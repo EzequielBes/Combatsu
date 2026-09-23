@@ -403,10 +403,10 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Testes com os números do spec: patrulha ±48 px a 35 px/s; persegue < 200 px a 70 px/s; prepara < 40 px; 450/120/800 ms; eventos `windupStart`/`hitboxOn`/`hitboxOff` na ordem
-- [ ] Testes: `canAct = false` zera `vx` e interrompe preparo e golpe (AI-04), sem emitir `hitboxOn` depois
-- [ ] Borda: morrer no preparo nunca abre a hitbox
-- [ ] Gate check passes: `npm test`
+- [x] Testes com os números do spec: patrulha ±48 px a 35 px/s; persegue < 200 px a 70 px/s; prepara < 40 px; 450/120/800 ms; eventos `windupStart`/`hitboxOn`/`hitboxOff` na ordem
+- [x] Testes: `canAct = false` zera `vx` e interrompe preparo e golpe (AI-04), sem emitir `hitboxOn` depois
+- [x] Borda: morrer no preparo nunca abre a hitbox
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/core/enemyAI.test.ts`)
 **Gate**: quick
