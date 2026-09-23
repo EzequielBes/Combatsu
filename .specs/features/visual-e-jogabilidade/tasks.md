@@ -569,8 +569,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: parado ao lado do inimigo o hp cai 12 por golpe; pisca e não perde vida durante a invulnerabilidade; ao zerar renasce no spawn com 100 e o objeto segurado cai
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: parado ao lado do inimigo o hp cai 12 por golpe; pisca e não perde vida durante a invulnerabilidade; ao zerar renasce no spawn com 100 e o objeto segurado cai
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptador; regra coberta pelo T21)
 **Gate**: build

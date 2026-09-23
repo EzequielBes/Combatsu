@@ -21,6 +21,9 @@ export const PLAYER_MOVE: MoveTuning = {
 /** Vida do player (HP-01..04). */
 export const PLAYER_HEALTH: HealthTuning = { maxHp: 100, invulnMs: 700, staggerMs: 200, respawnMs: 1000 };
 
+/** Recuo do player ao levar golpe (px/s na horizontal), mantido durante o atordoamento (HP-03). */
+export const PLAYER_KNOCKBACK = 180;
+
 /** Soco, soco, chute. force = impulso em px por step do Matter. */
 export const PLAYER_COMBO: AttackStep[] = [
   {

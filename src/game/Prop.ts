@@ -62,6 +62,17 @@ export class Prop {
     if (this.machine.endSwing()) this.sync();
   }
 
+  /**
+   * Quem segurava morreu ou sumiu (HP-04): o objeto cai em repouso de onde estava a mão. O ponto seguro vira o
+   * centro de quem segurava, que nunca está dentro do terreno.
+   */
+  holderGone(holderX: number, holderY: number): void {
+    if (!this.machine.holderGone()) return;
+    this.lastSafe = { x: holderX, y: holderY };
+    this.sprite.setPosition(holderX, holderY);
+    this.sync();
+  }
+
   /** Chamado todo frame por quem segura. Sem colisão, só posição visual no socket. */
   follow(holderX: number, holderY: number, facing: 1 | -1): void {
     const st = this.machine.state;
