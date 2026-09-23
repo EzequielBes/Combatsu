@@ -591,8 +591,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Testes: 50/90 ms; sobreposição fica com o maior, nunca a soma; `reset()` descongela
-- [ ] Gate check passes: `npm test`
+- [x] Testes: 50/90 ms; sobreposição fica com o maior, nunca a soma; `reset()` descongela
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/core/hitstop.test.ts`)
 **Gate**: quick

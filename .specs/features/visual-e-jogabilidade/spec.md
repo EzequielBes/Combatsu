@@ -226,8 +226,8 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | CHR-02 | P1: Personagens animados | Tasks | Implementing |
 | CHR-03 | P1: Personagens animados | Tasks | Implementing |
 | CHR-04 | P1: Personagens animados | Tasks | Implementing |
-| FX-01 | P1: Impacto do golpe | Tasks | Pending |
-| FX-02 | P1: Impacto do golpe | Tasks | Pending |
+| FX-01 | P1: Impacto do golpe | Tasks | Implementing |
+| FX-02 | P1: Impacto do golpe | Tasks | Implementing |
 | FX-03 | P1: Impacto do golpe | Tasks | Pending |
 | HP-01 | P1: Luta de verdade | Tasks | Implementing |
 | HP-02 | P1: Luta de verdade | Tasks | Implementing |
