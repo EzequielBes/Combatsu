@@ -3,22 +3,36 @@ import { parseSheet } from '../../core/pixelGrid';
 import { TEX, createPlaceholderTextures } from '../textures';
 import { PALETTE_KEYS } from './palette';
 import { registerSheet } from './render';
+import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
 import { registerTiles } from './tiles';
 
 /** Chave da animação do player no AnimationManager (global do jogo). */
 export const playerAnimKey = (name: string): string => `player-${name}`;
+/** Chave da animação do inimigo no AnimationManager. */
+export const enemyAnimKey = (name: string): string => `enemy-${name}`;
 
 /**
- * Registra toda a arte da cena: tileset, folha do player e as animações.
- * Inimigo, ragdoll, cadeira, garrafa e fumaça continuam com o placeholder até ganharem arte; o placeholder do
- * player também fica, porque é a textura do corpo físico invisível (o tamanho dela define o corpo).
+ * Registra toda a arte da cena: tileset, folhas do player e do inimigo, partes do ragdoll e as animações.
+ * Cadeira, garrafa e fumaça continuam com o placeholder até ganharem arte; o placeholder do player também fica,
+ * porque é a textura do corpo físico invisível (o tamanho dela define o corpo).
  */
 export function createArt(scene: Phaser.Scene): void {
   createPlaceholderTextures(scene);
   registerTiles(scene);
   registerSheet(scene, TEX.playerArt, parseSheet('player', PLAYER_FRAMES, PALETTE_KEYS));
   registerAnims(scene, TEX.playerArt, PLAYER_ANIMS, playerAnimKey);
+  registerSheet(scene, TEX.enemy, parseSheet('enemy', ENEMY_FRAMES, PALETTE_KEYS));
+  registerAnims(scene, TEX.enemy, ENEMY_ANIMS, enemyAnimKey);
+  // Uma textura por parte do ragdoll, nas cores da folha do inimigo (CHR-04).
+  const rag = {
+    [TEX.ragHead]: ENEMY_RAG_PARTS.head,
+    [TEX.ragTorso]: ENEMY_RAG_PARTS.torso,
+    [TEX.ragLimb]: ENEMY_RAG_PARTS.limb,
+  };
+  for (const [key, grid] of Object.entries(rag)) {
+    registerSheet(scene, key, parseSheet(key, { [key]: grid }, PALETTE_KEYS));
+  }
 }
 
 /**
