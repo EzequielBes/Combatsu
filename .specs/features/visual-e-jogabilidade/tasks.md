@@ -548,9 +548,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: player longe → inimigo patrulha; a 150 px → persegue; encostado → `windup` visível por ~450 ms e golpe; o outro inimigo nunca toma dano do golpe
-- [ ] Smoke: socar no preparo cancela o golpe
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: player longe → inimigo patrulha; a 150 px → persegue; encostado → `windup` visível por ~450 ms e golpe; o outro inimigo nunca toma dano do golpe
+- [x] Smoke: socar no preparo cancela o golpe
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptador; regras cobertas por T15/T20)
 **Gate**: build
