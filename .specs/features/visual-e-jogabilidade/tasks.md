@@ -105,9 +105,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `isDebug()` devolve `true` com `?debug` na URL e `false` sem
-- [ ] F1 alterna o estado e avisa quem se registrou
-- [ ] Gate check passes: `npm run build && npm test` (76 testes)
+- [x] `isDebug()` devolve `true` com `?debug` na URL e `false` sem
+- [x] F1 alterna o estado e avisa quem se registrou
+- [x] Gate check passes: `npm run build && npm test` (76 testes)
 
 **Tests**: none (adaptador lê `window.location` e o teclado do Phaser; a matriz diz none para essa camada)
 **Gate**: build
