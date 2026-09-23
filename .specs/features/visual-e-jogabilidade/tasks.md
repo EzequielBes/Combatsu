@@ -126,10 +126,10 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke sem `?debug`: 1/2 não mudam o estado de nenhum inimigo; H não liga o desenho da física; nenhum retângulo de hitbox aparece ao socar
-- [ ] Smoke com `?debug`: 1/2/H funcionam e a hitbox aparece
-- [ ] Smoke: J com o centro do inimigo a 60 px não acerta; encostado acerta (FIX-03)
-- [ ] Gate check passes: `npm run build && npm test` (76 testes)
+- [x] Smoke sem `?debug`: 1/2 não mudam o estado de nenhum inimigo; H não liga o desenho da física; nenhum retângulo de hitbox aparece ao socar
+- [x] Smoke com `?debug`: 1/2/H funcionam e a hitbox aparece
+- [x] Smoke: J com o centro do inimigo a 60 px não acerta; encostado acerta (FIX-03)
+- [x] Gate check passes: `npm run build && npm test` (76 testes)
 
 **Tests**: none (cena Phaser; smoke headless)
 **Gate**: build

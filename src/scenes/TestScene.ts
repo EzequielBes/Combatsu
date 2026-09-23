@@ -6,6 +6,7 @@ import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
 import { ENEMY_RESPAWN_MS, PLAYER_COMBO } from '../data/tuning';
 import { routeContact, tagBody } from '../game/bodyTags';
+import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { Enemy } from '../game/Enemy';
 import { PlayerInput } from '../game/input';
 import { MAX_FRAME_MS } from '../game/physics';
@@ -52,10 +53,11 @@ export class TestScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.level.widthPx, this.level.heightPx);
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
 
-    // Ferramentas de ajuste: golpes de teste e debug do Matter.
-    this.onKey('ONE', () => this.debugHit('light'));
-    this.onKey('TWO', () => this.debugHit('heavy'));
-    this.onKey('H', () => this.toggleDebugDraw());
+    // Ferramentas de ajuste (golpes de teste e debug do Matter): só valem no modo debug.
+    bindDebugToggle(this);
+    this.onKey('ONE', () => isDebug() && this.debugHit('light'));
+    this.onKey('TWO', () => isDebug() && this.debugHit('heavy'));
+    this.onKey('H', () => isDebug() && this.toggleDebugDraw());
     this.onKey('R', () => this.scene.restart());
     this.addHud();
   }
@@ -92,14 +94,15 @@ export class TestScene extends Phaser.Scene {
   }
 
   private addHud(): void {
-    const lines = [
+    const lines = (): string[] => [
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
       'J/X: golpe (combo de 3)   com objeto na mão: golpe forte',
       'K/Z: pegar / arremessar   S+K: largar',
-      'R: reiniciar   H: debug da física   1/2: golpe leve/forte de teste',
+      'R: reiniciar',
+      ...(isDebug() ? ['F1: sair do debug   H: debug da física   1/2: golpe leve/forte de teste'] : []),
     ];
-    this.add
-      .text(12, 10, lines.join('\n'), {
+    const hud = this.add
+      .text(12, 10, lines().join('\n'), {
         fontFamily: 'monospace',
         fontSize: '12px',
         color: '#e0e0e0',
@@ -108,11 +111,21 @@ export class TestScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setDepth(100);
+    const off = onDebugChange((on) => {
+      hud.setText(lines().join('\n'));
+      // Saindo do debug, o desenho da física não pode continuar ligado.
+      if (!on && this.matter.world.drawDebug) this.toggleDebugDraw();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
   }
 
   private toggleDebugDraw(): void {
     const world = this.matter.world;
-    if (!world.debugGraphic) world.createDebugGraphic();
+    if (!world.debugGraphic) {
+      // createDebugGraphic já liga o desenho; sem isso o primeiro H desligava na hora e parecia não funcionar.
+      world.createDebugGraphic();
+      world.drawDebug = false;
+    }
     world.drawDebug = !world.drawDebug;
     world.debugGraphic.clear();
   }

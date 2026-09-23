@@ -5,6 +5,7 @@ import { makeHitGate, type Hit } from '../core/hit';
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import { COMBO_WINDOW_MS, PLAYER_COMBO, PLAYER_MOVE, PROP_SWING } from '../data/tuning';
 import { newEntityId, tagBody, type Hittable } from './bodyTags';
+import { isDebug } from './debug';
 import type { InputSnapshot } from './input';
 import { PX_PER_S_TO_STEP, bodyOf } from './physics';
 import type { Prop } from './Prop';
@@ -171,7 +172,8 @@ export class Player implements Hittable {
       },
     });
     const color = step.strength === 'heavy' ? 0xffd166 : 0xffffff;
-    const view = this.scene.add.rectangle(0, 0, shape.width, shape.height, color, 0.35);
+    // O golpe aparece pela animação; o retângulo da hitbox só no modo debug.
+    const view = this.scene.add.rectangle(0, 0, shape.width, shape.height, color, 0.35).setVisible(isDebug());
     this.hitbox = { body, view, shape };
     this.placeHitbox();
   }
