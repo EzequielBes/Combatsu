@@ -4,6 +4,8 @@ import type Phaser from 'phaser';
 export const TEX = {
   terrain: 'terrain',
   player: 'player',
+  /** Folha animada do player (o `player` acima é o corpo físico invisível). */
+  playerArt: 'player-art',
   enemy: 'enemy',
   chair: 'chair',
   bottle: 'bottle',
