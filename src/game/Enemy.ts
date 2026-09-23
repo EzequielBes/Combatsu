@@ -21,6 +21,7 @@ const HIT_FLASH_MS = 70;
  */
 export class Enemy implements Hittable {
   readonly id = newEntityId();
+  readonly team = 'enemy';
   private readonly brain = new EnemyBrain(ENEMY);
   private readonly body: MatterJS.BodyType;
   private readonly view: Phaser.GameObjects.Sprite;

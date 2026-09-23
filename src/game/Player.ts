@@ -29,6 +29,7 @@ const PLAYER_DEPTH = 1;
 
 export class Player implements Hittable {
   readonly id = newEntityId();
+  readonly team = 'player';
   /** Corpo físico (invisível); o tamanho da textura placeholder define o corpo. */
   readonly sprite: Phaser.Physics.Matter.Image;
   /** O que aparece na tela: sprite animado com a origem no pé, seguindo o corpo. */
@@ -58,7 +59,7 @@ export class Player implements Hittable {
     this.sprite.setIgnoreGravity(true);
     this.sprite.setVisible(false);
     tagBody(bodyOf(this.sprite), { kind: 'character', target: this });
-    this.hitbox = new AttackHitbox(scene, this.id);
+    this.hitbox = new AttackHitbox(scene, this.id, this.team);
     this.view = scene.add
       .sprite(x, y + SIZE.player.h / 2, TEX.playerArt, 'idle-0')
       .setOrigin(PLAYER_ORIGIN.x, PLAYER_ORIGIN.y)

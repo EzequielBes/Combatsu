@@ -1,8 +1,9 @@
-import type { Hit } from '../core/hit';
+import type { Hit, Team } from '../core/hit';
 
 /** Qualquer coisa que pode levar um golpe (player, inimigo). */
 export interface Hittable {
   readonly id: number;
+  readonly team: Team;
   receiveHit(hit: Hit): void;
 }
 
