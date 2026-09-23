@@ -338,8 +338,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Teste de dados: a folha passa no `parseSheet`; todo nome de animação do CHR-01 tem pelo menos um frame; os golpes têm `wind`, `hit` e `recover`
-- [ ] Gate check passes: `npm test`
+- [x] Teste de dados: a folha passa no `parseSheet`; todo nome de animação do CHR-01 tem pelo menos um frame; os golpes têm `wind`, `hit` e `recover`
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/game/art.test.ts`)
 **Gate**: quick
