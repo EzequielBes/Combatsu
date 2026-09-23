@@ -317,9 +317,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Um teste por regra de precedência (hurt > golpe > ar > run > idle), limiar de 10 px/s, variante carry e jump × fall por sinal de vy
-- [ ] `attackFrame`: startup → `wind`, active → `hit`, recovery/window → `recover`
-- [ ] Gate check passes: `npm test`
+- [x] Um teste por regra de precedência (hurt > golpe > ar > run > idle), limiar de 10 px/s, variante carry e jump × fall por sinal de vy
+- [x] `attackFrame`: startup → `wind`, active → `hit`, recovery/window → `recover`
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/core/animState.test.ts`)
 **Gate**: quick

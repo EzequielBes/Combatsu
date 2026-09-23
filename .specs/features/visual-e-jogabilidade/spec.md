@@ -222,7 +222,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | ART-02 | P1: Base de pixel art | Tasks | Implementing |
 | ART-03 | P1: Base de pixel art | Tasks | Implementing |
 | RES-01 | P1: Base de pixel art | Tasks | Implementing |
-| CHR-01 | P1: Personagens animados | Tasks | Pending |
+| CHR-01 | P1: Personagens animados | Tasks | Implementing |
 | CHR-02 | P1: Personagens animados | Tasks | Implementing |
 | CHR-03 | P1: Personagens animados | Tasks | Pending |
 | CHR-04 | P1: Personagens animados | Tasks | Pending |
