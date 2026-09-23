@@ -3,8 +3,16 @@ import { RUN_THRESHOLD, attackFrame, pickPlayerAnim, type AttackAnim, type Playe
 import { Filters } from '../core/collision';
 import { ComboTracker, type AttackStep, type ComboEvent } from '../core/combo';
 import type { Hit } from '../core/hit';
+import { Health } from '../core/health';
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
-import { COMBO_WINDOW_MS, PLAYER_COMBO, PLAYER_MOVE, PROP_SWING } from '../data/tuning';
+import {
+  COMBO_WINDOW_MS,
+  PLAYER_COMBO,
+  PLAYER_HEALTH,
+  PLAYER_KNOCKBACK,
+  PLAYER_MOVE,
+  PROP_SWING,
+} from '../data/tuning';
 import { newEntityId, tagBody, type Hittable } from './bodyTags';
 import type { InputSnapshot } from './input';
 import { PX_PER_S_TO_STEP, bodyOf } from './physics';
@@ -26,6 +34,12 @@ const COMBO_ANIMS: readonly AttackAnim[] = ['jab', 'cross', 'kick'];
 const THROW_POSE_MS = 200;
 /** Profundidade do sprite do player (inimigos e objetos ficam em 0). */
 const PLAYER_DEPTH = 1;
+/** Piscar da invulnerabilidade: meio período (ms) e alpha da fase apagada. */
+const BLINK_MS = 70;
+const BLINK_ALPHA = 0.25;
+/** Fade da câmera ao morrer e ao renascer (ms); o respawn em si sai do PLAYER_HEALTH.respawnMs. */
+const DEATH_FADE_MS = 600;
+const RESPAWN_FADE_MS = 300;
 
 export class Player implements Hittable {
   readonly id = newEntityId();
@@ -40,6 +54,12 @@ export class Player implements Hittable {
   private readonly hitbox: AttackHitbox;
   private held: Prop | null = null;
   private throwPoseMs = 0;
+  private readonly health = new Health(PLAYER_HEALTH);
+  /** Sentido do recuo do último golpe recebido. */
+  private knockDir: 1 | -1 = 1;
+  private blinkMs = 0;
+  /** Onde o player renasce: o spawn do level. */
+  private readonly spawn: { x: number; y: number };
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -60,6 +80,7 @@ export class Player implements Hittable {
     this.sprite.setVisible(false);
     tagBody(bodyOf(this.sprite), { kind: 'character', target: this });
     this.hitbox = new AttackHitbox(scene, this.id, this.team);
+    this.spawn = { x, y };
     this.view = scene.add
       .sprite(x, y + SIZE.player.h / 2, TEX.playerArt, 'idle-0')
       .setOrigin(PLAYER_ORIGIN.x, PLAYER_ORIGIN.y)
@@ -71,11 +92,34 @@ export class Player implements Hittable {
     return this.move.facing;
   }
 
-  receiveHit(_hit: Hit): void {
-    // O player não recebe dano nesta demo (fora do escopo do sub-projeto 1).
+  /** Vida atual, para o HUD. */
+  get hp(): number {
+    return this.health.hp;
+  }
+
+  get maxHp(): number {
+    return this.health.max;
+  }
+
+  /**
+   * Golpe recebido (HP-01..04): perde vida, fica invulnerável (piscando) e atordoado, com recuo na direção do
+   * golpe. O golpe em andamento é cancelado. Ao zerar, larga o objeto e a tela escurece até o respawn.
+   */
+  receiveHit(hit: Hit): void {
+    const result = this.health.receive(hit.damage);
+    if (result === 'ignored') return;
+    this.onCombo(this.fists.cancel());
+    this.onPropSwing(this.propSwing.cancel());
+    this.throwPoseMs = 0;
+    this.knockDir = hit.direction.x < 0 ? -1 : 1;
+    if (result === 'died') this.die();
   }
 
   update(dtMs: number, input: InputSnapshot): void {
+    for (const ev of this.health.update(dtMs)) if (ev === 'respawn') this.respawn();
+    // Atordoado ou morto: sem golpe, sem pegar objeto e sem controle de movimento (HP-03).
+    const stunned = this.health.staggered || this.health.dead;
+
     // O objeto pode ter quebrado na mão durante o step de física.
     if (this.held && this.held.machine.holderId !== this.id) {
       this.held = null;
@@ -83,7 +127,7 @@ export class Player implements Hittable {
       this.onPropSwing(this.propSwing.cancel());
     }
 
-    if (input.attackPressed) {
+    if (input.attackPressed && !stunned) {
       if (this.held) this.onPropSwing(this.propSwing.press());
       else this.onCombo(this.fists.press());
     }
@@ -91,16 +135,48 @@ export class Player implements Hittable {
     this.onPropSwing(this.propSwing.update(dtMs));
 
     const attacking = this.fists.isAttacking || this.propSwing.isAttacking;
-    if (input.interactPressed && !attacking) this.interact(input.down);
+    if (input.interactPressed && !attacking && !stunned) this.interact(input.down);
 
     const sensors = { grounded: this.touchesTerrain('below'), ceiling: this.touchesTerrain('above') };
-    this.move = stepMovement(this.move, input, sensors, dtMs, PLAYER_MOVE, attacking);
+    this.move = stepMovement(this.move, input, sensors, dtMs, PLAYER_MOVE, attacking || stunned);
+    // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
+    if (this.health.staggered) this.move = { ...this.move, vx: this.knockDir * PLAYER_KNOCKBACK };
+    else if (this.health.dead) this.move = { ...this.move, vx: 0 };
     this.sprite.setVelocity(this.move.vx * PX_PER_S_TO_STEP, this.move.vy * PX_PER_S_TO_STEP);
     this.sprite.setFlipX(this.move.facing < 0);
     this.hitbox.follow(this.sprite.x, this.sprite.y, this.facing);
     this.held?.follow(this.sprite.x, this.sprite.y, this.facing);
     this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
     this.animate(sensors.grounded);
+    this.blink(dtMs);
+  }
+
+  /** Pisca enquanto invulnerável (HP-02). */
+  private blink(dtMs: number): void {
+    if (!this.health.invulnerable) {
+      this.blinkMs = 0;
+      this.view.setAlpha(1);
+      return;
+    }
+    this.blinkMs += dtMs;
+    this.view.setAlpha(Math.floor(this.blinkMs / BLINK_MS) % 2 === 0 ? BLINK_ALPHA : 1);
+  }
+
+  /** hp 0 (HP-04): larga o objeto (ele cai em repouso), e a tela escurece até o respawn. */
+  private die(): void {
+    if (this.held) {
+      this.held.holderGone(this.sprite.x, this.sprite.y);
+      this.held = null;
+    }
+    this.scene.cameras.main.fadeOut(DEATH_FADE_MS);
+  }
+
+  /** Renasce no spawn do level com a vida cheia (o Health já voltou para o máximo). */
+  private respawn(): void {
+    this.sprite.setPosition(this.spawn.x, this.spawn.y);
+    this.sprite.setVelocity(0, 0);
+    this.move = initialMoveState();
+    this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
   }
 
   /**
@@ -109,7 +185,8 @@ export class Player implements Hittable {
    */
   private animate(grounded: boolean): void {
     const input: PlayerAnimInput = {
-      hurt: false, // o dano do player chega em outra task
+      // Atordoado pelo golpe ou morto até o respawn.
+      hurt: this.health.staggered || this.health.dead,
       attack: this.currentAttack(grounded),
       grounded,
       vx: this.move.vx,
