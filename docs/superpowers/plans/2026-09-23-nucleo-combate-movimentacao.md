@@ -955,7 +955,7 @@ git commit -m "feat: add collision filters, hit model and contact routing" -m "C
   - `stepMovement(prev: MoveState, input: MoveInput, sensors: MoveSensors, dtMs: number, t: MoveTuning, locked?: boolean): MoveState`
   - `PLAYER_MOVE: MoveTuning` em `src/data/tuning.ts`
 
-- [ ] **Step 1: Escrever os testes (falhando)**
+- [x] **Step 1: Escrever os testes (falhando)**
 
 `tests/core/movement.test.ts`:
 
@@ -1104,12 +1104,12 @@ describe('stepMovement — pulo', () => {
 });
 ```
 
-- [ ] **Step 2: Rodar e ver falhar**
+- [x] **Step 2: Rodar e ver falhar**
 
 Run: `npx vitest run tests/core/movement.test.ts`
 Expected: FAIL — `Cannot find module '../../src/core/movement'`.
 
-- [ ] **Step 3: Implementar**
+- [x] **Step 3: Implementar**
 
 `src/core/movement.ts`:
 
@@ -1226,12 +1226,12 @@ export const PLAYER_MOVE: MoveTuning = {
 };
 ```
 
-- [ ] **Step 4: Rodar os testes**
+- [x] **Step 4: Rodar os testes**
 
 Run: `npm test`
 Expected: PASS (todos, incluindo os 13 de movimento).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/movement.ts src/data/tuning.ts tests/core/movement.test.ts
