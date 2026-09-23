@@ -218,7 +218,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | FIX-03 | P1: Ataque honesto | Tasks | Implementing |
 | FIX-04 | P1: Ataque honesto | Tasks | Implementing |
 | ART-01 | P1: Base de pixel art | Tasks | Pending |
-| ART-02 | P1: Base de pixel art | Tasks | Pending |
+| ART-02 | P1: Base de pixel art | Tasks | Implementing |
 | ART-03 | P1: Base de pixel art | Tasks | Pending |
 | RES-01 | P1: Base de pixel art | Tasks | Pending |
 | CHR-01 | P1: Personagens animados | Tasks | Pending |
