@@ -38,7 +38,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | Tamanho da paleta | Até 32 cores, tema noturno (azul-marinho, roxo amaldiçoado, âmbar e ciano de destaque) | Pouca cor mantém a consistência | y |
 | Escala de texel | 1 texel de arte = 2 px de mundo (`ART_SCALE = 2`) para todo sprite, tile e parte de ragdoll | Pixels do mesmo tamanho em toda a tela | y |
 | Resolução | Canvas 960×540 com `Scale.FIT`, câmera com zoom 1,5 (área visível 640×360 px de mundo) | Personagem ~2× maior sem mudar a física | y |
-| Tamanho dos sprites | Player 16×24 texels (32×48 px); inimigo 18×24 texels (36×48 px); corpos físicos inalterados (20×36 e 22×36), pé alinhado à base do corpo | O sprite pode passar do corpo; a física não muda | y |
+| Tamanho dos sprites | Player com ~16 texels de largura desenhados num frame de 32×24 texels (64×48 px), origem no pé no centro do corpo, para caber o membro esticado do golpe (SPEC_DEVIATION aceita no lote 2; ver `src/game/art/sprites/player.ts`); inimigo 18×24 texels (36×48 px), pode usar o mesmo padrão de frame largo; corpos físicos inalterados (20×36 e 22×36), pé alinhado à base do corpo | O sprite pode passar do corpo; a física não muda | y |
 | Números de vida e IA | hp do player 100; golpe do inimigo 12 de dano; invulnerabilidade 700 ms; atordoamento 200 ms; fade de respawn 1000 ms | Ponto de partida jogável; ajustável em `tuning.ts` | y |
 | Distâncias da IA | patrulha ±48 px em volta do spawn a 35 px/s; persegue a 70 px/s quando o player está a < 200 px na horizontal; prepara a < 40 px; preparo 450 ms, golpe ativo 120 ms, descanso 800 ms | Telegrafia legível; ajustável em `tuning.ts` | y |
 | Duração do hitstop | 50 ms golpe leve, 90 ms golpe forte | Faixa comum de jogos de ação 2D; ajustável | y |
