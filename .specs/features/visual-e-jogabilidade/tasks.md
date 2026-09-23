@@ -425,8 +425,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Um teste por linha da tabela brain × IA → `idle`/`walk`/`windup`/`attack`/`hurt`/`getup`
-- [ ] Gate check passes: `npm test`
+- [x] Um teste por linha da tabela brain × IA → `idle`/`walk`/`windup`/`attack`/`hurt`/`getup`
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/core/animState.test.ts`)
 **Gate**: quick

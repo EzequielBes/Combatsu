@@ -1,4 +1,6 @@
 import type { ComboPhase } from './combo';
+import type { EnemyAIState } from './enemyAI';
+import type { EnemyState } from './enemyBrain';
 
 export type PlayerAnim =
   | 'idle'
@@ -55,4 +57,39 @@ export function attackFrame(phase: AttackPhase): AttackFrame {
   if (phase === 'startup') return 'wind';
   if (phase === 'active') return 'hit';
   return 'recover';
+}
+
+export type EnemyAnim = 'idle' | 'walk' | 'windup' | 'attack' | 'hurt' | 'getup';
+
+export interface EnemyAnimInput {
+  brain: EnemyState;
+  ai: EnemyAIState;
+  /** O corpo está andando (|vx| acima de RUN_THRESHOLD). */
+  moving: boolean;
+}
+
+/**
+ * Animação do inimigo (CHR-03). O cérebro (reação a dano) manda sobre a IA:
+ *
+ * | brain                                          | IA              | moving | animação |
+ * | ---------------------------------------------- | --------------- | ------ | -------- |
+ * | hitstun                                        | qualquer        | -      | hurt     |
+ * | ragdollStun, deadRagdoll, dissolving, gone     | qualquer        | -      | hurt     |
+ * | gettingUp                                      | qualquer        | -      | getup    |
+ * | idle                                           | windup          | -      | windup   |
+ * | idle                                           | attack          | -      | attack   |
+ * | idle                                           | rest            | -      | idle     |
+ * | idle                                           | patrol, chase   | sim    | walk     |
+ * | idle                                           | patrol, chase   | não    | idle     |
+ *
+ * Em ragdoll o sprite fica escondido (as partes do ragdoll aparecem no lugar), então 'hurt' ali é só o frame que
+ * fica guardado.
+ */
+export function pickEnemyAnim(i: EnemyAnimInput): EnemyAnim {
+  if (i.brain === 'gettingUp') return 'getup';
+  if (i.brain !== 'idle') return 'hurt';
+  if (i.ai === 'windup') return 'windup';
+  if (i.ai === 'attack') return 'attack';
+  if (i.ai === 'rest') return 'idle';
+  return i.moving ? 'walk' : 'idle';
 }
