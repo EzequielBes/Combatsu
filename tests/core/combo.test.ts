@@ -97,6 +97,18 @@ describe('ComboTracker', () => {
     expect(c.currentIndex).toBe(1);
   });
 
+  it('um aperto no buffer encadeia só o golpe seguinte, sem sobrar buffer para o outro', () => {
+    const c = new ComboTracker(STEPS, WINDOW);
+    c.press();
+    c.press(); // buffer durante o golpe 0
+    finishStep(c);
+    expect(c.currentIndex).toBe(1);
+    const evs = finishStep(c); // golpe 1 termina sem novo aperto
+    expect(types(evs)).toEqual(['hitboxOn', 'hitboxOff']);
+    expect(c.currentIndex).toBe(1);
+    expect(c.isAttacking).toBe(false);
+  });
+
   it('cancelar durante a hitbox ativa desliga a hitbox e encerra', () => {
     const c = new ComboTracker(STEPS, WINDOW);
     c.press();
