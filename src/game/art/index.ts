@@ -5,6 +5,7 @@ import { PALETTE_KEYS } from './palette';
 import { registerSheet } from './render';
 import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
+import { PROP_SHARDS, PROP_SPRITES, SMOKE } from './sprites/props';
 import { registerTiles } from './tiles';
 
 /** Chave da animação do player no AnimationManager (global do jogo). */
@@ -12,10 +13,13 @@ export const playerAnimKey = (name: string): string => `player-${name}`;
 /** Chave da animação do inimigo no AnimationManager. */
 export const enemyAnimKey = (name: string): string => `enemy-${name}`;
 
+/** Textura dos estilhaços de um objeto, pela textura do próprio objeto (PRP-01). */
+export const shardsKey = (texture: string): string => `${texture}-shards`;
+
 /**
- * Registra toda a arte da cena: tileset, folhas do player e do inimigo, partes do ragdoll e as animações.
- * Cadeira, garrafa e fumaça continuam com o placeholder até ganharem arte; o placeholder do player também fica,
- * porque é a textura do corpo físico invisível (o tamanho dela define o corpo).
+ * Registra toda a arte da cena: tileset, folhas do player e do inimigo, partes do ragdoll, objetos com os seus
+ * estilhaços, fumaça e as animações. O placeholder do player fica, porque é a textura do corpo físico invisível
+ * (o tamanho dela define o corpo).
  */
 export function createArt(scene: Phaser.Scene): void {
   createPlaceholderTextures(scene);
@@ -33,6 +37,14 @@ export function createArt(scene: Phaser.Scene): void {
   for (const [key, grid] of Object.entries(rag)) {
     registerSheet(scene, key, parseSheet(key, { [key]: grid }, PALETTE_KEYS));
   }
+  // Objetos: a textura de 1 frame define o corpo físico (26x26 e 8x20 px, iguais aos placeholders antigos).
+  const props = { [TEX.chair]: 'chair', [TEX.bottle]: 'bottle' } as const;
+  for (const [texture, key] of Object.entries(props)) {
+    registerSheet(scene, texture, parseSheet(key, { [key]: PROP_SPRITES[key] }, PALETTE_KEYS));
+    const shards = Object.fromEntries(PROP_SHARDS[key].map((s) => [s.key, s.grid]));
+    registerSheet(scene, shardsKey(texture), parseSheet(shardsKey(key), shards, PALETTE_KEYS));
+  }
+  registerSheet(scene, TEX.smoke, parseSheet('smoke', { smoke: SMOKE }, PALETTE_KEYS));
 }
 
 /**
