@@ -485,8 +485,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: o combo acerta o inimigo exatamente como antes (8, 8, 18; um acerto por golpe) e nada acerta a 60 px
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: o combo acerta o inimigo exatamente como antes (8, 8, 18; um acerto por golpe) e nada acerta a 60 px
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (refatoração de adaptador; smoke de regressão)
 **Gate**: build

@@ -1,17 +1,17 @@
 import Phaser from 'phaser';
 import { RUN_THRESHOLD, attackFrame, pickPlayerAnim, type AttackAnim, type PlayerAnimInput } from '../core/animState';
 import { Filters } from '../core/collision';
-import { ComboTracker, type AttackStep, type ComboEvent, type HitboxShape } from '../core/combo';
-import { makeHitGate, type Hit } from '../core/hit';
+import { ComboTracker, type AttackStep, type ComboEvent } from '../core/combo';
+import type { Hit } from '../core/hit';
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import { COMBO_WINDOW_MS, PLAYER_COMBO, PLAYER_MOVE, PROP_SWING } from '../data/tuning';
 import { newEntityId, tagBody, type Hittable } from './bodyTags';
-import { isDebug } from './debug';
 import type { InputSnapshot } from './input';
 import { PX_PER_S_TO_STEP, bodyOf } from './physics';
 import type { Prop } from './Prop';
 import { playerAnimKey } from './art';
 import { PLAYER_ORIGIN } from './art/sprites/player';
+import { AttackHitbox } from './hitbox';
 import { SIZE, TEX } from './textures';
 
 /** Espessura das zonas de sensor de chão/teto (px). */
@@ -27,12 +27,6 @@ const THROW_POSE_MS = 200;
 /** Profundidade do sprite do player (inimigos e objetos ficam em 0). */
 const PLAYER_DEPTH = 1;
 
-interface ActiveHitbox {
-  body: MatterJS.BodyType;
-  view: Phaser.GameObjects.Rectangle;
-  shape: HitboxShape;
-}
-
 export class Player implements Hittable {
   readonly id = newEntityId();
   /** Corpo físico (invisível); o tamanho da textura placeholder define o corpo. */
@@ -42,7 +36,7 @@ export class Player implements Hittable {
   private move: MoveState = initialMoveState();
   private readonly fists = new ComboTracker(PLAYER_COMBO, COMBO_WINDOW_MS);
   private readonly propSwing = new ComboTracker([PROP_SWING], 0);
-  private hitbox: ActiveHitbox | null = null;
+  private readonly hitbox: AttackHitbox;
   private held: Prop | null = null;
   private throwPoseMs = 0;
 
@@ -64,6 +58,7 @@ export class Player implements Hittable {
     this.sprite.setIgnoreGravity(true);
     this.sprite.setVisible(false);
     tagBody(bodyOf(this.sprite), { kind: 'character', target: this });
+    this.hitbox = new AttackHitbox(scene, this.id);
     this.view = scene.add
       .sprite(x, y + SIZE.player.h / 2, TEX.playerArt, 'idle-0')
       .setOrigin(PLAYER_ORIGIN.x, PLAYER_ORIGIN.y)
@@ -101,7 +96,7 @@ export class Player implements Hittable {
     this.move = stepMovement(this.move, input, sensors, dtMs, PLAYER_MOVE, attacking);
     this.sprite.setVelocity(this.move.vx * PX_PER_S_TO_STEP, this.move.vy * PX_PER_S_TO_STEP);
     this.sprite.setFlipX(this.move.facing < 0);
-    this.placeHitbox();
+    this.hitbox.follow(this.sprite.x, this.sprite.y, this.facing);
     this.held?.follow(this.sprite.x, this.sprite.y, this.facing);
     this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
     this.animate(sensors.grounded);
@@ -205,55 +200,21 @@ export class Player implements Hittable {
   private onCombo(events: ComboEvent[]): void {
     for (const ev of events) {
       if (ev.type === 'hitboxOn') this.openHitbox(ev.step);
-      else if (ev.type === 'hitboxOff' || ev.type === 'comboEnd') this.closeHitbox();
+      else if (ev.type === 'hitboxOff' || ev.type === 'comboEnd') this.hitbox.close();
     }
   }
 
   private openHitbox(step: AttackStep): void {
     const shape = step.hitbox;
     if (!shape) return;
-    this.closeHitbox();
-    const gate = makeHitGate(this.id);
-    const facing = this.facing;
-    const body = this.scene.matter.add.rectangle(0, 0, shape.width, shape.height, {
-      isSensor: true,
-      isStatic: true,
-      collisionFilter: { ...Filters.hitbox },
-    });
-    tagBody(body, {
-      kind: 'active',
-      onTouch: (other) => {
-        if (other.kind !== 'character' || !gate(other.target.id)) return;
-        other.target.receiveHit({
-          ownerId: this.id,
-          damage: step.damage,
-          strength: step.strength,
-          force: step.force,
-          direction: { x: facing, y: step.strength === 'heavy' ? -0.6 : -0.15 },
-        });
-      },
-    });
-    const color = step.strength === 'heavy' ? 0xffd166 : 0xffffff;
-    // O golpe aparece pela animação; o retângulo da hitbox só no modo debug.
-    const view = this.scene.add.rectangle(0, 0, shape.width, shape.height, color, 0.35).setVisible(isDebug());
-    this.hitbox = { body, view, shape };
-    this.placeHitbox();
-  }
-
-  private placeHitbox(): void {
-    if (!this.hitbox) return;
-    const { body, view, shape } = this.hitbox;
-    const x = this.sprite.x + shape.offsetX * this.facing;
-    const y = this.sprite.y + shape.offsetY;
-    this.scene.matter.body.setPosition(body, { x, y });
-    view.setPosition(x, y);
-  }
-
-  private closeHitbox(): void {
-    if (!this.hitbox) return;
-    this.scene.matter.world.remove(this.hitbox.body);
-    this.hitbox.view.destroy();
-    this.hitbox = null;
+    const hit: Hit = {
+      ownerId: this.id,
+      damage: step.damage,
+      strength: step.strength,
+      force: step.force,
+      direction: { x: this.facing, y: step.strength === 'heavy' ? -0.6 : -0.15 },
+    };
+    this.hitbox.open(shape, hit, this.sprite.x, this.sprite.y, this.facing);
   }
 
   /**
