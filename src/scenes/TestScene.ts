@@ -17,6 +17,10 @@ import { TEX, createPlaceholderTextures } from '../game/textures';
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
 
 const SPAWN_LIFT = 2;
+/** Zoom da câmera do mundo (RES-01): 960x540 de tela mostram 640x360 px de mundo. */
+const WORLD_ZOOM = 1.5;
+/** Folga (px de tela) em que o player anda sem a câmera andar junto. */
+const FOLLOW_DEADZONE = { w: 40, h: 24 };
 
 export class TestScene extends Phaser.Scene {
   private level!: LevelData;
@@ -25,12 +29,16 @@ export class TestScene extends Phaser.Scene {
   private player!: Player;
   private enemies: Enemy[] = [];
   private props: Prop[] = [];
+  /** Tudo que a câmera de UI desenha mora aqui; o resto da cena é mundo. */
+  private uiLayer!: Phaser.GameObjects.Layer;
 
   constructor() {
     super('TestScene');
   }
 
   create(): void {
+    // Antes de criar qualquer objeto, para a câmera de UI ignorar tudo que for mundo.
+    this.addUiCamera();
     createPlaceholderTextures(this);
     this.level = parseLevel(LEVEL_1);
     this.terrain = [];
@@ -50,8 +58,12 @@ export class TestScene extends Phaser.Scene {
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props);
     for (const e of this.level.enemies) this.spawnEnemy({ x: e.x, y: e.y - SPAWN_LIFT });
 
-    this.cameras.main.setBounds(0, 0, this.level.widthPx, this.level.heightPx);
-    this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
+    this.cameras.main
+      .setZoom(WORLD_ZOOM)
+      .setRoundPixels(true)
+      .setBounds(0, 0, this.level.widthPx, this.level.heightPx)
+      .startFollow(this.player.sprite, true, 0.15, 0.15)
+      .setDeadzone(FOLLOW_DEADZONE.w, FOLLOW_DEADZONE.h);
 
     // Ferramentas de ajuste (golpes de teste e debug do Matter): só valem no modo debug.
     bindDebugToggle(this);
@@ -93,6 +105,24 @@ export class TestScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Duas câmeras (AD-003): a principal desenha o mundo com zoom e a de UI (zoom 1, sem scroll) só a `uiLayer`.
+   * Todo objeto que entra na cena depois (inimigo que renasce, partículas, hitbox, debug da física) é ignorado
+   * pela câmera de UI, a menos que entre na `uiLayer`.
+   */
+  private addUiCamera(): void {
+    this.uiLayer = this.add.layer();
+    this.cameras.main.ignore(this.uiLayer);
+    const ui = this.cameras.add(0, 0, this.scale.width, this.scale.height, false, 'ui');
+    const route = (obj: Phaser.GameObjects.GameObject): void => {
+      // Um objeto nasce na lista da cena e só depois é movido para a camada: aí ele volta a ser da UI.
+      if (obj.displayList === this.uiLayer) obj.cameraFilter &= ~ui.id;
+      else ui.ignore(obj);
+    };
+    this.events.on(Phaser.Scenes.Events.ADDED_TO_SCENE, route);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.ADDED_TO_SCENE, route));
+  }
+
   private addHud(): void {
     const lines = (): string[] => [
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
@@ -111,6 +141,7 @@ export class TestScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setDepth(100);
+    this.uiLayer.add(hud);
     const off = onDebugChange((on) => {
       hud.setText(lines().join('\n'));
       // Saindo do debug, o desenho da física não pode continuar ligado.

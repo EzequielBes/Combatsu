@@ -7,6 +7,7 @@ new Phaser.Game({
   width: 960,
   height: 540,
   pixelArt: true,
+  roundPixels: true,
   backgroundColor: '#1b1b2f',
   physics: {
     default: 'matter',

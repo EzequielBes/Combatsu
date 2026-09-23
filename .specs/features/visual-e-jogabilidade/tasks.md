@@ -210,9 +210,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: `cameras.main.zoom === 1.5`; com o player nos cantos da sala a câmera não mostra nada fora de `0..widthPx × 0..heightPx`
-- [ ] Smoke: o texto do HUD fica fixo no canto e não é ampliado
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: `cameras.main.zoom === 1.5`; com o player nos cantos da sala a câmera não mostra nada fora de `0..widthPx × 0..heightPx`
+- [x] Smoke: o texto do HUD fica fixo no canto e não é ampliado
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (câmera Phaser; smoke headless)
 **Gate**: build
