@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { RUN_THRESHOLD, attackFrame, pickPlayerAnim, type AttackAnim, type PlayerAnimInput } from '../core/animState';
 import { Filters } from '../core/collision';
 import { ComboTracker, type AttackStep, type ComboEvent, type HitboxShape } from '../core/combo';
 import { makeHitGate, type Hit } from '../core/hit';
@@ -9,7 +10,9 @@ import { isDebug } from './debug';
 import type { InputSnapshot } from './input';
 import { PX_PER_S_TO_STEP, bodyOf } from './physics';
 import type { Prop } from './Prop';
-import { TEX } from './textures';
+import { playerAnimKey } from './art';
+import { PLAYER_ORIGIN } from './art/sprites/player';
+import { SIZE, TEX } from './textures';
 
 /** Espessura das zonas de sensor de chão/teto (px). */
 const SENSOR_DEPTH = 3;
@@ -17,6 +20,12 @@ const SENSOR_DEPTH = 3;
 const SENSOR_INSET = 3;
 /** Alcance da zona de coleta à frente do player (px); atrás vale metade. */
 const PICKUP_REACH = 24;
+/** Animação de cada golpe do combo de socos, pela posição no PLAYER_COMBO. */
+const COMBO_ANIMS: readonly AttackAnim[] = ['jab', 'cross', 'kick'];
+/** Tempo (ms) que a pose de arremesso fica na tela depois de soltar o objeto. */
+const THROW_POSE_MS = 200;
+/** Profundidade do sprite do player (inimigos e objetos ficam em 0). */
+const PLAYER_DEPTH = 1;
 
 interface ActiveHitbox {
   body: MatterJS.BodyType;
@@ -26,12 +35,16 @@ interface ActiveHitbox {
 
 export class Player implements Hittable {
   readonly id = newEntityId();
+  /** Corpo físico (invisível); o tamanho da textura placeholder define o corpo. */
   readonly sprite: Phaser.Physics.Matter.Image;
+  /** O que aparece na tela: sprite animado com a origem no pé, seguindo o corpo. */
+  readonly view: Phaser.GameObjects.Sprite;
   private move: MoveState = initialMoveState();
   private readonly fists = new ComboTracker(PLAYER_COMBO, COMBO_WINDOW_MS);
   private readonly propSwing = new ComboTracker([PROP_SWING], 0);
   private hitbox: ActiveHitbox | null = null;
   private held: Prop | null = null;
+  private throwPoseMs = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -49,7 +62,13 @@ export class Player implements Hittable {
     });
     this.sprite.setFixedRotation();
     this.sprite.setIgnoreGravity(true);
+    this.sprite.setVisible(false);
     tagBody(bodyOf(this.sprite), { kind: 'character', target: this });
+    this.view = scene.add
+      .sprite(x, y + SIZE.player.h / 2, TEX.playerArt, 'idle-0')
+      .setOrigin(PLAYER_ORIGIN.x, PLAYER_ORIGIN.y)
+      // Acima dos inimigos e objetos: o membro do golpe aparece por cima do alvo que ele atinge.
+      .setDepth(PLAYER_DEPTH);
   }
 
   get facing(): 1 | -1 {
@@ -84,6 +103,48 @@ export class Player implements Hittable {
     this.sprite.setFlipX(this.move.facing < 0);
     this.placeHitbox();
     this.held?.follow(this.sprite.x, this.sprite.y, this.facing);
+    this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
+    this.animate(sensors.grounded);
+  }
+
+  /**
+   * Escolhe a animação pelo animState (CHR-01). Nos golpes o frame sai da fase do combo (CHR-02), não do relógio
+   * da animação: na fase ativa, com a hitbox ligada, aparece o frame *-hit com o membro esticado.
+   */
+  private animate(grounded: boolean): void {
+    const input: PlayerAnimInput = {
+      hurt: false, // o dano do player chega em outra task
+      attack: this.currentAttack(grounded),
+      grounded,
+      vx: this.move.vx,
+      vy: this.move.vy,
+      holding: this.held !== null,
+    };
+    const anim = pickPlayerAnim(input);
+    const v = this.view;
+    v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+    // Escala negativa espelha em volta da origem (o pé no centro do corpo); o flipX espelharia em volta do
+    // centro do frame, que é mais largo que o corpo.
+    v.setScale(this.facing, 1);
+    if (input.attack && anim !== 'throw' && anim !== 'hurt') {
+      v.anims.stop();
+      v.setFrame(`${anim}-${attackFrame(input.attack.phase)}`);
+    } else {
+      v.anims.play(playerAnimKey(anim), true);
+    }
+  }
+
+  /** Golpe em andamento para a animação. Na janela do combo, só enquanto o player está parado no chão. */
+  private currentAttack(grounded: boolean): PlayerAnimInput['attack'] {
+    if (this.throwPoseMs > 0) return { name: 'throw', phase: 'active' };
+    const still = grounded && Math.abs(this.move.vx) <= RUN_THRESHOLD;
+    const swing = this.propSwing.phase;
+    if (swing !== 'idle' && (swing !== 'window' || still)) return { name: 'swing', phase: swing };
+    const fist = this.fists.phase;
+    if (fist !== 'idle' && (fist !== 'window' || still)) {
+      return { name: COMBO_ANIMS[this.fists.currentIndex], phase: fist };
+    }
+    return null;
   }
 
   private interact(dropInstead: boolean): void {
@@ -91,6 +152,7 @@ export class Player implements Hittable {
       const prop = this.held;
       this.held = null;
       prop.release(this.sprite.x, this.sprite.y, dropInstead ? 'drop' : 'throw', this.facing);
+      if (!dropInstead) this.throwPoseMs = THROW_POSE_MS;
       return;
     }
     const target = this.findPickup();
