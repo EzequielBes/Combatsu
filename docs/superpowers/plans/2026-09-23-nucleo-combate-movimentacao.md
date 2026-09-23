@@ -2701,7 +2701,7 @@ git commit -m "feat: wire player melee combo with sensor hitboxes" -m "Co-Author
   - `class PropMachine { constructor(def: PropDef); readonly def; get state(); get impacts(); get holderId(): number | null; get ownerId(): number | null; get filter(): CollisionFilter; pickUp(holderId): boolean; drop(): boolean; startSwing(): boolean; endSwing(): boolean; throw(): boolean; holderGone(): boolean; tryHit(targetId): boolean; registerImpact(): PropImpact; update(dtMs): boolean }` (`update` devolve `true` no frame em que vira `gone`)
   - `PROP_DEFS: Record<string, PropDef>` com `chair` e `bottle`
 
-- [ ] **Step 1: Escrever os testes (falhando)**
+- [x] **Step 1: Escrever os testes (falhando)**
 
 `tests/core/props.test.ts`:
 
@@ -2920,12 +2920,12 @@ describe('PROP_DEFS', () => {
 });
 ```
 
-- [ ] **Step 2: Rodar e ver falhar**
+- [x] **Step 2: Rodar e ver falhar**
 
 Run: `npx vitest run tests/core/props.test.ts tests/data/props.test.ts`
 Expected: FAIL — módulos `props` não existem.
 
-- [ ] **Step 3: Implementar**
+- [x] **Step 3: Implementar**
 
 `src/core/props.ts`:
 
@@ -3138,12 +3138,12 @@ export const PROP_DEFS: Record<string, PropDef> = {
 };
 ```
 
-- [ ] **Step 4: Rodar os testes**
+- [x] **Step 4: Rodar os testes**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/props.ts src/data/props.ts tests/core/props.test.ts tests/data/props.test.ts
