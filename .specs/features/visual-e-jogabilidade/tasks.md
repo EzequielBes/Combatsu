@@ -169,9 +169,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Teste: no máximo 32 entradas, chaves de 1 caractere, `.` reservado (não está na paleta), cores válidas 0x000000–0xffffff, `ART_SCALE === 2`
-- [ ] O módulo não importa `phaser` como valor
-- [ ] Gate check passes: `npm test` (≈ 85 testes)
+- [x] Teste: no máximo 32 entradas, chaves de 1 caractere, `.` reservado (não está na paleta), cores válidas 0x000000–0xffffff, `ART_SCALE === 2`
+- [x] O módulo não importa `phaser` como valor
+- [x] Gate check passes: `npm test` (≈ 85 testes)
 
 **Tests**: unit (`tests/game/art.test.ts`)
 **Gate**: quick
