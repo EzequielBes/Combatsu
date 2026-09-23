@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ragdollFilter } from '../core/collision';
 import { normalize, type Vec2 } from '../core/hit';
+import { PALETTE } from './art/palette';
 import { bodyOf } from './physics';
 import { TEX } from './textures';
 
@@ -10,24 +11,29 @@ interface PartSpec {
   dy: number;
 }
 
-/** Posições relativas ao centro do inimigo. Índice 0 = tronco. Poucos segmentos grandes de propósito. */
+/**
+ * Posições relativas ao centro do inimigo. Índice 0 = tronco. Poucos segmentos grandes de propósito.
+ * Tamanhos vindos da arte (ENEMY_RAG_PARTS, 2 px por texel): tronco 16x20, cabeça 16x14, membro 6x16.
+ */
 const PARTS: readonly PartSpec[] = [
-  { key: TEX.ragTorso, dx: 0, dy: -1 },
-  { key: TEX.ragHead, dx: 0, dy: -15 },
-  { key: TEX.ragLimb, dx: -9, dy: -2 },
-  { key: TEX.ragLimb, dx: 9, dy: -2 },
-  { key: TEX.ragLimb, dx: -4, dy: 13 },
-  { key: TEX.ragLimb, dx: 4, dy: 13 },
+  { key: TEX.ragTorso, dx: 0, dy: 0 },
+  { key: TEX.ragHead, dx: 0, dy: -17 },
+  { key: TEX.ragLimb, dx: -11, dy: -1 },
+  { key: TEX.ragLimb, dx: 11, dy: -1 },
+  { key: TEX.ragLimb, dx: -4, dy: 12 },
+  { key: TEX.ragLimb, dx: 4, dy: 12 },
 ];
 
 /** [parte A, parte B, x da junta, y da junta] relativos ao centro do inimigo: pescoço, ombros, quadris. */
 const JOINTS: readonly (readonly [number, number, number, number])[] = [
   [0, 1, 0, -10],
-  [0, 2, -7, -8],
-  [0, 3, 7, -8],
+  [0, 2, -8, -7],
+  [0, 3, 8, -7],
   [0, 4, -4, 7],
   [0, 5, 4, 7],
 ];
+/** Energia amaldiçoada da dissolução: roxos da paleta. */
+const CURSE = [PALETTE.u, PALETTE.v, PALETTE.U];
 
 /** Teto do impulso: acima disso as juntas esticam e o corpo "explode". */
 const MAX_FORCE = 14;
@@ -82,7 +88,7 @@ export class Ragdoll {
   }
 
   flash(): void {
-    for (const p of this.parts) p.setTintFill(0xffffff);
+    for (const p of this.parts) p.setTintFill(PALETTE.w);
     this.scene.time.delayedCall(60, () => {
       for (const p of this.parts) if (p.active) p.clearTint();
     });
@@ -90,7 +96,7 @@ export class Ragdoll {
 
   /** Fumaça/energia amaldiçoada + fade. */
   dissolve(durationMs: number): void {
-    for (const p of this.parts) p.setTint(0x7b2cbf);
+    for (const p of this.parts) p.setTint(PALETTE.u);
     this.scene.tweens.add({ targets: this.parts, alpha: 0, duration: durationMs });
     const c = this.center;
     const smoke = this.scene.add.particles(c.x, c.y, TEX.smoke, {
@@ -99,7 +105,7 @@ export class Ragdoll {
       lifespan: 800,
       scale: { start: 1.4, end: 0 },
       alpha: { start: 0.8, end: 0 },
-      tint: [0x7b2cbf, 0x3c096c, 0xc77dff],
+      tint: CURSE,
       emitting: false,
     });
     smoke.explode(30);

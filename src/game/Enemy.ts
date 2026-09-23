@@ -1,23 +1,31 @@
 import Phaser from 'phaser';
+import { RUN_THRESHOLD, pickEnemyAnim } from '../core/animState';
 import { Filters } from '../core/collision';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
 import { normalize, type Hit, type Vec2 } from '../core/hit';
 import { ENEMY } from '../data/tuning';
+import { enemyAnimKey } from './art';
+import { PALETTE } from './art/palette';
+import { ENEMY_ORIGIN } from './art/sprites/enemy';
 import { newEntityId, tagBody, type Hittable } from './bodyTags';
 import { applyFilter, setIgnoreGravity } from './physics';
 import { Ragdoll } from './Ragdoll';
 import { SIZE, TEX } from './textures';
 
+/** Duração (ms) do flash branco do golpe leve. */
+const HIT_FLASH_MS = 70;
+
 /**
- * Corpo físico (retângulo Matter) separado do visual (imagem comum), para
- * poder esticar/achatar o visual em tweens sem mexer na física.
+ * Corpo físico (retângulo Matter) separado do visual (sprite animado com a origem no pé, no centro do corpo).
+ * A animação sai do pickEnemyAnim (CHR-03); em ragdoll o sprite some e as partes do ragdoll aparecem (CHR-04).
  */
 export class Enemy implements Hittable {
   readonly id = newEntityId();
   private readonly brain = new EnemyBrain(ENEMY);
   private readonly body: MatterJS.BodyType;
-  private readonly view: Phaser.GameObjects.Image;
+  private readonly view: Phaser.GameObjects.Sprite;
   private ragdoll: Ragdoll | null = null;
+  private facing: 1 | -1 = 1;
   private _removed = false;
 
   constructor(
@@ -34,7 +42,7 @@ export class Enemy implements Hittable {
     });
     scene.matter.body.setInertia(this.body, Infinity); // não tomba
     tagBody(this.body, { kind: 'character', target: this });
-    this.view = scene.add.image(spawn.x, spawn.y + h / 2, TEX.enemy).setOrigin(0.5, 1);
+    this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, TEX.enemy, 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
   }
 
   get x(): number {
@@ -63,8 +71,17 @@ export class Enemy implements Hittable {
       this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
       return;
     }
-    if (this.brain.state === 'idle') this.view.setFlipX(playerX < this.body.position.x);
+    if (this.brain.state === 'idle' && playerX !== this.body.position.x) this.facing = playerX < this.body.position.x ? -1 : 1;
+    this.animate();
+  }
+
+  private animate(): void {
+    const vxPerS = this.body.velocity.x * 60;
+    const anim = pickEnemyAnim({ brain: this.brain.state, ai: 'patrol', moving: Math.abs(vxPerS) > RUN_THRESHOLD });
     this.view.setPosition(this.body.position.x, this.body.position.y + SIZE.enemy.h / 2);
+    // Escala negativa espelha em volta da origem (o pé no centro do corpo), não do centro do frame largo.
+    this.view.setScale(this.facing, 1);
+    this.view.anims.play(enemyAnimKey(anim), true);
   }
 
   private handle(events: EnemyEvent[]): void {
@@ -78,25 +95,18 @@ export class Enemy implements Hittable {
     }
   }
 
-  private resetView(): void {
-    this.scene.tweens.killTweensOf(this.view);
-    this.view.setScale(1).clearTint();
-  }
-
-  /** Golpe leve: só "animação" (flash + achatar), sem ragdoll. */
+  /** Golpe leve: animação `hurt` (pelo pickEnemyAnim, com o cérebro em hitstun) + flash branco, sem ragdoll. */
   private playHitReaction(hit: Hit): void {
-    this.resetView();
     const d = normalize(hit.direction);
     this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
-    this.view.setTintFill(0xffffff);
-    this.scene.time.delayedCall(70, () => {
+    this.view.setTintFill(PALETTE.w);
+    this.scene.time.delayedCall(HIT_FLASH_MS, () => {
       if (this.view.active) this.view.clearTint();
     });
-    this.scene.tweens.add({ targets: this.view, scaleX: 0.75, duration: 60, yoyo: true });
   }
 
   private enterRagdoll(hit: Hit): void {
-    this.resetView();
+    this.view.clearTint();
     if (!this.ragdoll) {
       this.ragdoll = new Ragdoll(this.scene, this.body.position.x, this.body.position.y - 3);
       for (const b of this.ragdoll.bodies) tagBody(b, { kind: 'character', target: this });
@@ -108,7 +118,7 @@ export class Enemy implements Hittable {
     this.scene.cameras.main.shake(90, 0.004);
   }
 
-  /** "Levantar" simples: sem blend físico, só um tween de esticar. */
+  /** Levantar: o ragdoll some e o sprite volta tocando a animação `getup` (o cérebro fica em gettingUp). */
   private getUp(): void {
     if (!this.ragdoll) return;
     const c = this.ragdoll.center;
@@ -119,8 +129,8 @@ export class Enemy implements Hittable {
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
     applyFilter(this.body, Filters.enemy);
     setIgnoreGravity(this.body, false);
-    this.view.setPosition(c.x, y + SIZE.enemy.h / 2).setVisible(true).setScale(1, 0.35);
-    this.scene.tweens.add({ targets: this.view, scaleY: 1, duration: ENEMY.getUpMs, ease: 'Back.Out' });
+    this.view.setVisible(true);
+    this.animate();
   }
 
   private remove(): void {

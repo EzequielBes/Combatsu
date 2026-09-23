@@ -6,10 +6,12 @@ export const TEX = {
   player: 'player',
   /** Folha animada do player (o `player` acima é o corpo físico invisível). */
   playerArt: 'player-art',
+  /** Folha animada do inimigo (o corpo físico é um retângulo Matter, sem textura). */
   enemy: 'enemy',
   chair: 'chair',
   bottle: 'bottle',
   smoke: 'smoke',
+  /** Partes do ragdoll do inimigo, desenhadas com as cores da folha dele (CHR-04). */
   ragHead: 'rag-head',
   ragTorso: 'rag-torso',
   ragLimb: 'rag-limb',
@@ -39,12 +41,8 @@ function box(scene: Phaser.Scene, key: string, w: number, h: number, fill: numbe
 export function createPlaceholderTextures(scene: Phaser.Scene): void {
   box(scene, TEX.terrain, 32, 32, 0x4a4e69);
   box(scene, TEX.player, SIZE.player.w, SIZE.player.h, 0x3a86ff, true);
-  box(scene, TEX.enemy, SIZE.enemy.w, SIZE.enemy.h, 0xd62828, true);
   box(scene, TEX.chair, 26, 26, 0x8d5524);
   box(scene, TEX.bottle, 8, 20, 0x2a9d8f);
-  box(scene, TEX.ragHead, 10, 10, 0xd62828);
-  box(scene, TEX.ragTorso, 14, 18, 0xb71c1c);
-  box(scene, TEX.ragLimb, 5, 14, 0xd62828);
   if (!scene.textures.exists(TEX.smoke)) {
     const g = scene.add.graphics();
     g.fillStyle(0xffffff, 1);

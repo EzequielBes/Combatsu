@@ -465,8 +465,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: golpe leve = `hurt`; forte = ragdoll com as texturas das partes; levanta com `getup`; morte dissolve
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: golpe leve = `hurt`; forte = ragdoll com as texturas das partes; levanta com `getup`; morte dissolve
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptador; regra coberta pelo T16)
 **Gate**: build
