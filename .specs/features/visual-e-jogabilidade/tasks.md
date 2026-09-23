@@ -527,9 +527,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Testes com os números do spec: dano reduz hp; 700 ms de invulnerabilidade que ignora golpes; 200 ms de atordoamento; hp 0 → `died` e `respawn` após 1000 ms com hp 100; dano excedente não deixa hp negativo
-- [ ] Borda: dois golpes no mesmo frame = um dano só
-- [ ] Gate check passes: `npm test`
+- [x] Testes com os números do spec: dano reduz hp; 700 ms de invulnerabilidade que ignora golpes; 200 ms de atordoamento; hp 0 → `died` e `respawn` após 1000 ms com hp 100; dano excedente não deixa hp negativo
+- [x] Borda: dois golpes no mesmo frame = um dano só
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/core/health.test.ts`)
 **Gate**: quick

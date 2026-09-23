@@ -1,5 +1,6 @@
 import type { EnemyAITuning } from '../core/enemyAI';
 import type { EnemyTuning } from '../core/enemyBrain';
+import type { HealthTuning } from '../core/health';
 import type { AttackStep } from '../core/combo';
 import type { MoveTuning } from '../core/movement';
 
@@ -16,6 +17,9 @@ export const PLAYER_MOVE: MoveTuning = {
   coyoteMs: 90,
   jumpBufferMs: 110,
 };
+
+/** Vida do player (HP-01..04). */
+export const PLAYER_HEALTH: HealthTuning = { maxHp: 100, invulnMs: 700, staggerMs: 200, respawnMs: 1000 };
 
 /** Soco, soco, chute. force = impulso em px por step do Matter. */
 export const PLAYER_COMBO: AttackStep[] = [

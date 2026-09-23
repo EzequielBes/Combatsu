@@ -229,10 +229,10 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | FX-01 | P1: Impacto do golpe | Tasks | Pending |
 | FX-02 | P1: Impacto do golpe | Tasks | Pending |
 | FX-03 | P1: Impacto do golpe | Tasks | Pending |
-| HP-01 | P1: Luta de verdade | Tasks | Pending |
-| HP-02 | P1: Luta de verdade | Tasks | Pending |
-| HP-03 | P1: Luta de verdade | Tasks | Pending |
-| HP-04 | P1: Luta de verdade | Tasks | Pending |
+| HP-01 | P1: Luta de verdade | Tasks | Implementing |
+| HP-02 | P1: Luta de verdade | Tasks | Implementing |
+| HP-03 | P1: Luta de verdade | Tasks | Implementing |
+| HP-04 | P1: Luta de verdade | Tasks | Implementing |
 | AI-01 | P1: Luta de verdade | Tasks | Implementing |
 | AI-02 | P1: Luta de verdade | Tasks | Implementing |
 | AI-03 | P1: Luta de verdade | Tasks | Implementing |
