@@ -611,10 +611,10 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: a posição do inimigo fica parada ~50 ms após um jab e ~90 ms após o chute
-- [ ] Smoke + captura: faísca no ponto de contato com a cor certa; poeira ao pousar; rastro no chute
-- [ ] Smoke: R durante o hitstop reinicia sem ficar congelado
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: a posição do inimigo fica parada ~50 ms após um jab e ~90 ms após o chute
+- [x] Smoke + captura: faísca no ponto de contato com a cor certa; poeira ao pousar; rastro no chute
+- [x] Smoke: R durante o hitstop reinicia sem ficar congelado
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (efeitos Phaser; regra coberta pelo T24)
 **Gate**: build

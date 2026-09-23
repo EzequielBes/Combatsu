@@ -1,10 +1,29 @@
 import type Phaser from 'phaser';
 import { Filters } from '../core/collision';
 import type { HitboxShape } from '../core/combo';
-import { canDamage, makeHitGate, type Hit, type Team } from '../core/hit';
+import { canDamage, makeHitGate, type Hit, type Team, type Vec2 } from '../core/hit';
 import { PALETTE } from './art/palette';
-import { tagBody, type Hittable } from './bodyTags';
+import { tagBody, type Hittable, type Rect } from './bodyTags';
 import { isDebug } from './debug';
+
+/** Chamado a cada golpe que conecta, depois do `receiveHit` do alvo, com o ponto de contato (faísca + hitstop). */
+export type OnConnect = (hit: Hit, point: Vec2) => void;
+
+/**
+ * Ponto de contato entre quem bate e quem apanha: o centro da interseção dos dois retângulos. Se eles não se
+ * cruzam num eixo (o sensor tocou uma parte do ragdoll fora do retângulo), vale o meio do vão nesse eixo.
+ */
+export function contactPoint(a: Rect, b: Rect): Vec2 {
+  const mid = (ac: number, as: number, bc: number, bs: number): number =>
+    (Math.max(ac - as / 2, bc - bs / 2) + Math.min(ac + as / 2, bc + bs / 2)) / 2;
+  return { x: mid(a.x, a.width, b.x, b.width), y: mid(a.y, a.height, b.y, b.height) };
+}
+
+/** Ponto de contato de um golpe cuja área é `area`; sem área do alvo, o centro de quem bate. */
+export function contactWith(area: Rect, target: Hittable): Vec2 {
+  const hurt = target.hurtRect?.();
+  return hurt ? contactPoint(area, hurt) : { x: area.x, y: area.y };
+}
 
 interface OpenHitbox {
   body: MatterJS.BodyType;
@@ -26,7 +45,7 @@ export class AttackHitbox {
     /** Time de quem ataca: o golpe só atinge o outro time (AI-05). */
     private readonly team: Team,
     /** Chamado a cada acerto, depois do `receiveHit` do alvo. */
-    private readonly onConnect?: (hit: Hit, target: Hittable) => void,
+    private readonly onConnect?: OnConnect,
   ) {}
 
   get isOpen(): boolean {
@@ -47,7 +66,9 @@ export class AttackHitbox {
       onTouch: (other) => {
         if (other.kind !== 'character' || !canDamage(this.team, other.target.team) || !gate(other.target.id)) return;
         other.target.receiveHit(hit);
-        this.onConnect?.(hit, other.target);
+        // Posição + tamanho da hitbox (a posição do corpo sensor), nunca body.bounds.
+        const { x, y } = body.position;
+        this.onConnect?.(hit, contactWith({ x, y, width: shape.width, height: shape.height }, other.target));
       },
     });
     const color = hit.strength === 'heavy' ? PALETTE.A : PALETTE.w;

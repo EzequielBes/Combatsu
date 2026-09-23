@@ -15,6 +15,9 @@ export const TEX = {
   ragHead: 'rag-head',
   ragTorso: 'rag-torso',
   ragLimb: 'rag-limb',
+  /** Efeitos (FX-03/04): estrela do ponto de contato e pedacinhos da faísca e da poeira. */
+  fxStar: 'fx-star',
+  fxBit: 'fx-bit',
 } as const;
 
 export const SIZE = {

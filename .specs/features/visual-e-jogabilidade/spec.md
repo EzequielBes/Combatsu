@@ -228,7 +228,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | CHR-04 | P1: Personagens animados | Tasks | Implementing |
 | FX-01 | P1: Impacto do golpe | Tasks | Implementing |
 | FX-02 | P1: Impacto do golpe | Tasks | Implementing |
-| FX-03 | P1: Impacto do golpe | Tasks | Pending |
+| FX-03 | P1: Impacto do golpe | Tasks | Implementing |
 | HP-01 | P1: Luta de verdade | Tasks | Implementing |
 | HP-02 | P1: Luta de verdade | Tasks | Implementing |
 | HP-03 | P1: Luta de verdade | Tasks | Implementing |
@@ -244,8 +244,8 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | HUD-01 | P2: Objetos e HUD | Tasks | Pending |
 | HUD-02 | P2: Objetos e HUD | Tasks | Pending |
 | HUD-03 | P2: Objetos e HUD | Tasks | Pending |
-| FX-04 | P3: Polimento | Tasks | Pending |
-| FX-05 | P3: Polimento | Tasks | Pending |
+| FX-04 | P3: Polimento | Tasks | Implementing |
+| FX-05 | P3: Polimento | Tasks | Implementing |
 
 **Coverage:** 32 total, 0 mapped to tasks yet (Tasks phase pending).
 
