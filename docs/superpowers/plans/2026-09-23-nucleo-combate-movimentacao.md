@@ -535,7 +535,7 @@ git commit -m "feat: scaffold Phaser + Vite project with test room level" -m "Co
   - `tagBody(body: object, tag: BodyTag)`, `tagOf(body)`, `routeContact(bodyA, bodyB)`, `newEntityId(): number`
   - `PX_PER_S_TO_STEP`, `MAX_FRAME_MS`, `bodyOf(go)`, `applyFilter(body, filter)`, `setIgnoreGravity(body, value)`
 
-- [ ] **Step 1: Escrever os testes (falhando)**
+- [x] **Step 1: Escrever os testes (falhando)**
 
 `tests/core/collision.test.ts`:
 
@@ -688,12 +688,12 @@ describe('newEntityId', () => {
 });
 ```
 
-- [ ] **Step 2: Rodar e ver falhar**
+- [x] **Step 2: Rodar e ver falhar**
 
 Run: `npm test`
 Expected: FAIL — módulos `collision`, `hit` e `bodyTags` não existem.
 
-- [ ] **Step 3: Implementar**
+- [x] **Step 3: Implementar**
 
 `src/core/collision.ts`:
 
@@ -862,12 +862,12 @@ export function setIgnoreGravity(body: MatterJS.BodyType, value: boolean): void 
 }
 ```
 
-- [ ] **Step 4: Rodar os testes**
+- [x] **Step 4: Rodar os testes**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Ligar filtros e contato na cena**
+- [x] **Step 5: Ligar filtros e contato na cena**
 
 `src/scenes/TestScene.ts` (arquivo inteiro):
 
@@ -924,12 +924,12 @@ export class TestScene extends Phaser.Scene {
 }
 ```
 
-- [ ] **Step 6: Verificar**
+- [x] **Step 6: Verificar**
 
 Run: `npm run build && npm test`
 Expected: sem erros; todos os testes passam. `npm run dev` ainda mostra a sala igual à Task 1, sem erros no console.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src tests

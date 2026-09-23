@@ -1,10 +1,15 @@
 import Phaser from 'phaser';
+import { Filters } from '../core/collision';
 import { parseLevel, type LevelData } from '../core/level';
 import { LEVEL_1 } from '../data/level1';
+import { routeContact, tagBody } from '../game/bodyTags';
 import { TEX, createPlaceholderTextures } from '../game/textures';
+
+type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
 
 export class TestScene extends Phaser.Scene {
   private level!: LevelData;
+  private terrain: MatterJS.BodyType[] = [];
 
   constructor() {
     super('TestScene');
@@ -13,8 +18,10 @@ export class TestScene extends Phaser.Scene {
   create(): void {
     createPlaceholderTextures(this);
     this.level = parseLevel(LEVEL_1);
+    this.terrain = [];
     this.buildTerrain();
     this.cameras.main.setBounds(0, 0, this.level.widthPx, this.level.heightPx);
+    this.listenForContacts();
   }
 
   private buildTerrain(): void {
@@ -22,7 +29,22 @@ export class TestScene extends Phaser.Scene {
       const cx = r.x + r.width / 2;
       const cy = r.y + r.height / 2;
       this.add.tileSprite(cx, cy, r.width, r.height, TEX.terrain);
-      this.matter.add.rectangle(cx, cy, r.width, r.height, { isStatic: true, label: 'terrain' });
+      const body = this.matter.add.rectangle(cx, cy, r.width, r.height, {
+        isStatic: true,
+        label: 'terrain',
+        collisionFilter: { ...Filters.terrain },
+      });
+      tagBody(body, { kind: 'terrain' });
+      this.terrain.push(body);
     }
+  }
+
+  private listenForContacts(): void {
+    const onStart = (event: ContactEvent): void => {
+      for (const pair of event.pairs) routeContact(pair.bodyA, pair.bodyB);
+    };
+    this.matter.world.on('collisionstart', onStart);
+    // Sem isso, reiniciar a cena empilha listeners e cada contato dispara duas vezes.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.matter.world?.off('collisionstart', onStart));
   }
 }
