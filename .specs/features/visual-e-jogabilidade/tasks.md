@@ -507,8 +507,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Testes: enemy→player sim, enemy→enemy não, player→enemy sim; `Hittable` ganha `team`
-- [ ] Gate check passes: `npm test`
+- [x] Testes: enemy→player sim, enemy→enemy não, player→enemy sim; `Hittable` ganha `team`
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/core/hit.test.ts`)
 **Gate**: quick

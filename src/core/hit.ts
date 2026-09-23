@@ -1,5 +1,8 @@
 export type Strength = 'light' | 'heavy';
 
+/** Lado de quem ataca ou é atacado. */
+export type Team = 'player' | 'enemy';
+
 export interface Vec2 {
   x: number;
   y: number;
@@ -18,6 +21,14 @@ export interface Hit {
 export function normalize(v: Vec2): Vec2 {
   const len = Math.hypot(v.x, v.y);
   return len === 0 ? { x: 0, y: -1 } : { x: v.x / len, y: v.y / len };
+}
+
+/**
+ * Regra de time (AI-05): só se acerta quem é do outro time. Golpe de inimigo nunca atinge inimigo, e a máscara
+ * da hitbox (que inclui ENEMY) sozinha não impede isso.
+ */
+export function canDamage(attacker: Team, target: Team): boolean {
+  return attacker !== target;
 }
 
 /**

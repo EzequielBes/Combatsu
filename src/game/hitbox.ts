@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { Filters } from '../core/collision';
 import type { HitboxShape } from '../core/combo';
-import { makeHitGate, type Hit } from '../core/hit';
+import { canDamage, makeHitGate, type Hit, type Team } from '../core/hit';
 import { PALETTE } from './art/palette';
 import { tagBody, type Hittable } from './bodyTags';
 import { isDebug } from './debug';
@@ -23,6 +23,8 @@ export class AttackHitbox {
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly ownerId: number,
+    /** Time de quem ataca: o golpe só atinge o outro time (AI-05). */
+    private readonly team: Team,
     /** Chamado a cada acerto, depois do `receiveHit` do alvo. */
     private readonly onConnect?: (hit: Hit, target: Hittable) => void,
   ) {}
@@ -43,7 +45,7 @@ export class AttackHitbox {
     tagBody(body, {
       kind: 'active',
       onTouch: (other) => {
-        if (other.kind !== 'character' || !gate(other.target.id)) return;
+        if (other.kind !== 'character' || !canDamage(this.team, other.target.team) || !gate(other.target.id)) return;
         other.target.receiveHit(hit);
         this.onConnect?.(hit, other.target);
       },
