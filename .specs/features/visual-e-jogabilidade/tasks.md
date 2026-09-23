@@ -274,8 +274,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: três camadas atrás do terreno com `scrollFactorX` 0,1, 0,3 e 0,6; ao andar 200 px o fundo desloca 20/60/120 px
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: três camadas atrás do terreno com `scrollFactorX` 0,1, 0,3 e 0,6; ao andar 200 px o fundo desloca 20/60/120 px
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (desenho procedural com Graphics; smoke headless)
 **Gate**: build

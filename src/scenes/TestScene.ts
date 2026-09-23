@@ -5,6 +5,7 @@ import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
 import { ENEMY_RESPAWN_MS, PLAYER_COMBO } from '../data/tuning';
+import { buildBackground } from '../game/art/background';
 import { registerTiles, tileFrameFor } from '../game/art/tiles';
 import { routeContact, tagBody } from '../game/bodyTags';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
@@ -43,6 +44,7 @@ export class TestScene extends Phaser.Scene {
     createPlaceholderTextures(this);
     registerTiles(this);
     this.level = parseLevel(LEVEL_1);
+    buildBackground(this, this.level.widthPx, this.level.heightPx);
     this.terrain = [];
     this.enemies = [];
     this.buildTerrain();
