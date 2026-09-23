@@ -3,12 +3,14 @@ import { Filters } from '../core/collision';
 import type { Strength, Vec2 } from '../core/hit';
 import { parseLevel, type LevelData } from '../core/level';
 import { LEVEL_1 } from '../data/level1';
+import { PROP_DEFS } from '../data/props';
 import { ENEMY_RESPAWN_MS, PLAYER_COMBO } from '../data/tuning';
 import { routeContact, tagBody } from '../game/bodyTags';
 import { Enemy } from '../game/Enemy';
 import { PlayerInput } from '../game/input';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Player } from '../game/Player';
+import { Prop } from '../game/Prop';
 import { TEX, createPlaceholderTextures } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
@@ -21,6 +23,7 @@ export class TestScene extends Phaser.Scene {
   private controls!: PlayerInput;
   private player!: Player;
   private enemies: Enemy[] = [];
+  private props: Prop[] = [];
 
   constructor() {
     super('TestScene');
@@ -34,9 +37,16 @@ export class TestScene extends Phaser.Scene {
     this.buildTerrain();
     this.listenForContacts();
 
+    this.props = [];
+    for (const s of this.level.props) {
+      const def = PROP_DEFS[s.key];
+      if (!def) throw new Error(`Objeto sem definição: ${s.key}`);
+      this.props.push(new Prop(this, s.x, s.y, def));
+    }
+
     this.controls = new PlayerInput(this);
     const p = this.level.player;
-    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain);
+    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props);
     for (const e of this.level.enemies) this.spawnEnemy({ x: e.x, y: e.y - SPAWN_LIFT });
 
     this.cameras.main.setBounds(0, 0, this.level.widthPx, this.level.heightPx);
@@ -52,6 +62,8 @@ export class TestScene extends Phaser.Scene {
     const dt = Math.min(delta, MAX_FRAME_MS);
     this.player.update(dt, this.controls.read());
     for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
+    for (const prop of this.props) prop.update(dt);
+    this.props = this.props.filter((prop) => !prop.isGone);
   }
 
   private spawnEnemy(at: Vec2): void {

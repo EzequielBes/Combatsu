@@ -3164,7 +3164,7 @@ git commit -m "feat: add data-driven prop definitions and prop state machine" -m
   - `class Prop { constructor(scene, x, y, def: PropDef); readonly machine: PropMachine; readonly sprite: Phaser.Physics.Matter.Image; readonly def: PropDef; get body(): MatterJS.BodyType; get isGone(): boolean; pickUp(holderId: number): boolean; startSwing(): void; endSwing(): void; follow(holderX: number, holderY: number, facing: 1 | -1): void; release(holderX: number, holderY: number, mode: 'drop' | 'throw', facing: 1 | -1): void; update(dtMs: number): void }`
   - `Player` passa a receber `props: () => readonly Prop[]` como 5º argumento do construtor.
 
-- [ ] **Step 1: Prop**
+- [x] **Step 1: Prop**
 
 `src/game/Prop.ts`:
 
@@ -3338,7 +3338,7 @@ export class Prop {
 }
 ```
 
-- [ ] **Step 2: Player com objetos**
+- [x] **Step 2: Player com objetos**
 
 `src/game/Player.ts` (arquivo inteiro):
 
@@ -3536,7 +3536,9 @@ export class Player implements Hittable {
 }
 ```
 
-- [ ] **Step 3: Objetos na cena**
+> **Ajustes na execução (Task 10):** o `Player.ts` acima foi aplicado com três mudanças: (1) `touchesTerrain` mantém a correção da Task 4 (posição + tamanho do sprite, não `body.bounds`); (2) `findPickup` idem, pelo mesmo motivo; (3) quando o objeto quebra na mão, `this.propSwing.cancel()` é chamado junto com `this.held = null`, para o player ficar livre na hora em vez de esperar a recuperação do golpe (~220 ms) — Review Focus #2.
+
+- [x] **Step 3: Objetos na cena**
 
 Em `src/scenes/TestScene.ts`:
 
@@ -3577,28 +3579,28 @@ import { Prop } from '../game/Prop';
     this.props = this.props.filter((prop) => !prop.isGone);
 ```
 
-- [ ] **Step 4: Verificar build e testes**
+- [x] **Step 4: Verificar build e testes**
 
 Run: `npm run build && npm test`
 Expected: sem erros; testes passam.
 
-- [ ] **Step 5: Teste manual de objetos**
+- [x] **Step 5: Teste manual de objetos**
 
 Run: `npm run dev`.
 Checklist:
-- [ ] Cadeiras (marrom) e garrafas (verde) caem no chão e ficam paradas, sem tremer. O player e os inimigos **atravessam** elas andando, sem tropeçar nem ser bloqueados.
-- [ ] Encostado numa garrafa, `K` pega: ela fica na frente do player e vira junto com ele. A cadeira fica nas costas/ombro.
-- [ ] Segurando, andar e pular contra paredes e embaixo de plataformas: o objeto nunca prende o player nem fica agarrado no cenário.
-- [ ] Segurando, `J` dá um golpe (objeto gira para a frente); acertar um inimigo sempre joga ele em ragdoll (golpe forte).
-- [ ] Garrafa quebra no primeiro golpe (estilhaços verdes + fade) e o player fica de mãos vazias, podendo socar com `J` e pegar outra coisa com `K` na hora.
-- [ ] Cadeira aguenta 3 golpes e quebra no 4º.
-- [ ] Segurando, `K` arremessa: o objeto voa para a frente com um leve arco, atravessa o player sem acertá-lo e derruba o inimigo em ragdoll.
-- [ ] Cadeira arremessada contra a parede ou o chão quica, fica em repouso e pode ser pega de novo; a garrafa se estilhaça no primeiro impacto.
-- [ ] **Arremessar encostado numa parede** (virado para ela): o objeto cai perto do player, em espaço livre; não fica preso dentro da parede nem sai voando.
-- [ ] `S`+`K` (ou `↓`+`K`) larga o objeto; largar no meio do pulo faz ele cair normalmente até o chão.
-- [ ] Arremessar objetos até quebrar todos não gera erro no console.
+- [x] Cadeiras (marrom) e garrafas (verde) caem no chão e ficam paradas, sem tremer. O player e os inimigos **atravessam** elas andando, sem tropeçar nem ser bloqueados.
+- [x] Encostado numa garrafa, `K` pega: ela fica na frente do player e vira junto com ele. A cadeira fica nas costas/ombro.
+- [x] Segurando, andar e pular contra paredes e embaixo de plataformas: o objeto nunca prende o player nem fica agarrado no cenário.
+- [x] Segurando, `J` dá um golpe (objeto gira para a frente); acertar um inimigo sempre joga ele em ragdoll (golpe forte).
+- [x] Garrafa quebra no primeiro golpe (estilhaços verdes + fade) e o player fica de mãos vazias, podendo socar com `J` e pegar outra coisa com `K` na hora.
+- [x] Cadeira aguenta 3 golpes e quebra no 4º.
+- [x] Segurando, `K` arremessa: o objeto voa para a frente com um leve arco, atravessa o player sem acertá-lo e derruba o inimigo em ragdoll.
+- [x] Cadeira arremessada contra a parede ou o chão quica, fica em repouso e pode ser pega de novo; a garrafa se estilhaça no primeiro impacto.
+- [x] **Arremessar encostado numa parede** (virado para ela): o objeto cai perto do player, em espaço livre; não fica preso dentro da parede nem sai voando.
+- [x] `S`+`K` (ou `↓`+`K`) larga o objeto; largar no meio do pulo faz ele cair normalmente até o chão.
+- [x] Arremessar objetos até quebrar todos não gera erro no console.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src
