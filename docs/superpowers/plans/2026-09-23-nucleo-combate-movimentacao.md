@@ -3619,7 +3619,7 @@ git commit -m "feat: add interactive props with pickup, swing, throw and break" 
 - Consumes: `TestScene.onKey` (Task 7).
 - Produces: nada consumido por outras tasks.
 
-- [ ] **Step 1: HUD e tecla R**
+- [x] **Step 1: HUD e tecla R**
 
 Em `src/scenes/TestScene.ts`, no fim de `create()`:
 
@@ -3651,7 +3651,7 @@ E o método novo na classe:
   }
 ```
 
-- [ ] **Step 2: README**
+- [x] **Step 2: README**
 
 `README.md`:
 
@@ -3699,26 +3699,26 @@ chamada correspondente em `createPlaceholderTextures`.
 
 ## Critério de sucesso da demo
 
-- [ ] O personagem corre e pula com altura variável.
-- [ ] Combo corpo a corpo de 3 golpes; o último é forte.
-- [ ] Pegar, bater e arremessar cadeira (pesada, resistente) e garrafa (leve, frágil).
-- [ ] Inimigo reage a golpe leve com animação e a golpe forte com ragdoll.
-- [ ] Inimigo morre em ragdoll e se dissolve.
+- [x] O personagem corre e pula com altura variável.
+- [x] Combo corpo a corpo de 3 golpes; o último é forte.
+- [x] Pegar, bater e arremessar cadeira (pesada, resistente) e garrafa (leve, frágil).
+- [x] Inimigo reage a golpe leve com animação e a golpe forte com ragdoll.
+- [x] Inimigo morre em ragdoll e se dissolve.
 ````
 
-- [ ] **Step 3: Validação final**
+- [x] **Step 3: Validação final**
 
 Run: `npm test && npm run build`
 Expected: todos os testes passam; build sem erros.
 
 Run: `npm run dev`.
 Checklist:
-- [ ] O HUD aparece no canto superior esquerdo e não rola com a câmera.
-- [ ] `R` reinicia a sala: objetos e inimigos voltam; bater num inimigo depois de reiniciar dá **um** acerto por golpe (sem listeners duplicados — o golpe não tira o dobro de vida: 2 combos ainda são necessários para matar).
-- [ ] Reiniciar 5 vezes seguidas não gera erro no console.
-- [ ] Todos os itens de "Critério de sucesso da demo" do README podem ser marcados jogando.
+- [x] O HUD aparece no canto superior esquerdo e não rola com a câmera.
+- [x] `R` reinicia a sala: objetos e inimigos voltam; bater num inimigo depois de reiniciar dá **um** acerto por golpe (sem listeners duplicados — o golpe não tira o dobro de vida: 2 combos ainda são necessários para matar).
+- [x] Reiniciar 5 vezes seguidas não gera erro no console.
+- [x] Todos os itens de "Critério de sucesso da demo" do README podem ser marcados jogando.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/scenes/TestScene.ts README.md
