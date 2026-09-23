@@ -239,7 +239,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | AI-04 | P1: Luta de verdade | Tasks | Pending |
 | AI-05 | P1: Luta de verdade | Tasks | Pending |
 | ENV-01 | P2: Cenário | Tasks | Implementing |
-| ENV-02 | P2: Cenário | Tasks | Pending |
+| ENV-02 | P2: Cenário | Tasks | Implementing |
 | PRP-01 | P2: Objetos e HUD | Tasks | Pending |
 | HUD-01 | P2: Objetos e HUD | Tasks | Pending |
 | HUD-02 | P2: Objetos e HUD | Tasks | Pending |
