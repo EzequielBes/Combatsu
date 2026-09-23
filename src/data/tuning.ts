@@ -1,3 +1,4 @@
+import type { EnemyTuning } from '../core/enemyBrain';
 import type { AttackStep } from '../core/combo';
 import type { MoveTuning } from '../core/movement';
 
@@ -61,3 +62,15 @@ export const PROP_SWING: AttackStep = {
   activeMs: 140,
   recoveryMs: 220,
 };
+
+/** 60 de hp = ~2 combos completos, ou 3 cadeiradas. */
+export const ENEMY: EnemyTuning = {
+  maxHp: 60,
+  hitstunMs: 220,
+  ragdollStunMs: 1100,
+  getUpMs: 350,
+  deathRagdollMs: 2200,
+  dissolveMs: 700,
+};
+
+export const ENEMY_RESPAWN_MS = 1500;

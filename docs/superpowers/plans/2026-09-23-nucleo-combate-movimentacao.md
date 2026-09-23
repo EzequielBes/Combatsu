@@ -1859,7 +1859,7 @@ git commit -m "feat: add melee combo tracker with input buffer" -m "Co-Authored-
   - `class EnemyBrain { constructor(t: EnemyTuning); get state(): EnemyState; get hp(): number; get isDead(): boolean; receiveHit(hit: Hit): EnemyEvent[]; update(dtMs: number): EnemyEvent[] }`
   - `ENEMY: EnemyTuning`, `ENEMY_RESPAWN_MS: number` em `src/data/tuning.ts`
 
-- [ ] **Step 1: Escrever os testes (falhando)**
+- [x] **Step 1: Escrever os testes (falhando)**
 
 `tests/core/enemyBrain.test.ts`:
 
@@ -1954,12 +1954,12 @@ describe('EnemyBrain', () => {
 });
 ```
 
-- [ ] **Step 2: Rodar e ver falhar**
+- [x] **Step 2: Rodar e ver falhar**
 
 Run: `npx vitest run tests/core/enemyBrain.test.ts`
 Expected: FAIL — módulo `enemyBrain` não existe.
 
-- [ ] **Step 3: Implementar**
+- [x] **Step 3: Implementar**
 
 `src/core/enemyBrain.ts`:
 
@@ -2078,12 +2078,12 @@ export const ENEMY: EnemyTuning = {
 export const ENEMY_RESPAWN_MS = 1500;
 ```
 
-- [ ] **Step 4: Rodar os testes**
+- [x] **Step 4: Rodar os testes**
 
 Run: `npm test && npm run typecheck`
 Expected: PASS; sem erros de tipo.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/enemyBrain.ts src/data/tuning.ts tests/core/enemyBrain.test.ts
