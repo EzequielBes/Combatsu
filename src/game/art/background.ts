@@ -205,11 +205,11 @@ function paintMid(b: Brush, { x0, x1, ground, bottom }: Span): void {
       // Árvore: copa em discos, tronco fino, borda de cima acesa.
       const cx = x + 40;
       const top = ground - 90 - Math.floor(rand() * 3) * 10;
-      b.rect(cx - 3, top + 40, 6, ground - top - 40, 'k');
-      b.disc(cx, top + 30, 28, 'k');
-      b.disc(cx - 22, top + 42, 20, 'k');
-      b.disc(cx + 22, top + 44, 18, 'k');
-      b.disc(cx - 4, top + 20, 18, 'k');
+      b.rect(cx - 3, top + 40, 6, ground - top - 40, 'K');
+      b.disc(cx, top + 30, 28, 'K');
+      b.disc(cx - 22, top + 42, 20, 'K');
+      b.disc(cx + 22, top + 44, 18, 'K');
+      b.disc(cx - 4, top + 20, 18, 'K');
       for (let i = -12; i <= 8; i += 4) b.dot(cx + i, top + 3 + Math.abs(i) / 2, 'n');
       x += 110;
     } else {
@@ -228,27 +228,29 @@ function paintMid(b: Brush, { x0, x1, ground, bottom }: Span): void {
 }
 
 function paintNear(b: Brush, { x0, x1, ground, bottom }: Span): void {
+  // Tons médios (E/f), nunca o preto do contorno: os personagens passam na frente desta camada e o contorno
+  // deles (k) precisa se destacar dela.
   // Muro baixo de pedra.
-  b.rect(x0, ground - 36, x1 - x0, bottom - ground + 36, 'k');
-  b.rect(x0, ground - 36, x1 - x0, 2, 'n');
+  b.rect(x0, ground - 36, x1 - x0, bottom - ground + 36, 'E');
+  b.rect(x0, ground - 36, x1 - x0, 2, 'f');
   // Gradil: dois trilhos e barras finas.
   const railTop = ground - 76;
-  b.rect(x0, railTop, x1 - x0, 4, 'k');
+  b.rect(x0, railTop, x1 - x0, 4, 'K');
   b.rect(x0, railTop, x1 - x0, 2, 'n');
-  b.rect(x0, railTop + 24, x1 - x0, 4, 'k');
+  b.rect(x0, railTop + 24, x1 - x0, 4, 'K');
   for (let x = x0; x < x1; x += 12) {
-    b.rect(x, railTop - 6, 2, 46, 'k');
+    b.rect(x, railTop - 6, 2, 40, 'K');
     b.dot(x, railTop - 8, 'n');
   }
   // Pilares de pedra com capitel.
   for (let x = x0 + 40; x < x1; x += 208) {
     const top = ground - 110;
-    b.rect(x, top, 20, bottom - top, 'k');
-    b.rect(x + 2, top + 6, 16, ground - top - 42, 'K');
-    b.rect(x + 2, top + 6, 2, ground - top - 42, 'n');
-    b.rect(x - 4, top - 4, 28, 10, 'k');
-    b.rect(x - 4, top - 4, 28, 2, 'N');
-    b.rect(x + 2, top - 10, 16, 6, 'k');
+    b.rect(x, top, 20, bottom - top, 'K');
+    b.rect(x + 2, top + 6, 16, ground - top - 42, 'E');
+    b.rect(x + 2, top + 6, 2, ground - top - 42, 'f');
+    b.rect(x - 4, top - 4, 28, 10, 'K');
+    b.rect(x - 4, top - 4, 28, 2, 'f');
+    b.rect(x + 2, top - 10, 16, 6, 'K');
     b.rect(x + 4, top - 10, 12, 2, 'n');
   }
 }
