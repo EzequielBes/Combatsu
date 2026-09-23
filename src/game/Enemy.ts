@@ -8,8 +8,8 @@ import { ENEMY, ENEMY_AI, ENEMY_ATTACK } from '../data/tuning';
 import { enemyAnimKey } from './art';
 import { PALETTE } from './art/palette';
 import { ENEMY_ORIGIN } from './art/sprites/enemy';
-import { newEntityId, tagBody, type Hittable } from './bodyTags';
-import { AttackHitbox } from './hitbox';
+import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
+import { AttackHitbox, type OnConnect } from './hitbox';
 import { PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { Ragdoll } from './Ragdoll';
 import { SIZE, TEX } from './textures';
@@ -40,6 +40,8 @@ export class Enemy implements Hittable {
     private readonly scene: Phaser.Scene,
     readonly spawn: Vec2,
     private readonly onRemoved: (enemy: Enemy) => void,
+    /** Garra que conectou no player (faísca + hitstop), injetado pela cena. */
+    onConnect?: OnConnect,
   ) {
     const { w, h } = SIZE.enemy;
     this.body = scene.matter.add.rectangle(spawn.x, spawn.y, w, h, {
@@ -51,12 +53,18 @@ export class Enemy implements Hittable {
     scene.matter.body.setInertia(this.body, Infinity); // não tomba
     tagBody(this.body, { kind: 'character', target: this });
     this.ai = new EnemyAI(ENEMY_AI, spawn.x);
-    this.attack = new AttackHitbox(scene, this.id, this.team);
+    this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, TEX.enemy, 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
   }
 
   get x(): number {
     return this.body.position.x;
+  }
+
+  /** Posição + tamanho do corpo (em ragdoll ele acompanha o tronco), nunca body.bounds. */
+  hurtRect(): Rect {
+    const { x, y } = this.body.position;
+    return { x, y, width: SIZE.enemy.w, height: SIZE.enemy.h };
   }
 
   get state(): EnemyState {
@@ -159,7 +167,6 @@ export class Enemy implements Hittable {
       setIgnoreGravity(this.body, true);
     }
     this.ragdoll.impulse(hit.direction, hit.force);
-    this.scene.cameras.main.shake(90, 0.004);
   }
 
   /** Levantar: o ragdoll some e o sprite volta tocando a animação `getup` (o cérebro fica em gettingUp). */

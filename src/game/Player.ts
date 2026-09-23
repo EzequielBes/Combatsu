@@ -13,13 +13,14 @@ import {
   PLAYER_MOVE,
   PROP_SWING,
 } from '../data/tuning';
-import { newEntityId, tagBody, type Hittable } from './bodyTags';
+import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
+import type { Fx } from './fx';
 import type { InputSnapshot } from './input';
 import { PX_PER_S_TO_STEP, bodyOf } from './physics';
 import type { Prop } from './Prop';
 import { playerAnimKey } from './art';
 import { PLAYER_ORIGIN } from './art/sprites/player';
-import { AttackHitbox } from './hitbox';
+import { AttackHitbox, type OnConnect } from './hitbox';
 import { SIZE, TEX } from './textures';
 
 /** Espessura das zonas de sensor de chão/teto (px). */
@@ -60,6 +61,8 @@ export class Player implements Hittable {
   private blinkMs = 0;
   /** Onde o player renasce: o spawn do level. */
   private readonly spawn: { x: number; y: number };
+  /** Sensor de chão do frame anterior, para a poeira do pouso (FX-04). */
+  private wasGrounded = true;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -67,6 +70,9 @@ export class Player implements Hittable {
     y: number,
     private readonly terrain: MatterJS.BodyType[],
     private readonly props: () => readonly Prop[],
+    private readonly fx: Fx,
+    /** Golpe que conectou (faísca + hitstop), injetado pela cena. */
+    onConnect?: OnConnect,
   ) {
     this.sprite = scene.matter.add.image(x, y, TEX.player, undefined, {
       friction: 0,
@@ -79,7 +85,7 @@ export class Player implements Hittable {
     this.sprite.setIgnoreGravity(true);
     this.sprite.setVisible(false);
     tagBody(bodyOf(this.sprite), { kind: 'character', target: this });
-    this.hitbox = new AttackHitbox(scene, this.id, this.team);
+    this.hitbox = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.spawn = { x, y };
     this.view = scene.add
       .sprite(x, y + SIZE.player.h / 2, TEX.playerArt, 'idle-0')
@@ -90,6 +96,11 @@ export class Player implements Hittable {
 
   get facing(): 1 | -1 {
     return this.move.facing;
+  }
+
+  /** Posição + tamanho do corpo, nunca body.bounds. */
+  hurtRect(): Rect {
+    return { x: this.sprite.x, y: this.sprite.y, width: SIZE.player.w, height: SIZE.player.h };
   }
 
   /** Vida atual, para o HUD. */
@@ -138,7 +149,9 @@ export class Player implements Hittable {
     if (input.interactPressed && !attacking && !stunned) this.interact(input.down);
 
     const sensors = { grounded: this.touchesTerrain('below'), ceiling: this.touchesTerrain('above') };
+    const before = this.move;
     this.move = stepMovement(this.move, input, sensors, dtMs, PLAYER_MOVE, attacking || stunned);
+    this.kickUpDust(before, sensors.grounded);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
     if (this.health.staggered) this.move = { ...this.move, vx: this.knockDir * PLAYER_KNOCKBACK };
     else if (this.health.dead) this.move = { ...this.move, vx: 0 };
@@ -149,6 +162,15 @@ export class Player implements Hittable {
     this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
     this.animate(sensors.grounded);
     this.blink(dtMs);
+  }
+
+  /** Poeira nos pés (FX-04): ao pular, ao pousar e ao virar enquanto corre no chão. */
+  private kickUpDust(before: MoveState, grounded: boolean): void {
+    const jumped = this.move.jumping && !before.jumping;
+    const landed = grounded && !this.wasGrounded;
+    const turned = grounded && this.move.facing !== before.facing && Math.abs(before.vx) > RUN_THRESHOLD;
+    this.wasGrounded = grounded;
+    if (jumped || landed || turned) this.fx.dust(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
   }
 
   /** Pisca enquanto invulnerável (HP-02). */
@@ -205,6 +227,8 @@ export class Player implements Hittable {
     } else {
       v.anims.play(playerAnimKey(anim), true);
     }
+    // Rastro enquanto o chute está na fase ativa ou a pose de arremesso está na tela (FX-05), já com o frame novo.
+    if ((anim === 'kick' && input.attack?.phase === 'active') || anim === 'throw') this.fx.afterimage(v);
   }
 
   /** Golpe em andamento para a animação. Na janela do combo, só enquanto o player está parado no chão. */

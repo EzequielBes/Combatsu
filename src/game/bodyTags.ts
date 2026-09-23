@@ -1,10 +1,23 @@
 import type { Hit, Team } from '../core/hit';
 
+/** Retângulo pelo centro, em px de mundo. */
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 /** Qualquer coisa que pode levar um golpe (player, inimigo). */
 export interface Hittable {
   readonly id: number;
   readonly team: Team;
   receiveHit(hit: Hit): void;
+  /**
+   * Área de quem leva o golpe, para achar o ponto de contato da faísca. Sai da posição + tamanho do corpo, nunca
+   * de `body.bounds` (o Matter alarga o AABB pela velocidade). Sem ela, a faísca sai no centro de quem bate.
+   */
+  hurtRect?(): Rect;
 }
 
 export type BodyTag =

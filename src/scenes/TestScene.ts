@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { Filters } from '../core/collision';
-import type { Strength, Vec2 } from '../core/hit';
+import type { Hit, Strength, Vec2 } from '../core/hit';
+import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
+import { HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
 import { ENEMY_RESPAWN_MS, PLAYER_COMBO } from '../data/tuning';
@@ -11,6 +13,7 @@ import { tileFrameFor } from '../game/art/tiles';
 import { routeContact, tagBody } from '../game/bodyTags';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { Enemy } from '../game/Enemy';
+import { Fx, type SparkKind } from '../game/fx';
 import { PlayerInput } from '../game/input';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Player } from '../game/Player';
@@ -34,6 +37,10 @@ export class TestScene extends Phaser.Scene {
   private props: Prop[] = [];
   /** Tudo que a câmera de UI desenha mora aqui; o resto da cena é mundo. */
   private uiLayer!: Phaser.GameObjects.Layer;
+  private fx!: Fx;
+  private readonly hitstop = new Hitstop();
+  /** Se a pausa do hitstop está aplicada (física, animações, tweens e timers). */
+  private frozen = false;
 
   constructor() {
     super('TestScene');
@@ -43,6 +50,16 @@ export class TestScene extends Phaser.Scene {
     // Antes de criar qualquer objeto, para a câmera de UI ignorar tudo que for mundo.
     this.addUiCamera();
     createArt(this);
+    // Reinício no meio de um hitstop (R): a cena nova começa descongelada. As animações são do jogo, não da cena.
+    this.hitstop.reset();
+    this.unfreeze();
+    this.events.on(Phaser.Scenes.Events.PRE_UPDATE, this.tickHitstop, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.events.off(Phaser.Scenes.Events.PRE_UPDATE, this.tickHitstop, this);
+      this.hitstop.reset();
+      this.unfreeze();
+    });
+    this.fx = new Fx(this);
     this.level = parseLevel(LEVEL_1);
     buildBackground(this, this.level.widthPx, this.level.heightPx);
     this.terrain = [];
@@ -54,12 +71,13 @@ export class TestScene extends Phaser.Scene {
     for (const s of this.level.props) {
       const def = PROP_DEFS[s.key];
       if (!def) throw new Error(`Objeto sem definição: ${s.key}`);
-      this.props.push(new Prop(this, s.x, s.y, def));
+      this.props.push(new Prop(this, s.x, s.y, def, (hit, at) => this.onConnect(hit, at, 'prop')));
     }
 
     this.controls = new PlayerInput(this);
     const p = this.level.player;
-    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props);
+    const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
+    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, strike);
     for (const e of this.level.enemies) this.spawnEnemy({ x: e.x, y: e.y - SPAWN_LIFT });
 
     this.cameras.main
@@ -79,6 +97,8 @@ export class TestScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
+    // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
+    if (this.frozen) return;
     const dt = Math.min(delta, MAX_FRAME_MS);
     this.player.update(dt, this.controls.read());
     for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
@@ -88,11 +108,56 @@ export class TestScene extends Phaser.Scene {
 
   private spawnEnemy(at: Vec2): void {
     this.enemies.push(
-      new Enemy(this, at, (dead) => {
-        this.enemies = this.enemies.filter((e) => e !== dead);
-        this.time.delayedCall(ENEMY_RESPAWN_MS, () => this.spawnEnemy(dead.spawn));
-      }),
+      new Enemy(
+        this,
+        at,
+        (dead) => {
+          this.enemies = this.enemies.filter((e) => e !== dead);
+          this.time.delayedCall(ENEMY_RESPAWN_MS, () => this.spawnEnemy(dead.spawn));
+        },
+        // A garra que acerta o player também é um golpe que conecta.
+        (hit, point) => this.onConnect(hit, point, hit.strength),
+      ),
     );
+  }
+
+  /**
+   * Golpe que conectou: faísca no ponto de contato (FX-03), tremida só no forte e hitstop (FX-01/02). Golpe de
+   * objeto é forte (hitstop de 90 ms) e tem a faísca roxa.
+   */
+  private onConnect(hit: Hit, point: Vec2, kind: SparkKind): void {
+    this.fx.spark(point.x, point.y, kind);
+    if (hit.strength === 'heavy') this.fx.shake();
+    this.hitstop.trigger(HITSTOP_MS[hit.strength]);
+    this.freeze();
+  }
+
+  /**
+   * Conta o hitstop no PRE_UPDATE, antes do step do Matter (que roda no UPDATE): ao acabar, a física já anda
+   * neste mesmo frame. O frame em que o golpe conectou não conta, porque o golpe veio no meio dele.
+   */
+  private tickHitstop(_time: number, delta: number): void {
+    if (!this.frozen) return;
+    this.hitstop.update(Math.min(delta, MAX_FRAME_MS));
+    if (!this.hitstop.frozen) this.unfreeze();
+  }
+
+  private freeze(): void {
+    if (this.frozen) return;
+    this.frozen = true;
+    this.matter.world.pause();
+    this.anims.pauseAll();
+    this.tweens.pauseAll();
+    this.time.paused = true;
+  }
+
+  /** Retoma tudo. Seguro de chamar sem congelamento (no create e no SHUTDOWN). */
+  private unfreeze(): void {
+    this.frozen = false;
+    this.matter.world?.resume();
+    this.anims.resumeAll();
+    this.tweens.resumeAll();
+    this.time.paused = false;
   }
 
   /** Aplica em todos os inimigos o mesmo golpe que o combo do player daria. */

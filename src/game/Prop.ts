@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { normalize, type Vec2 } from '../core/hit';
 import { PROP_BREAK_MS, PropMachine, propHit, type PropDef, type PropImpact, type PropState } from '../core/props';
 import { tagBody, type BodyTag } from './bodyTags';
+import { contactWith, type OnConnect } from './hitbox';
 import { PX_PER_S_TO_STEP, applyFilter, bodyOf } from './physics';
 import { TEX } from './textures';
 
@@ -27,6 +28,8 @@ export class Prop {
     x: number,
     y: number,
     readonly def: PropDef,
+    /** Golpe de objeto que conectou (faísca roxa + hitstop do forte), injetado pela cena. */
+    private readonly onConnect?: OnConnect,
   ) {
     this.machine = new PropMachine(def);
     this.sprite = scene.matter.add.image(x, y, def.texture, undefined, {
@@ -123,7 +126,11 @@ export class Prop {
     if (other.kind !== 'character') return;
     const ownerId = this.machine.ownerId;
     if (ownerId === null || !this.machine.tryHit(other.target.id)) return;
-    other.target.receiveHit(propHit(this.def, ownerId, this.hitDirection(st)));
+    const hit = propHit(this.def, ownerId, this.hitDirection(st));
+    other.target.receiveHit(hit);
+    // Posição + tamanho do sprite (girado 90° no golpe com o objeto na mão), nunca body.bounds.
+    const [w, h] = st === 'swing' ? [this.sprite.height, this.sprite.width] : [this.sprite.width, this.sprite.height];
+    this.onConnect?.(hit, contactWith({ x: this.sprite.x, y: this.sprite.y, width: w, height: h }, other.target));
     this.afterImpact(this.machine.registerImpact());
   }
 
