@@ -2525,7 +2525,7 @@ git commit -m "feat: add test enemy with ragdoll hit reactions, death and respaw
 - Consumes: `ComboTracker`, `ComboEvent`, `AttackStep`, `HitboxShape` (Task 5); `PLAYER_COMBO`, `COMBO_WINDOW_MS`; `makeHitGate`; `Filters.hitbox`; tudo o que a Task 4 já usava.
 - Produces: `Player` com a mesma API pública da Task 4 (`id`, `sprite`, `facing`, `update(dtMs, input)`, `receiveHit`). `TestScene` não muda.
 
-- [ ] **Step 1: Player com combo e hitbox sensor**
+- [x] **Step 1: Player com combo e hitbox sensor**
 
 `src/game/Player.ts` (arquivo inteiro):
 
@@ -2657,25 +2657,25 @@ export class Player implements Hittable {
 }
 ```
 
-- [ ] **Step 2: Verificar build e testes**
+- [x] **Step 2: Verificar build e testes**
 
 Run: `npm run build && npm test`
 Expected: sem erros; testes passam.
 
-- [ ] **Step 3: Teste manual do combo**
+- [x] **Step 3: Teste manual do combo**
 
 Run: `npm run dev`.
 Checklist:
-- [ ] `J` três vezes no ritmo: aparecem dois retângulos brancos (socos) e um amarelo maior (chute) à frente do player, do lado para onde ele olha.
-- [ ] Encostado num inimigo: os socos fazem ele piscar/achatar; o chute joga ele em ragdoll.
-- [ ] Durante o golpe o player não anda nem pula; entre golpes (janela) ele já consegue andar.
-- [ ] Esperar mais de ~0,3 s entre apertos recomeça no primeiro soco.
-- [ ] Martelar `J` o mais rápido possível: os golpes saem um de cada vez, o combo termina no chute e o player não fica travado.
-- [ ] Chutar o inimigo caído com o combo: cada soco acerta uma vez só (pisca uma vez por soco, mesmo encostando em várias peças).
-- [ ] Dois combos completos matam o inimigo (ragdoll → fumaça → respawn).
-- [ ] Atacar no ar funciona e o player continua caindo normalmente.
+- [x] `J` três vezes no ritmo: aparecem dois retângulos brancos (socos) e um amarelo maior (chute) à frente do player, do lado para onde ele olha.
+- [x] Encostado num inimigo: os socos fazem ele piscar/achatar; o chute joga ele em ragdoll.
+- [x] Durante o golpe o player não anda nem pula; entre golpes (janela) ele já consegue andar.
+- [x] Esperar mais de ~0,3 s entre apertos recomeça no primeiro soco.
+- [x] Martelar `J` o mais rápido possível: os golpes saem um de cada vez, o combo termina no chute e o player não fica travado.
+- [x] Chutar o inimigo caído com o combo: cada soco acerta uma vez só (pisca uma vez por soco, mesmo encostando em várias peças).
+- [x] Dois combos completos matam o inimigo (ragdoll → fumaça → respawn).
+- [x] Atacar no ar funciona e o player continua caindo normalmente.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/game/Player.ts
