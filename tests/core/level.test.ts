@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TILE, parseLevel } from '../../src/core/level';
+import { TILE, parseLevel, tileVariant } from '../../src/core/level';
 
 describe('parseLevel', () => {
   it('junta blocos sólidos vizinhos da mesma linha num retângulo só', () => {
@@ -32,5 +32,61 @@ describe('parseLevel', () => {
     expect(() => parseLevel(['P.x.'])).toThrow(/x/);
     expect(() => parseLevel(['P...', '..'])).toThrow(/colunas/);
     expect(() => parseLevel([])).toThrow();
+  });
+});
+
+describe('tileVariant (ENV-01)', () => {
+  // Legenda dos mapinhos: '#' sólido, '.' vazio (P não é exigido: tileVariant não valida o level).
+  it('tile vazio não tem variante', () => {
+    expect(tileVariant(['#.#'], 1, 0)).toBeNull();
+  });
+
+  it('top: sem sólido em cima, com sólido embaixo e dos dois lados', () => {
+    const rows = ['.....', '.###.', '.###.'];
+    expect(tileVariant(rows, 2, 1)).toBe('top');
+  });
+
+  it('top-left e top-right: topo sem vizinho à esquerda / à direita', () => {
+    const rows = ['.....', '.###.', '.###.'];
+    expect(tileVariant(rows, 1, 1)).toBe('top-left');
+    expect(tileVariant(rows, 3, 1)).toBe('top-right');
+  });
+
+  it('middle: sólido em cima e dos dois lados', () => {
+    const rows = ['.....', '.###.', '.###.', '.###.'];
+    expect(tileVariant(rows, 2, 2)).toBe('middle');
+  });
+
+  it('left e right: sólido em cima, sem vizinho à esquerda / à direita', () => {
+    const rows = ['.....', '.###.', '.###.', '.###.'];
+    expect(tileVariant(rows, 1, 2)).toBe('left');
+    expect(tileVariant(rows, 3, 2)).toBe('right');
+  });
+
+  it('thin, thin-left e thin-right: plataforma de 1 tile de altura (nada em cima nem embaixo)', () => {
+    const rows = ['.....', '.###.', '.....'];
+    expect(tileVariant(rows, 1, 1)).toBe('thin-left');
+    expect(tileVariant(rows, 2, 1)).toBe('thin');
+    expect(tileVariant(rows, 3, 1)).toBe('thin-right');
+  });
+
+  it('bloco solto de 1 tile (sem vizinho nenhum) é thin', () => {
+    expect(tileVariant(['...', '.#.', '...'], 1, 1)).toBe('thin');
+  });
+
+  it('borda do mapa: fora conta como sólido nas laterais e embaixo', () => {
+    // Chão encostado nas duas paredes laterais e na base do mapa: topo sem cantos.
+    const rows = ['...', '###'];
+    expect(tileVariant(rows, 0, 1)).toBe('top');
+    expect(tileVariant(rows, 2, 1)).toBe('top');
+    // Coluna na lateral esquerda do mapa, com vazio à direita: parede virada para a direita.
+    expect(tileVariant(['#.', '#.', '#.'], 0, 1)).toBe('right');
+  });
+
+  it('borda do mapa: fora conta como vazio no topo', () => {
+    // Linha 0 com sólido embaixo vira topo, não meio.
+    expect(tileVariant(['###', '###'], 1, 0)).toBe('top');
+    // Linha 0 sem sólido embaixo é plataforma fina.
+    expect(tileVariant(['###', '...'], 1, 0)).toBe('thin');
   });
 });
