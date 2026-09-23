@@ -233,8 +233,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Testes cobrem as 9 variantes do ENV-01 e a borda do mapa (fora do mapa conta como sólido nas laterais e no fundo, vazio no topo)
-- [ ] Gate check passes: `npm test`
+- [x] Testes cobrem as 9 variantes do ENV-01 e a borda do mapa (fora do mapa conta como sólido nas laterais e no fundo, vazio no topo)
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/core/level.test.ts`)
 **Gate**: quick
