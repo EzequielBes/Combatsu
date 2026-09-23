@@ -148,9 +148,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Erro com o nome do sprite para linhas desiguais, caractere fora da paleta, frames de tamanhos diferentes e folha sem frames
-- [ ] `.` vira `null`; largura, altura e ordem dos frames preservadas
-- [ ] Gate check passes: `npm test` (≈ 82 testes)
+- [x] Erro com o nome do sprite para linhas desiguais, caractere fora da paleta, frames de tamanhos diferentes e folha sem frames
+- [x] `.` vira `null`; largura, altura e ordem dos frames preservadas
+- [x] Gate check passes: `npm test` (≈ 82 testes)
 
 **Tests**: unit (`tests/core/pixelGrid.test.ts`)
 **Gate**: quick
