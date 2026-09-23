@@ -241,9 +241,9 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | ENV-01 | P2: Cenário | Tasks | Implementing |
 | ENV-02 | P2: Cenário | Tasks | Implementing |
 | PRP-01 | P2: Objetos e HUD | Tasks | Implementing |
-| HUD-01 | P2: Objetos e HUD | Tasks | Pending |
-| HUD-02 | P2: Objetos e HUD | Tasks | Pending |
-| HUD-03 | P2: Objetos e HUD | Tasks | Pending |
+| HUD-01 | P2: Objetos e HUD | Tasks | Implementing |
+| HUD-02 | P2: Objetos e HUD | Tasks | Implementing |
+| HUD-03 | P2: Objetos e HUD | Tasks | Implementing |
 | FX-04 | P3: Polimento | Tasks | Implementing |
 | FX-05 | P3: Polimento | Tasks | Implementing |
 

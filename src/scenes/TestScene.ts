@@ -14,6 +14,7 @@ import { routeContact, tagBody } from '../game/bodyTags';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { Enemy } from '../game/Enemy';
 import { Fx, type SparkKind } from '../game/fx';
+import { Hud } from '../game/Hud';
 import { PlayerInput } from '../game/input';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Player } from '../game/Player';
@@ -27,6 +28,8 @@ const SPAWN_LIFT = 2;
 const WORLD_ZOOM = 1.5;
 /** Folga (px de tela) em que o player anda sem a câmera andar junto. */
 const FOLLOW_DEADZONE = { w: 40, h: 24 };
+/** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
+const CONTROLS_MS = 8000;
 
 export class TestScene extends Phaser.Scene {
   private level!: LevelData;
@@ -38,6 +41,7 @@ export class TestScene extends Phaser.Scene {
   /** Tudo que a câmera de UI desenha mora aqui; o resto da cena é mundo. */
   private uiLayer!: Phaser.GameObjects.Layer;
   private fx!: Fx;
+  private hud!: Hud;
   private readonly hitstop = new Hitstop();
   /** Se a pausa do hitstop está aplicada (física, animações, tweens e timers). */
   private frozen = false;
@@ -97,6 +101,8 @@ export class TestScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
+    // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
+    this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
     const dt = Math.min(delta, MAX_FRAME_MS);
@@ -197,22 +203,17 @@ export class TestScene extends Phaser.Scene {
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
       'J/X: golpe (combo de 3)   com objeto na mão: golpe forte',
       'K/Z: pegar / arremessar   S+K: largar',
-      'R: reiniciar',
+      'R: reiniciar   Tab: mostrar/esconder controles',
       ...(isDebug() ? ['F1: sair do debug   H: debug da física   1/2: golpe leve/forte de teste'] : []),
     ];
-    const hud = this.add
-      .text(12, 10, lines().join('\n'), {
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        color: '#e0e0e0',
-        backgroundColor: '#00000088',
-        padding: { x: 6, y: 4 },
-      })
-      .setScrollFactor(0)
-      .setDepth(100);
-    this.uiLayer.add(hud);
+    this.hud = new Hud(this, this.uiLayer, lines().join('\n'));
+    this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
+    this.hud.showControls(CONTROLS_MS);
+    // Tab alterna o painel; a captura impede o navegador de tirar o foco do jogo (HUD-03).
+    this.input.keyboard!.addCapture('TAB');
+    this.onKey('TAB', () => this.hud.toggleControls());
     const off = onDebugChange((on) => {
-      hud.setText(lines().join('\n'));
+      this.hud.setControlsText(lines().join('\n'));
       // Saindo do debug, o desenho da física não pode continuar ligado.
       if (!on && this.matter.world.drawDebug) this.toggleDebugDraw();
     });
