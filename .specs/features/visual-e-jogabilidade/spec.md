@@ -44,6 +44,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | Duração do hitstop | 50 ms golpe leve, 90 ms golpe forte | Faixa comum de jogos de ação 2D; ajustável | y |
 | Como ativar o modo debug | parâmetro `?debug` na URL ou a tecla F1 | Não interfere nos controles do jogo | y |
 | Painel de controles | Aparece por 8 s ao iniciar/reiniciar; Tab alterna | Não cobre a tela o tempo todo | y |
+| Alcance por golpe (FIX-03) | Socos ≤ 46 px e chute ≤ 55 px do centro do inimigo, com a hitbox atual do combo; o desenho do golpe estende o membro até esse alcance | Achado no lote 1: a hitbox do chute alcança ~53 px; o usuário escolheu limite por golpe em vez de mexer no tuning do combo | y |
 | Cenário | Pátio/corredor de escola à noite, com lua e prédios ao fundo | Coerente com o tema de Jujutsu Kaisen | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -73,7 +74,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 
 1. FIX-01: WHERE the debug mode is off THEN the game SHALL ignore the keys 1, 2 and H (nenhum inimigo muda de estado e o desenho da física continua desligado).
 2. FIX-02: WHILE the debug mode is off the game SHALL keep every attack hitbox invisible (o golpe é mostrado pela animação).
-3. FIX-03: WHEN the player presses the attack key THEN the game SHALL hit only enemies overlapping the hitbox in front of the player, and SHALL NOT hit an enemy whose center is more than 45 px away horizontally.
+3. FIX-03: WHEN the player presses the attack key THEN the game SHALL hit only enemies overlapping the hitbox in front of the player, and SHALL NOT hit an enemy whose center is more than 46 px away horizontally with a punch (jab, cross) or more than 55 px away with the kick.
 4. FIX-04: WHERE the debug mode is on (`?debug` na URL ou F1) the game SHALL enable keys 1, 2 and H and draw the attack hitboxes.
 
 **Independent Test**: sem `?debug`, apertar 1/2 não altera nenhum inimigo; J com o inimigo a 60 px não acerta; encostado, acerta.

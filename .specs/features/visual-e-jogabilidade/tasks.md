@@ -381,6 +381,7 @@ T27 -> T28
 - [ ] Smoke: no frame em que o `hitboxOn` dispara, o frame do sprite é o `*-hit` do golpe
 - [ ] Smoke: correndo = `run`, no ar subindo = `jump`, caindo = `fall`, segurando objeto = `carry-*`
 - [ ] Smoke: J com o inimigo a 60 px não acerta; encostado acerta
+- [ ] Smoke: alcance máximo medido — jab/cross ≤ 46 px e chute ≤ 55 px do centro do inimigo (FIX-03); o frame `*-hit` estende o punho/perna até a borda da hitbox
 - [ ] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptador; regra coberta pelo T11)
