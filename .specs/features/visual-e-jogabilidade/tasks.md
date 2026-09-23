@@ -190,8 +190,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: uma folha de teste registrada tem frames do tamanho `largura*2 × altura*2` e pixels com as cores da paleta (lidos com `getPixel`)
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: uma folha de teste registrada tem frames do tamanho `largura*2 × altura*2` e pixels com as cores da paleta (lidos com `getPixel`)
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptador de canvas; smoke headless)
 **Gate**: build
