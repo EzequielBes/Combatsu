@@ -25,7 +25,8 @@ export type ComboEvent =
   | { type: 'hitboxOff'; index: number }
   | { type: 'comboEnd' };
 
-type Phase = 'idle' | 'startup' | 'active' | 'recovery' | 'window';
+/** Fase do golpe atual; 'active' é exatamente a janela com a hitbox ligada (CHR-02). */
+export type ComboPhase = 'idle' | 'startup' | 'active' | 'recovery' | 'window';
 
 /**
  * Sequência de golpes: cada golpe tem startup → active (hitbox ligada) → recovery.
@@ -33,7 +34,7 @@ type Phase = 'idle' | 'startup' | 'active' | 'recovery' | 'window';
  * recuperação encadeia o próximo. Depois do último golpe o combo sempre termina.
  */
 export class ComboTracker {
-  private phase: Phase = 'idle';
+  private _phase: ComboPhase = 'idle';
   private index = -1;
   private timer = 0;
   private buffered = false;
@@ -47,7 +48,11 @@ export class ComboTracker {
 
   /** Durante startup/active/recovery o personagem fica travado; na janela ele já pode se mexer. */
   get isAttacking(): boolean {
-    return this.phase === 'startup' || this.phase === 'active' || this.phase === 'recovery';
+    return this._phase === 'startup' || this._phase === 'active' || this._phase === 'recovery';
+  }
+
+  get phase(): ComboPhase {
+    return this._phase;
   }
 
   get currentIndex(): number {
@@ -56,27 +61,27 @@ export class ComboTracker {
 
   press(): ComboEvent[] {
     const events: ComboEvent[] = [];
-    if (this.phase === 'idle') this.startStep(0, events);
-    else if (this.phase === 'window') this.startStep(this.index + 1, events);
+    if (this._phase === 'idle') this.startStep(0, events);
+    else if (this._phase === 'window') this.startStep(this.index + 1, events);
     else this.buffered = true;
     return events;
   }
 
   update(dtMs: number): ComboEvent[] {
     const events: ComboEvent[] = [];
-    if (this.phase === 'idle') return events;
+    if (this._phase === 'idle') return events;
     this.timer -= dtMs;
     if (this.timer > 0) return events;
 
     const step = this.steps[this.index];
-    switch (this.phase) {
+    switch (this._phase) {
       case 'startup':
-        this.phase = 'active';
+        this._phase = 'active';
         this.timer = step.activeMs;
         events.push({ type: 'hitboxOn', index: this.index, step });
         break;
       case 'active':
-        this.phase = 'recovery';
+        this._phase = 'recovery';
         this.timer = step.recoveryMs;
         events.push({ type: 'hitboxOff', index: this.index });
         break;
@@ -84,7 +89,7 @@ export class ComboTracker {
         const hasNext = this.index + 1 < this.steps.length;
         if (hasNext && this.buffered) this.startStep(this.index + 1, events);
         else if (hasNext && this.windowMs > 0) {
-          this.phase = 'window';
+          this._phase = 'window';
           this.timer = this.windowMs;
         } else this.end(events);
         break;
@@ -98,22 +103,22 @@ export class ComboTracker {
 
   cancel(): ComboEvent[] {
     const events: ComboEvent[] = [];
-    if (this.phase === 'idle') return events;
-    if (this.phase === 'active') events.push({ type: 'hitboxOff', index: this.index });
+    if (this._phase === 'idle') return events;
+    if (this._phase === 'active') events.push({ type: 'hitboxOff', index: this.index });
     this.end(events);
     return events;
   }
 
   private startStep(index: number, events: ComboEvent[]): void {
     this.index = index;
-    this.phase = 'startup';
+    this._phase = 'startup';
     this.timer = this.steps[index].startupMs;
     this.buffered = false;
     events.push({ type: 'stepStart', index, step: this.steps[index] });
   }
 
   private end(events: ComboEvent[]): void {
-    this.phase = 'idle';
+    this._phase = 'idle';
     this.index = -1;
     this.timer = 0;
     this.buffered = false;
