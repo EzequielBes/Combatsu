@@ -674,8 +674,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] README cita `?debug`/F1, Tab, e aponta `tuning.ts`, `fx.ts` e `src/game/art/`
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] README cita `?debug`/F1, Tab, e aponta `tuning.ts`, `fx.ts` e `src/game/art/`
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (documentação)
 **Gate**: build
