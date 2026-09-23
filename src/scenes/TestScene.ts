@@ -56,6 +56,8 @@ export class TestScene extends Phaser.Scene {
     this.onKey('ONE', () => this.debugHit('light'));
     this.onKey('TWO', () => this.debugHit('heavy'));
     this.onKey('H', () => this.toggleDebugDraw());
+    this.onKey('R', () => this.scene.restart());
+    this.addHud();
   }
 
   update(_time: number, delta: number): void {
@@ -87,6 +89,25 @@ export class TestScene extends Phaser.Scene {
         direction: { x: e.x >= this.player.sprite.x ? 1 : -1, y: -0.6 },
       });
     }
+  }
+
+  private addHud(): void {
+    const lines = [
+      'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
+      'J/X: golpe (combo de 3)   com objeto na mão: golpe forte',
+      'K/Z: pegar / arremessar   S+K: largar',
+      'R: reiniciar   H: debug da física   1/2: golpe leve/forte de teste',
+    ];
+    this.add
+      .text(12, 10, lines.join('\n'), {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#e0e0e0',
+        backgroundColor: '#00000088',
+        padding: { x: 6, y: 4 },
+      })
+      .setScrollFactor(0)
+      .setDepth(100);
   }
 
   private toggleDebugDraw(): void {
