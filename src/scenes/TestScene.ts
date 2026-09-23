@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { Filters } from '../core/collision';
 import type { Strength, Vec2 } from '../core/hit';
-import { parseLevel, type LevelData } from '../core/level';
+import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
 import { ENEMY_RESPAWN_MS, PLAYER_COMBO } from '../data/tuning';
+import { registerTiles, tileFrameFor } from '../game/art/tiles';
 import { routeContact, tagBody } from '../game/bodyTags';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { Enemy } from '../game/Enemy';
@@ -40,6 +41,7 @@ export class TestScene extends Phaser.Scene {
     // Antes de criar qualquer objeto, para a câmera de UI ignorar tudo que for mundo.
     this.addUiCamera();
     createPlaceholderTextures(this);
+    registerTiles(this);
     this.level = parseLevel(LEVEL_1);
     this.terrain = [];
     this.enemies = [];
@@ -168,11 +170,18 @@ export class TestScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => kb.off(event, fn));
   }
 
+  /** Desenho tile a tile pela variante (ENV-01); a física continua nos retângulos mesclados do parseLevel. */
   private buildTerrain(): void {
+    LEVEL_1.forEach((row, ty) => {
+      for (let tx = 0; tx < row.length; tx++) {
+        const variant = tileVariant(LEVEL_1, tx, ty);
+        if (!variant) continue;
+        this.add.image(tx * TILE + TILE / 2, ty * TILE + TILE / 2, TEX.terrain, tileFrameFor(variant, tx, ty));
+      }
+    });
     for (const r of this.level.solids) {
       const cx = r.x + r.width / 2;
       const cy = r.y + r.height / 2;
-      this.add.tileSprite(cx, cy, r.width, r.height, TEX.terrain);
       const body = this.matter.add.rectangle(cx, cy, r.width, r.height, {
         isStatic: true,
         label: 'terrain',

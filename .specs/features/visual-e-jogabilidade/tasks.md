@@ -253,9 +253,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Teste de dados: a folha do tileset passa no `parseSheet` com a paleta e tem um frame por variante
-- [ ] Smoke + captura: plataformas com borda de topo clara e cantos; nenhum bloco cinza placeholder
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Teste de dados: a folha do tileset passa no `parseSheet` com a paleta e tem um frame por variante
+- [x] Smoke + captura: plataformas com borda de topo clara e cantos; nenhum bloco cinza placeholder
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit (`tests/game/art.test.ts`)
 **Gate**: build
