@@ -1503,7 +1503,7 @@ git commit -m "feat: add controllable player with sensor-based ground detection"
   - `class ComboTracker { constructor(steps: readonly AttackStep[], windowMs: number); get isAttacking(): boolean; get currentIndex(): number; press(): ComboEvent[]; update(dtMs: number): ComboEvent[]; cancel(): ComboEvent[] }`
   - `PLAYER_COMBO: AttackStep[]`, `COMBO_WINDOW_MS: number`, `PROP_SWING: AttackStep` em `src/data/tuning.ts`
 
-- [ ] **Step 1: Escrever os testes (falhando)**
+- [x] **Step 1: Escrever os testes (falhando)**
 
 `tests/core/combo.test.ts`:
 
@@ -1642,12 +1642,12 @@ describe('dados de combo', () => {
 });
 ```
 
-- [ ] **Step 2: Rodar e ver falhar**
+- [x] **Step 2: Rodar e ver falhar**
 
 Run: `npx vitest run tests/core/combo.test.ts`
 Expected: FAIL — módulo `combo` não existe.
 
-- [ ] **Step 3: Implementar**
+- [x] **Step 3: Implementar**
 
 `src/core/combo.ts`:
 
@@ -1829,12 +1829,12 @@ export const PROP_SWING: AttackStep = {
 };
 ```
 
-- [ ] **Step 4: Rodar os testes**
+- [x] **Step 4: Rodar os testes**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/combo.ts src/data/tuning.ts tests/core/combo.test.ts
