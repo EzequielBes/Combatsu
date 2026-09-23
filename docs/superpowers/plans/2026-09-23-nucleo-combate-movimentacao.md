@@ -1253,7 +1253,7 @@ git commit -m "feat: add deterministic platformer movement logic" -m "Co-Authore
   - `class PlayerInput { constructor(scene: Phaser.Scene); read(): InputSnapshot }` (ler **uma vez** por frame)
   - `class Player implements Hittable { readonly id: number; readonly sprite: Phaser.Physics.Matter.Image; get facing(): 1 | -1; constructor(scene, x, y, terrain: MatterJS.BodyType[]); update(dtMs: number, input: InputSnapshot): void }`
 
-- [ ] **Step 1: Input**
+- [x] **Step 1: Input**
 
 `src/game/input.ts`:
 
@@ -1311,7 +1311,7 @@ export class PlayerInput {
 }
 ```
 
-- [ ] **Step 2: Player**
+- [x] **Step 2: Player**
 
 `src/game/Player.ts`:
 
@@ -1380,7 +1380,9 @@ export class Player implements Hittable {
 
 > Nota de design: o spec pede "detecção de chão por sensores". Aqui o sensor é uma consulta de região (`Matter.Query.region`) a cada frame em vez de um corpo sensor com contagem de contatos — mesmo efeito, sem estado de contato para dessincronizar. O Matter só checa o filtro do corpo pai em corpos compostos, então um sensor preso ao player como "parte" não funcionaria com filtro próprio.
 
-- [ ] **Step 3: Cena com player e câmera**
+> **Correção na execução (Task 4):** o código do plano montava a região do sensor a partir de `body.bounds`. O Matter alarga esse AABB pela velocidade do frame; empurrando a parede a ~3,7 px/step o AABB invadia o terreno além da folga lateral de 3 px, então a parede aparecia como teto (cancelando o pulo) e como chão. `Player.touchesTerrain` agora usa `body.position` + `displayWidth/Height`. `SPAWN_LIFT` passou de 4 para 2 (o player nascia 2 px acima do chão, porque o sensor de 3 px já o considerava apoiado).
+
+- [x] **Step 3: Cena com player e câmera**
 
 `src/scenes/TestScene.ts` (arquivo inteiro):
 
@@ -1455,28 +1457,28 @@ export class TestScene extends Phaser.Scene {
 }
 ```
 
-- [ ] **Step 4: Verificar build e testes**
+- [x] **Step 4: Verificar build e testes**
 
 Run: `npm run build && npm test`
 Expected: sem erros; testes passam.
 
-- [ ] **Step 5: Teste manual de "feel" (o spec pede validar cedo)**
+- [x] **Step 5: Teste manual de "feel" (o spec pede validar cedo)**
 
 Run: `npm run dev`, abrir no navegador.
 Checklist — todos precisam ser verdade:
-- [ ] Retângulo azul nasce no chão à esquerda e não afunda nem treme parado.
-- [ ] A/D (ou ←/→) corre; soltar para rápido, sem escorregar. O "olho" vira para o lado do movimento.
-- [ ] Toque rápido em Espaço dá um pulinho (~1 tile); segurar dá um pulo alto (~4 tiles) que alcança as plataformas baixas.
-- [ ] Segurar direção contra a parede no meio do pulo **não** gruda o player na parede.
-- [ ] Pular embaixo de uma plataforma: a cabeça bate e o player cai na hora, sem "flutuar" colado no teto.
-- [ ] Sair andando da borda de uma plataforma e apertar pulo logo em seguida ainda pula (coyote).
-- [ ] Apertar pulo um instante antes de pousar pula assim que toca o chão (buffer).
-- [ ] Não existe pulo duplo no ar.
-- [ ] A câmera segue o player sem sair dos limites da sala.
+- [x] Retângulo azul nasce no chão à esquerda e não afunda nem treme parado.
+- [x] A/D (ou ←/→) corre; soltar para rápido, sem escorregar. O "olho" vira para o lado do movimento.
+- [x] Toque rápido em Espaço dá um pulinho (~1 tile); segurar dá um pulo alto (~4 tiles) que alcança as plataformas baixas.
+- [x] Segurar direção contra a parede no meio do pulo **não** gruda o player na parede.
+- [x] Pular embaixo de uma plataforma: a cabeça bate e o player cai na hora, sem "flutuar" colado no teto.
+- [x] Sair andando da borda de uma plataforma e apertar pulo logo em seguida ainda pula (coyote).
+- [x] Apertar pulo um instante antes de pousar pula assim que toca o chão (buffer).
+- [x] Não existe pulo duplo no ar.
+- [x] A câmera segue o player sem sair dos limites da sala.
 
 Se algo do feel estiver ruim (não os bugs), ajustar só `PLAYER_MOVE` em `src/data/tuning.ts` e rodar `npm test` de novo (os testes de movimento usam tuning próprio e não quebram com isso).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src
