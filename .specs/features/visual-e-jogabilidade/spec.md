@@ -213,9 +213,9 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| FIX-01 | P1: Ataque honesto | Tasks | Pending |
-| FIX-02 | P1: Ataque honesto | Tasks | Pending |
-| FIX-03 | P1: Ataque honesto | Tasks | Pending |
+| FIX-01 | P1: Ataque honesto | Tasks | Implementing |
+| FIX-02 | P1: Ataque honesto | Tasks | Implementing |
+| FIX-03 | P1: Ataque honesto | Tasks | Implementing |
 | FIX-04 | P1: Ataque honesto | Tasks | Implementing |
 | ART-01 | P1: Base de pixel art | Tasks | Pending |
 | ART-02 | P1: Base de pixel art | Tasks | Pending |
