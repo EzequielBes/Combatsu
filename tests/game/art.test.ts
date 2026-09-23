@@ -7,6 +7,7 @@ import { ART_SCALE, PALETTE, PALETTE_KEYS } from '../../src/game/art/palette';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE } from '../../src/game/art/sprites/props';
+import { ENEMY_BAR, ENEMY_BAR_WELL, HUD_BAR, HUD_BAR_WELL } from '../../src/game/art/hud';
 import { ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
 import type { EnemyAnim } from '../../src/core/animState';
 import {
@@ -289,5 +290,21 @@ describe('objetos com arte (PRP-01, ART-01, ART-03)', () => {
     const sheet = parseSheet('smoke', { smoke: SMOKE }, PALETTE_KEYS);
     expect(sheet.width * ART_SCALE).toBeLessThanOrEqual(8);
     expect(sheet.height * ART_SCALE).toBeLessThanOrEqual(8);
+  });
+});
+
+describe('molduras das barras de vida (HUD-01/02, ART-01)', () => {
+  it('passam no parseSheet só com cores da paleta, com o poço dentro da moldura e pintado de K', () => {
+    for (const [name, grid, well] of [
+      ['hud-bar', HUD_BAR, HUD_BAR_WELL],
+      ['enemy-bar', ENEMY_BAR, ENEMY_BAR_WELL],
+    ] as const) {
+      const sheet = parseSheet(name, { [name]: grid }, PALETTE_KEYS);
+      expect(well.x + well.w, name).toBeLessThan(sheet.width);
+      expect(well.y + well.h, name).toBeLessThan(sheet.height);
+      for (let y = well.y; y < well.y + well.h; y++) {
+        for (let x = well.x; x < well.x + well.w; x++) expect(grid[y][x], `${name} (${x}, ${y})`).toBe('K');
+      }
+    }
   });
 });

@@ -654,8 +654,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: a barra acompanha o hp; a barra do inimigo só aparece após o primeiro dano; o painel some em 8 s e volta com Tab
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: a barra acompanha o hp; a barra do inimigo só aparece após o primeiro dano; o painel some em 8 s e volta com Tab
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (UI Phaser; smoke headless)
 **Gate**: build

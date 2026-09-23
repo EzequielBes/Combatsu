@@ -18,6 +18,9 @@ export const TEX = {
   /** Efeitos (FX-03/04): estrela do ponto de contato e pedacinhos da faísca e da poeira. */
   fxStar: 'fx-star',
   fxBit: 'fx-bit',
+  /** Molduras das barras de vida do player (HUD-01) e do inimigo (HUD-02). */
+  hudBar: 'hud-bar',
+  enemyBar: 'enemy-bar',
 } as const;
 
 export const SIZE = {

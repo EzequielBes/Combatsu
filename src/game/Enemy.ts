@@ -6,7 +6,8 @@ import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain
 import { normalize, type Hit, type Vec2 } from '../core/hit';
 import { ENEMY, ENEMY_AI, ENEMY_ATTACK } from '../data/tuning';
 import { enemyAnimKey } from './art';
-import { PALETTE } from './art/palette';
+import { ENEMY_BAR_WELL } from './art/hud';
+import { ART_SCALE, PALETTE } from './art/palette';
 import { ENEMY_ORIGIN } from './art/sprites/enemy';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
@@ -18,6 +19,9 @@ import { SIZE, TEX } from './textures';
 const HIT_FLASH_MS = 70;
 /** No golpe o inimigo fica acima do player (depth 1): a garra aparece por cima de quem ela atinge. */
 const ATTACK_DEPTH = 2;
+/** Barra de vida (HUD-02): altura do topo acima do centro do corpo (px) e profundidade, acima de todos. */
+const BAR_RISE = 44;
+const BAR_DEPTH = 3;
 
 /**
  * Corpo físico (retângulo Matter) separado do visual (sprite animado com a origem no pé, no centro do corpo).
@@ -33,6 +37,9 @@ export class Enemy implements Hittable {
   private readonly body: MatterJS.BodyType;
   private readonly view: Phaser.GameObjects.Sprite;
   private ragdoll: Ragdoll | null = null;
+  /** Barra de vida acima da cabeça, na câmera do mundo: aparece no primeiro dano e some ao morrer (HUD-02). */
+  private readonly barFrame: Phaser.GameObjects.Image;
+  private readonly barFill: Phaser.GameObjects.Rectangle;
   private facing: 1 | -1 = 1;
   private _removed = false;
 
@@ -55,6 +62,13 @@ export class Enemy implements Hittable {
     this.ai = new EnemyAI(ENEMY_AI, spawn.x);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, TEX.enemy, 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
+    this.barFrame = scene.add.image(0, 0, TEX.enemyBar).setOrigin(0, 0).setDepth(BAR_DEPTH).setVisible(false);
+    const well = ENEMY_BAR_WELL;
+    this.barFill = scene.add
+      .rectangle(0, 0, well.w * ART_SCALE, well.h * ART_SCALE, PALETTE.r)
+      .setOrigin(0, 0)
+      .setDepth(BAR_DEPTH)
+      .setVisible(false);
   }
 
   get x(): number {
@@ -81,6 +95,22 @@ export class Enemy implements Hittable {
     // Levar golpe cancela o preparo ou o golpe em andamento (AI-04).
     this.onAI(this.ai.interrupt());
     this.handle(events);
+    this.updateBar();
+  }
+
+  /** Mostra a barra depois do primeiro dano e até morrer, cheia na proporção da vida, em passos de 1 texel. */
+  private updateBar(): void {
+    const show = !this.brain.isDead && this.brain.hp < ENEMY.maxHp;
+    this.barFrame.setVisible(show);
+    const well = ENEMY_BAR_WELL;
+    const texels = Math.round((well.w * this.brain.hp) / ENEMY.maxHp);
+    this.barFill.setVisible(show && texels > 0).setSize(texels * ART_SCALE, well.h * ART_SCALE);
+    if (!show) return;
+    const { x, y } = this.body.position;
+    const left = Math.round(x - this.barFrame.width / 2);
+    const top = Math.round(y - BAR_RISE);
+    this.barFrame.setPosition(left, top);
+    this.barFill.setPosition(left + well.x * ART_SCALE, top + well.y * ART_SCALE);
   }
 
   update(dtMs: number, playerX: number): void {
@@ -95,6 +125,7 @@ export class Enemy implements Hittable {
       // Corpo escondido acompanha o tronco para o "levantar" nascer no lugar certo.
       this.scene.matter.body.setPosition(this.body, this.ragdoll.center);
       this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
+      this.updateBar();
       return;
     }
     if (canAct) {
@@ -104,6 +135,7 @@ export class Enemy implements Hittable {
     }
     this.attack.follow(this.body.position.x, this.body.position.y, this.facing);
     this.animate();
+    this.updateBar();
   }
 
   private onAI(events: AIEvent[]): void {
@@ -190,6 +222,8 @@ export class Enemy implements Hittable {
     this.ragdoll = null;
     this.scene.matter.world.remove(this.body);
     this.view.destroy();
+    this.barFrame.destroy();
+    this.barFill.destroy();
     this._removed = true;
     this.onRemoved(this);
   }
