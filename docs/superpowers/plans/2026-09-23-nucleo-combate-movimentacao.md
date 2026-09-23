@@ -2104,7 +2104,7 @@ git commit -m "feat: add enemy hit-reaction state machine" -m "Co-Authored-By: C
   - `class Ragdoll { constructor(scene, x, y); readonly parts: Phaser.Physics.Matter.Image[]; get bodies(): MatterJS.BodyType[]; get center(): Vec2; impulse(direction: Vec2, force: number): void; flash(): void; dissolve(durationMs: number): void; destroy(): void }`
   - `class Enemy implements Hittable { readonly id: number; readonly spawn: Vec2; constructor(scene, spawn: Vec2, onRemoved: (e: Enemy) => void); get x(): number; get state(): EnemyState; get removed(): boolean; receiveHit(hit: Hit): void; update(dtMs: number, playerX: number): void }`
 
-- [ ] **Step 1: Ragdoll**
+- [x] **Step 1: Ragdoll**
 
 `src/game/Ragdoll.ts`:
 
@@ -2224,7 +2224,7 @@ export class Ragdoll {
 }
 ```
 
-- [ ] **Step 2: Inimigo**
+- [x] **Step 2: Inimigo**
 
 `src/game/Enemy.ts`:
 
@@ -2365,7 +2365,7 @@ export class Enemy implements Hittable {
 }
 ```
 
-- [ ] **Step 3: Cena com inimigos, respawn e teclas de teste**
+- [x] **Step 3: Cena com inimigos, respawn e teclas de teste**
 
 `src/scenes/TestScene.ts` (arquivo inteiro):
 
@@ -2488,26 +2488,26 @@ export class TestScene extends Phaser.Scene {
 }
 ```
 
-- [ ] **Step 4: Verificar build e testes**
+- [x] **Step 4: Verificar build e testes**
 
 Run: `npm run build && npm test`
 Expected: sem erros; testes passam.
 
-- [ ] **Step 5: Teste manual de reação e ragdoll**
+- [x] **Step 5: Teste manual de reação e ragdoll**
 
 Run: `npm run dev`.
 Checklist:
-- [ ] Dois retângulos vermelhos em pé no chão, olhando para o lado do player; o player atravessa eles sem ser bloqueado.
-- [ ] Tecla `1`: cada inimigo pisca branco, achata rápido e é empurrado um pouco; volta ao normal.
-- [ ] Tecla `2`: inimigo vira ragdoll de 6 peças, é arremessado para longe do player com leve tremida de câmera, cai e fica no chão ~1 s; depois reaparece em pé "esticando" no lugar do tronco.
-- [ ] Ragdoll parado no chão não treme, não afunda no chão e não "explode" (peças voando sozinhas).
-- [ ] `2` várias vezes com o inimigo caído: ele leva novo impulso a cada vez; `1` com ele caído só pisca as peças.
-- [ ] Apertar `2` até morrer (4 vezes seguidas): ragdoll fica ~2 s, fica roxo, some com fumaça roxa subindo; ~1,5 s depois reaparece em pé no spawn original.
-- [ ] `H` mostra/esconde o debug do Matter (contornos dos corpos e juntas).
+- [x] Dois retângulos vermelhos em pé no chão, olhando para o lado do player; o player atravessa eles sem ser bloqueado.
+- [x] Tecla `1`: cada inimigo pisca branco, achata rápido e é empurrado um pouco; volta ao normal.
+- [x] Tecla `2`: inimigo vira ragdoll de 6 peças, é arremessado para longe do player com leve tremida de câmera, cai e fica no chão ~1 s; depois reaparece em pé "esticando" no lugar do tronco.
+- [x] Ragdoll parado no chão não treme, não afunda no chão e não "explode" (peças voando sozinhas).
+- [x] `2` várias vezes com o inimigo caído: ele leva novo impulso a cada vez; `1` com ele caído só pisca as peças.
+- [x] Apertar `2` até morrer (4 vezes seguidas): ragdoll fica ~2 s, fica roxo, some com fumaça roxa subindo; ~1,5 s depois reaparece em pé no spawn original.
+- [x] `H` mostra/esconde o debug do Matter (contornos dos corpos e juntas).
 
 Ajuste fino (sem mudar lógica): rigidez/damping das juntas e `MAX_FORCE` em `Ragdoll.ts`; tempos em `ENEMY` (`src/data/tuning.ts`).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src
