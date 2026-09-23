@@ -6,7 +6,16 @@ import { TRANSPARENT, parseSheet } from '../../src/core/pixelGrid';
 import { ART_SCALE, PALETTE, PALETTE_KEYS } from '../../src/game/art/palette';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
-import { PLAYER_COMBO } from '../../src/data/tuning';
+import { ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
+import type { EnemyAnim } from '../../src/core/animState';
+import {
+  ENEMY_ANIMS,
+  ENEMY_FRAMES,
+  ENEMY_FRAME_H,
+  ENEMY_FRAME_W,
+  ENEMY_ORIGIN,
+  ENEMY_RAG_PARTS,
+} from '../../src/game/art/sprites/enemy';
 
 describe('paleta única (ART-01)', () => {
   it('tem no máximo 32 cores, cada uma com chave de 1 caractere', () => {
@@ -152,5 +161,73 @@ describe('folha do player (CHR-01, ART-01, ART-03)', () => {
 
   it('a origem fica no pé (base do frame)', () => {
     expect(PLAYER_ORIGIN.y).toBe(1);
+  });
+});
+
+describe('folha do inimigo (CHR-03, CHR-04, ART-01)', () => {
+  const sheet = parseSheet('enemy', ENEMY_FRAMES, PALETTE_KEYS);
+  const CHR03: EnemyAnim[] = ['idle', 'walk', 'windup', 'attack', 'hurt', 'getup'];
+  const colorsOf = (cells: (string | null)[][]): Set<string> =>
+    new Set(cells.flat().filter((c): c is string => c !== null));
+
+  it('passa no parseSheet só com cores da paleta, todos os frames do mesmo tamanho (48 px de altura)', () => {
+    expect(sheet.width).toBe(ENEMY_FRAME_W);
+    expect(sheet.height).toBe(ENEMY_FRAME_H);
+    expect(sheet.height * ART_SCALE).toBe(48);
+  });
+
+  it('toda animação do CHR-03 existe e tem pelo menos um frame, e todo frame citado existe na folha', () => {
+    for (const name of CHR03) {
+      const anim = ENEMY_ANIMS[name];
+      expect(anim, name).toBeDefined();
+      expect(anim.frames.length, name).toBeGreaterThan(0);
+      for (const f of anim.frames) expect(Object.hasOwn(ENEMY_FRAMES, f), `${name}: ${f}`).toBe(true);
+    }
+  });
+
+  it('no frame attack a garra chega à borda da hitbox do ENEMY_ATTACK (até 1 texel além), na altura da hitbox', () => {
+    const originCol = ENEMY_ORIGIN.x * ENEMY_FRAME_W;
+    const footRow = ENEMY_ORIGIN.y * ENEMY_FRAME_H;
+    // Corpo de 36 px com o pé na base: o centro fica 18 px acima do pé.
+    const centerFromFoot = 18;
+    const box = ENEMY_ATTACK.hitbox!;
+    const edge = box.offsetX + box.width / 2;
+    const frame = sheet.frames.find((f) => f.key === ENEMY_ANIMS.attack.frames[0])!;
+    let reach = -Infinity;
+    let reachRow = -1;
+    frame.cells.forEach((row, y) =>
+      row.forEach((c, x) => {
+        if (c === null) return;
+        const px = (x + 1 - originCol) * ART_SCALE;
+        if (px > reach) {
+          reach = px;
+          reachRow = y;
+        }
+      }),
+    );
+    expect(reach).toBeGreaterThanOrEqual(edge);
+    expect(reach).toBeLessThanOrEqual(edge + ART_SCALE);
+    const rowTop = (reachRow - footRow) * ART_SCALE + centerFromFoot;
+    expect(rowTop).toBeGreaterThanOrEqual(box.offsetY - box.height / 2 - ART_SCALE);
+    expect(rowTop + ART_SCALE).toBeLessThanOrEqual(box.offsetY + box.height / 2 + ART_SCALE);
+  });
+
+  it('a origem fica no pé e a linha de centro cai num número inteiro de px', () => {
+    expect(ENEMY_ORIGIN.y).toBe(1);
+    expect(Number.isInteger(ENEMY_ORIGIN.x * ENEMY_FRAME_W * ART_SCALE)).toBe(true);
+  });
+
+  it('as partes do ragdoll (cabeça, tronco, membro) passam no parseSheet e só usam cores dos frames do inimigo', () => {
+    const frameColors = new Set(sheet.frames.flatMap((f) => [...colorsOf(f.cells)]));
+    expect(Object.keys(ENEMY_RAG_PARTS).sort()).toEqual(['head', 'limb', 'torso']);
+    for (const [name, grid] of Object.entries(ENEMY_RAG_PARTS)) {
+      const part = parseSheet(`rag-${name}`, { [name]: grid }, PALETTE_KEYS);
+      for (const c of colorsOf(part.frames[0].cells)) expect(frameColors.has(c), `${name}: ${c}`).toBe(true);
+    }
+  });
+
+  it('a cabeça do ragdoll tem o olho (o âmbar do olho dos frames)', () => {
+    const head = colorsOf(parseSheet('rag-head', { head: ENEMY_RAG_PARTS.head }, PALETTE_KEYS).frames[0].cells);
+    expect(head.has('A')).toBe(true);
   });
 });

@@ -225,7 +225,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | CHR-01 | P1: Personagens animados | Tasks | Implementing |
 | CHR-02 | P1: Personagens animados | Tasks | Implementing |
 | CHR-03 | P1: Personagens animados | Tasks | Implementing |
-| CHR-04 | P1: Personagens animados | Tasks | Pending |
+| CHR-04 | P1: Personagens animados | Tasks | Implementing |
 | FX-01 | P1: Impacto do golpe | Tasks | Pending |
 | FX-02 | P1: Impacto do golpe | Tasks | Pending |
 | FX-03 | P1: Impacto do golpe | Tasks | Pending |

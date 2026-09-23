@@ -445,8 +445,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Teste de dados: a folha passa no `parseSheet`; existem frames para as 6 animações do CHR-03; as partes do ragdoll só usam cores presentes nos frames do inimigo
-- [ ] Gate check passes: `npm test`
+- [x] Teste de dados: a folha passa no `parseSheet`; existem frames para as 6 animações do CHR-03; as partes do ragdoll só usam cores presentes nos frames do inimigo
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/game/art.test.ts`)
 **Gate**: quick
