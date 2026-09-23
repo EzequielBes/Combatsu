@@ -296,9 +296,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Testes: `phase` passa por idle → startup → active → recovery → window → idle nos tempos do golpe
-- [ ] Os 14 testes de combo existentes continuam passando sem alteração
-- [ ] Gate check passes: `npm test`
+- [x] Testes: `phase` passa por idle → startup → active → recovery → window → idle nos tempos do golpe
+- [x] Os 14 testes de combo existentes continuam passando sem alteração
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit (`tests/core/combo.test.ts`)
 **Gate**: quick
