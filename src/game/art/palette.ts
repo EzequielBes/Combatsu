@@ -47,6 +47,9 @@ export const PALETTE: Readonly<Record<string, number>> = {
   L: 0xbab497, // crateras / sombra da lua
   // Acento quente
   r: 0xb3314f, // vermelho escuro (olho, boca, dano)
+  // Cinza-arroxeado do espírito amaldiçoado: tons médio e claro, para destacar do fundo noturno escuro
+  i: 0x8e7fa6, // cinza-arroxeado (corpo)
+  I: 0xc4b6da, // cinza-arroxeado claro (luz de cima)
 };
 
 export const PALETTE_KEYS: ReadonlySet<string> = new Set(Object.keys(PALETTE));
