@@ -633,9 +633,9 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Teste de dados: a folha passa no `parseSheet`; os fragmentos só usam cores do sprite de origem
-- [ ] Smoke + captura: cadeira e garrafa reconhecíveis; ao quebrar voam fragmentos da mesma cor
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Teste de dados: a folha passa no `parseSheet`; os fragmentos só usam cores do sprite de origem
+- [x] Smoke + captura: cadeira e garrafa reconhecíveis; ao quebrar voam fragmentos da mesma cor
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit (`tests/game/art.test.ts`)
 **Gate**: build

@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { normalize, type Vec2 } from '../core/hit';
-import { PROP_BREAK_MS, PropMachine, propHit, type PropDef, type PropImpact, type PropState } from '../core/props';
+import { PropMachine, propHit, type PropDef, type PropImpact, type PropState } from '../core/props';
+import { shardsKey } from './art';
+import { ART_SCALE } from './art/palette';
+import { PROP_SHARDS } from './art/sprites/props';
 import { tagBody, type BodyTag } from './bodyTags';
 import { contactWith, type OnConnect } from './hitbox';
 import { PX_PER_S_TO_STEP, applyFilter, bodyOf } from './physics';
-import { TEX } from './textures';
 
 /** Posição do objeto relativa ao centro de quem segura (x espelhado pelo facing). */
 const SOCKET: Record<'front' | 'back' | 'swing', Vec2> = {
@@ -14,6 +16,11 @@ const SOCKET: Record<'front' | 'back' | 'swing', Vec2> = {
 };
 /** Fração da velocidade de arremesso usada para cima. */
 const THROW_LIFT = 0.22;
+/** Estilhaços: duração do voo (ms), gravidade (px/s²), velocidade para fora (px/s) e pulo para cima (px/s). */
+const SHARD_MS = 500;
+const SHARD_GRAVITY = 700;
+const SHARD_SPEED = { min: 50, max: 130 };
+const SHARD_LIFT = { min: 60, max: 130 };
 
 export class Prop {
   readonly machine: PropMachine;
@@ -169,17 +176,47 @@ export class Prop {
     if (st === 'breaking') this.shatter();
   }
 
+  /**
+   * Quebra (PRP-01): o sprite some e no lugar dele voam os estilhaços recortados da própria arte, cada um saindo
+   * da sua posição no objeto (com o giro e o espelhamento que o objeto tinha) para fora do centro, e caindo.
+   */
   private shatter(): void {
-    const debris = this.scene.add.particles(this.sprite.x, this.sprite.y, TEX.smoke, {
-      speed: { min: 40, max: 140 },
-      lifespan: 450,
-      scale: { start: 0.8, end: 0 },
-      tint: this.def.debrisColor,
-      gravityY: 400,
-      emitting: false,
-    });
-    debris.explode(14);
-    this.scene.time.delayedCall(600, () => debris.destroy());
-    this.scene.tweens.add({ targets: this.sprite, alpha: 0, duration: PROP_BREAK_MS });
+    const spr = this.sprite;
+    const shards = PROP_SHARDS[this.def.key as keyof typeof PROP_SHARDS] ?? [];
+    const cols = spr.width / ART_SCALE;
+    const rows = spr.height / ART_SCALE;
+    const flip = spr.flipX ? -1 : 1;
+    const cos = Math.cos(spr.rotation);
+    const sin = Math.sin(spr.rotation);
+    for (const s of shards) {
+      const half = s.grid.length / 2;
+      const lx = (s.x + half - cols / 2) * ART_SCALE * flip;
+      const ly = (s.y + half - rows / 2) * ART_SCALE;
+      const ox = lx * cos - ly * sin;
+      const oy = lx * sin + ly * cos;
+      const x0 = spr.x + ox;
+      const y0 = spr.y + oy;
+      const piece = this.scene.add
+        .image(x0, y0, shardsKey(this.def.texture), s.key)
+        .setFlipX(spr.flipX)
+        .setRotation(spr.rotation);
+      const len = Math.hypot(ox, oy) || 1;
+      const speed = Phaser.Math.Between(SHARD_SPEED.min, SHARD_SPEED.max);
+      const vx = (ox / len) * speed;
+      const vy = (oy / len) * speed - Phaser.Math.Between(SHARD_LIFT.min, SHARD_LIFT.max);
+      // Tween da cena: pausa junto com o hitstop, e os estilhaços ficam parados durante o congelamento.
+      this.scene.tweens.addCounter({
+        from: 0,
+        to: SHARD_MS / 1000,
+        duration: SHARD_MS,
+        onUpdate: (tw) => {
+          const t = tw.getValue() ?? 0;
+          piece.setPosition(x0 + vx * t, y0 + vy * t + 0.5 * SHARD_GRAVITY * t * t);
+          piece.setAlpha(1 - tw.progress);
+        },
+        onComplete: () => piece.destroy(),
+      });
+    }
+    spr.setAlpha(0);
   }
 }

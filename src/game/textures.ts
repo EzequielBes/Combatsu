@@ -44,13 +44,4 @@ function box(scene: Phaser.Scene, key: string, w: number, h: number, fill: numbe
 export function createPlaceholderTextures(scene: Phaser.Scene): void {
   box(scene, TEX.terrain, 32, 32, 0x4a4e69);
   box(scene, TEX.player, SIZE.player.w, SIZE.player.h, 0x3a86ff, true);
-  box(scene, TEX.chair, 26, 26, 0x8d5524);
-  box(scene, TEX.bottle, 8, 20, 0x2a9d8f);
-  if (!scene.textures.exists(TEX.smoke)) {
-    const g = scene.add.graphics();
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(4, 4, 4);
-    g.generateTexture(TEX.smoke, 8, 8);
-    g.destroy();
-  }
 }

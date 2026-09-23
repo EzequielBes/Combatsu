@@ -6,6 +6,7 @@ import { TRANSPARENT, parseSheet } from '../../src/core/pixelGrid';
 import { ART_SCALE, PALETTE, PALETTE_KEYS } from '../../src/game/art/palette';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
+import { PROP_SHARDS, PROP_SPRITES, SMOKE } from '../../src/game/art/sprites/props';
 import { ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
 import type { EnemyAnim } from '../../src/core/animState';
 import {
@@ -229,5 +230,64 @@ describe('folha do inimigo (CHR-03, CHR-04, ART-01)', () => {
   it('a cabeça do ragdoll tem o olho (o âmbar do olho dos frames)', () => {
     const head = colorsOf(parseSheet('rag-head', { head: ENEMY_RAG_PARTS.head }, PALETTE_KEYS).frames[0].cells);
     expect(head.has('A')).toBe(true);
+  });
+});
+
+describe('objetos com arte (PRP-01, ART-01, ART-03)', () => {
+  const colorsOf = (cells: (string | null)[][]): Set<string> =>
+    new Set(cells.flat().filter((c): c is string => c !== null));
+  // Tamanhos atuais dos corpos físicos, que saem do tamanho da textura: a física não pode mudar.
+  const BODY_PX = { chair: { w: 26, h: 26 }, bottle: { w: 8, h: 20 } } as const;
+
+  for (const key of ['chair', 'bottle'] as const) {
+    it(`${key}: passa no parseSheet só com cores da paleta, com o mesmo tamanho do corpo atual`, () => {
+      const sheet = parseSheet(key, { [key]: PROP_SPRITES[key] }, PALETTE_KEYS);
+      expect(sheet.width * ART_SCALE).toBe(BODY_PX[key].w);
+      expect(sheet.height * ART_SCALE).toBe(BODY_PX[key].h);
+    });
+
+    it(`${key}: tem contorno (k) e pelo menos dois tons próprios além dele`, () => {
+      const colors = colorsOf(parseSheet(key, { [key]: PROP_SPRITES[key] }, PALETTE_KEYS).frames[0].cells);
+      expect(colors.has('k')).toBe(true);
+      expect(colors.size).toBeGreaterThanOrEqual(3);
+    });
+
+    it(`${key}: os fragmentos passam no parseSheet e só usam cores do sprite de origem`, () => {
+      const source = colorsOf(parseSheet(key, { [key]: PROP_SPRITES[key] }, PALETTE_KEYS).frames[0].cells);
+      const shards = PROP_SHARDS[key];
+      expect(shards.length).toBeGreaterThan(1);
+      const frames = Object.fromEntries(shards.map((s) => [s.key, s.grid]));
+      const sheet = parseSheet(`${key}-shards`, frames, PALETTE_KEYS);
+      for (const f of sheet.frames) {
+        const colors = colorsOf(f.cells);
+        expect(colors.size, f.key).toBeGreaterThan(0);
+        for (const c of colors) expect(source.has(c), `${f.key}: ${c}`).toBe(true);
+      }
+    });
+
+    it(`${key}: cada fragmento é um recorte do sprite na sua posição, e juntos cobrem todo texel pintado`, () => {
+      const grid = PROP_SPRITES[key];
+      const covered = new Set<string>();
+      for (const s of PROP_SHARDS[key]) {
+        s.grid.forEach((row, dy) =>
+          [...row].forEach((ch, dx) => {
+            if (ch === '.') return;
+            expect(grid[s.y + dy]?.[s.x + dx], `${s.key} (${dx}, ${dy})`).toBe(ch);
+            covered.add(`${s.x + dx},${s.y + dy}`);
+          }),
+        );
+      }
+      grid.forEach((row, y) =>
+        [...row].forEach((ch, x) => {
+          if (ch !== '.') expect(covered.has(`${x},${y}`), `(${x}, ${y})`).toBe(true);
+        }),
+      );
+    });
+  }
+
+  it('a fumaça é uma textura pequena da paleta', () => {
+    const sheet = parseSheet('smoke', { smoke: SMOKE }, PALETTE_KEYS);
+    expect(sheet.width * ART_SCALE).toBeLessThanOrEqual(8);
+    expect(sheet.height * ART_SCALE).toBeLessThanOrEqual(8);
   });
 });
