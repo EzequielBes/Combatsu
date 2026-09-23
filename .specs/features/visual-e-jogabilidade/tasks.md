@@ -358,8 +358,8 @@ T27 -> T28
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: todas as chaves de `TEX` existem; as animações do player existem com os frames certos
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: todas as chaves de `TEX` existem; as animações do player existem com os frames certos
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (registro no Phaser; smoke headless)
 **Gate**: build

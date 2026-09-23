@@ -6,7 +6,8 @@ import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
 import { ENEMY_RESPAWN_MS, PLAYER_COMBO } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
-import { registerTiles, tileFrameFor } from '../game/art/tiles';
+import { createArt } from '../game/art';
+import { tileFrameFor } from '../game/art/tiles';
 import { routeContact, tagBody } from '../game/bodyTags';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { Enemy } from '../game/Enemy';
@@ -14,7 +15,7 @@ import { PlayerInput } from '../game/input';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
-import { TEX, createPlaceholderTextures } from '../game/textures';
+import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
 
@@ -41,8 +42,7 @@ export class TestScene extends Phaser.Scene {
   create(): void {
     // Antes de criar qualquer objeto, para a câmera de UI ignorar tudo que for mundo.
     this.addUiCamera();
-    createPlaceholderTextures(this);
-    registerTiles(this);
+    createArt(this);
     this.level = parseLevel(LEVEL_1);
     buildBackground(this, this.level.widthPx, this.level.heightPx);
     this.terrain = [];
