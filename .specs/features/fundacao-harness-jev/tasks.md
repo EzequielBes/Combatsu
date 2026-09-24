@@ -327,11 +327,11 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `parseAcs` extrai ID, story e critério de uma spec de exemplo; spec sem AC lança `nenhum AC encontrado` (edge)
-- [ ] `flagsFor`: cada limiar isolado (ambiguous 0,61 → flag, 0,60 → não; bundled idem; testable 0,59 → flag, 0,60 → não; precision 1,99 → flag, 2 → não) (FND-14)
-- [ ] `formatReport`: uma linha por AC com ID, os 4 valores e os nomes dos julgamentos que sinalizaram ou `ok` (FND-13)
-- [ ] `buildRequest`: `model: 'jev-latest'`, 3 perguntas noul + `precision` score com 4 níveis
-- [ ] Gate check passes: `npm test`
+- [x] `parseAcs` extrai ID, story e critério de uma spec de exemplo; spec sem AC lança `nenhum AC encontrado` (edge)
+- [x] `flagsFor`: cada limiar isolado (ambiguous 0,61 → flag, 0,60 → não; bundled idem; testable 0,59 → flag, 0,60 → não; precision 1,99 → flag, 2 → não) (FND-14)
+- [x] `formatReport`: uma linha por AC com ID, os 4 valores e os nomes dos julgamentos que sinalizaram ou `ok` (FND-13)
+- [x] `buildRequest`: `model: 'jev-latest'`, 3 perguntas noul + `precision` score com 4 níveis
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
