@@ -146,9 +146,9 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 | FND-03 | P1: Aleatoriedade reproduzível | Specify | Implementing |
 | FND-21 | P1: Aleatoriedade reproduzível | Specify | Implementing |
 | FND-04 | P1: Aleatoriedade reproduzível | Specify | Implementing |
-| FND-05 | P1: Cura e morte do inimigo | Specify | Pending |
-| FND-06 | P1: Cura e morte do inimigo | Specify | Pending |
-| FND-07 | P1: Cura e morte do inimigo | Specify | Pending |
+| FND-05 | P1: Cura e morte do inimigo | Specify | Implementing |
+| FND-06 | P1: Cura e morte do inimigo | Specify | Implementing |
+| FND-07 | P1: Cura e morte do inimigo | Specify | Implementing |
 | FND-08 | P1: Cura e morte do inimigo | Specify | Pending |
 | FND-09 | P1: Smoke headless versionado | Specify | Pending |
 | FND-22 | P1: Smoke headless versionado | Specify | Pending |
