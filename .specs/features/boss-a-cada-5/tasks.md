@@ -257,10 +257,10 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] Todas as grades novas passam no `parseSheet` com a paleta; frame do chefe maior que o do inimigo; frames de preparo distintos dos de idle (BAT-05)
-- [ ] `TECELA_COLOR_MAP` só usa cores da paleta e muda ao menos 3 cores em relação ao Oni (BTIER-06)
-- [ ] Teste confere `20 < PLAYER_MOVE.jumpSpeed² / (2 × PLAYER_MOVE.gravity)` (49 px) (BAT-07)
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Todas as grades novas passam no `parseSheet` com a paleta; frame do chefe maior que o do inimigo; frames de preparo distintos dos de idle (BAT-05)
+- [x] `TECELA_COLOR_MAP` só usa cores da paleta e muda ao menos 3 cores em relação ao Oni (BTIER-06)
+- [x] Teste confere `20 < PLAYER_MOVE.jumpSpeed² / (2 × PLAYER_MOVE.gravity)` (49 px) (BAT-07)
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
