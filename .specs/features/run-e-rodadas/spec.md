@@ -124,7 +124,7 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 3. DIF-06: WHEN the scaling is computed for round `r` THEN its enemy patrol speed and chase speed SHALL each be the base value from `src/data/tuning.ts` multiplied by `min(1 + 0.03·(r − 1), 1.4)`.
 4. DIF-02: For every integer round `r` from 2 to 100, each of the three multipliers SHALL be greater than or equal to its value at round `r − 1`.
 5. DIF-03: IF the scaling is asked for a round below 1 or not an integer THEN it SHALL return the round-1 values.
-6. DIF-04: WHEN an enemy spawns in round `r` THEN its `maxHp`, attack damage and speeds SHALL equal the values of DIF-01, DIF-05 and DIF-06 for `r`, observable as `enemies[i].maxHp` and `enemies[i].damage` in the debug snapshot.
+6. DIF-04: WHEN an enemy spawns in round `r` THEN its `maxHp`, attack damage and speeds SHALL equal the values of DIF-01, DIF-05 and DIF-06 for `r`, observable as `enemies[i].maxHp`, `enemies[i].damage`, `enemies[i].patrolSpeed` and `enemies[i].chaseSpeed` in the debug snapshot (values read from the live brain, attack and AI).
 
 **Independent Test**: `difficulty.test.ts` confere os valores exatos nas rodadas 1, 2, 10, 15 (velocidade no teto), 18 (hp no teto), 20 (dano no teto) e 0/−3/2.5 (tratadas como 1); smoke confere `hp` do inimigo da rodada 2 no snapshot.
 
@@ -139,7 +139,7 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 **Acceptance Criteria**:
 
 1. RHUD-01: WHILE the run is in `roundActive`, the HUD SHALL show `Rodada N` and `Inimigos: K`, where K is alive plus queued enemies of the round.
-2. RHUD-02: WHEN a round starts THEN the HUD SHALL show the banner `Rodada N` centered horizontally on the 960×540 screen at y = 135 (a quarter of the height, so it does not cover the fight) for 1500 ms and then hide it.
+2. RHUD-02: WHEN a round starts THEN the HUD SHALL show the banner `Rodada N` with its visual center at x = 480, y = 135 on the 960×540 screen (a quarter of the height, so it does not cover the fight) for 1500 ms and then hide it.
 3. RHUD-03: WHEN the run enters `intermission` THEN the HUD SHALL show `Rodada N concluída` until the next round starts.
 4. RHUD-04: The text and fill colors of the HUD elements of this feature SHALL be colors of the game palette (AD-002).
 5. RHUD-07: The HUD elements of this feature SHALL be in the main camera's ignore list (AD-003), reported as `hud.ignoredByMain: true` in the debug snapshot.

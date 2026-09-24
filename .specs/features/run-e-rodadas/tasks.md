@@ -61,6 +61,12 @@ T7 → T8
 T9 → T10 → T11 → T12 → T13 → T14
 ```
 
+### Phase 4: Correções do Verifier (rodada 2)
+
+```
+T15 → T16
+```
+
 ---
 
 ## Task Breakdown
@@ -484,14 +490,70 @@ T9 → T10 → T11 → T12 → T13 → T14
 
 ---
 
+### T15: Velocidades escaladas no inimigo vivo
+
+**What**: O snapshot expõe `patrolSpeed`/`chaseSpeed` lidos do `EnemyAI` em uso; os cenários conferem 35/70 na rodada 1 e 36,05/72,1 na rodada 2.
+**Where**: `src/game/Enemy.ts`
+**Depends on**: None
+**Reuses**: `checkAliveAndScale` de `run-loop.smoke.mjs`, `boot.smoke.mjs`
+**Requirement**: DIF-04, DIF-06
+
+> Toca também `src/core/enemyAI.ts` (getters das velocidades do tuning em uso), `src/game/debugApi.ts`, `src/scenes/TestScene.ts` (snapshot), `scripts/smoke/run-loop.smoke.mjs` e `scripts/smoke/boot.smoke.mjs`.
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `boot.smoke.mjs`: todo inimigo da rodada 1 com `patrolSpeed === 35` e `chaseSpeed === 70` (± 0,01)
+- [ ] `run-loop.smoke.mjs`: todo inimigo novo da rodada 2 com `patrolSpeed` 36,05 e `chaseSpeed` 72,1 (± 0,01)
+- [ ] Mutante N4 (velocidades fixas em 40) falha no smoke
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `fix(game): expose live enemy speeds in debug snapshot`
+
+---
+
+### T16: Centro visual da faixa
+
+**What**: `bannerPos` passa a ser o centro visual do texto (bounds), e o cenário mantém x = 480, y = 135.
+**Where**: `src/game/Hud.ts`
+**Depends on**: T15
+**Reuses**: asserção existente em `hud.smoke.mjs`
+**Requirement**: RHUD-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `bannerPos` vem de `getBounds()` (centro) do texto da faixa; `hud.smoke.mjs` confere x = 480 e y = 135 (± 1)
+- [ ] Mutante N2 (`setOrigin(0, 0.5)`) falha no smoke
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `fix(hud): report banner visual center`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3
+Phase 1 → Phase 2 → Phase 3 → Phase 4
 
 Phase 1:  T1 ------→ T2 ------→ T3 ------→ T4 ------→ T5 ------→ T6
 Phase 2:  T7 ------→ T8
 Phase 3:  T9 ------→ T10 -----→ T11 -----→ T12 -----→ T13 -----→ T14
+Phase 4:  T15 -----→ T16
 ```
 
 ---
