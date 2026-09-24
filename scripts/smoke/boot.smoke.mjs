@@ -35,6 +35,11 @@ export default async function ({ page, baseUrl, assert }) {
     assert(e.hp === 60 && e.maxHp === 60 && e.state === 'idle', `inimigo inicial errado: ${JSON.stringify(e)}`);
     // Centro do corpo (36 px de altura) sobre o chão da linha 14 do LEVEL_1, cujo topo fica em y = 480.
     assert(typeof e.y === 'number' && e.y > 430 && e.y < 480, `inimigo fora do chão: ${JSON.stringify(e)}`);
+    // DIF-04/06: velocidades da IA em uso na rodada 1, sem escala (multiplicador ×1).
+    assert(
+      Math.abs(e.patrolSpeed - 35) < 0.01 && Math.abs(e.chaseSpeed - 70) < 0.01,
+      `velocidades da rodada 1 erradas: ${JSON.stringify(e)}`,
+    );
   }
 
   const after = await page.evaluate(() => {

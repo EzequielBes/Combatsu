@@ -241,6 +241,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         state: e.state,
         maxHp: e.maxHp,
         damage: e.damage,
+        patrolSpeed: e.patrolSpeed,
+        chaseSpeed: e.chaseSpeed,
       })),
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),
