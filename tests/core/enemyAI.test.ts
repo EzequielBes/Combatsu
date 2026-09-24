@@ -248,3 +248,41 @@ describe('EnemyAI: interrupção (AI-04)', () => {
     expect(out.events).toEqual([]);
   });
 });
+
+describe('EnemyAI: patrulha presa por obstáculo (caso de borda do AI-01)', () => {
+  const FAR = SPAWN - 1000; // player longe: só patrulha
+
+  it('parado no mesmo x por 200 ms patrulhando, inverte o sentido', () => {
+    const ai = new EnemyAI(ENEMY_AI, SPAWN);
+    const first = ai.update(FRAME, { selfX: SPAWN + 20, playerX: FAR, canAct: true });
+    expect(first.vx).toBe(35);
+    const stuck = run(ai, 208, { selfX: SPAWN + 20, playerX: FAR });
+    expect(stuck.vx).toBe(-35);
+    expect(stuck.facing).toBe(-1);
+  });
+
+  it('parado por menos de 200 ms continua no mesmo sentido', () => {
+    const ai = new EnemyAI(ENEMY_AI, SPAWN);
+    ai.update(FRAME, { selfX: SPAWN + 20, playerX: FAR, canAct: true });
+    const out = run(ai, 160, { selfX: SPAWN + 20, playerX: FAR });
+    expect(out.vx).toBe(35);
+  });
+
+  it('avançando pelo menos 1 px a cada 200 ms não inverte', () => {
+    const ai = new EnemyAI(ENEMY_AI, SPAWN);
+    let x = SPAWN;
+    let out: AIOutput = ai.update(FRAME, { selfX: x, playerX: FAR, canAct: true });
+    for (let t = 0; t < 600; t += FRAME) {
+      x += 0.1; // 0,1 px por frame = ~1,2 px a cada 200 ms
+      out = ai.update(FRAME, { selfX: x, playerX: FAR, canAct: true });
+    }
+    expect(out.vx).toBe(35);
+  });
+
+  it('perseguindo parado contra algo não inverte (só a patrulha vira)', () => {
+    const ai = new EnemyAI(ENEMY_AI, SPAWN);
+    const out = run(ai, 400, { selfX: SPAWN, playerX: SPAWN + 150 });
+    expect(ai.state).toBe('chase');
+    expect(out.vx).toBe(70);
+  });
+});

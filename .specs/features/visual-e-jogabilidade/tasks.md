@@ -789,9 +789,9 @@ T33
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Teste: patrulhando com `selfX` parado por 200 ms, o vx troca de sinal; parado menos de 200 ms não troca; perseguição e preparo não são afetados
-- [ ] Smoke: o inimigo da direita (spawn x=1200, parede em x=1248) vai e volta em vez de empurrar a parede
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Teste: patrulhando com `selfX` parado por 200 ms, o vx troca de sinal; parado menos de 200 ms não troca; perseguição e preparo não são afetados
+- [x] Smoke: o inimigo da direita (spawn x=1200, parede em x=1248) vai e volta em vez de empurrar a parede
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit (`tests/core/enemyAI.test.ts`)
 **Gate**: build

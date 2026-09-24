@@ -1,6 +1,10 @@
 export type EnemyAIState = 'patrol' | 'chase' | 'windup' | 'attack' | 'rest';
 export type AIEvent = 'windupStart' | 'hitboxOn' | 'hitboxOff';
 
+/** Patrulhando, se o x avança menos que isso em PATROL_STALL_MS, algo bloqueou: vira (caso de borda do AI-01). */
+export const PATROL_STALL_PX = 1;
+export const PATROL_STALL_MS = 200;
+
 export interface EnemyAITuning {
   /** Meia largura da faixa de patrulha em volta do spawn (px). */
   patrolRange: number;
@@ -42,6 +46,9 @@ export class EnemyAI {
   private facing: 1 | -1 = 1;
   /** Sentido atual da patrulha. */
   private patrolDir: 1 | -1 = 1;
+  /** x de referência e tempo sem avançar na patrulha (null = fora da patrulha). */
+  private stallX: number | null = null;
+  private stallMs = 0;
 
   constructor(
     private readonly t: EnemyAITuning,
@@ -53,6 +60,13 @@ export class EnemyAI {
   }
 
   update(dtMs: number, s: AIInput): AIOutput {
+    const wasPatrolling = this._state === 'patrol';
+    const out = this.decide(dtMs, s);
+    if (this._state !== 'patrol' || !wasPatrolling) this.stallX = null;
+    return out;
+  }
+
+  private decide(dtMs: number, s: AIInput): AIOutput {
     if (!s.canAct) {
       const events = this.interrupt();
       if (this._state === 'rest') this.timer -= dtMs;
@@ -98,8 +112,23 @@ export class EnemyAI {
     this._state = 'patrol';
     if (s.selfX >= this.spawnX + this.t.patrolRange) this.patrolDir = -1;
     else if (s.selfX <= this.spawnX - this.t.patrolRange) this.patrolDir = 1;
+    this.checkStall(dtMs, s.selfX);
     this.facing = this.patrolDir;
     return this.out(this.patrolDir * this.t.patrolSpeed);
+  }
+
+  /** Parede ou obstáculo: sem avançar PATROL_STALL_PX em PATROL_STALL_MS, inverte a patrulha. */
+  private checkStall(dtMs: number, x: number): void {
+    if (this.stallX === null || Math.abs(x - this.stallX) >= PATROL_STALL_PX) {
+      this.stallX = x;
+      this.stallMs = 0;
+      return;
+    }
+    this.stallMs += dtMs;
+    if (this.stallMs < PATROL_STALL_MS) return;
+    this.patrolDir = this.patrolDir === 1 ? -1 : 1;
+    this.stallX = x;
+    this.stallMs = 0;
   }
 
   /** Levou golpe: cancela preparo ou golpe. Devolve `hitboxOff` se a hitbox estava aberta. */
