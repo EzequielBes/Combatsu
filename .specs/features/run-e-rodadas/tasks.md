@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/run-e-rodadas/spec.md`
 **Design**: `.specs/features/run-e-rodadas/design.md`
-**Status**: Approved
+**Status**: Done (Verifier PASS na rodada 3; ver validation.md)
 **Branch**: `feat/run-e-rodadas` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS, AD-008)
 **Test count before this feature**: 248
 
