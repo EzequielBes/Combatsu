@@ -97,8 +97,11 @@ function paintFar(b: Brush, { x0, x1, ground, bottom }: Span): void {
   const w = x1 - x0;
   // Céu: topo profundo, meio e horizonte, com faixas de dither entre eles.
   b.rect(x0, -256, w, 256 + 150, 'e');
+  // O dither pinta só metade dos texels: a faixa precisa de base sólida, senão aparece o fundo do canvas (ART-01).
+  b.rect(x0, 150, w, 12, 'e');
   b.dither(x0, 150, w, 12, 'E');
   b.rect(x0, 162, w, 78, 'E');
+  b.rect(x0, 240, w, 12, 'E');
   b.dither(x0, 240, w, 12, 'f');
   b.rect(x0, 252, w, bottom - 252, 'f');
 
