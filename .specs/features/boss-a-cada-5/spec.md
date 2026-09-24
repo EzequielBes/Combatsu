@@ -245,8 +245,8 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BWIN-03 | P1: Barra do chefe e vitória | Specify | Pending |
 | BTIER-01 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-02 | P2: Chefes mais duros e variados | Specify | Implementing |
-| BTIER-03 | P2: Chefes mais duros e variados | Specify | Pending |
-| BTIER-04 | P2: Chefes mais duros e variados | Specify | Pending |
+| BTIER-03 | P2: Chefes mais duros e variados | Specify | Implementing |
+| BTIER-04 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-05 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-07 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-06 | P2: Chefes mais duros e variados | Specify | Pending |
