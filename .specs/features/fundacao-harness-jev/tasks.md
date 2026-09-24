@@ -220,10 +220,10 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `npm run smoke` roda o build, o preview e `no-debug.smoke.mjs` (sem `?debug`: canvas existe e `window.__game === undefined`) e sai com 0 (FND-23, FND-10)
-- [ ] Um cenário temporário que falha de propósito faz o comando sair com 1 e imprimir o nome dele (FND-11); o cenário é apagado antes do commit
-- [ ] `EDGE_PATH` inválido com o Edge presente ainda acha o Edge padrão; o caminho do código 2 está coberto pelo teste do T5 (FND-12)
-- [ ] Gate check passes: `npm test && npm run smoke`
+- [x] `npm run smoke` roda o build, o preview e `no-debug.smoke.mjs` (sem `?debug`: canvas existe e `window.__game === undefined`) e sai com 0 (FND-23, FND-10)
+- [x] Um cenário temporário que falha de propósito faz o comando sair com 1 e imprimir o nome dele (FND-11); o cenário é apagado antes do commit
+- [x] `EDGE_PATH` inválido com o Edge presente ainda acha o Edge padrão; o caminho do código 2 está coberto pelo teste do T5 (FND-12)
+- [x] Gate check passes: `npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
