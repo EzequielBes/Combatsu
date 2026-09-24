@@ -140,10 +140,10 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] hp 50/100, `heal(20)` → hp 70, devolve 20 (FND-05); hp 95/100, `heal(10)` → hp 100, devolve 5 (edge)
-- [ ] Morto: `heal(30)` → hp 0, devolve 0 (FND-06)
-- [ ] `heal(0)`, `heal(-5)`, `heal(NaN)`, `heal(Infinity)` → hp inalterado, devolve 0 (FND-07)
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] hp 50/100, `heal(20)` → hp 70, devolve 20 (FND-05); hp 95/100, `heal(10)` → hp 100, devolve 5 (edge)
+- [x] Morto: `heal(30)` → hp 0, devolve 0 (FND-06)
+- [x] `heal(0)`, `heal(-5)`, `heal(NaN)`, `heal(Infinity)` → hp inalterado, devolve 0 (FND-07)
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
