@@ -58,6 +58,14 @@
 - **Date**: 2026-09-24
 - **Status**: active
 
+### AD-008
+- **Decision**: Fluxo de branches: cada feature nasce de `dev` em `feat/<nome>` e é mergeada em `dev` com `--no-ff` depois do Verifier PASS; `main` só recebe `dev` quando tudo estiver validado pelo usuário. Sem pull requests. Remote: `origin` = https://github.com/EzequielBes/Combatsu.git.
+- **Reason**: Pedido do usuário; `dev` integra as features e `main` guarda só o que foi validado.
+- **Trade-off**: Sem revisão via PR; a garantia vem do Verifier e do UAT antes de ir para `main`.
+- **Scope**: Todas as features.
+- **Date**: 2026-09-24
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-harness-jev` concluída → próxima: `.specs/features/run-e-rodadas` (F1)
@@ -65,6 +73,6 @@
 - **Completed**: F0 inteira: Rng com seed, `Health.heal`, `onEnemyDied` com posição, `window.__game` (`snapshot`/`step`) só em `?debug`, `npm run smoke` versionado (3 cenários), `tools/jev-refine.mjs`; 248 testes
 - **In-progress** (file:line): none
 - **Next step**: Design de F1 (Large: apresentar 2-3 abordagens para a máquina de run/ondas e confirmar com o usuário), depois Tasks e Execute
-- **Blockers**: UAT de visual-e-jogabilidade ainda pendente antes do merge em `main`; `feat/fundacao-harness-jev` foi criada a partir de `feat/visual-e-jogabilidade`
+- **Blockers**: UAT de visual-e-jogabilidade e da F0 antes de `dev` ir para `main`
 - **Uncommitted files**: none
-- **Branch**: feat/fundacao-harness-jev (sem push)
+- **Branch**: `dev` (com as features visual-e-jogabilidade e fundacao-harness-jev mergeadas; F1 nasce de `dev` em `feat/run-e-rodadas`)
