@@ -140,11 +140,11 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| FND-01 | P1: Aleatoriedade reproduzível | Specify | Pending |
-| FND-02 | P1: Aleatoriedade reproduzível | Specify | Pending |
-| FND-20 | P1: Aleatoriedade reproduzível | Specify | Pending |
-| FND-03 | P1: Aleatoriedade reproduzível | Specify | Pending |
-| FND-21 | P1: Aleatoriedade reproduzível | Specify | Pending |
+| FND-01 | P1: Aleatoriedade reproduzível | Specify | Implementing |
+| FND-02 | P1: Aleatoriedade reproduzível | Specify | Implementing |
+| FND-20 | P1: Aleatoriedade reproduzível | Specify | Implementing |
+| FND-03 | P1: Aleatoriedade reproduzível | Specify | Implementing |
+| FND-21 | P1: Aleatoriedade reproduzível | Specify | Implementing |
 | FND-04 | P1: Aleatoriedade reproduzível | Specify | Pending |
 | FND-05 | P1: Cura e morte do inimigo | Specify | Pending |
 | FND-06 | P1: Cura e morte do inimigo | Specify | Pending |

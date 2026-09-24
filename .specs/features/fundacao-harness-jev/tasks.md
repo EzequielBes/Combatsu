@@ -87,11 +87,11 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Mesma seed dá os mesmos 1000 `next()` (FND-01); seeds diferentes dão sequências diferentes
-- [ ] `next()` em [0, 1) em 10 000 amostras (FND-02); `int(min, max)` inteiro em [min, max], `int(3, 3) === 3` (FND-20 + edge)
-- [ ] `chance(0)`, `chance(-1)` são `false` (FND-03); `chance(1)`, `chance(2)` são `true` (FND-21)
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: 198 + novos testes passam
+- [x] Mesma seed dá os mesmos 1000 `next()` (FND-01); seeds diferentes dão sequências diferentes
+- [x] `next()` em [0, 1) em 10 000 amostras (FND-02); `int(min, max)` inteiro em [min, max], `int(3, 3) === 3` (FND-20 + edge)
+- [x] `chance(0)`, `chance(-1)` são `false` (FND-03); `chance(1)`, `chance(2)` são `true` (FND-21)
+- [x] Gate check passes: `npm test`
+- [x] Test count: 198 + novos testes passam
 
 **Tests**: unit
 **Gate**: quick
