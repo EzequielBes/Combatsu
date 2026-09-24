@@ -219,16 +219,16 @@ T7 → T8
 
 **Done when**:
 
-- [ ] Estado inicial `title`, sem comandos de spawn (RUN-01)
-- [ ] Start em `title` → `roundActive`, round 1, kills 0, comandos `startRun` e `roundStart(1)` (RUN-02)
-- [ ] Morte do player em `roundActive` → `gameOver`, com `summary = { round, kills }` e comando `gameOver` (RUN-04)
-- [ ] Start em `gameOver` após 1000 ms → nova run, round 1, kills 0, `startRun` (RUN-05); em 999 ms continua `gameOver` com o mesmo summary (RUN-11)
-- [ ] Último abate → `intermission` e um único `roundCleared` (RUN-06); 2499 ms depois continua `intermission`, 2500 ms → `roundActive` com round + 1 e `roundStart` (RUN-10)
-- [ ] Abate em `title`/`intermission`/`gameOver` e start em `roundActive`/`intermission` não mudam state, round nem kills (RUN-07)
-- [ ] `acceptsPlayerInput` é `true` só em `roundActive` e `intermission` (RUN-08)
-- [ ] Player e último inimigo morrem antes do mesmo `update` → `gameOver`, não `intermission` (edge)
-- [ ] Morte do player em `intermission` → `gameOver` com a rodada recém-limpa (edge)
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Estado inicial `title`, sem comandos de spawn (RUN-01)
+- [x] Start em `title` → `roundActive`, round 1, kills 0, comandos `startRun` e `roundStart(1)` (RUN-02)
+- [x] Morte do player em `roundActive` → `gameOver`, com `summary = { round, kills }` e comando `gameOver` (RUN-04)
+- [x] Start em `gameOver` após 1000 ms → nova run, round 1, kills 0, `startRun` (RUN-05); em 999 ms continua `gameOver` com o mesmo summary (RUN-11)
+- [x] Último abate → `intermission` e um único `roundCleared` (RUN-06); 2499 ms depois continua `intermission`, 2500 ms → `roundActive` com round + 1 e `roundStart` (RUN-10)
+- [x] Abate em `title`/`intermission`/`gameOver` e start em `roundActive`/`intermission` não mudam state, round nem kills (RUN-07)
+- [x] `acceptsPlayerInput` é `true` só em `roundActive` e `intermission` (RUN-08)
+- [x] Player e último inimigo morrem antes do mesmo `update` → `gameOver`, não `intermission` (edge)
+- [x] Morte do player em `intermission` → `gameOver` com a rodada recém-limpa (edge)
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
