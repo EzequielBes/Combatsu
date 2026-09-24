@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 10,
+  "next_id": 11,
   "lessons": [
     {
       "id": "L-001",
@@ -166,6 +166,24 @@
       ],
       "created": "2026-09-24T01:27:55Z",
       "last_seen": "2026-09-24T01:27:55Z"
+    },
+    {
+      "id": "L-010",
+      "key": "surviving_mutant::test every spec threshold exactly at its boundary value on both sides because flipping a strict comparison to non strict survives tests that only probe values away from the limit",
+      "text": "Test every spec threshold exactly at its boundary value on both sides, because flipping a strict comparison to non-strict survives tests that only probe values away from the limit.",
+      "signal": "surviving_mutant",
+      "scope": "tests core",
+      "status": "candidate",
+      "features": [
+        "visual-e-jogabilidade"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core)"
+      ],
+      "created": "2026-09-24T02:09:18Z",
+      "last_seen": "2026-09-24T02:09:18Z"
     }
   ]
 }

@@ -1,19 +1,20 @@
-# Visual, efeitos e jogabilidade — Validation (rodada 2)
+# Visual, efeitos e jogabilidade — Validation (rodada 3)
 
 **Date**: 2026-09-23
-**Spec**: `.specs/features/visual-e-jogabilidade/spec.md` (34 requisitos, incluindo AI-06, FX-06, o FX-01 com tolerância de 1 frame, o ART-01 ampliado e o caso de borda da patrulha presa)
-**Diff range**: `338ad6d..1697e88` (branch `feat/visual-e-jogabilidade`, 40 commits, 51 arquivos, +4572/−296). As correções da rodada 1 estão em `eb8914a..1697e88` (8 commits: T29–T33 e os ajustes de spec/tasks).
-**Verifier**: sub-agente independente, rodada 2 (autor ≠ verificador). Ele não escreveu a feature nem as correções. Toda medição foi refeita com scripts próprios (`v2-*.mjs` no scratchpad), sem reaproveitar os resultados da rodada 1.
+**Spec**: `.specs/features/visual-e-jogabilidade/spec.md`: 34 requisitos, 6 casos de borda e as premissas, incluindo a nova "Transparência e ART-01" e as SPEC_DEVIATION aceitas do frame largo (`src/game/art/sprites/player.ts:6`, `enemy.ts:6`)
+**Diff range**:
+- feature: `338ad6d..194aeca` (46 commits, 51 arquivos, +4787/−298);
+- correções da rodada 2: `84657c2..194aeca` (5 commits: `e52468f` spec/tasks, depois T34 `605e57f`, T35 `e00203f`, T36 `be7b10d` e T37 `194aeca`).
+
+**Verifier**: sub-agente independente, rodada 3 (autor ≠ verificador). Ele não escreveu a feature nem as correções. Não confiou nas mensagens de commit: toda medição foi refeita contra a árvore real em HEAD com scripts `v3-*.mjs` no scratchpad:
+- `v3-knock`, `v3-speed`, `v3-art` e `v3-misc` foram escritos nesta rodada;
+- `v3-reg` e `v3-fx` são os scripts da rodada 2, reapontados para `v3-harness.mjs` e rodados de novo.
 
 ## Validation
 
 **Result**: FAIL
 
-Motivo, em uma linha: as quatro lacunas da rodada 1 que tinham correção foram fechadas (AI-06, FX-06, tolerância do FX-01, `debrisColor`), e o caso da patrulha presa também, mas:
-
-1. o T29 introduziu uma regressão: o inimigo que anda, ao levar um golpe, avança ~8 px no sentido em que andava (em direção ao player, quando persegue) em vez de parar;
-2. o ART-01 ampliado continua violado em dois pontos medidos no framebuffer: as partículas da dissolução saem 100% fora da paleta (tint multiplicativo), e as faixas de dither do céu deixam aparecer a cor de fundo `#1b1b2f`, que também está fora da paleta;
-3. um mutante do limiar de 1 px da patrulha presa sobrevive à suíte.
+Motivo, em uma linha: as quatro lacunas da rodada 2 estão fechadas, com medição, e os 34 ACs batem com o spec. Mas o sensor achou **2 mutantes de limiar não equivalentes que sobrevivem** na detecção da patrulha presa. Os dois são do mesmo tipo da lacuna 4 da rodada 2. O código está certo nos dois limites; o que falta é teste que os prenda. Pelo `validate.md` §5, mutante sobrevivente vira fix task antes de fechar a feature. Esta é a iteração 3 de 3, então o caso vai para o usuário.
 
 ---
 
@@ -21,186 +22,246 @@ Motivo, em uma linha: as quatro lacunas da rodada 1 que tinham correção foram 
 
 | Task | Status | Notes |
 | --- | --- | --- |
-| T1–T28 | ✅ Done | Verificadas na rodada 1; os pontos tocados pelas correções foram reexecutados aqui |
-| T29 | ⚠️ Partial | AI-06 cumprido (medido). O done-when "Recuo, ragdoll e levantar continuam como antes" está marcado `[x]`, mas é **falso**: ver a lacuna 1 |
-| T30 | ✅ Done | FX-06 medido nos cinco casos |
-| T31 | ⚠️ Partial | O texto do HUD e o `setTintFill` da dissolução estão na paleta, mas as partículas da fumaça (`tint: CURSE`, multiplicativo) continuam fora dela. O grep por `0x`/`#` do done-when não pega esse caso |
-| T32 | ✅ Done | `grep -rn debrisColor src tests` → 0 linhas |
-| T33 | ✅ Done (teste fraco) | O comportamento foi medido no jogo, mas o limiar de 1 px não está preso por teste (mutante M3) |
+| T1–T33 | ✅ Done | Regressões reexecutadas nesta rodada (ver abaixo) |
+| T34 | ✅ Done | Medido: o golpe leve empurra ~15 px no sentido do golpe, e o jab num inimigo que persegue dá 0 px durante o hitstun. A reversão (M5) é detectada pelo smoke |
+| T35 | ✅ Done | 0 px `#1b1b2f` em 5 posições de câmera. `backgroundColor` = `PALETTE.e` (`src/main.ts:13`) |
+| T36 | ✅ Done | O emissor usa `smoke-curse`, frames `u`/`v`/`U` e tint `#ffffff`. Com alpha 1, os pixels da fumaça são 100% u/v/U. Teste de dados em `tests/game/art.test.ts:289-295` |
+| T37 | ✅ Done | `tests/core/enemyAI.test.ts:280` asserta todas as saídas. O mutante `PATROL_STALL_PX` 1→2 agora morre (M1) |
 
-`tasks.md`: 89 `[x]` e 0 `[ ]`.
+`tasks.md`: 101 `[x]`, 0 `[ ]`.
 
 ---
 
 ## Gate Check
 
-- **Gate command**: `npm run build && npm test`
-- **Result**: build ok (typecheck estrito + vite; só o aviso de chunk > 500 kB). **195 passed, 0 failed, 0 skipped** (16 arquivos)
-- **Test count before feature**: 76 (em `338ad6d`, medido na rodada 1)
-- **Test count after feature**: 195 (191 na rodada 1, mais 4 testes do T33)
-- **Delta**: +119
+- **Gate command**: `npm run build && npm test` (`build` = `tsc --noEmit && vite build`)
+- **Result**: build ok (só o aviso de chunk > 500 kB). **196 passed, 0 failed, 0 skipped** (16 arquivos).
+- **Test count before feature**: 76 (`338ad6d`).
+- **Test count after feature**: 196 (195 na rodada 2, mais 1 teste novo do T36).
+- **Delta**: +120.
 - **Integridade dos testes**:
-  - `git diff 338ad6d..HEAD -- tests`: as únicas linhas removidas de testes pré-existentes são dois imports ampliados (`hit.test.ts:2`, `level.test.ts`), a linha `debrisColor: 0xffffff` do fixture de `props.test.ts` (T32; o campo deixou de existir) e o helper de `bodyTags.test.ts:4`. Nenhuma asserção foi removida.
-  - `git diff eb8914a..HEAD -- tests`: `enemyAI.test.ts` só ganhou o bloco novo (linhas 252–288). Em `props.test.ts`, só saiu a linha do campo morto. Em `bodyTags.test.ts:4`, `receiveHit: vi.fn()` virou `vi.fn(() => true)`, que é o ajuste de tipo exigido pelo novo retorno `boolean`. Nenhum teste da feature foi enfraquecido.
+  - **`git diff 338ad6d..HEAD -- tests`**: as únicas linhas `-` são:
+    - dois imports ampliados (`hit.test.ts`, `level.test.ts`);
+    - o campo morto `debrisColor` (T32);
+    - `receiveHit: vi.fn()` → `vi.fn(() => true)` (`bodyTags.test.ts`, ajuste de tipo).
+
+    Nenhuma asserção foi removida.
+  - **`git diff 84657c2..HEAD -- tests`**:
+    - `enemyAI.test.ts:271-281`: a asserção só do último `vx` (`expect(out.vx).toBe(35)`) virou `expect(vxs.every((vx) => vx === 35)).toBe(true)`. Ficou **mais forte**.
+    - `art.test.ts`: import ampliado e teste novo (`:289-295`).
+
+    Nada foi enfraquecido.
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
-Legenda: ✅ bate com o spec · ❌ violação · ⚠️ lacuna de precisão do spec. Os ACs de adaptador (matriz = none) são verificados por inspeção `arquivo:linha` mais smoke próprio. "Simulado" = tempo de jogo com `game.headlessStep` a dt fixo (60 fps = 1 step do Matter por frame; 30 fps = 2 steps por frame), com steps contados pelo `afterupdate`.
+Legenda: ✅ bate com o spec · ❌ violação · ⚠️ lacuna de precisão do spec.
+
+Os ACs de adaptador (matriz = none) são verificados por `arquivo:linha` mais smoke próprio. "Simulado" significa `game.headlessStep` com dt fixo: 60 fps dá 1 step do Matter por frame, 30 fps dá 2 steps por frame, e os steps são contados no `afterupdate` de `scene.matter.world`.
 
 ### P1: Ataque honesto
 
 | AC | Resultado definido no spec | Evidência | Resultado |
 | --- | --- | --- | --- |
-| FIX-01 | Sem debug, 1/2/H não fazem nada | `src/scenes/TestScene.ts:96-98` (`isDebug() && ...`). Smoke `v2-reg`: teclas 1,2,H,1,2 reais → `[['idle',60],['idle',60]]` antes e depois, `drawDebug=false`, sem `debugGraphic` | ✅ |
-| FIX-02 | Hitbox invisível fora do debug | `src/game/hitbox.ts:75` `.setVisible(isDebug())`. Smoke `v2-reg`: em todos os frames com a hitbox aberta durante a varredura de alcance, `view.visible ∈ {false}` | ✅ |
-| FIX-03 | Soco não acerta com o centro a > 46 px, chute não acerta a > 55 px; J a 60 px não acerta | Smoke `v2-reg`, inimigo pinado de 36 a 62 px com o combo real: maior distância com acerto do jab = **45**, do cross = **45**, do chute = **52**; nenhum acerto a ≥ 60 px; 0 acertos no outro inimigo | ✅ |
-| FIX-04 | `?debug` ou F1 liga 1/2/H e desenha a hitbox | `src/game/debug.ts`. Smoke `v2-reg`: com `?debug`, 1 → `hitstun` (hp 52), 2 → `ragdollStun` (34), H → `drawDebug=true`, J → hitbox `visible=[true]`. Sem `?debug`: F1 → 1 tira 8 de hp; H liga o desenho; F1 de novo → `drawDebug=false` e 1 não faz nada | ✅ |
+| FIX-01 | Sem debug, 1/2/H não fazem nada | `src/scenes/TestScene.ts:96-98` (`isDebug() && …`). `v3-reg`: teclas reais 1,2,H,1,2 → `[['idle',60],['idle',60]]` antes e depois; `drawDebug=false`, sem `debugGraphic` | ✅ |
+| FIX-02 | Hitbox invisível fora do debug | `src/game/hitbox.ts:75` `.setVisible(isDebug())`. `v3-reg`: em todo frame com hitbox aberta na varredura de alcance, `visible ∈ {false}` | ✅ |
+| FIX-03 | Soco não acerta com o centro a > 46 px; chute não acerta a > 55; J a 60 px não acerta | `v3-reg`, inimigo pinado de 36 a 62 px, combo real: maior acerto do jab **45**, do cross **45**, do chute **52**; 0 acertos a ≥ 60; 0 acertos no outro inimigo | ✅ |
+| FIX-04 | `?debug` ou F1 liga 1/2/H e desenha a hitbox | `src/game/debug.ts`. `v3-reg`: com `?debug`, 1 → `hitstun` (52), 2 → `ragdollStun` (34), H → `drawDebug=true`, J → hitbox `visible=[true]`. Com F1: 1 tira 8 de hp e H liga o desenho. Com F1 de novo: `drawDebug=false` e 1 não faz nada | ✅ |
 
 ### P1: Base de pixel art
 
 | AC | Resultado definido no spec | Evidência | Resultado |
 | --- | --- | --- | --- |
-| ART-01 | **Tudo que é desenhado** (sprite, tile, fundo, partícula, tint, texto do HUD) só com cores da paleta | Testes: `tests/game/art.test.ts:69-71,222-228,244-247` (`parseSheet(..., PALETTE_KEYS)`). Texturas (`v2-art`): leitura de pixels de **todas** as texturas de canvas (terrain, player-art, enemy, rag-*, chair/bottle e shards, smoke, hud-bar, enemy-bar, fx-star, fx-bit) → **0** cores fora da paleta. O placeholder `player` (0x3a86ff) é o corpo invisível (`visible=false`). HUD: `src/game/Hud.ts:13-15,40` usa `PALETTE.w`/`PALETTE.k`; os únicos pixels fora da paleta no texto são de borda de glifo com alpha < 255 (`offPaletteOpaque = 0`). **Violação 1, partículas/tint**: `src/game/Ragdoll.ts:36,109` `tint: CURSE` (multiplicativo) sobre a fumaça `SMOKE` toda em `w` (`src/game/art/sprites/props.ts:46`, 0xfff4e0). Leitura do framebuffer WebGL com as partículas em alpha 1 sobre preto: renderizadas **0x3b1c4e, 0xcf8ee0, 0x7b3ca2**, ou seja, **532/532 px fora da paleta** (w×v, w×U, w×u). **Violação 2, fundo**: `src/game/art/background.ts:99-103`. Nas faixas `dither(…, 'E')` (y 150–162) e `dither(…, 'f')` (y 240–252), só metade dos texels é pintada, e nada fica embaixo. A outra metade mostra o `backgroundColor: '#1b1b2f'` do jogo (`src/main.ts:11`, fora da paleta): **11 214 a 14 652 px** dessa cor por tela nos 4 cantos da sala e no centro (faixas nas linhas de tela 76–256) | ❌ |
-| ART-02 | Linhas desiguais, caractere fora da paleta ou frames de tamanhos diferentes lançam erro com o nome do sprite | `tests/core/pixelGrid.test.ts:31` `toThrow(/heroi/)`; `:37-39` `/heroi/`, `/'x'/`, `/\(1, 1\)/`; `:43-44` `toThrow(/inimigo.*tamanho/)` | ✅ |
-| ART-03 | 2 px de mundo por texel em sprite, tile e parte de ragdoll | `tests/game/art.test.ts:51` `expect(ART_SCALE).toBe(2)`; `:70-71` tile = `TILE`; `:113` altura × 2 = 48. Smoke `v2-misc`: partes do ragdoll com `scaleX=[1]`; `Ragdoll.ts:107` fumaça agora começa em `scale 1` | ✅ |
-| RES-01 | Zoom 1,5, round pixels, segue o player, nunca mostra fora da sala | `TestScene.ts:87-92`. Smoke `v2-misc`/`v2-misc2`: `zoom=1.5`, `roundPixels=true`, `bounds=[0,0,1280,544]`, `following=true`, câmera de UI com zoom 1; `worldView` nos 4 cantos = `[0,0,640,360]`, `[640,0,1280,360]`, `[0,184,640,544]`, `[640,184,1280,544]` (dentro da sala) | ✅ |
+| ART-01 | Toda cor de origem desenhada é da paleta. Mistura por alpha é permitida. Tint multiplicativo e fundo do canvas fora da paleta não são | Dados: `tests/game/art.test.ts:69,93,170,226,245` (`parseSheet(…, PALETTE_KEYS)`); `:290-294` fumaça (`toEqual(['U','u','v'])`, `toEqual([fr.key])`). Detalhe da medição logo abaixo da tabela | ✅ |
+| ART-02 | Grade inválida lança erro com o nome do sprite | `tests/core/pixelGrid.test.ts:31` `toThrow(/heroi/)`; `:37-39` `/heroi/`, `/'x'/`, `/\(1, 1\)/`; `:43-44` `toThrow(/inimigo.*tamanho/)` | ✅ |
+| ART-03 | 2 px de mundo por texel em sprite, tile e parte de ragdoll | `tests/game/art.test.ts:51` `expect(ART_SCALE).toBe(2)`. `v3-misc`: partes do ragdoll com `scaleX=[1]`. A fumaça começa em `scale 1` (`Ragdoll.ts:106`) | ✅ |
+| RES-01 | Zoom 1,5, round pixels, segue o player, nunca mostra fora da sala | `TestScene.ts:87-92`. `v3-misc`: `zoom=1.5`, `roundPixels=true`, `bounds=[0,0,1280,544]`, `following=true`, câmera `ui` com zoom 1. `v3-art`: `worldView` nos 4 cantos = `[0,0]`, `[640,0]`, `[0,184]`, `[640,184]` (640×360, dentro da sala) | ✅ |
+
+**Detalhe da medição do ART-01** (`v3-art`):
+
+- **Texturas**: as 19 texturas de canvas foram lidas; **0** cores opacas fora da paleta. As exceções:
+  - o placeholder `player` (`#3a86ff`/`#000`/`#fff`) é o corpo invisível (`src/game/Player.ts:86` `setVisible(false)`);
+  - as 2 texturas de `Text` só têm pixels de alpha parcial (antialias).
+- **Framebuffer** (`renderer.snapshot`) nos 4 cantos da sala e no centro:
+  - **`#1b1b2f` = 0 px** em todas as posições;
+  - **0 px fora da paleta fora das áreas de texto do HUD**;
+  - dentro delas há 21,7k a 22,4k px, todos de mistura por alpha do painel (`k` a 0,8, `Hud.ts:40`) e das bordas dos glifos;
+  - com o painel escondido, sobram 62 px, só na borda do rótulo "HP".
+- **Cor de limpeza** = `#0e1326` = `PALETTE.e` (`src/main.ts:13`).
+- **Fumaça da dissolução** (`Ragdoll.ts:101-109`):
+  - emissor `smoke-curse`, 30 partículas vivas;
+  - frames `['U','u','v']`, tints `['#ffffff']`, `tintFill=false`;
+  - frames da textura: `u=#7b3fb8`, `v=#3b1d59`, `U=#cf94ff`;
+  - com o alpha das partículas forçado a 1 e as partes do ragdoll escondidas: 422 px de u/v/U e **0 px fora da paleta**.
+- **Grep em `src/`**:
+  - `setTint(` e `tint:` → 0;
+  - `setTintFill` só com `PALETTE.*` (`Enemy.ts:203`, `Ragdoll.ts:89,98`, `fx.ts:102`);
+  - `'#`/`` `#`` só na montagem de CSS a partir da `PALETTE` (`render.ts:23`, `Hud.ts:14`, `main.ts:13`);
+  - `0x` fora da paleta: máscaras de colisão (`core/collision.ts`), o divisor do RNG (`background.ts:62`) e os placeholders pré-existentes de `src/game/textures.ts:37,41,49,50` (ver Observações).
 
 ### P1: Personagens animados
 
 | AC | Resultado definido no spec | Evidência | Resultado |
 | --- | --- | --- | --- |
-| CHR-01 | 12 animações com a precedência do spec e a variante carry | `tests/core/animState.test.ts:14-17` (10 → idle, 10,5 → run), `:21-23`, `:27-29`, `:33-34`, `:38-40` `toBe('hurt')`, `:44-46`, `:50-51` (arquivo sem alteração desde a rodada 1) | ✅ |
-| CHR-02 | Frame de membro esticado durante toda a fase ativa | `tests/core/animState.test.ts:61` `attackFrame('active')).toBe('hit')`; `tests/core/combo.test.ts:175-176`. Smoke `v2-misc`: rastro do chute só em `kick-hit` | ✅ |
-| CHR-03 | Inimigo: exatamente uma de 6 animações | `tests/core/animState.test.ts:76-117`; `:117` varre brain × IA × moving contra `ALL` | ✅ |
-| CHR-04 | Ragdoll com texturas recortadas da arte do inimigo | `tests/game/art.test.ts:222-228,233`. Smoke `v2-misc`: `deadRagdoll` com `rag-torso`, `rag-head` e 4× `rag-limb`, sprite escondido | ✅ |
+| CHR-01 | 12 animações com a precedência do spec e a variante carry | `tests/core/animState.test.ts:14-51` (ex.: `:38-40` `toBe('hurt')`). Arquivo sem alteração desde a rodada 2 | ✅ |
+| CHR-02 | Frame de membro esticado durante toda a fase ativa | `tests/core/animState.test.ts:61` `attackFrame('active')).toBe('hit')`; `tests/core/combo.test.ts:175-176` | ✅ |
+| CHR-03 | Inimigo: exatamente uma de 6 animações | `tests/core/animState.test.ts:76-117` (varredura brain × IA × moving contra `ALL`) | ✅ |
+| CHR-04 | Ragdoll com texturas recortadas da arte do inimigo | `tests/game/art.test.ts:222-233`. `v3-misc`: `deadRagdoll` com `rag-torso`, `rag-head` e 4× `rag-limb`; sprite escondido | ✅ |
 
 ### P1: Impacto do golpe
 
 | AC | Resultado definido no spec | Evidência | Resultado |
 | --- | --- | --- | --- |
-| FX-01 | Golpe aceito congela física e animações por ≥ 50 e < 50 + 1 frame (leve) e por ≥ 90 e < 90 + 1 frame (forte) | Lógica: `tests/core/hitstop.test.ts:11` `toEqual({ light: 50, heavy: 90 })`, `:23-27` (49 → congelado, 50 → livre), `:34-36`. Adaptador: `TestScene.ts:145-158`. Smoke `v2-fx`, golpe real, tempo entre o frame do acerto e o próximo step do Matter: leve **50,0 ms** (60 fps, frame 16,7) e **66,7 ms** (30 fps, frame 33,3); forte **100 ms** (60 fps) e **100 ms** (30 fps). Todos ≥ ms e < ms + frame; animação do inimigo e posição sem mudança durante o congelamento | ✅ |
-| FX-02 | Novo golpe no congelamento fica com o maior, nunca a soma | `tests/core/hitstop.test.ts:63-72,74-83,85-91,93-102`; mutante M6 (`max` → último) morto | ✅ |
-| FX-03 | Faísca no ponto de contato: branca no leve, âmbar no forte, roxa no objeto | `src/game/fx.ts:26-30`; `hitbox.ts:69-71` (`contactWith` por posição + tamanho). Smoke `v2-fx`: combo → `['light','light','heavy']` com `shake=1`; `v2-misc`: golpe com a garrafa → `['prop']` | ✅ |
-| FX-06 | Golpe ignorado (player invulnerável, inimigo morto ou dissolvendo, dono, mesmo time) não gera faísca, tremida nem congelamento | `src/game/hitbox.ts:68` `if (!other.target.receiveHit(hit)) return;`, `src/game/Prop.ts:138-142`, `Player.ts:119-128` (`'ignored'` → `false`), `Enemy.ts:104-111` (`[]` → `false`), `bodyTags.ts:19`. Smoke `v2-fx` com contadores em `fx.spark`, `fx.shake` e `hitstop.trigger`: **invulnerável**: a garra chama `receiveHit` e recebe `false`, com 0/0/0, hp continua 99; **morto** (`deadRagdoll`): 5 golpes ignorados com 0/0/0; **dissolvendo**: 1 golpe ignorado com 0/0/0; **dono** (garrafa arremessada tocando o player): 0 chamadas e 0/0/0; **mesmo time** (inimigo 1 dentro da garra): 0 chamadas no inimigo 1. **Aceito continua**: garra no player vulnerável → `['light']` + `trigger [50]`; combo → 3 faíscas + `[50,50,90]` + 1 tremida. Mutante de adaptador M12 (gate removido) morto pelo smoke | ✅ |
+| FX-01 | ≥ 50 e < 50 + 1 frame (leve); ≥ 90 e < 90 + 1 frame (forte) | `tests/core/hitstop.test.ts:10-11` `toEqual({ light: 50, heavy: 90 })`, `:20-36`. `v3-fx`, golpe real (do acerto ao próximo step): leve **50,0** (60 fps) e **66,7** (30 fps); forte **100** (60) e **100** (30). Todos ≥ ms e < ms + frame. Durante o congelamento, a animação e a posição do inimigo não mudam | ✅ |
+| FX-02 | Novo golpe no congelamento fica com o maior, nunca a soma | `tests/core/hitstop.test.ts:63-102`; mutante M2 (soma) morto por 4 testes | ✅ |
+| FX-03 | Faísca no ponto de contato: branca no leve, âmbar no forte, roxa no objeto | `src/game/fx.ts:26-30`, `hitbox.ts:69-74`. `v3-fx`: combo → `['light','light','heavy']` + 1 tremida | ✅ |
+| FX-06 | Golpe ignorado não gera faísca, tremida nem congelamento | `hitbox.ts:68` `if (!other.target.receiveHit(hit)) return;`. Os 5 casos medidos estão logo abaixo da tabela | ✅ |
+
+**Os 5 casos do FX-06** (`v3-fx`):
+
+- **Invulnerável**: a garra recebe `false`; faísca/tremida/congelamento 0/0/0; hp fica em 99.
+- **Morto** (`deadRagdoll`): 5 golpes ignorados, 0/0/0.
+- **Dissolvendo**: 1 golpe ignorado, 0/0/0.
+- **Dono** (a garrafa arremessada toca o player): 0 chamadas, 0/0/0.
+- **Mesmo time**: 0 chamadas de `receiveHit` no inimigo 1 dentro da garra.
+- **Golpe aceito mantém o feedback**: garra → `['light']` + `trigger [50]`; combo → `[50,50,90]`.
 
 ### P1: Luta de verdade
 
 | AC | Resultado definido no spec | Evidência | Resultado |
 | --- | --- | --- | --- |
-| HP-01 | Perde hp = dano e fica invulnerável por 700 ms | `tests/core/health.test.ts:12` `toEqual(SPEC)` (100/700/200/1000), `:28-30`, `:36-40`. Smoke `v2-reg`: hp 100 → 88 → 76 → 64 pela garra; invulnerabilidade de 717 ms simulados (700 + quantização de 1 frame) | ✅ |
-| HP-02 | Invulnerável ignora golpes e pisca | `tests/core/health.test.ts:37-38`; `Player.ts:177-185`. Smoke `v2-fx`: garra durante a invulnerabilidade → `receiveHit=false`, hp inalterado | ✅ |
-| HP-03 | Recuo na direção do golpe e sem controle por 200 ms | `tests/core/health.test.ts:57-63`; `Player.ts:133,157` (`vx = knockDir * PLAYER_KNOCKBACK`) | ✅ |
-| HP-04 | hp 0 → fade, respawn no spawn com 100 depois de 1000 ms, larga o objeto | `tests/core/health.test.ts:78-89`; `Player.ts:188-202`. Smoke `v2-reg`: segurando a cadeira (`held`), morre (`dead=true`), cadeira `rest`, fade visto, respawn em (112, 462) = spawn (112, 464 − 2 de `SPAWN_LIFT`), hp 100, ~1017 ms simulados depois da morte | ✅ |
-| AI-01 | Player ≥ 200 px → patrulha ±48 px a 35 px/s | Lógica: `tests/core/enemyAI.test.ts:40` `toEqual(SPEC)`, `:54` `toBe(35)`, `:61-64` vira em ±48. Smoke `v2-speed2` (8 s simulados): inimigo 0 com faixa **[−48, +48]** (60 fps) e [−48,6, +48,6] (30 fps), **34,3 px/s** | ✅ |
-| AI-02 | Player < 200 px → anda até ele a 70 px/s | `tests/core/enemyAI.test.ts:97` `toBe(70)`, `:100` `-70`, `:116`. Smoke: **68,6 px/s** a 60 e a 30 fps | ✅ |
-| AI-03 | < 40 px → preparo 450, golpe ativo 120 com 12 de dano, descanso 800, volta a perseguir | `tests/core/enemyAI.test.ts:125-177`, `:44-45`. Smoke `v2-reg` (tempo simulado sem hitstop): windup **450/450/450**, attack **133** (120 quantizado ao frame; a sobra volta no descanso pela carga de `next()`), rest **800/800**, 12 de dano por golpe | ✅ |
-| AI-04 | Golpe no preparo ou no golpe cancela e recomeça o ciclo | `tests/core/enemyAI.test.ts:195-233`; `Enemy.ts:108` `this.onAI(this.ai.interrupt())` | ✅ (a reação ao golpe tem a regressão da lacuna 1) |
-| AI-05 | A garra nunca fere o próprio inimigo nem outros | `tests/core/hit.test.ts:41` `canDamage('enemy','enemy')).toBe(false)`; `hitbox.ts:67`. Smoke `v2-fx`: 0 chamadas de `receiveHit` no inimigo 1 dentro da garra; mutante M8 morto | ✅ |
-| AI-06 | Patrulha e perseguição no tuning ±10% a 30 e a 60 fps | `src/game/Enemy.ts:49-53,77,137` (vx reaplicado em todo `beforeupdate`). Smoke `v2-speed2`, tempo simulado (distância total ÷ steps/60), **referência do player: 220,0 px/s nos dois casos**: **60 fps** (1 step/frame): patrulha **34,3** (−2,0%), perseguição **68,6** (−2,0%); **30 fps** (2 steps/frame): patrulha **34,3**, perseguição **68,6**. No loop real do headless (`v2-speed`, `afterupdate`, ~25 fps, 2 steps/frame, com e sem `fpsLimit=30`): 34,3 e 68,6. Mutante M13 (reaplique desligado) → 17,85 e 33,88 a 30 fps: morto pelo smoke | ✅ |
+| HP-01 | Perde hp = dano e fica invulnerável por 700 ms | `tests/core/health.test.ts:12` `toEqual(SPEC)` (100/700/200/1000), `:26-40`. `v3-reg`: hp 100 → 88 → 76 → 64; invulnerável por 717 ms simulados (700 mais a quantização de 1 frame) | ✅ |
+| HP-02 | Invulnerável ignora golpes e pisca | `tests/core/health.test.ts:33-40`; `Player.ts:177-185`. `v3-fx`: garra na invulnerabilidade → `false`, hp inalterado | ✅ |
+| HP-03 | Recuo na direção do golpe e sem controle por 200 ms | `tests/core/health.test.ts:54-63`; `Player.ts:133,157` | ✅ |
+| HP-04 | hp 0 → fade, respawn no spawn com 100 depois de 1000 ms, larga o objeto | `tests/core/health.test.ts:75-89`. `v3-reg`: segurando a cadeira (`held`), o player morre; a cadeira vai para `rest`; o fade aparece; respawn em (112, 462) = spawn (112, 464) − `SPAWN_LIFT` 2, com hp 100, 1017 ms simulados depois da morte | ✅ |
+| AI-01 | Player ≥ 200 px → patrulha ±48 px a 35 px/s | `tests/core/enemyAI.test.ts:40` `toEqual(SPEC)`, `:54` `toBe(35)`, `:61-64` vira em ±48. `v3-speed`, deslocamento por step (só steps com cérebro `idle` e IA `patrol`, × 60): **34,3 px/s** (−2,0%) a 60 e a 30 fps; faixa [−48, +48] a 60 e [−48,6, +48,6] a 30 | ✅ |
+| AI-02 | Player < 200 px → anda até ele a 70 px/s | `tests/core/enemyAI.test.ts:97` `toBe(70)`, `:100` `toBe(-70)`. `v3-speed`: **68,6 px/s** (−2,0%) a 60 e a 30 fps | ✅ |
+| AI-03 | < 40 px → preparo 450, golpe 120 com 12 de dano, descanso 800 | `tests/core/enemyAI.test.ts:44-45` (`damage 12`, `activeMs 120`), `:125-177`. `v3-reg` (tempo simulado descongelado): windup **450/450/450**, attack **133** (120 arredondado para o frame, a sobra volta no descanso), rest **800/800**, **12** de dano por golpe | ✅ |
+| AI-04 | Golpe no preparo ou no ataque cancela e recomeça depois da reação | `tests/core/enemyAI.test.ts:195-233`; `Enemy.ts:111` `this.onAI(this.ai.interrupt())`. A reação ao golpe voltou ao que era antes do T29 (ver T34) | ✅ |
+| AI-05 | A garra nunca fere o próprio inimigo nem outros | `tests/core/hit.test.ts:41` `canDamage('enemy','enemy')).toBe(false)`; `hitbox.ts:67`. `v3-fx`: 0 chamadas no inimigo 1; mutante M3 morto | ✅ |
+| AI-06 | Patrulha e perseguição no tuning ±10% a 30 e a 60 fps | `src/game/Enemy.ts:50-55,140`. `v3-speed`, simulado: **1 step/frame** → patrulha 34,3, perseguição 68,6; **2 steps/frame** → 34,3 e 68,6. Loop real com `fpsLimit=30` (33 fps medidos, 2 steps/frame): 34,3 e 68,6 | ✅ |
 
 ### P2 / P3
 
 | AC | Resultado definido no spec | Evidência | Resultado |
 | --- | --- | --- | --- |
-| ENV-01 | 9 variantes só pelos 4 vizinhos | `tests/core/level.test.ts:41-90` (ex.: `:46` `toBe('top')`, `:68-69` `thin-left`/`thin`); mutantes de `tileVariant` da rodada 1 (arquivo sem alteração) | ✅ |
-| ENV-02 | 3 camadas de parallax 0,1 / 0,3 / 0,6 atrás do terreno | `background.ts:83`. Smoke `v2-misc`: `[[0.1,0.1,-30],[0.3,0.3,-20],[0.6,0.6,-10]]`, terreno com depth `[0]` | ✅ (cor: ver ART-01) |
-| PRP-01 | Cadeira e garrafa na escala 2; estilhaços recortados do próprio sprite | `tests/game/art.test.ts:244-247,256-285`. Smoke `v2-misc`: a garrafa quebra em 10 objetos `bottle-shards:s0..` | ✅ |
-| HUD-01 | Barra de hp do player fixa na tela | `Hud.ts`. Smoke `v2-misc2`: `scrollFactor=0`, na camada de UI, largura 104 → 52 com hp 50 | ✅ |
-| HUD-02 | Barra do inimigo do primeiro dano até morrer | `Enemy.ts:115-127`. Smoke `v2-misc`: `before=false`, `after=true`, o outro inimigo continua sem barra, `afterDeath=false` | ✅ |
-| HUD-03 | Painel por 8 s ao iniciar/reiniciar; Tab alterna | `TestScene.ts:32,211,214`; `Hud.ts:58-72` (`delayedCall(ms)`). Smoke `v2-reg`: visível no início, escondido ~8,2 s de cena depois do R (a observação começa ~300 ms depois do R); Tab → `true`, Tab → `false` | ✅ |
-| FX-04 | Poeira ao pular, pousar ou virar correndo | `Player.ts:168-174`. Smoke `v2-misc`: 2 nuvens no pulo + pouso, 1 na virada | ✅ |
-| FX-05 | Rastro no chute ou no arremesso | `Player.ts:232`. Smoke `v2-misc`: 6 cópias no chute, todas `kick-hit` | ✅ |
+| ENV-01 | 9 variantes só pelos 4 vizinhos | `tests/core/level.test.ts:41-90` (ex.: `:46` `toBe('top')`) | ✅ |
+| ENV-02 | 3 camadas de parallax 0,1 / 0,3 / 0,6 atrás do terreno | `background.ts:83`. `v3-misc`: `[[0.1,0.1,-30],[0.3,0.3,-20],[0.6,0.6,-10]]`, terreno com depth `[0]`. Cor: ver ART-01 (0 furos) | ✅ |
+| PRP-01 | Cadeira e garrafa na escala 2; estilhaços do próprio sprite | `tests/game/art.test.ts:244-285` | ✅ |
+| HUD-01 | Barra de hp do player fixa na tela | `Hud.ts:35-51`; `scrollFactor 0` na `uiLayer` (`:43-44`) | ✅ |
+| HUD-02 | Barra do inimigo do primeiro dano até morrer | `Enemy.ts:118-130`. `v3-misc`: `before=false`, `after=true`, o outro inimigo sem barra, `afterDeath=false` | ✅ |
+| HUD-03 | Painel por 8 s ao iniciar/reiniciar; Tab alterna | `TestScene.ts:32,211-214`. `v3-misc`, simulado: some com **8000 ms** de cena. `v3-reg`, teclas reais: visível no início; Tab → `true`, Tab → `false` | ✅ |
+| FX-04 | Poeira ao pular, pousar ou virar correndo | `Player.ts:168-174` (sem alteração desde a rodada 2, que mediu 2 nuvens no pulo + pouso e 1 na virada) | ✅ |
+| FX-05 | Rastro no chute ou no arremesso | `Player.ts:232` (sem alteração desde a rodada 2: 6 cópias `kick-hit`) | ✅ |
 
-**Status**: ❌ 33/34 ACs batem com o spec. ART-01 está violado (partículas tingidas e dither do céu). Nenhuma lacuna nova de precisão do spec. Há ainda uma regressão fora da tabela de ACs (lacuna 1) e um mutante sobrevivente (lacuna 4).
+**Status**: ✅ **34/34 ACs** batem com o valor do spec. Nenhuma lacuna nova de precisão do spec.
 
-Interpretação aplicada ao ART-01: composição por alpha (fade, piscar, bordas de glifo com cobertura parcial) não conta como "cor", porque a cor de origem continua da paleta. Tint multiplicativo e fundo sem pintura contam, porque a cor de origem na tela deixa de ser da paleta.
+### Regressão do T34, medida (`v3-knock`, simulado)
+
+- **Golpe leve direto** (o `debugHit('light')` da tecla 1, fora do step): o inimigo desloca **+15,06 px** no sentido do golpe (60 fps) e **+14,97** (30 fps), tanto patrulhando (vx de andar +0,58/step) quanto perseguindo (vx −1,17/step, contra o golpe). Referência pré-T29 (rodada 2): ~15–17,5 px.
+- **Jab real num inimigo que persegue**, com o aperto de 44 a 56 px e o acerto a 38–45 px:
+  - deslocamento durante o hitstun: **mínimo 0,00 px** em todos os casos, a 60 e a 30 fps;
+  - ele não avança para o player; o congelamento dura 5–6 frames (60 fps) ou 3–4 (30 fps).
+
+  Com o T34 revertido (M5): −7,5 a −8,7 px em direção ao player. Os 0 px de recuo no caminho real já existiam antes da feature (rodada 2) e ficam fora do escopo.
+- **Patrulha e perseguição**: 34,3 e 68,6 px/s com 1 e 2 steps/frame (ver AI-06).
 
 ---
 
 ## Edge Cases
 
-- [x] **Player morre segurando objeto → o objeto cai em repouso**: `Player.ts:189-192` + `Prop.holderGone`; `tests/core/props.test.ts:78,82` `holderGone()).toBe(true)`. Smoke `v2-reg`: cadeira `held` → `rest` na morte.
-- [x] **Inimigo morre no preparo → a hitbox nunca abre**: `tests/core/enemyAI.test.ts:242-249` `expect(out.events).toEqual([])`.
-- [x] **Patrulha presa (avança < 1 px em 200 ms) → inverte**: `src/core/enemyAI.ts:4-6,115,120-132`; `tests/core/enemyAI.test.ts:256-261` (208 ms parado → `vx -35`, `facing -1`), `:264-269` (160 ms → `35`), `:282-287` (perseguição não vira). Smoke `v2-speed2`: o inimigo da direita (spawn **1200**, parede em 1248) inverte em **x = 1236,6** depois de **217 ms** parado, vai até 1152 (−48) e volta: 3 inversões em 8 s, a 60 e a 30 fps, faixa [−48,5, +37,2]. ⚠️ O limiar de 1 px não está preso por teste (mutante M3; lacuna 4).
-- [x] **Reinício durante o hitstop → cena descongelada**: `tests/core/hitstop.test.ts:105-120`; `TestScene.ts:58-65`. Smoke `v2-reg`: `trigger(5000)` + restart → `frozen=false`, world ativo, `time.paused=false`.
-- [x] **Golpe do inimigo e do próprio objeto no mesmo frame → só o do inimigo**: `tests/core/props.test.ts:89-94` (`tryHit(PLAYER)).toBe(false)`); smoke `v2-fx` (dono): 0 chamadas.
-- [x] **Dois golpes de inimigo no mesmo frame → dano uma vez só**: `tests/core/health.test.ts:45-49` (`'hurt'`, depois `'ignored'`, hp 88).
+- [x] **Player morre segurando objeto → o objeto cai em repouso**: `Player.ts:189-192`; `tests/core/props.test.ts:78,82`. `v3-reg`: `held` → `rest`.
+- [x] **Inimigo morre no preparo → a hitbox nunca abre**: `tests/core/enemyAI.test.ts:242-248` `expect(out.events).toEqual([])`.
+- [x] **Patrulha presa (< 1 px em 200 ms) → inverte**: `src/core/enemyAI.ts:4-6,113-132`; `tests/core/enemyAI.test.ts:255-261`, `:264-269`, `:271-281`.
+  - `v3-speed`: o inimigo 1 (spawn **1200**, parede em 1248) inverte em x = 1236,6 depois de **217 ms** parado, vai até 1152 (−48) e volta. Faz 3 inversões em 8 s, a 60 e a 30 fps, na faixa [−48,5, +37,2].
+  - ⚠️ Os limites exatos (1 px e 200 ms) não estão presos por teste (M9 e M10; lacuna nova 1).
+- [x] **Reinício durante o hitstop → cena descongelada**: `tests/core/hitstop.test.ts:106-120`; `TestScene.ts:57-65`. `v3-reg`: `trigger(5000)` + restart → `frozen=false`, world ativo, `time.paused=false`.
+- [x] **Golpe do inimigo e do próprio objeto no mesmo frame → só o do inimigo**: `tests/core/props.test.ts:89-94`. `v3-fx` (dono): 0 chamadas.
+- [x] **Dois golpes de inimigo no mesmo frame → dano uma vez**: `tests/core/health.test.ts:45-49`.
 
 ---
 
-## Status das lacunas da rodada 1
+## Status das lacunas das rodadas 1 e 2
 
-| # | Lacuna da rodada 1 | Status | Evidência |
+| # | Lacuna | Status | Evidência (rodada 3) |
 | --- | --- | --- | --- |
-| 1 | [Major] AI-01/02 dependem da taxa de quadros | ✅ **Fechada** | 34,3/68,6 px/s com 1 e 2 steps/frame (antes: 17,8/34,3 a 30 fps); player a 220 nos dois; M13 volta a quebrar e o smoke detecta. O efeito colateral está na lacuna nova 1 |
-| 2 | [Major] Golpe ignorado gera faísca e hitstop | ✅ **Fechada** | FX-06 nos cinco casos, com 0 faísca/tremida/trigger; golpe aceito mantém o feedback; M12 detectado |
-| 3 | [Minor] FX-01 sem tolerância de frame | ✅ **Fechada** | Spec: "≥ ms e < ms + 1 frame". Medido 50/66,7 (leve) e 100/100 (forte) a 60/30 fps |
-| 4 | [Minor] ART-01 (texto do HUD, tint e fumaça da dissolução) | ⚠️ **Parcial, aberta** | Texto do HUD: fechado (`PALETTE.w`/`k`). Partes do ragdoll: fechado (`setTintFill(PALETTE.u)`, smoke `tintFill=true`, `7b3fb8`). Escala da fumaça: fechado (`scale 1`). **Partículas da fumaça: abertas** (tint multiplicativo, 100% fora da paleta no framebuffer) |
-| 5 | [Cosmético] Campo morto `debrisColor` | ✅ **Fechada** | `grep -rn debrisColor src tests` → vazio |
-| — | Caso de borda da patrulha presa (achado depois da rodada 1) | ✅ **Fechada** (teste fraco) | Smoke: vai e volta na parede; limiar sem teste discriminante (M3) |
+| R1-1 | [Major] AI-01/02 dependiam do fps | ✅ Fechada | 34,3/68,6 px/s com 1 e 2 steps/frame e no loop real a 33 fps |
+| R1-2 | [Major] Golpe ignorado gerava feedback | ✅ Fechada | FX-06: 5 casos com 0/0/0; golpe aceito mantém o feedback |
+| R1-3 | [Minor] FX-01 sem tolerância de frame | ✅ Fechada | 50/66,7 (leve) e 100/100 (forte) a 60/30 fps |
+| R1-4 | [Minor] ART-01: texto do HUD, tint e fumaça | ✅ Fechada | Texto em `PALETTE.w`/`k`; ragdoll com `setTintFill`; fumaça com frames da paleta e tint neutro (ver R2-3) |
+| R1-5 | [Cosmético] `debrisColor` morto | ✅ Fechada | `grep -rn debrisColor src tests` → vazio |
+| R1-extra | Patrulha presa empurrava a parede | ✅ Fechada | Vai e volta: 3 inversões em 8 s |
+| R2-1 | [Major] Regressão do T29: o inimigo atingido continuava andando | ✅ Fechada | Golpe leve: +15 px no sentido do golpe. Jab no inimigo que persegue: 0 px no hitstun. M5 detectado pelo smoke |
+| R2-2 | [Major] Dither do céu mostrava `#1b1b2f` | ✅ Fechada | 0 px em 5 posições de câmera; clear = `PALETTE.e`. M6 (reversão) volta a 11–15k px |
+| R2-3 | [Minor] Fumaça com tint multiplicativo | ✅ Fechada | Frames u/v/U, tint `#ffffff`, 0 px fora da paleta com alpha 1. M7 (tint de volta) → 504 px fora |
+| R2-4 | [Minor] Mutante `PATROL_STALL_PX` 1→2 sobrevivia | ✅ Fechada | M1 morto (`enemyAI.test.ts:280`) |
 
 ---
 
 ## Discrimination Sensor
 
-Scratch: `git worktree add --detach …/scratchpad/verifier2-wt HEAD` (1697e88), com junction de `node_modules` (PowerShell `New-Item -ItemType Junction`). Cada mutação rodou `npx vitest run` (a suíte inteira) e foi desfeita com `git checkout -- <arquivo>`, com porcelain do scratch vazio entre uma e outra. As mutações de adaptador (M12, M13) rodaram o **smoke** contra o vite do worktree, porque a matriz de cobertura define o smoke como o teste dessa camada. Worktrees auxiliares de comparação: `verifier2-pre` (`f389390`, antes do T29) e `verifier2-base` (`338ad6d`, antes da feature).
+**Scratch**: `git worktree add --detach …/scratchpad/verifier3-wt HEAD` (194aeca), com junction de `node_modules` (`New-Item -ItemType Junction`).
+
+- **Mutações unitárias**: cada uma rodou `npx vitest run` (a suíte inteira) e foi desfeita com `git checkout -- <arquivo>`.
+- **Mutações de adaptador** (matriz = none, teste = smoke): rodaram o smoke `v3-*` contra o vite do worktree (`V3_PROJECT`).
+- **Limpeza do scratch**: o porcelain do scratch ficou vazio entre as mutações.
+- **Sondas de limiar**: um arquivo de teste temporário **só no scratch** (`tests/core/v3probe.test.ts`), apagado em seguida, provou que os sobreviventes não são equivalentes.
 
 | # | File:line | Mutação | Resultado |
 | --- | --- | --- | --- |
-| M1 | `src/core/enemyAI.ts:129` | patrulha presa não inverte (linha removida) | ✅ morto (1 falha) |
-| M2 | `src/core/enemyAI.ts:6` | `PATROL_STALL_MS` 200 → 400 | ✅ morto (1) |
-| M3 | `src/core/enemyAI.ts:5` | `PATROL_STALL_PX` 1 → 2 | ❌ **sobreviveu, e não é equivalente**. No cenário de `tests/core/enemyAI.test.ts:271-280` (0,1 px/frame), com 2 px o inimigo inverte **2 vezes** em 600 ms e termina no mesmo sentido; o teste só confere o `vx` final (`:279`). Réplica determinística: PX=1 → 0 inversões; PX=2 → 2 inversões, sentido final +1. O spec fixa "less than 1 px in 200 ms" → lacuna 4 |
-| M4 | `src/core/enemyAI.ts:65` | não zera o stall ao sair da patrulha | ❌ sobreviveu, **equivalente pelo spec**. Só muda algo se a patrulha é interrompida (perseguição/preparo/descanso) e retomada sem o inimigo ter andado 1 px: aí o tempo parado de antes da interrupção continua contando. O spec diz "while it patrols" e não define se a contagem recomeça depois de uma interrupção. Não indica teste fraco para um valor do spec |
-| M5 | `src/core/enemyAI.ts:127` | `stallMs += dtMs` → `= dtMs` | ✅ morto (1) |
-| M6 | `src/core/hitstop.ts:13` | `Math.max(remaining, ms)` → `ms` (o último vence) | ✅ morto (1) |
-| M7 | `src/core/hitstop.ts:9` | `remainingMs > 0` → `>= 0` | ✅ morto (12) |
-| M8 | `src/core/hit.ts:31` | `canDamage` sempre `true` | ✅ morto (1) |
-| M9 | `src/core/enemyAI.ts:110` | perseguição sem o sinal (`facing *` removido) | ✅ morto (1) |
-| M10 | `src/data/fx.ts:4` | `heavy: 90` → `100` | ✅ morto (2) |
-| M11 | `src/data/tuning.ts:89` | `patrolSpeed: 35` → `38` | ✅ morto (9) |
-| M12 | `src/game/hitbox.ts:68` | adaptador: ignora o retorno de `receiveHit` (volta ao comportamento da rodada 1) | ✅ morto pelo smoke `v2-fx`: player invulnerável → `spark ['light']`, `trigger [50]` |
-| M13 | `src/game/Enemy.ts:51` | adaptador: `onStep` não reaplica o vx | ✅ morto pelo smoke `v2-speed2`: a 30 fps, patrulha 17,85 e perseguição 33,88 px/s (60 fps continua 34,3/68,6) |
+| M1 | `src/core/enemyAI.ts:5` | `PATROL_STALL_PX` 1 → 2 | ✅ morto (1 falha) |
+| M2 | `src/core/hitstop.ts:13` | regra de sobreposição: `Math.max(remaining, ms)` → `remaining + ms` (soma) | ✅ morto (4) |
+| M3 | `src/core/hit.ts:31` | `canDamage` → `return true` | ✅ morto (1) |
+| M4 | `src/game/art/sprites/props.ts:51` | `SMOKE_CURSE.v` pintado com `w` | ✅ morto (1) |
+| M4b | `src/game/art/sprites/props.ts:52` | `SMOKE_CURSE.U` pintado com `u` | ✅ morto (1) |
+| M8 | `src/core/hitstop.ts:9` | `frozen`: `> 0` → `>= 0` | ✅ morto (12) |
+| M9 | `src/core/enemyAI.ts:128` | `stallMs < PATROL_STALL_MS` → `<=` | ❌ **sobreviveu, não equivalente**. Parado exatamente 200 ms (4 × 50 ms): o código real inverte, como diz o spec ("less than 1 px in 200 ms"); o mutante só inverte no frame seguinte. Os testes usam 208 ms e 160 ms (`enemyAI.test.ts:259,267`), que ficam dos dois lados sem tocar o limite. A sonda falha no mutante e passa no real |
+| M10 | `src/core/enemyAI.ts:122` | `Math.abs(x − stallX) >= PATROL_STALL_PX` → `>` | ❌ **sobreviveu, não equivalente**. Avançando exatamente 1 px a cada 200 ms (0,25 px por 50 ms): o código real não inverte (1 px não é "less than 1 px"); o mutante inverte. O teste de progresso usa ~1,2 px por 200 ms (`enemyAI.test.ts:276`). A sonda falha no mutante e passa no real |
+| M5 | `src/game/Enemy.ts` | adaptador: T34 revertido (versão de `84657c2`) | ✅ morto pelo smoke `v3-knock`. Golpe leve no inimigo que persegue: −8,2 px (HEAD +15,06). Jab real: −7,5 a −8,7 px em direção ao player no hitstun (HEAD 0) |
+| M5a | `src/game/Enemy.ts:53` | adaptador: tira só a guarda `brain.state !== 'idle' \|\| ragdoll` do `onStep` | ⚪ equivalente. O `walkVxStep = null` do `receiveHit` (`:109`) e o `canAct` do `update` (`:140`) já zeram o vx fora de `idle`; o cérebro só sai de `idle` por golpe. Smoke idêntico ao HEAD (+15,06 / 0) |
+| M5b | `src/game/Enemy.ts:109` | adaptador: tira só o `walkVxStep = null` | ⚪ equivalente. A guarda do `onStep` cobre (o cérebro já está em `hitstun`). Smoke idêntico ao HEAD. As duas proteções são redundantes de propósito, e reverter as duas é detectado (M5) |
+| M6 | `src/game/art/background.ts` + `src/main.ts` | adaptador: T35 revertido | ✅ morto pelo smoke `v3-art`: 11 214 a 14 652 px de `#1b1b2f` por tela |
+| M6b | `src/game/art/background.ts:101,104` | adaptador: tira só as bases sólidas das faixas de dither | ⚪ equivalente para o ART-01. Os furos mostram o clear `PALETTE.e`, que é da paleta (0 px fora da paleta em 5 posições). É só nuance de desenho, não requisito |
+| M6c | `src/main.ts:13` | adaptador: `backgroundColor` de volta a `#1b1b2f` | ✅ morto pelo smoke (`clearInPalette=false`, proibido pela premissa). Hoje ele não aparece em nenhum pixel, porque o céu cobre tudo |
+| M7 | `src/game/Ragdoll.ts:108` | adaptador: `tint: [u, v, U]` de volta sobre os frames roxos | ✅ morto pelo smoke `v3-art`: tints não neutros e 504 px fora da paleta (`#301159`, `#a856ff`…) |
 
-**Sensor depth**: expandido (13 mutações: detecção de patrulha presa, hitstop, `canDamage`, sinal da perseguição, dados de tuning e 2 adaptadores)
-**Resultado do sensor**: 11/13 mortos. M4 é equivalente, com justificativa. **M3 sobreviveu sem ser equivalente → FAIL do sensor** (lacuna 4).
-**Isolamento**: junctions removidas com `cmd /c rmdir` antes de `git worktree remove --force` (×3) + `git worktree prune`. `git worktree list` mostra só a árvore principal. `git status --porcelain` da árvore real = baseline (`?? .agents/`, `?? .claude/`, `?? .cursor/`, `?? .windsurf/`), confirmado por `diff` (igual). `git stash list` vazio. `node_modules` real intacto (`.bin` presente).
+**Sensor depth**: expandido. Foram 15 mutações: patrulha presa, sobreposição e limite do hitstop, `canDamage`, cores da `SMOKE_CURSE` e 7 de adaptador (T34, T35, T36).
+
+**Resultado do sensor**: 10 mortos, 3 equivalentes com justificativa (M5a, M5b, M6b) e **2 sobreviventes reais (M9, M10) → FAIL do sensor**.
+
+**Isolamento**:
+- a junction foi removida com `cmd //c rmdir` antes de `git worktree remove --force` e `git worktree prune`;
+- `git worktree list` mostra só a árvore principal, e `git stash list` está vazio;
+- o `node_modules` real está intacto (`.bin` presente);
+- `git status --porcelain` da árvore real = baseline (`?? .agents/`, `?? .claude/`, `?? .cursor/`, `?? .windsurf/`), confirmado por `diff` (`PORCELAIN_IGUAL`).
 
 ---
 
-## Lacunas novas (rodada 2)
+## Lacunas novas (rodada 3), ranqueadas
 
-### Lacuna 1 — [Major] Regressão do T29: o inimigo atingido continua andando
+### 1 — [Minor] Limites exatos da patrulha presa sem teste (M9, M10)
 
-- **Causa raiz**: `walkVxStep` só é recalculado em `Enemy.update` (`src/game/Enemy.ts:137`). O Matter faz os seus steps (com o `beforeupdate` → `onStep`, `:50-53`) no evento UPDATE da cena, **antes** do `TestScene.update`. Quando um golpe é aceito (`receiveHit`, `:104-111`), o hitstop congela a cena e o `update` desse frame é pulado. Ao descongelar, o primeiro step reaplica o vx de andar **velho** por cima da reação ao golpe (`playHitReaction`, `:199`, que faz `setVelocity(d.x*force, -1)` e tira o inimigo do chão). Sem atrito no ar, o inimigo desliza no sentido em que andava durante o hitstun.
-- **Medição** (tempo simulado, 60 fps; `v2-knock3` em HEAD × `f389390`):
-  - Jab real do player num inimigo que persegue (apertado de 46 a 56 px): em HEAD, o inimigo **avança 7,5–8,5 px em direção ao player** nos 12 steps depois do golpe. Em `f389390` e em `338ad6d`, ele fica parado (0 px).
-  - Golpe leve aplicado pelo caminho `receiveHit` + `onConnect` fora de contato (igual à tecla 1 do debug, `v2-knock2`): em `f389390`, **recua 17,5 px** no sentido do golpe; em HEAD, recua **0** e desliza **7,4 px** (perseguição) ou 3,3 px (patrulha) no sentido contrário ao golpe.
-- **Por que bloqueia**: o done-when do T29 ("Recuo, ragdoll e levantar continuam como antes") está marcado `[x]`, e o comportamento mudou. O spec põe mudanças de física/movimento fora do escopo. A reação ao golpe do inimigo é parte do "feel" que a feature existe para avaliar.
-- **Fix task**: em `src/game/Enemy.ts`, zerar `walkVxStep` (null) no momento em que o cérebro sai de `idle`: em `receiveHit` antes de `handle`, ou no `onStep` checando `this.brain.state === 'idle' && !this.ragdoll`. Verificar com smoke simulado que o golpe leve num inimigo andando dá deslocamento ≥ 0 no sentido do golpe (igual ao `f389390`), e que AI-06 continua 35/70 ±10% a 30/60 fps.
-
-### Lacuna 2 — [Major, AC violado] ART-01: dither do céu mostra a cor de fundo fora da paleta
-
-- `src/game/art/background.ts:99-103`: `rect('e')` vai até y=150, `dither('E')` pinta metade dos texels de 150–162, `rect('E')` cobre 162–240, `dither('f')` pinta metade de 240–252. Os texels não pintados das duas faixas ficam transparentes e mostram o `backgroundColor: '#1b1b2f'` do jogo (`src/main.ts:11`, fora da paleta).
-- Medição (`v2-art`, `v2-bg`, snapshot do WebGL): **11 214 a 14 652 px** de `#1b1b2f` por tela, sempre visíveis (faixas nas linhas de tela 76–256). Isso já existia na rodada 1, que só leu texturas; o fundo é `Graphics`.
-- **Fix task**: pintar a cor de baixo da transição sob cada faixa de dither (ex.: `rect('e')` até 162 e `rect('E')` até 252 antes do `dither`) e/ou usar uma cor da paleta como `backgroundColor`. Verificar com snapshot: 0 px fora da paleta com opacidade total no céu.
-
-### Lacuna 3 — [Minor, AC violado] ART-01: partículas da dissolução com tint multiplicativo
-
-- `src/game/Ragdoll.ts:36,109`: `tint: CURSE` (u/v/U) multiplica a textura `smoke`, que é toda em `w` = 0xfff4e0 (`src/game/art/sprites/props.ts:46`). Cor renderizada = w × tint → **0x7b3ca2, 0x3b1c4e, 0xcf8ee0**, nenhuma na paleta (532/532 px no framebuffer, com alpha forçado a 1). O done-when do T31 ("grep por `0x` e `#`") não pega o caso, porque todos os literais vêm da `PALETTE`.
-- **Fix task**: desenhar a fumaça direto nas cores da paleta (uma folha com frames `u`/`v`/`U`, sorteando o frame) em vez de tingir; ou usar uma textura branca pura (0xffffff) não herdada da paleta. Verificar lendo o framebuffer durante a dissolução.
-
-### Lacuna 4 — [Minor] Mutante sobrevivente no limiar de 1 px da patrulha presa (M3)
-
-- `tests/core/enemyAI.test.ts:271-280` só confere o `vx` final (`:279`), e um número par de inversões espúrias passa.
-- **Fix task**: no teste "avançando pelo menos 1 px a cada 200 ms não inverte", assertar `vx === 35` em **todas** as saídas do laço, e acrescentar o limite do outro lado (avançar 0,9 px em 200 ms inverte). Verificar que M3 (`PATROL_STALL_PX = 2`) passa a ser morto.
+- **Onde**: `src/core/enemyAI.ts:122` (`>= PATROL_STALL_PX`) e `:128` (`< PATROL_STALL_MS`), contra `tests/core/enemyAI.test.ts:255-281`.
+- **O quê**:
+  - o spec define "advances less than 1 px in 200 ms". O código real acerta os dois limites: 1,0 px não inverte, e 200 ms parado inverte;
+  - a suíte só testa longe dos limites (208/160 ms e ~1,2 px), então trocar `>=`↔`>` ou `<`↔`<=` passa despercebido;
+  - é o mesmo padrão da lacuna 4 da rodada 2. O T37 prendeu o valor do limiar, mas não os operadores de fronteira.
+- **Impacto no jogo**: nenhum hoje. O comportamento está certo, e no jogo real o deslocamento por step raramente cai exatamente no limite. É fragilidade de teste num módulo `src/core`, que pela matriz exige "todos os ramos".
+- **Fix task (~10 linhas em `tests/core/enemyAI.test.ts`)**, no bloco do caso de borda:
+  - (a) "avançando exatamente 1 px a cada 200 ms não inverte": `ai.update(50, …)` com `x += 0.25` por passo, asserindo `vx === 35` em todas as saídas;
+  - (b) "parado exatamente 200 ms inverte": âncora + 4 × `update(50)` parado → `vx === -35`.
+  - Verificar num scratch que M9 e M10 passam a morrer.
 
 ### Observações (não bloqueiam)
 
-- `src/game/Enemy.ts:78`: cada inimigo (inclusive os que renascem) registra um `scene.events.once(SHUTDOWN, …)` que só sai no fim da cena. O `remove()` (`:235`) já tira o `beforeupdate`, então os listeners de SHUTDOWN só se acumulam por respawn até o reinício. Inofensivo, mas é sujeira.
-- `src/game/Enemy.ts:148`: o `setVelocity` por frame ficou redundante com o `onStep`.
-- O recuo do golpe leve no caminho real (golpe dentro do step do Matter) já era 0 em `338ad6d`. É pré-existente e fora desta feature; a lacuna 1 trata só do deslizamento novo.
+- **Placeholders pré-existentes em `src/game/textures.ts:37,41,49,50`**: `0x000000`, `0xffffff`, `0x4a4e69` e `0x3a86ff` estão fora da paleta, mas **não são desenhados**:
+  - o `terrain` é gerado e depois substituído pelo tileset (`render.ts:13` remove a chave);
+  - o `player` é o corpo físico invisível (`Player.ts:86`).
+
+  Não violam o ART-01, que fala do que é desenhado. Vêm de antes da feature (`338ad6d`). Um `grep 0x` literal os acusa, e dá para limpar depois.
+- **O desenho da física do Matter** (tecla H, só no modo debug) usa as cores padrão do Phaser. É ferramenta de debug (FIX-04), não arte do jogo.
+- `Enemy.ts:80`: cada inimigo que renasce registra um `once(SHUTDOWN)`, que se acumula até o reinício. `Enemy.ts:151`: o `setVelocity` por frame é redundante com o `onStep`. Os dois são inofensivos e já estavam na rodada 2.
 
 ---
 
@@ -208,13 +269,13 @@ Scratch: `git worktree add --detach …/scratchpad/verifier2-wt HEAD` (1697e88),
 
 | Principle | Status |
 | --- | --- |
-| Minimum code | ✅ (a redundância em `Enemy.ts:148` é menor) |
-| Surgical changes | ✅ as correções tocam só os arquivos das tasks |
-| No scope creep | ❌ o T29 mudou a física da reação ao golpe (fora do escopo pelo spec) sem querer |
-| Matches patterns | ✅ lógica pura em `src/core` (stall na `EnemyAI`), adaptadores finos (AD-001), paleta (AD-002) |
-| Spec-anchored outcome check | ✅ os valores asseridos batem com o spec (tuning importado: `enemyAI.test.ts:40`, `health.test.ts:12`, `hitstop.test.ts:11`) |
-| Per-layer coverage | ⚠️ domínio 1:1, exceto o limiar de 1 px (M3); adaptadores com build + smoke |
-| Todo teste mapeia um requisito | ✅ os 4 testes novos mapeiam o caso de borda da patrulha presa |
+| Minimum code | ✅ As correções têm +34/−11 linhas em `src`. A guarda dupla do T34 é redundante (M5a/M5b), mas é barata e está comentada |
+| Surgical changes | ✅ Só os arquivos das tasks T34–T37 (`art/index.ts` e `textures.ts` recebem a ligação da textura nova) |
+| No scope creep | ✅ O T34 devolve a reação ao golpe ao comportamento anterior (+15 px, igual ao pré-T29) |
+| Matches patterns | ✅ Arte como grade da paleta (AD-002), adaptadores finos (AD-001) |
+| Spec-anchored outcome check | ✅ Os valores assertados são os do spec (tuning importado: `enemyAI.test.ts:40`, `health.test.ts:12`, `hitstop.test.ts:10-11`) |
+| Per-layer coverage | ⚠️ Domínio 1:1 com os ACs, mas os operadores de fronteira da patrulha presa não estão presos (M9/M10). Adaptadores com build + smoke |
+| Todo teste mapeia um requisito | ✅ O teste novo mapeia ART-01 (T36); o reforço mapeia o caso de borda do AI-01 (T37) |
 | Guidelines | `vitest.config.ts`, `.specs/STATE.md` AD-001..003 |
 
 ---
@@ -223,24 +284,41 @@ Scratch: `git worktree add --detach …/scratchpad/verifier2-wt HEAD` (1697e88),
 
 | Requirement | Previous Status | New Status |
 | --- | --- | --- |
-| FIX-01..04, ART-02, ART-03, RES-01, CHR-01..04, FX-01..06, HP-01..04, AI-01..03, AI-05, AI-06, ENV-01, ENV-02, PRP-01, HUD-01..03 | Implementing | ✅ Verified |
-| AI-04 | Implementing | ⚠️ Verified (ciclo), com a regressão da reação ao golpe (lacuna 1) |
-| ART-01 | Implementing | ❌ Needs Fix (dither do céu, partículas tingidas) |
+| Os 34 (FIX-01..04, ART-01..03, RES-01, CHR-01..04, FX-01..06, HP-01..04, AI-01..06, ENV-01/02, PRP-01, HUD-01..03) | Implementing | ✅ Verified (comportamento) |
+| Caso de borda da patrulha presa (AI-01) | — | ⚠️ Comportamento verificado; limites sem teste (lacuna 1) |
 
 ---
 
 ## Summary
 
-**Overall**: ❌ Not Ready
+**Overall**: ❌ Not Ready. O único motivo é o sensor; o comportamento está pronto.
 
-**Spec-anchored check**: 33/34 ACs com o valor do spec; 1 violado (ART-01, em dois pontos); 0 lacunas novas de precisão do spec
-**Sensor**: 11/13 mortos (M4 equivalente; M3 sobrevivente real)
-**Gate**: 195 passed, 0 failed (antes da feature: 76)
+**Spec-anchored check**: 34/34 ACs com o valor do spec; 0 lacunas de precisão do spec.
+**Sensor**: 10/15 mortos, 3 equivalentes, 2 sobreviventes reais (M9, M10).
+**Gate**: 196 passed, 0 failed (antes da feature: 76).
 
-**What works**: a velocidade do inimigo agora vale em px/s a 30 e a 60 fps. Golpe ignorado não gera feedback nenhum e golpe aceito mantém faísca, tremida e hitstop. O hitstop fica dentro de [ms, ms + 1 frame). A patrulha vira na parede. Todas as regressões principais da rodada 1 continuam passando (alcance 45/45/52, debug fechado, IA 450/120/800, vida e respawn, R no hitstop, HUD e Tab). O console só tem o 404 do favicon.
+**What works**:
+- O inimigo atingido volta a ser empurrado no sentido do golpe (+15 px) e não avança para o player no hitstun.
+- A velocidade da IA fica em 34,3/68,6 px/s com 1 e 2 steps por frame.
+- Nenhum pixel `#1b1b2f`, e o céu e o clear são da paleta.
+- A fumaça sai direto nas cores u/v/U, sem tint.
+- O mutante da rodada 2 (`PATROL_STALL_PX` 1→2) morre.
+- Todas as regressões passam:
+  - alcance 45/45/52;
+  - debug fechado sem `?debug`/F1;
+  - IA 450/133/800 com 12 de dano;
+  - FX-06 nos 5 casos;
+  - FX-01 dentro de [ms, ms + 1 frame);
+  - vida e respawn com a cadeira;
+  - R durante o hitstop;
+  - HUD (8000 ms simulados) e Tab;
+  - patrulha presa indo e voltando;
+  - console só com o 404 do favicon.
 
-**Issues found**: (1) o inimigo atingido desliza no sentido em que andava (regressão do T29); (2) o dither do céu mostra `#1b1b2f`; (3) a fumaça da dissolução está fora da paleta; (4) o teste do limiar de 1 px é fraco.
+**Issues found**: (1) os limites exatos de 1 px e 200 ms da patrulha presa não estão presos por teste (M9, M10). A correção são 2 testes de fronteira.
 
-**Next steps**: rotear as fix tasks das lacunas 1–4 para um implementer e re-verificar. Esta é a iteração 2 de 3; se as lacunas persistirem na 3, escalar para o usuário.
+**Next steps**: esta é a iteração 3 de 3. Escalar para o usuário, que decide entre:
+- (a) aplicar a fix task da lacuna 1 (dois testes, sem mudar código) e fazer uma re-verificação curta do sensor;
+- (b) aceitar M9/M10 como risco conhecido.
 
 **validate_state.py** (`python .claude/skills/tlc-spec-driven/scripts/validate_state.py visual-e-jogabilidade`): exit 1, `ERROR visual-e-jogabilidade: validation.md verdict is FAIL - route the ranked gaps to fix tasks, then re-verify (feature is not done)`. É o esperado para um relatório FAIL legível: o veredito foi reconhecido e não é placeholder.
