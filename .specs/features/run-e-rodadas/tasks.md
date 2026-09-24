@@ -158,11 +158,11 @@ T7 → T8
 
 **Done when**:
 
-- [ ] Com `respawnMs: Infinity`, depois de morrer e somar 1 000 000 ms de `update`, `dead` continua `true` e nenhum `respawn` é emitido (RUN-03)
-- [ ] `reset()` depois de morto: hp = maxHp, `dead = false`, sem invulnerabilidade nem atordoamento (RUN-02/05)
-- [ ] `reset()` com hp parcial e invulnerável: hp = maxHp e `invulnerable = false`
-- [ ] Testes HP-01..04 existentes continuam passando sem alteração
-- [ ] Gate check passes: `npm test`
+- [x] Com `respawnMs: Infinity`, depois de morrer e somar 1 000 000 ms de `update`, `dead` continua `true` e nenhum `respawn` é emitido (RUN-03)
+- [x] `reset()` depois de morto: hp = maxHp, `dead = false`, sem invulnerabilidade nem atordoamento (RUN-02/05)
+- [x] `reset()` com hp parcial e invulnerável: hp = maxHp e `invulnerable = false`
+- [x] Testes HP-01..04 existentes continuam passando sem alteração
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
