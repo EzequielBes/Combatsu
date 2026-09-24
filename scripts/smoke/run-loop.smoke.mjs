@@ -39,6 +39,11 @@ export default async function ({ page, baseUrl, assert }) {
     `run deveria estar na rodada 1: ${JSON.stringify(snap.run)}`,
   );
   assert(snap.player.hp === 100 && snap.player.dead === false, `player inicial errado: ${JSON.stringify(snap.player)}`);
+  // RUN-02: player a menos de 1 px do spawn do level no começo da run.
+  assert(
+    Math.abs(snap.player.x - snap.level.playerSpawn.x) < 1 && Math.abs(snap.player.y - snap.level.playerSpawn.y) < 1,
+    `player não nasceu no spawn do level: ${JSON.stringify(snap.player)} != ${JSON.stringify(snap.level.playerSpawn)}`,
+  );
 
   // Limpa a rodada 1 (golpe forte de teste, tecla 2, em todos os vivos) até a run entrar em intermission (RUN-06).
   for (let i = 0; i < 20 && snap.run.state !== 'intermission'; i++) {
@@ -215,5 +220,10 @@ export default async function ({ page, baseUrl, assert }) {
   assert(
     snap.player.hp === 100 && snap.player.dead === false,
     `player deveria renascer com hp cheio na run nova: ${JSON.stringify(snap.player)}`,
+  );
+  // RUN-05: player de volta a menos de 1 px do spawn do level na run nova depois do game over.
+  assert(
+    Math.abs(snap.player.x - snap.level.playerSpawn.x) < 1 && Math.abs(snap.player.y - snap.level.playerSpawn.y) < 1,
+    `player não voltou ao spawn do level na run nova: ${JSON.stringify(snap.player)} != ${JSON.stringify(snap.level.playerSpawn)}`,
   );
 }

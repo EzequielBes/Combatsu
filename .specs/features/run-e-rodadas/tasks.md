@@ -473,9 +473,9 @@ T9 → T10 → T11 → T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Spawn esperado lido do level (`P` do `LEVEL_1`, com o mesmo ajuste da cena) exposto no snapshot como `level.playerSpawn`; player `x`/`y` a menos de 1 px dele nos dois inícios (pode ser conferido logo após o `startRun`)
-- [ ] Mutante A14 (spawn deslocado de 200 px) falha
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Spawn esperado lido do level (`P` do `LEVEL_1`, com o mesmo ajuste da cena) exposto no snapshot como `level.playerSpawn`; player `x`/`y` a menos de 1 px dele nos dois inícios (pode ser conferido logo após o `startRun`)
+- [x] Mutante A14 (spawn deslocado de 200 px) falha
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
