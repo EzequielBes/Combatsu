@@ -193,10 +193,10 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `findEdge` prefere `EDGE_PATH` existente; senão o primeiro candidato existente; nenhum → `null` (FND-12)
-- [ ] `DEFAULT_EDGE_PATHS` contém os dois caminhos padrão do Windows (Program Files e Program Files (x86))
-- [ ] `exitCodeFor` → 0 com todos ok, 1 com ao menos uma falha; `failedNames` lista só os que falharam (FND-11)
-- [ ] Gate check passes: `npm test`
+- [x] `findEdge` prefere `EDGE_PATH` existente; senão o primeiro candidato existente; nenhum → `null` (FND-12)
+- [x] `DEFAULT_EDGE_PATHS` contém os dois caminhos padrão do Windows (Program Files e Program Files (x86))
+- [x] `exitCodeFor` → 0 com todos ok, 1 com ao menos uma falha; `failedNames` lista só os que falharam (FND-11)
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
