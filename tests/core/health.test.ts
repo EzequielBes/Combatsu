@@ -110,3 +110,35 @@ describe('Health: morte e respawn (HP-04)', () => {
     expect(h.hp).toBe(88);
   });
 });
+
+describe('Health: cura com teto (FND-05, FND-06, FND-07)', () => {
+  it('vivo com 50/100: heal(20) deixa hp 70 e devolve 20', () => {
+    const h = new Health(SPEC);
+    h.receive(50);
+    expect(h.hp).toBe(50);
+    expect(h.heal(20)).toBe(20);
+    expect(h.hp).toBe(70);
+  });
+
+  it('borda: 95/100, heal(10) para em 100 e devolve só 5', () => {
+    const h = new Health(SPEC);
+    h.receive(5);
+    expect(h.heal(10)).toBe(5);
+    expect(h.hp).toBe(100);
+  });
+
+  it('morto: heal(30) mantém hp 0, devolve 0 e não revive', () => {
+    const h = new Health(SPEC);
+    expect(h.receive(100)).toBe('died');
+    expect(h.heal(30)).toBe(0);
+    expect(h.hp).toBe(0);
+    expect(h.dead).toBe(true);
+  });
+
+  it.each([0, -5, NaN, Infinity])('heal(%s) não muda o hp e devolve 0', (n) => {
+    const h = new Health(SPEC);
+    h.receive(50);
+    expect(h.heal(n)).toBe(0);
+    expect(h.hp).toBe(50);
+  });
+});

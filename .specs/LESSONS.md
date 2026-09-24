@@ -80,6 +80,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M12 src/core/enemyAI.ts:131 vs tests/core/enemyAI.test.ts (validation.md re-verificação final, R4-1) (tests core)
 - last seen: 2026-09-24T02:17:48Z
 
+### L-012 - When a callback AC names payload values such as a position, make the adapter expose them to the debug snapshot and assert them in the smoke, not only the call count.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/game smoke` · harmful: 0
+- features: fundacao-harness-jev
+- evidence: FND-08 / mutant A5 / src/scenes/TestScene.ts:138 (src/game smoke)
+- last seen: 2026-09-24T14:20:47Z
+
+### L-013 - Test a rounding rule with an input that is not an exact multiple of the step, because exact multiples cannot tell ceil from floor.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests game` · harmful: 0
+- features: fundacao-harness-jev
+- evidence: M22 / src/game/debugApi.ts:47 (tests game)
+- last seen: 2026-09-24T14:20:47Z
+
+### L-014 - When a spec converts a duration into fixed steps, state the rounding rule for durations that are not a whole number of steps.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec timing` · harmful: 0
+- features: fundacao-harness-jev
+- evidence: FND-22 / tests/game/debugApi.test.ts:52 (spec timing)
+- last seen: 2026-09-24T14:20:48Z
+
+### L-015 - When a parser is widened beyond the pattern the spec quotes, update the spec text and keep a negative test for every part of the pattern that still must match.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `tools spec` · harmful: 0
+- features: fundacao-harness-jev
+- evidence: SPEC_DEVIATION tools/jev-refine/lib.ts:19 (tools spec)
+- last seen: 2026-09-24T14:20:48Z
+
+### L-016 - Give every required token of a parsing regex a negative test with a line that lacks only that token.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests tools` · harmful: 0
+- features: fundacao-harness-jev
+- evidence: M24 / tools/jev-refine/lib.ts:22 (tests tools)
+- last seen: 2026-09-24T14:20:48Z
+
+### L-017 - Assert a payload position with the tightest tolerance the scenario allows, measured from a real run, because a loose tolerance lets an offset the size of the entity pass.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/game smoke` · harmful: 0
+- features: fundacao-harness-jev
+- evidence: N6 src/game/Enemy.ts:198 vs scripts/smoke/enemy-died.smoke.mjs:50-53 (validation.md rodada 2, R2-1) (src/game smoke)
+- last seen: 2026-09-24T14:43:47Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

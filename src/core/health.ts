@@ -61,6 +61,17 @@ export class Health {
     return 'hurt';
   }
 
+  /**
+   * Cura até o teto de `maxHp` e devolve o que foi restaurado (FND-05). Morto (FND-06), `n <= 0` ou `n` não
+   * finito (FND-07) não mudam nada e devolvem 0.
+   */
+  heal(n: number): number {
+    if (this._dead || !Number.isFinite(n) || n <= 0) return 0;
+    const before = this._hp;
+    this._hp = Math.min(this.t.maxHp, this._hp + n);
+    return this._hp - before;
+  }
+
   update(dtMs: number): HealthEvent[] {
     const events: HealthEvent[] = [];
     if (this._dead) {
