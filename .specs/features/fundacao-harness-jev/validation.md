@@ -1,15 +1,118 @@
 # Fundação da expansão (RNG, cura, harness e Jev) — Validation
 
-# Rodada 2 (vigente)
+# Rodada 3 (vigente)
+
+**Date**: 2026-09-24
+**Spec**: `.specs/features/fundacao-harness-jev/spec.md` (24 requisitos FND-01..FND-24 e 4 casos de borda; texto inalterado desde a rodada 2)
+**Diff range**: feature inteira `22cf49e..a6947d6` (18 commits); correção desta rodada `08c8abb..a6947d6` (T17 `a6947d6`: `scripts/smoke/enemy-died.smoke.mjs` +2/−2 e `tasks.md` +35/−1)
+**Verifier**: sub-agente independente, rodada 3 de no máximo 3 (autor ≠ verificador). Evidência refeita contra HEAD `a6947d6`. As mutações rodaram num `git worktree` descartável no scratchpad (`verify-wt3`), com junction para o `node_modules`.
+
+## Validation (rodada 3)
+
+**Result**: PASS
+
+Motivo: o único gap da rodada 2 (R2-1, FND-08) está fechado. `scripts/smoke/enemy-died.smoke.mjs:51` agora exige `Math.abs(x - was.x) < 1 && Math.abs(y - was.y) < 1`. O mutante N6 morre, assim como A5 e quatro variações novas (`x + 5`, `y - 2`, `x`/`y` trocados, `y + 1`). A tolerância de 1 px foi estável em três execuções seguidas do smoke na árvore real. O diff desde a rodada 2 não toca código de produção nem outros testes, então os outros 23 ACs e os 4 casos de borda seguem com a evidência da rodada 2, e os gates continuam verdes.
+
+---
+
+## Gates (rodados pelo Verifier em HEAD `a6947d6`)
+
+- `npx vitest run`: **23 arquivos, 248 passed, 0 failed, 0 skipped** (igual à rodada 2; o T17 só mexe no smoke).
+- `npm run build`: **exit 0** (só o aviso de chunk > 500 kB, que já existia).
+- `npm run smoke`, três vezes seguidas: **exit 0 nas três**, sempre com `ok boot.smoke.mjs`, `ok enemy-died.smoke.mjs`, `ok no-debug.smoke.mjs` e "3 cenário(s) ok". A tolerância de 1 px não oscilou.
+- **Integridade dos testes**: `git diff 08c8abb..HEAD -- tests scripts` só troca `< 40` por `< 1` nas duas comparações de posição e reescreve o comentário da linha 44. Nenhuma asserção foi removida; a única mudança aperta uma asserção.
+- **Isolamento do sensor**: `git status --porcelain` da árvore real antes e depois é idêntico (`?? .agents/ .claude/ .cursor/ .windsurf/`). A junction foi desfeita com `rmdir` antes do `git worktree remove --force`, o `node_modules` real continua intacto e `git worktree list` mostra só a árvore principal.
+- **Segurança**: a busca literal pedida (`git grep -n` e `git log --all -p | grep -c` pela string da chave) dá **1**, e esse 1 é só a linha do relatório da rodada 2 (commit `08c8abb`) que cita o próprio comando de busca. Não há chave: `git grep -nE "apikey[_]2[A-Za-z0-9_-]" HEAD` dá 0, `git log --all -p | grep -cE "apikey[_]2[A-Za-z0-9_-]"` dá 0, e `git log --all -p` sem a linha do comando citado também dá 0. Este relatório escreve o padrão como `apikey[_]2` para não criar ocorrências literais novas. Nas próximas rodadas, busque com esse padrão: a regex casa com a string, mas o texto dela não.
+
+---
+
+## Re-verificação do gap da rodada 2
+
+| # | Gap | Evidência em HEAD | Mutantes | Status |
+| --- | --- | --- | --- | --- |
+| R2-1 | FND-08: tolerância de 40 px na posição do abate | `src/game/Enemy.ts:198` passa `this.body.position.x/y`; `src/scenes/TestScene.ts:142` guarda `{ id, x, y }` em `debugDeaths`; `:150` copia para `deaths`. `scripts/smoke/enemy-died.smoke.mjs:33` guarda o inimigo no snapshot anterior ao golpe fatal; `:47` exige uma entrada em `deaths` por id; `:50-53` exige `Math.abs(x - was.x) < 1 && Math.abs(y - was.y) < 1` | N6 ✅, A5 ✅, V1..V4 ✅ (tabela do sensor) | ✅ Fechado |
+
+## Spec-Anchored Acceptance Criteria (rodada 3)
+
+O `git diff 08c8abb..HEAD` não toca `src/`, `tests/`, `tools/` nem os outros cenários do smoke. Por isso as citações da rodada 2 continuam válidas para os 23 ACs que já passavam. Conferi por amostragem, em HEAD, que as linhas citadas ainda contêm as asserções: `tests/core/rng.test.ts:8` (FND-01), `tests/core/health.test.ts:126-127` (FND-05 e o caso de borda 95/100), `tests/game/debugApi.test.ts:69-71` (FND-22), `scripts/smoke/boot.smoke.mjs:23` (FND-09, `y` do inimigo), `tests/tools/jevClient.test.ts:173-174` (FND-16) e `tests/tools/gitignore.test.ts:8` (FND-19).
+
+| AC | Spec-defined outcome | `file:line` + asserção | Status |
+| --- | --- | --- | --- |
+| FND-08 | `onEnemyDied(id, x, y)` uma vez por inimigo, com a posição no mundo naquele frame; em `?debug`, um `enemyDied:<id>` e um `{ id, x, y }` em `deaths` com essa posição | Unicidade: `scripts/smoke/enemy-died.smoke.mjs:47`, `:61-62`, `:68-71`. Posição: `:50-53` - `< 1` px contra o snapshot anterior ao golpe fatal, que é a posição daquele frame, porque o golpe de teste entra antes da física no primeiro frame do `step` (diferença medida 0 na rodada 2) | ✅ PASS |
+| FND-01..07, FND-09..24 (23 ACs) | ver tabela da rodada 2 | citações da rodada 2, sem arquivo alterado; amostragem acima | ✅ PASS |
+
+**Status**: 24/24 ACs PASS ancorados. 0 spec-precision gaps.
+
+## Edge Cases (rodada 3)
+
+Os 4 casos de borda seguem com a evidência da rodada 2, sem arquivo alterado: parser sem `SHALL` (`tests/tools/jevRefine.test.ts:45`, `:49`), `int(3, 3)` (`tests/core/rng.test.ts:44`), cura acima do teto (`tests/core/health.test.ts:126-127`) e duas mortes no mesmo frame (`scripts/smoke/enemy-died.smoke.mjs:39-42`, `:47`). ✅ 4/4.
+
+## SPEC_DEVIATION
+
+Nenhum marcador ativo.
+
+---
+
+## Discrimination Sensor (rodada 3)
+
+**Sensor depth**: lightweight, focado na correção T17. Cada mutante troca só `src/game/Enemy.ts:198` no worktree e roda o `npm run smoke` completo (build, preview e 3 cenários). São **6 mutantes, 6 mortos e 0 sobreviventes**.
+
+| # | File:line | Mutação | Killed? |
+| --- | --- | --- | --- |
+| N6 | `src/game/Enemy.ts:198` | `y + 36` | ✅ Killed (exit 1: `posição do abate {"id":2,"x":880.03...,"y":477.51...} longe de {"x":880.03...,"y":441.51...}`) |
+| A5 | `src/game/Enemy.ts:198` | `onDied(this, 0, 0)` | ✅ Killed (exit 1: `{"x":0,"y":0} longe de {"x":925.10...,"y":426.16...}`) |
+| V1 | `src/game/Enemy.ts:198` | `x + 5` | ✅ Killed (exit 1: `x` 905.08 contra 900.08) |
+| V2 | `src/game/Enemy.ts:198` | `y - 2` | ✅ Killed (exit 1: `y` 430.13 contra 432.13) |
+| V3 | `src/game/Enemy.ts:198` | `x` e `y` trocados | ✅ Killed (exit 1: `{"x":437.92,"y":999.24}` contra `{"x":999.24,"y":437.92}`) |
+| V4 | `src/game/Enemy.ts:198` | `y + 1` (fronteira da tolerância) | ✅ Killed (exit 1: `y` 436.94 contra 435.94) |
+
+Nos seis casos, `boot.smoke.mjs` e `no-debug.smoke.mjs` continuaram `ok` e o harness imprimiu `FALHA enemy-died.smoke.mjs`, o que também reconfirma o FND-11 (nome do cenário falho e exit 1).
+
+**Resultado do sensor**: 6/6 killed. ✅
+
+---
+
+## Code Quality (T17)
+
+| Principle | Status |
+| --- | --- |
+| Minimum code | ✅ Duas constantes trocadas e um comentário |
+| Surgical changes | ✅ Só `scripts/smoke/enemy-died.smoke.mjs` e `tasks.md` |
+| No scope creep | ✅ |
+| Matches patterns | ✅ |
+| Spec-anchored outcome check | ✅ A posição conferida é a daquele frame, sem folga que esconda desvios |
+| Per-layer Coverage Expectation | ✅ Smoke para o adaptador Phaser (AD-001) |
+| Every test maps to a spec requirement | ✅ FND-08 |
+| Documented guidelines followed | ✅ `.specs/STATE.md` AD-001 |
+
+## Requirement Traceability Update (rodada 3)
+
+| Requirement | Previous Status | New Status |
+| --- | --- | --- |
+| FND-01..FND-24 (24) | Implementing | ✅ Verified |
+
+`spec.md` atualizado: os 24 requisitos passam a `Verified`, e a linha Coverage fica em 24 total, 24 mapeados.
+
+## Summary (rodada 3)
+
+**Overall**: ✅ Ready
+**Spec-anchored check**: 24/24 ACs PASS; 4/4 casos de borda; 0 spec-precision gaps.
+**Sensor**: 6 injetados, 6 mortos, 0 sobreviventes.
+**Gate**: 248 passed, 0 failed; build exit 0; smoke exit 0 três vezes (3/3 cenários em cada).
+**Next steps**: nenhum gap. A feature está pronta para o fluxo de finalização do branch.
+
+---
+
+# Rodada 2 (histórico)
 
 **Date**: 2026-09-24
 **Spec**: `.specs/features/fundacao-harness-jev/spec.md` (24 requisitos FND-01..FND-24 e 4 casos de borda, com o ajuste de texto de FND-08, FND-09, FND-22 e do caso de borda do parser)
 **Diff range**: feature inteira `22cf49e..590e1d8` (16 commits); correções desta rodada `1cf8ded..590e1d8` (T13 `6522618`, T14 `e5c7700`, T15 `40530e1`, T16 `590e1d8`; 9 arquivos, +169/−9)
 **Verifier**: sub-agente independente, rodada 2 de no máximo 3 (autor ≠ verificador). Toda evidência foi refeita contra HEAD `590e1d8`. As mutações rodaram num `git worktree` descartável no scratchpad (`verify-wt2`), com junction para o `node_modules`.
 
-## Validation (rodada 2)
+## Veredito da rodada 2
 
-**Result**: FAIL
+**Resultado**: FAIL
 
 Motivo: quatro dos cinco gaps da rodada 1 estão fechados, com mutantes mortos (A5, M22, M24, y do snapshot, mortes no mesmo frame). Resta um sobrevivente novo no mesmo conjunto do FND-08: o mutante N6 (`onDied(this, x, y + 36)`, a posição deslocada uma altura inteira de corpo para dentro do chão) passa no smoke. Isso acontece porque `scripts/smoke/enemy-died.smoke.mjs:51` aceita até 40 px de diferença, e a diferença real medida entre a posição notificada e o snapshot anterior ao golpe é **exatamente 0** nos dois inimigos, em duas execuções. A asserção mais apertada é viável e não foi usada. Pela regra do sensor ("surviving mutants become fix tasks"), o FND-08 continua sem discriminação para erros de posição menores que 40 px. É um gap Minor, com correção de uma linha.
 
@@ -153,7 +256,7 @@ Não promovido: o veredito é FAIL. Os 24 requisitos continuam `Implementing` em
 **Spec-anchored check**: 23/24 ACs PASS; FND-08 parcial (N6); 0 spec-precision gaps.
 **Sensor**: 13 injetados, 12 mortos, 1 sobrevivente (N6).
 **Gate**: 248 passed, 0 failed; build exit 0; smoke exit 0 (3/3).
-**Next steps**: Fix R2-1, depois a rodada 3 (última antes de escalar ao usuário). Nota para a rodada 3: o veredito vigente é a linha `**Result**` desta seção. As linhas de veredito da rodada 1 abaixo foram renomeadas (`Veredito da rodada 1`, `**Resultado**`) para não confundir o `validate_state.py`; o conteúdo não mudou.
+**Next steps**: Fix R2-1, depois a rodada 3 (última antes de escalar ao usuário). Nota para a rodada 3: o veredito desta rodada estava na linha de resultado desta seção (renomeada na rodada 3 para `**Resultado**`). As linhas de veredito da rodada 1 abaixo foram renomeadas (`Veredito da rodada 1`, `**Resultado**`) para não confundir o `validate_state.py`; o conteúdo não mudou.
 
 ---
 

@@ -140,32 +140,32 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| FND-01 | P1: Aleatoriedade reproduzível | Specify | Implementing |
-| FND-02 | P1: Aleatoriedade reproduzível | Specify | Implementing |
-| FND-20 | P1: Aleatoriedade reproduzível | Specify | Implementing |
-| FND-03 | P1: Aleatoriedade reproduzível | Specify | Implementing |
-| FND-21 | P1: Aleatoriedade reproduzível | Specify | Implementing |
-| FND-04 | P1: Aleatoriedade reproduzível | Specify | Implementing |
-| FND-05 | P1: Cura e morte do inimigo | Specify | Implementing |
-| FND-06 | P1: Cura e morte do inimigo | Specify | Implementing |
-| FND-07 | P1: Cura e morte do inimigo | Specify | Implementing |
-| FND-08 | P1: Cura e morte do inimigo | Specify | Implementing |
-| FND-09 | P1: Smoke headless versionado | Specify | Implementing |
-| FND-22 | P1: Smoke headless versionado | Specify | Implementing |
-| FND-10 | P1: Smoke headless versionado | Specify | Implementing |
-| FND-11 | P1: Smoke headless versionado | Specify | Implementing |
-| FND-23 | P1: Smoke headless versionado | Specify | Implementing |
-| FND-12 | P1: Smoke headless versionado | Specify | Implementing |
-| FND-13 | P1: Refinamento com o Jev | Specify | Implementing |
-| FND-14 | P1: Refinamento com o Jev | Specify | Implementing |
-| FND-15 | P1: Refinamento com o Jev | Specify | Implementing |
-| FND-16 | P1: Refinamento com o Jev | Specify | Implementing |
-| FND-24 | P1: Refinamento com o Jev | Specify | Implementing |
-| FND-17 | P1: Refinamento com o Jev | Specify | Implementing |
-| FND-18 | P1: Refinamento com o Jev | Specify | Implementing |
-| FND-19 | P1: Refinamento com o Jev | Specify | Implementing |
+| FND-01 | P1: Aleatoriedade reproduzível | Specify | Verified |
+| FND-02 | P1: Aleatoriedade reproduzível | Specify | Verified |
+| FND-20 | P1: Aleatoriedade reproduzível | Specify | Verified |
+| FND-03 | P1: Aleatoriedade reproduzível | Specify | Verified |
+| FND-21 | P1: Aleatoriedade reproduzível | Specify | Verified |
+| FND-04 | P1: Aleatoriedade reproduzível | Specify | Verified |
+| FND-05 | P1: Cura e morte do inimigo | Specify | Verified |
+| FND-06 | P1: Cura e morte do inimigo | Specify | Verified |
+| FND-07 | P1: Cura e morte do inimigo | Specify | Verified |
+| FND-08 | P1: Cura e morte do inimigo | Specify | Verified |
+| FND-09 | P1: Smoke headless versionado | Specify | Verified |
+| FND-22 | P1: Smoke headless versionado | Specify | Verified |
+| FND-10 | P1: Smoke headless versionado | Specify | Verified |
+| FND-11 | P1: Smoke headless versionado | Specify | Verified |
+| FND-23 | P1: Smoke headless versionado | Specify | Verified |
+| FND-12 | P1: Smoke headless versionado | Specify | Verified |
+| FND-13 | P1: Refinamento com o Jev | Specify | Verified |
+| FND-14 | P1: Refinamento com o Jev | Specify | Verified |
+| FND-15 | P1: Refinamento com o Jev | Specify | Verified |
+| FND-16 | P1: Refinamento com o Jev | Specify | Verified |
+| FND-24 | P1: Refinamento com o Jev | Specify | Verified |
+| FND-17 | P1: Refinamento com o Jev | Specify | Verified |
+| FND-18 | P1: Refinamento com o Jev | Specify | Verified |
+| FND-19 | P1: Refinamento com o Jev | Specify | Verified |
 
-**Coverage:** 24 total, 0 mapped to tasks, 24 unmapped ⚠️ (Tasks ainda não criadas)
+**Coverage:** 24 total, 24 mapped to tasks, 0 unmapped ✅ (24 Verified na rodada 3 do Verifier)
 
 ---
 
