@@ -271,12 +271,13 @@ describe('EnemyAI: patrulha presa por obstáculo (caso de borda do AI-01)', () =
   it('avançando pelo menos 1 px a cada 200 ms não inverte', () => {
     const ai = new EnemyAI(ENEMY_AI, SPAWN);
     let x = SPAWN;
-    let out: AIOutput = ai.update(FRAME, { selfX: x, playerX: FAR, canAct: true });
+    const vxs: number[] = [ai.update(FRAME, { selfX: x, playerX: FAR, canAct: true }).vx];
     for (let t = 0; t < 600; t += FRAME) {
       x += 0.1; // 0,1 px por frame = ~1,2 px a cada 200 ms
-      out = ai.update(FRAME, { selfX: x, playerX: FAR, canAct: true });
+      vxs.push(ai.update(FRAME, { selfX: x, playerX: FAR, canAct: true }).vx);
     }
-    expect(out.vx).toBe(35);
+    // Em TODOS os frames, não só no último: uma inversão dupla terminaria no mesmo sentido.
+    expect(vxs.every((vx) => vx === 35)).toBe(true);
   });
 
   it('perseguindo parado contra algo não inverte (só a patrulha vira)', () => {
