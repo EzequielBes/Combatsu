@@ -132,9 +132,9 @@ T7 → T8
 
 **Done when**:
 
-- [ ] `new SpawnGrace(600)`: ativo em 0, ainda ativo após 599 ms somados, inativo em 600 ms e depois (WAVE-09)
-- [ ] Soma de vários `update` pequenos dá o mesmo resultado que um grande
-- [ ] Gate check passes: `npm test`
+- [x] `new SpawnGrace(600)`: ativo em 0, ainda ativo após 599 ms somados, inativo em 600 ms e depois (WAVE-09)
+- [x] Soma de vários `update` pequenos dá o mesmo resultado que um grande
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
