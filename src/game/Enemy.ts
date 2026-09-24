@@ -41,6 +41,16 @@ export class Enemy implements Hittable {
   private readonly barFrame: Phaser.GameObjects.Image;
   private readonly barFill: Phaser.GameObjects.Rectangle;
   private facing: 1 | -1 = 1;
+  /**
+   * vx da IA em px por step, reaplicado a cada step do Matter (null = a física manda). O Matter roda em passo
+   * fixo de 60 Hz e dá vários steps por frame abaixo de 60 fps; aplicado só uma vez por frame, o atrito com o
+   * chão comia o vx nos steps seguintes e a velocidade caía junto com o fps (AI-06).
+   */
+  private walkVxStep: number | null = null;
+  private readonly onStep = (): void => {
+    if (this.walkVxStep === null) return;
+    this.scene.matter.body.setVelocity(this.body, { x: this.walkVxStep, y: this.body.velocity.y });
+  };
   private _removed = false;
 
   constructor(
@@ -64,6 +74,8 @@ export class Enemy implements Hittable {
     this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, TEX.enemy, 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
     this.barFrame = scene.add.image(0, 0, TEX.enemyBar).setOrigin(0, 0).setDepth(BAR_DEPTH).setVisible(false);
     const well = ENEMY_BAR_WELL;
+    scene.matter.world.on('beforeupdate', this.onStep);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
     this.barFill = scene.add
       .rectangle(0, 0, well.w * ART_SCALE, well.h * ART_SCALE, PALETTE.r)
       .setOrigin(0, 0)
@@ -121,6 +133,7 @@ export class Enemy implements Hittable {
     const canAct = this.brain.state === 'idle' && !this.brain.isDead;
     const out = this.ai.update(dtMs, { selfX: this.body.position.x, playerX, canAct });
     this.onAI(out.events);
+    this.walkVxStep = canAct && !this.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
     if (this.ragdoll) {
       // Corpo escondido acompanha o tronco para o "levantar" nascer no lugar certo.
       this.scene.matter.body.setPosition(this.body, this.ragdoll.center);
@@ -217,6 +230,8 @@ export class Enemy implements Hittable {
   }
 
   private remove(): void {
+    this.walkVxStep = null;
+    this.scene.matter.world.off('beforeupdate', this.onStep);
     this.attack.close();
     this.ragdoll?.destroy();
     this.ragdoll = null;

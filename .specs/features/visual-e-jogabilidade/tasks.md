@@ -705,9 +705,9 @@ T32
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke medindo por `performance.now()`: patrulha 35 px/s ±10% e perseguição 70 px/s ±10% a 60 fps e forçando ~30 fps (ex. `game.loop` com `fps.limit` 30 ou `targetFps`)
-- [ ] Recuo, ragdoll e levantar continuam como antes
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke medindo por `performance.now()`: patrulha 35 px/s ±10% e perseguição 70 px/s ±10% a 60 fps e forçando ~30 fps (ex. `game.loop` com `fps.limit` 30 ou `targetFps`)
+- [x] Recuo, ragdoll e levantar continuam como antes
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptador de física; smoke headless em 30 e 60 fps)
 **Gate**: build
