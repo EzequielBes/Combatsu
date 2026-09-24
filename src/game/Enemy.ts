@@ -130,6 +130,16 @@ export class Enemy implements Hittable {
     return this.lastAttackDamage;
   }
 
+  /** Velocidade de patrulha da IA em uso, já escalada pela rodada (DIF-04/06), para o snapshot de debug. */
+  get patrolSpeed(): number {
+    return this.ai.patrolSpeed;
+  }
+
+  /** Velocidade de perseguição da IA em uso, já escalada pela rodada (DIF-04/06), para o snapshot de debug. */
+  get chaseSpeed(): number {
+    return this.ai.chaseSpeed;
+  }
+
   receiveHit(hit: Hit): boolean {
     const events = this.brain.receiveHit(hit);
     if (events.length === 0) return false; // já morto

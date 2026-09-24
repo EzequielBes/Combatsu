@@ -4,7 +4,18 @@ import type { RunState } from '../core/run';
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
   player: { x: number; y: number; hp: number; dead: boolean };
-  enemies: { id: number; x: number; y: number; hp: number; state: EnemyState; maxHp: number; damage: number }[];
+  enemies: {
+    id: number;
+    x: number;
+    y: number;
+    hp: number;
+    state: EnemyState;
+    maxHp: number;
+    damage: number;
+    /** Velocidades da IA em uso, já escaladas pela rodada (DIF-04/06). */
+    patrolSpeed: number;
+    chaseSpeed: number;
+  }[];
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
   deaths: { id: number; x: number; y: number }[];

@@ -76,6 +76,11 @@ export default async function ({ page, baseUrl, assert }) {
       if (seenIds.has(e.id)) continue;
       seenIds.add(e.id);
       assert(e.maxHp === 67, `inimigo novo ${e.id} nasceu com maxHp errado: ${JSON.stringify(e)}`);
+      // DIF-04/06: velocidades escaladas da rodada 2 (35 × 1,03 e 70 × 1,03).
+      assert(
+        Math.abs(e.patrolSpeed - 36.05) < 0.01 && Math.abs(e.chaseSpeed - 72.1) < 0.01,
+        `inimigo novo ${e.id} nasceu com velocidades erradas: ${JSON.stringify(e)}`,
+      );
     }
   };
   let round2;

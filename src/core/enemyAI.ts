@@ -59,6 +59,16 @@ export class EnemyAI {
     return this._state;
   }
 
+  /** Velocidade de patrulha do tuning com que a IA foi criada (px/s), já escalada pela rodada (DIF-04/06). */
+  get patrolSpeed(): number {
+    return this.t.patrolSpeed;
+  }
+
+  /** Velocidade de perseguição do tuning com que a IA foi criada (px/s), já escalada pela rodada (DIF-04/06). */
+  get chaseSpeed(): number {
+    return this.t.chaseSpeed;
+  }
+
   update(dtMs: number, s: AIInput): AIOutput {
     const wasPatrolling = this._state === 'patrol';
     const out = this.decide(dtMs, s);

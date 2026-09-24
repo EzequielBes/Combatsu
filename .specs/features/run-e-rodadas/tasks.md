@@ -507,10 +507,10 @@ T15 → T16
 
 **Done when**:
 
-- [ ] `boot.smoke.mjs`: todo inimigo da rodada 1 com `patrolSpeed === 35` e `chaseSpeed === 70` (± 0,01)
-- [ ] `run-loop.smoke.mjs`: todo inimigo novo da rodada 2 com `patrolSpeed` 36,05 e `chaseSpeed` 72,1 (± 0,01)
-- [ ] Mutante N4 (velocidades fixas em 40) falha no smoke
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `boot.smoke.mjs`: todo inimigo da rodada 1 com `patrolSpeed === 35` e `chaseSpeed === 70` (± 0,01)
+- [x] `run-loop.smoke.mjs`: todo inimigo novo da rodada 2 com `patrolSpeed` 36,05 e `chaseSpeed` 72,1 (± 0,01)
+- [x] Mutante N4 (velocidades fixas em 40) falha no smoke
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
