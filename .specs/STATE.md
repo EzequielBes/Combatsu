@@ -60,11 +60,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/visual-e-jogabilidade` (UAT pendente) → expansão em `.specs/ROADMAP.md`
-- **Phase / Task**: F0 `fundacao-harness-jev` e F1 `run-e-rodadas` em Specify (spec.md + refinement.md prontos, aguardando aprovação do usuário)
-- **Completed**: T1–T38 de visual-e-jogabilidade; ROADMAP F0–F8; AD-004..AD-007; specs de F0 e F1 validadas (`validate_spec.py` 0 erros) e refinadas com o Jev
+- **Feature**: `.specs/features/fundacao-harness-jev` concluída → próxima: `.specs/features/run-e-rodadas` (F1)
+- **Phase / Task**: F0 Done (T1–T17, Verifier PASS na rodada 3); F1 com spec aprovada, Design pendente
+- **Completed**: F0 inteira: Rng com seed, `Health.heal`, `onEnemyDied` com posição, `window.__game` (`snapshot`/`step`) só em `?debug`, `npm run smoke` versionado (3 cenários), `tools/jev-refine.mjs`; 248 testes
 - **In-progress** (file:line): none
-- **Next step**: usuário aprova as specs de F0/F1 (e os números marcados `n` em F1) → Design/Tasks de F0 numa branch `feat/fundacao-harness-jev` a partir de `main`
-- **Blockers**: UAT de visual-e-jogabilidade antes do merge em `main`
-- **Uncommitted files**: .specs/STATE.md, .specs/ROADMAP.md, .specs/features/fundacao-harness-jev/, .specs/features/run-e-rodadas/
-- **Branch**: feat/visual-e-jogabilidade (sem push)
+- **Next step**: Design de F1 (Large: apresentar 2-3 abordagens para a máquina de run/ondas e confirmar com o usuário), depois Tasks e Execute
+- **Blockers**: UAT de visual-e-jogabilidade ainda pendente antes do merge em `main`; `feat/fundacao-harness-jev` foi criada a partir de `feat/visual-e-jogabilidade`
+- **Uncommitted files**: none
+- **Branch**: feat/fundacao-harness-jev (sem push)
