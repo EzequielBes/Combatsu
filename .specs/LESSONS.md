@@ -8,7 +8,11 @@
 
 Corroborated across multiple features. Safe to apply as guidance.
 
-_none_
+### L-010 - Test every spec threshold exactly at its boundary value on both sides, because flipping a strict comparison to non-strict survives tests that only probe values away from the limit.
+- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `tests core` · harmful: 0
+- features: visual-e-jogabilidade, run-e-rodadas
+- evidence: M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core) (+1 more)
+- last seen: 2026-09-24T16:44:30Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -68,12 +72,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M3 src/core/enemyAI.ts:5 vs tests/core/enemyAI.test.ts:271-280 (validation.md rodada 2, lacuna 4) (tests core)
 - last seen: 2026-09-24T01:27:55Z
 
-### L-010 - Test every spec threshold exactly at its boundary value on both sides, because flipping a strict comparison to non-strict survives tests that only probe values away from the limit.
-- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests core` · harmful: 0
-- features: visual-e-jogabilidade
-- evidence: M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core)
-- last seen: 2026-09-24T02:09:18Z
-
 ### L-011 - When a rule acts after a timer or accumulator crosses a threshold, assert the outputs on the frames right after the action so that forgetting to reset the accumulator fails a test.
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests core` · harmful: 0
 - features: visual-e-jogabilidade
@@ -115,6 +113,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: fundacao-harness-jev
 - evidence: N6 src/game/Enemy.ts:198 vs scripts/smoke/enemy-died.smoke.mjs:50-53 (validation.md rodada 2, R2-1) (src/game smoke)
 - last seen: 2026-09-24T14:43:47Z
+
+### L-018 - Test a seeded random offset with a seed that draws a nonzero value, because a seed that draws zero cannot tell whether the offset is applied at all.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests core rng` · harmful: 0
+- features: run-e-rodadas
+- evidence: C10b src/core/waves.ts:97; tests/core/waves.test.ts:34-38 (tests core rng)
+- last seen: 2026-09-24T16:44:28Z
+
+### L-019 - Read debug snapshot values from the object the game actually uses, not from the config it was built with, so the smoke checks behavior and not input.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/game smoke` · harmful: 0
+- features: run-e-rodadas
+- evidence: A2/A3 src/game/Enemy.ts:121-128; scripts/smoke/run-loop.smoke.mjs:88-92 (src/game smoke)
+- last seen: 2026-09-24T16:44:28Z
+
+### L-020 - Assert that a forbidden event never happens across the whole window where it could occur, not at a single sampled instant.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: run-e-rodadas
+- evidence: A4 src/scenes/TestScene.ts:215; scripts/smoke/run-loop.smoke.mjs:61-70 (smoke)
+- last seen: 2026-09-24T16:44:29Z
+
+### L-021 - When a lower layer deduplicates events, also test the duplicate through every layer that re-counts its results.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests core` · harmful: 0
+- features: run-e-rodadas
+- evidence: C17 src/core/run.ts:113 (tests core)
+- last seen: 2026-09-24T16:44:30Z
+
+### L-022 - Assert every clause of a conjunctive acceptance criterion, including positions set alongside the headline values.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: run-e-rodadas
+- evidence: RUN-02 A14 src/game/Player.ts:219; scripts/smoke/run-loop.smoke.mjs:41 (smoke)
+- last seen: 2026-09-24T16:44:31Z
+
+### L-023 - State layout terms such as centered as explicit axes or coordinates in the spec so the smoke can assert them.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec hud` · harmful: 0
+- features: run-e-rodadas
+- evidence: RHUD-02 src/game/Hud.ts:65 (spec hud)
+- last seen: 2026-09-24T16:44:32Z
 
 ## Quarantined (failed when applied - ignore)
 
