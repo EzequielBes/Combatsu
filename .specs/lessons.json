@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 6,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::apply game driven velocity to matter bodies on every physics step or give them zero ground friction because the fixed step runner can run several steps per frame and friction erases a once per frame velocity after the first step",
+      "text": "Apply game-driven velocity to Matter bodies on every physics step or give them zero ground friction, because the fixed-step runner can run several steps per frame and friction erases a once-per-frame velocity after the first step.",
+      "signal": "ac_gap",
+      "scope": "src/game physics",
+      "status": "candidate",
+      "features": [
+        "visual-e-jogabilidade"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AI-01/AI-02 src/game/Enemy.ts:151,230 (validation.md suspeita a) (src/game physics)"
+      ],
+      "created": "2026-09-24T00:12:03Z",
+      "last_seen": "2026-09-24T00:12:03Z"
+    },
+    {
+      "id": "L-002",
+      "key": "spec_precision_gap::trigger hit feedback such as sparks hitstop and shake only when the target reports the hit as applied never on raw sensor contact",
+      "text": "Trigger hit feedback such as sparks, hitstop and shake only when the target reports the hit as applied, never on raw sensor contact.",
+      "signal": "spec_precision_gap",
+      "scope": "src/game combat fx",
+      "status": "candidate",
+      "features": [
+        "visual-e-jogabilidade"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "FX-01 src/game/hitbox.ts:68-71 (validation.md suspeita b) (src/game combat fx)"
+      ],
+      "created": "2026-09-24T00:12:03Z",
+      "last_seen": "2026-09-24T00:12:03Z"
+    },
+    {
+      "id": "L-003",
+      "key": "spec_precision_gap::specify frame bound durations as a minimum rounded up to whole frames and verify them in simulated time smoke at 60 and 30 fps",
+      "text": "Specify frame-bound durations as a minimum rounded up to whole frames and verify them in simulated-time smoke at 60 and 30 fps.",
+      "signal": "spec_precision_gap",
+      "scope": "spec timing",
+      "status": "candidate",
+      "features": [
+        "visual-e-jogabilidade"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "FX-01 tolerância de frame (validation.md suspeita d) (spec timing)"
+      ],
+      "created": "2026-09-24T00:12:04Z",
+      "last_seen": "2026-09-24T00:12:04Z"
+    },
+    {
+      "id": "L-004",
+      "key": "spec_precision_gap::state explicitly whether hud text tints and particle scaling fall under the single palette and texel scale rules",
+      "text": "State explicitly whether HUD text, tints and particle scaling fall under the single-palette and texel-scale rules.",
+      "signal": "spec_precision_gap",
+      "scope": "spec art",
+      "status": "candidate",
+      "features": [
+        "visual-e-jogabilidade"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ART-01 src/game/Hud.ts:12,37 src/game/Ragdoll.ts:275,282 (spec art)"
+      ],
+      "created": "2026-09-24T00:12:04Z",
+      "last_seen": "2026-09-24T00:12:04Z"
+    },
+    {
+      "id": "L-005",
+      "key": "spec_deviation::size sprite frames for the widest pose such as an extended strike limb and keep the frame size decoupled from the physics body",
+      "text": "Size sprite frames for the widest pose, such as an extended strike limb, and keep the frame size decoupled from the physics body.",
+      "signal": "spec_deviation",
+      "scope": "src/game/art",
+      "status": "candidate",
+      "features": [
+        "visual-e-jogabilidade"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/game/art/sprites/player.ts:6 (src/game/art)"
+      ],
+      "created": "2026-09-24T00:12:05Z",
+      "last_seen": "2026-09-24T00:12:05Z"
+    }
+  ]
+}
