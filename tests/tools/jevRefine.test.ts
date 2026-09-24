@@ -36,6 +36,11 @@ describe('parseAcs', () => {
     expect(acs[2].criterion).toBe('IF the player has no coins THEN the shop SHALL disable buying.');
   });
 
+  it('aceita AC ubíquo com quantificador antes do SHALL (DIF-02 de run-e-rodadas)', () => {
+    const acs = parseAcs('4. DIF-02: For every integer round `r` from 2 to 100, each multiplier SHALL not decrease.\n');
+    expect(acs.map((a) => a.id)).toEqual(['DIF-02']);
+  });
+
   it('spec sem AC lança "nenhum AC encontrado"', () => {
     expect(() => parseAcs('# Nada\n\n- IF x THEN y SHALL z.\n')).toThrow('nenhum AC encontrado');
   });

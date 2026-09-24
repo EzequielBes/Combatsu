@@ -16,9 +16,12 @@ export interface Answers {
 
 export type AcResult = Answers | { error: string };
 
-const AC_LINE = /^\s*\d+\.\s+([A-Z]+-\d+):\s+((?:WHEN|WHILE|WHERE|IF|The)\b.*\bSHALL\b.*)$/;
+// SPEC_DEVIATION: o caso de borda da spec cita `ID: WHEN|WHILE|WHERE|IF|The … SHALL`; aqui vale qualquer
+// `N. ID: … SHALL`. Reason: ACs ubíquos com quantificador (ex.: DIF-02 "For every … SHALL") ficariam de fora,
+// e o T12 exige as 31 linhas de run-e-rodadas.
+const AC_LINE = /^\s*\d+\.\s+([A-Z]+-\d+):\s+(.*\bSHALL\b.*)$/;
 
-/** ACs numerados `N. ID: WHEN|WHILE|WHERE|IF|The … SHALL`, com a story corrente (título + User Story). */
+/** ACs numerados `N. ID: … SHALL`, com a story corrente (título + User Story). */
 export function parseAcs(markdown: string): AcRow[] {
   const acs: AcRow[] = [];
   let story = '';

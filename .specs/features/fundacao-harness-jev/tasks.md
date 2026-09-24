@@ -384,10 +384,10 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Sem chave: `node tools/jev-refine.mjs .specs/features/run-e-rodadas/spec.md` imprime o aviso, não cria arquivo e sai com 0 (FND-15)
-- [ ] Com chave inválida: sai com 1 e imprime o status 401 (FND-17)
-- [ ] Com a chave do usuário (só no ambiente): grava `.specs/features/run-e-rodadas/refinement.md` com 31 linhas de AC (FND-13); a revisão do autor existente é preservada
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Sem chave: `node tools/jev-refine.mjs .specs/features/run-e-rodadas/spec.md` imprime o aviso, não cria arquivo e sai com 0 (FND-15)
+- [x] Com chave inválida: sai com 1 e imprime o status 401 (FND-17)
+- [x] Com a chave do usuário (só no ambiente): grava `.specs/features/run-e-rodadas/refinement.md` com 31 linhas de AC (FND-13); a revisão do autor existente é preservada
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: smoke
 **Gate**: build
