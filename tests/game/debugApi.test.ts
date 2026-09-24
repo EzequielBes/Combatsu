@@ -59,4 +59,15 @@ describe('installDebugApi', () => {
     expect(calls.steps).toHaveLength(9);
     for (let i = 1; i < calls.steps.length; i++) expect(calls.steps[i].time).toBeGreaterThan(calls.steps[i - 1].time);
   });
+
+  it('step arredonda para cima os ms que não fecham um passo: ceil(ms / (1000/60)) (FND-22)', () => {
+    const { game, calls } = fakeGame();
+    const target: { __game?: Api } = {};
+    installDebugApi(game, target, true);
+
+    target.__game!.step(20);
+    expect(calls.steps).toHaveLength(2);
+    target.__game!.step(1);
+    expect(calls.steps).toHaveLength(3);
+  });
 });
