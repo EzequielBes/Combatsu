@@ -247,10 +247,10 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `debugOn=false` → `target.__game` fica `undefined` (FND-10)
-- [ ] `snapshot()` devolve o que o probe registrado devolve (FND-09)
-- [ ] `step(100)` com game falso: `loop.sleep` chamado uma vez em toda a vida; `headlessStep` chamado `ceil(100/(1000/60)) = 6` vezes, com delta 1000/60 e tempo crescente (FND-22); uma segunda chamada `step(50)` soma mais 3 chamadas sem novo `sleep`
-- [ ] Gate check passes: `npm test`
+- [x] `debugOn=false` → `target.__game` fica `undefined` (FND-10)
+- [x] `snapshot()` devolve o que o probe registrado devolve (FND-09)
+- [x] `step(100)` com game falso: `loop.sleep` chamado uma vez em toda a vida; `headlessStep` chamado `ceil(100/(1000/60)) = 6` vezes, com delta 1000/60 e tempo crescente (FND-22); uma segunda chamada `step(50)` soma mais 3 chamadas sem novo `sleep`
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
