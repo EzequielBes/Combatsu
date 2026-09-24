@@ -302,8 +302,8 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `tests/tools/gitignore.test.ts` lê o `.gitignore` e acha a linha exata `.env.local` (FND-19)
-- [ ] Gate check passes: `npm test`
+- [x] `tests/tools/gitignore.test.ts` lê o `.gitignore` e acha a linha exata `.env.local` (FND-19)
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick

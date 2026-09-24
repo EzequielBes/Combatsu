@@ -163,7 +163,7 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 | FND-24 | P1: Refinamento com o Jev | Specify | Pending |
 | FND-17 | P1: Refinamento com o Jev | Specify | Pending |
 | FND-18 | P1: Refinamento com o Jev | Specify | Pending |
-| FND-19 | P1: Refinamento com o Jev | Specify | Pending |
+| FND-19 | P1: Refinamento com o Jev | Specify | Implementing |
 
 **Coverage:** 24 total, 0 mapped to tasks, 24 unmapped ⚠️ (Tasks ainda não criadas)
 
