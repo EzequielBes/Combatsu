@@ -55,7 +55,8 @@ export class Player implements Hittable {
   private readonly hitbox: AttackHitbox;
   private held: Prop | null = null;
   private throwPoseMs = 0;
-  private readonly health = new Health(PLAYER_HEALTH);
+  /** `respawnMs: Infinity` (RUN-03): fora de run não existe mais respawn, só `resetForRun`. */
+  private readonly health = new Health({ ...PLAYER_HEALTH, respawnMs: Infinity });
   /** Sentido do recuo do último golpe recebido. */
   private knockDir: 1 | -1 = 1;
   private blinkMs = 0;
@@ -204,6 +205,33 @@ export class Player implements Hittable {
     this.sprite.setVelocity(0, 0);
     this.move = initialMoveState();
     this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
+  }
+
+  /**
+   * Nova run (RUN-02/05): larga o objeto da mão, volta ao spawn do level parado e com a vida cheia, sem
+   * invulnerabilidade nem atordoamento. A morte deixou a câmera do mundo em fadeOut; aqui ela clareia de volta.
+   */
+  resetForRun(): void {
+    if (this.held) {
+      this.held.holderGone(this.sprite.x, this.sprite.y);
+      this.held = null;
+    }
+    this.sprite.setPosition(this.spawn.x, this.spawn.y);
+    this.sprite.setVelocity(0, 0);
+    this.move = initialMoveState();
+    this.health.reset();
+    this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
+  }
+
+  /** Mata o player pelo caminho normal de morte (tecla 3 em `?debug`, RUN-03/04). */
+  debugKill(): void {
+    this.receiveHit({
+      ownerId: 0,
+      damage: this.health.max,
+      strength: 'heavy',
+      force: 0,
+      direction: { x: this.facing, y: -1 },
+    });
   }
 
   /**

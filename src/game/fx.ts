@@ -50,6 +50,9 @@ const AFTERIMAGE_DRIFT = 10;
 /** Tremida da câmera só no golpe forte: duração (ms) e intensidade. */
 const SHAKE_MS = 90;
 const SHAKE_INTENSITY = 0.004;
+/** Fumaça amaldiçoada do spawn (RHUD-08): duração (ms) e número de partículas da rajada. */
+const CURSE_SMOKE_MS = 500;
+const CURSE_SMOKE_COUNT = 16;
 
 /**
  * Efeitos visuais de impacto e movimento (FX-03..05). Toda cor sai da PALETTE e nada é escalado: cada texel
@@ -113,6 +116,26 @@ export class Fx {
   /** Tremida curta da câmera do mundo; a cena chama só no golpe forte. */
   shake(): void {
     this.scene.cameras.main.shake(SHAKE_MS, SHAKE_INTENSITY);
+  }
+
+  /**
+   * Fumaça amaldiçoada no ponto de spawn (RHUD-08): rajada curta com a textura `smokeCurse`, cor de origem
+   * vinda do frame (sem tint multiplicativo, AD-002), como em `Ragdoll.dissolve`.
+   */
+  curseSmoke(x: number, y: number): void {
+    const emitter = this.scene.add
+      .particles(x, y, TEX.smokeCurse, {
+        frame: ['u', 'v', 'U'],
+        speed: { min: 15, max: 60 },
+        angle: { min: 200, max: 340 },
+        lifespan: CURSE_SMOKE_MS,
+        scale: { start: 1, end: 0 },
+        alpha: { start: 0.8, end: 0 },
+        emitting: false,
+      })
+      .setDepth(FX_DEPTH);
+    emitter.explode(CURSE_SMOKE_COUNT);
+    this.scene.time.delayedCall(CURSE_SMOKE_MS + 100, () => emitter.destroy());
   }
 
   private burst(

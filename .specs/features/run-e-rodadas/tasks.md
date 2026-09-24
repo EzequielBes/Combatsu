@@ -254,20 +254,20 @@ T7 → T8
 
 **Done when**:
 
-- [ ] `run-loop.smoke.mjs` (`?debug&seed=1`):
-  - [ ] boot em `title`, com 0 inimigos (RUN-01)
-  - [ ] J → `roundActive`, round 1, player com hp 100 no spawn (RUN-02)
-  - [ ] tecla 2 até limpar a rodada → `intermission` (RUN-06); `step(2600)` → round 2 (RUN-10)
-  - [ ] os inimigos da rodada 2 têm `maxHp: 67`, `damage: 13` (DIF-04)
-  - [ ] um inimigo recém-nascido não muda de `x` nos primeiros 500 ms (WAVE-09)
-  - [ ] cada spawn gera um `spawnFx:<id>` (RHUD-08)
-  - [ ] nenhum inimigo morto volta a aparecer com o mesmo ponto em 1500 ms fora da onda (WAVE-05)
-  - [ ] tecla 3 → `gameOver` com `summary` da rodada 2; o player continua `dead` após `step(3000)` (RUN-03/04)
-  - [ ] J com `step(100)` → ainda `gameOver` (RUN-11); após `step(1000)`, J → round 1, kills 0, hp 100 (RUN-05)
-  - [ ] em `title`, segurar D por 500 ms não move o player (RUN-08)
-- [ ] `boot.smoke.mjs` e `enemy-died.smoke.mjs` começam a run com J; as asserções de FND-08/09 continuam (a checagem "nenhum evento novo" filtra `enemyDied:`); `boot` avança 1200 ms por causa da graça
-- [ ] `snapshot().run` tem `{ state, round, kills, alive, queued }` (RUN-09)
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `run-loop.smoke.mjs` (`?debug&seed=1`):
+  - [x] boot em `title`, com 0 inimigos (RUN-01)
+  - [x] J → `roundActive`, round 1, player com hp 100 no spawn (RUN-02)
+  - [x] tecla 2 até limpar a rodada → `intermission` (RUN-06); `step(2600)` → round 2 (RUN-10)
+  - [x] os inimigos da rodada 2 têm `maxHp: 67`, `damage: 13` (DIF-04)
+  - [x] um inimigo recém-nascido não muda de `x` nos primeiros 500 ms (WAVE-09)
+  - [x] cada spawn gera um `spawnFx:<id>` (RHUD-08)
+  - [x] nenhum inimigo morto volta a aparecer com o mesmo ponto em 1500 ms fora da onda (WAVE-05)
+  - [x] tecla 3 → `gameOver` com `summary` da rodada 2; o player continua `dead` após `step(3000)` (RUN-03/04)
+  - [x] J com `step(100)` → ainda `gameOver` (RUN-11); após `step(1000)`, J → round 1, kills 0, hp 100 (RUN-05)
+  - [x] em `title`, segurar D por 500 ms não move o player (RUN-08)
+- [x] `boot.smoke.mjs` e `enemy-died.smoke.mjs` começam a run com J; as asserções de FND-08/09 continuam (a checagem "nenhum evento novo" filtra `enemyDied:`); `boot` avança 1200 ms por causa da graça
+- [x] `snapshot().run` tem `{ state, round, kills, alive, queued }` (RUN-09)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

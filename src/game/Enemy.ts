@@ -3,8 +3,9 @@ import { RUN_THRESHOLD, pickEnemyAnim } from '../core/animState';
 import { Filters } from '../core/collision';
 import { EnemyAI, type AIEvent } from '../core/enemyAI';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
+import type { EnemyBase } from '../core/difficulty';
+import { SpawnGrace } from '../core/spawnGrace';
 import { normalize, type Hit, type Vec2 } from '../core/hit';
-import { ENEMY, ENEMY_AI, ENEMY_ATTACK } from '../data/tuning';
 import { enemyAnimKey } from './art';
 import { ENEMY_BAR_WELL } from './art/hud';
 import { ART_SCALE, PALETTE } from './art/palette';
@@ -31,8 +32,10 @@ const BAR_DEPTH = 3;
 export class Enemy implements Hittable {
   readonly id = newEntityId();
   readonly team = 'enemy';
-  private readonly brain = new EnemyBrain(ENEMY);
+  private readonly brain: EnemyBrain;
   private readonly ai: EnemyAI;
+  /** Graça ao nascer (WAVE-09): segura `canAct` pelos primeiros `graceMs`. */
+  private readonly grace: SpawnGrace;
   private readonly attack: AttackHitbox;
   private readonly body: MatterJS.BodyType;
   private readonly view: Phaser.GameObjects.Sprite;
@@ -58,6 +61,9 @@ export class Enemy implements Hittable {
   constructor(
     private readonly scene: Phaser.Scene,
     readonly spawn: Vec2,
+    /** Tuning escalado da rodada (DIF-04): hp, dano e velocidades já com o multiplicador aplicado. */
+    private readonly tuning: EnemyBase,
+    graceMs: number,
     private readonly onRemoved: (enemy: Enemy) => void,
     /** Garra que conectou no player (faísca + hitstop), injetado pela cena. */
     onConnect?: OnConnect,
@@ -65,6 +71,8 @@ export class Enemy implements Hittable {
     private readonly onDied?: (enemy: Enemy, x: number, y: number) => void,
   ) {
     const { w, h } = SIZE.enemy;
+    this.brain = new EnemyBrain(tuning.brain);
+    this.grace = new SpawnGrace(graceMs);
     this.body = scene.matter.add.rectangle(spawn.x, spawn.y, w, h, {
       friction: 0.8,
       frictionAir: 0.02,
@@ -73,7 +81,7 @@ export class Enemy implements Hittable {
     });
     scene.matter.body.setInertia(this.body, Infinity); // não tomba
     tagBody(this.body, { kind: 'character', target: this });
-    this.ai = new EnemyAI(ENEMY_AI, spawn.x);
+    this.ai = new EnemyAI(tuning.ai, spawn.x);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, TEX.enemy, 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
     this.barFrame = scene.add.image(0, 0, TEX.enemyBar).setOrigin(0, 0).setDepth(BAR_DEPTH).setVisible(false);
@@ -109,6 +117,16 @@ export class Enemy implements Hittable {
     return this._removed;
   }
 
+  /** Vida máxima da rodada em que nasceu (DIF-04), para o snapshot de debug. */
+  get maxHp(): number {
+    return this.tuning.brain.maxHp;
+  }
+
+  /** Dano da garra da rodada em que nasceu (DIF-04), para o snapshot de debug. */
+  get damage(): number {
+    return this.tuning.attack.damage;
+  }
+
   receiveHit(hit: Hit): boolean {
     const events = this.brain.receiveHit(hit);
     if (events.length === 0) return false; // já morto
@@ -122,10 +140,10 @@ export class Enemy implements Hittable {
 
   /** Mostra a barra depois do primeiro dano e até morrer, cheia na proporção da vida, em passos de 1 texel. */
   private updateBar(): void {
-    const show = !this.brain.isDead && this.brain.hp < ENEMY.maxHp;
+    const show = !this.brain.isDead && this.brain.hp < this.tuning.brain.maxHp;
     this.barFrame.setVisible(show);
     const well = ENEMY_BAR_WELL;
-    const texels = Math.round((well.w * this.brain.hp) / ENEMY.maxHp);
+    const texels = Math.round((well.w * this.brain.hp) / this.tuning.brain.maxHp);
     this.barFill.setVisible(show && texels > 0).setSize(texels * ART_SCALE, well.h * ART_SCALE);
     if (!show) return;
     const { x, y } = this.body.position;
@@ -137,10 +155,12 @@ export class Enemy implements Hittable {
 
   update(dtMs: number, playerX: number): void {
     if (this._removed) return;
+    this.grace.update(dtMs);
     this.handle(this.brain.update(dtMs));
     if (this._removed) return;
-    // Só age com o cérebro livre: em reação a golpe, ragdoll, levantando ou morto a IA fica parada (AI-04).
-    const canAct = this.brain.state === 'idle' && !this.brain.isDead;
+    // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto ou
+    // recém-nascido deixam a IA parada (AI-04, WAVE-09).
+    const canAct = this.brain.state === 'idle' && !this.brain.isDead && !this.grace.active;
     const out = this.ai.update(dtMs, { selfX: this.body.position.x, playerX, canAct });
     this.onAI(out.events);
     this.walkVxStep = canAct && !this.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
@@ -168,9 +188,9 @@ export class Enemy implements Hittable {
     }
   }
 
-  /** Garra: 12 de dano, time 'enemy' (nunca acerta outro inimigo, AI-05). */
+  /** Garra: dano da rodada (DIF-04), time 'enemy' (nunca acerta outro inimigo, AI-05). */
   private openAttack(): void {
-    const step = ENEMY_ATTACK;
+    const step = this.tuning.attack;
     const hit: Hit = {
       ownerId: this.id,
       damage: step.damage,
@@ -198,7 +218,7 @@ export class Enemy implements Hittable {
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
       else if (ev.type === 'ragdoll') this.enterRagdoll(ev.hit);
       else if (ev.type === 'getUp') this.getUp();
-      else if (ev.type === 'dissolve') this.ragdoll?.dissolve(ENEMY.dissolveMs);
+      else if (ev.type === 'dissolve') this.ragdoll?.dissolve(this.tuning.brain.dissolveMs);
       else if (ev.type === 'removed') this.remove();
     }
   }
@@ -241,6 +261,20 @@ export class Enemy implements Hittable {
   }
 
   private remove(): void {
+    this.cleanup();
+    this.onRemoved(this);
+  }
+
+  /**
+   * Remove o inimigo na hora, sem dissolução nem `onRemoved` (o `startRun` já limpa a lista da cena inteira de
+   * uma vez): corpo, sprite, barra, ragdoll e o listener `beforeupdate` somem já (RUN-01/05).
+   */
+  destroyNow(): void {
+    if (this._removed) return;
+    this.cleanup();
+  }
+
+  private cleanup(): void {
     this.walkVxStep = null;
     this.scene.matter.world.off('beforeupdate', this.onStep);
     this.attack.close();
@@ -251,6 +285,5 @@ export class Enemy implements Hittable {
     this.barFrame.destroy();
     this.barFill.destroy();
     this._removed = true;
-    this.onRemoved(this);
   }
 }
