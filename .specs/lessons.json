@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 12,
+  "next_id": 17,
   "lessons": [
     {
       "id": "L-001",
@@ -202,6 +202,96 @@
       ],
       "created": "2026-09-24T02:17:48Z",
       "last_seen": "2026-09-24T02:17:48Z"
+    },
+    {
+      "id": "L-012",
+      "key": "ac_gap::when a callback ac names payload values such as a position make the adapter expose them to the debug snapshot and assert them in the smoke not only the call count",
+      "text": "When a callback AC names payload values such as a position, make the adapter expose them to the debug snapshot and assert them in the smoke, not only the call count.",
+      "signal": "ac_gap",
+      "scope": "src/game smoke",
+      "status": "candidate",
+      "features": [
+        "fundacao-harness-jev"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "FND-08 / mutant A5 / src/scenes/TestScene.ts:138 (src/game smoke)"
+      ],
+      "created": "2026-09-24T14:20:47Z",
+      "last_seen": "2026-09-24T14:20:47Z"
+    },
+    {
+      "id": "L-013",
+      "key": "surviving_mutant::test a rounding rule with an input that is not an exact multiple of the step because exact multiples cannot tell ceil from floor",
+      "text": "Test a rounding rule with an input that is not an exact multiple of the step, because exact multiples cannot tell ceil from floor.",
+      "signal": "surviving_mutant",
+      "scope": "tests game",
+      "status": "candidate",
+      "features": [
+        "fundacao-harness-jev"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M22 / src/game/debugApi.ts:47 (tests game)"
+      ],
+      "created": "2026-09-24T14:20:47Z",
+      "last_seen": "2026-09-24T14:20:47Z"
+    },
+    {
+      "id": "L-014",
+      "key": "spec_precision_gap::when a spec converts a duration into fixed steps state the rounding rule for durations that are not a whole number of steps",
+      "text": "When a spec converts a duration into fixed steps, state the rounding rule for durations that are not a whole number of steps.",
+      "signal": "spec_precision_gap",
+      "scope": "spec timing",
+      "status": "candidate",
+      "features": [
+        "fundacao-harness-jev"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "FND-22 / tests/game/debugApi.test.ts:52 (spec timing)"
+      ],
+      "created": "2026-09-24T14:20:48Z",
+      "last_seen": "2026-09-24T14:20:48Z"
+    },
+    {
+      "id": "L-015",
+      "key": "spec_deviation::when a parser is widened beyond the pattern the spec quotes update the spec text and keep a negative test for every part of the pattern that still must match",
+      "text": "When a parser is widened beyond the pattern the spec quotes, update the spec text and keep a negative test for every part of the pattern that still must match.",
+      "signal": "spec_deviation",
+      "scope": "tools spec",
+      "status": "candidate",
+      "features": [
+        "fundacao-harness-jev"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPEC_DEVIATION tools/jev-refine/lib.ts:19 (tools spec)"
+      ],
+      "created": "2026-09-24T14:20:48Z",
+      "last_seen": "2026-09-24T14:20:48Z"
+    },
+    {
+      "id": "L-016",
+      "key": "surviving_mutant::give every required token of a parsing regex a negative test with a line that lacks only that token",
+      "text": "Give every required token of a parsing regex a negative test with a line that lacks only that token.",
+      "signal": "surviving_mutant",
+      "scope": "tests tools",
+      "status": "candidate",
+      "features": [
+        "fundacao-harness-jev"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M24 / tools/jev-refine/lib.ts:22 (tests tools)"
+      ],
+      "created": "2026-09-24T14:20:48Z",
+      "last_seen": "2026-09-24T14:20:48Z"
     }
   ]
 }
