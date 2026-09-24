@@ -207,20 +207,20 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BOSS-06 | P1: Rodada de chefe | Specify | Implementing |
 | BOSS-08 | P1: Rodada de chefe | Specify | Implementing |
 | BAT-01 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-09 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-09 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-02 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-10 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-10 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-03 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-04 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-05 | P1: Ataques telegrafados | Specify | Pending |
-| BAT-11 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-05 | P1: Ataques telegrafados | Specify | Implementing |
+| BAT-11 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-06 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-12 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-07 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-08 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-13 | P1: Ataques telegrafados | Specify | Pending |
 | BAI-01 | P1: Fases e postura | Specify | Implementing |
-| BAI-02 | P1: Fases e postura | Specify | Pending |
+| BAI-02 | P1: Fases e postura | Specify | Implementing |
 | BAI-03 | P1: Fases e postura | Specify | Implementing |
 | BAI-11 | P1: Fases e postura | Specify | Implementing |
 | BAI-04 | P1: Fases e postura | Specify | Implementing |

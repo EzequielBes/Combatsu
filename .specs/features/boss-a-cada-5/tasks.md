@@ -191,16 +191,16 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] Ciclo: fase 1 investida → salto → investida; fase 2 investida → rajada → salto; fase 3 rajada → investida → salto → investida; ao mudar de fase recomeça do primeiro (BAI-02)
-- [ ] Preparos na fase 1/2/3: investida 600/510/420, salto 500/425/350, rajada 700/595/490 ms (limite exato: ataque não começa 1 ms antes) (BAT-01, BAT-02, BAT-04, BAI-03)
-- [ ] Todo preparo ≥ 350 ms em todas as fases (BAT-05)
-- [ ] Descanso depois de cada ataque: 900/700/500 ms por fase (BAI-11)
-- [ ] Investida: `vx = ±320` na direção do player no fim do preparo; para em 360 px (somados por dt) ou quando `blocked`; `hitboxOn` só ao começar o movimento e `hitboxOff` ao parar (BAT-01, BAT-09); player no mesmo x → direção para onde o chefe olha (edge)
-- [ ] Salto: `leap.toX` = x do player no fim do preparo; `progress` 0 → 1 em 700 ms; `landed` emitido uma vez ao terminar (BAT-02, BAT-10)
-- [ ] Rajada: `fire` emitido `volleyCount` vezes, a cada 150 ms, com `speed` do spec e `dir` para o lado do player (BAT-04)
-- [ ] `state`/`attack` no output: `windup` + ataque durante o preparo (BAT-11)
-- [ ] Sem `canAct`: emite `hitboxOff` se havia hitbox aberta, zera `vx`, cancela o ataque e não o retoma (BAI-05)
-- [ ] Gate check passes: `npm test`
+- [x] Ciclo: fase 1 investida → salto → investida; fase 2 investida → rajada → salto; fase 3 rajada → investida → salto → investida; ao mudar de fase recomeça do primeiro (BAI-02)
+- [x] Preparos na fase 1/2/3: investida 600/510/420, salto 500/425/350, rajada 700/595/490 ms (limite exato: ataque não começa 1 ms antes) (BAT-01, BAT-02, BAT-04, BAI-03)
+- [x] Todo preparo ≥ 350 ms em todas as fases (BAT-05)
+- [x] Descanso depois de cada ataque: 900/700/500 ms por fase (BAI-11)
+- [x] Investida: `vx = ±320` na direção do player no fim do preparo; para em 360 px (somados por dt) ou quando `blocked`; `hitboxOn` só ao começar o movimento e `hitboxOff` ao parar (BAT-01, BAT-09); player no mesmo x → direção para onde o chefe olha (edge)
+- [x] Salto: `leap.toX` = x do player no fim do preparo; `progress` 0 → 1 em 700 ms; `landed` emitido uma vez ao terminar (BAT-02, BAT-10)
+- [x] Rajada: `fire` emitido `volleyCount` vezes, a cada 150 ms, com `speed` do spec e `dir` para o lado do player (BAT-04)
+- [x] `state`/`attack` no output: `windup` + ataque durante o preparo (BAT-11)
+- [x] Sem `canAct`: emite `hitboxOff` se havia hitbox aberta, zera `vx`, cancela o ataque e não o retoma (BAI-05)
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
