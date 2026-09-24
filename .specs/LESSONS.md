@@ -68,6 +68,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M3 src/core/enemyAI.ts:5 vs tests/core/enemyAI.test.ts:271-280 (validation.md rodada 2, lacuna 4) (tests core)
 - last seen: 2026-09-24T01:27:55Z
 
+### L-010 - Test every spec threshold exactly at its boundary value on both sides, because flipping a strict comparison to non-strict survives tests that only probe values away from the limit.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests core` · harmful: 0
+- features: visual-e-jogabilidade
+- evidence: M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core)
+- last seen: 2026-09-24T02:09:18Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
