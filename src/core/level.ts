@@ -74,3 +74,41 @@ export function parseLevel(rows: readonly string[]): LevelData {
   if (!player) throw new Error('Level sem P (spawn do player)');
   return { widthPx: width * TILE, heightPx: rows.length * TILE, solids, player, enemies, props };
 }
+
+export type TileVariant =
+  | 'top'
+  | 'middle'
+  | 'left'
+  | 'right'
+  | 'top-left'
+  | 'top-right'
+  | 'thin'
+  | 'thin-left'
+  | 'thin-right';
+
+/**
+ * Variante visual de um tile sólido pelos quatro vizinhos (ENV-01); `null` se o tile não é sólido.
+ * Fora do mapa conta como sólido nas laterais e embaixo (paredes e chão continuam além da borda) e como vazio
+ * em cima (a primeira linha mostra o topo).
+ * Regra:
+ * - sem sólido em cima e sem sólido embaixo → linha fina: `thin-left` (só falta o vizinho da esquerda),
+ *   `thin-right` (só falta o da direita), senão `thin`;
+ * - sem sólido em cima, com sólido embaixo → topo: `top-left`, `top-right` ou `top`, pela mesma regra lateral;
+ * - com sólido em cima → interior: `left` (só falta o vizinho da esquerda), `right` (só falta o da direita),
+ *   senão `middle`.
+ * Quando faltam os dois vizinhos laterais (coluna de 1 tile), fica a variante central da linha.
+ */
+export function tileVariant(rows: readonly string[], tx: number, ty: number): TileVariant | null {
+  const solid = (x: number, y: number, outside: boolean): boolean => {
+    if (y < 0 || y >= rows.length || x < 0 || x >= rows[y].length) return outside;
+    return rows[y][x] === '#';
+  };
+  if (!solid(tx, ty, false)) return null;
+  const up = solid(tx, ty - 1, false);
+  const down = solid(tx, ty + 1, true);
+  const left = solid(tx - 1, ty, true);
+  const right = solid(tx + 1, ty, true);
+  const side = !left && right ? '-left' : left && !right ? '-right' : '';
+  if (up) return side === '-left' ? 'left' : side === '-right' ? 'right' : 'middle';
+  return `${down ? 'top' : 'thin'}${side}` as TileVariant;
+}

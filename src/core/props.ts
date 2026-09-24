@@ -11,7 +11,6 @@ export interface PropDef {
   throwSpeed: number; // px/s
   knockback: number; // impulso em px por step do Matter
   socket: 'front' | 'back'; // onde fica na mão: à frente ou nas costas/ombro
-  debrisColor: number;
   tags: readonly string[]; // reservado para técnicas futuras ("cortante", "inflamável")
 }
 

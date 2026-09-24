@@ -1,9 +1,27 @@
-import type { Hit } from '../core/hit';
+import type { Hit, Team } from '../core/hit';
+
+/** Retângulo pelo centro, em px de mundo. */
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 /** Qualquer coisa que pode levar um golpe (player, inimigo). */
 export interface Hittable {
   readonly id: number;
-  receiveHit(hit: Hit): void;
+  readonly team: Team;
+  /**
+   * Aplica o golpe. Devolve `true` se o alvo aceitou (dano ou reação) e `false` se ignorou (invulnerável, morto,
+   * dissolvendo): só golpe aceito gera faísca, tremida e hitstop (FX-06).
+   */
+  receiveHit(hit: Hit): boolean;
+  /**
+   * Área de quem leva o golpe, para achar o ponto de contato da faísca. Sai da posição + tamanho do corpo, nunca
+   * de `body.bounds` (o Matter alarga o AABB pela velocidade). Sem ela, a faísca sai no centro de quem bate.
+   */
+  hurtRect?(): Rect;
 }
 
 export type BodyTag =
