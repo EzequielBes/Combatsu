@@ -95,6 +95,7 @@ T29
 T30
 T31
 T32
+T33
 ```
 
 ---
@@ -774,6 +775,27 @@ T32
 **Tests**: unit (os testes de `tests/core/props.test.ts` e `tests/data/props.test.ts` continuam cobrindo PropDef)
 **Gate**: build
 **Commit**: `refactor(props): drop unused debris color field`
+
+---
+
+#### T33: Patrulha vira ao ficar presa
+
+**What**: A `EnemyAI` detecta, na patrulha, que a posição não avançou 1 px em 200 ms e inverte a direção.
+**Where**: `src/core/enemyAI.ts`
+**Depends on**: None
+**Reuses**: `EnemyAI.update` (já recebe `selfX`)
+**Requirement**: AI-01
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] Teste: patrulhando com `selfX` parado por 200 ms, o vx troca de sinal; parado menos de 200 ms não troca; perseguição e preparo não são afetados
+- [ ] Smoke: o inimigo da direita (spawn x=1200, parede em x=1248) vai e volta em vez de empurrar a parede
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: unit (`tests/core/enemyAI.test.ts`)
+**Gate**: build
+**Commit**: `fix(ai): turn patrol around when an obstacle stops the enemy`
 
 ---
 
