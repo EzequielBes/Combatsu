@@ -215,7 +215,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BAT-05 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-11 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-06 | P1: Ataques telegrafados | Specify | Pending |
-| BAT-12 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-12 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-07 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-08 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-13 | P1: Ataques telegrafados | Specify | Pending |

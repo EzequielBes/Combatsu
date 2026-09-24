@@ -131,10 +131,10 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] A 260 px/s e 1200 px: `moving` com 1199 px percorridos, `expired` ao chegar a 1200 px; `x` anda na direção `dir` (±1) (BAT-12)
-- [ ] A 240 px/s e 600 px: `expired` exatamente em 600 px (BAT-12)
-- [ ] Vários `update` pequenos equivalem a um grande
-- [ ] Gate check passes: `npm test`
+- [x] A 260 px/s e 1200 px: `moving` com 1199 px percorridos, `expired` ao chegar a 1200 px; `x` anda na direção `dir` (±1) (BAT-12)
+- [x] A 240 px/s e 600 px: `expired` exatamente em 600 px (BAT-12)
+- [x] Vários `update` pequenos equivalem a um grande
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
