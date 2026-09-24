@@ -280,6 +280,25 @@ describe('EnemyAI: patrulha presa por obstáculo (caso de borda do AI-01)', () =
     expect(vxs.every((vx) => vx === 35)).toBe(true);
   });
 
+  it('fronteira: parado exatamente 200 ms inverte no frame em que completa os 200 ms', () => {
+    const ai = new EnemyAI(ENEMY_AI, SPAWN);
+    const at = { selfX: SPAWN, playerX: FAR, canAct: true };
+    ai.update(50, at); // âncora
+    const vxs = [50, 50, 50, 50].map((dt) => ai.update(dt, at).vx);
+    expect(vxs).toEqual([35, 35, 35, -35]);
+  });
+
+  it('fronteira: avançando exatamente 1 px a cada 200 ms nunca inverte', () => {
+    const ai = new EnemyAI(ENEMY_AI, SPAWN);
+    let x = SPAWN;
+    const vxs: number[] = [ai.update(50, { selfX: x, playerX: FAR, canAct: true }).vx];
+    for (let i = 0; i < 16; i++) {
+      x += 0.25; // 4 passos de 50 ms = exatamente 1 px em 200 ms
+      vxs.push(ai.update(50, { selfX: x, playerX: FAR, canAct: true }).vx);
+    }
+    expect(vxs.every((vx) => vx === 35)).toBe(true);
+  });
+
   it('perseguindo parado contra algo não inverte (só a patrulha vira)', () => {
     const ai = new EnemyAI(ENEMY_AI, SPAWN);
     const out = run(ai, 400, { selfX: SPAWN, playerX: SPAWN + 150 });

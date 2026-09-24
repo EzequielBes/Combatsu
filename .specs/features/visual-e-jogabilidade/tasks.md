@@ -105,6 +105,7 @@ T34
 T35
 T36
 T37
+T38
 ```
 
 ---
@@ -891,6 +892,26 @@ T37
 **Tests**: unit
 **Gate**: quick
 **Commit**: `test(ai): assert patrol direction on every step of the progress case`
+
+---
+
+#### T38: Testes nos limites exatos da patrulha presa
+
+**What**: Dois testes na fronteira do caso de borda do AI-01: parado exatamente 200 ms inverte; avançando exatamente 1 px a cada 200 ms não inverte. Decisão do usuário após a rodada 3 do Verifier (mutantes M9 e M10).
+**Where**: `tests/core/enemyAI.test.ts`
+**Depends on**: None
+**Reuses**: helpers do arquivo
+**Requirement**: AI-01
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [x] Os dois testes passam no código real e falham com M9 (`<` → `<=` no tempo parado) e com M10 (`>=` → `>` no avanço), provado num worktree descartável
+- [x] Gate check passes: `npm test` (198 testes)
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `test(ai): cover exact stall thresholds of the blocked patrol rule`
 
 ---
 
