@@ -102,13 +102,13 @@ T7 → T8
 
 **Done when**:
 
-- [ ] maxHp: r1 = 60, r2 = 67, r5 = 89, r10 = 125, r18 = 180 (teto), r30 = 180 (DIF-01)
-- [ ] dano: r1 = 12, r2 = 13, r5 = 16, r19 = 29, r20 = 30 (teto), r40 = 30 (DIF-05)
-- [ ] velocidade: r1 = ×1, r15 = ×1,4 (teto), r30 = ×1,4, aplicado a `patrolSpeed` e `chaseSpeed`; os outros campos da IA ficam iguais (DIF-06)
-- [ ] Para r de 2 a 100, cada multiplicador ≥ o de r − 1 (DIF-02)
-- [ ] Rodadas 0, −3 e 2.5 devolvem exatamente os valores da rodada 1 (DIF-03)
-- [ ] `scaleFor` não altera o objeto base
-- [ ] Gate check passes: `npm test`
+- [x] maxHp: r1 = 60, r2 = 67, r5 = 89, r10 = 125, r18 = 180 (teto), r30 = 180 (DIF-01)
+- [x] dano: r1 = 12, r2 = 13, r5 = 16, r19 = 29, r20 = 30 (teto), r40 = 30 (DIF-05)
+- [x] velocidade: r1 = ×1, r15 = ×1,4 (teto), r30 = ×1,4, aplicado a `patrolSpeed` e `chaseSpeed`; os outros campos da IA ficam iguais (DIF-06)
+- [x] Para r de 2 a 100, cada multiplicador ≥ o de r − 1 (DIF-02)
+- [x] Rodadas 0, −3 e 2.5 devolvem exatamente os valores da rodada 1 (DIF-03)
+- [x] `scaleFor` não altera o objeto base
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
