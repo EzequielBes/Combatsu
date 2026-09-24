@@ -11,6 +11,7 @@ export const TEX = {
   chair: 'chair',
   bottle: 'bottle',
   smoke: 'smoke',
+  smokeCurse: 'smoke-curse',
   /** Partes do ragdoll do inimigo, desenhadas com as cores da folha dele (CHR-04). */
   ragHead: 'rag-head',
   ragTorso: 'rag-torso',

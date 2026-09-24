@@ -6,7 +6,7 @@ import { PALETTE_KEYS } from './palette';
 import { registerSheet } from './render';
 import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
-import { PROP_SHARDS, PROP_SPRITES, SMOKE } from './sprites/props';
+import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
 import { registerTiles } from './tiles';
 
 /** Chave da animação do player no AnimationManager (global do jogo). */
@@ -46,6 +46,7 @@ export function createArt(scene: Phaser.Scene): void {
     registerSheet(scene, shardsKey(texture), parseSheet(shardsKey(key), shards, PALETTE_KEYS));
   }
   registerSheet(scene, TEX.smoke, parseSheet('smoke', { smoke: SMOKE }, PALETTE_KEYS));
+  registerSheet(scene, TEX.smokeCurse, parseSheet('smoke-curse', SMOKE_CURSE, PALETTE_KEYS));
   registerSheet(scene, TEX.hudBar, parseSheet('hud-bar', { bar: HUD_BAR }, PALETTE_KEYS));
   registerSheet(scene, TEX.enemyBar, parseSheet('enemy-bar', { bar: ENEMY_BAR }, PALETTE_KEYS));
 }

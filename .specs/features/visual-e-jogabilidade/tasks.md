@@ -864,9 +864,9 @@ T37
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: pixels opacos das partículas de fumaça só com cores da paleta (u, v, U)
-- [ ] Teste de dados: as folhas de fumaça passam no parseSheet com a paleta
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: pixels opacos das partículas de fumaça só com cores da paleta (u, v, U)
+- [x] Teste de dados: as folhas de fumaça passam no parseSheet com a paleta
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit (`tests/game/art.test.ts`)
 **Gate**: build
