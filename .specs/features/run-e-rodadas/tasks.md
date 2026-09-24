@@ -358,9 +358,9 @@ T9 → T10 → T11 → T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Mesmo id reportado duas vezes antes do `update` e em `update`s diferentes → `run.kills === 1` e `remaining` cai 1
-- [ ] Mutante C17 (contar sem checar o dedupe em `src/core/run.ts`) falha
-- [ ] Gate check passes: `npm test`
+- [x] Mesmo id reportado duas vezes antes do `update` e em `update`s diferentes → `run.kills === 1` e `remaining` cai 1
+- [x] Mutante C17 (contar sem checar o dedupe em `src/core/run.ts`) falha
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
