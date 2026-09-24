@@ -179,10 +179,10 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | RUN-01 | P1: Run com permadeath | Specify | Pending |
-| RUN-02 | P1: Run com permadeath | Specify | Pending |
-| RUN-03 | P1: Run com permadeath | Specify | Pending |
+| RUN-02 | P1: Run com permadeath | Specify | Implementing |
+| RUN-03 | P1: Run com permadeath | Specify | Implementing |
 | RUN-04 | P1: Run com permadeath | Specify | Pending |
-| RUN-05 | P1: Run com permadeath | Specify | Pending |
+| RUN-05 | P1: Run com permadeath | Specify | Implementing |
 | RUN-06 | P1: Run com permadeath | Specify | Pending |
 | RUN-07 | P1: Run com permadeath | Specify | Pending |
 | RUN-08 | P1: Run com permadeath | Specify | Pending |
