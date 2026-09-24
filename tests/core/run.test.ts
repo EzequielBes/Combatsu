@@ -169,6 +169,29 @@ describe('Run: eventos fora de hora são ignorados (RUN-07)', () => {
   });
 });
 
+describe('Run: dedupe de abate (WAVE-06)', () => {
+  it('o mesmo id morto duas vezes antes do update conta 1 em kills e derruba remaining em 1', () => {
+    const run = started();
+    run.enemyDied(1);
+    run.enemyDied(1); // mesmo id, ainda pendente
+    run.update(0, SEED);
+    expect(run.kills).toBe(1);
+    expect(run.remaining).toBe(2); // 3 (base da rodada 1) - 1
+  });
+
+  it('o mesmo id morto de novo num update seguinte não soma kills nem derruba remaining de novo', () => {
+    const run = started();
+    run.enemyDied(1);
+    run.update(0, SEED);
+    expect(run.kills).toBe(1);
+    expect(run.remaining).toBe(2);
+    run.enemyDied(1); // já contado antes, agora num update diferente
+    run.update(0, SEED);
+    expect(run.kills).toBe(1);
+    expect(run.remaining).toBe(2);
+  });
+});
+
 describe('acceptsPlayerInput (RUN-08)', () => {
   it.each<[RunState, boolean]>([
     ['title', false],
