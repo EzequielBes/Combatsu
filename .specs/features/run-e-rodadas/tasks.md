@@ -293,15 +293,15 @@ T7 → T8
 
 **Done when**:
 
-- [ ] `hud.smoke.mjs` (`?debug&seed=1`):
-  - [ ] em `title`, `center` contém o nome do jogo e `J / Enter para começar` (RHUD-05)
-  - [ ] em `roundActive`, `round === 'Rodada 1'` e `remaining === 'Inimigos: K'`, com K = alive + queued do `run` (RHUD-01)
-  - [ ] `banner === 'Rodada 1'` logo após começar e `null` depois de `step(1600)` (RHUD-02)
-  - [ ] na `intermission`, `banner === 'Rodada 1 concluída'` (RHUD-03)
-  - [ ] em `gameOver`, `center` contém `Rodada alcançada: N`, `Abates: K` e `J / Enter para tentar de novo` (RHUD-06)
-  - [ ] `ignoredByMain === true` (RHUD-07)
-- [ ] `tests/game/art.test.ts` confere que as cores de texto e de fundo usadas pelos elementos novos do HUD estão na paleta (RHUD-04)
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `hud.smoke.mjs` (`?debug&seed=1`):
+  - [x] em `title`, `center` contém o nome do jogo e `J / Enter para começar` (RHUD-05)
+  - [x] em `roundActive`, `round === 'Rodada 1'` e `remaining === 'Inimigos: K'`, com K = alive + queued do `run` (RHUD-01)
+  - [x] `banner === 'Rodada 1'` logo após começar e `null` depois de `step(1600)` (RHUD-02)
+  - [x] na `intermission`, `banner === 'Rodada 1 concluída'` (RHUD-03)
+  - [x] em `gameOver`, `center` contém `Rodada alcançada: N`, `Abates: K` e `J / Enter para tentar de novo` (RHUD-06)
+  - [x] `ignoredByMain === true` (RHUD-07)
+- [x] `tests/game/art.test.ts` confere que as cores de texto e de fundo usadas pelos elementos novos do HUD estão na paleta (RHUD-04)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

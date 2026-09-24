@@ -204,14 +204,14 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 | DIF-04 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-05 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-06 | P1: Dificuldade progressiva | Specify | Implementing |
-| RHUD-01 | P2: HUD da run | Specify | Pending |
+| RHUD-01 | P2: HUD da run | Specify | Implementing |
 | RHUD-02 | P2: HUD da run | Specify | Implementing |
-| RHUD-03 | P2: HUD da run | Specify | Pending |
-| RHUD-04 | P2: HUD da run | Specify | Pending |
-| RHUD-05 | P2: Telas de título e game over | Specify | Pending |
-| RHUD-06 | P2: Telas de título e game over | Specify | Pending |
-| RHUD-07 | P2: HUD da run | Specify | Pending |
-| RHUD-08 | P2: HUD da run | Specify | Pending |
+| RHUD-03 | P2: HUD da run | Specify | Implementing |
+| RHUD-04 | P2: HUD da run | Specify | Implementing |
+| RHUD-05 | P2: Telas de título e game over | Specify | Implementing |
+| RHUD-06 | P2: Telas de título e game over | Specify | Implementing |
+| RHUD-07 | P2: HUD da run | Specify | Implementing |
+| RHUD-08 | P2: HUD da run | Specify | Implementing |
 
 **Coverage:** 34 total, 0 mapped to tasks, 34 unmapped ⚠️ (Tasks ainda não criadas)
 

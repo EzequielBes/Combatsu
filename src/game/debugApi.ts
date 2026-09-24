@@ -10,6 +10,8 @@ export interface GameSnapshot {
   deaths: { id: number; x: number; y: number }[];
   /** Estado da máquina de run (RUN-09). */
   run: { state: RunState; round: number; kills: number; alive: number; queued: number };
+  /** Estado do HUD da run (RHUD-01..07). */
+  hud: { ignoredByMain: boolean; round: string; remaining: string; banner: string | null; center: string[] | null };
 }
 
 export interface DebugProbe {
