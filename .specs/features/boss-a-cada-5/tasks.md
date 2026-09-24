@@ -77,8 +77,8 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] `tests/data/tuning.test.ts` confere cada valor de `BOSS` contra as Assumptions da spec e `BOSS_DEFEAT_HITSTOP_MS === 250`
-- [ ] Gate check passes: `npm test`
+- [x] `tests/data/tuning.test.ts` confere cada valor de `BOSS` contra as Assumptions da spec e `BOSS_DEFEAT_HITSTOP_MS === 250`
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick

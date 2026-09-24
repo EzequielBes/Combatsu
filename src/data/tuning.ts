@@ -123,3 +123,51 @@ export const WAVE: WaveTuning = { base: 3, max: 12, maxAlive: 4, pointGapMs: 800
 
 /** Tempos da máquina de estados da run (RUN-10, RUN-11, RHUD-02). */
 export const RUN: RunTuning = { intermissionMs: 2500, gameOverLockMs: 1000, spawnGraceMs: 600, bannerMs: 1500 };
+
+/**
+ * Tuning do chefe (BOSS-06, BAT-01..04, BAI-01, BAI-03, BAI-04, BAI-07..09, BAI-11, BAI-13, BWIN-01, BWIN-02,
+ * BTIER-01, BTIER-02, BTIER-04, BTIER-05, BTIER-07): todos os números das Assumptions da spec de
+ * `boss-a-cada-5`. Fases indexadas 0..2 (fase 1, 2, 3).
+ */
+export const BOSS = {
+  /** Entrada parado e invulnerável antes de poder atacar (BOSS-06). */
+  introMs: 1500,
+  /** Fração de hp/maxHp em que a fase muda: <= phase2 vira fase 2, <= phase3 vira fase 3 (BAI-01). */
+  phaseThresholds: { phase2: 0.66, phase3: 0.33 },
+  /** Rugido ao mudar de fase: invulnerável, sem atacar (BAI-04). */
+  roarMs: 900,
+  /** Impulso horizontal no player ao começar o rugido, px/step (BAI-13). */
+  roarImpulse: 6,
+  /** Atordoamento com a postura zerada: sem mover, sem atacar (BAI-08). */
+  staggerMs: 1200,
+  poise: {
+    max: 100,
+    /** Por segundo, depois de `regenDelayMs` sem apanhar (BAI-09). */
+    regenPerSec: 15,
+    regenDelayMs: 2000,
+  },
+  /** windupMult multiplica o preparo base de cada ataque (BAI-03); restMs = descanso depois de um ataque (BAI-11). */
+  phases: [
+    { windupMult: 1.0, restMs: 900 },
+    { windupMult: 0.85, restMs: 700 },
+    { windupMult: 0.7, restMs: 500 },
+  ] as const,
+  /** Investida: preparo base, velocidade, alcance máximo e dano forte (BAT-01, BAT-09). */
+  charge: { windupMs: 600, speed: 320, maxDist: 360, damage: 18 },
+  /** Salto: preparo base, duração do salto e dano forte do pouso (BAT-02, BAT-10). */
+  leap: { windupMs: 500, durationMs: 700, damage: 20 },
+  /** Onda de choque do pouso: velocidade, alcance, altura e dano leve (BAT-03). */
+  shockwave: { speed: 240, maxDist: 600, height: 20, damage: 12 },
+  /** Rajada: preparo base, quantidade padrão, intervalo, velocidade, dano leve e alcance do projétil (BAT-04). */
+  volley: { windupMs: 700, count: 3, intervalMs: 150, speed: 260, damage: 10, maxDist: 1200 },
+  /** Escala por tier (BTIER-01, BTIER-02): hp = round(hpBase * min(1 + hpPerTier*(tier-1), hpCap)); dano dos
+   * ataques = base * min(1 + damagePerTier*(tier-1), damageCap), arredondado. */
+  tier: { hpBase: 600, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 },
+  /** Arquétipos (BTIER-04, BTIER-05, BTIER-07): a Tecelã multiplica a velocidade do projétil e troca o volleyCount. */
+  archetypes: {
+    oni: { name: 'Oni do Portão' },
+    tecela: { name: 'Tecelã de Maldições', volleyCount: 5, projectileSpeedMult: 1.25 },
+  },
+  /** Cura do player ao derrotar o chefe, fração de maxHp com teto (BWIN-01). */
+  healFraction: 0.3,
+} as const;
