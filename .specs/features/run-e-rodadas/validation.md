@@ -1,15 +1,110 @@
 # Run, rodadas e dificuldade progressiva — Validation
 
-# Rodada 2 (vigente)
+# Rodada 3 (vigente)
+
+**Date**: 2026-09-24
+**Spec**: `.specs/features/run-e-rodadas/spec.md` (34 requisitos, 5 casos de borda). DIF-04 agora nomeia `enemies[i].patrolSpeed`/`chaseSpeed` no snapshot (`spec.md:127`). RHUD-02 fixa o centro visual da faixa em x = 480, y = 135 (`spec.md:142`).
+**Diff range**: `9b1ffc8..ded735f` (T15 `e70983d`, T16 `ded735f`, mais `3e7d566` com as fix tasks). Código e testes: 8 arquivos, +52/−3 (`src/core/enemyAI.ts`, `src/game/Enemy.ts`, `src/game/Hud.ts`, `src/game/debugApi.ts`, `src/scenes/TestScene.ts`, `tests/game/debugApi.test.ts`, `scripts/smoke/boot.smoke.mjs`, `scripts/smoke/run-loop.smoke.mjs`).
+**Verifier**: sub-agente independente, rodada 3 de no máximo 3 (autor ≠ verificador). As mutações rodaram num `git worktree` descartável (`scratchpad/verify-f1r3`), com junction para o `node_modules`.
+
+## Validation (rodada 3)
+
+**Result**: PASS
+
+Motivo: os 2 sobreviventes da rodada 2 (N4 e N2) agora morrem por asserção comportamental. Das 6 variações novas dentro do diff, 5 morrem e 1 é equivalente. Os gates estão verdes: 323 testes, build e smoke 3 vezes. Os 34 requisitos têm evidência `file:line` que discrimina o valor do spec, e os 34 passaram para `Verified`.
+
+---
+
+## Gates (rodados pelo Verifier em HEAD `ded735f`)
+
+- `npx vitest run`: **29 arquivos, 323 passed, 0 failed, 0 skipped**, igual à rodada 2. T15 e T16 não criaram testes unitários; só acrescentaram os campos novos do snapshot ao fixture de `tests/game/debugApi.test.ts:36`. Nenhum teste foi removido nem afrouxado.
+- `npm run build`: **exit 0** (só o aviso de chunk > 500 kB que já existia).
+- `npm run smoke`, três vezes seguidas: **exit 0 nas três**, `ok` em `boot`, `enemy-died`, `hud`, `no-debug` e `run-loop` ("5 cenário(s) ok"). Estável.
+- **Isolamento do sensor**: `git status --porcelain` da árvore real igual antes e depois (`?? .agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`). Junction desfeita com `rmdir` antes do `git worktree remove --force`. O `node_modules` real está intacto e `git worktree list` mostra só a árvore principal.
+- Nenhum `// SPEC_DEVIATION` novo no diff.
+
+## Task Completion (fix tasks da rodada 2)
+
+| Task | Status | Evidência |
+| --- | --- | --- |
+| T15 | ✅ | Getters em `src/core/enemyAI.ts:63-70`, que leem `this.t`, o mesmo tuning que a IA usa para mover (`:120`, `:127`). Getters em `src/game/Enemy.ts:134-141`, que leem `this.ai`. Snapshot em `src/scenes/TestScene.ts:244-245`, tipo em `src/game/debugApi.ts:16-17`. Asserções em `scripts/smoke/boot.smoke.mjs:39-42` e `scripts/smoke/run-loop.smoke.mjs:80-83`. N4 morto |
+| T16 | ✅ | `src/game/Hud.ts:171-174` (`bannerPos` = `getBounds().centerX/centerY`). Asserção em `scripts/smoke/hud.smoke.mjs:42-45`. N2 morto |
+
+## Re-verificação dos ACs (spec-anchored, evidence-or-zero)
+
+| AC | Spec-defined outcome | `file:line` + asserção | Status |
+| --- | --- | --- | --- |
+| DIF-06 | patrol/chase = base de `tuning.ts` (35/70, `src/data/tuning.ts:90,92`) × `min(1 + 0.03(r−1), 1.4)` | `tests/core/difficulty.test.ts:36-49` (r1 ×1, r15 ×1.4, r30 ×1.4, `toBeCloseTo`). Na cena, `scripts/smoke/run-loop.smoke.mjs:81` confere a rodada 2: 35 × 1,03 = 36,05 e 70 × 1,03 = 72,1 (± 0,01). V1 (só `chaseSpeed` sem escala) e V2 (escala aplicada duas vezes, 37,13/74,26) mortos | ✅ PASS |
+| DIF-04 (hp e dano) | inimigo da rodada 2 com `maxHp` 67 e dano 13 | Sem mudança desde a rodada 2 (as linhas desceram 5): `scripts/smoke/run-loop.smoke.mjs:78` (`maxHp === 67`), `:172` (`player.hp === 87`), `:176` (`hp === 67 && maxHp === 67 && damage === 13`) | ✅ PASS |
+| DIF-04 (velocidades) | `enemies[i].patrolSpeed/chaseSpeed`, lidos da IA viva, iguais a DIF-06 para `r` | Rodada 1: `scripts/smoke/boot.smoke.mjs:40` - `abs(e.patrolSpeed - 35) < 0.01 && abs(e.chaseSpeed - 70) < 0.01` em todo inimigo. Rodada 2: `scripts/smoke/run-loop.smoke.mjs:81` - `abs(e.patrolSpeed - 36.05) < 0.01 && abs(e.chaseSpeed - 72.1) < 0.01` em todo inimigo novo, dentro de `checkAliveAndScale`, que roda a cada 100 ms. O valor sai de `EnemyAI.t` (`src/core/enemyAI.ts:64,69`) e passa pelo `Enemy` (`src/game/Enemy.ts:135,140`); não vem do tuning da cena. N4 (`40/40`) morto no boot e no run-loop | ✅ PASS |
+| RHUD-02 (posição) | centro visual da faixa em x = 480, y = 135 | `scripts/smoke/hud.smoke.mjs:43` - `abs(bannerPos.x - 480) < 1 && abs(bannerPos.y - 135) < 1`, com `bannerPos` = centro de `getBounds()` (`src/game/Hud.ts:172-173`). Mortos: N2 (`setOrigin(0, 0.5)` → x 519), V3 (`setOrigin(1, 0.5)` → x 441), V4 (y = 140) e V6 (`setOrigin(0.5, 0)` → y 148) | ✅ PASS |
+| RHUD-02 (duração) | 1500 ms e depois some | Sem mudança: `scripts/smoke/hud.smoke.mjs:52` (visível em 1400 ms), `:57` (`null` em 1600 ms) | ✅ PASS |
+
+**Amostragem dos demais ACs**: conferi contra HEAD as linhas citadas na rodada 2, e nenhuma mudou de sentido. Em `run-loop.smoke.mjs`, tudo depois de `:79` desceu 5 linhas por causa do T15. Amostras:
+- RUN-02: `scripts/smoke/run-loop.smoke.mjs:43-46`
+- WAVE-02: `tests/core/waves.test.ts:45,49`
+- WAVE-05: `scripts/smoke/run-loop.smoke.mjs:74`
+- WAVE-06 no `Run`: `tests/core/run.test.ts:178-179`
+- DIF-01/05: `tests/core/difficulty.test.ts:16,29`
+
+Os outros (RUN-01, 03..11, WAVE-01, 03, 04, 07..09, DIF-02, 03, RHUD-01, 03..08) não aparecem no diff `9b1ffc8..HEAD`. A evidência das rodadas 1 e 2 continua valendo, e os gates verdes confirmam.
+
+**Status**: 34/34 requisitos com evidência que discrimina o valor do spec; 0 spec-precision gaps; 5/5 casos de borda (sem mudança desde a rodada 2).
+
+## Discrimination Sensor (rodada 3)
+
+**Sensor depth**: expandido (rodada final). **8 mutantes no diff: 2 re-execuções (N4, N2) e 6 novos. 7 mortos, 0 sobreviventes, 1 equivalente.** Todas as mortes vieram de asserção do smoke (`FALHA <cenário>: <mensagem>`), nenhuma de erro de compilação.
+
+| # | File:line | Mutação | Killed? |
+| --- | --- | --- | --- |
+| N4 | `src/game/Enemy.ts:87` | `EnemyAI` com `patrolSpeed: 40, chaseSpeed: 40` em qualquer rodada | ✅ Killed (`boot:40`, `run-loop:81`) |
+| N2 | `src/game/Hud.ts:66` | faixa com `setOrigin(0, 0.5)` | ✅ Killed (`hud:43`, `{x:519, y:135}`) |
+| V1 | `src/game/Enemy.ts:87` | só `chaseSpeed` sem escala (`chaseSpeed: 70`), `patrolSpeed` escalado | ✅ Killed (`run-loop:81`, `chaseSpeed 70`) |
+| V2 | `src/game/Enemy.ts:87` | escala de velocidade aplicada duas vezes | ✅ Killed (`run-loop:81`, `37.13/74.26`) |
+| V3 | `src/game/Hud.ts:66` | faixa com `setOrigin(1, 0.5)` | ✅ Killed (`hud:43`, `{x:441}`) |
+| V4 | `src/game/Hud.ts:65` | faixa em y = 140 (`h2 * 0.25 + 5`) | ✅ Killed (`hud:43`, `{y:140}`) |
+| V6 | `src/game/Hud.ts:66` | faixa com `setOrigin(0.5, 0)` (mexe só no centro vertical) | ✅ Killed (`hud:43`, `{y:148}`) |
+| V7 | `src/core/enemyAI.ts:69` | getter `chaseSpeed` devolve `t.patrolSpeed * 2` | ➖ Equivalente. Com o tuning atual (70 = 2 × 35) e a escala uniforme de DIF-06, `2 × patrolSpeed` é igual a `chaseSpeed` em qualquer rodada. Nenhum teste distingue os dois sem mudar os dados, então não conta |
+
+**Resultado do sensor**: 7/7 não equivalentes mortos. ✅
+
+**Observação fora do escopo (não conta no veredito)**: rodei também um mutante em código anterior à feature, e ele passou no vitest e nos smokes. É o V5, em `src/core/enemyAI.ts:120`: a perseguição usa `this.facing * 70` fixo em vez de `this.t.chaseSpeed`. Essa linha é da F0 (AI-02) e está fora do diff da feature. Os testes de `tests/core/enemyAI.test.ts:97-135` só usam o tuning 35/70, então não distinguem uma constante do valor do tuning. A observação que a spec definiu para DIF-04 (a velocidade lida da IA viva) está coberta, e a IA lê o mesmo `this.t` para mover (`src/core/enemyAI.ts:120,127`). Reforço opcional, fora desta feature: um caso em `enemyAI.test.ts` com tuning diferente de 35/70.
+
+## Code Quality (diff da rodada 3)
+
+| Principle | Status |
+| --- | --- |
+| Minimum code | ✅ (4 getters de uma linha e 2 campos no snapshot) |
+| Surgical changes | ✅ (só os arquivos listados em T15/T16) |
+| No scope creep | ✅ |
+| Matches patterns | ✅ (mesmo padrão dos getters `maxHp`/`damage` da rodada 2) |
+| Spec-anchored outcome check | ✅ |
+| Every test maps to a requirement | ✅ |
+
+## Requirement Traceability Update (rodada 3)
+
+Os 34 requisitos (RUN-01..11, WAVE-01..09, DIF-01..06, RHUD-01..08) passam de `Implementing` para `Verified` em `spec.md`. Coverage: 34 total, 34 mapeados.
+
+## validate_state.py (rodada 3)
+
+`python .claude/skills/tlc-spec-driven/scripts/validate_state.py run-e-rodadas` → **exit 0**.
+
+## Conclusão da rodada 3
+
+Aprovada. Gates verdes (323 testes, build, smoke 3 vezes), 34/34 ACs ancorados e 7/7 mutantes não equivalentes mortos, incluindo N4 e N2. Nenhum sinal novo para o lessons layer.
+
+---
+
+# Rodada 2
 
 **Date**: 2026-09-24
 **Spec**: `.specs/features/run-e-rodadas/spec.md` (34 requisitos, 5 casos de borda; RHUD-02 agora fixa a faixa em x centrado e y = 135)
 **Diff range**: `0b1aff1..724492b` (T9 `3405794`, T10 `6d8e6bc`, T11 `8745620`, T12 `de36a40`, T13 `d17741f`, T14 `724492b`; mais `8da98c1` com as fix tasks). Código e testes: 11 arquivos, +215/−41 (`src/core/enemyBrain.ts`, `src/data/tuning.ts`, `src/game/Enemy.ts`, `src/game/Hud.ts`, `src/game/debugApi.ts`, `src/scenes/TestScene.ts`, `tests/core/run.test.ts`, `tests/core/waves.test.ts`, `tests/game/debugApi.test.ts`, `scripts/smoke/hud.smoke.mjs`, `scripts/smoke/run-loop.smoke.mjs`)
 **Verifier**: sub-agente independente, rodada 2 de no máximo 3 (autor ≠ verificador). Mutações num `git worktree` descartável (`scratchpad/verify-f1r2`) com junction para o `node_modules`.
 
-## Validation (rodada 2)
+## Veredito da rodada 2
 
-**Result**: FAIL
+**Resultado**: FAIL
 
 Motivo: os 7 sobreviventes da rodada 1 agora morrem, todos por asserção comportamental (nenhum só pelo `tsc`). Os gates estão verdes. Mas 2 dos 8 mutantes novos sobreviveram e mostram duas conjunções sem evidência:
 - **DIF-04, "and speeds"**: nenhum teste liga as velocidades escaladas ao inimigo que nasce na cena (N4).
