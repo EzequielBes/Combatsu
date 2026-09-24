@@ -1,12 +1,15 @@
 import Phaser from 'phaser';
 import { Filters } from '../core/collision';
+import { scaleFor } from '../core/difficulty';
 import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
+import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
+import { requireSpawnPoints } from '../core/waves';
 import { HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
-import { ENEMY_RESPAWN_MS, PLAYER_COMBO } from '../data/tuning';
+import { DIFFICULTY, ENEMY, ENEMY_AI, ENEMY_ATTACK, PLAYER_COMBO, RUN, WAVE } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
@@ -15,7 +18,8 @@ import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { registerDebugProbe, type DebugProbe, type GameSnapshot } from '../game/debugApi';
 import { Enemy } from '../game/Enemy';
 import { Fx, type SparkKind } from '../game/fx';
-import { Hud } from '../game/Hud';
+import { GAME_NAME, Hud } from '../game/Hud';
+import type { InputSnapshot } from '../game/input';
 import { PlayerInput } from '../game/input';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Player } from '../game/Player';
@@ -31,6 +35,17 @@ const WORLD_ZOOM = 1.5;
 const FOLLOW_DEADZONE = { w: 40, h: 24 };
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
 const CONTROLS_MS = 8000;
+/** Input neutro (RUN-08): fora de `roundActive`/`intermission` o player ignora tudo, mas o input continua sendo
+ * lido (para não vazar um `JustDown` represado quando a run volta a aceitar). */
+const NEUTRAL_INPUT: InputSnapshot = {
+  left: false,
+  right: false,
+  down: false,
+  jumpPressed: false,
+  jumpHeld: false,
+  attackPressed: false,
+  interactPressed: false,
+};
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
   private level!: LevelData;
@@ -43,6 +58,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private uiLayer!: Phaser.GameObjects.Layer;
   private fx!: Fx;
   private hud!: Hud;
+  private run!: Run;
+  /** Detecta a transição para morto (RUN-04): só o primeiro frame morto conta como evento. */
+  private wasPlayerDead = false;
   private readonly hitstop = new Hitstop();
   /** Se a pausa do hitstop está aplicada (física, animações, tweens e timers). */
   private frozen = false;
@@ -73,11 +91,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => registerDebugProbe(null));
     this.fx = new Fx(this);
     this.level = parseLevel(LEVEL_1);
+    requireSpawnPoints(this.level, 'LEVEL_1');
     buildBackground(this, this.level.widthPx, this.level.heightPx);
     this.terrain = [];
     this.enemies = [];
     this.buildTerrain();
     this.listenForContacts();
+    this.run = new Run(RUN, WAVE, this.level.enemies.length);
+    this.wasPlayerDead = false;
 
     this.props = [];
     for (const s of this.level.props) {
@@ -90,7 +111,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, strike);
-    for (const e of this.level.enemies) this.spawnEnemy({ x: e.x, y: e.y - SPAWN_LIFT });
+    // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
 
     this.cameras.main
       .setZoom(WORLD_ZOOM)
@@ -99,10 +120,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       .startFollow(this.player.sprite, true, 0.15, 0.15)
       .setDeadzone(FOLLOW_DEADZONE.w, FOLLOW_DEADZONE.h);
 
+    // J também é ataque (PlayerInput): o listener aqui é independente e só começa/recomeça a run (RUN-02/05).
+    this.onKey('J', () => this.run.startPressed());
+    this.onKey('ENTER', () => this.run.startPressed());
+
     // Ferramentas de ajuste (golpes de teste e debug do Matter): só valem no modo debug.
     bindDebugToggle(this);
     this.onKey('ONE', () => isDebug() && this.debugHit('light'));
     this.onKey('TWO', () => isDebug() && this.debugHit('heavy'));
+    this.onKey('THREE', () => isDebug() && this.player.debugKill());
     this.onKey('H', () => isDebug() && this.toggleDebugDraw());
     this.onKey('R', () => this.scene.restart());
     this.addHud();
@@ -114,40 +140,115 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
     const dt = Math.min(delta, MAX_FRAME_MS);
-    this.player.update(dt, this.controls.read());
+    // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
+    const raw = this.controls.read();
+    this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+    // Morte do player (RUN-04): só a transição para morto conta, uma vez.
+    if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
+    this.wasPlayerDead = this.player.dead;
     for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
     for (const prop of this.props) prop.update(dt);
     this.props = this.props.filter((prop) => !prop.isGone);
+    for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
+    // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
+    this.hud.setRun(this.run.round > 0 ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
+    this.hud.update(dt);
   }
 
-  private spawnEnemy(at: Vec2): void {
-    this.enemies.push(
-      new Enemy(
-        this,
-        at,
-        (dead) => {
-          this.enemies = this.enemies.filter((e) => e !== dead);
-          this.time.delayedCall(ENEMY_RESPAWN_MS, () => this.spawnEnemy(dead.spawn));
-        },
-        // A garra que acerta o player também é um golpe que conecta.
-        (hit, point) => this.onConnect(hit, point, hit.strength),
-        (dead, x, y) => this.onEnemyDied(dead.id, x, y),
-      ),
+  /** Seed da run: fixa por `?seed=N` só em `?debug` (design); senão o relógio (runs variadas). */
+  private seedForNewRun = (): number => {
+    if (isDebug()) {
+      const raw = new URLSearchParams(window.location.search).get('seed');
+      if (raw !== null) {
+        const n = Number(raw);
+        if (Number.isFinite(n)) return n;
+      }
+    }
+    return Date.now();
+  };
+
+  private applyRunCommand(cmd: RunCommand): void {
+    switch (cmd.type) {
+      case 'startRun':
+        this.onStartRun();
+        break;
+      case 'spawn':
+        this.spawnFromCommand(cmd.point, cmd.round);
+        break;
+      case 'roundStart':
+        // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
+        this.hud.setCenter(null);
+        this.hud.banner(`Rodada ${cmd.round}`, RUN.bannerMs);
+        break;
+      case 'roundCleared':
+        // Fica até o próximo `roundStart` chamar `banner` de novo (RHUD-03).
+        this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
+        break;
+      case 'gameOver':
+        this.hud.setCenter([
+          `Rodada alcançada: ${cmd.round}`,
+          `Abates: ${cmd.kills}`,
+          'J / Enter para tentar de novo',
+        ]);
+        break;
+    }
+  }
+
+  /** Nova run (RUN-01/05): remove os inimigos restantes na hora e devolve o player ao spawn com a vida cheia. */
+  private onStartRun(): void {
+    for (const e of this.enemies) e.destroyNow();
+    this.enemies = [];
+    this.player.resetForRun();
+  }
+
+  /** Onda da rodada (WAVE-02): tuning escalado pela rodada (DIF-04) e graça ao nascer (WAVE-09). */
+  private spawnFromCommand(point: number, round: number): void {
+    const at = this.level.enemies[point];
+    const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
+    const tuning = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
+    const enemy = new Enemy(
+      this,
+      spawnAt,
+      tuning,
+      RUN.spawnGraceMs,
+      (dead) => {
+        this.enemies = this.enemies.filter((e) => e !== dead);
+      },
+      // A garra que acerta o player também é um golpe que conecta.
+      (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength),
+      (dead, x, y) => this.onEnemyDied(dead.id, x, y),
     );
+    this.enemies.push(enemy);
+    this.debugEvents.push(`spawnFx:${enemy.id}`);
+    this.fx.curseSmoke(spawnAt.x, spawnAt.y);
   }
 
-  /** Um abate (FND-08): F1 conta a rodada aqui; por enquanto só vai para o snapshot de debug. */
+  /** Um abate (FND-08, WAVE-06): conta na onda da rodada, além de ir para o snapshot de debug. */
   onEnemyDied(enemyId: number, x: number, y: number): void {
     this.debugEvents.push(`enemyDied:${enemyId}`);
     this.debugDeaths.push({ id: enemyId, x, y });
+    this.run.enemyDied(enemyId);
   }
 
   debugSnapshot(): GameSnapshot {
     return {
       player: { x: this.player.sprite.x, y: this.player.sprite.y, hp: this.player.hp, dead: this.player.dead },
-      enemies: this.enemies.map((e) => ({ id: e.id, x: e.x, y: e.hurtRect().y, hp: e.hp, state: e.state })),
+      enemies: this.enemies.map((e) => ({
+        id: e.id,
+        x: e.x,
+        y: e.hurtRect().y,
+        hp: e.hp,
+        state: e.state,
+        maxHp: e.maxHp,
+        damage: e.damage,
+        patrolSpeed: e.patrolSpeed,
+        chaseSpeed: e.chaseSpeed,
+      })),
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),
+      run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
+      hud: this.hud.debugState(),
+      level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
     };
   }
 
@@ -233,6 +334,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud = new Hud(this, this.uiLayer, lines().join('\n'));
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     this.hud.showControls(CONTROLS_MS);
+    // Boot em `title` (RUN-01/RHUD-05): tela com o nome do jogo até o primeiro J/Enter.
+    this.hud.setCenter([GAME_NAME, 'J / Enter para começar']);
     // Tab alterna o painel; a captura impede o navegador de tirar o foco do jogo (HUD-03).
     this.input.keyboard!.addCapture('TAB');
     this.onKey('TAB', () => this.hud.toggleControls());

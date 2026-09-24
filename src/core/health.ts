@@ -72,6 +72,15 @@ export class Health {
     return this._hp - before;
   }
 
+  /** Volta ao hp cheio, vivo, sem invulnerabilidade, atordoamento nem respawn pendente (RUN-02, RUN-05). */
+  reset(): void {
+    this._hp = this.t.maxHp;
+    this._dead = false;
+    this.invulnTimer = 0;
+    this.staggerTimer = 0;
+    this.respawnTimer = 0;
+  }
+
   update(dtMs: number): HealthEvent[] {
     const events: HealthEvent[] = [];
     if (this._dead) {

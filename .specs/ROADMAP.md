@@ -13,7 +13,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | # | Feature | Tamanho | IDs | Status |
 |---|---|---|---|---|
 | F0 | `fundacao-harness-jev` | Medium | FND | Done (Verifier PASS, rodada 3) |
-| F1 | `run-e-rodadas` | Large | RUN, WAVE, DIF, RHUD | Spec aprovada |
+| F1 | `run-e-rodadas` | Large | RUN, WAVE, DIF, RHUD | Done (Verifier PASS, rodada 3) |
 | F2 | `boss-a-cada-5` | Large | BOSS | Planejada |
 | F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM | Planejada |
 | F4 | `loja-da-run` | Large | SHOP, MOD | Planejada |
@@ -63,3 +63,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 ### F8 combos-estilo-luta
 - P1 Cancel por hit-confirm e dash-cancel; P1 juggle com limite; P1 contador e nota de estilo.
 - P2 Black Flash; P3 buffer de input de movimento.
+
+## Backlog técnico
+
+- `tests/core/enemyAI.test.ts` só usa o tuning 35/70: um mutante que fixa 70 na perseguição (`src/core/enemyAI.ts:120`) sobrevive. Adicionar um caso com tuning diferente (achado fora de escopo pelo Verifier da F1, rodada 3).
