@@ -74,6 +74,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core)
 - last seen: 2026-09-24T02:09:18Z
 
+### L-011 - When a rule acts after a timer or accumulator crosses a threshold, assert the outputs on the frames right after the action so that forgetting to reset the accumulator fails a test.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests core` · harmful: 0
+- features: visual-e-jogabilidade
+- evidence: M12 src/core/enemyAI.ts:131 vs tests/core/enemyAI.test.ts (validation.md re-verificação final, R4-1) (tests core)
+- last seen: 2026-09-24T02:17:48Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
