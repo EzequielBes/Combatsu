@@ -81,7 +81,7 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 1. FND-05: WHEN `heal(n)` is called on a living `Health` with hp `h` THEN the `Health` SHALL set hp to `min(maxHp, h + n)` and return the amount actually restored.
 2. FND-06: IF `heal(n)` is called while the `Health` is dead THEN the `Health` SHALL keep hp at 0 and return 0.
 3. FND-07: IF `heal(n)` is called with `n <= 0` or a non-finite `n` THEN the `Health` SHALL keep hp unchanged and return 0.
-4. FND-08: WHEN an enemy's `EnemyBrain` emits `died` THEN the enemy adapter SHALL call the scene's `onEnemyDied(enemyId, x, y)` exactly once for that enemy, with its world position at that frame (in `?debug`, the snapshot `events` gains exactly one `enemyDied:<enemyId>` entry).
+4. FND-08: WHEN an enemy's `EnemyBrain` emits `died` THEN the enemy adapter SHALL call the scene's `onEnemyDied(enemyId, x, y)` exactly once for that enemy, with its world position at that frame (in `?debug`, the snapshot `events` gains exactly one `enemyDied:<enemyId>` entry and `deaths` gains exactly one `{ id, x, y }` entry with that position).
 
 **Independent Test**: `health.test.ts` cobre FND-05..07; o smoke `enemy-died.smoke.mjs` mata um inimigo em `?debug` e confere uma notificação no snapshot.
 
@@ -95,8 +95,8 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 
 **Acceptance Criteria**:
 
-1. FND-09: WHERE the URL has `?debug` the game SHALL expose `window.__game.snapshot()`, returning `{ player: { x, y, hp, dead }, enemies: [{ id, x, y, hp, state }], events: string[] }`.
-2. FND-22: WHERE the URL has `?debug`, calling `window.__game.step(ms)` SHALL advance the game simulation by `ms` milliseconds in fixed steps of 1000/60 ms, before returning.
+1. FND-09: WHERE the URL has `?debug` the game SHALL expose `window.__game.snapshot()`, returning `{ player: { x, y, hp, dead }, enemies: [{ id, x, y, hp, state }], events: string[], deaths: { id, x, y }[] }`, where enemy `x`/`y` is the center of its physics body.
+2. FND-22: WHERE the URL has `?debug`, calling `window.__game.step(ms)` SHALL advance the game simulation in `ceil(ms / (1000/60))` fixed steps of 1000/60 ms each, before returning.
 3. FND-10: WHERE the URL has no `?debug` the game SHALL leave `window.__game` undefined.
 4. FND-23: WHEN `npm run smoke` runs THEN the harness SHALL run `npm run build`, serve `dist/` with `vite preview` and execute each `scripts/smoke/*.smoke.mjs` file once in headless Edge.
 5. FND-11: WHEN all smoke scenarios have run THEN the harness SHALL exit with code 0 if every scenario passed and with code 1 if at least one failed, printing the name of each failed scenario.
@@ -129,7 +129,7 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 
 ## Edge Cases
 
-- IF a spec has no line matching `ID: WHEN|WHILE|WHERE|IF|The … SHALL` THEN the Jev tool SHALL exit with code 1 and the message `nenhum AC encontrado`.
+- IF a spec has no numbered line `N. ID: … SHALL` (any EARS pattern, including quantified ubiquitous ones like `For every … SHALL`) THEN the Jev tool SHALL exit with code 1 and the message `nenhum AC encontrado`.
 - WHEN `int(min, max)` is called with `min === max` THEN the `Rng` SHALL return `min`.
 - IF `heal` would exceed `maxHp` THEN the `Health` SHALL return only the part that fit (e.g. hp 95/100, `heal(10)` returns 5).
 - WHEN two enemies die in the same frame THEN the scene SHALL receive two notifications, one per enemy.

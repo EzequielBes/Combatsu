@@ -48,6 +48,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private frozen = false;
   /** Eventos lidos pelo smoke no snapshot de debug, ex.: `enemyDied:7`. */
   private debugEvents: string[] = [];
+  private debugDeaths: { id: number; x: number; y: number }[] = [];
 
   constructor() {
     super('TestScene');
@@ -67,6 +68,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.unfreeze();
     });
     this.debugEvents = [];
+    this.debugDeaths = [];
     registerDebugProbe(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => registerDebugProbe(null));
     this.fx = new Fx(this);
@@ -135,8 +137,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Um abate (FND-08): F1 conta a rodada aqui; por enquanto só vai para o snapshot de debug. */
-  onEnemyDied(enemyId: number, _x: number, _y: number): void {
+  onEnemyDied(enemyId: number, x: number, y: number): void {
     this.debugEvents.push(`enemyDied:${enemyId}`);
+    this.debugDeaths.push({ id: enemyId, x, y });
   }
 
   debugSnapshot(): GameSnapshot {
@@ -144,6 +147,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       player: { x: this.player.sprite.x, y: this.player.sprite.y, hp: this.player.hp, dead: this.player.dead },
       enemies: this.enemies.map((e) => ({ id: e.id, x: e.x, y: e.hurtRect().y, hp: e.hp, state: e.state })),
       events: [...this.debugEvents],
+      deaths: this.debugDeaths.map((d) => ({ ...d })),
     };
   }
 

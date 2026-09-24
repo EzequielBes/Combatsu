@@ -5,6 +5,8 @@ export interface GameSnapshot {
   player: { x: number; y: number; hp: number; dead: boolean };
   enemies: { id: number; x: number; y: number; hp: number; state: EnemyState }[];
   events: string[];
+  /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
+  deaths: { id: number; x: number; y: number }[];
 }
 
 export interface DebugProbe {

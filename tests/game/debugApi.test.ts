@@ -35,6 +35,7 @@ describe('installDebugApi', () => {
       player: { x: 10, y: 20, hp: 100, dead: false },
       enemies: [{ id: 7, x: 30, y: 40, hp: 60, state: 'idle' }],
       events: ['enemyDied:3'],
+      deaths: [{ id: 3, x: 50, y: 60 }],
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};
