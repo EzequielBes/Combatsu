@@ -204,14 +204,14 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BOSS-04 | P1: Rodada de chefe | Specify | Pending |
 | BOSS-07 | P1: Rodada de chefe | Specify | Pending |
 | BOSS-05 | P1: Rodada de chefe | Specify | Pending |
-| BOSS-06 | P1: Rodada de chefe | Specify | Pending |
+| BOSS-06 | P1: Rodada de chefe | Specify | Implementing |
 | BOSS-08 | P1: Rodada de chefe | Specify | Pending |
-| BAT-01 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-01 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-09 | P1: Ataques telegrafados | Specify | Pending |
-| BAT-02 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-02 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-10 | P1: Ataques telegrafados | Specify | Pending |
-| BAT-03 | P1: Ataques telegrafados | Specify | Pending |
-| BAT-04 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-03 | P1: Ataques telegrafados | Specify | Implementing |
+| BAT-04 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-05 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-11 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-06 | P1: Ataques telegrafados | Specify | Pending |
@@ -219,18 +219,18 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BAT-07 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-08 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-13 | P1: Ataques telegrafados | Specify | Pending |
-| BAI-01 | P1: Fases e postura | Specify | Pending |
+| BAI-01 | P1: Fases e postura | Specify | Implementing |
 | BAI-02 | P1: Fases e postura | Specify | Pending |
-| BAI-03 | P1: Fases e postura | Specify | Pending |
-| BAI-11 | P1: Fases e postura | Specify | Pending |
-| BAI-04 | P1: Fases e postura | Specify | Pending |
-| BAI-13 | P1: Fases e postura | Specify | Pending |
+| BAI-03 | P1: Fases e postura | Specify | Implementing |
+| BAI-11 | P1: Fases e postura | Specify | Implementing |
+| BAI-04 | P1: Fases e postura | Specify | Implementing |
+| BAI-13 | P1: Fases e postura | Specify | Implementing |
 | BAI-12 | P1: Fases e postura | Specify | Pending |
 | BAI-05 | P1: Fases e postura | Specify | Pending |
 | BAI-06 | P1: Fases e postura | Specify | Pending |
-| BAI-07 | P1: Fases e postura | Specify | Pending |
-| BAI-08 | P1: Fases e postura | Specify | Pending |
-| BAI-09 | P1: Fases e postura | Specify | Pending |
+| BAI-07 | P1: Fases e postura | Specify | Implementing |
+| BAI-08 | P1: Fases e postura | Specify | Implementing |
+| BAI-09 | P1: Fases e postura | Specify | Implementing |
 | BAI-10 | P1: Fases e postura | Specify | Pending |
 | BAI-14 | P1: Fases e postura | Specify | Pending |
 | BHUD-01 | P1: Barra do chefe e vitória | Specify | Pending |
@@ -240,15 +240,15 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BHUD-05 | P1: Barra do chefe e vitória | Specify | Pending |
 | BHUD-06 | P1: Barra do chefe e vitória | Specify | Pending |
 | BHUD-07 | P1: Barra do chefe e vitória | Specify | Pending |
-| BWIN-01 | P1: Barra do chefe e vitória | Specify | Pending |
-| BWIN-02 | P1: Barra do chefe e vitória | Specify | Pending |
+| BWIN-01 | P1: Barra do chefe e vitória | Specify | Implementing |
+| BWIN-02 | P1: Barra do chefe e vitória | Specify | Implementing |
 | BWIN-03 | P1: Barra do chefe e vitória | Specify | Pending |
-| BTIER-01 | P2: Chefes mais duros e variados | Specify | Pending |
-| BTIER-02 | P2: Chefes mais duros e variados | Specify | Pending |
+| BTIER-01 | P2: Chefes mais duros e variados | Specify | Implementing |
+| BTIER-02 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-03 | P2: Chefes mais duros e variados | Specify | Pending |
 | BTIER-04 | P2: Chefes mais duros e variados | Specify | Pending |
-| BTIER-05 | P2: Chefes mais duros e variados | Specify | Pending |
-| BTIER-07 | P2: Chefes mais duros e variados | Specify | Pending |
+| BTIER-05 | P2: Chefes mais duros e variados | Specify | Implementing |
+| BTIER-07 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-06 | P2: Chefes mais duros e variados | Specify | Pending |
 
 **Coverage:** 52 total, 0 mapped to tasks, 52 unmapped ⚠️ (Tasks ainda não criadas)
