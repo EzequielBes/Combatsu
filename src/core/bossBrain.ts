@@ -89,7 +89,8 @@ export class BossBrain {
       this._phase = newPhase;
       this._state = 'roar';
       this.timer = this.t.roarMs;
-      return [{ type: 'phaseChanged', phase: newPhase }, { type: 'roarStart' }];
+      // newPhase > this._phase (que já era >= 1) só pode ser 2 ou 3 aqui.
+      return [{ type: 'phaseChanged', phase: newPhase as 2 | 3 }, { type: 'roarStart' }];
     }
 
     if (poiseBefore > 0 && this._poise <= 0) {
