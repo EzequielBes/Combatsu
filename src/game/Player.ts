@@ -112,6 +112,10 @@ export class Player implements Hittable {
     return this.health.max;
   }
 
+  get dead(): boolean {
+    return this.health.dead;
+  }
+
   /**
    * Golpe recebido (HP-01..04): perde vida, fica invulnerável (piscando) e atordoado, com recuo na direção do
    * golpe. O golpe em andamento é cancelado. Ao zerar, larga o objeto e a tela escurece até o respawn.

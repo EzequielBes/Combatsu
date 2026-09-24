@@ -12,6 +12,7 @@ import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
 import { routeContact, tagBody } from '../game/bodyTags';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
+import { registerDebugProbe, type DebugProbe, type GameSnapshot } from '../game/debugApi';
 import { Enemy } from '../game/Enemy';
 import { Fx, type SparkKind } from '../game/fx';
 import { Hud } from '../game/Hud';
@@ -31,7 +32,7 @@ const FOLLOW_DEADZONE = { w: 40, h: 24 };
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
 const CONTROLS_MS = 8000;
 
-export class TestScene extends Phaser.Scene {
+export class TestScene extends Phaser.Scene implements DebugProbe {
   private level!: LevelData;
   private terrain: MatterJS.BodyType[] = [];
   private controls!: PlayerInput;
@@ -45,6 +46,8 @@ export class TestScene extends Phaser.Scene {
   private readonly hitstop = new Hitstop();
   /** Se a pausa do hitstop está aplicada (física, animações, tweens e timers). */
   private frozen = false;
+  /** Eventos lidos pelo smoke no snapshot de debug, ex.: `enemyDied:7`. */
+  private debugEvents: string[] = [];
 
   constructor() {
     super('TestScene');
@@ -63,6 +66,9 @@ export class TestScene extends Phaser.Scene {
       this.hitstop.reset();
       this.unfreeze();
     });
+    this.debugEvents = [];
+    registerDebugProbe(this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => registerDebugProbe(null));
     this.fx = new Fx(this);
     this.level = parseLevel(LEVEL_1);
     buildBackground(this, this.level.widthPx, this.level.heightPx);
@@ -123,8 +129,22 @@ export class TestScene extends Phaser.Scene {
         },
         // A garra que acerta o player também é um golpe que conecta.
         (hit, point) => this.onConnect(hit, point, hit.strength),
+        (dead, x, y) => this.onEnemyDied(dead.id, x, y),
       ),
     );
+  }
+
+  /** Um abate (FND-08): F1 conta a rodada aqui; por enquanto só vai para o snapshot de debug. */
+  onEnemyDied(enemyId: number, _x: number, _y: number): void {
+    this.debugEvents.push(`enemyDied:${enemyId}`);
+  }
+
+  debugSnapshot(): GameSnapshot {
+    return {
+      player: { x: this.player.sprite.x, y: this.player.sprite.y, hp: this.player.hp, dead: this.player.dead },
+      enemies: this.enemies.map((e) => ({ id: e.id, x: e.x, y: e.hurtRect().y, hp: e.hp, state: e.state })),
+      events: [...this.debugEvents],
+    };
   }
 
   /**

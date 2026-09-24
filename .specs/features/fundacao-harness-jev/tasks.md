@@ -276,9 +276,9 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `boot.smoke.mjs` (`?debug`): snapshot com `player { x, y, hp: 100, dead: false }` e 2 inimigos com `id`, `hp: 60`, `state: 'idle'`; após `step(500)` o `x` de algum inimigo mudou (patrulha) (FND-09, FND-22)
-- [ ] `enemy-died.smoke.mjs` (`?debug`): tecla 2 (golpe forte de teste, 18 de dano) até os inimigos morrerem; `events` tem exatamente um `enemyDied:<id>` por inimigo, e nenhum a mais depois de mais `step(3000)` (FND-08)
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `boot.smoke.mjs` (`?debug`): snapshot com `player { x, y, hp: 100, dead: false }` e 2 inimigos com `id`, `hp: 60`, `state: 'idle'`; após `step(500)` o `x` de algum inimigo mudou (patrulha) (FND-09, FND-22)
+- [x] `enemy-died.smoke.mjs` (`?debug`): tecla 2 (golpe forte de teste, 18 de dano) até os inimigos morrerem; `events` tem exatamente um `enemyDied:<id>` por inimigo, e nenhum a mais depois de mais `step(3000)` (FND-08)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
