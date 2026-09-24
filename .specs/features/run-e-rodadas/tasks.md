@@ -386,10 +386,10 @@ T9 → T10 → T11 → T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `EnemyBrain` expõe o maxHp com que foi criado; `Enemy.maxHp` lê dele e `Enemy.damage` lê do `AttackStep` usado no golpe
-- [ ] `run-loop.smoke.mjs`: inimigo da rodada 2 sem dano tem `hp === 67`, `maxHp === 67`, `damage === 13`
-- [ ] Mutantes A2 (brain com `ENEMY` fixo) e A3 (garra com 12 fixo) falham no smoke
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `EnemyBrain` expõe o maxHp com que foi criado; `Enemy.maxHp` lê dele e `Enemy.damage` lê do `AttackStep` usado no golpe
+- [x] `run-loop.smoke.mjs`: inimigo da rodada 2 sem dano tem `hp === 67`, `maxHp === 67`, `damage === 13`
+- [x] Mutantes A2 (brain com `ENEMY` fixo) e A3 (garra com 12 fixo) falham no smoke
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

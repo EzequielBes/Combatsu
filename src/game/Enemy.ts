@@ -50,6 +50,8 @@ export class Enemy implements Hittable {
    * chão comia o vx nos steps seguintes e a velocidade caía junto com o fps (AI-06).
    */
   private walkVxStep: number | null = null;
+  /** Dano da última garra realmente aberta (DIF-04); antes do primeiro golpe, o dano com que o inimigo nasceu. */
+  private lastAttackDamage: number;
   private readonly onStep = (): void => {
     // Os steps do Matter rodam antes do update da cena: sem este teste, o vx de andar do frame anterior passava
     // por cima do empurrão de um golpe recebido neste frame.
@@ -72,6 +74,7 @@ export class Enemy implements Hittable {
   ) {
     const { w, h } = SIZE.enemy;
     this.brain = new EnemyBrain(tuning.brain);
+    this.lastAttackDamage = tuning.attack.damage;
     this.grace = new SpawnGrace(graceMs);
     this.body = scene.matter.add.rectangle(spawn.x, spawn.y, w, h, {
       friction: 0.8,
@@ -117,14 +120,14 @@ export class Enemy implements Hittable {
     return this._removed;
   }
 
-  /** Vida máxima da rodada em que nasceu (DIF-04), para o snapshot de debug. */
+  /** Vida máxima com que o cérebro foi criado (DIF-04), para o snapshot de debug. */
   get maxHp(): number {
-    return this.tuning.brain.maxHp;
+    return this.brain.maxHp;
   }
 
-  /** Dano da garra da rodada em que nasceu (DIF-04), para o snapshot de debug. */
+  /** Dano do golpe realmente usado da última garra aberta (DIF-04), para o snapshot de debug. */
   get damage(): number {
-    return this.tuning.attack.damage;
+    return this.lastAttackDamage;
   }
 
   receiveHit(hit: Hit): boolean {
@@ -198,6 +201,7 @@ export class Enemy implements Hittable {
       force: step.force,
       direction: { x: this.facing, y: -0.3 },
     };
+    this.lastAttackDamage = hit.damage;
     this.attack.open(step.hitbox!, hit, this.body.position.x, this.body.position.y, this.facing);
   }
 

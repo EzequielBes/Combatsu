@@ -85,11 +85,11 @@ export default async function ({ page, baseUrl, assert }) {
 
   // DIF-04: os inimigos da rodada 2 têm hp 67 e dano 13 (arredondado de 60 × 1,12 e 12 × 1,08). Um inimigo da
   // rodada 1 ainda pode estar dissolvendo (hp 0) neste snapshot; só os vivos pertencem à onda nova.
-  const round2Enemies = round2.enemies.filter((e) => e.hp > 0);
-  assert(round2Enemies.length > 0, 'rodada 2 sem inimigos vivos para conferir a escala');
-  for (const e of round2Enemies) {
-    assert(e.maxHp === 67 && e.damage === 13, `escala da rodada 2 errada: ${JSON.stringify(e)}`);
-  }
+  const round2EnemiesAtStart = round2.enemies.filter((e) => e.hp > 0);
+  assert(round2EnemiesAtStart.length > 0, 'rodada 2 sem inimigos vivos para conferir a escala');
+  const closestAtStart = round2EnemiesAtStart.reduce((a, b) =>
+    Math.abs(a.x - round2.player.x) <= Math.abs(b.x - round2.player.x) ? a : b,
+  );
 
   // WAVE-09: um inimigo que nasce neste step não muda de x nos primeiros 500 ms (pode nascer parado, apanhar sim).
   let prevIds = new Set(round2.enemies.map((e) => e.id));
@@ -118,6 +118,41 @@ export default async function ({ page, baseUrl, assert }) {
     typeof afterGraceX === 'number' && Math.abs(afterGraceX - freshX) < 0.5,
     `inimigo recém-nascido andou durante a graça: ${freshX} -> ${afterGraceX}`,
   );
+
+  // DIF-04 (real): anda até o inimigo mais próximo da rodada 2 e deixa a IA atacar de verdade, para que
+  // maxHp/damage venham do EnemyBrain e do golpe realmente aberto (A2, A3), não de um valor "de prateleira" que
+  // ficaria certo mesmo se o inimigo usasse outro. Só até entrar na faixa de perseguição (chaseRange 200 px);
+  // dali em diante a própria IA fecha a distância e ataca sozinha (o player não atravessa e passa do alvo, porque
+  // runSpeed > chaseSpeed).
+  const targetId = closestAtStart.id;
+  const moveKey = closestAtStart.x >= graceCheck.player.x ? 'KeyD' : 'KeyA';
+  let holding = true;
+  await page.keyboard.down(moveKey);
+  let attacked = null;
+  let chase = graceCheck;
+  for (let i = 0; i < 80 && attacked === null; i++) {
+    chase = await page.evaluate(() => {
+      window.__game.step(200);
+      return window.__game.snapshot();
+    });
+    const target = chase.enemies.find((e) => e.id === targetId) ?? closestAtStart;
+    if (holding && Math.abs(target.x - chase.player.x) < 150) {
+      await page.keyboard.up(moveKey);
+      holding = false;
+    }
+    if (chase.player.hp < 100) attacked = chase;
+  }
+  if (holding) await page.keyboard.up(moveKey);
+  assert(attacked !== null, `nenhum inimigo da rodada 2 chegou a atacar o player: player.hp=${chase.player.hp}`);
+  assert(attacked.player.hp === 87, `player deveria perder 13 de hp no golpe da rodada 2: ${attacked.player.hp}`);
+  const attacker = attacked.enemies.find((e) => e.hp > 0 && Math.abs(e.x - attacked.player.x) < 60);
+  assert(attacker !== undefined, `nenhum inimigo perto do player logo após o golpe: ${JSON.stringify(attacked.enemies)}`);
+  assert(
+    attacker.hp === 67 && attacker.maxHp === 67 && attacker.damage === 13,
+    `escala da rodada 2 errada no inimigo que atacou: ${JSON.stringify(attacker)}`,
+  );
+  // Passa a invulnerabilidade do golpe (HP-02, invulnMs 700 ms) antes da tecla 3, para o golpe de morte não ser ignorado.
+  await page.evaluate(() => window.__game.step(800));
 
   // Tecla 3 mata o player pelo caminho normal de morte: gameOver com o resumo da rodada 2 (RUN-04).
   await page.keyboard.press('Digit3', { delay: 50 });

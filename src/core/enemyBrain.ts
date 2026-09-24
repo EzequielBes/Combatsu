@@ -42,6 +42,11 @@ export class EnemyBrain {
     return this._hp;
   }
 
+  /** Vida máxima com que este cérebro foi criado (DIF-04): a fonte real de verdade do hp do inimigo. */
+  get maxHp(): number {
+    return this.t.maxHp;
+  }
+
   get isDead(): boolean {
     return this._state === 'deadRagdoll' || this._state === 'dissolving' || this._state === 'gone';
   }
