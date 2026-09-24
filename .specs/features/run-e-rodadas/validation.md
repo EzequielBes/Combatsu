@@ -1,15 +1,125 @@
 # Run, rodadas e dificuldade progressiva — Validation
 
-# Rodada 1 (vigente)
+# Rodada 2 (vigente)
+
+**Date**: 2026-09-24
+**Spec**: `.specs/features/run-e-rodadas/spec.md` (34 requisitos, 5 casos de borda; RHUD-02 agora fixa a faixa em x centrado e y = 135)
+**Diff range**: `0b1aff1..724492b` (T9 `3405794`, T10 `6d8e6bc`, T11 `8745620`, T12 `de36a40`, T13 `d17741f`, T14 `724492b`; mais `8da98c1` com as fix tasks). Código e testes: 11 arquivos, +215/−41 (`src/core/enemyBrain.ts`, `src/data/tuning.ts`, `src/game/Enemy.ts`, `src/game/Hud.ts`, `src/game/debugApi.ts`, `src/scenes/TestScene.ts`, `tests/core/run.test.ts`, `tests/core/waves.test.ts`, `tests/game/debugApi.test.ts`, `scripts/smoke/hud.smoke.mjs`, `scripts/smoke/run-loop.smoke.mjs`)
+**Verifier**: sub-agente independente, rodada 2 de no máximo 3 (autor ≠ verificador). Mutações num `git worktree` descartável (`scratchpad/verify-f1r2`) com junction para o `node_modules`.
+
+## Validation (rodada 2)
+
+**Result**: FAIL
+
+Motivo: os 7 sobreviventes da rodada 1 agora morrem, todos por asserção comportamental (nenhum só pelo `tsc`). Os gates estão verdes. Mas 2 dos 8 mutantes novos sobreviveram e mostram duas conjunções sem evidência:
+- **DIF-04, "and speeds"**: nenhum teste liga as velocidades escaladas ao inimigo que nasce na cena (N4).
+- **RHUD-02, "centered horizontally"**: o teste confere o ponto de âncora da faixa, não se ela está visualmente centralizada (N2).
+
+O código de produção está certo nos dois casos (`src/game/Enemy.ts:87` passa `tuning.ai` já escalado; `src/game/Hud.ts:64-66` usa `setOrigin(0.5, 0.5)`), então os gaps são de teste. Nenhum requisito foi promovido.
+
+---
+
+## Gates (rodados pelo Verifier em HEAD `724492b`)
+
+- `npx vitest run`: **29 arquivos, 323 passed, 0 failed, 0 skipped** (rodada 1: 318; +5 = 2 do T10 em `tests/core/run.test.ts:172-192`, 3 do T9 em `tests/core/waves.test.ts:43-62,161-183`). Nenhum teste removido. O teste antigo de seed 7 (`waves.test.ts:34-41`) continua lá, junto com o novo.
+- `npm run build`: **exit 0** (só o aviso de chunk > 500 kB que já existia).
+- `npm run smoke`, duas vezes seguidas: **exit 0 nas duas**, `ok` em `boot`, `enemy-died`, `hud`, `no-debug` e `run-loop` ("5 cenário(s) ok"). Estável, apesar de o `run-loop` agora ter um trecho de IA de verdade (inimigo atacando o player).
+- **Isolamento do sensor**: `git status --porcelain` da árvore real igual antes e depois (`?? .agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`). Junction desfeita com `rmdir` antes do `git worktree remove --force`. O `node_modules` real está intacto e `git worktree list` mostra só a árvore principal.
+- `ENEMY_RESPAWN_MS` saiu de `src/data/tuning.ts` e não sobrou nenhum uso (`grep` em `src`, `tests`, `scripts`: nenhum resultado). No diff não há nenhum `// SPEC_DEVIATION` novo.
+
+## Task Completion (fix tasks)
+
+| Task | Status | Evidência |
+| --- | --- | --- |
+| T9 | ✅ | `tests/core/waves.test.ts:43-50` (P = 3, s = 1 → `[1, 2, 0]`), `:53-61` (P = 2 → `[1, 0]`), `:161-183` (pares literais do WAVE-07). C10b morto |
+| T10 | ✅ | `tests/core/run.test.ts:173-179`, `:182-191`. C17 morto |
+| T11 | ✅ | `src/core/enemyBrain.ts:46-48` (`maxHp` do cérebro), `src/game/Enemy.ts:124-131` (`damage` = `lastAttackDamage`, atualizado em `:204`), `scripts/smoke/run-loop.smoke.mjs:166-173`. A2 e A3 mortos |
+| T12 | ✅ | `scripts/smoke/run-loop.smoke.mjs:71-80` (`checkAliveAndScale`), laços em `:82-89` e `:133-140`. A4 e N5 mortos |
+| T13 | ✅ | `scripts/smoke/hud.smoke.mjs:42-45` (x = 480, y = 135 ± 1), `:52` (visível em 1400 ms), `:57` (`null` em 1600 ms). A13, N1 e N6 mortos. N2 sobrevive (ver RHUD-02) |
+| T14 | ✅ | `src/scenes/TestScene.ts:249` (`level.playerSpawn`), `scripts/smoke/run-loop.smoke.mjs:43-46` e `:225-228`. A14 e N3 mortos |
+
+## Re-verificação dos ACs (spec-anchored, evidence-or-zero)
+
+Os ACs que passaram na rodada 1 foram conferidos de novo contra HEAD. As linhas de `tests/core/run.test.ts` depois de `:169` mudaram por causa do T10: RUN-08 está em `:195-202`, os casos de borda de prioridade em `:207-218` e `:221-227`. Todos continuam cobertos com o valor exato do spec. A tabela abaixo traz os 7 gaps da rodada 1, o RHUD-02 e os dois gaps novos.
+
+| AC | Spec-defined outcome | `file:line` + asserção | Status |
+| --- | --- | --- | --- |
+| RUN-02 | round 1, kills 0, hp cheio **no spawn do level** | `tests/core/run.test.ts:42-45`; `scripts/smoke/run-loop.smoke.mjs:41` (`hp === 100`), `:43-46` - `abs(player.x - level.playerSpawn.x) < 1 && abs(player.y - level.playerSpawn.y) < 1`. O `playerSpawn` vem do level (`src/scenes/TestScene.ts:249`, `level.player - SPAWN_LIFT`), não do player, então tanto o deslocamento no `resetForRun` (A14) quanto no construtor (N3) são pegos (`{x:312} != {x:112}`) | ✅ PASS |
+| RUN-05 | nova run: round 1, kills 0, hp cheio (e no spawn) | `scripts/smoke/run-loop.smoke.mjs:216-228` | ✅ PASS |
+| WAVE-02 | k-ésimo spawn em `(s + k) mod P`, `s` do `Rng` | `tests/core/waves.test.ts:45` (`rng.int(0,2) === 1`), `:49` `toEqual([1, 2, 0])`; `:55`, `:60` `toEqual([1, 0])`. C10b morto (`[0,1,2] != [1,2,0]`) | ✅ PASS |
+| WAVE-07 | mesma seed e mesmas mortes → mesmos pares `(atMs, point)` | `tests/core/waves.test.ts:153` (duas instâncias com `SEED_S1`) e `:181` - pares literais `[[0,1],[0,2],[0,0]]`, `[[800,1]]`, `[[1600,2]]`, `[[2400,0],[2400,1]]`, `[]`. Conferi à mão: s = 1, P = 3, 7 inimigos, teto 4 e gap de 800 ms dão exatamente essa sequência | ✅ PASS |
+| WAVE-06 (camada `Run`) | id duplicado conta 1 em `kills` e em `remaining` | `tests/core/run.test.ts:178-179` (`kills 1`, `remaining 2`, dois reportes antes do mesmo `update`), `:190-191` (reporte repetido num `update` seguinte). C17 morto (`expected 2 to be 1`) | ✅ PASS |
+| WAVE-05 | morto não renasce durante a run | `scripts/smoke/run-loop.smoke.mjs:74` - vivos por state `=== run.alive` a cada 100 ms, da limpeza da rodada 1 até 3000 ms depois da janela de graça da rodada 2 (`:82-89`, `:133-140`); `:78` - todo inimigo novo com `maxHp === 67`. A4 (1500 ms) morto com `vivos (2) != run.alive (0)`, N5 (5000 ms) morto com `vivos (6) != run.alive (4)` | ✅ PASS |
+| DIF-04 (hp e dano) | inimigo da rodada 2 com `maxHp` 67 e dano 13, vistos em `enemies[i].maxHp/damage` | `scripts/smoke/run-loop.smoke.mjs:78` (`maxHp === 67` em cada inimigo novo), `:167` - `player.hp === 87` (dano real de 13 no golpe da IA), `:170-173` - `attacker.hp === 67 && maxHp === 67 && damage === 13`. `maxHp` lê do `EnemyBrain` (`src/game/Enemy.ts:124-126`) e `damage` lê da última garra aberta (`:129-131`, `:204`). A2, A3 e N8 mortos | ✅ PASS |
+| DIF-04 (**speeds**) | velocidades de patrulha e perseguição do inimigo da rodada r iguais às de DIF-06 (rodada 2: 35 × 1,03 = 36,05 e 70 × 1,03 = 72,1) | Não há asserção. `tests/core/difficulty.test.ts:36-49` cobre só o `scaleFor` (DIF-06), e A12b (rodada 1 com `maxHp` 67 esperado) só cobre a ligação cena → `scaleFor`. A ligação `Enemy` → `EnemyAI` (`src/game/Enemy.ts:87`, `new EnemyAI(tuning.ai, …)`) não tem teste: o mutante N4, que fixa `patrolSpeed: 40, chaseSpeed: 40` em qualquer rodada, passa no vitest e nos 5 smokes | ❌ GAP |
+| RHUD-02 (duração) | `Rodada N` por 1500 ms e depois some | `scripts/smoke/hud.smoke.mjs:36` (visível ao começar), `:52` (visível em 1400 ms), `:57` (`null` em 1600 ms). A13 (1000 ms) e N6 (1800 ms) mortos | ✅ PASS |
+| RHUD-02 (posição) | centralizada na horizontal na tela 960×540, com y = 135 | `scripts/smoke/hud.smoke.mjs:42-45` - `abs(bannerPos.x - 480) < 1 && abs(bannerPos.y - 135) < 1`, com `bannerPos = { x: bannerText.x, y: bannerText.y }` (`src/game/Hud.ts:169`). O y discrimina (N1 → `y: 270`, morto). Mas `bannerText.x` é o ponto de âncora, e a centralização visual depende do `originX` 0.5 (`src/game/Hud.ts:66`). O mutante N2 (`setOrigin(0, 0.5)`: a faixa começa em x = 480 e cresce para a direita) passa, porque `bannerPos.x` continua 480 | ❌ GAP ("centered horizontally") |
+
+O spec-precision gap da rodada 1 ("centered") foi resolvido: `spec.md:142` agora diz "centered horizontally … at y = 135".
+
+**Status**: 32/34 requisitos com evidência que discrimina; 2 com conjunção sem evidência (DIF-04 velocidades, RHUD-02 centralização horizontal); 0 spec-precision gaps.
+
+## Edge Cases (re-conferidos em HEAD)
+
+- [x] Player e último inimigo no mesmo frame → `gameOver`: `tests/core/run.test.ts:215-218`.
+- [x] Morte na intermission → `gameOver` com a rodada recém-limpa: `tests/core/run.test.ts:225-227`.
+- [x] Rodada ≥ 10 com 12 inimigos: `tests/core/waves.test.ts:12-19`.
+- [x] Um só ponto `E`, gap de 800 ms: `tests/core/waves.test.ts:109-111`.
+- [x] Sem ponto `E`: lança com o nome do level: `tests/core/waves.test.ts:25`.
+
+## Discrimination Sensor (rodada 2)
+
+**Sensor depth**: expandido. **15 mutantes injetados: 7 re-execuções dos sobreviventes da rodada 1 e 8 novos. 13 mortos, 2 sobreviventes.** Todas as mortes vieram de asserção (vitest ou `FALHA <cenário>: <mensagem>`), nenhuma de erro de compilação.
+
+| # | File:line | Mutação | Killed? |
+| --- | --- | --- | --- |
+| C10b | `src/core/waves.ts:97` | `(this.s * 0 + this.nextK) % P` | ✅ Killed (`waves.test.ts:49,60,181`) |
+| C17 | `src/core/run.ts:113` | `Run` soma kill sem checar o dedupe | ✅ Killed (`run.test.ts:178,190`) |
+| A2 | `src/game/Enemy.ts:76` | cérebro com `maxHp: 60` fixo | ✅ Killed (`run-loop:78`, `maxHp 60`) |
+| A3 | `src/game/Enemy.ts:199` | garra com `damage: 12` fixo | ✅ Killed (`run-loop:167`, hp 88) |
+| A4 | `src/scenes/TestScene.ts` (callback de morte + `update`) | respawn de 1500 ms do inimigo no mesmo ponto, com o tuning da rodada original | ✅ Killed (`run-loop:74`) |
+| A13 | `src/scenes/TestScene.ts:181` | faixa de 1000 ms | ✅ Killed (`hud:52`) |
+| A14 | `src/game/Player.ts:219` | `resetForRun` põe o player 200 px fora do spawn | ✅ Killed (`run-loop:43`) |
+| N1 | `src/game/Hud.ts:65` | faixa em `y = h/2` (centro vertical, cobre a luta) | ✅ Killed (`hud:42`, `y: 270`) |
+| N2 | `src/game/Hud.ts:66` | faixa com `setOrigin(0, 0.5)` (âncora em 480, texto alinhado à esquerda) | ❌ Survived |
+| N3 | `src/scenes/TestScene.ts:113` | player criado 200 px à direita do `P` do level | ✅ Killed (`run-loop:43`) |
+| N4 | `src/game/Enemy.ts:87` | `EnemyAI` com `patrolSpeed: 40, chaseSpeed: 40` em qualquer rodada (ignora a escala de DIF-06) | ❌ Survived |
+| N5 | `src/scenes/TestScene.ts` | respawn órfão atrasado, 5000 ms (pega a remoção de `ENEMY_RESPAWN_MS` com outro tempo) | ✅ Killed (`run-loop:74`) |
+| N6 | `src/scenes/TestScene.ts:181` | faixa de 1800 ms (limite superior) | ✅ Killed (`hud:57`) |
+| N7 | `src/core/run.ts:111` | abates contam fora de `roundActive` | ✅ Killed (`run.test.ts` RUN-07/RUN-10) |
+| N8 | `src/core/enemyBrain.ts:47` | getter `maxHp` devolve o valor sem escala (`t.maxHp / 1.12`) | ✅ Killed (`boot:35`, `run-loop:78`) |
+
+**Resultado do sensor**: 13/15 mortos, 2 sobreviventes. ❌
+
+## Fix Plans (rodada 2, ranked gaps)
+
+1. **DIF-04, velocidades sem evidência no inimigo que nasce** (N4, `src/game/Enemy.ts:87`). Correção: expor no snapshot as velocidades que o `EnemyAI` do inimigo usa de fato, como um getter no `EnemyAI`/`Enemy` que lê `this.t` (`enemies[i].patrolSpeed`/`chaseSpeed`). Em `scripts/smoke/run-loop.smoke.mjs`, dentro de `checkAliveAndScale`, afirmar `patrolSpeed ≈ 36.05` e `chaseSpeed ≈ 72.1` (± 0,01) em todo inimigo novo da rodada 2. Na rodada 1, em `boot.smoke.mjs:35`, afirmar 35 e 70. Opcional: registrar na spec, em DIF-04, que as velocidades também aparecem no snapshot, como já acontece com `maxHp`/`damage`. Done when: N4 falha. Prioridade: Major (conjunção de um AC P1).
+2. **RHUD-02, centralização horizontal pelo ponto de âncora** (N2, `src/game/Hud.ts:66`, `:169`). Correção: fazer o `bannerPos` refletir o centro visual, por exemplo `bannerText.getCenter()` ou `getBounds().centerX/centerY`, e manter `x = 480` e `y = 135` (± 1) em `scripts/smoke/hud.smoke.mjs:42-45`. Com `setOrigin(0, 0.5)`, o `centerX` passa a 480 + largura/2 e o teste falha. Done when: N2 falha. Prioridade: Minor (P2).
+
+## Requirement Traceability Update (rodada 2)
+
+Nenhum requisito promovido (veredito FAIL). Os 34 seguem `Implementing` em `spec.md` até a rodada 3.
+
+## validate_state.py (rodada 2)
+
+`python .claude/skills/tlc-spec-driven/scripts/validate_state.py run-e-rodadas` → **exit 1** ("verdict is FAIL"), como esperado para um relatório reprovado.
+
+## Conclusão da rodada 2
+
+Reprovada, mas por pouco. Os gates estão verdes (323 testes, build, smoke 2×) e os 7 sobreviventes da rodada 1 morrem. Sobraram 2 conjunções sem teste (DIF-04 velocidades e RHUD-02 centro visual), cada uma exposta por um mutante novo vivo. Próximo passo: 2 fix tasks (T15, T16) e depois a rodada 3, a última antes de escalar para o usuário.
+
+---
+
+# Rodada 1
 
 **Date**: 2026-09-24
 **Spec**: `.specs/features/run-e-rodadas/spec.md` (34 requisitos: RUN-01..11, WAVE-01..09, DIF-01..06, RHUD-01..08, mais 5 casos de borda)
 **Diff range**: `efac150..574cd6c` (T1..T8: `6b0ed7e`, `de53839`, `ed3f4a6`, `a53a015`, `c2bfbe0`, `2fb0a82`, `4dea967`, `574cd6c`), 26 arquivos, +1638/−152
 **Verifier**: sub-agente independente, rodada 1 de no máximo 3 (autor ≠ verificador). As mutações rodaram num `git worktree` descartável no scratchpad (`verify-f1`), com junction para o `node_modules`.
 
-## Validation (rodada 1)
+## Veredito da rodada 1
 
-**Result**: FAIL
+**Resultado**: FAIL
 
 Motivo: os gates estão verdes e 27 dos 34 requisitos têm evidência ancorada no valor do spec, mas o sensor expandido deixou **7 mutantes comportamentais vivos** (de 31). Eles mostram asserções que não discriminam em WAVE-02/WAVE-07 (o `s` sorteado nunca é exercitado), DIF-04 (o snapshot lê o tuning e não o que o inimigo usa), WAVE-05 (o respawn antigo reativado passa), WAVE-06 no `Run`, RHUD-02 (duração da faixa) e RUN-02 (posição do spawn). O código de produção se comportou certo em todas as inspeções; os gaps são de teste. Nenhum requisito foi promovido para `Verified`.
 
@@ -199,6 +309,6 @@ Nenhum requisito promovido nesta rodada (veredito FAIL). Todos seguem `Implement
 
 `python .claude/skills/tlc-spec-driven/scripts/validate_state.py run-e-rodadas` → **exit 1** ("verdict is FAIL - route the ranked gaps to fix tasks"), o esperado para um relatório reprovado.
 
-## Veredito da rodada 1
+## Conclusão da rodada 1
 
 Reprovada: gates verdes (318 testes, build, smoke 2x), 27/34 ACs ancorados, 5/5 casos de borda, sensor com 7 sobreviventes em 31. Próximo passo: fix tasks para os 6 gaps acima e rodada 2 do Verifier.

@@ -150,6 +150,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: RHUD-02 src/game/Hud.ts:65 (spec hud)
 - last seen: 2026-09-24T16:44:32Z
 
+### L-024 - Assert every clause of a conjunctive acceptance criterion, including positions set alongside the headline values.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: run-e-rodadas
+- evidence: validation.md rodada 2 N4 (src/game/Enemy.ts:87, DIF-04 speeds) (smoke)
+- last seen: 2026-09-24T18:18:53Z
+
+### L-025 - Assert a rendered element's layout from its visual bounds, not its anchor coordinates, because the anchor stays in place when the origin changes.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/game smoke hud` · harmful: 0
+- features: run-e-rodadas
+- evidence: validation.md rodada 2 N2 (src/game/Hud.ts:66,169, RHUD-02 centered) (src/game smoke hud)
+- last seen: 2026-09-24T18:18:54Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

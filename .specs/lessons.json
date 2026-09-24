@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 24,
+  "next_id": 26,
   "lessons": [
     {
       "id": "L-001",
@@ -420,6 +420,42 @@
       ],
       "created": "2026-09-24T16:44:32Z",
       "last_seen": "2026-09-24T16:44:32Z"
+    },
+    {
+      "id": "L-024",
+      "key": "surviving_mutant::assert every clause of a conjunctive acceptance criterion including positions set alongside the headline values",
+      "text": "Assert every clause of a conjunctive acceptance criterion, including positions set alongside the headline values.",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md rodada 2 N4 (src/game/Enemy.ts:87, DIF-04 speeds) (smoke)"
+      ],
+      "created": "2026-09-24T18:18:53Z",
+      "last_seen": "2026-09-24T18:18:53Z"
+    },
+    {
+      "id": "L-025",
+      "key": "surviving_mutant::assert a rendered element s layout from its visual bounds not its anchor coordinates because the anchor stays in place when the origin changes",
+      "text": "Assert a rendered element's layout from its visual bounds, not its anchor coordinates, because the anchor stays in place when the origin changes.",
+      "signal": "surviving_mutant",
+      "scope": "src/game smoke hud",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md rodada 2 N2 (src/game/Hud.ts:66,169, RHUD-02 centered) (src/game smoke hud)"
+      ],
+      "created": "2026-09-24T18:18:54Z",
+      "last_seen": "2026-09-24T18:18:54Z"
     }
   ]
 }
