@@ -22,6 +22,12 @@ export const TEX = {
   /** Molduras das barras de vida do player (HUD-01) e do inimigo (HUD-02). */
   hudBar: 'hud-bar',
   enemyBar: 'enemy-bar',
+  /** Folha do chefe (BTIER-06): uma textura por arquétipo, nunca a mesma folha com tint. */
+  bossOni: 'boss-oni',
+  bossTecela: 'boss-tecela',
+  /** Projétil da rajada e onda de choque do pouso (BAT-03/04). */
+  bossProjectile: 'boss-projectile',
+  bossShockwave: 'boss-shockwave',
 } as const;
 
 export const SIZE = {

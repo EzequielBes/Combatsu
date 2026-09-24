@@ -7,6 +7,14 @@ import { registerSheet } from './render';
 import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
+import {
+  BOSS_ANIMS,
+  BOSS_FRAMES,
+  PROJECTILE_FRAME,
+  SHOCKWAVE_FRAME,
+  TECELA_FRAMES,
+  bossAnimKey,
+} from './sprites/boss';
 import { registerTiles } from './tiles';
 
 /** Chave da animação do player no AnimationManager (global do jogo). */
@@ -49,6 +57,13 @@ export function createArt(scene: Phaser.Scene): void {
   registerSheet(scene, TEX.smokeCurse, parseSheet('smoke-curse', SMOKE_CURSE, PALETTE_KEYS));
   registerSheet(scene, TEX.hudBar, parseSheet('hud-bar', { bar: HUD_BAR }, PALETTE_KEYS));
   registerSheet(scene, TEX.enemyBar, parseSheet('enemy-bar', { bar: ENEMY_BAR }, PALETTE_KEYS));
+  // Chefe (BTIER-06): uma folha por arquétipo, com o mesmo conjunto de frames e animações.
+  registerSheet(scene, TEX.bossOni, parseSheet('boss-oni', BOSS_FRAMES, PALETTE_KEYS));
+  registerAnims(scene, TEX.bossOni, BOSS_ANIMS, (name) => bossAnimKey('oni', name));
+  registerSheet(scene, TEX.bossTecela, parseSheet('boss-tecela', TECELA_FRAMES, PALETTE_KEYS));
+  registerAnims(scene, TEX.bossTecela, BOSS_ANIMS, (name) => bossAnimKey('tecela', name));
+  registerSheet(scene, TEX.bossProjectile, parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS));
+  registerSheet(scene, TEX.bossShockwave, parseSheet('boss-shockwave', { shockwave: SHOCKWAVE_FRAME }, PALETTE_KEYS));
 }
 
 /**

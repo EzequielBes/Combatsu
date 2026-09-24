@@ -249,7 +249,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BTIER-04 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-05 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-07 | P2: Chefes mais duros e variados | Specify | Implementing |
-| BTIER-06 | P2: Chefes mais duros e variados | Specify | Pending |
+| BTIER-06 | P2: Chefes mais duros e variados | Specify | Implementing |
 
 **Coverage:** 52 total, 0 mapped to tasks, 52 unmapped ⚠️ (Tasks ainda não criadas)
 

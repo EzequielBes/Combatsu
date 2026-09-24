@@ -19,6 +19,18 @@ import {
   ENEMY_ORIGIN,
   ENEMY_RAG_PARTS,
 } from '../../src/game/art/sprites/enemy';
+import {
+  BOSS_ANIMS,
+  BOSS_FRAMES,
+  BOSS_FRAME_H,
+  BOSS_FRAME_W,
+  BOSS_ORIGIN,
+  PROJECTILE_FRAME,
+  SHOCKWAVE_FRAME,
+  TECELA_COLOR_MAP,
+  TECELA_FRAMES,
+} from '../../src/game/art/sprites/boss';
+import { BOSS, PLAYER_MOVE } from '../../src/data/tuning';
 
 describe('paleta única (ART-01)', () => {
   it('tem no máximo 32 cores, cada uma com chave de 1 caractere', () => {
@@ -307,6 +319,92 @@ describe('cores do HUD da run (RHUD-04)', () => {
   it('o texto e o fundo dos elementos novos (rodada, faixa, título/game over) são cores da paleta', () => {
     expect(Object.values(PALETTE)).toContain(RUN_TEXT_COLOR);
     expect(Object.values(PALETTE)).toContain(RUN_BG_COLOR);
+  });
+});
+
+describe('folha do chefe (BTIER-06, BAT-05, ART-01)', () => {
+  const sheet = parseSheet('boss', BOSS_FRAMES, PALETTE_KEYS);
+  const STATES = [
+    'idle',
+    'windup-charge',
+    'charge',
+    'windup-leap',
+    'leap',
+    'windup-volley',
+    'volley',
+    'roar',
+    'stagger',
+    'dead',
+  ];
+
+  it('passa no parseSheet só com cores da paleta, com o frame maior que o do inimigo nas duas dimensões', () => {
+    expect(sheet.width).toBe(BOSS_FRAME_W);
+    expect(sheet.height).toBe(BOSS_FRAME_H);
+    expect(BOSS_FRAME_W).toBeGreaterThan(ENEMY_FRAME_W);
+    expect(BOSS_FRAME_H).toBeGreaterThan(ENEMY_FRAME_H);
+  });
+
+  it('tem um frame e uma animação para cada estado do design, todos citando frames existentes', () => {
+    for (const name of STATES) {
+      expect(Object.hasOwn(BOSS_FRAMES, name), name).toBe(true);
+      const anim = BOSS_ANIMS[name];
+      expect(anim, name).toBeDefined();
+      for (const f of anim.frames) expect(Object.hasOwn(BOSS_FRAMES, f), `${name}: ${f}`).toBe(true);
+    }
+  });
+
+  it('cada frame de preparo é visualmente distinto do idle (BAT-05)', () => {
+    for (const name of ['windup-charge', 'windup-leap', 'windup-volley']) {
+      expect(BOSS_FRAMES[name], name).not.toEqual(BOSS_FRAMES.idle);
+    }
+  });
+
+  it('a origem fica no pé, no centro do corpo', () => {
+    expect(BOSS_ORIGIN.y).toBe(1);
+    expect(BOSS_ORIGIN.x * BOSS_FRAME_W).toBe(BOSS_FRAME_W / 2);
+  });
+
+  it('TECELA_COLOR_MAP só usa cores da paleta e muda ao menos 3 cores em relação ao Oni (BTIER-06)', () => {
+    for (const [from, to] of Object.entries(TECELA_COLOR_MAP)) {
+      expect(PALETTE_KEYS.has(from), from).toBe(true);
+      expect(PALETTE_KEYS.has(to), to).toBe(true);
+    }
+    const distinct = Object.entries(TECELA_COLOR_MAP).filter(([from, to]) => from !== to);
+    expect(distinct.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('a grade da Tecelã reaproveita os mesmos frames do Oni, só com as cores trocadas (BTIER-06)', () => {
+    const tecelaSheet = parseSheet('boss-tecela', TECELA_FRAMES, PALETTE_KEYS);
+    expect(tecelaSheet.width).toBe(sheet.width);
+    expect(tecelaSheet.height).toBe(sheet.height);
+    expect(Object.keys(TECELA_FRAMES).sort()).toEqual(Object.keys(BOSS_FRAMES).sort());
+    const changedColors = new Set<string>();
+    BOSS_FRAMES.idle.forEach((row, y) => {
+      [...row].forEach((ch, x) => {
+        const other = TECELA_FRAMES.idle[y][x];
+        if (ch !== other) changedColors.add(ch);
+      });
+    });
+    expect(changedColors.size).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
+  it('o projétil passa no parseSheet só com cores da paleta', () => {
+    const sheet = parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS);
+    expect(sheet.frames).toHaveLength(1);
+  });
+
+  it('a onda de choque tem 10 texels de altura (20 px de mundo com ART_SCALE 2, BAT-03)', () => {
+    const sheet = parseSheet('boss-shockwave', { shockwave: SHOCKWAVE_FRAME }, PALETTE_KEYS);
+    expect(sheet.height).toBe(10);
+    expect(sheet.height * ART_SCALE).toBe(BOSS.shockwave.height);
+  });
+
+  it('a altura da onda é menor que o ápice do pulo do player, computado do PLAYER_MOVE (BAT-07)', () => {
+    const jumpApex = PLAYER_MOVE.jumpSpeed ** 2 / (2 * PLAYER_MOVE.gravity);
+    expect(jumpApex).toBeCloseTo(49, 5);
+    expect(BOSS.shockwave.height).toBeLessThan(jumpApex);
   });
 });
 
