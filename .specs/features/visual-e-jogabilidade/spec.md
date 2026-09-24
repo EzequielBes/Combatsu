@@ -49,6 +49,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | Tolerância do congelamento (FX-01) | Pelo menos a duração do spec e menos que ela mais um frame | O congelamento só termina na virada de frame; lacuna apontada pelo Verifier na rodada 1 | y |
 | Alcance do ART-01 | Tudo que é desenhado: sprites, tiles, fundo, partículas, tint e texto do HUD | Lacuna apontada pelo Verifier na rodada 1 | y |
 | Velocidade independente de fps (AI-06) | Velocidades em px/s valem a 30 e a 60 fps (±10%) | Falha real achada pelo Verifier: o atrito zerava a velocidade entre steps do Matter | y |
+| Transparência e ART-01 | Toda cor de origem (textura, fill, tint de preenchimento, cor de fundo do jogo) é da paleta; mistura por transparência (fade, alpha) de cores da paleta é permitida; tint multiplicativo e cor de fundo do canvas fora da paleta não | Rodada 2 do Verifier: a fumaça usava tint multiplicativo e o dither do céu deixava ver o fundo #1b1b2f | y |
 | Cenário | Pátio/corredor de escola à noite, com lua e prédios ao fundo | Coerente com o tema de Jujutsu Kaisen | y |
 
 **Open questions:** none - all resolved or logged above.
