@@ -98,6 +98,15 @@ T32
 T33
 ```
 
+### Phase 8: Correções da rodada 2 do Verifier
+
+```
+T34
+T35
+T36
+T37
+```
+
 ---
 
 ## Task Breakdown
@@ -796,6 +805,92 @@ T33
 **Tests**: unit (`tests/core/enemyAI.test.ts`)
 **Gate**: build
 **Commit**: `fix(ai): turn patrol around when an obstacle stops the enemy`
+
+---
+
+### Phase 8: Correções da rodada 2 do Verifier
+
+#### T34: Inimigo atingido não anda
+
+**What**: A velocidade de andar reaplicada por step só vale com o cérebro idle; zera ao receber golpe, para a reação ao golpe voltar a ser a de antes do T29.
+**Where**: `src/game/Enemy.ts`
+**Depends on**: None
+**Reuses**: correções da Fase 7
+**Requirement**: AI-04, AI-06, HP-03
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] Smoke: jab num inimigo que persegue não o faz avançar para o player (desloca-se no sentido do golpe ou fica)
+- [ ] Smoke: golpe leve de debug empurra o inimigo no sentido do golpe como em `338ad6d` (~17 px)
+- [ ] Smoke: patrulha e perseguição continuam 35/70 px/s ±10% a 30 e 60 fps (tempo simulado)
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: none (adaptador; smoke headless)
+**Gate**: build
+**Commit**: `fix(enemy): stop per-step walk velocity as soon as the enemy is hit`
+
+---
+
+#### T35: Céu sem furos e fundo do jogo na paleta
+
+**What**: Base sólida sob as faixas de dither do céu e `backgroundColor` do jogo vindo da paleta.
+**Where**: `src/game/art/background.ts`
+**Depends on**: None
+**Reuses**: correções da Fase 7
+**Requirement**: ART-01, ENV-02
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] Smoke: nenhum pixel `#1b1b2f` na tela; leitura do framebuffer na faixa do céu só com cores da paleta
+- [ ] `src/main.ts` sem literal de cor fora da paleta
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: none (desenho procedural; smoke headless)
+**Gate**: build
+**Commit**: `fix(art): paint solid sky under dither bands and use palette clear color`
+
+---
+
+#### T36: Fumaça da dissolução sem tint multiplicativo
+
+**What**: Uma textura de fumaça por roxo da paleta (u, v, U), emitidas sem tint.
+**Where**: `src/game/Ragdoll.ts`
+**Depends on**: None
+**Reuses**: correções da Fase 7
+**Requirement**: ART-01
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] Smoke: pixels opacos das partículas de fumaça só com cores da paleta (u, v, U)
+- [ ] Teste de dados: as folhas de fumaça passam no parseSheet com a paleta
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: unit (`tests/game/art.test.ts`)
+**Gate**: build
+**Commit**: `fix(art): emit dissolve smoke from palette textures instead of multiply tint`
+
+---
+
+#### T37: Teste da patrulha presa assertando todo o laço
+
+**What**: O teste "avançando pelo menos 1 px a cada 200 ms não inverte" confere o vx em todas as saídas do laço, matando o mutante PATROL_STALL_PX 1→2.
+**Where**: `tests/core/enemyAI.test.ts`
+**Depends on**: None
+**Reuses**: correções da Fase 7
+**Requirement**: AI-01
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] Com a mutação PATROL_STALL_PX = 2 (scratch) o teste falha; no código real passa
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `test(ai): assert patrol direction on every step of the progress case`
 
 ---
 
