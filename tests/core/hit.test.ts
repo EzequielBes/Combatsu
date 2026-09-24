@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { makeHitGate, normalize } from '../../src/core/hit';
+import { canDamage, makeHitGate, normalize } from '../../src/core/hit';
 
 describe('makeHitGate', () => {
   it('nunca deixa o dono se acertar', () => {
@@ -29,5 +29,19 @@ describe('normalize', () => {
 
   it('vetor zero vira "para cima"', () => {
     expect(normalize({ x: 0, y: 0 })).toEqual({ x: 0, y: -1 });
+  });
+});
+
+describe('canDamage: regra de time (AI-05)', () => {
+  it('golpe de inimigo acerta o player', () => {
+    expect(canDamage('enemy', 'player')).toBe(true);
+  });
+
+  it('golpe de inimigo nunca acerta inimigo (nem outro, nem ele mesmo)', () => {
+    expect(canDamage('enemy', 'enemy')).toBe(false);
+  });
+
+  it('golpe do player acerta inimigo', () => {
+    expect(canDamage('player', 'enemy')).toBe(true);
   });
 });

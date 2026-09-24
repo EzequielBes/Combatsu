@@ -1,29 +1,66 @@
 import Phaser from 'phaser';
+import { RUN_THRESHOLD, pickEnemyAnim } from '../core/animState';
 import { Filters } from '../core/collision';
+import { EnemyAI, type AIEvent } from '../core/enemyAI';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
 import { normalize, type Hit, type Vec2 } from '../core/hit';
-import { ENEMY } from '../data/tuning';
-import { newEntityId, tagBody, type Hittable } from './bodyTags';
-import { applyFilter, setIgnoreGravity } from './physics';
+import { ENEMY, ENEMY_AI, ENEMY_ATTACK } from '../data/tuning';
+import { enemyAnimKey } from './art';
+import { ENEMY_BAR_WELL } from './art/hud';
+import { ART_SCALE, PALETTE } from './art/palette';
+import { ENEMY_ORIGIN } from './art/sprites/enemy';
+import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
+import { AttackHitbox, type OnConnect } from './hitbox';
+import { PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { Ragdoll } from './Ragdoll';
 import { SIZE, TEX } from './textures';
 
+/** Duração (ms) do flash branco do golpe leve. */
+const HIT_FLASH_MS = 70;
+/** No golpe o inimigo fica acima do player (depth 1): a garra aparece por cima de quem ela atinge. */
+const ATTACK_DEPTH = 2;
+/** Barra de vida (HUD-02): altura do topo acima do centro do corpo (px) e profundidade, acima de todos. */
+const BAR_RISE = 44;
+const BAR_DEPTH = 3;
+
 /**
- * Corpo físico (retângulo Matter) separado do visual (imagem comum), para
- * poder esticar/achatar o visual em tweens sem mexer na física.
+ * Corpo físico (retângulo Matter) separado do visual (sprite animado com a origem no pé, no centro do corpo).
+ * A animação sai do pickEnemyAnim (CHR-03); em ragdoll o sprite some e as partes do ragdoll aparecem (CHR-04).
+ * A EnemyAI decide o andar (só em x) e o golpe de garra (AI-01..05).
  */
 export class Enemy implements Hittable {
   readonly id = newEntityId();
+  readonly team = 'enemy';
   private readonly brain = new EnemyBrain(ENEMY);
+  private readonly ai: EnemyAI;
+  private readonly attack: AttackHitbox;
   private readonly body: MatterJS.BodyType;
-  private readonly view: Phaser.GameObjects.Image;
+  private readonly view: Phaser.GameObjects.Sprite;
   private ragdoll: Ragdoll | null = null;
+  /** Barra de vida acima da cabeça, na câmera do mundo: aparece no primeiro dano e some ao morrer (HUD-02). */
+  private readonly barFrame: Phaser.GameObjects.Image;
+  private readonly barFill: Phaser.GameObjects.Rectangle;
+  private facing: 1 | -1 = 1;
+  /**
+   * vx da IA em px por step, reaplicado a cada step do Matter (null = a física manda). O Matter roda em passo
+   * fixo de 60 Hz e dá vários steps por frame abaixo de 60 fps; aplicado só uma vez por frame, o atrito com o
+   * chão comia o vx nos steps seguintes e a velocidade caía junto com o fps (AI-06).
+   */
+  private walkVxStep: number | null = null;
+  private readonly onStep = (): void => {
+    // Os steps do Matter rodam antes do update da cena: sem este teste, o vx de andar do frame anterior passava
+    // por cima do empurrão de um golpe recebido neste frame.
+    if (this.walkVxStep === null || this.brain.state !== 'idle' || this.ragdoll) return;
+    this.scene.matter.body.setVelocity(this.body, { x: this.walkVxStep, y: this.body.velocity.y });
+  };
   private _removed = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
     readonly spawn: Vec2,
     private readonly onRemoved: (enemy: Enemy) => void,
+    /** Garra que conectou no player (faísca + hitstop), injetado pela cena. */
+    onConnect?: OnConnect,
   ) {
     const { w, h } = SIZE.enemy;
     this.body = scene.matter.add.rectangle(spawn.x, spawn.y, w, h, {
@@ -34,11 +71,28 @@ export class Enemy implements Hittable {
     });
     scene.matter.body.setInertia(this.body, Infinity); // não tomba
     tagBody(this.body, { kind: 'character', target: this });
-    this.view = scene.add.image(spawn.x, spawn.y + h / 2, TEX.enemy).setOrigin(0.5, 1);
+    this.ai = new EnemyAI(ENEMY_AI, spawn.x);
+    this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
+    this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, TEX.enemy, 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
+    this.barFrame = scene.add.image(0, 0, TEX.enemyBar).setOrigin(0, 0).setDepth(BAR_DEPTH).setVisible(false);
+    const well = ENEMY_BAR_WELL;
+    scene.matter.world.on('beforeupdate', this.onStep);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
+    this.barFill = scene.add
+      .rectangle(0, 0, well.w * ART_SCALE, well.h * ART_SCALE, PALETTE.r)
+      .setOrigin(0, 0)
+      .setDepth(BAR_DEPTH)
+      .setVisible(false);
   }
 
   get x(): number {
     return this.body.position.x;
+  }
+
+  /** Posição + tamanho do corpo (em ragdoll ele acompanha o tronco), nunca body.bounds. */
+  hurtRect(): Rect {
+    const { x, y } = this.body.position;
+    return { x, y, width: SIZE.enemy.w, height: SIZE.enemy.h };
   }
 
   get state(): EnemyState {
@@ -49,22 +103,86 @@ export class Enemy implements Hittable {
     return this._removed;
   }
 
-  receiveHit(hit: Hit): void {
-    this.handle(this.brain.receiveHit(hit));
+  receiveHit(hit: Hit): boolean {
+    const events = this.brain.receiveHit(hit);
+    if (events.length === 0) return false; // já morto
+    this.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
+    // Levar golpe cancela o preparo ou o golpe em andamento (AI-04).
+    this.onAI(this.ai.interrupt());
+    this.handle(events);
+    this.updateBar();
+    return true;
+  }
+
+  /** Mostra a barra depois do primeiro dano e até morrer, cheia na proporção da vida, em passos de 1 texel. */
+  private updateBar(): void {
+    const show = !this.brain.isDead && this.brain.hp < ENEMY.maxHp;
+    this.barFrame.setVisible(show);
+    const well = ENEMY_BAR_WELL;
+    const texels = Math.round((well.w * this.brain.hp) / ENEMY.maxHp);
+    this.barFill.setVisible(show && texels > 0).setSize(texels * ART_SCALE, well.h * ART_SCALE);
+    if (!show) return;
+    const { x, y } = this.body.position;
+    const left = Math.round(x - this.barFrame.width / 2);
+    const top = Math.round(y - BAR_RISE);
+    this.barFrame.setPosition(left, top);
+    this.barFill.setPosition(left + well.x * ART_SCALE, top + well.y * ART_SCALE);
   }
 
   update(dtMs: number, playerX: number): void {
     if (this._removed) return;
     this.handle(this.brain.update(dtMs));
     if (this._removed) return;
+    // Só age com o cérebro livre: em reação a golpe, ragdoll, levantando ou morto a IA fica parada (AI-04).
+    const canAct = this.brain.state === 'idle' && !this.brain.isDead;
+    const out = this.ai.update(dtMs, { selfX: this.body.position.x, playerX, canAct });
+    this.onAI(out.events);
+    this.walkVxStep = canAct && !this.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
     if (this.ragdoll) {
       // Corpo escondido acompanha o tronco para o "levantar" nascer no lugar certo.
       this.scene.matter.body.setPosition(this.body, this.ragdoll.center);
       this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
+      this.updateBar();
       return;
     }
-    if (this.brain.state === 'idle') this.view.setFlipX(playerX < this.body.position.x);
+    if (canAct) {
+      this.facing = out.facing;
+      // A IA só mexe no x; o y fica com a física (gravidade). Sem canAct o empurrão do golpe segue livre.
+      this.scene.matter.body.setVelocity(this.body, { x: out.vx * PX_PER_S_TO_STEP, y: this.body.velocity.y });
+    }
+    this.attack.follow(this.body.position.x, this.body.position.y, this.facing);
+    this.animate();
+    this.updateBar();
+  }
+
+  private onAI(events: AIEvent[]): void {
+    for (const ev of events) {
+      if (ev === 'hitboxOn') this.openAttack();
+      else if (ev === 'hitboxOff') this.attack.close();
+    }
+  }
+
+  /** Garra: 12 de dano, time 'enemy' (nunca acerta outro inimigo, AI-05). */
+  private openAttack(): void {
+    const step = ENEMY_ATTACK;
+    const hit: Hit = {
+      ownerId: this.id,
+      damage: step.damage,
+      strength: step.strength,
+      force: step.force,
+      direction: { x: this.facing, y: -0.3 },
+    };
+    this.attack.open(step.hitbox!, hit, this.body.position.x, this.body.position.y, this.facing);
+  }
+
+  private animate(): void {
+    const vxPerS = this.body.velocity.x / PX_PER_S_TO_STEP;
+    const anim = pickEnemyAnim({ brain: this.brain.state, ai: this.ai.state, moving: Math.abs(vxPerS) > RUN_THRESHOLD });
     this.view.setPosition(this.body.position.x, this.body.position.y + SIZE.enemy.h / 2);
+    // Escala negativa espelha em volta da origem (o pé no centro do corpo), não do centro do frame largo.
+    this.view.setScale(this.facing, 1);
+    this.view.setDepth(anim === 'attack' ? ATTACK_DEPTH : 0);
+    this.view.anims.play(enemyAnimKey(anim), true);
   }
 
   private handle(events: EnemyEvent[]): void {
@@ -78,25 +196,18 @@ export class Enemy implements Hittable {
     }
   }
 
-  private resetView(): void {
-    this.scene.tweens.killTweensOf(this.view);
-    this.view.setScale(1).clearTint();
-  }
-
-  /** Golpe leve: só "animação" (flash + achatar), sem ragdoll. */
+  /** Golpe leve: animação `hurt` (pelo pickEnemyAnim, com o cérebro em hitstun) + flash branco, sem ragdoll. */
   private playHitReaction(hit: Hit): void {
-    this.resetView();
     const d = normalize(hit.direction);
     this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
-    this.view.setTintFill(0xffffff);
-    this.scene.time.delayedCall(70, () => {
+    this.view.setTintFill(PALETTE.w);
+    this.scene.time.delayedCall(HIT_FLASH_MS, () => {
       if (this.view.active) this.view.clearTint();
     });
-    this.scene.tweens.add({ targets: this.view, scaleX: 0.75, duration: 60, yoyo: true });
   }
 
   private enterRagdoll(hit: Hit): void {
-    this.resetView();
+    this.view.clearTint();
     if (!this.ragdoll) {
       this.ragdoll = new Ragdoll(this.scene, this.body.position.x, this.body.position.y - 3);
       for (const b of this.ragdoll.bodies) tagBody(b, { kind: 'character', target: this });
@@ -105,10 +216,9 @@ export class Enemy implements Hittable {
       setIgnoreGravity(this.body, true);
     }
     this.ragdoll.impulse(hit.direction, hit.force);
-    this.scene.cameras.main.shake(90, 0.004);
   }
 
-  /** "Levantar" simples: sem blend físico, só um tween de esticar. */
+  /** Levantar: o ragdoll some e o sprite volta tocando a animação `getup` (o cérebro fica em gettingUp). */
   private getUp(): void {
     if (!this.ragdoll) return;
     const c = this.ragdoll.center;
@@ -119,15 +229,20 @@ export class Enemy implements Hittable {
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
     applyFilter(this.body, Filters.enemy);
     setIgnoreGravity(this.body, false);
-    this.view.setPosition(c.x, y + SIZE.enemy.h / 2).setVisible(true).setScale(1, 0.35);
-    this.scene.tweens.add({ targets: this.view, scaleY: 1, duration: ENEMY.getUpMs, ease: 'Back.Out' });
+    this.view.setVisible(true);
+    this.animate();
   }
 
   private remove(): void {
+    this.walkVxStep = null;
+    this.scene.matter.world.off('beforeupdate', this.onStep);
+    this.attack.close();
     this.ragdoll?.destroy();
     this.ragdoll = null;
     this.scene.matter.world.remove(this.body);
     this.view.destroy();
+    this.barFrame.destroy();
+    this.barFill.destroy();
     this._removed = true;
     this.onRemoved(this);
   }

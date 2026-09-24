@@ -75,6 +75,12 @@ golpes leves e fortes e morre em ragdoll.
 - Estrutura de roguelike: runs, morte permanente, meta-progressão.
 - IA de inimigo sofisticada (padrões de ataque, variedade de inimigos).
 
+> **Nota de escopo (2026-09-23):** uma IA simples de inimigo (patrulha,
+> perseguição e um golpe telegrafado) e a vida do player (dano,
+> invulnerabilidade e respawn) entraram neste sub-projeto pela feature
+> `.specs/features/visual-e-jogabilidade`, para a demo ficar jogável. A IA
+> sofisticada continua fora do escopo.
+
 ## Arquitetura
 
 ### 1. Controlador de movimentação
