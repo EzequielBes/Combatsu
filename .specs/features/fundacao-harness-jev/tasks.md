@@ -445,8 +445,8 @@ T13 → T14 → T15 → T16
 
 **Done when**:
 
-- [ ] `step(20)` → 2 chamadas de `headlessStep`; `step(1)` → 1 chamada (mata `floor`/`round`) (FND-22)
-- [ ] Gate check passes: `npm test`
+- [x] `step(20)` → 2 chamadas de `headlessStep`; `step(1)` → 1 chamada (mata `floor`/`round`) (FND-22)
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
