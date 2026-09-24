@@ -1,4 +1,4 @@
-# Visual, efeitos e jogabilidade — Validation (rodada 3)
+# Visual, efeitos e jogabilidade — Validation (rodada 3 + re-verificação final após T38)
 
 **Date**: 2026-09-23
 **Spec**: `.specs/features/visual-e-jogabilidade/spec.md`: 34 requisitos, 6 casos de borda e as premissas, incluindo a nova "Transparência e ART-01" e as SPEC_DEVIATION aceitas do frame largo (`src/game/art/sprites/player.ts:6`, `enemy.ts:6`)
@@ -14,7 +14,72 @@
 
 **Result**: FAIL
 
-Motivo, em uma linha: as quatro lacunas da rodada 2 estão fechadas, com medição, e os 34 ACs batem com o spec. Mas o sensor achou **2 mutantes de limiar não equivalentes que sobrevivem** na detecção da patrulha presa. Os dois são do mesmo tipo da lacuna 4 da rodada 2. O código está certo nos dois limites; o que falta é teste que os prenda. Pelo `validate.md` §5, mutante sobrevivente vira fix task antes de fechar a feature. Esta é a iteração 3 de 3, então o caso vai para o usuário.
+Motivo, em uma linha (re-verificação final, `ee01101`): o T38 fechou M9 e M10 (os dois agora morrem, e os 34 ACs da rodada 3 seguem válidos porque `src/` não mudou). Mas uma mutação nova na mesma regra, **M12 (não zerar `stallMs` ao inverter), sobrevive e não é equivalente**: com ela, o inimigo que acabou de virar na parede volta a virar no frame seguinte e fica tremendo contra a parede (o bug R1-extra volta). Pelo `validate.md` §5, mutante sobrevivente vira fix task. Detalhes em "Re-verificação final (após T38)".
+
+Veredito da rodada 3 (mantido como histórico): as quatro lacunas da rodada 2 fechadas, 34/34 ACs, FAIL só por M9/M10.
+
+## Re-verificação final (após T38)
+
+**Date**: 2026-09-23 · **HEAD**: `ee01101` · **Verifier**: sub-agente independente (rodada 4, curta), sem autoria na feature.
+
+### Diff desde a rodada 3
+
+`git diff --stat 57efd18..HEAD`: só 2 arquivos, **+40/−0**:
+- `.specs/features/visual-e-jogabilidade/tasks.md` (+21, task T38);
+- `tests/core/enemyAI.test.ts` (+19).
+
+`src/` não mudou, então a evidência por AC da rodada 3 continua valendo.
+
+### Gate
+
+- `npm run build && npm test`: build exit 0 (só o aviso de chunk > 500 kB); **198 passed, 0 failed, 0 skipped** (196 + 2 do T38).
+- **Integridade**: `git diff 57efd18..HEAD -- tests` só tem linhas `+`. Nenhuma asserção removida ou enfraquecida.
+- **Os testes novos asseram o valor do spec** ("advances less than 1 px in 200 ms → reverse", `spec.md:214`):
+  - `enemyAI.test.ts` "fronteira: parado exatamente 200 ms…": âncora + 4 × `update(50)` parado → `toEqual([35, 35, 35, -35])` (inverte exatamente no frame dos 200 ms, e não antes);
+  - "fronteira: avançando exatamente 1 px a cada 200 ms…": `x += 0.25` por passo de 50 ms, 16 passos → `vx === 35` em **todas** as saídas (1,0 px não é "menos que 1 px").
+
+### Sensor
+
+Scratch: `git worktree add --detach …/scratchpad/verifier4-wt` (`ee01101`) com junction de `node_modules`. Cada mutação rodou a suíte inteira (`npx vitest run`) e foi desfeita com `git checkout -- src/core/enemyAI.ts`; o porcelain do scratch ficou vazio entre elas. Baseline sem mutação no scratch: 198 passed.
+
+| # | File:line | Mutação | Resultado |
+| --- | --- | --- | --- |
+| M9 | `src/core/enemyAI.ts:128` | `stallMs < PATROL_STALL_MS` → `<=` | ✅ **morto** (1 falha: "fronteira: parado exatamente 200 ms…") |
+| M10 | `src/core/enemyAI.ts:122` | `Math.abs(x − stallX) >= PATROL_STALL_PX` → `>` | ✅ **morto** (1 falha: "fronteira: avançando exatamente 1 px…") |
+| M11 | `src/core/enemyAI.ts:6` | `PATROL_STALL_MS` 200 → 250 | ✅ morto (2 falhas: "parado … por 200 ms … inverte" e "fronteira: parado exatamente 200 ms…") |
+| M12 | `src/core/enemyAI.ts:131` | não zerar `stallMs` depois de inverter (`this.stallMs = 0;` removido) | ❌ **sobreviveu, não equivalente** (198 passed) |
+
+**Por que M12 não é equivalente** (sonda temporária `tests/core/v4probe.test.ts`, criada e apagada **só no scratch**):
+- cenário: âncora, parado 200 ms (4 × 50 ms) → vira para −35; depois sai da parede a 35 px/s em frames de 16,67 ms (0,58 px por frame, o deslocamento real a 60 fps), por 12 frames;
+- código real: `vx = −35` em todos os 12 frames (a sonda passa);
+- mutante: o `stallMs` fica ≥ 200 e o primeiro frame avança só 0,58 px (< 1 px), então ele vira de novo já no frame seguinte e volta para a parede. A sonda falha (`expected false to be true`);
+- no jogo, isso é o bug R1-extra de volta: o inimigo treme contra a parede em vez de ir e voltar. O spec pede uma janela nova de 200 ms sem avanço para cada inversão.
+- **Por que os testes não pegam**: o teste de 208 ms só olha a última saída depois de uma inversão, e nenhum teste observa os frames **depois** da inversão.
+
+**Resultado**: 4 injetados, 3 mortos, **1 sobrevivente real (M12)**. **M9/M10: fechados** (os dois morrem pelos testes do T38).
+
+**Isolamento**:
+- a junction foi removida com `cmd //c rmdir` antes de `git worktree remove --force` e `git worktree prune`; o `node_modules` real está intacto (`.bin` presente);
+- `git worktree list` mostra só a árvore principal; `git stash list` vazio;
+- `git status --porcelain` da árvore real = baseline (`?? .agents/`, `?? .claude/`, `?? .cursor/`, `?? .windsurf/`), confirmado por `diff` (`PORCELAIN_IGUAL`).
+
+### Lacuna nova (rodada 4)
+
+**1 — [Minor] O reinício da janela de 200 ms depois de inverter não está preso por teste (M12)**
+
+- **Onde**: `src/core/enemyAI.ts:131` (`this.stallMs = 0;` depois da inversão), contra `tests/core/enemyAI.test.ts` (bloco do caso de borda do AI-01).
+- **Impacto no jogo**: nenhum hoje, o código está certo. Mas apagar essa linha passa na suíte e traz de volta o inimigo tremendo contra a parede.
+- **Fix task (~10 linhas de teste, sem mudar `src/`)**: no bloco da patrulha presa, "depois de inverter, só inverte de novo após novos 200 ms sem avanço":
+  - âncora + 4 × `update(50)` parado → a última saída é `−35`;
+  - depois, (a) parado mais 3 × `update(50)` → `vx === −35` em todas as saídas, e o 4º → `+35`; ou (b) avançando 0,58 px por frame de 16,67 ms → `vx === −35` em todos os frames.
+  - Conferir num scratch que M12 passa a morrer (e que M9/M10/M11 continuam mortos).
+
+### Status das lacunas anteriores
+
+| # | Lacuna | Status |
+| --- | --- | --- |
+| R3-1 | [Minor] Limites exatos da patrulha presa sem teste (M9, M10) | ✅ Fechada pelo T38 (`ee01101`): M9 e M10 mortos |
+| R4-1 | [Minor] Reinício da janela depois de inverter sem teste (M12) | ❌ Aberta |
 
 ---
 
@@ -322,3 +387,7 @@ Os ACs de adaptador (matriz = none) são verificados por `arquivo:linha` mais sm
 - (b) aceitar M9/M10 como risco conhecido.
 
 **validate_state.py** (`python .claude/skills/tlc-spec-driven/scripts/validate_state.py visual-e-jogabilidade`): exit 1, `ERROR visual-e-jogabilidade: validation.md verdict is FAIL - route the ranked gaps to fix tasks, then re-verify (feature is not done)`. É o esperado para um relatório FAIL legível: o veredito foi reconhecido e não é placeholder.
+
+**Atualização da re-verificação final (após T38)**: gate 198 passed; M9/M10 mortos (R3-1 fechada). Continua ❌ Not Ready por **M12** (não zerar `stallMs` ao inverter sobrevive e traz de volta o tremor na parede). Próximo passo: a fix task da lacuna R4-1 (um teste, sem mudar `src/`) e nova re-verificação curta do sensor. Como a rodada 3 já era a iteração 3 de 3, a decisão entre aplicar o teste ou aceitar M12 como risco conhecido fica com o usuário.
+
+**validate_state.py (re-verificação final)**: exit 1, `ERROR visual-e-jogabilidade: validation.md verdict is FAIL - route the ranked gaps to fix tasks, then re-verify (feature is not done)`. É o esperado para um relatório FAIL legível.

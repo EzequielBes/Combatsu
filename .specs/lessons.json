@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 11,
+  "next_id": 12,
   "lessons": [
     {
       "id": "L-001",
@@ -184,6 +184,24 @@
       ],
       "created": "2026-09-24T02:09:18Z",
       "last_seen": "2026-09-24T02:09:18Z"
+    },
+    {
+      "id": "L-011",
+      "key": "surviving_mutant::when a rule acts after a timer or accumulator crosses a threshold assert the outputs on the frames right after the action so that forgetting to reset the accumulator fails a test",
+      "text": "When a rule acts after a timer or accumulator crosses a threshold, assert the outputs on the frames right after the action so that forgetting to reset the accumulator fails a test.",
+      "signal": "surviving_mutant",
+      "scope": "tests core",
+      "status": "candidate",
+      "features": [
+        "visual-e-jogabilidade"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M12 src/core/enemyAI.ts:131 vs tests/core/enemyAI.test.ts (validation.md re-verificação final, R4-1) (tests core)"
+      ],
+      "created": "2026-09-24T02:17:48Z",
+      "last_seen": "2026-09-24T02:17:48Z"
     }
   ]
 }
