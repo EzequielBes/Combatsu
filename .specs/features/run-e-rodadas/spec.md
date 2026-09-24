@@ -42,6 +42,9 @@ Esta feature cria a espinha da expansão: uma run com permadeath, dividida em ro
 | Tecla R | Continua reiniciando a cena, que volta para a tela de título | Mantém o atalho atual | y |
 | Seed da run | Derivada do relógio ao começar a run; em `?debug`, `?seed=N` fixa a seed | Runs variadas no jogo e reproduzíveis no smoke | y |
 | Respawn fora de run | Não existe mais: fora de run o jogo está na tela de título | Uma única forma de jogar | y |
+| Graça ao nascer | 600 ms parado e sem atacar, com a fumaça amaldiçoada no ponto de spawn; pode apanhar nesse tempo | Diversão e justiça: inimigo não nasce colado batendo; o player pode punir quem acabou de entrar. Decidido pelo agente (delegação do usuário, 24/09) | y |
+| Trava do game over | J/Enter ignorados nos primeiros 1000 ms do `gameOver` | J também é ataque: quem está apertando J ao morrer não pula o resumo sem querer. Decidido pelo agente | y |
+| Smokes da F0 | `boot.smoke.mjs` e `enemy-died.smoke.mjs` passam a apertar J e começar a run antes das asserções de FND-08/09; as asserções continuam | O boot agora é a tela de título (RUN-01); mudança de requisito, não afrouxamento. Escolha do usuário | y |
 
 Os itens com `n` são números de balanceamento que o usuário pode trocar sem mudar os ACs, porque todos vivem em `tuning.ts`.
 
@@ -77,9 +80,10 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 5. RUN-05: WHEN the player presses J or Enter in `gameOver` THEN the run SHALL start a new run with round 1, kills 0 and full hp.
 6. RUN-06: WHEN the last enemy of the round dies THEN the run SHALL enter `intermission` exactly once for that round.
 7. RUN-10: WHEN 2500 ms have elapsed in `intermission` for round N THEN the run SHALL enter `roundActive` with round N + 1.
-8. RUN-07: IF an event arrives that the current state does not accept (enemy death in `title`, `intermission` or `gameOver`; start input in `roundActive` or `intermission`) THEN the run SHALL keep its state, round and kills unchanged.
-9. RUN-08: WHILE the run is in `title` or `gameOver`, the player SHALL ignore the left, right, jump, attack and interact inputs (position, velocity and combo state stay unchanged).
-10. RUN-09: WHERE the debug mode is on, `window.__game.snapshot()` SHALL include `run: { state, round, kills, alive, queued }`.
+8. RUN-11: IF J or Enter is pressed less than 1000 ms after the run entered `gameOver` THEN the run SHALL stay in `gameOver` with the same summary.
+9. RUN-07: IF an event arrives that the current state does not accept (enemy death in `title`, `intermission` or `gameOver`; start input in `roundActive` or `intermission`) THEN the run SHALL keep its state, round and kills unchanged.
+10. RUN-08: WHILE the run is in `title` or `gameOver`, the player SHALL ignore the left, right, jump, attack and interact inputs (position, velocity and combo state stay unchanged).
+11. RUN-09: WHERE the debug mode is on, `window.__game.snapshot()` SHALL include `run: { state, round, kills, alive, queued }`.
 
 **Independent Test**: testes do `run.test.ts` para as transições; smoke `run-loop.smoke.mjs` com `?debug&seed=1`: começa a run, mata os inimigos da rodada 1 via `step`, vê `round: 2`, zera a vida do player e vê `gameOver`.
 
@@ -101,6 +105,7 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 6. WAVE-06: IF the same enemy is reported dead more than once THEN the wave SHALL count it exactly once in `kills` and in the round's remaining count.
 7. WAVE-08: WHEN two different enemies die in the same frame THEN the wave SHALL add 2 to `kills` and subtract 2 from the round's remaining count.
 8. WAVE-07: WHEN two runs start with the same seed THEN their waves SHALL produce the same sequence of `(spawn time in ms, spawn point index)` pairs for every round, given the same sequence of enemy deaths.
+9. WAVE-09: WHILE less than 600 ms have passed since an enemy spawned, that enemy SHALL NOT start a windup or an attack and SHALL stand still (it can still be hit).
 
 **Independent Test**: `waves.test.ts` com `Rng` de seed fixa: contagens das rodadas 1, 5, 10 e 20; rodízio de pontos; fila com teto 4; espera de 800 ms; morte duplicada.
 
@@ -119,7 +124,7 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 3. DIF-06: WHEN the scaling is computed for round `r` THEN its enemy patrol speed and chase speed SHALL each be the base value from `src/data/tuning.ts` multiplied by `min(1 + 0.03·(r − 1), 1.4)`.
 4. DIF-02: For every integer round `r` from 2 to 100, each of the three multipliers SHALL be greater than or equal to its value at round `r − 1`.
 5. DIF-03: IF the scaling is asked for a round below 1 or not an integer THEN it SHALL return the round-1 values.
-6. DIF-04: WHEN an enemy spawns in round `r` THEN its `maxHp`, attack damage and speeds SHALL equal the values of DIF-01, DIF-05 and DIF-06 for `r`, observable as `enemies[i].maxHp` and `enemies[i].damage` in the debug snapshot.
+6. DIF-04: WHEN an enemy spawns in round `r` THEN its `maxHp`, attack damage and speeds SHALL equal the values of DIF-01, DIF-05 and DIF-06 for `r`, observable as `enemies[i].maxHp`, `enemies[i].damage`, `enemies[i].patrolSpeed` and `enemies[i].chaseSpeed` in the debug snapshot (values read from the live brain, attack and AI).
 
 **Independent Test**: `difficulty.test.ts` confere os valores exatos nas rodadas 1, 2, 10, 15 (velocidade no teto), 18 (hp no teto), 20 (dano no teto) e 0/−3/2.5 (tratadas como 1); smoke confere `hp` do inimigo da rodada 2 no snapshot.
 
@@ -134,10 +139,11 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 **Acceptance Criteria**:
 
 1. RHUD-01: WHILE the run is in `roundActive`, the HUD SHALL show `Rodada N` and `Inimigos: K`, where K is alive plus queued enemies of the round.
-2. RHUD-02: WHEN a round starts THEN the HUD SHALL show the banner `Rodada N` centered on the 960×540 screen for 1500 ms and then hide it.
+2. RHUD-02: WHEN a round starts THEN the HUD SHALL show the banner `Rodada N` with its visual center at x = 480, y = 135 on the 960×540 screen (a quarter of the height, so it does not cover the fight) for 1500 ms and then hide it.
 3. RHUD-03: WHEN the run enters `intermission` THEN the HUD SHALL show `Rodada N concluída` until the next round starts.
 4. RHUD-04: The text and fill colors of the HUD elements of this feature SHALL be colors of the game palette (AD-002).
 5. RHUD-07: The HUD elements of this feature SHALL be in the main camera's ignore list (AD-003), reported as `hud.ignoredByMain: true` in the debug snapshot.
+6. RHUD-08: WHEN an enemy spawns THEN the game SHALL play the curse smoke burst at its spawn point, reported as one `spawnFx:<enemyId>` entry in the debug snapshot `events`.
 
 **Independent Test**: smoke confere os textos do HUD pelo snapshot de debug; teste de paleta em `tests/game/art.test.ts` para as novas cores.
 
@@ -172,39 +178,42 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| RUN-01 | P1: Run com permadeath | Specify | Pending |
-| RUN-02 | P1: Run com permadeath | Specify | Pending |
-| RUN-03 | P1: Run com permadeath | Specify | Pending |
-| RUN-04 | P1: Run com permadeath | Specify | Pending |
-| RUN-05 | P1: Run com permadeath | Specify | Pending |
-| RUN-06 | P1: Run com permadeath | Specify | Pending |
-| RUN-07 | P1: Run com permadeath | Specify | Pending |
-| RUN-08 | P1: Run com permadeath | Specify | Pending |
-| RUN-09 | P1: Run com permadeath | Specify | Pending |
-| RUN-10 | P1: Run com permadeath | Specify | Pending |
-| WAVE-01 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-02 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-03 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-04 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-05 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-06 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-07 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-08 | P1: Ondas de inimigos | Specify | Pending |
-| DIF-01 | P1: Dificuldade progressiva | Specify | Pending |
-| DIF-02 | P1: Dificuldade progressiva | Specify | Pending |
-| DIF-03 | P1: Dificuldade progressiva | Specify | Pending |
-| DIF-04 | P1: Dificuldade progressiva | Specify | Pending |
-| DIF-05 | P1: Dificuldade progressiva | Specify | Pending |
-| DIF-06 | P1: Dificuldade progressiva | Specify | Pending |
-| RHUD-01 | P2: HUD da run | Specify | Pending |
-| RHUD-02 | P2: HUD da run | Specify | Pending |
-| RHUD-03 | P2: HUD da run | Specify | Pending |
-| RHUD-04 | P2: HUD da run | Specify | Pending |
-| RHUD-05 | P2: Telas de título e game over | Specify | Pending |
-| RHUD-06 | P2: Telas de título e game over | Specify | Pending |
-| RHUD-07 | P2: HUD da run | Specify | Pending |
+| RUN-01 | P1: Run com permadeath | Specify | Verified |
+| RUN-02 | P1: Run com permadeath | Specify | Verified |
+| RUN-03 | P1: Run com permadeath | Specify | Verified |
+| RUN-04 | P1: Run com permadeath | Specify | Verified |
+| RUN-05 | P1: Run com permadeath | Specify | Verified |
+| RUN-06 | P1: Run com permadeath | Specify | Verified |
+| RUN-07 | P1: Run com permadeath | Specify | Verified |
+| RUN-08 | P1: Run com permadeath | Specify | Verified |
+| RUN-09 | P1: Run com permadeath | Specify | Verified |
+| RUN-10 | P1: Run com permadeath | Specify | Verified |
+| RUN-11 | P1: Run com permadeath | Specify | Verified |
+| WAVE-01 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-02 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-03 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-04 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-05 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-06 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-07 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-08 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-09 | P1: Ondas de inimigos | Specify | Verified |
+| DIF-01 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-02 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-03 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-04 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-05 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-06 | P1: Dificuldade progressiva | Specify | Verified |
+| RHUD-01 | P2: HUD da run | Specify | Verified |
+| RHUD-02 | P2: HUD da run | Specify | Verified |
+| RHUD-03 | P2: HUD da run | Specify | Verified |
+| RHUD-04 | P2: HUD da run | Specify | Verified |
+| RHUD-05 | P2: Telas de título e game over | Specify | Verified |
+| RHUD-06 | P2: Telas de título e game over | Specify | Verified |
+| RHUD-07 | P2: HUD da run | Specify | Verified |
+| RHUD-08 | P2: HUD da run | Specify | Verified |
 
-**Coverage:** 31 total, 0 mapped to tasks, 31 unmapped ⚠️ (Tasks ainda não criadas)
+**Coverage:** 34 total, 34 mapped to tasks, 0 unmapped ✅ (34 Verified na rodada 3 do Verifier)
 
 ---
 

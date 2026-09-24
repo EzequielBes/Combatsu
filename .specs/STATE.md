@@ -68,11 +68,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/fundacao-harness-jev` concluída → próxima: `.specs/features/run-e-rodadas` (F1)
-- **Phase / Task**: F0 Done (T1–T17, Verifier PASS na rodada 3); F1 com spec aprovada, Design pendente
-- **Completed**: F0 inteira: Rng com seed, `Health.heal`, `onEnemyDied` com posição, `window.__game` (`snapshot`/`step`) só em `?debug`, `npm run smoke` versionado (3 cenários), `tools/jev-refine.mjs`; 248 testes
+- **Feature**: `.specs/features/run-e-rodadas` (F1) concluída → próxima: F2 `boss-a-cada-5` ou F3 `economia-drops-cura` (ROADMAP)
+- **Phase / Task**: F1 Done (T1–T16, Verifier PASS na rodada 3), mergeada em `dev`
+- **Completed**: título → rodadas com ondas escaladas, graça de 600 ms no spawn, permadeath, game over com trava de 1 s, HUD de rodada e faixas; 323 testes, 5 cenários de smoke
 - **In-progress** (file:line): none
-- **Next step**: Design de F1 (Large: apresentar 2-3 abordagens para a máquina de run/ondas e confirmar com o usuário), depois Tasks e Execute
-- **Blockers**: UAT de visual-e-jogabilidade e da F0 antes de `dev` ir para `main`
-- **Uncommitted files**: none
-- **Branch**: `dev` (com as features visual-e-jogabilidade e fundacao-harness-jev mergeadas; F1 nasce de `dev` em `feat/run-e-rodadas`)
+- **Next step**: Specify da próxima feature (sugestão: F3 antes de F2, porque a cura e a moeda deixam as rodadas longas jogáveis); usar a skill `phaser-gamedev` nos workers de gameplay
+- **Blockers**: UAT do usuário (visual-e-jogabilidade, F0, F1) antes de `dev` ir para `main`
+- **Uncommitted files**: none (fora `skills-lock.json`, do usuário)
+- **Branch**: `dev`

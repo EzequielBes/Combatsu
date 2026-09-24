@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 18,
+  "next_id": 26,
   "lessons": [
     {
       "id": "L-001",
@@ -173,17 +173,19 @@
       "text": "Test every spec threshold exactly at its boundary value on both sides, because flipping a strict comparison to non-strict survives tests that only probe values away from the limit.",
       "signal": "surviving_mutant",
       "scope": "tests core",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "visual-e-jogabilidade"
+        "visual-e-jogabilidade",
+        "run-e-rodadas"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core)"
+        "M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core)",
+        "A13 src/game/Hud.ts:125; scripts/smoke/hud.smoke.mjs:36,46 (tests core)"
       ],
       "created": "2026-09-24T02:09:18Z",
-      "last_seen": "2026-09-24T02:09:18Z"
+      "last_seen": "2026-09-24T16:44:30Z"
     },
     {
       "id": "L-011",
@@ -310,6 +312,150 @@
       ],
       "created": "2026-09-24T14:43:47Z",
       "last_seen": "2026-09-24T14:43:47Z"
+    },
+    {
+      "id": "L-018",
+      "key": "surviving_mutant::test a seeded random offset with a seed that draws a nonzero value because a seed that draws zero cannot tell whether the offset is applied at all",
+      "text": "Test a seeded random offset with a seed that draws a nonzero value, because a seed that draws zero cannot tell whether the offset is applied at all.",
+      "signal": "surviving_mutant",
+      "scope": "tests core rng",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C10b src/core/waves.ts:97; tests/core/waves.test.ts:34-38 (tests core rng)"
+      ],
+      "created": "2026-09-24T16:44:28Z",
+      "last_seen": "2026-09-24T16:44:28Z"
+    },
+    {
+      "id": "L-019",
+      "key": "surviving_mutant::read debug snapshot values from the object the game actually uses not from the config it was built with so the smoke checks behavior and not input",
+      "text": "Read debug snapshot values from the object the game actually uses, not from the config it was built with, so the smoke checks behavior and not input.",
+      "signal": "surviving_mutant",
+      "scope": "src/game smoke",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "A2/A3 src/game/Enemy.ts:121-128; scripts/smoke/run-loop.smoke.mjs:88-92 (src/game smoke)"
+      ],
+      "created": "2026-09-24T16:44:28Z",
+      "last_seen": "2026-09-24T16:44:28Z"
+    },
+    {
+      "id": "L-020",
+      "key": "surviving_mutant::assert that a forbidden event never happens across the whole window where it could occur not at a single sampled instant",
+      "text": "Assert that a forbidden event never happens across the whole window where it could occur, not at a single sampled instant.",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "A4 src/scenes/TestScene.ts:215; scripts/smoke/run-loop.smoke.mjs:61-70 (smoke)"
+      ],
+      "created": "2026-09-24T16:44:29Z",
+      "last_seen": "2026-09-24T16:44:29Z"
+    },
+    {
+      "id": "L-021",
+      "key": "surviving_mutant::when a lower layer deduplicates events also test the duplicate through every layer that re counts its results",
+      "text": "When a lower layer deduplicates events, also test the duplicate through every layer that re-counts its results.",
+      "signal": "surviving_mutant",
+      "scope": "tests core",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C17 src/core/run.ts:113 (tests core)"
+      ],
+      "created": "2026-09-24T16:44:30Z",
+      "last_seen": "2026-09-24T16:44:30Z"
+    },
+    {
+      "id": "L-022",
+      "key": "ac_gap::assert every clause of a conjunctive acceptance criterion including positions set alongside the headline values",
+      "text": "Assert every clause of a conjunctive acceptance criterion, including positions set alongside the headline values.",
+      "signal": "ac_gap",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "RUN-02 A14 src/game/Player.ts:219; scripts/smoke/run-loop.smoke.mjs:41 (smoke)"
+      ],
+      "created": "2026-09-24T16:44:31Z",
+      "last_seen": "2026-09-24T16:44:31Z"
+    },
+    {
+      "id": "L-023",
+      "key": "spec_precision_gap::state layout terms such as centered as explicit axes or coordinates in the spec so the smoke can assert them",
+      "text": "State layout terms such as centered as explicit axes or coordinates in the spec so the smoke can assert them.",
+      "signal": "spec_precision_gap",
+      "scope": "spec hud",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "RHUD-02 src/game/Hud.ts:65 (spec hud)"
+      ],
+      "created": "2026-09-24T16:44:32Z",
+      "last_seen": "2026-09-24T16:44:32Z"
+    },
+    {
+      "id": "L-024",
+      "key": "surviving_mutant::assert every clause of a conjunctive acceptance criterion including positions set alongside the headline values",
+      "text": "Assert every clause of a conjunctive acceptance criterion, including positions set alongside the headline values.",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md rodada 2 N4 (src/game/Enemy.ts:87, DIF-04 speeds) (smoke)"
+      ],
+      "created": "2026-09-24T18:18:53Z",
+      "last_seen": "2026-09-24T18:18:53Z"
+    },
+    {
+      "id": "L-025",
+      "key": "surviving_mutant::assert a rendered element s layout from its visual bounds not its anchor coordinates because the anchor stays in place when the origin changes",
+      "text": "Assert a rendered element's layout from its visual bounds, not its anchor coordinates, because the anchor stays in place when the origin changes.",
+      "signal": "surviving_mutant",
+      "scope": "src/game smoke hud",
+      "status": "candidate",
+      "features": [
+        "run-e-rodadas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md rodada 2 N2 (src/game/Hud.ts:66,169, RHUD-02 centered) (src/game smoke hud)"
+      ],
+      "created": "2026-09-24T18:18:54Z",
+      "last_seen": "2026-09-24T18:18:54Z"
     }
   ]
 }

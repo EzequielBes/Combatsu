@@ -3,6 +3,9 @@ import type { EnemyTuning } from '../core/enemyBrain';
 import type { HealthTuning } from '../core/health';
 import type { AttackStep } from '../core/combo';
 import type { MoveTuning } from '../core/movement';
+import type { DifficultyTuning } from '../core/difficulty';
+import type { WaveTuning } from '../core/waves';
+import type { RunTuning } from '../core/run';
 
 /** Pulo máximo ≈ 130 px (4 tiles); toque ≈ 30 px. Ajustar jogando. */
 export const PLAYER_MOVE: MoveTuning = {
@@ -81,8 +84,6 @@ export const ENEMY: EnemyTuning = {
   dissolveMs: 700,
 };
 
-export const ENEMY_RESPAWN_MS = 1500;
-
 /** IA simples do inimigo (AI-01..03): distâncias só na horizontal, em px; velocidades em px/s. */
 export const ENEMY_AI: EnemyAITuning = {
   patrolRange: 48,
@@ -106,3 +107,19 @@ export const ENEMY_ATTACK: AttackStep = {
   recoveryMs: 0,
   hitbox: { offsetX: 20, offsetY: -2, width: 24, height: 20 },
 };
+
+/** Escala de dificuldade por rodada (DIF-01, DIF-05, DIF-06): cresce até um teto. */
+export const DIFFICULTY: DifficultyTuning = {
+  hpPerRound: 0.12,
+  hpCap: 3.0,
+  damagePerRound: 0.08,
+  damageCap: 2.5,
+  speedPerRound: 0.03,
+  speedCap: 1.4,
+};
+
+/** Onda de inimigos por rodada (WAVE-01, WAVE-03, WAVE-04). */
+export const WAVE: WaveTuning = { base: 3, max: 12, maxAlive: 4, pointGapMs: 800 };
+
+/** Tempos da máquina de estados da run (RUN-10, RUN-11, RHUD-02). */
+export const RUN: RunTuning = { intermissionMs: 2500, gameOverLockMs: 1000, spawnGraceMs: 600, bannerMs: 1500 };

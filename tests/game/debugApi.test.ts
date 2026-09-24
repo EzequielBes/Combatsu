@@ -33,9 +33,19 @@ describe('installDebugApi', () => {
   it('snapshot devolve o que o probe registrado devolve (FND-09)', () => {
     const snap: GameSnapshot = {
       player: { x: 10, y: 20, hp: 100, dead: false },
-      enemies: [{ id: 7, x: 30, y: 40, hp: 60, state: 'idle' }],
+      enemies: [{ id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70 }],
       events: ['enemyDied:3'],
       deaths: [{ id: 3, x: 50, y: 60 }],
+      run: { state: 'roundActive', round: 1, kills: 0, alive: 1, queued: 2 },
+      level: { playerSpawn: { x: 96, y: 460 } },
+      hud: {
+        ignoredByMain: true,
+        round: 'Rodada 1',
+        remaining: 'Inimigos: 3',
+        banner: null,
+        center: null,
+        bannerPos: { x: 480, y: 135 },
+      },
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};
