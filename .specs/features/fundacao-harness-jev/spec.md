@@ -152,9 +152,9 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 | FND-08 | P1: Cura e morte do inimigo | Specify | Pending |
 | FND-09 | P1: Smoke headless versionado | Specify | Pending |
 | FND-22 | P1: Smoke headless versionado | Specify | Pending |
-| FND-10 | P1: Smoke headless versionado | Specify | Pending |
+| FND-10 | P1: Smoke headless versionado | Specify | Implementing |
 | FND-11 | P1: Smoke headless versionado | Specify | Implementing |
-| FND-23 | P1: Smoke headless versionado | Specify | Pending |
+| FND-23 | P1: Smoke headless versionado | Specify | Implementing |
 | FND-12 | P1: Smoke headless versionado | Specify | Implementing |
 | FND-13 | P1: Refinamento com o Jev | Specify | Pending |
 | FND-14 | P1: Refinamento com o Jev | Specify | Pending |
