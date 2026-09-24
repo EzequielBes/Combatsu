@@ -45,6 +45,13 @@ export const PROP_SPRITES = { chair: CHAIR, bottle: BOTTLE } as const;
 /** Fumaça (4x4 texels, 8x8 px como o placeholder): branca, tingida por quem usa com as cores da paleta. */
 export const SMOKE: Grid = ['.ww.', 'wwww', 'wwww', '.ww.'];
 
+/** Fumaça da dissolução: um frame por roxo da paleta, emitida sem tint (tint multiplicativo sai da paleta, ART-01). */
+export const SMOKE_CURSE: Record<string, Grid> = {
+  u: SMOKE.map((row) => row.replace(/w/g, 'u')),
+  v: SMOKE.map((row) => row.replace(/w/g, 'v')),
+  U: SMOKE.map((row) => row.replace(/w/g, 'U')),
+};
+
 /** Um estilhaço: um recorte quadrado do sprite, com a posição (texels) do canto superior esquerdo no sprite. */
 export interface Shard {
   key: string;

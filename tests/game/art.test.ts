@@ -6,7 +6,7 @@ import { TRANSPARENT, parseSheet } from '../../src/core/pixelGrid';
 import { ART_SCALE, PALETTE, PALETTE_KEYS } from '../../src/game/art/palette';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
-import { PROP_SHARDS, PROP_SPRITES, SMOKE } from '../../src/game/art/sprites/props';
+import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
 import { ENEMY_BAR, ENEMY_BAR_WELL, HUD_BAR, HUD_BAR_WELL } from '../../src/game/art/hud';
 import { ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
 import type { EnemyAnim } from '../../src/core/animState';
@@ -285,6 +285,15 @@ describe('objetos com arte (PRP-01, ART-01, ART-03)', () => {
       );
     });
   }
+
+  it('a fumaça da dissolução tem um frame por roxo da paleta (u, v, U), cada um só com a sua cor (ART-01)', () => {
+    const sheet = parseSheet('smoke-curse', SMOKE_CURSE, PALETTE_KEYS);
+    expect(sheet.frames.map((fr) => fr.key).sort()).toEqual(['U', 'u', 'v']);
+    for (const fr of sheet.frames) {
+      const colors = new Set(fr.cells.flat().filter((c) => c !== null));
+      expect([...colors]).toEqual([fr.key]);
+    }
+  });
 
   it('a fumaça é uma textura pequena da paleta', () => {
     const sheet = parseSheet('smoke', { smoke: SMOKE }, PALETTE_KEYS);

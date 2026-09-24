@@ -32,8 +32,6 @@ const JOINTS: readonly (readonly [number, number, number, number])[] = [
   [0, 4, -4, 7],
   [0, 5, 4, 7],
 ];
-/** Energia amaldiçoada da dissolução: roxos da paleta. */
-const CURSE = [PALETTE.u, PALETTE.v, PALETTE.U];
 
 /** Teto do impulso: acima disso as juntas esticam e o corpo "explode". */
 const MAX_FORCE = 14;
@@ -100,13 +98,13 @@ export class Ragdoll {
     for (const p of this.parts) p.setTintFill(PALETTE.u);
     this.scene.tweens.add({ targets: this.parts, alpha: 0, duration: durationMs });
     const c = this.center;
-    const smoke = this.scene.add.particles(c.x, c.y, TEX.smoke, {
+    const smoke = this.scene.add.particles(c.x, c.y, TEX.smokeCurse, {
+      frame: ['u', 'v', 'U'], // cor de origem vem do frame, sem tint multiplicativo (ART-01)
       speed: { min: 15, max: 60 },
       angle: { min: 200, max: 340 },
       lifespan: 800,
       scale: { start: 1, end: 0 }, // começa no tamanho de texel da textura (ART-03)
       alpha: { start: 0.8, end: 0 },
-      tint: CURSE,
       emitting: false,
     });
     smoke.explode(30);
