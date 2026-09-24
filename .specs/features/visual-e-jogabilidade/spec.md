@@ -210,6 +210,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 
 - IF the player dies while holding a prop THEN the prop SHALL fall to rest (via `PropMachine.holderGone`) before the respawn.
 - IF the enemy dies during its windup THEN its attack hitbox SHALL never open.
+- IF a wall or any obstacle stops the enemy while it patrols (position advances less than 1 px in 200 ms) THEN the enemy SHALL reverse its patrol direction (AI-01; bug achado na rodada 1: o inimigo da direita empurrava a parede para sempre).
 - WHEN the scene restarts during a hitstop THEN the new scene SHALL start unfrozen.
 - IF the player is hit by an enemy and by its own thrown prop in the same frame THEN only the enemy hit SHALL apply (o dono nunca se acerta — já garantido por `makeHitGate`).
 - WHEN two enemy hits land in the same frame THEN the player SHALL take damage only once (invulnerabilidade).
