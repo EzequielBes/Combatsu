@@ -149,7 +149,7 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 | FND-05 | P1: Cura e morte do inimigo | Specify | Implementing |
 | FND-06 | P1: Cura e morte do inimigo | Specify | Implementing |
 | FND-07 | P1: Cura e morte do inimigo | Specify | Implementing |
-| FND-08 | P1: Cura e morte do inimigo | Specify | Pending |
+| FND-08 | P1: Cura e morte do inimigo | Specify | Implementing |
 | FND-09 | P1: Smoke headless versionado | Specify | Implementing |
 | FND-22 | P1: Smoke headless versionado | Specify | Implementing |
 | FND-10 | P1: Smoke headless versionado | Specify | Implementing |
