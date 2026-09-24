@@ -18,7 +18,7 @@ import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { registerDebugProbe, type DebugProbe, type GameSnapshot } from '../game/debugApi';
 import { Enemy } from '../game/Enemy';
 import { Fx, type SparkKind } from '../game/fx';
-import { Hud } from '../game/Hud';
+import { GAME_NAME, Hud } from '../game/Hud';
 import type { InputSnapshot } from '../game/input';
 import { PlayerInput } from '../game/input';
 import { MAX_FRAME_MS } from '../game/physics';
@@ -150,6 +150,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const prop of this.props) prop.update(dt);
     this.props = this.props.filter((prop) => !prop.isGone);
     for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
+    // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
+    this.hud.setRun(this.run.round > 0 ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
+    this.hud.update(dt);
   }
 
   /** Seed da run: fixa por `?seed=N` só em `?debug` (design); senão o relógio (runs variadas). */
@@ -173,9 +176,20 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.spawnFromCommand(cmd.point, cmd.round);
         break;
       case 'roundStart':
+        // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
+        this.hud.setCenter(null);
+        this.hud.banner(`Rodada ${cmd.round}`, RUN.bannerMs);
+        break;
       case 'roundCleared':
+        // Fica até o próximo `roundStart` chamar `banner` de novo (RHUD-03).
+        this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
+        break;
       case 'gameOver':
-        // HUD (T8): faixa de rodada, "rodada concluída" e a tela de game over.
+        this.hud.setCenter([
+          `Rodada alcançada: ${cmd.round}`,
+          `Abates: ${cmd.kills}`,
+          'J / Enter para tentar de novo',
+        ]);
         break;
     }
   }
@@ -231,6 +245,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
+      hud: this.hud.debugState(),
     };
   }
 
@@ -316,6 +331,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud = new Hud(this, this.uiLayer, lines().join('\n'));
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     this.hud.showControls(CONTROLS_MS);
+    // Boot em `title` (RUN-01/RHUD-05): tela com o nome do jogo até o primeiro J/Enter.
+    this.hud.setCenter([GAME_NAME, 'J / Enter para começar']);
     // Tab alterna o painel; a captura impede o navegador de tirar o foco do jogo (HUD-03).
     this.input.keyboard!.addCapture('TAB');
     this.onKey('TAB', () => this.hud.toggleControls());
