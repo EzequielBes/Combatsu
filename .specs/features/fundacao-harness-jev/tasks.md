@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/fundacao-harness-jev/spec.md`
 **Design**: `.specs/features/fundacao-harness-jev/design.md`
-**Status**: Approved
+**Status**: Done (Verifier PASS na rodada 3; ver validation.md)
 **Branch**: `feat/fundacao-harness-jev`
 **Test count before this feature**: 198
 
