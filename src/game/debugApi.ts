@@ -10,6 +10,8 @@ export interface GameSnapshot {
   deaths: { id: number; x: number; y: number }[];
   /** Estado da máquina de run (RUN-09). */
   run: { state: RunState; round: number; kills: number; alive: number; queued: number };
+  /** Spawn do player no level, já com o mesmo ajuste que a cena aplica (RUN-02/05). */
+  level: { playerSpawn: { x: number; y: number } };
   /** Estado do HUD da run (RHUD-01..07). */
   hud: {
     ignoredByMain: boolean;

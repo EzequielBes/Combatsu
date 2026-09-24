@@ -37,6 +37,7 @@ describe('installDebugApi', () => {
       events: ['enemyDied:3'],
       deaths: [{ id: 3, x: 50, y: 60 }],
       run: { state: 'roundActive', round: 1, kills: 0, alive: 1, queued: 2 },
+      level: { playerSpawn: { x: 96, y: 460 } },
       hud: {
         ignoredByMain: true,
         round: 'Rodada 1',

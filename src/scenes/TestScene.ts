@@ -246,6 +246,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       deaths: this.debugDeaths.map((d) => ({ ...d })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
       hud: this.hud.debugState(),
+      level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
     };
   }
 
