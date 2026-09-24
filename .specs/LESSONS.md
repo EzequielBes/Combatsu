@@ -110,6 +110,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M24 / tools/jev-refine/lib.ts:22 (tests tools)
 - last seen: 2026-09-24T14:20:48Z
 
+### L-017 - Assert a payload position with the tightest tolerance the scenario allows, measured from a real run, because a loose tolerance lets an offset the size of the entity pass.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/game smoke` · harmful: 0
+- features: fundacao-harness-jev
+- evidence: N6 src/game/Enemy.ts:198 vs scripts/smoke/enemy-died.smoke.mjs:50-53 (validation.md rodada 2, R2-1) (src/game smoke)
+- last seen: 2026-09-24T14:43:47Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

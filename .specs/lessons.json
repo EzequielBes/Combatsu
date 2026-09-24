@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 17,
+  "next_id": 18,
   "lessons": [
     {
       "id": "L-001",
@@ -292,6 +292,24 @@
       ],
       "created": "2026-09-24T14:20:48Z",
       "last_seen": "2026-09-24T14:20:48Z"
+    },
+    {
+      "id": "L-017",
+      "key": "surviving_mutant::assert a payload position with the tightest tolerance the scenario allows measured from a real run because a loose tolerance lets an offset the size of the entity pass",
+      "text": "Assert a payload position with the tightest tolerance the scenario allows, measured from a real run, because a loose tolerance lets an offset the size of the entity pass.",
+      "signal": "surviving_mutant",
+      "scope": "src/game smoke",
+      "status": "candidate",
+      "features": [
+        "fundacao-harness-jev"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N6 src/game/Enemy.ts:198 vs scripts/smoke/enemy-died.smoke.mjs:50-53 (validation.md rodada 2, R2-1) (src/game smoke)"
+      ],
+      "created": "2026-09-24T14:43:47Z",
+      "last_seen": "2026-09-24T14:43:47Z"
     }
   ]
 }
