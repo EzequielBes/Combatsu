@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { newEntityId, routeContact, tagBody, tagOf, type BodyTag } from '../../src/game/bodyTags';
 
-const character = (id: number): BodyTag => ({ kind: 'character', target: { id, team: 'enemy', receiveHit: vi.fn() } });
+const character = (id: number): BodyTag => ({ kind: 'character', target: { id, team: 'enemy', receiveHit: vi.fn(() => true) } });
 
 describe('routeContact', () => {
   it('avisa o corpo ativo com a tag do outro corpo, nas duas ordens', () => {

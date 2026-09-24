@@ -6,7 +6,7 @@ import { PALETTE } from './art/palette';
 import { tagBody, type Hittable, type Rect } from './bodyTags';
 import { isDebug } from './debug';
 
-/** Chamado a cada golpe que conecta, depois do `receiveHit` do alvo, com o ponto de contato (faísca + hitstop). */
+/** Chamado a cada golpe aceito pelo alvo (`receiveHit` devolveu true), com o ponto de contato (faísca + hitstop). */
 export type OnConnect = (hit: Hit, point: Vec2) => void;
 
 /**
@@ -44,7 +44,7 @@ export class AttackHitbox {
     private readonly ownerId: number,
     /** Time de quem ataca: o golpe só atinge o outro time (AI-05). */
     private readonly team: Team,
-    /** Chamado a cada acerto, depois do `receiveHit` do alvo. */
+    /** Chamado a cada golpe aceito pelo alvo. */
     private readonly onConnect?: OnConnect,
   ) {}
 
@@ -65,7 +65,7 @@ export class AttackHitbox {
       kind: 'active',
       onTouch: (other) => {
         if (other.kind !== 'character' || !canDamage(this.team, other.target.team) || !gate(other.target.id)) return;
-        other.target.receiveHit(hit);
+        if (!other.target.receiveHit(hit)) return; // ignorado: sem faísca nem hitstop (FX-06)
         // Posição + tamanho da hitbox (a posição do corpo sensor), nunca body.bounds.
         const { x, y } = body.position;
         this.onConnect?.(hit, contactWith({ x, y, width: shape.width, height: shape.height }, other.target));

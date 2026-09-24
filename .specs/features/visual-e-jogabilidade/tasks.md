@@ -726,9 +726,9 @@ T32
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Player, Enemy e Prop implementam o retorno; o fixture de `tests/game/bodyTags.test.ts` só ajusta o tipo
-- [ ] Smoke: garra no player invulnerável = 0 faíscas e 0 hitstop; golpe em inimigo dissolvendo = 0 faíscas; golpe aceito continua com faísca e hitstop
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Player, Enemy e Prop implementam o retorno; o fixture de `tests/game/bodyTags.test.ts` só ajusta o tipo
+- [x] Smoke: garra no player invulnerável = 0 faíscas e 0 hitstop; golpe em inimigo dissolvendo = 0 faíscas; golpe aceito continua com faísca e hitstop
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptadores; as regras de aceitar/ignorar já têm teste em `tests/core/health.test.ts` e `tests/core/enemyBrain.test.ts`)
 **Gate**: build

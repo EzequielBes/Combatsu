@@ -134,10 +134,12 @@ export class Prop {
     const ownerId = this.machine.ownerId;
     if (ownerId === null || !this.machine.tryHit(other.target.id)) return;
     const hit = propHit(this.def, ownerId, this.hitDirection(st));
-    other.target.receiveHit(hit);
-    // Posição + tamanho do sprite (girado 90° no golpe com o objeto na mão), nunca body.bounds.
-    const [w, h] = st === 'swing' ? [this.sprite.height, this.sprite.width] : [this.sprite.width, this.sprite.height];
-    this.onConnect?.(hit, contactWith({ x: this.sprite.x, y: this.sprite.y, width: w, height: h }, other.target));
+    // O objeto bate de verdade mesmo se o alvo ignorar o golpe (conta impacto), mas só golpe aceito tem feedback (FX-06).
+    if (other.target.receiveHit(hit)) {
+      // Posição + tamanho do sprite (girado 90° no golpe com o objeto na mão), nunca body.bounds.
+      const [w, h] = st === 'swing' ? [this.sprite.height, this.sprite.width] : [this.sprite.width, this.sprite.height];
+      this.onConnect?.(hit, contactWith({ x: this.sprite.x, y: this.sprite.y, width: w, height: h }, other.target));
+    }
     this.afterImpact(this.machine.registerImpact());
   }
 
