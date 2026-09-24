@@ -44,6 +44,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/game/art/sprites/player.ts:6 (src/game/art)
 - last seen: 2026-09-24T00:12:05Z
 
+### L-006 - Clear a per-step velocity override the moment a hit or state change takes over the body, because physics steps run before the next scene update and right after a hitstop unfreeze.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/game physics` · harmful: 0
+- features: visual-e-jogabilidade
+- evidence: src/game/Enemy.ts:50-53,137 regressão do T29 (validation.md rodada 2, lacuna 1) (src/game physics)
+- last seen: 2026-09-24T01:27:54Z
+
+### L-007 - Paint a solid palette base under every dithered or partially transparent background band so the canvas clear color never shows through.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/game/art` · harmful: 0
+- features: visual-e-jogabilidade
+- evidence: ART-01 src/game/art/background.ts:99-103 src/main.ts:11 (validation.md rodada 2, lacuna 2) (src/game/art)
+- last seen: 2026-09-24T01:27:54Z
+
+### L-008 - Keep particle colors inside the palette with palette-colored frames or fill tint, because a multiplicative tint over a non-white palette texture yields off-palette colors.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/game/art fx` · harmful: 0
+- features: visual-e-jogabilidade
+- evidence: ART-01 src/game/Ragdoll.ts:109 src/game/art/sprites/props.ts:46 (validation.md rodada 2, lacuna 3) (src/game/art fx)
+- last seen: 2026-09-24T01:27:55Z
+
+### L-009 - Assert a threshold-driven toggle on every intermediate output, not only the final one, because an even number of spurious toggles leaves the final value unchanged.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests core` · harmful: 0
+- features: visual-e-jogabilidade
+- evidence: M3 src/core/enemyAI.ts:5 vs tests/core/enemyAI.test.ts:271-280 (validation.md rodada 2, lacuna 4) (tests core)
+- last seen: 2026-09-24T01:27:55Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
