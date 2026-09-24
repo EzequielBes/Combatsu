@@ -178,42 +178,42 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| RUN-01 | P1: Run com permadeath | Specify | Implementing |
-| RUN-02 | P1: Run com permadeath | Specify | Implementing |
-| RUN-03 | P1: Run com permadeath | Specify | Implementing |
-| RUN-04 | P1: Run com permadeath | Specify | Implementing |
-| RUN-05 | P1: Run com permadeath | Specify | Implementing |
-| RUN-06 | P1: Run com permadeath | Specify | Implementing |
-| RUN-07 | P1: Run com permadeath | Specify | Implementing |
-| RUN-08 | P1: Run com permadeath | Specify | Implementing |
-| RUN-09 | P1: Run com permadeath | Specify | Implementing |
-| RUN-10 | P1: Run com permadeath | Specify | Implementing |
-| RUN-11 | P1: Run com permadeath | Specify | Implementing |
-| WAVE-01 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-02 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-03 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-04 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-05 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-06 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-07 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-08 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-09 | P1: Ondas de inimigos | Specify | Implementing |
-| DIF-01 | P1: Dificuldade progressiva | Specify | Implementing |
-| DIF-02 | P1: Dificuldade progressiva | Specify | Implementing |
-| DIF-03 | P1: Dificuldade progressiva | Specify | Implementing |
-| DIF-04 | P1: Dificuldade progressiva | Specify | Implementing |
-| DIF-05 | P1: Dificuldade progressiva | Specify | Implementing |
-| DIF-06 | P1: Dificuldade progressiva | Specify | Implementing |
-| RHUD-01 | P2: HUD da run | Specify | Implementing |
-| RHUD-02 | P2: HUD da run | Specify | Implementing |
-| RHUD-03 | P2: HUD da run | Specify | Implementing |
-| RHUD-04 | P2: HUD da run | Specify | Implementing |
-| RHUD-05 | P2: Telas de título e game over | Specify | Implementing |
-| RHUD-06 | P2: Telas de título e game over | Specify | Implementing |
-| RHUD-07 | P2: HUD da run | Specify | Implementing |
-| RHUD-08 | P2: HUD da run | Specify | Implementing |
+| RUN-01 | P1: Run com permadeath | Specify | Verified |
+| RUN-02 | P1: Run com permadeath | Specify | Verified |
+| RUN-03 | P1: Run com permadeath | Specify | Verified |
+| RUN-04 | P1: Run com permadeath | Specify | Verified |
+| RUN-05 | P1: Run com permadeath | Specify | Verified |
+| RUN-06 | P1: Run com permadeath | Specify | Verified |
+| RUN-07 | P1: Run com permadeath | Specify | Verified |
+| RUN-08 | P1: Run com permadeath | Specify | Verified |
+| RUN-09 | P1: Run com permadeath | Specify | Verified |
+| RUN-10 | P1: Run com permadeath | Specify | Verified |
+| RUN-11 | P1: Run com permadeath | Specify | Verified |
+| WAVE-01 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-02 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-03 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-04 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-05 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-06 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-07 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-08 | P1: Ondas de inimigos | Specify | Verified |
+| WAVE-09 | P1: Ondas de inimigos | Specify | Verified |
+| DIF-01 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-02 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-03 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-04 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-05 | P1: Dificuldade progressiva | Specify | Verified |
+| DIF-06 | P1: Dificuldade progressiva | Specify | Verified |
+| RHUD-01 | P2: HUD da run | Specify | Verified |
+| RHUD-02 | P2: HUD da run | Specify | Verified |
+| RHUD-03 | P2: HUD da run | Specify | Verified |
+| RHUD-04 | P2: HUD da run | Specify | Verified |
+| RHUD-05 | P2: Telas de título e game over | Specify | Verified |
+| RHUD-06 | P2: Telas de título e game over | Specify | Verified |
+| RHUD-07 | P2: HUD da run | Specify | Verified |
+| RHUD-08 | P2: HUD da run | Specify | Verified |
 
-**Coverage:** 34 total, 0 mapped to tasks, 34 unmapped ⚠️ (Tasks ainda não criadas)
+**Coverage:** 34 total, 34 mapped to tasks, 0 unmapped ✅ (34 Verified na rodada 3 do Verifier)
 
 ---
 
