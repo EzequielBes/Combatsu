@@ -199,8 +199,8 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 | WAVE-08 | P1: Ondas de inimigos | Specify | Pending |
 | WAVE-09 | P1: Ondas de inimigos | Specify | Implementing |
 | DIF-01 | P1: Dificuldade progressiva | Specify | Implementing |
-| DIF-02 | P1: Dificuldade progressiva | Specify | Pending |
-| DIF-03 | P1: Dificuldade progressiva | Specify | Pending |
+| DIF-02 | P1: Dificuldade progressiva | Specify | Implementing |
+| DIF-03 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-04 | P1: Dificuldade progressiva | Specify | Pending |
 | DIF-05 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-06 | P1: Dificuldade progressiva | Specify | Implementing |
