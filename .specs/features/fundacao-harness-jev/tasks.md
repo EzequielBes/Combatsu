@@ -472,8 +472,8 @@ T13 → T14 → T15 → T16
 
 **Done when**:
 
-- [ ] `parseAcs` ignora `1. RUN-01: WHEN x THEN y.` (sem SHALL) e lança `nenhum AC encontrado` quando essa é a única linha
-- [ ] Gate check passes: `npm test`
+- [x] `parseAcs` ignora `1. RUN-01: WHEN x THEN y.` (sem SHALL) e lança `nenhum AC encontrado` quando essa é a única linha
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick

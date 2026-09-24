@@ -16,9 +16,7 @@ export interface Answers {
 
 export type AcResult = Answers | { error: string };
 
-// SPEC_DEVIATION: o caso de borda da spec cita `ID: WHEN|WHILE|WHERE|IF|The … SHALL`; aqui vale qualquer
-// `N. ID: … SHALL`. Reason: ACs ubíquos com quantificador (ex.: DIF-02 "For every … SHALL") ficariam de fora,
-// e o T12 exige as 31 linhas de run-e-rodadas.
+// Qualquer `N. ID: … SHALL` é AC, inclusive o ubíquo com quantificador (ex.: DIF-02 "For every … SHALL").
 const AC_LINE = /^\s*\d+\.\s+([A-Z]+-\d+):\s+(.*\bSHALL\b.*)$/;
 
 /** ACs numerados `N. ID: … SHALL`, com a story corrente (título + User Story). */

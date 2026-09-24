@@ -41,6 +41,10 @@ describe('parseAcs', () => {
     expect(acs.map((a) => a.id)).toEqual(['DIF-02']);
   });
 
+  it('linha numerada com ID mas sem SHALL não é AC (edge case da spec)', () => {
+    expect(() => parseAcs('1. RUN-01: WHEN x THEN y.\n')).toThrow('nenhum AC encontrado');
+  });
+
   it('spec sem AC lança "nenhum AC encontrado"', () => {
     expect(() => parseAcs('# Nada\n\n- IF x THEN y SHALL z.\n')).toThrow('nenhum AC encontrado');
   });
