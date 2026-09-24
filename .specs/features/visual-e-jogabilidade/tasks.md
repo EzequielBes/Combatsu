@@ -885,8 +885,8 @@ T37
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Com a mutação PATROL_STALL_PX = 2 (scratch) o teste falha; no código real passa
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Com a mutação PATROL_STALL_PX = 2 (scratch) o teste falha; no código real passa
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: quick
