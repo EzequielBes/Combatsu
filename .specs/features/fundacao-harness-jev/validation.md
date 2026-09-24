@@ -1,13 +1,172 @@
 # Fundação da expansão (RNG, cura, harness e Jev) — Validation
 
+# Rodada 2 (vigente)
+
+**Date**: 2026-09-24
+**Spec**: `.specs/features/fundacao-harness-jev/spec.md` (24 requisitos FND-01..FND-24 e 4 casos de borda, com o ajuste de texto de FND-08, FND-09, FND-22 e do caso de borda do parser)
+**Diff range**: feature inteira `22cf49e..590e1d8` (16 commits); correções desta rodada `1cf8ded..590e1d8` (T13 `6522618`, T14 `e5c7700`, T15 `40530e1`, T16 `590e1d8`; 9 arquivos, +169/−9)
+**Verifier**: sub-agente independente, rodada 2 de no máximo 3 (autor ≠ verificador). Toda evidência foi refeita contra HEAD `590e1d8`. As mutações rodaram num `git worktree` descartável no scratchpad (`verify-wt2`), com junction para o `node_modules`.
+
+## Validation (rodada 2)
+
+**Result**: FAIL
+
+Motivo: quatro dos cinco gaps da rodada 1 estão fechados, com mutantes mortos (A5, M22, M24, y do snapshot, mortes no mesmo frame). Resta um sobrevivente novo no mesmo conjunto do FND-08: o mutante N6 (`onDied(this, x, y + 36)`, a posição deslocada uma altura inteira de corpo para dentro do chão) passa no smoke. Isso acontece porque `scripts/smoke/enemy-died.smoke.mjs:51` aceita até 40 px de diferença, e a diferença real medida entre a posição notificada e o snapshot anterior ao golpe é **exatamente 0** nos dois inimigos, em duas execuções. A asserção mais apertada é viável e não foi usada. Pela regra do sensor ("surviving mutants become fix tasks"), o FND-08 continua sem discriminação para erros de posição menores que 40 px. É um gap Minor, com correção de uma linha.
+
+---
+
+## Gates (rodados pelo Verifier em HEAD `590e1d8`)
+
+- `npx vitest run`: **23 arquivos, 248 passed, 0 failed, 0 skipped** (246 na rodada 1, **+2**: o teste de `ceil` do T14 e o teste sem `SHALL` do T15).
+- `npm run build`: **exit 0** (só o aviso de chunk > 500 kB, que já existia).
+- `npm run smoke`: **exit 0**, com `ok boot.smoke.mjs`, `ok enemy-died.smoke.mjs`, `ok no-debug.smoke.mjs` e "3 cenário(s) ok".
+- **Integridade dos testes**: `git diff 1cf8ded..HEAD -- tests scripts` só acrescenta testes e asserções. Nenhuma foi removida ou enfraquecida.
+- **Isolamento do sensor**: `git status --porcelain` da árvore real antes e depois é idêntico (`?? .agents/ .claude/ .cursor/ .windsurf/`). A junction foi desfeita com `rmdir` antes do `git worktree remove --force`. `git worktree list` mostra só a árvore principal, e o `node_modules` real continua intacto.
+- **Segurança**: `git grep -n "apikey_2" HEAD` dá 0 linhas e `git log --all -p | grep -c "apikey_2"` dá 0.
+
+---
+
+## Re-verificação dos 5 gaps da rodada 1
+
+| # | Gap da rodada 1 | Evidência em HEAD | Mutante | Result |
+| --- | --- | --- | --- | --- |
+| 1 | FND-08: posição `x, y` sem evidência | `src/game/Enemy.ts:198` passa `body.position`; `src/scenes/TestScene.ts:142` guarda `{ id, x, y }`; `:150` copia para `deaths`. `scripts/smoke/enemy-died.smoke.mjs:47` - `deaths.length === 1` por id; `:50-53` - `Math.abs(x - was.x) < 40 && Math.abs(y - was.y) < 40` | A5 ✅ morto (`{"x":0,"y":0} longe de {"x":1013.7,...}`); N1b, N2b, N4, N5 e N8 mortos; **N6 (+36 px em y) sobrevive** | ⚠️ Parcial: fechado para erros grosseiros, sem discriminação abaixo de 40 px (gap R2-1) |
+| 2 | FND-22: `ceil` vs `floor` | Spec agora diz `ceil(ms / (1000/60))`. `tests/game/debugApi.test.ts:68-71` - `step(20)` → `toHaveLength(2)`; `step(1)` → `toHaveLength(3)`; `src/game/debugApi.ts:49` `Math.ceil` | M22 (`floor`) ✅ morto; M22r (`round`) ✅ morto | ✅ Fechado |
+| 3 | Parser aceitava linha sem `SHALL` (M24) e texto da spec desalinhado | Caso de borda da spec agora descreve `N. ID: … SHALL`; o marcador SPEC_DEVIATION saiu de `tools/jev-refine/lib.ts:19`. `tests/tools/jevRefine.test.ts:45` - `parseAcs('1. RUN-01: WHEN x THEN y.\n')` `toThrow('nenhum AC encontrado')`; `:40-41` ubíquo com quantificador continua aceito | M24 (regex sem `\bSHALL\b`) ✅ morto | ✅ Fechado |
+| 4 | FND-09: `enemies[].y` não conferido | Spec agora define `x`/`y` como centro do corpo físico. `scripts/smoke/boot.smoke.mjs:23` - `typeof e.y === 'number' && e.y > 430 && e.y < 480` (centro de um corpo de 36 px sobre o chão em y = 480, ou seja ≈ 462); `src/scenes/TestScene.ts:148` usa `hurtRect().y` = `body.position.y` (`src/game/Enemy.ts:95-97`) | N3 (`y: 0`) ✅ morto no `boot` | ✅ Fechado |
+| 5 | Mortes no mesmo frame, só indireto | `scripts/smoke/enemy-died.smoke.mjs:39-42` - algum step contém os 2 ids iniciais no diff de `events`. O golpe de teste chama `receiveHit` nos dois inimigos no mesmo laço síncrono (`src/scenes/TestScene.ts:196-204`), então as mortes caem no mesmo frame por construção. Instrumentação no worktree (não é mutante): `deaths` com `t` idêntico nos dois (`2060.83`) e `diedInStep=[[2,3]]` | N7 (a cena descarta a 2ª notificação do mesmo `time.now`) ✅ morto (`nem todos morreram: events=["enemyDied:2"]`) | ✅ Fechado |
+
+---
+
+## Spec-Anchored Acceptance Criteria (rodada 2)
+
+Os ACs sem código alterado desde a rodada 1 foram reconferidos contra HEAD. As linhas citadas na rodada 1 continuam válidas, porque `git diff 1cf8ded..HEAD` não toca `src/core`, `tests/core`, `scripts/smoke/lib.ts`, `scripts/smoke/run.mjs`, `tests/scripts` nem `tools/jev-refine.mjs`, e os gates acima passam.
+
+| AC | Spec-defined outcome | `file:line` + asserção | Result |
+| --- | --- | --- | --- |
+| FND-01 | mesma seed: 1000 `next()` idênticos | `tests/core/rng.test.ts:8` - `toEqual` entre duas `Rng(12345)` | ✅ PASS |
+| FND-02 | `next()` em [0, 1) | `tests/core/rng.test.ts:21-22` - `>= 0` e `< 1` em 10 000 amostras | ✅ PASS |
+| FND-20 | `int` inteiro em [min, max] | `tests/core/rng.test.ts:33-39` - `Number.isInteger`, limites e as duas pontas alcançadas | ✅ PASS |
+| FND-03 | `chance(p<=0)` é `false` | `tests/core/rng.test.ts:52-53` - `toBe(false)` | ✅ PASS |
+| FND-21 | `chance(p>=1)` é `true` | `tests/core/rng.test.ts:60-61` - `toBe(true)` | ✅ PASS |
+| FND-04 | nenhum `Math.random` em `src/core`/`src/data` | `tests/core/noMathRandom.test.ts:22` - `expect(offenders).toEqual([])` | ✅ PASS |
+| FND-05 | hp = `min(maxHp, h+n)`, devolve o restaurado | `tests/core/health.test.ts:119-120` e `:126-127` | ✅ PASS |
+| FND-06 | morto: hp 0, devolve 0 | `tests/core/health.test.ts:133-135` | ✅ PASS |
+| FND-07 | `n<=0` ou não finito: inalterado, devolve 0 | `tests/core/health.test.ts:138-142` - `it.each([0, -5, NaN, Infinity])` | ✅ PASS |
+| FND-08 | `onEnemyDied(id, x, y)` uma vez por inimigo, com a posição no mundo naquele frame; em `?debug`, um `enemyDied:<id>` e um `{ id, x, y }` em `deaths` com essa posição | Unicidade: `scripts/smoke/enemy-died.smoke.mjs:47` (uma entrada em `deaths`), `:61-62` (um evento por id), `:68-71` (nada novo após `step(3000)`). Posição: `:50-53` - tolerância `< 40` px contra o snapshot anterior ao golpe fatal. A5 morto; **N6 (+36 px) sobrevive**, e a diferença real medida é 0 | ⚠️ GAP R2-1: tolerância larga demais para "a posição naquele frame" |
+| FND-09 | `snapshot()` = `{ player, enemies:[{id,x,y,hp,state}], events, deaths }`, com `x`/`y` do inimigo no centro do corpo | `tests/game/debugApi.test.ts:43` - `toEqual(snap)` com `deaths`; `scripts/smoke/boot.smoke.mjs:16-25` (player, `id`, `hp === 60`, `state === 'idle'`, `y` entre 430 e 480, `events` lista); `scripts/smoke/enemy-died.smoke.mjs:47` lê `deaths` | ✅ PASS |
+| FND-22 | `ceil(ms / (1000/60))` passos fixos de 1000/60 ms, antes de retornar | `tests/game/debugApi.test.ts:52-55` (delta `DT`, tempo crescente), `:69` `step(20)` → 2, `:71` `step(1)` → +1 | ✅ PASS |
+| FND-10 | sem `?debug`, `window.__game` undefined | `tests/game/debugApi.test.ts:30` - `toBeUndefined()`; `scripts/smoke/no-debug.smoke.mjs:6` | ✅ PASS |
+| FND-23 | build, `vite preview` de `dist/` e cada `*.smoke.mjs` uma vez em Edge headless | `scripts/smoke/run.mjs:25`, `:44`, `:82-84`, `:87-91`; execução do Verifier: 3 cenários `ok`, uma vez cada | ✅ PASS |
+| FND-11 | exit 0 com todos ok, 1 com falha, e o nome de cada falho | `tests/scripts/smokeLib.test.ts:48`, `:53-55`; execução no worktree com cenário falho (ex.: A5): `FALHA enemy-died.smoke.mjs` e exit 1 | ✅ PASS |
+| FND-12 | sem Edge: exit 2 e os caminhos procurados | `tests/scripts/smokeLib.test.ts:24-25`, `:31-32`; `scripts/smoke/run.mjs:17-20` (execução da rodada 1: exit 2; código inalterado) | ✅ PASS |
+| FND-13 | `refinement.md` com ID, 4 valores e flags ou `ok` | `tests/tools/jevRefine.test.ts:81-86`; parser exige `SHALL` (`:45`) | ✅ PASS |
+| FND-14 | flag exatamente nos 4 limiares | `tests/tools/jevRefine.test.ts:54-67` - os dois lados de cada fronteira | ✅ PASS |
+| FND-15 | sem chave: aviso, nenhum arquivo, exit 0 | `tests/tools/jevClient.test.ts:143-150`; `tools/jev-refine.mjs:14-19` | ✅ PASS |
+| FND-16 | 429/529: 3 novas tentativas, com esperas de 1, 2 e 4 s | `tests/tools/jevClient.test.ts:163-165`, `:173-174` - `waits` `toEqual([1000, 2000, 4000])` | ✅ PASS |
+| FND-24 | 3ª nova tentativa falha: `erro <status>` e segue | `tests/tools/jevClient.test.ts:172`; `tests/tools/jevRefine.test.ts:89` | ✅ PASS |
+| FND-17 | 401/422: para, imprime status e mensagem, exit 1 | `tests/tools/jevClient.test.ts:181-184` | ✅ PASS |
+| FND-18 | chave nunca exposta | `tests/tools/jevClient.test.ts:190-194` - `not.toContain(KEY)`; varredura do git = 0 | ✅ PASS |
+| FND-19 | `.gitignore` contém `.env.local` | `tests/tools/gitignore.test.ts:8` | ✅ PASS |
+
+**Status**: 23/24 ACs PASS ancorados; o FND-08 tem um conjunto (posição) com discriminação insuficiente (N6). Nenhum spec-precision gap novo: FND-22 agora define `ceil`, e FND-09 define o centro do corpo.
+
+## Edge Cases (rodada 2)
+
+| Caso de borda | Evidência | Result |
+| --- | --- | --- |
+| Spec sem linha `N. ID: … SHALL`: exit 1 e `nenhum AC encontrado` | `tests/tools/jevRefine.test.ts:45` (linha sem `SHALL`) e `:49` (sem linha numerada); M24 morto nesta rodada (M26 na rodada 1, código inalterado) | ✅ PASS |
+| `int(3, 3)` devolve 3 | `tests/core/rng.test.ts:44` | ✅ PASS |
+| `heal` acima do teto devolve só o que coube (95/100 → 5) | `tests/core/health.test.ts:126-127` | ✅ PASS |
+| Duas mortes no mesmo frame geram duas notificações | `scripts/smoke/enemy-died.smoke.mjs:39-42` e `:47`; mesmo `time.now` confirmado por instrumentação; N7 morto | ✅ PASS |
+
+## SPEC_DEVIATION
+
+Nenhum marcador ativo: o de `tools/jev-refine/lib.ts` saiu no T15, e o caso de borda da spec agora descreve o padrão aceito (`N. ID: … SHALL`).
+
+---
+
+## Discrimination Sensor (rodada 2)
+
+**Sensor depth**: lightweight/expandido, focado nas correções. São **13 mutantes não equivalentes**: 3 re-execuções dos sobreviventes da rodada 1 que estão dentro da spec (A5, M22, M24) e 10 novos sobre o código das correções. Resultado: **12 mortos e 1 sobrevivente**. Os mutantes que só morreram no typecheck (N1 e N2, parâmetro `x`/`y` não usado, TS6133) foram refeitos em variantes de runtime (N1b, N2b) e não entram na contagem.
+
+| # | File:line | Mutação | Killed? |
+| --- | --- | --- | --- |
+| A5 | `src/game/Enemy.ts:198` | `onDied(this, 0, 0)` | ✅ Killed (smoke: `posição do abate {"x":0,"y":0} longe de ...`) |
+| M22 | `src/game/debugApi.ts:49` | `Math.ceil` → `Math.floor` | ✅ Killed (`tests/game/debugApi.test.ts:69`) |
+| M22r | `src/game/debugApi.ts:49` | `Math.ceil` → `Math.round` | ✅ Killed (`:69`) |
+| M24 | `tools/jev-refine/lib.ts:20` | regex do AC sem `\bSHALL\b` | ✅ Killed (`tests/tools/jevRefine.test.ts:45`) |
+| N1b | `src/scenes/TestScene.ts:142` | `deaths` grava `x * 0, y * 0` (não copia a posição) | ✅ Killed (smoke) |
+| N2b | `src/scenes/TestScene.ts:142` | `deaths` nunca recebe a entrada | ✅ Killed (`deaths deveria ter uma entrada para 2: []`) |
+| N3 | `src/scenes/TestScene.ts:148` | snapshot com `enemies[].y = 0` | ✅ Killed (`boot`: `inimigo fora do chão`) |
+| N4 | `src/game/Enemy.ts:198` | `x` e `y` trocados | ✅ Killed (smoke) |
+| N5 | `src/game/Enemy.ts:198` | posição do spawn (não a do frame) | ✅ Killed (smoke: `{"x":624,"y":462}` longe de `{"x":988.2,...}`) |
+| N6 | `src/game/Enemy.ts:198` | `y + 36` (uma altura de corpo abaixo do centro) | ❌ **Survived** (tolerância de 40 px em `scripts/smoke/enemy-died.smoke.mjs:51`) |
+| N7 | `src/scenes/TestScene.ts:140` | a cena descarta a 2ª notificação no mesmo `time.now` (mesmo frame) | ✅ Killed (`nem todos morreram: events=["enemyDied:2"]`) |
+| N8 | `src/scenes/TestScene.ts:150` | snapshot de `deaths` com `x + 60` | ✅ Killed (smoke) |
+| N9 | `src/game/Enemy.ts:198` | posição do sprite (`view.x`, `view.y`) em vez do corpo | ✅ Killed (smoke: sprite sem sincronizar, `x 633` contra `964`) |
+
+Checagens de instrumentação no worktree (não são mutantes):
+- INSTR: `deaths=[{"id":2,...,"t":2060.83},{"id":3,...,"t":2060.83}]` e `diedInStep=[[2,3]]`. As duas mortes caem no mesmo `time.now`.
+- INSTR2, duas execuções: `[{"id":2,"dx":0,"dy":0},{"id":3,"dx":0,"dy":0}]`. A posição notificada é idêntica à do snapshot anterior ao golpe, porque o golpe de teste é aplicado na entrada do primeiro frame do `step`, antes da física andar. Uma tolerância de 1 px é viável e determinística.
+
+**Resultado do sensor**: 12/13 killed. **FAIL ❌** por causa do N6, que está dentro da spec (FND-08, "posição naquele frame").
+
+---
+
+## Code Quality (correções T13–T16)
+
+| Principle | Status |
+| --- | --- |
+| Minimum code | ✅ Um campo `debugDeaths` e uma linha no snapshot |
+| Surgical changes | ✅ Só os arquivos das tasks T13–T16 |
+| No scope creep | ✅ |
+| Matches patterns | ✅ Mesmo padrão de `debugEvents` |
+| Spec-anchored outcome check | ⚠️ FND-08: posição conferida com tolerância larga (N6) |
+| Per-layer Coverage Expectation | ✅ Unit para `debugApi`/parser; smoke para o adaptador |
+| Every test maps to a spec requirement | ✅ Cada asserção nova cita FND-08, FND-09, FND-22 ou um caso de borda |
+| Documented guidelines followed | ✅ `.specs/STATE.md` AD-001/AD-006/AD-007 |
+
+---
+
+## Fix Plans (rodada 2)
+
+### Fix R2-1: apertar a tolerância da posição do abate (FND-08), Minor
+
+- **Root cause**: `scripts/smoke/enemy-died.smoke.mjs:51` aceita 40 px de diferença. A diferença real é 0, porque o golpe de teste entra antes da física no primeiro frame do `step`. Assim, um desvio de até uma altura de corpo (N6, `y + 36`) passa.
+- **Fix task**: trocar `< 40` por `< 1` (ou `toBeCloseTo`, com 0,5 px) nas duas comparações, mantendo a referência do snapshot anterior ao golpe fatal. Se precisar de folga, justificar com uma medição.
+- **Done when**: N6 (`this.onDied?.(this, this.body.position.x, this.body.position.y + 36)` em `src/game/Enemy.ts:198`) falha no `npm run smoke`, e A5 continua falhando.
+
+---
+
+## Ranked gaps (rodada 2)
+
+1. **FND-08, tolerância da posição**: o mutante N6 (`y + 36`) sobrevive a `scripts/smoke/enemy-died.smoke.mjs:50-53` (`< 40` px), e a diferença real medida é 0. (Minor)
+
+## Requirement Traceability Update (rodada 2)
+
+Não promovido: o veredito é FAIL. Os 24 requisitos continuam `Implementing` em `spec.md`. Depois do Fix R2-1 e de uma rodada 3 com PASS, todos passam a `Verified`.
+
+## Summary (rodada 2)
+
+**Overall**: ❌ Not Ready (um ajuste de uma linha)
+**Spec-anchored check**: 23/24 ACs PASS; FND-08 parcial (N6); 0 spec-precision gaps.
+**Sensor**: 13 injetados, 12 mortos, 1 sobrevivente (N6).
+**Gate**: 248 passed, 0 failed; build exit 0; smoke exit 0 (3/3).
+**Next steps**: Fix R2-1, depois a rodada 3 (última antes de escalar ao usuário). Nota para a rodada 3: o veredito vigente é a linha `**Result**` desta seção. As linhas de veredito da rodada 1 abaixo foram renomeadas (`Veredito da rodada 1`, `**Resultado**`) para não confundir o `validate_state.py`; o conteúdo não mudou.
+
+---
+
+# Rodada 1 (histórico)
+
 **Date**: 2026-09-24
 **Spec**: `.specs/features/fundacao-harness-jev/spec.md` (24 requisitos FND-01..FND-24 e 4 casos de borda)
 **Diff range**: `22cf49e..aaed07b` (12 commits, T1 `3611713` .. T12 `aaed07b`; 28 arquivos, +1507/−105)
 **Verifier**: sub-agente independente (autor ≠ verificador). Não escreveu o código nem os testes, e toda evidência foi refeita contra HEAD. As mutações rodaram num `git worktree` descartável no scratchpad, com junction para o `node_modules`.
 
-## Validation
+## Veredito da rodada 1
 
-**Result**: FAIL
+**Resultado**: FAIL
 
 Motivo: o FND-08 exige que `onEnemyDied(enemyId, x, y)` receba **a posição do inimigo no mundo naquele frame**, mas nenhum teste confere `x`/`y`. O mutante A5 (`onDied(this, 0, 0)`) sobrevive ao smoke, e `TestScene.onEnemyDied` descarta `_x`/`_y` (`src/scenes/TestScene.ts:138`). Pela regra de payload/conjunção isso deixa um conjunto do AC sem evidência. Há também dois sobreviventes menores ligados à spec (M22 no FND-22 e M24 no caso de borda do parser). Os outros 23 ACs têm evidência ancorada, e os três gates passam.
 
@@ -145,7 +304,7 @@ Equivalentes descartadas (não contam):
 
 Checagem de CLI no worktree (não é mutante): A7, um cenário que falha de propósito, deu exit 1 e o nome listado (FND-11). A troca dos caminhos padrão por inexistentes deu exit 2 e os caminhos impressos (FND-12).
 
-**Result**: 31/36 killed. **FAIL ❌**: A5, M22 e M24 são sobreviventes ligados à spec. M23 e A6 são informativos.
+**Resultado**: 31/36 killed. **FAIL ❌**: A5, M22 e M24 são sobreviventes ligados à spec. M23 e A6 são informativos.
 
 ---
 
