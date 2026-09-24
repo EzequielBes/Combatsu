@@ -222,40 +222,40 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| FIX-01 | P1: Ataque honesto | Tasks | Implementing |
-| FIX-02 | P1: Ataque honesto | Tasks | Implementing |
-| FIX-03 | P1: Ataque honesto | Tasks | Implementing |
-| FIX-04 | P1: Ataque honesto | Tasks | Implementing |
-| ART-01 | P1: Base de pixel art | Tasks | Implementing |
-| ART-02 | P1: Base de pixel art | Tasks | Implementing |
-| ART-03 | P1: Base de pixel art | Tasks | Implementing |
-| RES-01 | P1: Base de pixel art | Tasks | Implementing |
-| CHR-01 | P1: Personagens animados | Tasks | Implementing |
-| CHR-02 | P1: Personagens animados | Tasks | Implementing |
-| CHR-03 | P1: Personagens animados | Tasks | Implementing |
-| CHR-04 | P1: Personagens animados | Tasks | Implementing |
-| FX-01 | P1: Impacto do golpe | Tasks | Implementing |
-| FX-02 | P1: Impacto do golpe | Tasks | Implementing |
-| FX-03 | P1: Impacto do golpe | Tasks | Implementing |
-| FX-06 | P1: Impacto do golpe | Tasks | Implementing |
-| HP-01 | P1: Luta de verdade | Tasks | Implementing |
-| HP-02 | P1: Luta de verdade | Tasks | Implementing |
-| HP-03 | P1: Luta de verdade | Tasks | Implementing |
-| HP-04 | P1: Luta de verdade | Tasks | Implementing |
-| AI-01 | P1: Luta de verdade | Tasks | Implementing |
-| AI-02 | P1: Luta de verdade | Tasks | Implementing |
-| AI-03 | P1: Luta de verdade | Tasks | Implementing |
-| AI-04 | P1: Luta de verdade | Tasks | Implementing |
-| AI-05 | P1: Luta de verdade | Tasks | Implementing |
-| AI-06 | P1: Luta de verdade | Tasks | Implementing |
-| ENV-01 | P2: Cenário | Tasks | Implementing |
-| ENV-02 | P2: Cenário | Tasks | Implementing |
-| PRP-01 | P2: Objetos e HUD | Tasks | Implementing |
-| HUD-01 | P2: Objetos e HUD | Tasks | Implementing |
-| HUD-02 | P2: Objetos e HUD | Tasks | Implementing |
-| HUD-03 | P2: Objetos e HUD | Tasks | Implementing |
-| FX-04 | P3: Polimento | Tasks | Implementing |
-| FX-05 | P3: Polimento | Tasks | Implementing |
+| FIX-01 | P1: Ataque honesto | Tasks | Verified |
+| FIX-02 | P1: Ataque honesto | Tasks | Verified |
+| FIX-03 | P1: Ataque honesto | Tasks | Verified |
+| FIX-04 | P1: Ataque honesto | Tasks | Verified |
+| ART-01 | P1: Base de pixel art | Tasks | Verified |
+| ART-02 | P1: Base de pixel art | Tasks | Verified |
+| ART-03 | P1: Base de pixel art | Tasks | Verified |
+| RES-01 | P1: Base de pixel art | Tasks | Verified |
+| CHR-01 | P1: Personagens animados | Tasks | Verified |
+| CHR-02 | P1: Personagens animados | Tasks | Verified |
+| CHR-03 | P1: Personagens animados | Tasks | Verified |
+| CHR-04 | P1: Personagens animados | Tasks | Verified |
+| FX-01 | P1: Impacto do golpe | Tasks | Verified |
+| FX-02 | P1: Impacto do golpe | Tasks | Verified |
+| FX-03 | P1: Impacto do golpe | Tasks | Verified |
+| FX-06 | P1: Impacto do golpe | Tasks | Verified |
+| HP-01 | P1: Luta de verdade | Tasks | Verified |
+| HP-02 | P1: Luta de verdade | Tasks | Verified |
+| HP-03 | P1: Luta de verdade | Tasks | Verified |
+| HP-04 | P1: Luta de verdade | Tasks | Verified |
+| AI-01 | P1: Luta de verdade | Tasks | Verified |
+| AI-02 | P1: Luta de verdade | Tasks | Verified |
+| AI-03 | P1: Luta de verdade | Tasks | Verified |
+| AI-04 | P1: Luta de verdade | Tasks | Verified |
+| AI-05 | P1: Luta de verdade | Tasks | Verified |
+| AI-06 | P1: Luta de verdade | Tasks | Verified |
+| ENV-01 | P2: Cenário | Tasks | Verified |
+| ENV-02 | P2: Cenário | Tasks | Verified |
+| PRP-01 | P2: Objetos e HUD | Tasks | Verified |
+| HUD-01 | P2: Objetos e HUD | Tasks | Verified |
+| HUD-02 | P2: Objetos e HUD | Tasks | Verified |
+| HUD-03 | P2: Objetos e HUD | Tasks | Verified |
+| FX-04 | P3: Polimento | Tasks | Verified |
+| FX-05 | P3: Polimento | Tasks | Verified |
 
 **Coverage:** 34 total, 34 mapped to tasks (FX-06 e AI-06 na Fase 7).
 
