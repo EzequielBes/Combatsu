@@ -3,8 +3,10 @@ import { Rng } from '../../src/core/rng';
 import { WaveSpawner, waveSize, requireSpawnPoints, type WaveTuning } from '../../src/core/waves';
 
 const WAVE: WaveTuning = { base: 3, max: 12, maxAlive: 4, pointGapMs: 800 };
-/** seed 7: rng.int(0, P-1) = 0 para P = 2 e P = 3 (checado fora do teste). */
+/** seed 7: rng.int(0, P-1) = 0 para P = 2 e P = 3 (checado fora do teste); usada nos testes que não dependem de s. */
 const SEED = 7;
+/** seed 1: rng.int(0, P-1) = 1 para P = 2 e P = 3 (checado abaixo), exercita o termo `s` do rodízio. */
+const SEED_S1 = 1;
 
 describe('waveSize: tamanho da onda por rodada (WAVE-01)', () => {
   it.each([
@@ -36,6 +38,27 @@ describe('WaveSpawner: rodízio de pontos (WAVE-02)', () => {
     const orders = spawner.update(0);
     expect(orders.map((o) => o.point)).toEqual([0, 1, 2]);
     expect(orders.map((o) => o.k)).toEqual([0, 1, 2]);
+  });
+
+  it('com s != 0 (P = 3), os pontos giram a partir de s: (s+k) mod P', () => {
+    const rng = new Rng(SEED_S1);
+    expect(rng.int(0, 2)).toBe(1); // confirma s = 1 para esta seed com P = 3
+    const spawner = new WaveSpawner(1, 3, new Rng(SEED_S1), WAVE); // round 1 => 3 inimigos, P = 3
+    const orders = spawner.update(0);
+    // s = 1: pontos (1+0)%3, (1+1)%3, (1+2)%3 = 1, 2, 0 - não [0, 1, 2] como o mutante C10b devolveria.
+    expect(orders.map((o) => o.point)).toEqual([1, 2, 0]);
+    expect(orders.map((o) => o.k)).toEqual([0, 1, 2]);
+  });
+
+  it('com s != 0 (P = 2), os pontos giram a partir de s: (s+k) mod P', () => {
+    const rng = new Rng(SEED_S1);
+    expect(rng.int(0, 1)).toBe(1); // confirma s = 1 para esta seed com P = 2
+    const spawner = new WaveSpawner(1, 2, new Rng(SEED_S1), WAVE); // round 1 => 3 inimigos, P = 2
+    const orders = spawner.update(0);
+    // s = 1: pontos (1+0)%2, (1+1)%2 = 1, 0 (o 3º fica em fila: maxAlive não bloqueia, mas o gap de 800 ms no
+    // ponto 1 sim: (1+2)%2 = 1, já usado em atMs 0).
+    expect(orders.map((o) => o.point)).toEqual([1, 0]);
+    expect(orders.map((o) => o.k)).toEqual([0, 1]);
   });
 });
 
@@ -112,17 +135,17 @@ describe('WaveSpawner: duas mortes diferentes antes do mesmo update (WAVE-08)', 
 });
 
 describe('WaveSpawner: mesma seed e mesma sequência de mortes (WAVE-07)', () => {
-  it('duas instâncias produzem os mesmos pares (atMs, point)', () => {
-    const a = new WaveSpawner(5, 3, new Rng(SEED), WAVE); // round 5 => 7 inimigos, P = 3
-    const b = new WaveSpawner(5, 3, new Rng(SEED), WAVE);
+  const stepsAndDeaths: Array<{ dt: number; deaths: number[] }> = [
+    { dt: 0, deaths: [] },
+    { dt: 800, deaths: [1] },
+    { dt: 800, deaths: [2, 3] },
+    { dt: 800, deaths: [] },
+    { dt: 800, deaths: [] },
+  ];
 
-    const stepsAndDeaths: Array<{ dt: number; deaths: number[] }> = [
-      { dt: 0, deaths: [] },
-      { dt: 800, deaths: [1] },
-      { dt: 800, deaths: [2, 3] },
-      { dt: 800, deaths: [] },
-      { dt: 800, deaths: [] },
-    ];
+  it('duas instâncias produzem os mesmos pares (atMs, point)', () => {
+    const a = new WaveSpawner(5, 3, new Rng(SEED_S1), WAVE); // round 5 => 7 inimigos, P = 3
+    const b = new WaveSpawner(5, 3, new Rng(SEED_S1), WAVE);
 
     for (const { dt, deaths } of stepsAndDeaths) {
       const ordersA = a.update(dt);
@@ -133,5 +156,30 @@ describe('WaveSpawner: mesma seed e mesma sequência de mortes (WAVE-07)', () =>
         b.enemyDied(id);
       }
     }
+  });
+
+  it('os pares (atMs, point) batem com os valores esperados, com s = 1 (não 0)', () => {
+    const spawner = new WaveSpawner(5, 3, new Rng(SEED_S1), WAVE); // round 5 => 7 inimigos, P = 3
+    // s = 1: primeiro spawn no ponto (1+0)%3 = 1, não no ponto 0 (o que o mutante C10b, que ignora s, daria).
+    const expectedPairs = [
+      [
+        [0, 1],
+        [0, 2],
+        [0, 0],
+      ],
+      [[800, 1]],
+      [[1600, 2]],
+      [
+        [2400, 0],
+        [2400, 1],
+      ],
+      [],
+    ];
+
+    stepsAndDeaths.forEach(({ dt, deaths }, i) => {
+      const orders = spawner.update(dt);
+      expect(orders.map((o) => [o.atMs, o.point])).toEqual(expectedPairs[i]);
+      for (const id of deaths) spawner.enemyDied(id);
+    });
   });
 });

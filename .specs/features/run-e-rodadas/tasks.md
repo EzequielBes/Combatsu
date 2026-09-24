@@ -331,10 +331,10 @@ T9 → T10 → T11 → T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Seed escolhida com `rng.int(0, P − 1) !== 0` para P = 2 (e um caso com P = 3); os pontos esperados `(s + k) mod P` são literais no teste
-- [ ] WAVE-07 compara a sequência com pares `(atMs, point)` literais, não só entre duas instâncias
-- [ ] Mutante C10b (ignorar `s` em `src/core/waves.ts`) falha
-- [ ] Gate check passes: `npm test`
+- [x] Seed escolhida com `rng.int(0, P − 1) !== 0` para P = 2 (e um caso com P = 3); os pontos esperados `(s + k) mod P` são literais no teste
+- [x] WAVE-07 compara a sequência com pares `(atMs, point)` literais, não só entre duas instâncias
+- [x] Mutante C10b (ignorar `s` em `src/core/waves.ts`) falha
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
