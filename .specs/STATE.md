@@ -26,13 +26,45 @@
 - **Date**: 2026-09-23
 - **Status**: active
 
+### AD-004
+- **Decision**: A progressão é híbrida: uma moeda da run ("fragmentos") compra upgrades temporários na loja entre rodadas e zera no fim da run; uma moeda rara persistente ("selos") compra upgrades permanentes de efeito pequeno fora da run.
+- **Reason**: Escolha do usuário; dá curva de poder dentro da run e sensação de avanço entre runs sem deixar o início trivial.
+- **Trade-off**: Duas economias para balancear e um save persistente para manter (F6).
+- **Scope**: Expansão roguelite (F3, F4, F6 do `.specs/ROADMAP.md`).
+- **Date**: 2026-09-24
+- **Status**: active
+
+### AD-005
+- **Decision**: O jogador começa sem técnica amaldiçoada; técnicas são desbloqueadas e evoluídas (nível 1–3) pela loja, e níveis altos exigem uma rodada mínima.
+- **Reason**: Escolha do usuário; controla o balanceamento inicial e amarra técnicas à economia.
+- **Trade-off**: O início da run depende só do corpo a corpo; a loja precisa garantir que técnicas apareçam com frequência suficiente.
+- **Scope**: F4, F5.
+- **Date**: 2026-09-24
+- **Status**: active
+
+### AD-006
+- **Decision**: Toda aleatoriedade de gameplay (ondas, drops, ofertas da loja, chance de cura, inimigos armados) passa por um RNG com seed em `src/core/rng.ts`; `Math.random` não é usado em `src/core`/`src/data`.
+- **Reason**: Testes determinísticos em Node (AD-001) e runs reproduzíveis por seed.
+- **Trade-off**: O RNG precisa ser injetado em cada sistema que sorteia.
+- **Scope**: Toda a expansão.
+- **Date**: 2026-09-24
+- **Status**: active
+
+### AD-007
+- **Decision**: No Specify, depois de `validate_spec.py`, cada AC passa por um refinamento consultivo com o Jev (TypeSafe System One): julgamentos de ambiguidade, agrupamento, testabilidade e precisão geram `refinement.md`; ACs sinalizados são reescritos ou registrados em Assumptions. A chave fica só em `TYPESAFE_API_KEY` (ambiente ou `.env.local` ignorado pelo git) e nunca em arquivos versionados. O jogo em si não chama o Jev.
+- **Reason**: Pedido do usuário; um segundo par de olhos barato e tipado sobre a clareza das stories antes da aprovação.
+- **Trade-off**: Depende de rede e de chave; é consultivo, então sem chave o fluxo segue com aviso.
+- **Scope**: Specify de todas as features da expansão.
+- **Date**: 2026-09-24
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `.specs/features/visual-e-jogabilidade`
-- **Phase / Task**: Execute concluído (T1–T38); UAT interativo com o usuário pendente
-- **Completed**: T1–T38; 3 rodadas de Verifier + re-verificação curta; 34/34 ACs verificados; M12 aceito como risco pelo usuário
+- **Feature**: `.specs/features/visual-e-jogabilidade` (UAT pendente) → expansão em `.specs/ROADMAP.md`
+- **Phase / Task**: F0 `fundacao-harness-jev` e F1 `run-e-rodadas` em Specify (spec.md + refinement.md prontos, aguardando aprovação do usuário)
+- **Completed**: T1–T38 de visual-e-jogabilidade; ROADMAP F0–F8; AD-004..AD-007; specs de F0 e F1 validadas (`validate_spec.py` 0 erros) e refinadas com o Jev
 - **In-progress** (file:line): none
-- **Next step**: UAT jogando com o usuário (contraste do uniforme do player contra o fundo já anotado)
-- **Blockers**: none
-- **Uncommitted files**: none
+- **Next step**: usuário aprova as specs de F0/F1 (e os números marcados `n` em F1) → Design/Tasks de F0 numa branch `feat/fundacao-harness-jev` a partir de `main`
+- **Blockers**: UAT de visual-e-jogabilidade antes do merge em `main`
+- **Uncommitted files**: .specs/STATE.md, .specs/ROADMAP.md, .specs/features/fundacao-harness-jev/, .specs/features/run-e-rodadas/
 - **Branch**: feat/visual-e-jogabilidade (sem push)
