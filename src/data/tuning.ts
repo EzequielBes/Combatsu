@@ -84,8 +84,6 @@ export const ENEMY: EnemyTuning = {
   dissolveMs: 700,
 };
 
-export const ENEMY_RESPAWN_MS = 1500;
-
 /** IA simples do inimigo (AI-01..03): distâncias só na horizontal, em px; velocidades em px/s. */
 export const ENEMY_AI: EnemyAITuning = {
   patrolRange: 48,

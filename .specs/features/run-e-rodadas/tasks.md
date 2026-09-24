@@ -415,10 +415,10 @@ T9 → T10 → T11 → T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Da limpeza da rodada 1 até a rodada 2 começar, em passos de 100 ms: inimigos com estado vivo == `run.alive`, e todo inimigo que nasce depois tem `maxHp === 67`
-- [ ] `ENEMY_RESPAWN_MS` removido de `src/data/tuning.ts` (sem outros usos)
-- [ ] Mutante A4 (respawn de 1500 ms reativado) falha
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Da limpeza da rodada 1 até a rodada 2 começar, em passos de 100 ms: inimigos com estado vivo == `run.alive`, e todo inimigo que nasce depois tem `maxHp === 67`
+- [x] `ENEMY_RESPAWN_MS` removido de `src/data/tuning.ts` (sem outros usos)
+- [x] Mutante A4 (respawn de 1500 ms reativado) falha
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

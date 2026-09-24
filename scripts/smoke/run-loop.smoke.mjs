@@ -57,25 +57,29 @@ export default async function ({ page, baseUrl, assert }) {
     assert(snap.events.includes(`spawnFx:${id}`), `inimigo ${id} nasceu sem spawnFx`);
   }
 
-  // WAVE-05: durante a intermission nenhum inimigo da rodada 1 volta a existir vivo, e run.alive é 0.
-  const mid = await page.evaluate(() => {
-    window.__game.step(2000);
-    return window.__game.snapshot();
-  });
+  // WAVE-05: da limpeza da rodada 1 até a rodada 2 começar, em passos de 100 ms, os "vivos" (por state) batem com
+  // run.alive - nenhum inimigo morto da rodada 1 volta a existir vivo em nenhum instante dessa janela - e todo
+  // inimigo que nasce a partir daqui (só pode ser da onda nova) já nasce com maxHp 67 (um respawn órfão da rodada
+  // 1 reapareceria com maxHp 60). A checagem continua mais 3000 ms depois do início da rodada 2 logo abaixo, após
+  // o teste de WAVE-09 aproveitar a fila ainda não esgotada da onda nova.
   const ALIVE_STATES = new Set(['idle', 'hitstun', 'ragdollStun', 'gettingUp']);
-  assert(
-    mid.enemies.every((e) => !ALIVE_STATES.has(e.state)),
-    `um inimigo voltou a existir vivo na intermission: ${JSON.stringify(mid.enemies)}`,
-  );
-  assert(mid.run.alive === 0, `run.alive deveria ser 0 na intermission: ${mid.run.alive}`);
-
-  // Depois de 2500 ms de intermission a rodada 2 começa (RUN-10); passamos aqui só os 500 ms que faltam.
+  const seenIds = new Set(snap.enemies.map((e) => e.id));
+  const checkAliveAndScale = (s) => {
+    const aliveCount = s.enemies.filter((e) => ALIVE_STATES.has(e.state)).length;
+    assert(aliveCount === s.run.alive, `vivos (${aliveCount}) != run.alive (${s.run.alive}): ${JSON.stringify(s.enemies)}`);
+    for (const e of s.enemies) {
+      if (seenIds.has(e.id)) continue;
+      seenIds.add(e.id);
+      assert(e.maxHp === 67, `inimigo novo ${e.id} nasceu com maxHp errado: ${JSON.stringify(e)}`);
+    }
+  };
   let round2;
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 40; i++) {
     round2 = await page.evaluate(() => {
       window.__game.step(100);
       return window.__game.snapshot();
     });
+    checkAliveAndScale(round2);
     if (round2.run.state === 'roundActive' && round2.run.round === 2) break;
   }
   assert(
@@ -119,17 +123,28 @@ export default async function ({ page, baseUrl, assert }) {
     `inimigo recém-nascido andou durante a graça: ${freshX} -> ${afterGraceX}`,
   );
 
+  // WAVE-05 (continuação): mais 3000 ms de rodada 2, ainda em passos de 100 ms, com a mesma checagem de vivos e
+  // maxHp - um respawn órfão da rodada 1 chegaria atrasado, depois da janela usada acima para WAVE-09.
+  let sinceGrace = graceCheck;
+  for (let i = 0; i < 30; i++) {
+    sinceGrace = await page.evaluate(() => {
+      window.__game.step(100);
+      return window.__game.snapshot();
+    });
+    checkAliveAndScale(sinceGrace);
+  }
+
   // DIF-04 (real): anda até o inimigo mais próximo da rodada 2 e deixa a IA atacar de verdade, para que
   // maxHp/damage venham do EnemyBrain e do golpe realmente aberto (A2, A3), não de um valor "de prateleira" que
   // ficaria certo mesmo se o inimigo usasse outro. Só até entrar na faixa de perseguição (chaseRange 200 px);
   // dali em diante a própria IA fecha a distância e ataca sozinha (o player não atravessa e passa do alvo, porque
   // runSpeed > chaseSpeed).
   const targetId = closestAtStart.id;
-  const moveKey = closestAtStart.x >= graceCheck.player.x ? 'KeyD' : 'KeyA';
+  const moveKey = closestAtStart.x >= sinceGrace.player.x ? 'KeyD' : 'KeyA';
   let holding = true;
   await page.keyboard.down(moveKey);
   let attacked = null;
-  let chase = graceCheck;
+  let chase = sinceGrace;
   for (let i = 0; i < 80 && attacked === null; i++) {
     chase = await page.evaluate(() => {
       window.__game.step(200);
