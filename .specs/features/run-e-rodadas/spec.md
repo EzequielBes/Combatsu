@@ -186,14 +186,14 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 | RUN-06 | P1: Run com permadeath | Specify | Implementing |
 | RUN-07 | P1: Run com permadeath | Specify | Implementing |
 | RUN-08 | P1: Run com permadeath | Specify | Implementing |
-| RUN-09 | P1: Run com permadeath | Specify | Pending |
+| RUN-09 | P1: Run com permadeath | Specify | Implementing |
 | RUN-10 | P1: Run com permadeath | Specify | Implementing |
 | RUN-11 | P1: Run com permadeath | Specify | Implementing |
 | WAVE-01 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-02 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-03 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-04 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-05 | P1: Ondas de inimigos | Specify | Pending |
+| WAVE-05 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-06 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-07 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-08 | P1: Ondas de inimigos | Specify | Implementing |
@@ -201,7 +201,7 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 | DIF-01 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-02 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-03 | P1: Dificuldade progressiva | Specify | Implementing |
-| DIF-04 | P1: Dificuldade progressiva | Specify | Pending |
+| DIF-04 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-05 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-06 | P1: Dificuldade progressiva | Specify | Implementing |
 | RHUD-01 | P2: HUD da run | Specify | Pending |
