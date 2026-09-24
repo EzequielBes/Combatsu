@@ -235,7 +235,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | FX-01 | P1: Impacto do golpe | Tasks | Implementing |
 | FX-02 | P1: Impacto do golpe | Tasks | Implementing |
 | FX-03 | P1: Impacto do golpe | Tasks | Implementing |
-| FX-06 | P1: Impacto do golpe | Tasks | Implementing |
+| FX-06 | P1: Impacto do golpe | Tasks | Pending |
 | HP-01 | P1: Luta de verdade | Tasks | Implementing |
 | HP-02 | P1: Luta de verdade | Tasks | Implementing |
 | HP-03 | P1: Luta de verdade | Tasks | Implementing |
@@ -245,7 +245,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | AI-03 | P1: Luta de verdade | Tasks | Implementing |
 | AI-04 | P1: Luta de verdade | Tasks | Implementing |
 | AI-05 | P1: Luta de verdade | Tasks | Implementing |
-| AI-06 | P1: Luta de verdade | Tasks | Pending |
+| AI-06 | P1: Luta de verdade | Tasks | Implementing |
 | ENV-01 | P2: Cenário | Tasks | Implementing |
 | ENV-02 | P2: Cenário | Tasks | Implementing |
 | PRP-01 | P2: Objetos e HUD | Tasks | Implementing |
