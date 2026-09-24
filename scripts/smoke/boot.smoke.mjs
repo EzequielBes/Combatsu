@@ -19,6 +19,8 @@ export default async function ({ page, baseUrl, assert }) {
   for (const e of enemies) {
     assert(typeof e.id === 'number', `inimigo sem id: ${JSON.stringify(e)}`);
     assert(e.hp === 60 && e.state === 'idle', `inimigo inicial errado: ${JSON.stringify(e)}`);
+    // Centro do corpo (36 px de altura) sobre o chão da linha 14 do LEVEL_1, cujo topo fica em y = 480.
+    assert(typeof e.y === 'number' && e.y > 430 && e.y < 480, `inimigo fora do chão: ${JSON.stringify(e)}`);
   }
   assert(Array.isArray(snap.events), 'events deveria ser uma lista');
 

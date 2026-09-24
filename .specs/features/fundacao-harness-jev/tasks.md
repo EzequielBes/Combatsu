@@ -497,8 +497,8 @@ T13 → T14 → T15 → T16
 
 **Done when**:
 
-- [ ] Cada inimigo inicial tem `y` numérico entre 430 e 480 (centro do corpo sobre o chão da linha 14 do `LEVEL_1`) (FND-09)
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Cada inimigo inicial tem `y` numérico entre 430 e 480 (centro do corpo sobre o chão da linha 14 do `LEVEL_1`) (FND-09)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
