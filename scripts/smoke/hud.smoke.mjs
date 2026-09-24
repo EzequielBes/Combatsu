@@ -38,9 +38,20 @@ export default async function ({ page, baseUrl, assert }) {
   const expectedRemaining = `Inimigos: ${snap.run.alive + snap.run.queued}`;
   assert(snap.hud.remaining === expectedRemaining, `hud.remaining errado: ${snap.hud.remaining} != ${expectedRemaining}`);
 
-  // Depois de RUN.bannerMs (1500 ms) a faixa some (RHUD-02).
+  // A faixa fica centralizada em x = 480, y = 135 na tela de 960x540 (RHUD-02).
+  assert(
+    Math.abs(snap.hud.bannerPos.x - 480) < 1 && Math.abs(snap.hud.bannerPos.y - 135) < 1,
+    `posição da faixa errada: ${JSON.stringify(snap.hud.bannerPos)}`,
+  );
+
+  // RUN.bannerMs (1500 ms): ainda visível em 1400 ms (limite inferior), sumida em mais 200 ms (RHUD-02).
   snap = await page.evaluate(() => {
-    window.__game.step(1600);
+    window.__game.step(1400);
+    return window.__game.snapshot();
+  });
+  assert(snap.hud.banner === 'Rodada 1', `banner deveria continuar em 1400 ms: ${JSON.stringify(snap.hud.banner)}`);
+  snap = await page.evaluate(() => {
+    window.__game.step(200);
     return window.__game.snapshot();
   });
   assert(snap.hud.banner === null, `banner deveria sumir após 1600 ms: ${JSON.stringify(snap.hud.banner)}`);

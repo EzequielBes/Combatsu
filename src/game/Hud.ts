@@ -151,7 +151,14 @@ export class Hud {
    * `ignoredByMain` é a checagem real de que a `uiLayer` está na lista de ignorados da câmera principal (AD-003),
    * não uma constante fixa: se a rota de câmeras quebrar, este bit some e o smoke pega (RHUD-07).
    */
-  debugState(): { ignoredByMain: boolean; round: string; remaining: string; banner: string | null; center: string[] | null } {
+  debugState(): {
+    ignoredByMain: boolean;
+    round: string;
+    remaining: string;
+    banner: string | null;
+    center: string[] | null;
+    bannerPos: { x: number; y: number };
+  } {
     const mainId = this.scene.cameras.main.id;
     return {
       ignoredByMain: (this.layer.cameraFilter & mainId) === mainId,
@@ -159,6 +166,7 @@ export class Hud {
       remaining: this.remainingText.text,
       banner: this.bannerText.visible ? this.bannerText.text : null,
       center: this.centerLines,
+      bannerPos: { x: this.bannerText.x, y: this.bannerText.y },
     };
   }
 }
