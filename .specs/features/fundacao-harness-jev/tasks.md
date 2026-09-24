@@ -355,12 +355,12 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `readKey`: ambiente primeiro; senão a linha `TYPESAFE_API_KEY=` do `.env.local`; nada → `null` (FND-15)
-- [ ] `fetch` falso com 429, 429, 200 → devolve as respostas, com esperas registradas `[1000, 2000]` (FND-16)
-- [ ] 529 quatro vezes → `{ error: '529' }`, com esperas `[1000, 2000, 4000]` (FND-24)
-- [ ] 401 e 422 → lança `JevAuthError` com o status e a mensagem da API (FND-17)
-- [ ] A mensagem do erro e o texto do relatório não contêm a chave usada no teste (FND-18)
-- [ ] Gate check passes: `npm test`
+- [x] `readKey`: ambiente primeiro; senão a linha `TYPESAFE_API_KEY=` do `.env.local`; nada → `null` (FND-15)
+- [x] `fetch` falso com 429, 429, 200 → devolve as respostas, com esperas registradas `[1000, 2000]` (FND-16)
+- [x] 529 quatro vezes → `{ error: '529' }`, com esperas `[1000, 2000, 4000]` (FND-24)
+- [x] 401 e 422 → lança `JevAuthError` com o status e a mensagem da API (FND-17)
+- [x] A mensagem do erro e o texto do relatório não contêm a chave usada no teste (FND-18)
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
