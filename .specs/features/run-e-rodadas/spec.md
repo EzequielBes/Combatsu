@@ -139,7 +139,7 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 **Acceptance Criteria**:
 
 1. RHUD-01: WHILE the run is in `roundActive`, the HUD SHALL show `Rodada N` and `Inimigos: K`, where K is alive plus queued enemies of the round.
-2. RHUD-02: WHEN a round starts THEN the HUD SHALL show the banner `Rodada N` centered on the 960×540 screen for 1500 ms and then hide it.
+2. RHUD-02: WHEN a round starts THEN the HUD SHALL show the banner `Rodada N` centered horizontally on the 960×540 screen at y = 135 (a quarter of the height, so it does not cover the fight) for 1500 ms and then hide it.
 3. RHUD-03: WHEN the run enters `intermission` THEN the HUD SHALL show `Rodada N concluída` until the next round starts.
 4. RHUD-04: The text and fill colors of the HUD elements of this feature SHALL be colors of the game palette (AD-002).
 5. RHUD-07: The HUD elements of this feature SHALL be in the main camera's ignore list (AD-003), reported as `hud.ignoredByMain: true` in the debug snapshot.
