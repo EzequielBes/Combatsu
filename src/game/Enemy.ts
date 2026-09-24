@@ -101,13 +101,14 @@ export class Enemy implements Hittable {
     return this._removed;
   }
 
-  receiveHit(hit: Hit): void {
+  receiveHit(hit: Hit): boolean {
     const events = this.brain.receiveHit(hit);
-    if (events.length === 0) return; // já morto
+    if (events.length === 0) return false; // já morto
     // Levar golpe cancela o preparo ou o golpe em andamento (AI-04).
     this.onAI(this.ai.interrupt());
     this.handle(events);
     this.updateBar();
+    return true;
   }
 
   /** Mostra a barra depois do primeiro dano e até morrer, cheia na proporção da vida, em passos de 1 texel. */

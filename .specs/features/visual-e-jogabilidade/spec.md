@@ -235,7 +235,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | FX-01 | P1: Impacto do golpe | Tasks | Implementing |
 | FX-02 | P1: Impacto do golpe | Tasks | Implementing |
 | FX-03 | P1: Impacto do golpe | Tasks | Implementing |
-| FX-06 | P1: Impacto do golpe | Tasks | Pending |
+| FX-06 | P1: Impacto do golpe | Tasks | Implementing |
 | HP-01 | P1: Luta de verdade | Tasks | Implementing |
 | HP-02 | P1: Luta de verdade | Tasks | Implementing |
 | HP-03 | P1: Luta de verdade | Tasks | Implementing |

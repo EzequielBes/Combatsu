@@ -12,7 +12,11 @@ export interface Rect {
 export interface Hittable {
   readonly id: number;
   readonly team: Team;
-  receiveHit(hit: Hit): void;
+  /**
+   * Aplica o golpe. Devolve `true` se o alvo aceitou (dano ou reação) e `false` se ignorou (invulnerável, morto,
+   * dissolvendo): só golpe aceito gera faísca, tremida e hitstop (FX-06).
+   */
+  receiveHit(hit: Hit): boolean;
   /**
    * Área de quem leva o golpe, para achar o ponto de contato da faísca. Sai da posição + tamanho do corpo, nunca
    * de `body.bounds` (o Matter alarga o AABB pela velocidade). Sem ela, a faísca sai no centro de quem bate.

@@ -116,14 +116,15 @@ export class Player implements Hittable {
    * Golpe recebido (HP-01..04): perde vida, fica invulnerável (piscando) e atordoado, com recuo na direção do
    * golpe. O golpe em andamento é cancelado. Ao zerar, larga o objeto e a tela escurece até o respawn.
    */
-  receiveHit(hit: Hit): void {
+  receiveHit(hit: Hit): boolean {
     const result = this.health.receive(hit.damage);
-    if (result === 'ignored') return;
+    if (result === 'ignored') return false;
     this.onCombo(this.fists.cancel());
     this.onPropSwing(this.propSwing.cancel());
     this.throwPoseMs = 0;
     this.knockDir = hit.direction.x < 0 ? -1 : 1;
     if (result === 'died') this.die();
+    return true;
   }
 
   update(dtMs: number, input: InputSnapshot): void {
