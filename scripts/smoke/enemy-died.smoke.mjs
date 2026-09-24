@@ -41,14 +41,14 @@ export default async function ({ page, baseUrl, assert }) {
     `as duas mortes deveriam cair no mesmo step: ${JSON.stringify(diedInStep)}`,
   );
 
-  // Cada abate chega com a posição do inimigo naquele frame (FND-08): perto de onde ele estava antes do golpe.
+  // Cada abate chega com a posição do inimigo naquele frame (FND-08): a mesma de antes do golpe, porque o golpe de teste entra antes da física no primeiro frame do step.
   for (const id of initial) {
     const deaths = snap.deaths.filter((d) => d.id === id);
     assert(deaths.length === 1, `deaths deveria ter uma entrada para ${id}: ${JSON.stringify(snap.deaths)}`);
     const was = beforeFatal.get(id);
     const { x, y } = deaths[0];
     assert(
-      Math.abs(x - was.x) < 40 && Math.abs(y - was.y) < 40,
+      Math.abs(x - was.x) < 1 && Math.abs(y - was.y) < 1,
       `posição do abate ${JSON.stringify(deaths[0])} longe de ${JSON.stringify({ x: was.x, y: was.y })}`,
     );
   }

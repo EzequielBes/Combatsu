@@ -74,6 +74,12 @@ T9 → T10 → T11 → T12
 T13 → T14 → T15 → T16
 ```
 
+### Phase 6: Correções do Verifier (rodada 2)
+
+```
+T17
+```
+
 ---
 
 ## Task Breakdown
@@ -507,16 +513,44 @@ T13 → T14 → T15 → T16
 
 ---
 
+### T17: Posição exata do abate
+
+**What**: As comparações de posição do abate em `enemy-died.smoke.mjs` passam de `< 40` para `< 1` px.
+**Where**: `scripts/smoke/enemy-died.smoke.mjs`
+**Depends on**: None
+**Reuses**: cenário existente
+**Requirement**: FND-08
+
+> Medido pelo Verifier na rodada 2: dx = dy = 0 nas duas mortes, em duas execuções (o golpe de teste entra antes da física no primeiro frame do `step`).
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] O mutante N6 (`y + 36` no `onDied`) faz o smoke falhar; A5 (`0, 0`) continua falhando (FND-08)
+- [x] Gate check passes: `npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): require exact enemy death position`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
 
 Phase 1:  T1 ------→ T2 ------→ T3
 Phase 2:  T4 ------→ T5 ------→ T6
 Phase 3:  T7 ------→ T8
 Phase 4:  T9 ------→ T10 -----→ T11 -----→ T12
 Phase 5:  T13 -----→ T14 -----→ T15 -----→ T16
+Phase 6:  T17
 ```
 
 ---
