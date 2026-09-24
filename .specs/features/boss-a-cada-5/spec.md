@@ -205,7 +205,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BOSS-07 | P1: Rodada de chefe | Specify | Pending |
 | BOSS-05 | P1: Rodada de chefe | Specify | Pending |
 | BOSS-06 | P1: Rodada de chefe | Specify | Implementing |
-| BOSS-08 | P1: Rodada de chefe | Specify | Pending |
+| BOSS-08 | P1: Rodada de chefe | Specify | Implementing |
 | BAT-01 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-09 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-02 | P1: Ataques telegrafados | Specify | Implementing |
@@ -225,14 +225,14 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BAI-11 | P1: Fases e postura | Specify | Implementing |
 | BAI-04 | P1: Fases e postura | Specify | Implementing |
 | BAI-13 | P1: Fases e postura | Specify | Implementing |
-| BAI-12 | P1: Fases e postura | Specify | Pending |
-| BAI-05 | P1: Fases e postura | Specify | Pending |
-| BAI-06 | P1: Fases e postura | Specify | Pending |
+| BAI-12 | P1: Fases e postura | Specify | Implementing |
+| BAI-05 | P1: Fases e postura | Specify | Implementing |
+| BAI-06 | P1: Fases e postura | Specify | Implementing |
 | BAI-07 | P1: Fases e postura | Specify | Implementing |
 | BAI-08 | P1: Fases e postura | Specify | Implementing |
 | BAI-09 | P1: Fases e postura | Specify | Implementing |
-| BAI-10 | P1: Fases e postura | Specify | Pending |
-| BAI-14 | P1: Fases e postura | Specify | Pending |
+| BAI-10 | P1: Fases e postura | Specify | Implementing |
+| BAI-14 | P1: Fases e postura | Specify | Implementing |
 | BHUD-01 | P1: Barra do chefe e vitória | Specify | Pending |
 | BHUD-02 | P1: Barra do chefe e vitória | Specify | Pending |
 | BHUD-03 | P1: Barra do chefe e vitória | Specify | Pending |

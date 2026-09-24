@@ -158,16 +158,16 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] Intro: golpe em 1499 ms não tira hp; `introEnd` em 1500 ms; golpe depois disso tira (BOSS-06, BOSS-08)
-- [ ] Fase por fração da vida (maxHp 600): hp 397 → fase 1; hp 396 → fase 2 (66%); hp 199 → fase 2; hp 198 → fase 3 (33%) (BAI-01)
-- [ ] Cruzar um limiar emite `phaseChanged` e entra em `roar` por 900 ms (899 ainda em roar, 900 sai); golpe no roar não tira hp (BAI-04, BAI-05, BAI-12)
-- [ ] Cada limiar dispara uma vez só, mesmo se a vida oscilar em volta dele; um golpe que atravessa os dois limiares vai direto para a fase 3 com um único roar (BAI-06)
-- [ ] Postura: leve de 10 → −10; forte de 18 → −36; nunca abaixo de 0 (BAI-07)
-- [ ] Postura em 0 → `stagger` por 1200 ms (1199 ainda, 1200 sai) e depois volta a 100 (BAI-08)
-- [ ] Regeneração: 1999 ms sem golpe não regenera; a partir de 2000 ms, +15/s até 100 (BAI-09)
-- [ ] Golpe leve com postura > 0 não muda o estado; golpe forte nunca gera ragdoll (não existe estado de ragdoll no chefe) (BAI-10, BAI-14)
-- [ ] Edge: em `stagger`, cruzar um limiar encerra o stagger e começa o roar; morrer no roar ou no stagger emite um único `died`
-- [ ] Gate check passes: `npm test`
+- [x] Intro: golpe em 1499 ms não tira hp; `introEnd` em 1500 ms; golpe depois disso tira (BOSS-06, BOSS-08)
+- [x] Fase por fração da vida (maxHp 600): hp 397 → fase 1; hp 396 → fase 2 (66%); hp 199 → fase 2; hp 198 → fase 3 (33%) (BAI-01)
+- [x] Cruzar um limiar emite `phaseChanged` e entra em `roar` por 900 ms (899 ainda em roar, 900 sai); golpe no roar não tira hp (BAI-04, BAI-05, BAI-12)
+- [x] Cada limiar dispara uma vez só, mesmo se a vida oscilar em volta dele; um golpe que atravessa os dois limiares vai direto para a fase 3 com um único roar (BAI-06)
+- [x] Postura: leve de 10 → −10; forte de 18 → −36; nunca abaixo de 0 (BAI-07)
+- [x] Postura em 0 → `stagger` por 1200 ms (1199 ainda, 1200 sai) e depois volta a 100 (BAI-08)
+- [x] Regeneração: 1999 ms sem golpe não regenera; a partir de 2000 ms, +15/s até 100 (BAI-09)
+- [x] Golpe leve com postura > 0 não muda o estado; golpe forte nunca gera ragdoll (não existe estado de ragdoll no chefe) (BAI-10, BAI-14)
+- [x] Edge: em `stagger`, cruzar um limiar encerra o stagger e começa o roar; morrer no roar ou no stagger emite um único `died`
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
