@@ -96,14 +96,15 @@ export class Ragdoll {
 
   /** Fumaça/energia amaldiçoada + fade. */
   dissolve(durationMs: number): void {
-    for (const p of this.parts) p.setTint(PALETTE.u);
+    // Preenchimento (não multiplicação): o corpo vira silhueta roxa da paleta enquanto some (ART-01).
+    for (const p of this.parts) p.setTintFill(PALETTE.u);
     this.scene.tweens.add({ targets: this.parts, alpha: 0, duration: durationMs });
     const c = this.center;
     const smoke = this.scene.add.particles(c.x, c.y, TEX.smoke, {
       speed: { min: 15, max: 60 },
       angle: { min: 200, max: 340 },
       lifespan: 800,
-      scale: { start: 1.4, end: 0 },
+      scale: { start: 1, end: 0 }, // começa no tamanho de texel da textura (ART-03)
       alpha: { start: 0.8, end: 0 },
       tint: CURSE,
       emitting: false,

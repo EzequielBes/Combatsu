@@ -747,9 +747,9 @@ T32
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Nenhum literal de cor fora da `PALETTE` em `src/game/Hud.ts` e `src/game/Ragdoll.ts` (grep por `0x` e `#`)
-- [ ] Smoke + captura: HUD legível; dissolução continua roxa
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Nenhum literal de cor fora da `PALETTE` em `src/game/Hud.ts` e `src/game/Ragdoll.ts` (grep por `0x` e `#`)
+- [x] Smoke + captura: HUD legível; dissolução continua roxa
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptadores)
 **Gate**: build
