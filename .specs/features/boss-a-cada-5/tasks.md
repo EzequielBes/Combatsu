@@ -102,12 +102,12 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] maxHp: tier 1 = 600, 2 = 900, 3 = 1200, 6 = 2100, 7 = 2400 (teto), 20 = 2400 (BTIER-01)
-- [ ] dano da investida (18): tier 1 = 18, 2 = 21, 7 = 34, 8 = 36 (teto ×2), 20 = 36; mesma regra para pouso 20, onda 12 e projétil 10 (BTIER-02)
-- [ ] Para t de 2 a 50, os dois multiplicadores ≥ os de t − 1 (BTIER-03)
-- [ ] Arquétipo: tier 1 e 2 `oni`; 3 `tecela`; 4 `oni`; 5 `tecela`; nomes "Oni do Portão" e "Tecelã de Maldições" (BTIER-04)
-- [ ] Tecelã: `volleyCount` 5, `projectileSpeed` 325; Oni: 3 e 260 (BTIER-05, BTIER-07)
-- [ ] Gate check passes: `npm test`
+- [x] maxHp: tier 1 = 600, 2 = 900, 3 = 1200, 6 = 2100, 7 = 2400 (teto), 20 = 2400 (BTIER-01)
+- [x] dano da investida (18): tier 1 = 18, 2 = 21, 7 = 34, 8 = 36 (teto ×2), 20 = 36; mesma regra para pouso 20, onda 12 e projétil 10 (BTIER-02)
+- [x] Para t de 2 a 50, os dois multiplicadores ≥ os de t − 1 (BTIER-03)
+- [x] Arquétipo: tier 1 e 2 `oni`; 3 `tecela`; 4 `oni`; 5 `tecela`; nomes "Oni do Portão" e "Tecelã de Maldições" (BTIER-04)
+- [x] Tecelã: `volleyCount` 5, `projectileSpeed` 325; Oni: 3 e 260 (BTIER-05, BTIER-07)
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
