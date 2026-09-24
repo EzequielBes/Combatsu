@@ -115,8 +115,8 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] O teste lista os arquivos `.ts` de `src/core` e `src/data` (lista não vazia) e nenhum contém `Math.random`
-- [ ] Gate check passes: `npm test`
+- [x] O teste lista os arquivos `.ts` de `src/core` e `src/data` (lista não vazia) e nenhum contém `Math.random`
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick

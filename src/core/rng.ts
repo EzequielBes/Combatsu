@@ -1,6 +1,6 @@
 /**
  * Gerador pseudoaleatório com seed (mulberry32, AD-006): a mesma seed dá sempre a mesma sequência (FND-01), para
- * testar ondas, drops e loja em Node e reproduzir uma run. Puro: nada de `Math.random` no núcleo.
+ * testar ondas, drops e loja em Node e reproduzir uma run. Puro: é a única fonte de sorteio do núcleo.
  */
 export class Rng {
   private state: number;
