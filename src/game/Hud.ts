@@ -9,7 +9,10 @@ const MARGIN = 12;
 const LABEL_W = 26;
 /** O painel de controles começa abaixo da barra. */
 const PANEL_Y = 36;
-const TEXT_STYLE = { fontFamily: 'monospace', fontSize: '12px', color: '#e0e0e0' };
+/** Cor da paleta em CSS (`#rrggbb` ou `#rrggbbaa`), para o texto do Phaser, que não aceita número (ART-01). */
+const css = (color: number, alpha = 1): string =>
+  `#${color.toString(16).padStart(6, '0')}${alpha < 1 ? Math.round(alpha * 255).toString(16).padStart(2, '0') : ''}`;
+const TEXT_STYLE = { fontFamily: 'monospace', fontSize: '12px', color: css(PALETTE.w) };
 
 /**
  * HUD na câmera de UI (AD-003): barra de vida do player com moldura pixel art (HUD-01) e o painel de controles, que
@@ -34,7 +37,7 @@ export class Hud {
       .setOrigin(0, 0);
     this.panel = scene.add.text(MARGIN, PANEL_Y, controlsText, {
       ...TEXT_STYLE,
-      backgroundColor: '#00000088',
+      backgroundColor: css(PALETTE.k, 0.8),
       padding: { x: 6, y: 4 },
     });
     for (const obj of [label, frame, this.fill, this.panel]) obj.setScrollFactor(0).setDepth(100);
