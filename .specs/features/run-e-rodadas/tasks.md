@@ -186,16 +186,16 @@ T7 → T8
 
 **Done when**:
 
-- [ ] `waveSize`: r1 = 3, r5 = 7, r10 = 12, r11 = 12, r20 = 12 (WAVE-01 + edge das rodadas ≥ 10)
-- [ ] Rodízio: o k-ésimo spawn sai no ponto `(s + k) mod P`, com `s` igual a `rng.int(0, P − 1)` de um `Rng` de mesma seed (WAVE-02)
-- [ ] Com 4 vivos nenhum spawn sai, mesmo passados 800 ms (WAVE-03)
-- [ ] Com menos de 4 vivos e fila não vazia: o próximo sai assim que passam 800 ms desde o último spawn naquele ponto (799 ms não sai, 800 ms sai) (WAVE-04)
-- [ ] `P = 1`: todos no ponto 0, espaçados de 800 ms (edge)
-- [ ] O mesmo id morto duas vezes conta 1 em `kills` e 1 em `remaining`; o segundo `enemyDied` devolve `false` (WAVE-06)
-- [ ] Dois ids diferentes mortos antes do mesmo `update`: `kills` +2 e `remaining` −2 (WAVE-08)
-- [ ] Duas instâncias com a mesma seed e a mesma sequência de mortes produzem os mesmos pares `(atMs, point)` (WAVE-07)
-- [ ] `requireSpawnPoints({ enemies: [] }, 'level1')` lança uma mensagem com `level1` (edge)
-- [ ] Gate check passes: `npm test`
+- [x] `waveSize`: r1 = 3, r5 = 7, r10 = 12, r11 = 12, r20 = 12 (WAVE-01 + edge das rodadas ≥ 10)
+- [x] Rodízio: o k-ésimo spawn sai no ponto `(s + k) mod P`, com `s` igual a `rng.int(0, P − 1)` de um `Rng` de mesma seed (WAVE-02)
+- [x] Com 4 vivos nenhum spawn sai, mesmo passados 800 ms (WAVE-03)
+- [x] Com menos de 4 vivos e fila não vazia: o próximo sai assim que passam 800 ms desde o último spawn naquele ponto (799 ms não sai, 800 ms sai) (WAVE-04)
+- [x] `P = 1`: todos no ponto 0, espaçados de 800 ms (edge)
+- [x] O mesmo id morto duas vezes conta 1 em `kills` e 1 em `remaining`; o segundo `enemyDied` devolve `false` (WAVE-06)
+- [x] Dois ids diferentes mortos antes do mesmo `update`: `kills` +2 e `remaining` −2 (WAVE-08)
+- [x] Duas instâncias com a mesma seed e a mesma sequência de mortes produzem os mesmos pares `(atMs, point)` (WAVE-07)
+- [x] `requireSpawnPoints({ enemies: [] }, 'level1')` lança uma mensagem com `level1` (edge)
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick

@@ -190,13 +190,13 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 | RUN-10 | P1: Run com permadeath | Specify | Implementing |
 | RUN-11 | P1: Run com permadeath | Specify | Implementing |
 | WAVE-01 | P1: Ondas de inimigos | Specify | Implementing |
-| WAVE-02 | P1: Ondas de inimigos | Specify | Pending |
+| WAVE-02 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-03 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-04 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-05 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-06 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-07 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-08 | P1: Ondas de inimigos | Specify | Pending |
+| WAVE-06 | P1: Ondas de inimigos | Specify | Implementing |
+| WAVE-07 | P1: Ondas de inimigos | Specify | Implementing |
+| WAVE-08 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-09 | P1: Ondas de inimigos | Specify | Implementing |
 | DIF-01 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-02 | P1: Dificuldade progressiva | Specify | Implementing |
