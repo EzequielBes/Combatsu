@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../../src/core/rng';
-import { WaveSpawner, waveSize, requireSpawnPoints, type WaveTuning } from '../../src/core/waves';
+import {
+  WaveSpawner,
+  waveSize,
+  requireSpawnPoints,
+  isBossRound,
+  farthestPoint,
+  type WaveTuning,
+} from '../../src/core/waves';
 
 const WAVE: WaveTuning = { base: 3, max: 12, maxAlive: 4, pointGapMs: 800 };
 /** seed 7: rng.int(0, P-1) = 0 para P = 2 e P = 3 (checado fora do teste); usada nos testes que não dependem de s. */
@@ -64,7 +71,8 @@ describe('WaveSpawner: rodízio de pontos (WAVE-02)', () => {
 
 describe('WaveSpawner: teto de vivos (WAVE-03)', () => {
   it('com 4 vivos, nenhum spawn sai mesmo passados 800 ms', () => {
-    const spawner = new WaveSpawner(10, 1, new Rng(SEED), WAVE); // round 10 => 12 inimigos, P = 1
+    // round 11 (não round 10, que agora é rodada de chefe, BOSS-01): min(3+10, 12) = 12 inimigos, P = 1
+    const spawner = new WaveSpawner(11, 1, new Rng(SEED), WAVE);
     spawner.update(0); // k0 em t=0
     spawner.update(800); // k1 em t=800
     spawner.update(800); // k2 em t=1600
@@ -80,15 +88,16 @@ describe('WaveSpawner: fila com menos de 4 vivos e 800 ms (WAVE-04)', () => {
   it('799 ms não libera o próximo spawn no mesmo ponto; 800 ms libera', () => {
     const spawner = new WaveSpawner(1, 1, new Rng(SEED), WAVE); // round 1 => 3 inimigos, P = 1
     const first = spawner.update(0);
-    expect(first).toEqual([{ k: 0, point: 0, atMs: 0 }]);
+    expect(first).toEqual([{ k: 0, point: 0, atMs: 0, kind: 'enemy' }]);
     const before = spawner.update(799);
     expect(before).toEqual([]);
     const after = spawner.update(1); // total 800 ms desde o spawn do ponto 0
-    expect(after).toEqual([{ k: 1, point: 0, atMs: 800 }]);
+    expect(after).toEqual([{ k: 1, point: 0, atMs: 800, kind: 'enemy' }]);
   });
 
   it('libera o spawn assim que um abate abre vaga e o gap já foi cumprido', () => {
-    const spawner = new WaveSpawner(10, 1, new Rng(SEED), WAVE); // P = 1, 12 inimigos
+    // round 11 (não round 10, que agora é rodada de chefe, BOSS-01): P = 1, 12 inimigos
+    const spawner = new WaveSpawner(11, 1, new Rng(SEED), WAVE);
     spawner.update(0); // k0 t=0
     spawner.update(800); // k1 t=800
     spawner.update(800); // k2 t=1600
@@ -96,7 +105,7 @@ describe('WaveSpawner: fila com menos de 4 vivos e 800 ms (WAVE-04)', () => {
     expect(spawner.update(800)).toEqual([]); // t=3200, sem vaga
     spawner.enemyDied(1001); // abre vaga: alive = 3
     const orders = spawner.update(0); // gap (3200 - 2400 = 800) já cumprido
-    expect(orders).toEqual([{ k: 4, point: 0, atMs: 3200 }]);
+    expect(orders).toEqual([{ k: 4, point: 0, atMs: 3200, kind: 'enemy' }]);
   });
 });
 
@@ -106,9 +115,9 @@ describe('WaveSpawner: P = 1, todos no mesmo ponto espaçados de 800 ms (edge)',
     const o0 = spawner.update(0);
     const o1 = spawner.update(800);
     const o2 = spawner.update(800);
-    expect(o0).toEqual([{ k: 0, point: 0, atMs: 0 }]);
-    expect(o1).toEqual([{ k: 1, point: 0, atMs: 800 }]);
-    expect(o2).toEqual([{ k: 2, point: 0, atMs: 1600 }]);
+    expect(o0).toEqual([{ k: 0, point: 0, atMs: 0, kind: 'enemy' }]);
+    expect(o1).toEqual([{ k: 1, point: 0, atMs: 800, kind: 'enemy' }]);
+    expect(o2).toEqual([{ k: 2, point: 0, atMs: 1600, kind: 'enemy' }]);
   });
 });
 
@@ -135,6 +144,11 @@ describe('WaveSpawner: duas mortes diferentes antes do mesmo update (WAVE-08)', 
 });
 
 describe('WaveSpawner: mesma seed e mesma sequência de mortes (WAVE-07)', () => {
+  // round 5 virou rodada de chefe (BOSS-01); round 3 com este tuning dá o mesmo waveSize (7) e não é
+  // múltiplo de 5, preservando exatamente a mesma sequência de spawns que o teste original usava.
+  const WAVE_SIZE7: WaveTuning = { base: 5, max: 12, maxAlive: 4, pointGapMs: 800 };
+  const ROUND = 3; // waveSize(3, WAVE_SIZE7) = 5 + (3-1) = 7
+
   const stepsAndDeaths: Array<{ dt: number; deaths: number[] }> = [
     { dt: 0, deaths: [] },
     { dt: 800, deaths: [1] },
@@ -144,8 +158,8 @@ describe('WaveSpawner: mesma seed e mesma sequência de mortes (WAVE-07)', () =>
   ];
 
   it('duas instâncias produzem os mesmos pares (atMs, point)', () => {
-    const a = new WaveSpawner(5, 3, new Rng(SEED_S1), WAVE); // round 5 => 7 inimigos, P = 3
-    const b = new WaveSpawner(5, 3, new Rng(SEED_S1), WAVE);
+    const a = new WaveSpawner(ROUND, 3, new Rng(SEED_S1), WAVE_SIZE7); // 7 inimigos, P = 3
+    const b = new WaveSpawner(ROUND, 3, new Rng(SEED_S1), WAVE_SIZE7);
 
     for (const { dt, deaths } of stepsAndDeaths) {
       const ordersA = a.update(dt);
@@ -159,7 +173,7 @@ describe('WaveSpawner: mesma seed e mesma sequência de mortes (WAVE-07)', () =>
   });
 
   it('os pares (atMs, point) batem com os valores esperados, com s = 1 (não 0)', () => {
-    const spawner = new WaveSpawner(5, 3, new Rng(SEED_S1), WAVE); // round 5 => 7 inimigos, P = 3
+    const spawner = new WaveSpawner(ROUND, 3, new Rng(SEED_S1), WAVE_SIZE7); // 7 inimigos, P = 3
     // s = 1: primeiro spawn no ponto (1+0)%3 = 1, não no ponto 0 (o que o mutante C10b, que ignora s, daria).
     const expectedPairs = [
       [
@@ -181,5 +195,55 @@ describe('WaveSpawner: mesma seed e mesma sequência de mortes (WAVE-07)', () =>
       expect(orders.map((o) => [o.atMs, o.point])).toEqual(expectedPairs[i]);
       for (const id of deaths) spawner.enemyDied(id);
     });
+  });
+});
+
+describe('isBossRound: múltiplo de 5 (BOSS-01)', () => {
+  it.each([
+    [4, false],
+    [5, true],
+    [6, false],
+    [9, false],
+    [10, true],
+    [15, true],
+  ])('round %i => %s', (round, expected) => {
+    expect(isBossRound(round)).toBe(expected);
+  });
+});
+
+describe('farthestPoint: ponto E mais distante do player (BOSS-03)', () => {
+  it('escolhe o ponto de maior distância absoluta', () => {
+    expect(farthestPoint([{ x: 100 }, { x: 900 }], 200)).toBe(1);
+    expect(farthestPoint([{ x: 100 }, { x: 900 }], 800)).toBe(0);
+  });
+
+  it('empate: escolhe o menor índice', () => {
+    expect(farthestPoint([{ x: 0 }, { x: 200 }], 100)).toBe(0);
+  });
+
+  it('um único ponto: sempre 0', () => {
+    expect(farthestPoint([{ x: 500 }], 0)).toBe(0);
+  });
+});
+
+describe('WaveSpawner: rodada de chefe (BOSS-01, BOSS-02)', () => {
+  it.each([5, 10, 15])('round %i: onda de tamanho 1 com uma ordem kind boss', (round) => {
+    const spawner = new WaveSpawner(round, 3, new Rng(SEED), WAVE);
+    const orders = spawner.update(0);
+    expect(orders).toHaveLength(1);
+    expect(orders[0].kind).toBe('boss');
+    expect(spawner.remaining).toBe(1);
+  });
+
+  it.each([
+    [4, 6],
+    [6, 8],
+    [9, 11],
+  ])('round %i: onda de tamanho min(3 + (r-1), 12) = %i, só kind enemy, nenhum chefe', (round, expectedCount) => {
+    const spawner = new WaveSpawner(round, 1, new Rng(SEED), WAVE);
+    expect(spawner.remaining).toBe(expectedCount);
+    const orders = spawner.update(0);
+    expect(orders.length).toBeGreaterThan(0);
+    expect(orders.every((o) => o.kind === 'enemy')).toBe(true);
   });
 });

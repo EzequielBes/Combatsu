@@ -198,12 +198,12 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| BOSS-01 | P1: Rodada de chefe | Specify | Pending |
-| BOSS-02 | P1: Rodada de chefe | Specify | Pending |
-| BOSS-03 | P1: Rodada de chefe | Specify | Pending |
-| BOSS-04 | P1: Rodada de chefe | Specify | Pending |
-| BOSS-07 | P1: Rodada de chefe | Specify | Pending |
-| BOSS-05 | P1: Rodada de chefe | Specify | Pending |
+| BOSS-01 | P1: Rodada de chefe | Specify | Implementing |
+| BOSS-02 | P1: Rodada de chefe | Specify | Implementing |
+| BOSS-03 | P1: Rodada de chefe | Specify | Implementing |
+| BOSS-04 | P1: Rodada de chefe | Specify | Implementing |
+| BOSS-07 | P1: Rodada de chefe | Specify | Implementing |
+| BOSS-05 | P1: Rodada de chefe | Specify | Implementing |
 | BOSS-06 | P1: Rodada de chefe | Specify | Implementing |
 | BOSS-08 | P1: Rodada de chefe | Specify | Implementing |
 | BAT-01 | P1: Ataques telegrafados | Specify | Implementing |

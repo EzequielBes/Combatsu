@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { Run, acceptsPlayerInput, type RunState } from '../../src/core/run';
+import { Run, acceptsPlayerInput, type RunCommand, type RunState } from '../../src/core/run';
 import { RUN, WAVE } from '../../src/data/tuning';
+
+function isSpawn(c: RunCommand): c is Extract<RunCommand, { type: 'spawn' }> {
+  return c.type === 'spawn';
+}
 
 /** seed 7: rng.int(0, 1) = 0, então s = 0 para P = 2 (checado em waves.test.ts). */
 const SEED = () => 7;
@@ -225,5 +229,72 @@ describe('Run: edge cases de prioridade', () => {
     expect(run.state).toBe('gameOver');
     expect(commands).toContainEqual({ type: 'gameOver', round: 1, kills: 3 });
     expect(run.summary).toEqual({ round: 1, kills: 3 });
+  });
+});
+
+describe('Run: firstRound opcional no construtor', () => {
+  it('sem a opção: começa na rodada 1 (F1 inalterada)', () => {
+    const run = newRun();
+    run.startPressed();
+    run.update(0, SEED);
+    expect(run.round).toBe(1);
+  });
+
+  it('com { firstRound: 5 }: começa direto na rodada 5', () => {
+    const run = new Run(RUN, WAVE, POINTS, { firstRound: 5 });
+    run.startPressed();
+    const commands = run.update(0, SEED);
+    expect(run.round).toBe(5);
+    expect(commands).toEqual([{ type: 'startRun' }, { type: 'roundStart', round: 5 }]);
+  });
+});
+
+describe('Run: o comando spawn carrega kind (BOSS-01, BOSS-02)', () => {
+  it('rodada 1 (não é de chefe): todo spawn tem kind enemy', () => {
+    const run = started();
+    const commands = run.update(0, SEED); // libera os spawns da rodada 1
+    const spawnCmds = commands.filter(isSpawn);
+    expect(spawnCmds.length).toBeGreaterThan(0);
+    expect(spawnCmds.every((c) => c.kind === 'enemy')).toBe(true);
+  });
+
+  it('rodada 5 (de chefe): um único spawn com kind boss', () => {
+    const run = new Run(RUN, WAVE, POINTS, { firstRound: 5 });
+    run.startPressed();
+    run.update(0, SEED); // startRun + roundStart(5), sem spawn ainda
+    const commands = run.update(0, SEED); // libera o spawn do chefe
+    const spawnCmds = commands.filter(isSpawn);
+    expect(spawnCmds).toHaveLength(1);
+    expect(spawnCmds[0].kind).toBe('boss');
+    expect(spawnCmds[0].round).toBe(5);
+  });
+});
+
+describe('Run: morte do chefe conta kills e entra em intermission (BOSS-04, BOSS-07)', () => {
+  it('o chefe é o único inimigo da onda de tamanho 1; sua morte limpa a rodada', () => {
+    const run = new Run(RUN, WAVE, POINTS, { firstRound: 5 });
+    run.startPressed();
+    run.update(0, SEED); // roundStart(5)
+    run.update(0, SEED); // spawn do chefe
+    run.enemyDied(500); // o chefe morre, contado do mesmo jeito que um inimigo comum
+    const commands = run.update(0, SEED);
+    expect(run.kills).toBe(1);
+    expect(run.state).toBe('intermission');
+    expect(commands).toContainEqual({ type: 'roundCleared', round: 5 });
+  });
+});
+
+describe('Run: chefe e player morrem antes do mesmo update (BOSS-05)', () => {
+  it('a morte do player tem prioridade sobre a morte do chefe no mesmo frame: gameOver, não intermission', () => {
+    const run = new Run(RUN, WAVE, POINTS, { firstRound: 5 });
+    run.startPressed();
+    run.update(0, SEED); // roundStart(5)
+    run.update(0, SEED); // spawn do chefe
+    run.enemyDied(500); // chefe morrendo
+    run.playerDied(); // player morrendo no mesmo frame
+    const commands = run.update(0, SEED);
+    expect(run.state).toBe('gameOver');
+    expect(commands.some((c) => c.type === 'roundCleared')).toBe(false);
+    expect(commands).toContainEqual({ type: 'gameOver', round: 5, kills: 0 });
   });
 });

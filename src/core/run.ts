@@ -1,5 +1,5 @@
 import { Rng } from './rng';
-import { WaveSpawner, type WaveTuning } from './waves';
+import { WaveSpawner, type SpawnKind, type WaveTuning } from './waves';
 
 /** Tuning da máquina de estados da run (RUN-10, RUN-11, RHUD-02); lógica em T6. */
 export interface RunTuning {
@@ -19,9 +19,14 @@ export interface RunSummary {
 export type RunCommand =
   | { type: 'startRun' }
   | { type: 'roundStart'; round: number }
-  | { type: 'spawn'; point: number; round: number }
+  | { type: 'spawn'; point: number; round: number; kind: SpawnKind }
   | { type: 'roundCleared'; round: number }
   | { type: 'gameOver'; round: number; kills: number };
+
+/** Opções do construtor de `Run`; `firstRound` só serve para o debug começar direto numa rodada (ex.: de chefe). */
+export interface RunOptions {
+  firstRound?: number;
+}
 
 /** `true` só em `roundActive` e `intermission` (RUN-08): fora disso o player ignora o input de jogo. */
 export function acceptsPlayerInput(state: RunState): boolean {
@@ -48,11 +53,16 @@ export class Run {
   private pendingPlayerDied = false;
   private pendingEnemyDeaths: number[] = [];
 
+  private readonly firstRound: number;
+
   constructor(
     private readonly t: RunTuning,
     private readonly waveT: WaveTuning,
     private readonly pointCount: number,
-  ) {}
+    options: RunOptions = {},
+  ) {
+    this.firstRound = options.firstRound ?? 1;
+  }
 
   get state(): RunState {
     return this._state;
@@ -124,7 +134,7 @@ export class Run {
     if (this._state === startState) {
       if (this._state === 'roundActive' && this.spawner) {
         for (const order of this.spawner.update(dtMs)) {
-          commands.push({ type: 'spawn', point: order.point, round: this._round });
+          commands.push({ type: 'spawn', point: order.point, round: this._round, kind: order.kind });
         }
       } else if (this._state === 'intermission') {
         this.intermissionTimer += dtMs;
@@ -144,7 +154,7 @@ export class Run {
       const canStart = this._state === 'title' || (this._state === 'gameOver' && this.gameOverTimer >= this.t.gameOverLockMs);
       if (canStart) {
         this.rng = new Rng(seedForNewRun());
-        this._round = 1;
+        this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;
         this.spawner = new WaveSpawner(this._round, this.pointCount, this.rng, this.waveT);

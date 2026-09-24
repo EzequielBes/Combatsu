@@ -226,12 +226,12 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] Rodadas 5, 10, 15: onda de tamanho 1 com uma ordem `kind: 'boss'`; rodadas 4, 6, 9: `min(3 + (r − 1), 12)` inimigos `kind: 'enemy'` e nenhum chefe (BOSS-01, BOSS-02)
-- [ ] `farthestPoint([{x:100},{x:900}], 200) === 1`; `farthestPoint([{x:100},{x:900}], 800) === 0`; empate → menor índice; um ponto só → 0 (BOSS-03 + edge)
-- [ ] O comando `spawn` do `Run` carrega `kind`; morte do chefe → `kills` +1 e `intermission` (BOSS-04, BOSS-07)
-- [ ] Chefe e player morrem antes do mesmo `update` → `gameOver` (BOSS-05)
-- [ ] `new Run(..., { firstRound: 5 })` começa a run na rodada 5; sem a opção, na 1 (testes da F1 continuam passando)
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Rodadas 5, 10, 15: onda de tamanho 1 com uma ordem `kind: 'boss'`; rodadas 4, 6, 9: `min(3 + (r − 1), 12)` inimigos `kind: 'enemy'` e nenhum chefe (BOSS-01, BOSS-02)
+- [x] `farthestPoint([{x:100},{x:900}], 200) === 1`; `farthestPoint([{x:100},{x:900}], 800) === 0`; empate → menor índice; um ponto só → 0 (BOSS-03 + edge)
+- [x] O comando `spawn` do `Run` carrega `kind`; morte do chefe → `kills` +1 e `intermission` (BOSS-04, BOSS-07)
+- [x] Chefe e player morrem antes do mesmo `update` → `gameOver` (BOSS-05)
+- [x] `new Run(..., { firstRound: 5 })` começa a run na rodada 5; sem a opção, na 1 (testes da F1 continuam passando)
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
