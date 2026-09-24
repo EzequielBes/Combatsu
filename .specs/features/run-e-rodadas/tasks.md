@@ -74,11 +74,11 @@ T7 → T8
 
 **Done when**:
 
-- [ ] `DIFFICULTY = { hpPerRound: 0.12, hpCap: 3.0, damagePerRound: 0.08, damageCap: 2.5, speedPerRound: 0.03, speedCap: 1.4 }`
-- [ ] `WAVE = { base: 3, max: 12, maxAlive: 4, pointGapMs: 800 }`
-- [ ] `RUN = { intermissionMs: 2500, gameOverLockMs: 1000, spawnGraceMs: 600, bannerMs: 1500 }`
-- [ ] `tests/data/tuning.test.ts` confere cada valor
-- [ ] Gate check passes: `npm test`
+- [x] `DIFFICULTY = { hpPerRound: 0.12, hpCap: 3.0, damagePerRound: 0.08, damageCap: 2.5, speedPerRound: 0.03, speedCap: 1.4 }`
+- [x] `WAVE = { base: 3, max: 12, maxAlive: 4, pointGapMs: 800 }`
+- [x] `RUN = { intermissionMs: 2500, gameOverLockMs: 1000, spawnGraceMs: 600, bannerMs: 1500 }`
+- [x] `tests/data/tuning.test.ts` confere cada valor
+- [x] Gate check passes: `npm test`
 
 **Tests**: unit
 **Gate**: quick
