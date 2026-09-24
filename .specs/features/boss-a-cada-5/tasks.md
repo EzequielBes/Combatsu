@@ -30,7 +30,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 | Gate Level | When to Use | Command |
 | --- | --- | --- |
-| Quick | Tasks com testes unitários | `npm test` |
+| Quick | Tasks com testes unitários | `npm run typecheck && npm test` (o Vitest não checa tipos; o T4 foi commitado com erro de tipo, corrigido no T6) |
 | Full | Tasks com cenários de smoke | `npm run build && npm test && npm run smoke` |
 | Build | Última task de cada fase | `npm run build && npm test` |
 
