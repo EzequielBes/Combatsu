@@ -10,7 +10,6 @@ export const PROP_DEFS: Record<string, PropDef> = {
     throwSpeed: 520,
     knockback: 10,
     socket: 'back',
-    debrisColor: 0x8d5524,
     tags: ['inflamável'],
   },
   bottle: {
@@ -22,7 +21,6 @@ export const PROP_DEFS: Record<string, PropDef> = {
     throwSpeed: 760,
     knockback: 6,
     socket: 'front',
-    debrisColor: 0x2a9d8f,
     tags: ['cortante'],
   },
 };

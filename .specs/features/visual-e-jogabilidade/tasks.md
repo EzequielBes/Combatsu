@@ -768,8 +768,8 @@ T32
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `grep -rn debrisColor src tests` vazio; nenhuma asserção removida
-- [ ] Gate check passes: `npm run build && npm test` (191 testes)
+- [x] `grep -rn debrisColor src tests` vazio; nenhuma asserção removida
+- [x] Gate check passes: `npm run build && npm test` (191 testes)
 
 **Tests**: unit (os testes de `tests/core/props.test.ts` e `tests/data/props.test.ts` continuam cobrindo PropDef)
 **Gate**: build
