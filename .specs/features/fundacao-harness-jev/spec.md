@@ -158,11 +158,11 @@ Além disso, o usuário quer que as stories passem por um refinamento com o Jev 
 | FND-12 | P1: Smoke headless versionado | Specify | Implementing |
 | FND-13 | P1: Refinamento com o Jev | Specify | Implementing |
 | FND-14 | P1: Refinamento com o Jev | Specify | Implementing |
-| FND-15 | P1: Refinamento com o Jev | Specify | Pending |
-| FND-16 | P1: Refinamento com o Jev | Specify | Pending |
-| FND-24 | P1: Refinamento com o Jev | Specify | Pending |
-| FND-17 | P1: Refinamento com o Jev | Specify | Pending |
-| FND-18 | P1: Refinamento com o Jev | Specify | Pending |
+| FND-15 | P1: Refinamento com o Jev | Specify | Implementing |
+| FND-16 | P1: Refinamento com o Jev | Specify | Implementing |
+| FND-24 | P1: Refinamento com o Jev | Specify | Implementing |
+| FND-17 | P1: Refinamento com o Jev | Specify | Implementing |
+| FND-18 | P1: Refinamento com o Jev | Specify | Implementing |
 | FND-19 | P1: Refinamento com o Jev | Specify | Implementing |
 
 **Coverage:** 24 total, 0 mapped to tasks, 24 unmapped ⚠️ (Tasks ainda não criadas)

@@ -122,3 +122,62 @@ Limiares: ambiguous > 0,6 · bundled > 0,6 · testable < 0,6 · precision < 2 (e
 ${lines.join('\n')}
 `;
 }
+
+/** Chave da TypeSafe: ambiente primeiro, senão a linha `TYPESAFE_API_KEY=` do `.env.local` (FND-15). */
+export function readKey(env: Record<string, string | undefined>, envLocalText: string | null): string | null {
+  if (env.TYPESAFE_API_KEY) return env.TYPESAFE_API_KEY;
+  for (const line of (envLocalText ?? '').split(/\r?\n/)) {
+    const m = line.match(/^\s*TYPESAFE_API_KEY\s*=\s*(.*?)\s*$/);
+    if (m && m[1]) return m[1].replace(/^["']|["']$/g, '');
+  }
+  return null;
+}
+
+/** 401/422: chave ou payload rejeitados; a CLI para e sai com 1 (FND-17). */
+export class JevAuthError extends Error {
+  readonly status: number;
+  constructor(status: number, message: string) {
+    super(`API ${status}: ${message}`);
+    this.status = status;
+  }
+}
+
+const ENDPOINT = 'https://api.typesafe.ai/v1/systemone';
+const RETRY_WAITS_MS = [1000, 2000, 4000];
+
+/**
+ * Pergunta ao Jev sobre um AC. 429/529 repetem até 3 vezes (1, 2 e 4 s, FND-16) e depois viram `{ error }`
+ * (FND-24); 401/422 lançam JevAuthError. A chave nunca entra em mensagem nem em resultado (FND-18).
+ */
+export async function askWithRetry(
+  ac: AcRow,
+  key: string,
+  fetchFn: typeof fetch,
+  sleepFn: (ms: number) => Promise<void>,
+): Promise<AcResult> {
+  const body = JSON.stringify(buildRequest(ac));
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetchFn(ENDPOINT, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body,
+    });
+    if (res.ok) {
+      const { answers } = await res.json();
+      return {
+        ambiguous: answers.ambiguous.noul,
+        bundled: answers.bundled.noul,
+        testable: answers.testable.noul,
+        precision: answers.precision.score,
+      };
+    }
+    if (res.status === 401 || res.status === 422) {
+      throw new JevAuthError(res.status, (await res.text()).split(key).join('***'));
+    }
+    if ((res.status === 429 || res.status === 529) && attempt < RETRY_WAITS_MS.length) {
+      await sleepFn(RETRY_WAITS_MS[attempt]);
+      continue;
+    }
+    return { error: String(res.status) };
+  }
+}
