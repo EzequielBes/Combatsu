@@ -61,6 +61,8 @@ export class Enemy implements Hittable {
     private readonly onRemoved: (enemy: Enemy) => void,
     /** Garra que conectou no player (faísca + hitstop), injetado pela cena. */
     onConnect?: OnConnect,
+    /** Morte (evento `died` do cérebro, uma vez só), com a posição do corpo neste frame (FND-08). */
+    private readonly onDied?: (enemy: Enemy, x: number, y: number) => void,
   ) {
     const { w, h } = SIZE.enemy;
     this.body = scene.matter.add.rectangle(spawn.x, spawn.y, w, h, {
@@ -93,6 +95,10 @@ export class Enemy implements Hittable {
   hurtRect(): Rect {
     const { x, y } = this.body.position;
     return { x, y, width: SIZE.enemy.w, height: SIZE.enemy.h };
+  }
+
+  get hp(): number {
+    return this.brain.hp;
   }
 
   get state(): EnemyState {
@@ -189,6 +195,7 @@ export class Enemy implements Hittable {
     for (const ev of events) {
       if (ev.type === 'hitReaction') this.playHitReaction(ev.hit);
       else if (ev.type === 'hurtWhileDown') this.ragdoll?.flash();
+      else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
       else if (ev.type === 'ragdoll') this.enterRagdoll(ev.hit);
       else if (ev.type === 'getUp') this.getUp();
       else if (ev.type === 'dissolve') this.ragdoll?.dissolve(ENEMY.dissolveMs);

@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
 import { PALETTE } from './game/art/palette';
+import { installDebugApi } from './game/debugApi';
+import { isDebug } from './game/debug';
 import { TestScene } from './scenes/TestScene';
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: document.body,
   width: 960,
@@ -18,3 +20,6 @@ new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [TestScene],
 });
+
+// `window.__game` só com `?debug` no boot (FND-09, FND-10); ligar o debug depois pelo F1 não o cria.
+installDebugApi(game, window, isDebug());
