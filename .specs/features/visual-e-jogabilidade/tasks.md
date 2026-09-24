@@ -821,10 +821,10 @@ T37
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: jab num inimigo que persegue não o faz avançar para o player (desloca-se no sentido do golpe ou fica)
-- [ ] Smoke: golpe leve de debug empurra o inimigo no sentido do golpe como em `338ad6d` (~17 px)
-- [ ] Smoke: patrulha e perseguição continuam 35/70 px/s ±10% a 30 e 60 fps (tempo simulado)
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: jab num inimigo que persegue não o faz avançar para o player (desloca-se no sentido do golpe ou fica)
+- [x] Smoke: golpe leve de debug empurra o inimigo no sentido do golpe como em `338ad6d` (~17 px)
+- [x] Smoke: patrulha e perseguição continuam 35/70 px/s ±10% a 30 e 60 fps (tempo simulado)
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (adaptador; smoke headless)
 **Gate**: build

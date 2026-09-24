@@ -48,7 +48,9 @@ export class Enemy implements Hittable {
    */
   private walkVxStep: number | null = null;
   private readonly onStep = (): void => {
-    if (this.walkVxStep === null) return;
+    // Os steps do Matter rodam antes do update da cena: sem este teste, o vx de andar do frame anterior passava
+    // por cima do empurrão de um golpe recebido neste frame.
+    if (this.walkVxStep === null || this.brain.state !== 'idle' || this.ragdoll) return;
     this.scene.matter.body.setVelocity(this.body, { x: this.walkVxStep, y: this.body.velocity.y });
   };
   private _removed = false;
@@ -104,6 +106,7 @@ export class Enemy implements Hittable {
   receiveHit(hit: Hit): boolean {
     const events = this.brain.receiveHit(hit);
     if (events.length === 0) return false; // já morto
+    this.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
     // Levar golpe cancela o preparo ou o golpe em andamento (AI-04).
     this.onAI(this.ai.interrupt());
     this.handle(events);
