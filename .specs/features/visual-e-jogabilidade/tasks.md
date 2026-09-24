@@ -843,9 +843,9 @@ T37
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Smoke: nenhum pixel `#1b1b2f` na tela; leitura do framebuffer na faixa do céu só com cores da paleta
-- [ ] `src/main.ts` sem literal de cor fora da paleta
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Smoke: nenhum pixel `#1b1b2f` na tela; leitura do framebuffer na faixa do céu só com cores da paleta
+- [x] `src/main.ts` sem literal de cor fora da paleta
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (desenho procedural; smoke headless)
 **Gate**: build
