@@ -55,6 +55,12 @@ T1 → T2 → T3 → T4 → T5 → T6
 T7 → T8
 ```
 
+### Phase 3: Correções do Verifier (rodada 1)
+
+```
+T9 → T10 → T11 → T12 → T13 → T14
+```
+
 ---
 
 ## Task Breakdown
@@ -310,13 +316,182 @@ T7 → T8
 
 ---
 
+### T9: Rodízio com s diferente de zero
+
+**What**: Testes de WAVE-02/07 usam uma seed cujo `s` sorteado é diferente de 0 e comparam com pares literais esperados.
+**Where**: `tests/core/waves.test.ts`
+**Depends on**: None
+**Reuses**: testes e cenários existentes
+**Requirement**: WAVE-02, WAVE-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Seed escolhida com `rng.int(0, P − 1) !== 0` para P = 2 (e um caso com P = 3); os pontos esperados `(s + k) mod P` são literais no teste
+- [ ] WAVE-07 compara a sequência com pares `(atMs, point)` literais, não só entre duas instâncias
+- [ ] Mutante C10b (ignorar `s` em `src/core/waves.ts`) falha
+- [ ] Gate check passes: `npm test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(core): pin wave rotation offset with nonzero seed`
+
+---
+
+### T10: Dedupe de abate no Run
+
+**What**: Teste do `Run` com o mesmo id morto duas vezes.
+**Where**: `tests/core/run.test.ts`
+**Depends on**: T9
+**Reuses**: testes e cenários existentes
+**Requirement**: WAVE-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Mesmo id reportado duas vezes antes do `update` e em `update`s diferentes → `run.kills === 1` e `remaining` cai 1
+- [ ] Mutante C17 (contar sem checar o dedupe em `src/core/run.ts`) falha
+- [ ] Gate check passes: `npm test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(core): cover duplicate kill reports in run`
+
+---
+
+### T11: maxHp e dano reais no snapshot
+
+**What**: `Enemy.maxHp`/`damage` passam a ler do `EnemyBrain` e do golpe realmente usado; o cenário confere `hp === 67` num inimigo intacto da rodada 2.
+**Where**: `src/game/Enemy.ts`
+**Depends on**: T10
+**Reuses**: testes e cenários existentes
+**Requirement**: DIF-04
+
+> Toca também `src/core/enemyBrain.ts` (getter) e `scripts/smoke/run-loop.smoke.mjs`.
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `EnemyBrain` expõe o maxHp com que foi criado; `Enemy.maxHp` lê dele e `Enemy.damage` lê do `AttackStep` usado no golpe
+- [ ] `run-loop.smoke.mjs`: inimigo da rodada 2 sem dano tem `hp === 67`, `maxHp === 67`, `damage === 13`
+- [ ] Mutantes A2 (brain com `ENEMY` fixo) e A3 (garra com 12 fixo) falham no smoke
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `fix(game): report live enemy hp and claw damage in snapshot`
+
+---
+
+### T12: Sem respawn durante toda a intermission
+
+**What**: O cenário avança a intermission em passos pequenos até a rodada 2, conferindo a cada passo que os inimigos vivos batem com `run.alive`; `ENEMY_RESPAWN_MS`, órfão, sai do tuning.
+**Where**: `scripts/smoke/run-loop.smoke.mjs`
+**Depends on**: T11
+**Reuses**: testes e cenários existentes
+**Requirement**: WAVE-05
+
+> Toca também `src/data/tuning.ts` (remove a constante órfã).
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Da limpeza da rodada 1 até a rodada 2 começar, em passos de 100 ms: inimigos com estado vivo == `run.alive`, e todo inimigo que nasce depois tem `maxHp === 67`
+- [ ] `ENEMY_RESPAWN_MS` removido de `src/data/tuning.ts` (sem outros usos)
+- [ ] Mutante A4 (respawn de 1500 ms reativado) falha
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): assert no respawn across the intermission`
+
+---
+
+### T13: Duração e posição da faixa
+
+**What**: O cenário do HUD confere a faixa visível em 1400 ms e escondida em 1600 ms, e a posição em y = 135.
+**Where**: `scripts/smoke/hud.smoke.mjs`
+**Depends on**: T12
+**Reuses**: testes e cenários existentes
+**Requirement**: RHUD-02
+
+> Toca também `src/game/Hud.ts` e `src/game/debugApi.ts` (posição no `debugState`), se ainda não expostos.
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Após começar: `step(1400)` → `banner === 'Rodada 1'`; mais `step(200)` → `banner === null`
+- [ ] `hud` do snapshot expõe a posição da faixa; x = 480 e y = 135 (±1 px)
+- [ ] Mutante A13 (faixa de 1000 ms) falha
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): pin round banner duration and position`
+
+---
+
+### T14: Player no spawn ao começar
+
+**What**: O cenário confere o player a menos de 1 px do spawn do level ao começar a run e ao começar uma nova depois do game over.
+**Where**: `scripts/smoke/run-loop.smoke.mjs`
+**Depends on**: T13
+**Reuses**: testes e cenários existentes
+**Requirement**: RUN-02, RUN-05
+
+> Toca também `src/scenes/TestScene.ts` e `src/game/debugApi.ts` (`level.playerSpawn` no snapshot).
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Spawn esperado lido do level (`P` do `LEVEL_1`, com o mesmo ajuste da cena) exposto no snapshot como `level.playerSpawn`; player `x`/`y` a menos de 1 px dele nos dois inícios (pode ser conferido logo após o `startRun`)
+- [ ] Mutante A14 (spawn deslocado de 200 px) falha
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): assert player starts runs at level spawn`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2
+Phase 1 → Phase 2 → Phase 3
 
 Phase 1:  T1 ------→ T2 ------→ T3 ------→ T4 ------→ T5 ------→ T6
 Phase 2:  T7 ------→ T8
+Phase 3:  T9 ------→ T10 -----→ T11 -----→ T12 -----→ T13 -----→ T14
 ```
 
 ---
