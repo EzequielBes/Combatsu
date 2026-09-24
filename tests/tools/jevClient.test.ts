@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { JevAuthError, askWithRetry, formatReport, readKey, type AcRow } from '../../tools/jev-refine/lib';
 
-const KEY = 'apikey_teste_nao_real_123';
+const KEY = 'chave-de-teste-nao-real-123';
 const AC: AcRow = { id: 'RUN-01', story: 'P1: Rodadas', criterion: 'WHEN the run starts THEN the game SHALL set round to 1.' };
 const OK_BODY = {
   answers: {
