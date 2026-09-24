@@ -534,9 +534,9 @@ T15 → T16
 
 **Done when**:
 
-- [ ] `bannerPos` vem de `getBounds()` (centro) do texto da faixa; `hud.smoke.mjs` confere x = 480 e y = 135 (± 1)
-- [ ] Mutante N2 (`setOrigin(0, 0.5)`) falha no smoke
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `bannerPos` vem de `getBounds()` (centro) do texto da faixa; `hud.smoke.mjs` confere x = 480 e y = 135 (± 1)
+- [x] Mutante N2 (`setOrigin(0, 0.5)`) falha no smoke
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

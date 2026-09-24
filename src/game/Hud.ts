@@ -166,7 +166,12 @@ export class Hud {
       remaining: this.remainingText.text,
       banner: this.bannerText.visible ? this.bannerText.text : null,
       center: this.centerLines,
-      bannerPos: { x: this.bannerText.x, y: this.bannerText.y },
+      // Centro visual do texto (RHUD-02): com origem não centralizada, o ponto de âncora (x/y) não discriminaria
+      // uma faixa que cresce só para um lado.
+      bannerPos: (() => {
+        const b = this.bannerText.getBounds();
+        return { x: b.centerX, y: b.centerY };
+      })(),
     };
   }
 }
