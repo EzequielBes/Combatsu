@@ -15,7 +15,6 @@ const def = (durability: number): PropDef => ({
   throwSpeed: 500,
   knockback: 8,
   socket: 'front',
-  debrisColor: 0xffffff,
   tags: [],
 });
 
