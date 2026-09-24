@@ -167,9 +167,9 @@ T9 → T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `npm install -D puppeteer-core` concluído (lockfile atualizado)
-- [ ] Script `smoke` presente
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] `npm install -D puppeteer-core` concluído (lockfile atualizado)
+- [x] Script `smoke` presente
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none
 **Gate**: build
