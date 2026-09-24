@@ -187,25 +187,25 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 | RUN-07 | P1: Run com permadeath | Specify | Pending |
 | RUN-08 | P1: Run com permadeath | Specify | Pending |
 | RUN-09 | P1: Run com permadeath | Specify | Pending |
-| RUN-10 | P1: Run com permadeath | Specify | Pending |
-| RUN-11 | P1: Run com permadeath | Specify | Pending |
-| WAVE-01 | P1: Ondas de inimigos | Specify | Pending |
+| RUN-10 | P1: Run com permadeath | Specify | Implementing |
+| RUN-11 | P1: Run com permadeath | Specify | Implementing |
+| WAVE-01 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-02 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-03 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-04 | P1: Ondas de inimigos | Specify | Pending |
+| WAVE-03 | P1: Ondas de inimigos | Specify | Implementing |
+| WAVE-04 | P1: Ondas de inimigos | Specify | Implementing |
 | WAVE-05 | P1: Ondas de inimigos | Specify | Pending |
 | WAVE-06 | P1: Ondas de inimigos | Specify | Pending |
 | WAVE-07 | P1: Ondas de inimigos | Specify | Pending |
 | WAVE-08 | P1: Ondas de inimigos | Specify | Pending |
-| WAVE-09 | P1: Ondas de inimigos | Specify | Pending |
-| DIF-01 | P1: Dificuldade progressiva | Specify | Pending |
+| WAVE-09 | P1: Ondas de inimigos | Specify | Implementing |
+| DIF-01 | P1: Dificuldade progressiva | Specify | Implementing |
 | DIF-02 | P1: Dificuldade progressiva | Specify | Pending |
 | DIF-03 | P1: Dificuldade progressiva | Specify | Pending |
 | DIF-04 | P1: Dificuldade progressiva | Specify | Pending |
-| DIF-05 | P1: Dificuldade progressiva | Specify | Pending |
-| DIF-06 | P1: Dificuldade progressiva | Specify | Pending |
+| DIF-05 | P1: Dificuldade progressiva | Specify | Implementing |
+| DIF-06 | P1: Dificuldade progressiva | Specify | Implementing |
 | RHUD-01 | P2: HUD da run | Specify | Pending |
-| RHUD-02 | P2: HUD da run | Specify | Pending |
+| RHUD-02 | P2: HUD da run | Specify | Implementing |
 | RHUD-03 | P2: HUD da run | Specify | Pending |
 | RHUD-04 | P2: HUD da run | Specify | Pending |
 | RHUD-05 | P2: Telas de título e game over | Specify | Pending |
