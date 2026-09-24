@@ -68,6 +68,12 @@ T7 → T8
 T9 → T10 → T11 → T12
 ```
 
+### Phase 5: Correções do Verifier (rodada 1)
+
+```
+T13 → T14 → T15 → T16
+```
+
 ---
 
 ## Task Breakdown
@@ -396,15 +402,121 @@ T9 → T10 → T11 → T12
 
 ---
 
+### T13: Posição do abate e mortes no mesmo frame no snapshot
+
+**What**: A cena guarda `deaths: [{ id, x, y }]` com a posição recebida em `onEnemyDied`; o cenário confere a posição e que as duas mortes do mesmo golpe entram no mesmo `step`.
+**Where**: `src/scenes/TestScene.ts`
+**Depends on**: None
+**Reuses**: `GameSnapshot` de `src/game/debugApi.ts`, `scripts/smoke/enemy-died.smoke.mjs`
+**Requirement**: FND-08, edge case "duas mortes no mesmo frame"
+
+> Toca também `src/game/debugApi.ts` (tipo do snapshot) e `scripts/smoke/enemy-died.smoke.mjs` (asserções): um único fluxo.
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `snapshot().deaths` tem uma entrada `{ id, x, y }` por inimigo morto, com `x`/`y` a menos de 40 px da posição do inimigo no snapshot anterior ao golpe fatal (mata o mutante `onDied(this, 0, 0)`) (FND-08)
+- [x] Os 2 ids iniciais aparecem no diff de `events` de um mesmo `step` (edge case)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `fix(game): record enemy death position in debug snapshot`
+
+---
+
+### T14: Arredondamento do step
+
+**What**: Teste de `step` com `ms` que não é múltiplo de 1000/60 (FND-22 agora define `ceil`).
+**Where**: `tests/game/debugApi.test.ts`
+**Depends on**: T13
+**Reuses**: fake game existente
+**Requirement**: FND-22
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `step(20)` → 2 chamadas de `headlessStep`; `step(1)` → 1 chamada (mata `floor`/`round`) (FND-22)
+- [ ] Gate check passes: `npm test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(debug): cover step rounding for partial frames`
+
+---
+
+### T15: Linha de AC exige SHALL
+
+**What**: Teste de que uma linha `N. ID: …` sem `SHALL` não vira AC; o marcador SPEC_DEVIATION sai porque a spec passou a descrever o padrão aceito.
+**Where**: `tests/tools/jevRefine.test.ts`
+**Depends on**: T14
+**Reuses**: testes existentes do `parseAcs`
+**Requirement**: FND-13, edge case "spec sem AC"
+
+> Toca também `tools/jev-refine/lib.ts` (só o comentário do marcador).
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `parseAcs` ignora `1. RUN-01: WHEN x THEN y.` (sem SHALL) e lança `nenhum AC encontrado` quando essa é a única linha
+- [ ] Gate check passes: `npm test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(tools): require shall in parsed acceptance criteria`
+
+---
+
+### T16: Conferir y dos inimigos no boot
+
+**What**: `boot.smoke.mjs` confere `enemies[].y` do snapshot.
+**Where**: `scripts/smoke/boot.smoke.mjs`
+**Depends on**: T15
+**Reuses**: cenário existente
+**Requirement**: FND-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Cada inimigo inicial tem `y` numérico entre 430 e 480 (centro do corpo sobre o chão da linha 14 do `LEVEL_1`) (FND-09)
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): assert enemy y in boot snapshot`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 
 Phase 1:  T1 ------→ T2 ------→ T3
 Phase 2:  T4 ------→ T5 ------→ T6
 Phase 3:  T7 ------→ T8
 Phase 4:  T9 ------→ T10 -----→ T11 -----→ T12
+Phase 5:  T13 -----→ T14 -----→ T15 -----→ T16
 ```
 
 ---

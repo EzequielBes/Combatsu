@@ -20,12 +20,38 @@ export default async function ({ page, baseUrl, assert }) {
   const allDead = (s) => initial.every((id) => s.events.includes(`enemyDied:${id}`));
   // Modo manual: o teclado do Phaser só é processado dentro do step, então aperta e depois avança.
   await page.evaluate(() => window.__game.step(20));
+  snap = await snapshot();
+  // Posição de cada inimigo no snapshot anterior ao golpe que o matou, e os ids que morreram em cada step.
+  const beforeFatal = new Map();
+  const diedInStep = [];
   for (let i = 0; i < 12 && !allDead(snap); i++) {
+    const prev = snap;
     await page.keyboard.press('Digit2', { delay: 50 });
     await page.evaluate(() => window.__game.step(300));
     snap = await snapshot();
+    const newly = snap.events.filter((ev) => !prev.events.includes(ev)).map((ev) => Number(ev.split(':')[1]));
+    for (const id of newly) beforeFatal.set(id, prev.enemies.find((e) => e.id === id));
+    if (newly.length) diedInStep.push(newly);
   }
   assert(allDead(snap), `nem todos morreram: events=${JSON.stringify(snap.events)}`);
+
+  // O golpe de teste acerta os dois de uma vez: as duas mortes entram no mesmo step (edge case do mesmo frame).
+  assert(
+    diedInStep.some((ids) => initial.every((id) => ids.includes(id))),
+    `as duas mortes deveriam cair no mesmo step: ${JSON.stringify(diedInStep)}`,
+  );
+
+  // Cada abate chega com a posição do inimigo naquele frame (FND-08): perto de onde ele estava antes do golpe.
+  for (const id of initial) {
+    const deaths = snap.deaths.filter((d) => d.id === id);
+    assert(deaths.length === 1, `deaths deveria ter uma entrada para ${id}: ${JSON.stringify(snap.deaths)}`);
+    const was = beforeFatal.get(id);
+    const { x, y } = deaths[0];
+    assert(
+      Math.abs(x - was.x) < 40 && Math.abs(y - was.y) < 40,
+      `posição do abate ${JSON.stringify(deaths[0])} longe de ${JSON.stringify({ x: was.x, y: was.y })}`,
+    );
+  }
 
   const count = (events) => {
     const c = new Map();
