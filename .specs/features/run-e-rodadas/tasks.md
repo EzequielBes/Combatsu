@@ -444,10 +444,10 @@ T9 → T10 → T11 → T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Após começar: `step(1400)` → `banner === 'Rodada 1'`; mais `step(200)` → `banner === null`
-- [ ] `hud` do snapshot expõe a posição da faixa; x = 480 e y = 135 (±1 px)
-- [ ] Mutante A13 (faixa de 1000 ms) falha
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Após começar: `step(1400)` → `banner === 'Rodada 1'`; mais `step(200)` → `banner === null`
+- [x] `hud` do snapshot expõe a posição da faixa; x = 480 e y = 135 (±1 px)
+- [x] Mutante A13 (faixa de 1000 ms) falha
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

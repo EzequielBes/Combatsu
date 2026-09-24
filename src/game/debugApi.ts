@@ -11,7 +11,14 @@ export interface GameSnapshot {
   /** Estado da máquina de run (RUN-09). */
   run: { state: RunState; round: number; kills: number; alive: number; queued: number };
   /** Estado do HUD da run (RHUD-01..07). */
-  hud: { ignoredByMain: boolean; round: string; remaining: string; banner: string | null; center: string[] | null };
+  hud: {
+    ignoredByMain: boolean;
+    round: string;
+    remaining: string;
+    banner: string | null;
+    center: string[] | null;
+    bannerPos: { x: number; y: number };
+  };
 }
 
 export interface DebugProbe {
