@@ -45,6 +45,10 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | Como ativar o modo debug | parâmetro `?debug` na URL ou a tecla F1 | Não interfere nos controles do jogo | y |
 | Painel de controles | Aparece por 8 s ao iniciar/reiniciar; Tab alterna | Não cobre a tela o tempo todo | y |
 | Alcance por golpe (FIX-03) | Socos ≤ 46 px e chute ≤ 55 px do centro do inimigo, com a hitbox atual do combo; o desenho do golpe estende o membro até esse alcance | Achado no lote 1: a hitbox do chute alcança ~53 px; o usuário escolheu limite por golpe em vez de mexer no tuning do combo | y |
+| O que é "golpe que conecta" (FX-01/03) | O alvo aceitou o golpe (aplicou dano ou reação); golpe ignorado não dá faísca, tremida nem congelamento (FX-06) | Lacuna apontada pelo Verifier na rodada 1: feedback de golpe ignorado mente para o jogador | y |
+| Tolerância do congelamento (FX-01) | Pelo menos a duração do spec e menos que ela mais um frame | O congelamento só termina na virada de frame; lacuna apontada pelo Verifier na rodada 1 | y |
+| Alcance do ART-01 | Tudo que é desenhado: sprites, tiles, fundo, partículas, tint e texto do HUD | Lacuna apontada pelo Verifier na rodada 1 | y |
+| Velocidade independente de fps (AI-06) | Velocidades em px/s valem a 30 e a 60 fps (±10%) | Falha real achada pelo Verifier: o atrito zerava a velocidade entre steps do Matter | y |
 | Cenário | Pátio/corredor de escola à noite, com lua e prédios ao fundo | Coerente com o tema de Jujutsu Kaisen | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -89,7 +93,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 
 **Acceptance Criteria**:
 
-1. ART-01: The art pipeline SHALL render every sprite, tile and background layer using only colors from the single palette module.
+1. ART-01: The game SHALL draw every sprite, tile, background layer, particle, tint and HUD text using only colors from the single palette module.
 2. ART-02: IF a sprite grid has rows of different widths, a character missing from the palette, or frames of different sizes THEN the parser SHALL throw an error whose message names the sprite.
 3. ART-03: The art pipeline SHALL render every sprite, tile and ragdoll part at a texel scale of exactly 2 world pixels per art pixel.
 4. RES-01: The camera SHALL use zoom 1.5, round pixels, follow the player and never show anything outside the room bounds.
@@ -123,9 +127,10 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 
 **Acceptance Criteria**:
 
-1. FX-01: WHEN a hit connects THEN the game SHALL freeze physics and animations for 50 ms if the hit is light and 90 ms if it is heavy.
+1. FX-01: WHEN a hit connects (the target accepted it and applied damage or a reaction) THEN the game SHALL freeze physics and animations for at least 50 ms and less than 50 ms plus one frame if the hit is light, and for at least 90 ms and less than 90 ms plus one frame if it is heavy.
 2. FX-02: IF a new hit connects while a freeze is active THEN the game SHALL keep the longer of the remaining freeze and the new freeze, never the sum.
 3. FX-03: WHEN a hit connects THEN the game SHALL spawn a spark at the contact point, white for light hits, amber for heavy hits and purple for prop hits.
+4. FX-06: IF a hit is ignored by its target (invulnerable player, dead or dissolving enemy, owner, same team) THEN the game SHALL NOT spawn a spark, shake the camera or start a freeze.
 
 **Independent Test**: no navegador, a posição do inimigo fica parada durante o congelamento; os testes do timer de hitstop cobrem a sobreposição.
 
@@ -148,6 +153,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 7. AI-03: WHEN the player is less than 40 px away horizontally from a chasing enemy THEN the enemy SHALL wind up for 450 ms, attack with an active hitbox for 120 ms dealing 12 damage, then rest for 800 ms before chasing again.
 8. AI-04: IF the enemy receives a hit during windup or attack THEN the enemy SHALL cancel its attack and restart the cycle after the hit reaction.
 9. AI-05: The enemy attack SHALL never damage the enemy itself or other enemies.
+10. AI-06: The enemy SHALL move at its tuned patrol and chase speeds within ±10% whether the game runs at 30 or 60 frames per second.
 
 **Independent Test**: testes puros do ciclo da IA e da vida; no navegador, o player parado perto do inimigo perde 12 de hp a cada golpe e renasce ao zerar.
 
@@ -229,6 +235,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | FX-01 | P1: Impacto do golpe | Tasks | Implementing |
 | FX-02 | P1: Impacto do golpe | Tasks | Implementing |
 | FX-03 | P1: Impacto do golpe | Tasks | Implementing |
+| FX-06 | P1: Impacto do golpe | Tasks | Pending |
 | HP-01 | P1: Luta de verdade | Tasks | Implementing |
 | HP-02 | P1: Luta de verdade | Tasks | Implementing |
 | HP-03 | P1: Luta de verdade | Tasks | Implementing |
@@ -238,6 +245,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | AI-03 | P1: Luta de verdade | Tasks | Implementing |
 | AI-04 | P1: Luta de verdade | Tasks | Implementing |
 | AI-05 | P1: Luta de verdade | Tasks | Implementing |
+| AI-06 | P1: Luta de verdade | Tasks | Pending |
 | ENV-01 | P2: Cenário | Tasks | Implementing |
 | ENV-02 | P2: Cenário | Tasks | Implementing |
 | PRP-01 | P2: Objetos e HUD | Tasks | Implementing |
@@ -247,7 +255,7 @@ Esta feature torna a demo legível, consistente e jogável, para que a avaliaç�
 | FX-04 | P3: Polimento | Tasks | Implementing |
 | FX-05 | P3: Polimento | Tasks | Implementing |
 
-**Coverage:** 32 total, 0 mapped to tasks yet (Tasks phase pending).
+**Coverage:** 34 total, 34 mapped to tasks (FX-06 e AI-06 na Fase 7).
 
 ---
 

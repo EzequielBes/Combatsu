@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/visual-e-jogabilidade/spec.md`
 **Design**: `.specs/features/visual-e-jogabilidade/design.md`
-**Status**: Approved
+**Status**: In Progress
 **Branch**: `feat/visual-e-jogabilidade`
 **Test count before this feature**: 76
 
@@ -86,6 +86,15 @@ T22 -> T23
 T24 -> T25
 T26
 T27 -> T28
+```
+
+### Phase 7: Correções da rodada 1 do Verifier
+
+```
+T29
+T30
+T31
+T32
 ```
 
 ---
@@ -680,6 +689,91 @@ T27 -> T28
 **Tests**: none (documentação)
 **Gate**: build
 **Commit**: `docs: document controls, debug mode and art pipeline`
+
+---
+
+### Phase 7: Correções da rodada 1 do Verifier
+
+#### T29: Velocidade do inimigo independente de fps
+
+**What**: Reaplicar o vx da IA em todo step do Matter (ex. evento `beforeupdate`) ou zerar o atrito do corpo enquanto a IA age, para patrulha e perseguição valerem em px/s a 30 e 60 fps.
+**Where**: `src/game/Enemy.ts`
+**Depends on**: None
+**Reuses**: `EnemyAI` output, `ENEMY_AI`
+**Requirement**: AI-06, AI-01, AI-02
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] Smoke medindo por `performance.now()`: patrulha 35 px/s ±10% e perseguição 70 px/s ±10% a 60 fps e forçando ~30 fps (ex. `game.loop` com `fps.limit` 30 ou `targetFps`)
+- [ ] Recuo, ragdoll e levantar continuam como antes
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: none (adaptador de física; smoke headless em 30 e 60 fps)
+**Gate**: build
+**Commit**: `fix(enemy): keep ai walk speed independent of frame rate`
+
+---
+
+#### T30: Feedback só para golpe aceito
+
+**What**: `Hittable.receiveHit` passa a devolver `boolean` (aceito ou ignorado); `AttackHitbox` e `Prop` só chamam `onConnect` (faísca, tremida, hitstop) quando o alvo aceitou.
+**Where**: `src/game/hitbox.ts`
+**Depends on**: None
+**Reuses**: `Health.receive` (já devolve `ignored`), `EnemyBrain.receiveHit` (devolve `[]` quando morto)
+**Requirement**: FX-06, FX-01, FX-03
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] Player, Enemy e Prop implementam o retorno; o fixture de `tests/game/bodyTags.test.ts` só ajusta o tipo
+- [ ] Smoke: garra no player invulnerável = 0 faíscas e 0 hitstop; golpe em inimigo dissolvendo = 0 faíscas; golpe aceito continua com faísca e hitstop
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: none (adaptadores; as regras de aceitar/ignorar já têm teste em `tests/core/health.test.ts` e `tests/core/enemyBrain.test.ts`)
+**Gate**: build
+**Commit**: `fix(combat): only give hit feedback when the target accepts the hit`
+
+---
+
+#### T31: Texto do HUD e dissolução dentro da paleta
+
+**What**: Cor do texto do HUD e do painel vindas da `PALETTE`; tint e partículas da dissolução do ragdoll só com cores da paleta e escala inteira de texel.
+**Where**: `src/game/Hud.ts`
+**Depends on**: None
+**Reuses**: `PALETTE`, `ART_SCALE`
+**Requirement**: ART-01, ART-03
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] Nenhum literal de cor fora da `PALETTE` em `src/game/Hud.ts` e `src/game/Ragdoll.ts` (grep por `0x` e `#`)
+- [ ] Smoke + captura: HUD legível; dissolução continua roxa
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: none (adaptadores)
+**Gate**: build
+**Commit**: `fix(art): keep hud text and dissolve effect inside the palette`
+
+---
+
+#### T32: Remover campo morto debrisColor
+
+**What**: Tirar `debrisColor` de `PropDef`, das definições e do fixture de teste (o estilhaço usa fragmentos do sprite).
+**Where**: `src/core/props.ts`
+**Depends on**: None
+**Reuses**: nada
+**Requirement**: ART-01, PRP-01
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [ ] `grep -rn debrisColor src tests` vazio; nenhuma asserção removida
+- [ ] Gate check passes: `npm run build && npm test` (191 testes)
+
+**Tests**: unit (os testes de `tests/core/props.test.ts` e `tests/data/props.test.ts` continuam cobrindo PropDef)
+**Gate**: build
+**Commit**: `refactor(props): drop unused debris color field`
 
 ---
 
