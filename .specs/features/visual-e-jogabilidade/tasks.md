@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/visual-e-jogabilidade/spec.md`
 **Design**: `.specs/features/visual-e-jogabilidade/design.md`
-**Status**: In Progress
+**Status**: Done (M12 aceito como risco; ver validation.md)
 **Branch**: `feat/visual-e-jogabilidade`
 **Test count before this feature**: 76
 

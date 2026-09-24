@@ -391,3 +391,13 @@ Os ACs de adaptador (matriz = none) são verificados por `arquivo:linha` mais sm
 **Atualização da re-verificação final (após T38)**: gate 198 passed; M9/M10 mortos (R3-1 fechada). Continua ❌ Not Ready por **M12** (não zerar `stallMs` ao inverter sobrevive e traz de volta o tremor na parede). Próximo passo: a fix task da lacuna R4-1 (um teste, sem mudar `src/`) e nova re-verificação curta do sensor. Como a rodada 3 já era a iteração 3 de 3, a decisão entre aplicar o teste ou aceitar M12 como risco conhecido fica com o usuário.
 
 **validate_state.py (re-verificação final)**: exit 1, `ERROR visual-e-jogabilidade: validation.md verdict is FAIL - route the ranked gaps to fix tasks, then re-verify (feature is not done)`. É o esperado para um relatório FAIL legível.
+
+---
+
+## Decisão do usuário: M12 aceito como risco conhecido (2026-09-23)
+
+- **Contexto:** depois de 3 rodadas de correção e da re-verificação curta, o comportamento ficou aprovado em 34/34 ACs, com evidência `arquivo:linha` e medição. O único achado aberto é o mutante M12: apagar `this.stallMs = 0;` logo depois da inversão da patrulha presa (`src/core/enemyAI.ts:131`) não quebra nenhum teste.
+- **Estado do código:** correto. A janela de 200 ms recomeça depois de cada inversão. A sonda do Verifier mostrou `vx = -35` estável nos 12 frames seguintes, e o jogo não é afetado.
+- **Decisão:** o usuário escolheu aceitar M12 como risco conhecido, sem teste adicional. O risco é uma regressão futura nesse reset não ser pega pela suíte. Se acontecer, o sintoma é o inimigo "tremendo" contra a parede.
+- **Veredito formal:** este relatório continua FAIL, porque o Verifier não reescreveu o resultado. Por isso o `validate_state.py` sai com código 1. A feature foi encerrada com esse risco aceito explicitamente, e não com PASS.
+- **Lição relacionada:** L-011 (candidate), sobre testar os frames logo depois de uma ação disparada por um acumulador.

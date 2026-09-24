@@ -29,10 +29,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/visual-e-jogabilidade`
-- **Phase / Task**: Execute - lote 1 (Fase 1, T1-T6)
-- **Completed**: spec, design e tasks aprovados
+- **Phase / Task**: Execute concluído (T1–T38); UAT interativo com o usuário pendente
+- **Completed**: T1–T38; 3 rodadas de Verifier + re-verificação curta; 34/34 ACs verificados; M12 aceito como risco pelo usuário
 - **In-progress** (file:line): none
-- **Next step**: worker do lote 1 executa T1-T6
+- **Next step**: UAT jogando com o usuário (contraste do uniforme do player contra o fundo já anotado)
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: feat/visual-e-jogabilidade
+- **Branch**: feat/visual-e-jogabilidade (sem push)
