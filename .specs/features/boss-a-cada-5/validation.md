@@ -1,25 +1,91 @@
 # Boss a cada 5 rodadas — Validation
 
+## Rodada 2
+
+**Date**: 2026-09-25
+**Spec**: `.specs/features/boss-a-cada-5/spec.md` (52 requisitos, 6 casos de borda)
+**Diff range**: `3c6592b..a2308c6` (T11 — correções da rodada 1). 11 arquivos, +130/−13: `src/game/Boss.ts`, `src/core/collision.ts`, `src/game/{Projectile,Player,debugApi,physics}.ts`, `src/scenes/TestScene.ts`, `scripts/smoke/{boss,boss-victory,run}.mjs`, `.specs/features/boss-a-cada-5/tasks.md`.
+**Verifier**: sub-agente independente (autor ≠ verificador), rodada 2.
+
+### Veredito da rodada 2: **FAIL** ❌ (2 de 3 rodadas)
+
+**Result**: FAIL
+
+Motivo: gates verdes na árvore real (`npx vitest run` 471/471, `npm run build` exit 0, `npm run smoke` 7/7) e os 3 fixes da rodada 1 (BOSS-08, BWIN-01, BAT-06) agora têm cenário de smoke que os discrimina — confirmado: os 3 mutantes originais da rodada 1, reaplicados numa cópia isolada, são mortos. O bug real da rodada 1 (chefe afundava no chão após o salto) também está corrigido (`Filters.bossAirborne` em vez de `isSensor`) e coberto por um guard `boss.y < 544` em todo passo do smoke `boss`. Mas o sensor desta rodada incluiu 2 mutações novas nos pontos que o próprio T11 tocou, e uma delas sobreviveu: o pouso do salto (`src/game/Boss.ts:250`) usa `groundTopBelow` para recalcular o chão sob o x de pouso, mas nenhum cenário de smoke faz o chefe saltar de um trecho do `LEVEL_1` para um x sobre uma das plataformas elevadas (`src/data/level1.ts:9,12`, colunas 15-20/29-34 e 8-12/22-25, alturas diferentes do piso principal da linha 15) — então um regresso que reusasse o `y` pré-salto "cru" (em vez de recalcular no destino) não seria pego. O código real (não mutado) já está correto; é uma lacuna de cobertura, não um bug ao vivo. Por isso a Requirement Traceability **continua não promovida**.
+
+### Gates (rodada 2)
+
+- `npx vitest run`: **33 arquivos, 471 passed, 0 failed** (idêntico à rodada 1 — T11 não tocou `tests/**`, só os smokes).
+- `npm run build`: **exit 0** (mesmo aviso de chunk pré-existente).
+- `npm run smoke`: **exit 0** — `boot`, `boss-victory`, `boss`, `enemy-died`, `hud`, `no-debug`, `run-loop` todos `ok` (7/7, primeira execução).
+
+### Re-verificação dos ACs tocados pelo T11 (`file:line`)
+
+| AC(s) | Spec-defined outcome | `file:line` + asserção | Result |
+| --- | --- | --- | --- |
+| BOSS-08 | intro: golpe não muda hp nem gera feedback (faísca/hitstop) | `src/game/Boss.ts:143-146` (guard `state === 'intro'` inalterado, ainda devolve `false`) · `src/scenes/TestScene.ts:452` (só empilha `bossHitAccepted` quando `receiveHit` devolve `true`) · `scripts/smoke/boss.smoke.mjs:57` (`assert(!s.events.includes('bossHitAccepted'))`) — mutante da rodada 1 (remover `'intro'` do guard) agora morre: `FALHA boss.smoke.mjs: o chefe aceitou golpe na intro` | ✅ PASS (era ⚠️ sobrevivente) |
+| BWIN-01 | cura `round(0,3×maxHp)` com teto, discriminada abaixo do teto | `src/scenes/TestScene.ts:320` (`Math.round(BOSS.healFraction * this.player.maxHp)`, inalterado) · `src/game/Player.ts:238-240` (`debugHurt`, tecla 4) · `scripts/smoke/boss-victory.smoke.mjs:47-52,66,68` (fere o player a 50 hp antes do golpe fatal, `assert(hpBefore <= 70)`, `assert(hp === Math.min(100, hpBefore+30))`) — mutante da rodada 1 (0,2 fixo) agora morre: `FALHA: cura: antes 50, depois 70` (esperado 65) | ✅ PASS (era ⚠️ sobrevivente) |
+| BAT-06 | some ao tocar parede, distinto de expirar por alcance (BAT-12) | `src/game/Projectile.ts:94-96` (`destroyNow()` no toque com `terrain`, inalterado) · `scripts/smoke/boss.smoke.mjs:236-272` (novo: reposiciona o player perto de uma parede, força outro salto, mede `traveled` da onda que morre perto da parede, `assert(traveled < 560)`) — mutante da rodada 1 (remover o `destroyNow` do toque em parede) agora morre: a onda percorre `traveled:596` (quase o alcance de 600) em vez de morrer perto da parede | ✅ PASS (era ⚠️ sobrevivente) |
+| BAT-03 | pouso emite 2 ondas, direções opostas | `src/game/Boss.ts:259,264` (`onLanded` chamado 2x com `dir` opostos, inalterado) — confirmado incidentalmente: o mutante novo #4 (filtro do salto sem trocar) quebra esta mesma asserção (`ondas deveriam ter direções opostas`), mostrando que o teste continua um discriminador forte para esta região | ✅ PASS (sem mudança) |
+| BAT-13 | corpo do chefe empurra o player por colisão física (não sensor) | `src/core/collision.ts:37` (`Filters.boss`, inalterado, ainda sólido) · `src/game/Boss.ts:239` (`exitLeap`/`onLand` sempre devolvem o filtro a `Filters.boss` depois do salto) | ⚠️ Spec-precision gap (mesma nota qualificada da rodada 1, sem mudança — nenhuma asserção de não-sobreposição dedicada) |
+| Guard novo `boss.y` | Chefe nunca sai da sala (0..544) durante toda a luta, inclusive depois de pousar | `src/game/Boss.ts:89` (getter `y`) · `src/game/debugApi.ts:40-41`, `src/scenes/TestScene.ts:382` (exposto no snapshot) · `scripts/smoke/boss.smoke.mjs:18-21` (`stepAndSnap` assere `sn.boss.y < 544` em **todo** passo do cenário `boss`, não só no fim) | ✅ PASS (hardening do bug real da rodada 1; não é um AC formal do spec.md) |
+
+Amostragem dos demais ACs: os 471 testes de unidade (`tests/core/{bossBrain,bossAI,bossTier,waves,run,mover}.test.ts`, `tests/data/tuning.test.ts`, `tests/game/art.test.ts`) continuam idênticos e verdes — T11 não tocou nenhum desses arquivos de teste nem os arquivos que eles cobrem (`bossBrain.ts`, `bossAI.ts`, `bossTier.ts`, `waves.ts`, `Hud.ts`, `tuning.ts`), então BOSS-01..07, BAT-01/02/04/05/07-12, BAI-*, BHUD-*, BTIER-* seguem cobertos como na rodada 1.
+
+### Discrimination Sensor (rodada 2)
+
+**Sensor depth**: 5 mutações — os 3 sobreviventes da rodada 1 (para confirmar que T11 os matou) mais 2 novas nos pontos que o próprio T11 introduziu. Isolado num `git worktree` descartável em `scratchpad/verify-f2r2` (junction para `node_modules`, desfeita com a remoção do link seguida de `Remove-Item` antes do `git worktree remove --force`, pois o `rmdir` do Git Bash não apaga a junction do Windows). `git status --porcelain` da árvore real idêntico antes/depois: `?? .agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`.
+
+| # | File:line | Mutação | Ferramenta | Killed? |
+| --- | --- | --- | --- | --- |
+| 1 (rodada 1, M3) | `src/game/Boss.ts:145` | Remove `'intro'` do guard de `receiveHit` | `npm run smoke -- boss` | ✅ Killed — `FALHA boss.smoke.mjs: o chefe aceitou golpe na intro` |
+| 2 (rodada 1, M4) | `src/scenes/TestScene.ts:320` | Cura fixa em `0,2` em vez de `BOSS.healFraction` | `npm run smoke -- boss-victory` | ✅ Killed — `FALHA: cura: antes 50, depois 70` |
+| 3 (rodada 1, M5) | `src/game/Projectile.ts:94-96` | Remove `destroyNow()` do toque com `terrain` (mantém só o `return`) | `npm run smoke -- boss.smoke` | ✅ Killed — `FALHA: a onda deveria sumir na parede antes do alcance` (`traveled:596`) |
+| 4 (novo) | `src/game/Boss.ts:224` (`enterLeap`) | Filtro do salto sem mudar: `applyFilter(this.body, Filters.bossAirborne)` → `applyFilter(this.body, Filters.boss)` (sem efeito) | `npm run smoke -- boss.smoke` | ✅ Killed — `FALHA: ondas deveriam ter direções opostas` (a colisão física durante o voo roteirizado corrompe a sequência de pouso) |
+| 5 (novo) | `src/game/Boss.ts:250` (`onLand`) | Pouso usa `leapGroundY` cru em vez de `groundTopBelow(x, leapGroundY - LEAP_ARC_HEIGHT) - BODY_H/2` | `npm run smoke` (suíte completa) | ❌ **Survived**. `LEVEL_1` tem plataformas elevadas (`src/data/level1.ts:9,12`) com altura diferente do piso principal, e é exatamente esse cenário — saltar de um trecho para um x com altura de chão diferente — que discriminaria `groundTopBelow` do valor cru. Nenhum cenário de smoke força o chefe a pousar sobre uma plataforma nem perto de uma; o código de produção (não mutado) já está correto, mas o teste não fecharia a porta se essa linha regredisse. |
+
+**Resultado**: 4/5 killed, 1/5 sobrevivente (não equivalente — efeito observável real em qualquer pouso cujo x de destino tenha altura de chão diferente da altura de partida). ❌
+
+### Fix Plan (rodada 2 → rodada 3)
+
+### Fix 4: pouso do salto não é discriminado de `groundTopBelow` quando o chefe pousa sobre uma plataforma
+
+- **Root cause**: `boss.smoke.mjs` sempre deixa o chefe saltar e pousar sobre o piso principal (linha 15 do `LEVEL_1`); nenhum cenário posiciona o player sob uma das plataformas elevadas (colunas 15-20 ou 29-34 da linha 9, x ≈ 480-672 e 928-1120; ou colunas 8-12/22-25 da linha 12) antes do próximo salto do chefe.
+- **Fix task**: no cenário `boss`, antes de um salto, mover o player para um x sob uma plataforma (ex.: x≈560, coluna 17-18) e, após o pouso, assert que `boss.y` corresponde ao topo da plataforma (calculável a partir do `LEVEL_1`/`groundTopBelow`), não ao piso principal nem ao `leapGroundY` de partida.
+- **Priority**: Minor — sem bug ao vivo (o código de produção já usa `groundTopBelow`); fecha só a lacuna de cobertura na linha exata que o T11 introduziu.
+
+### Lessons distilled (rodada 2)
+
+- `L-029` (novo, `surviving_mutant`, `src/game/Boss.ts:250`): registrado via `lessons.py` — ver seção Lessons abaixo.
+
+---
+
+## Requirement Traceability Update (rodada 2)
+
+**Não promovida** — veredito FAIL. Todas as linhas de `spec.md` permanecem `Implementing`; Fix 4 acima precisa de uma rodada 3 para fechar o sensor 5/5 (ou justificar equivalência) antes de promover.
+
+---
+
+## Rodada 1
+
 **Date**: 2026-09-25
 **Spec**: `.specs/features/boss-a-cada-5/spec.md` (52 requisitos, 6 casos de borda)
 **Diff range**: `7bda3e6..4ced596` (T1..T10, mais `75532ff` que reconcilia `WAVE-01`/edge case de `run-e-rodadas` com `BOSS-01`). 34 arquivos, +3162/−167: `src/core/{bossAI,bossBrain,bossTier,mover,collision,hitstop,run,waves}.ts`, `src/data/{tuning,fx}.ts`, `src/game/{Boss,Projectile,Hud,Player,debugApi,physics,textures}.ts`, `src/game/art/{index,sprites/boss}.ts`, `src/scenes/TestScene.ts`, `scripts/smoke/{boss,boss-victory}.smoke.mjs`, mais os `tests/**` correspondentes.
 **Verifier**: sub-agente independente (autor ≠ verificador), rodada 1.
 
----
+### Veredito da rodada 1: **FAIL** ❌
 
-## Result: **FAIL** ❌
-
-Motivo: os gates estão verdes e os 52 requisitos têm evidência `file:line` que discrimina o valor do spec (nenhum spec-precision gap), mas o sensor de discriminação (5 mutações nos pontos de maior risco do diff) matou só 2/5. As outras 3 sobrevivem porque testes existentes não isolam o comportamento específico que deveriam proteger — ver Discrimination Sensor abaixo. Por isso a Requirement Traceability **não foi promovida**.
+**Resultado**: os gates estão verdes e os 52 requisitos têm evidência `file:line` que discrimina o valor do spec (nenhum spec-precision gap), mas o sensor de discriminação (5 mutações nos pontos de maior risco do diff) matou só 2/5. As outras 3 sobrevivem porque testes existentes não isolam o comportamento específico que deveriam proteger — ver Discrimination Sensor abaixo. Por isso a Requirement Traceability **não foi promovida**.
 
 ---
 
-## Gates
+## Gates (rodada 1)
 
 - `npx vitest run`: **33 arquivos, 471 passed, 0 failed, 0 skipped** (era 323 antes da feature, conforme `tasks.md`; delta +148, todos novos, nenhum removido/afrouxado).
 - `npm run build`: **exit 0** (só o aviso de chunk > 500 kB, pré-existente).
 - `npm run smoke`: **exit 0** na primeira execução — `boot`, `boss-victory`, `boss`, `enemy-died`, `hud`, `no-debug`, `run-loop` todos `ok` (7 cenários; F0/F1 continuam verdes).
 
-## Task Completion
+## Task Completion (rodada 1)
 
 | Task | Status | Notes |
 | --- | --- | --- |
@@ -27,7 +93,7 @@ Motivo: os gates estão verdes e os 52 requisitos têm evidência `file:line` qu
 
 ---
 
-## Spec-Anchored Acceptance Criteria (evidence-or-zero)
+## Spec-Anchored Acceptance Criteria (evidence-or-zero) — rodada 1
 
 | AC(s) | Spec-defined outcome | `file:line` + asserção | Result |
 | --- | --- | --- | --- |
@@ -63,7 +129,7 @@ Motivo: os gates estão verdes e os 52 requisitos têm evidência `file:line` qu
 
 ---
 
-## Edge Cases
+## Edge Cases (rodada 1)
 
 - [x] Player no mesmo x do chefe ao iniciar investida → usa o `facing` atual (`tests/core/bossAI.test.ts:215-231`).
 - [x] Chefe atordoado quando cruza um limiar → stagger termina e o roar começa (`tests/core/bossBrain.test.ts:241-257`).
@@ -74,7 +140,7 @@ Motivo: os gates estão verdes e os 52 requisitos têm evidência `file:line` qu
 
 ---
 
-## Discrimination Sensor
+## Discrimination Sensor (rodada 1)
 
 **Sensor depth**: lightweight (5 mutações, conforme pedido), isoladas num `git worktree` descartável em `scratchpad/verify-f2` (junction para `node_modules`, desfeita com `rmdir` antes do `git worktree remove --force`). `git status --porcelain` da árvore real idêntico antes/depois: `?? .agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`.
 
@@ -86,11 +152,11 @@ Motivo: os gates estão verdes e os 52 requisitos têm evidência `file:line` qu
 | 4 | `src/scenes/TestScene.ts:318` | Cura fixa em `0,2` em vez de `BOSS.healFraction` (0,3) | `npm run smoke` | ❌ **Survived**. `boss-victory.smoke.mjs:60` mede `hpBefore` logo antes de cada golpe de teste, mas nessa sequência (`Digit2` repetido, sem o chefe atacar de volta a tempo) o player nunca perde hp: chega à morte do chefe com `hp=100` (teto). `min(100, 100+20)===min(100, 100+30)===100`, então o teste não distingue 20 de 30 - só prova o teto, não a fração. |
 | 5 | `src/game/Projectile.ts:89-91` | Onda/projétil não some ao tocar parede (removido o `destroyNow()` do `if (other.kind === 'terrain')`, mantendo só o retorno) | `npm run smoke` | ❌ **Survived**. `boss.smoke.mjs:216-222` só espera a lista de ondas ficar vazia, e o `Mover` (`mover.ts`) sempre expira sozinho aos 600 px independentemente de tocar parede - nenhuma asserção mede que o desaparecimento aconteceu antes do alcance máximo (ou perto de uma parede real), então a remoção por parede especificamente nunca é exercida de forma isolada. |
 
-**Resultado do sensor**: 2/5 killed, 3/5 sobreviventes (nenhum equivalente - as 3 mutações têm efeito observável real, só não são cobertas pelos testes atuais). ❌
+**Resultado**: 2/5 killed, 3/5 sobreviventes (nenhum equivalente - as 3 mutações têm efeito observável real, só não são cobertas pelos testes atuais). ❌ (rodada 1)
 
 ---
 
-## Code Quality (diff completo)
+## Code Quality (diff completo) — rodada 1
 
 | Principle | Status |
 | --- | --- |
@@ -105,7 +171,7 @@ Motivo: os gates estão verdes e os 52 requisitos têm evidência `file:line` qu
 
 ---
 
-## Fix Plans
+## Fix Plans (rodada 1)
 
 ### Fix 1: intro do chefe devolve `true` para golpes reais (mascarado pela dupla proteção)
 
@@ -127,13 +193,13 @@ Motivo: os gates estão verdes e os 52 requisitos têm evidência `file:line` qu
 
 ---
 
-## Requirement Traceability Update
+## Requirement Traceability Update (rodada 1)
 
 **Não promovida** — veredito FAIL. Todas as linhas de `spec.md` permanecem `Implementing` até uma rodada de re-verificação confirmar os 3 fixes acima (sensor 5/5 ou equivalência justificada).
 
 ---
 
-## Summary
+## Summary (rodada 1)
 
 **Overall**: ⚠️ Issues — spec-anchored coverage completa e gates verdes, mas o sensor de discriminação achou 3 testes que não provam o que deveriam.
 

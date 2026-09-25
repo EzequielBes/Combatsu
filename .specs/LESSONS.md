@@ -180,6 +180,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/game/Projectile.ts:89-91 (mutant 5) (lifecycle)
 - last seen: 2026-09-25T14:46:04Z
 
+### L-029 - When a scripted movement (like a leap) can start and end at different terrain heights, recompute the landing height at the destination x instead of reusing the height captured at takeoff, and test it by landing on a platform whose height differs from the takeoff point.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `physics leap` · harmful: 0
+- features: boss-a-cada-5
+- evidence: src/game/Boss.ts:250 (mutant 5, rodada 2) (physics leap)
+- last seen: 2026-09-25T15:32:27Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
