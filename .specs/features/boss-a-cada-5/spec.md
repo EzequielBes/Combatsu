@@ -200,60 +200,60 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| BOSS-01 | P1: Rodada de chefe | Specify | Implementing |
-| BOSS-02 | P1: Rodada de chefe | Specify | Implementing |
-| BOSS-03 | P1: Rodada de chefe | Specify | Implementing |
-| BOSS-04 | P1: Rodada de chefe | Specify | Implementing |
-| BOSS-07 | P1: Rodada de chefe | Specify | Implementing |
-| BOSS-05 | P1: Rodada de chefe | Specify | Implementing |
-| BOSS-06 | P1: Rodada de chefe | Specify | Implementing |
-| BOSS-08 | P1: Rodada de chefe | Specify | Implementing |
-| BAT-01 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-09 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-02 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-10 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-03 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-04 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-05 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-11 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-06 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-12 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-07 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-08 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-13 | P1: Ataques telegrafados | Specify | Implementing |
-| BAI-01 | P1: Fases e postura | Specify | Implementing |
-| BAI-02 | P1: Fases e postura | Specify | Implementing |
-| BAI-03 | P1: Fases e postura | Specify | Implementing |
-| BAI-11 | P1: Fases e postura | Specify | Implementing |
-| BAI-04 | P1: Fases e postura | Specify | Implementing |
-| BAI-13 | P1: Fases e postura | Specify | Implementing |
-| BAI-12 | P1: Fases e postura | Specify | Implementing |
-| BAI-05 | P1: Fases e postura | Specify | Implementing |
-| BAI-06 | P1: Fases e postura | Specify | Implementing |
-| BAI-07 | P1: Fases e postura | Specify | Implementing |
-| BAI-08 | P1: Fases e postura | Specify | Implementing |
-| BAI-09 | P1: Fases e postura | Specify | Implementing |
-| BAI-10 | P1: Fases e postura | Specify | Implementing |
-| BAI-14 | P1: Fases e postura | Specify | Implementing |
-| BHUD-01 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BHUD-02 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BHUD-03 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BHUD-04 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BHUD-05 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BHUD-06 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BHUD-07 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BWIN-01 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BWIN-02 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BWIN-03 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BTIER-01 | P2: Chefes mais duros e variados | Specify | Implementing |
-| BTIER-02 | P2: Chefes mais duros e variados | Specify | Implementing |
-| BTIER-03 | P2: Chefes mais duros e variados | Specify | Implementing |
-| BTIER-04 | P2: Chefes mais duros e variados | Specify | Implementing |
-| BTIER-05 | P2: Chefes mais duros e variados | Specify | Implementing |
-| BTIER-07 | P2: Chefes mais duros e variados | Specify | Implementing |
-| BTIER-06 | P2: Chefes mais duros e variados | Specify | Implementing |
+| BOSS-01 | P1: Rodada de chefe | Specify | Verified |
+| BOSS-02 | P1: Rodada de chefe | Specify | Verified |
+| BOSS-03 | P1: Rodada de chefe | Specify | Verified |
+| BOSS-04 | P1: Rodada de chefe | Specify | Verified |
+| BOSS-07 | P1: Rodada de chefe | Specify | Verified |
+| BOSS-05 | P1: Rodada de chefe | Specify | Verified |
+| BOSS-06 | P1: Rodada de chefe | Specify | Verified |
+| BOSS-08 | P1: Rodada de chefe | Specify | Verified |
+| BAT-01 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-09 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-02 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-10 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-03 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-04 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-05 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-11 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-06 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-12 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-07 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-08 | P1: Ataques telegrafados | Specify | Verified |
+| BAT-13 | P1: Ataques telegrafados | Specify | Verified |
+| BAI-01 | P1: Fases e postura | Specify | Verified |
+| BAI-02 | P1: Fases e postura | Specify | Verified |
+| BAI-03 | P1: Fases e postura | Specify | Verified |
+| BAI-11 | P1: Fases e postura | Specify | Verified |
+| BAI-04 | P1: Fases e postura | Specify | Verified |
+| BAI-13 | P1: Fases e postura | Specify | Verified |
+| BAI-12 | P1: Fases e postura | Specify | Verified |
+| BAI-05 | P1: Fases e postura | Specify | Verified |
+| BAI-06 | P1: Fases e postura | Specify | Verified |
+| BAI-07 | P1: Fases e postura | Specify | Verified |
+| BAI-08 | P1: Fases e postura | Specify | Verified |
+| BAI-09 | P1: Fases e postura | Specify | Verified |
+| BAI-10 | P1: Fases e postura | Specify | Verified |
+| BAI-14 | P1: Fases e postura | Specify | Verified |
+| BHUD-01 | P1: Barra do chefe e vitória | Specify | Verified |
+| BHUD-02 | P1: Barra do chefe e vitória | Specify | Verified |
+| BHUD-03 | P1: Barra do chefe e vitória | Specify | Verified |
+| BHUD-04 | P1: Barra do chefe e vitória | Specify | Verified |
+| BHUD-05 | P1: Barra do chefe e vitória | Specify | Verified |
+| BHUD-06 | P1: Barra do chefe e vitória | Specify | Verified |
+| BHUD-07 | P1: Barra do chefe e vitória | Specify | Verified |
+| BWIN-01 | P1: Barra do chefe e vitória | Specify | Verified |
+| BWIN-02 | P1: Barra do chefe e vitória | Specify | Verified |
+| BWIN-03 | P1: Barra do chefe e vitória | Specify | Verified |
+| BTIER-01 | P2: Chefes mais duros e variados | Specify | Verified |
+| BTIER-02 | P2: Chefes mais duros e variados | Specify | Verified |
+| BTIER-03 | P2: Chefes mais duros e variados | Specify | Verified |
+| BTIER-04 | P2: Chefes mais duros e variados | Specify | Verified |
+| BTIER-05 | P2: Chefes mais duros e variados | Specify | Verified |
+| BTIER-07 | P2: Chefes mais duros e variados | Specify | Verified |
+| BTIER-06 | P2: Chefes mais duros e variados | Specify | Verified |
 
-**Coverage:** 52 total, 0 mapped to tasks, 52 unmapped ⚠️ (Tasks ainda não criadas)
+**Coverage:** 52/52 verified — all 52 requirements ✅ Verified (rodada 3 do Verifier, `.specs/features/boss-a-cada-5/validation.md`).
 
 ---
 

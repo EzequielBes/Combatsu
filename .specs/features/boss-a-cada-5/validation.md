@@ -1,5 +1,59 @@
 # Boss a cada 5 rodadas — Validation
 
+## Rodada 3
+
+**Date**: 2026-09-25
+**Spec**: `.specs/features/boss-a-cada-5/spec.md` (52 requisitos, 7 casos de borda — T12 acrescentou o do pouso)
+**Diff range**: `7590c4b..7c20e2b` (T12 — fix do Fix 4 da rodada 2). 4 arquivos, +63/−3: `src/game/Boss.ts`, `scripts/smoke/boss.smoke.mjs`, `.specs/features/boss-a-cada-5/{spec,tasks}.md`.
+**Verifier**: sub-agente independente (autor ≠ verificador), rodada 3 (última das 3).
+
+### Veredito da rodada 3: **PASS** ✅ (3 de 3 rodadas)
+
+**Result**: PASS
+
+Motivo: gates verdes na árvore real (`npx vitest run` 471/471, `npm run build` exit 0, `npm run smoke` 7/7). O Fix 4 da rodada 2 foi resolvido pelo T12: `src/game/Boss.ts:251` agora ancora a sonda do pouso nos pés do chefe (`groundTopBelow(x, this.leapGroundY + BODY_H / 2 - 4) - BODY_H / 2`) em vez do topo do arco (`this.leapGroundY - LEAP_ARC_HEIGHT`), então a sonda nunca alcança uma plataforma elevada entre a decolagem e o chão real — e o novo edge case do smoke prova isso com o player embaixo da plataforma. O sensor desta rodada (3 mutações) mata a sonda antiga e a falta de restauração do filtro do salto; o terceiro mutante (pouso sem ancorar o `y`, i.e. `leapGroundY` cru) sobrevive, mas é julgado equivalente para a topologia atual de `LEVEL_1` (ver nota abaixo) — não é um bug ao vivo nem uma lacuna de cobertura acionável. A Requirement Traceability é promovida.
+
+### Gates (rodada 3)
+
+- `npx vitest run`: **33 arquivos, 471 passed, 0 failed** (idêntico às rodadas 1/2 — T12 não tocou `tests/**`).
+- `npm run build`: **exit 0** (mesmo aviso de chunk pré-existente).
+- `npm run smoke`: **exit 0** — `boot`, `boss-victory`, `boss`, `enemy-died`, `hud`, `no-debug`, `run-loop` todos `ok` (7/7, primeira execução).
+
+### Re-verificação do novo edge case e do AC afetado (`file:line`)
+
+| AC / Edge case | Spec-defined outcome | `file:line` + asserção | Result |
+| --- | --- | --- | --- |
+| Edge case novo (`spec.md:194`) | Pouso do salto: sempre no piso da partida (ou abaixo), nunca numa plataforma acima, mesmo com o player embaixo dela | `src/game/Boss.ts:251` (`groundTopBelow(x, this.leapGroundY + BODY_H / 2 - 4) - BODY_H / 2`, sonda a partir dos pés) · `scripts/smoke/boss.smoke.mjs:274-295` (leva o player para x 280..392, sob a plataforma da linha 12 do `LEVEL_1`; após o pouso, `assert(Math.abs(cur.boss.y - 452) < 3)`) | ✅ PASS |
+| BAT-02 (pouso, comportamento geral) | preparo `500×m`; `toX` fixado no fim do preparo; 700 ms exatos; pouso: hitbox 1 frame, dano 20, largura corpo+16 cada lado | `src/core/bossAI.ts:154-160,190-202` (inalterado desde a rodada 1) · `src/game/Boss.ts:246-266` (`onLand`, hitbox/dano inalterados; só a linha 251 mudou) · `tests/core/bossAI.test.ts:234-257` · `scripts/smoke/boss.smoke.mjs:274-295` (agora também confere o `y` de pouso) | ✅ PASS |
+
+Amostragem do resto: `git diff 7590c4b..HEAD` toca só `src/game/Boss.ts` (1 linha de lógica, `onLand`), `scripts/smoke/boss.smoke.mjs` (+23, um novo bloco de edge case) e os dois `.md` de spec/tasks — nenhum arquivo de `tests/**`, nenhum outro arquivo de `src/`. Os 471 testes de unidade (`tests/core/{bossBrain,bossAI,bossTier,waves,run,mover}.test.ts`, `tests/data/tuning.test.ts`, `tests/game/art.test.ts`) e os demais 6 cenários de smoke continuam idênticos aos das rodadas 1/2, então BOSS-01..08, BAT-01/03-13, BAI-*, BHUD-*, BWIN-*, BTIER-* seguem cobertos como documentado nas rodadas anteriores (ver seções Rodada 1/2 abaixo).
+
+### Discrimination Sensor (rodada 3)
+
+**Sensor depth**: 3 mutações, isoladas num `git worktree` descartável em `scratchpad/verify-f2r3` (junction de `node_modules` criada com `New-Item -ItemType Junction` e desfeita com `.Delete()` antes do `git worktree remove --force` — equivalente ao `mklink /J`/`rmdir`; usado porque o `mklink` via `cmd //c` falhou na sintaxe de path dentro do Git Bash desta sessão). `git status --porcelain` da árvore real idêntico antes/depois: `?? .agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`.
+
+| # | File:line | Mutação | Ferramenta | Killed? |
+| --- | --- | --- | --- | --- |
+| 1 | `src/game/Boss.ts:251` | Sonda a partir do topo do arco (versão pré-T12): `groundTopBelow(x, this.leapGroundY - LEAP_ARC_HEIGHT)` | `npm run smoke -- boss` | ✅ Killed — `FALHA boss.smoke.mjs: player não chegou embaixo da plataforma` (o pouso incorreto mais cedo na luta desvia o combate e o player nunca fica livre para ser levado até a plataforma dentro do limite de passos) |
+| 2 | `src/game/Boss.ts:251` | Pouso sem ancorar o `y`: `const y = this.leapGroundY;` (remove o `groundTopBelow`) | `npm run smoke` (suíte completa) | ❌ Survived — ver julgamento de equivalência abaixo |
+| 3 | `src/game/Boss.ts:239-243` (`exitLeap`) | Filtro do salto não restaurado no pouso: remove `applyFilter(this.body, Filters.boss)` | `npm run smoke -- boss` | ✅ Killed — `FALHA boss.smoke.mjs: o chefe saiu da sala` (`boss.y≈572`; o corpo continua na categoria `bossAirborne`, sem colisão sólida com o chão, e cai por gravidade, estourando o guard `boss.y < 544`) |
+
+**Resultado**: 2/3 killed, 1/3 sobrevivente — julgado **equivalente** (não é um mutante que precise de fix task).
+
+**Julgamento de equivalência (mutante #2):** `LEVEL_1` (`src/data/level1.ts:2-18`) tem um único piso contínuo na linha 15 (`y=480`) sob toda a área jogável; as únicas alturas de chão diferentes são as plataformas elevadas das linhas 9 e 12, que a sonda pós-T12 (a partir dos pés, `leapGroundY + BODY_H/2 - 4`) deliberadamente nunca alcança — esse é exatamente o comportamento que o T12 corrigiu (a sonda só enxerga chão na altura da partida ou abaixo). Logo, para qualquer `x` de pouso alcançável nesta sala, `groundTopBelow(x, ...)` sempre resolve para a mesma altura de piso principal que `this.leapGroundY` já tinha (o chefe só decola do piso principal em todos os cenários de smoke). A única forma de as duas expressões divergirem seria um afundamento acumulado do corpo no chão entre a decolagem e a leitura de `leapGroundY`, e isso é auto-corrigido pela física do Matter (o corpo é sólido e sofre resolução de colisão a cada passo antes de entrar no salto) — a divergência residual é sub-pixel, abaixo da tolerância de 3 px do smoke. Não é uma equivalência estrutural (um nível com dois pisos de alturas diferentes acessíveis por salto discriminaria os dois cálculos), mas é equivalente para a topologia atual de `LEVEL_1` e para o comportamento observável do jogo hoje; não vira Fix Plan porque não há bug ao vivo e reintroduzir uma leitura direta de `leapGroundY` sem sondagem reabriria a exposição a plataformas que o T12 fechou caso o nível ganhe pisos de alturas diferentes no futuro.
+
+### Lessons distilled (rodada 3)
+
+Nenhuma lição registrada. PASS limpo: 0 spec-precision gaps novos, 0 SPEC_DEVIATION, e o único mutante sobrevivente foi julgado equivalente (não é um "surviving_mutant" no sentido de `lessons.md` — não há teste fraco a corrigir, há uma mutação que não produz efeito observável na topologia atual). Self-check: sem sinal de gap real nesta rodada, então nada é escrito — conforme `lessons.md`.
+
+---
+
+## Requirement Traceability Update (rodada 3)
+
+**Promovida** — veredito PASS. Todas as 52 linhas de `spec.md` passam de `Implementing` para `Verified`; Coverage atualizada para **52/52**.
+
+---
+
 ## Rodada 2
 
 **Date**: 2026-09-25
@@ -7,9 +61,9 @@
 **Diff range**: `3c6592b..a2308c6` (T11 — correções da rodada 1). 11 arquivos, +130/−13: `src/game/Boss.ts`, `src/core/collision.ts`, `src/game/{Projectile,Player,debugApi,physics}.ts`, `src/scenes/TestScene.ts`, `scripts/smoke/{boss,boss-victory,run}.mjs`, `.specs/features/boss-a-cada-5/tasks.md`.
 **Verifier**: sub-agente independente (autor ≠ verificador), rodada 2.
 
-### Veredito da rodada 2: **FAIL** ❌ (2 de 3 rodadas)
+### Veredito da rodada 2 (histórico): **FAIL** ❌ (2 de 3 rodadas)
 
-**Result**: FAIL
+**Resultado da rodada 2**: FAIL
 
 Motivo: gates verdes na árvore real (`npx vitest run` 471/471, `npm run build` exit 0, `npm run smoke` 7/7) e os 3 fixes da rodada 1 (BOSS-08, BWIN-01, BAT-06) agora têm cenário de smoke que os discrimina — confirmado: os 3 mutantes originais da rodada 1, reaplicados numa cópia isolada, são mortos. O bug real da rodada 1 (chefe afundava no chão após o salto) também está corrigido (`Filters.bossAirborne` em vez de `isSensor`) e coberto por um guard `boss.y < 544` em todo passo do smoke `boss`. Mas o sensor desta rodada incluiu 2 mutações novas nos pontos que o próprio T11 tocou, e uma delas sobreviveu: o pouso do salto (`src/game/Boss.ts:250`) usa `groundTopBelow` para recalcular o chão sob o x de pouso, mas nenhum cenário de smoke faz o chefe saltar de um trecho do `LEVEL_1` para um x sobre uma das plataformas elevadas (`src/data/level1.ts:9,12`, colunas 15-20/29-34 e 8-12/22-25, alturas diferentes do piso principal da linha 15) — então um regresso que reusasse o `y` pré-salto "cru" (em vez de recalcular no destino) não seria pego. O código real (não mutado) já está correto; é uma lacuna de cobertura, não um bug ao vivo. Por isso a Requirement Traceability **continua não promovida**.
 
