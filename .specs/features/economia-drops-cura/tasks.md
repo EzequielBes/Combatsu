@@ -253,9 +253,9 @@ T13
 
 **Done when**:
 
-- [ ] `tests/game/art.test.ts` confere que todas as grades novas só usam `.` e chaves da `PALETTE`, que os frames de cada folha têm o mesmo tamanho e que o frame `rare` tem `A` no contorno
-- [ ] O frame `raised` tem `U`; `hold-a` e `hold-b` diferem só no contorno da aura
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] `tests/game/art.test.ts` confere que todas as grades novas só usam `.` e chaves da `PALETTE`, que os frames de cada folha têm o mesmo tamanho e que o frame `rare` tem `A` no contorno
+- [x] O frame `raised` tem `U`; `hold-a` e `hold-b` diferem só no contorno da aura
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

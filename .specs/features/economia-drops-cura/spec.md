@@ -304,7 +304,7 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-31 | P1: Fragmentos | Specify | Implementing |
 | ECO-22 | P1: Fragmentos | Specify | Pending |
 | ECO-19 | P1: Fragmentos | Specify | Pending |
-| ECO-23 | P1: Fragmentos | Specify | Pending |
+| ECO-23 | P1: Fragmentos | Specify | Implementing |
 | HEAL-01 | P1: Gota de cura | Specify | Implementing |
 | HEAL-02 | P1: Gota de cura | Specify | Implementing |
 | HEAL-03 | P1: Gota de cura | Specify | Pending |
@@ -327,7 +327,7 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-23 | P1: Inimigos armados | Specify | Implementing |
 | ARM-07 | P1: Inimigos armados | Specify | Implementing |
 | ARM-08 | P1: Inimigos armados | Specify | Pending |
-| ARM-09 | P1: Inimigos armados | Specify | Pending |
+| ARM-09 | P1: Inimigos armados | Specify | Implementing |
 | ARM-10 | P1: Inimigos armados | Specify | Pending |
 | ARM-15 | P1: Inimigos armados | Specify | Implementing |
 | ARM-11 | P1: Usar a ferramenta | Specify | Implementing |
@@ -341,14 +341,14 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-14 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-18 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-16 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-19 | P1: Usar a ferramenta | Specify | Pending |
+| ARM-19 | P1: Usar a ferramenta | Specify | Implementing |
 | ITEM-01 | P2: Item na mão no HUD | Specify | Implementing |
 | ITEM-02 | P2: Item na mão no HUD | Specify | Pending |
 | ITEM-03 | P2: Item na mão no HUD | Specify | Pending |
 | RAR-01 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-02 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-06 | P3: Ferramentas raras | Specify | Implementing |
-| RAR-03 | P3: Ferramentas raras | Specify | Pending |
+| RAR-03 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-07 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-04 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-05 | P3: Ferramentas raras | Specify | Implementing |
