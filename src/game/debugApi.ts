@@ -38,6 +38,20 @@ export interface GameSnapshot {
     name: string;
     x: number;
   } | null;
+  /**
+   * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
+   * `id` é único por instância (nunca reaproveitado) - o smoke usa para contar disparos mesmo que um projétil
+   * já tenha sumido (acertou o player) antes do próximo nascer.
+   */
+  projectiles: {
+    id: number;
+    x: number;
+    y: number;
+    dir: 1 | -1;
+    speed: number;
+    kind: 'projectile' | 'shockwave';
+    height: number;
+  }[];
   /** Estado da máquina de run (RUN-09). */
   run: { state: RunState; round: number; kills: number; alive: number; queued: number };
   /** Spawn do player no level, já com o mesmo ajuste que a cena aplica (RUN-02/05). */

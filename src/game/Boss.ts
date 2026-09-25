@@ -19,6 +19,10 @@ const LEAP_ARC_HEIGHT = 120;
 const LANDING_HITBOX_PAD = 16;
 /** Sonda de parede à frente do corpo (px), para `blocked` na investida (BAT-01). */
 const WALL_PROBE = 4;
+/** Profundidade da sondagem de chão abaixo do chefe (px), para achar o terreno mesmo já meio encostado nele. */
+const GROUND_PROBE_DEPTH = 200;
+/** Metade da altura da onda de choque (design: 20 px), para nascer rente ao chão de verdade (ver `groundTopBelow`). */
+const SHOCKWAVE_HALF_H = 10;
 
 /**
  * Adaptador Phaser do chefe (BOSS-01/03/06/08, BAT-01/02/09/10/13, BAI-04/13, BHUD-04): move o corpo Matter,
@@ -54,8 +58,8 @@ export class Boss implements Hittable {
     onConnect?: OnConnect,
     /** Rugido (BAI-13): a cena empurra o player para longe. */
     private readonly onRoarPush?: (dir: 1 | -1) => void,
-    /** Pouso do salto (BAT-03, T9): a cena cria as duas ondas de choque. */
-    private readonly onLanded?: (x: number, y: number) => void,
+    /** Pouso do salto (BAT-03, T9): a cena cria as duas ondas de choque, com o dano já escalado pelo tier. */
+    private readonly onLanded?: (x: number, y: number, damage: number) => void,
     /** Disparo da rajada (BAT-04, T9): a cena cria o projétil. */
     private readonly onFire?: (x: number, y: number, dir: 1 | -1, speed: number, damage: number) => void,
     /** Morte (BWIN-01..03, T10): a cena aplica a recompensa e os efeitos. */
@@ -192,7 +196,8 @@ export class Boss implements Hittable {
       else if (ev.type === 'landed') this.onLand();
       else if (ev.type === 'fire') {
         const { x, y } = this.body.position;
-        this.onFire?.(x, y, ev.dir, ev.speed, this.spec.damage.projectile);
+        // Altura de tronco a partir do chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).
+        this.onFire?.(x, this.groundTopBelow(x, y) - BODY_H / 2, ev.dir, ev.speed, this.spec.damage.projectile);
       }
     }
   }
@@ -250,7 +255,22 @@ export class Boss implements Hittable {
     const shape = { offsetX: 0, offsetY: 0, width: BODY_W + LANDING_HITBOX_PAD * 2, height: BODY_H };
     this.attack.open(shape, hit, x, y, this.facing);
     this.landingHitboxTicks = 1;
-    this.onLanded?.(x, y);
+    // Rente ao chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).
+    this.onLanded?.(x, this.groundTopBelow(x, y) - SHOCKWAVE_HALF_H, this.spec.damage.shockwave);
+  }
+
+  /**
+   * Topo do terreno abaixo de `x`, a partir de `fromY` (BAT-03/04, T9): ancora o projétil/onda no chão de
+   * verdade, nunca no y ao vivo do corpo do chefe. Depois de uma luta longa o corpo pode ficar um pouco cravado
+   * no chão (o Matter aceita uma pequena sobreposição de contato que se acumula aos poucos); um projétil/onda
+   * nascido nessa profundidade tocaria o terreno e sumiria no mesmo frame (BAT-06), sem nunca voar de verdade.
+   * Sem terreno na sondagem (não deveria acontecer sobre um chão válido), devolve `fromY`.
+   */
+  private groundTopBelow(x: number, fromY: number): number {
+    const region = { min: { x: x - 4, y: fromY - 4 }, max: { x: x + 4, y: fromY + GROUND_PROBE_DEPTH } };
+    const hits = this.scene.matter.query.region(this.terrain, region);
+    if (hits.length === 0) return fromY;
+    return Math.min(...hits.map((b) => b.bounds.min.y));
   }
 
   /** Terreno a `WALL_PROBE` px à frente do corpo, na direção `dir` (BAT-01). */

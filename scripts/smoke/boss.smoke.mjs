@@ -142,4 +142,162 @@ export default async function ({ page, baseUrl, assert }) {
       stillRoar.boss.archetype === 'oni',
     `snapshot do chefe incompleto: ${JSON.stringify(stillRoar.boss)}`,
   );
+
+  // T9 (BAT-03/04/06/12): na fase 2 o ciclo é investida -> rajada -> salto (BAI-02); avança sem prever o tempo
+  // exato de cada ataque, só observando `snapshot.projectiles` (lido do objeto vivo) até ver a rajada e o pouso.
+  // Cada projétil tem um `id` único (nunca reaproveitado): identifica um disparo mesmo que ele já tenha sumido
+  // (acertou o player) antes do próximo nascer, então a contagem não depende de vários estarem vivos ao mesmo
+  // tempo. `step(1 tick)` a cada volta: `step(ms)` sempre arredonda para cima ao tick fixo de 1000/60 ms, então
+  // medir o intervalo entre disparos com uma unidade "elapsed" diferente do tick real desalinha a medição.
+  const TICK_MS = 1000 / 60;
+  const boltFirst = new Map(); // id -> { t, speed }
+  const boltOrder = [];
+  const waveFirst = new Map(); // id -> { t, dir, height }
+  const waveOrder = [];
+  let volleyHpBefore = null;
+  let volleyHit = null; // dano isolado enquanto boss.state === 'volley' (só o projétil causa dano nesse estado)
+  let elapsed = 0;
+  cur = stillRoar;
+  for (let i = 0; i < 1500 && (boltOrder.length < 3 || waveOrder.length < 2); i++) {
+    cur = await stepAndSnap(1);
+    elapsed += TICK_MS;
+    for (const p of cur.projectiles) {
+      if (p.kind === 'projectile' && !boltFirst.has(p.id)) {
+        boltFirst.set(p.id, { t: elapsed, speed: p.speed });
+        boltOrder.push(p.id);
+      } else if (p.kind === 'shockwave' && !waveFirst.has(p.id)) {
+        waveFirst.set(p.id, { t: elapsed, dir: p.dir, height: p.height });
+        waveOrder.push(p.id);
+      }
+    }
+    if (cur.boss.state === 'volley' && volleyHpBefore === null) volleyHpBefore = cur.player.hp;
+    if (volleyHpBefore !== null && !volleyHit && cur.player.hp < volleyHpBefore) {
+      volleyHit = { before: volleyHpBefore, after: cur.player.hp };
+    }
+  }
+  assert(boltOrder.length >= 3, `a rajada da fase 2 nunca disparou os 3 projéteis esperados (BAT-04): ${boltOrder.length}`);
+  assert(waveOrder.length >= 2, `o chefe nunca pousou de um salto na fase 2 com as duas ondas de choque (BAT-03): ${waveOrder.length}`);
+
+  // BAT-04: os 3 primeiros projéteis da rajada, a 260 px/s (tier 1, Oni), ~150 ms entre disparos (±1 frame no
+  // relógio do `BossAI`, que é puro - ver tests/core/bossAI.test.ts). Do lado de fora (smoke), um projétil que
+  // acerta o player (BAT-06, checado logo abaixo) dispara um hitstop de 50 ms (`HITSTOP_MS.light`) que congela a
+  // cena inteira, inclusive o cronômetro da rajada - por isso a folga aqui é maior que ±1 frame: cobre o caso em
+  // que um golpe (ou mais de um) da própria rajada gera hitstop entre dois disparos.
+  const firstThreeBolts = boltOrder.slice(0, 3).map((id) => boltFirst.get(id));
+  assert(
+    firstThreeBolts.every((b) => Math.abs(b.speed - 260) < 0.01),
+    `projétil da rajada com velocidade errada: ${JSON.stringify(firstThreeBolts)}`,
+  );
+  for (let i = 1; i < firstThreeBolts.length; i++) {
+    const delta = firstThreeBolts[i].t - firstThreeBolts[i - 1].t;
+    assert(
+      delta >= 140 && delta <= 300,
+      `intervalo entre disparos deveria ser ~150 ms (+ hitstop se algum acertou): ${JSON.stringify(firstThreeBolts)}`,
+    );
+  }
+
+  // BAT-06: um projétil que acerta o player tira o dano do spec (10 no tier 1); isolado porque durante o estado
+  // `volley` só o projétil pode causar dano (o chefe não tem hitbox de investida/pouso aberta nesse estado).
+  assert(volleyHit, 'nenhum projétil da rajada acertou o player para confirmar o dano (BAT-06)');
+  assert(
+    volleyHit.before - volleyHit.after === 10,
+    `dano do projétil deveria ser 10 (tier 1): ${volleyHit.before} -> ${volleyHit.after}`,
+  );
+
+  // BAT-03: as duas ondas do pouso, direções opostas e 20 px de altura, lidas no instante em que cada uma nasceu.
+  const firstTwoWaves = waveOrder.slice(0, 2).map((id) => waveFirst.get(id));
+  const dirs = firstTwoWaves.map((w) => w.dir).sort();
+  assert(dirs[0] === -1 && dirs[1] === 1, `ondas deveriam ter direções opostas: ${JSON.stringify(firstTwoWaves)}`);
+  assert(
+    firstTwoWaves.every((w) => w.height === 20),
+    `onda de choque deveria ter 20 px de altura: ${JSON.stringify(firstTwoWaves)}`,
+  );
+
+  // BAT-06/12: as ondas somem (parede ou 600 px) - continua avançando até a lista ficar sem nenhuma onda viva.
+  let wavesCleared = cur.projectiles.filter((p) => p.kind === 'shockwave').length === 0;
+  for (let i = 0; i < 500 && !wavesCleared; i++) {
+    cur = await stepAndSnap(20);
+    if (cur.projectiles.filter((p) => p.kind === 'shockwave').length === 0) wavesCleared = true;
+  }
+  assert(wavesCleared, 'as ondas de choque nunca sumiram (parede ou 600 px)');
+
+  // Edge case (T9): J depois de um game over com o chefe vivo e projéteis em voo -> nova run sem chefe nem projéteis.
+  // O ciclo da fase 2 continua (investida -> rajada -> salto): avança até o próximo ataque pôr algum projétil em
+  // voo de novo, para matar o player com pelo menos um projétil (ou onda) vivo na hora do game over.
+  let hasFlying = false;
+  for (let i = 0; i < 1000 && !hasFlying; i++) {
+    cur = await stepAndSnap(20);
+    if (cur.projectiles.length > 0) hasFlying = true;
+  }
+  assert(hasFlying, 'nenhum novo projétil apareceu para testar o edge case de game over em pleno voo');
+  await page.keyboard.press('Digit3', { delay: 50 }); // mata o player (tecla 3)
+  let overSnap = await stepAndSnap(100);
+  for (let i = 0; i < 20 && overSnap.run.state !== 'gameOver'; i++) overSnap = await stepAndSnap(100);
+  assert(overSnap.run.state === 'gameOver', `esperava game over depois da morte do player: ${JSON.stringify(overSnap.run)}`);
+  assert(overSnap.boss !== null, 'o chefe deveria continuar vivo no game over (para o teste do edge case)');
+  // RUN-05/11: a trava de 1000 ms (RUN.gameOverLockMs) precisa passar antes do J valer para começar uma run nova.
+  await stepAndSnap(1100);
+  await page.keyboard.press('KeyJ', { delay: 50 });
+  const newRun = await stepAndSnap(50);
+  // `?round=5` (debug) faz a run nova recomeçar direto numa rodada de chefe: um chefe novo nasce no mesmo
+  // comando que reinicia (startRun + spawn), então o teste do `startRun` (design.md: "remove o chefe e os
+  // projéteis") é o chefe estar zerado (não o antigo, com hp=384/fase 2 ainda em rajada) e nenhum projétil velho.
+  assert(newRun.projectiles.length === 0, `nova run não deveria ter projéteis do chefe anterior: ${JSON.stringify(newRun.projectiles)}`);
+  assert(
+    newRun.boss !== null && newRun.boss.hp === newRun.boss.maxHp && newRun.boss.state === 'intro',
+    `nova run deveria ter um chefe novo (não o antigo em pleno combate): ${JSON.stringify(newRun.boss)}`,
+  );
+
+  // BTIER-05/07: rodada 15 (tier 3) é a Tecelã de Maldições - rajada de 5 projéteis a 325 px/s (260 x 1.25).
+  await page.goto(`${baseUrl}?debug&seed=1&round=15`, { waitUntil: 'load' });
+  await page.waitForFunction(
+    () => {
+      try {
+        return typeof window.__game.snapshot === 'function';
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 15_000 },
+  );
+  await stepAndSnap(20);
+  await page.keyboard.press('KeyJ', { delay: 50 });
+  let snap15 = await stepAndSnap(50);
+  assert(
+    snap15.boss !== null && snap15.boss.archetype === 'tecela' && snap15.boss.name === 'Tecelã de Maldições',
+    `rodada 15 deveria ter a Tecelã de Maldições: ${JSON.stringify(snap15.boss)}`,
+  );
+  const maxHp15 = snap15.boss.maxHp;
+
+  // Passa a intro (1500 ms) e traz a vida a 66% ou menos com golpes de teste, até a fase 2 (que tem rajada).
+  for (let i = 0; i < 10 && snap15.boss.state === 'intro'; i++) snap15 = await stepAndSnap(200);
+  assert(snap15.boss.state !== 'intro', 'chefe da rodada 15 não saiu da intro a tempo');
+  for (let i = 0; i < 40 && snap15.boss.hp > maxHp15 * 0.66; i++) {
+    await page.keyboard.press('Digit2', { delay: 50 });
+    snap15 = await stepAndSnap(100);
+  }
+  assert(snap15.boss.hp <= maxHp15 * 0.66, `Tecelã deveria estar em 66% de vida ou menos: ${snap15.boss.hp}`);
+  // Sai do rugido (900 ms) para a IA voltar a agir.
+  for (let i = 0; i < 20 && snap15.boss.state === 'roar'; i++) snap15 = await stepAndSnap(100);
+  assert(snap15.boss.state !== 'roar', 'Tecelã nunca saiu do rugido a tempo');
+
+  // Id único por projétil (nunca reaproveitado): conta disparos mesmo que um já tenha sumido antes do próximo.
+  const bolt15First = new Map();
+  const bolt15Order = [];
+  cur = snap15;
+  for (let i = 0; i < 1500 && bolt15Order.length < 5; i++) {
+    cur = await stepAndSnap(1);
+    for (const p of cur.projectiles) {
+      if (p.kind === 'projectile' && !bolt15First.has(p.id)) {
+        bolt15First.set(p.id, p);
+        bolt15Order.push(p.id);
+      }
+    }
+  }
+  assert(bolt15Order.length >= 5, `a rajada da Tecelã (rodada 15) nunca disparou os 5 projéteis esperados (BTIER-05): ${bolt15Order.length}`);
+  const volley15 = bolt15Order.slice(0, 5).map((id) => bolt15First.get(id));
+  assert(
+    volley15.every((p) => Math.abs(p.speed - 325) < 0.01),
+    `projétil da Tecelã deveria ir a 325 px/s (BTIER-07): ${JSON.stringify(volley15)}`,
+  );
 }

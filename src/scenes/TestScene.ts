@@ -16,6 +16,7 @@ import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
 import { routeContact, tagBody } from '../game/bodyTags';
 import { Boss } from '../game/Boss';
+import { Projectile } from '../game/Projectile';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { registerDebugProbe, type DebugProbe, type GameSnapshot } from '../game/debugApi';
 import { Enemy } from '../game/Enemy';
@@ -57,6 +58,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private enemies: Enemy[] = [];
   /** Só existe numa rodada de chefe (BOSS-01); `null` fora dela ou depois de removido. */
   private boss: Boss | null = null;
+  /** Projéteis da rajada e ondas de choque do pouso do chefe (BAT-03/04/06/12). */
+  private projectiles: Projectile[] = [];
   private props: Prop[] = [];
   /** Tudo que a câmera de UI desenha mora aqui; o resto da cena é mundo. */
   private uiLayer!: Phaser.GameObjects.Layer;
@@ -99,6 +102,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     buildBackground(this, this.level.widthPx, this.level.heightPx);
     this.terrain = [];
     this.enemies = [];
+    this.projectiles = [];
     this.buildTerrain();
     this.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
@@ -153,6 +157,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.wasPlayerDead = this.player.dead;
     for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
     this.boss?.update(dt, this.player.sprite.x);
+    for (const proj of this.projectiles) proj.update(dt);
+    this.projectiles = this.projectiles.filter((proj) => !proj.removed);
     for (const prop of this.props) prop.update(dt);
     this.props = this.props.filter((prop) => !prop.isGone);
     for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
@@ -212,14 +218,16 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   /**
    * Nova run (RUN-01/05): remove os inimigos restantes na hora e devolve o player ao spawn com a vida cheia.
-   * Também remove o chefe se algum estiver vivo (edge case: game over em plena luta de chefe); os projéteis
-   * dele ficam para o T9.
+   * Também remove o chefe e os projéteis dele, se algum estiver vivo (edge case: game over em plena luta de
+   * chefe, com o chefe e/ou projéteis dele ainda em cena).
    */
   private onStartRun(): void {
     for (const e of this.enemies) e.destroyNow();
     this.enemies = [];
     this.boss?.destroyNow();
     this.boss = null;
+    for (const proj of this.projectiles) proj.destroyNow();
+    this.projectiles = [];
     this.player.resetForRun();
   }
 
@@ -265,10 +273,29 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength),
       // Rugido (BAI-13): empurra o player para longe do chefe.
       (dir) => this.player.pushHorizontal(dir, BOSS.roarImpulse),
-      // onLanded (BAT-03, ondas de choque) e onFire (BAT-04, projétil): T9.
-      undefined,
-      undefined,
+      // Pouso do salto (BAT-03): duas ondas de choque, uma para cada lado, rente ao chão.
+      (x, y, damage) => {
+        this.spawnProjectile('shockwave', x, y, 1, BOSS.shockwave.speed, BOSS.shockwave.maxDist, damage);
+        this.spawnProjectile('shockwave', x, y, -1, BOSS.shockwave.speed, BOSS.shockwave.maxDist, damage);
+      },
+      // Disparo da rajada (BAT-04, BTIER-05/07): um projétil por evento `fire`, já com o `speed` do arquétipo.
+      (x, y, dir, speed, damage) => this.spawnProjectile('projectile', x, y, dir, speed, BOSS.volley.maxDist, damage),
       (dead, x, y) => this.onEnemyDied(dead.id, x, y),
+    );
+  }
+
+  /** Cria um projétil ou onda de choque do chefe e o adiciona à lista da cena (BAT-03/04/06/12). */
+  private spawnProjectile(
+    kind: 'projectile' | 'shockwave',
+    x: number,
+    y: number,
+    dir: 1 | -1,
+    speed: number,
+    maxDist: number,
+    damage: number,
+  ): void {
+    this.projectiles.push(
+      new Projectile(this, kind, x, y, dir, speed, maxDist, damage, (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength)),
     );
   }
 
@@ -308,6 +335,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
             x: this.boss.x,
           }
         : null,
+      projectiles: this.projectiles.map((p) => ({
+        id: p.id,
+        x: p.x,
+        y: p.y,
+        dir: p.dir,
+        speed: p.speed,
+        kind: p.kind,
+        height: p.height,
+      })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
       hud: this.hud.debugState(),
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
