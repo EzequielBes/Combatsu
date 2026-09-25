@@ -300,8 +300,8 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-29 | P1: Fragmentos | Specify | Pending |
 | ECO-30 | P1: Fragmentos | Specify | Pending |
 | ECO-21 | P1: Fragmentos | Specify | Implementing |
-| ECO-17 | P1: Fragmentos | Specify | Pending |
-| ECO-31 | P1: Fragmentos | Specify | Pending |
+| ECO-17 | P1: Fragmentos | Specify | Implementing |
+| ECO-31 | P1: Fragmentos | Specify | Implementing |
 | ECO-22 | P1: Fragmentos | Specify | Pending |
 | ECO-19 | P1: Fragmentos | Specify | Pending |
 | ECO-23 | P1: Fragmentos | Specify | Pending |
