@@ -235,6 +235,11 @@ export class Player implements Hittable {
   }
 
   /** Mata o player pelo caminho normal de morte (tecla 3 em `?debug`, RUN-03/04). */
+  /** Dano de teste (só debug, tecla 4) pelo caminho normal de golpe. */
+  debugHurt(damage: number): void {
+    this.receiveHit({ ownerId: 0, damage, strength: 'light', force: 0, direction: { x: this.facing, y: 0 } });
+  }
+
   debugKill(): void {
     this.receiveHit({
       ownerId: 0,

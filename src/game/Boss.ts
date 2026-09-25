@@ -7,7 +7,7 @@ import type { Hit, Vec2 } from '../core/hit';
 import { bossAnimKey, BOSS_ORIGIN } from './art/sprites/boss';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
-import { PX_PER_S_TO_STEP, setIgnoreGravity, setSensor } from './physics';
+import { PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { TEX } from './textures';
 
 /** Corpo físico do chefe (design: 40x56 px). */
@@ -83,6 +83,10 @@ export class Boss implements Hittable {
 
   get x(): number {
     return this.body.position.x;
+  }
+
+  get y(): number {
+    return this.body.position.y;
   }
 
   get hp(): number {
@@ -218,7 +222,7 @@ export class Boss implements Hittable {
   private enterLeap(): void {
     this.inLeap = true;
     this.leapGroundY = this.body.position.y;
-    setSensor(this.body, true);
+    applyFilter(this.body, Filters.bossAirborne);
     setIgnoreGravity(this.body, true);
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
   }
@@ -234,7 +238,7 @@ export class Boss implements Hittable {
   /** Volta o corpo a sólido sem esperar o evento `landed` (ex.: ataque interrompido em pleno ar). */
   private exitLeap(): void {
     this.inLeap = false;
-    setSensor(this.body, false);
+    applyFilter(this.body, Filters.boss);
     setIgnoreGravity(this.body, false);
   }
 
@@ -242,7 +246,8 @@ export class Boss implements Hittable {
   private onLand(): void {
     this.exitLeap();
     const { x } = this.body.position;
-    const y = this.leapGroundY;
+    // Ancora no topo real do chão sob o pouso (o y guardado na partida pode estar errado se o salto começou no ar).
+    const y = this.groundTopBelow(x, this.leapGroundY - LEAP_ARC_HEIGHT) - BODY_H / 2;
     this.scene.matter.body.setPosition(this.body, { x, y });
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
     const hit: Hit = {

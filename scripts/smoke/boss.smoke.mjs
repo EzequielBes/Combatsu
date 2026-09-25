@@ -14,7 +14,12 @@ export default async function ({ page, baseUrl, assert }) {
     { timeout: 15_000 },
   );
   // Avança `ms` e devolve o snapshot resultante (padrão dos outros cenários de smoke).
-  const stepAndSnap = (ms) => page.evaluate((n) => { window.__game.step(n); return window.__game.snapshot(); }, ms);
+  // O chefe nunca sai da sala (544 px de altura): guarda contra o corpo afundar no chão depois de um pouso.
+  const stepAndSnap = async (ms) => {
+    const sn = await page.evaluate((n) => { window.__game.step(n); return window.__game.snapshot(); }, ms);
+    if (sn.boss) assert(sn.boss.y < 544, `o chefe saiu da sala: ${JSON.stringify(sn.boss)}`);
+    return sn;
+  };
 
   await stepAndSnap(20);
 
@@ -48,6 +53,8 @@ export default async function ({ page, baseUrl, assert }) {
     assert(Math.abs(s.boss.x - introX) < 0.5, `x do chefe mudou durante a intro: ${s.boss.x}`);
     assert(s.boss.hp === maxHp, `golpe de teste tirou hp do chefe durante a intro: ${JSON.stringify(s.boss)}`);
   }
+  // O próprio chefe recusa o golpe na intro (retorno de receiveHit, que decide faísca e hitstop).
+  assert(!s.events.includes('bossHitAccepted'), `o chefe aceitou golpe na intro: ${JSON.stringify(s.events)}`);
 
   // Passa o fim da intro (1500 ms) e confere que o primeiro ataque do ciclo da fase 1 é a investida, em preparo.
   let afterIntro = null;
@@ -213,13 +220,56 @@ export default async function ({ page, baseUrl, assert }) {
     `onda de choque deveria ter 20 px de altura: ${JSON.stringify(firstTwoWaves)}`,
   );
 
-  // BAT-06/12: as ondas somem (parede ou 600 px) - continua avançando até a lista ficar sem nenhuma onda viva.
+  // BAT-06/12: as ondas somem (parede ou 600 px) - continua avançando até a lista ficar sem nenhuma onda viva,
+  // guardando o último estado de cada onda para saber onde e com quanto percorrido ela sumiu.
+  const waveLast = new Map();
+  const noteWaves = (snap) => {
+    for (const p of snap.projectiles) if (p.kind === 'shockwave') waveLast.set(p.id, { x: p.x, traveled: p.traveled });
+  };
+  noteWaves(cur);
   let wavesCleared = cur.projectiles.filter((p) => p.kind === 'shockwave').length === 0;
   for (let i = 0; i < 500 && !wavesCleared; i++) {
     cur = await stepAndSnap(20);
+    noteWaves(cur);
     if (cur.projectiles.filter((p) => p.kind === 'shockwave').length === 0) wavesCleared = true;
   }
   assert(wavesCleared, 'as ondas de choque nunca sumiram (parede ou 600 px)');
+  // BAT-06 (parede): o salto mira o x do player, então as ondas acima nasceram em cima dele e sumiram no contato.
+  // Para exercitar a parede, espera o próximo salto e anda para a direita durante o voo: o pouso fica perto da
+  // parede esquerda e a onda que vai para a esquerda bate nela sem passar pelo player, bem antes dos 600 px (BAT-12).
+  // Posiciona o player a menos de ~400 px de uma parede (sala de 1280 px, paredes internas em x = 32 e 1248),
+  // para o pouso ficar perto dela; durante o voo ele anda para longe dessa parede, liberando o caminho da onda.
+  if (Math.abs(cur.player.x - 640) < 240) {
+    const key = cur.player.x < 640 ? 'KeyA' : 'KeyD';
+    await page.keyboard.down(key);
+    for (let i = 0; i < 40 && Math.abs(cur.player.x - 640) < 240; i++) cur = await stepAndSnap(50);
+    await page.keyboard.up(key);
+  }
+  let inLeap = false;
+  for (let i = 0; i < 1500 && !inLeap; i++) {
+    cur = await stepAndSnap(20);
+    if (cur.boss && cur.boss.state === 'leap') inLeap = true;
+  }
+  assert(inLeap, 'o chefe não saltou de novo para o teste da parede');
+  const nearLeft = cur.player.x < 640;
+  const towardWall = nearLeft ? -1 : 1;
+  await page.keyboard.down(nearLeft ? 'KeyD' : 'KeyA');
+  cur = await stepAndSnap(800);
+  await page.keyboard.up(nearLeft ? 'KeyD' : 'KeyA');
+  const wallWaves = new Map();
+  const noteWall = (snap) => {
+    for (const p of snap.projectiles) if (p.kind === 'shockwave') wallWaves.set(p.id, { x: p.x, dir: p.dir, traveled: p.traveled });
+  };
+  noteWall(cur);
+  for (let i = 0; i < 200 && cur.projectiles.some((p) => p.kind === 'shockwave'); i++) {
+    cur = await stepAndSnap(20);
+    noteWall(cur);
+  }
+  // A onda que vai para a parede próxima some encostada nela (x a menos de 70 px da parede, sem passar dela) e
+  // bem antes dos 600 px do alcance: remoção pela parede (BAT-06), não pelo Mover (BAT-12).
+  const atWall = (w) => (w.dir === -1 ? w.x > 30 && w.x < 102 : w.x > 1178 && w.x < 1250);
+  const wallRemoved = [...wallWaves.values()].some((w) => w.dir === towardWall && atWall(w) && w.traveled < 560);
+  assert(wallRemoved, `a onda deveria sumir na parede antes do alcance: ${JSON.stringify([...wallWaves.values()])}`);
 
   // Edge case (T9): J depois de um game over com o chefe vivo e projéteis em voo -> nova run sem chefe nem projéteis.
   // O ciclo da fase 2 continua (investida -> rajada -> salto): avança até o próximo ataque pôr algum projétil em

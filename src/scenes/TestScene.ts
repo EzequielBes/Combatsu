@@ -142,6 +142,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.onKey('ONE', () => isDebug() && this.debugHit('light'));
     this.onKey('TWO', () => isDebug() && this.debugHit('heavy'));
     this.onKey('THREE', () => isDebug() && this.player.debugKill());
+    // Tecla 4 (só debug): 50 de dano no player, para o smoke medir a cura da vitória abaixo do teto (BWIN-01).
+    this.onKey('FOUR', () => isDebug() && this.player.debugHurt(50));
     this.onKey('H', () => isDebug() && this.toggleDebugDraw());
     this.onKey('R', () => this.scene.restart());
     this.addHud();
@@ -377,6 +379,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
             archetype: this.boss.archetype,
             name: this.boss.name,
             x: this.boss.x,
+            y: this.boss.y,
           }
         : null,
       projectiles: this.projectiles.map((p) => ({
@@ -387,6 +390,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         speed: p.speed,
         kind: p.kind,
         height: p.height,
+        traveled: p.traveled,
       })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
       hud: this.hud.debugState(),
@@ -445,7 +449,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       direction: { x: targetX >= this.player.sprite.x ? 1 : -1, y: -0.6 },
     });
     for (const e of this.enemies) e.receiveHit(hitToward(e.x));
-    this.boss?.receiveHit(hitToward(this.boss.x));
+    // Golpe aceito pelo chefe vai para o snapshot: na intro e no rugido ele recusa (BOSS-08, BAI-12).
+    if (this.boss?.receiveHit(hitToward(this.boss.x))) this.debugEvents.push('bossHitAccepted');
   }
 
   /**

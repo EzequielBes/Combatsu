@@ -81,6 +81,8 @@ const assert = (cond, msg) => {
 
 const files = readdirSync(here)
   .filter((f) => f.endsWith('.smoke.mjs'))
+  // `npm run smoke -- <trecho>` roda só os cenários cujo nome contém o trecho (iteração rápida).
+  .filter((f) => !process.argv[2] || f.includes(process.argv[2]))
   .sort();
 
 const results = [];

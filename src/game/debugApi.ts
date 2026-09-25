@@ -37,6 +37,8 @@ export interface GameSnapshot {
     archetype: BossArchetype;
     name: string;
     x: number;
+    /** Centro do corpo; fica dentro da sala (0..544) durante toda a luta. */
+    y: number;
   } | null;
   /**
    * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
@@ -51,6 +53,7 @@ export interface GameSnapshot {
     speed: number;
     kind: 'projectile' | 'shockwave';
     height: number;
+    traveled: number;
   }[];
   /** Estado da máquina de run (RUN-09). */
   run: { state: RunState; round: number; kills: number; alive: number; queued: number };

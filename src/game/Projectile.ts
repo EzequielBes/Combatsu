@@ -57,6 +57,11 @@ export class Projectile {
     this.view = scene.add.sprite(x, y, textureKey, kind).setFlipX(dir < 0);
   }
 
+  /** Distância já percorrida (BAT-06/12), para o smoke distinguir remoção na parede de alcance esgotado. */
+  get traveled(): number {
+    return this.mover.traveled;
+  }
+
   get x(): number {
     return this.mover.x;
   }

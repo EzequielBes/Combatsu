@@ -44,7 +44,13 @@ export default async function ({ page, baseUrl, assert }) {
   // Golpes de teste até o chefe morrer, medindo a vida do player logo antes de cada golpe.
   const killsBefore = s.run.kills;
   let hpBefore = s.player.hp;
+  let hurt = false;
   for (let i = 0; i < 200 && s.boss && s.boss.state !== 'dead' && s.run.state === 'roundActive'; i++) {
+    // Perto do fim, tecla 4 tira 50 do player: a cura de 30 fica abaixo do teto e distingue 20% de 30% (BWIN-01).
+    if (!hurt && s.boss.hp <= 60) {
+      s = await press('Digit4', 17);
+      hurt = true;
+    }
     hpBefore = s.player.hp;
     s = await press('Digit2', 17);
     if (s.events.includes('bossDefeatedFx')) break;
@@ -57,6 +63,7 @@ export default async function ({ page, baseUrl, assert }) {
   assert(s.hitstop.frozen && s.hitstop.remainingMs > 200 && s.hitstop.remainingMs <= 250,
     `hitstop da vitória: ${JSON.stringify(s.hitstop)}`);
   // BWIN-01: cura de round(0,3 × 100) = 30, com teto em 100.
+  assert(hpBefore <= 70, `o player deveria estar ferido antes do golpe fatal: ${hpBefore}`);
   assert(s.player.hp === Math.min(100, hpBefore + 30), `cura: antes ${hpBefore}, depois ${s.player.hp}`);
   // BHUD-03: barra some na hora.
   assert(s.hud.bossBar.visible === false, 'barra deveria sumir ao derrotar o chefe');
