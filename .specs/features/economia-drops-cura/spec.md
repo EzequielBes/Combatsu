@@ -274,86 +274,86 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| ECO-01 | P1: Fragmentos | Specify | Implementing |
-| ECO-02 | P1: Fragmentos | Specify | Implementing |
-| ECO-03 | P1: Fragmentos | Specify | Implementing |
-| ECO-04 | P1: Fragmentos | Specify | Implementing |
-| ECO-05 | P1: Fragmentos | Specify | Implementing |
-| ECO-06 | P1: Fragmentos | Specify | Implementing |
-| ECO-07 | P1: Fragmentos | Specify | Implementing |
-| ECO-24 | P1: Fragmentos | Specify | Implementing |
-| ECO-08 | P1: Fragmentos | Specify | Implementing |
-| ECO-09 | P1: Fragmentos | Specify | Implementing |
-| ECO-10 | P1: Fragmentos | Specify | Implementing |
-| ECO-18 | P1: Fragmentos | Specify | Implementing |
-| ECO-11 | P1: Fragmentos | Specify | Implementing |
-| ECO-25 | P1: Fragmentos | Specify | Implementing |
-| ECO-12 | P1: Fragmentos | Specify | Implementing |
-| ECO-13 | P1: Fragmentos | Specify | Implementing |
-| ECO-26 | P1: Fragmentos | Specify | Implementing |
-| ECO-20 | P1: Fragmentos | Specify | Implementing |
-| ECO-14 | P1: Fragmentos | Specify | Implementing |
-| ECO-27 | P1: Fragmentos | Specify | Implementing |
-| ECO-15 | P1: Fragmentos | Specify | Implementing |
-| ECO-28 | P1: Fragmentos | Specify | Implementing |
-| ECO-16 | P1: Fragmentos | Specify | Implementing |
-| ECO-29 | P1: Fragmentos | Specify | Implementing |
-| ECO-30 | P1: Fragmentos | Specify | Implementing |
-| ECO-21 | P1: Fragmentos | Specify | Implementing |
-| ECO-17 | P1: Fragmentos | Specify | Implementing |
-| ECO-31 | P1: Fragmentos | Specify | Implementing |
-| ECO-22 | P1: Fragmentos | Specify | Implementing |
-| ECO-19 | P1: Fragmentos | Specify | Implementing |
-| ECO-23 | P1: Fragmentos | Specify | Implementing |
-| HEAL-01 | P1: Gota de cura | Specify | Implementing |
-| HEAL-02 | P1: Gota de cura | Specify | Implementing |
-| HEAL-03 | P1: Gota de cura | Specify | Implementing |
-| HEAL-08 | P1: Gota de cura | Specify | Implementing |
-| HEAL-04 | P1: Gota de cura | Specify | Implementing |
-| HEAL-09 | P1: Gota de cura | Specify | Implementing |
-| HEAL-05 | P1: Gota de cura | Specify | Implementing |
-| HEAL-06 | P1: Gota de cura | Specify | Implementing |
-| HEAL-07 | P1: Gota de cura | Specify | Implementing |
-| HEAL-10 | P1: Gota de cura | Specify | Implementing |
-| ARM-01 | P1: Inimigos armados | Specify | Implementing |
-| ARM-02 | P1: Inimigos armados | Specify | Implementing |
-| ARM-03 | P1: Inimigos armados | Specify | Implementing |
-| ARM-04 | P1: Inimigos armados | Specify | Implementing |
-| ARM-05 | P1: Inimigos armados | Specify | Implementing |
-| ARM-20 | P1: Inimigos armados | Specify | Implementing |
-| ARM-21 | P1: Inimigos armados | Specify | Implementing |
-| ARM-06 | P1: Inimigos armados | Specify | Implementing |
-| ARM-22 | P1: Inimigos armados | Specify | Implementing |
-| ARM-23 | P1: Inimigos armados | Specify | Implementing |
-| ARM-07 | P1: Inimigos armados | Specify | Implementing |
-| ARM-08 | P1: Inimigos armados | Specify | Implementing |
-| ARM-09 | P1: Inimigos armados | Specify | Implementing |
-| ARM-10 | P1: Inimigos armados | Specify | Implementing |
-| ARM-15 | P1: Inimigos armados | Specify | Implementing |
-| ARM-11 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-24 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-12 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-17 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-26 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-27 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-13 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-28 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-14 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-18 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-16 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-19 | P1: Usar a ferramenta | Specify | Implementing |
-| ITEM-01 | P2: Item na mão no HUD | Specify | Implementing |
-| ITEM-02 | P2: Item na mão no HUD | Specify | Implementing |
-| ITEM-03 | P2: Item na mão no HUD | Specify | Implementing |
-| RAR-01 | P3: Ferramentas raras | Specify | Implementing |
-| RAR-02 | P3: Ferramentas raras | Specify | Implementing |
-| RAR-06 | P3: Ferramentas raras | Specify | Implementing |
-| RAR-03 | P3: Ferramentas raras | Specify | Implementing |
-| RAR-07 | P3: Ferramentas raras | Specify | Implementing |
-| RAR-04 | P3: Ferramentas raras | Specify | Implementing |
-| RAR-05 | P3: Ferramentas raras | Specify | Implementing |
+| ECO-01 | P1: Fragmentos | Specify | Verified |
+| ECO-02 | P1: Fragmentos | Specify | Verified |
+| ECO-03 | P1: Fragmentos | Specify | Verified |
+| ECO-04 | P1: Fragmentos | Specify | Verified |
+| ECO-05 | P1: Fragmentos | Specify | Verified |
+| ECO-06 | P1: Fragmentos | Specify | Verified |
+| ECO-07 | P1: Fragmentos | Specify | Verified |
+| ECO-24 | P1: Fragmentos | Specify | Verified |
+| ECO-08 | P1: Fragmentos | Specify | Verified |
+| ECO-09 | P1: Fragmentos | Specify | Verified |
+| ECO-10 | P1: Fragmentos | Specify | Verified |
+| ECO-18 | P1: Fragmentos | Specify | Verified |
+| ECO-11 | P1: Fragmentos | Specify | Verified |
+| ECO-25 | P1: Fragmentos | Specify | Verified |
+| ECO-12 | P1: Fragmentos | Specify | Verified |
+| ECO-13 | P1: Fragmentos | Specify | Verified |
+| ECO-26 | P1: Fragmentos | Specify | Verified |
+| ECO-20 | P1: Fragmentos | Specify | Verified |
+| ECO-14 | P1: Fragmentos | Specify | Verified |
+| ECO-27 | P1: Fragmentos | Specify | Verified |
+| ECO-15 | P1: Fragmentos | Specify | Verified |
+| ECO-28 | P1: Fragmentos | Specify | Verified |
+| ECO-16 | P1: Fragmentos | Specify | Verified |
+| ECO-29 | P1: Fragmentos | Specify | Verified |
+| ECO-30 | P1: Fragmentos | Specify | Verified |
+| ECO-21 | P1: Fragmentos | Specify | Verified |
+| ECO-17 | P1: Fragmentos | Specify | Verified |
+| ECO-31 | P1: Fragmentos | Specify | Verified |
+| ECO-22 | P1: Fragmentos | Specify | Verified |
+| ECO-19 | P1: Fragmentos | Specify | Verified |
+| ECO-23 | P1: Fragmentos | Specify | Verified |
+| HEAL-01 | P1: Gota de cura | Specify | Verified |
+| HEAL-02 | P1: Gota de cura | Specify | Verified |
+| HEAL-03 | P1: Gota de cura | Specify | Verified |
+| HEAL-08 | P1: Gota de cura | Specify | Verified |
+| HEAL-04 | P1: Gota de cura | Specify | Verified |
+| HEAL-09 | P1: Gota de cura | Specify | Verified |
+| HEAL-05 | P1: Gota de cura | Specify | Verified |
+| HEAL-06 | P1: Gota de cura | Specify | Verified |
+| HEAL-07 | P1: Gota de cura | Specify | Verified |
+| HEAL-10 | P1: Gota de cura | Specify | Verified |
+| ARM-01 | P1: Inimigos armados | Specify | Verified |
+| ARM-02 | P1: Inimigos armados | Specify | Verified |
+| ARM-03 | P1: Inimigos armados | Specify | Verified |
+| ARM-04 | P1: Inimigos armados | Specify | Verified |
+| ARM-05 | P1: Inimigos armados | Specify | Verified |
+| ARM-20 | P1: Inimigos armados | Specify | Verified |
+| ARM-21 | P1: Inimigos armados | Specify | Verified |
+| ARM-06 | P1: Inimigos armados | Specify | Verified |
+| ARM-22 | P1: Inimigos armados | Specify | Verified |
+| ARM-23 | P1: Inimigos armados | Specify | Verified |
+| ARM-07 | P1: Inimigos armados | Specify | Verified |
+| ARM-08 | P1: Inimigos armados | Specify | Verified |
+| ARM-09 | P1: Inimigos armados | Specify | Verified |
+| ARM-10 | P1: Inimigos armados | Specify | Verified |
+| ARM-15 | P1: Inimigos armados | Specify | Verified |
+| ARM-11 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-24 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-12 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-17 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-26 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-27 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-13 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-28 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-14 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-18 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-16 | P1: Usar a ferramenta | Specify | Verified |
+| ARM-19 | P1: Usar a ferramenta | Specify | Verified |
+| ITEM-01 | P2: Item na mão no HUD | Specify | Verified |
+| ITEM-02 | P2: Item na mão no HUD | Specify | Verified |
+| ITEM-03 | P2: Item na mão no HUD | Specify | Verified |
+| RAR-01 | P3: Ferramentas raras | Specify | Verified |
+| RAR-02 | P3: Ferramentas raras | Specify | Verified |
+| RAR-06 | P3: Ferramentas raras | Specify | Verified |
+| RAR-03 | P3: Ferramentas raras | Specify | Verified |
+| RAR-07 | P3: Ferramentas raras | Specify | Verified |
+| RAR-04 | P3: Ferramentas raras | Specify | Verified |
+| RAR-05 | P3: Ferramentas raras | Specify | Verified |
 
-**Coverage:** 78 total, 0 mapped to tasks, 78 unmapped ⚠️
+**Coverage:** 78 total, 78 Verified (Verifier round 2, `validation.md`, PASS) ✅
 
 ---
 
