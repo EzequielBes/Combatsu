@@ -7,6 +7,8 @@ export const Category = {
   PROP: 0x0008,
   HITBOX: 0x0010,
   RAGDOLL: 0x0020,
+  /** Só o chefe (BAT-13): ao contrário do inimigo comum, o corpo dele empurra o player. */
+  BOSS: 0x0040,
   ALL: 0xffff,
 } as const;
 
@@ -26,10 +28,12 @@ const filter = (category: number, mask: number, group = 0): CollisionFilter => (
  */
 export const Filters = {
   terrain: filter(C.TERRAIN, C.ALL),
-  player: filter(C.PLAYER, C.TERRAIN | C.HITBOX),
+  // BAT-13: o player também colide fisicamente com o chefe (categoria própria), diferente do inimigo comum.
+  player: filter(C.PLAYER, C.TERRAIN | C.HITBOX | C.BOSS),
   enemy: filter(C.ENEMY, C.TERRAIN | C.HITBOX),
+  boss: filter(C.BOSS, C.TERRAIN | C.HITBOX | C.PLAYER),
   hidden: filter(C.NONE, C.NONE),
-  hitbox: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL),
+  hitbox: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
   propRest: filter(C.PROP, C.TERRAIN | C.PROP),
   propHeld: filter(C.PROP, C.NONE),
   propSwing: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL),

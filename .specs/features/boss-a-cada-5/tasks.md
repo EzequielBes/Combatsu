@@ -286,15 +286,15 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] `boss.smoke.mjs` (`?debug&seed=1&round=5`):
-  - [ ] ao começar há exatamente 1 chefe e 0 inimigos comuns; `boss.name === 'Oni do Portão'`, `maxHp === 600` (BOSS-01, BHUD-04)
-  - [ ] o chefe nasce no ponto `E` mais distante do player (BOSS-03)
-  - [ ] nos primeiros 1500 ms o `x` não muda e golpes de teste não tiram hp (BOSS-06, BOSS-08)
-  - [ ] o primeiro ataque passa por `state: 'windup'`, `attack: 'charge'` por ≥ 600 ms antes de o `x` começar a mudar (BAT-01, BAT-05, BAT-11)
-  - [ ] parado encostado no chefe fora de ataque, o player não perde hp (BAT-08)
-  - [ ] com golpes de teste até cruzar 66%, `state: 'roar'`, golpes no roar não tiram hp e o player é empurrado para longe (BAI-04, BAI-13)
-- [ ] O snapshot tem `boss: { hp, maxHp, phase, state, attack, poise, archetype, name }` lido do chefe vivo, e `boss: null` sem chefe (BHUD-04)
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `boss.smoke.mjs` (`?debug&seed=1&round=5`):
+  - [x] ao começar há exatamente 1 chefe e 0 inimigos comuns; `boss.name === 'Oni do Portão'`, `maxHp === 600` (BOSS-01, BHUD-04)
+  - [x] o chefe nasce no ponto `E` mais distante do player (BOSS-03)
+  - [x] nos primeiros 1500 ms o `x` não muda e golpes de teste não tiram hp (BOSS-06, BOSS-08)
+  - [x] o primeiro ataque passa por `state: 'windup'`, `attack: 'charge'` por ≥ 600 ms antes de o `x` começar a mudar (BAT-01, BAT-05, BAT-11)
+  - [x] parado encostado no chefe fora de ataque, o player não perde hp (BAT-08)
+  - [x] com golpes de teste até cruzar 66%, `state: 'roar'`, golpes no roar não tiram hp e o player é empurrado para longe (BAI-04, BAI-13)
+- [x] O snapshot tem `boss: { hp, maxHp, phase, state, attack, poise, archetype, name }` lido do chefe vivo, e `boss: null` sem chefe (BHUD-04)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

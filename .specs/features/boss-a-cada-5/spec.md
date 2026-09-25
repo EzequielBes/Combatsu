@@ -217,8 +217,8 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BAT-06 | P1: Ataques telegrafados | Specify | Pending |
 | BAT-12 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-07 | P1: Ataques telegrafados | Specify | Pending |
-| BAT-08 | P1: Ataques telegrafados | Specify | Pending |
-| BAT-13 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-08 | P1: Ataques telegrafados | Specify | Implementing |
+| BAT-13 | P1: Ataques telegrafados | Specify | Implementing |
 | BAI-01 | P1: Fases e postura | Specify | Implementing |
 | BAI-02 | P1: Fases e postura | Specify | Implementing |
 | BAI-03 | P1: Fases e postura | Specify | Implementing |
@@ -236,7 +236,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BHUD-01 | P1: Barra do chefe e vitória | Specify | Pending |
 | BHUD-02 | P1: Barra do chefe e vitória | Specify | Pending |
 | BHUD-03 | P1: Barra do chefe e vitória | Specify | Pending |
-| BHUD-04 | P1: Barra do chefe e vitória | Specify | Pending |
+| BHUD-04 | P1: Barra do chefe e vitória | Specify | Implementing |
 | BHUD-05 | P1: Barra do chefe e vitória | Specify | Pending |
 | BHUD-06 | P1: Barra do chefe e vitória | Specify | Pending |
 | BHUD-07 | P1: Barra do chefe e vitória | Specify | Pending |
