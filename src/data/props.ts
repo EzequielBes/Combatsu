@@ -24,3 +24,36 @@ export const PROP_DEFS: Record<string, PropDef> = {
     tags: ['cortante'],
   },
 };
+
+/**
+ * Ferramentas amaldiçoadas (ARM-11, ARM-24), largadas pelo inimigo armado.
+ * SPEC_DEVIATION: o design fala em `PROP_DEFS.cursedKnife`/`cursedClub`, mas `PROP_DEFS` é fixado pelo teste
+ * existente `tests/data/props.test.ts` ("o level usa só chaves que existem aqui" = ['bottle', 'chair']), porque é
+ * o conjunto que `level.ts` sabe spawnar. Ferramentas não nascem no level (só na morte de um inimigo armado), então
+ * ficam num mapa próprio para não quebrar esse teste nem misturar as duas origens.
+ * Reason: preservar o teste existente sem enfraquecê-lo, como pedem as regras de execução.
+ */
+export const TOOL_DEFS: Record<'cursedKnife' | 'cursedClub', PropDef> = {
+  cursedKnife: {
+    key: 'cursedKnife',
+    texture: 'cursedKnife',
+    mass: 1,
+    damage: 16,
+    durability: 6,
+    throwSpeed: 820,
+    knockback: 6,
+    socket: 'front',
+    tags: ['amaldiçoado'],
+  },
+  cursedClub: {
+    key: 'cursedClub',
+    texture: 'cursedClub',
+    mass: 6,
+    damage: 26,
+    durability: 5,
+    throwSpeed: 480,
+    knockback: 12,
+    socket: 'back',
+    tags: ['amaldiçoado'],
+  },
+};

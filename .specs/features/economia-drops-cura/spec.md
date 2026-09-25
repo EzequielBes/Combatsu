@@ -319,19 +319,19 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-02 | P1: Inimigos armados | Specify | Implementing |
 | ARM-03 | P1: Inimigos armados | Specify | Implementing |
 | ARM-04 | P1: Inimigos armados | Specify | Implementing |
-| ARM-05 | P1: Inimigos armados | Specify | Pending |
-| ARM-20 | P1: Inimigos armados | Specify | Pending |
-| ARM-21 | P1: Inimigos armados | Specify | Pending |
-| ARM-06 | P1: Inimigos armados | Specify | Pending |
-| ARM-22 | P1: Inimigos armados | Specify | Pending |
-| ARM-23 | P1: Inimigos armados | Specify | Pending |
-| ARM-07 | P1: Inimigos armados | Specify | Pending |
+| ARM-05 | P1: Inimigos armados | Specify | Implementing |
+| ARM-20 | P1: Inimigos armados | Specify | Implementing |
+| ARM-21 | P1: Inimigos armados | Specify | Implementing |
+| ARM-06 | P1: Inimigos armados | Specify | Implementing |
+| ARM-22 | P1: Inimigos armados | Specify | Implementing |
+| ARM-23 | P1: Inimigos armados | Specify | Implementing |
+| ARM-07 | P1: Inimigos armados | Specify | Implementing |
 | ARM-08 | P1: Inimigos armados | Specify | Pending |
 | ARM-09 | P1: Inimigos armados | Specify | Pending |
 | ARM-10 | P1: Inimigos armados | Specify | Pending |
 | ARM-15 | P1: Inimigos armados | Specify | Implementing |
-| ARM-11 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-24 | P1: Usar a ferramenta | Specify | Pending |
+| ARM-11 | P1: Usar a ferramenta | Specify | Implementing |
+| ARM-24 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-12 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-17 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-26 | P1: Usar a ferramenta | Specify | Pending |
@@ -342,15 +342,15 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-18 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-16 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-19 | P1: Usar a ferramenta | Specify | Pending |
-| ITEM-01 | P2: Item na mão no HUD | Specify | Pending |
+| ITEM-01 | P2: Item na mão no HUD | Specify | Implementing |
 | ITEM-02 | P2: Item na mão no HUD | Specify | Pending |
 | ITEM-03 | P2: Item na mão no HUD | Specify | Pending |
 | RAR-01 | P3: Ferramentas raras | Specify | Implementing |
-| RAR-02 | P3: Ferramentas raras | Specify | Pending |
-| RAR-06 | P3: Ferramentas raras | Specify | Pending |
+| RAR-02 | P3: Ferramentas raras | Specify | Implementing |
+| RAR-06 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-03 | P3: Ferramentas raras | Specify | Pending |
-| RAR-07 | P3: Ferramentas raras | Specify | Pending |
-| RAR-04 | P3: Ferramentas raras | Specify | Pending |
+| RAR-07 | P3: Ferramentas raras | Specify | Implementing |
+| RAR-04 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-05 | P3: Ferramentas raras | Specify | Implementing |
 
 **Coverage:** 78 total, 0 mapped to tasks, 78 unmapped ⚠️
