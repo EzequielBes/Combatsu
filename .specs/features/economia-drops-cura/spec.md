@@ -326,21 +326,21 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-22 | P1: Inimigos armados | Specify | Implementing |
 | ARM-23 | P1: Inimigos armados | Specify | Implementing |
 | ARM-07 | P1: Inimigos armados | Specify | Implementing |
-| ARM-08 | P1: Inimigos armados | Specify | Pending |
+| ARM-08 | P1: Inimigos armados | Specify | Implementing |
 | ARM-09 | P1: Inimigos armados | Specify | Implementing |
 | ARM-10 | P1: Inimigos armados | Specify | Implementing |
 | ARM-15 | P1: Inimigos armados | Specify | Implementing |
 | ARM-11 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-24 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-12 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-17 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-26 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-27 | P1: Usar a ferramenta | Specify | Pending |
+| ARM-12 | P1: Usar a ferramenta | Specify | Implementing |
+| ARM-17 | P1: Usar a ferramenta | Specify | Implementing |
+| ARM-26 | P1: Usar a ferramenta | Specify | Implementing |
+| ARM-27 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-13 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-28 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-14 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-18 | P1: Usar a ferramenta | Specify | Implementing |
-| ARM-16 | P1: Usar a ferramenta | Specify | Pending |
+| ARM-16 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-19 | P1: Usar a ferramenta | Specify | Implementing |
 | ITEM-01 | P2: Item na mão no HUD | Specify | Implementing |
 | ITEM-02 | P2: Item na mão no HUD | Specify | Pending |

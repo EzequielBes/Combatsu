@@ -1,21 +1,36 @@
 import Phaser from 'phaser';
-import { armFor } from '../core/armed';
+import { armFor, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
+import { DroppedTools } from '../core/droppedTools';
 import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
-import { capDrop, Loot, type EnemyDropResult, type LootOverrides } from '../core/loot';
+import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import type { PickupPlayer } from '../core/pickup';
+import type { PropState } from '../core/props';
 import type { Rng } from '../core/rng';
 import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
 import { Wallet } from '../core/wallet';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
-import { PROP_DEFS } from '../data/props';
-import { ARMED, BOSS, DIFFICULTY, ECONOMY, ENEMY, ENEMY_AI, ENEMY_ATTACK, PICKUP, PLAYER_COMBO, RUN, WAVE } from '../data/tuning';
+import { PROP_DEFS, TOOL_DEFS } from '../data/props';
+import {
+  ARMED,
+  BOSS,
+  DIFFICULTY,
+  DROPPED_TOOLS,
+  ECONOMY,
+  ENEMY,
+  ENEMY_AI,
+  ENEMY_ATTACK,
+  PICKUP,
+  PLAYER_COMBO,
+  RUN,
+  WAVE,
+} from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
@@ -37,6 +52,9 @@ import { Prop } from '../game/Prop';
 import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
+
+/** Ferramenta amaldiçoada largada (chave em `TOOL_DEFS`, comum ou rara), nunca um objeto do mapa. */
+const isDroppedTool = (key: string): boolean => key.startsWith('cursed');
 
 const SPAWN_LIFT = 2;
 /** Zoom da câmera do mundo (RES-01): 960x540 de tela mostram 640x360 px de mundo. */
@@ -83,6 +101,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private lootRng!: Rng;
   private pickups!: Pickups;
   private floatTexts!: FloatTexts;
+  /** Tempo de vida e teto das ferramentas largadas (ARM-13/14/18/28); vive a cena toda. */
+  private droppedTools!: DroppedTools;
   /** Detecta a transição para morto (RUN-04): só o primeiro frame morto conta como evento. */
   private wasPlayerDead = false;
   private readonly hitstop = new Hitstop();
@@ -143,6 +163,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.wallet = new Wallet();
     this.pickups = new Pickups(this, PICKUP);
     this.floatTexts = new FloatTexts(this);
+    this.droppedTools = new DroppedTools(DROPPED_TOOLS);
 
     this.cameras.main
       .setZoom(WORLD_ZOOM)
@@ -198,6 +219,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const proj of this.projectiles) proj.update(dt);
     this.projectiles = this.projectiles.filter((proj) => !proj.removed);
     for (const prop of this.props) prop.update(dt);
+    this.updateDroppedTools(dt);
     this.props = this.props.filter((prop) => !prop.isGone);
     for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
@@ -276,6 +298,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.wallet.reset();
     this.pickups.clear();
     this.floatTexts.clear();
+    // ARM-18: nenhuma ferramenta largada sobrevive à run anterior (a cadeira/garrafa do mapa não são drops).
+    for (const prop of this.props) if (isDroppedTool(prop.def.key)) prop.destroyNow();
+    this.props = this.props.filter((prop) => !prop.isGone);
+    this.droppedTools.clear();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
     this.lootRng = this.run.lootRng!;
     this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides());
@@ -337,6 +363,40 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (result.heal) this.pickups.spawnDrop(this.lootRng, x, y, 'heal', 1, ECONOMY.healAmount, 0);
   }
 
+  /**
+   * Ferramenta largada por um inimigo armado (ARM-08): nasce em `rest`, pronta para pegar (design.md). Se o teto
+   * de 6 já estiver cheio, a mais antiga em `rest` some antes (ARM-14).
+   */
+  private dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
+    const def = rare ? rareDef(TOOL_DEFS[tool]) : TOOL_DEFS[tool];
+    const prop = new Prop(this, x, y, def, (hit, at) => this.onConnect(hit, at, 'prop'), rare);
+    const evictId = this.droppedTools.admit(prop.id, this.toolStates());
+    if (evictId !== null) {
+      this.props.find((p) => p.id === evictId)?.destroyNow();
+      this.droppedTools.forget(evictId);
+    }
+    this.props.push(prop);
+  }
+
+  /** Estado atual de cada ferramenta largada registrada (para `DroppedTools.admit`/`update`). */
+  private toolStates(): Map<number, PropState> {
+    const states = new Map<number, PropState>();
+    for (const p of this.props) if (isDroppedTool(p.def.key)) states.set(p.id, p.machine.state);
+    return states;
+  }
+
+  /** Sumiço por tempo (ARM-13) e limpeza do registro para ferramentas que já sumiram por outro motivo (quebra, teto). */
+  private updateDroppedTools(dtMs: number): void {
+    const expired = this.droppedTools.update(dtMs, this.toolStates());
+    for (const id of expired) {
+      const p = this.props.find((pr) => pr.id === id);
+      if (!p) continue;
+      this.fx.curseSmoke(p.sprite.x, p.sprite.y);
+      p.destroyNow();
+    }
+    for (const p of this.props) if (isDroppedTool(p.def.key) && p.isGone) this.droppedTools.forget(p.id);
+  }
+
   /** Onda da rodada (WAVE-02): tuning escalado pela rodada (DIF-04) e graça ao nascer (WAVE-09). */
   private spawnFromCommand(point: number, round: number): void {
     const at = this.level.enemies[point];
@@ -359,6 +419,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       (dead, x, y) => {
         this.onEnemyDied(dead.id, x, y);
         this.applyDrop(this.loot.enemyDrop(this.run.round, dead.weapon !== null), x, y);
+        if (dead.weapon) this.dropTool(dead.weapon, dead.weaponRare, x, y);
       },
       armedRoll,
     );
@@ -492,6 +553,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       wallet: { fragments: this.wallet.fragments },
       pickups: this.pickups.debug(),
       floatTexts: this.floatTexts.debug(),
+      worldProps: this.props.map((p) => ({
+        id: p.id,
+        key: p.def.key,
+        state: p.machine.state,
+        x: p.sprite.x,
+        y: p.sprite.y,
+        durabilityLeft: p.def.durability - p.machine.impacts,
+        rare: p.rare,
+      })),
     };
   }
 

@@ -4,7 +4,7 @@ import { PropMachine, propHit, type PropDef, type PropImpact, type PropState } f
 import { shardsKey } from './art';
 import { ART_SCALE } from './art/palette';
 import { PROP_SHARDS } from './art/sprites/props';
-import { tagBody, type BodyTag } from './bodyTags';
+import { newEntityId, tagBody, type BodyTag } from './bodyTags';
 import { contactWith, type OnConnect } from './hitbox';
 import { PX_PER_S_TO_STEP, applyFilter, bodyOf } from './physics';
 
@@ -21,14 +21,18 @@ const SHARD_MS = 500;
 const SHARD_GRAVITY = 700;
 const SHARD_SPEED = { min: 50, max: 130 };
 const SHARD_LIFT = { min: 60, max: 130 };
+/** Alternância do contorno raro (RAR-03): troca entre `common` e `rare` a cada 200 ms. */
+const RARE_BLINK_MS = 200;
 
 export class Prop {
+  readonly id = newEntityId();
   readonly machine: PropMachine;
   readonly sprite: Phaser.Physics.Matter.Image;
   private applied: PropState = 'rest';
   private facing: 1 | -1 = 1;
   /** Última posição em voo fora do terreno; é para onde o objeto volta ao bater. */
   private lastSafe: Vec2;
+  private destroyed = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -37,6 +41,8 @@ export class Prop {
     readonly def: PropDef,
     /** Golpe de objeto que conectou (faísca roxa + hitstop do forte), injetado pela cena. */
     private readonly onConnect?: OnConnect,
+    /** Ferramenta rara (RAR-02/03/06): sprite alterna `common`/`rare`; sem efeito num objeto comum. */
+    readonly rare: boolean = false,
   ) {
     this.machine = new PropMachine(def);
     this.sprite = scene.matter.add.image(x, y, def.texture, undefined, {
@@ -55,7 +61,14 @@ export class Prop {
   }
 
   get isGone(): boolean {
-    return this.machine.state === 'gone';
+    return this.machine.state === 'gone' || this.destroyed;
+  }
+
+  /** Remoção forçada (ARM-13/14: sumiço por tempo ou teto), fora do ciclo natural de quebra. */
+  destroyNow(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.sprite.destroy();
   }
 
   pickUp(holderId: number): boolean {
@@ -121,6 +134,8 @@ export class Prop {
     // Os eventos de colisão rodam no step do Matter, antes deste update:
     // se estamos em voo aqui, a posição atual está fora do terreno.
     if (this.machine.state === 'thrown') this.lastSafe = { x: this.sprite.x, y: this.sprite.y };
+    // RAR-03: contorno raro piscando, em qualquer estado (chão, na mão, arremessado).
+    if (this.rare) this.sprite.setFrame(Math.floor(this.scene.time.now / RARE_BLINK_MS) % 2 === 0 ? 'common' : 'rare');
   }
 
   private onTouch(other: BodyTag): void {
