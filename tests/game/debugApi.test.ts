@@ -36,6 +36,7 @@ describe('installDebugApi', () => {
       enemies: [{ id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70 }],
       events: ['enemyDied:3'],
       deaths: [{ id: 3, x: 50, y: 60 }],
+      boss: null,
       run: { state: 'roundActive', round: 1, kills: 0, alive: 1, queued: 2 },
       level: { playerSpawn: { x: 96, y: 460 } },
       hud: {

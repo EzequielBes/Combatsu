@@ -1,3 +1,6 @@
+import type { BossAIState, BossAttack } from '../core/bossAI';
+import type { BossBrainState } from '../core/bossBrain';
+import type { BossArchetype } from '../core/bossTier';
 import type { EnemyState } from '../core/enemyBrain';
 import type { RunState } from '../core/run';
 
@@ -19,6 +22,22 @@ export interface GameSnapshot {
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
   deaths: { id: number; x: number; y: number }[];
+  /**
+   * Estado do chefe (BHUD-04), lido do objeto vivo; `null` sem chefe na cena. `x` não está na lista da spec, mas
+   * é necessário para o smoke confirmar o ponto de spawn (BOSS-03).
+   */
+  boss: {
+    hp: number;
+    maxHp: number;
+    phase: 1 | 2 | 3;
+    /** Fora de `active`, o estado do `BossBrain`; em `active`, o sub-estado do `BossAI` (BAT-11). */
+    state: BossBrainState | BossAIState;
+    attack: BossAttack | null;
+    poise: number;
+    archetype: BossArchetype;
+    name: string;
+    x: number;
+  } | null;
   /** Estado da máquina de run (RUN-09). */
   run: { state: RunState; round: number; kills: number; alive: number; queued: number };
   /** Spawn do player no level, já com o mesmo ajuste que a cena aplica (RUN-02/05). */

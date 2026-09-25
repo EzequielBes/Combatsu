@@ -223,6 +223,12 @@ export class Player implements Hittable {
     this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
   }
 
+  /** Empurrão instantâneo (BAI-13): o rugido do chefe soma esta velocidade horizontal (px/step) ao corpo. */
+  pushHorizontal(dir: 1 | -1, pxPerStep: number): void {
+    const body = bodyOf(this.sprite);
+    this.scene.matter.body.setVelocity(body, { x: body.velocity.x + dir * pxPerStep, y: body.velocity.y });
+  }
+
   /** Mata o player pelo caminho normal de morte (tecla 3 em `?debug`, RUN-03/04). */
   debugKill(): void {
     this.receiveHit({
