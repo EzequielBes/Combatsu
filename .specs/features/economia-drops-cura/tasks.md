@@ -107,15 +107,15 @@ T13
 
 **Done when**:
 
-- [ ] Quantidade sempre em [2, 4] (e [4, 6] armado) em 1000 sorteios com seed fixa, com os três valores aparecendo
-- [ ] Valor: rodada 1 = 1, 5 = 1, 6 = 2, 10 = 2, 11 = 3; chefe 15 pickups e sem gota
-- [ ] Ordem: com um `Rng` falso que registra as chamadas, a cura é sorteada antes da quantidade; `rollArmed` faz chance → ferramenta → raro
-- [ ] `armedChance`: rodada 2 = 0, 3 = 0,15, 4 = 0,20, 9 = 0,45, 10 = 0,5, 20 = 0,5
-- [ ] `capDrop`: live 56 + 4 = 4 sem extra; live 57 + 4 = 3 + 1 extra; live 60 + 3 = 1 + 2 extras; live 70 + 2 = 1 + 1 extra
-- [ ] `burstVelocity`: vx em [−120, 120] e vy em [−260, −180]
-- [ ] Overrides: `healChance: 1` dá cura sempre; `armed: 'club'` arma sempre com porrete na rodada 1; `rare: true` dá raro sempre
-- [ ] Mesma seed → mesma sequência de drops
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Quantidade sempre em [2, 4] (e [4, 6] armado) em 1000 sorteios com seed fixa, com os três valores aparecendo
+- [x] Valor: rodada 1 = 1, 5 = 1, 6 = 2, 10 = 2, 11 = 3; chefe 15 pickups e sem gota
+- [x] Ordem: com um `Rng` falso que registra as chamadas, a cura é sorteada antes da quantidade; `rollArmed` faz chance → ferramenta → raro
+- [x] `armedChance`: rodada 2 = 0, 3 = 0,15, 4 = 0,20, 9 = 0,45, 10 = 0,5, 20 = 0,5
+- [x] `capDrop`: live 56 + 4 = 4 sem extra; live 57 + 4 = 3 + 1 extra; live 60 + 3 = 1 + 2 extras; live 70 + 2 = 1 + 1 extra
+- [x] `burstVelocity`: vx em [−120, 120] e vy em [−260, −180]
+- [x] Overrides: `healChance: 1` dá cura sempre; `armed: 'club'` arma sempre com porrete na rodada 1; `rare: true` dá raro sempre
+- [x] Mesma seed → mesma sequência de drops
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

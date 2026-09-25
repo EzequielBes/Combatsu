@@ -274,12 +274,12 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| ECO-01 | P1: Fragmentos | Specify | Pending |
-| ECO-02 | P1: Fragmentos | Specify | Pending |
-| ECO-03 | P1: Fragmentos | Specify | Pending |
-| ECO-04 | P1: Fragmentos | Specify | Pending |
-| ECO-05 | P1: Fragmentos | Specify | Pending |
-| ECO-06 | P1: Fragmentos | Specify | Pending |
+| ECO-01 | P1: Fragmentos | Specify | Implementing |
+| ECO-02 | P1: Fragmentos | Specify | Implementing |
+| ECO-03 | P1: Fragmentos | Specify | Implementing |
+| ECO-04 | P1: Fragmentos | Specify | Implementing |
+| ECO-05 | P1: Fragmentos | Specify | Implementing |
+| ECO-06 | P1: Fragmentos | Specify | Implementing |
 | ECO-07 | P1: Fragmentos | Specify | Pending |
 | ECO-24 | P1: Fragmentos | Specify | Pending |
 | ECO-08 | P1: Fragmentos | Specify | Pending |
@@ -294,8 +294,8 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-20 | P1: Fragmentos | Specify | Implementing |
 | ECO-14 | P1: Fragmentos | Specify | Implementing |
 | ECO-27 | P1: Fragmentos | Specify | Pending |
-| ECO-15 | P1: Fragmentos | Specify | Pending |
-| ECO-28 | P1: Fragmentos | Specify | Pending |
+| ECO-15 | P1: Fragmentos | Specify | Implementing |
+| ECO-28 | P1: Fragmentos | Specify | Implementing |
 | ECO-16 | P1: Fragmentos | Specify | Pending |
 | ECO-29 | P1: Fragmentos | Specify | Pending |
 | ECO-30 | P1: Fragmentos | Specify | Pending |
@@ -305,20 +305,20 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-22 | P1: Fragmentos | Specify | Pending |
 | ECO-19 | P1: Fragmentos | Specify | Pending |
 | ECO-23 | P1: Fragmentos | Specify | Pending |
-| HEAL-01 | P1: Gota de cura | Specify | Pending |
-| HEAL-02 | P1: Gota de cura | Specify | Pending |
+| HEAL-01 | P1: Gota de cura | Specify | Implementing |
+| HEAL-02 | P1: Gota de cura | Specify | Implementing |
 | HEAL-03 | P1: Gota de cura | Specify | Pending |
 | HEAL-08 | P1: Gota de cura | Specify | Pending |
 | HEAL-04 | P1: Gota de cura | Specify | Pending |
 | HEAL-09 | P1: Gota de cura | Specify | Pending |
 | HEAL-05 | P1: Gota de cura | Specify | Pending |
-| HEAL-06 | P1: Gota de cura | Specify | Pending |
+| HEAL-06 | P1: Gota de cura | Specify | Implementing |
 | HEAL-07 | P1: Gota de cura | Specify | Pending |
 | HEAL-10 | P1: Gota de cura | Specify | Pending |
-| ARM-01 | P1: Inimigos armados | Specify | Pending |
-| ARM-02 | P1: Inimigos armados | Specify | Pending |
-| ARM-03 | P1: Inimigos armados | Specify | Pending |
-| ARM-04 | P1: Inimigos armados | Specify | Pending |
+| ARM-01 | P1: Inimigos armados | Specify | Implementing |
+| ARM-02 | P1: Inimigos armados | Specify | Implementing |
+| ARM-03 | P1: Inimigos armados | Specify | Implementing |
+| ARM-04 | P1: Inimigos armados | Specify | Implementing |
 | ARM-05 | P1: Inimigos armados | Specify | Pending |
 | ARM-20 | P1: Inimigos armados | Specify | Pending |
 | ARM-21 | P1: Inimigos armados | Specify | Pending |
@@ -329,7 +329,7 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-08 | P1: Inimigos armados | Specify | Pending |
 | ARM-09 | P1: Inimigos armados | Specify | Pending |
 | ARM-10 | P1: Inimigos armados | Specify | Pending |
-| ARM-15 | P1: Inimigos armados | Specify | Pending |
+| ARM-15 | P1: Inimigos armados | Specify | Implementing |
 | ARM-11 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-24 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-12 | P1: Usar a ferramenta | Specify | Pending |
@@ -345,13 +345,13 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ITEM-01 | P2: Item na mão no HUD | Specify | Pending |
 | ITEM-02 | P2: Item na mão no HUD | Specify | Pending |
 | ITEM-03 | P2: Item na mão no HUD | Specify | Pending |
-| RAR-01 | P3: Ferramentas raras | Specify | Pending |
+| RAR-01 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-02 | P3: Ferramentas raras | Specify | Pending |
 | RAR-06 | P3: Ferramentas raras | Specify | Pending |
 | RAR-03 | P3: Ferramentas raras | Specify | Pending |
 | RAR-07 | P3: Ferramentas raras | Specify | Pending |
 | RAR-04 | P3: Ferramentas raras | Specify | Pending |
-| RAR-05 | P3: Ferramentas raras | Specify | Pending |
+| RAR-05 | P3: Ferramentas raras | Specify | Implementing |
 
 **Coverage:** 78 total, 0 mapped to tasks, 78 unmapped ⚠️
 
