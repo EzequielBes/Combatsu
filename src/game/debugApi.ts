@@ -2,6 +2,7 @@ import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { EnemyState } from '../core/enemyBrain';
+import type { ToolKey } from '../core/loot';
 import type { RunState } from '../core/run';
 
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
@@ -18,6 +19,8 @@ export interface GameSnapshot {
     /** Velocidades da IA em uso, já escaladas pela rodada (DIF-04/06). */
     patrolSpeed: number;
     chaseSpeed: number;
+    /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
+    weapon: ToolKey | null;
   }[];
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */

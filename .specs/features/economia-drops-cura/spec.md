@@ -328,7 +328,7 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-07 | P1: Inimigos armados | Specify | Implementing |
 | ARM-08 | P1: Inimigos armados | Specify | Pending |
 | ARM-09 | P1: Inimigos armados | Specify | Implementing |
-| ARM-10 | P1: Inimigos armados | Specify | Pending |
+| ARM-10 | P1: Inimigos armados | Specify | Implementing |
 | ARM-15 | P1: Inimigos armados | Specify | Implementing |
 | ARM-11 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-24 | P1: Usar a ferramenta | Specify | Implementing |
