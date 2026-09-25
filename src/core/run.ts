@@ -46,6 +46,7 @@ export class Run {
   private _summary: RunSummary | null = null;
   private spawner: WaveSpawner | null = null;
   private rng: Rng | null = null;
+  private lootRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -90,6 +91,11 @@ export class Run {
 
   get remaining(): number {
     return this.spawner?.remaining ?? 0;
+  }
+
+  /** Stream de sorteio dos drops (ECO-17): próprio, criado com `seed ^ 0x9e3779b9`; `null` antes do primeiro start. */
+  get lootRng(): Rng | null {
+    return this.lootRngValue;
   }
 
   startPressed(): void {
@@ -153,7 +159,9 @@ export class Run {
     if (this.pendingStart) {
       const canStart = this._state === 'title' || (this._state === 'gameOver' && this.gameOverTimer >= this.t.gameOverLockMs);
       if (canStart) {
-        this.rng = new Rng(seedForNewRun());
+        const seed = seedForNewRun();
+        this.rng = new Rng(seed);
+        this.lootRngValue = new Rng(seed ^ 0x9e3779b9);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;

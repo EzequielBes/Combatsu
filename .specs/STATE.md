@@ -84,14 +84,14 @@
 
 ## Handoff
 
-- **Feature**: F2 `.specs/features/boss-a-cada-5` concluída e mergeada em `dev` → próxima: **F3 `economia-drops-cura`** (moeda da run, drops, cura ao abater, inimigos armados; ver `.specs/ROADMAP.md`)
-- **Phase / Task**: F3 ainda não especificada; começar pelo Specify (tlc) + refinamento Jev (`node tools/jev-refine.mjs <spec>`, chave em `TYPESAFE_API_KEY` só no ambiente do comando)
+- **Feature**: F3 `.specs/features/economia-drops-cura` concluída e mergeada em `dev` → próxima: **F4 `loja-da-run`** (modificadores com teto, loja entre rodadas com 3 ofertas, gasta `Wallet.spend`; ver `.specs/ROADMAP.md`)
+- **Phase / Task**: F4 ainda não especificada; começar pelo Specify (tlc) + refinamento Jev (`node tools/jev-refine.mjs <spec>`, chave em `TYPESAFE_API_KEY` só no ambiente do comando)
 - **Adiantado**: Specify da F5 `energia-e-tecnicas` feito (`.specs/features/energia-e-tecnicas/spec.md`, 148 ACs, validador limpo, Jev em 3 rodadas com revisão do autor em `refinement.md`). A F5 continua na fila depois de F3 e F4.
 - **Completed**:
-  - F0 (harness de smoke, Jev), F1 (run/rodadas/dificuldade) e F2 (chefe a cada 5 rodadas: investida, salto com ondas, rajada, 3 fases, postura, barra, vitória com cura de 30%, tier e Tecelã)
-  - 471 testes, 7 cenários de smoke
+  - F0 (harness de smoke, Jev), F1 (run/rodadas/dificuldade), F2 (chefe a cada 5 rodadas) e F3 (fragmentos com ímã, gota de cura, inimigos armados com faca/porrete, ferramentas usáveis e raras, item na mão no HUD)
+  - 568 testes, 11 cenários de smoke
 - **Como trabalhar** (memória do usuário):
-  - Opus planeja; workers Sonnet, um por lote de fase (não um por task)
+  - Opus planeja; workers Sonnet, um por lote de fase (não um por task); workers de integração/smoke com no máximo ~3 tasks
   - Correções pequenas do Verifier: inline
   - Verifier em Sonnet com sensor leve
   - Decidir sozinho seguindo a recomendação, pensando em diversão
@@ -103,6 +103,6 @@
   - O gate Quick deve incluir `npm run typecheck`
   - Skill `phaser-gamedev` disponível para os workers
 - **In-progress** (file:line): none
-- **Blockers**: UAT do usuário (visual, F0, F1, F2) antes de `dev` ir para `main`
+- **Blockers**: UAT do usuário (visual, F0, F1, F2, F3) antes de `dev` ir para `main`
 - **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas, que são do usuário)
 - **Branch**: `dev`

@@ -16,7 +16,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F0 | `fundacao-harness-jev` | Medium | FND | Done (Verifier PASS, rodada 3) |
 | F1 | `run-e-rodadas` | Large | RUN, WAVE, DIF, RHUD | Done (Verifier PASS, rodada 3) |
 | F2 | `boss-a-cada-5` | Large | BOSS, BAT, BAI, BHUD, BWIN, BTIER | Done (Verifier PASS, rodada 3) |
-| F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM | Planejada |
+| F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM, ITEM, RAR | Done (Verifier PASS, rodada 2) |
 | F4 | `loja-da-run` | Large | SHOP, MOD | Planejada |
 | F5 | `energia-e-tecnicas` | Complex | CE, TEC, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Specify feito (148 ACs, Jev em 3 rodadas); Design, Tasks e Execute depois de F4 |
 | F6 | `meta-progressao` | Large | META, SAVE | Planejada |

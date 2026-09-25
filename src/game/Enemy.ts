@@ -4,6 +4,7 @@ import { Filters } from '../core/collision';
 import { EnemyAI, type AIEvent } from '../core/enemyAI';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
 import type { EnemyBase } from '../core/difficulty';
+import type { ToolKey } from '../core/loot';
 import { SpawnGrace } from '../core/spawnGrace';
 import { normalize, type Hit, type Vec2 } from '../core/hit';
 import { enemyAnimKey } from './art';
@@ -18,6 +19,9 @@ import { SIZE, TEX } from './textures';
 
 /** Duração (ms) do flash branco do golpe leve. */
 const HIT_FLASH_MS = 70;
+/** Ferramenta na mão (ARM-09): aura alternando a cada 150 ms; offset à frente do corpo. */
+const WEAPON_AURA_MS = 150;
+const WEAPON_OFFSET = { x: 10, y: 2 };
 /** No golpe o inimigo fica acima do player (depth 1): a garra aparece por cima de quem ela atinge. */
 const ATTACK_DEPTH = 2;
 /** Barra de vida (HUD-02): altura do topo acima do centro do corpo (px) e profundidade, acima de todos. */
@@ -40,6 +44,8 @@ export class Enemy implements Hittable {
   private readonly body: MatterJS.BodyType;
   private readonly view: Phaser.GameObjects.Sprite;
   private ragdoll: Ragdoll | null = null;
+  /** Sprite da ferramenta na mão (ARM-09/10), `null` se o inimigo não está armado. */
+  private readonly weaponView: Phaser.GameObjects.Sprite | null;
   /** Barra de vida acima da cabeça, na câmera do mundo: aparece no primeiro dano e some ao morrer (HUD-02). */
   private readonly barFrame: Phaser.GameObjects.Image;
   private readonly barFill: Phaser.GameObjects.Rectangle;
@@ -71,6 +77,8 @@ export class Enemy implements Hittable {
     onConnect?: OnConnect,
     /** Morte (evento `died` do cérebro, uma vez só), com a posição do corpo neste frame (FND-08). */
     private readonly onDied?: (enemy: Enemy, x: number, y: number) => void,
+    /** Ferramenta amaldiçoada na mão (ARM-01..03), `null` para um inimigo comum desarmado. */
+    private readonly weaponInfo: { tool: ToolKey; rare: boolean } | null = null,
   ) {
     const { w, h } = SIZE.enemy;
     this.brain = new EnemyBrain(tuning.brain);
@@ -87,6 +95,9 @@ export class Enemy implements Hittable {
     this.ai = new EnemyAI(tuning.ai, spawn.x);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, TEX.enemy, 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
+    this.weaponView = weaponInfo
+      ? scene.add.sprite(spawn.x, spawn.y, weaponInfo.tool === 'cursedKnife' ? TEX.cursedKnife : TEX.cursedClub, 'hold-a')
+      : null;
     this.barFrame = scene.add.image(0, 0, TEX.enemyBar).setOrigin(0, 0).setDepth(BAR_DEPTH).setVisible(false);
     const well = ENEMY_BAR_WELL;
     scene.matter.world.on('beforeupdate', this.onStep);
@@ -140,6 +151,21 @@ export class Enemy implements Hittable {
     return this.ai.chaseSpeed;
   }
 
+  /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
+  get weapon(): ToolKey | null {
+    return this.weaponInfo?.tool ?? null;
+  }
+
+  /** Raridade da ferramenta na mão (RAR-02/06): sem sentido desarmado. */
+  get weaponRare(): boolean {
+    return this.weaponInfo?.rare ?? false;
+  }
+
+  /** Sprite da ferramenta visível (ARM-10); `null` sem arma. */
+  get weaponVisible(): boolean | null {
+    return this.weaponView ? this.weaponView.visible : null;
+  }
+
   receiveHit(hit: Hit): boolean {
     const events = this.brain.receiveHit(hit);
     if (events.length === 0) return false; // já morto
@@ -182,6 +208,7 @@ export class Enemy implements Hittable {
       this.scene.matter.body.setPosition(this.body, this.ragdoll.center);
       this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
       this.updateBar();
+      this.updateWeaponView(); // some junto com o sprite em ragdoll (ARM-10)
       return;
     }
     if (canAct) {
@@ -192,6 +219,29 @@ export class Enemy implements Hittable {
     this.attack.follow(this.body.position.x, this.body.position.y, this.facing);
     this.animate();
     this.updateBar();
+    this.updateWeaponView();
+  }
+
+  /** Ferramenta na mão (ARM-09/10): some em ragdoll, senão segue a mão com a aura/preparo certo. */
+  private updateWeaponView(): void {
+    if (!this.weaponView) return;
+    if (this.ragdoll || this._removed) {
+      this.weaponView.setVisible(false);
+      return;
+    }
+    this.weaponView.setVisible(true);
+    this.weaponView.setFrame(this.weaponFrame());
+    const { x, y } = this.body.position;
+    this.weaponView.setPosition(x + WEAPON_OFFSET.x * this.facing, y + WEAPON_OFFSET.y);
+    this.weaponView.setFlipX(this.facing < 0);
+    this.weaponView.setDepth(this.view.depth);
+  }
+
+  /** `raised` no preparo (ARM-09, glow U); senão a aura alterna entre `hold-a`/`hold-b` (rara: `hold-rare` fixo). */
+  private weaponFrame(): string {
+    if (this.ai.state === 'windup') return 'raised';
+    if (this.weaponInfo?.rare) return 'hold-rare';
+    return Math.floor(this.scene.time.now / WEAPON_AURA_MS) % 2 === 0 ? 'hold-a' : 'hold-b';
   }
 
   private onAI(events: AIEvent[]): void {
@@ -296,6 +346,7 @@ export class Enemy implements Hittable {
     this.ragdoll = null;
     this.scene.matter.world.remove(this.body);
     this.view.destroy();
+    this.weaponView?.destroy();
     this.barFrame.destroy();
     this.barFill.destroy();
     this._removed = true;

@@ -57,6 +57,13 @@ export class Hud {
   private readonly bossBarMarks: Phaser.GameObjects.Rectangle[];
   private readonly bossBarName: Phaser.GameObjects.Text;
   private bossBarVisible = false;
+  /** Contador de fragmentos (ECO-16), abaixo da barra de HP: ícone + número, que pulsa ao mudar. */
+  private readonly fragmentIcon: Phaser.GameObjects.Image;
+  private readonly fragmentText: Phaser.GameObjects.Text;
+  private lastFragments = 0;
+  /** Objeto na mão (ITEM-01..03), abaixo do contador de fragmentos. */
+  private readonly heldItemText: Phaser.GameObjects.Text;
+  private heldItemState: { name: string; pips: number; maxPips: number } | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -109,10 +116,41 @@ export class Hud {
       .setOrigin(0.5, 1)
       .setVisible(false);
 
+    // Contador de fragmentos (ECO-16), logo abaixo da barra de HP.
+    const fragY = MARGIN + 20;
+    this.fragmentIcon = scene.add.image(MARGIN, fragY, TEX.fragmentIcon, 'icon').setOrigin(0, 0);
+    this.fragmentText = scene.add.text(MARGIN + 16, fragY - 2, '0', TEXT_STYLE);
+    // Item na mão (ITEM-01..03), logo abaixo do contador de fragmentos; escondido de mãos vazias.
+    this.heldItemText = scene.add.text(MARGIN, fragY + 16, '', TEXT_STYLE).setVisible(false);
+
     const runObjs = [this.roundText, this.remainingText, this.bannerText, this.centerText];
     const bossBarObjs = [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName];
-    for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs]) obj.setScrollFactor(0).setDepth(100);
-    layer.add([label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs]);
+    const fragmentObjs = [this.fragmentIcon, this.fragmentText, this.heldItemText];
+    for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]) {
+      obj.setScrollFactor(0).setDepth(100);
+    }
+    layer.add([label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]);
+  }
+
+  /** Nome e pips do objeto na mão (ITEM-01/02), `null` esconde a linha (ITEM-03). */
+  setHeldItem(item: { name: string; pips: number; maxPips: number } | null): void {
+    this.heldItemState = item;
+    if (!item) {
+      this.heldItemText.setVisible(false);
+      return;
+    }
+    const filled = '#'.repeat(Math.max(0, item.pips));
+    const empty = '-'.repeat(Math.max(0, item.maxPips - item.pips));
+    this.heldItemText.setText(`${item.name} ${filled}${empty}`).setVisible(true);
+  }
+
+  /** Atualiza o contador (ECO-16): pulsa de 1,3 para 1 em 150 ms quando o valor muda. */
+  setFragments(n: number): void {
+    this.fragmentText.setText(String(n));
+    if (n === this.lastFragments) return;
+    this.lastFragments = n;
+    this.fragmentText.setScale(1.3);
+    this.scene.tweens.add({ targets: this.fragmentText, scale: 1, duration: 150 });
   }
 
   /** Enche a barra na proporção da vida, em passos de 1 texel (2 px). */
@@ -201,6 +239,8 @@ export class Hud {
     bannerPos: { x: number; y: number };
     bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
     bossBarIgnoredByMain: boolean;
+    fragments: string;
+    heldItem: { name: string; pips: number; maxPips: number } | null;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -209,6 +249,8 @@ export class Hud {
       remaining: this.remainingText.text,
       banner: this.bannerText.visible ? this.bannerText.text : null,
       center: this.centerLines,
+      fragments: this.fragmentText.text,
+      heldItem: this.heldItemState,
       // Centro visual do texto (RHUD-02): com origem não centralizada, o ponto de âncora (x/y) não discriminaria
       // uma faixa que cresce só para um lado.
       bannerPos: (() => {
