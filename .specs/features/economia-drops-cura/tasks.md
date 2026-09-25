@@ -225,11 +225,11 @@ T13
 
 **Done when**:
 
-- [ ] Depois do start com seed s, `lootRng.next()` é igual ao primeiro `next()` de `new Rng(s ^ 0x9e3779b9)`
-- [ ] As ordens de spawn das rodadas 1–3 são iguais com e sem 50 sorteios no `lootRng` entre os updates
-- [ ] Nova run cria um `lootRng` novo com a seed nova
-- [ ] Todos os testes antigos de `run` continuam passando
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Depois do start com seed s, `lootRng.next()` é igual ao primeiro `next()` de `new Rng(s ^ 0x9e3779b9)`
+- [x] As ordens de spawn das rodadas 1–3 são iguais com e sem 50 sorteios no `lootRng` entre os updates
+- [x] Nova run cria um `lootRng` novo com a seed nova
+- [x] Todos os testes antigos de `run` continuam passando
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
