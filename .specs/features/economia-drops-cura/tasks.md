@@ -139,13 +139,13 @@ T13
 
 **Done when**:
 
-- [ ] Cai com gravidade 900 e para no topo do sólido abaixo; quica uma vez com 0,35; nunca termina um passo sobrepondo um sólido (também nascendo dentro de um)
-- [ ] Ímã: idade 299 não entra, 300 entra; distância 72 entra, 73 não; uma vez em ímã fica; velocidade 120 + 1200·t com teto 600; atravessa sólidos
-- [ ] Coleta só sobrepondo o player vivo; player morto não coleta nem liga o ímã
-- [ ] Gota: com `canHeal` falso não coleta nem liga o ímã
-- [ ] Vida: fragmento 14999 fica, 15000 expira; gota 9999 fica, 10000 expira
-- [ ] `visible`: sempre visível até restarem 3000 ms; depois alterna a cada 150 ms
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Cai com gravidade 900 e para no topo do sólido abaixo; quica uma vez com 0,35; nunca termina um passo sobrepondo um sólido (também nascendo dentro de um)
+- [x] Ímã: idade 299 não entra, 300 entra; distância 72 entra, 73 não; uma vez em ímã fica; velocidade 120 + 1200·t com teto 600; atravessa sólidos
+- [x] Coleta só sobrepondo o player vivo; player morto não coleta nem liga o ímã
+- [x] Gota: com `canHeal` falso não coleta nem liga o ímã
+- [x] Vida: fragmento 14999 fica, 15000 expira; gota 9999 fica, 10000 expira
+- [x] `visible`: sempre visível até restarem 3000 ms; depois alterna a cada 150 ms
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
