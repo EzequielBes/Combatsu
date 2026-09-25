@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/boss-a-cada-5/spec.md`
 **Design**: `.specs/features/boss-a-cada-5/design.md`
-**Status**: Approved
+**Status**: Done (Verifier PASS na rodada 3; ver validation.md)
 **Branch**: `feat/boss-a-cada-5` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS, AD-008)
 **Test count before this feature**: 323
 
