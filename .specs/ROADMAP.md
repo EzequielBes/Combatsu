@@ -18,7 +18,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F2 | `boss-a-cada-5` | Large | BOSS, BAT, BAI, BHUD, BWIN, BTIER | Done (Verifier PASS, rodada 3) |
 | F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM | Planejada |
 | F4 | `loja-da-run` | Large | SHOP, MOD | Planejada |
-| F5 | `energia-e-tecnicas` | Complex | CE, TEC, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Specify feito (124 ACs); Design, Tasks e Execute depois de F4 |
+| F5 | `energia-e-tecnicas` | Complex | CE, TEC, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Specify feito (148 ACs, Jev em 3 rodadas); Design, Tasks e Execute depois de F4 |
 | F6 | `meta-progressao` | Large | META, SAVE | Planejada |
 | F7 | `moveset-e-voadora` | Complex | MOV, AIR | Planejada |
 | F8 | `combos-estilo-luta` | Complex | CMB, STY | Planejada |

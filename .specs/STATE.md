@@ -86,7 +86,7 @@
 
 - **Feature**: F2 `.specs/features/boss-a-cada-5` concluída e mergeada em `dev` → próxima: **F3 `economia-drops-cura`** (moeda da run, drops, cura ao abater, inimigos armados; ver `.specs/ROADMAP.md`)
 - **Phase / Task**: F3 ainda não especificada; começar pelo Specify (tlc) + refinamento Jev (`node tools/jev-refine.mjs <spec>`, chave em `TYPESAFE_API_KEY` só no ambiente do comando)
-- **Adiantado**: Specify da F5 `energia-e-tecnicas` feito (`.specs/features/energia-e-tecnicas/spec.md`, 124 ACs, validador limpo; Jev pulado por falta de chave: rodar antes do Design). A F5 continua na fila depois de F3 e F4.
+- **Adiantado**: Specify da F5 `energia-e-tecnicas` feito (`.specs/features/energia-e-tecnicas/spec.md`, 148 ACs, validador limpo, Jev em 3 rodadas com revisão do autor em `refinement.md`). A F5 continua na fila depois de F3 e F4.
 - **Completed**:
   - F0 (harness de smoke, Jev), F1 (run/rodadas/dificuldade) e F2 (chefe a cada 5 rodadas: investida, salto com ondas, rajada, 3 fases, postura, barra, vitória com cura de 30%, tier e Tecelã)
   - 471 testes, 7 cenários de smoke
