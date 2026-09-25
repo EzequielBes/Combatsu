@@ -21,8 +21,3 @@ export function applyFilter(body: MatterJS.BodyType, f: CollisionFilter): void {
 export function setIgnoreGravity(body: MatterJS.BodyType, value: boolean): void {
   (body as MatterJS.BodyType & { ignoreGravity: boolean }).ignoreGravity = value;
 }
-
-/** Vira sensor (sem resposta física, só evento de contato) sem recriar o corpo; usado no salto do chefe. */
-export function setSensor(body: MatterJS.BodyType, value: boolean): void {
-  body.isSensor = value;
-}

@@ -56,6 +56,12 @@ T7
 T8 → T9 → T10
 ```
 
+### Phase 4: Correções do Verifier (rodada 1)
+
+```
+T11
+```
+
 ---
 
 ## Task Breakdown
@@ -370,14 +376,45 @@ T8 → T9 → T10
 
 ---
 
+### T11: Correções da rodada 1 do Verifier
+
+**What**: Cenários que discriminam os 3 mutantes sobreviventes e correção do bug real achado no caminho: depois de um pouso, o chefe afundava no chão (o par criado enquanto o corpo era sensor continuava sensor), e as ondas nasciam fora da sala.
+**Where**: `src/game/Boss.ts`
+**Depends on**: None
+**Reuses**: `Filters`, `applyFilter`, `groundTopBelow`
+**Requirement**: BOSS-08, BWIN-01, BAT-06, BAT-03
+
+> Toca também `src/core/collision.ts` (`bossAirborne`), `src/game/physics.ts` (remove `setSensor` órfão), `src/game/Projectile.ts` (`traveled`), `src/game/Player.ts` (`debugHurt`), `src/game/debugApi.ts`, `src/scenes/TestScene.ts` (tecla 4, evento `bossHitAccepted`, `boss.y`, `traveled`), `scripts/smoke/boss.smoke.mjs`, `scripts/smoke/boss-victory.smoke.mjs` e `scripts/smoke/run.mjs` (filtro por nome).
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] No salto, o chefe troca o filtro de colisão (`bossAirborne`) em vez de virar sensor; o pouso ancora no topo real do chão; o smoke exige `boss.y < 544` em todo passo
+- [x] Intro: o chefe recusa o golpe de teste (`bossHitAccepted` ausente) (BOSS-08)
+- [x] Vitória: a tecla 4 fere o player antes do golpe fatal e a cura é conferida abaixo do teto (BWIN-01)
+- [x] Parede: a onda que vai para a parede próxima some encostada nela com `traveled < 560` (BAT-06)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `fix(game): keep boss on the floor after leaps and harden boss scenarios`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3
+Phase 1 → Phase 2 → Phase 3 → Phase 4
 
 Phase 1:  T1 ------→ T2 ------→ T3 ------→ T4 ------→ T5 ------→ T6
 Phase 2:  T7
 Phase 3:  T8 ------→ T9 ------→ T10
+Phase 4:  T11
 ```
 
 ---

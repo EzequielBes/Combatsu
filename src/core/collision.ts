@@ -35,6 +35,9 @@ export const Filters = {
   player: filter(C.PLAYER, C.TERRAIN | C.HITBOX | C.BOSS | C.PROJECTILE),
   enemy: filter(C.ENEMY, C.TERRAIN | C.HITBOX),
   boss: filter(C.BOSS, C.TERRAIN | C.HITBOX | C.PLAYER),
+  // Chefe no ar (salto): só hitboxes o alcançam. Trocar o filtro (reavaliado a cada passo) em vez de virar sensor,
+  // porque o par criado enquanto o corpo é sensor continua sensor depois, e o chefe afundava no chão ao pousar.
+  bossAirborne: filter(C.BOSS, C.HITBOX),
   hidden: filter(C.NONE, C.NONE),
   hitbox: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
   // BAT-06: some ao tocar parede (terreno) ou o player; nunca colide com inimigo, objeto ou outro projétil.
