@@ -336,10 +336,10 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-17 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-26 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-27 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-13 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-28 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-14 | P1: Usar a ferramenta | Specify | Pending |
-| ARM-18 | P1: Usar a ferramenta | Specify | Pending |
+| ARM-13 | P1: Usar a ferramenta | Specify | Implementing |
+| ARM-28 | P1: Usar a ferramenta | Specify | Implementing |
+| ARM-14 | P1: Usar a ferramenta | Specify | Implementing |
+| ARM-18 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-16 | P1: Usar a ferramenta | Specify | Pending |
 | ARM-19 | P1: Usar a ferramenta | Specify | Pending |
 | ITEM-01 | P2: Item na mão no HUD | Specify | Implementing |
