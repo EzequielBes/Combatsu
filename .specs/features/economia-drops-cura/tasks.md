@@ -279,11 +279,11 @@ T13
 
 **Done when**:
 
-- [ ] Abater um inimigo em `?debug&seed=1` cria 2–4 pickups no snapshot; andar até eles aumenta `wallet.fragments` pelo valor e gera `collect:fragment:<v>` e um `floatTexts` `+v`
-- [ ] Com `?debug&heal=1` e tecla 4, a gota cura 8 e gera `collect:heal:8`; com vida cheia a gota fica
-- [ ] Os pickups param durante o hitstop
-- [ ] Nova run: carteira 0 e `pickups` vazio
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Abater um inimigo em `?debug&seed=1` cria 2–4 pickups no snapshot; andar até eles aumenta `wallet.fragments` pelo valor e gera `collect:fragment:<v>` e um `floatTexts` `+v`
+- [x] Com `?debug&heal=1` e tecla 4, a gota cura 8 e gera `collect:heal:8`; com vida cheia a gota fica
+- [x] Os pickups param durante o hitstop
+- [x] Nova run: carteira 0 e `pickups` vazio
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: smoke
 **Gate**: build

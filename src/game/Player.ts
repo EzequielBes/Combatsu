@@ -19,6 +19,7 @@ import type { InputSnapshot } from './input';
 import { PX_PER_S_TO_STEP, bodyOf } from './physics';
 import type { Prop } from './Prop';
 import { playerAnimKey } from './art';
+import { PALETTE } from './art/palette';
 import { PLAYER_ORIGIN } from './art/sprites/player';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { SIZE, TEX } from './textures';
@@ -60,6 +61,8 @@ export class Player implements Hittable {
   /** Sentido do recuo do último golpe recebido. */
   private knockDir: 1 | -1 = 1;
   private blinkMs = 0;
+  /** Flash sólido temporário (HEAL-10, ex.: cura), independente do piscar de invulnerabilidade. */
+  private flashMs = 0;
   /** Onde o player renasce: o spawn do level. */
   private readonly spawn: { x: number; y: number };
   /** Sensor de chão do frame anterior, para a poeira do pouso (FX-04). */
@@ -168,6 +171,7 @@ export class Player implements Hittable {
     this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
     this.animate(sensors.grounded);
     this.blink(dtMs);
+    this.tickFlash(dtMs);
   }
 
   /** Poeira nos pés (FX-04): ao pular, ao pousar e ao virar enquanto corre no chão. */
@@ -227,6 +231,18 @@ export class Player implements Hittable {
   /** Cura com teto em maxHp (BWIN-01); devolve o que foi restaurado. */
   heal(amount: number): number {
     return this.health.heal(amount);
+  }
+
+  /** Flash sólido por `ms` (HEAL-10), na cor da PALETTE indicada; independente do piscar de invulnerabilidade. */
+  flash(colorKey: string, ms: number): void {
+    this.flashMs = ms;
+    this.view.setTintFill(PALETTE[colorKey]);
+  }
+
+  private tickFlash(dtMs: number): void {
+    if (this.flashMs <= 0) return;
+    this.flashMs -= dtMs;
+    if (this.flashMs <= 0) this.view.clearTint();
   }
 
   pushHorizontal(dir: 1 | -1, pxPerStep: number): void {

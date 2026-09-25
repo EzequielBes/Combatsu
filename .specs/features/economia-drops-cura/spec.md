@@ -293,28 +293,28 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-26 | P1: Fragmentos | Specify | Implementing |
 | ECO-20 | P1: Fragmentos | Specify | Implementing |
 | ECO-14 | P1: Fragmentos | Specify | Implementing |
-| ECO-27 | P1: Fragmentos | Specify | Pending |
+| ECO-27 | P1: Fragmentos | Specify | Implementing |
 | ECO-15 | P1: Fragmentos | Specify | Implementing |
 | ECO-28 | P1: Fragmentos | Specify | Implementing |
 | ECO-16 | P1: Fragmentos | Specify | Pending |
-| ECO-29 | P1: Fragmentos | Specify | Pending |
-| ECO-30 | P1: Fragmentos | Specify | Pending |
+| ECO-29 | P1: Fragmentos | Specify | Implementing |
+| ECO-30 | P1: Fragmentos | Specify | Implementing |
 | ECO-21 | P1: Fragmentos | Specify | Implementing |
 | ECO-17 | P1: Fragmentos | Specify | Implementing |
 | ECO-31 | P1: Fragmentos | Specify | Implementing |
 | ECO-22 | P1: Fragmentos | Specify | Pending |
-| ECO-19 | P1: Fragmentos | Specify | Pending |
+| ECO-19 | P1: Fragmentos | Specify | Implementing |
 | ECO-23 | P1: Fragmentos | Specify | Implementing |
 | HEAL-01 | P1: Gota de cura | Specify | Implementing |
 | HEAL-02 | P1: Gota de cura | Specify | Implementing |
-| HEAL-03 | P1: Gota de cura | Specify | Pending |
-| HEAL-08 | P1: Gota de cura | Specify | Pending |
+| HEAL-03 | P1: Gota de cura | Specify | Implementing |
+| HEAL-08 | P1: Gota de cura | Specify | Implementing |
 | HEAL-04 | P1: Gota de cura | Specify | Implementing |
 | HEAL-09 | P1: Gota de cura | Specify | Implementing |
 | HEAL-05 | P1: Gota de cura | Specify | Implementing |
 | HEAL-06 | P1: Gota de cura | Specify | Implementing |
-| HEAL-07 | P1: Gota de cura | Specify | Pending |
-| HEAL-10 | P1: Gota de cura | Specify | Pending |
+| HEAL-07 | P1: Gota de cura | Specify | Implementing |
+| HEAL-10 | P1: Gota de cura | Specify | Implementing |
 | ARM-01 | P1: Inimigos armados | Specify | Implementing |
 | ARM-02 | P1: Inimigos armados | Specify | Implementing |
 | ARM-03 | P1: Inimigos armados | Specify | Implementing |
