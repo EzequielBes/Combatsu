@@ -517,7 +517,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   debugSnapshot(): GameSnapshot {
     return {
-      player: { x: this.player.sprite.x, y: this.player.sprite.y, hp: this.player.hp, dead: this.player.dead },
+      player: {
+        x: this.player.sprite.x,
+        y: this.player.sprite.y,
+        hp: this.player.hp,
+        dead: this.player.dead,
+        facing: this.player.facing,
+        flash: this.player.activeFlash,
+      },
       enemies: this.enemies.map((e) => ({
         id: e.id,
         x: e.x,
@@ -529,6 +536,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         patrolSpeed: e.patrolSpeed,
         chaseSpeed: e.chaseSpeed,
         weapon: e.weapon,
+        weaponVisible: e.weaponVisible,
       })),
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),
@@ -571,6 +579,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         y: p.sprite.y,
         durabilityLeft: p.def.durability - p.machine.impacts,
         rare: p.rare,
+        vx: p.vx,
       })),
     };
   }

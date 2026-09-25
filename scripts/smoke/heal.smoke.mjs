@@ -41,12 +41,23 @@ export default async function ({ page, baseUrl, assert }) {
   // ter morrido junto (Digit2 acerta todos de uma vez), então mais de uma gota pode ser coletada no caminho - o
   // que importa (HEAL-03/08) é que cada coleta individual restaura exatamente 8.
   const eventsBefore = snap.events.length;
-  for (let i = 0; i < 200 && snap.pickups.some((p) => p.id === heal.id); i++) {
+  // Passos de 16 ms (1 frame): no frame em que o hp sobe, o flash de 80 ms (HEAL-10) ainda está aceso.
+  let flashSeen = null;
+  for (let i = 0; i < 600 && snap.pickups.some((p) => p.id === heal.id); i++) {
     const dir = heal.x >= snap.player.x ? 'KeyD' : 'KeyA';
+    const hpBefore = snap.player.hp;
     await page.keyboard.down(dir);
-    snap = await stepAndSnap(50);
+    snap = await stepAndSnap(16);
     await page.keyboard.up(dir);
+    if (flashSeen === null && snap.player.hp > hpBefore) flashSeen = snap.player.flash;
   }
+  assert(flashSeen === 'G', `HEAL-10: no frame da cura o player deveria piscar em G: ${flashSeen}`);
+  const healsBefore = snap.events.filter((e) => e.startsWith('collect:heal:')).length;
+  const afterFlash = await stepAndSnap(120);
+  // Outra gota coletada nesse meio tempo reacende o flash; só vale checar o apagar sem nova coleta.
+  const healsAfter = afterFlash.events.filter((e) => e.startsWith('collect:heal:')).length;
+  assert(healsAfter > healsBefore || afterFlash.player.flash === null,`HEAL-10: o flash deveria apagar depois de 80 ms: ${afterFlash.player.flash}`);
+  snap = afterFlash;
   assert(!snap.pickups.some((p) => p.id === heal.id), 'a gota deveria ter sido coletada');
   const newHealCollects = snap.events.slice(eventsBefore).filter((e) => e.startsWith('collect:heal:'));
   assert(newHealCollects.length > 0, `HEAL-08: esperava ao menos um collect:heal: nos eventos: ${JSON.stringify(snap.events)}`);
@@ -71,13 +82,32 @@ export default async function ({ page, baseUrl, assert }) {
   }
   assert(snap.player.hp === 100, `deveria ter chegado à vida cheia para testar HEAL-04/09: ${snap.player.hp}`);
 
-  // HEAL-04/09: com vida cheia, uma gota nova nem entra em ímã nem é coletada, mesmo com o player em cima dela.
-  for (let i = 0; i < 20 && snap.pickups.filter((p) => p.kind === 'heal').length === 0; i++) {
-    await page.keyboard.press('Digit2', { delay: 50 });
-    snap = await stepAndSnap(300);
+  // HEAL-04/09: com vida cheia, uma gota nem entra em ímã nem é coletada, mesmo com o player em cima dela. O teste
+  // acontece no intervalo entre rodadas (nenhum inimigo vivo para ferir o player e tornar a coleta legítima).
+  const nearestHeal = (s) =>
+    s.pickups
+      .filter((p) => p.kind === 'heal')
+      .sort((p, q) => Math.abs(p.x - s.player.x) - Math.abs(q.x - s.player.x))[0] ?? null;
+  let fullHpHeal = null;
+  for (let attempt = 0; attempt < 6 && !fullHpHeal; attempt++) {
+    for (let i = 0; i < 40 && snap.run.state !== 'intermission'; i++) {
+      await page.keyboard.press('Digit2', { delay: 50 });
+      snap = await stepAndSnap(300);
+    }
+    // Ferido no caminho: as gotas da própria leva curam até o teto.
+    for (let i = 0; i < 80 && snap.player.hp < 100 && nearestHeal(snap); i++) {
+      const dir = nearestHeal(snap).x >= snap.player.x ? 'KeyD' : 'KeyA';
+      await page.keyboard.down(dir);
+      snap = await stepAndSnap(50);
+      await page.keyboard.up(dir);
+    }
+    if (snap.run.state === 'intermission' && snap.player.hp === 100) fullHpHeal = nearestHeal(snap);
+    if (!fullHpHeal) {
+      for (let i = 0; i < 20 && snap.run.state !== 'roundActive'; i++) snap = await stepAndSnap(300);
+    }
   }
-  const fullHpHeal = snap.pickups.find((p) => p.kind === 'heal');
-  if (fullHpHeal) {
+  assert(fullHpHeal, `HEAL-04: esperava uma gota no chão com a vida cheia no intervalo: ${JSON.stringify(snap.pickups)}`);
+  {
     // Capturado já aqui: os passeios abaixo podem, sozinhos, consumir boa parte (ou tudo) dos 10000 ms de vida.
     const eventsBeforeExpiry = snap.events.length;
     for (let i = 0; i < 60 && Math.abs(snap.player.x - fullHpHeal.x) >= 4; i++) {
@@ -86,24 +116,17 @@ export default async function ({ page, baseUrl, assert }) {
       snap = await stepAndSnap(50);
       await page.keyboard.up(dir);
     }
+    assert(snap.player.hp === 100, `a vida deveria seguir cheia ao chegar na gota: ${snap.player.hp}`);
     const stillThere = snap.pickups.find((p) => p.id === fullHpHeal.id);
     assert(stillThere, 'HEAL-04: a gota deveria continuar no chão com vida cheia, mesmo com o player em cima');
     assert(stillThere.magnet === false, 'HEAL-09: a gota não deveria entrar em ímã com vida cheia');
 
-    // Sai de perto (fora do alcance do ímã, ECO-10/HEAL-09) antes de esperar o tempo de vida - parado colado nela,
-    // um arranhão qualquer de um inimigo por perto ligaria o ímã e a coletaria antes da hora (fora do escopo deste
-    // teste de expiração, já coberto no limite exato 9999/10000 em pickup.test.ts).
-    const away = snap.player.x < stillThere.x ? 'KeyA' : 'KeyD';
-    for (let i = 0; i < 40 && Math.abs(snap.player.x - stillThere.x) < 100; i++) {
-      await page.keyboard.down(away);
-      snap = await stepAndSnap(50);
-      await page.keyboard.up(away);
-    }
-
-    // HEAL-05: expira sozinha (sem virar collect:heal:) dentro de uma folga generosa de vida (a espera acima já
-    // consumiu parte dos 10000 ms; o limite exato dos dois lados já está em pickup.test.ts).
+    // HEAL-05: morto o player não coleta nada (ECO-11) e os pickups seguem no chão até expirar (edge case da spec):
+    // a gota rastreada só pode sumir por expiração, sem depender de nenhum inimigo errar o golpe.
+    await page.keyboard.press('Digit3', { delay: 50 });
     let elapsed = 0;
-    let cur = snap;
+    let cur = await stepAndSnap(50);
+    assert(cur.player.dead, 'o player deveria estar morto para a espera da expiração');
     while (elapsed < 12000 && cur.pickups.some((p) => p.id === fullHpHeal.id)) {
       cur = await stepAndSnap(500);
       elapsed += 500;
@@ -112,11 +135,8 @@ export default async function ({ page, baseUrl, assert }) {
       !cur.pickups.some((p) => p.id === fullHpHeal.id),
       `HEAL-05: a gota deveria ter expirado sozinha: ${JSON.stringify(cur.pickups)}`,
     );
-    // Nota: se o player tomar dano de um inimigo por perto durante a espera, outra gota da mesma leva (heal=1 faz
-    // todo abate soltar uma) pode ficar coletável e aparecer como collect:heal: no meio - o que importa aqui é que
-    // a gota específica rastreada (fullHpHeal.id) sumiu da lista sem nunca ter entrado em ímã enquanto a vida
-    // esteve cheia (já confirmado acima) e que ao menos uma expiração real aconteceu.
     const newEvents = cur.events.slice(eventsBeforeExpiry);
+    assert(!newEvents.some((e) => e.startsWith('collect:heal:')), `ECO-11: morto não coleta: ${JSON.stringify(newEvents)}`);
     assert(newEvents.includes('pickupExpired'), `esperava o evento pickupExpired (HEAL-05): ${JSON.stringify(newEvents)}`);
   }
 }

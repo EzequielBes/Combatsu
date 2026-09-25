@@ -63,6 +63,7 @@ export class Player implements Hittable {
   private blinkMs = 0;
   /** Flash sólido temporário (HEAL-10, ex.: cura), independente do piscar de invulnerabilidade. */
   private flashMs = 0;
+  private flashColor: string | null = null;
   /** Onde o player renasce: o spawn do level. */
   private readonly spawn: { x: number; y: number };
   /** Sensor de chão do frame anterior, para a poeira do pouso (FX-04). */
@@ -241,13 +242,22 @@ export class Player implements Hittable {
   /** Flash sólido por `ms` (HEAL-10), na cor da PALETTE indicada; independente do piscar de invulnerabilidade. */
   flash(colorKey: string, ms: number): void {
     this.flashMs = ms;
+    this.flashColor = colorKey;
     this.view.setTintFill(PALETTE[colorKey]);
   }
 
   private tickFlash(dtMs: number): void {
     if (this.flashMs <= 0) return;
     this.flashMs -= dtMs;
-    if (this.flashMs <= 0) this.view.clearTint();
+    if (this.flashMs <= 0) {
+      this.view.clearTint();
+      this.flashColor = null;
+    }
+  }
+
+  /** Cor do flash em andamento (HEAL-10) para o snapshot de debug; `null` sem flash. */
+  get activeFlash(): string | null {
+    return this.flashMs > 0 && this.view.isTinted ? this.flashColor : null;
   }
 
   pushHorizontal(dir: 1 | -1, pxPerStep: number): void {

@@ -161,6 +161,11 @@ export class Enemy implements Hittable {
     return this.weaponInfo?.rare ?? false;
   }
 
+  /** Sprite da ferramenta visível (ARM-10); `null` sem arma. */
+  get weaponVisible(): boolean | null {
+    return this.weaponView ? this.weaponView.visible : null;
+  }
+
   receiveHit(hit: Hit): boolean {
     const events = this.brain.receiveHit(hit);
     if (events.length === 0) return false; // já morto
