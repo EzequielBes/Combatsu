@@ -81,9 +81,9 @@ T13
 
 **Done when**:
 
-- [ ] `tests/data/tuning.test.ts` confere cada valor novo contra as Assumptions da spec
-- [ ] `tests/core/wallet.test.ts`: `spend` com n = saldo (true, 0), n = saldo + 1 (false, intacto), `add` ignora n ≤ 0 e não inteiro, `reset` volta a 0, saldo nunca negativo
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] `tests/data/tuning.test.ts` confere cada valor novo contra as Assumptions da spec
+- [x] `tests/core/wallet.test.ts`: `spend` com n = saldo (true, 0), n = saldo + 1 (false, intacto), `add` ignora n ≤ 0 e não inteiro, `reset` volta a 0, saldo nunca negativo
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
