@@ -72,6 +72,12 @@ export interface GameSnapshot {
   };
   /** Estado do hitstop (BWIN-02). */
   hitstop: { frozen: boolean; remainingMs: number };
+  /** Carteira de fragmentos da run (ECO-19). */
+  wallet: { fragments: number };
+  /** Um item por pickup vivo (fragmento ou gota de cura), lido do objeto vivo (ECO-19). */
+  pickups: { id: number; kind: 'fragment' | 'heal'; value: number; x: number; y: number; ageMs: number; magnet: boolean }[];
+  /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
+  floatTexts: { text: string; color: string; x: number; y: number }[];
 }
 
 export interface DebugProbe {
