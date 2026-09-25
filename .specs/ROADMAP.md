@@ -5,9 +5,10 @@ Mapa das features da expansão. Cada item é uma pasta tlc em `.specs/features/<
 ```
 Parte A — Roguelite
  F0 fundacao-harness-jev ─► F1 run-e-rodadas ─┬─► F2 boss-a-cada-5
-                                              └─► F3 economia-drops-cura ─► F4 loja-da-run ─► F5 energia-e-tecnicas ─► F6 meta-progressao
+                                              └─► F3 economia-drops-cura ─► F4 loja-da-run ─► F5 energia-e-tecnicas ─┬─► F6 meta-progressao
+                                                                                                                     └─► F9 tecnicas-avancadas
 Parte B — Corpo a corpo estilo jogo de luta
- F7 moveset-e-voadora ─► F8 combos-estilo-luta   (F7 depende de F1; o Black Flash de F8 usa a energia de F5)
+ F7 moveset-e-voadora ─► F8 combos-estilo-luta   (F7 depende de F1; o Kokusen no combo de F8 reusa a regra de F5)
 ```
 
 | # | Feature | Tamanho | IDs | Status |
@@ -17,10 +18,11 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F2 | `boss-a-cada-5` | Large | BOSS, BAT, BAI, BHUD, BWIN, BTIER | Done (Verifier PASS, rodada 3) |
 | F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM | Planejada |
 | F4 | `loja-da-run` | Large | SHOP, MOD | Planejada |
-| F5 | `energia-e-tecnicas` | Complex | CE, TEC | Planejada |
+| F5 | `energia-e-tecnicas` | Complex | CE, TEC, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Specify feito (124 ACs); Design, Tasks e Execute depois de F4 |
 | F6 | `meta-progressao` | Large | META, SAVE | Planejada |
 | F7 | `moveset-e-voadora` | Complex | MOV, AIR | Planejada |
 | F8 | `combos-estilo-luta` | Complex | CMB, STY | Planejada |
+| F9 | `tecnicas-avancadas` | Complex | PUR, DOM, CHT | Planejada |
 
 ## Esboço das stories (viram spec.md completa no Specify de cada feature)
 
@@ -49,9 +51,14 @@ Parte B — Corpo a corpo estilo jogo de luta
 - P1 Modificadores de atributo com teto (`src/core/modifiers.ts`); P1 loja entre rodadas com 3 ofertas.
 - P1 Nível máximo e rodada mínima por upgrade; P2 reroll; P2 navegação por teclado.
 
-### F5 energia-e-tecnicas
-- P1 Energia amaldiçoada com regen e upgrades de máximo/regen; P1 2 slots, desbloqueio pela loja.
-- P1 Punho Divergente; P1 Corte; P2 Azul; P3 Vermelho; P3 Expansão de Domínio.
+### F5 energia-e-tecnicas (spec completa em `.specs/features/energia-e-tecnicas/spec.md`)
+- P1 Energia amaldiçoada (máx. 100, regen 8/s, +3 por golpe) e 2 slots (`L`/`C`, `I`/`V`); técnicas nível 1–3 vindas da loja.
+- P1 Conjuração comum a toda técnica: selo de mão → carga → soltura → recuperação, com aura, câmera que aproxima, chamada com kanji em pixel art e "pairar" no ar.
+- P1 Punho Divergente: 1º impacto e o 2º 200 ms depois (energia atrasada), com anel de aproximação marcando o ritmo.
+- P1 Kokusen (Black Flash, veio da F8): apertar no fim do anel vira 45 de dano, com tela invertida, duotom preto/vermelho, raios negros com borda vermelha, zoom-punch, cartão 黒閃 e zona de 8 s.
+- P1 Reversão de Técnica: Vermelho: esfera que nasce na ponta dos dedos expelindo faíscas, dispara, arremessa inimigos e explode em área.
+- P2 Técnica Amplificada: Azul (suga e esmaga, espiral entrando); P2 Desmantelar (3 cortes invisíveis); P2 laboratório de efeitos (`?debug&fxlab`, câmera lenta) para o UAT visual.
+- P1 Invariantes de VFX: só cores da paleta (+ `b`, `R`, `W`, `d`), geometria na grade de 2 px, nada sobra na cena, fallback sem WebGL (AD-009).
 
 ### F6 meta-progressao
 - P1 Selos persistentes; P1 altar de upgrades permanentes; P1 save versionado com fallback; P2 estatísticas.
@@ -62,7 +69,12 @@ Parte B — Corpo a corpo estilo jogo de luta
 
 ### F8 combos-estilo-luta
 - P1 Cancel por hit-confirm e dash-cancel; P1 juggle com limite; P1 contador e nota de estilo.
-- P2 Black Flash; P3 buffer de input de movimento.
+- P2 Kokusen também no finalizador do combo (reusa a janela e os efeitos de KOK da F5); P3 buffer de input de movimento.
+
+### F9 tecnicas-avancadas
+- P1 Vazio Roxo (茈): com Azul e Vermelho equipados, os dois slots juntos unem as esferas numa esfera roxa que apaga tudo numa linha; custa a barra inteira.
+- P1 Expansão de Domínio — Vazio Infinito (無量空処): selo de mão, esfera negra que cobre a tela, fundo cósmico e inimigos na tela paralisados por alguns segundos; depois, técnicas travadas (queima do domínio).
+- P2 Encantamento: segurar a tecla do slot para recitar e aumentar o poder da técnica, com risco de ser interrompido.
 
 ## Backlog técnico
 
