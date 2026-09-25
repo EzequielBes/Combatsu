@@ -9,6 +9,8 @@ export const Category = {
   RAGDOLL: 0x0020,
   /** Só o chefe (BAT-13): ao contrário do inimigo comum, o corpo dele empurra o player. */
   BOSS: 0x0040,
+  /** Projétil e onda de choque do chefe (BAT-03/04/06): sensor que acerta o player e some na parede. */
+  PROJECTILE: 0x0080,
   ALL: 0xffff,
 } as const;
 
@@ -29,11 +31,14 @@ const filter = (category: number, mask: number, group = 0): CollisionFilter => (
 export const Filters = {
   terrain: filter(C.TERRAIN, C.ALL),
   // BAT-13: o player também colide fisicamente com o chefe (categoria própria), diferente do inimigo comum.
-  player: filter(C.PLAYER, C.TERRAIN | C.HITBOX | C.BOSS),
+  // BAT-04/06: o player também detecta o projétil/onda do chefe (sensor, sem resposta física).
+  player: filter(C.PLAYER, C.TERRAIN | C.HITBOX | C.BOSS | C.PROJECTILE),
   enemy: filter(C.ENEMY, C.TERRAIN | C.HITBOX),
   boss: filter(C.BOSS, C.TERRAIN | C.HITBOX | C.PLAYER),
   hidden: filter(C.NONE, C.NONE),
   hitbox: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
+  // BAT-06: some ao tocar parede (terreno) ou o player; nunca colide com inimigo, objeto ou outro projétil.
+  projectile: filter(C.PROJECTILE, C.TERRAIN | C.PLAYER),
   propRest: filter(C.PROP, C.TERRAIN | C.PROP),
   propHeld: filter(C.PROP, C.NONE),
   propSwing: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL),

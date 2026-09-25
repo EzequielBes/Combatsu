@@ -320,12 +320,12 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] Smoke: depois de um pouso aparecem 2 ondas com `dir` opostos, cada uma com 20 px de altura, e elas somem ao bater na parede ou em 600 px (BAT-03, BAT-06, BAT-12)
-- [ ] Smoke: numa rajada da fase 2 saem 3 projéteis a 260 px/s, com 150 ms entre eles (±1 frame) (BAT-04)
-- [ ] Smoke com `?round=15` (tier 3, Tecelã): a rajada tem 5 projéteis a 325 px/s (BTIER-05, BTIER-07)
-- [ ] Smoke: um projétil que acerta o player some e tira o dano do spec (10 no tier 1) (BAT-06)
-- [ ] Smoke: J após o game over com o chefe vivo e projéteis em voo → 0 chefe e 0 projéteis na nova run (edge)
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Smoke: depois de um pouso aparecem 2 ondas com `dir` opostos, cada uma com 20 px de altura, e elas somem ao bater na parede ou em 600 px (BAT-03, BAT-06, BAT-12)
+- [x] Smoke: numa rajada da fase 2 saem 3 projéteis a 260 px/s, com 150 ms entre eles (±1 frame) (BAT-04)
+- [x] Smoke com `?round=15` (tier 3, Tecelã): a rajada tem 5 projéteis a 325 px/s (BTIER-05, BTIER-07)
+- [x] Smoke: um projétil que acerta o player some e tira o dano do spec (10 no tier 1) (BAT-06)
+- [x] Smoke: J após o game over com o chefe vivo e projéteis em voo → 0 projéteis e um chefe novo (zerado, não o antigo em pleno combate) na nova run (edge; `?round=5` do debug sempre recomeça numa rodada de chefe, então "0 chefe" não é observável fora do reinício em si - o que `startRun` garante é remover a instância antiga)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
