@@ -191,6 +191,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 - WHEN the boss dies during a roar or a stagger THEN it SHALL die normally (defeat effects, heal, kill counted once).
 - IF a new run starts while a boss is alive (after game over) THEN the boss, its projectiles and its shockwaves SHALL be removed.
 - WHEN the level has a single `E` point THEN the boss SHALL spawn at that point.
+- WHEN the boss lands from a leap THEN it SHALL stand on the floor surface at or below its takeoff level (body center at `floorTop − 28` on the main floor), never on a platform above it, even if the player is under that platform.
 - WHEN a boss round is cleared THEN the HUD SHALL show `Chefe derrotado!` for 2000 ms of game time (the defeat hitstop does not count) and then `Rodada N concluída` until the next round starts (BHUD-03 + RHUD-03).
 
 ---

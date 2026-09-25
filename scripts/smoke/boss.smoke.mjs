@@ -271,6 +271,29 @@ export default async function ({ page, baseUrl, assert }) {
   const wallRemoved = [...wallWaves.values()].some((w) => w.dir === towardWall && atWall(w) && w.traveled < 560);
   assert(wallRemoved, `a onda deveria sumir na parede antes do alcance: ${JSON.stringify([...wallWaves.values()])}`);
 
+  // Edge case (pouso): com o player embaixo da plataforma da linha 12 do LEVEL_1 (x 256..416, topo em y = 384),
+  // o chefe pousa no piso principal (centro em 480 − 28 = 452), nunca em cima da plataforma.
+  {
+    const under = (x) => x >= 280 && x <= 392; // dentro da plataforma, com margem para o corpo do player
+    // Recalcula a direção a cada passo: o chefe pode empurrar ou atingir o player no caminho.
+    for (let i = 0; i < 160 && !under(cur.player.x); i++) {
+      const key = cur.player.x > 336 ? 'KeyA' : 'KeyD';
+      await page.keyboard.down(key);
+      cur = await stepAndSnap(50);
+      await page.keyboard.up(key);
+    }
+    assert(under(cur.player.x), `player não chegou embaixo da plataforma: ${cur.player.x}`);
+    let flying = false;
+    let landed = false;
+    for (let i = 0; i < 1500 && !landed; i++) {
+      cur = await stepAndSnap(20);
+      if (cur.boss && cur.boss.state === 'leap') flying = true;
+      else if (flying && cur.boss) landed = true;
+    }
+    assert(landed, 'o chefe não saltou para o teste do pouso');
+    assert(Math.abs(cur.boss.y - 452) < 3, `o chefe deveria pousar no piso (y 452): ${JSON.stringify(cur.boss)}`);
+  }
+
   // Edge case (T9): J depois de um game over com o chefe vivo e projéteis em voo -> nova run sem chefe nem projéteis.
   // O ciclo da fase 2 continua (investida -> rajada -> salto): avança até o próximo ataque pôr algum projétil em
   // voo de novo, para matar o player com pelo menos um projétil (ou onda) vivo na hora do game over.
