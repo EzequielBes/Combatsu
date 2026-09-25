@@ -308,7 +308,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides());
   }
 
-  /** Overrides de debug dos sorteios (HEAL-06, ARM-15): `?debug&heal=N` e `?debug&armed=knife|club`. */
+  /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
   private lootOverrides(): LootOverrides {
     if (!isDebug()) return {};
     const params = new URLSearchParams(window.location.search);
@@ -321,6 +321,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const armed = params.get('armed');
     if (armed === 'knife') overrides.armed = 'cursedKnife';
     else if (armed === 'club') overrides.armed = 'cursedClub';
+    const rare = params.get('rare');
+    if (rare !== null) overrides.rare = rare === '1' || rare === 'true';
     return overrides;
   }
 

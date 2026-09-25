@@ -419,8 +419,8 @@ Cada um é determinístico por `?debug&seed=N` e pelas chaves de debug.
 
 **Done when**:
 
-- [ ] Os 4 cenários passam junto com os 7 existentes
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Os 4 cenários passam junto com os 7 existentes
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
