@@ -55,7 +55,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 
 **Open questions:** none - all resolved or logged above.
 
-**Refinamento Jev (AD-007):** pulado em 25/09 porque `TYPESAFE_API_KEY` não estava no ambiente. No lugar, uma revisão manual dividiu os 7 ACs que juntavam dois comportamentos (CE-09, TEC-12, CAST-19, CAST-20, RED-15, RED-16, BLU-11). Rodar `node tools/jev-refine.mjs` antes do Design, quando a chave estiver disponível.
+**Refinamento Jev (AD-007):** três rodadas em 25/09 (`refinement.md`): de 124 ACs com 65 sinalizados para 148 ACs com 54 sinalizados. Todos os ACs com precisão baixa ou com dois comportamentos claros foram reescritos ou divididos; o que sobrou está aceito com justificativa na revisão do autor.
 
 **Implicit-requirement dimensions sweep:**
 - State-transition integrity: coberta por CAST-01..CAST-20 (máquina `sign → charge → release → recover`, cancelamento) e KOK-03..KOK-05 (janela, trava por tentativa).
@@ -107,19 +107,22 @@ fx: { live: number; degraded: boolean; layers: string[] };
 6. CE-06: WHEN a basic melee hit (jab, cross, kick or prop hit) is applied to an enemy or the boss THEN the cursed energy SHALL increase by 3, capped at max.
 7. CE-07: WHEN the max upgrade is applied at level `n` (n ≥ 0) THEN max SHALL be `min(100 + 20n, 200)`.
 8. CE-09: WHEN the regen upgrade is applied at level `n` (n ≥ 0) THEN regen SHALL be `min(8 + 2n, 16)`.
-9. CE-08: WHEN a technique hit (any damage dealt by a technique) is applied THEN the cursed energy SHALL NOT increase from the CE-06 rule.
+9. CE-08: WHEN damage dealt by a technique is applied to a target THEN the cursed energy SHALL NOT receive the +3 of CE-06.
 10. TEC-01: WHEN a run starts without the `tech` debug parameter THEN both technique slots SHALL be empty (AD-005).
 11. TEC-02: WHERE the debug mode is on and the URL has `tech=<id>[,<id>]` THEN the slots SHALL start with those techniques at level 1, in order, ignoring unknown ids.
 12. TEC-03: WHEN `equip(slot, id, level)` is called with a valid slot, a known id and a level in 1–3 THEN that slot SHALL hold that technique at that level.
-13. TEC-04: IF `equip` is called with an id already in the other slot THEN the loadout SHALL stay unchanged and the call SHALL return `false`.
-14. TEC-05: IF `equip` or `upgrade` would set a level outside 1–3 THEN the loadout SHALL stay unchanged and the call SHALL return `false`.
-15. TEC-06: For a technique at level `n`, its damage values SHALL be the level-1 values multiplied by 1.0, 1.25 or 1.5 (n = 1, 2, 3) and rounded to the nearest integer, and its cost SHALL be the level-1 cost minus 0, 5 or 10.
-16. TEC-07: The HUD SHALL show the cursed energy bar under the HP bar, with fill width `barWidth × cur / max` (±1 px).
-17. TEC-12: The energy bar SHALL show one mark per equipped technique at `barWidth × cost / max` px from its left edge (±1 px).
-18. TEC-09: The HUD SHALL show one icon per slot next to the energy bar, with a dark overlay whose height is `iconHeight × cooldownMs / cooldownTotal` (±1 px).
-19. TEC-10: WHEN a cast is denied for lack of energy THEN the energy bar SHALL flash in `R` for 300 ms.
-20. TEC-08: WHERE the debug mode is on, the snapshot SHALL include `ce` and `tech` as defined in the snapshot contract.
-21. TEC-11: The energy bar and slot icons SHALL be in the main camera's ignore list and their colors SHALL belong to `PALETTE` (data test).
+13. TEC-04: IF `equip` is called with an id already in the other slot THEN both slots SHALL keep the technique and level they had before the call.
+14. TEC-13: IF `equip` is called with an id already in the other slot THEN `equip` SHALL return `false`.
+15. TEC-05: IF `equip` or `upgrade` would set a level outside 1–3 THEN the loadout SHALL stay unchanged and the call SHALL return `false`.
+16. TEC-06: For a technique at level `n` ∈ {1, 2, 3}, each damage value SHALL be `round(base × k)`, with k = 1.0, 1.25 and 1.5 for n = 1, 2 and 3, where `base` is the level-1 value and `round` rounds halves up.
+17. TEC-14: For a technique at level `n` ∈ {1, 2, 3}, its cost SHALL be `baseCost − 5 × (n − 1)`, where `baseCost` is its level-1 cost (Vermelho: 45, 40, 35).
+18. TEC-07: The HUD SHALL show the cursed energy bar under the HP bar, with fill width `barWidth × cur / max` (±1 px).
+19. TEC-12: WHILE a slot holds a technique, the energy bar SHALL show a vertical mark for it at `barLeft + barWidth × cost / max` px (±1 px), where `cost` is that technique cost at its level.
+20. TEC-09: WHILE a slot holds a technique, its HUD icon SHALL have a dark overlay of height `iconHeight × cooldownMs / cooldown` px (±1 px), where `cooldown` is that technique full cooldown.
+21. TEC-10: WHEN a cast is denied for lack of energy THEN the energy bar SHALL flash in `R` for 300 ms.
+22. TEC-08: WHERE the debug mode is on, the snapshot SHALL include `ce` and `tech` as defined in the snapshot contract.
+23. TEC-11: The energy bar and slot icon objects SHALL be in the main camera ignore list, reported as `hud.techIgnoredByMain: true` in the debug snapshot.
+24. TEC-15: The fill, background, mark, flash and overlay colors of the energy bar and slot icons SHALL be exported constants whose values belong to `PALETTE` (data test).
 
 **Independent Test**: `energy.test.ts` e `loadout.test.ts` em Node (limites 0/máx., regen com e sem conjuração, +3, tetos dos upgrades nos níveis 5/6 e 4/5, duplicado, nível 0 e 4); smoke `tech.smoke.mjs` com `?debug&tech=vermelho` confere barra, marca e ícone.
 
@@ -141,25 +144,27 @@ fx: { live: number; degraded: boolean; layers: string[] };
 **Acceptance Criteria**:
 
 1. CAST-01: WHEN the player presses a slot key holding a technique with enough energy and no cooldown THEN a cast SHALL start in the `sign` state.
-2. CAST-02: WHEN a cast starts THEN it SHALL go through `sign`, `charge`, `release` and `recover` in that order, each lasting the time defined for that technique.
+2. CAST-02: WHEN a cast starts THEN it SHALL stay in `sign` for the technique sign time, then in `charge` for its charge time, then in `release` for its release time, then in `recover` for its recover time, and then end, skipping any state whose time is 0 ms.
 3. CAST-03: WHEN a cast enters `release` THEN the technique cost SHALL be subtracted from the cursed energy exactly once.
 4. CAST-04: WHEN a cast enters `release` THEN the slot cooldown SHALL be set to the technique cooldown.
 5. CAST-05: IF the player presses a slot key and the cursed energy is below the cost THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:energy`.
 6. CAST-06: IF the player presses a slot key whose cooldown is above 0 THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:cooldown`.
-7. CAST-07: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end without spending energy and without starting the cooldown.
-8. CAST-20: WHEN a cast ends by CAST-07 THEN `events` SHALL get `techCancel`.
-9. CAST-08: WHILE a cast is in progress, a slot key press SHALL NOT start another cast.
-10. CAST-09: IF the player presses a slot key while holding a prop, in hitstun, or in the `startup` or `active` phase of a melee attack THEN no cast SHALL start and `events` SHALL get `techDenied:busy`.
-11. CAST-10: WHEN the player presses a slot key during the `recover` phase of a melee attack and CAST-01 holds THEN the melee attack SHALL end and the cast SHALL start in that frame.
-12. CAST-11: WHILE the player is airborne in `sign` or `charge`, the gravity applied to the player SHALL be 30% of `PLAYER_MOVE.gravity`.
-13. CAST-12: WHILE a cast is in `sign`, `charge`, `release` or `recover`, the player SHALL NOT move horizontally from input.
-14. CAST-13: WHILE a cast is in `sign`, the player sprite SHALL show that technique's sign frame; in `charge` its charge frame; in `release` its release frame; in `recover` its recover frame.
-15. CAST-14: WHILE a cast is in `sign` or `charge`, `fx.layers` SHALL include `cast.aura`.
-16. CAST-15: WHEN a cast enters `charge` THEN the main camera zoom SHALL move from 1.5 to 1.6 over the charge time.
-17. CAST-19: WHEN a cast enters `release` THEN the main camera zoom SHALL return to 1.5 within 250 ms.
-18. CAST-16: WHEN a cast enters `release` THEN the HUD SHALL show the callout with the technique kanji grid and Portuguese name for 900 ms, reported as `hud.callout` in the snapshot.
-19. CAST-17: WHEN a cast enters `release` THEN `events` SHALL get `techCast:<id>`.
-20. CAST-18: The sign, charge, release and recover frames of every technique SHALL be 32×24 texels and use only `PALETTE` keys (data test).
+7. CAST-07: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end and the cursed energy SHALL keep the value it had before that damage.
+8. CAST-21: WHEN a cast ends by CAST-07 THEN the slot cooldown SHALL stay 0.
+9. CAST-20: WHEN a cast ends by CAST-07 THEN `events` SHALL get `techCancel`.
+10. CAST-08: WHILE a cast is in progress, a slot key press SHALL NOT start another cast.
+11. CAST-09: IF the player presses a slot key while holding a prop, in hitstun, or in the `startup` or `active` phase of a melee attack THEN no cast SHALL start and `events` SHALL get `techDenied:busy`.
+12. CAST-10: WHEN the player presses a slot key during the `recover` phase of a melee attack, with enough energy and no cooldown for that technique, THEN the melee attack SHALL end and the cast SHALL start in that same frame.
+13. CAST-11: WHILE the player is airborne in `sign` or `charge`, the gravity applied to the player SHALL be 30% of `PLAYER_MOVE.gravity`.
+14. CAST-12: WHILE a cast is in `sign`, `charge`, `release` or `recover`, the player SHALL NOT move horizontally from input.
+15. CAST-13: WHILE a cast is in `sign`, the player sprite SHALL show that technique's sign frame; in `charge` its charge frame; in `release` its release frame; in `recover` its recover frame.
+16. CAST-14: WHILE a cast is in `sign` or `charge`, `fx.layers` SHALL include `cast.aura`.
+17. CAST-15: WHEN a cast enters `charge` THEN the main camera zoom SHALL move from 1.5 to 1.6 over the charge time.
+18. CAST-19: WHEN a cast enters `release` THEN the main camera zoom SHALL return to 1.5 within 250 ms.
+19. CAST-16: WHEN a cast enters `release` THEN the HUD SHALL show the callout with the technique kanji grid and Portuguese name for 900 ms, reported as `hud.callout` in the snapshot.
+20. CAST-17: WHEN a cast enters `release` THEN `events` SHALL get `techCast:<id>`.
+21. CAST-18: For each technique id in {`divergente`, `vermelho`, `azul`, `corte`}, the player sheet SHALL contain the frames `<id>-sign`, `<id>-charge`, `<id>-release` and `<id>-recover`, each 32×24 texels (data test).
+22. CAST-22: Every texel of the frames listed in CAST-18 SHALL be '.' or a `PALETTE` key (data test).
 
 **Independent Test**: `cast.test.ts` em Node (ordem dos estados, custo único, cancelamento em `sign`/`charge` e não em `release`, recusas, cancel na `recover` do golpe); smoke confere `tech.cast.state` passo a passo, `cast.aura`, zoom e `hud.callout`.
 
@@ -180,15 +185,17 @@ fx: { live: number; degraded: boolean; layers: string[] };
 **Acceptance Criteria**:
 
 1. DIV-01: The Punho Divergente SHALL have cost 20, cooldown 1200 ms, sign 60 ms, charge 60 ms, release 80 ms and recover 200 ms at level 1.
-2. DIV-02: WHILE the Punho Divergente is in `release`, a punch hitbox with the cross reach SHALL be open and SHALL hit at most one target.
-3. DIV-03: WHEN the punch hitbox touches a target THEN that target SHALL take a first impact of 12 light damage.
-4. DIV-04: WHEN 200 ms of game time have passed since the first impact THEN the same target SHALL take a second impact of 18 heavy damage at the first contact point.
-5. DIV-05: IF the punch hitbox touches no target during `release` THEN no second impact SHALL happen.
-6. DIV-06: IF the target died from the first impact THEN no second impact SHALL happen.
-7. DIV-07: WHILE the time since the first impact is between 0 and 200 ms, `fx.layers` SHALL include `divergente.echo` and `divergente.ring`.
-8. DIV-08: WHILE the approach ring is visible, its radius SHALL be `32 × (1 − t / 200)` px (±2 px), where `t` is the ms since the first impact.
-9. DIV-09: WHEN the second impact happens without a Kokusen THEN `fx.layers` SHALL include `divergente.burst` and `divergente.fistGhost` in that frame and `events` SHALL get `divergent2`.
-10. DIV-10: WHILE the Punho Divergente is in `sign` or `charge`, `fx.layers` SHALL include `divergente.fistAura`.
+2. DIV-02: WHILE the Punho Divergente is in `release`, a punch hitbox with the same size and offset as the cross hitbox SHALL be open.
+3. DIV-11: WHEN the Punho Divergente punch hitbox touches its first target THEN it SHALL ignore every other target for the rest of that cast.
+4. DIV-03: WHEN the punch hitbox touches a target THEN that target SHALL take a first impact of 12 light damage.
+5. DIV-04: WHEN 200 ms of game time have passed since the first impact THEN the first-impact target SHALL take 18 heavy damage.
+6. DIV-12: WHEN the second impact happens THEN its effects SHALL be drawn at the first-impact target center in that frame.
+7. DIV-05: IF the punch hitbox touches no target during `release` THEN no second impact SHALL happen.
+8. DIV-06: IF the target died from the first impact THEN no second impact SHALL happen.
+9. DIV-07: WHILE the time since the first impact is between 0 and 200 ms, `fx.layers` SHALL include `divergente.echo` and `divergente.ring`.
+10. DIV-08: WHILE the approach ring is visible, its radius SHALL be `32 × (1 − t / 200)` px (±2 px), where `t` is the ms since the first impact.
+11. DIV-09: WHEN the second impact happens without a Kokusen THEN `fx.layers` SHALL include `divergente.burst` and `divergente.fistGhost` in that frame and `events` SHALL get `divergent2`.
+12. DIV-10: WHILE the Punho Divergente is in `sign` or `charge`, `fx.layers` SHALL include `divergente.fistAura`.
 
 **Independent Test**: `divergent.test.ts` em Node (tempos, um alvo só, 2º impacto aos 199/200 ms, sem 2º quando erra ou mata); smoke com `?debug&tech=divergente` acerta um inimigo e confere hp, eventos e camadas.
 
@@ -214,33 +221,38 @@ fx: { live: number; degraded: boolean; layers: string[] };
 
 1. KOK-01: WHILE the time since a Punho Divergente first impact is at least 120 ms and at most 200 ms (outside the zone), the Kokusen window SHALL be open (`kokusen.windowOpen === true`).
 2. KOK-02: WHILE in the zone, the Kokusen window SHALL be open from 60 ms to 200 ms after the first impact.
-3. KOK-03: WHEN the player presses the same slot key while the window is open THEN the second impact SHALL be a Kokusen.
+3. KOK-03: WHEN the player presses the slot key that cast the Punho Divergente while `kokusen.windowOpen` is true and that cast is not locked by KOK-04 THEN the second impact of that cast SHALL be a Kokusen.
 4. KOK-04: WHEN the player presses the same slot key after the first impact and before the window opens THEN that Punho Divergente SHALL NOT produce a Kokusen, and `events` SHALL get `kokusenMiss`.
 5. KOK-05: WHILE a Punho Divergente is in `sign`, `charge` or `release` before its first impact, a press of its slot key SHALL NOT count for KOK-03 or KOK-04.
 6. KOK-06: WHEN a Kokusen lands THEN the target SHALL take 45 heavy damage (18 × 2.5) instead of the normal second impact.
 7. KOK-07: WHEN a Kokusen lands on a regular enemy that survives THEN the enemy SHALL enter ragdoll with twice the heavy-hit knockback.
 8. KOK-08: WHEN a Kokusen lands on the boss THEN the boss poise SHALL drop by `3 × 45`, never below 0.
 9. KOK-09: WHEN a Kokusen lands THEN the cursed energy SHALL increase by 30, capped at max.
-10. KOK-10: WHEN a Kokusen lands THEN the zone SHALL start (or restart) with 8000 ms and `kokusen.streak` SHALL increase by 1.
-11. KOK-11: WHEN the zone time reaches 0 THEN the zone SHALL end and `kokusen.streak` SHALL reset to 0.
-12. KOK-12: IF a Kokusen takes the boss hp across a phase threshold THEN the boss SHALL enter `roar` (BAI-05) and the Kokusen damage and energy SHALL still apply.
-13. KOK-13: WHEN a Kokusen lands THEN the game SHALL apply a hitstop of 220 ms (FX-02: the longest pending hitstop wins).
-14. KOK-14: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.invert` for at least 33 ms of real time (2 frames at 60 fps, rounded up to whole frames).
-15. KOK-15: WHEN `kokusen.invert` ends THEN `fx.layers` SHALL include `kokusen.duotone` for at least 66 ms of real time (4 frames at 60 fps, rounded up to whole frames), and SHALL NOT include `kokusen.invert` at the same time.
-16. KOK-16: WHILE `kokusen.invert` is active, the target sprite SHALL be drawn as a solid `b` silhouette.
-17. KOK-17: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.bolts` until 150 ms of real time after the hitstop ends.
-18. KOK-18: For any seed, `lightningBolts(seed, origin, dir)` SHALL return between 5 and 8 bolts, each with total length between 40 and 110 px.
-19. KOK-19: For any seed, every vertex returned by `lightningBolts` SHALL have integer coordinates that are multiples of 2 relative to the origin.
-20. KOK-20: WHEN `lightningBolts` is called twice with the same seed, origin and direction THEN it SHALL return the same bolts.
-21. KOK-21: WHILE `kokusen.bolts` is active during the hitstop, the bolts SHALL be regenerated with a new seed every 2 frames.
-22. KOK-22: The bolt stroke SHALL be `b` with a 1-texel `R` border.
-23. KOK-23: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.sparks` and `kokusen.shock` in that frame.
-24. KOK-24: WHEN a Kokusen lands THEN the main camera zoom SHALL reach 1.68 (1.5 × 1.12) within 60 ms of real time and return to 1.5 within the next 300 ms.
-25. KOK-25: WHEN a Kokusen lands THEN the HUD SHALL show the 黒閃 card at the screen center for 800 ms, reported as `hud.kokusenCard` in the snapshot.
-26. KOK-26: WHILE `kokusen.streak` ≥ 2, the card SHALL show `×N` with N = streak.
-27. KOK-27: WHILE the zone is active, `fx.layers` SHALL include `kokusen.zoneAura`.
-28. KOK-28: WHEN a Kokusen lands THEN `events` SHALL get exactly one `kokusen` entry.
-29. KOK-29: The 黒 and 閃 grids SHALL be 24×24 texels each and use only `PALETTE` keys (data test).
+10. KOK-10: WHEN a Kokusen lands THEN `kokusen.zoneMs` SHALL be set to 8000 and `kokusen.zone` to true.
+11. KOK-30: WHEN a Kokusen lands THEN `kokusen.streak` SHALL increase by 1.
+12. KOK-11: WHEN `kokusen.zoneMs` reaches 0 THEN `kokusen.zone` SHALL become false.
+13. KOK-31: WHEN `kokusen.zone` becomes false THEN `kokusen.streak` SHALL become 0.
+14. KOK-12: IF a Kokusen takes the boss hp from above a phase threshold to at or below it THEN the boss SHALL lose the full 45 hp and enter `roar` in that frame (BAI-05).
+15. KOK-32: IF a Kokusen takes the boss hp from above a phase threshold to at or below it THEN the cursed energy SHALL still increase by 30 (KOK-09).
+16. KOK-13: WHEN a Kokusen lands THEN the game SHALL apply a hitstop of 220 ms (FX-02: the longest pending hitstop wins).
+17. KOK-14: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.invert` for at least 33 ms of real time (2 frames at 60 fps, rounded up to whole frames).
+18. KOK-15: WHEN `kokusen.invert` ends THEN `fx.layers` SHALL include `kokusen.duotone` for at least 66 ms of real time (4 frames at 60 fps, rounded up to whole frames), and SHALL NOT include `kokusen.invert` at the same time.
+19. KOK-16: WHILE `kokusen.invert` is active, the target sprite SHALL be drawn as a solid `b` silhouette.
+20. KOK-17: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.bolts` until 150 ms of real time after the hitstop ends.
+21. KOK-18: For any seed, `lightningBolts(seed, origin, dir)` SHALL return at least 5 and at most 8 bolts.
+22. KOK-33: For any seed, the sum of the segment lengths of each bolt returned by `lightningBolts` SHALL be at least 40 px and at most 110 px.
+23. KOK-19: For any seed, every vertex returned by `lightningBolts` SHALL have integer coordinates that are multiples of 2 relative to the origin.
+24. KOK-20: WHEN `lightningBolts` is called twice with the same seed, origin and direction THEN it SHALL return the same bolts.
+25. KOK-21: WHILE `kokusen.bolts` is active during the hitstop, the bolts SHALL be regenerated with a new seed every 2 frames.
+26. KOK-22: The bolt stroke SHALL be `b` with a 1-texel `R` border.
+27. KOK-23: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.sparks` and `kokusen.shock` in that frame.
+28. KOK-24: WHEN a Kokusen lands THEN the main camera zoom SHALL reach 1.68 (1.5 × 1.12) within 60 ms of real time and return to 1.5 within the next 300 ms.
+29. KOK-25: WHEN a Kokusen lands THEN the HUD SHALL show the 黒閃 card at the screen center for 800 ms, reported as `hud.kokusenCard` in the snapshot.
+30. KOK-26: WHILE `kokusen.streak` ≥ 2, the card SHALL show `×N` with N = streak.
+31. KOK-27: WHILE the zone is active, `fx.layers` SHALL include `kokusen.zoneAura`.
+32. KOK-28: WHEN a Kokusen lands THEN `events` SHALL get exactly one `kokusen` entry.
+33. KOK-29: The 黒 and 閃 grids SHALL be 24×24 texels each (data test).
+34. KOK-34: Every texel of the 黒 and 閃 grids SHALL be '.' or a `PALETTE` key (data test).
 
 **Independent Test**: `kokusen.test.ts` em Node (janela nos limites 119/120 e 200/201 ms, na zona 59/60 ms, trava por tentativa, zona 7999/8000 ms, streak, dano, energia com teto); `lightning.test.ts` (quantidade, comprimentos, grade de 2 px, determinismo por seed); smoke `kokusen.smoke.mjs` aperta a tecla aos 160 ms e confere camadas, hitstop, zoom, cartão e evento; um segundo cenário aperta aos 60 ms e confere `kokusenMiss`.
 
@@ -275,9 +287,10 @@ fx: { live: number; degraded: boolean; layers: string[] };
 11. RED-10: WHEN the red orb detonates THEN every regular enemy whose center is within 96 px of the detonation point and that the orb has not hit before SHALL take 25 heavy damage and a radial impulse away from that point.
 12. RED-11: WHEN the red orb detonates THEN `fx.layers` SHALL include `red.flashCore`, `red.sphere`, `red.shockRing`, `red.debris` and `red.screenFlash` in that frame.
 13. RED-16: WHEN the red orb detonates THEN `events` SHALL get exactly one `redDetonate`.
-14. RED-12: WHEN the red orb detonates THEN `red.screenFlash` SHALL last 80 ms and the camera SHALL shake for 200 ms.
-15. RED-13: WHEN the red orb detonates THEN it SHALL be removed from `techObjects` in that frame.
-16. RED-14: WHILE the red orb is in flight, `techObjects` SHALL list it with `kind: 'red'` and its `traveled` distance.
+14. RED-12: WHEN the red orb detonates THEN `red.screenFlash` SHALL stay in `fx.layers` for 80 ms (rounded up to whole frames).
+15. RED-17: WHEN the red orb detonates THEN the main camera SHALL shake for 200 ms.
+16. RED-13: WHEN the red orb detonates THEN it SHALL be removed from `techObjects` in that frame.
+17. RED-14: WHILE the red orb is in flight, `techObjects` SHALL list it with `kind: 'red'` and its `traveled` distance.
 
 **Independent Test**: `redOrb.test.ts` em Node (velocidade, alcance 419/420 px, cada inimigo uma vez, raio 95/96/97 px, detonação em parede e no chefe); teste de dados das grades da esfera; smoke `red.smoke.mjs` com `?debug&tech=vermelho` e dois inimigos na linha confere dano, ragdoll, camadas e evento.
 
@@ -300,15 +313,16 @@ fx: { live: number; degraded: boolean; layers: string[] };
 
 1. BLU-01: The Azul SHALL have cost 35, cooldown 4000 ms, sign 200 ms, charge 250 ms, release 100 ms and recover 200 ms at level 1.
 2. BLU-02: WHEN the Azul enters `release` THEN a blue orb SHALL appear 110 px ahead of the player center at the player center height, or 16 px before the first wall if a wall is closer than 110 px.
-3. BLU-03: The blue orb SHALL last 1400 ms and SHALL NOT move.
-4. BLU-04: WHILE the blue orb exists, every regular enemy whose center is within 130 px of the orb SHALL be moved toward the orb center at 150 px/s.
-5. BLU-05: WHILE the blue orb exists, the boss SHALL NOT be moved by it.
-6. BLU-06: WHILE the blue orb exists, every 250 ms of its life every enemy and the boss within 130 px SHALL take 5 light damage.
-7. BLU-07: WHEN the blue orb reaches 1400 ms THEN every enemy and the boss within 130 px SHALL take 10 light damage.
-8. BLU-11: WHEN the blue orb reaches 1400 ms THEN it SHALL be removed from `techObjects` and `events` SHALL get exactly one `blueImplode`.
-9. BLU-08: WHILE the blue orb exists, `fx.layers` SHALL include `blue.core`, `blue.spiralIn`, `blue.distortRing` and `blue.debrisIn`.
-10. BLU-09: The `blue.spiralIn` particles SHALL have velocities with a component pointing toward the orb center (the dot product of velocity and offset from the center is negative).
-11. BLU-10: WHILE the blue orb exists, `techObjects` SHALL list it with `kind: 'blue'`.
+3. BLU-03: WHEN the blue orb has existed for 1400 ms THEN it SHALL end (BLU-07, BLU-11).
+4. BLU-12: WHILE the blue orb exists, its position SHALL stay equal to its spawn position.
+5. BLU-04: WHILE the blue orb exists, every regular enemy whose center is within 130 px of the orb SHALL be moved toward the orb center at 150 px/s.
+6. BLU-05: WHILE the blue orb exists, the boss SHALL NOT be moved by it.
+7. BLU-06: WHILE the blue orb exists, every 250 ms of its life every enemy and the boss within 130 px SHALL take 5 light damage.
+8. BLU-07: WHEN the blue orb ends THEN every regular enemy and the boss whose center is within 130 px of the orb center SHALL take 10 light damage once.
+9. BLU-11: WHEN the blue orb reaches 1400 ms THEN it SHALL be removed from `techObjects` and `events` SHALL get exactly one `blueImplode`.
+10. BLU-08: WHILE the blue orb exists, `fx.layers` SHALL include `blue.core`, `blue.spiralIn`, `blue.distortRing` and `blue.debrisIn`.
+11. BLU-09: The `blue.spiralIn` particles SHALL have velocities with a component pointing toward the orb center (the dot product of velocity and offset from the center is negative).
+12. BLU-10: WHILE the blue orb exists, `techObjects` SHALL list it with `kind: 'blue'`.
 
 **Independent Test**: `blueOrb.test.ts` em Node (posição com e sem parede, raio 129/130/131 px, 5 ticks + implosão, chefe não puxado); smoke com `?debug&tech=azul` confere puxão, dano e camadas.
 
@@ -330,9 +344,10 @@ fx: { live: number; degraded: boolean; layers: string[] };
 1. CUT-01: The Desmantelar SHALL have cost 30, cooldown 2500 ms, sign 150 ms, charge 0 ms, release 150 ms and recover 200 ms at level 1.
 2. CUT-02: WHEN the Desmantelar enters `release` THEN it SHALL make 3 cuts, at 0, 60 and 120 ms after entering `release`.
 3. CUT-03: WHEN a cut happens THEN every enemy and the boss whose body overlaps the rectangle from 60 to 180 px ahead of the player center and 48 px tall centered on it SHALL take 10 light damage.
-4. CUT-04: WHEN a cut happens THEN `fx.layers` SHALL include `cut.line` in that frame and `events` SHALL get `cut`.
-5. CUT-05: The 3 cut lines of one cast SHALL have 3 different angles.
-6. CUT-06: WHEN a cut damages a target THEN `fx.layers` SHALL include `cut.split` for that target for at least 33 ms (2 frames at 60 fps, rounded up to whole frames).
+4. CUT-04: WHEN a cut happens THEN `fx.layers` SHALL include `cut.line` in that frame.
+5. CUT-08: WHEN a cut happens THEN `events` SHALL get exactly one `cut`.
+6. CUT-05: The 3 cut lines of one cast SHALL be at 20°, −25° and 70° from the horizontal, in cut order, mirrored horizontally when the player faces left.
+7. CUT-06: WHEN a cut damages a target THEN `fx.layers` SHALL include `cut.split` for that target for at least 33 ms (2 frames at 60 fps, rounded up to whole frames).
 
 **Independent Test**: `cut.test.ts` em Node (tempos, área 59/60 e 180/181 px); smoke com `?debug&tech=corte` confere dano nos 3 cortes, ângulos e camadas.
 
@@ -346,10 +361,15 @@ fx: { live: number; degraded: boolean; layers: string[] };
 
 **Acceptance Criteria**:
 
-1. FXL-01: WHERE the debug mode is on and the URL has `fxlab` THEN the scene SHALL start with no waves and 3 training dummies whose hp resets to max 1000 ms after reaching 0.
-2. FXL-02: WHILE in `fxlab`, the keys 1 to 6 SHALL play, respectively, the cast aura, the Punho Divergente, a guaranteed Kokusen, the Vermelho, the Azul and the Desmantelar on the nearest dummy, ignoring energy and cooldown.
-3. FXL-03: WHILE in `fxlab`, the key 0 SHALL toggle the scene time scale between 1 and 0.25.
-4. FXL-04: WHILE in `fxlab`, the HUD SHALL show the key legend and the current time scale.
+1. FXL-01: WHERE the debug mode is on and the URL has `fxlab` THEN the run SHALL spawn no waves.
+2. FXL-05: WHERE the debug mode is on and the URL has `fxlab` THEN the scene SHALL place 3 training dummies on the main floor at `playerSpawn.x + 120`, `+ 200` and `+ 280` px.
+3. FXL-06: WHEN a training dummy hp reaches 0 THEN the dummy SHALL stay in place and its hp SHALL be set to max 1000 ms later.
+4. FXL-02: WHILE in `fxlab`, the keys 1, 2, 3, 4, 5 and 6 SHALL play, respectively, the cast aura, the Punho Divergente, a Kokusen, the Vermelho, the Azul and the Desmantelar, aimed at the nearest dummy.
+5. FXL-07: WHILE in `fxlab`, the effects played by the keys 1 to 6 SHALL NOT change the cursed energy.
+6. FXL-09: WHILE in `fxlab`, the effects played by the keys 1 to 6 SHALL NOT change any slot cooldown.
+7. FXL-03: WHILE in `fxlab`, the key 0 SHALL toggle the scene time scale between 1 and 0.25.
+8. FXL-04: WHILE in `fxlab`, the HUD SHALL show the legend `1 aura · 2 divergente · 3 kokusen · 4 vermelho · 5 azul · 6 corte · 0 lento`.
+9. FXL-08: WHILE in `fxlab`, the HUD SHALL show `velocidade: 1x` when the time scale is 1 and `velocidade: 0.25x` when it is 0.25.
 
 **Independent Test**: smoke `fxlab.smoke.mjs` dispara 1–6, confere as camadas de cada efeito e salva uma captura de cada um na pasta de saída do smoke para o UAT.
 
@@ -363,13 +383,17 @@ fx: { live: number; degraded: boolean; layers: string[] };
 
 **Acceptance Criteria**:
 
-1. TFX-01: Every color used by technique effects, frames, kanji grids and HUD parts SHALL belong to `PALETTE`, and `PALETTE` SHALL gain exactly the keys `b`, `R`, `W` and `d` (data test).
-2. TFX-02: Every procedural effect geometry (bolts, rings, lines) SHALL have vertex coordinates that are multiples of 2 px relative to its origin.
-3. TFX-03: WHEN a technique effect ends THEN all of its game objects SHALL be destroyed within 300 ms, and `fx.live` SHALL return to its value before the effect started.
-4. TFX-04: Every technique particle emitter SHALL have at most 64 live particles at any time.
-5. TFX-05: WHILE a hitstop is active, every technique effect layer except `kokusen.invert`, `kokusen.duotone`, `kokusen.bolts` and the 黒閃 card SHALL keep its state unchanged.
-6. TFX-06: IF the renderer is not WebGL THEN the postFX layers SHALL be skipped, the sprite and geometry layers SHALL still play, and the snapshot SHALL report `fx.degraded: true`.
-7. TFX-07: WHERE the debug mode is on, the snapshot SHALL include `kokusen`, `techObjects` and `fx` as defined in the snapshot contract.
+1. TFX-01: Every color used by technique effects, technique frames, kanji grids and technique HUD parts SHALL belong to `PALETTE` (data test).
+2. TFX-08: This feature SHALL add exactly four keys to `PALETTE`: `b` = 0x050205, `R` = 0xff3344, `W` = 0xffffff and `d` = 0x14307a (data test).
+3. TFX-02: For every procedural effect geometry (bolt, ring, cut line), the x and y offsets of every vertex from the effect origin SHALL be even integers (px).
+4. TFX-03: WHEN a technique effect ends THEN every game object it created SHALL be destroyed within 300 ms.
+5. TFX-09: WHEN 300 ms have passed since a technique effect ended THEN `fx.live` SHALL equal its value from the frame before that effect started.
+6. TFX-04: Every technique particle emitter SHALL have at most 64 live particles at any time.
+7. TFX-05: WHILE a hitstop is active, every technique effect layer other than `kokusen.invert`, `kokusen.duotone`, `kokusen.bolts` and the 黒閃 card SHALL NOT advance its animation time.
+8. TFX-06: IF the renderer is not WebGL THEN no postFX SHALL be added to any camera or game object.
+9. TFX-10: IF the renderer is not WebGL THEN the sprite and geometry layers of each effect SHALL still appear in `fx.layers` as with WebGL.
+10. TFX-11: IF the renderer is not WebGL THEN the snapshot SHALL report `fx.degraded: true`.
+11. TFX-07: WHERE the debug mode is on, the snapshot SHALL include `kokusen`, `techObjects` and `fx` as defined in the snapshot contract.
 
 **Independent Test**: teste de dados da paleta e das grades; `lightning.test.ts` e testes das geometrias na grade de 2 px; smoke confere `fx.live` antes e 300 ms depois de cada técnica e o hitstop congelando as camadas.
 
@@ -381,7 +405,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 - WHEN a new run starts THEN every technique object and effect SHALL be removed, the zone SHALL end and the energy SHALL reset to CE-01.
 - WHEN a round is cleared while a red or blue orb exists THEN the orb SHALL keep its behavior until it detonates or expires.
 - IF the red orb passes through a regular enemy that is already in ragdoll from that same orb THEN that enemy SHALL NOT take damage again.
-- IF the Punho Divergente first impact target enters ragdoll or moves before the second impact THEN the second impact SHALL still hit that same target at its current position.
+- IF the Punho Divergente first impact target enters ragdoll or moves before the second impact THEN the second impact SHALL still hit that same target, drawn at its current center (DIV-12).
 - IF the Punho Divergente target is the boss in `roar` or in the entrance invulnerability THEN both impacts SHALL deal 0 damage and no Kokusen SHALL be possible (BOSS-08, BAI-12).
 - WHEN the player is in the air at the end of a cast THEN normal gravity SHALL resume in that frame.
 - IF both slot keys are pressed in the same frame THEN only slot 1 SHALL be considered.
@@ -405,14 +429,17 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TEC-02 | P1: Energia e slots | Specify | Pending |
 | TEC-03 | P1: Energia e slots | Specify | Pending |
 | TEC-04 | P1: Energia e slots | Specify | Pending |
+| TEC-13 | P1: Energia e slots | Specify | Pending |
 | TEC-05 | P1: Energia e slots | Specify | Pending |
 | TEC-06 | P1: Energia e slots | Specify | Pending |
+| TEC-14 | P1: Energia e slots | Specify | Pending |
 | TEC-07 | P1: Energia e slots | Specify | Pending |
 | TEC-12 | P1: Energia e slots | Specify | Pending |
 | TEC-09 | P1: Energia e slots | Specify | Pending |
 | TEC-10 | P1: Energia e slots | Specify | Pending |
 | TEC-08 | P1: Energia e slots | Specify | Pending |
 | TEC-11 | P1: Energia e slots | Specify | Pending |
+| TEC-15 | P1: Energia e slots | Specify | Pending |
 | CAST-01 | P1: Conjuração | Specify | Pending |
 | CAST-02 | P1: Conjuração | Specify | Pending |
 | CAST-03 | P1: Conjuração | Specify | Pending |
@@ -420,6 +447,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CAST-05 | P1: Conjuração | Specify | Pending |
 | CAST-06 | P1: Conjuração | Specify | Pending |
 | CAST-07 | P1: Conjuração | Specify | Pending |
+| CAST-21 | P1: Conjuração | Specify | Pending |
 | CAST-20 | P1: Conjuração | Specify | Pending |
 | CAST-08 | P1: Conjuração | Specify | Pending |
 | CAST-09 | P1: Conjuração | Specify | Pending |
@@ -433,10 +461,13 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CAST-16 | P1: Conjuração | Specify | Pending |
 | CAST-17 | P1: Conjuração | Specify | Pending |
 | CAST-18 | P1: Conjuração | Specify | Pending |
+| CAST-22 | P1: Conjuração | Specify | Pending |
 | DIV-01 | P1: Punho Divergente | Specify | Pending |
 | DIV-02 | P1: Punho Divergente | Specify | Pending |
+| DIV-11 | P1: Punho Divergente | Specify | Pending |
 | DIV-03 | P1: Punho Divergente | Specify | Pending |
 | DIV-04 | P1: Punho Divergente | Specify | Pending |
+| DIV-12 | P1: Punho Divergente | Specify | Pending |
 | DIV-05 | P1: Punho Divergente | Specify | Pending |
 | DIV-06 | P1: Punho Divergente | Specify | Pending |
 | DIV-07 | P1: Punho Divergente | Specify | Pending |
@@ -453,14 +484,18 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | KOK-08 | P1: Kokusen | Specify | Pending |
 | KOK-09 | P1: Kokusen | Specify | Pending |
 | KOK-10 | P1: Kokusen | Specify | Pending |
+| KOK-30 | P1: Kokusen | Specify | Pending |
 | KOK-11 | P1: Kokusen | Specify | Pending |
+| KOK-31 | P1: Kokusen | Specify | Pending |
 | KOK-12 | P1: Kokusen | Specify | Pending |
+| KOK-32 | P1: Kokusen | Specify | Pending |
 | KOK-13 | P1: Kokusen | Specify | Pending |
 | KOK-14 | P1: Kokusen | Specify | Pending |
 | KOK-15 | P1: Kokusen | Specify | Pending |
 | KOK-16 | P1: Kokusen | Specify | Pending |
 | KOK-17 | P1: Kokusen | Specify | Pending |
 | KOK-18 | P1: Kokusen | Specify | Pending |
+| KOK-33 | P1: Kokusen | Specify | Pending |
 | KOK-19 | P1: Kokusen | Specify | Pending |
 | KOK-20 | P1: Kokusen | Specify | Pending |
 | KOK-21 | P1: Kokusen | Specify | Pending |
@@ -472,6 +507,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | KOK-27 | P1: Kokusen | Specify | Pending |
 | KOK-28 | P1: Kokusen | Specify | Pending |
 | KOK-29 | P1: Kokusen | Specify | Pending |
+| KOK-34 | P1: Kokusen | Specify | Pending |
 | RED-01 | P1: Vermelho | Specify | Pending |
 | RED-02 | P1: Vermelho | Specify | Pending |
 | RED-03 | P1: Vermelho | Specify | Pending |
@@ -486,11 +522,13 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | RED-11 | P1: Vermelho | Specify | Pending |
 | RED-16 | P1: Vermelho | Specify | Pending |
 | RED-12 | P1: Vermelho | Specify | Pending |
+| RED-17 | P1: Vermelho | Specify | Pending |
 | RED-13 | P1: Vermelho | Specify | Pending |
 | RED-14 | P1: Vermelho | Specify | Pending |
 | BLU-01 | P2: Azul | Specify | Pending |
 | BLU-02 | P2: Azul | Specify | Pending |
 | BLU-03 | P2: Azul | Specify | Pending |
+| BLU-12 | P2: Azul | Specify | Pending |
 | BLU-04 | P2: Azul | Specify | Pending |
 | BLU-05 | P2: Azul | Specify | Pending |
 | BLU-06 | P2: Azul | Specify | Pending |
@@ -503,21 +541,31 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CUT-02 | P2: Desmantelar | Specify | Pending |
 | CUT-03 | P2: Desmantelar | Specify | Pending |
 | CUT-04 | P2: Desmantelar | Specify | Pending |
+| CUT-08 | P2: Desmantelar | Specify | Pending |
 | CUT-05 | P2: Desmantelar | Specify | Pending |
 | CUT-06 | P2: Desmantelar | Specify | Pending |
 | FXL-01 | P2: Laboratório de efeitos | Specify | Pending |
+| FXL-05 | P2: Laboratório de efeitos | Specify | Pending |
+| FXL-06 | P2: Laboratório de efeitos | Specify | Pending |
 | FXL-02 | P2: Laboratório de efeitos | Specify | Pending |
+| FXL-07 | P2: Laboratório de efeitos | Specify | Pending |
+| FXL-09 | P2: Laboratório de efeitos | Specify | Pending |
 | FXL-03 | P2: Laboratório de efeitos | Specify | Pending |
 | FXL-04 | P2: Laboratório de efeitos | Specify | Pending |
+| FXL-08 | P2: Laboratório de efeitos | Specify | Pending |
 | TFX-01 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-08 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-02 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-03 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-09 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-04 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-05 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-06 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-10 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-11 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-07 | P1: Invariantes dos efeitos | Specify | Pending |
 
-**Coverage:** 124 total, 0 mapped to tasks, 124 unmapped ⚠️ (Design e Tasks acontecem quando a F5 entrar em execução, depois de F3 e F4).
+**Coverage:** 148 total, 0 mapped to tasks, 148 unmapped ⚠️ (Design e Tasks acontecem quando a F5 entrar em execução, depois de F3 e F4).
 
 ---
 
