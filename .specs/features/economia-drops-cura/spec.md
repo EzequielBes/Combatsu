@@ -280,14 +280,14 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-04 | P1: Fragmentos | Specify | Implementing |
 | ECO-05 | P1: Fragmentos | Specify | Implementing |
 | ECO-06 | P1: Fragmentos | Specify | Implementing |
-| ECO-07 | P1: Fragmentos | Specify | Pending |
-| ECO-24 | P1: Fragmentos | Specify | Pending |
-| ECO-08 | P1: Fragmentos | Specify | Pending |
-| ECO-09 | P1: Fragmentos | Specify | Pending |
-| ECO-10 | P1: Fragmentos | Specify | Pending |
-| ECO-18 | P1: Fragmentos | Specify | Pending |
-| ECO-11 | P1: Fragmentos | Specify | Pending |
-| ECO-25 | P1: Fragmentos | Specify | Pending |
+| ECO-07 | P1: Fragmentos | Specify | Implementing |
+| ECO-24 | P1: Fragmentos | Specify | Implementing |
+| ECO-08 | P1: Fragmentos | Specify | Implementing |
+| ECO-09 | P1: Fragmentos | Specify | Implementing |
+| ECO-10 | P1: Fragmentos | Specify | Implementing |
+| ECO-18 | P1: Fragmentos | Specify | Implementing |
+| ECO-11 | P1: Fragmentos | Specify | Implementing |
+| ECO-25 | P1: Fragmentos | Specify | Implementing |
 | ECO-12 | P1: Fragmentos | Specify | Implementing |
 | ECO-13 | P1: Fragmentos | Specify | Implementing |
 | ECO-26 | P1: Fragmentos | Specify | Implementing |
@@ -299,7 +299,7 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-16 | P1: Fragmentos | Specify | Pending |
 | ECO-29 | P1: Fragmentos | Specify | Pending |
 | ECO-30 | P1: Fragmentos | Specify | Pending |
-| ECO-21 | P1: Fragmentos | Specify | Pending |
+| ECO-21 | P1: Fragmentos | Specify | Implementing |
 | ECO-17 | P1: Fragmentos | Specify | Pending |
 | ECO-31 | P1: Fragmentos | Specify | Pending |
 | ECO-22 | P1: Fragmentos | Specify | Pending |
@@ -309,9 +309,9 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | HEAL-02 | P1: Gota de cura | Specify | Implementing |
 | HEAL-03 | P1: Gota de cura | Specify | Pending |
 | HEAL-08 | P1: Gota de cura | Specify | Pending |
-| HEAL-04 | P1: Gota de cura | Specify | Pending |
-| HEAL-09 | P1: Gota de cura | Specify | Pending |
-| HEAL-05 | P1: Gota de cura | Specify | Pending |
+| HEAL-04 | P1: Gota de cura | Specify | Implementing |
+| HEAL-09 | P1: Gota de cura | Specify | Implementing |
+| HEAL-05 | P1: Gota de cura | Specify | Implementing |
 | HEAL-06 | P1: Gota de cura | Specify | Implementing |
 | HEAL-07 | P1: Gota de cura | Specify | Pending |
 | HEAL-10 | P1: Gota de cura | Specify | Pending |
