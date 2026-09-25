@@ -102,6 +102,11 @@ export class Player implements Hittable {
     return this.move.facing;
   }
 
+  /** Objeto segurado agora (ITEM-01..03), `null` de mãos vazias. */
+  get heldProp(): Prop | null {
+    return this.held;
+  }
+
   /** Posição + tamanho do corpo, nunca body.bounds. */
   hurtRect(): Rect {
     return { x: this.sprite.x, y: this.sprite.y, width: SIZE.player.w, height: SIZE.player.h };

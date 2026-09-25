@@ -388,8 +388,8 @@ T13
 
 **Done when**:
 
-- [ ] Segurando a cadeira: `{ name: 'Cadeira', pips: 4, maxPips: 4 }`; depois de 2 impactos, `pips: 2`; de mãos vazias, `null`
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Segurando a cadeira: `{ name: 'Cadeira', pips: 4, maxPips: 4 }`; depois de 2 impactos, `pips: 2`; de mãos vazias, `null`
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: smoke
 **Gate**: build

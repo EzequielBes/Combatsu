@@ -75,6 +75,8 @@ export interface GameSnapshot {
     bossBarIgnoredByMain: boolean;
     /** Texto do contador de fragmentos (ECO-16). */
     fragments: string;
+    /** Objeto na mão (ITEM-01..03), `null` de mãos vazias. */
+    heldItem: { name: string; pips: number; maxPips: number } | null;
   };
   /** Estado do hitstop (BWIN-02). */
   hitstop: { frozen: boolean; remainingMs: number };
