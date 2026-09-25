@@ -28,6 +28,14 @@ export const TEX = {
   /** Projétil da rajada e onda de choque do pouso (BAT-03/04). */
   bossProjectile: 'boss-projectile',
   bossShockwave: 'boss-shockwave',
+  /** Cristal do fragmento amaldiçoado e ícone do contador no HUD (ECO-23). */
+  fragment: 'fragment',
+  fragmentIcon: 'fragment-icon',
+  /** Gota de cura (HEAL). */
+  healDrop: 'heal-drop',
+  /** Ferramentas amaldiçoadas: comum/rara e as poses na mão do inimigo (ARM-19). */
+  cursedKnife: 'cursed-knife',
+  cursedClub: 'cursed-club',
 } as const;
 
 export const SIZE = {
