@@ -47,7 +47,10 @@ describe('installDebugApi', () => {
         banner: null,
         center: null,
         bannerPos: { x: 480, y: 135 },
+        bossBar: { visible: false, name: '', width: 400, fillWidth: 400, marks: [264, 132] },
+        bossBarIgnoredByMain: true,
       },
+      hitstop: { frozen: false, remainingMs: 0 },
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};

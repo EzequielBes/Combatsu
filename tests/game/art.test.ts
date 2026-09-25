@@ -8,7 +8,14 @@ import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORI
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
 import { ENEMY_BAR, ENEMY_BAR_WELL, HUD_BAR, HUD_BAR_WELL } from '../../src/game/art/hud';
-import { RUN_BG_COLOR, RUN_TEXT_COLOR } from '../../src/game/Hud';
+import {
+  BOSS_BAR_BG_COLOR,
+  BOSS_BAR_FILL_COLOR,
+  BOSS_BAR_MARK_COLOR,
+  BOSS_BAR_NAME_COLOR,
+  RUN_BG_COLOR,
+  RUN_TEXT_COLOR,
+} from '../../src/game/Hud';
 import { ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
 import type { EnemyAnim } from '../../src/core/animState';
 import {
@@ -319,6 +326,14 @@ describe('cores do HUD da run (RHUD-04)', () => {
   it('o texto e o fundo dos elementos novos (rodada, faixa, título/game over) são cores da paleta', () => {
     expect(Object.values(PALETTE)).toContain(RUN_TEXT_COLOR);
     expect(Object.values(PALETTE)).toContain(RUN_BG_COLOR);
+  });
+});
+
+describe('cores da barra do chefe (BHUD-06)', () => {
+  it('preenchimento, fundo, marcas e nome são cores da paleta', () => {
+    for (const c of [BOSS_BAR_FILL_COLOR, BOSS_BAR_BG_COLOR, BOSS_BAR_MARK_COLOR, BOSS_BAR_NAME_COLOR]) {
+      expect(Object.values(PALETTE)).toContain(c);
+    }
   });
 });
 

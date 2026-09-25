@@ -6,8 +6,8 @@ import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
-import { farthestPoint, requireSpawnPoints } from '../core/waves';
-import { HITSTOP_MS } from '../data/fx';
+import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
+import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
 import { BOSS, DIFFICULTY, ENEMY, ENEMY_AI, ENEMY_ATTACK, PLAYER_COMBO, RUN, WAVE } from '../data/tuning';
@@ -58,6 +58,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private enemies: Enemy[] = [];
   /** Só existe numa rodada de chefe (BOSS-01); `null` fora dela ou depois de removido. */
   private boss: Boss | null = null;
+  /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
+  private bossDefeatedPending = false;
+  /** Na rodada de chefe, "Rodada N concluída" entra depois da faixa "Chefe derrotado!" (BHUD-03 + RHUD-03). */
+  private clearedBanner: { round: number; afterMs: number } | null = null;
   /** Projéteis da rajada e ondas de choque do pouso do chefe (BAT-03/04/06/12). */
   private projectiles: Projectile[] = [];
   private props: Prop[] = [];
@@ -157,6 +161,19 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.wasPlayerDead = this.player.dead;
     for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
     this.boss?.update(dt, this.player.sprite.x);
+    if (this.bossDefeatedPending) {
+      this.boss?.destroyNow();
+      this.boss = null;
+      this.bossDefeatedPending = false;
+    }
+    if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
+    if (this.clearedBanner) {
+      this.clearedBanner.afterMs -= dt;
+      if (this.clearedBanner.afterMs <= 0) {
+        if (this.run.state === 'intermission') this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
+        this.clearedBanner = null;
+      }
+    }
     for (const proj of this.projectiles) proj.update(dt);
     this.projectiles = this.projectiles.filter((proj) => !proj.removed);
     for (const prop of this.props) prop.update(dt);
@@ -203,8 +220,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.hud.banner(`Rodada ${cmd.round}`, RUN.bannerMs);
         break;
       case 'roundCleared':
-        // Fica até o próximo `roundStart` chamar `banner` de novo (RHUD-03).
-        this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
+        // Fica até o próximo `roundStart` (RHUD-03). Na rodada de chefe, ela entra depois de "Chefe derrotado!",
+        // que o `onBossDefeated` já mostrou (BHUD-03).
+        if (!isBossRound(cmd.round)) this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
         break;
       case 'gameOver':
         this.hud.setCenter([
@@ -226,6 +244,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.enemies = [];
     this.boss?.destroyNow();
     this.boss = null;
+    this.bossDefeatedPending = false;
+    this.clearedBanner = null;
+    this.hud.hideBossBar();
     for (const proj of this.projectiles) proj.destroyNow();
     this.projectiles = [];
     this.player.resetForRun();
@@ -280,8 +301,31 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       },
       // Disparo da rajada (BAT-04, BTIER-05/07): um projétil por evento `fire`, já com o `speed` do arquétipo.
       (x, y, dir, speed, damage) => this.spawnProjectile('projectile', x, y, dir, speed, BOSS.volley.maxDist, damage),
-      (dead, x, y) => this.onEnemyDied(dead.id, x, y),
+      (dead, x, y) => this.onBossDefeated(dead, x, y),
     );
+    // Entrada (BHUD-01/05): barra cheia com o nome e a faixa do chefe durante a intro.
+    this.hud.showBossBar(spec.name);
+    this.hud.banner(`Chefe: ${spec.name}`, BOSS.introMs);
+  }
+
+  /**
+   * Vitória (BWIN-01..03, BHUD-03): conta o abate, cura 30% do maxHp, hitstop de 250 ms (o `trigger` fica com o
+   * maior, então o golpe fatal de 90 ms não encurta), tremida e fumaça na posição do chefe. O chefe some no fim
+   * do hitstop, fora do próprio `receiveHit` que o matou.
+   */
+  private onBossDefeated(dead: Boss, x: number, y: number): void {
+    this.onEnemyDied(dead.id, x, y);
+    this.player.heal(Math.round(BOSS.healFraction * this.player.maxHp));
+    this.hitstop.trigger(BOSS_DEFEAT_HITSTOP_MS);
+    this.freeze();
+    this.fx.shake();
+    this.fx.curseSmoke(x, y);
+    this.debugEvents.push('bossDefeatedFx');
+    this.hud.hideBossBar();
+    // BHUD-03: a faixa entra na hora da morte; "Rodada N concluída" vem depois dela (RHUD-03).
+    this.hud.banner('Chefe derrotado!', BOSS.defeatBannerMs);
+    this.clearedBanner = { round: this.run.round, afterMs: BOSS.defeatBannerMs };
+    this.bossDefeatedPending = true;
   }
 
   /** Cria um projétil ou onda de choque do chefe e o adiciona à lista da cena (BAT-03/04/06/12). */
@@ -346,6 +390,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
       hud: this.hud.debugState(),
+      hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
     };
   }

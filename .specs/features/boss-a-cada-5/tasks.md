@@ -351,17 +351,17 @@ T8 → T9 → T10
 
 **Done when**:
 
-- [ ] Smoke: ao nascer, `banner === 'Chefe: Oni do Portão'` por 1500 ms (visível em 1400, oculto em 1600) (BHUD-05)
-- [ ] Smoke: `hud.bossBar.visible`, `name`, largura total 400 e marcas em 264 e 132 px; `fillWidth === 400 × hp / maxHp` (±1) depois de golpes (BHUD-01, BHUD-02)
-- [ ] Smoke: ao derrotar o chefe (golpes de teste):
-  - [ ] a barra some e `banner === 'Chefe derrotado!'` por 2000 ms (BHUD-03)
-  - [ ] `kills` +1 e `run.state === 'intermission'` (BOSS-04, BOSS-07)
-  - [ ] o player cura `round(0.3 × maxHp)` com teto: 30 de 100; com hp 90, vai a 100 (BWIN-01)
-  - [ ] um único `bossDefeatedFx` em `events` (BWIN-03)
-  - [ ] o `step` imediatamente seguinte fica congelado por 250 ms (medido pelo `x` de um projétil, ou por um contador de frames do hitstop no snapshot) (BWIN-02)
-- [ ] `hud.bossBarIgnoredByMain === true` com checagem real (BHUD-07)
-- [ ] `tests/game/art.test.ts` confere que as constantes de cor da barra estão na paleta (BHUD-06)
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Smoke: ao nascer, `banner === 'Chefe: Oni do Portão'` por 1500 ms (visível em 1400, oculto em 1600) (BHUD-05)
+- [x] Smoke: `hud.bossBar.visible`, `name`, largura total 400 e marcas em 264 e 132 px; `fillWidth === 400 × hp / maxHp` (±1) depois de golpes (BHUD-01, BHUD-02)
+- [x] Smoke: ao derrotar o chefe (golpes de teste):
+  - [x] a barra some e `banner === 'Chefe derrotado!'` por 2000 ms (BHUD-03)
+  - [x] `kills` +1 e `run.state === 'intermission'` (BOSS-04, BOSS-07)
+  - [x] o player cura `round(0.3 × maxHp)` com teto: 30 de 100; com hp 90, vai a 100 (BWIN-01)
+  - [x] um único `bossDefeatedFx` em `events` (BWIN-03)
+  - [x] o `step` imediatamente seguinte fica congelado por 250 ms (medido pelo `x` de um projétil, ou por um contador de frames do hitstop no snapshot) (BWIN-02)
+- [x] `hud.bossBarIgnoredByMain === true` com checagem real (BHUD-07)
+- [x] `tests/game/art.test.ts` confere que as constantes de cor da barra estão na paleta (BHUD-06)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

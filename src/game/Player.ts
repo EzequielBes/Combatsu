@@ -224,6 +224,11 @@ export class Player implements Hittable {
   }
 
   /** Empurrão instantâneo (BAI-13): o rugido do chefe soma esta velocidade horizontal (px/step) ao corpo. */
+  /** Cura com teto em maxHp (BWIN-01); devolve o que foi restaurado. */
+  heal(amount: number): number {
+    return this.health.heal(amount);
+  }
+
   pushHorizontal(dir: 1 | -1, pxPerStep: number): void {
     const body = bodyOf(this.sprite);
     this.scene.matter.body.setVelocity(body, { x: body.velocity.x + dir * pxPerStep, y: body.velocity.y });

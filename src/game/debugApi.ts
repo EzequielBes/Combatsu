@@ -64,7 +64,11 @@ export interface GameSnapshot {
     banner: string | null;
     center: string[] | null;
     bannerPos: { x: number; y: number };
+    bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
+    bossBarIgnoredByMain: boolean;
   };
+  /** Estado do hitstop (BWIN-02). */
+  hitstop: { frozen: boolean; remainingMs: number };
 }
 
 export interface DebugProbe {
