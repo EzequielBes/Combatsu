@@ -66,10 +66,27 @@
 - **Date**: 2026-09-24
 - **Status**: active
 
+### AD-009
+- **Decision**: Os efeitos de técnica amaldiçoada usam, além das grades de texto (AD-002), geometria procedural (`Graphics`: raios, anéis, riscos) e postFX do Phaser (ColorMatrix, Glow, Bloom). Toda cor sai da `PALETTE`, toda geometria encaixa na grade de 2 px e todo gerador de forma aleatória (ex.: raios do Kokusen) é puro, com seed, em `src/core`. Sem WebGL, os postFX são pulados e o resto toca.
+- **Reason**: O usuário pediu efeitos fiéis ao anime; tela invertida, raios que mudam de forma e anéis de choque não saem bem só de sprites fixos.
+- **Trade-off**: Mais código de efeito para manter e um caminho de fallback sem WebGL para testar.
+- **Scope**: F5, F9 e qualquer efeito cinemático futuro.
+- **Date**: 2026-09-25
+- **Status**: active
+
+### AD-010
+- **Decision**: O Kokusen (Black Flash) é da F5, acertado por timing no 2º impacto do Punho Divergente (janela de 80 ms, 140 ms na zona), e não por sorte. A F8 só estende a mesma regra ao finalizador do combo.
+- **Reason**: Pedido do usuário de ter o Kokusen com os efeitos do anime na US de técnicas; no anime o Black Flash nasce do Punho Divergente, e timing dá habilidade e comemoração.
+- **Trade-off**: A janela curta pode frustrar no começo; o anel de aproximação e a zona existem para ensinar o ritmo.
+- **Scope**: F5, F8.
+- **Date**: 2026-09-25
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: F2 `.specs/features/boss-a-cada-5` concluída e mergeada em `dev` → próxima: **F3 `economia-drops-cura`** (moeda da run, drops, cura ao abater, inimigos armados; ver `.specs/ROADMAP.md`)
 - **Phase / Task**: F3 ainda não especificada; começar pelo Specify (tlc) + refinamento Jev (`node tools/jev-refine.mjs <spec>`, chave em `TYPESAFE_API_KEY` só no ambiente do comando)
+- **Adiantado**: Specify da F5 `energia-e-tecnicas` feito (`.specs/features/energia-e-tecnicas/spec.md`, 124 ACs, validador limpo; Jev pulado por falta de chave: rodar antes do Design). A F5 continua na fila depois de F3 e F4.
 - **Completed**:
   - F0 (harness de smoke, Jev), F1 (run/rodadas/dificuldade) e F2 (chefe a cada 5 rodadas: investida, salto com ondas, rajada, 3 fases, postura, barra, vitória com cura de 30%, tier e Tecelã)
   - 471 testes, 7 cenários de smoke
