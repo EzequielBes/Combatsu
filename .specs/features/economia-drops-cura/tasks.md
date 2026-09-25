@@ -169,12 +169,12 @@ T13
 
 **Done when**:
 
-- [ ] Faca sobre a garra da rodada 1 (12): dano 15, largura +8 e offsetX +4, força e preparo iguais; sobre a rodada 10 escalada (dano 21): 26
-- [ ] Porrete: dano 19 na rodada 1, strength `heavy`, largura +12, preparo 450 → 600; o `base` não é mutado
-- [ ] `cursedKnife` e `cursedClub` com os valores de ARM-11/ARM-24 e passando em `validatePropDef`
-- [ ] `rareDef`: faca 24/8, porrete 39/7, chave com sufixo `Rare`
-- [ ] Nomes: Cadeira, Garrafa, Faca Amaldiçoada, Porrete Amaldiçoado; o raro termina em ` Rara`
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Faca sobre a garra da rodada 1 (12): dano 15, largura +8 e offsetX +4, força e preparo iguais; sobre a rodada 10 escalada (dano 21): 26
+- [x] Porrete: dano 19 na rodada 1, strength `heavy`, largura +12, preparo 450 → 600; o `base` não é mutado
+- [x] `cursedKnife` e `cursedClub` com os valores de ARM-11/ARM-24 e passando em `validatePropDef`
+- [x] `rareDef`: faca 24/8, porrete 39/7, chave com sufixo `Rare`
+- [x] Nomes: Cadeira, Garrafa, Faca Amaldiçoada, Porrete Amaldiçoado; o raro termina em ` Rara`
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
