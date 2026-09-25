@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 26,
+  "next_id": 30,
   "lessons": [
     {
       "id": "L-001",
@@ -456,6 +456,78 @@
       ],
       "created": "2026-09-24T18:18:54Z",
       "last_seen": "2026-09-24T18:18:54Z"
+    },
+    {
+      "id": "L-026",
+      "key": "surviving_mutant::when a return value gates visible feedback spark hitstop test it through the real hit routing path not only through a debug test hit whose return value is discarded",
+      "text": "When a return value gates visible feedback (spark, hitstop), test it through the real hit-routing path, not only through a debug test-hit whose return value is discarded.",
+      "signal": "surviving_mutant",
+      "scope": "combat-feedback",
+      "status": "candidate",
+      "features": [
+        "boss-a-cada-5"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/game/Boss.ts:141 (mutant 3) (combat-feedback)"
+      ],
+      "created": "2026-09-25T14:45:48Z",
+      "last_seen": "2026-09-25T14:45:48Z"
+    },
+    {
+      "id": "L-027",
+      "key": "surviving_mutant::when testing a reward that heals or grants a capped resource first drive the resource below the cap so the exact amount is discriminated not masked by the ceiling",
+      "text": "When testing a reward that heals or grants a capped resource, first drive the resource below the cap so the exact amount is discriminated, not masked by the ceiling.",
+      "signal": "surviving_mutant",
+      "scope": "reward-fx",
+      "status": "candidate",
+      "features": [
+        "boss-a-cada-5"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/scenes/TestScene.ts:318 (mutant 4) (reward-fx)"
+      ],
+      "created": "2026-09-25T14:46:03Z",
+      "last_seen": "2026-09-25T14:46:03Z"
+    },
+    {
+      "id": "L-028",
+      "key": "surviving_mutant::when an entity can disappear through two independent paths a boundary trigger and a max distance time expiry assert the specific path that fired not just that the entity is eventually gone",
+      "text": "When an entity can disappear through two independent paths (a boundary trigger and a max-distance/time expiry), assert the specific path that fired, not just that the entity is eventually gone.",
+      "signal": "surviving_mutant",
+      "scope": "lifecycle",
+      "status": "candidate",
+      "features": [
+        "boss-a-cada-5"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/game/Projectile.ts:89-91 (mutant 5) (lifecycle)"
+      ],
+      "created": "2026-09-25T14:46:04Z",
+      "last_seen": "2026-09-25T14:46:04Z"
+    },
+    {
+      "id": "L-029",
+      "key": "surviving_mutant::when a scripted movement like a leap can start and end at different terrain heights recompute the landing height at the destination x instead of reusing the height captured at takeoff and test it by landing on a platform whose height differs from the takeoff point",
+      "text": "When a scripted movement (like a leap) can start and end at different terrain heights, recompute the landing height at the destination x instead of reusing the height captured at takeoff, and test it by landing on a platform whose height differs from the takeoff point.",
+      "signal": "surviving_mutant",
+      "scope": "physics leap",
+      "status": "candidate",
+      "features": [
+        "boss-a-cada-5"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/game/Boss.ts:250 (mutant 5, rodada 2) (physics leap)"
+      ],
+      "created": "2026-09-25T15:32:27Z",
+      "last_seen": "2026-09-25T15:32:27Z"
     }
   ]
 }

@@ -14,7 +14,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 |---|---|---|---|---|
 | F0 | `fundacao-harness-jev` | Medium | FND | Done (Verifier PASS, rodada 3) |
 | F1 | `run-e-rodadas` | Large | RUN, WAVE, DIF, RHUD | Done (Verifier PASS, rodada 3) |
-| F2 | `boss-a-cada-5` | Large | BOSS | Planejada |
+| F2 | `boss-a-cada-5` | Large | BOSS, BAT, BAI, BHUD, BWIN, BTIER | Done (Verifier PASS, rodada 3) |
 | F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM | Planejada |
 | F4 | `loja-da-run` | Large | SHOP, MOD | Planejada |
 | F5 | `energia-e-tecnicas` | Complex | CE, TEC | Planejada |

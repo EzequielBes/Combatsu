@@ -1,3 +1,6 @@
+import type { BossAIState, BossAttack } from '../core/bossAI';
+import type { BossBrainState } from '../core/bossBrain';
+import type { BossArchetype } from '../core/bossTier';
 import type { EnemyState } from '../core/enemyBrain';
 import type { RunState } from '../core/run';
 
@@ -19,6 +22,39 @@ export interface GameSnapshot {
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
   deaths: { id: number; x: number; y: number }[];
+  /**
+   * Estado do chefe (BHUD-04), lido do objeto vivo; `null` sem chefe na cena. `x` não está na lista da spec, mas
+   * é necessário para o smoke confirmar o ponto de spawn (BOSS-03).
+   */
+  boss: {
+    hp: number;
+    maxHp: number;
+    phase: 1 | 2 | 3;
+    /** Fora de `active`, o estado do `BossBrain`; em `active`, o sub-estado do `BossAI` (BAT-11). */
+    state: BossBrainState | BossAIState;
+    attack: BossAttack | null;
+    poise: number;
+    archetype: BossArchetype;
+    name: string;
+    x: number;
+    /** Centro do corpo; fica dentro da sala (0..544) durante toda a luta. */
+    y: number;
+  } | null;
+  /**
+   * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
+   * `id` é único por instância (nunca reaproveitado) - o smoke usa para contar disparos mesmo que um projétil
+   * já tenha sumido (acertou o player) antes do próximo nascer.
+   */
+  projectiles: {
+    id: number;
+    x: number;
+    y: number;
+    dir: 1 | -1;
+    speed: number;
+    kind: 'projectile' | 'shockwave';
+    height: number;
+    traveled: number;
+  }[];
   /** Estado da máquina de run (RUN-09). */
   run: { state: RunState; round: number; kills: number; alive: number; queued: number };
   /** Spawn do player no level, já com o mesmo ajuste que a cena aplica (RUN-02/05). */
@@ -31,7 +67,11 @@ export interface GameSnapshot {
     banner: string | null;
     center: string[] | null;
     bannerPos: { x: number; y: number };
+    bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
+    bossBarIgnoredByMain: boolean;
   };
+  /** Estado do hitstop (BWIN-02). */
+  hitstop: { frozen: boolean; remainingMs: number };
 }
 
 export interface DebugProbe {
