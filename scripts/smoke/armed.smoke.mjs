@@ -48,6 +48,24 @@ export default async function ({ page, baseUrl, assert }) {
     `ARM-15: todo inimigo deveria nascer com a faca: ${JSON.stringify(snap.enemies)}`,
   );
 
+  // ARM-10: o golpe forte de teste (18) derruba sem matar (hp ≈ 74 na rodada 3): em ragdoll a faca some e volta ao
+  // levantar.
+  await page.keyboard.press('Digit2', { delay: 50 });
+  snap = await stepAndSnap(50);
+  const downed = snap.enemies.filter((e) => e.state === 'ragdollStun');
+  assert(downed.length > 0, `ARM-10: esperava um armado em ragdoll depois do golpe forte: ${JSON.stringify(snap.enemies)}`);
+  assert(
+    downed.every((e) => e.weaponVisible === false),
+    `ARM-10: em ragdoll a ferramenta deveria sumir: ${JSON.stringify(downed)}`,
+  );
+  snap = await stepAndSnap(2000);
+  const upAgain = snap.enemies.filter((e) => downed.some((d) => d.id === e.id) && e.state === 'idle');
+  assert(upAgain.length > 0, `ARM-10: esperava o armado de pé de novo: ${JSON.stringify(snap.enemies)}`);
+  assert(
+    upAgain.every((e) => e.weaponVisible === true),
+    `ARM-10: ao levantar a ferramenta deveria voltar: ${JSON.stringify(upAgain)}`,
+  );
+
   // ARM-08: mata um armado com golpe de teste - a faca cai em `rest` com a durabilidade cheia (6).
   for (let i = 0; i < 20 && snap.worldProps.filter((p) => p.key === 'cursedKnife').length === 0; i++) {
     await page.keyboard.press('Digit2', { delay: 50 });
@@ -179,6 +197,19 @@ export default async function ({ page, baseUrl, assert }) {
   assert(
     snap.hud.heldItem && snap.hud.heldItem.name.endsWith(' Rara'),
     `RAR-07: nome no HUD deveria terminar em " Rara": ${JSON.stringify(snap.hud.heldItem)}`,
+  );
+
+  // ARM-26: K segurando a ferramenta a arremessa em `thrown` a 820 px/s (throwSpeed da faca) para o lado do facing.
+  // Um frame depois o atrito do ar do Matter já tirou um pouco: tolerância de 10% para baixo.
+  const facing = snap.player.facing;
+  await page.keyboard.down('KeyK');
+  snap = await stepAndSnap(16);
+  await page.keyboard.up('KeyK');
+  const thrown = snap.worldProps.find((p) => p.id === rareKnife.id);
+  assert(thrown && thrown.state === 'thrown', `ARM-26: a faca deveria estar em thrown: ${JSON.stringify(thrown)}`);
+  assert(
+    Math.sign(thrown.vx) === facing && Math.abs(thrown.vx) >= 0.9 * 820 && Math.abs(thrown.vx) <= 821,
+    `ARM-26: vx deveria ser ~820 px/s para o facing ${facing}: ${thrown.vx}`,
   );
 
   // ARM-18: nova run remove qualquer ferramenta largada.

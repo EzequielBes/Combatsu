@@ -60,6 +60,11 @@ export class Prop {
     return bodyOf(this.sprite);
   }
 
+  /** Velocidade horizontal do corpo em px/s (ARM-26, snapshot de debug). */
+  get vx(): number {
+    return this.body.velocity.x / PX_PER_S_TO_STEP;
+  }
+
   get isGone(): boolean {
     return this.machine.state === 'gone' || this.destroyed;
   }

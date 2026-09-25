@@ -8,7 +8,8 @@ import type { RunState } from '../core/run';
 
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
-  player: { x: number; y: number; hp: number; dead: boolean };
+  /** `facing` e `flash` (cor do flash em andamento, HEAL-10) servem ao smoke da economia. */
+  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null };
   enemies: {
     id: number;
     x: number;
@@ -22,6 +23,8 @@ export interface GameSnapshot {
     chaseSpeed: number;
     /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
     weapon: ToolKey | null;
+    /** Sprite da ferramenta visível (ARM-10); `null` sem arma. */
+    weaponVisible: boolean | null;
   }[];
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
@@ -87,7 +90,7 @@ export interface GameSnapshot {
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
-  worldProps: { id: number; key: string; state: PropState; x: number; y: number; durabilityLeft: number; rare: boolean }[];
+  worldProps: { id: number; key: string; state: PropState; x: number; y: number; durabilityLeft: number; rare: boolean; vx: number }[];
 }
 
 export interface DebugProbe {

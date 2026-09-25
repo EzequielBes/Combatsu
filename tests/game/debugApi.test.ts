@@ -32,9 +32,9 @@ describe('installDebugApi', () => {
 
   it('snapshot devolve o que o probe registrado devolve (FND-09)', () => {
     const snap: GameSnapshot = {
-      player: { x: 10, y: 20, hp: 100, dead: false },
+      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null },
       enemies: [
-        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null },
+        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null, weaponVisible: null },
       ],
       events: ['enemyDied:3'],
       deaths: [{ id: 3, x: 50, y: 60 }],
@@ -58,7 +58,7 @@ describe('installDebugApi', () => {
       wallet: { fragments: 4 },
       pickups: [{ id: 1, kind: 'fragment', value: 1, x: 70, y: 80, ageMs: 100, magnet: false }],
       floatTexts: [{ text: '+1', color: 'U', x: 70, y: 76 }],
-      worldProps: [{ id: 2, key: 'cursedKnife', state: 'rest', x: 90, y: 100, durabilityLeft: 6, rare: false }],
+      worldProps: [{ id: 2, key: 'cursedKnife', state: 'rest', x: 90, y: 100, durabilityLeft: 6, rare: false, vx: 0 }],
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};
