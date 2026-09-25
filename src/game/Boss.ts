@@ -246,8 +246,9 @@ export class Boss implements Hittable {
   private onLand(): void {
     this.exitLeap();
     const { x } = this.body.position;
-    // Ancora no topo real do chão sob o pouso (o y guardado na partida pode estar errado se o salto começou no ar).
-    const y = this.groundTopBelow(x, this.leapGroundY - LEAP_ARC_HEIGHT) - BODY_H / 2;
+    // Ancora no topo real do chão no nível da partida ou abaixo dele (a sonda começa nos pés do chefe): nunca pousa
+    // numa plataforma acima, mesmo com o player embaixo dela (edge case da spec).
+    const y = this.groundTopBelow(x, this.leapGroundY + BODY_H / 2 - 4) - BODY_H / 2;
     this.scene.matter.body.setPosition(this.body, { x, y });
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
     const hit: Hit = {

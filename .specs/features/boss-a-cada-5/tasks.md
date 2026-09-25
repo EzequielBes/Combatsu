@@ -62,6 +62,12 @@ T8 → T9 → T10
 T11
 ```
 
+### Phase 5: Correções do Verifier (rodada 2)
+
+```
+T12
+```
+
 ---
 
 ## Task Breakdown
@@ -406,15 +412,44 @@ T11
 
 ---
 
+### T12: Pouso sempre no nível da partida
+
+**What**: A sonda do pouso começa nos pés do chefe, então ele nunca pousa numa plataforma acima, mesmo com o player embaixo dela (edge case novo da spec); o smoke confere o pouso no piso (y 452) com o player sob a plataforma da linha 12.
+**Where**: `src/game/Boss.ts`
+**Depends on**: None
+**Reuses**: `groundTopBelow`
+**Requirement**: BAT-02 (edge case do pouso)
+
+> Toca também `scripts/smoke/boss.smoke.mjs` e o edge case em `spec.md`.
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Com o player embaixo da plataforma, o chefe pousa com o centro em y 452 (±3)
+- [x] A sonda antiga (a partir do topo do arco) pousava na plataforma e faz o smoke falhar
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `fix(game): land the boss on its takeoff floor level`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 
 Phase 1:  T1 ------→ T2 ------→ T3 ------→ T4 ------→ T5 ------→ T6
 Phase 2:  T7
 Phase 3:  T8 ------→ T9 ------→ T10
 Phase 4:  T11
+Phase 5:  T12
 ```
 
 ---
