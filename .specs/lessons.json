@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 30,
+  "next_id": 32,
   "lessons": [
     {
       "id": "L-001",
@@ -528,6 +528,42 @@
       ],
       "created": "2026-09-25T15:32:27Z",
       "last_seen": "2026-09-25T15:32:27Z"
+    },
+    {
+      "id": "L-030",
+      "key": "ac_gap::expose every visual or physical state an ac names sprite visibility tint body velocity as a live read field in the debug snapshot in the same task that implements it so the smoke can assert it",
+      "text": "Expose every visual or physical state an AC names (sprite visibility, tint, body velocity) as a live-read field in the debug snapshot in the same task that implements it, so the smoke can assert it.",
+      "signal": "ac_gap",
+      "scope": "smoke debug snapshot",
+      "status": "candidate",
+      "features": [
+        "economia-drops-cura"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ARM-10/ARM-26/HEAL-10 validation.md rodada 1 (smoke debug snapshot)"
+      ],
+      "created": "2026-09-25T23:00:29Z",
+      "last_seen": "2026-09-25T23:00:29Z"
+    },
+    {
+      "id": "L-031",
+      "key": "gate_fail::make smoke scenarios that depend on the player not taking damage run with no living enemies intermission or with the player dead instead of hoping enemies miss",
+      "text": "Make smoke scenarios that depend on the player not taking damage run with no living enemies (intermission) or with the player dead, instead of hoping enemies miss.",
+      "signal": "gate_fail",
+      "scope": "smoke determinism",
+      "status": "candidate",
+      "features": [
+        "economia-drops-cura"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "scripts/smoke/heal.smoke.mjs HEAL-04/HEAL-05 (smoke determinism)"
+      ],
+      "created": "2026-09-25T23:00:31Z",
+      "last_seen": "2026-09-25T23:00:31Z"
     }
   ]
 }
