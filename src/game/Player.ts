@@ -223,7 +223,23 @@ export class Player implements Hittable {
     this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
   }
 
+  /** Empurrão instantâneo (BAI-13): o rugido do chefe soma esta velocidade horizontal (px/step) ao corpo. */
+  /** Cura com teto em maxHp (BWIN-01); devolve o que foi restaurado. */
+  heal(amount: number): number {
+    return this.health.heal(amount);
+  }
+
+  pushHorizontal(dir: 1 | -1, pxPerStep: number): void {
+    const body = bodyOf(this.sprite);
+    this.scene.matter.body.setVelocity(body, { x: body.velocity.x + dir * pxPerStep, y: body.velocity.y });
+  }
+
   /** Mata o player pelo caminho normal de morte (tecla 3 em `?debug`, RUN-03/04). */
+  /** Dano de teste (só debug, tecla 4) pelo caminho normal de golpe. */
+  debugHurt(damage: number): void {
+    this.receiveHit({ ownerId: 0, damage, strength: 'light', force: 0, direction: { x: this.facing, y: 0 } });
+  }
+
   debugKill(): void {
     this.receiveHit({
       ownerId: 0,

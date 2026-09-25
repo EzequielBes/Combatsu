@@ -68,11 +68,24 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/run-e-rodadas` (F1) concluída → próxima: F2 `boss-a-cada-5` ou F3 `economia-drops-cura` (ROADMAP)
-- **Phase / Task**: F1 Done (T1–T16, Verifier PASS na rodada 3), mergeada em `dev`
-- **Completed**: título → rodadas com ondas escaladas, graça de 600 ms no spawn, permadeath, game over com trava de 1 s, HUD de rodada e faixas; 323 testes, 5 cenários de smoke
+- **Feature**: F2 `.specs/features/boss-a-cada-5` concluída e mergeada em `dev` → próxima: **F3 `economia-drops-cura`** (moeda da run, drops, cura ao abater, inimigos armados; ver `.specs/ROADMAP.md`)
+- **Phase / Task**: F3 ainda não especificada; começar pelo Specify (tlc) + refinamento Jev (`node tools/jev-refine.mjs <spec>`, chave em `TYPESAFE_API_KEY` só no ambiente do comando)
+- **Completed**:
+  - F0 (harness de smoke, Jev), F1 (run/rodadas/dificuldade) e F2 (chefe a cada 5 rodadas: investida, salto com ondas, rajada, 3 fases, postura, barra, vitória com cura de 30%, tier e Tecelã)
+  - 471 testes, 7 cenários de smoke
+- **Como trabalhar** (memória do usuário):
+  - Opus planeja; workers Sonnet, um por lote de fase (não um por task)
+  - Correções pequenas do Verifier: inline
+  - Verifier em Sonnet com sensor leve
+  - Decidir sozinho seguindo a recomendação, pensando em diversão
+  - Merge em `dev` com `--no-ff` e mensagem `chore(dev): merge feat/<nome>`; `main` só com validação do usuário
+- **Dicas técnicas**:
+  - `npm run smoke -- <trecho>` roda só alguns cenários
+  - `?debug&seed=N&round=N` começa na rodada N
+  - Teclas de debug: 2 = golpe forte em todos, 3 = mata o player, 4 = 50 de dano no player
+  - O gate Quick deve incluir `npm run typecheck`
+  - Skill `phaser-gamedev` disponível para os workers
 - **In-progress** (file:line): none
-- **Next step**: Specify da próxima feature (sugestão: F3 antes de F2, porque a cura e a moeda deixam as rodadas longas jogáveis); usar a skill `phaser-gamedev` nos workers de gameplay
-- **Blockers**: UAT do usuário (visual-e-jogabilidade, F0, F1) antes de `dev` ir para `main`
-- **Uncommitted files**: none (fora `skills-lock.json`, do usuário)
+- **Blockers**: UAT do usuário (visual, F0, F1, F2) antes de `dev` ir para `main`
+- **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas, que são do usuário)
 - **Branch**: `dev`

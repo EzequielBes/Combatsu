@@ -8,6 +8,8 @@ export interface WaveTuning {
   pointGapMs: number;
 }
 
+export type SpawnKind = 'enemy' | 'boss';
+
 export interface SpawnOrder {
   /** Índice do inimigo na rodada (0-based, ordem de spawn). */
   k: number;
@@ -15,11 +17,35 @@ export interface SpawnOrder {
   point: number;
   /** Relógio interno da onda no momento do spawn. */
   atMs: number;
+  /** `'boss'` numa rodada de chefe (BOSS-01/02), `'enemy'` nas demais. */
+  kind: SpawnKind;
 }
 
 /** Tamanho da onda da rodada `r` (WAVE-01): cresce linearmente até o teto `t.max`. */
 export function waveSize(round: number, t: WaveTuning): number {
   return Math.min(t.base + (round - 1), t.max);
+}
+
+/** Rodada de chefe (BOSS-01): múltiplo de 5. */
+export function isBossRound(round: number): boolean {
+  return round % 5 === 0;
+}
+
+/**
+ * Ponto de spawn do chefe (BOSS-03): o de maior distância absoluta até o player; empate escolhe o menor
+ * índice. Um único ponto sempre devolve 0.
+ */
+export function farthestPoint(points: { x: number }[], playerX: number): number {
+  let bestIdx = 0;
+  let bestDist = -Infinity;
+  for (let i = 0; i < points.length; i++) {
+    const dist = Math.abs(points[i].x - playerX);
+    if (dist > bestDist) {
+      bestDist = dist;
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
 }
 
 /** Level sem ponto `E`: falha de dado de mapa, não deveria acontecer em produção (edge case). */
@@ -37,6 +63,7 @@ export function requireSpawnPoints(level: { enemies: unknown[] }, name: string):
 export class WaveSpawner {
   private readonly size: number;
   private readonly s: number;
+  private readonly bossRound: boolean;
   private elapsedMs = 0;
   private nextK = 0;
   private readonly lastSpawnAtPoint = new Map<number, number>();
@@ -48,7 +75,8 @@ export class WaveSpawner {
     rng: Rng,
     private readonly t: WaveTuning,
   ) {
-    this.size = waveSize(round, t);
+    this.bossRound = isBossRound(round);
+    this.size = this.bossRound ? 1 : waveSize(round, t);
     this.s = rng.int(0, pointCount - 1);
   }
 
@@ -97,7 +125,7 @@ export class WaveSpawner {
       const point = (this.s + this.nextK) % this.pointCount;
       const lastAtPoint = this.lastSpawnAtPoint.get(point);
       if (lastAtPoint !== undefined && this.elapsedMs - lastAtPoint < this.t.pointGapMs) break;
-      orders.push({ k: this.nextK, point, atMs: this.elapsedMs });
+      orders.push({ k: this.nextK, point, atMs: this.elapsedMs, kind: this.bossRound ? 'boss' : 'enemy' });
       this.lastSpawnAtPoint.set(point, this.elapsedMs);
       this.nextK++;
     }

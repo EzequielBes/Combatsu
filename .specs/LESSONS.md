@@ -162,6 +162,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: validation.md rodada 2 N2 (src/game/Hud.ts:66,169, RHUD-02 centered) (src/game smoke hud)
 - last seen: 2026-09-24T18:18:54Z
 
+### L-026 - When a return value gates visible feedback (spark, hitstop), test it through the real hit-routing path, not only through a debug test-hit whose return value is discarded.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `combat-feedback` · harmful: 0
+- features: boss-a-cada-5
+- evidence: src/game/Boss.ts:141 (mutant 3) (combat-feedback)
+- last seen: 2026-09-25T14:45:48Z
+
+### L-027 - When testing a reward that heals or grants a capped resource, first drive the resource below the cap so the exact amount is discriminated, not masked by the ceiling.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `reward-fx` · harmful: 0
+- features: boss-a-cada-5
+- evidence: src/scenes/TestScene.ts:318 (mutant 4) (reward-fx)
+- last seen: 2026-09-25T14:46:03Z
+
+### L-028 - When an entity can disappear through two independent paths (a boundary trigger and a max-distance/time expiry), assert the specific path that fired, not just that the entity is eventually gone.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `lifecycle` · harmful: 0
+- features: boss-a-cada-5
+- evidence: src/game/Projectile.ts:89-91 (mutant 5) (lifecycle)
+- last seen: 2026-09-25T14:46:04Z
+
+### L-029 - When a scripted movement (like a leap) can start and end at different terrain heights, recompute the landing height at the destination x instead of reusing the height captured at takeoff, and test it by landing on a platform whose height differs from the takeoff point.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `physics leap` · harmful: 0
+- features: boss-a-cada-5
+- evidence: src/game/Boss.ts:250 (mutant 5, rodada 2) (physics leap)
+- last seen: 2026-09-25T15:32:27Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

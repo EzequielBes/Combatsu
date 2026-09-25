@@ -5,6 +5,11 @@
 export class Hitstop {
   private remainingMs = 0;
 
+  /** Tempo de congelamento que ainda falta (ms); exposto no snapshot de debug (BWIN-02). */
+  get remaining(): number {
+    return this.remainingMs;
+  }
+
   get frozen(): boolean {
     return this.remainingMs > 0;
   }

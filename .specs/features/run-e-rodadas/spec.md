@@ -97,7 +97,7 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 
 **Acceptance Criteria**:
 
-1. WAVE-01: The wave for round `r` SHALL contain `min(3 + (r − 1), 12)` enemies.
+1. WAVE-01: The wave for round `r` SHALL contain `min(3 + (r − 1), 12)` enemies (for rounds with `r % 5 === 0`, superseded by BOSS-01 of `boss-a-cada-5`: one boss, no regular enemies).
 2. WAVE-02: WHEN the wave spawns the k-th enemy of a round (k = 0, 1, 2, …) THEN it SHALL place it at spawn point index `(s + k) mod P`, where P is the number of `E` points of the level and `s` is an integer in [0, P − 1] drawn once per round from the run's `Rng`.
 3. WAVE-03: WHILE 4 enemies of the round are alive, the wave SHALL spawn no further enemy.
 4. WAVE-04: WHILE fewer than 4 enemies of the round are alive and the queue is not empty, the wave SHALL spawn the next queued enemy at the first moment when at least 800 ms have passed since the previous spawn at that enemy's spawn point (from WAVE-02).
@@ -168,7 +168,7 @@ Os itens com `n` são números de balanceamento que o usuário pode trocar sem m
 
 - IF the player dies in the same frame the last enemy dies THEN the run SHALL enter `gameOver` and not `intermission` (a morte do player tem prioridade).
 - IF the player dies during `intermission` (e.g. by a hazard) THEN the run SHALL enter `gameOver` with the round just cleared as the summary.
-- WHEN round 10 or later starts THEN the wave SHALL contain exactly 12 enemies.
+- WHEN round 11 or later starts, except boss rounds (`r % 5 === 0`, BOSS-01 of `boss-a-cada-5`), THEN the wave SHALL contain exactly 12 enemies.
 - WHEN the level has a single `E` point THEN every enemy SHALL spawn at that point, respecting the 800 ms gap.
 - IF the level has no `E` point THEN the run SHALL throw an error at level load naming the level (dado de mapa inválido, falha de desenvolvimento).
 
