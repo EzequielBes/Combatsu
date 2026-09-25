@@ -307,10 +307,10 @@ T13
 
 **Done when**:
 
-- [ ] `hud.fragments` acompanha `wallet.fragments` no frame da coleta
-- [ ] O contador e o ícone estão na `uiLayer`
-- [ ] O centro do game over tem `Fragmentos: <n>`
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] `hud.fragments` acompanha `wallet.fragments` no frame da coleta
+- [x] O contador e o ícone estão na `uiLayer`
+- [x] O centro do game over tem `Fragmentos: <n>`
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: smoke
 **Gate**: build

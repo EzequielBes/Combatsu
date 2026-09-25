@@ -57,6 +57,10 @@ export class Hud {
   private readonly bossBarMarks: Phaser.GameObjects.Rectangle[];
   private readonly bossBarName: Phaser.GameObjects.Text;
   private bossBarVisible = false;
+  /** Contador de fragmentos (ECO-16), abaixo da barra de HP: ícone + número, que pulsa ao mudar. */
+  private readonly fragmentIcon: Phaser.GameObjects.Image;
+  private readonly fragmentText: Phaser.GameObjects.Text;
+  private lastFragments = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -109,10 +113,27 @@ export class Hud {
       .setOrigin(0.5, 1)
       .setVisible(false);
 
+    // Contador de fragmentos (ECO-16), logo abaixo da barra de HP.
+    const fragY = MARGIN + 20;
+    this.fragmentIcon = scene.add.image(MARGIN, fragY, TEX.fragmentIcon, 'icon').setOrigin(0, 0);
+    this.fragmentText = scene.add.text(MARGIN + 16, fragY - 2, '0', TEXT_STYLE);
+
     const runObjs = [this.roundText, this.remainingText, this.bannerText, this.centerText];
     const bossBarObjs = [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName];
-    for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs]) obj.setScrollFactor(0).setDepth(100);
-    layer.add([label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs]);
+    const fragmentObjs = [this.fragmentIcon, this.fragmentText];
+    for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]) {
+      obj.setScrollFactor(0).setDepth(100);
+    }
+    layer.add([label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]);
+  }
+
+  /** Atualiza o contador (ECO-16): pulsa de 1,3 para 1 em 150 ms quando o valor muda. */
+  setFragments(n: number): void {
+    this.fragmentText.setText(String(n));
+    if (n === this.lastFragments) return;
+    this.lastFragments = n;
+    this.fragmentText.setScale(1.3);
+    this.scene.tweens.add({ targets: this.fragmentText, scale: 1, duration: 150 });
   }
 
   /** Enche a barra na proporção da vida, em passos de 1 texel (2 px). */
@@ -201,6 +222,7 @@ export class Hud {
     bannerPos: { x: number; y: number };
     bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
     bossBarIgnoredByMain: boolean;
+    fragments: string;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -209,6 +231,7 @@ export class Hud {
       remaining: this.remainingText.text,
       banner: this.bannerText.visible ? this.bannerText.text : null,
       center: this.centerLines,
+      fragments: this.fragmentText.text,
       // Centro visual do texto (RHUD-02): com origem não centralizada, o ponto de âncora (x/y) não discriminaria
       // uma faixa que cresce só para um lado.
       bannerPos: (() => {

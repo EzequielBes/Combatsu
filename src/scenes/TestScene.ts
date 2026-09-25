@@ -248,6 +248,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.hud.setCenter([
           `Rodada alcançada: ${cmd.round}`,
           `Abates: ${cmd.kills}`,
+          `Fragmentos: ${this.wallet.fragments}`,
           'J / Enter para tentar de novo',
         ]);
         break;
@@ -303,6 +304,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const p of collected) this.onPickupCollected(p);
     for (let i = 0; i < expired.length; i++) this.debugEvents.push('pickupExpired');
     this.floatTexts.update(dtMs);
+    // ECO-16: o contador do HUD acompanha a carteira no mesmo frame da coleta.
+    this.hud.setFragments(this.wallet.fragments);
   }
 
   /** Fragmento credita a carteira; gota cura (teto em maxHp, HEAL-03) - cada uma com o "+N" e o evento (ECO-29/HEAL-08). */

@@ -69,6 +69,8 @@ export interface GameSnapshot {
     bannerPos: { x: number; y: number };
     bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
     bossBarIgnoredByMain: boolean;
+    /** Texto do contador de fragmentos (ECO-16). */
+    fragments: string;
   };
   /** Estado do hitstop (BWIN-02). */
   hitstop: { frozen: boolean; remainingMs: number };

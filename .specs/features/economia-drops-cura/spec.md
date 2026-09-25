@@ -296,13 +296,13 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-27 | P1: Fragmentos | Specify | Implementing |
 | ECO-15 | P1: Fragmentos | Specify | Implementing |
 | ECO-28 | P1: Fragmentos | Specify | Implementing |
-| ECO-16 | P1: Fragmentos | Specify | Pending |
+| ECO-16 | P1: Fragmentos | Specify | Implementing |
 | ECO-29 | P1: Fragmentos | Specify | Implementing |
 | ECO-30 | P1: Fragmentos | Specify | Implementing |
 | ECO-21 | P1: Fragmentos | Specify | Implementing |
 | ECO-17 | P1: Fragmentos | Specify | Implementing |
 | ECO-31 | P1: Fragmentos | Specify | Implementing |
-| ECO-22 | P1: Fragmentos | Specify | Pending |
+| ECO-22 | P1: Fragmentos | Specify | Implementing |
 | ECO-19 | P1: Fragmentos | Specify | Implementing |
 | ECO-23 | P1: Fragmentos | Specify | Implementing |
 | HEAL-01 | P1: Gota de cura | Specify | Implementing |

@@ -49,6 +49,7 @@ describe('installDebugApi', () => {
         bannerPos: { x: 480, y: 135 },
         bossBar: { visible: false, name: '', width: 400, fillWidth: 400, marks: [264, 132] },
         bossBarIgnoredByMain: true,
+        fragments: '4',
       },
       hitstop: { frozen: false, remainingMs: 0 },
       wallet: { fragments: 4 },
