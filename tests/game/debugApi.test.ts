@@ -57,6 +57,7 @@ describe('installDebugApi', () => {
       wallet: { fragments: 4 },
       pickups: [{ id: 1, kind: 'fragment', value: 1, x: 70, y: 80, ageMs: 100, magnet: false }],
       floatTexts: [{ text: '+1', color: 'U', x: 70, y: 76 }],
+      worldProps: [{ id: 2, key: 'cursedKnife', state: 'rest', x: 90, y: 100, durabilityLeft: 6, rare: false }],
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};

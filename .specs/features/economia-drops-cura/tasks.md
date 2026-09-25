@@ -360,11 +360,11 @@ T13
 
 **Done when**:
 
-- [ ] Depois da morte de um armado aparece em `worldProps` uma ferramenta em `rest` com `durabilityLeft` igual à durabilidade da def
-- [ ] Pegar (K) e bater (J) num inimigo tira o dano da ferramenta e desgasta 1; arremessar deixa `thrown`
-- [ ] Uma ferramenta parada some aos 20 s com fumaça e sai de `worldProps`
-- [ ] Nova run: nenhuma ferramenta largada
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Depois da morte de um armado aparece em `worldProps` uma ferramenta em `rest` com `durabilityLeft` igual à durabilidade da def
+- [x] Pegar (K) e bater (J) num inimigo tira o dano da ferramenta e desgasta 1; arremessar deixa `thrown`
+- [x] Uma ferramenta parada some aos 20 s com fumaça e sai de `worldProps`
+- [x] Nova run: nenhuma ferramenta largada
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: smoke
 **Gate**: build

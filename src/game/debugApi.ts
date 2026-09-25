@@ -3,6 +3,7 @@ import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { EnemyState } from '../core/enemyBrain';
 import type { ToolKey } from '../core/loot';
+import type { PropState } from '../core/props';
 import type { RunState } from '../core/run';
 
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
@@ -83,6 +84,8 @@ export interface GameSnapshot {
   pickups: { id: number; kind: 'fragment' | 'heal'; value: number; x: number; y: number; ageMs: number; magnet: boolean }[];
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
+  /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
+  worldProps: { id: number; key: string; state: PropState; x: number; y: number; durabilityLeft: number; rare: boolean }[];
 }
 
 export interface DebugProbe {
