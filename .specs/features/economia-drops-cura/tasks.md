@@ -334,9 +334,9 @@ T13
 
 **Done when**:
 
-- [ ] Com `?debug&armed=club&round=3`, todo inimigo comum tem `weapon: 'cursedClub'`, `damage` igual a `round(1.6 × base escalado)` e o preparo mais longo
-- [ ] O sprite da ferramenta some em ragdoll e volta ao levantar
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Com `?debug&armed=club&round=3`, todo inimigo comum tem `weapon: 'cursedClub'`, `damage` igual a `round(1.6 × base escalado)` e o preparo mais longo
+- [x] O sprite da ferramenta some em ragdoll e volta ao levantar
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: smoke
 **Gate**: build

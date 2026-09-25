@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { armFor } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
@@ -14,7 +15,7 @@ import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
-import { BOSS, DIFFICULTY, ECONOMY, ENEMY, ENEMY_AI, ENEMY_ATTACK, PICKUP, PLAYER_COMBO, RUN, WAVE } from '../data/tuning';
+import { ARMED, BOSS, DIFFICULTY, ECONOMY, ENEMY, ENEMY_AI, ENEMY_ATTACK, PICKUP, PLAYER_COMBO, RUN, WAVE } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
@@ -280,13 +281,20 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides());
   }
 
-  /** Overrides de debug dos sorteios (HEAL-06): só `?debug&heal=N` por enquanto. */
+  /** Overrides de debug dos sorteios (HEAL-06, ARM-15): `?debug&heal=N` e `?debug&armed=knife|club`. */
   private lootOverrides(): LootOverrides {
     if (!isDebug()) return {};
-    const raw = new URLSearchParams(window.location.search).get('heal');
-    if (raw === null) return {};
-    const n = Number(raw);
-    return Number.isFinite(n) ? { healChance: n } : {};
+    const params = new URLSearchParams(window.location.search);
+    const overrides: LootOverrides = {};
+    const heal = params.get('heal');
+    if (heal !== null) {
+      const n = Number(heal);
+      if (Number.isFinite(n)) overrides.healChance = n;
+    }
+    const armed = params.get('armed');
+    if (armed === 'knife') overrides.armed = 'cursedKnife';
+    else if (armed === 'club') overrides.armed = 'cursedClub';
+    return overrides;
   }
 
   /** Move e coleta os pickups vivos (ECO-06..11, HEAL-03/04) e avança os textos flutuantes da coleta. */
@@ -333,7 +341,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private spawnFromCommand(point: number, round: number): void {
     const at = this.level.enemies[point];
     const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
-    const tuning = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
+    const scaled = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
+    // ARM-01..03: sorteado depois da escala da rodada (armFor multiplica o dano já escalado).
+    const armedRoll = this.loot.rollArmed(round);
+    const tuning = armedRoll ? armFor(armedRoll.tool, scaled, ARMED) : scaled;
     const enemy = new Enemy(
       this,
       spawnAt,
@@ -347,8 +358,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Drop do inimigo comum (design.md): sai daqui, não do onEnemyDied (que o chefe também chama).
       (dead, x, y) => {
         this.onEnemyDied(dead.id, x, y);
-        this.applyDrop(this.loot.enemyDrop(this.run.round, false), x, y);
+        this.applyDrop(this.loot.enemyDrop(this.run.round, dead.weapon !== null), x, y);
       },
+      armedRoll,
     );
     this.enemies.push(enemy);
     this.debugEvents.push(`spawnFx:${enemy.id}`);
@@ -445,6 +457,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         damage: e.damage,
         patrolSpeed: e.patrolSpeed,
         chaseSpeed: e.chaseSpeed,
+        weapon: e.weapon,
       })),
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),
