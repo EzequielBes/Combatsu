@@ -170,4 +170,6 @@ export const BOSS = {
   },
   /** Cura do player ao derrotar o chefe, fração de maxHp com teto (BWIN-01). */
   healFraction: 0.3,
+  /** Duração da faixa "Chefe derrotado!" (BHUD-03). */
+  defeatBannerMs: 2000,
 } as const;

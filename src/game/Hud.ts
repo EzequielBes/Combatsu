@@ -22,6 +22,18 @@ const RUN_PANEL_STYLE = { ...RUN_TEXT_STYLE, backgroundColor: css(RUN_BG_COLOR, 
 /** Nome do jogo, mostrado na tela de título (RHUD-05). */
 export const GAME_NAME = 'Combatsu';
 
+/** Cores da barra do chefe (BHUD-06), todas da paleta. */
+export const BOSS_BAR_FILL_COLOR = PALETTE.a;
+export const BOSS_BAR_BG_COLOR = PALETTE.k;
+export const BOSS_BAR_MARK_COLOR = PALETTE.w;
+export const BOSS_BAR_NAME_COLOR = PALETTE.w;
+const BOSS_BAR_NAME_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(BOSS_BAR_NAME_COLOR) };
+/** Largura total da barra do chefe (BHUD-01) e marcas de fase, em fração da largura (BAI-01: 66%/33%). */
+const BOSS_BAR_WIDTH = 400;
+const BOSS_BAR_HEIGHT = 12;
+const BOSS_BAR_MARK_W = 2;
+const BOSS_BAR_MARK_FRACTIONS = [0.66, 0.33] as const;
+
 /**
  * HUD na câmera de UI (AD-003): barra de vida do player com moldura pixel art (HUD-01) e o painel de controles, que
  * aparece por um tempo e alterna no Tab (HUD-03). Todo objeto entra na camada de UI.
@@ -39,6 +51,12 @@ export class Hud {
   /** Texto central da tela de título/game over (RHUD-05/06); `null` = escondido. */
   private readonly centerText: Phaser.GameObjects.Text;
   private centerLines: string[] | null = null;
+  /** Barra do chefe (BHUD-01..03/06/07), no topo central; escondida fora de uma luta de chefe. */
+  private readonly bossBarBg: Phaser.GameObjects.Rectangle;
+  private readonly bossBarFill: Phaser.GameObjects.Rectangle;
+  private readonly bossBarMarks: Phaser.GameObjects.Rectangle[];
+  private readonly bossBarName: Phaser.GameObjects.Text;
+  private bossBarVisible = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -69,9 +87,32 @@ export class Hud {
       .text(w2 / 2, h2 / 2, '', { ...RUN_PANEL_STYLE, padding: { x: 14, y: 10 } })
       .setOrigin(0.5, 0.5)
       .setVisible(false);
+
+    // Barra do chefe (BHUD-01): 400 px no topo central, nome acima e marcas de fase em 66%/33% da largura.
+    const bossX = w2 / 2 - BOSS_BAR_WIDTH / 2;
+    this.bossBarBg = scene.add
+      .rectangle(bossX, MARGIN, BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT, BOSS_BAR_BG_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.bossBarFill = scene.add
+      .rectangle(bossX, MARGIN, BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT, BOSS_BAR_FILL_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.bossBarMarks = BOSS_BAR_MARK_FRACTIONS.map((f) =>
+      scene.add
+        .rectangle(bossX + BOSS_BAR_WIDTH * f, MARGIN, BOSS_BAR_MARK_W, BOSS_BAR_HEIGHT, BOSS_BAR_MARK_COLOR)
+        .setOrigin(0.5, 0)
+        .setVisible(false),
+    );
+    this.bossBarName = scene.add
+      .text(w2 / 2, MARGIN - 2, '', BOSS_BAR_NAME_STYLE)
+      .setOrigin(0.5, 1)
+      .setVisible(false);
+
     const runObjs = [this.roundText, this.remainingText, this.bannerText, this.centerText];
-    for (const obj of [label, frame, this.fill, this.panel, ...runObjs]) obj.setScrollFactor(0).setDepth(100);
-    layer.add([label, frame, this.fill, this.panel, ...runObjs]);
+    const bossBarObjs = [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName];
+    for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs]) obj.setScrollFactor(0).setDepth(100);
+    layer.add([label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs]);
   }
 
   /** Enche a barra na proporção da vida, em passos de 1 texel (2 px). */
@@ -158,6 +199,8 @@ export class Hud {
     banner: string | null;
     center: string[] | null;
     bannerPos: { x: number; y: number };
+    bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
+    bossBarIgnoredByMain: boolean;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -172,6 +215,38 @@ export class Hud {
         const b = this.bannerText.getBounds();
         return { x: b.centerX, y: b.centerY };
       })(),
+      // Medidas lidas dos retângulos desenhados (BHUD-01/02), relativas ao início da barra.
+      bossBar: {
+        visible: this.bossBarVisible,
+        name: this.bossBarName.text,
+        width: this.bossBarBg.width,
+        fillWidth: this.bossBarFill.width,
+        marks: this.bossBarMarks.map((m) => m.x - this.bossBarBg.x),
+      },
+      // BHUD-07: cada peça da barra está na `uiLayer`, e a camada é ignorada pela câmera principal.
+      bossBarIgnoredByMain:
+        (this.layer.cameraFilter & mainId) === mainId &&
+        [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName].every((o) => o.displayList === this.layer),
     };
+  }
+
+  /** Mostra a barra do chefe cheia, com o nome acima (BHUD-01). */
+  showBossBar(name: string): void {
+    this.bossBarVisible = true;
+    this.bossBarName.setText(name);
+    this.bossBarFill.width = BOSS_BAR_WIDTH;
+    for (const o of [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName]) o.setVisible(true);
+  }
+
+  /** Largura do preenchimento proporcional à vida (BHUD-02). */
+  setBossHp(hp: number, max: number): void {
+    if (!this.bossBarVisible) return;
+    this.bossBarFill.width = Math.round((BOSS_BAR_WIDTH * Math.max(0, hp)) / max);
+  }
+
+  /** Esconde a barra (BHUD-03): chefe morto ou run nova. */
+  hideBossBar(): void {
+    this.bossBarVisible = false;
+    for (const o of [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName]) o.setVisible(false);
   }
 }

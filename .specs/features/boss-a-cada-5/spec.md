@@ -191,6 +191,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 - WHEN the boss dies during a roar or a stagger THEN it SHALL die normally (defeat effects, heal, kill counted once).
 - IF a new run starts while a boss is alive (after game over) THEN the boss, its projectiles and its shockwaves SHALL be removed.
 - WHEN the level has a single `E` point THEN the boss SHALL spawn at that point.
+- WHEN a boss round is cleared THEN the HUD SHALL show `Chefe derrotado!` for 2000 ms of game time (the defeat hitstop does not count) and then `Rodada N concluída` until the next round starts (BHUD-03 + RHUD-03).
 
 ---
 
@@ -216,7 +217,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BAT-11 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-06 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-12 | P1: Ataques telegrafados | Specify | Implementing |
-| BAT-07 | P1: Ataques telegrafados | Specify | Pending |
+| BAT-07 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-08 | P1: Ataques telegrafados | Specify | Implementing |
 | BAT-13 | P1: Ataques telegrafados | Specify | Implementing |
 | BAI-01 | P1: Fases e postura | Specify | Implementing |
@@ -233,16 +234,16 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | BAI-09 | P1: Fases e postura | Specify | Implementing |
 | BAI-10 | P1: Fases e postura | Specify | Implementing |
 | BAI-14 | P1: Fases e postura | Specify | Implementing |
-| BHUD-01 | P1: Barra do chefe e vitória | Specify | Pending |
-| BHUD-02 | P1: Barra do chefe e vitória | Specify | Pending |
-| BHUD-03 | P1: Barra do chefe e vitória | Specify | Pending |
+| BHUD-01 | P1: Barra do chefe e vitória | Specify | Implementing |
+| BHUD-02 | P1: Barra do chefe e vitória | Specify | Implementing |
+| BHUD-03 | P1: Barra do chefe e vitória | Specify | Implementing |
 | BHUD-04 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BHUD-05 | P1: Barra do chefe e vitória | Specify | Pending |
-| BHUD-06 | P1: Barra do chefe e vitória | Specify | Pending |
-| BHUD-07 | P1: Barra do chefe e vitória | Specify | Pending |
+| BHUD-05 | P1: Barra do chefe e vitória | Specify | Implementing |
+| BHUD-06 | P1: Barra do chefe e vitória | Specify | Implementing |
+| BHUD-07 | P1: Barra do chefe e vitória | Specify | Implementing |
 | BWIN-01 | P1: Barra do chefe e vitória | Specify | Implementing |
 | BWIN-02 | P1: Barra do chefe e vitória | Specify | Implementing |
-| BWIN-03 | P1: Barra do chefe e vitória | Specify | Pending |
+| BWIN-03 | P1: Barra do chefe e vitória | Specify | Implementing |
 | BTIER-01 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-02 | P2: Chefes mais duros e variados | Specify | Implementing |
 | BTIER-03 | P2: Chefes mais duros e variados | Specify | Implementing |
