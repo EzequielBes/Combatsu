@@ -129,6 +129,86 @@ export const RUN: RunTuning = { intermissionMs: 2500, gameOverLockMs: 1000, spaw
  * BTIER-01, BTIER-02, BTIER-04, BTIER-05, BTIER-07): todos os números das Assumptions da spec de
  * `boss-a-cada-5`. Fases indexadas 0..2 (fase 1, 2, 3).
  */
+/** Tuning da economia de drops (ECO-02..05, ECO-15, HEAL-01, HEAL-02, ARM-01..03). */
+export interface EconomyTuning {
+  fragmentsMin: number;
+  fragmentsMax: number;
+  armedBonus: number;
+  bossFragments: number;
+  valueEvery: number;
+  healChance: number;
+  healAmount: number;
+  maxLiveFragments: number;
+  armed: { startRound: number; base: number; perRound: number; cap: number; rareChance: number };
+}
+
+/** Números da economia (Assumptions da spec economia-drops-cura). */
+export const ECONOMY: EconomyTuning = {
+  fragmentsMin: 2,
+  fragmentsMax: 4,
+  armedBonus: 2,
+  bossFragments: 15,
+  valueEvery: 5,
+  healChance: 0.1,
+  healAmount: 8,
+  maxLiveFragments: 60,
+  armed: { startRound: 3, base: 0.15, perRound: 0.05, cap: 0.5, rareChance: 0.15 },
+};
+
+/** Tuning da física, ímã e vida do pickup (ECO-06..11, ECO-18, ECO-21, HEAL-04/05/09). */
+export interface PickupTuning {
+  gravity: number;
+  bounce: number;
+  wallBounce: number;
+  size: number;
+  magnetDelayMs: number;
+  magnetRange: number;
+  magnetSpeed0: number;
+  magnetAccel: number;
+  magnetSpeedMax: number;
+  fragmentLifeMs: number;
+  healLifeMs: number;
+  blinkLastMs: number;
+  blinkEveryMs: number;
+}
+
+/** Números da física do pickup (Assumptions da spec economia-drops-cura). */
+export const PICKUP: PickupTuning = {
+  gravity: 900,
+  bounce: 0.35,
+  wallBounce: 0.5,
+  size: 8,
+  magnetDelayMs: 300,
+  magnetRange: 72,
+  magnetSpeed0: 120,
+  magnetAccel: 1200,
+  magnetSpeedMax: 600,
+  fragmentLifeMs: 15000,
+  healLifeMs: 10000,
+  blinkLastMs: 3000,
+  blinkEveryMs: 150,
+};
+
+/** Multiplicadores do inimigo armado por ferramenta (ARM-05..07). */
+export interface ArmedTuning {
+  knife: { dmg: number; widen: number };
+  club: { dmg: number; widen: number; windupPlus: number };
+}
+
+/** Números do inimigo armado (Assumptions da spec economia-drops-cura). */
+export const ARMED: ArmedTuning = {
+  knife: { dmg: 1.25, widen: 8 },
+  club: { dmg: 1.6, widen: 12, windupPlus: 150 },
+};
+
+/** Tempo de vida e teto das ferramentas largadas (ARM-13, ARM-14). */
+export interface DroppedToolsTuning {
+  restMs: number;
+  max: number;
+}
+
+export const DROPPED_TOOLS: DroppedToolsTuning = { restMs: 20000, max: 6 };
+
 export const BOSS = {
   /** Entrada parado e invulnerável antes de poder atacar (BOSS-06). */
   introMs: 1500,

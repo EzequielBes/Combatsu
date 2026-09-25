@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Run, acceptsPlayerInput, type RunCommand, type RunState } from '../../src/core/run';
+import { Rng } from '../../src/core/rng';
 import { RUN, WAVE } from '../../src/data/tuning';
 
 function isSpawn(c: RunCommand): c is Extract<RunCommand, { type: 'spawn' }> {
@@ -281,6 +282,65 @@ describe('Run: morte do chefe conta kills e entra em intermission (BOSS-04, BOSS
     expect(run.kills).toBe(1);
     expect(run.state).toBe('intermission');
     expect(commands).toContainEqual({ type: 'roundCleared', round: 5 });
+  });
+});
+
+describe('Run: stream de loot com seed própria (ECO-17, ECO-31)', () => {
+  it('lootRng é null antes do primeiro start', () => {
+    const run = newRun();
+    expect(run.lootRng).toBeNull();
+  });
+
+  it('depois do start com seed s, lootRng.next() é igual ao primeiro next() de new Rng(s ^ 0x9e3779b9)', () => {
+    const run = newRun();
+    run.startPressed();
+    run.update(0, SEED); // SEED() === 7
+    const expected = new Rng(7 ^ 0x9e3779b9).next();
+    expect(run.lootRng!.next()).toBe(expected);
+  });
+
+  it('sorteios no lootRng entre updates não mudam a ordem de spawn das rodadas (o rng das ondas é outro)', () => {
+    // Mata cada inimigo assim que nasce, para as rodadas 1-3 se sucederem dentro de um número fixo de passos.
+    const run = (withLoot: boolean): { spawns: number[]; rounds: number[] } => {
+      const r = new Run(RUN, WAVE, POINTS);
+      r.startPressed();
+      const spawns: number[] = [];
+      const rounds: number[] = [];
+      let nextId = 1;
+      for (let step = 0; step < 200; step++) {
+        if (withLoot) for (let i = 0; i < 50; i++) r.lootRng?.next();
+        const cmds = r.update(50, SEED);
+        for (const c of cmds) {
+          if (c.type === 'spawn') {
+            spawns.push(c.point);
+            r.enemyDied(nextId++); // morre assim que nasce: a rodada some rápido
+          }
+          if (c.type === 'roundStart') rounds.push(c.round);
+        }
+        if (rounds.includes(4)) break;
+      }
+      return { spawns, rounds };
+    };
+
+    const without = run(false);
+    const with50Draws = run(true);
+    expect(with50Draws.spawns).toEqual(without.spawns);
+    expect(with50Draws.rounds).toEqual(without.rounds);
+    expect(without.rounds).toContain(3); // prova que as 3 rodadas realmente aconteceram
+  });
+
+  it('uma nova run cria um lootRng novo, com a seed nova', () => {
+    const run = newRun();
+    run.startPressed();
+    run.update(0, () => 1); // primeira run, seed 1
+    run.lootRng!.next(); // consome um sorteio na run anterior
+
+    run.playerDied();
+    run.update(0, () => 1); // gameOver
+    run.startPressed();
+    run.update(RUN.gameOverLockMs, () => 2); // nova run, seed 2
+
+    expect(run.lootRng!.next()).toBe(new Rng(2 ^ 0x9e3779b9).next());
   });
 });
 

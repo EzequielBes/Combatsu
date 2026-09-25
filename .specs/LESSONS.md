@@ -186,6 +186,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/game/Boss.ts:250 (mutant 5, rodada 2) (physics leap)
 - last seen: 2026-09-25T15:32:27Z
 
+### L-030 - Expose every visual or physical state an AC names (sprite visibility, tint, body velocity) as a live-read field in the debug snapshot in the same task that implements it, so the smoke can assert it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `smoke debug snapshot` · harmful: 0
+- features: economia-drops-cura
+- evidence: ARM-10/ARM-26/HEAL-10 validation.md rodada 1 (smoke debug snapshot)
+- last seen: 2026-09-25T23:00:29Z
+
+### L-031 - Make smoke scenarios that depend on the player not taking damage run with no living enemies (intermission) or with the player dead, instead of hoping enemies miss.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `smoke determinism` · harmful: 0
+- features: economia-drops-cura
+- evidence: scripts/smoke/heal.smoke.mjs HEAL-04/HEAL-05 (smoke determinism)
+- last seen: 2026-09-25T23:00:31Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

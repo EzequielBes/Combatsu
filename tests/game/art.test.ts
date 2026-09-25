@@ -7,6 +7,8 @@ import { ART_SCALE, PALETTE, PALETTE_KEYS } from '../../src/game/art/palette';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
+import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from '../../src/game/art/sprites/economy';
+import { TOOL_FRAMES, TOOL_SHARDS } from '../../src/game/art/sprites/tools';
 import { ENEMY_BAR, ENEMY_BAR_WELL, HUD_BAR, HUD_BAR_WELL } from '../../src/game/art/hud';
 import {
   BOSS_BAR_BG_COLOR,
@@ -421,6 +423,87 @@ describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
     expect(jumpApex).toBeCloseTo(49, 5);
     expect(BOSS.shockwave.height).toBeLessThan(jumpApex);
   });
+});
+
+describe('fragmento amaldiçoado e ícone do contador (ECO-23)', () => {
+  it('a folha do fragmento passa no parseSheet, tem 5x7 texels em 2 frames', () => {
+    const sheet = parseSheet('fragment', FRAGMENT_FRAMES, PALETTE_KEYS);
+    expect(sheet.width).toBe(5);
+    expect(sheet.height).toBe(7);
+    expect(sheet.frames.map((f) => f.key).sort()).toEqual(['a', 'b']);
+  });
+
+  it('os 2 frames do fragmento cintilam: não são idênticos', () => {
+    expect(FRAGMENT_FRAMES.a).not.toEqual(FRAGMENT_FRAMES.b);
+  });
+
+  it('o ícone do contador passa no parseSheet só com cores da paleta', () => {
+    const sheet = parseSheet('fragment-icon', { icon: FRAGMENT_ICON }, PALETTE_KEYS);
+    expect(sheet.frames).toHaveLength(1);
+  });
+});
+
+describe('gota de cura (HEAL)', () => {
+  it('a folha da gota passa no parseSheet, tem 6x8 texels em 2 frames que pulsam', () => {
+    const sheet = parseSheet('heal-drop', HEAL_FRAMES, PALETTE_KEYS);
+    expect(sheet.width).toBe(6);
+    expect(sheet.height).toBe(8);
+    expect(sheet.frames.map((f) => f.key).sort()).toEqual(['a', 'b']);
+    expect(HEAL_FRAMES.a).not.toEqual(HEAL_FRAMES.b);
+  });
+});
+
+describe('ferramentas amaldiçoadas (ARM-19, RAR-03)', () => {
+  const colorsOf = (cells: (string | null)[][]): Set<string> =>
+    new Set(cells.flat().filter((c): c is string => c !== null));
+
+  for (const key of ['cursedKnife', 'cursedClub'] as const) {
+    it(`${key}: a folha passa no parseSheet só com cores da paleta, todos os frames do mesmo tamanho`, () => {
+      const sheet = parseSheet(key, TOOL_FRAMES[key], PALETTE_KEYS);
+      expect(sheet.frames.map((f) => f.key).sort()).toEqual(
+        ['common', 'hold-a', 'hold-b', 'hold-rare', 'raised', 'rare'].sort(),
+      );
+    });
+
+    it(`${key}: o frame rare tem contorno A e o common tem contorno k`, () => {
+      const sheet = parseSheet(key, TOOL_FRAMES[key], PALETTE_KEYS);
+      const rare = colorsOf(sheet.frames.find((f) => f.key === 'rare')!.cells);
+      const common = colorsOf(sheet.frames.find((f) => f.key === 'common')!.cells);
+      expect(rare.has('A')).toBe(true);
+      expect(rare.has('k')).toBe(false);
+      expect(common.has('k')).toBe(true);
+      expect(common.has('A')).toBe(false);
+    });
+
+    it(`${key}: o frame raised tem o brilho U`, () => {
+      const sheet = parseSheet(key, TOOL_FRAMES[key], PALETTE_KEYS);
+      const raised = colorsOf(sheet.frames.find((f) => f.key === 'raised')!.cells);
+      expect(raised.has('U')).toBe(true);
+    });
+
+    it(`${key}: hold-a e hold-b diferem só no contorno da aura (u vs v)`, () => {
+      const sheet = parseSheet(key, TOOL_FRAMES[key], PALETTE_KEYS);
+      const holdA = sheet.frames.find((f) => f.key === 'hold-a')!;
+      const holdB = sheet.frames.find((f) => f.key === 'hold-b')!;
+      const replaced = holdA.cells.map((row, y) => row.map((c, x) => (c === 'u' ? holdB.cells[y][x] : c)));
+      expect(replaced).toEqual(holdB.cells);
+      expect(colorsOf(holdA.cells).has('u')).toBe(true);
+      expect(colorsOf(holdB.cells).has('v')).toBe(true);
+    });
+
+    it(`${key}: os estilhaços passam no parseSheet e só usam cores do frame comum`, () => {
+      const source = colorsOf(parseSheet(key, { common: TOOL_FRAMES[key].common }, PALETTE_KEYS).frames[0].cells);
+      const shards = TOOL_SHARDS[key];
+      expect(shards.length).toBeGreaterThan(1);
+      const frames = Object.fromEntries(shards.map((s) => [s.key, s.grid]));
+      const sheet = parseSheet(`${key}-shards`, frames, PALETTE_KEYS);
+      for (const f of sheet.frames) {
+        const colors = colorsOf(f.cells);
+        expect(colors.size, f.key).toBeGreaterThan(0);
+        for (const c of colors) expect(source.has(c), `${f.key}: ${c}`).toBe(true);
+      }
+    });
+  }
 });
 
 describe('molduras das barras de vida (HUD-01/02, ART-01)', () => {

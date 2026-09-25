@@ -7,6 +7,8 @@ import { registerSheet } from './render';
 import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
+import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from './sprites/economy';
+import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
 import {
   BOSS_ANIMS,
   BOSS_FRAMES,
@@ -55,6 +57,17 @@ export function createArt(scene: Phaser.Scene): void {
   }
   registerSheet(scene, TEX.smoke, parseSheet('smoke', { smoke: SMOKE }, PALETTE_KEYS));
   registerSheet(scene, TEX.smokeCurse, parseSheet('smoke-curse', SMOKE_CURSE, PALETTE_KEYS));
+  // Economia (ECO-23, HEAL): fragmento, gota de cura e o ícone do contador.
+  registerSheet(scene, TEX.fragment, parseSheet('fragment', FRAGMENT_FRAMES, PALETTE_KEYS));
+  registerSheet(scene, TEX.healDrop, parseSheet('heal-drop', HEAL_FRAMES, PALETTE_KEYS));
+  registerSheet(scene, TEX.fragmentIcon, parseSheet('fragment-icon', { icon: FRAGMENT_ICON }, PALETTE_KEYS));
+  // Ferramentas amaldiçoadas (ARM-19): comum, rara e as poses na mão, com os estilhaços do frame comum.
+  const tools = { [TEX.cursedKnife]: 'cursedKnife', [TEX.cursedClub]: 'cursedClub' } as const;
+  for (const [texture, key] of Object.entries(tools)) {
+    registerSheet(scene, texture, parseSheet(key, TOOL_FRAMES[key], PALETTE_KEYS));
+    const shards = Object.fromEntries(TOOL_SHARDS[key].map((s) => [s.key, s.grid]));
+    registerSheet(scene, shardsKey(texture), parseSheet(shardsKey(key), shards, PALETTE_KEYS));
+  }
   registerSheet(scene, TEX.hudBar, parseSheet('hud-bar', { bar: HUD_BAR }, PALETTE_KEYS));
   registerSheet(scene, TEX.enemyBar, parseSheet('enemy-bar', { bar: ENEMY_BAR }, PALETTE_KEYS));
   // Chefe (BTIER-06): uma folha por arquétipo, com o mesmo conjunto de frames e animações.

@@ -1,16 +1,36 @@
 import Phaser from 'phaser';
+import { armFor, propName, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
+import { DroppedTools } from '../core/droppedTools';
 import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
+import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
+import type { PickupPlayer } from '../core/pickup';
+import type { PropState } from '../core/props';
+import type { Rng } from '../core/rng';
 import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
+import { Wallet } from '../core/wallet';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
-import { PROP_DEFS } from '../data/props';
-import { BOSS, DIFFICULTY, ENEMY, ENEMY_AI, ENEMY_ATTACK, PLAYER_COMBO, RUN, WAVE } from '../data/tuning';
+import { PROP_DEFS, TOOL_DEFS } from '../data/props';
+import {
+  ARMED,
+  BOSS,
+  DIFFICULTY,
+  DROPPED_TOOLS,
+  ECONOMY,
+  ENEMY,
+  ENEMY_AI,
+  ENEMY_ATTACK,
+  PICKUP,
+  PLAYER_COMBO,
+  RUN,
+  WAVE,
+} from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
@@ -24,12 +44,17 @@ import { Fx, type SparkKind } from '../game/fx';
 import { GAME_NAME, Hud } from '../game/Hud';
 import type { InputSnapshot } from '../game/input';
 import { PlayerInput } from '../game/input';
+import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS } from '../game/physics';
+import { Pickups } from '../game/Pickups';
 import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
 import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
+
+/** Ferramenta amaldiçoada largada (chave em `TOOL_DEFS`, comum ou rara), nunca um objeto do mapa. */
+const isDroppedTool = (key: string): boolean => key.startsWith('cursed');
 
 const SPAWN_LIFT = 2;
 /** Zoom da câmera do mundo (RES-01): 960x540 de tela mostram 640x360 px de mundo. */
@@ -70,6 +95,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private fx!: Fx;
   private hud!: Hud;
   private run!: Run;
+  /** Carteira de fragmentos da run (ECO-12..14) e os sorteios de drop, criados a cada `startRun` com o `lootRng`. */
+  private wallet!: Wallet;
+  private loot!: Loot;
+  private lootRng!: Rng;
+  private pickups!: Pickups;
+  private floatTexts!: FloatTexts;
+  /** Tempo de vida e teto das ferramentas largadas (ARM-13/14/18/28); vive a cena toda. */
+  private droppedTools!: DroppedTools;
   /** Detecta a transição para morto (RUN-04): só o primeiro frame morto conta como evento. */
   private wasPlayerDead = false;
   private readonly hitstop = new Hitstop();
@@ -126,6 +159,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, strike);
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
 
+    // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
+    this.wallet = new Wallet();
+    this.pickups = new Pickups(this, PICKUP);
+    this.floatTexts = new FloatTexts(this);
+    this.droppedTools = new DroppedTools(DROPPED_TOOLS);
+
     this.cameras.main
       .setZoom(WORLD_ZOOM)
       .setRoundPixels(true)
@@ -158,6 +197,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
     const raw = this.controls.read();
     this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+    this.updatePickups(dt);
     // Morte do player (RUN-04): só a transição para morto conta, uma vez.
     if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
     this.wasPlayerDead = this.player.dead;
@@ -179,10 +219,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const proj of this.projectiles) proj.update(dt);
     this.projectiles = this.projectiles.filter((proj) => !proj.removed);
     for (const prop of this.props) prop.update(dt);
+    this.updateDroppedTools(dt);
     this.props = this.props.filter((prop) => !prop.isGone);
     for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
     this.hud.setRun(this.run.round > 0 ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
+    this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
   }
 
@@ -230,6 +272,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.hud.setCenter([
           `Rodada alcançada: ${cmd.round}`,
           `Abates: ${cmd.kills}`,
+          `Fragmentos: ${this.wallet.fragments}`,
           'J / Enter para tentar de novo',
         ]);
         break;
@@ -252,13 +295,126 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const proj of this.projectiles) proj.destroyNow();
     this.projectiles = [];
     this.player.resetForRun();
+    // ECO-14/27: carteira zerada e nenhum pickup/texto flutuante sobrevive à run anterior.
+    this.wallet.reset();
+    this.pickups.clear();
+    this.floatTexts.clear();
+    // ARM-18: nenhuma ferramenta largada sobrevive à run anterior (a cadeira/garrafa do mapa não são drops).
+    for (const prop of this.props) if (isDroppedTool(prop.def.key)) prop.destroyNow();
+    this.props = this.props.filter((prop) => !prop.isGone);
+    this.droppedTools.clear();
+    // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
+    this.lootRng = this.run.lootRng!;
+    this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides());
+  }
+
+  /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
+  private lootOverrides(): LootOverrides {
+    if (!isDebug()) return {};
+    const params = new URLSearchParams(window.location.search);
+    const overrides: LootOverrides = {};
+    const heal = params.get('heal');
+    if (heal !== null) {
+      const n = Number(heal);
+      if (Number.isFinite(n)) overrides.healChance = n;
+    }
+    const armed = params.get('armed');
+    if (armed === 'knife') overrides.armed = 'cursedKnife';
+    else if (armed === 'club') overrides.armed = 'cursedClub';
+    const rare = params.get('rare');
+    if (rare !== null) overrides.rare = rare === '1' || rare === 'true';
+    return overrides;
+  }
+
+  /** Move e coleta os pickups vivos (ECO-06..11, HEAL-03/04) e avança os textos flutuantes da coleta. */
+  private updatePickups(dtMs: number): void {
+    const pr = this.player.hurtRect();
+    const player: PickupPlayer = {
+      x: pr.x - pr.width / 2,
+      y: pr.y - pr.height / 2,
+      w: pr.width,
+      h: pr.height,
+      alive: !this.player.dead,
+      canHeal: this.player.hp < this.player.maxHp,
+    };
+    const { collected, expired } = this.pickups.update(dtMs, { solids: this.level.solids, player });
+    for (const p of collected) this.onPickupCollected(p);
+    for (let i = 0; i < expired.length; i++) this.debugEvents.push('pickupExpired');
+    this.floatTexts.update(dtMs);
+    // ECO-16: o contador do HUD acompanha a carteira no mesmo frame da coleta.
+    this.hud.setFragments(this.wallet.fragments);
+  }
+
+  /** Fragmento credita a carteira; gota cura (teto em maxHp, HEAL-03) - cada uma com o "+N" e o evento (ECO-29/HEAL-08). */
+  private onPickupCollected(p: { kind: 'fragment' | 'heal'; value: number; x: number; y: number }): void {
+    if (p.kind === 'fragment') {
+      this.wallet.add(p.value);
+      this.debugEvents.push(`collect:fragment:${p.value}`);
+      this.floatTexts.spawn(`+${p.value}`, 'U', p.x, p.y);
+      return;
+    }
+    const restored = this.player.heal(p.value);
+    this.debugEvents.push(`collect:heal:${restored}`);
+    this.floatTexts.spawn(`+${restored}`, 'G', p.x, p.y);
+    this.player.flash('G', 80);
+  }
+
+  /** Nome e pips do objeto na mão (ITEM-01/02), `null` de mãos vazias (ITEM-03). */
+  private heldItemInfo(): { name: string; pips: number; maxPips: number } | null {
+    const prop = this.player.heldProp;
+    if (!prop) return null;
+    return { name: propName(prop.def), pips: prop.def.durability - prop.machine.impacts, maxPips: prop.def.durability };
+  }
+
+  /** Sorteia e materializa o drop de um abate (ECO-01/05, ECO-15/28, HEAL-01/02) no ponto da morte. */
+  private applyDrop(result: EnemyDropResult, x: number, y: number): void {
+    const cap = capDrop(result.fragments, this.pickups.liveFragments, ECONOMY.maxLiveFragments);
+    if (cap.spawn > 0) this.pickups.spawnDrop(this.lootRng, x, y, 'fragment', cap.spawn, result.value, cap.extraOnLast);
+    if (result.heal) this.pickups.spawnDrop(this.lootRng, x, y, 'heal', 1, ECONOMY.healAmount, 0);
+  }
+
+  /**
+   * Ferramenta largada por um inimigo armado (ARM-08): nasce em `rest`, pronta para pegar (design.md). Se o teto
+   * de 6 já estiver cheio, a mais antiga em `rest` some antes (ARM-14).
+   */
+  private dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
+    const def = rare ? rareDef(TOOL_DEFS[tool]) : TOOL_DEFS[tool];
+    const prop = new Prop(this, x, y, def, (hit, at) => this.onConnect(hit, at, 'prop'), rare);
+    const evictId = this.droppedTools.admit(prop.id, this.toolStates());
+    if (evictId !== null) {
+      this.props.find((p) => p.id === evictId)?.destroyNow();
+      this.droppedTools.forget(evictId);
+    }
+    this.props.push(prop);
+  }
+
+  /** Estado atual de cada ferramenta largada registrada (para `DroppedTools.admit`/`update`). */
+  private toolStates(): Map<number, PropState> {
+    const states = new Map<number, PropState>();
+    for (const p of this.props) if (isDroppedTool(p.def.key)) states.set(p.id, p.machine.state);
+    return states;
+  }
+
+  /** Sumiço por tempo (ARM-13) e limpeza do registro para ferramentas que já sumiram por outro motivo (quebra, teto). */
+  private updateDroppedTools(dtMs: number): void {
+    const expired = this.droppedTools.update(dtMs, this.toolStates());
+    for (const id of expired) {
+      const p = this.props.find((pr) => pr.id === id);
+      if (!p) continue;
+      this.fx.curseSmoke(p.sprite.x, p.sprite.y);
+      p.destroyNow();
+    }
+    for (const p of this.props) if (isDroppedTool(p.def.key) && p.isGone) this.droppedTools.forget(p.id);
   }
 
   /** Onda da rodada (WAVE-02): tuning escalado pela rodada (DIF-04) e graça ao nascer (WAVE-09). */
   private spawnFromCommand(point: number, round: number): void {
     const at = this.level.enemies[point];
     const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
-    const tuning = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
+    const scaled = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
+    // ARM-01..03: sorteado depois da escala da rodada (armFor multiplica o dano já escalado).
+    const armedRoll = this.loot.rollArmed(round);
+    const tuning = armedRoll ? armFor(armedRoll.tool, scaled, ARMED) : scaled;
     const enemy = new Enemy(
       this,
       spawnAt,
@@ -269,7 +425,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       },
       // A garra que acerta o player também é um golpe que conecta.
       (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength),
-      (dead, x, y) => this.onEnemyDied(dead.id, x, y),
+      // Drop do inimigo comum (design.md): sai daqui, não do onEnemyDied (que o chefe também chama).
+      (dead, x, y) => {
+        this.onEnemyDied(dead.id, x, y);
+        this.applyDrop(this.loot.enemyDrop(this.run.round, dead.weapon !== null), x, y);
+        if (dead.weapon) this.dropTool(dead.weapon, dead.weaponRare, x, y);
+      },
+      armedRoll,
     );
     this.enemies.push(enemy);
     this.debugEvents.push(`spawnFx:${enemy.id}`);
@@ -317,6 +479,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    */
   private onBossDefeated(dead: Boss, x: number, y: number): void {
     this.onEnemyDied(dead.id, x, y);
+    this.applyDrop(this.loot.bossDrop(this.run.round), x, y);
     this.player.heal(Math.round(BOSS.healFraction * this.player.maxHp));
     this.hitstop.trigger(BOSS_DEFEAT_HITSTOP_MS);
     this.freeze();
@@ -354,7 +517,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   debugSnapshot(): GameSnapshot {
     return {
-      player: { x: this.player.sprite.x, y: this.player.sprite.y, hp: this.player.hp, dead: this.player.dead },
+      player: {
+        x: this.player.sprite.x,
+        y: this.player.sprite.y,
+        hp: this.player.hp,
+        dead: this.player.dead,
+        facing: this.player.facing,
+        flash: this.player.activeFlash,
+      },
       enemies: this.enemies.map((e) => ({
         id: e.id,
         x: e.x,
@@ -365,6 +535,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         damage: e.damage,
         patrolSpeed: e.patrolSpeed,
         chaseSpeed: e.chaseSpeed,
+        weapon: e.weapon,
+        weaponVisible: e.weaponVisible,
       })),
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),
@@ -396,6 +568,19 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       hud: this.hud.debugState(),
       hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
+      wallet: { fragments: this.wallet.fragments },
+      pickups: this.pickups.debug(),
+      floatTexts: this.floatTexts.debug(),
+      worldProps: this.props.map((p) => ({
+        id: p.id,
+        key: p.def.key,
+        state: p.machine.state,
+        x: p.sprite.x,
+        y: p.sprite.y,
+        durabilityLeft: p.def.durability - p.machine.impacts,
+        rare: p.rare,
+        vx: p.vx,
+      })),
     };
   }
 

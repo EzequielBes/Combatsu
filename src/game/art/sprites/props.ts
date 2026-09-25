@@ -64,7 +64,7 @@ export interface Shard {
  * Recorta o sprite numa grade de quadrados `size x size` texels. Quadrados vazios ficam de fora e os da borda são
  * completados com '.', para todos terem o mesmo tamanho (uma folha só).
  */
-function cutShards(grid: Grid, size: number): Shard[] {
+export function cutShards(grid: Grid, size: number): Shard[] {
   const shards: Shard[] = [];
   const width = grid[0].length;
   for (let y = 0; y < grid.length; y += size) {

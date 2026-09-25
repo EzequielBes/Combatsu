@@ -2,11 +2,14 @@ import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { EnemyState } from '../core/enemyBrain';
+import type { ToolKey } from '../core/loot';
+import type { PropState } from '../core/props';
 import type { RunState } from '../core/run';
 
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
-  player: { x: number; y: number; hp: number; dead: boolean };
+  /** `facing` e `flash` (cor do flash em andamento, HEAL-10) servem ao smoke da economia. */
+  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null };
   enemies: {
     id: number;
     x: number;
@@ -18,6 +21,10 @@ export interface GameSnapshot {
     /** Velocidades da IA em uso, já escaladas pela rodada (DIF-04/06). */
     patrolSpeed: number;
     chaseSpeed: number;
+    /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
+    weapon: ToolKey | null;
+    /** Sprite da ferramenta visível (ARM-10); `null` sem arma. */
+    weaponVisible: boolean | null;
   }[];
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
@@ -69,9 +76,21 @@ export interface GameSnapshot {
     bannerPos: { x: number; y: number };
     bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
     bossBarIgnoredByMain: boolean;
+    /** Texto do contador de fragmentos (ECO-16). */
+    fragments: string;
+    /** Objeto na mão (ITEM-01..03), `null` de mãos vazias. */
+    heldItem: { name: string; pips: number; maxPips: number } | null;
   };
   /** Estado do hitstop (BWIN-02). */
   hitstop: { frozen: boolean; remainingMs: number };
+  /** Carteira de fragmentos da run (ECO-19). */
+  wallet: { fragments: number };
+  /** Um item por pickup vivo (fragmento ou gota de cura), lido do objeto vivo (ECO-19). */
+  pickups: { id: number; kind: 'fragment' | 'heal'; value: number; x: number; y: number; ageMs: number; magnet: boolean }[];
+  /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
+  floatTexts: { text: string; color: string; x: number; y: number }[];
+  /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
+  worldProps: { id: number; key: string; state: PropState; x: number; y: number; durabilityLeft: number; rare: boolean; vx: number }[];
 }
 
 export interface DebugProbe {
