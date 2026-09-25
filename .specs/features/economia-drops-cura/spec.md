@@ -288,11 +288,11 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ECO-18 | P1: Fragmentos | Specify | Pending |
 | ECO-11 | P1: Fragmentos | Specify | Pending |
 | ECO-25 | P1: Fragmentos | Specify | Pending |
-| ECO-12 | P1: Fragmentos | Specify | Pending |
-| ECO-13 | P1: Fragmentos | Specify | Pending |
-| ECO-26 | P1: Fragmentos | Specify | Pending |
-| ECO-20 | P1: Fragmentos | Specify | Pending |
-| ECO-14 | P1: Fragmentos | Specify | Pending |
+| ECO-12 | P1: Fragmentos | Specify | Implementing |
+| ECO-13 | P1: Fragmentos | Specify | Implementing |
+| ECO-26 | P1: Fragmentos | Specify | Implementing |
+| ECO-20 | P1: Fragmentos | Specify | Implementing |
+| ECO-14 | P1: Fragmentos | Specify | Implementing |
 | ECO-27 | P1: Fragmentos | Specify | Pending |
 | ECO-15 | P1: Fragmentos | Specify | Pending |
 | ECO-28 | P1: Fragmentos | Specify | Pending |
