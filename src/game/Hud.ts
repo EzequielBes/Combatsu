@@ -61,6 +61,9 @@ export class Hud {
   private readonly fragmentIcon: Phaser.GameObjects.Image;
   private readonly fragmentText: Phaser.GameObjects.Text;
   private lastFragments = 0;
+  /** Objeto na mão (ITEM-01..03), abaixo do contador de fragmentos. */
+  private readonly heldItemText: Phaser.GameObjects.Text;
+  private heldItemState: { name: string; pips: number; maxPips: number } | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -117,14 +120,28 @@ export class Hud {
     const fragY = MARGIN + 20;
     this.fragmentIcon = scene.add.image(MARGIN, fragY, TEX.fragmentIcon, 'icon').setOrigin(0, 0);
     this.fragmentText = scene.add.text(MARGIN + 16, fragY - 2, '0', TEXT_STYLE);
+    // Item na mão (ITEM-01..03), logo abaixo do contador de fragmentos; escondido de mãos vazias.
+    this.heldItemText = scene.add.text(MARGIN, fragY + 16, '', TEXT_STYLE).setVisible(false);
 
     const runObjs = [this.roundText, this.remainingText, this.bannerText, this.centerText];
     const bossBarObjs = [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName];
-    const fragmentObjs = [this.fragmentIcon, this.fragmentText];
+    const fragmentObjs = [this.fragmentIcon, this.fragmentText, this.heldItemText];
     for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]) {
       obj.setScrollFactor(0).setDepth(100);
     }
     layer.add([label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]);
+  }
+
+  /** Nome e pips do objeto na mão (ITEM-01/02), `null` esconde a linha (ITEM-03). */
+  setHeldItem(item: { name: string; pips: number; maxPips: number } | null): void {
+    this.heldItemState = item;
+    if (!item) {
+      this.heldItemText.setVisible(false);
+      return;
+    }
+    const filled = '#'.repeat(Math.max(0, item.pips));
+    const empty = '-'.repeat(Math.max(0, item.maxPips - item.pips));
+    this.heldItemText.setText(`${item.name} ${filled}${empty}`).setVisible(true);
   }
 
   /** Atualiza o contador (ECO-16): pulsa de 1,3 para 1 em 150 ms quando o valor muda. */
@@ -223,6 +240,7 @@ export class Hud {
     bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
     bossBarIgnoredByMain: boolean;
     fragments: string;
+    heldItem: { name: string; pips: number; maxPips: number } | null;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -232,6 +250,7 @@ export class Hud {
       banner: this.bannerText.visible ? this.bannerText.text : null,
       center: this.centerLines,
       fragments: this.fragmentText.text,
+      heldItem: this.heldItemState,
       // Centro visual do texto (RHUD-02): com origem não centralizada, o ponto de âncora (x/y) não discriminaria
       // uma faixa que cresce só para um lado.
       bannerPos: (() => {

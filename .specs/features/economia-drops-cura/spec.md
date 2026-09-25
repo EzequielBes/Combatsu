@@ -343,8 +343,8 @@ floatTexts: { text: string; color: string; x: number; y: number }[];
 | ARM-16 | P1: Usar a ferramenta | Specify | Implementing |
 | ARM-19 | P1: Usar a ferramenta | Specify | Implementing |
 | ITEM-01 | P2: Item na mão no HUD | Specify | Implementing |
-| ITEM-02 | P2: Item na mão no HUD | Specify | Pending |
-| ITEM-03 | P2: Item na mão no HUD | Specify | Pending |
+| ITEM-02 | P2: Item na mão no HUD | Specify | Implementing |
+| ITEM-03 | P2: Item na mão no HUD | Specify | Implementing |
 | RAR-01 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-02 | P3: Ferramentas raras | Specify | Implementing |
 | RAR-06 | P3: Ferramentas raras | Specify | Implementing |

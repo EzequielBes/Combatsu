@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { armFor, rareDef } from '../core/armed';
+import { armFor, propName, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
@@ -224,6 +224,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
     this.hud.setRun(this.run.round > 0 ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
+    this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
   }
 
@@ -354,6 +355,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.debugEvents.push(`collect:heal:${restored}`);
     this.floatTexts.spawn(`+${restored}`, 'G', p.x, p.y);
     this.player.flash('G', 80);
+  }
+
+  /** Nome e pips do objeto na mão (ITEM-01/02), `null` de mãos vazias (ITEM-03). */
+  private heldItemInfo(): { name: string; pips: number; maxPips: number } | null {
+    const prop = this.player.heldProp;
+    if (!prop) return null;
+    return { name: propName(prop.def), pips: prop.def.durability - prop.machine.impacts, maxPips: prop.def.durability };
   }
 
   /** Sorteia e materializa o drop de um abate (ECO-01/05, ECO-15/28, HEAL-01/02) no ponto da morte. */
