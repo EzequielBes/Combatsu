@@ -198,10 +198,10 @@ T13
 
 **Done when**:
 
-- [ ] 19999 ms em `rest` fica, 20000 sai; sair de `rest` e voltar zera a contagem
-- [ ] Com 6 registradas e uma nova: devolve a mais antiga em `rest`; com 6 e nenhuma em `rest`, devolve null; com 5, null
-- [ ] `clear` esvazia tudo; `forget` tira uma (ex.: quebrou)
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] 19999 ms em `rest` fica, 20000 sai; sair de `rest` e voltar zera a contagem
+- [x] Com 6 registradas e uma nova: devolve a mais antiga em `rest`; com 6 e nenhuma em `rest`, devolve null; com 5, null
+- [x] `clear` esvazia tudo; `forget` tira uma (ex.: quebrou)
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
