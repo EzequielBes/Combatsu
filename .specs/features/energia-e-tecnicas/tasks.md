@@ -290,13 +290,13 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] 2º impacto aos 199 ms não, aos 200 ms sim
-- [ ] DIV-03 conferido: WHEN the punch hitbox touches a target THEN that target SHALL take a first impact of 12 light damage.
-- [ ] DIV-04 conferido: WHEN 200 ms of game time have passed since the first impact THEN the first-impact target SHALL take 18 heavy damage.
-- [ ] DIV-05 conferido: IF the punch hitbox touches no target during `release` THEN no second impact SHALL happen.
-- [ ] DIV-06 conferido: IF the target died from the first impact THEN no second impact SHALL happen.
-- [ ] DIV-08 conferido: WHILE the approach ring is visible, its radius SHALL be `32 × (1 − t / 200)` px (±2 px), where `t` is the ms since the first impact.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] 2º impacto aos 199 ms não, aos 200 ms sim
+- [x] DIV-03 conferido: WHEN the punch hitbox touches a target THEN that target SHALL take a first impact of 12 light damage.
+- [x] DIV-04 conferido: WHEN 200 ms of game time have passed since the first impact THEN the first-impact target SHALL take 18 heavy damage.
+- [x] DIV-05 conferido: IF the punch hitbox touches no target during `release` THEN no second impact SHALL happen.
+- [x] DIV-06 conferido: IF the target died from the first impact THEN no second impact SHALL happen.
+- [x] DIV-08 conferido: WHILE the approach ring is visible, its radius SHALL be `32 × (1 − t / 200)` px (±2 px), where `t` is the ms since the first impact.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
