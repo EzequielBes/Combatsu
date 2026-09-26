@@ -93,13 +93,13 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] `tests/data/techniques.test.ts` confere cada número contra os ACs
-- [ ] DIV-01 conferido: The Punho Divergente SHALL have cost 20, cooldown 1200 ms, sign 60 ms, charge 60 ms, release 80 ms and recover 200 ms at level 1.
-- [ ] RED-01 conferido: The Vermelho SHALL have cost 45, cooldown 3000 ms, sign 250 ms, charge 350 ms, release 100 ms and recover 250 ms at level 1.
-- [ ] BLU-01 conferido: The Azul SHALL have cost 35, cooldown 4000 ms, sign 200 ms, charge 250 ms, release 100 ms and recover 200 ms at level 1.
-- [ ] CUT-01 conferido: The Desmantelar SHALL have cost 30, cooldown 2500 ms, sign 150 ms, charge 0 ms, release 150 ms and recover 200 ms at level 1.
-- [ ] TEC-14 conferido: For a technique at level `n` ∈ {1, 2, 3}, its cost SHALL be `baseCost − 5 × (n − 1)`, where `baseCost` is its level-1 cost (Vermelho: 45, 40, 35).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] `tests/data/techniques.test.ts` confere cada número contra os ACs
+- [x] DIV-01 conferido: The Punho Divergente SHALL have cost 20, cooldown 1200 ms, sign 60 ms, charge 60 ms, release 80 ms and recover 200 ms at level 1.
+- [x] RED-01 conferido: The Vermelho SHALL have cost 45, cooldown 3000 ms, sign 250 ms, charge 350 ms, release 100 ms and recover 250 ms at level 1.
+- [x] BLU-01 conferido: The Azul SHALL have cost 35, cooldown 4000 ms, sign 200 ms, charge 250 ms, release 100 ms and recover 200 ms at level 1.
+- [x] CUT-01 conferido: The Desmantelar SHALL have cost 30, cooldown 2500 ms, sign 150 ms, charge 0 ms, release 150 ms and recover 200 ms at level 1.
+- [x] TEC-14 conferido: For a technique at level `n` ∈ {1, 2, 3}, its cost SHALL be `baseCost − 5 × (n − 1)`, where `baseCost` is its level-1 cost (Vermelho: 45, 40, 35).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

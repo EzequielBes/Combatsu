@@ -469,7 +469,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TEC-13 | P1: Energia e slots | Specify | Pending |
 | TEC-05 | P1: Energia e slots | Specify | Pending |
 | TEC-06 | P1: Energia e slots | Specify | Pending |
-| TEC-14 | P1: Energia e slots | Specify | Pending |
+| TEC-14 | P1: Energia e slots | Specify | Implemented |
 | TEC-07 | P1: Energia e slots | Specify | Pending |
 | TEC-12 | P1: Energia e slots | Specify | Pending |
 | TEC-09 | P1: Energia e slots | Specify | Pending |
@@ -516,7 +516,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CAST-17 | P1: Conjuração | Specify | Pending |
 | CAST-18 | P1: Conjuração | Specify | Pending |
 | CAST-22 | P1: Conjuração | Specify | Pending |
-| DIV-01 | P1: Punho Divergente | Specify | Pending |
+| DIV-01 | P1: Punho Divergente | Specify | Implemented |
 | DIV-02 | P1: Punho Divergente | Specify | Pending |
 | DIV-11 | P1: Punho Divergente | Specify | Pending |
 | DIV-03 | P1: Punho Divergente | Specify | Pending |
@@ -562,7 +562,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | KOK-28 | P1: Kokusen | Specify | Pending |
 | KOK-29 | P1: Kokusen | Specify | Pending |
 | KOK-34 | P1: Kokusen | Specify | Pending |
-| RED-01 | P1: Vermelho | Specify | Pending |
+| RED-01 | P1: Vermelho | Specify | Implemented |
 | RED-02 | P1: Vermelho | Specify | Pending |
 | RED-03 | P1: Vermelho | Specify | Pending |
 | RED-04 | P1: Vermelho | Specify | Pending |
@@ -579,7 +579,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | RED-17 | P1: Vermelho | Specify | Pending |
 | RED-13 | P1: Vermelho | Specify | Pending |
 | RED-14 | P1: Vermelho | Specify | Pending |
-| BLU-01 | P2: Azul | Specify | Pending |
+| BLU-01 | P2: Azul | Specify | Implemented |
 | BLU-02 | P2: Azul | Specify | Pending |
 | BLU-03 | P2: Azul | Specify | Pending |
 | BLU-12 | P2: Azul | Specify | Pending |
@@ -591,7 +591,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | BLU-08 | P2: Azul | Specify | Pending |
 | BLU-09 | P2: Azul | Specify | Pending |
 | BLU-10 | P2: Azul | Specify | Pending |
-| CUT-01 | P2: Desmantelar | Specify | Pending |
+| CUT-01 | P2: Desmantelar | Specify | Implemented |
 | CUT-02 | P2: Desmantelar | Specify | Pending |
 | CUT-03 | P2: Desmantelar | Specify | Pending |
 | CUT-04 | P2: Desmantelar | Specify | Pending |
