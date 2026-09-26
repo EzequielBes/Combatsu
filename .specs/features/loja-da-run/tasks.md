@@ -355,16 +355,16 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Build passa; `npm run smoke` continua verde com o helper de T13 ainda não criado (cenários que passam da rodada 1 podem ficar para T13)
-- [ ] SHOP-32 conferido: WHEN the run state becomes `shop` THEN `events` SHALL get exactly one `shopOpen:<r>`, where `r` is the round just cleared.
-- [ ] SHOP-33 conferido: WHILE the run state is `shop`, the scene SHALL skip the gameplay update, so the player, enemy and pickup positions and the pickup ages SHALL stay the same between frames.
-- [ ] SHOP-35 conferido: WHEN the shop closes THEN `events` SHALL get exactly one `shopClose`.
-- [ ] SHOP-05 conferido: WHEN the shop opens THEN the wallet count SHALL increase by exactly the sum of the values of the fragment pickups alive in the frame before it opened.
-- [ ] SHOP-36 conferido: WHEN the shop opens THEN no fragment pickup SHALL remain in the scene.
-- [ ] SHOP-37 conferido: WHEN the shop opens THEN every heal pickup SHALL remain in the scene at the same position.
-- [ ] SHOP-20 conferido: WHILE the run state is not `shop`, the keys `1`, `2`, `3` and `Enter` SHALL not attempt any purchase.
-- [ ] SHOP-45 conferido: WHEN key `k` (1, 2 or 3) is pressed while the run state is `shop` and slot `k − 1` holds an unsold offer whose cost ≤ the wallet count, and that offer is not `cura` with the player HP equal to max HP, THEN that offer SHALL be bought.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Build passa; `npm run smoke` continua verde com o helper de T13 ainda não criado (cenários que passam da rodada 1 podem ficar para T13)
+- [x] SHOP-32 conferido: WHEN the run state becomes `shop` THEN `events` SHALL get exactly one `shopOpen:<r>`, where `r` is the round just cleared.
+- [x] SHOP-33 conferido: WHILE the run state is `shop`, the scene SHALL skip the gameplay update, so the player, enemy and pickup positions and the pickup ages SHALL stay the same between frames.
+- [x] SHOP-35 conferido: WHEN the shop closes THEN `events` SHALL get exactly one `shopClose`.
+- [x] SHOP-05 conferido: WHEN the shop opens THEN the wallet count SHALL increase by exactly the sum of the values of the fragment pickups alive in the frame before it opened.
+- [x] SHOP-36 conferido: WHEN the shop opens THEN no fragment pickup SHALL remain in the scene.
+- [x] SHOP-37 conferido: WHEN the shop opens THEN every heal pickup SHALL remain in the scene at the same position.
+- [x] SHOP-20 conferido: WHILE the run state is not `shop`, the keys `1`, `2`, `3` and `Enter` SHALL not attempt any purchase.
+- [x] SHOP-45 conferido: WHEN key `k` (1, 2 or 3) is pressed while the run state is `shop` and slot `k − 1` holds an unsold offer whose cost ≤ the wallet count, and that offer is not `cura` with the player HP equal to max HP, THEN that offer SHALL be bought.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (smoke em T14)
 **Gate**: build

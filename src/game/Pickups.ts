@@ -40,6 +40,25 @@ export class Pickups {
   }
 
   /**
+   * Varre todo fragmento vivo para a carteira (SHOP-05, SHOP-36): remove cada um da cena e devolve a soma dos
+   * valores. Gotas de cura não são tocadas (SHOP-37).
+   */
+  collectFragments(): number {
+    let total = 0;
+    const remaining: PickupEntry[] = [];
+    for (const e of this.entries) {
+      if (e.state.kind === 'fragment') {
+        total += e.state.value;
+        e.sprite.destroy();
+      } else {
+        remaining.push(e);
+      }
+    }
+    this.entries = remaining;
+    return total;
+  }
+
+  /**
    * Cria `count` pickups no ponto do drop, com a velocidade do estouro sorteada no `rng` da run (ECO-06). O
    * último pickup carrega `value + extraValue` (ECO-28); os demais carregam `value`.
    */
