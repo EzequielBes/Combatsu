@@ -167,6 +167,18 @@ export class ShopPanel {
     this.hint.setText(`1-3 comprar · R rerolar (${view.rerollCost}) · Enter continuar`);
   }
 
+  /** Textos e realce visíveis de cada carta e a dica, lidos dos objetos vivos (SHOP-22 estendido para o painel). */
+  debug(): { cards: { lines: string[]; highlighted: boolean }[]; hint: string } {
+    const visible = (t: Phaser.GameObjects.Text): string[] => (t.visible && t.text !== '' ? [t.text] : []);
+    return {
+      cards: this.cards.map((c) => ({
+        lines: [c.status, c.name, c.level, c.preview, c.cost].flatMap(visible),
+        highlighted: c.border.strokeColor === PALETTE[SHOP_PANEL_COLORS.borderSelected],
+      })),
+      hint: this.hint.text,
+    };
+  }
+
   private updateCard(c: CardObjs, offer: OfferView, selected: boolean): void {
     const empty = offer.id === null;
     // SHOP-38: slot vazio mostra só "Esgotado"; SHOP-42: carta vendida mostra só "Comprado".

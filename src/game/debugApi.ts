@@ -93,6 +93,8 @@ export interface GameSnapshot {
     offers: { id: string; level: number; maxLevel: number; cost: number; sold: boolean; affordable: boolean }[];
     rerollCost: number;
     selected: number;
+    /** Painel visível: linhas de texto de cada carta (status, nome, nível, prévia, custo), realce e dica. */
+    panel: { cards: { lines: string[]; highlighted: boolean }[]; hint: string } | null;
   };
   /** Nível atual de cada modificador da run (SHOP-22). */
   modifiers: Record<string, number>;

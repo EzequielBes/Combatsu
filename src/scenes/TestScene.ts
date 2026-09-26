@@ -32,6 +32,7 @@ import {
   PICKUP,
   PLAYER_COMBO,
   RUN,
+  SHOP,
   WAVE,
 } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
@@ -199,11 +200,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
     // Ferramentas de ajuste (golpes de teste e debug do Matter): só valem no modo debug.
     bindDebugToggle(this);
-    this.onKey('ONE', () => isDebug() && this.debugHit('light'));
-    this.onKey('TWO', () => isDebug() && this.debugHit('heavy'));
-    this.onKey('THREE', () => isDebug() && this.player.debugKill());
+    // Na loja, 1/2/3 compram (SHOP-45) e nunca disparam as teclas de debug.
+    const debugKeys = (): boolean => isDebug() && this.run.state !== 'shop';
+    this.onKey('ONE', () => debugKeys() && this.debugHit('light'));
+    this.onKey('TWO', () => debugKeys() && this.debugHit('heavy'));
+    this.onKey('THREE', () => debugKeys() && this.player.debugKill());
     // Tecla 4 (só debug): 50 de dano no player, para o smoke medir a cura da vitória abaixo do teto (BWIN-01).
-    this.onKey('FOUR', () => isDebug() && this.player.debugHurt(50));
+    this.onKey('FOUR', () => debugKeys() && this.player.debugHurt(50));
     this.onKey('H', () => isDebug() && this.toggleDebugDraw());
     // Fora da loja, R reinicia a cena; dentro dela é reroll (SHOP-16), lido por `ShopInput` no `update`.
     this.onKey('R', () => {
@@ -270,7 +273,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       wallet: this.wallet,
       hp: this.player.hp,
       maxHp: this.player.maxHp,
-      applyModifier: (id) => this.modifiers.apply(id),
+      applyModifier: (id) => {
+        const applied = this.modifiers.apply(id);
+        // MOD-04/MOD-11: `vida` sobe o teto real do player e cura os mesmos 15.
+        if (applied && id === 'vida') {
+          this.player.setMaxHp(this.modifiers.maxHp);
+          this.player.heal(SHOP.vidaPerLevel);
+        }
+        return applied;
+      },
       // SHOP-12/MOD-11: cura (consumível) e o +15 de HP da compra de `vida` passam pelo mesmo `heal` com teto.
       healPlayer: (amount) => this.player.heal(amount),
     };
@@ -337,6 +348,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         }),
       rerollCost: view?.rerollCost ?? 0,
       selected: view?.selected ?? 0,
+      panel: this.shop ? this.shopPanel.debug() : null,
     };
   }
 
