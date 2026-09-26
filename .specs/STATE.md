@@ -84,24 +84,21 @@
 
 ## Handoff
 
-- **Feature**: F4 `.specs/features/loja-da-run` em Execute, branch `feat/loja-da-run` (publicada no `origin`; ainda NÃO mergeada em `dev`)
-- **Phase / Task**: fases 1 (T1–T7, núcleo puro) e T8–T9 da fase 2 feitas. **Próximo: T10** (painel da loja), depois T11 (polimento), T12 (debug `?fragments=N` + snapshot), T13 (ajustar smokes), T14 (smoke da loja), Verifier Sonnet e merge `--no-ff` em `dev`
-- **Estado do jogo nesta branch**: a loja abre entre rodadas e segura a rodada até `Enter`, mas **ainda não tem painel** (T10). Jogando, depois de limpar uma rodada é preciso apertar `Enter` para seguir; `1/2/3`, `J`, setas e `R` já compram, navegam e rerolam às cegas
-- **Smoke**: 4 cenários quebrados de propósito desde T9 (`run-loop`, `hud`, `drops`, `heal`: esperam a rodada 2 sem passar pela loja); T13 corrige com um helper `continueShop` em `scripts/smoke/lib.ts`
-- **Jev nesta feature**: spec com 3 rodadas de `jev-refine` (`refinement.md`) e a nova ferramenta `node tools/jev-align.mjs <pasta-da-feature>` (tasks × ACs e stories × diversão, `alignment.md`); usar as duas no Specify/Tasks das próximas features
+- **Feature**: F4 `.specs/features/loja-da-run` concluída e mergeada em `dev` → próxima: **F5 `energia-e-tecnicas`** (Specify já feito: `.specs/features/energia-e-tecnicas/spec.md`, 148 ACs; falta Design → Tasks → Execute → Verifier). A F5 vende técnicas pela loja da F4: acrescentar `kind: 'technique'` e os upgrades de energia (CE-07, CE-09) ao `SHOP_CATALOG`
+- **Phase / Task**: F5 Design (rodar `node tools/jev-align.mjs .specs/features/energia-e-tecnicas` depois do tasks.md)
 - **Completed**:
-  - F0–F3 mergeadas em `dev`; F4 T1–T9 (652 testes)
+  - F0–F4 mergeadas em `dev` (F4: loja entre rodadas, 5 modificadores com teto, cura, reroll, navegação, painel com animações)
+  - 654 testes, 12 cenários de smoke
 - **Como trabalhar** (memória do usuário):
-  - Opus planeja; workers Sonnet, um por lote de fase (não um por task); workers de integração/smoke com no máximo ~3 tasks
-  - Próximos lotes: W2b = T10–T11 (com `phaser-gamedev`); W3 = T12–T14; depois o Verifier
-  - Correções pequenas do Verifier: inline
-  - Merge em `dev` com `--no-ff` e mensagem `chore(dev): merge feat/<nome>`; `main` só com validação do usuário
+  - Opus planeja; workers Sonnet, um por lote de fase; integração/smoke com no máximo ~3 tasks; fixes pequenos e smokes direto pelo orquestrador para ganhar tempo
+  - Jev: `jev-refine` no Specify e `jev-align` nas tasks (tasks × ACs e stories × diversão)
+  - Context7 liberado: `/phaserjs/phaser/v3_90_0` para a API do Phaser (postFX, câmera, partículas na F5)
+  - Verifier em Sonnet com sensor leve; merge em `dev` com `--no-ff`; `main` só com validação do usuário; push só da branch da feature (a `dev` sobe quando o usuário pedir)
 - **Dicas técnicas**:
-  - `npm run smoke -- <trecho>` roda só alguns cenários
-  - `?debug&seed=N&round=N` começa na rodada N
-  - Teclas de debug: 2 = golpe forte em todos, 3 = mata o player, 4 = 50 de dano no player; `R` reinicia a cena só fora da loja
-  - O gate Quick deve incluir `npm run typecheck`
+  - `npm run smoke -- <trecho>` roda um cenário; `?debug&seed=N&round=N&fragments=N`; `?debug&noshop=1` pula a loja
+  - Teclas de debug 1–4 (golpe leve/forte em todos, mata o player, 50 de dano) não valem dentro da loja; `R` reinicia a cena só fora da loja
+  - Smoke: tecla que o jogo lê com `JustDown` precisa ficar segurada durante um `step` (ver `tap` em `shop.smoke.mjs`)
 - **In-progress** (file:line): none
-- **Blockers**: UAT do usuário (visual, F0–F3) antes de `dev` ir para `main`
+- **Blockers**: UAT do usuário (visual, F0–F4) antes de `dev` ir para `main`
 - **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas, que são do usuário)
-- **Branch**: `feat/loja-da-run`
+- **Branch**: `dev`
