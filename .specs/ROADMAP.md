@@ -79,4 +79,4 @@ Parte B — Corpo a corpo estilo jogo de luta
 ## Backlog técnico
 
 - `tests/core/enemyAI.test.ts` só usa o tuning 35/70: um mutante que fixa 70 na perseguição (`src/core/enemyAI.ts:120`) sobrevive. Adicionar um caso com tuning diferente (achado fora de escopo pelo Verifier da F1, rodada 3).
-- `armed.smoke.mjs` e `held-item.smoke.mjs` falham de vez em quando no suite completo e passam isolados (visto na F4, 26/09: "esperava game over" e "pips de 4 para 2: 1"). Provável dependência de tempo real entre `keyboard.press` e `step`; trocar por tecla segurada durante um passo, como em `shop.smoke.mjs`.
+- `held-item.smoke.mjs` falha de vez em quando no suite completo e passa isolado (F4, 26/09: "pips de 4 para 2: 1"). Provável dependência de tempo real entre `keyboard.press` e `step`; trocar por tecla segurada durante um passo, como em `shop.smoke.mjs`. (`armed` corrigido na F4: a tecla 3 caía na invulnerabilidade.)

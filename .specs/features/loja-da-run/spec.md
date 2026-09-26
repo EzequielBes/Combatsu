@@ -165,7 +165,7 @@ maxHp: number;
 32. SHOP-21: Each unsold card SHALL show, top to bottom, the name, the level text `Nv <n+1>/<max>` (blank for `cura`), the preview text defined in Assumptions and the cost.
 33. SHOP-22: WHERE the debug mode is on, the snapshot SHALL include the `shop`, `modifiers` and `player.maxHp` fields of the contract above, with `shop.open` true if and only if the run state is `shop`.
 34. SHOP-23: WHERE the debug mode is on and the URL has `fragments=N` with integer N ≥ 0 THEN the wallet SHALL be N when the run starts.
-36. SHOP-47: WHERE the debug mode is on and the URL has `noshop=1` THEN the shop SHALL close in the same update it opens, without crediting or removing any pickup.
+36. SHOP-47: WHERE the debug mode is on and the URL has `noshop=1` THEN the next round SHALL start on the update after the shop opens, without crediting or removing any pickup.
 35. SHOP-24: Every color key used by the shop panel (background, card borders and texts) SHALL be a key of `PALETTE`.
 
 **Independent Test**: `shop.test.ts` em Node (elegibilidade nos limites de nível e rodada 5/6 e 3/4, pesos, sem repetição, menos de 3 elegíveis, determinismo por seed, compra com saldo exato e saldo − 1, carta vendida, cura com vida cheia e vida cheia − 1, recálculo após compra); `run.test.ts` (intermissão 2499/2500 ms → `shop`, nada avança em `shop`, `Enter` → `roundActive` com rodada + 1, streams independentes); smoke `shop.smoke.mjs` com `?debug&seed=1&fragments=200` limpa a rodada 1, compra, confere carteira, nível, `player.maxHp` e continua.

@@ -69,6 +69,17 @@ export default async function ({ page, baseUrl, assert }) {
   assert(new Set(snap.shop.offers.map((o) => o.id)).size === 3, `ofertas repetidas: ${JSON.stringify(snap.shop.offers)}`);
   assert(snap.shop.selected === 0 && snap.shop.rerollCost === 5, `seleção/reroll iniciais errados: ${JSON.stringify(snap.shop)}`);
 
+  // SHOP-21/31: cada carta mostra nome, `Nv`, prévia e custo; só a selecionada tem realce.
+  const cards = snap.shop.panel.cards;
+  snap.shop.offers.forEach((o, i) => {
+    assert(cards[i].lines.includes(String(o.cost)), `SHOP-21: carta ${i} sem o custo ${o.cost}: ${JSON.stringify(cards[i])}`);
+    if (o.id !== 'cura') {
+      assert(cards[i].lines.includes(`Nv ${o.level + 1}/${o.maxLevel}`), `SHOP-21: carta ${i} sem o nível: ${JSON.stringify(cards[i])}`);
+    }
+  });
+  assert(cards.map((c) => c.highlighted).join() === 'true,false,false', `SHOP-31: realce errado: ${JSON.stringify(cards)}`);
+  assert(snap.shop.panel.hint === '1-3 comprar · R rerolar (5) · Enter continuar', `dica errada: ${snap.shop.panel.hint}`);
+
   // SHOP-02/33: 1 s de loja não move nada nem faz nascer inimigo.
   const frozen = await stepAndSnap(1000);
   assert(frozen.run.state === 'shop' && frozen.run.round === 1, `loja deveria segurar a rodada: ${JSON.stringify(frozen.run)}`);
@@ -108,6 +119,10 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.modifiers[offer.id] === levelBefore + 1, `SHOP-41: nível de ${offer.id} não subiu: ${JSON.stringify(snap.modifiers)}`);
   assert(snap.shop.offers[slot].sold === true, `SHOP-42: oferta não ficou vendida: ${JSON.stringify(snap.shop.offers)}`);
   assert(
+    JSON.stringify(snap.shop.panel.cards[slot].lines) === '["Comprado"]',
+    `SHOP-42: carta vendida deveria mostrar só "Comprado": ${JSON.stringify(snap.shop.panel.cards[slot])}`,
+  );
+  assert(
     snap.events.filter((e) => e === `buy:${offer.id}:${offer.cost}`).length === 1,
     `SHOP-43: esperava um buy:${offer.id}:${offer.cost}: ${JSON.stringify(snap.events)}`,
   );
@@ -125,14 +140,26 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.run.state === 'shop', `R não pode reiniciar a cena na loja: ${JSON.stringify(snap.run)}`);
   assert(snap.wallet.fragments === walletBeforeReroll - 5, `SHOP-16: reroll deveria custar 5: ${snap.wallet.fragments}`);
   assert(snap.shop.rerollCost === 10, `SHOP-25: reroll deveria ir para 10: ${snap.shop.rerollCost}`);
+  assert(snap.shop.panel.hint.includes('R rerolar (10)'), `SHOP-46: dica sem o novo custo: ${snap.shop.panel.hint}`);
   assert(snap.shop.offers.every((o) => !o.sold), `reroll deveria trazer 3 ofertas novas: ${JSON.stringify(snap.shop.offers)}`);
+
+  // MOD-04/MOD-11: rerola até `vida` aparecer e compra; o teto sobe 15 e a vida sobe 15 (com teto).
+  for (let i = 0; i < 6 && !snap.shop.offers.some((o) => o.id === 'vida' && !o.sold); i++) snap = await tap('KeyR');
+  const vidaSlot = snap.shop.offers.findIndex((o) => o.id === 'vida' && !o.sold);
+  assert(vidaSlot >= 0, `vida não apareceu em 6 rerolls: ${JSON.stringify(snap.shop.offers)}`);
+  const hpBefore = snap.player.hp;
+  const maxBefore = snap.player.maxHp;
+  snap = await tap(`Digit${vidaSlot + 1}`);
+  assert(snap.player.maxHp === maxBefore + 15, `MOD-04: maxHp ${maxBefore} -> ${snap.player.maxHp}`);
+  assert(snap.player.hp === Math.min(hpBefore + 15, snap.player.maxHp), `MOD-11: hp ${hpBefore} -> ${snap.player.hp}`);
+  assert(snap.player.maxHp === 100 + 15 * snap.modifiers.vida, `MOD-04: maxHp fora da fórmula: ${snap.player.maxHp}`);
 
   // SHOP-28/30: D, D leva a seleção ao slot 2 e J compra essa carta.
   snap = await tap('KeyD');
   snap = await tap('KeyD');
   assert(snap.shop.selected === 2, `SHOP-28: seleção deveria estar no slot 2: ${snap.shop.selected}`);
   const third = snap.shop.offers[2];
-  const canBuyThird = third.affordable && !(third.id === 'cura' && snap.player.hp === snap.player.maxHp);
+  const canBuyThird = !third.sold && third.affordable && !(third.id === 'cura' && snap.player.hp === snap.player.maxHp);
   const walletBeforeJ = snap.wallet.fragments;
   snap = await tap('KeyJ');
   if (canBuyThird) {
@@ -151,6 +178,15 @@ export default async function ({ page, baseUrl, assert }) {
   snap = await tap('Enter');
   assert(snap.events.filter((e) => e.startsWith('buy')).length === buys, `SHOP-20: comprou fora da loja: ${JSON.stringify(snap.events)}`);
 
+  // MOD-10: game over e run nova voltam a vida máxima para 100 e os níveis para 0 (a vida máxima estava em 115+).
+  assert(snap.player.maxHp > 100, `pré-condição do MOD-10: maxHp ${snap.player.maxHp}`);
+  await page.keyboard.press('Digit3', { delay: 50 });
+  snap = await stepAndSnap(1200);
+  await page.keyboard.press('KeyJ', { delay: 50 });
+  snap = await stepAndSnap(50);
+  assert(snap.run.state === 'roundActive' && snap.player.maxHp === 100, `MOD-10: run nova com maxHp ${snap.player.maxHp}`);
+  assert(Object.values(snap.modifiers).every((n) => n === 0), `MOD-01: níveis não zeraram: ${JSON.stringify(snap.modifiers)}`);
+
   // SHOP-10: sem fragmentos, qualquer compra é recusada por saldo e nada muda.
   ({ snap } = await openShop(0));
   const pricey = snap.shop.offers.findIndex((o) => o.cost > snap.wallet.fragments && o.id !== 'cura');
@@ -166,4 +202,30 @@ export default async function ({ page, baseUrl, assert }) {
     snap = await tap('KeyR');
     assert(snap.events.includes('rerollRefused'), `SHOP-26: esperava rerollRefused: ${JSON.stringify(snap.events)}`);
   }
+
+  // SHOP-47: com `noshop=1` a loja fecha no mesmo update, sem varrer: carteira e fragmentos do chão ficam iguais.
+  await page.goto(`${baseUrl}?debug&seed=1&noshop=1`, { waitUntil: 'load' });
+  await page.waitForFunction(() => typeof window.__game?.snapshot === 'function', { timeout: 15_000 });
+  await stepAndSnap(20);
+  await page.keyboard.press('KeyJ', { delay: 50 });
+  snap = await stepAndSnap(50);
+  for (let i = 0; i < 40 && snap.run.state === 'roundActive'; i++) {
+    await page.keyboard.press('Digit2', { delay: 50 });
+    snap = await stepAndSnap(300);
+  }
+  let prev = snap;
+  for (let i = 0; i < 200 && snap.run.state === 'intermission'; i++) {
+    prev = snap;
+    snap = await stepAndSnap(20);
+  }
+  // A `Run` resolve o `closeShop` no update seguinte: um passo depois já é a rodada 2.
+  if (snap.run.state === 'shop') snap = await stepAndSnap(20);
+  assert(snap.run.state === 'roundActive' && snap.run.round === 2, `SHOP-47: deveria ir direto à rodada 2: ${JSON.stringify(snap.run)}`);
+  assert(!snap.events.some((e) => e.startsWith('shopOpen')), `SHOP-47: loja abriu: ${JSON.stringify(snap.events)}`);
+  assert(snap.wallet.fragments === prev.wallet.fragments, `SHOP-47: carteira mudou: ${prev.wallet.fragments} -> ${snap.wallet.fragments}`);
+  const prevFrags = prev.pickups.filter((p) => p.kind === 'fragment').map((p) => p.id);
+  assert(
+    prevFrags.every((id) => snap.pickups.some((p) => p.id === id)),
+    `SHOP-47: fragmentos sumiram: ${JSON.stringify(prevFrags)} vs ${JSON.stringify(snap.pickups)}`,
+  );
 }
