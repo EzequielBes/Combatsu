@@ -155,15 +155,15 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Nível 0 e 4 recusados; arredondamento de meio para cima
-- [ ] TEC-01 conferido: WHEN a run starts without the `tech` debug parameter THEN both technique slots SHALL be empty (AD-005).
-- [ ] TEC-03 conferido: WHEN `equip(slot, id, level)` is called with a valid slot, a known id and a level in 1–3 THEN that slot SHALL hold that technique at that level.
-- [ ] TEC-04 conferido: IF `equip` is called with an id already in the other slot THEN both slots SHALL keep the technique and level they had before the call.
-- [ ] TEC-13 conferido: IF `equip` is called with an id already in the other slot THEN `equip` SHALL return `false`.
-- [ ] TEC-05 conferido: IF `equip` or `upgrade` would set a level outside 1–3 THEN the loadout SHALL stay unchanged and the call SHALL return `false`.
-- [ ] TEC-06 conferido: For a technique at level `n` ∈ {1, 2, 3}, each damage value SHALL be `round(base × k)`, with k = 1.0, 1.25 and 1.5 for n = 1, 2 and 3, where `base` is the level-1 value and `round` rounds halves up.
-- [ ] TEC-14 conferido: For a technique at level `n` ∈ {1, 2, 3}, its cost SHALL be `baseCost − 5 × (n − 1)`, where `baseCost` is its level-1 cost (Vermelho: 45, 40, 35).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Nível 0 e 4 recusados; arredondamento de meio para cima
+- [x] TEC-01 conferido: WHEN a run starts without the `tech` debug parameter THEN both technique slots SHALL be empty (AD-005).
+- [x] TEC-03 conferido: WHEN `equip(slot, id, level)` is called with a valid slot, a known id and a level in 1–3 THEN that slot SHALL hold that technique at that level.
+- [x] TEC-04 conferido: IF `equip` is called with an id already in the other slot THEN both slots SHALL keep the technique and level they had before the call.
+- [x] TEC-13 conferido: IF `equip` is called with an id already in the other slot THEN `equip` SHALL return `false`.
+- [x] TEC-05 conferido: IF `equip` or `upgrade` would set a level outside 1–3 THEN the loadout SHALL stay unchanged and the call SHALL return `false`.
+- [x] TEC-06 conferido: For a technique at level `n` ∈ {1, 2, 3}, each damage value SHALL be `round(base × k)`, with k = 1.0, 1.25 and 1.5 for n = 1, 2 and 3, where `base` is the level-1 value and `round` rounds halves up.
+- [x] TEC-14 conferido: For a technique at level `n` ∈ {1, 2, 3}, its cost SHALL be `baseCost − 5 × (n − 1)`, where `baseCost` is its level-1 cost (Vermelho: 45, 40, 35).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
