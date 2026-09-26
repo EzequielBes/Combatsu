@@ -355,13 +355,13 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] 1000 seeds: quantidade, comprimento e grade sempre dentro dos limites
-- [ ] KOK-18 conferido: For any seed, `lightningBolts(seed, origin, dir)` SHALL return at least 5 and at most 8 bolts.
-- [ ] KOK-33 conferido: For any seed, the sum of the segment lengths of each bolt returned by `lightningBolts` SHALL be at least 40 px and at most 110 px.
-- [ ] KOK-19 conferido: For any seed, every vertex returned by `lightningBolts` SHALL have integer coordinates that are multiples of 2 relative to the origin.
-- [ ] KOK-20 conferido: WHEN `lightningBolts` is called twice with the same seed, origin and direction THEN it SHALL return the same bolts.
-- [ ] TFX-02 conferido: For every procedural effect geometry (bolt, ring, cut line), the x and y offsets of every vertex from the effect origin SHALL be even integers (px).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] 1000 seeds: quantidade, comprimento e grade sempre dentro dos limites
+- [x] KOK-18 conferido: For any seed, `lightningBolts(seed, origin, dir)` SHALL return at least 5 and at most 8 bolts.
+- [x] KOK-33 conferido: For any seed, the sum of the segment lengths of each bolt returned by `lightningBolts` SHALL be at least 40 px and at most 110 px.
+- [x] KOK-19 conferido: For any seed, every vertex returned by `lightningBolts` SHALL have integer coordinates that are multiples of 2 relative to the origin.
+- [x] KOK-20 conferido: WHEN `lightningBolts` is called twice with the same seed, origin and direction THEN it SHALL return the same bolts.
+- [x] TFX-02 conferido: For every procedural effect geometry (bolt, ring, cut line), the x and y offsets of every vertex from the effect origin SHALL be even integers (px).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
