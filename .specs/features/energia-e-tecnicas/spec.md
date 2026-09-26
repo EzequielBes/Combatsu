@@ -458,12 +458,12 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CE-03 | P1: Energia e slots | Specify | Implemented |
 | CE-04 | P1: Energia e slots | Specify | Implemented |
 | CE-05 | P1: Energia e slots | Specify | Implemented |
-| CE-06 | P1: Energia e slots | Specify | Pending |
+| CE-06 | P1: Energia e slots | Specify | Implemented |
 | CE-07 | P1: Energia e slots | Specify | Implemented |
 | CE-09 | P1: Energia e slots | Specify | Implemented |
-| CE-08 | P1: Energia e slots | Specify | Pending |
+| CE-08 | P1: Energia e slots | Specify | Implemented |
 | TEC-01 | P1: Energia e slots | Specify | Implemented |
-| TEC-02 | P1: Energia e slots | Specify | Pending |
+| TEC-02 | P1: Energia e slots | Specify | Implemented |
 | TEC-03 | P1: Energia e slots | Specify | Implemented |
 | TEC-04 | P1: Energia e slots | Specify | Implemented |
 | TEC-13 | P1: Energia e slots | Specify | Implemented |
@@ -474,7 +474,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TEC-12 | P1: Energia e slots | Specify | Pending |
 | TEC-09 | P1: Energia e slots | Specify | Pending |
 | TEC-10 | P1: Energia e slots | Specify | Pending |
-| TEC-08 | P1: Energia e slots | Specify | Pending |
+| TEC-08 | P1: Energia e slots | Specify | Implemented |
 | TEC-11 | P1: Energia e slots | Specify | Pending |
 | TEC-15 | P1: Energia e slots | Specify | Implemented |
 | TSH-01 | P1: Técnicas na loja | Specify | Implemented |
@@ -486,8 +486,8 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TSH-07 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-08 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-09 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-10 | P1: Técnicas na loja | Specify | Pending |
-| TSH-11 | P1: Técnicas na loja | Specify | Pending |
+| TSH-10 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-11 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-12 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-13 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-14 | P1: Técnicas na loja | Specify | Pending |

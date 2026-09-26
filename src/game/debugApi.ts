@@ -1,10 +1,12 @@
 import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
+import type { CastState } from '../core/cast';
 import type { EnemyState } from '../core/enemyBrain';
 import type { ToolKey } from '../core/loot';
 import type { PropState } from '../core/props';
 import type { RunState } from '../core/run';
+import type { TechId } from '../data/techniques';
 
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
@@ -102,6 +104,16 @@ export interface GameSnapshot {
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
   worldProps: { id: number; key: string; state: PropState; x: number; y: number; durabilityLeft: number; rare: boolean; vx: number }[];
+  /** Energia amaldiçoada do player (CE-01..09, TEC-08), lida do estado vivo. */
+  ce: { cur: number; max: number; regen: number };
+  /** Loadout de técnicas e a conjuração ativa (TEC-01..06/08, CAST-*), contrato exato da spec. */
+  tech: {
+    slots: [
+      { id: TechId; level: 1 | 2 | 3; cooldownMs: number } | null,
+      { id: TechId; level: 1 | 2 | 3; cooldownMs: number } | null,
+    ];
+    cast: { slot: 0 | 1; id: TechId; state: CastState; elapsedMs: number } | null;
+  };
 }
 
 export interface DebugProbe {
