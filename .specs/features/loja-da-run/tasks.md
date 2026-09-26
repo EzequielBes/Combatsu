@@ -12,7 +12,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Design**: `.specs/features/loja-da-run/design.md`
 **Status**: Ready
 **Branch**: `feat/loja-da-run` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS, AD-008)
-**Test count before this feature**: 568
+**Test count before this feature**: 573
 
 ---
 
@@ -75,12 +75,12 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `tests/data/shop.test.ts` confere cada entrada contra as Assumptions (maxLevel 5/5/3/3/3/0, base/step, raridade)
-- [ ] `minRound`: vida e forca níveis 3 → 1, 4 → 6, 5 → 6; agilidade 2 → 1, 3 → 4; demais 1
-- [ ] MOD-03 conferido: For every modifier, the level SHALL stay in the range 0..maxLevel, with maxLevel 5 for `vida` and `forca` and 3 for `agilidade`, `ima` and `sorte`.
-- [ ] MOD-09 conferido: WHEN a modifier at level `n` is offered THEN its cost SHALL be `base + step × n`, with (base, step) = (12, 6) for `vida`, (15, 8) for `forca`, (10, 6) for `agilidade`, (6, 4) for `ima` and (10, 6) for `sorte`.
-- [ ] SHOP-18 conferido: For modifier `m` going to level `k`, the min round SHALL be 6 when `m` is `vida` or `forca` and `k` is 4 or 5, 4 when `m` is `agilidade` and `k` is 3, and 1 in every other case.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] `tests/data/shop.test.ts` confere cada entrada contra as Assumptions (maxLevel 5/5/3/3/3/0, base/step, raridade)
+- [x] `minRound`: vida e forca níveis 3 → 1, 4 → 6, 5 → 6; agilidade 2 → 1, 3 → 4; demais 1
+- [x] MOD-03 conferido: For every modifier, the level SHALL stay in the range 0..maxLevel, with maxLevel 5 for `vida` and `forca` and 3 for `agilidade`, `ima` and `sorte`.
+- [x] MOD-09 conferido: WHEN a modifier at level `n` is offered THEN its cost SHALL be `base + step × n`, with (base, step) = (12, 6) for `vida`, (15, 8) for `forca`, (10, 6) for `agilidade`, (6, 4) for `ima` and (10, 6) for `sorte`.
+- [x] SHOP-18 conferido: For modifier `m` going to level `k`, the min round SHALL be 6 when `m` is `vida` or `forca` and `k` is 4 or 5, 4 when `m` is `agilidade` and `k` is 3, and 1 in every other case.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
