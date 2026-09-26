@@ -11,9 +11,12 @@ import {
 } from './art/techColors';
 import { TEX } from './textures';
 
-/** Alinhada com a barra de HP (Hud.ts: `MARGIN` 12, `LABEL_W` 26), logo abaixo dela (TEC-07). */
-const BAR_X = 12 + 26;
-const BAR_Y = 12 + 20;
+/**
+ * Alinhada com a barra de HP (Hud.ts: `MARGIN` 12), abaixo do painel de controles (`PANEL_Y = 36` + ~5 linhas de
+ * texto) para não empilhar em cima dele nos primeiros `CONTROLS_MS` de cada run (conferido no screenshot de T20).
+ */
+const BAR_X = 12;
+const BAR_Y = 124;
 const BAR_W = 104;
 const BAR_H = 6;
 const MARK_W = 2;

@@ -8,6 +8,7 @@ import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
 import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
+import { AURA_FRAMES } from './sprites/techFx';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from './sprites/economy';
 import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
@@ -73,6 +74,8 @@ export function createArt(scene: Phaser.Scene): void {
   }
   // Kanji das técnicas (TEC-09, CAST-16): ícones de slot do HUD e a chamada da conjuração, na mesma folha.
   registerSheet(scene, TEX.kanji, parseSheet('kanji', KANJI_FRAMES, PALETTE_KEYS));
+  // Aura de conjuração (CAST-14): 2 frames de chama por cor (blue-a/b, red-a/b, white-a/b).
+  registerSheet(scene, TEX.techAura, parseSheet('tech-aura', AURA_FRAMES, PALETTE_KEYS));
   registerSheet(scene, TEX.hudBar, parseSheet('hud-bar', { bar: HUD_BAR }, PALETTE_KEYS));
   registerSheet(scene, TEX.enemyBar, parseSheet('enemy-bar', { bar: ENEMY_BAR }, PALETTE_KEYS));
   // Chefe (BTIER-06): uma folha por arquétipo, com o mesmo conjunto de frames e animações.

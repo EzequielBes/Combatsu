@@ -509,10 +509,10 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CAST-11 | P1: Conjuração | Specify | Implemented |
 | CAST-12 | P1: Conjuração | Specify | Implemented |
 | CAST-13 | P1: Conjuração | Specify | Implemented |
-| CAST-14 | P1: Conjuração | Specify | Pending |
-| CAST-15 | P1: Conjuração | Specify | Pending |
-| CAST-19 | P1: Conjuração | Specify | Pending |
-| CAST-16 | P1: Conjuração | Specify | Pending |
+| CAST-14 | P1: Conjuração | Specify | Implemented |
+| CAST-15 | P1: Conjuração | Specify | Implemented |
+| CAST-19 | P1: Conjuração | Specify | Implemented |
+| CAST-16 | P1: Conjuração | Specify | Implemented |
 | CAST-17 | P1: Conjuração | Specify | Implemented |
 | CAST-18 | P1: Conjuração | Specify | Implemented |
 | CAST-22 | P1: Conjuração | Specify | Implemented |
@@ -610,14 +610,14 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TFX-01 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-08 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-02 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-03 | P1: Invariantes dos efeitos | Specify | Pending |
-| TFX-09 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-03 | P1: Invariantes dos efeitos | Specify | Implemented |
+| TFX-09 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-04 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-05 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-06 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-10 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-11 | P1: Invariantes dos efeitos | Specify | Pending |
-| TFX-07 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-07 | P1: Invariantes dos efeitos | Specify | Implemented |
 
 **Coverage:** 165 total, 0 Verified
 

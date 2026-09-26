@@ -681,14 +681,14 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] CAST-14 conferido: WHILE a cast is in `sign` or `charge`, `fx.layers` SHALL include `cast.aura`.
-- [ ] CAST-15 conferido: WHEN a cast enters `charge` THEN the main camera zoom SHALL move from 1.5 to 1.6 over the charge time.
-- [ ] CAST-19 conferido: WHEN a cast enters `release` THEN the main camera zoom SHALL return to 1.5 within 250 ms.
-- [ ] CAST-16 conferido: WHEN a cast enters `release` THEN the HUD SHALL show the callout with the technique kanji grid and Portuguese name for 900 ms, reported as `hud.callout` in the snapshot.
-- [ ] TFX-03 conferido: WHEN a technique effect ends THEN every game object it created SHALL be destroyed within 300 ms.
-- [ ] TFX-09 conferido: WHEN 300 ms have passed since a technique effect ended THEN `fx.live` SHALL equal its value from the frame before that effect started.
-- [ ] TFX-07 conferido: WHERE the debug mode is on, the snapshot SHALL include `kokusen`, `techObjects` and `fx` as defined in the snapshot contract.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] CAST-14 conferido: WHILE a cast is in `sign` or `charge`, `fx.layers` SHALL include `cast.aura`.
+- [x] CAST-15 conferido: WHEN a cast enters `charge` THEN the main camera zoom SHALL move from 1.5 to 1.6 over the charge time.
+- [x] CAST-19 conferido: WHEN a cast enters `release` THEN the main camera zoom SHALL return to 1.5 within 250 ms.
+- [x] CAST-16 conferido: WHEN a cast enters `release` THEN the HUD SHALL show the callout with the technique kanji grid and Portuguese name for 900 ms, reported as `hud.callout` in the snapshot.
+- [x] TFX-03 conferido: WHEN a technique effect ends THEN every game object it created SHALL be destroyed within 300 ms.
+- [x] TFX-09 conferido: WHEN 300 ms have passed since a technique effect ended THEN `fx.live` SHALL equal its value from the frame before that effect started.
+- [x] TFX-07 conferido: WHERE the debug mode is on, the snapshot SHALL include `kokusen`, `techObjects` and `fx` as defined in the snapshot contract.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

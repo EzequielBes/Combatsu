@@ -4,7 +4,10 @@ import { bossSpecFor } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
+import type { CastState } from '../core/cast';
 import { CursedEnergy } from '../core/energy';
+import { FxRegistry } from '../core/fxRegistry';
+import { FxTimeline } from '../core/fxTimeline';
 import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
@@ -22,7 +25,7 @@ import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { SHOP_CATALOG, type ModifierId } from '../data/shop';
-import { CE, TECHNIQUES, type TechId } from '../data/techniques';
+import { CAST_FX, CE, TECHNIQUES, type TechId } from '../data/techniques';
 import {
   ARMED,
   BOSS,
@@ -59,6 +62,8 @@ import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
 import { ShopPanel } from '../game/ShopPanel';
 import { TechCaster } from '../game/TechCaster';
+import { Aura } from '../game/techFx/Aura';
+import { Callout } from '../game/techFx/Callout';
 import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
@@ -125,6 +130,17 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private loadout!: Loadout;
   /** Conjuração de técnicas (CAST-*), dona da `CastMachine` e dos ganchos do `Player`. */
   private techCaster!: TechCaster;
+  /**
+   * Camadas de efeito de técnica (design "Dois relógios"): `game` para (hoje) `cast.aura`, `real` para as
+   * cinemáticas do Kokusen (T24), que a Fase 6 confere continuarem andando durante o hitstop (TFX-05).
+   */
+  private realtimeFx!: FxTimeline;
+  /** Objetos de efeito de técnica vivos (TFX-03/09); `fx.live` do snapshot é `fxRegistry.size`. */
+  private fxRegistry!: FxRegistry;
+  private aura!: Aura;
+  private callout!: Callout;
+  /** Último estado de conjuração visto (CAST-15/19): dispara o zoom da câmera só na troca de estado. */
+  private lastCastState: CastState | null = null;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
   private shop: Shop | null = null;
   /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
@@ -197,6 +213,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
     this.techCaster = new TechCaster(this, this.player, this.energy, this.loadout);
+    this.realtimeFx = new FxTimeline();
+    this.fxRegistry = new FxRegistry();
+    this.aura = new Aura(this, this.realtimeFx, this.fxRegistry);
 
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
     this.wallet = new Wallet();
@@ -236,9 +255,16 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   update(_time: number, delta: number): void {
     // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
+    const clamped = Math.min(delta, MAX_FRAME_MS);
+    // Dois relógios (design): a parte `real` das camadas de efeito (as cinemáticas do Kokusen, T24) anda mesmo
+    // congelada; a parte `game` (hoje só `cast.aura`) para no hitstop (TFX-05) — por isso este `update` roda
+    // ANTES do retorno adiante, mas com `gameDt` zerado enquanto `frozen`.
+    this.realtimeFx.update(this.frozen ? 0 : clamped, clamped);
+    // TFX-03/09: a destruição agendada dos objetos de efeito é em tempo real, independe do hitstop.
+    this.fxRegistry.update(clamped);
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
-    const dt = Math.min(delta, MAX_FRAME_MS);
+    const dt = clamped;
     // SHOP-33: na loja, nada de gameplay anda; só o input da loja, `run.update`, o painel e o HUD.
     if (this.run.state === 'shop') {
       this.updateShop();
@@ -255,6 +281,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.loadout.tick(dt);
       // CE-04/05: sem regen enquanto há uma conjuração em andamento.
       this.energy.update(dt, this.techCaster.cast !== null);
+      // CAST-14: aura por técnica em sign/charge, sobre o corpo do player.
+      this.aura.update(dt, this.techCaster.cast, this.player.sprite.x, this.player.sprite.y);
+      // CAST-16: a chamada aparece exatamente no frame em que a soltura começa (`techCast:<id>`).
+      for (const ev of this.techCaster.events) {
+        if (ev.startsWith('techCast:')) this.callout.show(ev.slice('techCast:'.length) as TechId);
+      }
+      this.callout.update(dt);
+      this.updateCastZoom();
       this.updatePickups(dt);
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
@@ -286,6 +320,25 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
     this.energyHud.update(dt, this.energy, this.loadout);
+  }
+
+  /**
+   * Zoom da câmera principal na conjuração (CAST-15/19): dispara só na troca de estado, nunca a cada frame — a
+   * carga anima até 1,6 ao longo do `chargeMs` da técnica, e a soltura (ou um cancelamento em `sign`/`charge`,
+   * CAST-07) devolve o zoom base em 250 ms.
+   */
+  private updateCastZoom(): void {
+    const state = this.techCaster.cast?.state ?? null;
+    if (state === this.lastCastState) return;
+    const cam = this.cameras.main;
+    if (state === 'charge' && this.techCaster.cast) {
+      cam.zoomTo(CAST_FX.zoomCharge, Math.max(1, TECHNIQUES[this.techCaster.cast.id].chargeMs), 'Linear', true);
+    } else if (state === 'release') {
+      cam.zoomTo(CAST_FX.zoomBase, CAST_FX.zoomBackMs, 'Linear', true);
+    } else if (state === null && (this.lastCastState === 'sign' || this.lastCastState === 'charge')) {
+      cam.zoomTo(CAST_FX.zoomBase, CAST_FX.zoomBackMs, 'Linear', true);
+    }
+    this.lastCastState = state;
   }
 
   /**
@@ -758,7 +811,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         traveled: p.traveled,
       })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
-      hud: { ...this.hud.debugState(), ...this.energyHud.debugState() },
+      hud: { ...this.hud.debugState(), ...this.energyHud.debugState(), callout: this.callout.debug() },
       hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
       wallet: { fragments: this.wallet.fragments },
@@ -778,6 +831,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       })),
       ce: { cur: this.energy.cur, max: this.energy.max, regen: this.energy.regen },
       tech: this.techSnapshot(),
+      // Placeholder até a Fase 5 (T22+) implementar o Kokusen e os orbes de verdade (TFX-07).
+      kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
+      techObjects: [],
+      fx: { live: this.fxRegistry.size, degraded: false, layers: this.realtimeFx.layers() },
     };
   }
 
@@ -875,6 +932,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     ];
     this.hud = new Hud(this, this.uiLayer, lines().join('\n'));
     this.energyHud = new EnergyHud(this, this.uiLayer);
+    this.callout = new Callout(this, this.uiLayer);
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     this.hud.showControls(CONTROLS_MS);
     // Boot em `title` (RUN-01/RHUD-05): tela com o nome do jogo até o primeiro J/Enter.
