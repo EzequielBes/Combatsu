@@ -14,28 +14,30 @@ function segmentSum(vertices: { x: number; y: number }[]): number {
 }
 
 describe('KOK-18: 1000 seeds sempre devolvem entre 5 e 8 raios', () => {
-  it.each(SEEDS)('seed %i', (seed) => {
-    const bolts = lightningBolts(seed, ORIGIN, DIR);
-    expect(bolts.length).toBeGreaterThanOrEqual(5);
-    expect(bolts.length).toBeLessThanOrEqual(8);
+  it('seeds 0..999', () => {
+    for (const seed of SEEDS) {
+      const n = lightningBolts(seed, ORIGIN, DIR).length;
+      expect(n, `seed ${seed}`).toBeGreaterThanOrEqual(5);
+      expect(n, `seed ${seed}`).toBeLessThanOrEqual(8);
+    }
   });
 });
 
 describe('KOK-33: para 1000 seeds, a soma dos segmentos de cada raio fica entre 40 e 110 px', () => {
-  it.each(SEEDS)('seed %i', (seed) => {
-    const bolts = lightningBolts(seed, ORIGIN, DIR);
-    for (const bolt of bolts) {
-      const total = segmentSum(bolt.vertices);
-      expect(total).toBeGreaterThanOrEqual(40);
-      expect(total).toBeLessThanOrEqual(110);
+  it('seeds 0..999', () => {
+    for (const seed of SEEDS) {
+      for (const bolt of lightningBolts(seed, ORIGIN, DIR)) {
+        const total = segmentSum(bolt.vertices);
+        expect(total, `seed ${seed}`).toBeGreaterThanOrEqual(40);
+        expect(total, `seed ${seed}`).toBeLessThanOrEqual(110);
+      }
     }
   });
 });
 
 describe('KOK-19, TFX-02: para 1000 seeds, todo vértice fica em deslocamento inteiro par da origem', () => {
-  it.each(SEEDS)('seed %i', (seed) => {
-    const bolts = lightningBolts(seed, ORIGIN, DIR);
-    for (const bolt of bolts) {
+  it('seeds 0..999', () => {
+    for (const seed of SEEDS) for (const bolt of lightningBolts(seed, ORIGIN, DIR)) {
       for (const v of bolt.vertices) {
         const dx = v.x - ORIGIN.x;
         const dy = v.y - ORIGIN.y;
