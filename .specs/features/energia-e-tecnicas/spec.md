@@ -548,10 +548,10 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | KOK-15 | P1: Kokusen | Specify | Pending |
 | KOK-16 | P1: Kokusen | Specify | Pending |
 | KOK-17 | P1: Kokusen | Specify | Pending |
-| KOK-18 | P1: Kokusen | Specify | Pending |
-| KOK-33 | P1: Kokusen | Specify | Pending |
-| KOK-19 | P1: Kokusen | Specify | Pending |
-| KOK-20 | P1: Kokusen | Specify | Pending |
+| KOK-18 | P1: Kokusen | Specify | Implemented |
+| KOK-33 | P1: Kokusen | Specify | Implemented |
+| KOK-19 | P1: Kokusen | Specify | Implemented |
+| KOK-20 | P1: Kokusen | Specify | Implemented |
 | KOK-21 | P1: Kokusen | Specify | Pending |
 | KOK-22 | P1: Kokusen | Specify | Pending |
 | KOK-23 | P1: Kokusen | Specify | Pending |
@@ -609,7 +609,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | FXL-08 | P2: Laboratório de efeitos | Specify | Pending |
 | TFX-01 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-08 | P1: Invariantes dos efeitos | Specify | Pending |
-| TFX-02 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-02 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-03 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-09 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-04 | P1: Invariantes dos efeitos | Specify | Pending |
