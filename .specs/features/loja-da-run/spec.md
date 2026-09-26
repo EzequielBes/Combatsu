@@ -225,7 +225,7 @@ maxHp: number;
 | --- | --- | --- | --- |
 | MOD-01 | P1: Modificadores | Specify | Pending |
 | MOD-02 | P1: Modificadores | Specify | Pending |
-| MOD-03 | P1: Modificadores | Specify | Pending |
+| MOD-03 | P1: Modificadores | Specify | Implemented |
 | MOD-04 | P1: Modificadores | Specify | Pending |
 | MOD-11 | P1: Modificadores | Specify | Pending |
 | MOD-05 | P1: Modificadores | Specify | Pending |
@@ -233,7 +233,7 @@ maxHp: number;
 | MOD-07 | P1: Modificadores | Specify | Pending |
 | MOD-08 | P1: Modificadores | Specify | Pending |
 | MOD-12 | P1: Modificadores | Specify | Pending |
-| MOD-09 | P1: Modificadores | Specify | Pending |
+| MOD-09 | P1: Modificadores | Specify | Implemented |
 | MOD-10 | P1: Modificadores | Specify | Pending |
 | SHOP-01 | P1: Loja | Specify | Pending |
 | SHOP-32 | P1: Loja | Specify | Pending |
@@ -249,7 +249,7 @@ maxHp: number;
 | SHOP-38 | P1: Loja | Specify | Pending |
 | SHOP-07 | P1: Loja | Specify | Pending |
 | SHOP-39 | P1: Loja | Specify | Pending |
-| SHOP-18 | P1: Loja | Specify | Pending |
+| SHOP-18 | P1: Loja | Specify | Implemented |
 | SHOP-08 | P1: Loja | Specify | Pending |
 | SHOP-09 | P1: Loja | Specify | Pending |
 | SHOP-40 | P1: Loja | Specify | Pending |
