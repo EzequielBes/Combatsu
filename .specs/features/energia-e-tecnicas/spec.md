@@ -20,7 +20,6 @@ Esta feature cria a energia amaldiçoada, dois slots de técnica e um ritual de 
 | --- | --- |
 | Vazio Roxo, Expansão de Domínio (Vazio Infinito), Encantamento | Vão para a F9 `tecnicas-avancadas`; dependem das técnicas desta feature estarem estáveis |
 | Kokusen nos golpes comuns do combo | F8 reusa a regra de janela desta feature no finalizador do combo |
-| Oferta e compra de técnicas na loja | F4; esta feature expõe `equip`/`upgrade` para a loja chamar e usa `?debug&tech=` para testar |
 | Som, voz e trilha | Não há assets; pode virar feature própria com síntese WebAudio |
 | Técnicas usadas pelos inimigos ou pelo chefe | Muda a leitura das lutas da F1/F2; fica para depois |
 | Técnicas com nível acima de 3 | AD-005 fixa os níveis 1–3 |
@@ -51,6 +50,12 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | Energia do Kokusen | +30 (com teto) | No anime a energia flui melhor depois do Black Flash | y |
 | Zona | 8 s; janela passa de 80 para 140 ms; cada Kokusen na zona renova os 8 s | "Estar na zona" do anime; recompensa encadear | y |
 | Azul contra o chefe | Aplica dano, não puxa | O chefe tem peso e padrões próprios (F2) | y |
+| Técnicas na loja (decidido em 26/09, depois da F4) | Entradas `kind: 'technique'` no `SHOP_CATALOG`: Punho Divergente e Desmantelar comuns, Azul e Vermelho raras; comprar sem ter equipa no 1º slot livre no nível 1; comprar tendo sobe 1 nível | A F4 foi fechada sem vender técnicas; sem isso o jogador nunca teria técnica fora do debug (AD-005) |
+| Preço das técnicas | `base + step × nível atual`: divergente 20 + 15n, corte 30 + 15n, azul 35 + 20n, vermelho 40 + 20n | A primeira técnica cabe na carteira da rodada 1–2; subir nível custa mais que um modificador |
+| Nível mínimo das técnicas | Nível 2 exige rodada ≥ 3; nível 3 exige rodada ≥ 6 | AD-005: níveis altos exigem rodada mínima |
+| Técnica garantida | Enquanto os dois slots estão vazios, o espaço 0 de toda loja (inclusive após reroll) é uma técnica, sorteada entre as técnicas pelo peso de raridade | AD-005 trade-off: a loja precisa garantir técnicas cedo; o 1º "uau" não pode depender de sorte |
+| Troca de técnica | Com os dois slots cheios, técnica que o jogador não tem não é oferecida | Sem tela de troca nesta feature; mantém a escolha dos 2 slots com peso |
+| Upgrades de energia na loja | Modificadores `energia` (máx. +20 por nível, até 5) e `fluxo` (regen +2/s por nível, até 4), comuns, custo 10 + 6n e 12 + 6n; só oferecidos com ao menos uma técnica equipada | Reusa CE-07/CE-09; sem técnica eles não servem para nada |
 | Renderer sem WebGL | Pula os postFX e mantém os efeitos em sprite e geometria | Não quebrar o jogo em máquina sem WebGL; o smoke headless pode cair em Canvas | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -125,6 +130,38 @@ fx: { live: number; degraded: boolean; layers: string[] };
 24. TEC-15: The fill, background, mark, flash and overlay colors of the energy bar and slot icons SHALL be exported constants whose values belong to `PALETTE` (data test).
 
 **Independent Test**: `energy.test.ts` e `loadout.test.ts` em Node (limites 0/máx., regen com e sem conjuração, +3, tetos dos upgrades nos níveis 5/6 e 4/5, duplicado, nível 0 e 4); smoke `tech.smoke.mjs` com `?debug&tech=vermelho` confere barra, marca e ícone.
+
+---
+
+### P1: Técnicas e energia na loja ⭐ MVP
+
+**User Story**: Como jogador, quero comprar minha primeira técnica na loja entre rodadas e depois evoluí-la, para montar meu feiticeiro ao longo da run.
+
+**Why P1**: Sem isso nenhuma técnica aparece fora do debug (AD-005); é o elo entre a economia da F3/F4 e esta feature.
+
+**Direção de feel**: a carta de técnica mostra o kanji da técnica no topo; comprar a primeira técnica faz o ícone voar da carta até o slot do HUD em 300 ms.
+
+**Acceptance Criteria**:
+
+1. TSH-01: The shop catalog SHALL include the techniques `divergente` and `corte` with rarity common and `azul` and `vermelho` with rarity rare, each with `kind: 'technique'` and maxLevel 3.
+2. TSH-02: WHEN a technique at level `n` (0 if not equipped) is offered THEN its cost SHALL be `base + step × n`, with (base, step) = (20, 15) for `divergente`, (30, 15) for `corte`, (35, 20) for `azul` and (40, 20) for `vermelho`.
+3. TSH-03: The offer pool SHALL include a technique that is not equipped if and only if at least one slot is empty.
+4. TSH-04: The offer pool SHALL include an equipped technique if and only if its level is below 3 and the current round is ≥ 3 for level 2 or ≥ 6 for level 3.
+5. TSH-05: WHILE both slots are empty, slot 0 of every drawn set of offers (at shop open and after each reroll) SHALL be a technique, drawn among the eligible techniques by SHOP-08 weights before the other slots.
+6. TSH-06: WHEN a technique that is not equipped is bought THEN it SHALL be equipped at level 1 in the first empty slot (slot 1 before slot 2).
+7. TSH-07: WHEN an equipped technique is bought THEN its level SHALL increase by exactly 1.
+8. TSH-08: The shop catalog SHALL include the common modifier `energia` with maxLevel 5 and cost `10 + 6n`.
+9. TSH-15: The shop catalog SHALL include the common modifier `fluxo` with maxLevel 4 and cost `12 + 6n`.
+10. TSH-09: The offer pool SHALL include `energia` and `fluxo` only while at least one slot holds a technique.
+11. TSH-10: WHILE `energia` is at level `n`, the cursed energy max SHALL be `min(100 + 20n, 200)`.
+12. TSH-11: WHILE `fluxo` is at level `n`, the cursed energy regen SHALL be `min(8 + 2n, 16)` per second.
+13. TSH-12: WHILE a technique is not equipped, its card preview text SHALL be `Nova · slot <k>`, where `k` is 1 if slot 1 is empty and 2 otherwise.
+14. TSH-16: WHILE a technique is equipped at level `n` < 3, its card preview text SHALL be `Dano ×<a> → ×<b>`, with `a` and `b` the TEC-06 factors of levels `n` and `n + 1` written with a comma decimal (`×1,0`, `×1,25`, `×1,5`).
+15. TSH-13: The `energia` card preview text SHALL be `Energia máx. <cur> → <new>`, with `cur` the current max and `new` the max at the next level.
+16. TSH-17: The `fluxo` card preview text SHALL be `Regen <cur>/s → <new>/s`, with `cur` the current regen and `new` the regen at the next level.
+17. TSH-14: WHEN a technique is bought while both slots are empty THEN `events` SHALL get exactly one `techUnlock:<id>`, where `id` is the bought technique id.
+
+**Independent Test**: `shop.test.ts` e `techShop.test.ts` em Node (pool com 0, 1 e 2 slots cheios; níveis nas rodadas 2/3 e 5/6; garantia do espaço 0 também após reroll; compra que equipa no slot 1 e depois no 2; upgrade; custos; prévias); smoke `shop.smoke.mjs` compra a técnica garantida na rodada 1 e confere `tech.slots`.
 
 ---
 
@@ -440,6 +477,23 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TEC-08 | P1: Energia e slots | Specify | Pending |
 | TEC-11 | P1: Energia e slots | Specify | Pending |
 | TEC-15 | P1: Energia e slots | Specify | Pending |
+| TSH-01 | P1: Técnicas na loja | Specify | Pending |
+| TSH-02 | P1: Técnicas na loja | Specify | Pending |
+| TSH-03 | P1: Técnicas na loja | Specify | Pending |
+| TSH-04 | P1: Técnicas na loja | Specify | Pending |
+| TSH-05 | P1: Técnicas na loja | Specify | Pending |
+| TSH-06 | P1: Técnicas na loja | Specify | Pending |
+| TSH-07 | P1: Técnicas na loja | Specify | Pending |
+| TSH-08 | P1: Técnicas na loja | Specify | Pending |
+| TSH-09 | P1: Técnicas na loja | Specify | Pending |
+| TSH-10 | P1: Técnicas na loja | Specify | Pending |
+| TSH-11 | P1: Técnicas na loja | Specify | Pending |
+| TSH-12 | P1: Técnicas na loja | Specify | Pending |
+| TSH-13 | P1: Técnicas na loja | Specify | Pending |
+| TSH-14 | P1: Técnicas na loja | Specify | Pending |
+| TSH-15 | P1: Técnicas na loja | Specify | Pending |
+| TSH-16 | P1: Técnicas na loja | Specify | Pending |
+| TSH-17 | P1: Técnicas na loja | Specify | Pending |
 | CAST-01 | P1: Conjuração | Specify | Pending |
 | CAST-02 | P1: Conjuração | Specify | Pending |
 | CAST-03 | P1: Conjuração | Specify | Pending |
@@ -565,7 +619,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TFX-11 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-07 | P1: Invariantes dos efeitos | Specify | Pending |
 
-**Coverage:** 148 total, 0 mapped to tasks, 148 unmapped ⚠️ (Design e Tasks acontecem quando a F5 entrar em execução, depois de F3 e F4).
+**Coverage:** 165 total, 0 Verified
 
 ---
 
