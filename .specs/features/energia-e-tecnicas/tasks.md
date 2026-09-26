@@ -224,9 +224,9 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] 33 ms → 2 frames e 66 ms → 4 frames; `real` anda durante hitstop, `game` não
-- [ ] TFX-05 conferido: WHILE a hitstop is active, every technique effect layer other than `kokusen.invert`, `kokusen.duotone`, `kokusen.bolts` and the 黒閃 card SHALL NOT advance its animation time.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] 33 ms → 2 frames e 66 ms → 4 frames; `real` anda durante hitstop, `game` não
+- [x] TFX-05 conferido: WHILE a hitstop is active, every technique effect layer other than `kokusen.invert`, `kokusen.duotone`, `kokusen.bolts` and the 黒閃 card SHALL NOT advance its animation time.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
