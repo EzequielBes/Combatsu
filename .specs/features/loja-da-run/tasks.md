@@ -285,19 +285,19 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Intermissão 2499 ms → ainda `intermission`; 2500 ms → `shop` com `shopOpen` da rodada limpa
-- [ ] Em `shop`, 10 s de `update` não emitem `spawn` nem mudam a rodada
-- [ ] `closeShop()` → `roundActive`, rodada + 1, `roundStart`; `closeShop()` fora de `shop` não faz nada
-- [ ] Morte do player durante a intermissão vence a abertura da loja
-- [ ] `shopRng` = `new Rng(seed ^ 0x85ebca6b)`; ondas e loot idênticos com e sem sorteios na loja
-- [ ] Testes de `run.test.ts` atualizados para passar pela loja
-- [ ] SHOP-01 conferido: WHEN the run state is `intermission` and its timer reaches 2500 ms THEN the run state SHALL become `shop`.
-- [ ] SHOP-02 conferido: WHILE the run state is `shop`, the run SHALL emit no `spawn` command.
-- [ ] SHOP-03 conferido: WHEN `Enter` is pressed while the run state is `shop` THEN the run state SHALL become `roundActive` with the round equal to the cleared round + 1.
-- [ ] SHOP-04 conferido: WHILE the run state is `shop`, the player SHALL receive neutral input (no movement, jump or attack).
-- [ ] SHOP-09 conferido: WHEN a run starts with seed `s` THEN the shop RNG SHALL be created as `new Rng(s ^ 0x85ebca6b)`.
-- [ ] SHOP-40 conferido: For the same run seed, the wave spawn orders and the loot draws SHALL be identical whether or not shop draws happen.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Intermissão 2499 ms → ainda `intermission`; 2500 ms → `shop` com `shopOpen` da rodada limpa
+- [x] Em `shop`, 10 s de `update` não emitem `spawn` nem mudam a rodada
+- [x] `closeShop()` → `roundActive`, rodada + 1, `roundStart`; `closeShop()` fora de `shop` não faz nada
+- [x] Morte do player durante a intermissão vence a abertura da loja
+- [x] `shopRng` = `new Rng(seed ^ 0x85ebca6b)`; ondas e loot idênticos com e sem sorteios na loja
+- [x] Testes de `run.test.ts` atualizados para passar pela loja
+- [x] SHOP-01 conferido: WHEN the run state is `intermission` and its timer reaches 2500 ms THEN the run state SHALL become `shop`.
+- [x] SHOP-02 conferido: WHILE the run state is `shop`, the run SHALL emit no `spawn` command.
+- [x] SHOP-03 conferido: WHEN `Enter` is pressed while the run state is `shop` THEN the run state SHALL become `roundActive` with the round equal to the cleared round + 1.
+- [x] SHOP-04 conferido: WHILE the run state is `shop`, the player SHALL receive neutral input (no movement, jump or attack).
+- [x] SHOP-09 conferido: WHEN a run starts with seed `s` THEN the shop RNG SHALL be created as `new Rng(s ^ 0x85ebca6b)`.
+- [x] SHOP-40 conferido: For the same run seed, the wave spawn orders and the loot draws SHALL be identical whether or not shop draws happen.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
