@@ -453,14 +453,14 @@ fx: { live: number; degraded: boolean; layers: string[] };
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CE-01 | P1: Energia e slots | Specify | Pending |
-| CE-02 | P1: Energia e slots | Specify | Pending |
-| CE-03 | P1: Energia e slots | Specify | Pending |
-| CE-04 | P1: Energia e slots | Specify | Pending |
-| CE-05 | P1: Energia e slots | Specify | Pending |
+| CE-01 | P1: Energia e slots | Specify | Implemented |
+| CE-02 | P1: Energia e slots | Specify | Implemented |
+| CE-03 | P1: Energia e slots | Specify | Implemented |
+| CE-04 | P1: Energia e slots | Specify | Implemented |
+| CE-05 | P1: Energia e slots | Specify | Implemented |
 | CE-06 | P1: Energia e slots | Specify | Pending |
-| CE-07 | P1: Energia e slots | Specify | Pending |
-| CE-09 | P1: Energia e slots | Specify | Pending |
+| CE-07 | P1: Energia e slots | Specify | Implemented |
+| CE-09 | P1: Energia e slots | Specify | Implemented |
 | CE-08 | P1: Energia e slots | Specify | Pending |
 | TEC-01 | P1: Energia e slots | Specify | Pending |
 | TEC-02 | P1: Energia e slots | Specify | Pending |
