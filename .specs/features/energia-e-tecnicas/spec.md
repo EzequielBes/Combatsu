@@ -490,7 +490,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TSH-11 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-12 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-13 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-14 | P1: Técnicas na loja | Specify | Pending |
+| TSH-14 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-15 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-16 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-17 | P1: Técnicas na loja | Specify | Implemented |

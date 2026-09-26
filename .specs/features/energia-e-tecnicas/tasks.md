@@ -712,11 +712,11 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] TSH-06 conferido: WHEN a technique that is not equipped is bought THEN it SHALL be equipped at level 1 in the first empty slot (slot 1 before slot 2).
-- [ ] TSH-07 conferido: WHEN an equipped technique is bought THEN its level SHALL increase by exactly 1.
-- [ ] TSH-14 conferido: WHEN a technique is bought while both slots are empty THEN `events` SHALL get exactly one `techUnlock:<id>`, where `id` is the bought technique id.
-- [ ] TSH-05 conferido: WHILE both slots are empty, slot 0 of every drawn set of offers (at shop open and after each reroll) SHALL be a technique, drawn among the eligible techniques by SHOP-08 weights before the other slots.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] TSH-06 conferido: WHEN a technique that is not equipped is bought THEN it SHALL be equipped at level 1 in the first empty slot (slot 1 before slot 2).
+- [x] TSH-07 conferido: WHEN an equipped technique is bought THEN its level SHALL increase by exactly 1.
+- [x] TSH-14 conferido: WHEN a technique is bought while both slots are empty THEN `events` SHALL get exactly one `techUnlock:<id>`, where `id` is the bought technique id.
+- [x] TSH-05 conferido: WHILE both slots are empty, slot 0 of every drawn set of offers (at shop open and after each reroll) SHALL be a technique, drawn among the eligible techniques by SHOP-08 weights before the other slots.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

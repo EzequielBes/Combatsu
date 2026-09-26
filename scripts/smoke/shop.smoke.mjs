@@ -70,10 +70,12 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.shop.selected === 0 && snap.shop.rerollCost === 5, `seleção/reroll iniciais errados: ${JSON.stringify(snap.shop)}`);
 
   // SHOP-21/31: cada carta mostra nome, `Nv`, prévia e custo; só a selecionada tem realce.
+  // F5 (TSH-01/12/16): técnicas também não têm "Nv X/Y" — a prévia delas é "Nova · slot k" ou "Dano ×a → ×b".
+  const TECH_IDS = ['divergente', 'vermelho', 'azul', 'corte'];
   const cards = snap.shop.panel.cards;
   snap.shop.offers.forEach((o, i) => {
     assert(cards[i].lines.includes(String(o.cost)), `SHOP-21: carta ${i} sem o custo ${o.cost}: ${JSON.stringify(cards[i])}`);
-    if (o.id !== 'cura') {
+    if (o.id !== 'cura' && !TECH_IDS.includes(o.id)) {
       assert(cards[i].lines.includes(`Nv ${o.level + 1}/${o.maxLevel}`), `SHOP-21: carta ${i} sem o nível: ${JSON.stringify(cards[i])}`);
     }
   });
@@ -108,8 +110,9 @@ export default async function ({ page, baseUrl, assert }) {
     assert(snap.wallet.fragments === wallet, `SHOP-13: carteira mudou na recusa: ${snap.wallet.fragments}`);
   }
 
-  // SHOP-45/19/41/42/43: compra a primeira oferta de modificador pela tecla do slot.
-  const slot = snap.shop.offers.findIndex((o) => o.id !== 'cura');
+  // SHOP-45/19/41/42/43: compra a primeira oferta de modificador pela tecla do slot (F5: pula técnicas, que têm
+  // seu próprio fluxo de compra e não aparecem em `snap.modifiers`, TSH-06/07).
+  const slot = snap.shop.offers.findIndex((o) => o.id !== 'cura' && !TECH_IDS.includes(o.id));
   const offer = snap.shop.offers[slot];
   const walletBefore = snap.wallet.fragments;
   const levelBefore = snap.modifiers[offer.id];

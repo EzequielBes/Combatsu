@@ -81,6 +81,12 @@ export class EnergyHud {
     this.flashMs = FLASH_MS;
   }
 
+  /** Centro do ícone do slot (T21 "Direção de feel"): destino do ícone que voa da carta da loja. */
+  slotIconPosition(slot: 0 | 1): { x: number; y: number } {
+    const icon = this.slots[slot].icon;
+    return { x: icon.x + ICON_SIZE / 2, y: icon.y + ICON_SIZE / 2 };
+  }
+
   update(dtMs: number, energy: CursedEnergy, loadout: Loadout): void {
     const frac = Math.max(0, Math.min(1, energy.cur / energy.max));
     this.fill.width = BAR_W * frac; // TEC-07
