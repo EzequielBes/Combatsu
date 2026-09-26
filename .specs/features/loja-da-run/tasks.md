@@ -104,21 +104,21 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Níveis começam em 0; `apply` no max devolve `false` e não muda (vida 5/6, agilidade 3/4)
-- [ ] `maxHp` 100/115/175; `runSpeed` 220/237,6/272,8; `magnetRange` 72/93,6/136,8; `healChance` 0,10/0,13/0,19
-- [ ] `meleeDamage`: base 8 nível 0 → 8, nível 1 → 9 (8,8), base 18 nível 5 → 27; base 5 nível 1 → 6 (5,5 arredonda para cima)
-- [ ] `cost`: vida 12/18/36, forca 15/23, agilidade 10/16, ima 6/10, sorte 10/16
-- [ ] `reset` zera todos
-- [ ] MOD-01 conferido: WHEN a run starts THEN every modifier level SHALL be 0.
-- [ ] MOD-02 conferido: IF a modifier is at its max level THEN applying one more level SHALL leave its level unchanged and return `false`.
-- [ ] MOD-03 conferido: For every modifier, the level SHALL stay in the range 0..maxLevel, with maxLevel 5 for `vida` and `forca` and 3 for `agilidade`, `ima` and `sorte`.
-- [ ] MOD-04 conferido: WHILE `vida` is at level `n`, the player max HP SHALL be `100 + 15n`.
-- [ ] MOD-05 conferido: WHILE `forca` is at level `n`, each melee hit damage of the player (combo steps and held-prop hits) SHALL be `round(base × (1 + 0.10n))`, where `round` rounds halves up.
-- [ ] MOD-06 conferido: WHILE `agilidade` is at level `n`, the player run speed SHALL be `220 × (1 + 0.08n)` px/s.
-- [ ] MOD-07 conferido: WHILE `ima` is at level `n`, the pickup magnet range SHALL be `72 × (1 + 0.30n)` px.
-- [ ] MOD-08 conferido: WHILE `sorte` is at level `n`, the heal drop chance of a regular enemy SHALL be `0.10 + 0.03n`.
-- [ ] MOD-09 conferido: WHEN a modifier at level `n` is offered THEN its cost SHALL be `base + step × n`, with (base, step) = (12, 6) for `vida`, (15, 8) for `forca`, (10, 6) for `agilidade`, (6, 4) for `ima` and (10, 6) for `sorte`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Níveis começam em 0; `apply` no max devolve `false` e não muda (vida 5/6, agilidade 3/4)
+- [x] `maxHp` 100/115/175; `runSpeed` 220/237,6/272,8; `magnetRange` 72/93,6/136,8; `healChance` 0,10/0,13/0,19
+- [x] `meleeDamage`: base 8 nível 0 → 8, nível 1 → 9 (8,8), base 18 nível 5 → 27; base 5 nível 1 → 6 (5,5 arredonda para cima)
+- [x] `cost`: vida 12/18/36, forca 15/23, agilidade 10/16, ima 6/10, sorte 10/16
+- [x] `reset` zera todos
+- [x] MOD-01 conferido: WHEN a run starts THEN every modifier level SHALL be 0.
+- [x] MOD-02 conferido: IF a modifier is at its max level THEN applying one more level SHALL leave its level unchanged and return `false`.
+- [x] MOD-03 conferido: For every modifier, the level SHALL stay in the range 0..maxLevel, with maxLevel 5 for `vida` and `forca` and 3 for `agilidade`, `ima` and `sorte`.
+- [x] MOD-04 conferido: WHILE `vida` is at level `n`, the player max HP SHALL be `100 + 15n`.
+- [x] MOD-05 conferido: WHILE `forca` is at level `n`, each melee hit damage of the player (combo steps and held-prop hits) SHALL be `round(base × (1 + 0.10n))`, where `round` rounds halves up.
+- [x] MOD-06 conferido: WHILE `agilidade` is at level `n`, the player run speed SHALL be `220 × (1 + 0.08n)` px/s.
+- [x] MOD-07 conferido: WHILE `ima` is at level `n`, the pickup magnet range SHALL be `72 × (1 + 0.30n)` px.
+- [x] MOD-08 conferido: WHILE `sorte` is at level `n`, the heal drop chance of a regular enemy SHALL be `0.10 + 0.03n`.
+- [x] MOD-09 conferido: WHEN a modifier at level `n` is offered THEN its cost SHALL be `base + step × n`, with (base, step) = (12, 6) for `vida`, (15, 8) for `forca`, (10, 6) for `agilidade`, (6, 4) for `ima` and (10, 6) for `sorte`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

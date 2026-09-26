@@ -223,15 +223,15 @@ maxHp: number;
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| MOD-01 | P1: Modificadores | Specify | Pending |
-| MOD-02 | P1: Modificadores | Specify | Pending |
+| MOD-01 | P1: Modificadores | Specify | Implemented |
+| MOD-02 | P1: Modificadores | Specify | Implemented |
 | MOD-03 | P1: Modificadores | Specify | Implemented |
-| MOD-04 | P1: Modificadores | Specify | Pending |
+| MOD-04 | P1: Modificadores | Specify | Implemented |
 | MOD-11 | P1: Modificadores | Specify | Pending |
-| MOD-05 | P1: Modificadores | Specify | Pending |
-| MOD-06 | P1: Modificadores | Specify | Pending |
-| MOD-07 | P1: Modificadores | Specify | Pending |
-| MOD-08 | P1: Modificadores | Specify | Pending |
+| MOD-05 | P1: Modificadores | Specify | Implemented |
+| MOD-06 | P1: Modificadores | Specify | Implemented |
+| MOD-07 | P1: Modificadores | Specify | Implemented |
+| MOD-08 | P1: Modificadores | Specify | Implemented |
 | MOD-12 | P1: Modificadores | Specify | Pending |
 | MOD-09 | P1: Modificadores | Specify | Implemented |
 | MOD-10 | P1: Modificadores | Specify | Pending |
