@@ -6,6 +6,7 @@ import { PALETTE_KEYS } from './palette';
 import { registerSheet } from './render';
 import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
+import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from './sprites/economy';
 import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
@@ -35,7 +36,8 @@ export const shardsKey = (texture: string): string => `${texture}-shards`;
 export function createArt(scene: Phaser.Scene): void {
   createPlaceholderTextures(scene);
   registerTiles(scene);
-  registerSheet(scene, TEX.playerArt, parseSheet('player', PLAYER_FRAMES, PALETTE_KEYS));
+  // Folha do player + os frames de conjuração das técnicas (CAST-18), na mesma textura (CAST-13 troca de frame).
+  registerSheet(scene, TEX.playerArt, parseSheet('player', { ...PLAYER_FRAMES, ...PLAYER_TECH_FRAMES }, PALETTE_KEYS));
   registerAnims(scene, TEX.playerArt, PLAYER_ANIMS, playerAnimKey);
   registerSheet(scene, TEX.enemy, parseSheet('enemy', ENEMY_FRAMES, PALETTE_KEYS));
   registerAnims(scene, TEX.enemy, ENEMY_ANIMS, enemyAnimKey);
