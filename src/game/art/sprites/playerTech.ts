@@ -9,6 +9,9 @@
  *   esticado (release, mesma silhueta do `cross`) e retorno (recover).
  * - Desmantelar: gesto rápido de dois dedos (indicador e médio) cortando o ar, com um fio de energia branca
  *   `w`/`W` na ponta dos dedos em vez do punho fechado.
+ * - Vermelho: braço esticado à frente com indicador e médio apontados, tingidos de vermelho `r`/`R` (a esfera
+ *   nasce na ponta, fora do sprite, via `techFx`).
+ * - Azul: mão erguida à frente, dedos juntos, com um núcleo `c`/`d` entre eles em vez do punho fechado.
  */
 import {
   ARM_COCK,
@@ -35,6 +38,21 @@ function armPointed(len: number, hi: string, fill: string): string[] {
     'k'.repeat(len - 1) + '.',
     'k' + 's'.repeat(sleeve) + `k${hi}${hi}${fill}k`,
     'k' + 'N'.repeat(sleeve) + `k${hi}${hi}${fill}k`,
+    'k' + 'n'.repeat(sleeve) + 'kPPqk',
+    'k'.repeat(len - 1) + '.',
+  ];
+}
+
+/**
+ * Palma aberta à frente, dedos juntos, com um núcleo `core` entre eles em vez do punho fechado — usada pela
+ * Azul (a esfera azul nasce nesse núcleo, fora do sprite, via `techFx`).
+ */
+function armPalm(len: number, core: string): string[] {
+  const sleeve = len - 6;
+  return [
+    'k'.repeat(len - 1) + '.',
+    'k' + 's'.repeat(sleeve) + `kp${core}pk`,
+    'k' + 'N'.repeat(sleeve) + `kP${core}Pk`,
     'k' + 'n'.repeat(sleeve) + 'kPPqk',
     'k'.repeat(len - 1) + '.',
   ];
@@ -97,6 +115,67 @@ export const PLAYER_TECH_FRAMES: Record<string, readonly string[]> = {
     lean: 1,
     head: HEAD_FOCUS,
     near: [armPointed(10, 'W', 'w'), 9, 11],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+
+  // Vermelho (RED-*): braço esticado à frente com indicador e médio apontados, tingidos de vermelho.
+  'vermelho-sign': pose({
+    lean: -1,
+    head: HEAD_FOCUS,
+    near: [armPointed(13, 'R', 'r'), 9, 11],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  'vermelho-charge': pose({
+    lean: 0,
+    head: HEAD_FOCUS,
+    near: [armPointed(14, 'R', 'r'), 9, 11],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  // A soltura empurra o player para trás (RED-15): lean e pernas recuam em vez de avançar.
+  'vermelho-release': pose({
+    lean: -2,
+    head: HEAD_FOCUS,
+    near: [armPointed(16, 'R', 'r'), 9, 11],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, -1, Y_LEGS]],
+  }),
+  'vermelho-recover': pose({
+    lean: -1,
+    head: HEAD_FOCUS,
+    near: [armPointed(11, 'R', 'r'), 9, 11],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+
+  // Azul (BLU-*): mão erguida à frente, dedos juntos, núcleo azul crescendo entre eles.
+  'azul-sign': pose({
+    lean: 0,
+    head: HEAD_FOCUS,
+    near: [armPalm(11, 'c'), 9, 8],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  'azul-charge': pose({
+    lean: 0,
+    head: HEAD_FOCUS,
+    near: [armPalm(12, 'd'), 9, 8],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  'azul-release': pose({
+    lean: 1,
+    head: HEAD_FOCUS,
+    near: [armPalm(13, 'd'), 9, 8],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  'azul-recover': pose({
+    lean: 0,
+    head: HEAD_FOCUS,
+    near: [armPalm(10, 'c'), 9, 8],
     far: [far(ARM_GUARD), 8, 11],
     legs: [[LEGS_WIDE, 0, Y_LEGS]],
   }),

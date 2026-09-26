@@ -220,8 +220,7 @@ describe('folha do player (CHR-01, ART-01, ART-03)', () => {
 });
 
 describe('frames de conjuração das técnicas (CAST-18, CAST-22)', () => {
-  // Cobertura incremental: T14 traz divergente e corte; T15 completa com vermelho e azul (CAST-18 completo).
-  const IDS_DONE = ['divergente', 'corte'] as const;
+  const IDS: Array<'divergente' | 'vermelho' | 'azul' | 'corte'> = ['divergente', 'vermelho', 'azul', 'corte'];
   const sheet = parseSheet('player-tech', PLAYER_TECH_FRAMES, PALETTE_KEYS);
 
   it('passa no parseSheet só com cores da paleta, todo frame com 32x24 texels (CAST-18/22)', () => {
@@ -229,8 +228,8 @@ describe('frames de conjuração das técnicas (CAST-18, CAST-22)', () => {
     expect(sheet.height).toBe(PLAYER_FRAME_H);
   });
 
-  it('cada id de técnica já implementado tem os 4 frames sign/charge/release/recover (CAST-18)', () => {
-    for (const id of IDS_DONE) {
+  it('cada técnica de CAST-18 tem os 4 frames sign/charge/release/recover', () => {
+    for (const id of IDS) {
       for (const part of ['sign', 'charge', 'release', 'recover']) {
         expect(Object.hasOwn(PLAYER_TECH_FRAMES, `${id}-${part}`), `${id}-${part}`).toBe(true);
       }
