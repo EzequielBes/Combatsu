@@ -494,18 +494,18 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TSH-15 | P1: Técnicas na loja | Specify | Pending |
 | TSH-16 | P1: Técnicas na loja | Specify | Pending |
 | TSH-17 | P1: Técnicas na loja | Specify | Pending |
-| CAST-01 | P1: Conjuração | Specify | Pending |
-| CAST-02 | P1: Conjuração | Specify | Pending |
-| CAST-03 | P1: Conjuração | Specify | Pending |
-| CAST-04 | P1: Conjuração | Specify | Pending |
-| CAST-05 | P1: Conjuração | Specify | Pending |
-| CAST-06 | P1: Conjuração | Specify | Pending |
-| CAST-07 | P1: Conjuração | Specify | Pending |
-| CAST-21 | P1: Conjuração | Specify | Pending |
-| CAST-20 | P1: Conjuração | Specify | Pending |
-| CAST-08 | P1: Conjuração | Specify | Pending |
-| CAST-09 | P1: Conjuração | Specify | Pending |
-| CAST-10 | P1: Conjuração | Specify | Pending |
+| CAST-01 | P1: Conjuração | Specify | Implemented |
+| CAST-02 | P1: Conjuração | Specify | Implemented |
+| CAST-03 | P1: Conjuração | Specify | Implemented |
+| CAST-04 | P1: Conjuração | Specify | Implemented |
+| CAST-05 | P1: Conjuração | Specify | Implemented |
+| CAST-06 | P1: Conjuração | Specify | Implemented |
+| CAST-07 | P1: Conjuração | Specify | Implemented |
+| CAST-21 | P1: Conjuração | Specify | Implemented |
+| CAST-20 | P1: Conjuração | Specify | Implemented |
+| CAST-08 | P1: Conjuração | Specify | Implemented |
+| CAST-09 | P1: Conjuração | Specify | Implemented |
+| CAST-10 | P1: Conjuração | Specify | Implemented |
 | CAST-11 | P1: Conjuração | Specify | Pending |
 | CAST-12 | P1: Conjuração | Specify | Pending |
 | CAST-13 | P1: Conjuração | Specify | Pending |

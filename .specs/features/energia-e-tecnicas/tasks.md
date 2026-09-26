@@ -187,20 +187,20 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Cortes de tempo exatos em cada troca de estado (ex.: 59/60 ms no `sign` do Divergente)
-- [ ] CAST-01 conferido: WHEN the player presses a slot key holding a technique with enough energy and no cooldown THEN a cast SHALL start in the `sign` state.
-- [ ] CAST-02 conferido: WHEN a cast starts THEN it SHALL stay in `sign` for the technique sign time, then in `charge` for its charge time, then in `release` for its release time, then in `recover` for its recover time, and then end, skipping any state whose time is 0 ms.
-- [ ] CAST-03 conferido: WHEN a cast enters `release` THEN the technique cost SHALL be subtracted from the cursed energy exactly once.
-- [ ] CAST-04 conferido: WHEN a cast enters `release` THEN the slot cooldown SHALL be set to the technique cooldown.
-- [ ] CAST-05 conferido: IF the player presses a slot key and the cursed energy is below the cost THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:energy`.
-- [ ] CAST-06 conferido: IF the player presses a slot key whose cooldown is above 0 THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:cooldown`.
-- [ ] CAST-07 conferido: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end and the cursed energy SHALL keep the value it had before that damage.
-- [ ] CAST-21 conferido: WHEN a cast ends by CAST-07 THEN the slot cooldown SHALL stay 0.
-- [ ] CAST-20 conferido: WHEN a cast ends by CAST-07 THEN `events` SHALL get `techCancel`.
-- [ ] CAST-08 conferido: WHILE a cast is in progress, a slot key press SHALL NOT start another cast.
-- [ ] CAST-09 conferido: IF the player presses a slot key while holding a prop, in hitstun, or in the `startup` or `active` phase of a melee attack THEN no cast SHALL start and `events` SHALL get `techDenied:busy`.
-- [ ] CAST-10 conferido: WHEN the player presses a slot key during the `recover` phase of a melee attack, with enough energy and no cooldown for that technique, THEN the melee attack SHALL end and the cast SHALL start in that same frame.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Cortes de tempo exatos em cada troca de estado (ex.: 59/60 ms no `sign` do Divergente)
+- [x] CAST-01 conferido: WHEN the player presses a slot key holding a technique with enough energy and no cooldown THEN a cast SHALL start in the `sign` state.
+- [x] CAST-02 conferido: WHEN a cast starts THEN it SHALL stay in `sign` for the technique sign time, then in `charge` for its charge time, then in `release` for its release time, then in `recover` for its recover time, and then end, skipping any state whose time is 0 ms.
+- [x] CAST-03 conferido: WHEN a cast enters `release` THEN the technique cost SHALL be subtracted from the cursed energy exactly once.
+- [x] CAST-04 conferido: WHEN a cast enters `release` THEN the slot cooldown SHALL be set to the technique cooldown.
+- [x] CAST-05 conferido: IF the player presses a slot key and the cursed energy is below the cost THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:energy`.
+- [x] CAST-06 conferido: IF the player presses a slot key whose cooldown is above 0 THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:cooldown`.
+- [x] CAST-07 conferido: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end and the cursed energy SHALL keep the value it had before that damage.
+- [x] CAST-21 conferido: WHEN a cast ends by CAST-07 THEN the slot cooldown SHALL stay 0.
+- [x] CAST-20 conferido: WHEN a cast ends by CAST-07 THEN `events` SHALL get `techCancel`.
+- [x] CAST-08 conferido: WHILE a cast is in progress, a slot key press SHALL NOT start another cast.
+- [x] CAST-09 conferido: IF the player presses a slot key while holding a prop, in hitstun, or in the `startup` or `active` phase of a melee attack THEN no cast SHALL start and `events` SHALL get `techDenied:busy`.
+- [x] CAST-10 conferido: WHEN the player presses a slot key during the `recover` phase of a melee attack, with enough energy and no cooldown for that technique, THEN the melee attack SHALL end and the cast SHALL start in that same frame.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
