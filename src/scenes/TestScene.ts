@@ -24,7 +24,7 @@ import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
-import { SHOP_CATALOG, type ModifierId } from '../data/shop';
+import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
 import { CAST_FX, CE, TECHNIQUES, type TechId } from '../data/techniques';
 import {
   ARMED,
@@ -143,6 +143,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private lastCastState: CastState | null = null;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
   private shop: Shop | null = null;
+  /** 1ª técnica equipada nesta compra (TSH-06), para o ícone voar da carta ao slot (T21); `null` fora disso. */
+  private pendingTechEquip: { id: TechId; slot: 0 | 1 } | null = null;
   /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
   private shopPanel!: ShopPanel;
   private loot!: Loot;
@@ -364,9 +366,18 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       },
       // SHOP-12/MOD-11: cura (consumível) e o +15 de HP da compra de `vida` passam pelo mesmo `heal` com teto.
       healPlayer: (amount) => this.player.heal(amount),
-      // F5 (provisório até T21): a cena ainda não tem loadout de técnicas nem oferece técnicas na loja
-      // (`Shop` é criada sem `loadout`, então nenhuma oferta é `kind: 'technique'`); stub só para compilar.
-      applyTechnique: () => {},
+      // TSH-06/07: equipa no primeiro slot vazio (não equipada) ou sobe 1 nível (já equipada); TSH-14: exatamente
+      // um `techUnlock:<id>` quando os dois slots estavam vazios antes desta compra.
+      applyTechnique: (id) => {
+        const bothEmptyBefore = !this.loadout.hasAny();
+        if (this.loadout.levelOf(id) > 0) {
+          this.loadout.upgrade(id);
+        } else {
+          const slot = this.loadout.firstEmpty();
+          if (slot !== null && this.loadout.equip(slot, id, 1)) this.pendingTechEquip = { id, slot };
+        }
+        if (bothEmptyBefore) this.debugEvents.push(`techUnlock:${id}`);
+      },
     };
     if (input.buySlot !== null) this.resolveBuy(shop, input.buySlot, ctx);
     else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);
@@ -383,11 +394,20 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Traduz o `BuyResult` tipado do `Shop` num evento de debug (design "Error Handling Strategy"). */
   private resolveBuy(shop: Shop, slot: number, ctx: BuyContext): void {
     const offerId = shop.view(ctx.wallet, ctx.hp, ctx.maxHp).offers[slot]?.id ?? null;
+    this.pendingTechEquip = null;
     const result = shop.buy(slot, ctx);
+    // `shop.buy` pode ter escrito em `pendingTechEquip` de dentro de `ctx.applyTechnique` (outro método): o TS não
+    // enxerga essa escrita através da chamada e estreitaria a leitura para o `null` de cima sem este cast.
+    const equipped = this.pendingTechEquip as { id: TechId; slot: 0 | 1 } | null;
     if (result.ok) {
       this.debugEvents.push(`buy:${result.id}:${result.cost}`);
       // T11: carta pisca branco e o custo pago sobe em "−N".
       this.shopPanel.flashBuy(slot, result.cost);
+      // Direção de feel (T21): 1ª técnica equipada faz o ícone voar da carta ao slot do HUD em 300 ms.
+      if (equipped) {
+        const kanji = TECHNIQUES[equipped.id].kanji;
+        this.shopPanel.flyToSlot(slot, kanji, this.energyHud.slotIconPosition(equipped.slot));
+      }
     } else if (result.reason === 'funds' && offerId) this.debugEvents.push(`buyRefused:${offerId}:funds`);
     else if (result.reason === 'fullHp') this.debugEvents.push('buyRefused:cura:fullHp');
   }
@@ -399,11 +419,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     else this.debugEvents.push('rerollRefused');
   }
 
-  /** Abre a loja (SHOP-01): varre os fragmentos vivos para a carteira e pausa o Matter (SHOP-05/33/36/37). */
+  /**
+   * Abre a loja (SHOP-01): varre os fragmentos vivos para a carteira e pausa o Matter (SHOP-05/33/36/37).
+   * `FULL_SHOP_CATALOG` (F5) inclui as técnicas e `energia`/`fluxo`; o `loadout` decide elegibilidade e a
+   * garantia do espaço 0 (TSH-05).
+   */
   private openShop(round: number): void {
     this.wallet.add(this.pickups.collectFragments());
     this.matter.world.pause();
-    this.shop = new Shop(SHOP_CATALOG, this.modifiers, this.run.shopRng!, round);
+    this.shop = new Shop(FULL_SHOP_CATALOG, this.modifiers, this.run.shopRng!, round, this.loadout);
     this.shopPanel.show(this.shop.view(this.wallet, this.player.hp, this.player.maxHp));
     this.debugEvents.push(`shopOpen:${round}`);
   }
@@ -417,7 +441,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.debugEvents.push('shopClose');
   }
 
-  /** Campo `shop` do snapshot (SHOP-22): `open` só no estado `shop`; nível e máximo vêm dos modificadores. */
+  /**
+   * Campo `shop` do snapshot (SHOP-22): `open` só no estado `shop`; nível vem dos modificadores ou do `loadout`
+   * (técnica, F5) conforme o `kind` da entrada.
+   */
   private shopSnapshot(): GameSnapshot['shop'] {
     const view = this.shop?.view(this.wallet, this.player.hp, this.player.maxHp);
     return {
@@ -425,8 +452,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       offers: (view?.offers ?? [])
         .filter((o) => o.id !== null)
         .map((o) => {
-          const entry = SHOP_CATALOG.find((e) => e.id === o.id)!;
-          const level = entry.kind === 'modifier' ? this.modifiers.level(entry.id as ModifierId) : 0;
+          const entry = FULL_SHOP_CATALOG.find((e) => e.id === o.id)!;
+          const level =
+            entry.kind === 'modifier'
+              ? this.modifiers.level(entry.id as ModifierId)
+              : entry.kind === 'technique'
+                ? this.loadout.levelOf(entry.id as TechId)
+                : 0;
           return { id: o.id!, level, maxLevel: entry.maxLevel, cost: o.cost!, sold: o.sold, affordable: o.affordable };
         }),
       rerollCost: view?.rerollCost ?? 0,
