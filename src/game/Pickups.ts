@@ -54,13 +54,17 @@ export class Pickups {
     }
   }
 
-  /** Avança todos os pickups vivos; devolve os coletados e os expirados neste frame (removidos da lista). */
-  update(dtMs: number, ctx: { solids: readonly Rect[]; player: PickupPlayer }): PickupUpdateResult {
+  /**
+   * Avança todos os pickups vivos; devolve os coletados e os expirados neste frame (removidos da lista).
+   * `magnetRange` vem de `Modifiers.magnetRange` lido na hora pela cena (MOD-07): sem cache aqui.
+   */
+  update(dtMs: number, ctx: { solids: readonly Rect[]; player: PickupPlayer; magnetRange: number }): PickupUpdateResult {
     const collected: PickupState[] = [];
     const expired: PickupState[] = [];
     const remaining: PickupEntry[] = [];
+    const t = { ...this.t, magnetRange: ctx.magnetRange };
     for (const e of this.entries) {
-      const result: PickupStepResult = stepPickup(e.state, dtMs, { solids: ctx.solids, player: ctx.player, t: this.t });
+      const result: PickupStepResult = stepPickup(e.state, dtMs, { solids: ctx.solids, player: ctx.player, t });
       if (result === 'collected') {
         collected.push(e.state);
         e.sprite.destroy();
@@ -71,7 +75,7 @@ export class Pickups {
         e.sprite.destroy();
         continue;
       }
-      e.sprite.setPosition(e.state.x, e.state.y).setVisible(visible(e.state, this.t));
+      e.sprite.setPosition(e.state.x, e.state.y).setVisible(visible(e.state, t));
       remaining.push(e);
     }
     this.entries = remaining;
