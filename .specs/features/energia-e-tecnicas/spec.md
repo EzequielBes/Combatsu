@@ -506,14 +506,14 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CAST-08 | P1: Conjuração | Specify | Implemented |
 | CAST-09 | P1: Conjuração | Specify | Implemented |
 | CAST-10 | P1: Conjuração | Specify | Implemented |
-| CAST-11 | P1: Conjuração | Specify | Pending |
-| CAST-12 | P1: Conjuração | Specify | Pending |
-| CAST-13 | P1: Conjuração | Specify | Pending |
+| CAST-11 | P1: Conjuração | Specify | Implemented |
+| CAST-12 | P1: Conjuração | Specify | Implemented |
+| CAST-13 | P1: Conjuração | Specify | Implemented |
 | CAST-14 | P1: Conjuração | Specify | Pending |
 | CAST-15 | P1: Conjuração | Specify | Pending |
 | CAST-19 | P1: Conjuração | Specify | Pending |
 | CAST-16 | P1: Conjuração | Specify | Pending |
-| CAST-17 | P1: Conjuração | Specify | Pending |
+| CAST-17 | P1: Conjuração | Specify | Implemented |
 | CAST-18 | P1: Conjuração | Specify | Implemented |
 | CAST-22 | P1: Conjuração | Specify | Implemented |
 | DIV-01 | P1: Punho Divergente | Specify | Implemented |

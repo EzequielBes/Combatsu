@@ -645,19 +645,19 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] CAST-01 conferido: WHEN the player presses a slot key holding a technique with enough energy and no cooldown THEN a cast SHALL start in the `sign` state.
-- [ ] CAST-05 conferido: IF the player presses a slot key and the cursed energy is below the cost THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:energy`.
-- [ ] CAST-06 conferido: IF the player presses a slot key whose cooldown is above 0 THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:cooldown`.
-- [ ] CAST-07 conferido: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end and the cursed energy SHALL keep the value it had before that damage.
-- [ ] CAST-20 conferido: WHEN a cast ends by CAST-07 THEN `events` SHALL get `techCancel`.
-- [ ] CAST-21 conferido: WHEN a cast ends by CAST-07 THEN the slot cooldown SHALL stay 0.
-- [ ] CAST-09 conferido: IF the player presses a slot key while holding a prop, in hitstun, or in the `startup` or `active` phase of a melee attack THEN no cast SHALL start and `events` SHALL get `techDenied:busy`.
-- [ ] CAST-10 conferido: WHEN the player presses a slot key during the `recover` phase of a melee attack, with enough energy and no cooldown for that technique, THEN the melee attack SHALL end and the cast SHALL start in that same frame.
-- [ ] CAST-11 conferido: WHILE the player is airborne in `sign` or `charge`, the gravity applied to the player SHALL be 30% of `PLAYER_MOVE.gravity`.
-- [ ] CAST-12 conferido: WHILE a cast is in `sign`, `charge`, `release` or `recover`, the player SHALL NOT move horizontally from input.
-- [ ] CAST-13 conferido: WHILE a cast is in `sign`, the player sprite SHALL show that technique's sign frame; in `charge` its charge frame; in `release` its release frame; in `recover` its recover frame.
-- [ ] CAST-17 conferido: WHEN a cast enters `release` THEN `events` SHALL get `techCast:<id>`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] CAST-01 conferido: WHEN the player presses a slot key holding a technique with enough energy and no cooldown THEN a cast SHALL start in the `sign` state.
+- [x] CAST-05 conferido: IF the player presses a slot key and the cursed energy is below the cost THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:energy`.
+- [x] CAST-06 conferido: IF the player presses a slot key whose cooldown is above 0 THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:cooldown`.
+- [x] CAST-07 conferido: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end and the cursed energy SHALL keep the value it had before that damage.
+- [x] CAST-20 conferido: WHEN a cast ends by CAST-07 THEN `events` SHALL get `techCancel`.
+- [x] CAST-21 conferido: WHEN a cast ends by CAST-07 THEN the slot cooldown SHALL stay 0.
+- [x] CAST-09 conferido: IF the player presses a slot key while holding a prop, in hitstun, or in the `startup` or `active` phase of a melee attack THEN no cast SHALL start and `events` SHALL get `techDenied:busy`.
+- [x] CAST-10 conferido: WHEN the player presses a slot key during the `recover` phase of a melee attack, with enough energy and no cooldown for that technique, THEN the melee attack SHALL end and the cast SHALL start in that same frame.
+- [x] CAST-11 conferido: WHILE the player is airborne in `sign` or `charge`, the gravity applied to the player SHALL be 30% of `PLAYER_MOVE.gravity`.
+- [x] CAST-12 conferido: WHILE a cast is in `sign`, `charge`, `release` or `recover`, the player SHALL NOT move horizontally from input.
+- [x] CAST-13 conferido: WHILE a cast is in `sign`, the player sprite SHALL show that technique's sign frame; in `charge` its charge frame; in `release` its release frame; in `recover` its recover frame.
+- [x] CAST-17 conferido: WHEN a cast enters `release` THEN `events` SHALL get `techCast:<id>`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build
