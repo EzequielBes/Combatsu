@@ -52,7 +52,7 @@ Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário 
 | Teclas | P1: `1`/`2`/`3` compram a carta, `Enter` continua. P2: `←`/`→` ou `A`/`D` movem a seleção, `J` compra a selecionada, `R` rerola | Mesmo teclado do jogo; `J` já é "confirmar" no título | y |
 | Prévia na carta | `vida`: `Vida máx. 100 → 115`; `forca`: `Dano ×1,0 → ×1,1`; `agilidade`: `Velocidade 220 → 238` (arredondado); `ima`: `Ímã 72 → 94` (arredondado); `sorte`: `Cura 10% → 13%`; `cura`: `Vida 70 → 100` (hp atual → `min(hp + 30, max)`) | O jogador vê o ganho antes de pagar | y |
 | Fim da run | Game over zera todos os níveis de modificador | Upgrades da run são temporários (AD-004) | y |
-| Debug | `?debug&fragments=N` começa a run com N fragmentos | Smoke determinístico sem farmar | y |
+| Debug | `?debug&fragments=N` começa a run com N fragmentos; `?debug&noshop=1` pula a loja (cenários antigos da F1/F3 que atravessam rodadas) | Smoke determinístico sem farmar e sem a varredura apagar pickups acompanhados | y |
 | Painel | Na câmera de UI (AD-003); só cores da `PALETTE` (AD-002); texto em português | Mesmas regras do HUD | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -165,6 +165,7 @@ maxHp: number;
 32. SHOP-21: Each unsold card SHALL show, top to bottom, the name, the level text `Nv <n+1>/<max>` (blank for `cura`), the preview text defined in Assumptions and the cost.
 33. SHOP-22: WHERE the debug mode is on, the snapshot SHALL include the `shop`, `modifiers` and `player.maxHp` fields of the contract above, with `shop.open` true if and only if the run state is `shop`.
 34. SHOP-23: WHERE the debug mode is on and the URL has `fragments=N` with integer N ≥ 0 THEN the wallet SHALL be N when the run starts.
+36. SHOP-47: WHERE the debug mode is on and the URL has `noshop=1` THEN the shop SHALL close in the same update it opens, without crediting or removing any pickup.
 35. SHOP-24: Every color key used by the shop panel (background, card borders and texts) SHALL be a key of `PALETTE`.
 
 **Independent Test**: `shop.test.ts` em Node (elegibilidade nos limites de nível e rodada 5/6 e 3/4, pesos, sem repetição, menos de 3 elegíveis, determinismo por seed, compra com saldo exato e saldo − 1, carta vendida, cura com vida cheia e vida cheia − 1, recálculo após compra); `run.test.ts` (intermissão 2499/2500 ms → `shop`, nada avança em `shop`, `Enter` → `roundActive` com rodada + 1, streams independentes); smoke `shop.smoke.mjs` com `?debug&seed=1&fragments=200` limpa a rodada 1, compra, confere carteira, nível, `player.maxHp` e continua.
@@ -267,8 +268,9 @@ maxHp: number;
 | SHOP-44 | P1: Loja | Specify | Implemented |
 | SHOP-20 | P1: Loja | Specify | Implemented |
 | SHOP-21 | P1: Loja | Specify | Implemented |
-| SHOP-22 | P1: Loja | Specify | Pending |
-| SHOP-23 | P1: Loja | Specify | Pending |
+| SHOP-22 | P1: Loja | Specify | Implemented |
+| SHOP-23 | P1: Loja | Specify | Implemented |
+| SHOP-47 | P1: Loja | Specify | Implemented |
 | SHOP-24 | P1: Loja | Specify | Implemented |
 | SHOP-16 | P2: Reroll | Specify | Implemented |
 | SHOP-25 | P2: Reroll | Specify | Implemented |
@@ -281,7 +283,7 @@ maxHp: number;
 | SHOP-30 | P2: Navegação | Specify | Implemented |
 | SHOP-31 | P2: Navegação | Specify | Implemented |
 
-**Coverage:** 57 total, 0 Verified
+**Coverage:** 58 total, 0 Verified
 
 ---
 

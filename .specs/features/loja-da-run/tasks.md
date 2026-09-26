@@ -431,11 +431,11 @@ T12 → T13 → T14
 
 ### T12: Debug da loja
 
-**What**: `?debug&fragments=N` e campos `shop`, `modifiers`, `player.maxHp` no snapshot.
+**What**: `?debug&fragments=N`, `?debug&noshop=1` e campos `shop`, `modifiers`, `player.maxHp` no snapshot.
 **Where**: `src/game/debugApi.ts`, `src/scenes/TestScene.ts`
 **Depends on**: None (fase 2 inteira)
 **Reuses**: parse de `?round=`
-**Requirement**: SHOP-22, SHOP-23
+**Requirement**: SHOP-22, SHOP-23, SHOP-47
 
 **Tools**:
 
@@ -444,10 +444,11 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Build passa; snapshot mostra os campos
-- [ ] SHOP-22 conferido: WHERE the debug mode is on, the snapshot SHALL include the `shop`, `modifiers` and `player.maxHp` fields of the contract above, with `shop.open` true if and only if the run state is `shop`.
-- [ ] SHOP-23 conferido: WHERE the debug mode is on and the URL has `fragments=N` with integer N ≥ 0 THEN the wallet SHALL be N when the run starts.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Build passa; snapshot mostra os campos
+- [x] SHOP-22 conferido: WHERE the debug mode is on, the snapshot SHALL include the `shop`, `modifiers` and `player.maxHp` fields of the contract above, with `shop.open` true if and only if the run state is `shop`.
+- [x] SHOP-47 conferido: WHERE the debug mode is on and the URL has `noshop=1` THEN the shop SHALL close in the same update it opens, without crediting or removing any pickup.
+- [x] SHOP-23 conferido: WHERE the debug mode is on and the URL has `fragments=N` with integer N ≥ 0 THEN the wallet SHALL be N when the run starts.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none
 **Gate**: build

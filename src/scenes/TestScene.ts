@@ -19,7 +19,7 @@ import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
-import { SHOP_CATALOG } from '../data/shop';
+import { SHOP_CATALOG, type ModifierId } from '../data/shop';
 import {
   ARMED,
   BOSS,
@@ -67,6 +67,12 @@ const WORLD_ZOOM = 1.5;
 const FOLLOW_DEADZONE = { w: 40, h: 24 };
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
 const CONTROLS_MS = 8000;
+
+/** Parâmetro de URL que só vale em `?debug` (SHOP-23, SHOP-47); fora do debug, sempre `null`. */
+function debugParam(name: string): string | null {
+  return isDebug() ? new URLSearchParams(window.location.search).get(name) : null;
+}
+
 /** Input neutro (RUN-08): fora de `roundActive`/`intermission` o player ignora tudo, mas o input continua sendo
  * lido (para não vazar um `JustDown` represado quando a run volta a aceitar). */
 const NEUTRAL_INPUT: InputSnapshot = {
@@ -317,6 +323,23 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.debugEvents.push('shopClose');
   }
 
+  /** Campo `shop` do snapshot (SHOP-22): `open` só no estado `shop`; nível e máximo vêm dos modificadores. */
+  private shopSnapshot(): GameSnapshot['shop'] {
+    const view = this.shop?.view(this.wallet, this.player.hp, this.player.maxHp);
+    return {
+      open: this.run.state === 'shop',
+      offers: (view?.offers ?? [])
+        .filter((o) => o.id !== null)
+        .map((o) => {
+          const entry = SHOP_CATALOG.find((e) => e.id === o.id)!;
+          const level = entry.kind === 'modifier' ? this.modifiers.level(entry.id as ModifierId) : 0;
+          return { id: o.id!, level, maxLevel: entry.maxLevel, cost: o.cost!, sold: o.sold, affordable: o.affordable };
+        }),
+      rerollCost: view?.rerollCost ?? 0,
+      selected: view?.selected ?? 0,
+    };
+  }
+
   /** Seed da run: fixa por `?seed=N` só em `?debug` (design); senão o relógio (runs variadas). */
   private seedForNewRun = (): number => {
     if (isDebug()) {
@@ -358,7 +381,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         if (!isBossRound(cmd.round)) this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
         break;
       case 'shopOpen':
-        this.openShop(cmd.round);
+        // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
+        if (debugParam('noshop') === '1') this.run.closeShop();
+        else this.openShop(cmd.round);
         break;
       case 'gameOver':
         this.hud.setCenter([
@@ -394,6 +419,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.player.resetForRun();
     // ECO-14/27: carteira zerada e nenhum pickup/texto flutuante sobrevive à run anterior.
     this.wallet.reset();
+    // SHOP-23: `?debug&fragments=N` (inteiro >= 0) começa a run com N fragmentos; inválido é ignorado.
+    const startFragments = Number(debugParam('fragments'));
+    if (debugParam('fragments') !== null && Number.isInteger(startFragments)) this.wallet.add(startFragments);
     this.pickups.clear();
     this.floatTexts.clear();
     // ARM-18: nenhuma ferramenta largada sobrevive à run anterior (a cadeira/garrafa do mapa não são drops).
@@ -627,6 +655,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         dead: this.player.dead,
         facing: this.player.facing,
         flash: this.player.activeFlash,
+        maxHp: this.player.maxHp,
       },
       enemies: this.enemies.map((e) => ({
         id: e.id,
@@ -672,6 +701,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
       wallet: { fragments: this.wallet.fragments },
+      shop: this.shopSnapshot(),
+      modifiers: this.modifiers.levels,
       pickups: this.pickups.debug(),
       floatTexts: this.floatTexts.debug(),
       worldProps: this.props.map((p) => ({
