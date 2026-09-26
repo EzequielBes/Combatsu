@@ -4,6 +4,13 @@ import { TILE, type TileVariant } from '../../src/core/level';
 import { TRANSPARENT, parseSheet } from '../../src/core/pixelGrid';
 // Importar no Vitest (Node, sem window) já prova que a paleta não carrega o `phaser` como valor.
 import { ART_SCALE, PALETTE, PALETTE_KEYS } from '../../src/game/art/palette';
+import {
+  ENERGY_BAR_BG_COLOR,
+  ENERGY_BAR_FILL_COLOR,
+  ENERGY_BAR_FLASH_COLOR,
+  ENERGY_BAR_MARK_COLOR,
+  TECH_ICON_OVERLAY_COLOR,
+} from '../../src/game/art/techColors';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
@@ -42,10 +49,10 @@ import {
 import { BOSS, PLAYER_MOVE } from '../../src/data/tuning';
 
 describe('paleta única (ART-01)', () => {
-  it('tem no máximo 32 cores, cada uma com chave de 1 caractere', () => {
+  it('tem no máximo 40 cores, cada uma com chave de 1 caractere', () => {
     const keys = Object.keys(PALETTE);
     expect(keys.length).toBeGreaterThan(0);
-    expect(keys.length).toBeLessThanOrEqual(32);
+    expect(keys.length).toBeLessThanOrEqual(40);
     for (const k of keys) expect([...k]).toHaveLength(1);
   });
 
@@ -71,6 +78,29 @@ describe('paleta única (ART-01)', () => {
 describe('escala de texel (ART-03)', () => {
   it('1 texel de arte = 2 px de mundo', () => {
     expect(ART_SCALE).toBe(2);
+  });
+});
+
+describe('paleta das técnicas (TFX-08)', () => {
+  it('adiciona exatamente as 4 chaves b, R, W e d com os valores do AC', () => {
+    expect(PALETTE.b).toBe(0x050205);
+    expect(PALETTE.R).toBe(0xff3344);
+    expect(PALETTE.W).toBe(0xffffff);
+    expect(PALETTE.d).toBe(0x14307a);
+  });
+});
+
+describe('cores da barra de energia e ícones de slot (TEC-15)', () => {
+  it('preenchimento, fundo, marca, flash e overlay são cores da paleta', () => {
+    for (const c of [
+      ENERGY_BAR_FILL_COLOR,
+      ENERGY_BAR_BG_COLOR,
+      ENERGY_BAR_MARK_COLOR,
+      ENERGY_BAR_FLASH_COLOR,
+      TECH_ICON_OVERLAY_COLOR,
+    ]) {
+      expect(Object.values(PALETTE)).toContain(c);
+    }
   });
 });
 
