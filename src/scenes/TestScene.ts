@@ -272,19 +272,31 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);
     if (input.moveRight) shop.move(1);
     if (input.moveLeft) shop.move(-1);
-    if (input.reroll && !shop.reroll(this.wallet)) this.debugEvents.push('rerollRefused');
+    if (input.reroll) this.resolveReroll(shop);
     if (input.confirm) this.closeShop();
     // T10: o painel acompanha a `view` a cada frame (compra/reroll/movimento mudam custo, seleção, sold...).
     this.shopPanel.update(shop.view(this.wallet, this.player.hp, this.player.maxHp));
+    // T11: o contador de fragmentos do HUD pulsa sozinho quando o valor muda (compra, reroll, varredura ao abrir).
+    this.hud.setFragments(this.wallet.fragments);
   }
 
   /** Traduz o `BuyResult` tipado do `Shop` num evento de debug (design "Error Handling Strategy"). */
   private resolveBuy(shop: Shop, slot: number, ctx: BuyContext): void {
     const offerId = shop.view(ctx.wallet, ctx.hp, ctx.maxHp).offers[slot]?.id ?? null;
     const result = shop.buy(slot, ctx);
-    if (result.ok) this.debugEvents.push(`buy:${result.id}:${result.cost}`);
-    else if (result.reason === 'funds' && offerId) this.debugEvents.push(`buyRefused:${offerId}:funds`);
+    if (result.ok) {
+      this.debugEvents.push(`buy:${result.id}:${result.cost}`);
+      // T11: carta pisca branco e o custo pago sobe em "−N".
+      this.shopPanel.flashBuy(slot, result.cost);
+    } else if (result.reason === 'funds' && offerId) this.debugEvents.push(`buyRefused:${offerId}:funds`);
     else if (result.reason === 'fullHp') this.debugEvents.push('buyRefused:cura:fullHp');
+  }
+
+  /** Reroll (SHOP-16/25/26): paga pelo custo atual antes de sortear, para o "−N" da animação (T11). */
+  private resolveReroll(shop: Shop): void {
+    const cost = shop.rerollCost;
+    if (shop.reroll(this.wallet)) this.shopPanel.flipReroll(cost);
+    else this.debugEvents.push('rerollRefused');
   }
 
   /** Abre a loja (SHOP-01): varre os fragmentos vivos para a carteira e pausa o Matter (SHOP-05/33/36/37). */
