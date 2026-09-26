@@ -66,11 +66,13 @@ export class Loot {
     private readonly rng: Rng,
     private readonly t: EconomyTuning,
     private readonly overrides: LootOverrides = {},
+    /** Chance de cura lida na hora (MOD-08); sem instância, cai no valor fixo de `t.healChance`. */
+    private readonly modifiers?: { healChance: number },
   ) {}
 
-  /** Cura primeiro, depois a quantidade de fragmentos (ECO-02, ECO-03, HEAL-01). */
+  /** Cura primeiro, depois a quantidade de fragmentos (ECO-02, ECO-03, HEAL-01, MOD-08, MOD-12). */
   enemyDrop(round: number, armed: boolean): EnemyDropResult {
-    const healChance = this.overrides.healChance ?? this.t.healChance;
+    const healChance = this.overrides.healChance ?? this.modifiers?.healChance ?? this.t.healChance;
     const heal = this.rng.chance(healChance);
     let fragments = this.rng.int(this.t.fragmentsMin, this.t.fragmentsMax);
     if (armed) fragments += this.t.armedBonus;

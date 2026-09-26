@@ -8,15 +8,18 @@ import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
+import { Modifiers } from '../core/modifiers';
 import type { PickupPlayer } from '../core/pickup';
 import type { PropState } from '../core/props';
 import type { Rng } from '../core/rng';
 import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
+import { Shop, type BuyContext } from '../core/shop';
 import { Wallet } from '../core/wallet';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
+import { SHOP_CATALOG, type ModifierId } from '../data/shop';
 import {
   ARMED,
   BOSS,
@@ -29,6 +32,7 @@ import {
   PICKUP,
   PLAYER_COMBO,
   RUN,
+  SHOP,
   WAVE,
 } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
@@ -43,12 +47,13 @@ import { Enemy } from '../game/Enemy';
 import { Fx, type SparkKind } from '../game/fx';
 import { GAME_NAME, Hud } from '../game/Hud';
 import type { InputSnapshot } from '../game/input';
-import { PlayerInput } from '../game/input';
+import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Pickups } from '../game/Pickups';
 import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
+import { ShopPanel } from '../game/ShopPanel';
 import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
@@ -63,6 +68,12 @@ const WORLD_ZOOM = 1.5;
 const FOLLOW_DEADZONE = { w: 40, h: 24 };
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
 const CONTROLS_MS = 8000;
+
+/** Parâmetro de URL que só vale em `?debug` (SHOP-23, SHOP-47); fora do debug, sempre `null`. */
+function debugParam(name: string): string | null {
+  return isDebug() ? new URLSearchParams(window.location.search).get(name) : null;
+}
+
 /** Input neutro (RUN-08): fora de `roundActive`/`intermission` o player ignora tudo, mas o input continua sendo
  * lido (para não vazar um `JustDown` represado quando a run volta a aceitar). */
 const NEUTRAL_INPUT: InputSnapshot = {
@@ -79,6 +90,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private level!: LevelData;
   private terrain: MatterJS.BodyType[] = [];
   private controls!: PlayerInput;
+  /** Teclas da loja (SHOP-45, SHOP-28..30, SHOP-16, SHOP-03), lidas só com `run.state === 'shop'`. */
+  private shopInput!: ShopInput;
   private player!: Player;
   private enemies: Enemy[] = [];
   /** Só existe numa rodada de chefe (BOSS-01); `null` fora dela ou depois de removido. */
@@ -97,6 +110,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private run!: Run;
   /** Carteira de fragmentos da run (ECO-12..14) e os sorteios de drop, criados a cada `startRun` com o `lootRng`. */
   private wallet!: Wallet;
+  /** Níveis de modificador da run (MOD-01..09): lidos na hora por Player/Pickups/Loot; zerados a cada `startRun`. */
+  private modifiers!: Modifiers;
+  /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
+  private shop: Shop | null = null;
+  /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
+  private shopPanel!: ShopPanel;
   private loot!: Loot;
   private lootRng!: Rng;
   private pickups!: Pickups;
@@ -145,18 +164,21 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     this.run = new Run(RUN, WAVE, this.level.enemies.length, { firstRound: this.firstRoundForDebug() });
     this.wasPlayerDead = false;
+    // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
+    this.modifiers = new Modifiers();
 
     this.props = [];
     for (const s of this.level.props) {
       const def = PROP_DEFS[s.key];
       if (!def) throw new Error(`Objeto sem definição: ${s.key}`);
-      this.props.push(new Prop(this, s.x, s.y, def, (hit, at) => this.onConnect(hit, at, 'prop')));
+      this.props.push(new Prop(this, s.x, s.y, def, this.modifiers, (hit, at) => this.onConnect(hit, at, 'prop')));
     }
 
     this.controls = new PlayerInput(this);
+    this.shopInput = new ShopInput(this);
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
-    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, strike);
+    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
 
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
@@ -178,14 +200,20 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
     // Ferramentas de ajuste (golpes de teste e debug do Matter): só valem no modo debug.
     bindDebugToggle(this);
-    this.onKey('ONE', () => isDebug() && this.debugHit('light'));
-    this.onKey('TWO', () => isDebug() && this.debugHit('heavy'));
-    this.onKey('THREE', () => isDebug() && this.player.debugKill());
+    // Na loja, 1/2/3 compram (SHOP-45) e nunca disparam as teclas de debug.
+    const debugKeys = (): boolean => isDebug() && this.run.state !== 'shop';
+    this.onKey('ONE', () => debugKeys() && this.debugHit('light'));
+    this.onKey('TWO', () => debugKeys() && this.debugHit('heavy'));
+    this.onKey('THREE', () => debugKeys() && this.player.debugKill());
     // Tecla 4 (só debug): 50 de dano no player, para o smoke medir a cura da vitória abaixo do teto (BWIN-01).
-    this.onKey('FOUR', () => isDebug() && this.player.debugHurt(50));
+    this.onKey('FOUR', () => debugKeys() && this.player.debugHurt(50));
     this.onKey('H', () => isDebug() && this.toggleDebugDraw());
-    this.onKey('R', () => this.scene.restart());
+    // Fora da loja, R reinicia a cena; dentro dela é reroll (SHOP-16), lido por `ShopInput` no `update`.
+    this.onKey('R', () => {
+      if (this.run.state !== 'shop') this.scene.restart();
+    });
     this.addHud();
+    this.shopPanel = new ShopPanel(this, this.uiLayer);
   }
 
   update(_time: number, delta: number): void {
@@ -194,38 +222,134 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
     const dt = Math.min(delta, MAX_FRAME_MS);
-    // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
-    const raw = this.controls.read();
-    this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
-    this.updatePickups(dt);
-    // Morte do player (RUN-04): só a transição para morto conta, uma vez.
-    if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
-    this.wasPlayerDead = this.player.dead;
-    for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
-    this.boss?.update(dt, this.player.sprite.x);
-    if (this.bossDefeatedPending) {
-      this.boss?.destroyNow();
-      this.boss = null;
-      this.bossDefeatedPending = false;
-    }
-    if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
-    if (this.clearedBanner) {
-      this.clearedBanner.afterMs -= dt;
-      if (this.clearedBanner.afterMs <= 0) {
-        if (this.run.state === 'intermission') this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
-        this.clearedBanner = null;
+    // SHOP-33: na loja, nada de gameplay anda; só o input da loja, `run.update`, o painel e o HUD.
+    if (this.run.state === 'shop') {
+      this.updateShop();
+    } else {
+      // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
+      const raw = this.controls.read();
+      this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+      this.updatePickups(dt);
+      // Morte do player (RUN-04): só a transição para morto conta, uma vez.
+      if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
+      this.wasPlayerDead = this.player.dead;
+      for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
+      this.boss?.update(dt, this.player.sprite.x);
+      if (this.bossDefeatedPending) {
+        this.boss?.destroyNow();
+        this.boss = null;
+        this.bossDefeatedPending = false;
       }
+      if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
+      if (this.clearedBanner) {
+        this.clearedBanner.afterMs -= dt;
+        if (this.clearedBanner.afterMs <= 0) {
+          if (this.run.state === 'intermission') this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
+          this.clearedBanner = null;
+        }
+      }
+      for (const proj of this.projectiles) proj.update(dt);
+      this.projectiles = this.projectiles.filter((proj) => !proj.removed);
+      for (const prop of this.props) prop.update(dt);
+      this.updateDroppedTools(dt);
+      this.props = this.props.filter((prop) => !prop.isGone);
     }
-    for (const proj of this.projectiles) proj.update(dt);
-    this.projectiles = this.projectiles.filter((proj) => !proj.removed);
-    for (const prop of this.props) prop.update(dt);
-    this.updateDroppedTools(dt);
-    this.props = this.props.filter((prop) => !prop.isGone);
     for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
     this.hud.setRun(this.run.round > 0 ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
+  }
+
+  /**
+   * Loja aberta (SHOP-45, SHOP-28..30, SHOP-16/26, SHOP-03): traduz `ShopInput` em ações do `Shop` e eventos de
+   * debug. `run.closeShop()` só arma o pedido; o `run.update` logo depois, no chamador, resolve a troca de rodada.
+   */
+  private updateShop(): void {
+    const shop = this.shop;
+    if (!shop) return;
+    const input = this.shopInput.read();
+    const ctx: BuyContext = {
+      wallet: this.wallet,
+      hp: this.player.hp,
+      maxHp: this.player.maxHp,
+      applyModifier: (id) => {
+        const applied = this.modifiers.apply(id);
+        // MOD-04/MOD-11: `vida` sobe o teto real do player e cura os mesmos 15.
+        if (applied && id === 'vida') {
+          this.player.setMaxHp(this.modifiers.maxHp);
+          this.player.heal(SHOP.vidaPerLevel);
+        }
+        return applied;
+      },
+      // SHOP-12/MOD-11: cura (consumível) e o +15 de HP da compra de `vida` passam pelo mesmo `heal` com teto.
+      healPlayer: (amount) => this.player.heal(amount),
+    };
+    if (input.buySlot !== null) this.resolveBuy(shop, input.buySlot, ctx);
+    else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);
+    if (input.moveRight) shop.move(1);
+    if (input.moveLeft) shop.move(-1);
+    if (input.reroll) this.resolveReroll(shop);
+    if (input.confirm) this.closeShop();
+    // T10: o painel acompanha a `view` a cada frame (compra/reroll/movimento mudam custo, seleção, sold...).
+    this.shopPanel.update(shop.view(this.wallet, this.player.hp, this.player.maxHp));
+    // T11: o contador de fragmentos do HUD pulsa sozinho quando o valor muda (compra, reroll, varredura ao abrir).
+    this.hud.setFragments(this.wallet.fragments);
+  }
+
+  /** Traduz o `BuyResult` tipado do `Shop` num evento de debug (design "Error Handling Strategy"). */
+  private resolveBuy(shop: Shop, slot: number, ctx: BuyContext): void {
+    const offerId = shop.view(ctx.wallet, ctx.hp, ctx.maxHp).offers[slot]?.id ?? null;
+    const result = shop.buy(slot, ctx);
+    if (result.ok) {
+      this.debugEvents.push(`buy:${result.id}:${result.cost}`);
+      // T11: carta pisca branco e o custo pago sobe em "−N".
+      this.shopPanel.flashBuy(slot, result.cost);
+    } else if (result.reason === 'funds' && offerId) this.debugEvents.push(`buyRefused:${offerId}:funds`);
+    else if (result.reason === 'fullHp') this.debugEvents.push('buyRefused:cura:fullHp');
+  }
+
+  /** Reroll (SHOP-16/25/26): paga pelo custo atual antes de sortear, para o "−N" da animação (T11). */
+  private resolveReroll(shop: Shop): void {
+    const cost = shop.rerollCost;
+    if (shop.reroll(this.wallet)) this.shopPanel.flipReroll(cost);
+    else this.debugEvents.push('rerollRefused');
+  }
+
+  /** Abre a loja (SHOP-01): varre os fragmentos vivos para a carteira e pausa o Matter (SHOP-05/33/36/37). */
+  private openShop(round: number): void {
+    this.wallet.add(this.pickups.collectFragments());
+    this.matter.world.pause();
+    this.shop = new Shop(SHOP_CATALOG, this.modifiers, this.run.shopRng!, round);
+    this.shopPanel.show(this.shop.view(this.wallet, this.player.hp, this.player.maxHp));
+    this.debugEvents.push(`shopOpen:${round}`);
+  }
+
+  /** Fecha a loja (SHOP-03/35): arma o pedido na `Run`, retoma o Matter e limpa a loja. */
+  private closeShop(): void {
+    this.run.closeShop();
+    this.matter.world.resume();
+    this.shop = null;
+    this.shopPanel.hide();
+    this.debugEvents.push('shopClose');
+  }
+
+  /** Campo `shop` do snapshot (SHOP-22): `open` só no estado `shop`; nível e máximo vêm dos modificadores. */
+  private shopSnapshot(): GameSnapshot['shop'] {
+    const view = this.shop?.view(this.wallet, this.player.hp, this.player.maxHp);
+    return {
+      open: this.run.state === 'shop',
+      offers: (view?.offers ?? [])
+        .filter((o) => o.id !== null)
+        .map((o) => {
+          const entry = SHOP_CATALOG.find((e) => e.id === o.id)!;
+          const level = entry.kind === 'modifier' ? this.modifiers.level(entry.id as ModifierId) : 0;
+          return { id: o.id!, level, maxLevel: entry.maxLevel, cost: o.cost!, sold: o.sold, affordable: o.affordable };
+        }),
+      rerollCost: view?.rerollCost ?? 0,
+      selected: view?.selected ?? 0,
+      panel: this.shop ? this.shopPanel.debug() : null,
+    };
   }
 
   /** Seed da run: fixa por `?seed=N` só em `?debug` (design); senão o relógio (runs variadas). */
@@ -268,6 +392,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         // que o `onBossDefeated` já mostrou (BHUD-03).
         if (!isBossRound(cmd.round)) this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
         break;
+      case 'shopOpen':
+        // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
+        if (debugParam('noshop') === '1') this.run.closeShop();
+        else this.openShop(cmd.round);
+        break;
       case 'gameOver':
         this.hud.setCenter([
           `Rodada alcançada: ${cmd.round}`,
@@ -291,21 +420,31 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.boss = null;
     this.bossDefeatedPending = false;
     this.clearedBanner = null;
+    // Higiene: uma loja não deveria sobreviver a um game over (gameOver só sai de roundActive/intermission), mas
+    // uma run nova nunca deve carregar a loja da anterior.
+    if (this.shop) this.matter.world.resume();
+    this.shop = null;
+    this.shopPanel.hide();
     this.hud.hideBossBar();
     for (const proj of this.projectiles) proj.destroyNow();
     this.projectiles = [];
     this.player.resetForRun();
     // ECO-14/27: carteira zerada e nenhum pickup/texto flutuante sobrevive à run anterior.
     this.wallet.reset();
+    // SHOP-23: `?debug&fragments=N` (inteiro >= 0) começa a run com N fragmentos; inválido é ignorado.
+    const startFragments = Number(debugParam('fragments'));
+    if (debugParam('fragments') !== null && Number.isInteger(startFragments)) this.wallet.add(startFragments);
     this.pickups.clear();
     this.floatTexts.clear();
     // ARM-18: nenhuma ferramenta largada sobrevive à run anterior (a cadeira/garrafa do mapa não são drops).
     for (const prop of this.props) if (isDroppedTool(prop.def.key)) prop.destroyNow();
     this.props = this.props.filter((prop) => !prop.isGone);
     this.droppedTools.clear();
+    // MOD-01/MOD-10: upgrades da run anterior não sobrevivem (AD-004).
+    this.modifiers.reset();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
     this.lootRng = this.run.lootRng!;
-    this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides());
+    this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides(), this.modifiers);
   }
 
   /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
@@ -337,7 +476,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       alive: !this.player.dead,
       canHeal: this.player.hp < this.player.maxHp,
     };
-    const { collected, expired } = this.pickups.update(dtMs, { solids: this.level.solids, player });
+    const { collected, expired } = this.pickups.update(dtMs, {
+      solids: this.level.solids,
+      player,
+      magnetRange: this.modifiers.magnetRange,
+    });
     for (const p of collected) this.onPickupCollected(p);
     for (let i = 0; i < expired.length; i++) this.debugEvents.push('pickupExpired');
     this.floatTexts.update(dtMs);
@@ -379,7 +522,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    */
   private dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
     const def = rare ? rareDef(TOOL_DEFS[tool]) : TOOL_DEFS[tool];
-    const prop = new Prop(this, x, y, def, (hit, at) => this.onConnect(hit, at, 'prop'), rare);
+    const prop = new Prop(this, x, y, def, this.modifiers, (hit, at) => this.onConnect(hit, at, 'prop'), rare);
     const evictId = this.droppedTools.admit(prop.id, this.toolStates());
     if (evictId !== null) {
       this.props.find((p) => p.id === evictId)?.destroyNow();
@@ -524,6 +667,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         dead: this.player.dead,
         facing: this.player.facing,
         flash: this.player.activeFlash,
+        maxHp: this.player.maxHp,
       },
       enemies: this.enemies.map((e) => ({
         id: e.id,
@@ -569,6 +713,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
       wallet: { fragments: this.wallet.fragments },
+      shop: this.shopSnapshot(),
+      modifiers: this.modifiers.levels,
       pickups: this.pickups.debug(),
       floatTexts: this.floatTexts.debug(),
       worldProps: this.props.map((p) => ({

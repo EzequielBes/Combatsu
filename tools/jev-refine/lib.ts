@@ -156,7 +156,25 @@ export async function askWithRetry(
   fetchFn: typeof fetch,
   sleepFn: (ms: number) => Promise<void>,
 ): Promise<AcResult> {
-  const body = JSON.stringify(buildRequest(ac));
+  const r = await postWithRetry(buildRequest(ac), key, fetchFn, sleepFn);
+  if ('error' in r) return r;
+  const answers = r.answers as Record<string, { noul: number; score: number }>;
+  return {
+    ambiguous: answers.ambiguous.noul,
+    bundled: answers.bundled.noul,
+    testable: answers.testable.noul,
+    precision: answers.precision.score,
+  };
+}
+
+/** POST ao Jev com a mesma política de retry e de sigilo da chave de `askWithRetry`; devolve `answers` cru. */
+export async function postWithRetry(
+  request: object,
+  key: string,
+  fetchFn: typeof fetch,
+  sleepFn: (ms: number) => Promise<void>,
+): Promise<{ answers: Record<string, unknown> } | { error: string }> {
+  const body = JSON.stringify(request);
   for (let attempt = 0; ; attempt++) {
     const res = await fetchFn(ENDPOINT, {
       method: 'POST',
@@ -165,12 +183,7 @@ export async function askWithRetry(
     });
     if (res.ok) {
       const { answers } = await res.json();
-      return {
-        ambiguous: answers.ambiguous.noul,
-        bundled: answers.bundled.noul,
-        testable: answers.testable.noul,
-        precision: answers.precision.score,
-      };
+      return { answers };
     }
     if (res.status === 401 || res.status === 422) {
       throw new JevAuthError(res.status, (await res.text()).split(key).join('***'));

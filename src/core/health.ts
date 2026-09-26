@@ -17,13 +17,15 @@ export type HealthEvent = 'staggerEnd' | 'invulnEnd' | 'respawn';
  */
 export class Health {
   private _hp: number;
+  private _maxHp: number;
   private invulnTimer = 0;
   private staggerTimer = 0;
   private respawnTimer = 0;
   private _dead = false;
 
   constructor(private readonly t: HealthTuning) {
-    this._hp = t.maxHp;
+    this._maxHp = t.maxHp;
+    this._hp = this._maxHp;
   }
 
   get hp(): number {
@@ -31,7 +33,16 @@ export class Health {
   }
 
   get max(): number {
-    return this.t.maxHp;
+    return this._maxHp;
+  }
+
+  /**
+   * Muda o teto de vida sem curar (MOD-04): `hp` é recortado para o novo teto quando ele desce; um teto maior
+   * só passa a valer numa cura seguinte (MOD-11 aplica `setMax` e depois `heal` em dois passos).
+   */
+  setMax(n: number): void {
+    this._maxHp = n;
+    this._hp = Math.min(this._hp, this._maxHp);
   }
 
   get invulnerable(): boolean {
@@ -68,13 +79,15 @@ export class Health {
   heal(n: number): number {
     if (this._dead || !Number.isFinite(n) || n <= 0) return 0;
     const before = this._hp;
-    this._hp = Math.min(this.t.maxHp, this._hp + n);
+    this._hp = Math.min(this._maxHp, this._hp + n);
     return this._hp - before;
   }
 
-  /** Volta ao hp cheio, vivo, sem invulnerabilidade, atordoamento nem respawn pendente (RUN-02, RUN-05). */
+  /** Volta ao teto e ao hp da tuning original, vivo, sem invulnerabilidade, atordoamento nem respawn pendente
+   * (RUN-02, RUN-05, MOD-10): uma run nova começa sem os modificadores da run anterior. */
   reset(): void {
-    this._hp = this.t.maxHp;
+    this._maxHp = this.t.maxHp;
+    this._hp = this._maxHp;
     this._dead = false;
     this.invulnTimer = 0;
     this.staggerTimer = 0;
@@ -87,7 +100,7 @@ export class Health {
       this.respawnTimer -= dtMs;
       if (this.respawnTimer <= 0) {
         this._dead = false;
-        this._hp = this.t.maxHp;
+        this._hp = this._maxHp;
         events.push('respawn');
       }
       return events;

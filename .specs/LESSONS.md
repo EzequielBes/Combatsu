@@ -198,6 +198,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: scripts/smoke/heal.smoke.mjs HEAL-04/HEAL-05 (smoke determinism)
 - last seen: 2026-09-25T23:00:31Z
 
+### L-032 - When a stat modifier changes a ceiling (max HP, max resource) that a live entity object owns, wire the setter into that entity on every level-up, not only into an isolated pure formula getter that no runtime code calls.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `core` · harmful: 0
+- features: loja-da-run
+- evidence: MOD-04,MOD-11 (core)
+- last seen: 2026-09-26T19:43:48Z
+
+### L-033 - Expose rendered UI text/state (status labels, dynamic hint strings, selection highlight) on the debug snapshot so smoke tests can assert it, instead of leaving it verifiable only by eye.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `game-ui` · harmful: 0
+- features: loja-da-run
+- evidence: SHOP-38,SHOP-46,SHOP-31,SHOP-42 (game-ui)
+- last seen: 2026-09-26T19:43:48Z
+
+### L-034 - A debug bypass flag (?debug&noX=1) needs its own dedicated before/after assertion proving the bypassed effect did not happen, not just reliance on other scenarios that merely avoid triggering it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `debug-api` · harmful: 0
+- features: loja-da-run
+- evidence: SHOP-47 (debug-api)
+- last seen: 2026-09-26T19:43:49Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
