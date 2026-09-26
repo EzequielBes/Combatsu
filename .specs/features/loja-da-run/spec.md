@@ -177,12 +177,15 @@ maxHp: number;
 
 **Why P2**: Agência extra; a loja funciona sem ele.
 
+**Direção de feel**: as 3 cartas viram de costas e voltam com as ofertas novas em 150 ms, um "−N" sobe da dica e o novo custo aparece na dica.
+
 **Acceptance Criteria**:
 
 1. SHOP-16: WHEN `R` is pressed in the shop and the reroll cost ≤ the wallet count THEN the wallet SHALL decrease by the reroll cost and 3 new offers SHALL be drawn by SHOP-08 rules.
 2. SHOP-25: WHEN a reroll happens THEN the reroll cost of that shop SHALL increase by 5.
 3. SHOP-17: WHEN a shop opens THEN its reroll cost SHALL be 5.
 4. SHOP-26: IF `R` is pressed with the reroll cost greater than the wallet count THEN nothing SHALL change and `events` SHALL get `rerollRefused`.
+5. SHOP-46: WHEN a reroll happens THEN the hint line SHALL show `R rerolar (<c>)`, where `c` is the new reroll cost.
 
 **Independent Test**: `shop.test.ts` (custo 5 → 10 → 15, saldo exato e saldo − 1, volta a 5 na loja seguinte); smoke com `fragments=200` rerola e confere `rerollCost`.
 
@@ -271,13 +274,14 @@ maxHp: number;
 | SHOP-25 | P2: Reroll | Specify | Pending |
 | SHOP-17 | P2: Reroll | Specify | Pending |
 | SHOP-26 | P2: Reroll | Specify | Pending |
+| SHOP-46 | P2: Reroll | Specify | Pending |
 | SHOP-27 | P2: Navegação | Specify | Pending |
 | SHOP-28 | P2: Navegação | Specify | Pending |
 | SHOP-29 | P2: Navegação | Specify | Pending |
 | SHOP-30 | P2: Navegação | Specify | Pending |
 | SHOP-31 | P2: Navegação | Specify | Pending |
 
-**Coverage:** 56 total, 0 Verified
+**Coverage:** 57 total, 0 Verified
 
 ---
 
