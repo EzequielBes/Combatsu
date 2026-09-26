@@ -284,6 +284,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       },
       // SHOP-12/MOD-11: cura (consumível) e o +15 de HP da compra de `vida` passam pelo mesmo `heal` com teto.
       healPlayer: (amount) => this.player.heal(amount),
+      // F5 (provisório até T21): a cena ainda não tem loadout de técnicas nem oferece técnicas na loja
+      // (`Shop` é criada sem `loadout`, então nenhuma oferta é `kind: 'technique'`); stub só para compilar.
+      applyTechnique: () => {},
     };
     if (input.buySlot !== null) this.resolveBuy(shop, input.buySlot, ctx);
     else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);

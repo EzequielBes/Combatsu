@@ -477,23 +477,23 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TEC-08 | P1: Energia e slots | Specify | Pending |
 | TEC-11 | P1: Energia e slots | Specify | Pending |
 | TEC-15 | P1: Energia e slots | Specify | Pending |
-| TSH-01 | P1: Técnicas na loja | Specify | Pending |
-| TSH-02 | P1: Técnicas na loja | Specify | Pending |
-| TSH-03 | P1: Técnicas na loja | Specify | Pending |
-| TSH-04 | P1: Técnicas na loja | Specify | Pending |
-| TSH-05 | P1: Técnicas na loja | Specify | Pending |
-| TSH-06 | P1: Técnicas na loja | Specify | Pending |
-| TSH-07 | P1: Técnicas na loja | Specify | Pending |
-| TSH-08 | P1: Técnicas na loja | Specify | Pending |
-| TSH-09 | P1: Técnicas na loja | Specify | Pending |
+| TSH-01 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-02 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-03 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-04 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-05 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-06 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-07 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-08 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-09 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-10 | P1: Técnicas na loja | Specify | Pending |
 | TSH-11 | P1: Técnicas na loja | Specify | Pending |
-| TSH-12 | P1: Técnicas na loja | Specify | Pending |
-| TSH-13 | P1: Técnicas na loja | Specify | Pending |
+| TSH-12 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-13 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-14 | P1: Técnicas na loja | Specify | Pending |
-| TSH-15 | P1: Técnicas na loja | Specify | Pending |
-| TSH-16 | P1: Técnicas na loja | Specify | Pending |
-| TSH-17 | P1: Técnicas na loja | Specify | Pending |
+| TSH-15 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-16 | P1: Técnicas na loja | Specify | Implemented |
+| TSH-17 | P1: Técnicas na loja | Specify | Implemented |
 | CAST-01 | P1: Conjuração | Specify | Implemented |
 | CAST-02 | P1: Conjuração | Specify | Implemented |
 | CAST-03 | P1: Conjuração | Specify | Implemented |

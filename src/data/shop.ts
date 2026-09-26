@@ -1,10 +1,16 @@
+import type { TechId } from './techniques';
+
 /**
  * Catálogo da loja (SHOP-06..09, SHOP-18, MOD-03, MOD-09): dirigido por dados para a F5 acrescentar um `kind`
  * novo (técnicas, upgrades de energia) sem mudar a lógica de elegibilidade, sorteio ou compra.
  */
-export type ShopEntryKind = 'modifier' | 'consumable';
-export type ModifierId = 'vida' | 'forca' | 'agilidade' | 'ima' | 'sorte';
-export type ShopEntryId = ModifierId | 'cura';
+export type ShopEntryKind = 'modifier' | 'consumable' | 'technique';
+/** Os 5 modificadores da F4 (loja-da-run). */
+export type CoreModifierId = 'vida' | 'forca' | 'agilidade' | 'ima' | 'sorte';
+/** Upgrades de energia amaldiçoada da F5 (TSH-08, TSH-15): rastreados à parte dos 5 da F4 em `Modifiers`. */
+export type EnergyModifierId = 'energia' | 'fluxo';
+export type ModifierId = CoreModifierId | EnergyModifierId;
+export type ShopEntryId = ModifierId | 'cura' | TechId;
 
 export interface ShopEntryCost {
   base: number;
@@ -92,3 +98,86 @@ export const SHOP_CATALOG: readonly ShopEntry[] = [
     minRound: alwaysOpen,
   },
 ];
+
+/**
+ * Rodada mínima do próximo nível de uma técnica (TSH-04, AD-005): nível 2 exige rodada ≥ 3, nível 3 exige
+ * rodada ≥ 6.
+ */
+const techGate = (nextLevel: number): number => {
+  if (nextLevel >= 3) return 6;
+  if (nextLevel >= 2) return 3;
+  return 1;
+};
+
+/**
+ * Técnicas na loja (TSH-01, TSH-02): Punho Divergente e Desmantelar comuns, Azul e Vermelho raras; custo
+ * `base + step × nível atual` (0 se não equipada).
+ */
+export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
+  {
+    id: 'divergente',
+    kind: 'technique',
+    rarity: 'common',
+    name: 'Punho Divergente',
+    maxLevel: 3,
+    cost: { base: 20, step: 15 },
+    minRound: techGate,
+  },
+  {
+    id: 'corte',
+    kind: 'technique',
+    rarity: 'common',
+    name: 'Desmantelar',
+    maxLevel: 3,
+    cost: { base: 30, step: 15 },
+    minRound: techGate,
+  },
+  {
+    id: 'azul',
+    kind: 'technique',
+    rarity: 'rare',
+    name: 'Azul',
+    maxLevel: 3,
+    cost: { base: 35, step: 20 },
+    minRound: techGate,
+  },
+  {
+    id: 'vermelho',
+    kind: 'technique',
+    rarity: 'rare',
+    name: 'Reversão de Técnica: Vermelho',
+    maxLevel: 3,
+    cost: { base: 40, step: 20 },
+    minRound: techGate,
+  },
+];
+
+/** Upgrades de energia amaldiçoada na loja (TSH-08, TSH-15): só entram no pool com alguma técnica equipada (TSH-09). */
+export const ENERGY_SHOP_ENTRIES: readonly ShopEntry[] = [
+  {
+    id: 'energia',
+    kind: 'modifier',
+    rarity: 'common',
+    name: 'Energia',
+    maxLevel: 5,
+    cost: { base: 10, step: 6 },
+    minRound: alwaysOpen,
+  },
+  {
+    id: 'fluxo',
+    kind: 'modifier',
+    rarity: 'common',
+    name: 'Fluxo',
+    maxLevel: 4,
+    cost: { base: 12, step: 6 },
+    minRound: alwaysOpen,
+  },
+];
+
+/**
+ * Catálogo completo com técnicas e energia (F5, TSH-01). `SHOP_CATALOG` continua só com os itens da F4 —
+ * SPEC_DEVIATION: `tests/data/shop.test.ts` fixa `SHOP_CATALOG.map(e => e.id)` por igualdade exata (F4); acrescentar
+ * as técnicas ali quebraria essa asserção sem necessidade, já que `eligible`/`Shop` aceitam qualquer catálogo.
+ * `FULL_SHOP_CATALOG` é o catálogo que a loja usa a partir da F5.
+ */
+export const FULL_SHOP_CATALOG: readonly ShopEntry[] = [...SHOP_CATALOG, ...TECHNIQUE_SHOP_ENTRIES, ...ENERGY_SHOP_ENTRIES];
