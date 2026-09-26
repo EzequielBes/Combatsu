@@ -84,6 +84,8 @@ export interface GameSnapshot {
     heldItem: { name: string; pips: number; maxPips: number } | null;
     /** Barra de energia e ícones de slot na `uiLayer` (TEC-11). */
     techIgnoredByMain: boolean;
+    /** Chamada da conjuração (CAST-16), `null` fora da janela de 900 ms. */
+    callout: { id: TechId; name: string } | null;
     /** Estado vivo da barra de energia e dos ícones de slot (TEC-07/09/10/12). */
     energy: {
       width: number;
@@ -125,6 +127,12 @@ export interface GameSnapshot {
     ];
     cast: { slot: 0 | 1; id: TechId; state: CastState; elapsedMs: number } | null;
   };
+  /** Janela e zona do Kokusen (KOK-*); placeholder até a Fase 5 (T22+) implementar o Kokusen de verdade. */
+  kokusen: { zone: boolean; zoneMs: number; streak: number; windowOpen: boolean };
+  /** Orbes vivos (RED-14, BLU-*); placeholder `[]` até a Fase 5 criar orbes de verdade. */
+  techObjects: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[];
+  /** Camadas de efeito de técnica vivas (TFX-*), lidas do `FxTimeline`/`FxRegistry` da cena. */
+  fx: { live: number; degraded: boolean; layers: string[] };
 }
 
 export interface DebugProbe {

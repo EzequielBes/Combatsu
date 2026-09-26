@@ -55,6 +55,7 @@ describe('installDebugApi', () => {
         heldItem: null,
         techIgnoredByMain: true,
         energy: { width: 104, fillWidth: 104, marks: [null, null], icons: [{ cooldownOverlayHeight: 0 }, { cooldownOverlayHeight: 0 }], flashing: false },
+        callout: null,
       },
       hitstop: { frozen: false, remainingMs: 0 },
       wallet: { fragments: 4 },
@@ -65,6 +66,9 @@ describe('installDebugApi', () => {
       worldProps: [{ id: 2, key: 'cursedKnife', state: 'rest', x: 90, y: 100, durabilityLeft: 6, rare: false, vx: 0 }],
       ce: { cur: 100, max: 100, regen: 8 },
       tech: { slots: [null, null], cast: null },
+      kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
+      techObjects: [],
+      fx: { live: 0, degraded: false, layers: [] },
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};
