@@ -58,6 +58,7 @@ import { Pickups } from '../game/Pickups';
 import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
 import { ShopPanel } from '../game/ShopPanel';
+import { TechCaster } from '../game/TechCaster';
 import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
@@ -122,6 +123,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private energy!: CursedEnergy;
   /** Slots de técnica (TEC-01..06), vazios a cada `startRun` (ou `?debug&tech=`, TEC-02). */
   private loadout!: Loadout;
+  /** Conjuração de técnicas (CAST-*), dona da `CastMachine` e dos ganchos do `Player`. */
+  private techCaster!: TechCaster;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
   private shop: Shop | null = null;
   /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
@@ -193,6 +196,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
+    this.techCaster = new TechCaster(this, this.player, this.energy, this.loadout);
 
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
     this.wallet = new Wallet();
@@ -242,11 +246,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
       const raw = this.controls.read();
       this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+      this.techCaster.update(dt);
+      this.debugEvents.push(...this.techCaster.events);
+      // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
+      if (this.techCaster.events.includes('techDenied:energy')) this.energyHud.flashDenied();
       // TSH-10/11: níveis de `energia`/`fluxo` lidos na hora, sem cache (mesmo padrão de `modifiers.runSpeed`).
       this.energy.setLevels(this.modifiers.level('energia'), this.modifiers.level('fluxo'));
       this.loadout.tick(dt);
-      // CE-04/05: T19 troca `false` por `techCaster.inProgress` (energia não regenera durante a conjuração).
-      this.energy.update(dt, false);
+      // CE-04/05: sem regen enquanto há uma conjuração em andamento.
+      this.energy.update(dt, this.techCaster.cast !== null);
       this.updatePickups(dt);
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
@@ -773,12 +781,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     };
   }
 
-  /** `tech` do snapshot (TEC-08): slots do loadout; T19 acrescenta a conjuração ativa em `cast`. */
+  /** `tech` do snapshot (TEC-08): slots do loadout e a conjuração ativa (CAST-*). */
   private techSnapshot(): GameSnapshot['tech'] {
     const [s0, s1] = this.loadout.slotsView;
     const slotView = (slot: 0 | 1, s: { id: TechId; level: 1 | 2 | 3 } | null) =>
       s ? { id: s.id, level: s.level, cooldownMs: this.loadout.cooldownOf(slot) } : null;
-    return { slots: [slotView(0, s0), slotView(1, s1)], cast: null };
+    return { slots: [slotView(0, s0), slotView(1, s1)], cast: this.techCaster.cast };
   }
 
   /**
