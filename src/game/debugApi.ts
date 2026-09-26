@@ -82,6 +82,17 @@ export interface GameSnapshot {
     fragments: string;
     /** Objeto na mão (ITEM-01..03), `null` de mãos vazias. */
     heldItem: { name: string; pips: number; maxPips: number } | null;
+    /** Barra de energia e ícones de slot na `uiLayer` (TEC-11). */
+    techIgnoredByMain: boolean;
+    /** Estado vivo da barra de energia e dos ícones de slot (TEC-07/09/10/12). */
+    energy: {
+      width: number;
+      fillWidth: number;
+      /** Offset (px) da marca de custo a partir do início da barra; `null` sem técnica no slot (TEC-12). */
+      marks: (number | null)[];
+      icons: { cooldownOverlayHeight: number }[];
+      flashing: boolean;
+    };
   };
   /** Estado do hitstop (BWIN-02). */
   hitstop: { frozen: boolean; remainingMs: number };

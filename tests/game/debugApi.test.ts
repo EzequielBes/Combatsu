@@ -53,6 +53,8 @@ describe('installDebugApi', () => {
         bossBarIgnoredByMain: true,
         fragments: '4',
         heldItem: null,
+        techIgnoredByMain: true,
+        energy: { width: 104, fillWidth: 104, marks: [null, null], icons: [{ cooldownOverlayHeight: 0 }, { cooldownOverlayHeight: 0 }], flashing: false },
       },
       hitstop: { frozen: false, remainingMs: 0 },
       wallet: { fragments: 4 },
