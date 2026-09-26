@@ -592,11 +592,11 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | BLU-09 | P2: Azul | Specify | Pending |
 | BLU-10 | P2: Azul | Specify | Pending |
 | CUT-01 | P2: Desmantelar | Specify | Implemented |
-| CUT-02 | P2: Desmantelar | Specify | Pending |
-| CUT-03 | P2: Desmantelar | Specify | Pending |
+| CUT-02 | P2: Desmantelar | Specify | Implemented |
+| CUT-03 | P2: Desmantelar | Specify | Implemented |
 | CUT-04 | P2: Desmantelar | Specify | Pending |
 | CUT-08 | P2: Desmantelar | Specify | Pending |
-| CUT-05 | P2: Desmantelar | Specify | Pending |
+| CUT-05 | P2: Desmantelar | Specify | Implemented |
 | CUT-06 | P2: Desmantelar | Specify | Pending |
 | FXL-01 | P2: Laboratório de efeitos | Specify | Pending |
 | FXL-05 | P2: Laboratório de efeitos | Specify | Pending |

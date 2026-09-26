@@ -448,11 +448,11 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Área 59/60 e 180/181 px
-- [ ] CUT-02 conferido: WHEN the Desmantelar enters `release` THEN it SHALL make 3 cuts, at 0, 60 and 120 ms after entering `release`.
-- [ ] CUT-03 conferido: WHEN a cut happens THEN every enemy and the boss whose body overlaps the rectangle from 60 to 180 px ahead of the player center and 48 px tall centered on it SHALL take 10 light damage.
-- [ ] CUT-05 conferido: The 3 cut lines of one cast SHALL be at 20°, −25° and 70° from the horizontal, in cut order, mirrored horizontally when the player faces left.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Área 59/60 e 180/181 px
+- [x] CUT-02 conferido: WHEN the Desmantelar enters `release` THEN it SHALL make 3 cuts, at 0, 60 and 120 ms after entering `release`.
+- [x] CUT-03 conferido: WHEN a cut happens THEN every enemy and the boss whose body overlaps the rectangle from 60 to 180 px ahead of the player center and 48 px tall centered on it SHALL take 10 light damage.
+- [x] CUT-05 conferido: The 3 cut lines of one cast SHALL be at 20°, −25° and 70° from the horizontal, in cut order, mirrored horizontally when the player faces left.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
