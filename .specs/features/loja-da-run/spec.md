@@ -246,7 +246,7 @@ maxHp: number;
 | SHOP-36 | P1: Loja | Specify | Implemented |
 | SHOP-37 | P1: Loja | Specify | Implemented |
 | SHOP-06 | P1: Loja | Specify | Implemented |
-| SHOP-38 | P1: Loja | Specify | Pending |
+| SHOP-38 | P1: Loja | Specify | Implemented |
 | SHOP-07 | P1: Loja | Specify | Implemented |
 | SHOP-39 | P1: Loja | Specify | Implemented |
 | SHOP-18 | P1: Loja | Specify | Implemented |
@@ -269,7 +269,7 @@ maxHp: number;
 | SHOP-21 | P1: Loja | Specify | Implemented |
 | SHOP-22 | P1: Loja | Specify | Pending |
 | SHOP-23 | P1: Loja | Specify | Pending |
-| SHOP-24 | P1: Loja | Specify | Pending |
+| SHOP-24 | P1: Loja | Specify | Implemented |
 | SHOP-16 | P2: Reroll | Specify | Implemented |
 | SHOP-25 | P2: Reroll | Specify | Implemented |
 | SHOP-17 | P2: Reroll | Specify | Implemented |
@@ -279,7 +279,7 @@ maxHp: number;
 | SHOP-28 | P2: Navegação | Specify | Implemented |
 | SHOP-29 | P2: Navegação | Specify | Implemented |
 | SHOP-30 | P2: Navegação | Specify | Implemented |
-| SHOP-31 | P2: Navegação | Specify | Pending |
+| SHOP-31 | P2: Navegação | Specify | Implemented |
 
 **Coverage:** 57 total, 0 Verified
 
