@@ -142,14 +142,14 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `setMax(115)` com hp 100 → max 115, hp 100; depois `heal(15)` → 115; `heal` cheio não passa de 115
-- [ ] `setMax(115)` com hp 110 e `heal(15)` → 115 (teto)
-- [ ] `reset()` → max 100 e hp 100
-- [ ] Testes antigos de `Health` continuam passando
-- [ ] MOD-04 conferido: WHILE `vida` is at level `n`, the player max HP SHALL be `100 + 15n`.
-- [ ] MOD-11 conferido: WHEN a `vida` level is bought THEN the player HP SHALL increase by 15, capped at the new max HP.
-- [ ] MOD-10 conferido: WHEN a new run starts after a game over THEN the player max HP SHALL be 100.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] `setMax(115)` com hp 100 → max 115, hp 100; depois `heal(15)` → 115; `heal` cheio não passa de 115
+- [x] `setMax(115)` com hp 110 e `heal(15)` → 115 (teto)
+- [x] `reset()` → max 100 e hp 100
+- [x] Testes antigos de `Health` continuam passando
+- [x] MOD-04 conferido: WHILE `vida` is at level `n`, the player max HP SHALL be `100 + 15n`.
+- [x] MOD-11 conferido: WHEN a `vida` level is bought THEN the player HP SHALL increase by 15, capped at the new max HP.
+- [x] MOD-10 conferido: WHEN a new run starts after a game over THEN the player max HP SHALL be 100.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

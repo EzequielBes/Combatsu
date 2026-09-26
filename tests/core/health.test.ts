@@ -142,3 +142,37 @@ describe('Health: cura com teto (FND-05, FND-06, FND-07)', () => {
     expect(h.hp).toBe(50);
   });
 });
+
+describe('Health: teto ajustável por setMax (MOD-04, MOD-11, MOD-10)', () => {
+  it('setMax(115) com hp cheio (100) não cura: max 115, hp continua 100; heal(15) depois enche até 115', () => {
+    const h = new Health(SPEC);
+    h.setMax(115);
+    expect(h.max).toBe(115);
+    expect(h.hp).toBe(100);
+    expect(h.heal(15)).toBe(15);
+    expect(h.hp).toBe(115);
+  });
+
+  it('setMax(115) com hp 110: heal(15) para no novo teto (125 → 115), não passa dele', () => {
+    const h = new Health(SPEC);
+    h.setMax(115);
+    h.heal(10); // hp 100 -> 110, ainda abaixo do novo teto
+    expect(h.hp).toBe(110);
+    expect(h.heal(15)).toBe(5); // 110 + 15 = 125, recortado para 115
+    expect(h.hp).toBe(115);
+  });
+
+  it('reset() volta o teto a 100 (tuning) e o hp a 100, mesmo depois de setMax', () => {
+    const h = new Health(SPEC);
+    h.setMax(115);
+    h.heal(15);
+    h.reset();
+    expect(h.max).toBe(100);
+    expect(h.hp).toBe(100);
+  });
+
+  it('testes antigos de Health (sem setMax) continuam válidos: max começa igual a t.maxHp', () => {
+    const h = new Health(SPEC);
+    expect(h.max).toBe(SPEC.maxHp);
+  });
+});
