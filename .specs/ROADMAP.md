@@ -17,7 +17,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F1 | `run-e-rodadas` | Large | RUN, WAVE, DIF, RHUD | Done (Verifier PASS, rodada 3) |
 | F2 | `boss-a-cada-5` | Large | BOSS, BAT, BAI, BHUD, BWIN, BTIER | Done (Verifier PASS, rodada 3) |
 | F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM, ITEM, RAR | Done (Verifier PASS, rodada 2) |
-| F4 | `loja-da-run` | Large | SHOP, MOD | Execute: T1–T9 de 14 feitas (spec com Jev 3 rodadas + alinhamento Jev) |
+| F4 | `loja-da-run` | Large | SHOP, MOD | Done (Verifier PASS, rodada 2) |
 | F5 | `energia-e-tecnicas` | Complex | CE, TEC, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Specify feito (148 ACs, Jev em 3 rodadas); Design, Tasks e Execute depois de F4 |
 | F6 | `meta-progressao` | Large | META, SAVE | Planejada |
 | F7 | `moveset-e-voadora` | Complex | MOV, AIR | Planejada |
