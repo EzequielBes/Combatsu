@@ -238,6 +238,18 @@ describe('frames de conjuração das técnicas (CAST-18, CAST-22)', () => {
     }
   });
 
+  it('as 4 fases de cada técnica têm silhuetas distintas entre si (aprovação de arte, ronda 2)', () => {
+    const PARTS = ['sign', 'charge', 'release', 'recover'] as const;
+    for (const id of IDS) {
+      const frames = PARTS.map((part) => PLAYER_TECH_FRAMES[`${id}-${part}`]);
+      for (let i = 0; i < frames.length; i++) {
+        for (let j = i + 1; j < frames.length; j++) {
+          expect(frames[i], `${id}-${PARTS[i]} vs ${id}-${PARTS[j]}`).not.toEqual(frames[j]);
+        }
+      }
+    }
+  });
+
   it('tem o frame kokusen-hit, 32x24 texels só com cores da paleta', () => {
     expect(Object.hasOwn(PLAYER_TECH_FRAMES, 'kokusen-hit')).toBe(true);
     const frame = sheet.frames.find((f) => f.key === 'kokusen-hit')!;

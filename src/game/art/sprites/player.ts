@@ -49,8 +49,8 @@ export function recolor(grid: Grid, map: Record<string, string>): string[] {
   return grid.map((row) => [...row].map((ch) => map[ch] ?? ch).join(''));
 }
 
-/** Espelha uma parte na horizontal. */
-function mirror(grid: Grid): string[] {
+/** Espelha uma parte na horizontal (usado também por `playerTech` para a perna de trás esticada do release). */
+export function mirror(grid: Grid): string[] {
   return grid.map((row) => [...row].reverse().join(''));
 }
 
@@ -122,8 +122,9 @@ const ARM_FWD: Grid = ['ksNk...', '.kNNk..', '..kNNk.', '...kNpk', '...kppk', '.
 export const ARM_GUARD: Grid = ['...kkk', '..kppk', 'ksNppk', 'kNNNk.', 'knNk..', '.kk...'];
 /** Punho puxado para trás do ombro (preparo do soco). */
 export const ARM_COCK: Grid = ['kkkNNk', 'kppNnk', 'kppnk.', '.kkk..'];
-/** Para cima segurando (carregar / preparo do arremesso). */
-const ARM_UP: Grid = ['.kk.', 'kppk', 'kppk', 'kNnk', 'kNnk', 'ksNk'];
+/** Para cima segurando (carregar / preparo do arremesso). Também vira a mão erguida da Azul via `recolor`
+ * (troca `p` pelo núcleo de energia): `playerTech` reusa esta peça em vez de desenhar um braço novo. */
+export const ARM_UP: Grid = ['.kk.', 'kppk', 'kppk', 'kNnk', 'kNnk', 'ksNk'];
 
 /**
  * Braço esticado na horizontal: manga com luz em cima, punho 3x3 na ponta. `len` = colunas do ombro até o
@@ -181,7 +182,7 @@ const LEGS_DANGLE: Grid = ['....knNNNNNk', '....kKnk.knNk', '...kKnk..knNk', '..
  * Chute: perna da frente esticada na horizontal, com o sapato na ponta. `len` = colunas do quadril até o
  * contorno da ponta do pé, inclusive.
  */
-function legStraight(len: number): string[] {
+export function legStraight(len: number): string[] {
   const leg = len - 6;
   return [
     'k'.repeat(len - 1) + '.',
@@ -193,8 +194,9 @@ function legStraight(len: number): string[] {
 }
 /** Joelho da frente dobrado para cima (preparo e volta do chute). */
 const LEG_CHAMBER: Grid = ['kkkkkk.', 'kNNNNNk', 'knnnnNk', '.kkkkNk', '....kKKk', '....kkkk'];
-/** Só a perna de trás, de apoio. */
-const LEG_SUPPORT: Grid = ['knNk', 'kKnk', 'kKnk', 'kKnk', 'kKnk', 'kKKKk', 'kkkkk'];
+/** Só a perna de trás, de apoio (usada também por `playerTech` no release: perna da frente plantada e curta,
+ * enquanto a de trás esticada carrega o avanço do golpe). */
+export const LEG_SUPPORT: Grid = ['knNk', 'kKnk', 'kKnk', 'kKnk', 'kKnk', 'kKKKk', 'kkkkk'];
 
 // ---------------------------------------------------------------- montagem
 const Y_HEAD = 0;
