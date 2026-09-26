@@ -213,9 +213,12 @@ export default async function ({ page, baseUrl, assert }) {
   );
 
   // ARM-18: nova run remove qualquer ferramenta largada.
-  await page.keyboard.press('Digit3', { delay: 50 });
-  let over = await stepAndSnap(100);
-  for (let i = 0; i < 20 && over.run.state !== 'gameOver'; i++) over = await stepAndSnap(100);
+  // A tecla 3 é ignorada durante a invulnerabilidade de um golpe recém-sofrido: repete até o game over.
+  let over = await stepAndSnap(16);
+  for (let i = 0; i < 20 && over.run.state !== 'gameOver'; i++) {
+    await page.keyboard.press('Digit3', { delay: 50 });
+    over = await stepAndSnap(100);
+  }
   assert(over.run.state === 'gameOver', `esperava game over: ${JSON.stringify(over.run)}`);
   await stepAndSnap(1100);
   await page.keyboard.press('KeyJ', { delay: 50 });
