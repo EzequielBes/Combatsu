@@ -519,13 +519,13 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | DIV-01 | P1: Punho Divergente | Specify | Implemented |
 | DIV-02 | P1: Punho Divergente | Specify | Pending |
 | DIV-11 | P1: Punho Divergente | Specify | Pending |
-| DIV-03 | P1: Punho Divergente | Specify | Pending |
-| DIV-04 | P1: Punho Divergente | Specify | Pending |
+| DIV-03 | P1: Punho Divergente | Specify | Implemented |
+| DIV-04 | P1: Punho Divergente | Specify | Implemented |
 | DIV-12 | P1: Punho Divergente | Specify | Pending |
-| DIV-05 | P1: Punho Divergente | Specify | Pending |
-| DIV-06 | P1: Punho Divergente | Specify | Pending |
+| DIV-05 | P1: Punho Divergente | Specify | Implemented |
+| DIV-06 | P1: Punho Divergente | Specify | Implemented |
 | DIV-07 | P1: Punho Divergente | Specify | Pending |
-| DIV-08 | P1: Punho Divergente | Specify | Pending |
+| DIV-08 | P1: Punho Divergente | Specify | Implemented |
 | DIV-09 | P1: Punho Divergente | Specify | Pending |
 | DIV-10 | P1: Punho Divergente | Specify | Pending |
 | KOK-01 | P1: Kokusen | Specify | Pending |
