@@ -274,7 +274,7 @@ maxHp: number;
 | SHOP-25 | P2: Reroll | Specify | Implemented |
 | SHOP-17 | P2: Reroll | Specify | Implemented |
 | SHOP-26 | P2: Reroll | Specify | Implemented |
-| SHOP-46 | P2: Reroll | Specify | Pending |
+| SHOP-46 | P2: Reroll | Specify | Implemented |
 | SHOP-27 | P2: Navegação | Specify | Implemented |
 | SHOP-28 | P2: Navegação | Specify | Implemented |
 | SHOP-29 | P2: Navegação | Specify | Implemented |

@@ -417,10 +417,10 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Build passa e nada da cena anda durante as animações
-- [ ] SHOP-21 conferido: Each unsold card SHALL show, top to bottom, the name, the level text `Nv <n+1>/<max>` (blank for `cura`), the preview text defined in Assumptions and the cost.
-- [ ] SHOP-46 conferido: WHEN a reroll happens THEN the hint line SHALL show `R rerolar (<c>)`, where `c` is the new reroll cost.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Build passa e nada da cena anda durante as animações
+- [x] SHOP-21 conferido: Each unsold card SHALL show, top to bottom, the name, the level text `Nv <n+1>/<max>` (blank for `cura`), the preview text defined in Assumptions and the cost.
+- [x] SHOP-46 conferido: WHEN a reroll happens THEN the hint line SHALL show `R rerolar (<c>)`, where `c` is the new reroll cost.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none
 **Gate**: build
