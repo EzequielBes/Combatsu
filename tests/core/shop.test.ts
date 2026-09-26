@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { drawOffers, eligible } from '../../src/core/shop';
+import { drawOffers, eligible, previewText, Shop, type BuyContext } from '../../src/core/shop';
 import { Modifiers } from '../../src/core/modifiers';
 import { Rng } from '../../src/core/rng';
+import { Wallet } from '../../src/core/wallet';
 import { SHOP_CATALOG, type ShopEntry } from '../../src/data/shop';
 
 const entry = (id: string): ShopEntry => {
@@ -106,5 +107,218 @@ describe('drawOffers: sorteio ponderado sem reposição (SHOP-08)', () => {
     const a = drawOffers(SHOP_CATALOG, new Rng(777), 3).map((e) => e.id);
     const b = drawOffers(SHOP_CATALOG, new Rng(777), 3).map((e) => e.id);
     expect(a).toEqual(b);
+  });
+});
+
+/**
+ * Contexto de compra (a loja não conhece o Player): por padrão `applyModifier` sobe o nível no `modifiers` que
+ * a própria loja usa (como a cena faz de verdade) e `healPlayer` só registra a quantidade pedida.
+ */
+function buyCtx(
+  modifiers: Modifiers,
+  overrides: Partial<BuyContext> & { wallet: Wallet },
+): BuyContext & { applied: ('vida' | 'forca' | 'agilidade' | 'ima' | 'sorte')[]; healed: number[] } {
+  const applied: ('vida' | 'forca' | 'agilidade' | 'ima' | 'sorte')[] = [];
+  const healed: number[] = [];
+  return {
+    hp: 100,
+    maxHp: 100,
+    applyModifier: (id) => {
+      applied.push(id);
+      modifiers.apply(id);
+    },
+    healPlayer: (n) => healed.push(n),
+    ...overrides,
+    applied,
+    healed,
+  };
+}
+
+/** Loja com round alto e nenhuma compra prévia: sorteio [0,0,0] cai sempre em vida, forca, agilidade (catálogo). */
+function freshShop(rng: Rng = fakeRng([0, 0, 0]), round = 10, modifiers = new Modifiers()): Shop {
+  return new Shop(SHOP_CATALOG, modifiers, rng, round);
+}
+
+describe('Shop: sorteio determinístico usado nos testes de compra', () => {
+  it('fakeRng([0,0,0]) na rodada 10 sorteia vida, forca e agilidade, nessa ordem', () => {
+    const shop = freshShop();
+    const view = shop.view(new Wallet(), 100, 100);
+    expect(view.offers.map((o) => o.id)).toEqual(['vida', 'forca', 'agilidade']);
+  });
+});
+
+describe('Shop.buy: saldo exato compra, saldo − 1 recusa por falta de fundos (SHOP-45, SHOP-19, SHOP-41, SHOP-42, SHOP-10, L-010)', () => {
+  it('saldo = custo (12): compra, saldo some, nível de vida sobe 1, oferta marcada como vendida', () => {
+    const modifiers = new Modifiers();
+    const shop = freshShop(fakeRng([0, 0, 0]), 10, modifiers);
+    const wallet = new Wallet();
+    wallet.add(12);
+    const ctx = buyCtx(modifiers, { wallet });
+    const result = shop.buy(0, ctx);
+    expect(result).toEqual({ ok: true, id: 'vida', cost: 12 });
+    expect(wallet.fragments).toBe(0);
+    expect(modifiers.level('vida')).toBe(1);
+    expect(ctx.applied).toEqual(['vida']);
+    expect(shop.view(wallet, 100, 100).offers[0].sold).toBe(true);
+  });
+
+  it('saldo = custo − 1 (11): recusa por falta de fundos, carteira e nível intactos', () => {
+    const modifiers = new Modifiers();
+    const shop = freshShop(fakeRng([0, 0, 0]), 10, modifiers);
+    const wallet = new Wallet();
+    wallet.add(11);
+    const ctx = buyCtx(modifiers, { wallet });
+    const result = shop.buy(0, ctx);
+    expect(result).toEqual({ ok: false, reason: 'funds' });
+    expect(wallet.fragments).toBe(11);
+    expect(modifiers.level('vida')).toBe(0);
+    expect(ctx.applied).toEqual([]);
+  });
+});
+
+describe('Shop.buy: carta já vendida e slot vazio não mudam nada (SHOP-11, SHOP-14)', () => {
+  it('comprar de novo a mesma carta: recusa por sold, nada muda', () => {
+    const modifiers = new Modifiers();
+    const shop = freshShop(fakeRng([0, 0, 0]), 10, modifiers);
+    const wallet = new Wallet();
+    wallet.add(100);
+    shop.buy(0, buyCtx(modifiers, { wallet }));
+    const before = wallet.fragments;
+    const result = shop.buy(0, buyCtx(modifiers, { wallet }));
+    expect(result).toEqual({ ok: false, reason: 'sold' });
+    expect(wallet.fragments).toBe(before);
+    expect(modifiers.level('vida')).toBe(1); // não sobe de novo
+  });
+
+  it('slot vazio (loja com só 1 elegível): recusa por empty, nada muda', () => {
+    const modifiers = new Modifiers();
+    for (const id of ['vida', 'forca', 'agilidade', 'ima', 'sorte'] as const) {
+      for (let i = 0; i < 5; i++) modifiers.apply(id);
+    }
+    const shop = new Shop(SHOP_CATALOG, modifiers, fakeRng([0]), 1); // só cura elegível: slots 1 e 2 vazios
+    const wallet = new Wallet();
+    wallet.add(100);
+    const ctx = buyCtx(modifiers, { wallet });
+    const result = shop.buy(1, ctx);
+    expect(result).toEqual({ ok: false, reason: 'empty' });
+    expect(wallet.fragments).toBe(100);
+    expect(ctx.applied).toEqual([]);
+    expect(ctx.healed).toEqual([]);
+  });
+});
+
+describe('Shop.buy: cura com vida cheia recusa, vida cheia − 1 compra e cura até o teto (SHOP-13, SHOP-12, L-010)', () => {
+  it('hp = maxHp: recusa por fullHp, carteira intacta', () => {
+    // Rodada 1, sem compras: pool = catálogo inteiro (6). O 3º sorteio (índice 2) precisa cair em `cura` para o
+    // teste ficar direto; em vez de calcular pesos à mão, drena o pool até sobrar só `cura` (nível máximo em
+    // todo o resto) e sorteia com a loja resultante (só 1 oferta, sempre `cura`).
+    const modifiers = new Modifiers();
+    for (const id of ['vida', 'forca', 'agilidade', 'ima', 'sorte'] as const) {
+      for (let i = 0; i < 5; i++) modifiers.apply(id);
+    }
+    const shop = new Shop(SHOP_CATALOG, modifiers, fakeRng([0]), 1);
+    const wallet = new Wallet();
+    wallet.add(100);
+    const ctx = buyCtx(modifiers, { wallet, hp: 100, maxHp: 100 });
+    const result = shop.buy(0, ctx);
+    expect(result).toEqual({ ok: false, reason: 'fullHp' });
+    expect(wallet.fragments).toBe(100);
+    expect(ctx.healed).toEqual([]);
+  });
+
+  it('hp = maxHp − 1: compra, cura chamada com 30, hp final vira maxHp (min(hp+30,maxHp))', () => {
+    const modifiers = new Modifiers();
+    for (const id of ['vida', 'forca', 'agilidade', 'ima', 'sorte'] as const) {
+      for (let i = 0; i < 5; i++) modifiers.apply(id);
+    }
+    const shop = new Shop(SHOP_CATALOG, modifiers, fakeRng([0]), 1);
+    const wallet = new Wallet();
+    wallet.add(100);
+    let hp = 99;
+    const maxHp = 100;
+    const ctx = buyCtx(modifiers, { wallet, hp, maxHp, healPlayer: (n) => (hp = Math.min(hp + n, maxHp)) });
+    const result = shop.buy(0, ctx);
+    expect(result).toEqual({ ok: true, id: 'cura', cost: 8 });
+    expect(hp).toBe(100);
+    expect(wallet.fragments).toBe(92);
+  });
+
+  it('hp 70/100: cura leva a 100 (SHOP-12: min(hp + 30, maxHp))', () => {
+    const modifiers = new Modifiers();
+    for (const id of ['vida', 'forca', 'agilidade', 'ima', 'sorte'] as const) {
+      for (let i = 0; i < 5; i++) modifiers.apply(id);
+    }
+    const shop = new Shop(SHOP_CATALOG, modifiers, fakeRng([0]), 1);
+    const wallet = new Wallet();
+    wallet.add(100);
+    let hp = 70;
+    const maxHp = 100;
+    const ctx = buyCtx(modifiers, { wallet, hp, maxHp, healPlayer: (n) => (hp = Math.min(hp + n, maxHp)) });
+    shop.buy(0, ctx);
+    expect(hp).toBe(100);
+  });
+});
+
+describe('Shop.view: ofertas não compradas mantêm id, slot e custo depois de uma compra (SHOP-15, SHOP-44)', () => {
+  it('comprar o slot 0 não muda id/custo/slot dos slots 1 e 2; affordable = custo ≤ saldo', () => {
+    const modifiers = new Modifiers();
+    const shop = freshShop(fakeRng([0, 0, 0]), 10, modifiers);
+    const wallet = new Wallet();
+    wallet.add(100);
+    const before = shop.view(wallet, 100, 100);
+    shop.buy(0, buyCtx(modifiers, { wallet }));
+    const after = shop.view(wallet, 100, 100);
+    expect(after.offers[1]).toMatchObject({ id: before.offers[1].id, cost: before.offers[1].cost, slot: 1 });
+    expect(after.offers[2]).toMatchObject({ id: before.offers[2].id, cost: before.offers[2].cost, slot: 2 });
+    // saldo 88 (100-12): forca custa 15 (affordable), agilidade custa 10 (affordable).
+    expect(after.offers[1].affordable).toBe(15 <= wallet.fragments);
+    expect(after.offers[2].affordable).toBe(10 <= wallet.fragments);
+  });
+
+  it('affordable vira false quando o saldo cai abaixo do custo', () => {
+    const shop = freshShop();
+    const wallet = new Wallet();
+    wallet.add(11); // abaixo do custo de vida (12)
+    expect(shop.view(wallet, 100, 100).offers[0].affordable).toBe(false);
+    wallet.add(1); // agora 12, exatamente o custo
+    expect(shop.view(wallet, 100, 100).offers[0].affordable).toBe(true);
+  });
+});
+
+describe('Shop.view: levelText "Nv n+1/max" (SHOP-21)', () => {
+  it('vida no nível 0 mostra Nv 1/5; depois de comprar, Nv 2/5', () => {
+    const modifiers = new Modifiers();
+    const shop = freshShop(fakeRng([0, 0, 0]), 10, modifiers);
+    const wallet = new Wallet();
+    wallet.add(100);
+    expect(shop.view(wallet, 100, 100).offers[0].levelText).toBe('Nv 1/5');
+    shop.buy(0, buyCtx(modifiers, { wallet }));
+    expect(shop.view(wallet, 100, 100).offers[0].levelText).toBe('Nv 2/5');
+  });
+});
+
+describe('previewText: textos exatos das Assumptions (SHOP-21)', () => {
+  it('vida: "Vida máx. 100 → 115"', () => {
+    expect(previewText(entry('vida'), new Modifiers(), 100, 100)).toBe('Vida máx. 100 → 115');
+  });
+
+  it('forca: "Dano ×1,0 → ×1,1"', () => {
+    expect(previewText(entry('forca'), new Modifiers(), 100, 100)).toBe('Dano ×1,0 → ×1,1');
+  });
+
+  it('agilidade: "Velocidade 220 → 238"', () => {
+    expect(previewText(entry('agilidade'), new Modifiers(), 100, 100)).toBe('Velocidade 220 → 238');
+  });
+
+  it('ima: "Ímã 72 → 94"', () => {
+    expect(previewText(entry('ima'), new Modifiers(), 100, 100)).toBe('Ímã 72 → 94');
+  });
+
+  it('sorte: "Cura 10% → 13%"', () => {
+    expect(previewText(entry('sorte'), new Modifiers(), 100, 100)).toBe('Cura 10% → 13%');
+  });
+
+  it('cura: hp 70/100 → "Vida 70 → 100"', () => {
+    expect(previewText(entry('cura'), new Modifiers(), 70, 100)).toBe('Vida 70 → 100');
   });
 });
