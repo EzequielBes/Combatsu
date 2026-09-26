@@ -13,11 +13,13 @@ import type { PickupPlayer } from '../core/pickup';
 import type { PropState } from '../core/props';
 import type { Rng } from '../core/rng';
 import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
+import { Shop, type BuyContext } from '../core/shop';
 import { Wallet } from '../core/wallet';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
+import { SHOP_CATALOG } from '../data/shop';
 import {
   ARMED,
   BOSS,
@@ -44,7 +46,7 @@ import { Enemy } from '../game/Enemy';
 import { Fx, type SparkKind } from '../game/fx';
 import { GAME_NAME, Hud } from '../game/Hud';
 import type { InputSnapshot } from '../game/input';
-import { PlayerInput } from '../game/input';
+import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Pickups } from '../game/Pickups';
@@ -80,6 +82,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private level!: LevelData;
   private terrain: MatterJS.BodyType[] = [];
   private controls!: PlayerInput;
+  /** Teclas da loja (SHOP-45, SHOP-28..30, SHOP-16, SHOP-03), lidas só com `run.state === 'shop'`. */
+  private shopInput!: ShopInput;
   private player!: Player;
   private enemies: Enemy[] = [];
   /** Só existe numa rodada de chefe (BOSS-01); `null` fora dela ou depois de removido. */
@@ -100,6 +104,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private wallet!: Wallet;
   /** Níveis de modificador da run (MOD-01..09): lidos na hora por Player/Pickups/Loot; zerados a cada `startRun`. */
   private modifiers!: Modifiers;
+  /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
+  private shop: Shop | null = null;
   private loot!: Loot;
   private lootRng!: Rng;
   private pickups!: Pickups;
@@ -159,6 +165,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     }
 
     this.controls = new PlayerInput(this);
+    this.shopInput = new ShopInput(this);
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
@@ -189,7 +196,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Tecla 4 (só debug): 50 de dano no player, para o smoke medir a cura da vitória abaixo do teto (BWIN-01).
     this.onKey('FOUR', () => isDebug() && this.player.debugHurt(50));
     this.onKey('H', () => isDebug() && this.toggleDebugDraw());
-    this.onKey('R', () => this.scene.restart());
+    // Fora da loja, R reinicia a cena; dentro dela é reroll (SHOP-16), lido por `ShopInput` no `update`.
+    this.onKey('R', () => {
+      if (this.run.state !== 'shop') this.scene.restart();
+    });
     this.addHud();
   }
 
@@ -199,38 +209,92 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
     const dt = Math.min(delta, MAX_FRAME_MS);
-    // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
-    const raw = this.controls.read();
-    this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
-    this.updatePickups(dt);
-    // Morte do player (RUN-04): só a transição para morto conta, uma vez.
-    if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
-    this.wasPlayerDead = this.player.dead;
-    for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
-    this.boss?.update(dt, this.player.sprite.x);
-    if (this.bossDefeatedPending) {
-      this.boss?.destroyNow();
-      this.boss = null;
-      this.bossDefeatedPending = false;
-    }
-    if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
-    if (this.clearedBanner) {
-      this.clearedBanner.afterMs -= dt;
-      if (this.clearedBanner.afterMs <= 0) {
-        if (this.run.state === 'intermission') this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
-        this.clearedBanner = null;
+    // SHOP-33: na loja, nada de gameplay anda; só o input da loja, `run.update`, o painel e o HUD.
+    if (this.run.state === 'shop') {
+      this.updateShop();
+    } else {
+      // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
+      const raw = this.controls.read();
+      this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+      this.updatePickups(dt);
+      // Morte do player (RUN-04): só a transição para morto conta, uma vez.
+      if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
+      this.wasPlayerDead = this.player.dead;
+      for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
+      this.boss?.update(dt, this.player.sprite.x);
+      if (this.bossDefeatedPending) {
+        this.boss?.destroyNow();
+        this.boss = null;
+        this.bossDefeatedPending = false;
       }
+      if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
+      if (this.clearedBanner) {
+        this.clearedBanner.afterMs -= dt;
+        if (this.clearedBanner.afterMs <= 0) {
+          if (this.run.state === 'intermission') this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
+          this.clearedBanner = null;
+        }
+      }
+      for (const proj of this.projectiles) proj.update(dt);
+      this.projectiles = this.projectiles.filter((proj) => !proj.removed);
+      for (const prop of this.props) prop.update(dt);
+      this.updateDroppedTools(dt);
+      this.props = this.props.filter((prop) => !prop.isGone);
     }
-    for (const proj of this.projectiles) proj.update(dt);
-    this.projectiles = this.projectiles.filter((proj) => !proj.removed);
-    for (const prop of this.props) prop.update(dt);
-    this.updateDroppedTools(dt);
-    this.props = this.props.filter((prop) => !prop.isGone);
     for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
     this.hud.setRun(this.run.round > 0 ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
+  }
+
+  /**
+   * Loja aberta (SHOP-45, SHOP-28..30, SHOP-16/26, SHOP-03): traduz `ShopInput` em ações do `Shop` e eventos de
+   * debug. `run.closeShop()` só arma o pedido; o `run.update` logo depois, no chamador, resolve a troca de rodada.
+   */
+  private updateShop(): void {
+    const shop = this.shop;
+    if (!shop) return;
+    const input = this.shopInput.read();
+    const ctx: BuyContext = {
+      wallet: this.wallet,
+      hp: this.player.hp,
+      maxHp: this.player.maxHp,
+      applyModifier: (id) => this.modifiers.apply(id),
+      // SHOP-12/MOD-11: cura (consumível) e o +15 de HP da compra de `vida` passam pelo mesmo `heal` com teto.
+      healPlayer: (amount) => this.player.heal(amount),
+    };
+    if (input.buySlot !== null) this.resolveBuy(shop, input.buySlot, ctx);
+    else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);
+    if (input.moveRight) shop.move(1);
+    if (input.moveLeft) shop.move(-1);
+    if (input.reroll && !shop.reroll(this.wallet)) this.debugEvents.push('rerollRefused');
+    if (input.confirm) this.closeShop();
+  }
+
+  /** Traduz o `BuyResult` tipado do `Shop` num evento de debug (design "Error Handling Strategy"). */
+  private resolveBuy(shop: Shop, slot: number, ctx: BuyContext): void {
+    const offerId = shop.view(ctx.wallet, ctx.hp, ctx.maxHp).offers[slot]?.id ?? null;
+    const result = shop.buy(slot, ctx);
+    if (result.ok) this.debugEvents.push(`buy:${result.id}:${result.cost}`);
+    else if (result.reason === 'funds' && offerId) this.debugEvents.push(`buyRefused:${offerId}:funds`);
+    else if (result.reason === 'fullHp') this.debugEvents.push('buyRefused:cura:fullHp');
+  }
+
+  /** Abre a loja (SHOP-01): varre os fragmentos vivos para a carteira e pausa o Matter (SHOP-05/33/36/37). */
+  private openShop(round: number): void {
+    this.wallet.add(this.pickups.collectFragments());
+    this.matter.world.pause();
+    this.shop = new Shop(SHOP_CATALOG, this.modifiers, this.run.shopRng!, round);
+    this.debugEvents.push(`shopOpen:${round}`);
+  }
+
+  /** Fecha a loja (SHOP-03/35): arma o pedido na `Run`, retoma o Matter e limpa a loja. */
+  private closeShop(): void {
+    this.run.closeShop();
+    this.matter.world.resume();
+    this.shop = null;
+    this.debugEvents.push('shopClose');
   }
 
   /** Seed da run: fixa por `?seed=N` só em `?debug` (design); senão o relógio (runs variadas). */
@@ -274,8 +338,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         if (!isBossRound(cmd.round)) this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
         break;
       case 'shopOpen':
-        // Provisório até T9 (painel e fluxo reais da loja): fecha na hora para o jogo continuar jogável.
-        this.run.closeShop();
+        this.openShop(cmd.round);
         break;
       case 'gameOver':
         this.hud.setCenter([
@@ -300,6 +363,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.boss = null;
     this.bossDefeatedPending = false;
     this.clearedBanner = null;
+    // Higiene: uma loja não deveria sobreviver a um game over (gameOver só sai de roundActive/intermission), mas
+    // uma run nova nunca deve carregar a loja da anterior.
+    if (this.shop) this.matter.world.resume();
+    this.shop = null;
     this.hud.hideBossBar();
     for (const proj of this.projectiles) proj.destroyNow();
     this.projectiles = [];
