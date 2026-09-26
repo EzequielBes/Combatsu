@@ -472,9 +472,9 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `npm run smoke` volta a ficar verde nos 11 cenários
-- [ ] SHOP-03 conferido: WHEN `Enter` is pressed while the run state is `shop` THEN the run state SHALL become `roundActive` with the round equal to the cleared round + 1.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `npm run smoke` volta a ficar verde nos 11 cenários
+- [x] SHOP-03 conferido: WHEN `Enter` is pressed while the run state is `shop` THEN the run state SHALL become `roundActive` with the round equal to the cleared round + 1.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
