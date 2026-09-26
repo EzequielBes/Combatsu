@@ -173,17 +173,17 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Vida no nível 3: fora do pool na rodada 5, dentro na 6; agilidade no nível 2: fora na 3, dentro na 4; modificador no max nunca entra
-- [ ] `cura` sempre no pool
-- [ ] `Rng` falso: `next()` = 0 pega a 1ª entrada; valores logo abaixo e acima de cada peso acumulado escolhem a entrada certa; sem repetição
-- [ ] Pool com 2 elegíveis → 2 ofertas; ids distintos em 1000 sorteios com seed
-- [ ] Mesma seed → mesmas ofertas
-- [ ] SHOP-06 conferido: WHEN the shop opens with `e` eligible entries THEN it SHALL hold exactly `min(3, e)` offers with pairwise distinct ids.
-- [ ] SHOP-07 conferido: The offer pool SHALL include a modifier if and only if its level is below its maxLevel and the min round of its next level (SHOP-18) is ≤ the current round.
-- [ ] SHOP-39 conferido: The offer pool SHALL always include the `cura` consumable.
-- [ ] SHOP-18 conferido: For modifier `m` going to level `k`, the min round SHALL be 6 when `m` is `vida` or `forca` and `k` is 4 or 5, 4 when `m` is `agilidade` and `k` is 3, and 1 in every other case.
-- [ ] SHOP-08 conferido: WHEN offers are drawn THEN slots 0, 1 and 2 SHALL be filled in order, each by taking `x = rng.next() × W` from the shop RNG, where `W` is the total weight of the eligible entries not yet drawn (common 3, rare 1), and picking the first of them in catalog order whose cumulative weight exceeds `x`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Vida no nível 3: fora do pool na rodada 5, dentro na 6; agilidade no nível 2: fora na 3, dentro na 4; modificador no max nunca entra
+- [x] `cura` sempre no pool
+- [x] `Rng` falso: `next()` = 0 pega a 1ª entrada; valores logo abaixo e acima de cada peso acumulado escolhem a entrada certa; sem repetição
+- [x] Pool com 2 elegíveis → 2 ofertas; ids distintos em 1000 sorteios com seed
+- [x] Mesma seed → mesmas ofertas
+- [x] SHOP-06 conferido: WHEN the shop opens with `e` eligible entries THEN it SHALL hold exactly `min(3, e)` offers with pairwise distinct ids.
+- [x] SHOP-07 conferido: The offer pool SHALL include a modifier if and only if its level is below its maxLevel and the min round of its next level (SHOP-18) is ≤ the current round.
+- [x] SHOP-39 conferido: The offer pool SHALL always include the `cura` consumable.
+- [x] SHOP-18 conferido: For modifier `m` going to level `k`, the min round SHALL be 6 when `m` is `vida` or `forca` and `k` is 4 or 5, 4 when `m` is `agilidade` and `k` is 3, and 1 in every other case.
+- [x] SHOP-08 conferido: WHEN offers are drawn THEN slots 0, 1 and 2 SHALL be filled in order, each by taking `x = rng.next() × W` from the shop RNG, where `W` is the total weight of the eligible entries not yet drawn (common 3, rare 1), and picking the first of them in catalog order whose cumulative weight exceeds `x`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
