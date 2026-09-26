@@ -613,7 +613,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TFX-03 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-09 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-04 | P1: Invariantes dos efeitos | Specify | Pending |
-| TFX-05 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-05 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-06 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-10 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-11 | P1: Invariantes dos efeitos | Specify | Pending |
