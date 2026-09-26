@@ -1,8 +1,8 @@
 # Loja da run Validation
 
-## Validation: loja-da-run - FAIL ❌
+## Validation: loja-da-run - PASS ✅ (Rodada 2)
 
-**Result**: FAIL — two acceptance criteria (MOD-04, MOD-11) describe behavior that the running game does not actually produce: buying `vida` raises the modifier level and its cost, but never changes the player's real max HP and never heals +15. `src/core/health.ts:43` (`Health.setMax`) is never called anywhere outside its own test file, and `src/core/shop.ts:183-184` only calls `ctx.healPlayer` for the `cura` consumable, never for a `vida` purchase. The unit tests for `Modifiers.maxHp` pass because they test an isolated pure getter that the live `Player`/`Health` object never reads. The bug is invisible to the shop smoke test only because, with `?debug&seed=1&fragments=200`, the RNG never draws `vida` as the first non-`cura` offer (confirmed: draws `['ima', 'cura', 'vida']`), so the one conditional assertion that would have caught it (`shop.smoke.mjs:115`, gated by `if (offer.id === 'vida')`) never runs. Everything else in the feature (58 - 2 = 56 remaining ACs) is either solidly evidenced or a lower-severity coverage gap; gate is green and the sensor is fully discriminating.
+**Result**: PASS as of Rodada 2 (`1aa3152..eb05e13`). Both Rodada 1 blockers are closed with live evidence: buying `vida` now calls `Player.setMaxHp` (`src/game/Player.ts:243-245`) and heals 15 (`src/scenes/TestScene.ts:280-281`), and `scripts/smoke/shop.smoke.mjs:153-155` asserts the live `player.maxHp`/`player.hp` values against the exact spec formula, not just the isolated `Modifiers.maxHp` getter. The three coverage gaps flagged as zero-evidence in Rodada 1 (SHOP-46, SHOP-31, SHOP-42) and the weak-evidence gap (SHOP-47) are now closed with dedicated smoke assertions reading a new `ShopPanel.debug()` / snapshot `panel` field. One coverage gap remains open and is accepted as Minor: SHOP-38 ("Esgotado" text) has no direct test because the shop always has ≥3 eligible entries this early in a run, so the empty-slot render path is real but not smoke-reachable without an artificially late-game state; the underlying core logic (offers with `id: null`) is unit-tested and the rendering hook needed to close it (`panel.cards[i].lines`) already exists. Gate is green (typecheck, 654/654 unit tests, build, 12/12 smoke) and the discrimination sensor (3/3 targeted mutations, including the newly-fixed debug-key/shop-buy key collision) is fully discriminating. See "Rodada 2" section below for full evidence.
 
 **Date**: 2026-09-26
 **Spec**: `.specs/features/loja-da-run/spec.md`
@@ -228,3 +228,75 @@ Per the coordinator's instruction, `spec.md`'s traceability table is left as `Im
 3. **Minor** — SHOP-47: `noshop=1`'s own contract ("no crediting or removing") has no dedicated assertion, only indirect protection via other smokes.
 
 **Next steps**: Fix 1 (MOD-04/MOD-11) must land before this feature can be marked done — it is the shop's headline mechanic and currently a no-op in the shipped build. Fixes 2-5 are optional hardening and do not block a re-verify once Fix 1 lands.
+
+---
+
+## Rodada 2 (re-verificação, sensor leve)
+
+**Date**: 2026-09-26
+**Diff range**: `1aa3152..eb05e13` (2 commits: `f955587` fix(game), `eb05e13` test(smoke))
+**Verifier**: independent sub-agent, second and different instance from Rodada 1 (author ≠ verifier holds for both rounds)
+**Verdict**: ✅ PASS
+
+### 1. Lacunas da Rodada 1 — fechadas ou abertas, com evidência
+
+| Lacuna (Rodada 1) | Status | Evidência `file:line` |
+| --- | --- | --- |
+| MOD-04 — `vida` não muda `player.maxHp` real | ✅ Fechada | `src/game/Player.ts:242-245` (`setMaxHp(n)` → `this.health.setMax(n)`); called from `src/scenes/TestScene.ts:280` (`this.player.setMaxHp(this.modifiers.maxHp)`) inside `applyModifier`; asserted live at `scripts/smoke/shop.smoke.mjs:130` (conditional, first `vida` draw) and unconditionally at `scripts/smoke/shop.smoke.mjs:153,155` (`maxHp === maxBefore + 15` and `=== 100 + 15*modifiers.vida`, forcing the draw via reroll loop at `shop.smoke.mjs:147`) |
+| MOD-11 — compra de `vida` não cura 15 | ✅ Fechada | `src/scenes/TestScene.ts:281` (`this.player.heal(SHOP.vidaPerLevel)`, `SHOP.vidaPerLevel = 15` at `src/data/tuning.ts:235`); asserted at `scripts/smoke/shop.smoke.mjs:154` (`hp === Math.min(hpBefore + 15, snap.player.maxHp)`) |
+| SHOP-38 — "Esgotado" sem evidência de teste | ❌ Ainda aberta (lacuna menor aceita — ver seção 1b) | Nenhuma linha de teste cita `Esgotado`; confirmado por `grep -rn "Esgotado" scripts/smoke/ tests/ src/` só retorna comentários/implementação, nunca uma asserção |
+| SHOP-46 — dica de reroll sem asserção de texto | ✅ Fechada | `src/game/ShopPanel.ts:170-178` (`debug()` expõe `hint: this.hint.text`); wired to snapshot at `src/game/debugApi.ts:96` (`panel` field) and `src/scenes/TestScene.ts:351` (`panel: this.shop ? this.shopPanel.debug() : null`); asserted at `scripts/smoke/shop.smoke.mjs:143` (`snap.shop.panel.hint.includes('R rerolar (10)')`) |
+| SHOP-31 — borda selecionada sem asserção | ✅ Fechada | `src/game/ShopPanel.ts:173` (`highlighted: c.border.strokeColor === PALETTE[SHOP_PANEL_COLORS.borderSelected]`); asserted at `scripts/smoke/shop.smoke.mjs:80` (`cards.map(c=>c.highlighted).join() === 'true,false,false'`) |
+| SHOP-42 — texto "Comprado" sem asserção | ✅ Fechada | `src/game/ShopPanel.ts:186` (`c.status.setText(empty ? 'Esgotado' : 'Comprado')`); asserted at `scripts/smoke/shop.smoke.mjs:121-123` (`JSON.stringify(snap.shop.panel.cards[slot].lines) === '["Comprado"]'`) |
+| SHOP-47 — sem asserção própria para `noshop=1` | ✅ Fechada | `scripts/smoke/shop.smoke.mjs:206-229`: dedicated block that opens with `?debug&seed=1&noshop=1`, snapshots wallet/pickups immediately before (`prev`) and after the transition, and asserts `snap.run.state === 'roundActive' && snap.run.round === 2` (line 223), no `shopOpen` event (224), `wallet.fragments` unchanged (225), and every prior fragment id still present in `pickups` (227-229) |
+| Bug novo (não estava na Rodada 1): tecla `3` compra na loja e também mata o player via debug | ✅ Fechada | `src/scenes/TestScene.ts:203-204` (`const debugKeys = () => isDebug() && this.run.state !== 'shop'`), gating `ONE`/`TWO`/`THREE`/`FOUR` (lines 205-208); confirmed by sensor mutation (c) below |
+
+**SHOP-21 / SHOP-42 revisited**: `scripts/smoke/shop.smoke.mjs:74-78` now also asserts every unsold card's rendered cost and level text (`cards[i].lines.includes(String(o.cost))`, `cards[i].lines.includes('Nv <n>/<max>')`) — this deepens SHOP-21's evidence from "data only" (Rodada 1) to "rendered text also verified".
+
+### 1b. SHOP-38 — decisão sobre a lacuna restante
+
+`ShopPanel.updateCard` (`src/game/ShopPanel.ts:183-186`) implements the empty-slot "Esgotado" text, and it is now structurally reachable through `panel.cards[i].lines` (same mechanism used to close SHOP-46/31/42). But no test drives a shop state with fewer than 3 eligible entries: at round 1 with the default catalog (5 modifiers + `cura`), `e = 6 ≥ 3` always, so `min(3, e)` never produces an empty slot in the smoke's early-game window. The only way to exercise SHOP-38 is a late-game state where ≥4 of the 5 modifiers are maxed out (e.g., after many rounds/rerolls), which the current smoke does not reach. Classification: **lacuna menor aceita** — cosmetic-only (no gameplay-state risk, matches the spec's own edge-case list which also leaves the analogous "wallet 0 → all unaffordable" edge case only partially covered), the core logic it depends on (`Shop` producing `id: null` offers) is already unit-tested (`tests/core/shop.test.ts:94-97`, pool-of-2 case), and Rodada 1 itself ranked this fix as Minor/optional hardening that "does not block a re-verify once Fix 1 lands." Does not block PASS.
+
+### 2. Discrimination Sensor (Rodada 2, sensor leve — 3 mutações)
+
+Isolated scratch: `git worktree add <scratchpad>/verify-wt-r2 HEAD` (`HEAD` = `eb05e13`), `node_modules` linked via NTFS junction (`New-Item -ItemType Junction`). Each mutation applied with `sed` inside the worktree only, reverted with `git checkout --` before the next; worktree removed with `git worktree remove --force` afterward.
+
+| # | file:line | Mutation | Command | Killed? |
+| --- | --- | --- | --- | --- |
+| 1 | `src/scenes/TestScene.ts:280` | Removed `this.player.setMaxHp(this.modifiers.maxHp)` from the `vida` buy branch | `npm run smoke -- shop` | ✅ Killed — `FALHA shop.smoke.mjs: MOD-04: maxHp 100 -> 100` |
+| 2 | `src/scenes/TestScene.ts:281` | Changed `this.player.heal(SHOP.vidaPerLevel)` → `this.player.heal(0)` (heal amount neutralized) | `npm run smoke -- shop` | ✅ Killed — `FALHA shop.smoke.mjs: MOD-11: hp 100 -> 100` |
+| 3 | `src/scenes/TestScene.ts:204` | Removed the `&& this.run.state !== 'shop'` guard: `const debugKeys = () => isDebug()` | `npm run smoke -- shop` | ✅ Killed — `FALHA shop.smoke.mjs: MOD-11: hp 100 -> 0` (key `3` bought `vida` and simultaneously debug-killed the player) |
+
+**Sensor depth**: lightweight (3 targeted mutations, exactly the coordinator's target list: `setMaxHp` removal, `heal(15)` removal, debug-key guard removal)
+**Sensor verdict**: 3/3 killed — no surviving mutants
+
+**Isolation confirmation**: `git status --porcelain` on the real worktree, before sensor setup and after `git worktree remove --force`, in both cases:
+```
+?? .agents/
+?? .claude/
+?? .cursor/
+?? .windsurf/
+?? skills-lock.json
+```
+Identical — no residue from the sensor run. `git worktree list` after removal shows only the main worktree.
+
+### 3. Gate Check (árvore real, `eb05e13`)
+
+| Command | Result |
+| --- | --- |
+| `npm run typecheck` | ✅ 0 errors |
+| `npm test` | ✅ 654/654 unit tests passed, 43 test files (unchanged count from Rodada 1 — no new unit tests this round, only smoke) |
+| `npm run build` | ✅ clean (`tsc --noEmit && vite build`) |
+| `npm run smoke` | ✅ 12/12 scenarios passed, single run — `held-item.smoke.mjs` and `armed.smoke.mjs` both passed first try, no re-isolation needed |
+
+### 4. Ranked remaining gaps
+
+1. **Minor (accepted)** — SHOP-38: no test exercises the "Esgotado" empty-slot render path (see 1b). Low effort to close: extend the existing late-game or a synthetic-catalog smoke/unit path to reach `e < 3`, then assert `panel.cards[i].lines.includes('Esgotado')`.
+2. **Cosmetic** — edge cases "wallet 0 → all 3 cards unaffordable + `Enter` still works" and "boss round → shop opens" remain architecturally guaranteed but not directly smoke-tested (carried over from Rodada 1, unchanged this round).
+3. **Cosmetic** — "rare offer sold, reroll may bring it back if still eligible" remains untested (carried over from Rodada 1, unchanged this round).
+
+No new lessons distilled this round: the only remaining gap (SHOP-38) is the same lacuna already recorded at `.specs/LESSONS.md` L-033 in Rodada 1 (not a new failure), and all 3 sensor mutations were killed (no surviving-mutant signal to record).
+
+### Summary (Rodada 2)
+
+**Overall**: ✅ PASS — the feature's headline mechanic (buying `vida` raises real max HP and heals 15) now works in the live game, confirmed by both direct smoke assertions and a discrimination sensor that kills the fault when reintroduced. All Rodada 1 zero-evidence UI-text gaps except SHOP-38 are closed with rendered-text assertions via the new `ShopPanel.debug()` snapshot field. The debug-key/shop-buy collision found during the fix is closed and sensor-confirmed. SHOP-38 remains an accepted Minor gap (cosmetic, low-risk, previously ranked non-blocking). Gate is fully green.
