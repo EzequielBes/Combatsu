@@ -498,32 +498,32 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Cenário `shop` passa junto com os outros 11
-- [ ] SHOP-01 conferido: WHEN the run state is `intermission` and its timer reaches 2500 ms THEN the run state SHALL become `shop`.
-- [ ] SHOP-32 conferido: WHEN the run state becomes `shop` THEN `events` SHALL get exactly one `shopOpen:<r>`, where `r` is the round just cleared.
-- [ ] SHOP-33 conferido: WHILE the run state is `shop`, the scene SHALL skip the gameplay update, so the player, enemy and pickup positions and the pickup ages SHALL stay the same between frames.
-- [ ] SHOP-03 conferido: WHEN `Enter` is pressed while the run state is `shop` THEN the run state SHALL become `roundActive` with the round equal to the cleared round + 1.
-- [ ] SHOP-35 conferido: WHEN the shop closes THEN `events` SHALL get exactly one `shopClose`.
-- [ ] SHOP-05 conferido: WHEN the shop opens THEN the wallet count SHALL increase by exactly the sum of the values of the fragment pickups alive in the frame before it opened.
-- [ ] SHOP-36 conferido: WHEN the shop opens THEN no fragment pickup SHALL remain in the scene.
-- [ ] SHOP-37 conferido: WHEN the shop opens THEN every heal pickup SHALL remain in the scene at the same position.
-- [ ] SHOP-45 conferido: WHEN key `k` (1, 2 or 3) is pressed while the run state is `shop` and slot `k − 1` holds an unsold offer whose cost ≤ the wallet count, and that offer is not `cura` with the player HP equal to max HP, THEN that offer SHALL be bought.
-- [ ] SHOP-19 conferido: WHEN an offer is bought THEN the wallet count SHALL decrease by exactly the offer cost.
-- [ ] SHOP-41 conferido: WHEN a modifier offer is bought THEN that modifier level SHALL increase by exactly 1.
-- [ ] SHOP-43 conferido: WHEN an offer is bought THEN `events` SHALL get exactly one `buy:<id>:<cost>`.
-- [ ] SHOP-10 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds an unsold offer whose cost is greater than the wallet count THEN the wallet and every modifier level SHALL stay unchanged and `events` SHALL get `buyRefused:<id>:funds`.
-- [ ] SHOP-13 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds the unsold `cura` offer and the player HP equals max HP THEN the wallet SHALL stay unchanged and `events` SHALL get `buyRefused:cura:fullHp`.
-- [ ] SHOP-16 conferido: WHEN `R` is pressed in the shop and the reroll cost ≤ the wallet count THEN the wallet SHALL decrease by the reroll cost and 3 new offers SHALL be drawn by SHOP-08 rules.
-- [ ] SHOP-28 conferido: WHEN `→` or `D` is pressed in the shop THEN the selected slot SHALL become `(selected + 1) mod 3`.
-- [ ] SHOP-30 conferido: WHEN `J` is pressed in the shop THEN a purchase SHALL be attempted for the selected slot, exactly as SHOP-45 does for key `<selected + 1>`.
-- [ ] SHOP-20 conferido: WHILE the run state is not `shop`, the keys `1`, `2`, `3` and `Enter` SHALL not attempt any purchase.
-- [ ] SHOP-22 conferido: WHERE the debug mode is on, the snapshot SHALL include the `shop`, `modifiers` and `player.maxHp` fields of the contract above, with `shop.open` true if and only if the run state is `shop`.
-- [ ] SHOP-23 conferido: WHERE the debug mode is on and the URL has `fragments=N` with integer N ≥ 0 THEN the wallet SHALL be N when the run starts.
-- [ ] MOD-04 conferido: WHILE `vida` is at level `n`, the player max HP SHALL be `100 + 15n`.
-- [ ] MOD-05 conferido: WHILE `forca` is at level `n`, each melee hit damage of the player (combo steps and held-prop hits) SHALL be `round(base × (1 + 0.10n))`, where `round` rounds halves up.
-- [ ] MOD-06 conferido: WHILE `agilidade` is at level `n`, the player run speed SHALL be `220 × (1 + 0.08n)` px/s.
-- [ ] MOD-07 conferido: WHILE `ima` is at level `n`, the pickup magnet range SHALL be `72 × (1 + 0.30n)` px.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Cenário `shop` passa junto com os outros 11
+- [x] SHOP-01 conferido: WHEN the run state is `intermission` and its timer reaches 2500 ms THEN the run state SHALL become `shop`.
+- [x] SHOP-32 conferido: WHEN the run state becomes `shop` THEN `events` SHALL get exactly one `shopOpen:<r>`, where `r` is the round just cleared.
+- [x] SHOP-33 conferido: WHILE the run state is `shop`, the scene SHALL skip the gameplay update, so the player, enemy and pickup positions and the pickup ages SHALL stay the same between frames.
+- [x] SHOP-03 conferido: WHEN `Enter` is pressed while the run state is `shop` THEN the run state SHALL become `roundActive` with the round equal to the cleared round + 1.
+- [x] SHOP-35 conferido: WHEN the shop closes THEN `events` SHALL get exactly one `shopClose`.
+- [x] SHOP-05 conferido: WHEN the shop opens THEN the wallet count SHALL increase by exactly the sum of the values of the fragment pickups alive in the frame before it opened.
+- [x] SHOP-36 conferido: WHEN the shop opens THEN no fragment pickup SHALL remain in the scene.
+- [x] SHOP-37 conferido: WHEN the shop opens THEN every heal pickup SHALL remain in the scene at the same position.
+- [x] SHOP-45 conferido: WHEN key `k` (1, 2 or 3) is pressed while the run state is `shop` and slot `k − 1` holds an unsold offer whose cost ≤ the wallet count, and that offer is not `cura` with the player HP equal to max HP, THEN that offer SHALL be bought.
+- [x] SHOP-19 conferido: WHEN an offer is bought THEN the wallet count SHALL decrease by exactly the offer cost.
+- [x] SHOP-41 conferido: WHEN a modifier offer is bought THEN that modifier level SHALL increase by exactly 1.
+- [x] SHOP-43 conferido: WHEN an offer is bought THEN `events` SHALL get exactly one `buy:<id>:<cost>`.
+- [x] SHOP-10 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds an unsold offer whose cost is greater than the wallet count THEN the wallet and every modifier level SHALL stay unchanged and `events` SHALL get `buyRefused:<id>:funds`.
+- [x] SHOP-13 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds the unsold `cura` offer and the player HP equals max HP THEN the wallet SHALL stay unchanged and `events` SHALL get `buyRefused:cura:fullHp`.
+- [x] SHOP-16 conferido: WHEN `R` is pressed in the shop and the reroll cost ≤ the wallet count THEN the wallet SHALL decrease by the reroll cost and 3 new offers SHALL be drawn by SHOP-08 rules.
+- [x] SHOP-28 conferido: WHEN `→` or `D` is pressed in the shop THEN the selected slot SHALL become `(selected + 1) mod 3`.
+- [x] SHOP-30 conferido: WHEN `J` is pressed in the shop THEN a purchase SHALL be attempted for the selected slot, exactly as SHOP-45 does for key `<selected + 1>`.
+- [x] SHOP-20 conferido: WHILE the run state is not `shop`, the keys `1`, `2`, `3` and `Enter` SHALL not attempt any purchase.
+- [x] SHOP-22 conferido: WHERE the debug mode is on, the snapshot SHALL include the `shop`, `modifiers` and `player.maxHp` fields of the contract above, with `shop.open` true if and only if the run state is `shop`.
+- [x] SHOP-23 conferido: WHERE the debug mode is on and the URL has `fragments=N` with integer N ≥ 0 THEN the wallet SHALL be N when the run starts.
+- [x] MOD-04 conferido: WHILE `vida` is at level `n`, the player max HP SHALL be `100 + 15n`.
+- [x] MOD-05 conferido: WHILE `forca` is at level `n`, each melee hit damage of the player (combo steps and held-prop hits) SHALL be `round(base × (1 + 0.10n))`, where `round` rounds halves up.
+- [x] MOD-06 conferido: WHILE `agilidade` is at level `n`, the player run speed SHALL be `220 × (1 + 0.08n)` px/s.
+- [x] MOD-07 conferido: WHILE `ima` is at level `n`, the pickup magnet range SHALL be `72 × (1 + 0.30n)` px.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
