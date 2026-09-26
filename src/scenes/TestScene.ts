@@ -52,6 +52,7 @@ import { MAX_FRAME_MS } from '../game/physics';
 import { Pickups } from '../game/Pickups';
 import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
+import { ShopPanel } from '../game/ShopPanel';
 import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
@@ -106,6 +107,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private modifiers!: Modifiers;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
   private shop: Shop | null = null;
+  /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
+  private shopPanel!: ShopPanel;
   private loot!: Loot;
   private lootRng!: Rng;
   private pickups!: Pickups;
@@ -201,6 +204,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       if (this.run.state !== 'shop') this.scene.restart();
     });
     this.addHud();
+    this.shopPanel = new ShopPanel(this, this.uiLayer);
   }
 
   update(_time: number, delta: number): void {
@@ -270,6 +274,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (input.moveLeft) shop.move(-1);
     if (input.reroll && !shop.reroll(this.wallet)) this.debugEvents.push('rerollRefused');
     if (input.confirm) this.closeShop();
+    // T10: o painel acompanha a `view` a cada frame (compra/reroll/movimento mudam custo, seleção, sold...).
+    this.shopPanel.update(shop.view(this.wallet, this.player.hp, this.player.maxHp));
   }
 
   /** Traduz o `BuyResult` tipado do `Shop` num evento de debug (design "Error Handling Strategy"). */
@@ -286,6 +292,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.wallet.add(this.pickups.collectFragments());
     this.matter.world.pause();
     this.shop = new Shop(SHOP_CATALOG, this.modifiers, this.run.shopRng!, round);
+    this.shopPanel.show(this.shop.view(this.wallet, this.player.hp, this.player.maxHp));
     this.debugEvents.push(`shopOpen:${round}`);
   }
 
@@ -294,6 +301,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.run.closeShop();
     this.matter.world.resume();
     this.shop = null;
+    this.shopPanel.hide();
     this.debugEvents.push('shopClose');
   }
 
@@ -367,6 +375,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // uma run nova nunca deve carregar a loja da anterior.
     if (this.shop) this.matter.world.resume();
     this.shop = null;
+    this.shopPanel.hide();
     this.hud.hideBossBar();
     for (const proj of this.projectiles) proj.destroyNow();
     this.projectiles = [];

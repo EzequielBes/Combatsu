@@ -388,12 +388,12 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `tests/game/shopPanel.test.ts`: toda cor de `SHOP_PANEL_COLORS` é chave de `PALETTE`
-- [ ] SHOP-21 conferido: Each unsold card SHALL show, top to bottom, the name, the level text `Nv <n+1>/<max>` (blank for `cura`), the preview text defined in Assumptions and the cost.
-- [ ] SHOP-38 conferido: WHILE the shop holds fewer than 3 offers, each empty slot SHALL show the text `Esgotado`.
-- [ ] SHOP-31 conferido: WHILE a slot is selected, its card SHALL be drawn with a highlighted border and all other cards SHALL not.
-- [ ] SHOP-24 conferido: Every color key used by the shop panel (background, card borders and texts) SHALL be a key of `PALETTE`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] `tests/game/shopPanel.test.ts`: toda cor de `SHOP_PANEL_COLORS` é chave de `PALETTE`
+- [x] SHOP-21 conferido: Each unsold card SHALL show, top to bottom, the name, the level text `Nv <n+1>/<max>` (blank for `cura`), the preview text defined in Assumptions and the cost.
+- [x] SHOP-38 conferido: WHILE the shop holds fewer than 3 offers, each empty slot SHALL show the text `Esgotado`.
+- [x] SHOP-31 conferido: WHILE a slot is selected, its card SHALL be drawn with a highlighted border and all other cards SHALL not.
+- [x] SHOP-24 conferido: Every color key used by the shop panel (background, card borders and texts) SHALL be a key of `PALETTE`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
