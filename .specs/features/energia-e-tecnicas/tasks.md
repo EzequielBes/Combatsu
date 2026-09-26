@@ -320,18 +320,18 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Janela 119/120 e 200/201 ms; na zona 59/60 ms; zona 7999/8000 ms
-- [ ] KOK-01 conferido: WHILE the time since a Punho Divergente first impact is at least 120 ms and at most 200 ms (outside the zone), the Kokusen window SHALL be open (`kokusen.windowOpen === true`).
-- [ ] KOK-02 conferido: WHILE in the zone, the Kokusen window SHALL be open from 60 ms to 200 ms after the first impact.
-- [ ] KOK-03 conferido: WHEN the player presses the slot key that cast the Punho Divergente while `kokusen.windowOpen` is true and that cast is not locked by KOK-04 THEN the second impact of that cast SHALL be a Kokusen.
-- [ ] KOK-04 conferido: WHEN the player presses the same slot key after the first impact and before the window opens THEN that Punho Divergente SHALL NOT produce a Kokusen, and `events` SHALL get `kokusenMiss`.
-- [ ] KOK-05 conferido: WHILE a Punho Divergente is in `sign`, `charge` or `release` before its first impact, a press of its slot key SHALL NOT count for KOK-03 or KOK-04.
-- [ ] KOK-09 conferido: WHEN a Kokusen lands THEN the cursed energy SHALL increase by 30, capped at max.
-- [ ] KOK-10 conferido: WHEN a Kokusen lands THEN `kokusen.zoneMs` SHALL be set to 8000 and `kokusen.zone` to true.
-- [ ] KOK-30 conferido: WHEN a Kokusen lands THEN `kokusen.streak` SHALL increase by 1.
-- [ ] KOK-11 conferido: WHEN `kokusen.zoneMs` reaches 0 THEN `kokusen.zone` SHALL become false.
-- [ ] KOK-31 conferido: WHEN `kokusen.zone` becomes false THEN `kokusen.streak` SHALL become 0.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Janela 119/120 e 200/201 ms; na zona 59/60 ms; zona 7999/8000 ms
+- [x] KOK-01 conferido: WHILE the time since a Punho Divergente first impact is at least 120 ms and at most 200 ms (outside the zone), the Kokusen window SHALL be open (`kokusen.windowOpen === true`).
+- [x] KOK-02 conferido: WHILE in the zone, the Kokusen window SHALL be open from 60 ms to 200 ms after the first impact.
+- [x] KOK-03 conferido: WHEN the player presses the slot key that cast the Punho Divergente while `kokusen.windowOpen` is true and that cast is not locked by KOK-04 THEN the second impact of that cast SHALL be a Kokusen.
+- [x] KOK-04 conferido: WHEN the player presses the same slot key after the first impact and before the window opens THEN that Punho Divergente SHALL NOT produce a Kokusen, and `events` SHALL get `kokusenMiss`.
+- [x] KOK-05 conferido: WHILE a Punho Divergente is in `sign`, `charge` or `release` before its first impact, a press of its slot key SHALL NOT count for KOK-03 or KOK-04.
+- [x] KOK-09 conferido: WHEN a Kokusen lands THEN the cursed energy SHALL increase by 30, capped at max.
+- [x] KOK-10 conferido: WHEN a Kokusen lands THEN `kokusen.zoneMs` SHALL be set to 8000 and `kokusen.zone` to true.
+- [x] KOK-30 conferido: WHEN a Kokusen lands THEN `kokusen.streak` SHALL increase by 1.
+- [x] KOK-11 conferido: WHEN `kokusen.zoneMs` reaches 0 THEN `kokusen.zone` SHALL become false.
+- [x] KOK-31 conferido: WHEN `kokusen.zone` becomes false THEN `kokusen.streak` SHALL become 0.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

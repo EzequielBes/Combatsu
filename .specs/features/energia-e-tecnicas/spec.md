@@ -528,19 +528,19 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | DIV-08 | P1: Punho Divergente | Specify | Implemented |
 | DIV-09 | P1: Punho Divergente | Specify | Pending |
 | DIV-10 | P1: Punho Divergente | Specify | Pending |
-| KOK-01 | P1: Kokusen | Specify | Pending |
-| KOK-02 | P1: Kokusen | Specify | Pending |
-| KOK-03 | P1: Kokusen | Specify | Pending |
-| KOK-04 | P1: Kokusen | Specify | Pending |
-| KOK-05 | P1: Kokusen | Specify | Pending |
+| KOK-01 | P1: Kokusen | Specify | Implemented |
+| KOK-02 | P1: Kokusen | Specify | Implemented |
+| KOK-03 | P1: Kokusen | Specify | Implemented |
+| KOK-04 | P1: Kokusen | Specify | Implemented |
+| KOK-05 | P1: Kokusen | Specify | Implemented |
 | KOK-06 | P1: Kokusen | Specify | Pending |
 | KOK-07 | P1: Kokusen | Specify | Pending |
 | KOK-08 | P1: Kokusen | Specify | Pending |
-| KOK-09 | P1: Kokusen | Specify | Pending |
-| KOK-10 | P1: Kokusen | Specify | Pending |
-| KOK-30 | P1: Kokusen | Specify | Pending |
-| KOK-11 | P1: Kokusen | Specify | Pending |
-| KOK-31 | P1: Kokusen | Specify | Pending |
+| KOK-09 | P1: Kokusen | Specify | Implemented |
+| KOK-10 | P1: Kokusen | Specify | Implemented |
+| KOK-30 | P1: Kokusen | Specify | Implemented |
+| KOK-11 | P1: Kokusen | Specify | Implemented |
+| KOK-31 | P1: Kokusen | Specify | Implemented |
 | KOK-12 | P1: Kokusen | Specify | Pending |
 | KOK-32 | P1: Kokusen | Specify | Pending |
 | KOK-13 | P1: Kokusen | Specify | Pending |
