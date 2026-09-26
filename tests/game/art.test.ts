@@ -291,11 +291,36 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
     }
   });
 
-  it('o orbe Azul passa no parseSheet, com núcleo d e borda C', () => {
+  it('o orbe Vermelho é um disco: o canto do quadro é transparente em todo tamanho (RED-02)', () => {
+    for (const size of RED_ORB_SIZES) {
+      const cells = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells;
+      expect(cells[0][0], `${size}`).toBeNull();
+      expect(cells[0][size - 1], `${size}`).toBeNull();
+      expect(cells[size - 1][0], `${size}`).toBeNull();
+      expect(cells[size - 1][size - 1], `${size}`).toBeNull();
+      // O centro (a região mais quente) é sempre W, nunca R (não é um preenchimento uniforme).
+      const mid = Math.floor(size / 2);
+      expect(cells[mid][mid], `${size}`).toBe('W');
+    }
+  });
+
+  it('o orbe Azul passa no parseSheet, com núcleo d, anel C e borda clara W', () => {
     const sheet = parseSheet('blue-orb', { orb: BLUE_ORB_FRAME }, PALETTE_KEYS);
     const colors = new Set(sheet.frames[0].cells.flat());
     expect(colors.has('d')).toBe(true);
     expect(colors.has('C')).toBe(true);
+    expect(colors.has('W')).toBe(true);
+  });
+
+  it('o orbe Azul é um disco: o canto do quadro é transparente e o centro é o núcleo d', () => {
+    const cells = parseSheet('blue-orb', { orb: BLUE_ORB_FRAME }, PALETTE_KEYS).frames[0].cells;
+    const size = BLUE_ORB_FRAME.length;
+    expect(cells[0][0]).toBeNull();
+    expect(cells[0][size - 1]).toBeNull();
+    expect(cells[size - 1][0]).toBeNull();
+    expect(cells[size - 1][size - 1]).toBeNull();
+    const mid = Math.floor(size / 2);
+    expect(cells[mid][mid]).toBe('d');
   });
 
   it('a chama da aura tem 2 frames por cor, do mesmo tamanho, que não são idênticos (cintilam)', () => {
