@@ -249,19 +249,19 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Loja nova: `rerollCost` 5, `selected` 0
-- [ ] Reroll com saldo 5 → saldo 0, 3 ofertas novas, custo 10; com saldo 4 → recusado, nada muda; 5 → 10 → 15
-- [ ] `move(+1)` 0 → 1 → 2 → 0; `move(−1)` 0 → 2
-- [ ] Comprar pelo `selected` = comprar pelo slot equivalente
-- [ ] SHOP-16 conferido: WHEN `R` is pressed in the shop and the reroll cost ≤ the wallet count THEN the wallet SHALL decrease by the reroll cost and 3 new offers SHALL be drawn by SHOP-08 rules.
-- [ ] SHOP-25 conferido: WHEN a reroll happens THEN the reroll cost of that shop SHALL increase by 5.
-- [ ] SHOP-17 conferido: WHEN a shop opens THEN its reroll cost SHALL be 5.
-- [ ] SHOP-26 conferido: IF `R` is pressed with the reroll cost greater than the wallet count THEN nothing SHALL change and `events` SHALL get `rerollRefused`.
-- [ ] SHOP-27 conferido: WHEN the shop opens THEN the selected slot SHALL be 0.
-- [ ] SHOP-28 conferido: WHEN `→` or `D` is pressed in the shop THEN the selected slot SHALL become `(selected + 1) mod 3`.
-- [ ] SHOP-29 conferido: WHEN `←` or `A` is pressed in the shop THEN the selected slot SHALL become `(selected + 2) mod 3`.
-- [ ] SHOP-30 conferido: WHEN `J` is pressed in the shop THEN a purchase SHALL be attempted for the selected slot, exactly as SHOP-45 does for key `<selected + 1>`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Loja nova: `rerollCost` 5, `selected` 0
+- [x] Reroll com saldo 5 → saldo 0, 3 ofertas novas, custo 10; com saldo 4 → recusado, nada muda; 5 → 10 → 15
+- [x] `move(+1)` 0 → 1 → 2 → 0; `move(−1)` 0 → 2
+- [x] Comprar pelo `selected` = comprar pelo slot equivalente
+- [x] SHOP-16 conferido: WHEN `R` is pressed in the shop and the reroll cost ≤ the wallet count THEN the wallet SHALL decrease by the reroll cost and 3 new offers SHALL be drawn by SHOP-08 rules.
+- [x] SHOP-25 conferido: WHEN a reroll happens THEN the reroll cost of that shop SHALL increase by 5.
+- [x] SHOP-17 conferido: WHEN a shop opens THEN its reroll cost SHALL be 5.
+- [x] SHOP-26 conferido: IF `R` is pressed with the reroll cost greater than the wallet count THEN nothing SHALL change and `events` SHALL get `rerollRefused`.
+- [x] SHOP-27 conferido: WHEN the shop opens THEN the selected slot SHALL be 0.
+- [x] SHOP-28 conferido: WHEN `→` or `D` is pressed in the shop THEN the selected slot SHALL become `(selected + 1) mod 3`.
+- [x] SHOP-29 conferido: WHEN `←` or `A` is pressed in the shop THEN the selected slot SHALL become `(selected + 2) mod 3`.
+- [x] SHOP-30 conferido: WHEN `J` is pressed in the shop THEN a purchase SHALL be attempted for the selected slot, exactly as SHOP-45 does for key `<selected + 1>`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

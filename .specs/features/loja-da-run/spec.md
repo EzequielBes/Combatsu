@@ -270,15 +270,15 @@ maxHp: number;
 | SHOP-22 | P1: Loja | Specify | Pending |
 | SHOP-23 | P1: Loja | Specify | Pending |
 | SHOP-24 | P1: Loja | Specify | Pending |
-| SHOP-16 | P2: Reroll | Specify | Pending |
-| SHOP-25 | P2: Reroll | Specify | Pending |
-| SHOP-17 | P2: Reroll | Specify | Pending |
-| SHOP-26 | P2: Reroll | Specify | Pending |
+| SHOP-16 | P2: Reroll | Specify | Implemented |
+| SHOP-25 | P2: Reroll | Specify | Implemented |
+| SHOP-17 | P2: Reroll | Specify | Implemented |
+| SHOP-26 | P2: Reroll | Specify | Implemented |
 | SHOP-46 | P2: Reroll | Specify | Pending |
-| SHOP-27 | P2: Navegação | Specify | Pending |
-| SHOP-28 | P2: Navegação | Specify | Pending |
-| SHOP-29 | P2: Navegação | Specify | Pending |
-| SHOP-30 | P2: Navegação | Specify | Pending |
+| SHOP-27 | P2: Navegação | Specify | Implemented |
+| SHOP-28 | P2: Navegação | Specify | Implemented |
+| SHOP-29 | P2: Navegação | Specify | Implemented |
+| SHOP-30 | P2: Navegação | Specify | Implemented |
 | SHOP-31 | P2: Navegação | Specify | Pending |
 
 **Coverage:** 57 total, 0 Verified
