@@ -4,50 +4,95 @@
  * (sem `phaser` como valor): rodam no Vitest.
  */
 
-/** Quadrado com anéis concêntricos de cor, `colors[0]` na borda até `colors[last]` no núcleo. */
-function ringedSquare(size: number, colors: readonly string[]): string[] {
-  const last = colors.length - 1;
+/**
+ * Disco com anéis concêntricos de cor por raio (não um quadrado): `stops` é uma lista, do núcleo para a borda,
+ * de `[fração do raio, cor]` — o primeiro `stop` cujo raio cobre o texel vence. Texels fora do último raio ficam
+ * transparentes ('.'), o que arredonda os cantos do quadro em vez de preenchê-los.
+ */
+function disc(size: number, stops: ReadonlyArray<readonly [number, string]>): string[] {
+  const center = (size - 1) / 2;
+  const maxRadius = size / 2;
   return Array.from({ length: size }, (_, y) =>
     Array.from({ length: size }, (_, x) => {
-      const ring = Math.min(x, y, size - 1 - x, size - 1 - y);
-      return colors[Math.min(ring, last)];
+      const dx = x - center;
+      const dy = y - center;
+      const r = Math.sqrt(dx * dx + dy * dy) / maxRadius;
+      for (const [threshold, color] of stops) if (r <= threshold) return color;
+      return '.';
     }).join(''),
   );
 }
 
-/** Tamanhos do orbe Vermelho por terço da carga (RED-02): 4, 8 e 12 texels, núcleo `W` e borda `R`. */
+/**
+ * Tamanhos do orbe Vermelho por terço da carga (RED-02): 4, 8 e 12 texels, discos (não quadrados) com núcleo
+ * branco-quente `W`, passando por um anel de laranja/âmbar (`a`/`A`) até a borda vermelha `R`.
+ */
 export const RED_ORB_SIZES = [4, 8, 12] as const;
 export const RED_ORB_FRAMES: Record<(typeof RED_ORB_SIZES)[number], readonly string[]> = {
-  4: ringedSquare(4, ['R', 'W']),
-  8: ringedSquare(8, ['R', 'A', 'W']),
-  12: ringedSquare(12, ['R', 'A', 'a', 'W']),
+  4: disc(4, [
+    [0.5, 'W'],
+    [1, 'R'],
+  ]),
+  8: disc(8, [
+    [0.3, 'W'],
+    [0.55, 'A'],
+    [0.8, 'a'],
+    [1, 'R'],
+  ]),
+  12: disc(12, [
+    [0.3, 'W'],
+    [0.55, 'A'],
+    [0.8, 'a'],
+    [1, 'R'],
+  ]),
 };
 
-/** Orbe Azul ativo: núcleo `d` com borda ciano `C` (design.md, "sprites/techFx.ts"). */
-export const BLUE_ORB_FRAME: readonly string[] = ringedSquare(10, ['C', 'd']);
+/**
+ * Orbe Azul ativo: disco (não quadrado) com núcleo azul-profundo `d` (a massa densa sendo absorvida), um anel
+ * ciano `C` e uma borda mais clara `W` (o brilho de contenção na borda, design.md "sprites/techFx.ts").
+ */
+export const BLUE_ORB_FRAME: readonly string[] = disc(10, [
+  [0.4, 'd'],
+  [0.75, 'C'],
+  [1, 'W'],
+]);
 
 /** Cor de aura por técnica (Direção de arte de cada story): Divergente/Azul em azul, Vermelho em vermelho,
  * Desmantelar em branco. */
 export type AuraColor = 'blue' | 'red' | 'white';
 
-/** Chama tremulando ao redor do corpo durante sign/charge (CAST-14): 2 frames que alternam a altura da chama. */
-function flame(base: string, hi: string, tall: boolean): string[] {
-  const rows = [
-    '....o....',
-    '...ooo...',
-    '..oxoxo..',
-    '.ooooooo.',
-    '.oxoxoxo.',
-    'ooooooooo',
-    'oxoxoxoxo',
-    'ooooooooo',
-    '.ooooooo.',
-    '.ooooooo.',
-    '..ooooo..',
-    '...ooo...',
-  ];
-  const padded = tall ? ['....o....', ...rows] : ['.........', ...rows];
-  return padded.map((row) => row.replace(/x/g, hi).replace(/o/g, base));
+/** Corpo arredondado da chama (8 linhas), igual nos dois frames — só as pontas em cima variam (flicker). */
+const FLAME_BODY: readonly string[] = [
+  'oxoxoxoxo',
+  'ooooooooo',
+  'oxoxoxoxo',
+  'ooooooooo',
+  '.ooooooo.',
+  '.ooooooo.',
+  '..ooooo..',
+  '...ooo...',
+];
+
+/** Altura (em linhas) de cada uma das 9 colunas da chama, por frame: irregular de propósito (silhueta orgânica,
+ * não um triângulo/losango simétrico). Os dois frames deslocam os picos para tremular (CAST-14). */
+const FLAME_TIP_ROWS = 6;
+const FLAME_TIPS: Record<'a' | 'b', readonly number[]> = {
+  a: [1, 3, 5, 4, 6, 3, 5, 2, 1],
+  b: [2, 4, 2, 6, 3, 5, 2, 4, 1],
+};
+
+/** Pontas da chama sobre o corpo: cada coluna sobe `heights[x]` linhas: `o` no corpo da ponta, `x` só no topo. */
+function flameTip(heights: readonly number[]): string[] {
+  return Array.from({ length: FLAME_TIP_ROWS }, (_, row) => {
+    const fromBottom = FLAME_TIP_ROWS - row;
+    return heights.map((h) => (h < fromBottom ? '.' : h === fromBottom ? 'x' : 'o')).join('');
+  });
+}
+
+/** Chama tremulando ao redor do corpo durante sign/charge (CAST-14): 2 frames com pontas em alturas diferentes. */
+function flame(base: string, hi: string, variant: 'a' | 'b'): string[] {
+  const rows = [...flameTip(FLAME_TIPS[variant]), ...FLAME_BODY];
+  return rows.map((row) => row.replace(/x/g, hi).replace(/o/g, base));
 }
 
 const AURA_COLORS: Record<AuraColor, { base: string; hi: string }> = {
@@ -56,11 +101,11 @@ const AURA_COLORS: Record<AuraColor, { base: string; hi: string }> = {
   white: { base: 'w', hi: 'W' },
 };
 
-/** Chama da aura, 2 frames por cor (`<cor>-a`, `<cor>-b`), todas do mesmo tamanho (9x13 texels). */
+/** Chama da aura, 2 frames por cor (`<cor>-a`, `<cor>-b`), todas do mesmo tamanho (9x14 texels). */
 export const AURA_FRAMES: Record<string, readonly string[]> = Object.fromEntries(
   (Object.entries(AURA_COLORS) as Array<[AuraColor, { base: string; hi: string }]>).flatMap(([color, { base, hi }]) => [
-    [`${color}-a`, flame(base, hi, true)],
-    [`${color}-b`, flame(base, hi, false)],
+    [`${color}-a`, flame(base, hi, 'a')],
+    [`${color}-b`, flame(base, hi, 'b')],
   ]),
 );
 
