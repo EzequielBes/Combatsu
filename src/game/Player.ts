@@ -239,6 +239,11 @@ export class Player implements Hittable {
   }
 
   /** Empurrão instantâneo (BAI-13): o rugido do chefe soma esta velocidade horizontal (px/step) ao corpo. */
+  /** Novo teto de vida (MOD-04): a compra de `vida` sobe o teto; `resetForRun` volta ao da tuning (MOD-10). */
+  setMaxHp(n: number): void {
+    this.health.setMax(n);
+  }
+
   /** Cura com teto em maxHp (BWIN-01); devolve o que foi restaurado. */
   heal(amount: number): number {
     return this.health.heal(amount);
