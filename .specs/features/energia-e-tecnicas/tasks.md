@@ -476,11 +476,11 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Teste de arte existente (limite de cores) atualizado só no número, não na regra
-- [ ] TFX-08 conferido: This feature SHALL add exactly four keys to `PALETTE`: `b` = 0x050205, `R` = 0xff3344, `W` = 0xffffff and `d` = 0x14307a (data test).
-- [ ] TEC-15 conferido: The fill, background, mark, flash and overlay colors of the energy bar and slot icons SHALL be exported constants whose values belong to `PALETTE` (data test).
-- [ ] TFX-01 conferido: Every color used by technique effects, technique frames, kanji grids and technique HUD parts SHALL belong to `PALETTE` (data test).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Teste de arte existente (limite de cores) atualizado só no número, não na regra
+- [x] TFX-08 conferido: This feature SHALL add exactly four keys to `PALETTE`: `b` = 0x050205, `R` = 0xff3344, `W` = 0xffffff and `d` = 0x14307a (data test).
+- [x] TEC-15 conferido: The fill, background, mark, flash and overlay colors of the energy bar and slot icons SHALL be exported constants whose values belong to `PALETTE` (data test).
+- [x] TFX-01 conferido: Every color used by technique effects, technique frames, kanji grids and technique HUD parts SHALL belong to `PALETTE` (data test).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
@@ -504,10 +504,10 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Teste de dados: tamanho e só chaves da paleta
-- [ ] CAST-18 conferido: For each technique id in {`divergente`, `vermelho`, `azul`, `corte`}, the player sheet SHALL contain the frames `<id>-sign`, `<id>-charge`, `<id>-release` and `<id>-recover`, each 32×24 texels (data test).
-- [ ] CAST-22 conferido: Every texel of the frames listed in CAST-18 SHALL be '.' or a `PALETTE` key (data test).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Teste de dados: tamanho e só chaves da paleta
+- [x] CAST-18 conferido: For each technique id in {`divergente`, `vermelho`, `azul`, `corte`}, the player sheet SHALL contain the frames `<id>-sign`, `<id>-charge`, `<id>-release` and `<id>-recover`, each 32×24 texels (data test).
+- [x] CAST-22 conferido: Every texel of the frames listed in CAST-18 SHALL be '.' or a `PALETTE` key (data test).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
@@ -531,10 +531,10 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Registrados na folha do player junto com os de T14
-- [ ] CAST-18 conferido: For each technique id in {`divergente`, `vermelho`, `azul`, `corte`}, the player sheet SHALL contain the frames `<id>-sign`, `<id>-charge`, `<id>-release` and `<id>-recover`, each 32×24 texels (data test).
-- [ ] CAST-22 conferido: Every texel of the frames listed in CAST-18 SHALL be '.' or a `PALETTE` key (data test).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Registrados na folha do player junto com os de T14
+- [x] CAST-18 conferido: For each technique id in {`divergente`, `vermelho`, `azul`, `corte`}, the player sheet SHALL contain the frames `<id>-sign`, `<id>-charge`, `<id>-release` and `<id>-recover`, each 32×24 texels (data test).
+- [x] CAST-22 conferido: Every texel of the frames listed in CAST-18 SHALL be '.' or a `PALETTE` key (data test).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
@@ -558,11 +558,11 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Kanji legíveis numa captura (conferir no UAT)
-- [ ] KOK-29 conferido: The 黒 and 閃 grids SHALL be 24×24 texels each (data test).
-- [ ] KOK-34 conferido: Every texel of the 黒 and 閃 grids SHALL be '.' or a `PALETTE` key (data test).
-- [ ] TFX-01 conferido: Every color used by technique effects, technique frames, kanji grids and technique HUD parts SHALL belong to `PALETTE` (data test).
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Kanji legíveis numa captura (conferir no UAT)
+- [x] KOK-29 conferido: The 黒 and 閃 grids SHALL be 24×24 texels each (data test).
+- [x] KOK-34 conferido: Every texel of the 黒 and 閃 grids SHALL be '.' or a `PALETTE` key (data test).
+- [x] TFX-01 conferido: Every color used by technique effects, technique frames, kanji grids and technique HUD parts SHALL belong to `PALETTE` (data test).
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

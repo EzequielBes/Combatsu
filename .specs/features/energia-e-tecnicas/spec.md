@@ -476,7 +476,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TEC-10 | P1: Energia e slots | Specify | Pending |
 | TEC-08 | P1: Energia e slots | Specify | Pending |
 | TEC-11 | P1: Energia e slots | Specify | Pending |
-| TEC-15 | P1: Energia e slots | Specify | Pending |
+| TEC-15 | P1: Energia e slots | Specify | Implemented |
 | TSH-01 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-02 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-03 | P1: Técnicas na loja | Specify | Implemented |
@@ -514,8 +514,8 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CAST-19 | P1: Conjuração | Specify | Pending |
 | CAST-16 | P1: Conjuração | Specify | Pending |
 | CAST-17 | P1: Conjuração | Specify | Pending |
-| CAST-18 | P1: Conjuração | Specify | Pending |
-| CAST-22 | P1: Conjuração | Specify | Pending |
+| CAST-18 | P1: Conjuração | Specify | Implemented |
+| CAST-22 | P1: Conjuração | Specify | Implemented |
 | DIV-01 | P1: Punho Divergente | Specify | Implemented |
 | DIV-02 | P1: Punho Divergente | Specify | Pending |
 | DIV-11 | P1: Punho Divergente | Specify | Pending |
@@ -560,8 +560,8 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | KOK-26 | P1: Kokusen | Specify | Pending |
 | KOK-27 | P1: Kokusen | Specify | Pending |
 | KOK-28 | P1: Kokusen | Specify | Pending |
-| KOK-29 | P1: Kokusen | Specify | Pending |
-| KOK-34 | P1: Kokusen | Specify | Pending |
+| KOK-29 | P1: Kokusen | Specify | Implemented |
+| KOK-34 | P1: Kokusen | Specify | Implemented |
 | RED-01 | P1: Vermelho | Specify | Implemented |
 | RED-02 | P1: Vermelho | Specify | Implemented |
 | RED-03 | P1: Vermelho | Specify | Pending |
@@ -607,8 +607,8 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | FXL-03 | P2: Laboratório de efeitos | Specify | Pending |
 | FXL-04 | P2: Laboratório de efeitos | Specify | Pending |
 | FXL-08 | P2: Laboratório de efeitos | Specify | Pending |
-| TFX-01 | P1: Invariantes dos efeitos | Specify | Pending |
-| TFX-08 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-01 | P1: Invariantes dos efeitos | Specify | Implemented |
+| TFX-08 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-02 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-03 | P1: Invariantes dos efeitos | Specify | Pending |
 | TFX-09 | P1: Invariantes dos efeitos | Specify | Pending |
