@@ -245,12 +245,12 @@ maxHp: number;
 | SHOP-05 | P1: Loja | Specify | Pending |
 | SHOP-36 | P1: Loja | Specify | Pending |
 | SHOP-37 | P1: Loja | Specify | Pending |
-| SHOP-06 | P1: Loja | Specify | Pending |
+| SHOP-06 | P1: Loja | Specify | Implemented |
 | SHOP-38 | P1: Loja | Specify | Pending |
-| SHOP-07 | P1: Loja | Specify | Pending |
-| SHOP-39 | P1: Loja | Specify | Pending |
+| SHOP-07 | P1: Loja | Specify | Implemented |
+| SHOP-39 | P1: Loja | Specify | Implemented |
 | SHOP-18 | P1: Loja | Specify | Implemented |
-| SHOP-08 | P1: Loja | Specify | Pending |
+| SHOP-08 | P1: Loja | Specify | Implemented |
 | SHOP-09 | P1: Loja | Specify | Pending |
 | SHOP-40 | P1: Loja | Specify | Pending |
 | SHOP-45 | P1: Loja | Specify | Pending |
