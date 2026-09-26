@@ -470,12 +470,12 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TEC-05 | P1: Energia e slots | Specify | Implemented |
 | TEC-06 | P1: Energia e slots | Specify | Implemented |
 | TEC-14 | P1: Energia e slots | Specify | Implemented |
-| TEC-07 | P1: Energia e slots | Specify | Pending |
-| TEC-12 | P1: Energia e slots | Specify | Pending |
-| TEC-09 | P1: Energia e slots | Specify | Pending |
-| TEC-10 | P1: Energia e slots | Specify | Pending |
+| TEC-07 | P1: Energia e slots | Specify | Implemented |
+| TEC-12 | P1: Energia e slots | Specify | Implemented |
+| TEC-09 | P1: Energia e slots | Specify | Implemented |
+| TEC-10 | P1: Energia e slots | Specify | Implemented |
 | TEC-08 | P1: Energia e slots | Specify | Implemented |
-| TEC-11 | P1: Energia e slots | Specify | Pending |
+| TEC-11 | P1: Energia e slots | Specify | Implemented |
 | TEC-15 | P1: Energia e slots | Specify | Implemented |
 | TSH-01 | P1: Técnicas na loja | Specify | Implemented |
 | TSH-02 | P1: Técnicas na loja | Specify | Implemented |

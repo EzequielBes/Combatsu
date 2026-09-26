@@ -616,12 +616,12 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] TEC-07 conferido: The HUD SHALL show the cursed energy bar under the HP bar, with fill width `barWidth × cur / max` (±1 px).
-- [ ] TEC-12 conferido: WHILE a slot holds a technique, the energy bar SHALL show a vertical mark for it at `barLeft + barWidth × cost / max` px (±1 px), where `cost` is that technique cost at its level.
-- [ ] TEC-09 conferido: WHILE a slot holds a technique, its HUD icon SHALL have a dark overlay of height `iconHeight × cooldownMs / cooldown` px (±1 px), where `cooldown` is that technique full cooldown.
-- [ ] TEC-10 conferido: WHEN a cast is denied for lack of energy THEN the energy bar SHALL flash in `R` for 300 ms.
-- [ ] TEC-11 conferido: The energy bar and slot icon objects SHALL be in the main camera ignore list, reported as `hud.techIgnoredByMain: true` in the debug snapshot.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] TEC-07 conferido: The HUD SHALL show the cursed energy bar under the HP bar, with fill width `barWidth × cur / max` (±1 px).
+- [x] TEC-12 conferido: WHILE a slot holds a technique, the energy bar SHALL show a vertical mark for it at `barLeft + barWidth × cost / max` px (±1 px), where `cost` is that technique cost at its level.
+- [x] TEC-09 conferido: WHILE a slot holds a technique, its HUD icon SHALL have a dark overlay of height `iconHeight × cooldownMs / cooldown` px (±1 px), where `cooldown` is that technique full cooldown.
+- [x] TEC-10 conferido: WHEN a cast is denied for lack of energy THEN the energy bar SHALL flash in `R` for 300 ms.
+- [x] TEC-11 conferido: The energy bar and slot icon objects SHALL be in the main camera ignore list, reported as `hud.techIgnoredByMain: true` in the debug snapshot.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

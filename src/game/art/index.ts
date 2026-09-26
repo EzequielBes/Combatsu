@@ -5,6 +5,7 @@ import { ENEMY_BAR, HUD_BAR } from './hud';
 import { PALETTE_KEYS } from './palette';
 import { registerSheet } from './render';
 import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
+import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
 import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
@@ -70,6 +71,8 @@ export function createArt(scene: Phaser.Scene): void {
     const shards = Object.fromEntries(TOOL_SHARDS[key].map((s) => [s.key, s.grid]));
     registerSheet(scene, shardsKey(texture), parseSheet(shardsKey(key), shards, PALETTE_KEYS));
   }
+  // Kanji das técnicas (TEC-09, CAST-16): ícones de slot do HUD e a chamada da conjuração, na mesma folha.
+  registerSheet(scene, TEX.kanji, parseSheet('kanji', KANJI_FRAMES, PALETTE_KEYS));
   registerSheet(scene, TEX.hudBar, parseSheet('hud-bar', { bar: HUD_BAR }, PALETTE_KEYS));
   registerSheet(scene, TEX.enemyBar, parseSheet('enemy-bar', { bar: ENEMY_BAR }, PALETTE_KEYS));
   // Chefe (BTIER-06): uma folha por arquétipo, com o mesmo conjunto de frames e animações.

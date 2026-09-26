@@ -47,6 +47,7 @@ import { Projectile } from '../game/Projectile';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { registerDebugProbe, type DebugProbe, type GameSnapshot } from '../game/debugApi';
 import { Enemy } from '../game/Enemy';
+import { EnergyHud } from '../game/EnergyHud';
 import { Fx, type SparkKind } from '../game/fx';
 import { GAME_NAME, Hud } from '../game/Hud';
 import type { InputSnapshot } from '../game/input';
@@ -110,6 +111,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private uiLayer!: Phaser.GameObjects.Layer;
   private fx!: Fx;
   private hud!: Hud;
+  /** Barra de energia e slots de técnica (TEC-07..12), na `uiLayer`. */
+  private energyHud!: EnergyHud;
   private run!: Run;
   /** Carteira de fragmentos da run (ECO-12..14) e os sorteios de drop, criados a cada `startRun` com o `lootRng`. */
   private wallet!: Wallet;
@@ -274,6 +277,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setRun(this.run.round > 0 ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
+    this.energyHud.update(dt, this.energy, this.loadout);
   }
 
   /**
@@ -746,7 +750,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         traveled: p.traveled,
       })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
-      hud: this.hud.debugState(),
+      hud: { ...this.hud.debugState(), ...this.energyHud.debugState() },
       hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
       wallet: { fragments: this.wallet.fragments },
@@ -862,6 +866,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       ...(isDebug() ? ['F1: sair do debug   H: debug da física   1/2: golpe leve/forte de teste'] : []),
     ];
     this.hud = new Hud(this, this.uiLayer, lines().join('\n'));
+    this.energyHud = new EnergyHud(this, this.uiLayer);
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     this.hud.showControls(CONTROLS_MS);
     // Boot em `title` (RUN-01/RHUD-05): tela com o nome do jogo até o primeiro J/Enter.

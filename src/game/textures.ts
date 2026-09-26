@@ -36,6 +36,8 @@ export const TEX = {
   /** Ferramentas amaldiçoadas: comum/rara e as poses na mão do inimigo (ARM-19). */
   cursedKnife: 'cursed-knife',
   cursedClub: 'cursed-club',
+  /** Kanji das técnicas (KOK-29): ícones de slot do HUD (TEC-09) e a chamada da conjuração (CAST-16). */
+  kanji: 'kanji',
 } as const;
 
 export const SIZE = {
