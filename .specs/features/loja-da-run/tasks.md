@@ -207,25 +207,25 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] Saldo = custo → compra (carteira 0, nível +1, `sold`); saldo = custo − 1 → `funds`, nada muda
-- [ ] Carta vendida → `sold`; espaço vazio → `empty`; nada muda nos dois
-- [ ] `cura` com hp = max → `fullHp`; com hp = max − 1 → compra, hp = max; hp 70 → 100
-- [ ] Depois de uma compra, as outras ofertas mantêm id, slot e custo; `affordable` = custo ≤ saldo
-- [ ] `previewText` gera exatamente os textos das Assumptions (`Vida máx. 100 → 115`, `Dano ×1,0 → ×1,1`, `Velocidade 220 → 238`, `Ímã 72 → 94`, `Cura 10% → 13%`, `Vida 70 → 100`) e `Nv n+1/max`
-- [ ] SHOP-45 conferido: WHEN key `k` (1, 2 or 3) is pressed while the run state is `shop` and slot `k − 1` holds an unsold offer whose cost ≤ the wallet count, and that offer is not `cura` with the player HP equal to max HP, THEN that offer SHALL be bought.
-- [ ] SHOP-19 conferido: WHEN an offer is bought THEN the wallet count SHALL decrease by exactly the offer cost.
-- [ ] SHOP-41 conferido: WHEN a modifier offer is bought THEN that modifier level SHALL increase by exactly 1.
-- [ ] SHOP-42 conferido: WHEN an offer is bought THEN its `sold` flag SHALL become `true` and its card SHALL show the text `Comprado`.
-- [ ] SHOP-43 conferido: WHEN an offer is bought THEN `events` SHALL get exactly one `buy:<id>:<cost>`.
-- [ ] SHOP-10 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds an unsold offer whose cost is greater than the wallet count THEN the wallet and every modifier level SHALL stay unchanged and `events` SHALL get `buyRefused:<id>:funds`.
-- [ ] SHOP-11 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds a sold offer THEN the wallet and every modifier level SHALL stay unchanged.
-- [ ] SHOP-13 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds the unsold `cura` offer and the player HP equals max HP THEN the wallet SHALL stay unchanged and `events` SHALL get `buyRefused:cura:fullHp`.
-- [ ] SHOP-12 conferido: WHEN the `cura` offer is bought THEN the player HP SHALL become `min(hp + 30, maxHp)`.
-- [ ] SHOP-14 conferido: IF key `k` is pressed in the shop while slot `k − 1` is empty THEN the wallet, every modifier level and `events` SHALL stay unchanged.
-- [ ] SHOP-15 conferido: WHEN an offer is bought THEN every other offer of that shop SHALL keep the same id, slot and cost it had before.
-- [ ] SHOP-44 conferido: The `affordable` flag of each unsold offer SHALL equal `cost ≤ wallet count` in every frame.
-- [ ] SHOP-21 conferido: Each unsold card SHALL show, top to bottom, the name, the level text `Nv <n+1>/<max>` (blank for `cura`), the preview text defined in Assumptions and the cost.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Saldo = custo → compra (carteira 0, nível +1, `sold`); saldo = custo − 1 → `funds`, nada muda
+- [x] Carta vendida → `sold`; espaço vazio → `empty`; nada muda nos dois
+- [x] `cura` com hp = max → `fullHp`; com hp = max − 1 → compra, hp = max; hp 70 → 100
+- [x] Depois de uma compra, as outras ofertas mantêm id, slot e custo; `affordable` = custo ≤ saldo
+- [x] `previewText` gera exatamente os textos das Assumptions (`Vida máx. 100 → 115`, `Dano ×1,0 → ×1,1`, `Velocidade 220 → 238`, `Ímã 72 → 94`, `Cura 10% → 13%`, `Vida 70 → 100`) e `Nv n+1/max`
+- [x] SHOP-45 conferido: WHEN key `k` (1, 2 or 3) is pressed while the run state is `shop` and slot `k − 1` holds an unsold offer whose cost ≤ the wallet count, and that offer is not `cura` with the player HP equal to max HP, THEN that offer SHALL be bought.
+- [x] SHOP-19 conferido: WHEN an offer is bought THEN the wallet count SHALL decrease by exactly the offer cost.
+- [x] SHOP-41 conferido: WHEN a modifier offer is bought THEN that modifier level SHALL increase by exactly 1.
+- [x] SHOP-42 conferido: WHEN an offer is bought THEN its `sold` flag SHALL become `true` and its card SHALL show the text `Comprado`.
+- [x] SHOP-43 conferido: WHEN an offer is bought THEN `events` SHALL get exactly one `buy:<id>:<cost>`.
+- [x] SHOP-10 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds an unsold offer whose cost is greater than the wallet count THEN the wallet and every modifier level SHALL stay unchanged and `events` SHALL get `buyRefused:<id>:funds`.
+- [x] SHOP-11 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds a sold offer THEN the wallet and every modifier level SHALL stay unchanged.
+- [x] SHOP-13 conferido: IF key `k` is pressed in the shop while slot `k − 1` holds the unsold `cura` offer and the player HP equals max HP THEN the wallet SHALL stay unchanged and `events` SHALL get `buyRefused:cura:fullHp`.
+- [x] SHOP-12 conferido: WHEN the `cura` offer is bought THEN the player HP SHALL become `min(hp + 30, maxHp)`.
+- [x] SHOP-14 conferido: IF key `k` is pressed in the shop while slot `k − 1` is empty THEN the wallet, every modifier level and `events` SHALL stay unchanged.
+- [x] SHOP-15 conferido: WHEN an offer is bought THEN every other offer of that shop SHALL keep the same id, slot and cost it had before.
+- [x] SHOP-44 conferido: The `affordable` flag of each unsold offer SHALL equal `cost ≤ wallet count` in every frame.
+- [x] SHOP-21 conferido: Each unsold card SHALL show, top to bottom, the name, the level text `Nv <n+1>/<max>` (blank for `cura`), the preview text defined in Assumptions and the cost.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
