@@ -1,7 +1,8 @@
+// `noshop=1` (SHOP-47): a varredura da loja levaria os fragmentos que este cenário acompanha por 15 s.
 // Fragmentos (ECO-01, ECO-08..10, ECO-16, ECO-21..22, ECO-27) com `?debug&seed=1`: mata um inimigo, anda até os
 // fragmentos e confere carteira, ímã, eventos, HUD, expiração e a limpeza numa run nova.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&seed=1&noshop=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

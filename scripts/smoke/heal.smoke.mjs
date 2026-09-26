@@ -1,7 +1,8 @@
+// `noshop=1` (SHOP-47): o cenário atravessa várias rodadas contando com a intermissão, sem passar pela loja.
 // Gota de cura (HEAL-01..10) com `?debug&seed=1&heal=1`: cada abate solta uma gota; ela cura o teto de 8 hp só
 // quando falta vida, e fica esperando no chão com vida cheia.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1&heal=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&seed=1&heal=1&noshop=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

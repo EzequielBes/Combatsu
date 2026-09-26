@@ -91,6 +91,13 @@ export default async function ({ page, baseUrl, assert }) {
     });
     checkAliveAndScale(round2);
     if (round2.run.state === 'roundActive' && round2.run.round === 2) break;
+    // SHOP-03: a loja segura a rodada até `Enter`.
+    if (round2.run.state === 'shop') {
+      // `Enter` segurado durante um passo: o input da loja lê `JustDown` no update.
+      await page.keyboard.down('Enter');
+      await page.evaluate(() => window.__game.step(50));
+      await page.keyboard.up('Enter');
+    }
   }
   assert(
     round2.run.state === 'roundActive' && round2.run.round === 2,
