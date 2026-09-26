@@ -385,15 +385,15 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Alcance 419/420 px; raio 95/96/97 px; cada inimigo uma vez
-- [ ] RED-02 conferido: WHILE the Vermelho is in `charge`, the orb frame SHALL be the 4-texel frame in the first third of the charge time, the 8-texel frame in the second third and the 12-texel frame in the last third.
-- [ ] RED-05 conferido: WHEN the Vermelho enters `release` THEN a red orb SHALL be launched horizontally toward the player's facing at 560 px/s from the fingertip position.
-- [ ] RED-06 conferido: WHEN the red orb touches a regular enemy it has not hit before THEN that enemy SHALL take 30 heavy damage and enter ragdoll with an impulse pointing away from the orb.
-- [ ] RED-08 conferido: WHEN the red orb touches a wall, touches the boss, or has traveled 420 px THEN it SHALL detonate in that frame.
-- [ ] RED-10 conferido: WHEN the red orb detonates THEN every regular enemy whose center is within 96 px of the detonation point and that the orb has not hit before SHALL take 25 heavy damage and a radial impulse away from that point.
-- [ ] RED-13 conferido: WHEN the red orb detonates THEN it SHALL be removed from `techObjects` in that frame.
-- [ ] RED-14 conferido: WHILE the red orb is in flight, `techObjects` SHALL list it with `kind: 'red'` and its `traveled` distance.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Alcance 419/420 px; raio 95/96/97 px; cada inimigo uma vez
+- [x] RED-02 conferido: WHILE the Vermelho is in `charge`, the orb frame SHALL be the 4-texel frame in the first third of the charge time, the 8-texel frame in the second third and the 12-texel frame in the last third.
+- [x] RED-05 conferido: WHEN the Vermelho enters `release` THEN a red orb SHALL be launched horizontally toward the player's facing at 560 px/s from the fingertip position.
+- [x] RED-06 conferido: WHEN the red orb touches a regular enemy it has not hit before THEN that enemy SHALL take 30 heavy damage and enter ragdoll with an impulse pointing away from the orb.
+- [x] RED-08 conferido: WHEN the red orb touches a wall, touches the boss, or has traveled 420 px THEN it SHALL detonate in that frame.
+- [x] RED-10 conferido: WHEN the red orb detonates THEN every regular enemy whose center is within 96 px of the detonation point and that the orb has not hit before SHALL take 25 heavy damage and a radial impulse away from that point.
+- [x] RED-13 conferido: WHEN the red orb detonates THEN it SHALL be removed from `techObjects` in that frame.
+- [x] RED-14 conferido: WHILE the red orb is in flight, `techObjects` SHALL list it with `kind: 'red'` and its `traveled` distance.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
