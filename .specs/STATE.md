@@ -84,25 +84,24 @@
 
 ## Handoff
 
-- **Feature**: F3 `.specs/features/economia-drops-cura` concluída e mergeada em `dev` → próxima: **F4 `loja-da-run`** (modificadores com teto, loja entre rodadas com 3 ofertas, gasta `Wallet.spend`; ver `.specs/ROADMAP.md`)
-- **Phase / Task**: F4 ainda não especificada; começar pelo Specify (tlc) + refinamento Jev (`node tools/jev-refine.mjs <spec>`, chave em `TYPESAFE_API_KEY` só no ambiente do comando)
-- **Adiantado**: Specify da F5 `energia-e-tecnicas` feito (`.specs/features/energia-e-tecnicas/spec.md`, 148 ACs, validador limpo, Jev em 3 rodadas com revisão do autor em `refinement.md`). A F5 continua na fila depois de F3 e F4.
+- **Feature**: F4 `.specs/features/loja-da-run` em Execute, branch `feat/loja-da-run` (publicada no `origin`; ainda NÃO mergeada em `dev`)
+- **Phase / Task**: fases 1 (T1–T7, núcleo puro) e T8–T9 da fase 2 feitas. **Próximo: T10** (painel da loja), depois T11 (polimento), T12 (debug `?fragments=N` + snapshot), T13 (ajustar smokes), T14 (smoke da loja), Verifier Sonnet e merge `--no-ff` em `dev`
+- **Estado do jogo nesta branch**: a loja abre entre rodadas e segura a rodada até `Enter`, mas **ainda não tem painel** (T10). Jogando, depois de limpar uma rodada é preciso apertar `Enter` para seguir; `1/2/3`, `J`, setas e `R` já compram, navegam e rerolam às cegas
+- **Smoke**: 4 cenários quebrados de propósito desde T9 (`run-loop`, `hud`, `drops`, `heal`: esperam a rodada 2 sem passar pela loja); T13 corrige com um helper `continueShop` em `scripts/smoke/lib.ts`
+- **Jev nesta feature**: spec com 3 rodadas de `jev-refine` (`refinement.md`) e a nova ferramenta `node tools/jev-align.mjs <pasta-da-feature>` (tasks × ACs e stories × diversão, `alignment.md`); usar as duas no Specify/Tasks das próximas features
 - **Completed**:
-  - F0 (harness de smoke, Jev), F1 (run/rodadas/dificuldade), F2 (chefe a cada 5 rodadas) e F3 (fragmentos com ímã, gota de cura, inimigos armados com faca/porrete, ferramentas usáveis e raras, item na mão no HUD)
-  - 568 testes, 11 cenários de smoke
+  - F0–F3 mergeadas em `dev`; F4 T1–T9 (652 testes)
 - **Como trabalhar** (memória do usuário):
   - Opus planeja; workers Sonnet, um por lote de fase (não um por task); workers de integração/smoke com no máximo ~3 tasks
+  - Próximos lotes: W2b = T10–T11 (com `phaser-gamedev`); W3 = T12–T14; depois o Verifier
   - Correções pequenas do Verifier: inline
-  - Verifier em Sonnet com sensor leve
-  - Decidir sozinho seguindo a recomendação, pensando em diversão
   - Merge em `dev` com `--no-ff` e mensagem `chore(dev): merge feat/<nome>`; `main` só com validação do usuário
 - **Dicas técnicas**:
   - `npm run smoke -- <trecho>` roda só alguns cenários
   - `?debug&seed=N&round=N` começa na rodada N
-  - Teclas de debug: 2 = golpe forte em todos, 3 = mata o player, 4 = 50 de dano no player
+  - Teclas de debug: 2 = golpe forte em todos, 3 = mata o player, 4 = 50 de dano no player; `R` reinicia a cena só fora da loja
   - O gate Quick deve incluir `npm run typecheck`
-  - Skill `phaser-gamedev` disponível para os workers
 - **In-progress** (file:line): none
-- **Blockers**: UAT do usuário (visual, F0, F1, F2, F3) antes de `dev` ir para `main`
+- **Blockers**: UAT do usuário (visual, F0–F3) antes de `dev` ir para `main`
 - **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas, que são do usuário)
-- **Branch**: `dev`
+- **Branch**: `feat/loja-da-run`
