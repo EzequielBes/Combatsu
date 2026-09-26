@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Run, acceptsPlayerInput, type RunCommand, type RunState } from '../../src/core/run';
 import { Rng } from '../../src/core/rng';
-import { RUN, WAVE } from '../../src/data/tuning';
+import { RUN, SHOP, WAVE } from '../../src/data/tuning';
 
 function isSpawn(c: RunCommand): c is Extract<RunCommand, { type: 'spawn' }> {
   return c.type === 'spawn';
@@ -96,7 +96,7 @@ describe('Run: start em gameOver com trava de 1000 ms (RUN-05, RUN-11)', () => {
   });
 });
 
-describe('Run: rodada limpa e intermission (RUN-06, RUN-10)', () => {
+describe('Run: rodada limpa, loja e próxima rodada (RUN-06, RUN-10, SHOP-01, SHOP-32, SHOP-02, SHOP-03)', () => {
   it('último abate: um único roundCleared, vai para intermission', () => {
     const { run, roundCommands } = cleared();
     expect(roundCommands.filter((c) => c.type === 'roundCleared')).toEqual([{ type: 'roundCleared', round: 1 }]);
@@ -110,13 +110,52 @@ describe('Run: rodada limpa e intermission (RUN-06, RUN-10)', () => {
     expect(run.state).toBe('intermission');
   });
 
-  it('2500 ms depois: vai para roundActive com round + 1 e roundStart', () => {
+  it('2500 ms depois: vai para shop com shopOpen da rodada limpa (SHOP-01, SHOP-32)', () => {
     const { run } = cleared();
     run.update(2499, SEED);
     const commands = run.update(1, SEED);
+    expect(commands).toEqual([{ type: 'shopOpen', round: 1 }]);
+    expect(run.state).toBe('shop');
+    expect(run.round).toBe(1);
+  });
+
+  it('em shop, 10 s de update não emitem spawn nem mudam a rodada (SHOP-02)', () => {
+    const { run } = cleared();
+    run.update(2499, SEED);
+    run.update(1, SEED); // entra em shop
+    const commands = run.update(10000, SEED);
+    expect(commands).toEqual([]);
+    expect(run.state).toBe('shop');
+    expect(run.round).toBe(1);
+  });
+
+  it('closeShop(): update seguinte vai para roundActive com round + 1 e roundStart (SHOP-03)', () => {
+    const { run } = cleared();
+    run.update(2499, SEED);
+    run.update(1, SEED); // entra em shop
+    run.closeShop();
+    const commands = run.update(0, SEED);
     expect(commands).toEqual([{ type: 'roundStart', round: 2 }]);
     expect(run.state).toBe('roundActive');
     expect(run.round).toBe(2);
+  });
+
+  it('closeShop() fora de shop não faz nada (nenhum roundStart, rodada e estado intactos)', () => {
+    const run = started();
+    run.closeShop();
+    const commands = run.update(0, SEED);
+    expect(commands.some((c) => c.type === 'roundStart')).toBe(false);
+    expect(run.state).toBe('roundActive');
+    expect(run.round).toBe(1);
+  });
+
+  it('morte do player exatamente quando a intermissão abriria a loja: gameOver vence, a loja não abre', () => {
+    const { run } = cleared();
+    run.update(2499, SEED); // ainda intermission
+    run.playerDied();
+    const commands = run.update(1, SEED); // este update chegaria a 2500 ms
+    expect(run.state).toBe('gameOver');
+    expect(commands.some((c) => c.type === 'shopOpen')).toBe(false);
   });
 });
 
@@ -197,11 +236,12 @@ describe('Run: dedupe de abate (WAVE-06)', () => {
   });
 });
 
-describe('acceptsPlayerInput (RUN-08)', () => {
+describe('acceptsPlayerInput (RUN-08, SHOP-04)', () => {
   it.each<[RunState, boolean]>([
     ['title', false],
     ['roundActive', true],
     ['intermission', true],
+    ['shop', false],
     ['gameOver', false],
   ])('%s => %s', (state, expected) => {
     expect(acceptsPlayerInput(state)).toBe(expected);
@@ -300,14 +340,15 @@ describe('Run: stream de loot com seed própria (ECO-17, ECO-31)', () => {
   });
 
   it('sorteios no lootRng entre updates não mudam a ordem de spawn das rodadas (o rng das ondas é outro)', () => {
-    // Mata cada inimigo assim que nasce, para as rodadas 1-3 se sucederem dentro de um número fixo de passos.
+    // Mata cada inimigo assim que nasce, para as rodadas 1-3 se sucederem dentro de um número fixo de passos;
+    // fecha a loja assim que ela abre (SHOP-03), como faria o jogador, para a run seguir de rodada em rodada.
     const run = (withLoot: boolean): { spawns: number[]; rounds: number[] } => {
       const r = new Run(RUN, WAVE, POINTS);
       r.startPressed();
       const spawns: number[] = [];
       const rounds: number[] = [];
       let nextId = 1;
-      for (let step = 0; step < 200; step++) {
+      for (let step = 0; step < 400; step++) {
         if (withLoot) for (let i = 0; i < 50; i++) r.lootRng?.next();
         const cmds = r.update(50, SEED);
         for (const c of cmds) {
@@ -317,6 +358,7 @@ describe('Run: stream de loot com seed própria (ECO-17, ECO-31)', () => {
           }
           if (c.type === 'roundStart') rounds.push(c.round);
         }
+        if (r.state === 'shop') r.closeShop();
         if (rounds.includes(4)) break;
       }
       return { spawns, rounds };
@@ -341,6 +383,68 @@ describe('Run: stream de loot com seed própria (ECO-17, ECO-31)', () => {
     run.update(RUN.gameOverLockMs, () => 2); // nova run, seed 2
 
     expect(run.lootRng!.next()).toBe(new Rng(2 ^ 0x9e3779b9).next());
+  });
+});
+
+describe('Run: stream da loja com seed própria (SHOP-09, SHOP-40)', () => {
+  it('shopRng é null antes do primeiro start', () => {
+    const run = newRun();
+    expect(run.shopRng).toBeNull();
+  });
+
+  it('depois do start com seed s, shopRng.next() é igual ao primeiro next() de new Rng(s ^ SHOP.rngSalt)', () => {
+    const run = newRun();
+    run.startPressed();
+    run.update(0, SEED); // SEED() === 7
+    const expected = new Rng(7 ^ SHOP.rngSalt).next();
+    expect(run.shopRng!.next()).toBe(expected);
+  });
+
+  it('sorteios no shopRng entre updates não mudam a ordem de spawn nem os sorteios de loot (SHOP-40)', () => {
+    const run = (withShopDraws: boolean): { spawns: number[]; rounds: number[]; loot: number[] } => {
+      const r = new Run(RUN, WAVE, POINTS);
+      r.startPressed();
+      const spawns: number[] = [];
+      const rounds: number[] = [];
+      const loot: number[] = [];
+      let nextId = 1;
+      for (let step = 0; step < 400; step++) {
+        if (withShopDraws) for (let i = 0; i < 50; i++) r.shopRng?.next();
+        const cmds = r.update(50, SEED);
+        for (const c of cmds) {
+          if (c.type === 'spawn') {
+            spawns.push(c.point);
+            r.enemyDied(nextId++);
+          }
+          if (c.type === 'roundStart') rounds.push(c.round);
+        }
+        loot.push(r.lootRng?.next() ?? -1); // consumido igualmente nos dois casos, para provar que não mudou
+        if (r.state === 'shop') r.closeShop();
+        if (rounds.includes(4)) break;
+      }
+      return { spawns, rounds, loot };
+    };
+
+    const without = run(false);
+    const withDraws = run(true);
+    expect(withDraws.spawns).toEqual(without.spawns);
+    expect(withDraws.rounds).toEqual(without.rounds);
+    expect(withDraws.loot).toEqual(without.loot);
+    expect(without.rounds).toContain(3);
+  });
+
+  it('uma nova run cria um shopRng novo, com a seed nova', () => {
+    const run = newRun();
+    run.startPressed();
+    run.update(0, () => 1); // primeira run, seed 1
+    run.shopRng!.next(); // consome um sorteio na run anterior
+
+    run.playerDied();
+    run.update(0, () => 1); // gameOver
+    run.startPressed();
+    run.update(RUN.gameOverLockMs, () => 2); // nova run, seed 2
+
+    expect(run.shopRng!.next()).toBe(new Rng(2 ^ SHOP.rngSalt).next());
   });
 });
 

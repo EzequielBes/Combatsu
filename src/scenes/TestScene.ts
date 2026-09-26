@@ -268,6 +268,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         // que o `onBossDefeated` já mostrou (BHUD-03).
         if (!isBossRound(cmd.round)) this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
         break;
+      case 'shopOpen':
+        // Provisório até T9 (painel e fluxo reais da loja): fecha na hora para o jogo continuar jogável.
+        this.run.closeShop();
+        break;
       case 'gameOver':
         this.hud.setCenter([
           `Rodada alcançada: ${cmd.round}`,
