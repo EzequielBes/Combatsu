@@ -6,8 +6,12 @@ import { PALETTE } from './art/palette';
 import { tagBody, type Hittable, type Rect } from './bodyTags';
 import { isDebug } from './debug';
 
-/** Chamado a cada golpe aceito pelo alvo (`receiveHit` devolveu true), com o ponto de contato (faísca + hitstop). */
-export type OnConnect = (hit: Hit, point: Vec2) => void;
+/**
+ * Chamado a cada golpe aceito pelo alvo (`receiveHit` devolveu true), com o ponto de contato (faísca + hitstop).
+ * `target` (T22, DIV-11/DIV-12) é o alvo de verdade, só passado pelo `AttackHitbox`: quem precisa dele depois do
+ * toque (ex.: o Punho Divergente, para o 2º impacto no mesmo alvo) o guarda; os outros ignoram o 3º argumento.
+ */
+export type OnConnect = (hit: Hit, point: Vec2, target?: Hittable) => void;
 
 /**
  * Ponto de contato entre quem bate e quem apanha: o centro da interseção dos dois retângulos. Se eles não se
@@ -68,7 +72,7 @@ export class AttackHitbox {
         if (!other.target.receiveHit(hit)) return; // ignorado: sem faísca nem hitstop (FX-06)
         // Posição + tamanho da hitbox (a posição do corpo sensor), nunca body.bounds.
         const { x, y } = body.position;
-        this.onConnect?.(hit, contactWith({ x, y, width: shape.width, height: shape.height }, other.target));
+        this.onConnect?.(hit, contactWith({ x, y, width: shape.width, height: shape.height }, other.target), other.target);
       },
     });
     const color = hit.strength === 'heavy' ? PALETTE.A : PALETTE.w;

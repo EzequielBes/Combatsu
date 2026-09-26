@@ -517,17 +517,17 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CAST-18 | P1: Conjuração | Specify | Implemented |
 | CAST-22 | P1: Conjuração | Specify | Implemented |
 | DIV-01 | P1: Punho Divergente | Specify | Implemented |
-| DIV-02 | P1: Punho Divergente | Specify | Pending |
-| DIV-11 | P1: Punho Divergente | Specify | Pending |
+| DIV-02 | P1: Punho Divergente | Specify | Implemented |
+| DIV-11 | P1: Punho Divergente | Specify | Implemented |
 | DIV-03 | P1: Punho Divergente | Specify | Implemented |
 | DIV-04 | P1: Punho Divergente | Specify | Implemented |
-| DIV-12 | P1: Punho Divergente | Specify | Pending |
+| DIV-12 | P1: Punho Divergente | Specify | Implemented |
 | DIV-05 | P1: Punho Divergente | Specify | Implemented |
 | DIV-06 | P1: Punho Divergente | Specify | Implemented |
-| DIV-07 | P1: Punho Divergente | Specify | Pending |
+| DIV-07 | P1: Punho Divergente | Specify | Implemented |
 | DIV-08 | P1: Punho Divergente | Specify | Implemented |
-| DIV-09 | P1: Punho Divergente | Specify | Pending |
-| DIV-10 | P1: Punho Divergente | Specify | Pending |
+| DIV-09 | P1: Punho Divergente | Specify | Implemented |
+| DIV-10 | P1: Punho Divergente | Specify | Implemented |
 | KOK-01 | P1: Kokusen | Specify | Implemented |
 | KOK-02 | P1: Kokusen | Specify | Implemented |
 | KOK-03 | P1: Kokusen | Specify | Implemented |

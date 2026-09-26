@@ -130,6 +130,11 @@ export class Boss implements Hittable {
     return this._removed;
   }
 
+  /** DIV-06: o chefe já morreu (mesmo sinal do `state === 'dead'`, mas pela interface comum de `Hittable`). */
+  isDead(): boolean {
+    return this.brain.isDead;
+  }
+
   /** Posição + tamanho do corpo, nunca `body.bounds` (mesma regra de Enemy/Player). */
   hurtRect(): Rect {
     const { x, y } = this.body.position;

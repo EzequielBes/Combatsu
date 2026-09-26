@@ -62,6 +62,7 @@ import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
 import { ShopPanel } from '../game/ShopPanel';
 import { TechCaster } from '../game/TechCaster';
+import { TechRunner } from '../game/TechRunner';
 import { Aura } from '../game/techFx/Aura';
 import { Callout } from '../game/techFx/Callout';
 import { TEX } from '../game/textures';
@@ -130,6 +131,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private loadout!: Loadout;
   /** Conjuração de técnicas (CAST-*), dona da `CastMachine` e dos ganchos do `Player`. */
   private techCaster!: TechCaster;
+  /** Executa a técnica na soltura (T22+: Punho Divergente/Kokusen), dona da hitbox e das camadas próprias dela. */
+  private techRunner!: TechRunner;
   /**
    * Camadas de efeito de técnica (design "Dois relógios"): `game` para (hoje) `cast.aura`, `real` para as
    * cinemáticas do Kokusen (T24), que a Fase 6 confere continuarem andando durante o hitstop (TFX-05).
@@ -218,6 +221,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.realtimeFx = new FxTimeline();
     this.fxRegistry = new FxRegistry();
     this.aura = new Aura(this, this.realtimeFx, this.fxRegistry);
+    // T22+: dono da hitbox do Punho Divergente e das camadas de fx próprias dela (eco, anel, aura do punho, estouro).
+    this.techRunner = new TechRunner(this, this.player, this.loadout, this.realtimeFx, this.fxRegistry, (hit, point) =>
+      this.onTechConnect(hit, point),
+    );
 
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
     this.wallet = new Wallet();
@@ -276,6 +283,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
       this.techCaster.update(dt);
       this.debugEvents.push(...this.techCaster.events);
+      // T22+: executa a técnica a partir do estado de conjuração e dos eventos deste frame (ex.: `techCast:divergente`).
+      this.techRunner.update(dt, this.techCaster.cast, this.techCaster.events);
+      this.debugEvents.push(...this.techRunner.events);
       // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
       if (this.techCaster.events.includes('techDenied:energy')) this.energyHud.flashDenied();
       // TSH-10/11: níveis de `energia`/`fluxo` lidos na hora, sem cache (mesmo padrão de `modifiers.runSpeed`).
@@ -891,6 +901,17 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // dele) aplicado a um alvo ganha energia; golpes que o player recebe têm outro dono, e dano de técnica (T22+)
     // não passa por este caminho.
     if (hit.ownerId === this.player.id) this.energy.gain(CE.meleeGain);
+  }
+
+  /**
+   * Golpe de técnica que conectou (T22+): mesma faísca + tremida + hitstop de FX-01..03, mas sem o +3 de CE-06
+   * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito).
+   */
+  private onTechConnect(hit: Hit, point: Vec2): void {
+    this.fx.spark(point.x, point.y, hit.strength);
+    if (hit.strength === 'heavy') this.fx.shake();
+    this.hitstop.trigger(HITSTOP_MS[hit.strength]);
+    this.freeze();
   }
 
   /**

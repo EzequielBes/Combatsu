@@ -22,6 +22,8 @@ export interface Hittable {
    * de `body.bounds` (o Matter alarga o AABB pela velocidade). Sem ela, a faísca sai no centro de quem bate.
    */
   hurtRect?(): Rect;
+  /** `true` se o alvo já morreu (DIV-06: sem isso, o Punho Divergente não sabe cancelar o 2º impacto). */
+  isDead?(): boolean;
 }
 
 export type BodyTag =
