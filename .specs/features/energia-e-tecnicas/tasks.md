@@ -740,13 +740,13 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] DIV-02 conferido: WHILE the Punho Divergente is in `release`, a punch hitbox with the same size and offset as the cross hitbox SHALL be open.
-- [ ] DIV-11 conferido: WHEN the Punho Divergente punch hitbox touches its first target THEN it SHALL ignore every other target for the rest of that cast.
-- [ ] DIV-07 conferido: WHILE the time since the first impact is between 0 and 200 ms, `fx.layers` SHALL include `divergente.echo` and `divergente.ring`.
-- [ ] DIV-09 conferido: WHEN the second impact happens without a Kokusen THEN `fx.layers` SHALL include `divergente.burst` and `divergente.fistGhost` in that frame and `events` SHALL get `divergent2`.
-- [ ] DIV-10 conferido: WHILE the Punho Divergente is in `sign` or `charge`, `fx.layers` SHALL include `divergente.fistAura`.
-- [ ] DIV-12 conferido: WHEN the second impact happens THEN its effects SHALL be drawn at the first-impact target center in that frame.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] DIV-02 conferido: WHILE the Punho Divergente is in `release`, a punch hitbox with the same size and offset as the cross hitbox SHALL be open.
+- [x] DIV-11 conferido: WHEN the Punho Divergente punch hitbox touches its first target THEN it SHALL ignore every other target for the rest of that cast.
+- [x] DIV-07 conferido: WHILE the time since the first impact is between 0 and 200 ms, `fx.layers` SHALL include `divergente.echo` and `divergente.ring`.
+- [x] DIV-09 conferido: WHEN the second impact happens without a Kokusen THEN `fx.layers` SHALL include `divergente.burst` and `divergente.fistGhost` in that frame and `events` SHALL get `divergent2`.
+- [x] DIV-10 conferido: WHILE the Punho Divergente is in `sign` or `charge`, `fx.layers` SHALL include `divergente.fistAura`.
+- [x] DIV-12 conferido: WHEN the second impact happens THEN its effects SHALL be drawn at the first-impact target center in that frame.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

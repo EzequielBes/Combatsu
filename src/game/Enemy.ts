@@ -131,6 +131,11 @@ export class Enemy implements Hittable {
     return this._removed;
   }
 
+  /** DIV-06: o alvo já morreu (ragdoll de morte, dissolvendo ou já sumido). */
+  isDead(): boolean {
+    return this.brain.isDead;
+  }
+
   /** Vida máxima com que o cérebro foi criado (DIF-04), para o snapshot de debug. */
   get maxHp(): number {
     return this.brain.maxHp;
