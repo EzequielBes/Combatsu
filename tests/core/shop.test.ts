@@ -322,3 +322,103 @@ describe('previewText: textos exatos das Assumptions (SHOP-21)', () => {
     expect(previewText(entry('cura'), new Modifiers(), 70, 100)).toBe('Vida 70 → 100');
   });
 });
+
+describe('Shop: loja nova (SHOP-17, SHOP-27)', () => {
+  it('rerollCost começa em 5, selected começa em 0', () => {
+    const shop = freshShop();
+    expect(shop.rerollCost).toBe(5);
+    expect(shop.selected).toBe(0);
+  });
+});
+
+describe('Shop.reroll: custo, saldo e novo sorteio (SHOP-16, SHOP-25, SHOP-26, L-010)', () => {
+  it('saldo = custo (5): gasta, sorteia 3 ofertas novas e sobe o custo para 10', () => {
+    // Depois dos 3 primeiros next()=0 (sorteio inicial: vida, forca, agilidade), o reroll consome mais 3 do
+    // mesmo stream; 0.99 no primeiro cai em `cura` (último do catálogo, peso alto acumulado), provando que é
+    // um sorteio novo e não uma repetição do inicial.
+    const shop = freshShop(fakeRng([0, 0, 0, 0.99, 0, 0]));
+    const wallet = new Wallet();
+    wallet.add(5);
+    const before = shop.view(wallet, 100, 100).offers.map((o) => o.id);
+    expect(before).toEqual(['vida', 'forca', 'agilidade']);
+    expect(shop.reroll(wallet)).toBe(true);
+    expect(wallet.fragments).toBe(0);
+    expect(shop.rerollCost).toBe(10);
+    const after = shop.view(wallet, 100, 100).offers.map((o) => o.id);
+    expect(after).toEqual(['cura', 'vida', 'forca']);
+  });
+
+  it('saldo = custo − 1 (4): recusa, carteira, ofertas e custo do reroll intactos', () => {
+    const shop = freshShop();
+    const wallet = new Wallet();
+    wallet.add(4);
+    const before = shop.view(wallet, 100, 100).offers.map((o) => o.id);
+    expect(shop.reroll(wallet)).toBe(false);
+    expect(wallet.fragments).toBe(4);
+    expect(shop.rerollCost).toBe(5);
+    expect(shop.view(wallet, 100, 100).offers.map((o) => o.id)).toEqual(before);
+  });
+
+  it('custo sobe 5 → 10 → 15 a cada reroll da mesma loja', () => {
+    const shop = freshShop(fakeRng([0, 0, 0, 0, 0, 0, 0, 0, 0]));
+    const wallet = new Wallet();
+    wallet.add(100);
+    expect(shop.rerollCost).toBe(5);
+    shop.reroll(wallet);
+    expect(shop.rerollCost).toBe(10);
+    shop.reroll(wallet);
+    expect(shop.rerollCost).toBe(15);
+  });
+
+  it('uma loja nova (próxima abertura) volta o reroll para 5', () => {
+    const shop1 = freshShop(fakeRng([0, 0, 0, 0, 0, 0]));
+    const wallet = new Wallet();
+    wallet.add(5);
+    shop1.reroll(wallet);
+    expect(shop1.rerollCost).toBe(10);
+    const shop2 = freshShop(); // loja nova e independente
+    expect(shop2.rerollCost).toBe(5);
+  });
+});
+
+describe('Shop.move: seleção cíclica entre os 3 slots (SHOP-27, SHOP-28, SHOP-29)', () => {
+  it('move(+1): 0 → 1 → 2 → 0', () => {
+    const shop = freshShop();
+    expect(shop.selected).toBe(0);
+    shop.move(1);
+    expect(shop.selected).toBe(1);
+    shop.move(1);
+    expect(shop.selected).toBe(2);
+    shop.move(1);
+    expect(shop.selected).toBe(0);
+  });
+
+  it('move(-1): 0 → 2', () => {
+    const shop = freshShop();
+    shop.move(-1);
+    expect(shop.selected).toBe(2);
+  });
+});
+
+describe('Shop.buy pelo selected == buy pelo slot equivalente (SHOP-30)', () => {
+  it('comprar buy(shop.selected, ctx) depois de mover a seleção compra a mesma carta que buy(2, ctx)', () => {
+    const modA = new Modifiers();
+    const shopA = freshShop(fakeRng([0, 0, 0]), 10, modA);
+    const walletA = new Wallet();
+    walletA.add(100);
+    shopA.move(1);
+    shopA.move(1);
+    expect(shopA.selected).toBe(2);
+    const viewedId = shopA.view(walletA, 100, 100).offers[2].id;
+    const resultBySelected = shopA.buy(shopA.selected, buyCtx(modA, { wallet: walletA }));
+
+    const modB = new Modifiers();
+    const shopB = freshShop(fakeRng([0, 0, 0]), 10, modB);
+    const walletB = new Wallet();
+    walletB.add(100);
+    const resultBySlot = shopB.buy(2, buyCtx(modB, { wallet: walletB }));
+
+    expect(resultBySelected).toEqual(resultBySlot);
+    expect(resultBySelected).toEqual({ ok: true, id: viewedId, cost: expect.any(Number) });
+  });
+});

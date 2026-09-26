@@ -185,6 +185,23 @@ export class Shop {
     return { ok: true, id: offer.entry.id, cost };
   }
 
+  /**
+   * Sorteia 3 ofertas novas (SHOP-16, SHOP-08); custa `rerollCost`, que sobe SHOP.rerollStep a cada reroll da
+   * mesma loja (SHOP-25). Checar → gastar → aplicar: sem saldo, `false` e nada muda (SHOP-26).
+   */
+  reroll(wallet: Wallet): boolean {
+    if (!wallet.spend(this._rerollCost)) return false;
+    this._rerollCost += SHOP.rerollStep;
+    this.offers = this.drawFresh();
+    this.sold.clear();
+    return true;
+  }
+
+  /** Move a seleção em ciclo entre os 3 slots (SHOP-28, SHOP-29): `+1` avança, `-1` volta. */
+  move(delta: 1 | -1): void {
+    this._selected = (this._selected + delta + SHOP.offers) % SHOP.offers;
+  }
+
   /** Dados prontos para o painel e o snapshot de debug (SHOP-21, SHOP-38, SHOP-44). */
   view(wallet: Wallet, hp: number, maxHp: number): ShopView {
     const offers = this.offers.map((offer, slot): OfferView => {
