@@ -12,6 +12,7 @@ import {
   TECH_ICON_OVERLAY_COLOR,
 } from '../../src/game/art/techColors';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from '../../src/game/art/sprites/economy';
@@ -215,6 +216,38 @@ describe('folha do player (CHR-01, ART-01, ART-03)', () => {
 
   it('a origem fica no pé (base do frame)', () => {
     expect(PLAYER_ORIGIN.y).toBe(1);
+  });
+});
+
+describe('frames de conjuração das técnicas (CAST-18, CAST-22)', () => {
+  // Cobertura incremental: T14 traz divergente e corte; T15 completa com vermelho e azul (CAST-18 completo).
+  const IDS_DONE = ['divergente', 'corte'] as const;
+  const sheet = parseSheet('player-tech', PLAYER_TECH_FRAMES, PALETTE_KEYS);
+
+  it('passa no parseSheet só com cores da paleta, todo frame com 32x24 texels (CAST-18/22)', () => {
+    expect(sheet.width).toBe(PLAYER_FRAME_W);
+    expect(sheet.height).toBe(PLAYER_FRAME_H);
+  });
+
+  it('cada id de técnica já implementado tem os 4 frames sign/charge/release/recover (CAST-18)', () => {
+    for (const id of IDS_DONE) {
+      for (const part of ['sign', 'charge', 'release', 'recover']) {
+        expect(Object.hasOwn(PLAYER_TECH_FRAMES, `${id}-${part}`), `${id}-${part}`).toBe(true);
+      }
+    }
+  });
+
+  it('tem o frame kokusen-hit, 32x24 texels só com cores da paleta', () => {
+    expect(Object.hasOwn(PLAYER_TECH_FRAMES, 'kokusen-hit')).toBe(true);
+    const frame = sheet.frames.find((f) => f.key === 'kokusen-hit')!;
+    expect(frame.cells.length).toBe(PLAYER_FRAME_H);
+    expect(frame.cells[0].length).toBe(PLAYER_FRAME_W);
+  });
+
+  it('nenhum frame de técnica repete o nome de um frame da folha base do player', () => {
+    for (const key of Object.keys(PLAYER_TECH_FRAMES)) {
+      expect(Object.hasOwn(PLAYER_FRAMES, key), key).toBe(false);
+    }
   });
 });
 
