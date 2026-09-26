@@ -9,7 +9,7 @@ import type { RunState } from '../core/run';
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
   /** `facing` e `flash` (cor do flash em andamento, HEAL-10) servem ao smoke da economia. */
-  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null };
+  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null; maxHp: number };
   enemies: {
     id: number;
     x: number;
@@ -87,6 +87,15 @@ export interface GameSnapshot {
   wallet: { fragments: number };
   /** Um item por pickup vivo (fragmento ou gota de cura), lido do objeto vivo (ECO-19). */
   pickups: { id: number; kind: 'fragment' | 'heal'; value: number; x: number; y: number; ageMs: number; magnet: boolean }[];
+  /** Loja entre rodadas (SHOP-22): `open` só no estado `shop`; ofertas sem os espaços vazios. */
+  shop: {
+    open: boolean;
+    offers: { id: string; level: number; maxLevel: number; cost: number; sold: boolean; affordable: boolean }[];
+    rerollCost: number;
+    selected: number;
+  };
+  /** Nível atual de cada modificador da run (SHOP-22). */
+  modifiers: Record<string, number>;
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
