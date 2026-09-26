@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../../src/core/rng';
 import { Loot, armedChance, burstVelocity, capDrop, fragmentValue, type ToolKey } from '../../src/core/loot';
+import { Modifiers } from '../../src/core/modifiers';
 import { ECONOMY } from '../../src/data/tuning';
 
 describe('fragmentValue (ECO-04)', () => {
@@ -184,6 +185,42 @@ describe('Overrides de debug', () => {
     for (let i = 0; i < 20; i++) {
       expect(loot.rollArmed(1)!.rare).toBe(true);
     }
+  });
+});
+
+describe('Loot.enemyDrop lê healChance de Modifiers (MOD-08, MOD-12)', () => {
+  it('sorte nível 0: healChance perto de 0,10 em 10000 abates', () => {
+    const modifiers = new Modifiers();
+    const loot = new Loot(new Rng(42), ECONOMY, {}, modifiers);
+    let heals = 0;
+    for (let i = 0; i < 10000; i++) {
+      if (loot.enemyDrop(1, false).heal) heals++;
+    }
+    expect(heals / 10000).toBeGreaterThan(0.08);
+    expect(heals / 10000).toBeLessThan(0.12);
+  });
+
+  it('sorte nível 3: healChance perto de 0,19 em 10000 abates', () => {
+    const modifiers = new Modifiers();
+    modifiers.apply('sorte');
+    modifiers.apply('sorte');
+    modifiers.apply('sorte');
+    const loot = new Loot(new Rng(42), ECONOMY, {}, modifiers);
+    let heals = 0;
+    for (let i = 0; i < 10000; i++) {
+      if (loot.enemyDrop(1, false).heal) heals++;
+    }
+    expect(heals / 10000).toBeGreaterThan(0.17);
+    expect(heals / 10000).toBeLessThan(0.21);
+  });
+
+  it('override heal=1 vence mesmo com sorte no máximo (MOD-12)', () => {
+    const modifiers = new Modifiers();
+    modifiers.apply('sorte');
+    modifiers.apply('sorte');
+    modifiers.apply('sorte');
+    const loot = new Loot(new Rng(1), ECONOMY, { healChance: 1 }, modifiers);
+    for (let i = 0; i < 20; i++) expect(loot.enemyDrop(1, false).heal).toBe(true);
   });
 });
 

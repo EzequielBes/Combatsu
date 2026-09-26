@@ -8,6 +8,7 @@ import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
+import { Modifiers } from '../core/modifiers';
 import type { PickupPlayer } from '../core/pickup';
 import type { PropState } from '../core/props';
 import type { Rng } from '../core/rng';
@@ -97,6 +98,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private run!: Run;
   /** Carteira de fragmentos da run (ECO-12..14) e os sorteios de drop, criados a cada `startRun` com o `lootRng`. */
   private wallet!: Wallet;
+  /** Níveis de modificador da run (MOD-01..09): lidos na hora por Player/Pickups/Loot; zerados a cada `startRun`. */
+  private modifiers!: Modifiers;
   private loot!: Loot;
   private lootRng!: Rng;
   private pickups!: Pickups;
@@ -145,18 +148,20 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     this.run = new Run(RUN, WAVE, this.level.enemies.length, { firstRound: this.firstRoundForDebug() });
     this.wasPlayerDead = false;
+    // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
+    this.modifiers = new Modifiers();
 
     this.props = [];
     for (const s of this.level.props) {
       const def = PROP_DEFS[s.key];
       if (!def) throw new Error(`Objeto sem definição: ${s.key}`);
-      this.props.push(new Prop(this, s.x, s.y, def, (hit, at) => this.onConnect(hit, at, 'prop')));
+      this.props.push(new Prop(this, s.x, s.y, def, this.modifiers, (hit, at) => this.onConnect(hit, at, 'prop')));
     }
 
     this.controls = new PlayerInput(this);
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
-    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, strike);
+    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
 
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
@@ -307,9 +312,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const prop of this.props) if (isDroppedTool(prop.def.key)) prop.destroyNow();
     this.props = this.props.filter((prop) => !prop.isGone);
     this.droppedTools.clear();
+    // MOD-01/MOD-10: upgrades da run anterior não sobrevivem (AD-004).
+    this.modifiers.reset();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
     this.lootRng = this.run.lootRng!;
-    this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides());
+    this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides(), this.modifiers);
   }
 
   /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
@@ -341,7 +348,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       alive: !this.player.dead,
       canHeal: this.player.hp < this.player.maxHp,
     };
-    const { collected, expired } = this.pickups.update(dtMs, { solids: this.level.solids, player });
+    const { collected, expired } = this.pickups.update(dtMs, {
+      solids: this.level.solids,
+      player,
+      magnetRange: this.modifiers.magnetRange,
+    });
     for (const p of collected) this.onPickupCollected(p);
     for (let i = 0; i < expired.length; i++) this.debugEvents.push('pickupExpired');
     this.floatTexts.update(dtMs);
@@ -383,7 +394,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    */
   private dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
     const def = rare ? rareDef(TOOL_DEFS[tool]) : TOOL_DEFS[tool];
-    const prop = new Prop(this, x, y, def, (hit, at) => this.onConnect(hit, at, 'prop'), rare);
+    const prop = new Prop(this, x, y, def, this.modifiers, (hit, at) => this.onConnect(hit, at, 'prop'), rare);
     const evictId = this.droppedTools.admit(prop.id, this.toolStates());
     if (evictId !== null) {
       this.props.find((p) => p.id === evictId)?.destroyNow();

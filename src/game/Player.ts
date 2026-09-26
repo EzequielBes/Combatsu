@@ -5,6 +5,7 @@ import { ComboTracker, type AttackStep, type ComboEvent } from '../core/combo';
 import type { Hit } from '../core/hit';
 import { Health } from '../core/health';
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
+import type { Modifiers } from '../core/modifiers';
 import {
   COMBO_WINDOW_MS,
   PLAYER_COMBO,
@@ -76,6 +77,8 @@ export class Player implements Hittable {
     private readonly terrain: MatterJS.BodyType[],
     private readonly props: () => readonly Prop[],
     private readonly fx: Fx,
+    /** Modificadores da run (MOD-05, MOD-06), lidos na hora a cada golpe/movimento, sem cache. */
+    private readonly modifiers: Modifiers,
     /** Golpe que conectou (faísca + hitstop), injetado pela cena. */
     onConnect?: OnConnect,
   ) {
@@ -165,7 +168,9 @@ export class Player implements Hittable {
 
     const sensors = { grounded: this.touchesTerrain('below'), ceiling: this.touchesTerrain('above') };
     const before = this.move;
-    this.move = stepMovement(this.move, input, sensors, dtMs, PLAYER_MOVE, attacking || stunned);
+    // MOD-06: velocidade de corrida lida de `modifiers` a cada frame, sem cache.
+    const moveTuning = { ...PLAYER_MOVE, runSpeed: this.modifiers.runSpeed };
+    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned);
     this.kickUpDust(before, sensors.grounded);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
     if (this.health.staggered) this.move = { ...this.move, vx: this.knockDir * PLAYER_KNOCKBACK };
@@ -391,7 +396,8 @@ export class Player implements Hittable {
     if (!shape) return;
     const hit: Hit = {
       ownerId: this.id,
-      damage: step.damage,
+      // MOD-05: dano do golpe escalado por `forca`, lido na hora.
+      damage: this.modifiers.meleeDamage(step.damage),
       strength: step.strength,
       force: step.force,
       direction: { x: this.facing, y: step.strength === 'heavy' ? -0.6 : -0.15 },

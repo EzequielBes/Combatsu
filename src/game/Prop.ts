@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { normalize, type Vec2 } from '../core/hit';
+import type { Modifiers } from '../core/modifiers';
 import { PropMachine, propHit, type PropDef, type PropImpact, type PropState } from '../core/props';
 import { shardsKey } from './art';
 import { ART_SCALE } from './art/palette';
@@ -39,6 +40,8 @@ export class Prop {
     x: number,
     y: number,
     readonly def: PropDef,
+    /** Modificadores da run (MOD-05): dano do golpe/arremesso escalado por `forca`, lido na hora. */
+    private readonly modifiers: Modifiers,
     /** Golpe de objeto que conectou (faísca roxa + hitstop do forte), injetado pela cena. */
     private readonly onConnect?: OnConnect,
     /** Ferramenta rara (RAR-02/03/06): sprite alterna `common`/`rare`; sem efeito num objeto comum. */
@@ -154,6 +157,8 @@ export class Prop {
     const ownerId = this.machine.ownerId;
     if (ownerId === null || !this.machine.tryHit(other.target.id)) return;
     const hit = propHit(this.def, ownerId, this.hitDirection(st));
+    // MOD-05: dano do objeto segurado/arremessado escalado por `forca`, lido na hora.
+    hit.damage = this.modifiers.meleeDamage(hit.damage);
     // O objeto bate de verdade mesmo se o alvo ignorar o golpe (conta impacto), mas só golpe aceito tem feedback (FX-06).
     if (other.target.receiveHit(hit)) {
       // Posição + tamanho do sprite (girado 90° no golpe com o objeto na mão), nunca body.bounds.

@@ -321,17 +321,17 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `loot.test.ts`: chance com sorte 0/3 e override `heal=1` vencendo
-- [ ] Build passa; smoke atual continua verde
-- [ ] MOD-04 conferido: WHILE `vida` is at level `n`, the player max HP SHALL be `100 + 15n`.
-- [ ] MOD-05 conferido: WHILE `forca` is at level `n`, each melee hit damage of the player (combo steps and held-prop hits) SHALL be `round(base × (1 + 0.10n))`, where `round` rounds halves up.
-- [ ] MOD-06 conferido: WHILE `agilidade` is at level `n`, the player run speed SHALL be `220 × (1 + 0.08n)` px/s.
-- [ ] MOD-07 conferido: WHILE `ima` is at level `n`, the pickup magnet range SHALL be `72 × (1 + 0.30n)` px.
-- [ ] MOD-08 conferido: WHILE `sorte` is at level `n`, the heal drop chance of a regular enemy SHALL be `0.10 + 0.03n`.
-- [ ] MOD-10 conferido: WHEN a new run starts after a game over THEN the player max HP SHALL be 100.
-- [ ] MOD-11 conferido: WHEN a `vida` level is bought THEN the player HP SHALL increase by 15, capped at the new max HP.
-- [ ] MOD-12 conferido: WHERE the debug mode is on and the URL has `heal=1` THEN the heal drop chance SHALL be 1 regardless of the `sorte` level.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] `loot.test.ts`: chance com sorte 0/3 e override `heal=1` vencendo
+- [x] Build passa; smoke atual continua verde
+- [x] MOD-04 conferido: WHILE `vida` is at level `n`, the player max HP SHALL be `100 + 15n`.
+- [x] MOD-05 conferido: WHILE `forca` is at level `n`, each melee hit damage of the player (combo steps and held-prop hits) SHALL be `round(base × (1 + 0.10n))`, where `round` rounds halves up.
+- [x] MOD-06 conferido: WHILE `agilidade` is at level `n`, the player run speed SHALL be `220 × (1 + 0.08n)` px/s.
+- [x] MOD-07 conferido: WHILE `ima` is at level `n`, the pickup magnet range SHALL be `72 × (1 + 0.30n)` px.
+- [x] MOD-08 conferido: WHILE `sorte` is at level `n`, the heal drop chance of a regular enemy SHALL be `0.10 + 0.03n`.
+- [x] MOD-10 conferido: WHEN a new run starts after a game over THEN the player max HP SHALL be 100.
+- [x] MOD-11 conferido: WHEN a `vida` level is bought THEN the player HP SHALL increase by 15, capped at the new max HP.
+- [x] MOD-12 conferido: WHERE the debug mode is on and the URL has `heal=1` THEN the heal drop chance SHALL be 1 regardless of the `sorte` level.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
