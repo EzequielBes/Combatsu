@@ -4,7 +4,17 @@ import { TILE, type TileVariant } from '../../src/core/level';
 import { TRANSPARENT, parseSheet } from '../../src/core/pixelGrid';
 // Importar no Vitest (Node, sem window) já prova que a paleta não carrega o `phaser` como valor.
 import { ART_SCALE, PALETTE, PALETTE_KEYS } from '../../src/game/art/palette';
+import {
+  ENERGY_BAR_BG_COLOR,
+  ENERGY_BAR_FILL_COLOR,
+  ENERGY_BAR_FLASH_COLOR,
+  ENERGY_BAR_MARK_COLOR,
+  TECH_ICON_OVERLAY_COLOR,
+} from '../../src/game/art/techColors';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
+import { KANJI_FRAMES } from '../../src/game/art/sprites/kanji';
+import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from '../../src/game/art/sprites/techFx';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from '../../src/game/art/sprites/economy';
@@ -42,10 +52,10 @@ import {
 import { BOSS, PLAYER_MOVE } from '../../src/data/tuning';
 
 describe('paleta única (ART-01)', () => {
-  it('tem no máximo 32 cores, cada uma com chave de 1 caractere', () => {
+  it('tem no máximo 40 cores, cada uma com chave de 1 caractere', () => {
     const keys = Object.keys(PALETTE);
     expect(keys.length).toBeGreaterThan(0);
-    expect(keys.length).toBeLessThanOrEqual(32);
+    expect(keys.length).toBeLessThanOrEqual(40);
     for (const k of keys) expect([...k]).toHaveLength(1);
   });
 
@@ -71,6 +81,29 @@ describe('paleta única (ART-01)', () => {
 describe('escala de texel (ART-03)', () => {
   it('1 texel de arte = 2 px de mundo', () => {
     expect(ART_SCALE).toBe(2);
+  });
+});
+
+describe('paleta das técnicas (TFX-08)', () => {
+  it('adiciona exatamente as 4 chaves b, R, W e d com os valores do AC', () => {
+    expect(PALETTE.b).toBe(0x050205);
+    expect(PALETTE.R).toBe(0xff3344);
+    expect(PALETTE.W).toBe(0xffffff);
+    expect(PALETTE.d).toBe(0x14307a);
+  });
+});
+
+describe('cores da barra de energia e ícones de slot (TEC-15)', () => {
+  it('preenchimento, fundo, marca, flash e overlay são cores da paleta', () => {
+    for (const c of [
+      ENERGY_BAR_FILL_COLOR,
+      ENERGY_BAR_BG_COLOR,
+      ENERGY_BAR_MARK_COLOR,
+      ENERGY_BAR_FLASH_COLOR,
+      TECH_ICON_OVERLAY_COLOR,
+    ]) {
+      expect(Object.values(PALETTE)).toContain(c);
+    }
   });
 });
 
@@ -185,6 +218,134 @@ describe('folha do player (CHR-01, ART-01, ART-03)', () => {
 
   it('a origem fica no pé (base do frame)', () => {
     expect(PLAYER_ORIGIN.y).toBe(1);
+  });
+});
+
+describe('frames de conjuração das técnicas (CAST-18, CAST-22)', () => {
+  const IDS: Array<'divergente' | 'vermelho' | 'azul' | 'corte'> = ['divergente', 'vermelho', 'azul', 'corte'];
+  const sheet = parseSheet('player-tech', PLAYER_TECH_FRAMES, PALETTE_KEYS);
+
+  it('passa no parseSheet só com cores da paleta, todo frame com 32x24 texels (CAST-18/22)', () => {
+    expect(sheet.width).toBe(PLAYER_FRAME_W);
+    expect(sheet.height).toBe(PLAYER_FRAME_H);
+  });
+
+  it('cada técnica de CAST-18 tem os 4 frames sign/charge/release/recover', () => {
+    for (const id of IDS) {
+      for (const part of ['sign', 'charge', 'release', 'recover']) {
+        expect(Object.hasOwn(PLAYER_TECH_FRAMES, `${id}-${part}`), `${id}-${part}`).toBe(true);
+      }
+    }
+  });
+
+  it('as 4 fases de cada técnica têm silhuetas distintas entre si (aprovação de arte, ronda 2)', () => {
+    const PARTS = ['sign', 'charge', 'release', 'recover'] as const;
+    for (const id of IDS) {
+      const frames = PARTS.map((part) => PLAYER_TECH_FRAMES[`${id}-${part}`]);
+      for (let i = 0; i < frames.length; i++) {
+        for (let j = i + 1; j < frames.length; j++) {
+          expect(frames[i], `${id}-${PARTS[i]} vs ${id}-${PARTS[j]}`).not.toEqual(frames[j]);
+        }
+      }
+    }
+  });
+
+  it('tem o frame kokusen-hit, 32x24 texels só com cores da paleta', () => {
+    expect(Object.hasOwn(PLAYER_TECH_FRAMES, 'kokusen-hit')).toBe(true);
+    const frame = sheet.frames.find((f) => f.key === 'kokusen-hit')!;
+    expect(frame.cells.length).toBe(PLAYER_FRAME_H);
+    expect(frame.cells[0].length).toBe(PLAYER_FRAME_W);
+  });
+
+  it('nenhum frame de técnica repete o nome de um frame da folha base do player', () => {
+    for (const key of Object.keys(PLAYER_TECH_FRAMES)) {
+      expect(Object.hasOwn(PLAYER_FRAMES, key), key).toBe(false);
+    }
+  });
+});
+
+describe('kanji das técnicas (KOK-29, KOK-34, TFX-01)', () => {
+  it('黒 (kuro) e 閃 (sen) têm 24x24 texels, só com cores da paleta (KOK-29/34)', () => {
+    for (const id of ['kuro', 'sen'] as const) {
+      const sheet = parseSheet(`kanji-${id}`, { [id]: KANJI_FRAMES[id] }, PALETTE_KEYS);
+      expect(sheet.width, id).toBe(24);
+      expect(sheet.height, id).toBe(24);
+    }
+  });
+
+  it('赫 (aka), 蒼 (ao) e 解 (kai) também têm 24x24 texels, só com cores da paleta (TFX-01)', () => {
+    for (const id of ['aka', 'ao', 'kai'] as const) {
+      const sheet = parseSheet(`kanji-${id}`, { [id]: KANJI_FRAMES[id] }, PALETTE_KEYS);
+      expect(sheet.width, id).toBe(24);
+      expect(sheet.height, id).toBe(24);
+    }
+  });
+
+  it('os 5 kanji têm silhuetas distintas entre si', () => {
+    const ids = Object.keys(KANJI_FRAMES) as (keyof typeof KANJI_FRAMES)[];
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        expect(KANJI_FRAMES[ids[i]], `${ids[i]} vs ${ids[j]}`).not.toEqual(KANJI_FRAMES[ids[j]]);
+      }
+    }
+  });
+});
+
+describe('orbes e aura das técnicas (TFX-01)', () => {
+  it('o orbe Vermelho passa no parseSheet nos 3 tamanhos da carga (RED-02), com núcleo W e borda R', () => {
+    for (const size of RED_ORB_SIZES) {
+      const sheet = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS);
+      expect(sheet.width).toBe(size);
+      expect(sheet.height).toBe(size);
+      const colors = new Set(sheet.frames[0].cells.flat());
+      expect(colors.has('W')).toBe(true);
+      expect(colors.has('R')).toBe(true);
+    }
+  });
+
+  it('o orbe Vermelho é um disco: o canto do quadro é transparente em todo tamanho (RED-02)', () => {
+    for (const size of RED_ORB_SIZES) {
+      const cells = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells;
+      expect(cells[0][0], `${size}`).toBeNull();
+      expect(cells[0][size - 1], `${size}`).toBeNull();
+      expect(cells[size - 1][0], `${size}`).toBeNull();
+      expect(cells[size - 1][size - 1], `${size}`).toBeNull();
+      // O centro (a região mais quente) é sempre W, nunca R (não é um preenchimento uniforme).
+      const mid = Math.floor(size / 2);
+      expect(cells[mid][mid], `${size}`).toBe('W');
+    }
+  });
+
+  it('o orbe Azul passa no parseSheet, com núcleo d, anel C e borda clara W', () => {
+    const sheet = parseSheet('blue-orb', { orb: BLUE_ORB_FRAME }, PALETTE_KEYS);
+    const colors = new Set(sheet.frames[0].cells.flat());
+    expect(colors.has('d')).toBe(true);
+    expect(colors.has('C')).toBe(true);
+    expect(colors.has('W')).toBe(true);
+  });
+
+  it('o orbe Azul é um disco: o canto do quadro é transparente e o centro é o núcleo d', () => {
+    const cells = parseSheet('blue-orb', { orb: BLUE_ORB_FRAME }, PALETTE_KEYS).frames[0].cells;
+    const size = BLUE_ORB_FRAME.length;
+    expect(cells[0][0]).toBeNull();
+    expect(cells[0][size - 1]).toBeNull();
+    expect(cells[size - 1][0]).toBeNull();
+    expect(cells[size - 1][size - 1]).toBeNull();
+    const mid = Math.floor(size / 2);
+    expect(cells[mid][mid]).toBe('d');
+  });
+
+  it('a chama da aura tem 2 frames por cor, do mesmo tamanho, que não são idênticos (cintilam)', () => {
+    const sheet = parseSheet('aura', AURA_FRAMES, PALETTE_KEYS);
+    for (const color of ['blue', 'red', 'white'] as const) {
+      expect(AURA_FRAMES[`${color}-a`], color).not.toEqual(AURA_FRAMES[`${color}-b`]);
+    }
+    expect(sheet.frames).toHaveLength(6);
+  });
+
+  it('as faíscas das técnicas passam no parseSheet só com cores da paleta', () => {
+    const sheet = parseSheet('tech-sparks', TECH_SPARK_FRAMES, PALETTE_KEYS);
+    expect(sheet.frames).toHaveLength(3);
   });
 });
 
