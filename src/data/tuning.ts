@@ -209,6 +209,36 @@ export interface DroppedToolsTuning {
 
 export const DROPPED_TOOLS: DroppedToolsTuning = { restMs: 20000, max: 6 };
 
+/** Tuning da loja entre rodadas (SHOP-06..09, SHOP-17, SHOP-25, MOD-04..09). */
+export interface ShopTuning {
+  offers: number;
+  weights: { common: number; rare: number };
+  rerollBase: number;
+  rerollStep: number;
+  rngSalt: number;
+  curaHp: number;
+  vidaPerLevel: number;
+  forcaPerLevel: number;
+  agilidadePerLevel: number;
+  imaPerLevel: number;
+  sortePerLevel: number;
+}
+
+/** Números da loja (Assumptions da spec loja-da-run). */
+export const SHOP: ShopTuning = {
+  offers: 3,
+  weights: { common: 3, rare: 1 },
+  rerollBase: 5,
+  rerollStep: 5,
+  rngSalt: 0x85ebca6b,
+  curaHp: 30,
+  vidaPerLevel: 15,
+  forcaPerLevel: 0.1,
+  agilidadePerLevel: 0.08,
+  imaPerLevel: 0.3,
+  sortePerLevel: 0.03,
+};
+
 export const BOSS = {
   /** Entrada parado e invulnerável antes de poder atacar (BOSS-06). */
   introMs: 1500,

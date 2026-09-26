@@ -72,6 +72,13 @@ export default async function ({ page, baseUrl, assert }) {
 
   // Chega a rodada 2 e o player morre pela tecla 3: game over com o resumo (RHUD-06).
   for (let i = 0; i < 20 && !(snap.run.state === 'roundActive' && snap.run.round === 2); i++) {
+    // SHOP-03: a loja segura a rodada até `Enter`.
+    if (snap.run.state === 'shop') {
+      // `Enter` segurado durante um passo: o input da loja lê `JustDown` no update.
+      await page.keyboard.down('Enter');
+      await page.evaluate(() => window.__game.step(50));
+      await page.keyboard.up('Enter');
+    }
     snap = await page.evaluate(() => {
       window.__game.step(200);
       return window.__game.snapshot();

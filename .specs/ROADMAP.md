@@ -17,7 +17,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F1 | `run-e-rodadas` | Large | RUN, WAVE, DIF, RHUD | Done (Verifier PASS, rodada 3) |
 | F2 | `boss-a-cada-5` | Large | BOSS, BAT, BAI, BHUD, BWIN, BTIER | Done (Verifier PASS, rodada 3) |
 | F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM, ITEM, RAR | Done (Verifier PASS, rodada 2) |
-| F4 | `loja-da-run` | Large | SHOP, MOD | Planejada |
+| F4 | `loja-da-run` | Large | SHOP, MOD | Done (Verifier PASS, rodada 2) |
 | F5 | `energia-e-tecnicas` | Complex | CE, TEC, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Specify feito (148 ACs, Jev em 3 rodadas); Design, Tasks e Execute depois de F4 |
 | F6 | `meta-progressao` | Large | META, SAVE | Planejada |
 | F7 | `moveset-e-voadora` | Complex | MOV, AIR | Planejada |
@@ -79,3 +79,4 @@ Parte B — Corpo a corpo estilo jogo de luta
 ## Backlog técnico
 
 - `tests/core/enemyAI.test.ts` só usa o tuning 35/70: um mutante que fixa 70 na perseguição (`src/core/enemyAI.ts:120`) sobrevive. Adicionar um caso com tuning diferente (achado fora de escopo pelo Verifier da F1, rodada 3).
+- `held-item.smoke.mjs` falha de vez em quando no suite completo e passa isolado (F4, 26/09: "pips de 4 para 2: 1"). Provável dependência de tempo real entre `keyboard.press` e `step`; trocar por tecla segurada durante um passo, como em `shop.smoke.mjs`. (`armed` corrigido na F4: a tecla 3 caía na invulnerabilidade.)

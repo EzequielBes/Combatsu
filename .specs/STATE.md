@@ -84,25 +84,21 @@
 
 ## Handoff
 
-- **Feature**: F3 `.specs/features/economia-drops-cura` concluída e mergeada em `dev` → próxima: **F4 `loja-da-run`** (modificadores com teto, loja entre rodadas com 3 ofertas, gasta `Wallet.spend`; ver `.specs/ROADMAP.md`)
-- **Phase / Task**: F4 ainda não especificada; começar pelo Specify (tlc) + refinamento Jev (`node tools/jev-refine.mjs <spec>`, chave em `TYPESAFE_API_KEY` só no ambiente do comando)
-- **Adiantado**: Specify da F5 `energia-e-tecnicas` feito (`.specs/features/energia-e-tecnicas/spec.md`, 148 ACs, validador limpo, Jev em 3 rodadas com revisão do autor em `refinement.md`). A F5 continua na fila depois de F3 e F4.
+- **Feature**: F4 `.specs/features/loja-da-run` concluída e mergeada em `dev` → próxima: **F5 `energia-e-tecnicas`** (Specify já feito: `.specs/features/energia-e-tecnicas/spec.md`, 148 ACs; falta Design → Tasks → Execute → Verifier). A F5 vende técnicas pela loja da F4: acrescentar `kind: 'technique'` e os upgrades de energia (CE-07, CE-09) ao `SHOP_CATALOG`
+- **Phase / Task**: F5 Design (rodar `node tools/jev-align.mjs .specs/features/energia-e-tecnicas` depois do tasks.md)
 - **Completed**:
-  - F0 (harness de smoke, Jev), F1 (run/rodadas/dificuldade), F2 (chefe a cada 5 rodadas) e F3 (fragmentos com ímã, gota de cura, inimigos armados com faca/porrete, ferramentas usáveis e raras, item na mão no HUD)
-  - 568 testes, 11 cenários de smoke
+  - F0–F4 mergeadas em `dev` (F4: loja entre rodadas, 5 modificadores com teto, cura, reroll, navegação, painel com animações)
+  - 654 testes, 12 cenários de smoke
 - **Como trabalhar** (memória do usuário):
-  - Opus planeja; workers Sonnet, um por lote de fase (não um por task); workers de integração/smoke com no máximo ~3 tasks
-  - Correções pequenas do Verifier: inline
-  - Verifier em Sonnet com sensor leve
-  - Decidir sozinho seguindo a recomendação, pensando em diversão
-  - Merge em `dev` com `--no-ff` e mensagem `chore(dev): merge feat/<nome>`; `main` só com validação do usuário
+  - Opus planeja; workers Sonnet, um por lote de fase; integração/smoke com no máximo ~3 tasks; fixes pequenos e smokes direto pelo orquestrador para ganhar tempo
+  - Jev: `jev-refine` no Specify e `jev-align` nas tasks (tasks × ACs e stories × diversão)
+  - Context7 liberado: `/phaserjs/phaser/v3_90_0` para a API do Phaser (postFX, câmera, partículas na F5)
+  - Verifier em Sonnet com sensor leve; merge em `dev` com `--no-ff`; `main` só com validação do usuário; push só da branch da feature (a `dev` sobe quando o usuário pedir)
 - **Dicas técnicas**:
-  - `npm run smoke -- <trecho>` roda só alguns cenários
-  - `?debug&seed=N&round=N` começa na rodada N
-  - Teclas de debug: 2 = golpe forte em todos, 3 = mata o player, 4 = 50 de dano no player
-  - O gate Quick deve incluir `npm run typecheck`
-  - Skill `phaser-gamedev` disponível para os workers
+  - `npm run smoke -- <trecho>` roda um cenário; `?debug&seed=N&round=N&fragments=N`; `?debug&noshop=1` pula a loja
+  - Teclas de debug 1–4 (golpe leve/forte em todos, mata o player, 50 de dano) não valem dentro da loja; `R` reinicia a cena só fora da loja
+  - Smoke: tecla que o jogo lê com `JustDown` precisa ficar segurada durante um `step` (ver `tap` em `shop.smoke.mjs`)
 - **In-progress** (file:line): none
-- **Blockers**: UAT do usuário (visual, F0, F1, F2, F3) antes de `dev` ir para `main`
+- **Blockers**: UAT do usuário (visual, F0–F4) antes de `dev` ir para `main`
 - **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas, que são do usuário)
 - **Branch**: `dev`
