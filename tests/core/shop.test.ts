@@ -3,7 +3,7 @@ import { drawOffers, eligible, previewText, Shop, type BuyContext } from '../../
 import { Modifiers } from '../../src/core/modifiers';
 import { Rng } from '../../src/core/rng';
 import { Wallet } from '../../src/core/wallet';
-import { SHOP_CATALOG, type ShopEntry } from '../../src/data/shop';
+import { SHOP_CATALOG, type ModifierId, type ShopEntry } from '../../src/data/shop';
 
 const entry = (id: string): ShopEntry => {
   const found = SHOP_CATALOG.find((e) => e.id === id);
@@ -117,8 +117,8 @@ describe('drawOffers: sorteio ponderado sem reposição (SHOP-08)', () => {
 function buyCtx(
   modifiers: Modifiers,
   overrides: Partial<BuyContext> & { wallet: Wallet },
-): BuyContext & { applied: ('vida' | 'forca' | 'agilidade' | 'ima' | 'sorte')[]; healed: number[] } {
-  const applied: ('vida' | 'forca' | 'agilidade' | 'ima' | 'sorte')[] = [];
+): BuyContext & { applied: ModifierId[]; healed: number[] } {
+  const applied: ModifierId[] = [];
   const healed: number[] = [];
   return {
     hp: 100,
@@ -128,6 +128,7 @@ function buyCtx(
       modifiers.apply(id);
     },
     healPlayer: (n) => healed.push(n),
+    applyTechnique: () => {}, // F5: nenhum teste de F4 compra técnica, sem loadout nenhuma oferta é uma
     ...overrides,
     applied,
     healed,

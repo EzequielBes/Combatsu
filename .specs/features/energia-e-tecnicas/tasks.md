@@ -250,23 +250,23 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Testes da F4 em `shop.test.ts`/`modifiers.test.ts` continuam passando sem mudança de asserção
-- [ ] Pool com 0, 1 e 2 slots cheios; rodada 2/3 e 5/6 para níveis 2 e 3
-- [ ] TSH-01 conferido: The shop catalog SHALL include the techniques `divergente` and `corte` with rarity common and `azul` and `vermelho` with rarity rare, each with `kind: 'technique'` and maxLevel 3.
-- [ ] TSH-02 conferido: WHEN a technique at level `n` (0 if not equipped) is offered THEN its cost SHALL be `base + step × n`, with (base, step) = (20, 15) for `divergente`, (30, 15) for `corte`, (35, 20) for `azul` and (40, 20) for `vermelho`.
-- [ ] TSH-03 conferido: The offer pool SHALL include a technique that is not equipped if and only if at least one slot is empty.
-- [ ] TSH-04 conferido: The offer pool SHALL include an equipped technique if and only if its level is below 3 and the current round is ≥ 3 for level 2 or ≥ 6 for level 3.
-- [ ] TSH-05 conferido: WHILE both slots are empty, slot 0 of every drawn set of offers (at shop open and after each reroll) SHALL be a technique, drawn among the eligible techniques by SHOP-08 weights before the other slots.
-- [ ] TSH-06 conferido: WHEN a technique that is not equipped is bought THEN it SHALL be equipped at level 1 in the first empty slot (slot 1 before slot 2).
-- [ ] TSH-07 conferido: WHEN an equipped technique is bought THEN its level SHALL increase by exactly 1.
-- [ ] TSH-08 conferido: The shop catalog SHALL include the common modifier `energia` with maxLevel 5 and cost `10 + 6n`.
-- [ ] TSH-15 conferido: The shop catalog SHALL include the common modifier `fluxo` with maxLevel 4 and cost `12 + 6n`.
-- [ ] TSH-09 conferido: The offer pool SHALL include `energia` and `fluxo` only while at least one slot holds a technique.
-- [ ] TSH-12 conferido: WHILE a technique is not equipped, its card preview text SHALL be `Nova · slot <k>`, where `k` is 1 if slot 1 is empty and 2 otherwise.
-- [ ] TSH-16 conferido: WHILE a technique is equipped at level `n` < 3, its card preview text SHALL be `Dano ×<a> → ×<b>`, with `a` and `b` the TEC-06 factors of levels `n` and `n + 1` written with a comma decimal (`×1,0`, `×1,25`, `×1,5`).
-- [ ] TSH-13 conferido: The `energia` card preview text SHALL be `Energia máx. <cur> → <new>`, with `cur` the current max and `new` the max at the next level.
-- [ ] TSH-17 conferido: The `fluxo` card preview text SHALL be `Regen <cur>/s → <new>/s`, with `cur` the current regen and `new` the regen at the next level.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Testes da F4 em `shop.test.ts`/`modifiers.test.ts` continuam passando sem mudança de asserção
+- [x] Pool com 0, 1 e 2 slots cheios; rodada 2/3 e 5/6 para níveis 2 e 3
+- [x] TSH-01 conferido: The shop catalog SHALL include the techniques `divergente` and `corte` with rarity common and `azul` and `vermelho` with rarity rare, each with `kind: 'technique'` and maxLevel 3.
+- [x] TSH-02 conferido: WHEN a technique at level `n` (0 if not equipped) is offered THEN its cost SHALL be `base + step × n`, with (base, step) = (20, 15) for `divergente`, (30, 15) for `corte`, (35, 20) for `azul` and (40, 20) for `vermelho`.
+- [x] TSH-03 conferido: The offer pool SHALL include a technique that is not equipped if and only if at least one slot is empty.
+- [x] TSH-04 conferido: The offer pool SHALL include an equipped technique if and only if its level is below 3 and the current round is ≥ 3 for level 2 or ≥ 6 for level 3.
+- [x] TSH-05 conferido: WHILE both slots are empty, slot 0 of every drawn set of offers (at shop open and after each reroll) SHALL be a technique, drawn among the eligible techniques by SHOP-08 weights before the other slots.
+- [x] TSH-06 conferido: WHEN a technique that is not equipped is bought THEN it SHALL be equipped at level 1 in the first empty slot (slot 1 before slot 2).
+- [x] TSH-07 conferido: WHEN an equipped technique is bought THEN its level SHALL increase by exactly 1.
+- [x] TSH-08 conferido: The shop catalog SHALL include the common modifier `energia` with maxLevel 5 and cost `10 + 6n`.
+- [x] TSH-15 conferido: The shop catalog SHALL include the common modifier `fluxo` with maxLevel 4 and cost `12 + 6n`.
+- [x] TSH-09 conferido: The offer pool SHALL include `energia` and `fluxo` only while at least one slot holds a technique.
+- [x] TSH-12 conferido: WHILE a technique is not equipped, its card preview text SHALL be `Nova · slot <k>`, where `k` is 1 if slot 1 is empty and 2 otherwise.
+- [x] TSH-16 conferido: WHILE a technique is equipped at level `n` < 3, its card preview text SHALL be `Dano ×<a> → ×<b>`, with `a` and `b` the TEC-06 factors of levels `n` and `n + 1` written with a comma decimal (`×1,0`, `×1,25`, `×1,5`).
+- [x] TSH-13 conferido: The `energia` card preview text SHALL be `Energia máx. <cur> → <new>`, with `cur` the current max and `new` the max at the next level.
+- [x] TSH-17 conferido: The `fluxo` card preview text SHALL be `Regen <cur>/s → <new>/s`, with `cur` the current regen and `new` the regen at the next level.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
