@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 32,
+  "next_id": 35,
   "lessons": [
     {
       "id": "L-001",
@@ -564,6 +564,60 @@
       ],
       "created": "2026-09-25T23:00:31Z",
       "last_seen": "2026-09-25T23:00:31Z"
+    },
+    {
+      "id": "L-032",
+      "key": "ac_gap::when a stat modifier changes a ceiling max hp max resource that a live entity object owns wire the setter into that entity on every level up not only into an isolated pure formula getter that no runtime code calls",
+      "text": "When a stat modifier changes a ceiling (max HP, max resource) that a live entity object owns, wire the setter into that entity on every level-up, not only into an isolated pure formula getter that no runtime code calls.",
+      "signal": "ac_gap",
+      "scope": "core",
+      "status": "candidate",
+      "features": [
+        "loja-da-run"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MOD-04,MOD-11 (core)"
+      ],
+      "created": "2026-09-26T19:43:48Z",
+      "last_seen": "2026-09-26T19:43:48Z"
+    },
+    {
+      "id": "L-033",
+      "key": "ac_gap::expose rendered ui text state status labels dynamic hint strings selection highlight on the debug snapshot so smoke tests can assert it instead of leaving it verifiable only by eye",
+      "text": "Expose rendered UI text/state (status labels, dynamic hint strings, selection highlight) on the debug snapshot so smoke tests can assert it, instead of leaving it verifiable only by eye.",
+      "signal": "ac_gap",
+      "scope": "game-ui",
+      "status": "candidate",
+      "features": [
+        "loja-da-run"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SHOP-38,SHOP-46,SHOP-31,SHOP-42 (game-ui)"
+      ],
+      "created": "2026-09-26T19:43:48Z",
+      "last_seen": "2026-09-26T19:43:48Z"
+    },
+    {
+      "id": "L-034",
+      "key": "ac_gap::a debug bypass flag debug nox 1 needs its own dedicated before after assertion proving the bypassed effect did not happen not just reliance on other scenarios that merely avoid triggering it",
+      "text": "A debug bypass flag (?debug&noX=1) needs its own dedicated before/after assertion proving the bypassed effect did not happen, not just reliance on other scenarios that merely avoid triggering it.",
+      "signal": "ac_gap",
+      "scope": "debug-api",
+      "status": "candidate",
+      "features": [
+        "loja-da-run"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SHOP-47 (debug-api)"
+      ],
+      "created": "2026-09-26T19:43:49Z",
+      "last_seen": "2026-09-26T19:43:49Z"
     }
   ]
 }
