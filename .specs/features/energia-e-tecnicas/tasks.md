@@ -417,14 +417,14 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Raio 129/130/131 px; 5 ticks + implosão; posição com e sem parede
-- [ ] BLU-02 conferido: WHEN the Azul enters `release` THEN a blue orb SHALL appear 110 px ahead of the player center at the player center height, or 16 px before the first wall if a wall is closer than 110 px.
-- [ ] BLU-03 conferido: WHEN the blue orb has existed for 1400 ms THEN it SHALL end (BLU-07, BLU-11).
-- [ ] BLU-12 conferido: WHILE the blue orb exists, its position SHALL stay equal to its spawn position.
-- [ ] BLU-04 conferido: WHILE the blue orb exists, every regular enemy whose center is within 130 px of the orb SHALL be moved toward the orb center at 150 px/s.
-- [ ] BLU-06 conferido: WHILE the blue orb exists, every 250 ms of its life every enemy and the boss within 130 px SHALL take 5 light damage.
-- [ ] BLU-07 conferido: WHEN the blue orb ends THEN every regular enemy and the boss whose center is within 130 px of the orb center SHALL take 10 light damage once.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Raio 129/130/131 px; 5 ticks + implosão; posição com e sem parede
+- [x] BLU-02 conferido: WHEN the Azul enters `release` THEN a blue orb SHALL appear 110 px ahead of the player center at the player center height, or 16 px before the first wall if a wall is closer than 110 px.
+- [x] BLU-03 conferido: WHEN the blue orb has existed for 1400 ms THEN it SHALL end (BLU-07, BLU-11).
+- [x] BLU-12 conferido: WHILE the blue orb exists, its position SHALL stay equal to its spawn position.
+- [x] BLU-04 conferido: WHILE the blue orb exists, every regular enemy whose center is within 130 px of the orb SHALL be moved toward the orb center at 150 px/s.
+- [x] BLU-06 conferido: WHILE the blue orb exists, every 250 ms of its life every enemy and the boss within 130 px SHALL take 5 light damage.
+- [x] BLU-07 conferido: WHEN the blue orb ends THEN every regular enemy and the boss whose center is within 130 px of the orb center SHALL take 10 light damage once.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
