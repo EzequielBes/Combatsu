@@ -61,6 +61,8 @@ describe('installDebugApi', () => {
       pickups: [{ id: 1, kind: 'fragment', value: 1, x: 70, y: 80, ageMs: 100, magnet: false }],
       floatTexts: [{ text: '+1', color: 'U', x: 70, y: 76 }],
       worldProps: [{ id: 2, key: 'cursedKnife', state: 'rest', x: 90, y: 100, durabilityLeft: 6, rare: false, vx: 0 }],
+      ce: { cur: 100, max: 100, regen: 8 },
+      tech: { slots: [null, null], cast: null },
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};

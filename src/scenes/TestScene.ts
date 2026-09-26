@@ -4,9 +4,11 @@ import { bossSpecFor } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
+import { CursedEnergy } from '../core/energy';
 import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
+import { Loadout } from '../core/loadout';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
 import type { PickupPlayer } from '../core/pickup';
@@ -20,6 +22,7 @@ import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { SHOP_CATALOG, type ModifierId } from '../data/shop';
+import { CE, TECHNIQUES, type TechId } from '../data/techniques';
 import {
   ARMED,
   BOSS,
@@ -112,6 +115,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private wallet!: Wallet;
   /** Níveis de modificador da run (MOD-01..09): lidos na hora por Player/Pickups/Loot; zerados a cada `startRun`. */
   private modifiers!: Modifiers;
+  /** Energia amaldiçoada do player (CE-01..09), zerada a cada `startRun`. */
+  private energy!: CursedEnergy;
+  /** Slots de técnica (TEC-01..06), vazios a cada `startRun` (ou `?debug&tech=`, TEC-02). */
+  private loadout!: Loadout;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
   private shop: Shop | null = null;
   /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
@@ -166,6 +173,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.wasPlayerDead = false;
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
     this.modifiers = new Modifiers();
+    // F5: uma instância por cena, zeradas a cada `startRun` (CE-01, TEC-01).
+    this.energy = new CursedEnergy();
+    this.loadout = new Loadout();
 
     this.props = [];
     for (const s of this.level.props) {
@@ -229,6 +239,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
       const raw = this.controls.read();
       this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+      // TSH-10/11: níveis de `energia`/`fluxo` lidos na hora, sem cache (mesmo padrão de `modifiers.runSpeed`).
+      this.energy.setLevels(this.modifiers.level('energia'), this.modifiers.level('fluxo'));
+      this.loadout.tick(dt);
+      // CE-04/05: T19 troca `false` por `techCaster.inProgress` (energia não regenera durante a conjuração).
+      this.energy.update(dt, false);
       this.updatePickups(dt);
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
@@ -445,9 +460,28 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.droppedTools.clear();
     // MOD-01/MOD-10: upgrades da run anterior não sobrevivem (AD-004).
     this.modifiers.reset();
+    // CE-01/TEC-01: energia e slots voltam ao início da run; `?debug&tech=` equipa por cima (TEC-02).
+    this.energy.reset();
+    this.loadout.reset();
+    this.equipDebugTech();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
     this.lootRng = this.run.lootRng!;
     this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides(), this.modifiers);
+  }
+
+  /**
+   * `?debug&tech=<id>[,<id>]` (TEC-02): equipa em nível 1, na ordem, ignorando ids desconhecidos e o segundo id
+   * quando os dois slots já couberam; sem o parâmetro, os dois slots ficam vazios (TEC-01, AD-005).
+   */
+  private equipDebugTech(): void {
+    const raw = debugParam('tech');
+    if (raw === null) return;
+    const ids = raw.split(',').filter((id): id is TechId => id in TECHNIQUES);
+    let slot = 0;
+    for (const id of ids) {
+      if (slot > 1) break;
+      if (this.loadout.equip(slot as 0 | 1, id, 1)) slot++;
+    }
   }
 
   /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
@@ -730,7 +764,17 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         rare: p.rare,
         vx: p.vx,
       })),
+      ce: { cur: this.energy.cur, max: this.energy.max, regen: this.energy.regen },
+      tech: this.techSnapshot(),
     };
+  }
+
+  /** `tech` do snapshot (TEC-08): slots do loadout; T19 acrescenta a conjuração ativa em `cast`. */
+  private techSnapshot(): GameSnapshot['tech'] {
+    const [s0, s1] = this.loadout.slotsView;
+    const slotView = (slot: 0 | 1, s: { id: TechId; level: 1 | 2 | 3 } | null) =>
+      s ? { id: s.id, level: s.level, cooldownMs: this.loadout.cooldownOf(slot) } : null;
+    return { slots: [slotView(0, s0), slotView(1, s1)], cast: null };
   }
 
   /**
@@ -742,6 +786,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (hit.strength === 'heavy') this.fx.shake();
     this.hitstop.trigger(HITSTOP_MS[hit.strength]);
     this.freeze();
+    // CE-06/CE-08: só o golpe corpo a corpo do próprio player (soco do combo ou objeto na mão, `ownerId` é o
+    // dele) aplicado a um alvo ganha energia; golpes que o player recebe têm outro dono, e dano de técnica (T22+)
+    // não passa por este caminho.
+    if (hit.ownerId === this.player.id) this.energy.gain(CE.meleeGain);
   }
 
   /**

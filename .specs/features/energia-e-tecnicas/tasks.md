@@ -586,13 +586,13 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] TEC-02 conferido: WHERE the debug mode is on and the URL has `tech=<id>[,<id>]` THEN the slots SHALL start with those techniques at level 1, in order, ignoring unknown ids.
-- [ ] TEC-08 conferido: WHERE the debug mode is on, the snapshot SHALL include `ce` and `tech` as defined in the snapshot contract.
-- [ ] CE-06 conferido: WHEN a basic melee hit (jab, cross, kick or prop hit) is applied to an enemy or the boss THEN the cursed energy SHALL increase by 3, capped at max.
-- [ ] CE-08 conferido: WHEN damage dealt by a technique is applied to a target THEN the cursed energy SHALL NOT receive the +3 of CE-06.
-- [ ] TSH-10 conferido: WHILE `energia` is at level `n`, the cursed energy max SHALL be `min(100 + 20n, 200)`.
-- [ ] TSH-11 conferido: WHILE `fluxo` is at level `n`, the cursed energy regen SHALL be `min(8 + 2n, 16)` per second.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] TEC-02 conferido: WHERE the debug mode is on and the URL has `tech=<id>[,<id>]` THEN the slots SHALL start with those techniques at level 1, in order, ignoring unknown ids.
+- [x] TEC-08 conferido: WHERE the debug mode is on, the snapshot SHALL include `ce` and `tech` as defined in the snapshot contract.
+- [x] CE-06 conferido: WHEN a basic melee hit (jab, cross, kick or prop hit) is applied to an enemy or the boss THEN the cursed energy SHALL increase by 3, capped at max.
+- [x] CE-08 conferido: WHEN damage dealt by a technique is applied to a target THEN the cursed energy SHALL NOT receive the +3 of CE-06.
+- [x] TSH-10 conferido: WHILE `energia` is at level `n`, the cursed energy max SHALL be `min(100 + 20n, 200)`.
+- [x] TSH-11 conferido: WHILE `fluxo` is at level `n`, the cursed energy regen SHALL be `min(8 + 2n, 16)` per second.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build
