@@ -123,15 +123,15 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] Níveis de upgrade 5/6 (máx.) e 4/5 (regen) dos dois lados do teto
-- [ ] CE-01 conferido: WHEN a run starts THEN the player cursed energy SHALL be 100 with max 100 and regen 8 per second.
-- [ ] CE-02 conferido: The cursed energy SHALL never be below 0.
-- [ ] CE-03 conferido: The cursed energy SHALL never be above its max.
-- [ ] CE-04 conferido: WHILE no cast is in progress, the cursed energy SHALL increase by `regen × dt / 1000` per frame of game time, capped at max.
-- [ ] CE-05 conferido: WHILE a cast is in progress (any cast state), the cursed energy SHALL NOT regenerate.
-- [ ] CE-07 conferido: WHEN the max upgrade is applied at level `n` (n ≥ 0) THEN max SHALL be `min(100 + 20n, 200)`.
-- [ ] CE-09 conferido: WHEN the regen upgrade is applied at level `n` (n ≥ 0) THEN regen SHALL be `min(8 + 2n, 16)`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Níveis de upgrade 5/6 (máx.) e 4/5 (regen) dos dois lados do teto
+- [x] CE-01 conferido: WHEN a run starts THEN the player cursed energy SHALL be 100 with max 100 and regen 8 per second.
+- [x] CE-02 conferido: The cursed energy SHALL never be below 0.
+- [x] CE-03 conferido: The cursed energy SHALL never be above its max.
+- [x] CE-04 conferido: WHILE no cast is in progress, the cursed energy SHALL increase by `regen × dt / 1000` per frame of game time, capped at max.
+- [x] CE-05 conferido: WHILE a cast is in progress (any cast state), the cursed energy SHALL NOT regenerate.
+- [x] CE-07 conferido: WHEN the max upgrade is applied at level `n` (n ≥ 0) THEN max SHALL be `min(100 + 20n, 200)`.
+- [x] CE-09 conferido: WHEN the regen upgrade is applied at level `n` (n ≥ 0) THEN regen SHALL be `min(8 + 2n, 16)`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
