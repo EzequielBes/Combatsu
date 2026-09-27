@@ -46,6 +46,8 @@ export const TEX = {
   techOrbRed4: 'tech-orb-red-4',
   techOrbRed8: 'tech-orb-red-8',
   techOrbRed12: 'tech-orb-red-12',
+  /** Orbe Azul ativo (BLU-08): um frame só. */
+  techOrbBlue: 'tech-orb-blue',
 } as const;
 
 export const SIZE = {

@@ -873,12 +873,12 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] BLU-05 conferido: WHILE the blue orb exists, the boss SHALL NOT be moved by it.
-- [ ] BLU-08 conferido: WHILE the blue orb exists, `fx.layers` SHALL include `blue.core`, `blue.spiralIn`, `blue.distortRing` and `blue.debrisIn`.
-- [ ] BLU-09 conferido: The `blue.spiralIn` particles SHALL have velocities with a component pointing toward the orb center (the dot product of velocity and offset from the center is negative).
-- [ ] BLU-10 conferido: WHILE the blue orb exists, `techObjects` SHALL list it with `kind: 'blue'`.
-- [ ] BLU-11 conferido: WHEN the blue orb reaches 1400 ms THEN it SHALL be removed from `techObjects` and `events` SHALL get exactly one `blueImplode`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] BLU-05 conferido: WHILE the blue orb exists, the boss SHALL NOT be moved by it.
+- [x] BLU-08 conferido: WHILE the blue orb exists, `fx.layers` SHALL include `blue.core`, `blue.spiralIn`, `blue.distortRing` and `blue.debrisIn`.
+- [x] BLU-09 conferido: The `blue.spiralIn` particles SHALL have velocities with a component pointing toward the orb center (the dot product of velocity and offset from the center is negative).
+- [x] BLU-10 conferido: WHILE the blue orb exists, `techObjects` SHALL list it with `kind: 'blue'`.
+- [x] BLU-11 conferido: WHEN the blue orb reaches 1400 ms THEN it SHALL be removed from `techObjects` and `events` SHALL get exactly one `blueImplode`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

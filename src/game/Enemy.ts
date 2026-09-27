@@ -58,10 +58,17 @@ export class Enemy implements Hittable {
   private walkVxStep: number | null = null;
   /** Dano da última garra realmente aberta (DIF-04); antes do primeiro golpe, o dano com que o inimigo nasceu. */
   private lastAttackDamage: number;
+  /** BLU-04: velocidade (px/step) do puxão do orbe Azul, reaplicada a cada step (L-001); `null` fora do raio. */
+  private pull: Vec2 | null = null;
   private readonly onStep = (): void => {
     // Os steps do Matter rodam antes do update da cena: sem este teste, o vx de andar do frame anterior passava
     // por cima do empurrão de um golpe recebido neste frame.
-    if (this.walkVxStep === null || this.brain.state !== 'idle' || this.ragdoll) return;
+    if (this.brain.state !== 'idle' || this.ragdoll) return;
+    if (this.pull) {
+      this.scene.matter.body.setVelocity(this.body, { x: this.pull.x, y: this.pull.y });
+      return;
+    }
+    if (this.walkVxStep === null) return;
     this.scene.matter.body.setVelocity(this.body, { x: this.walkVxStep, y: this.body.velocity.y });
   };
   private _removed = false;
@@ -111,6 +118,11 @@ export class Enemy implements Hittable {
 
   get x(): number {
     return this.body.position.x;
+  }
+
+  /** BLU-04/05: puxão do orbe Azul (px/step, já convertido); `null` limpa (fora do raio ou orbe sumiu). */
+  setPull(velocity: Vec2 | null): void {
+    this.pull = velocity;
   }
 
   /** Posição + tamanho do corpo (em ragdoll ele acompanha o tronco), nunca body.bounds. */

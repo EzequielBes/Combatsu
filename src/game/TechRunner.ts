@@ -9,6 +9,7 @@ import { canDamage, normalize, type Hit, type Vec2 } from '../core/hit';
 import { Kokusen } from '../core/kokusen';
 import type { Loadout } from '../core/loadout';
 import { RedOrbState, type RedOrbTarget } from '../core/redOrb';
+import { BlueOrbState, blueOrbSpawn, type BlueOrbDamage, type BlueOrbTarget } from '../core/blueOrb';
 import { KOKUSEN, TECHNIQUES } from '../data/techniques';
 import { PLAYER_COMBO } from '../data/tuning';
 import { newEntityId, tagBody, type BodyTag, type Hittable } from './bodyTags';
@@ -16,10 +17,11 @@ import { Boss } from './Boss';
 import { Enemy } from './Enemy';
 import { AttackHitbox } from './hitbox';
 import type { Player } from './Player';
-import { setIgnoreGravity } from './physics';
+import { bodyOf, PX_PER_S_TO_STEP, setIgnoreGravity } from './physics';
 import { TEX } from './textures';
 import { DivergentFx } from './techFx/DivergentFx';
 import { RedOrbFx } from './techFx/RedOrb';
+import { BlueOrbFx } from './techFx/BlueOrb';
 
 /** DIV-02: mesmo tamanho e offset da hitbox do `direto` (o cross do combo de socos). */
 const CROSS_HITBOX = PLAYER_COMBO.find((s) => s.name === 'direto')!.hitbox!;
@@ -35,12 +37,19 @@ const RED_ORB_RADIUS = 6;
 const RED_FORCE = 8;
 /** RED-15: recuo do player na soltura, no chão, oposto ao facing. */
 const RED_PUSH_PX = 12;
+/** BLU-02: alcance da consulta de parede à frente do player (folga acima dos 110 px do orbe). */
+const BLUE_WALL_QUERY_PX = 130;
 
 interface RedOrbEntry {
   readonly id: number;
   readonly state: RedOrbState;
   readonly body: MatterJS.BodyType;
   readonly view: Phaser.GameObjects.Sprite;
+}
+
+interface BlueOrbEntry {
+  readonly id: number;
+  readonly state: BlueOrbState;
 }
 
 /**
@@ -55,6 +64,7 @@ export class TechRunner {
   private readonly hitbox: AttackHitbox;
   private readonly divergentFx: DivergentFx;
   private readonly redFx: RedOrbFx;
+  private readonly blueFx: BlueOrbFx;
   /** Zona/streak do Kokusen persistem entre casts (KOK-10/11/30/31); um só por toda a run. */
   private readonly kokusen = new Kokusen();
   private divergent: DivergentState | null = null;
@@ -64,6 +74,7 @@ export class TechRunner {
   /** `true` assim que uma tentativa deste cast acerta a janela (KOK-03); decide o 2º impacto na resolução. */
   private pendingKokusen = false;
   private redOrb: RedOrbEntry | null = null;
+  private blueOrb: BlueOrbEntry | null = null;
   private frameEvents: string[] = [];
 
   constructor(
@@ -74,6 +85,8 @@ export class TechRunner {
     fx: FxTimeline,
     registry: FxRegistry,
     uiLayer: Phaser.GameObjects.Layer,
+    /** BAT-06/terreno: mesma lista do `Player`, para achar a distância até a parede à frente (BLU-02). */
+    private readonly terrain: MatterJS.BodyType[],
     /** Golpe de técnica que conectou: faísca + hitstop, sem o +3 de CE-06 (CE-08 - a cena decide isso). */
     private readonly onTechHit: (hit: Hit, point: Vec2) => void,
     /** KOK-13: hitstop de 220 ms do Kokusen (FX-02 já garante que o maior pendente vence). */
@@ -84,6 +97,7 @@ export class TechRunner {
     this.hitbox = new AttackHitbox(scene, player.id, player.team, (hit, point, target) => this.onFirstImpact(hit, point, target!));
     this.divergentFx = new DivergentFx(scene, fx, registry);
     this.redFx = new RedOrbFx(scene, fx, registry, uiLayer);
+    this.blueFx = new BlueOrbFx(scene, fx, registry);
   }
 
   /** Eventos deste frame (`divergent2`, `kokusen`, `kokusenMiss`, `redDetonate`). */
@@ -102,10 +116,11 @@ export class TechRunner {
     };
   }
 
-  /** `techObjects` do snapshot (RED-14): o orbe Vermelho vivo agora. */
+  /** `techObjects` do snapshot (RED-14, BLU-10): os orbes vivos agora. */
   get techObjectsSnapshot(): { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[] {
     const out: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[] = [];
     if (this.redOrb) out.push({ id: this.redOrb.id, kind: 'red', x: this.redOrb.state.x, y: this.redOrb.body.position.y, traveled: this.redOrb.state.traveled });
+    if (this.blueOrb) out.push({ id: this.blueOrb.id, kind: 'blue', x: this.blueOrb.state.position.x, y: this.blueOrb.state.position.y, traveled: 0 });
     return out;
   }
 
@@ -121,7 +136,7 @@ export class TechRunner {
     this.kokusen.tick(dtMs); // KOK-11/31: a zona esfria com o relógio de jogo, mesmo sem nenhum cast em curso.
     this.updateDivergent(dtMs, cast, castEvents, slotPressed);
     this.updateRed(dtMs, cast, castEvents, enemies);
-    void boss; // usado a partir do toque no chefe dentro de `onRedTouch`; parâmetro já preparado para T26/T27.
+    this.updateBlue(dtMs, castEvents, enemies, boss);
   }
 
   private updateDivergent(
@@ -368,5 +383,84 @@ export class TechRunner {
     this.scene.matter.world.remove(orb.body);
     orb.view.destroy();
     if (this.redOrb === orb) this.redOrb = null;
+  }
+
+  // --- Azul (T26) -------------------------------------------------------------------------------------------
+
+  private updateBlue(dtMs: number, castEvents: readonly string[], enemies: readonly Enemy[], boss: Boss | null): void {
+    if (castEvents.includes('techCast:azul')) this.spawnBlueOrb(this.player.facing);
+
+    const orb = this.blueOrb;
+    if (!orb) return;
+    const point = orb.state.position;
+    this.blueFx.update(dtMs, point.x, point.y); // BLU-08/09
+
+    const enemyTargets: BlueOrbTarget[] = enemies.map((e) => ({ id: e.id, center: { x: e.x, y: e.hurtRect().y }, kind: 'enemy' }));
+    const allTargets: BlueOrbTarget[] = boss
+      ? [...enemyTargets, { id: boss.id, center: { x: boss.x, y: boss.hurtRect().y }, kind: 'boss' }] // BLU-05: chefe nunca puxado, só listado para o tick/implosão.
+      : enemyTargets;
+
+    // BLU-04/05: puxão reaplicado a cada frame (L-001), só em inimigo comum, dentro do raio.
+    const pulls = orb.state.pullTargets(enemyTargets);
+    for (const e of enemies) {
+      const pull = pulls.find((p) => p.targetId === e.id);
+      e.setPull(pull ? { x: pull.velocity.x * PX_PER_S_TO_STEP, y: pull.velocity.y * PX_PER_S_TO_STEP } : null);
+    }
+
+    const { ticksCrossed, ended } = orb.state.update(dtMs);
+    for (let i = 0; i < ticksCrossed; i++) {
+      for (const dmg of orb.state.tickTargets(allTargets)) this.applyBlueDamage(dmg, enemies, boss); // BLU-06
+    }
+    if (ended) {
+      for (const dmg of orb.state.implosionTargets(allTargets)) this.applyBlueDamage(dmg, enemies, boss); // BLU-07
+      this.blueFx.implode(point.x, point.y); // BLU-11
+      this.frameEvents.push('blueImplode'); // BLU-11
+      for (const e of enemies) e.setPull(null);
+      this.blueOrb = null;
+    }
+  }
+
+  private spawnBlueOrb(facing: 1 | -1): void {
+    if (this.blueOrb) {
+      this.blueFx.hide();
+      this.blueOrb = null;
+    }
+    const center = { x: this.player.sprite.x, y: this.player.sprite.y };
+    const point = blueOrbSpawn(center, facing, this.wallDistanceAhead(facing)); // BLU-02
+    this.blueOrb = { id: newEntityId(), state: new BlueOrbState(point) };
+  }
+
+  /** BLU-02: distância (px) até a primeira parede à frente do player, `Infinity` se nenhuma dentro da consulta. */
+  private wallDistanceAhead(facing: 1 | -1): number {
+    const { x, y } = bodyOf(this.player.sprite).position;
+    const halfH = this.player.sprite.displayHeight / 2;
+    const region =
+      facing === 1
+        ? { min: { x, y: y - halfH }, max: { x: x + BLUE_WALL_QUERY_PX, y: y + halfH } }
+        : { min: { x: x - BLUE_WALL_QUERY_PX, y: y - halfH }, max: { x, y: y + halfH } };
+    const hits = this.scene.matter.query.region(this.terrain, region);
+    let closest = Infinity;
+    for (const body of hits) {
+      const edge = facing === 1 ? body.bounds.min.x : body.bounds.max.x;
+      const dist = facing === 1 ? edge - x : x - edge;
+      if (dist < closest) closest = dist;
+    }
+    return Math.max(0, closest);
+  }
+
+  private applyBlueDamage(dmg: BlueOrbDamage, enemies: readonly Enemy[], boss: Boss | null): void {
+    const hit: Hit = {
+      ownerId: this.player.id,
+      damage: this.loadout.damage('azul', dmg.damage), // BLU-06/07, TEC-06
+      strength: 'light',
+      force: 0,
+      direction: { x: 0, y: -1 },
+    };
+    const enemy = enemies.find((e) => e.id === dmg.targetId);
+    if (enemy) {
+      if (enemy.receiveHit(hit)) this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+      return;
+    }
+    if (boss && boss.id === dmg.targetId && boss.receiveHit(hit)) this.onTechHit(hit, { x: boss.x, y: boss.hurtRect().y });
   }
 }
