@@ -113,6 +113,9 @@ export class KokusenFx {
   private shockElapsedMs = 0;
   private shockOrigin: Vec2 = { x: 0, y: 0 };
 
+  /** KOK-24: ms reais restantes até a câmera voltar a 1,5 de zoom; `null` fora do zoom-punch. */
+  private zoomBackMs: number | null = null;
+
   private readonly cardKuro: Phaser.GameObjects.Sprite;
   private readonly cardSen: Phaser.GameObjects.Sprite;
   /** Faixa de tinta preta translúcida, bordas irregulares tipo pincelada, atrás do kanji (polimento do KOK-25). */
@@ -196,9 +199,12 @@ export class KokusenFx {
     this.cardStreakText.setText(streak >= 2 ? `×${streak}` : '').setVisible(streak >= 2); // KOK-26
 
     const cam = this.scene.cameras.main;
-    cam.zoomTo(KOKUSEN.zoomPeak, KOKUSEN.zoomInMs, 'Linear', true, (_cam, progress) => {
-      if (progress >= 1) cam.zoomTo(1.5, KOKUSEN.zoomOutMs, 'Linear', true); // KOK-24
-    });
+    // KOK-24: zoom-punch até 1,68 em 60 ms e de volta a 1,5 em 300 ms. O retorno é agendado pelo relógio real do
+    // próprio `update` (`zoomBackMs`), não pelo callback do `zoomTo` - `Zoom.update()` chama esse callback e, na
+    // MESMA passada, roda `effectComplete()` por `progress` já ter chegado a 1: um `zoomTo` novo armado dentro do
+    // callback (mesmo efeito, reaproveitado) era cancelado ali mesmo, e a câmera ficava presa em 1,68.
+    cam.zoomTo(KOKUSEN.zoomPeak, KOKUSEN.zoomInMs, 'Linear', true);
+    this.zoomBackMs = KOKUSEN.zoomInMs;
     cam.shake(KOKUSEN.hitstopMs, 0.012); // "tremida forte" (Direção de arte, beat 6)
   }
 
@@ -208,6 +214,16 @@ export class KokusenFx {
     this.updateBolts(realDtMs, frozenNow);
     this.updateShock(realDtMs);
     this.updateCard(realDtMs);
+    this.updateZoomBack(realDtMs);
+  }
+
+  /** KOK-24: volta a câmera a 1,5 quando o zoom-punch (`zoomBackMs`) termina - fora do callback do `zoomTo`. */
+  private updateZoomBack(realDtMs: number): void {
+    if (this.zoomBackMs === null) return;
+    this.zoomBackMs -= realDtMs;
+    if (this.zoomBackMs > 0) return;
+    this.zoomBackMs = null;
+    this.scene.cameras.main.zoomTo(1.5, KOKUSEN.zoomOutMs, 'Linear', true);
   }
 
   private updateInvertDuotone(realDtMs: number): void {
