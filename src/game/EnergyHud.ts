@@ -150,7 +150,7 @@ export class EnergyHud {
       width: number;
       fillWidth: number;
       marks: (number | null)[];
-      icons: { cooldownOverlayHeight: number }[];
+      icons: { cooldownOverlayHeight: number; iconHeight: number }[];
       flashing: boolean;
     };
   } {
@@ -168,7 +168,7 @@ export class EnergyHud {
         width: BAR_W,
         fillWidth: this.fill.width,
         marks: this.marks.map((m) => (m.visible ? m.x - BAR_X : null)),
-        icons: this.slots.map((s) => ({ cooldownOverlayHeight: s.overlay.visible ? s.overlay.height : 0 })),
+        icons: this.slots.map((s) => ({ cooldownOverlayHeight: s.overlay.visible ? s.overlay.height : 0, iconHeight: ICON_SIZE })),
         flashing: this.flashMs > 0,
       },
     };

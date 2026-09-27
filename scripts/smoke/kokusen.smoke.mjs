@@ -1,10 +1,7 @@
 // Punho Divergente e Kokusen (DIV-03/04/07/09, KOK-03/04/06/09/13/14/15/17/24/25/28, TFX-09) com
 // `?debug&seed=1&noshop=1&tech=divergente`. Os dois pontos de spawn de inimigo do level de teste ficam longe do
-// spawn do player (RUN-02): anda-se até um inimigo intacto para cada conjuração. Por causa do BUG documentado
-// abaixo (hitbox do Divergente reabrindo sozinha em `release`), um cast pode acertar de raspão um inimigo vizinho
-// além do alvo, e o Kokusen pode até matar o próprio alvo (60 hp não cobre o dano extra do bug); por isso
-// `approachFreshEnemy` sabe forçar o fim da rodada (`noshop=1` pula a loja) se os 3 inimigos da rodada 1
-// (WAVE.base) não bastarem mais.
+// spawn do player (RUN-02): anda-se até um inimigo intacto para cada conjuração; `approachFreshEnemy` força o
+// fim da rodada (`noshop=1` pula a loja) se os 3 inimigos da rodada 1 (WAVE.base) não bastarem.
 export default async function ({ page, baseUrl, assert }) {
   const stepAndSnap = async (ms) =>
     page.evaluate((n) => {
@@ -160,17 +157,7 @@ export default async function ({ page, baseUrl, assert }) {
   assert(sawWaitingFx, `DIV-07: nunca vi divergente.echo/ring esperando o 2º impacto: ${JSON.stringify(snap.fx.layers)}`);
   assert(secondImpact, `DIV-04: o 2º impacto normal nunca aconteceu: ${JSON.stringify(snap.tech.cast)}`);
   const enemyAfter2 = secondImpact.enemies.find((e) => e.id === target1);
-  // BUG: src/game/TechRunner.ts:114 reabre a hitbox do Divergente a cada frame de `release` em que ela não está
-  // aberta - inclusive no frame seguinte ao próprio `onFirstImpact` (TechRunner.ts:155) fechá-la ao tocar o
-  // alvo. Essa hitbox reaberta ganha um `makeHitGate` novo (src/game/hitbox.ts open()) e pode tocar o MESMO alvo
-  // de novo; `AttackHitbox.onTouch` (hitbox.ts:64) chama `target.receiveHit(hit)` ANTES do `onConnect`, e só
-  // então `TechRunner.onFirstImpact` (linha 154) descarta silenciosamente a 2ª chamada (`targetId !== null`) -
-  // sem novo evento, fx ou hitstop, mas o dano (12, leve) já foi aplicado. Repro: `?debug&seed=1&tech=divergente`,
-  // aproximar de um inimigo e conjurar o Divergente parado ao lado dele - `enemies[].hp` cai 12, mais 12 (esse
-  // bug, alguns frames depois, ainda dentro de `release`) e só então os 18 do 2º impacto oficial (DIV-04): 42 de
-  // dano total em vez dos 30 da spec (12+18). Por isso a asserção exata abaixo fica comentada.
-  // assert(enemyAfter2.hp === before1 - 12 - 18, `DIV-04: 2º impacto deveria tirar 18 a mais: ${JSON.stringify(enemyAfter2)}`);
-  assert(enemyAfter2.hp < before1 - 12, `DIV-04: o 2º impacto deveria ao menos diminuir o hp mais: ${JSON.stringify(enemyAfter2)}`);
+  assert(enemyAfter2.hp === before1 - 12 - 18, `DIV-04: 2º impacto deveria tirar 18 a mais: ${JSON.stringify(enemyAfter2)}`);
   assert(
     secondImpact.fx.layers.includes('divergente.burst') && secondImpact.fx.layers.includes('divergente.fistGhost'),
     `DIV-09: sem Kokusen, fx.layers deveria ter burst + fistGhost: ${JSON.stringify(secondImpact.fx.layers)}`,
@@ -206,13 +193,7 @@ export default async function ({ page, baseUrl, assert }) {
   assert(landed, 'KOK-28: o Kokusen nunca resolveu depois da tecla dentro da janela');
   assert(countOf(landed.events, 'kokusen') === kokusenBefore + 1, `KOK-28: esperava exatamente um kokusen a mais: ${JSON.stringify(landed.events)}`);
   const enemyAfterKokusen = landed.enemies.find((e) => e.id === target2);
-  // BUG: mesmo bug do cenário 1 (src/game/TechRunner.ts:114 + :155 - hitbox do Divergente reabre sozinha em
-  // `release` e acerta o mesmo alvo de novo, sem gerar evento/fx próprio, TFX-09 nesse arquivo). Com ele, o Kokusen
-  // some 12 (1º impacto) + 12 (bug) + 45 (Kokusen) = 69 do alvo, ultrapassando os 60 de hp comum (`EnemyBrain`
-  // recorta em `Math.max(0, hp-damage)`); o inimigo morre em vez de sobrar com 3. A asserção exata da spec (KOK-06)
-  // fica comentada.
-  // assert(enemyAfterKokusen.hp === before2 - 12 - 45, `KOK-06: Kokusen deveria tirar 45 (2,5×18): ${JSON.stringify(enemyAfterKokusen)}`);
-  assert(enemyAfterKokusen.hp < before2 - 12, `KOK-06: o Kokusen deveria ao menos diminuir o hp mais: ${JSON.stringify(enemyAfterKokusen)}`);
+  assert(enemyAfterKokusen.hp === before2 - 12 - 45, `KOK-06: Kokusen deveria tirar 45 (2,5×18): ${JSON.stringify(enemyAfterKokusen)}`);
   assert(
     Math.min(100, ceBeforeKokusen + 30) === landed.ce.cur,
     `KOK-09: energia deveria subir 30 com teto: ${ceBeforeKokusen} -> ${landed.ce.cur}`,
@@ -237,20 +218,8 @@ export default async function ({ page, baseUrl, assert }) {
   // (mais 4 frames, 66,7 ms) ainda está no meio - os dois nunca coexistem.
   assert(snap.fx.layers.includes('kokusen.duotone'), `KOK-15: fx.layers deveria ter kokusen.duotone: ${JSON.stringify(snap.fx.layers)}`);
   assert(!snap.fx.layers.includes('kokusen.invert'), `KOK-15: invert e duotone não deveriam coexistir: ${JSON.stringify(snap.fx.layers)}`);
-  // BUG: src/game/techFx/KokusenFx.ts:172-173 chama `cam.zoomTo(1.5, KOKUSEN.zoomOutMs, ...)` de DENTRO do
-  // próprio callback `onUpdate` do primeiro `zoomTo` (o que sobe a 1,68), no frame exato em que `progress>=1`.
-  // O `Zoom.update()` do Phaser (node_modules/phaser/src/cameras/2d/effects/Zoom.js, método `update`, ramo
-  // `else`) invoca esse callback e, na sequência, SEM CONDIÇÃO, chama `this.effectComplete()` - que zera
-  // `isRunning`/`_onUpdate` do efeito. Isso acontece DEPOIS do `zoomTo` aninhado já ter armado o efeito de volta
-  // (`isRunning=true`, novo destino 1,5): o `effectComplete()` da chamada de fora sobrescreve esse estado recém
-  // armado, e o zoom nunca mais anda - fica travado em 1,68 para sempre (confirmado manualmente: ainda 1,68 depois
-  // de mais de 600 ms). Repro: `?debug&seed=1&tech=divergente`, aproximar de um inimigo, conjurar o Divergente e
-  // acertar o Kokusen (tecla do slot dentro da janela) - `camera.zoom` sobe a 1,68 e nunca volta a 1,5. A metade
-  // "volta à base" de KOK-24 fica comentada; a subida (já conferida acima) continua garantida.
-  // snap = await stepAndSnap(500);
-  // assert(Math.abs(snap.camera.zoom - 1.5) < 0.02, `KOK-24: zoom deveria ter voltado a 1,5: ${snap.camera.zoom}`);
   snap = await stepAndSnap(500);
-  assert(snap.camera.zoom >= 1.6, `sanity: zoom não deveria ter caído sozinho antes do fix do bug acima: ${snap.camera.zoom}`);
+  assert(Math.abs(snap.camera.zoom - 1.5) < 0.02, `KOK-24: zoom deveria ter voltado a 1,5: ${snap.camera.zoom}`);
 
   // --- Cenário 3: tecla bem antes da janela abrir (poucos frames depois do 1º impacto) → kokusenMiss ------------
   await waitSlotReady();
@@ -284,8 +253,5 @@ export default async function ({ page, baseUrl, assert }) {
   assert(secondImpact3, 'o 2º impacto do cenário 3 (sem Kokusen) nunca aconteceu');
   assert(countOf(secondImpact3.events, 'kokusen') === kokusenBefore3, `KOK-04: não deveria ter virado Kokusen: ${JSON.stringify(secondImpact3.events)}`);
   const enemyAfter3 = secondImpact3.enemies.find((e) => e.id === target3);
-  // BUG: mesmo bug de TFX-09 acima (src/game/TechRunner.ts:114 + :155) - 12 (1º impacto) + 12 (bug) + 18 (2º
-  // impacto comum) = 42 em vez dos 30 da spec. Asserção exata comentada.
-  // assert(enemyAfter3.hp === before3 - 12 - 18, `2º impacto comum deveria tirar 18 a mais: ${JSON.stringify(enemyAfter3)}`);
-  assert(enemyAfter3.hp < before3 - 12, `2º impacto comum deveria ao menos diminuir o hp mais: ${JSON.stringify(enemyAfter3)}`);
+  assert(enemyAfter3.hp === before3 - 12 - 18, `2º impacto comum deveria tirar 18 a mais: ${JSON.stringify(enemyAfter3)}`);
 }

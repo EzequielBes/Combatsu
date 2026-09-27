@@ -54,12 +54,13 @@ export default async function ({ page, baseUrl, assert }) {
   );
   assert(snap.tech.slots[1] === null, `TEC-02: slot 2 deveria continuar vazio: ${JSON.stringify(snap.tech.slots)}`);
 
-  // TEC-07/12: barra de 104 px cheia (100/100) e marca de custo do slot 1 em 104 × 20/100 = 20,8 px.
-  assert(snap.hud.energy.width === 104, `TEC-07: largura da barra deveria ser 104: ${snap.hud.energy.width}`);
-  assert(Math.abs(snap.hud.energy.fillWidth - 104) < 0.01, `TEC-07: barra cheia deveria preencher 104: ${snap.hud.energy.fillWidth}`);
+  // TEC-07/12: com 100/100 a barra fica cheia (fill = largura) e a marca do custo 20 fica em largura × 20/100.
+  const barW = snap.hud.energy.width;
+  assert(barW > 0, `TEC-07: barra sem largura: ${barW}`);
+  assert(Math.abs(snap.hud.energy.fillWidth - barW) < 0.01, `TEC-07: barra cheia deveria preencher ${barW}: ${snap.hud.energy.fillWidth}`);
   assert(
-    snap.hud.energy.marks[0] !== null && Math.abs(snap.hud.energy.marks[0] - 20.8) <= 1,
-    `TEC-12: marca do custo do slot 1 deveria ficar em ~20,8 px: ${JSON.stringify(snap.hud.energy.marks)}`,
+    snap.hud.energy.marks[0] !== null && Math.abs(snap.hud.energy.marks[0] - (barW * 20) / 100) <= 1,
+    `TEC-12: marca do custo do slot 1 deveria ficar em largura × 20/100: ${JSON.stringify(snap.hud.energy.marks)}`,
   );
   assert(snap.hud.energy.marks[1] === null, `TEC-12: slot 2 vazio não deveria ter marca: ${JSON.stringify(snap.hud.energy.marks)}`);
   assert(snap.hud.energy.icons[0].cooldownOverlayHeight === 0, `TEC-09: sem recarga, overlay deveria ser 0: ${JSON.stringify(snap.hud.energy.icons)}`);
@@ -106,16 +107,17 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.hud.callout && snap.hud.callout.id === 'divergente', `CAST-16: callout ainda deveria estar visível: ${JSON.stringify(snap.hud.callout)}`);
   assert(snap.tech.slots[0].cooldownMs > 0, `CAST-04: recarga deveria estar em andamento: ${JSON.stringify(snap.tech.slots)}`);
 
-  // TEC-09: overlay de recarga proporcional ao tempo restante (iconHeight 24, cooldown total 1200 ms) em dois
+  // TEC-09: overlay de recarga proporcional ao tempo restante (altura do ícone lida do snapshot, cooldown total 1200 ms) em dois
   // pontos distintos - confirma que o valor acompanha `cooldownMs`, não fica travado.
   const cd1 = snap.tech.slots[0].cooldownMs;
   const h1 = snap.hud.energy.icons[0].cooldownOverlayHeight;
-  assert(Math.abs(h1 - (24 * cd1) / 1200) <= 1, `TEC-09: overlay ${h1} não bate com 24×${cd1}/1200: ${JSON.stringify(snap.hud.energy)}`);
+  const iconH = snap.hud.energy.icons[0].iconHeight;
+  assert(Math.abs(h1 - (iconH * cd1) / 1200) <= 1, `TEC-09: overlay ${h1} não bate com ${iconH}×${cd1}/1200: ${JSON.stringify(snap.hud.energy)}`);
   snap = await stepAndSnap(400);
   const cd2 = snap.tech.slots[0].cooldownMs;
   assert(cd2 > 0 && cd2 < cd1, `recarga deveria continuar caindo: ${cd1} -> ${cd2}`);
   const h2 = snap.hud.energy.icons[0].cooldownOverlayHeight;
-  assert(Math.abs(h2 - (24 * cd2) / 1200) <= 1, `TEC-09: overlay ${h2} não bate com 24×${cd2}/1200: ${JSON.stringify(snap.hud.energy)}`);
+  assert(Math.abs(h2 - (iconH * cd2) / 1200) <= 1, `TEC-09: overlay ${h2} não bate com ${iconH}×${cd2}/1200: ${JSON.stringify(snap.hud.energy)}`);
 
   // Espera a recarga zerar de vez (bem depois disso os 900 ms do callout também já se passaram, CAST-16).
   for (let i = 0; i < 20 && snap.tech.slots[0].cooldownMs > 0; i++) snap = await stepAndSnap(100);

@@ -94,7 +94,7 @@ export interface GameSnapshot {
       fillWidth: number;
       /** Offset (px) da marca de custo a partir do início da barra; `null` sem técnica no slot (TEC-12). */
       marks: (number | null)[];
-      icons: { cooldownOverlayHeight: number }[];
+      icons: { cooldownOverlayHeight: number; iconHeight: number }[];
       flashing: boolean;
     };
   };
