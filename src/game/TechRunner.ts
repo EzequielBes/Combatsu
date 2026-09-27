@@ -76,6 +76,8 @@ export class TechRunner {
   private divergentSlot: 0 | 1 | null = null;
   /** `true` assim que uma tentativa deste cast acerta a janela (KOK-03); decide o 2º impacto na resolução. */
   private pendingKokusen = false;
+  /** `true` depois que a hitbox do 1º impacto já abriu neste cast (DIV-11); nunca reabre, mesmo com `release` restante. */
+  private hitboxOpened = false;
   private redOrb: RedOrbEntry | null = null;
   private blueOrb: BlueOrbEntry | null = null;
   private cutSchedule: CutSchedule | null = null;
@@ -158,6 +160,7 @@ export class TechRunner {
       this.divergentTarget = null;
       this.divergentSlot = cast!.slot;
       this.pendingKokusen = false;
+      this.hitboxOpened = false;
       this.kokusen.startAttempt();
       this.divergentFx.hideWaiting();
     }
@@ -172,9 +175,13 @@ export class TechRunner {
 
     const releasing = isDivergent && cast!.state === 'release';
     if (releasing) {
-      // DIV-02: hitbox aberta durante toda a `release`; abre uma vez só (o próprio `open` reseta o gate por alvo).
-      if (!this.hitbox.isOpen) this.openHitbox();
-      this.hitbox.follow(this.player.sprite.x, this.player.sprite.y, this.player.facing);
+      // DIV-02/11: abre uma única vez por conjuração - reabrir depois do 1º impacto (onFirstImpact fecha a
+      // hitbox) criava um gate novo que podia acertar o mesmo alvo (ou um vizinho) de novo no frame seguinte.
+      if (!this.hitboxOpened) {
+        this.openHitbox();
+        this.hitboxOpened = true;
+      }
+      if (this.hitbox.isOpen) this.hitbox.follow(this.player.sprite.x, this.player.sprite.y, this.player.facing);
     } else if (this.hitbox.isOpen) {
       // DIV-05: fora de `release` (ou cast cancelado) a hitbox fecha - sem toque, sem 2º impacto.
       this.hitbox.close();
