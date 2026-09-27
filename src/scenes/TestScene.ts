@@ -902,6 +902,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // techObjects: placeholder até os orbes (T25/26) existirem de verdade.
       techObjects: [],
       fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers() },
+      // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
+      camera: { zoom: this.cameras.main.zoom },
     };
   }
 

@@ -70,6 +70,7 @@ describe('installDebugApi', () => {
       kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
       techObjects: [],
       fx: { live: 0, degraded: false, layers: [] },
+      camera: { zoom: 1.5 },
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};
