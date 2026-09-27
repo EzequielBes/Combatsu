@@ -253,8 +253,10 @@ export class KokusenFx {
     if (!this.boltsGfx) return;
     const bolts = lightningBolts(this.boltSeed, this.boltOrigin, this.boltDir); // KOK-18..20, 33
     this.boltsGfx.clear();
-    for (const bolt of bolts) this.boltsGfx.lineStyle(6, PALETTE.R, 1).strokePoints(bolt.vertices, false); // KOK-22 borda
-    for (const bolt of bolts) this.boltsGfx.lineStyle(2, PALETTE.b, 1).strokePoints(bolt.vertices, false); // KOK-22 traço
+    // Polimento (fix(fx)): raios pretos (núcleo 4 px) com borda vermelha de 2 px de cada lado (largura total 8 px),
+    // legíveis sobre o cenário - o núcleo preto é o que domina, a borda R só contorna.
+    for (const bolt of bolts) this.boltsGfx.lineStyle(8, PALETTE.R, 1).strokePoints(bolt.vertices, false); // KOK-22 borda
+    for (const bolt of bolts) this.boltsGfx.lineStyle(4, PALETTE.b, 1).strokePoints(bolt.vertices, false); // KOK-22 núcleo
   }
 
   private teardownBolts(): void {
