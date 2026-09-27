@@ -1,16 +1,17 @@
 /**
  * Kanji das técnicas em pixel art, 24x24 texels (KOK-29): 黒 (kuro, Kokusen), 閃 (sen, só no cartão 黒閃), 赫
- * (aka, Vermelho), 蒼 (ao, Azul) e 解 (kai, Desmantelar).
+ * (aka, Vermelho), 蒼 (ao, Azul), 解 (kai, Desmantelar) e 拳 (ken, Punho Divergente, de "逕庭拳").
  *
  * As grades vêm de uma rasterização real: cada glifo foi desenhado com uma fonte japonesa do Windows (Yu Gothic
- * UI para 黒/閃/赫/蒼, MS Gothic para 解 — a única que manteve os traços finos de 解 contínuos em 24x24), em
+ * UI para 黒/閃/赫/蒼/拳, MS Gothic para 解 — a única que manteve os traços finos de 解 contínuos em 24x24), em
  * negrito, amostrado com supersampling e um limiar de alfa por caractere, depois centralizado com 1 texel de
  * margem. Por cima da máscara resultante, cada texel de traço vira a cor da própria técnica e cada texel de fundo colado a
  * um texel de traço (8 vizinhos) vira o contorno de 1 texel: `b`/`R` para 黒/閃 (duotom do Kokusen, KOK-22),
- * `R`/`b` para 赫 (Vermelho), `C`/`d` para 蒼 (Azul) e `W`/`k` para 解 (Desmantelar). Dados puros (sem `phaser`
- * como valor): rodam no Vitest.
+ * `R`/`b` para 赫 (Vermelho), `C`/`d` para 蒼 (Azul), `W`/`k` para 解 (Desmantelar) e `C`/`d` para 拳 (Punho
+ * Divergente — mesma dupla do orbe/aura azul-ciano da técnica, TECHNIQUES.divergente.aura = 'c'). Dados puros
+ * (sem `phaser` como valor): rodam no Vitest.
  */
-export type KanjiId = 'kuro' | 'sen' | 'aka' | 'ao' | 'kai';
+export type KanjiId = 'kuro' | 'sen' | 'aka' | 'ao' | 'kai' | 'ken';
 
 /** 黒 (kuro, "preto"), traço `b` com contorno `R`. */
 const KURO: readonly string[] = [
@@ -152,10 +153,39 @@ const KAI: readonly string[] = [
   '.kkkk..kkkkkk...kkkk....',
 ];
 
+/** 拳 (ken, "punho", Punho Divergente), traço `C` com contorno `d`. */
+const KEN: readonly string[] = [
+  '..........ddd...........',
+  '.....ddd..dCdd.dddd.....',
+  '.....dCdd.dCCd.dCCd.....',
+  '.....dCCdddCddddCCd.....',
+  '...ddddCddCCdddCCddddd..',
+  '..ddCCCCCCCCCCCCCCCCCd..',
+  '..dCCCCCCCCCCCCCCCCCCd..',
+  '..dddddddCCdddCddddddd..',
+  '.dddddddCCddddCCddddddd.',
+  '.dCCCCCCCCCCCCCCCCCCCCd.',
+  '.ddddddCCdddddddCCddddd.',
+  '...ddCCCddddddCCdCCdd...',
+  '.dddCCCdCCCCCCCCddCCddd.',
+  'ddCCCddddddCCddddddCCCdd',
+  'dCCCdddddddCCddddddddCCd',
+  'dddddCCCCCCCCCCCCCCCdddd',
+  '....dddddddCCdddddddd...',
+  '.ddddddddddCCdddddddddd.',
+  '.dCCCCCCCCCCCCCCCCCCCCd.',
+  '.ddddddddddCCdddddddddd.',
+  '.......ddddCCd..........',
+  '.......dCCCCCd..........',
+  '.......ddCCCdd..........',
+  '........ddddd...........',
+];
+
 export const KANJI_FRAMES: Record<KanjiId, readonly string[]> = {
   kuro: KURO,
   sen: SEN,
   aka: AKA,
   ao: AO,
   kai: KAI,
+  ken: KEN,
 };
