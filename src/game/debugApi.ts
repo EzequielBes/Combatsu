@@ -140,6 +140,16 @@ export interface GameSnapshot {
    * principal; acrescentado aqui só para o smoke observar o zoom durante a conjuração e o Kokusen.
    */
   camera: { zoom: number };
+  /**
+   * Laboratório de efeitos (T28, `?debug&fxlab`), sem contrato prévio na spec: `null` fora do fxlab. Legenda e
+   * rótulo de velocidade exatos (FXL-04/08) e o estado vivo dos bonecos de treino (FXL-05/06).
+   */
+  fxlab: {
+    legend: string;
+    speedLabel: string;
+    timeScale: number;
+    dummies: { id: number; x: number; y: number; hp: number; maxHp: number }[];
+  } | null;
 }
 
 export interface DebugProbe {

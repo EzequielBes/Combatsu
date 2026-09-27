@@ -56,6 +56,26 @@ export class TechCaster {
     return this.framePressed;
   }
 
+  /**
+   * FxLab (T28): pede a conjuração do `slot` sem depender do teclado - mesmo caminho de `request` que uma tecla
+   * real usaria (CAST-01/09/10), incluindo o cancelamento do golpe em andamento. Os eventos entram no próximo
+   * `update` (mesmo canal de `onDamaged`), então deve ser chamado antes dele no mesmo frame.
+   */
+  requestSlot(slot: 0 | 1): void {
+    const ctx: CastContext = { meleePhase: this.player.meleePhase(), busy: this.player.isBusyForCast() };
+    const reqEvents = this.machine.request(slot, ctx);
+    if (reqEvents.some((e) => e.type === 'enter')) this.player.cancelMelee();
+    this.pendingEvents.push(...this.mapEvents(reqEvents));
+  }
+
+  /**
+   * FxLab (T28): força o slot como apertado neste frame (KOK-03 sem depender do teclado, timing garantido pelo
+   * laboratório). Só vale chamado depois do `update` deste frame - senão o próprio `update` sobrescreve.
+   */
+  forcePress(slot: 0 | 1): void {
+    this.framePressed = slot === 0 ? [true, this.framePressed[1]] : [this.framePressed[0], true];
+  }
+
   update(dtMs: number): void {
     const events = [...this.pendingEvents];
     this.pendingEvents = [];

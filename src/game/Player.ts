@@ -340,6 +340,18 @@ export class Player implements Hittable {
     });
   }
 
+  /** FxLab (T28): vira o player para `dir` antes de disparar uma técnica mirada no boneco mais próximo. */
+  debugFace(dir: 1 | -1): void {
+    this.move.facing = dir;
+  }
+
+  /** FxLab (T28): teleporta o player no eixo x (y intacto) para o alcance curto do Punho Divergente/Kokusen. */
+  debugTeleportX(x: number): void {
+    const body = bodyOf(this.sprite);
+    this.scene.matter.body.setPosition(body, { x, y: body.position.y });
+    this.scene.matter.body.setVelocity(body, { x: 0, y: body.velocity.y });
+  }
+
   /**
    * Escolhe a animação pelo animState (CHR-01). Nos golpes o frame sai da fase do combo (CHR-02), não do relógio
    * da animação: na fase ativa, com a hitbox ligada, aparece o frame *-hit com o membro esticado.

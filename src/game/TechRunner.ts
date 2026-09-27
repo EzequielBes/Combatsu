@@ -15,7 +15,6 @@ import { KOKUSEN, TECHNIQUES } from '../data/techniques';
 import { PLAYER_COMBO } from '../data/tuning';
 import { newEntityId, tagBody, type BodyTag, type Hittable, type Rect } from './bodyTags';
 import { Boss } from './Boss';
-import { Enemy } from './Enemy';
 import { AttackHitbox } from './hitbox';
 import type { Player } from './Player';
 import { bodyOf, PX_PER_S_TO_STEP, setIgnoreGravity } from './physics';
@@ -33,6 +32,18 @@ const CROSS_HITBOX = PLAYER_COMBO.find((s) => s.name === 'direto')!.hitbox!;
  * a versão Kokusen (`KOKUSEN.knockbackMul`).
  */
 export const DIVERGENT_FORCE = { first: 3, second: 9 } as const;
+/**
+ * Alvo dos varredores de área do Vermelho/Azul/Desmantelar (RED-10, BLU-04/06/07, CUT-03): posição e área de
+ * acerto, além do `Hittable` comum. A `Enemy` real satisfaz isto estruturalmente; o `TrainingDummy` do
+ * laboratório de efeitos (T28, `src/game/FxLab.ts`) também, sem o `TechRunner` precisar conhecer nenhum dos dois.
+ */
+export interface TechTarget extends Hittable {
+  readonly x: number;
+  hurtRect(): Rect;
+  /** BLU-04/05: puxão do orbe Azul (px/step, já convertido); `null` limpa (fora do raio ou orbe sumiu). */
+  setPull(velocity: Vec2 | null): void;
+}
+
 /** Raio do sensor de voo do orbe Vermelho (px de mundo); pequeno, o orbe visual é que dá o tamanho percebido. */
 const RED_ORB_RADIUS = 6;
 /** RED-06/09/10: força (px/step) dos impactos do Vermelho - mesma escala do 2º impacto do Divergente. */
@@ -136,7 +147,7 @@ export class TechRunner {
     cast: ActiveCastView | null,
     castEvents: readonly string[],
     slotPressed: readonly [boolean, boolean],
-    enemies: readonly Enemy[],
+    enemies: readonly TechTarget[],
     boss: Boss | null,
   ): void {
     this.frameEvents = [];
@@ -292,7 +303,7 @@ export class TechRunner {
 
   // --- Vermelho (T25) --------------------------------------------------------------------------------------
 
-  private updateRed(dtMs: number, cast: ActiveCastView | null, castEvents: readonly string[], enemies: readonly Enemy[]): void {
+  private updateRed(dtMs: number, cast: ActiveCastView | null, castEvents: readonly string[], enemies: readonly TechTarget[]): void {
     const charging = cast?.id === 'vermelho' && (cast.state === 'sign' || cast.state === 'charge');
     if (charging) {
       // RED-02/03/04: orbe crescendo + faíscas + anel + poeira, na ponta dos dedos.
@@ -376,7 +387,7 @@ export class TechRunner {
     if (target.receiveHit(hit)) this.onTechHit(hit, center);
   }
 
-  private finishRedDetonation(orb: RedOrbEntry, enemies: readonly Enemy[]): void {
+  private finishRedDetonation(orb: RedOrbEntry, enemies: readonly TechTarget[]): void {
     const point = { x: orb.state.x, y: orb.body.position.y };
     const targets: RedOrbTarget[] = enemies.map((e) => ({ id: e.id, center: { x: e.x, y: e.hurtRect().y } }));
     for (const splash of orb.state.detonationTargets(targets, point)) {
@@ -400,7 +411,7 @@ export class TechRunner {
 
   // --- Azul (T26) -------------------------------------------------------------------------------------------
 
-  private updateBlue(dtMs: number, castEvents: readonly string[], enemies: readonly Enemy[], boss: Boss | null): void {
+  private updateBlue(dtMs: number, castEvents: readonly string[], enemies: readonly TechTarget[], boss: Boss | null): void {
     if (castEvents.includes('techCast:azul')) this.spawnBlueOrb(this.player.facing);
 
     const orb = this.blueOrb;
@@ -461,7 +472,7 @@ export class TechRunner {
     return Math.max(0, closest);
   }
 
-  private applyBlueDamage(dmg: BlueOrbDamage, enemies: readonly Enemy[], boss: Boss | null): void {
+  private applyBlueDamage(dmg: BlueOrbDamage, enemies: readonly TechTarget[], boss: Boss | null): void {
     const hit: Hit = {
       ownerId: this.player.id,
       damage: this.loadout.damage('azul', dmg.damage), // BLU-06/07, TEC-06
@@ -479,7 +490,7 @@ export class TechRunner {
 
   // --- Desmantelar (T27) ------------------------------------------------------------------------------------
 
-  private updateCut(dtMs: number, castEvents: readonly string[], enemies: readonly Enemy[], boss: Boss | null): void {
+  private updateCut(dtMs: number, castEvents: readonly string[], enemies: readonly TechTarget[], boss: Boss | null): void {
     if (castEvents.includes('techCast:corte')) this.cutSchedule = new CutSchedule();
     if (!this.cutSchedule) return;
     const due = this.cutSchedule.update(dtMs);
@@ -500,7 +511,7 @@ export class TechRunner {
     if (due.includes(2)) this.cutSchedule = null; // agenda encerrada após o 3º corte
   }
 
-  private applyCutHit(hit: CutHit, enemies: readonly Enemy[], boss: Boss | null): void {
+  private applyCutHit(hit: CutHit, enemies: readonly TechTarget[], boss: Boss | null): void {
     const dealt: Hit = {
       ownerId: this.player.id,
       damage: this.loadout.damage('corte', hit.damage), // CUT-03, TEC-06
