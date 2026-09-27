@@ -16,6 +16,7 @@ const BAND_H = 100;
 const START_X = -BAND_W;
 /** Centro vertical da faixa, dentro do terço superior da tela (viewport 540 px de altura -> terço = 180 px). */
 const Y = 130;
+const BAND_TOP = Y - BAND_H / 2;
 const BORDER_H = 4;
 const PAD_X = 14;
 /** Kanji 3x maior que o antigo ícone de 28 px (mesmo tamanho do cartão do Kokusen, KANJI_SIZE). */
@@ -23,17 +24,28 @@ const ICON_SIZE = 84;
 const TEXT_GAP = 16;
 const DEPTH = 150;
 
+/** Deslocamento (local, sem o `x` de deslizar) de cada peça: `bg`/bordas em 0, ícone e texto adiante dele. */
+const BASE_X = { band: 0, icon: PAD_X, text: PAD_X + ICON_SIZE + TEXT_GAP };
+
 /**
  * Chamada da conjuração (CAST-16): faixa horizontal (Direção de arte) que desliza da esquerda em 150 ms, fica
  * 900 ms e sai deslizando: fundo preto translúcido, bordas na cor da técnica (`TECHNIQUES[id].aura`), kanji 3x à
  * esquerda e nome em fonte maior e bold. Só desenha; quem decide quando chamar é o `techCast:<id>` do `TechCaster`.
+ *
+ * Sem `Container`: os objetos são somados direto na `uiLayer` (como o resto do HUD) - um `Container` criado com
+ * filhos já prontos perde a câmera de UI, porque o roteador de câmeras da cena (`addUiCamera`) decide pelo
+ * `displayList` de cada objeto no evento `ADDED_TO_SCENE`, que só dispara uma vez, antes do filho entrar no
+ * `Container` (o filho nasce na lista da cena, não na da camada, e fica ignorado pela câmera de UI para sempre).
+ * O deslizar anima um único número (`slideX`) e reaplica a posição de cada peça a cada passo.
  */
 export class Callout {
-  private readonly container: Phaser.GameObjects.Container;
+  private readonly band: Phaser.GameObjects.Rectangle;
   private readonly borderTop: Phaser.GameObjects.Rectangle;
   private readonly borderBottom: Phaser.GameObjects.Rectangle;
   private readonly icon: Phaser.GameObjects.Sprite;
   private readonly text: Phaser.GameObjects.Text;
+  private readonly parts: (Phaser.GameObjects.Rectangle | Phaser.GameObjects.Sprite | Phaser.GameObjects.Text)[];
+  private readonly slide = { x: START_X };
   private msLeft = 0;
   private current: TechId | null = null;
 
@@ -41,19 +53,26 @@ export class Callout {
     private readonly scene: Phaser.Scene,
     layer: Phaser.GameObjects.Layer,
   ) {
-    const bg = scene.add.rectangle(0, 0, BAND_W, BAND_H, PALETTE.b, 0.72).setOrigin(0, 0);
-    this.borderTop = scene.add.rectangle(0, 0, BAND_W, BORDER_H, PALETTE.w).setOrigin(0, 0);
-    this.borderBottom = scene.add.rectangle(0, BAND_H - BORDER_H, BAND_W, BORDER_H, PALETTE.w).setOrigin(0, 0);
-    this.icon = scene.add.sprite(PAD_X, BAND_H / 2, TEX.kanji, 'kuro').setOrigin(0, 0.5).setDisplaySize(ICON_SIZE, ICON_SIZE);
+    this.band = scene.add.rectangle(0, BAND_TOP, BAND_W, BAND_H, PALETTE.b, 0.72).setOrigin(0, 0);
+    this.borderTop = scene.add.rectangle(0, BAND_TOP, BAND_W, BORDER_H, PALETTE.w).setOrigin(0, 0);
+    this.borderBottom = scene.add.rectangle(0, BAND_TOP + BAND_H - BORDER_H, BAND_W, BORDER_H, PALETTE.w).setOrigin(0, 0);
+    this.icon = scene.add.sprite(BASE_X.icon, Y, TEX.kanji, 'kuro').setOrigin(0, 0.5).setDisplaySize(ICON_SIZE, ICON_SIZE);
     this.text = scene.add
-      .text(PAD_X + ICON_SIZE + TEXT_GAP, BAND_H / 2, '', { fontFamily: 'monospace', fontSize: '30px', fontStyle: 'bold', color: css(PALETTE.w) })
+      .text(BASE_X.text, Y, '', { fontFamily: 'monospace', fontSize: '30px', fontStyle: 'bold', color: css(PALETTE.w) })
       .setOrigin(0, 0.5);
-    this.container = scene.add
-      .container(START_X, Y - BAND_H / 2, [bg, this.borderTop, this.borderBottom, this.icon, this.text])
-      .setScrollFactor(0)
-      .setDepth(DEPTH)
-      .setVisible(false);
-    layer.add(this.container);
+    this.parts = [this.band, this.borderTop, this.borderBottom, this.icon, this.text];
+    for (const o of this.parts) o.setScrollFactor(0).setDepth(DEPTH).setVisible(false);
+    layer.add(this.parts);
+    this.applySlide(START_X);
+  }
+
+  /** Reaplica `slideX` à posição local de cada peça (`band`/bordas em `BASE_X.band`, ícone e texto adiante dele). */
+  private applySlide(x: number): void {
+    this.band.x = BASE_X.band + x;
+    this.borderTop.x = BASE_X.band + x;
+    this.borderBottom.x = BASE_X.band + x;
+    this.icon.x = BASE_X.icon + x;
+    this.text.x = BASE_X.text + x;
   }
 
   /** Chamado no `techCast:<id>` (soltura, CAST-16). */
@@ -66,9 +85,17 @@ export class Callout {
     this.text.setText(def.name);
     this.borderTop.setFillStyle(auraColor);
     this.borderBottom.setFillStyle(auraColor);
-    this.container.setPosition(START_X, Y - BAND_H / 2).setVisible(true);
-    this.scene.tweens.killTweensOf(this.container);
-    this.scene.tweens.add({ targets: this.container, x: REST_X, duration: SLIDE_MS, ease: 'Cubic.Out' });
+    this.slide.x = START_X;
+    this.applySlide(START_X);
+    for (const o of this.parts) o.setVisible(true);
+    this.scene.tweens.killTweensOf(this.slide);
+    this.scene.tweens.add({
+      targets: this.slide,
+      x: REST_X,
+      duration: SLIDE_MS,
+      ease: 'Cubic.Out',
+      onUpdate: () => this.applySlide(this.slide.x),
+    });
   }
 
   update(dtMs: number): void {
@@ -76,13 +103,16 @@ export class Callout {
     this.msLeft -= dtMs;
     if (this.msLeft <= 0) {
       this.current = null;
-      this.scene.tweens.killTweensOf(this.container);
+      this.scene.tweens.killTweensOf(this.slide);
       this.scene.tweens.add({
-        targets: this.container,
+        targets: this.slide,
         x: START_X,
         duration: SLIDE_MS,
         ease: 'Cubic.In',
-        onComplete: () => this.container.setVisible(false),
+        onUpdate: () => this.applySlide(this.slide.x),
+        onComplete: () => {
+          for (const o of this.parts) o.setVisible(false);
+        },
       });
     }
   }
