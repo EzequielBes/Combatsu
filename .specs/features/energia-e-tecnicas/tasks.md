@@ -962,24 +962,24 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] CE-01 conferido: WHEN a run starts THEN the player cursed energy SHALL be 100 with max 100 and regen 8 per second.
-- [ ] TEC-01 conferido: WHEN a run starts without the `tech` debug parameter THEN both technique slots SHALL be empty (AD-005).
-- [ ] TEC-02 conferido: WHERE the debug mode is on and the URL has `tech=<id>[,<id>]` THEN the slots SHALL start with those techniques at level 1, in order, ignoring unknown ids.
-- [ ] TEC-07 conferido: The HUD SHALL show the cursed energy bar under the HP bar, with fill width `barWidth × cur / max` (±1 px).
-- [ ] TEC-09 conferido: WHILE a slot holds a technique, its HUD icon SHALL have a dark overlay of height `iconHeight × cooldownMs / cooldown` px (±1 px), where `cooldown` is that technique full cooldown.
-- [ ] TEC-10 conferido: WHEN a cast is denied for lack of energy THEN the energy bar SHALL flash in `R` for 300 ms.
-- [ ] TEC-12 conferido: WHILE a slot holds a technique, the energy bar SHALL show a vertical mark for it at `barLeft + barWidth × cost / max` px (±1 px), where `cost` is that technique cost at its level.
-- [ ] CAST-01 conferido: WHEN the player presses a slot key holding a technique with enough energy and no cooldown THEN a cast SHALL start in the `sign` state.
-- [ ] CAST-05 conferido: IF the player presses a slot key and the cursed energy is below the cost THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:energy`.
-- [ ] CAST-07 conferido: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end and the cursed energy SHALL keep the value it had before that damage.
-- [ ] CAST-14 conferido: WHILE a cast is in `sign` or `charge`, `fx.layers` SHALL include `cast.aura`.
-- [ ] CAST-15 conferido: WHEN a cast enters `charge` THEN the main camera zoom SHALL move from 1.5 to 1.6 over the charge time.
-- [ ] CAST-16 conferido: WHEN a cast enters `release` THEN the HUD SHALL show the callout with the technique kanji grid and Portuguese name for 900 ms, reported as `hud.callout` in the snapshot.
-- [ ] CAST-17 conferido: WHEN a cast enters `release` THEN `events` SHALL get `techCast:<id>`.
-- [ ] TSH-05 conferido: WHILE both slots are empty, slot 0 of every drawn set of offers (at shop open and after each reroll) SHALL be a technique, drawn among the eligible techniques by SHOP-08 weights before the other slots.
-- [ ] TSH-06 conferido: WHEN a technique that is not equipped is bought THEN it SHALL be equipped at level 1 in the first empty slot (slot 1 before slot 2).
-- [ ] TSH-14 conferido: WHEN a technique is bought while both slots are empty THEN `events` SHALL get exactly one `techUnlock:<id>`, where `id` is the bought technique id.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] CE-01 conferido: WHEN a run starts THEN the player cursed energy SHALL be 100 with max 100 and regen 8 per second.
+- [x] TEC-01 conferido: WHEN a run starts without the `tech` debug parameter THEN both technique slots SHALL be empty (AD-005).
+- [x] TEC-02 conferido: WHERE the debug mode is on and the URL has `tech=<id>[,<id>]` THEN the slots SHALL start with those techniques at level 1, in order, ignoring unknown ids.
+- [x] TEC-07 conferido: The HUD SHALL show the cursed energy bar under the HP bar, with fill width `barWidth × cur / max` (±1 px).
+- [x] TEC-09 conferido: WHILE a slot holds a technique, its HUD icon SHALL have a dark overlay of height `iconHeight × cooldownMs / cooldown` px (±1 px), where `cooldown` is that technique full cooldown.
+- [x] TEC-10 conferido: WHEN a cast is denied for lack of energy THEN the energy bar SHALL flash in `R` for 300 ms.
+- [x] TEC-12 conferido: WHILE a slot holds a technique, the energy bar SHALL show a vertical mark for it at `barLeft + barWidth × cost / max` px (±1 px), where `cost` is that technique cost at its level.
+- [x] CAST-01 conferido: WHEN the player presses a slot key holding a technique with enough energy and no cooldown THEN a cast SHALL start in the `sign` state.
+- [x] CAST-05 conferido: IF the player presses a slot key and the cursed energy is below the cost THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:energy`.
+- [x] CAST-07 conferido: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end and the cursed energy SHALL keep the value it had before that damage.
+- [x] CAST-14 conferido: WHILE a cast is in `sign` or `charge`, `fx.layers` SHALL include `cast.aura`.
+- [x] CAST-15 conferido: WHEN a cast enters `charge` THEN the main camera zoom SHALL move from 1.5 to 1.6 over the charge time.
+- [x] CAST-16 conferido: WHEN a cast enters `release` THEN the HUD SHALL show the callout with the technique kanji grid and Portuguese name for 900 ms, reported as `hud.callout` in the snapshot.
+- [x] CAST-17 conferido: WHEN a cast enters `release` THEN `events` SHALL get `techCast:<id>`.
+- [x] TSH-05 conferido: WHILE both slots are empty, slot 0 of every drawn set of offers (at shop open and after each reroll) SHALL be a technique, drawn among the eligible techniques by SHOP-08 weights before the other slots.
+- [x] TSH-06 conferido: WHEN a technique that is not equipped is bought THEN it SHALL be equipped at level 1 in the first empty slot (slot 1 before slot 2).
+- [x] TSH-14 conferido: WHEN a technique is bought while both slots are empty THEN `events` SHALL get exactly one `techUnlock:<id>`, where `id` is the bought technique id.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
@@ -1003,23 +1003,23 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] DIV-03 conferido: WHEN the punch hitbox touches a target THEN that target SHALL take a first impact of 12 light damage.
-- [ ] DIV-04 conferido: WHEN 200 ms of game time have passed since the first impact THEN the first-impact target SHALL take 18 heavy damage.
-- [ ] DIV-07 conferido: WHILE the time since the first impact is between 0 and 200 ms, `fx.layers` SHALL include `divergente.echo` and `divergente.ring`.
-- [ ] DIV-09 conferido: WHEN the second impact happens without a Kokusen THEN `fx.layers` SHALL include `divergente.burst` and `divergente.fistGhost` in that frame and `events` SHALL get `divergent2`.
-- [ ] KOK-03 conferido: WHEN the player presses the slot key that cast the Punho Divergente while `kokusen.windowOpen` is true and that cast is not locked by KOK-04 THEN the second impact of that cast SHALL be a Kokusen.
-- [ ] KOK-04 conferido: WHEN the player presses the same slot key after the first impact and before the window opens THEN that Punho Divergente SHALL NOT produce a Kokusen, and `events` SHALL get `kokusenMiss`.
-- [ ] KOK-06 conferido: WHEN a Kokusen lands THEN the target SHALL take 45 heavy damage (18 × 2.5) instead of the normal second impact.
-- [ ] KOK-09 conferido: WHEN a Kokusen lands THEN the cursed energy SHALL increase by 30, capped at max.
-- [ ] KOK-13 conferido: WHEN a Kokusen lands THEN the game SHALL apply a hitstop of 220 ms (FX-02: the longest pending hitstop wins).
-- [ ] KOK-14 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.invert` for at least 33 ms of real time (2 frames at 60 fps, rounded up to whole frames).
-- [ ] KOK-15 conferido: WHEN `kokusen.invert` ends THEN `fx.layers` SHALL include `kokusen.duotone` for at least 66 ms of real time (4 frames at 60 fps, rounded up to whole frames), and SHALL NOT include `kokusen.invert` at the same time.
-- [ ] KOK-17 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.bolts` until 150 ms of real time after the hitstop ends.
-- [ ] KOK-24 conferido: WHEN a Kokusen lands THEN the main camera zoom SHALL reach 1.68 (1.5 × 1.12) within 60 ms of real time and return to 1.5 within the next 300 ms.
-- [ ] KOK-25 conferido: WHEN a Kokusen lands THEN the HUD SHALL show the 黒閃 card at the screen center for 800 ms, reported as `hud.kokusenCard` in the snapshot.
-- [ ] KOK-28 conferido: WHEN a Kokusen lands THEN `events` SHALL get exactly one `kokusen` entry.
-- [ ] TFX-09 conferido: WHEN 300 ms have passed since a technique effect ended THEN `fx.live` SHALL equal its value from the frame before that effect started.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] DIV-03 conferido: WHEN the punch hitbox touches a target THEN that target SHALL take a first impact of 12 light damage.
+- [x] DIV-04 conferido: WHEN 200 ms of game time have passed since the first impact THEN the first-impact target SHALL take 18 heavy damage.
+- [x] DIV-07 conferido: WHILE the time since the first impact is between 0 and 200 ms, `fx.layers` SHALL include `divergente.echo` and `divergente.ring`.
+- [x] DIV-09 conferido: WHEN the second impact happens without a Kokusen THEN `fx.layers` SHALL include `divergente.burst` and `divergente.fistGhost` in that frame and `events` SHALL get `divergent2`.
+- [x] KOK-03 conferido: WHEN the player presses the slot key that cast the Punho Divergente while `kokusen.windowOpen` is true and that cast is not locked by KOK-04 THEN the second impact of that cast SHALL be a Kokusen.
+- [x] KOK-04 conferido: WHEN the player presses the same slot key after the first impact and before the window opens THEN that Punho Divergente SHALL NOT produce a Kokusen, and `events` SHALL get `kokusenMiss`.
+- [x] KOK-06 conferido: WHEN a Kokusen lands THEN the target SHALL take 45 heavy damage (18 × 2.5) instead of the normal second impact.
+- [x] KOK-09 conferido: WHEN a Kokusen lands THEN the cursed energy SHALL increase by 30, capped at max.
+- [x] KOK-13 conferido: WHEN a Kokusen lands THEN the game SHALL apply a hitstop of 220 ms (FX-02: the longest pending hitstop wins).
+- [x] KOK-14 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.invert` for at least 33 ms of real time (2 frames at 60 fps, rounded up to whole frames).
+- [x] KOK-15 conferido: WHEN `kokusen.invert` ends THEN `fx.layers` SHALL include `kokusen.duotone` for at least 66 ms of real time (4 frames at 60 fps, rounded up to whole frames), and SHALL NOT include `kokusen.invert` at the same time.
+- [x] KOK-17 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.bolts` until 150 ms of real time after the hitstop ends.
+- [x] KOK-24 conferido: WHEN a Kokusen lands THEN the main camera zoom SHALL reach 1.68 (1.5 × 1.12) within 60 ms of real time and return to 1.5 within the next 300 ms.
+- [x] KOK-25 conferido: WHEN a Kokusen lands THEN the HUD SHALL show the 黒閃 card at the screen center for 800 ms, reported as `hud.kokusenCard` in the snapshot.
+- [x] KOK-28 conferido: WHEN a Kokusen lands THEN `events` SHALL get exactly one `kokusen` entry.
+- [x] TFX-09 conferido: WHEN 300 ms have passed since a technique effect ended THEN `fx.live` SHALL equal its value from the frame before that effect started.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
