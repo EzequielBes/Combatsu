@@ -594,10 +594,10 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CUT-01 | P2: Desmantelar | Specify | Implemented |
 | CUT-02 | P2: Desmantelar | Specify | Implemented |
 | CUT-03 | P2: Desmantelar | Specify | Implemented |
-| CUT-04 | P2: Desmantelar | Specify | Pending |
-| CUT-08 | P2: Desmantelar | Specify | Pending |
+| CUT-04 | P2: Desmantelar | Specify | Implemented |
+| CUT-08 | P2: Desmantelar | Specify | Implemented |
 | CUT-05 | P2: Desmantelar | Specify | Implemented |
-| CUT-06 | P2: Desmantelar | Specify | Pending |
+| CUT-06 | P2: Desmantelar | Specify | Implemented |
 | FXL-01 | P2: Laboratório de efeitos | Specify | Pending |
 | FXL-05 | P2: Laboratório de efeitos | Specify | Pending |
 | FXL-06 | P2: Laboratório de efeitos | Specify | Pending |
