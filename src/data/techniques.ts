@@ -7,8 +7,8 @@ export type TechId = 'divergente' | 'vermelho' | 'azul' | 'corte';
 export interface TechDef {
   id: TechId;
   name: string;
-  /** Kanji da técnica (黒/赫/蒼/解); 閃 só aparece no card do Kokusen. */
-  kanji: 'kuro' | 'aka' | 'ao' | 'kai';
+  /** Kanji da técnica (拳/赫/蒼/解); 黒/閃 só aparecem no card do Kokusen. */
+  kanji: 'ken' | 'aka' | 'ao' | 'kai';
   /** Chave de `PALETTE` usada na aura da conjuração (CAST-14). */
   aura: string;
   /** Custo de energia em nível 1 (TEC-14 escala com o nível). */
@@ -26,7 +26,7 @@ export const TECHNIQUES: Record<TechId, TechDef> = {
   divergente: {
     id: 'divergente',
     name: 'Punho Divergente',
-    kanji: 'kuro',
+    kanji: 'ken', // feat(art): 拳 (de "逕庭拳") - antes usava 黒 (kuro), que é do Kokusen (KOK-22)
     aura: 'c',
     cost: 20,
     cooldownMs: 1200,
