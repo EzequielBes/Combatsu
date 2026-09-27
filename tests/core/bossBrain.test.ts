@@ -285,3 +285,50 @@ describe('BossBrain: edge cases de prioridade entre fase, postura e morte', () =
     expect(brain.hp).toBe(0);
   });
 });
+
+describe('BossBrain: Kokusen (KOK-06, KOK-08, KOK-12, KOK-32)', () => {
+  it('KOK-08: dano do Kokusen (45) tira 45 de hp e 3×45 = 135 de postura, nunca abaixo de 0', () => {
+    const brain = active();
+    const events = brain.receiveKokusen(45, 135);
+    expect(brain.hp).toBe(555);
+    expect(brain.poise).toBe(0); // teto de 100 (BOSS.poise.max): max(0, 100 - 135) = 0
+    expect(events).toEqual([{ type: 'staggerStart' }]);
+  });
+
+  it('postura nunca fica abaixo de 0 mesmo com o teto ampliado (sem cruzar fase)', () => {
+    const brain = active(MAX_HP, HIGH_POISE);
+    const events = brain.receiveKokusen(45, 135);
+    expect(brain.poise).toBe(1_000_000 - 135);
+    expect(brain.hp).toBe(555);
+    expect(events).toEqual([]);
+  });
+
+  it('KOK-12/32: cruzar um limiar de fase com o Kokusen perde os 45 cheios e entra em roar no mesmo frame', () => {
+    const brain = new BossBrain(100); // 66% = 66: hp 100 -> 55 cruza o limiar da fase 2
+    brain.update(1500); // active
+    const events = brain.receiveKokusen(45, 135);
+    expect(brain.hp).toBe(55);
+    expect(brain.phase).toBe(2);
+    expect(brain.state).toBe('roar');
+    expect(events).toEqual([
+      { type: 'phaseChanged', phase: 2 },
+      { type: 'roarStart' },
+    ]);
+  });
+
+  it('na intro, no rugido ou morto: ignorado por completo, sem mudar hp nem postura', () => {
+    const brain = new BossBrain(MAX_HP); // intro
+    expect(brain.receiveKokusen(45, 135)).toEqual([]);
+    expect(brain.hp).toBe(MAX_HP);
+
+    const roaring = active();
+    roaring.receiveHit(hit(204)); // cruza a fase 2, entra em roar
+    expect(roaring.receiveKokusen(45, 135)).toEqual([]);
+    expect(roaring.hp).toBe(396);
+
+    const dead = active();
+    dead.receiveHit(hit(9999, 'heavy'));
+    expect(dead.receiveKokusen(45, 135)).toEqual([]);
+    expect(dead.hp).toBe(0);
+  });
+});

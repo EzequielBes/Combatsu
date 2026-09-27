@@ -770,14 +770,14 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] KOK-06 conferido: WHEN a Kokusen lands THEN the target SHALL take 45 heavy damage (18 × 2.5) instead of the normal second impact.
-- [ ] KOK-07 conferido: WHEN a Kokusen lands on a regular enemy that survives THEN the enemy SHALL enter ragdoll with twice the heavy-hit knockback.
-- [ ] KOK-08 conferido: WHEN a Kokusen lands on the boss THEN the boss poise SHALL drop by `3 × 45`, never below 0.
-- [ ] KOK-12 conferido: IF a Kokusen takes the boss hp from above a phase threshold to at or below it THEN the boss SHALL lose the full 45 hp and enter `roar` in that frame (BAI-05).
-- [ ] KOK-32 conferido: IF a Kokusen takes the boss hp from above a phase threshold to at or below it THEN the cursed energy SHALL still increase by 30 (KOK-09).
-- [ ] KOK-13 conferido: WHEN a Kokusen lands THEN the game SHALL apply a hitstop of 220 ms (FX-02: the longest pending hitstop wins).
-- [ ] KOK-28 conferido: WHEN a Kokusen lands THEN `events` SHALL get exactly one `kokusen` entry.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] KOK-06 conferido: WHEN a Kokusen lands THEN the target SHALL take 45 heavy damage (18 × 2.5) instead of the normal second impact.
+- [x] KOK-07 conferido: WHEN a Kokusen lands on a regular enemy that survives THEN the enemy SHALL enter ragdoll with twice the heavy-hit knockback.
+- [x] KOK-08 conferido: WHEN a Kokusen lands on the boss THEN the boss poise SHALL drop by `3 × 45`, never below 0.
+- [x] KOK-12 conferido: IF a Kokusen takes the boss hp from above a phase threshold to at or below it THEN the boss SHALL lose the full 45 hp and enter `roar` in that frame (BAI-05).
+- [x] KOK-32 conferido: IF a Kokusen takes the boss hp from above a phase threshold to at or below it THEN the cursed energy SHALL still increase by 30 (KOK-09).
+- [x] KOK-13 conferido: WHEN a Kokusen lands THEN the game SHALL apply a hitstop of 220 ms (FX-02: the longest pending hitstop wins).
+- [x] KOK-28 conferido: WHEN a Kokusen lands THEN `events` SHALL get exactly one `kokusen` entry.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

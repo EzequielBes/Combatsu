@@ -15,6 +15,11 @@ export class DivergentState {
     return this._targetId;
   }
 
+  /** ms desde o 1º impacto (0 sem alvo ainda); é o `t` que decide a janela do Kokusen (KOK-01..05). */
+  get sinceImpactMs(): number {
+    return this._targetId === null ? 0 : this.elapsedMs;
+  }
+
   /** DIV-03: registra o alvo do 1º impacto e zera o relógio do 2º; ignora um novo alvo se já há um em curso. */
   firstImpact(targetId: number): void {
     if (this._targetId !== null) return;

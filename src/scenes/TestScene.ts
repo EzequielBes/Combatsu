@@ -221,9 +221,19 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.realtimeFx = new FxTimeline();
     this.fxRegistry = new FxRegistry();
     this.aura = new Aura(this, this.realtimeFx, this.fxRegistry);
-    // T22+: dono da hitbox do Punho Divergente e das camadas de fx próprias dela (eco, anel, aura do punho, estouro).
-    this.techRunner = new TechRunner(this, this.player, this.loadout, this.realtimeFx, this.fxRegistry, (hit, point) =>
-      this.onTechConnect(hit, point),
+    // T22+: dono da hitbox do Punho Divergente/Kokusen e das camadas de fx próprias delas (eco, anel, estouro...).
+    this.techRunner = new TechRunner(
+      this,
+      this.player,
+      this.loadout,
+      this.energy,
+      this.realtimeFx,
+      this.fxRegistry,
+      (hit, point) => this.onTechConnect(hit, point),
+      (ms) => {
+        this.hitstop.trigger(ms);
+        this.freeze();
+      },
     );
 
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
@@ -283,8 +293,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
       this.techCaster.update(dt);
       this.debugEvents.push(...this.techCaster.events);
-      // T22+: executa a técnica a partir do estado de conjuração e dos eventos deste frame (ex.: `techCast:divergente`).
-      this.techRunner.update(dt, this.techCaster.cast, this.techCaster.events);
+      // T22+: executa a técnica a partir do estado de conjuração, dos eventos deste frame e do slot apertado (Kokusen).
+      this.techRunner.update(dt, this.techCaster.cast, this.techCaster.events, this.techCaster.slotPressed);
       this.debugEvents.push(...this.techRunner.events);
       // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
       if (this.techCaster.events.includes('techDenied:energy')) this.energyHud.flashDenied();
@@ -873,8 +883,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       })),
       ce: { cur: this.energy.cur, max: this.energy.max, regen: this.energy.regen },
       tech: this.techSnapshot(),
-      // Placeholder até a Fase 5 (T22+) implementar o Kokusen e os orbes de verdade (TFX-07).
-      kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
+      kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
+      // techObjects: placeholder até os orbes (T25/26) existirem de verdade.
       techObjects: [],
       fx: { live: this.fxRegistry.size, degraded: false, layers: this.realtimeFx.layers() },
     };

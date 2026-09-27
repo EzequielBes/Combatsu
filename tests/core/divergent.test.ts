@@ -81,3 +81,19 @@ describe('DIV-08: raio do anel de aproximação (32 × (1 − t/200), ±2 px)', 
     expect(state.ringRadius()).toBe(0);
   });
 });
+
+describe('sinceImpactMs: relógio usado pela janela do Kokusen (KOK-01..05)', () => {
+  it('sem 1º impacto ainda, é 0', () => {
+    const state = new DivergentState();
+    expect(state.sinceImpactMs).toBe(0);
+  });
+
+  it('acompanha o tempo desde o 1º impacto', () => {
+    const state = new DivergentState();
+    state.firstImpact(1);
+    state.update(119);
+    expect(state.sinceImpactMs).toBe(119);
+    state.update(1);
+    expect(state.sinceImpactMs).toBe(120);
+  });
+});
