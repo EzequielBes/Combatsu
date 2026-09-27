@@ -902,10 +902,10 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] CUT-04 conferido: WHEN a cut happens THEN `fx.layers` SHALL include `cut.line` in that frame.
-- [ ] CUT-08 conferido: WHEN a cut happens THEN `events` SHALL get exactly one `cut`.
-- [ ] CUT-06 conferido: WHEN a cut damages a target THEN `fx.layers` SHALL include `cut.split` for that target for at least 33 ms (2 frames at 60 fps, rounded up to whole frames).
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] CUT-04 conferido: WHEN a cut happens THEN `fx.layers` SHALL include `cut.line` in that frame.
+- [x] CUT-08 conferido: WHEN a cut happens THEN `events` SHALL get exactly one `cut`.
+- [x] CUT-06 conferido: WHEN a cut damages a target THEN `fx.layers` SHALL include `cut.split` for that target for at least 33 ms (2 frames at 60 fps, rounded up to whole frames).
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

@@ -10,9 +10,10 @@ import { Kokusen } from '../core/kokusen';
 import type { Loadout } from '../core/loadout';
 import { RedOrbState, type RedOrbTarget } from '../core/redOrb';
 import { BlueOrbState, blueOrbSpawn, type BlueOrbDamage, type BlueOrbTarget } from '../core/blueOrb';
+import { CutSchedule, cutAngles, type CutHit, type CutTarget } from '../core/cut';
 import { KOKUSEN, TECHNIQUES } from '../data/techniques';
 import { PLAYER_COMBO } from '../data/tuning';
-import { newEntityId, tagBody, type BodyTag, type Hittable } from './bodyTags';
+import { newEntityId, tagBody, type BodyTag, type Hittable, type Rect } from './bodyTags';
 import { Boss } from './Boss';
 import { Enemy } from './Enemy';
 import { AttackHitbox } from './hitbox';
@@ -22,6 +23,7 @@ import { TEX } from './textures';
 import { DivergentFx } from './techFx/DivergentFx';
 import { RedOrbFx } from './techFx/RedOrb';
 import { BlueOrbFx } from './techFx/BlueOrb';
+import { CutFx } from './techFx/CutFx';
 
 /** DIV-02: mesmo tamanho e offset da hitbox do `direto` (o cross do combo de socos). */
 const CROSS_HITBOX = PLAYER_COMBO.find((s) => s.name === 'direto')!.hitbox!;
@@ -65,6 +67,7 @@ export class TechRunner {
   private readonly divergentFx: DivergentFx;
   private readonly redFx: RedOrbFx;
   private readonly blueFx: BlueOrbFx;
+  private readonly cutFx: CutFx;
   /** Zona/streak do Kokusen persistem entre casts (KOK-10/11/30/31); um só por toda a run. */
   private readonly kokusen = new Kokusen();
   private divergent: DivergentState | null = null;
@@ -75,6 +78,7 @@ export class TechRunner {
   private pendingKokusen = false;
   private redOrb: RedOrbEntry | null = null;
   private blueOrb: BlueOrbEntry | null = null;
+  private cutSchedule: CutSchedule | null = null;
   private frameEvents: string[] = [];
 
   constructor(
@@ -98,6 +102,7 @@ export class TechRunner {
     this.divergentFx = new DivergentFx(scene, fx, registry);
     this.redFx = new RedOrbFx(scene, fx, registry, uiLayer);
     this.blueFx = new BlueOrbFx(scene, fx, registry);
+    this.cutFx = new CutFx(scene, fx, registry);
   }
 
   /** Eventos deste frame (`divergent2`, `kokusen`, `kokusenMiss`, `redDetonate`). */
@@ -137,6 +142,7 @@ export class TechRunner {
     this.updateDivergent(dtMs, cast, castEvents, slotPressed);
     this.updateRed(dtMs, cast, castEvents, enemies);
     this.updateBlue(dtMs, castEvents, enemies, boss);
+    this.updateCut(dtMs, castEvents, enemies, boss);
   }
 
   private updateDivergent(
@@ -463,4 +469,54 @@ export class TechRunner {
     }
     if (boss && boss.id === dmg.targetId && boss.receiveHit(hit)) this.onTechHit(hit, { x: boss.x, y: boss.hurtRect().y });
   }
+
+  // --- Desmantelar (T27) ------------------------------------------------------------------------------------
+
+  private updateCut(dtMs: number, castEvents: readonly string[], enemies: readonly Enemy[], boss: Boss | null): void {
+    if (castEvents.includes('techCast:corte')) this.cutSchedule = new CutSchedule();
+    if (!this.cutSchedule) return;
+    const due = this.cutSchedule.update(dtMs);
+    if (due.length === 0) return;
+
+    const facing = this.player.facing;
+    const angles = cutAngles(facing); // CUT-05
+    const center = { x: this.player.sprite.x, y: this.player.sprite.y };
+    const targets: CutTarget[] = [
+      ...enemies.map((e) => ({ id: e.id, body: cornerRect(e.hurtRect()) })),
+      ...(boss ? [{ id: boss.id, body: cornerRect(boss.hurtRect()) }] : []),
+    ];
+    for (const i of due) {
+      this.cutFx.cut(center.x, center.y, facing, angles[i]); // CUT-04
+      this.frameEvents.push('cut'); // CUT-08: um evento por corte
+      for (const hit of this.cutSchedule.targetsHit(center, facing, targets)) this.applyCutHit(hit, enemies, boss);
+    }
+    if (due.includes(2)) this.cutSchedule = null; // agenda encerrada após o 3º corte
+  }
+
+  private applyCutHit(hit: CutHit, enemies: readonly Enemy[], boss: Boss | null): void {
+    const dealt: Hit = {
+      ownerId: this.player.id,
+      damage: this.loadout.damage('corte', hit.damage), // CUT-03, TEC-06
+      strength: 'light',
+      force: 0,
+      direction: { x: 0, y: -1 },
+    };
+    const enemy = enemies.find((e) => e.id === hit.targetId);
+    if (enemy) {
+      if (enemy.receiveHit(dealt)) {
+        this.onTechHit(dealt, { x: enemy.x, y: enemy.hurtRect().y });
+        this.cutFx.split(enemy.x, enemy.hurtRect().y); // CUT-06
+      }
+      return;
+    }
+    if (boss && boss.id === hit.targetId && boss.receiveHit(dealt)) {
+      this.onTechHit(dealt, { x: boss.x, y: boss.hurtRect().y });
+      this.cutFx.split(boss.x, boss.hurtRect().y); // CUT-06
+    }
+  }
+}
+
+/** `hurtRect()` devolve posição do CENTRO do corpo (convenção do jogo); o `CutSchedule` puro espera cantos. */
+function cornerRect(r: Rect): Rect {
+  return { x: r.x - r.width / 2, y: r.y - r.height / 2, width: r.width, height: r.height };
 }
