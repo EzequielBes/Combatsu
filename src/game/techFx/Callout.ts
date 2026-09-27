@@ -14,9 +14,17 @@ const REST_X = 0;
 const BAND_W = 360;
 const BAND_H = 100;
 const START_X = -BAND_W;
-/** Centro vertical da faixa, dentro do terço superior da tela (viewport 540 px de altura -> terço = 180 px). */
-const Y = 130;
-const BAND_TOP = Y - BAND_H / 2;
+/**
+ * Centro vertical da faixa. Fica no terço superior da tela (viewport 540 px de altura -> terço = 180 px) só até
+ * onde o resto do HUD deixa: `EnergyHud.ts` empilha barra de HP (Hud.ts, `MARGIN` 12) + painel de controles
+ * (`PANEL_Y` 36 + ~5 linhas) + barra de energia (`BAR_Y` 124) + ícones de slot (`ICON_Y` 146, `ICON_SIZE` 48,
+ * borda 2 px) - o pé dos ícones já fica em 146+48+2 = 196. Fix(hud): a faixa cobria o ícone do slot e o painel
+ * de controles em Y=130; agora começa 8 px abaixo do pé dos ícones, garantidamente fora de tudo isso.
+ */
+const HUD_ICONS_BOTTOM_PX = 196; // EnergyHud.ts: ICON_Y (146) + ICON_SIZE (48) + ICON_BORDER_W (2)
+const BAND_GAP_BELOW_HUD_PX = 8;
+const BAND_TOP = HUD_ICONS_BOTTOM_PX + BAND_GAP_BELOW_HUD_PX;
+const Y = BAND_TOP + BAND_H / 2;
 const BORDER_H = 4;
 const PAD_X = 14;
 /** Kanji 3x maior que o antigo ícone de 28 px (mesmo tamanho do cartão do Kokusen, KANJI_SIZE). */
