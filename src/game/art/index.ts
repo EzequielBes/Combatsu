@@ -8,7 +8,7 @@ import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
 import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
-import { AURA_FRAMES, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from './sprites/techFx';
+import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from './sprites/techFx';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from './sprites/economy';
 import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
@@ -84,6 +84,8 @@ export function createArt(scene: Phaser.Scene): void {
   for (const size of RED_ORB_SIZES) {
     registerSheet(scene, redOrbTex[size], parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS));
   }
+  // Orbe Azul ativo (BLU-08): um frame só.
+  registerSheet(scene, TEX.techOrbBlue, parseSheet('blue-orb', { orb: BLUE_ORB_FRAME }, PALETTE_KEYS));
   registerSheet(scene, TEX.hudBar, parseSheet('hud-bar', { bar: HUD_BAR }, PALETTE_KEYS));
   registerSheet(scene, TEX.enemyBar, parseSheet('enemy-bar', { bar: ENEMY_BAR }, PALETTE_KEYS));
   // Chefe (BTIER-06): uma folha por arquétipo, com o mesmo conjunto de frames e animações.
