@@ -160,6 +160,12 @@ export interface DebugProbe {
 export interface SteppableGame {
   loop: { sleep(): void; now: number };
   headlessStep(time: number, delta: number): void;
+  /**
+   * Passo completo do Phaser (com render), opcional - o game falso dos testes não precisa dele. T31
+   * (`fxlab.smoke.mjs`): `render()` usa isto com `delta=0` para desenhar o quadro atual sem avançar nenhum
+   * relógio, só para a captura de tela sair fiel ao estado vivo (o `headlessStep` normal nunca desenha, FND-22).
+   */
+  step?(time: number, delta: number): void;
 }
 
 const STEP_MS = 1000 / 60;
@@ -194,6 +200,15 @@ export function installDebugApi(game: SteppableGame, target: object, debugOn: bo
         time += STEP_MS;
         game.headlessStep(time, STEP_MS);
       }
+    },
+    /** T31: desenha o quadro atual (delta 0, nenhum relógio anda) para uma captura fiel ao vivo (`page.screenshot`). */
+    render(): void {
+      if (!manual) {
+        game.loop.sleep();
+        manual = true;
+        time = game.loop.now;
+      }
+      game.step?.(time, 0);
     },
   };
   (target as { __game?: typeof api }).__game = api;
