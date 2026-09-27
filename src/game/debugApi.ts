@@ -86,6 +86,8 @@ export interface GameSnapshot {
     techIgnoredByMain: boolean;
     /** Chamada da conjuração (CAST-16), `null` fora da janela de 900 ms. */
     callout: { id: TechId; name: string } | null;
+    /** Cartão 黒閃 do Kokusen (KOK-25/26), `null` fora da janela de 800 ms. */
+    kokusenCard: { streak: number } | null;
     /** Estado vivo da barra de energia e dos ícones de slot (TEC-07/09/10/12). */
     energy: {
       width: number;
@@ -127,7 +129,7 @@ export interface GameSnapshot {
     ];
     cast: { slot: 0 | 1; id: TechId; state: CastState; elapsedMs: number } | null;
   };
-  /** Janela e zona do Kokusen (KOK-*); placeholder até a Fase 5 (T22+) implementar o Kokusen de verdade. */
+  /** Janela e zona do Kokusen (KOK-01/02/10/11/30/31), lidas do estado vivo. */
   kokusen: { zone: boolean; zoneMs: number; streak: number; windowOpen: boolean };
   /** Orbes vivos (RED-14, BLU-*); placeholder `[]` até a Fase 5 criar orbes de verdade. */
   techObjects: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[];

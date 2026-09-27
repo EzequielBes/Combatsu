@@ -130,6 +130,11 @@ export class Boss implements Hittable {
     return this._removed;
   }
 
+  /** KOK-16: sprite visual para a silhueta do negativo do Kokusen. */
+  get fxSprite(): Phaser.GameObjects.Sprite {
+    return this.view;
+  }
+
   /** DIV-06: o chefe já morreu (mesmo sinal do `state === 'dead'`, mas pela interface comum de `Hittable`). */
   isDead(): boolean {
     return this.brain.isDead;

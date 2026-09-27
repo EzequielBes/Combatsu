@@ -1,3 +1,4 @@
+import type Phaser from 'phaser';
 import type { Hit, Team } from '../core/hit';
 
 /** Retângulo pelo centro, em px de mundo. */
@@ -24,6 +25,8 @@ export interface Hittable {
   hurtRect?(): Rect;
   /** `true` se o alvo já morreu (DIV-06: sem isso, o Punho Divergente não sabe cancelar o 2º impacto). */
   isDead?(): boolean;
+  /** Sprite visual do alvo (KOK-16: silhueta `b` durante o negativo do Kokusen); ausente sem um sprite próprio. */
+  readonly fxSprite?: Phaser.GameObjects.Sprite;
 }
 
 export type BodyTag =

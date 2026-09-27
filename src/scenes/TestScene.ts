@@ -65,6 +65,7 @@ import { TechCaster } from '../game/TechCaster';
 import { TechRunner } from '../game/TechRunner';
 import { Aura } from '../game/techFx/Aura';
 import { Callout } from '../game/techFx/Callout';
+import { KokusenFx } from '../game/techFx/KokusenFx';
 import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
@@ -142,6 +143,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private fxRegistry!: FxRegistry;
   private aura!: Aura;
   private callout!: Callout;
+  /** Cinema do Kokusen (T24): negativo/duotom/raios/faíscas/zoom/cartão, tudo em tempo real (TFX-05). */
+  private kokusenFx!: KokusenFx;
   /** Último estado de conjuração visto (CAST-15/19): dispara o zoom da câmera só na troca de estado. */
   private lastCastState: CastState | null = null;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
@@ -221,6 +224,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.realtimeFx = new FxTimeline();
     this.fxRegistry = new FxRegistry();
     this.aura = new Aura(this, this.realtimeFx, this.fxRegistry);
+    // T24: cartão/raios/faíscas/zoom do Kokusen, na `uiLayer` (o cartão é HUD) + câmera/mundo (raios, faíscas).
+    this.kokusenFx = new KokusenFx(this, this.realtimeFx, this.fxRegistry, this.uiLayer);
     // T22+: dono da hitbox do Punho Divergente/Kokusen e das camadas de fx próprias delas (eco, anel, estouro...).
     this.techRunner = new TechRunner(
       this,
@@ -234,6 +239,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.hitstop.trigger(ms);
         this.freeze();
       },
+      (target, point, facing, streak) => this.kokusenFx.trigger(target, point, facing, streak),
     );
 
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
@@ -281,6 +287,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.realtimeFx.update(this.frozen ? 0 : clamped, clamped);
     // TFX-03/09: a destruição agendada dos objetos de efeito é em tempo real, independe do hitstop.
     this.fxRegistry.update(clamped);
+    // T24 (TFX-05): negativo/duotom/raios/faíscas/cartão do Kokusen andam com o relógio real, mesmo congelados.
+    this.kokusenFx.update(clamped, this.frozen);
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
     const dt = clamped;
@@ -305,6 +313,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.energy.update(dt, this.techCaster.cast !== null);
       // CAST-14: aura por técnica em sign/charge, sobre o corpo do player.
       this.aura.update(dt, this.techCaster.cast, this.player.sprite.x, this.player.sprite.y);
+      // KOK-27: aura preta com faíscas vermelhas no player enquanto a zona do Kokusen está ativa.
+      this.kokusenFx.zoneAura(dt, this.techRunner.kokusenSnapshot.zone, this.player.sprite.x, this.player.sprite.y);
       // CAST-16: a chamada aparece exatamente no frame em que a soltura começa (`techCast:<id>`).
       for (const ev of this.techCaster.events) {
         if (ev.startsWith('techCast:')) this.callout.show(ev.slice('techCast:'.length) as TechId);
@@ -863,7 +873,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         traveled: p.traveled,
       })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
-      hud: { ...this.hud.debugState(), ...this.energyHud.debugState(), callout: this.callout.debug() },
+      hud: {
+        ...this.hud.debugState(),
+        ...this.energyHud.debugState(),
+        callout: this.callout.debug(),
+        kokusenCard: this.kokusenFx.cardDebug(),
+      },
       hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
       wallet: { fragments: this.wallet.fragments },
@@ -886,7 +901,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
       // techObjects: placeholder até os orbes (T25/26) existirem de verdade.
       techObjects: [],
-      fx: { live: this.fxRegistry.size, degraded: false, layers: this.realtimeFx.layers() },
+      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers() },
     };
   }
 
