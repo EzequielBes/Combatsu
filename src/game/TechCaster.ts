@@ -20,6 +20,7 @@ export class TechCaster {
   private readonly slot2Keys: Key[];
   private pendingEvents: string[] = [];
   private frameEvents: string[] = [];
+  private framePressed: [boolean, boolean] = [false, false];
 
   constructor(
     scene: Phaser.Scene,
@@ -46,12 +47,22 @@ export class TechCaster {
     return this.frameEvents;
   }
 
+  /**
+   * Slot apertado (JustDown) neste frame, mesmo enquanto uma conjuração já está em andamento nesse slot (T23: o
+   * Kokusen precisa saber disso mesmo quando `request` só devolve `[]` por já haver um cast ativo, CAST-08). Só
+   * slot 1 conta se os dois vierem no mesmo frame (edge case da spec).
+   */
+  get slotPressed(): readonly [boolean, boolean] {
+    return this.framePressed;
+  }
+
   update(dtMs: number): void {
     const events = [...this.pendingEvents];
     this.pendingEvents = [];
     // CAST-01/05/06/08/09/10: slot 1 (L/C) vence sobre o slot 2 (I/V) quando os dois são apertados no mesmo frame.
     const slot1 = anyJustDown(this.slot1Keys);
     const slot2 = anyJustDown(this.slot2Keys);
+    this.framePressed = [slot1, slot2 && !slot1];
     const ctx: CastContext = { meleePhase: this.player.meleePhase(), busy: this.player.isBusyForCast() };
     const reqEvents = slot1 ? this.machine.request(0, ctx) : slot2 ? this.machine.request(1, ctx) : [];
     // CAST-10: um pedido que de fato inicia a conjuração encerra o golpe corpo a corpo em andamento (recover).

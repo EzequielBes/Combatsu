@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { BossAI, type BossAIEvent, type BossAIState, type BossAttack } from '../core/bossAI';
-import { BossBrain, type BossBrainState } from '../core/bossBrain';
+import { BossBrain, type BossBrainState, type BossEvent } from '../core/bossBrain';
 import type { BossSpec } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import type { Hit, Vec2 } from '../core/hit';
@@ -154,6 +154,20 @@ export class Boss implements Hittable {
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
     }
     return true;
+  }
+
+  /**
+   * KOK-06/08/12/32: dano fixo do Kokusen, com a postura própria (3× o dano, não a fórmula 2× de golpe forte
+   * comum); mesmos efeitos colaterais de `receiveHit` (rugido empurra o player, morte avisa a cena). Quem chama
+   * já decide se o Kokusen pode acontecer neste estado (BOSS-08, BAI-12: nenhum Kokusen na intro/rugido).
+   */
+  receiveKokusen(damage: number, poiseDamage: number): BossEvent[] {
+    const events = this.brain.receiveKokusen(damage, poiseDamage);
+    for (const ev of events) {
+      if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
+      else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
+    }
+    return events;
   }
 
   update(dtMs: number, playerX: number): void {
