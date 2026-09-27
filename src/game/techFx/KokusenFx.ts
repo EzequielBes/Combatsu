@@ -22,8 +22,29 @@ const KANJI_SIZE = 84;
 const CARD_GAP = 4;
 const STREAK_GAP = 10;
 const CARD_DEPTH = 210;
+/** Folga da faixa de pincelada além do próprio cartão (polimento do KOK-25). */
+const INK_PAD = 14;
 /** Zona (KOK-27): faíscas discretas ao redor do player, uma emissão curta a cada intervalo. */
 const ZONE_SPARK_EVERY_MS = 220;
+
+/**
+ * Polígono de uma faixa retangular com bordas onduladas (tipo pincelada), centrada em `(cx, cy)`: em vez de um
+ * retângulo limpo, o topo e a base ondulam com uma soma de dois senos (determinístico, sem `Math.random`).
+ */
+function brushBandPoints(cx: number, cy: number, w: number, h: number): { x: number; y: number }[] {
+  const halfW = w / 2;
+  const halfH = h / 2;
+  const steps = 10;
+  const wobble = (i: number): number => Math.sin(i * 2.7 + 1) * 6 + Math.sin(i * 5.3) * 3;
+  const top: { x: number; y: number }[] = [];
+  const bottom: { x: number; y: number }[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const x = -halfW + (i / steps) * w;
+    top.push({ x: cx + x, y: cy - halfH + wobble(i) });
+    bottom.push({ x: cx + x, y: cy + halfH - wobble(steps - i) });
+  }
+  return [...top, ...bottom.reverse()];
+}
 
 /** Base preta (`b`) e alvo vermelho (`R`) do duotom (KOK-15, TFX-08): luminância → mistura das duas cores. */
 const DUOTONE_BASE = PALETTE.b;
@@ -94,7 +115,8 @@ export class KokusenFx {
 
   private readonly cardKuro: Phaser.GameObjects.Sprite;
   private readonly cardSen: Phaser.GameObjects.Sprite;
-  private readonly cardCover: Phaser.GameObjects.Rectangle;
+  /** Faixa de tinta preta translúcida, bordas irregulares tipo pincelada, atrás do kanji (polimento do KOK-25). */
+  private readonly cardInk: Phaser.GameObjects.Graphics;
   private readonly cardStreakText: Phaser.GameObjects.Text;
   private cardElapsedMs = 0;
   private cardActive = false;
@@ -125,14 +147,19 @@ export class KokusenFx {
       .setOrigin(0, 0.5)
       .setDisplaySize(KANJI_SIZE, KANJI_SIZE)
       .setVisible(false);
-    // KOK-25: revelado da esquerda para a direita - uma cortina opaca que encolhe por cima do cartão já desenhado.
-    this.cardCover = scene.add.rectangle(left + cardW, cy, 0, KANJI_SIZE, PALETTE.b, 1).setOrigin(1, 0.5).setVisible(false);
+    // Polimento (fix(fx)): faixa de pincelada atrás do kanji, bordas irregulares - não mais um retângulo limpo.
+    this.cardInk = scene.add
+      .graphics()
+      .fillStyle(PALETTE.b, 0.55)
+      .fillPoints(brushBandPoints(cx, cy, cardW + INK_PAD * 2, KANJI_SIZE + INK_PAD * 2), true)
+      .setVisible(false);
     this.cardStreakText = scene.add
       .text(left + cardW + STREAK_GAP, cy, '', { fontFamily: 'monospace', fontSize: '28px', color: '#ff3344' })
       .setOrigin(0, 0.5)
       .setVisible(false);
-    for (const o of [this.cardKuro, this.cardSen, this.cardCover, this.cardStreakText]) o.setScrollFactor(0).setDepth(CARD_DEPTH);
-    uiLayer.add([this.cardKuro, this.cardSen, this.cardCover, this.cardStreakText]);
+    this.cardInk.setScrollFactor(0).setDepth(CARD_DEPTH - 1);
+    for (const o of [this.cardKuro, this.cardSen, this.cardStreakText]) o.setScrollFactor(0).setDepth(CARD_DEPTH);
+    uiLayer.add([this.cardInk, this.cardKuro, this.cardSen, this.cardStreakText]);
   }
 
   /** KOK-06..28: chamado uma vez, no frame em que o Kokusen acerta. */
@@ -164,8 +191,8 @@ export class KokusenFx {
     this.cardActive = true;
     this.cardElapsedMs = 0;
     this.cardStreak = streak;
-    this.cardCover.width = KANJI_SIZE * 2 + CARD_GAP;
-    for (const o of [this.cardKuro, this.cardSen, this.cardCover]) o.setVisible(true);
+    this.cardInk.setVisible(true);
+    this.revealCard(0); // KOK-25: começa sem nada revelado - o crop cresce a cada `updateCard`.
     this.cardStreakText.setText(streak >= 2 ? `×${streak}` : '').setVisible(streak >= 2); // KOK-26
 
     const cam = this.scene.cameras.main;
@@ -284,11 +311,29 @@ export class KokusenFx {
     if (!this.cardActive) return;
     this.cardElapsedMs += realDtMs;
     const frac = Math.min(1, this.cardElapsedMs / KOKUSEN.cardMs);
-    this.cardCover.width = (KANJI_SIZE * 2 + CARD_GAP) * (1 - frac); // KOK-25: cortina encolhendo da direita
+    this.revealCard(frac); // KOK-25: crop revelando da esquerda para a direita (sem cortina opaca)
     if (frac >= 1) {
       this.cardActive = false;
-      for (const o of [this.cardKuro, this.cardSen, this.cardCover, this.cardStreakText]) o.setVisible(false);
+      for (const o of [this.cardKuro, this.cardSen, this.cardInk, this.cardStreakText]) o.setVisible(false);
     }
+  }
+
+  /** Revela `cardKuro`/`cardSen` da esquerda para a direita por crop de textura, `frac` de 0 (nada) a 1 (tudo). */
+  private revealCard(frac: number): void {
+    const totalW = KANJI_SIZE * 2 + CARD_GAP;
+    const revealedW = totalW * frac;
+    this.cropReveal(this.cardKuro, Phaser.Math.Clamp(revealedW, 0, KANJI_SIZE));
+    this.cropReveal(this.cardSen, Phaser.Math.Clamp(revealedW - KANJI_SIZE - CARD_GAP, 0, KANJI_SIZE));
+  }
+
+  private cropReveal(sprite: Phaser.GameObjects.Sprite, revealedDisplayPx: number): void {
+    if (revealedDisplayPx <= 0) {
+      sprite.setVisible(false);
+      return;
+    }
+    sprite.setVisible(true);
+    const cropW = sprite.frame.width * (revealedDisplayPx / KANJI_SIZE);
+    sprite.setCrop(0, 0, cropW, sprite.frame.height);
   }
 
   /** KOK-27: aura preta com faíscas vermelhas no player, discreta, enquanto a zona está ativa. */
