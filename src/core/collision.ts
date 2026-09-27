@@ -42,6 +42,9 @@ export const Filters = {
   hitbox: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
   // BAT-06: some ao tocar parede (terreno) ou o player; nunca colide com inimigo, objeto ou outro projétil.
   projectile: filter(C.PROJECTILE, C.TERRAIN | C.PLAYER),
+  // RED-08: o orbe Vermelho (ataque do player) detona em parede, inimigo ou chefe; categoria HITBOX porque
+  // inimigo/chefe já aceitam essa categoria na própria máscara (nunca colide com o player que o lançou).
+  techOrb: filter(C.HITBOX, C.TERRAIN | C.ENEMY | C.BOSS),
   propRest: filter(C.PROP, C.TERRAIN | C.PROP),
   propHeld: filter(C.PROP, C.NONE),
   propSwing: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL),

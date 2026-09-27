@@ -839,17 +839,17 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] RED-03 conferido: WHILE the Vermelho is in `charge`, `fx.layers` SHALL include `red.orb`, `red.sparksOut`, `red.glowRing` and `red.dustPush`.
-- [ ] RED-04 conferido: The `red.sparksOut` particles SHALL have velocities pointing away from the orb center (the dot product of velocity and offset from the center is positive).
-- [ ] RED-15 conferido: WHEN the Vermelho enters `release` on the ground THEN the player SHALL be pushed 12 px (±2 px) opposite to its facing.
-- [ ] RED-07 conferido: WHILE the red orb is in flight, `fx.layers` SHALL include `red.trail` and `red.crackle`.
-- [ ] RED-09 conferido: WHEN the red orb detonates on the boss THEN the boss SHALL take 30 heavy damage.
-- [ ] RED-11 conferido: WHEN the red orb detonates THEN `fx.layers` SHALL include `red.flashCore`, `red.sphere`, `red.shockRing`, `red.debris` and `red.screenFlash` in that frame.
-- [ ] RED-16 conferido: WHEN the red orb detonates THEN `events` SHALL get exactly one `redDetonate`.
-- [ ] RED-12 conferido: WHEN the red orb detonates THEN `red.screenFlash` SHALL stay in `fx.layers` for 80 ms (rounded up to whole frames).
-- [ ] RED-17 conferido: WHEN the red orb detonates THEN the main camera SHALL shake for 200 ms.
-- [ ] TFX-04 conferido: Every technique particle emitter SHALL have at most 64 live particles at any time.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] RED-03 conferido: WHILE the Vermelho is in `charge`, `fx.layers` SHALL include `red.orb`, `red.sparksOut`, `red.glowRing` and `red.dustPush`.
+- [x] RED-04 conferido: The `red.sparksOut` particles SHALL have velocities pointing away from the orb center (the dot product of velocity and offset from the center is positive).
+- [x] RED-15 conferido: WHEN the Vermelho enters `release` on the ground THEN the player SHALL be pushed 12 px (±2 px) opposite to its facing.
+- [x] RED-07 conferido: WHILE the red orb is in flight, `fx.layers` SHALL include `red.trail` and `red.crackle`.
+- [x] RED-09 conferido: WHEN the red orb detonates on the boss THEN the boss SHALL take 30 heavy damage.
+- [x] RED-11 conferido: WHEN the red orb detonates THEN `fx.layers` SHALL include `red.flashCore`, `red.sphere`, `red.shockRing`, `red.debris` and `red.screenFlash` in that frame.
+- [x] RED-16 conferido: WHEN the red orb detonates THEN `events` SHALL get exactly one `redDetonate`.
+- [x] RED-12 conferido: WHEN the red orb detonates THEN `red.screenFlash` SHALL stay in `fx.layers` for 80 ms (rounded up to whole frames).
+- [x] RED-17 conferido: WHEN the red orb detonates THEN the main camera SHALL shake for 200 ms.
+- [x] TFX-04 conferido: Every technique particle emitter SHALL have at most 64 live particles at any time.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

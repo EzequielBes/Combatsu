@@ -234,6 +234,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.energy,
       this.realtimeFx,
       this.fxRegistry,
+      this.uiLayer,
       (hit, point) => this.onTechConnect(hit, point),
       (ms) => {
         this.hitstop.trigger(ms);
@@ -302,7 +303,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.techCaster.update(dt);
       this.debugEvents.push(...this.techCaster.events);
       // T22+: executa a técnica a partir do estado de conjuração, dos eventos deste frame e do slot apertado (Kokusen).
-      this.techRunner.update(dt, this.techCaster.cast, this.techCaster.events, this.techCaster.slotPressed);
+      this.techRunner.update(dt, this.techCaster.cast, this.techCaster.events, this.techCaster.slotPressed, this.enemies, this.boss);
       this.debugEvents.push(...this.techRunner.events);
       // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
       if (this.techCaster.events.includes('techDenied:energy')) this.energyHud.flashDenied();
@@ -899,8 +900,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       ce: { cur: this.energy.cur, max: this.energy.max, regen: this.energy.regen },
       tech: this.techSnapshot(),
       kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
-      // techObjects: placeholder até os orbes (T25/26) existirem de verdade.
-      techObjects: [],
+      techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
       fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers() },
     };
   }

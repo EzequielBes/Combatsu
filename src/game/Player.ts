@@ -121,6 +121,11 @@ export class Player implements Hittable {
     return this.move.facing;
   }
 
+  /** RED-15: no chão agora, para decidir se o recuo da soltura do Vermelho se aplica (design "Vermelho"). */
+  get grounded(): boolean {
+    return this.touchesTerrain('below');
+  }
+
   /** Objeto segurado agora (ITEM-01..03), `null` de mãos vazias. */
   get heldProp(): Prop | null {
     return this.held;
