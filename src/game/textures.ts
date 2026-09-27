@@ -42,6 +42,10 @@ export const TEX = {
   techAura: 'tech-aura',
   /** Faíscas de técnica (2x2 texels): Kokusen, expelidas pelo Vermelho, sugadas pelo Azul (KOK-23). */
   techSpark: 'tech-spark',
+  /** Orbe Vermelho (RED-02): um frame por terço da carga, 4/8/12 texels, cada um numa textura própria. */
+  techOrbRed4: 'tech-orb-red-4',
+  techOrbRed8: 'tech-orb-red-8',
+  techOrbRed12: 'tech-orb-red-12',
 } as const;
 
 export const SIZE = {

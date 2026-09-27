@@ -564,19 +564,19 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | KOK-34 | P1: Kokusen | Specify | Implemented |
 | RED-01 | P1: Vermelho | Specify | Implemented |
 | RED-02 | P1: Vermelho | Specify | Implemented |
-| RED-03 | P1: Vermelho | Specify | Pending |
-| RED-04 | P1: Vermelho | Specify | Pending |
+| RED-03 | P1: Vermelho | Specify | Implemented |
+| RED-04 | P1: Vermelho | Specify | Implemented |
 | RED-05 | P1: Vermelho | Specify | Implemented |
-| RED-15 | P1: Vermelho | Specify | Pending |
+| RED-15 | P1: Vermelho | Specify | Implemented |
 | RED-06 | P1: Vermelho | Specify | Implemented |
-| RED-07 | P1: Vermelho | Specify | Pending |
+| RED-07 | P1: Vermelho | Specify | Implemented |
 | RED-08 | P1: Vermelho | Specify | Implemented |
-| RED-09 | P1: Vermelho | Specify | Pending |
+| RED-09 | P1: Vermelho | Specify | Implemented |
 | RED-10 | P1: Vermelho | Specify | Implemented |
-| RED-11 | P1: Vermelho | Specify | Pending |
-| RED-16 | P1: Vermelho | Specify | Pending |
-| RED-12 | P1: Vermelho | Specify | Pending |
-| RED-17 | P1: Vermelho | Specify | Pending |
+| RED-11 | P1: Vermelho | Specify | Implemented |
+| RED-16 | P1: Vermelho | Specify | Implemented |
+| RED-12 | P1: Vermelho | Specify | Implemented |
+| RED-17 | P1: Vermelho | Specify | Implemented |
 | RED-13 | P1: Vermelho | Specify | Implemented |
 | RED-14 | P1: Vermelho | Specify | Implemented |
 | BLU-01 | P2: Azul | Specify | Implemented |
@@ -612,7 +612,7 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | TFX-02 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-03 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-09 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-04 | P1: Invariantes dos efeitos | Specify | Pending |
+| TFX-04 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-05 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-06 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-10 | P1: Invariantes dos efeitos | Specify | Implemented |

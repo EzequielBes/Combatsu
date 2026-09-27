@@ -8,7 +8,7 @@ import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
 import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
-import { AURA_FRAMES, TECH_SPARK_FRAMES } from './sprites/techFx';
+import { AURA_FRAMES, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from './sprites/techFx';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from './sprites/economy';
 import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
@@ -78,6 +78,12 @@ export function createArt(scene: Phaser.Scene): void {
   registerSheet(scene, TEX.techAura, parseSheet('tech-aura', AURA_FRAMES, PALETTE_KEYS));
   // Faíscas de técnica (KOK-23): kokusen (preta/vermelha), redOut, blueIn.
   registerSheet(scene, TEX.techSpark, parseSheet('tech-spark', TECH_SPARK_FRAMES, PALETTE_KEYS));
+  // Orbe Vermelho (RED-02): um frame por terço da carga, cada tamanho na sua própria textura (parseSheet exige
+  // frames do mesmo tamanho dentro de uma folha, e os 3 tamanhos são diferentes).
+  const redOrbTex = { 4: TEX.techOrbRed4, 8: TEX.techOrbRed8, 12: TEX.techOrbRed12 } as const;
+  for (const size of RED_ORB_SIZES) {
+    registerSheet(scene, redOrbTex[size], parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS));
+  }
   registerSheet(scene, TEX.hudBar, parseSheet('hud-bar', { bar: HUD_BAR }, PALETTE_KEYS));
   registerSheet(scene, TEX.enemyBar, parseSheet('enemy-bar', { bar: ENEMY_BAR }, PALETTE_KEYS));
   // Chefe (BTIER-06): uma folha por arquétipo, com o mesmo conjunto de frames e animações.

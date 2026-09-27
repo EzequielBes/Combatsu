@@ -1,19 +1,25 @@
 import type Phaser from 'phaser';
 import type { ActiveCastView } from '../core/cast';
+import { Filters } from '../core/collision';
 import type { CursedEnergy } from '../core/energy';
 import { DivergentState } from '../core/divergent';
 import type { FxRegistry } from '../core/fxRegistry';
 import type { FxTimeline } from '../core/fxTimeline';
-import type { Hit, Vec2 } from '../core/hit';
+import { canDamage, normalize, type Hit, type Vec2 } from '../core/hit';
 import { Kokusen } from '../core/kokusen';
 import type { Loadout } from '../core/loadout';
+import { RedOrbState, type RedOrbTarget } from '../core/redOrb';
 import { KOKUSEN, TECHNIQUES } from '../data/techniques';
 import { PLAYER_COMBO } from '../data/tuning';
-import type { Hittable } from './bodyTags';
+import { newEntityId, tagBody, type BodyTag, type Hittable } from './bodyTags';
 import { Boss } from './Boss';
+import { Enemy } from './Enemy';
 import { AttackHitbox } from './hitbox';
 import type { Player } from './Player';
+import { setIgnoreGravity } from './physics';
+import { TEX } from './textures';
 import { DivergentFx } from './techFx/DivergentFx';
+import { RedOrbFx } from './techFx/RedOrb';
 
 /** DIV-02: mesmo tamanho e offset da hitbox do `direto` (o cross do combo de socos). */
 const CROSS_HITBOX = PLAYER_COMBO.find((s) => s.name === 'direto')!.hitbox!;
@@ -23,16 +29,32 @@ const CROSS_HITBOX = PLAYER_COMBO.find((s) => s.name === 'direto')!.hitbox!;
  * a versão Kokusen (`KOKUSEN.knockbackMul`).
  */
 export const DIVERGENT_FORCE = { first: 3, second: 9 } as const;
+/** Raio do sensor de voo do orbe Vermelho (px de mundo); pequeno, o orbe visual é que dá o tamanho percebido. */
+const RED_ORB_RADIUS = 6;
+/** RED-06/09/10: força (px/step) dos impactos do Vermelho - mesma escala do 2º impacto do Divergente. */
+const RED_FORCE = 8;
+/** RED-15: recuo do player na soltura, no chão, oposto ao facing. */
+const RED_PUSH_PX = 12;
+
+interface RedOrbEntry {
+  readonly id: number;
+  readonly state: RedOrbState;
+  readonly body: MatterJS.BodyType;
+  readonly view: Phaser.GameObjects.Sprite;
+}
 
 /**
  * Executa as técnicas a partir do que o `TechCaster` já decidiu (design "TechRunner.ts"): Punho Divergente -
  * hitbox do soco (DIV-02), 1 alvo (DIV-11), 1º impacto e o 2º atrasado no mesmo alvo (DIV-03/04/12), com o
- * eco/anel/aura/estouro/punho fantasma da direção de arte (DIV-07..10); e o Kokusen (T23) quando a tecla do slot
- * que conjurou o Divergente é apertada na janela certa (KOK-01..13, 28, 32).
+ * eco/anel/aura/estouro/punho fantasma da direção de arte (DIV-07..10); o Kokusen (T23) quando a tecla do slot
+ * que conjurou o Divergente é apertada na janela certa (KOK-01..13, 28, 32); e a Reversão de Técnica: Vermelho
+ * (T25), dona do seu estado puro (`RedOrbState`) e das vistas próprias em `techFx/RedOrb.ts`. Dono de
+ * `techObjects` (o contrato do snapshot para o orbe vivo).
  */
 export class TechRunner {
   private readonly hitbox: AttackHitbox;
   private readonly divergentFx: DivergentFx;
+  private readonly redFx: RedOrbFx;
   /** Zona/streak do Kokusen persistem entre casts (KOK-10/11/30/31); um só por toda a run. */
   private readonly kokusen = new Kokusen();
   private divergent: DivergentState | null = null;
@@ -41,15 +63,17 @@ export class TechRunner {
   private divergentSlot: 0 | 1 | null = null;
   /** `true` assim que uma tentativa deste cast acerta a janela (KOK-03); decide o 2º impacto na resolução. */
   private pendingKokusen = false;
+  private redOrb: RedOrbEntry | null = null;
   private frameEvents: string[] = [];
 
   constructor(
-    scene: Phaser.Scene,
+    private readonly scene: Phaser.Scene,
     private readonly player: Player,
     private readonly loadout: Loadout,
     private readonly energy: CursedEnergy,
     fx: FxTimeline,
     registry: FxRegistry,
+    uiLayer: Phaser.GameObjects.Layer,
     /** Golpe de técnica que conectou: faísca + hitstop, sem o +3 de CE-06 (CE-08 - a cena decide isso). */
     private readonly onTechHit: (hit: Hit, point: Vec2) => void,
     /** KOK-13: hitstop de 220 ms do Kokusen (FX-02 já garante que o maior pendente vence). */
@@ -59,9 +83,10 @@ export class TechRunner {
   ) {
     this.hitbox = new AttackHitbox(scene, player.id, player.team, (hit, point, target) => this.onFirstImpact(hit, point, target!));
     this.divergentFx = new DivergentFx(scene, fx, registry);
+    this.redFx = new RedOrbFx(scene, fx, registry, uiLayer);
   }
 
-  /** Eventos deste frame (`divergent2`, `kokusen`, `kokusenMiss`). */
+  /** Eventos deste frame (`divergent2`, `kokusen`, `kokusenMiss`, `redDetonate`). */
   get events(): readonly string[] {
     return this.frameEvents;
   }
@@ -77,10 +102,26 @@ export class TechRunner {
     };
   }
 
-  update(dtMs: number, cast: ActiveCastView | null, castEvents: readonly string[], slotPressed: readonly [boolean, boolean]): void {
+  /** `techObjects` do snapshot (RED-14): o orbe Vermelho vivo agora. */
+  get techObjectsSnapshot(): { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[] {
+    const out: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[] = [];
+    if (this.redOrb) out.push({ id: this.redOrb.id, kind: 'red', x: this.redOrb.state.x, y: this.redOrb.body.position.y, traveled: this.redOrb.state.traveled });
+    return out;
+  }
+
+  update(
+    dtMs: number,
+    cast: ActiveCastView | null,
+    castEvents: readonly string[],
+    slotPressed: readonly [boolean, boolean],
+    enemies: readonly Enemy[],
+    boss: Boss | null,
+  ): void {
     this.frameEvents = [];
     this.kokusen.tick(dtMs); // KOK-11/31: a zona esfria com o relógio de jogo, mesmo sem nenhum cast em curso.
     this.updateDivergent(dtMs, cast, castEvents, slotPressed);
+    this.updateRed(dtMs, cast, castEvents, enemies);
+    void boss; // usado a partir do toque no chefe dentro de `onRedTouch`; parâmetro já preparado para T26/T27.
   }
 
   private updateDivergent(
@@ -219,5 +260,113 @@ export class TechRunner {
     this.divergent = null;
     this.divergentSlot = null;
     this.pendingKokusen = false;
+  }
+
+  // --- Vermelho (T25) --------------------------------------------------------------------------------------
+
+  private updateRed(dtMs: number, cast: ActiveCastView | null, castEvents: readonly string[], enemies: readonly Enemy[]): void {
+    const charging = cast?.id === 'vermelho' && (cast.state === 'sign' || cast.state === 'charge');
+    if (charging) {
+      // RED-02/03/04: orbe crescendo + faíscas + anel + poeira, na ponta dos dedos.
+      this.redFx.chargeUpdate(dtMs, this.player.sprite.x, this.player.sprite.y, this.player.facing, cast!.elapsedMs, TECHNIQUES.vermelho.chargeMs);
+    } else {
+      this.redFx.hideCharge();
+    }
+
+    if (castEvents.includes('techCast:vermelho')) {
+      // RED-15: recuo no chão, oposto ao facing (fora do chão a soltura não empurra).
+      if (this.player.grounded) this.player.pushHorizontal(this.player.facing === 1 ? -1 : 1, RED_PUSH_PX);
+      this.spawnRedOrb(this.player.facing);
+    }
+
+    const orb = this.redOrb;
+    if (!orb) return;
+    if (!orb.state.detonated) {
+      const expired = orb.state.update(dtMs); // RED-08: alcance máximo (420 px)
+      if (!expired) {
+        this.scene.matter.body.setPosition(orb.body, { x: orb.state.x, y: orb.body.position.y });
+        orb.view.setPosition(orb.state.x, orb.body.position.y);
+        this.redFx.flightUpdate(dtMs, orb.state.x, orb.body.position.y);
+      }
+    }
+    if (orb.state.detonated) this.finishRedDetonation(orb, enemies);
+  }
+
+  private spawnRedOrb(facing: 1 | -1): void {
+    if (this.redOrb) {
+      this.scene.matter.world.remove(this.redOrb.body);
+      this.redOrb.view.destroy();
+      this.redOrb = null;
+    }
+    const point = this.redFx.fingertip(this.player.sprite.x, this.player.sprite.y, facing);
+    const state = new RedOrbState(point.x, facing);
+    const body = this.scene.matter.add.circle(point.x, point.y, RED_ORB_RADIUS, {
+      isSensor: true,
+      collisionFilter: { ...Filters.techOrb },
+    });
+    setIgnoreGravity(body, true);
+    const view = this.scene.add.sprite(point.x, point.y, TEX.techOrbRed12, 'orb').setDepth(2);
+    const entry: RedOrbEntry = { id: newEntityId(), state, body, view };
+    tagBody(body, { kind: 'active', onTouch: (other) => this.onRedTouch(entry, other) });
+    this.redOrb = entry;
+  }
+
+  /** RED-06/08/09: toque em parede/chefe detona; toque em inimigo comum acerta e o orbe segue voando (piercing). */
+  private onRedTouch(orb: RedOrbEntry, other: BodyTag): void {
+    if (orb !== this.redOrb || orb.state.detonated) return;
+    if (other.kind === 'terrain') {
+      orb.state.detonate(); // RED-08
+      return;
+    }
+    if (other.kind !== 'character') return;
+    const target = other.target;
+    if (!canDamage('player', target.team)) return;
+    const rect = target.hurtRect?.();
+    const center = rect ? { x: rect.x, y: rect.y } : { x: orb.state.x, y: orb.body.position.y };
+    const direction = normalize({ x: center.x - orb.state.x, y: center.y - orb.body.position.y });
+    if (target instanceof Boss) {
+      const hit: Hit = {
+        ownerId: this.player.id,
+        damage: this.loadout.damage('vermelho', TECHNIQUES.vermelho.damage.hit), // RED-09, TEC-06
+        strength: 'heavy',
+        force: RED_FORCE,
+        direction,
+      };
+      if (target.receiveHit(hit)) this.onTechHit(hit, center);
+      orb.state.detonate(); // RED-08: toque no chefe também detona
+      return;
+    }
+    const result = orb.state.hitTest({ id: target.id, center }, orb.body.position.y);
+    if (!result) return; // já atingido por este orbe antes (edge case: não acerta de novo)
+    const hit: Hit = {
+      ownerId: this.player.id,
+      damage: this.loadout.damage('vermelho', result.damage), // RED-06, TEC-06
+      strength: 'heavy',
+      force: RED_FORCE,
+      direction: result.direction,
+    };
+    if (target.receiveHit(hit)) this.onTechHit(hit, center);
+  }
+
+  private finishRedDetonation(orb: RedOrbEntry, enemies: readonly Enemy[]): void {
+    const point = { x: orb.state.x, y: orb.body.position.y };
+    const targets: RedOrbTarget[] = enemies.map((e) => ({ id: e.id, center: { x: e.x, y: e.hurtRect().y } }));
+    for (const splash of orb.state.detonationTargets(targets, point)) {
+      const enemy = enemies.find((e) => e.id === splash.targetId);
+      if (!enemy) continue;
+      const hit: Hit = {
+        ownerId: this.player.id,
+        damage: this.loadout.damage('vermelho', splash.damage), // RED-10, TEC-06
+        strength: 'heavy',
+        force: RED_FORCE,
+        direction: splash.direction,
+      };
+      if (enemy.receiveHit(hit)) this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+    }
+    this.redFx.detonate(point, this.player.facing); // RED-11/12/17
+    this.frameEvents.push('redDetonate'); // RED-16
+    this.scene.matter.world.remove(orb.body);
+    orb.view.destroy();
+    if (this.redOrb === orb) this.redOrb = null;
   }
 }
