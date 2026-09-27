@@ -83,6 +83,11 @@ export class Loadout {
     this.cooldowns[slot] = TECHNIQUES[s.id].cooldownMs;
   }
 
+  /** Zera a recarga do slot na hora (FXL-09: o laboratório de efeitos nunca deixa recarga pendente). */
+  clearCooldown(slot: 0 | 1): void {
+    this.cooldowns[slot] = 0;
+  }
+
   /** Some com o tempo, sem sair de 0. */
   tick(dtMs: number): void {
     this.cooldowns[0] = Math.max(0, this.cooldowns[0] - dtMs);

@@ -71,6 +71,7 @@ describe('installDebugApi', () => {
       techObjects: [],
       fx: { live: 0, degraded: false, layers: [] },
       camera: { zoom: 1.5 },
+      fxlab: null,
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};

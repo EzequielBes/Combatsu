@@ -598,15 +598,15 @@ fx: { live: number; degraded: boolean; layers: string[] };
 | CUT-08 | P2: Desmantelar | Specify | Implemented |
 | CUT-05 | P2: Desmantelar | Specify | Implemented |
 | CUT-06 | P2: Desmantelar | Specify | Implemented |
-| FXL-01 | P2: Laboratório de efeitos | Specify | Pending |
-| FXL-05 | P2: Laboratório de efeitos | Specify | Pending |
-| FXL-06 | P2: Laboratório de efeitos | Specify | Pending |
-| FXL-02 | P2: Laboratório de efeitos | Specify | Pending |
-| FXL-07 | P2: Laboratório de efeitos | Specify | Pending |
-| FXL-09 | P2: Laboratório de efeitos | Specify | Pending |
-| FXL-03 | P2: Laboratório de efeitos | Specify | Pending |
-| FXL-04 | P2: Laboratório de efeitos | Specify | Pending |
-| FXL-08 | P2: Laboratório de efeitos | Specify | Pending |
+| FXL-01 | P2: Laboratório de efeitos | Specify | Implemented |
+| FXL-05 | P2: Laboratório de efeitos | Specify | Implemented |
+| FXL-06 | P2: Laboratório de efeitos | Specify | Implemented |
+| FXL-02 | P2: Laboratório de efeitos | Specify | Implemented |
+| FXL-07 | P2: Laboratório de efeitos | Specify | Implemented |
+| FXL-09 | P2: Laboratório de efeitos | Specify | Implemented |
+| FXL-03 | P2: Laboratório de efeitos | Specify | Implemented |
+| FXL-04 | P2: Laboratório de efeitos | Specify | Implemented |
+| FXL-08 | P2: Laboratório de efeitos | Specify | Implemented |
 | TFX-01 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-08 | P1: Invariantes dos efeitos | Specify | Implemented |
 | TFX-02 | P1: Invariantes dos efeitos | Specify | Implemented |

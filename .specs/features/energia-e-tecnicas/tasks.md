@@ -929,16 +929,16 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] FXL-01 conferido: WHERE the debug mode is on and the URL has `fxlab` THEN the run SHALL spawn no waves.
-- [ ] FXL-05 conferido: WHERE the debug mode is on and the URL has `fxlab` THEN the scene SHALL place 3 training dummies on the main floor at `playerSpawn.x + 120`, `+ 200` and `+ 280` px.
-- [ ] FXL-06 conferido: WHEN a training dummy hp reaches 0 THEN the dummy SHALL stay in place and its hp SHALL be set to max 1000 ms later.
-- [ ] FXL-02 conferido: WHILE in `fxlab`, the keys 1, 2, 3, 4, 5 and 6 SHALL play, respectively, the cast aura, the Punho Divergente, a Kokusen, the Vermelho, the Azul and the Desmantelar, aimed at the nearest dummy.
-- [ ] FXL-07 conferido: WHILE in `fxlab`, the effects played by the keys 1 to 6 SHALL NOT change the cursed energy.
-- [ ] FXL-09 conferido: WHILE in `fxlab`, the effects played by the keys 1 to 6 SHALL NOT change any slot cooldown.
-- [ ] FXL-03 conferido: WHILE in `fxlab`, the key 0 SHALL toggle the scene time scale between 1 and 0.25.
-- [ ] FXL-04 conferido: WHILE in `fxlab`, the HUD SHALL show the legend `1 aura · 2 divergente · 3 kokusen · 4 vermelho · 5 azul · 6 corte · 0 lento`.
-- [ ] FXL-08 conferido: WHILE in `fxlab`, the HUD SHALL show `velocidade: 1x` when the time scale is 1 and `velocidade: 0.25x` when it is 0.25.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] FXL-01 conferido: WHERE the debug mode is on and the URL has `fxlab` THEN the run SHALL spawn no waves.
+- [x] FXL-05 conferido: WHERE the debug mode is on and the URL has `fxlab` THEN the scene SHALL place 3 training dummies on the main floor at `playerSpawn.x + 120`, `+ 200` and `+ 280` px.
+- [x] FXL-06 conferido: WHEN a training dummy hp reaches 0 THEN the dummy SHALL stay in place and its hp SHALL be set to max 1000 ms later.
+- [x] FXL-02 conferido: WHILE in `fxlab`, the keys 1, 2, 3, 4, 5 and 6 SHALL play, respectively, the cast aura, the Punho Divergente, a Kokusen, the Vermelho, the Azul and the Desmantelar, aimed at the nearest dummy.
+- [x] FXL-07 conferido: WHILE in `fxlab`, the effects played by the keys 1 to 6 SHALL NOT change the cursed energy.
+- [x] FXL-09 conferido: WHILE in `fxlab`, the effects played by the keys 1 to 6 SHALL NOT change any slot cooldown.
+- [x] FXL-03 conferido: WHILE in `fxlab`, the key 0 SHALL toggle the scene time scale between 1 and 0.25.
+- [x] FXL-04 conferido: WHILE in `fxlab`, the HUD SHALL show the legend `1 aura · 2 divergente · 3 kokusen · 4 vermelho · 5 azul · 6 corte · 0 lento`.
+- [x] FXL-08 conferido: WHILE in `fxlab`, the HUD SHALL show `velocidade: 1x` when the time scale is 1 and `velocidade: 0.25x` when it is 0.25.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build
@@ -1043,19 +1043,19 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] RED-06 conferido: WHEN the red orb touches a regular enemy it has not hit before THEN that enemy SHALL take 30 heavy damage and enter ragdoll with an impulse pointing away from the orb.
-- [ ] RED-10 conferido: WHEN the red orb detonates THEN every regular enemy whose center is within 96 px of the detonation point and that the orb has not hit before SHALL take 25 heavy damage and a radial impulse away from that point.
-- [ ] RED-11 conferido: WHEN the red orb detonates THEN `fx.layers` SHALL include `red.flashCore`, `red.sphere`, `red.shockRing`, `red.debris` and `red.screenFlash` in that frame.
-- [ ] RED-16 conferido: WHEN the red orb detonates THEN `events` SHALL get exactly one `redDetonate`.
-- [ ] BLU-04 conferido: WHILE the blue orb exists, every regular enemy whose center is within 130 px of the orb SHALL be moved toward the orb center at 150 px/s.
-- [ ] BLU-07 conferido: WHEN the blue orb ends THEN every regular enemy and the boss whose center is within 130 px of the orb center SHALL take 10 light damage once.
-- [ ] BLU-11 conferido: WHEN the blue orb reaches 1400 ms THEN it SHALL be removed from `techObjects` and `events` SHALL get exactly one `blueImplode`.
-- [ ] CUT-03 conferido: WHEN a cut happens THEN every enemy and the boss whose body overlaps the rectangle from 60 to 180 px ahead of the player center and 48 px tall centered on it SHALL take 10 light damage.
-- [ ] CUT-08 conferido: WHEN a cut happens THEN `events` SHALL get exactly one `cut`.
-- [ ] FXL-01 conferido: WHERE the debug mode is on and the URL has `fxlab` THEN the run SHALL spawn no waves.
-- [ ] FXL-02 conferido: WHILE in `fxlab`, the keys 1, 2, 3, 4, 5 and 6 SHALL play, respectively, the cast aura, the Punho Divergente, a Kokusen, the Vermelho, the Azul and the Desmantelar, aimed at the nearest dummy.
-- [ ] FXL-03 conferido: WHILE in `fxlab`, the key 0 SHALL toggle the scene time scale between 1 and 0.25.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] RED-06 conferido: WHEN the red orb touches a regular enemy it has not hit before THEN that enemy SHALL take 30 heavy damage and enter ragdoll with an impulse pointing away from the orb.
+- [x] RED-10 conferido: WHEN the red orb detonates THEN every regular enemy whose center is within 96 px of the detonation point and that the orb has not hit before SHALL take 25 heavy damage and a radial impulse away from that point.
+- [x] RED-11 conferido: WHEN the red orb detonates THEN `fx.layers` SHALL include `red.flashCore`, `red.sphere`, `red.shockRing`, `red.debris` and `red.screenFlash` in that frame.
+- [x] RED-16 conferido: WHEN the red orb detonates THEN `events` SHALL get exactly one `redDetonate`.
+- [x] BLU-04 conferido: WHILE the blue orb exists, every regular enemy whose center is within 130 px of the orb SHALL be moved toward the orb center at 150 px/s.
+- [x] BLU-07 conferido: WHEN the blue orb ends THEN every regular enemy and the boss whose center is within 130 px of the orb center SHALL take 10 light damage once.
+- [x] BLU-11 conferido: WHEN the blue orb reaches 1400 ms THEN it SHALL be removed from `techObjects` and `events` SHALL get exactly one `blueImplode`.
+- [x] CUT-03 conferido: WHEN a cut happens THEN every enemy and the boss whose body overlaps the rectangle from 60 to 180 px ahead of the player center and 48 px tall centered on it SHALL take 10 light damage.
+- [x] CUT-08 conferido: WHEN a cut happens THEN `events` SHALL get exactly one `cut`.
+- [x] FXL-01 conferido: WHERE the debug mode is on and the URL has `fxlab` THEN the run SHALL spawn no waves.
+- [x] FXL-02 conferido: WHILE in `fxlab`, the keys 1, 2, 3, 4, 5 and 6 SHALL play, respectively, the cast aura, the Punho Divergente, a Kokusen, the Vermelho, the Azul and the Desmantelar, aimed at the nearest dummy.
+- [x] FXL-03 conferido: WHILE in `fxlab`, the key 0 SHALL toggle the scene time scale between 1 and 0.25.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
