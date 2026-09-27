@@ -135,6 +135,11 @@ export interface GameSnapshot {
   techObjects: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[];
   /** Camadas de efeito de técnica vivas (TFX-*), lidas do `FxTimeline`/`FxRegistry` da cena. */
   fx: { live: number; degraded: boolean; layers: string[] };
+  /**
+   * Desvio da Fase 6 (T29/T30, CAST-15/KOK-24): a spec não tinha um jeito de o smoke ler o zoom da câmera
+   * principal; acrescentado aqui só para o smoke observar o zoom durante a conjuração e o Kokusen.
+   */
+  camera: { zoom: number };
 }
 
 export interface DebugProbe {
