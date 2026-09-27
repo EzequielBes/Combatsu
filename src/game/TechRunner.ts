@@ -456,7 +456,13 @@ export class TechRunner {
     for (const body of hits) {
       const edge = facing === 1 ? body.bounds.min.x : body.bounds.max.x;
       const dist = facing === 1 ? edge - x : x - edge;
-      if (dist < closest) closest = dist;
+      // Desvio (fix(fx) do lote de polimento): o chão (uma faixa larga por linha, parseLevel) sempre entra no
+      // resultado da `query.region` porque os pés do player tocam o topo dele - a borda esquerda dessa faixa fica
+      // muito atrás do player (`edge` bem menor que `x`), o que dava `dist` bem negativo. Como o laço só guardava
+      // o menor `dist` (sem checar o sinal), esse negativo sempre vencia qualquer parede real e o `Math.max(0, …)`
+      // final zerava tudo - o orbe Azul nascia sempre colado no player (BLU-02 quebrado sempre, não só perto de
+      // parede). Só um corpo cuja borda relevante está à frente do player (`dist >= 0`) conta como parede real.
+      if (dist >= 0 && dist < closest) closest = dist;
     }
     return Math.max(0, closest);
   }
