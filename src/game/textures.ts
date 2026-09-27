@@ -40,6 +40,8 @@ export const TEX = {
   kanji: 'kanji',
   /** Chama da aura de conjuração (CAST-14), 2 frames por cor. */
   techAura: 'tech-aura',
+  /** Faíscas de técnica (2x2 texels): Kokusen, expelidas pelo Vermelho, sugadas pelo Azul (KOK-23). */
+  techSpark: 'tech-spark',
 } as const;
 
 export const SIZE = {

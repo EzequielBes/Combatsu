@@ -801,21 +801,21 @@ T28 → T29 → T30 → T31
 
 **Done when**:
 
-- [ ] KOK-14 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.invert` for at least 33 ms of real time (2 frames at 60 fps, rounded up to whole frames).
-- [ ] KOK-15 conferido: WHEN `kokusen.invert` ends THEN `fx.layers` SHALL include `kokusen.duotone` for at least 66 ms of real time (4 frames at 60 fps, rounded up to whole frames), and SHALL NOT include `kokusen.invert` at the same time.
-- [ ] KOK-16 conferido: WHILE `kokusen.invert` is active, the target sprite SHALL be drawn as a solid `b` silhouette.
-- [ ] KOK-17 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.bolts` until 150 ms of real time after the hitstop ends.
-- [ ] KOK-21 conferido: WHILE `kokusen.bolts` is active during the hitstop, the bolts SHALL be regenerated with a new seed every 2 frames.
-- [ ] KOK-22 conferido: The bolt stroke SHALL be `b` with a 1-texel `R` border.
-- [ ] KOK-23 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.sparks` and `kokusen.shock` in that frame.
-- [ ] KOK-24 conferido: WHEN a Kokusen lands THEN the main camera zoom SHALL reach 1.68 (1.5 × 1.12) within 60 ms of real time and return to 1.5 within the next 300 ms.
-- [ ] KOK-25 conferido: WHEN a Kokusen lands THEN the HUD SHALL show the 黒閃 card at the screen center for 800 ms, reported as `hud.kokusenCard` in the snapshot.
-- [ ] KOK-26 conferido: WHILE `kokusen.streak` ≥ 2, the card SHALL show `×N` with N = streak.
-- [ ] KOK-27 conferido: WHILE the zone is active, `fx.layers` SHALL include `kokusen.zoneAura`.
-- [ ] TFX-06 conferido: IF the renderer is not WebGL THEN no postFX SHALL be added to any camera or game object.
-- [ ] TFX-10 conferido: IF the renderer is not WebGL THEN the sprite and geometry layers of each effect SHALL still appear in `fx.layers` as with WebGL.
-- [ ] TFX-11 conferido: IF the renderer is not WebGL THEN the snapshot SHALL report `fx.degraded: true`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] KOK-14 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.invert` for at least 33 ms of real time (2 frames at 60 fps, rounded up to whole frames).
+- [x] KOK-15 conferido: WHEN `kokusen.invert` ends THEN `fx.layers` SHALL include `kokusen.duotone` for at least 66 ms of real time (4 frames at 60 fps, rounded up to whole frames), and SHALL NOT include `kokusen.invert` at the same time.
+- [x] KOK-16 conferido: WHILE `kokusen.invert` is active, the target sprite SHALL be drawn as a solid `b` silhouette.
+- [x] KOK-17 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.bolts` until 150 ms of real time after the hitstop ends.
+- [x] KOK-21 conferido: WHILE `kokusen.bolts` is active during the hitstop, the bolts SHALL be regenerated with a new seed every 2 frames.
+- [x] KOK-22 conferido: The bolt stroke SHALL be `b` with a 1-texel `R` border.
+- [x] KOK-23 conferido: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.sparks` and `kokusen.shock` in that frame.
+- [x] KOK-24 conferido: WHEN a Kokusen lands THEN the main camera zoom SHALL reach 1.68 (1.5 × 1.12) within 60 ms of real time and return to 1.5 within the next 300 ms.
+- [x] KOK-25 conferido: WHEN a Kokusen lands THEN the HUD SHALL show the 黒閃 card at the screen center for 800 ms, reported as `hud.kokusenCard` in the snapshot.
+- [x] KOK-26 conferido: WHILE `kokusen.streak` ≥ 2, the card SHALL show `×N` with N = streak.
+- [x] KOK-27 conferido: WHILE the zone is active, `fx.layers` SHALL include `kokusen.zoneAura`.
+- [x] TFX-06 conferido: IF the renderer is not WebGL THEN no postFX SHALL be added to any camera or game object.
+- [x] TFX-10 conferido: IF the renderer is not WebGL THEN the sprite and geometry layers of each effect SHALL still appear in `fx.layers` as with WebGL.
+- [x] TFX-11 conferido: IF the renderer is not WebGL THEN the snapshot SHALL report `fx.degraded: true`.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: none (coberto pelos smokes da fase 6)
 **Gate**: build

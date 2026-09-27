@@ -56,6 +56,7 @@ describe('installDebugApi', () => {
         techIgnoredByMain: true,
         energy: { width: 104, fillWidth: 104, marks: [null, null], icons: [{ cooldownOverlayHeight: 0 }, { cooldownOverlayHeight: 0 }], flashing: false },
         callout: null,
+        kokusenCard: null,
       },
       hitstop: { frozen: false, remainingMs: 0 },
       wallet: { fragments: 4 },

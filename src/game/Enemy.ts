@@ -136,6 +136,11 @@ export class Enemy implements Hittable {
     return this.brain.isDead;
   }
 
+  /** KOK-16: sprite visual para a silhueta do negativo do Kokusen. */
+  get fxSprite(): Phaser.GameObjects.Sprite {
+    return this.view;
+  }
+
   /** Vida máxima com que o cérebro foi criado (DIF-04), para o snapshot de debug. */
   get maxHp(): number {
     return this.brain.maxHp;

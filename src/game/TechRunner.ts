@@ -54,6 +54,8 @@ export class TechRunner {
     private readonly onTechHit: (hit: Hit, point: Vec2) => void,
     /** KOK-13: hitstop de 220 ms do Kokusen (FX-02 já garante que o maior pendente vence). */
     private readonly triggerHitstop: (ms: number) => void,
+    /** T24: cinema do Kokusen (negativo/duotom/raios/faíscas/zoom/cartão), chamado uma vez por acerto. */
+    private readonly onKokusen: (target: Hittable, point: Vec2, facing: 1 | -1, streak: number) => void,
   ) {
     this.hitbox = new AttackHitbox(scene, player.id, player.team, (hit, point, target) => this.onFirstImpact(hit, point, target!));
     this.divergentFx = new DivergentFx(scene, fx, registry);
@@ -207,6 +209,7 @@ export class TechRunner {
     this.kokusen.land(this.energy); // KOK-09/10/30
     this.triggerHitstop(KOKUSEN.hitstopMs); // KOK-13
     this.frameEvents.push('kokusen'); // KOK-28
+    this.onKokusen(target, point, this.player.facing, this.kokusen.streak); // T24: cinema
     this.endCast();
   }
 
