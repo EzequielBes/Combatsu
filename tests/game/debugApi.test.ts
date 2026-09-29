@@ -53,6 +53,7 @@ describe('installDebugApi', () => {
         bossBarIgnoredByMain: true,
         fragments: '4',
         heldItem: null,
+        combo: { text: null, grade: null, x: 948, ignoredByMain: true },
         techIgnoredByMain: true,
         energy: { width: 104, fillWidth: 104, marks: [null, null], icons: [{ cooldownOverlayHeight: 0, iconHeight: 48 }, { cooldownOverlayHeight: 0, iconHeight: 48 }], flashing: false },
         callout: null,

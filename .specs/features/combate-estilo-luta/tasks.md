@@ -597,11 +597,11 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] CMB-01 conferido: WHEN a player hit lands on a target THEN `combo.hits` SHALL increase by 1.
-- [ ] CMB-02 conferido: WHEN 1500 ms pass without a new landed hit, or the player takes damage, THEN `combo.hits` SHALL become 0 and `combo.grade` null.
-- [ ] CMB-04 conferido: WHILE `combo.hits` ≥ 2, the HUD SHALL show the text `<hits> hits` at the right side of the screen.
-- [ ] CMB-05 conferido: WHILE `combo.hits` ≥ 2, the HUD SHALL show the grade letter under the hits text.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] CMB-01 conferido: WHEN a player hit lands on a target THEN `combo.hits` SHALL increase by 1.
+- [x] CMB-02 conferido: WHEN 1500 ms pass without a new landed hit, or the player takes damage, THEN `combo.hits` SHALL become 0 and `combo.grade` null.
+- [x] CMB-04 conferido: WHILE `combo.hits` ≥ 2, the HUD SHALL show the text `<hits> hits` at the right side of the screen.
+- [x] CMB-05 conferido: WHILE `combo.hits` ≥ 2, the HUD SHALL show the grade letter under the hits text.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 5)
 **Gate**: build
