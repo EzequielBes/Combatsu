@@ -387,6 +387,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.lastPlayerHp = this.player.hp;
       // DOD-11: enquanto a esquiva está ativa a camada `dodge.trail` fica viva (o rastro em si sai do Player).
       if (this.player.dodgeView.active) this.realtimeFx.add('dodge.trail', 100);
+      // AIR-05: enquanto a voadora está ativa a camada `air.kickTrail` fica viva (o rastro em si sai do Player).
+      if (this.player.moveName === 'voadora' && this.player.movePhase === 'active') this.realtimeFx.add('air.kickTrail', 100);
       this.techCaster.update(dt);
       // FXL-02/KOK-03: a tecla 3 arma o Kokusen sem timing manual - injeta a "tecla apertada de novo" no exato
       // frame em que a janela abre (o `windowOpen` já reflete o começo deste frame, antes do `techRunner.update`).

@@ -299,6 +299,8 @@ export class Player implements Hittable {
     const sensors = { grounded: this.touchesTerrain('below'), ceiling: this.touchesTerrain('above') };
     this.clockMs += dtMs;
     const onGround = sensors.grounded && this.move.vy >= 0;
+    // AIR-04: pousar libera o golpe aéreo do próximo pulo.
+    if (onGround) this.moves.land();
     if (input.dodgePressed && !stunned && !casting) this.tryDodge(input, onGround);
     const dodging = this.dodge.active;
     this.updateStrikes(dtMs, input, onGround, stunned || casting || dodging);
@@ -469,6 +471,11 @@ export class Player implements Hittable {
   /** CAST-10: encerra o golpe corpo a corpo em andamento (a `recover`) para a conjuração começar no mesmo frame. */
   cancelMelee(): void {
     this.onMove(this.moves.cancel());
+  }
+
+  /** Fase do golpe em andamento (`idle` sem golpe), para os efeitos da cena. */
+  get movePhase(): 'idle' | 'startup' | 'active' | 'recovery' | 'window' {
+    return this.moves.phase;
   }
 
   /** Nome do golpe em andamento, `null` sem golpe (MOV-18, `player.move` do snapshot). */
@@ -722,7 +729,8 @@ export class Player implements Hittable {
       } else if (input.lightPressed) this.onMove(this.moves.press('light', { ...ctx, motion: this.motion.matches(this.clockMs) }));
       if (input.heavyPressed) {
         this.onMove(this.moves.press('heavy', ctx));
-        this.heavyHoldMs = 0;
+        // Só um aperto no chão abre o carregado: a voadora/pisão apertadas no ar não carregam ao pousar.
+        this.heavyHoldMs = onGround ? 0 : -1;
       } else if (this.heavyHoldMs >= 0) {
         this.heavyHoldMs += dtMs;
         if (!input.heavyHeld) {
@@ -755,7 +763,9 @@ export class Player implements Hittable {
         this.activeElapsedMs = 0;
         this.travelDone = { forward: 0, down: 0 };
         // Pisão (AIR-03): a velocidade vertical vai direto para a queda máxima.
-        if (ev.move.slam) this.move = { ...this.move, vy: PLAYER_MOVE.maxFallSpeed };
+        // O golpe aéreo assume a vertical: solta o pulo sustentado para a subida não sobrescrever a queda/avanço.
+        if (ev.move.slam) this.move = { ...this.move, vy: PLAYER_MOVE.maxFallSpeed, jumping: false };
+        else if (ev.move.travel) this.move = { ...this.move, jumping: false };
       } else if (ev.type === 'hitboxOn') this.openHitbox(ev.move);
       else if (ev.type === 'hitboxOff' || ev.type === 'moveEnd') this.hitbox.close();
     }
