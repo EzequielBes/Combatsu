@@ -24,7 +24,7 @@ import { SlowMo } from '../core/slowMo';
 import { Wallet } from '../core/wallet';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
-import { DEFENSE, FINISHER_MOVE, STRUCTURE } from '../data/moves';
+import { DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
@@ -258,7 +258,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
-    this.player.onEvent = (ev) => this.debugEvents.push(ev);
+    this.player.onEvent = (ev) => {
+      this.debugEvents.push(ev);
+      if (ev.startsWith('move:')) this.onPlayerMoveStart(ev.slice(5));
+    };
     this.player.attackerOf = (ownerId) => this.attackerOf(ownerId);
     this.player.onDefense = (kind, point) => this.onDefense(kind, point);
     this.lastPlayerHp = this.player.hp;
@@ -852,6 +855,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       armedRoll,
     );
     enemy.onEvent = (ev) => this.debugEvents.push(ev);
+    enemy.guardRng = this.run.guardRng;
+    enemy.onBlock = (at) => {
+      this.fx.spark(at.x, at.y, 'guard');
+      this.realtimeFx.add('guard.spark', 100);
+    };
     this.enemies.push(enemy);
     this.debugEvents.push(`spawnFx:${enemy.id}`);
     this.fx.curseSmoke(spawnAt.x, spawnAt.y);
@@ -1055,6 +1063,18 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
       this.comboCounter.hit(hit.moveName ?? 'objeto');
     }
+  }
+
+  /**
+   * O jogador começou um golpe (`move:<nome>`): se é leve, os inimigos comuns perto e de frente sorteiam a guarda
+   * (EBL-01). `?debug&enemyGuard=N` fixa a chance (N=1: sempre levantam).
+   */
+  private onPlayerMoveStart(name: string): void {
+    if (MOVES[name]?.strength !== 'light') return;
+    const raw = debugParam('enemyGuard');
+    const override = raw !== null && Number.isFinite(Number(raw)) ? Number(raw) : undefined;
+    const me = { x: this.player.sprite.x, facing: this.player.facing };
+    for (const e of this.enemies) e.onPlayerLightMove(me, this.run.round, override);
   }
 
   /** Quem bateu no jogador, para o lado do golpe, o tipo (chefe) e o efeito do parry (PAR-03/07/10). */

@@ -325,6 +325,16 @@ describe('Run: morte do chefe conta kills e entra em intermission (BOSS-04, BOSS
   });
 });
 
+describe('Run: stream da guarda dos inimigos com seed própria (EBL-01)', () => {
+  it('guardRng é null antes do start e, depois dele com seed s, começa como new Rng(s ^ 0x2545f491)', () => {
+    const run = newRun();
+    expect(run.guardRng).toBeNull();
+    run.startPressed();
+    run.update(0, SEED);
+    expect(run.guardRng!.next()).toBe(new Rng(7 ^ 0x2545f491).next());
+  });
+});
+
 describe('Run: stream de loot com seed própria (ECO-17, ECO-31)', () => {
   it('lootRng é null antes do primeiro start', () => {
     const run = newRun();

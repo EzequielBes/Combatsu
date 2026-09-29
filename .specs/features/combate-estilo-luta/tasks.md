@@ -568,12 +568,12 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] EBL-01 conferido: WHEN the player starts a light move facing a regular enemy in `idle` within 60 px THEN that enemy SHALL guard for 600 ms with probability `min(0.1 + 0.03 × (round − 1), 0.4)`, drawn from the run RNG.
-- [ ] EBL-02 conferido: WHILE a regular enemy guards, a light hit from its front SHALL deal 0 damage, add 8 structure and give `events` one `enemyBlock:<id>`.
-- [ ] EBL-03 conferido: WHILE a regular enemy guards, a heavy hit from its front SHALL deal its full damage.
-- [ ] EBL-05 conferido: WHEN a guarding regular enemy takes a heavy hit THEN its guard SHALL end in that frame.
-- [ ] EBL-04 conferido: WHEN `chuteCarregado` hits a guarding regular enemy THEN it SHALL deal its full damage and add 40 structure.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] EBL-01 conferido: WHEN the player starts a light move facing a regular enemy in `idle` within 60 px THEN that enemy SHALL guard for 600 ms with probability `min(0.1 + 0.03 × (round − 1), 0.4)`, drawn from the run RNG.
+- [x] EBL-02 conferido: WHILE a regular enemy guards, a light hit from its front SHALL deal 0 damage, add 8 structure and give `events` one `enemyBlock:<id>`.
+- [x] EBL-03 conferido: WHILE a regular enemy guards, a heavy hit from its front SHALL deal its full damage.
+- [x] EBL-05 conferido: WHEN a guarding regular enemy takes a heavy hit THEN its guard SHALL end in that frame.
+- [x] EBL-04 conferido: WHEN `chuteCarregado` hits a guarding regular enemy THEN it SHALL deal its full damage and add 40 structure.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 5)
 **Gate**: build
