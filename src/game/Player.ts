@@ -119,6 +119,24 @@ export class Player implements Hittable {
   private blockPush: { dir: 1 | -1; remainingPx: number } | null = null;
   /** O frame anterior era de dash da esquiva: no seguinte a velocidade zera, sem escorregar além dos 96 px. */
   private wasDashing = false;
+  /**
+   * Deslocamento x pendente (px) da esquiva, da voadora e do recuo do bloqueio. O Matter roda 0, 1 ou 2 steps por
+   * frame conforme o tempo real; aplicar a velocidade do frame em todos os steps fazia o dash de 96 px andar de 96 a
+   * 158 px. Aqui o total sai inteiro no primeiro step depois de produzido (mesmo padrão do L-001 do inimigo).
+   */
+  private scriptedDx = 0;
+  /** Um step já aplicou `scriptedDx` neste frame: os steps seguintes zeram o x até o próximo `update`. */
+  private stepDriven = false;
+  private readonly onStep = (): void => {
+    const body = bodyOf(this.sprite);
+    if (this.scriptedDx !== 0) {
+      this.scene.matter.body.setVelocity(body, { x: this.scriptedDx, y: body.velocity.y });
+      this.scriptedDx = 0;
+      this.stepDriven = true;
+    } else if (this.stepDriven) {
+      this.scene.matter.body.setVelocity(body, { x: 0, y: body.velocity.y });
+    }
+  };
   /** Tempo (ms) que a pose do finalizador segue na tela. */
   private poseMs = 0;
   private readonly propSwing = new ComboTracker([PROP_SWING], 0);
@@ -158,6 +176,8 @@ export class Player implements Hittable {
       collisionFilter: { ...Filters.player },
     });
     this.sprite.setFixedRotation();
+    scene.matter.world.on('beforeupdate', this.onStep);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
     this.sprite.setIgnoreGravity(true);
     this.sprite.setVisible(false);
     tagBody(bodyOf(this.sprite), { kind: 'character', target: this });
@@ -281,6 +301,7 @@ export class Player implements Hittable {
   }
 
   update(dtMs: number, input: InputSnapshot): void {
+    this.stepDriven = false;
     for (const ev of this.health.update(dtMs)) if (ev === 'respawn') this.respawn();
     this.structure.update(dtMs);
     // Atordoado, morto ou com a guarda quebrada (STR-06): sem golpe, sem pegar objeto e sem controle (HP-03).
@@ -789,7 +810,8 @@ export class Player implements Hittable {
   private applyDash(dtMs: number): void {
     const dx = this.dodge.update(dtMs);
     if (dx !== 0 && dtMs > 0) {
-      this.move = { ...this.move, vx: dx / (dtMs / 1000) };
+      this.scriptedDx += dx;
+      this.move = { ...this.move, vx: 0 };
       this.wasDashing = true;
     } else if (this.wasDashing) {
       this.move = { ...this.move, vx: 0 };
@@ -802,7 +824,8 @@ export class Player implements Hittable {
     const push = this.blockPush;
     if (!push || dtMs <= 0) return;
     const px = Math.min(push.remainingPx, (BLOCK_PUSH_PX * dtMs) / BLOCK_PUSH_MS);
-    this.move = { ...this.move, vx: (push.dir * px) / (dtMs / 1000) };
+    this.scriptedDx += push.dir * px;
+    this.move = { ...this.move, vx: 0 };
     push.remainingPx -= px;
     if (push.remainingPx <= 0) this.blockPush = null;
   }
@@ -812,12 +835,8 @@ export class Player implements Hittable {
     const def = this.moves.def;
     if (!def?.travel || this.moves.phase !== 'active' || dtMs <= 0) return;
     const target = moveTravelAt(def, this.activeElapsedMs);
-    const dt = dtMs / 1000;
-    this.move = {
-      ...this.move,
-      vx: (this.facing * (target.forward - this.travelDone.forward)) / dt,
-      vy: (target.down - this.travelDone.down) / dt,
-    };
+    this.scriptedDx += this.facing * (target.forward - this.travelDone.forward);
+    this.move = { ...this.move, vx: 0, vy: (target.down - this.travelDone.down) / (dtMs / 1000) };
     this.travelDone = target;
   }
 
