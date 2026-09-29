@@ -443,7 +443,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | CMB-03 | P2: Contador de combo e nota de estilo | Specify | Pending |
 | CMB-04 | P2: Contador de combo e nota de estilo | Specify | Pending |
 | CMB-05 | P2: Contador de combo e nota de estilo | Specify | Pending |
-| SPC-01 | P3: Palma explosiva (meia-lua) | Specify | Pending |
+| SPC-01 | P3: Palma explosiva (meia-lua) | Specify | Implementing |
 | SPC-02 | P3: Palma explosiva (meia-lua) | Specify | Pending |
 
 **Coverage:** 91 total, 0 Verified

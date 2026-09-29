@@ -155,9 +155,9 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] 299/300 ms e ordem trocada
-- [ ] SPC-01 conferido: WHEN `S`, then the facing direction, then a light press happen within 300 ms in that order THEN `palmaExplosiva` (20 heavy) SHALL start instead of the move the last press would start.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] 299/300 ms e ordem trocada
+- [x] SPC-01 conferido: WHEN `S`, then the facing direction, then a light press happen within 300 ms in that order THEN `palmaExplosiva` (20 heavy) SHALL start instead of the move the last press would start.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
