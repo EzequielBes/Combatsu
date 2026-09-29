@@ -4,6 +4,7 @@ import { BossBrain, type BossBrainState, type BossEvent } from '../core/bossBrai
 import type { BossSpec } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import type { Hit, Vec2 } from '../core/hit';
+import { DEFENSE } from '../data/moves';
 import { bossAnimKey, BOSS_ORIGIN } from './art/sprites/boss';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
@@ -159,6 +160,11 @@ export class Boss implements Hittable {
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
     }
     return true;
+  }
+
+  /** Golpe do chefe aparado pelo jogador (PAR-07): a postura cai 30, nunca abaixo de 0, sem tirar vida. */
+  parried(): void {
+    this.receiveKokusen(0, DEFENSE.parryBossPoiseDamage);
   }
 
   /**

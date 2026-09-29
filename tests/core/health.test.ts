@@ -176,3 +176,24 @@ describe('Health: teto ajustável por setMax (MOD-04, MOD-11, MOD-10)', () => {
     expect(h.max).toBe(SPEC.maxHp);
   });
 });
+
+describe('Health.chip: dano que passa pela guarda do chefe (GRD-06)', () => {
+  it('tira o dano do hp sem invulnerabilidade nem atordoamento', () => {
+    const h = new Health(PLAYER_HEALTH);
+    expect(h.chip(5)).toBe('hurt');
+    expect(h.hp).toBe(95);
+    expect(h.invulnerable).toBe(false);
+    expect(h.staggered).toBe(false);
+  });
+
+  it('hp 0 mata como um golpe normal; morto ou invulnerável ignora', () => {
+    const h = new Health(PLAYER_HEALTH);
+    expect(h.chip(100)).toBe('died');
+    expect(h.dead).toBe(true);
+    expect(h.chip(5)).toBe('ignored');
+    const g = new Health(PLAYER_HEALTH);
+    g.receive(10);
+    expect(g.chip(5)).toBe('ignored');
+    expect(g.hp).toBe(90);
+  });
+});

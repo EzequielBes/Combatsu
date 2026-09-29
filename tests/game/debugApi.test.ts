@@ -32,7 +32,7 @@ describe('installDebugApi', () => {
 
   it('snapshot devolve o que o probe registrado devolve (FND-09)', () => {
     const snap: GameSnapshot = {
-      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0 },
+      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0, move: null, guard: 'none', structure: { cur: 0, max: 100, broken: false }, dodge: { active: false, invulnerable: false, cooldownMs: 0 } },
       enemies: [
         { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false } },
       ],
