@@ -539,12 +539,12 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] AIR-01 conferido: WHEN a light press happens in the air with no move in progress THEN `socoAereo` (7 light) SHALL start.
-- [ ] AIR-02 conferido: WHEN a heavy press happens in the air with no move in progress THEN `voadora` (16 heavy) SHALL start and move the player 120 px (±8 px) forward and down over its active time.
-- [ ] AIR-03 conferido: WHEN a heavy press happens in the air while `S` is held THEN `pisao` (14 heavy) SHALL start and set the player vertical speed to the max fall speed.
-- [ ] AIR-04 conferido: The player SHALL start at most one air move per jump.
-- [ ] AIR-05 conferido: WHILE `voadora` is active, `fx.layers` SHALL include `air.kickTrail`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] AIR-01 conferido: WHEN a light press happens in the air with no move in progress THEN `socoAereo` (7 light) SHALL start.
+- [x] AIR-02 conferido: WHEN a heavy press happens in the air with no move in progress THEN `voadora` (16 heavy) SHALL start and move the player 120 px (±8 px) forward and down over its active time.
+- [x] AIR-03 conferido: WHEN a heavy press happens in the air while `S` is held THEN `pisao` (14 heavy) SHALL start and set the player vertical speed to the max fall speed.
+- [x] AIR-04 conferido: The player SHALL start at most one air move per jump.
+- [x] AIR-05 conferido: WHILE `voadora` is active, `fx.layers` SHALL include `air.kickTrail`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 5)
 **Gate**: build
