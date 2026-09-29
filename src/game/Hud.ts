@@ -295,6 +295,7 @@ export class Hud {
     fragments: string;
     heldItem: { name: string; pips: number; maxPips: number } | null;
     combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
+    controls: string;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -305,6 +306,8 @@ export class Hud {
       center: this.centerLines,
       fragments: this.fragmentText.text,
       heldItem: this.heldItemState,
+      // CTL-06: texto vivo do painel de controles.
+      controls: this.panel.text,
       // CMB-04/05: texto e nota vivos (`null` escondidos), `x` = borda direita do texto na tela de UI, e ambos na `uiLayer`.
       combo: {
         text: this.comboHitsText.visible ? this.comboHitsText.text : null,

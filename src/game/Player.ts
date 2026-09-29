@@ -520,6 +520,11 @@ export class Player implements Hittable {
     );
   }
 
+  /** Nome do frame do sprite em cena, para o snapshot (`player.frame`, CTL-09). */
+  get frameName(): string {
+    return String(this.view.frame.name);
+  }
+
   /** Guarda para o snapshot (`player.guard`): `parry` = janela aberta. */
   get guardState(): 'none' | 'guard' | 'parry' {
     return this.guard.state;

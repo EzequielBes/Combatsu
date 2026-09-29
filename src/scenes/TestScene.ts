@@ -955,6 +955,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         maxHp: this.player.maxHp,
         vy: this.player.verticalSpeed,
         move: this.player.moveName,
+        frame: this.player.frameName,
         guard: this.player.guardState,
         structure: this.player.structureView,
         dodge: this.player.dodgeView,
