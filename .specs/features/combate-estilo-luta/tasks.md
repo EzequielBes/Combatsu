@@ -625,9 +625,9 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] SPC-01 conferido: WHEN `S`, then the facing direction, then a light press happen within 300 ms in that order THEN `palmaExplosiva` (20 heavy) SHALL start instead of the move the last press would start.
-- [ ] SPC-02 conferido: WHEN `palmaExplosiva` hits a regular enemy that survives THEN it SHALL push the enemy 200 px (±16 px) away.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] SPC-01 conferido: WHEN `S`, then the facing direction, then a light press happen within 300 ms in that order THEN `palmaExplosiva` (20 heavy) SHALL start instead of the move the last press would start.
+- [x] SPC-02 conferido: WHEN `palmaExplosiva` hits a regular enemy that survives THEN it SHALL push the enemy 200 px (±16 px) away.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 5)
 **Gate**: build
