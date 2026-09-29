@@ -318,9 +318,9 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Prévia PNG conferida antes do commit
-- [ ] MOV-14 conferido: The player sheet SHALL contain the frames `<move>-wind`, `<move>-hit` and `<move>-recover` for every ground and air move, each 32×24 texels with only `PALETTE` keys (data test).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Prévia PNG conferida antes do commit
+- [x] MOV-14 conferido: The player sheet SHALL contain the frames `<move>-wind`, `<move>-hit` and `<move>-recover` for every ground and air move, each 32×24 texels with only `PALETTE` keys (data test).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
@@ -344,10 +344,10 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Prévia PNG conferida antes do commit
-- [ ] MOV-14 conferido: The player sheet SHALL contain the frames `<move>-wind`, `<move>-hit` and `<move>-recover` for every ground and air move, each 32×24 texels with only `PALETTE` keys (data test).
-- [ ] STR-09 conferido: Every color used by the enemy and player structure bars SHALL be a key of `PALETTE` (data test on the exported color constants).
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Prévia PNG conferida antes do commit
+- [x] MOV-14 conferido: The player sheet SHALL contain the frames `<move>-wind`, `<move>-hit` and `<move>-recover` for every ground and air move, each 32×24 texels with only `PALETTE` keys (data test).
+- [x] STR-09 conferido: Every color used by the enemy and player structure bars SHALL be a key of `PALETTE` (data test on the exported color constants).
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

@@ -379,7 +379,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | MOV-12 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-13 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-18 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-14 | P1: Grafo de golpes | Specify | Pending |
+| MOV-14 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-15 | P1: Grafo de golpes | Specify | Pending |
 | GRD-01 | P1: Guarda | Specify | Implementing |
 | GRD-02 | P1: Guarda | Specify | Implementing |
@@ -427,7 +427,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | FIN-02 | P1: Estrutura e finalizador | Specify | Pending |
 | FIN-04 | P1: Estrutura e finalizador | Specify | Pending |
 | FIN-03 | P1: Estrutura e finalizador | Specify | Pending |
-| STR-09 | P1: Estrutura e finalizador | Specify | Pending |
+| STR-09 | P1: Estrutura e finalizador | Specify | Implementing |
 | AIR-01 | P2: Aéreos e voadora | Specify | Implementing |
 | AIR-02 | P2: Aéreos e voadora | Specify | Implementing |
 | AIR-03 | P2: Aéreos e voadora | Specify | Implementing |
