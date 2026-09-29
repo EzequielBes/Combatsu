@@ -14,6 +14,13 @@ import {
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
+import {
+  COMBO_GRADE_COLORS,
+  COMBO_TEXT_COLOR,
+  STRUCTURE_BAR_BG_COLOR,
+  STRUCTURE_BAR_BREAK_COLOR,
+  STRUCTURE_BAR_FILL_COLOR,
+} from '../../src/game/art/combatColors';
 import { KANJI_FRAMES } from '../../src/game/art/sprites/kanji';
 import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from '../../src/game/art/sprites/techFx';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
@@ -736,3 +743,59 @@ describe('frames dos golpes do chão (MOV-14, T8)', () => {
   });
 });
 
+describe('frames aéreos, de defesa e de status (MOV-14, T9)', () => {
+  const AIR_MOVES = ['socoAereo', 'voadora', 'pisao', 'palmaExplosiva'] as const;
+  const STATUS_FRAMES = ['guard', 'parry', 'dodge-0', 'dodge-1', 'stunned-0', 'stunned-1'] as const;
+  const sheet = parseSheet('player-moves-air', PLAYER_MOVE_FRAMES, PALETTE_KEYS);
+
+  it('passa no parseSheet só com cores da paleta, todo frame 32x24 texels', () => {
+    expect(sheet.width).toBe(PLAYER_FRAME_W);
+    expect(sheet.height).toBe(PLAYER_FRAME_H);
+  });
+
+  it('cada um dos golpes aéreos e a palma têm os frames wind, hit e recover, distintos entre si', () => {
+    for (const move of AIR_MOVES) {
+      const wind = PLAYER_MOVE_FRAMES[`${move}-wind`];
+      const hit = PLAYER_MOVE_FRAMES[`${move}-hit`];
+      const recover = PLAYER_MOVE_FRAMES[`${move}-recover`];
+      expect(wind, `${move}-wind`).toBeDefined();
+      expect(hit, `${move}-hit`).toBeDefined();
+      expect(recover, `${move}-recover`).toBeDefined();
+      expect(wind, `${move}: wind vs hit`).not.toEqual(hit);
+      expect(hit, `${move}: hit vs recover`).not.toEqual(recover);
+      expect(wind, `${move}: wind vs recover`).not.toEqual(recover);
+    }
+  });
+
+  it('guard, parry, dodge-0/1 e stunned-0/1 existem, 32x24 texels só com cores da paleta', () => {
+    for (const name of STATUS_FRAMES) {
+      expect(Object.hasOwn(PLAYER_MOVE_FRAMES, name), name).toBe(true);
+      const frame = sheet.frames.find((f) => f.key === name)!;
+      expect(frame.cells.length, name).toBe(PLAYER_FRAME_H);
+      expect(frame.cells[0].length, name).toBe(PLAYER_FRAME_W);
+    }
+  });
+
+  it('guard e parry são posturas distintas; dodge-0/1 e stunned-0/1 diferem entre si', () => {
+    expect(PLAYER_MOVE_FRAMES.guard).not.toEqual(PLAYER_MOVE_FRAMES.parry);
+    expect(PLAYER_MOVE_FRAMES['dodge-0']).not.toEqual(PLAYER_MOVE_FRAMES['dodge-1']);
+    expect(PLAYER_MOVE_FRAMES['stunned-0']).not.toEqual(PLAYER_MOVE_FRAMES['stunned-1']);
+  });
+});
+
+describe('cores da barra de estrutura e do combo (STR-09)', () => {
+  it('fundo, preenchimento e quebra da barra de estrutura são cores da paleta', () => {
+    for (const c of [STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_FILL_COLOR, STRUCTURE_BAR_BREAK_COLOR]) {
+      expect(Object.values(PALETTE)).toContain(c);
+    }
+  });
+
+  it('o texto do combo e as 5 notas (D/C/B/A/S) são cores da paleta, cada uma diferente da anterior', () => {
+    expect(Object.values(PALETTE)).toContain(COMBO_TEXT_COLOR);
+    const order: Array<'D' | 'C' | 'B' | 'A' | 'S'> = ['D', 'C', 'B', 'A', 'S'];
+    for (const grade of order) expect(Object.values(PALETTE)).toContain(COMBO_GRADE_COLORS[grade]);
+    for (let i = 1; i < order.length; i++) {
+      expect(COMBO_GRADE_COLORS[order[i]], order[i]).not.toBe(COMBO_GRADE_COLORS[order[i - 1]]);
+    }
+  });
+});
