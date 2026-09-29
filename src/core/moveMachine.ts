@@ -6,6 +6,8 @@ export interface MoveContext {
   down: boolean;
   up: boolean;
   forward: boolean;
+  /** Meia-lua detectada pela `MotionInput` no aperto do leve (SPC-01). */
+  motion?: boolean;
 }
 
 export type MoveEvent =
@@ -80,6 +82,10 @@ export class MoveMachine {
     const events: MoveEvent[] = [];
     if (this.isMoving) {
       this.buffered = { button, grounded: ctx.grounded };
+      return events;
+    }
+    if (button === 'light' && ctx.motion && ctx.grounded) {
+      this.startMove(this.moves.palmaExplosiva, events);
       return events;
     }
     if (this._phase === 'window') {
