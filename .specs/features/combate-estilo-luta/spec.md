@@ -393,7 +393,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | PAR-01 | P1: Parry | Specify | Implementing |
 | PAR-02 | P1: Parry | Specify | Implementing |
 | PAR-09 | P1: Parry | Specify | Implementing |
-| PAR-03 | P1: Parry | Specify | Pending |
+| PAR-03 | P1: Parry | Specify | Implementing |
 | PAR-10 | P1: Parry | Specify | Pending |
 | PAR-07 | P1: Parry | Specify | Pending |
 | PAR-08 | P1: Parry | Specify | Pending |
@@ -413,16 +413,16 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | DOD-06 | P1: Esquiva | Specify | Pending |
 | DOD-11 | P1: Esquiva | Specify | Pending |
 | DOD-12 | P1: Esquiva | Specify | Pending |
-| STR-01 | P1: Estrutura e finalizador | Specify | Pending |
-| STR-02 | P1: Estrutura e finalizador | Specify | Pending |
-| STR-03 | P1: Estrutura e finalizador | Specify | Pending |
-| STR-04 | P1: Estrutura e finalizador | Specify | Pending |
-| STR-07 | P1: Estrutura e finalizador | Specify | Pending |
-| STR-05 | P1: Estrutura e finalizador | Specify | Pending |
+| STR-01 | P1: Estrutura e finalizador | Specify | Implementing |
+| STR-02 | P1: Estrutura e finalizador | Specify | Implementing |
+| STR-03 | P1: Estrutura e finalizador | Specify | Implementing |
+| STR-04 | P1: Estrutura e finalizador | Specify | Implementing |
+| STR-07 | P1: Estrutura e finalizador | Specify | Implementing |
+| STR-05 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-10 | P1: Estrutura e finalizador | Specify | Pending |
-| STR-06 | P1: Estrutura e finalizador | Specify | Pending |
+| STR-06 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-11 | P1: Estrutura e finalizador | Specify | Pending |
-| STR-08 | P1: Estrutura e finalizador | Specify | Pending |
+| STR-08 | P1: Estrutura e finalizador | Specify | Implementing |
 | FIN-01 | P1: Estrutura e finalizador | Specify | Pending |
 | FIN-02 | P1: Estrutura e finalizador | Specify | Pending |
 | FIN-04 | P1: Estrutura e finalizador | Specify | Pending |

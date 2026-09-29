@@ -251,17 +251,17 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Queda 1499/1500 ms (inimigo) e 999/1000 ms (jogador); teto; quebra exatamente em 100
-- [ ] STR-01 conferido: Every regular enemy and the player SHALL have a structure between 0 and 100.
-- [ ] STR-02 conferido: WHEN a regular enemy takes a light hit, a heavy hit, the `chuteCarregado` or the `joelhada` THEN its structure SHALL increase by 4, 10, 40 or 30 (10 + 20), respectively, capped at 100.
-- [ ] STR-03 conferido: WHEN a player hit is blocked by the player guard THEN the player structure SHALL increase by 15 for a regular enemy hit and 25 for a boss hit, capped at 100.
-- [ ] STR-04 conferido: WHEN 1500 ms of game time pass since an enemy structure last increased THEN that structure SHALL decrease by 10 per second of game time, stopping at 0.
-- [ ] STR-07 conferido: WHEN 1000 ms of game time pass since the player last blocked a hit THEN the player structure SHALL decrease by 20 per second of game time, stopping at 0.
-- [ ] STR-05 conferido: WHEN a regular enemy structure reaches 100 THEN it SHALL be broken and stunned (no attack, no movement) for 1500 ms.
-- [ ] STR-06 conferido: WHEN the player structure reaches 100 THEN the player SHALL be stunned for 800 ms, ignoring input.
-- [ ] STR-08 conferido: WHEN a stun from STR-05 or STR-06 ends THEN that structure SHALL be 0 and not broken.
-- [ ] PAR-03 conferido: WHEN a regular enemy hit is parried THEN that enemy structure SHALL increase by 35, capped at 100.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Queda 1499/1500 ms (inimigo) e 999/1000 ms (jogador); teto; quebra exatamente em 100
+- [x] STR-01 conferido: Every regular enemy and the player SHALL have a structure between 0 and 100.
+- [x] STR-02 conferido: WHEN a regular enemy takes a light hit, a heavy hit, the `chuteCarregado` or the `joelhada` THEN its structure SHALL increase by 4, 10, 40 or 30 (10 + 20), respectively, capped at 100.
+- [x] STR-03 conferido: WHEN a player hit is blocked by the player guard THEN the player structure SHALL increase by 15 for a regular enemy hit and 25 for a boss hit, capped at 100.
+- [x] STR-04 conferido: WHEN 1500 ms of game time pass since an enemy structure last increased THEN that structure SHALL decrease by 10 per second of game time, stopping at 0.
+- [x] STR-07 conferido: WHEN 1000 ms of game time pass since the player last blocked a hit THEN the player structure SHALL decrease by 20 per second of game time, stopping at 0.
+- [x] STR-05 conferido: WHEN a regular enemy structure reaches 100 THEN it SHALL be broken and stunned (no attack, no movement) for 1500 ms.
+- [x] STR-06 conferido: WHEN the player structure reaches 100 THEN the player SHALL be stunned for 800 ms, ignoring input.
+- [x] STR-08 conferido: WHEN a stun from STR-05 or STR-06 ends THEN that structure SHALL be 0 and not broken.
+- [x] PAR-03 conferido: WHEN a regular enemy hit is parried THEN that enemy structure SHALL increase by 35, capped at 100.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
