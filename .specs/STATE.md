@@ -82,28 +82,25 @@
 - **Date**: 2026-09-25
 - **Status**: active
 
+### AD-011
+- **Decision**: O `ganchoAscendente` (MOV-07) aceita J até 100 ms depois de um pulo que saiu do chão com `W`: o pulo é cancelado (volta ao chão, sem gastar o pulo) e o gancho sai. `Space` e `↑` continuam pulando normalmente; `W` continua pulando se nenhum J vier na janela.
+- **Reason**: `W` é pulo e "cima" ao mesmo tempo; exigir `W`+`J` no mesmo frame deixava o golpe quase impossível e fazia o jogador pular sem querer (injusto, pouco divertido).
+- **Trade-off**: 100 ms de pulo podem ser "desfeitos"; o salto nesse tempo sobe poucos px, então visualmente é um tranco curto.
+- **Scope**: F7 (T11/T15, smoke T19).
+- **Date**: 2026-09-29
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: F7 `.specs/features/combate-estilo-luta` (combate estilo Sifu; absorve a antiga F8) em Execute, branch `feat/combate-estilo-luta` (a partir de `dev`, que já tem F0–F5)
-- **Feito**: Specify (91 ACs, Jev em 3 rodadas + glossário da spec), Design, Tasks (21 tasks em 5 fases), alinhamento Jev (0 stories sinalizadas; revisão em `alignment.md`)
-- **Phase / Task — RETOMAR ASSIM**:
-  1. **Fase 1 (T1–T7, núcleo puro)**: ainda NÃO começou (o worker travou sem gravar nada; árvore limpa). Lançar 1 worker Sonnet com as tasks T1–T7.
-  2. **Fase 2 (T8–T9, arte)**: PARCIAL e SEM commit no worktree `C:\Users\Usuario\AppData\Local\Temp\claude\C--Users-Usuario-documents-surgue\fc11ceb2-8480-4cb5-a593-ee9b3e9fd301\scratchpad\wt-art7` (branch `art/combate-estilo-luta`): modificados `src/game/art/index.ts`, `tests/game/art.test.ts`; novos `src/game/art/combatColors.ts`, `src/game/art/sprites/playerMoves.ts`. Último sinal: typecheck passando. Relançar 1 worker Sonnet "retome a partir do `git status`/`git diff` do worktree", gerar a prévia em `scratchpad\art7-preview\art7-preview.png`, commitar T8 e T9 separados, sem editar `tasks.md`/`spec.md`.
-  3. Depois das duas: `git merge --no-ff art/combate-estilo-luta` na branch da feature, marcar T8/T9 em `tasks.md`/`spec.md`, remover o worktree e a branch `art/*`, e lançar a fase 3 (T10–T14).
-- **Completed**:
-  - F0–F5 mergeadas em `dev` (865 testes, 17 smokes); `feat/energia-e-tecnicas` publicada; `dev` local 110+ commits à frente do `origin` (sobe só quando o usuário pedir)
-- **Como trabalhar** (memória do usuário):
-  - Opus planeja; workers Sonnet, um por lote de fase; **no máximo 2 agentes ao mesmo tempo**; arte/smokes em worktree criado à mão em `scratchpad\wt-*` (o `isolation: worktree` recusa o repo por causa de maiúsculas em `Documents/surGue`)
-  - Worker que cair por limite ou travar: conferir `git status`/`git diff` e relançar com "retome a partir do diff"; nunca descartar trabalho parcial que compila
-  - Jev: `jev-refine` no Specify (lê `## Glossário` da spec) e `jev-align` nas tasks; Context7 `/phaserjs/phaser/v3_90_0`
-  - Merge em `dev` com `--no-ff`; `main` só com validação do usuário; push só da branch da feature
+- **Feature**: F7 `.specs/features/combate-estilo-luta` em Execute, branch `feat/combate-estilo-luta`
+- **Feito**: fases 1–3 (T1–T14) commitadas; arte mergeada; worktree `wt-art7` e branch `art/*` removidos; 1048 testes, 16 smokes
+- **Phase / Task — RETOMAR ASSIM**: fase 4 (fix AD-011 + T15–T18) com 1 worker Sonnet 5.5; depois fase 5 (T19–T21, smokes); depois Verifier automático, `validate_state.py`, merge `--no-ff` em `dev`
+- **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; worker que cair é retomado do `git diff`; `python` (não `python3`) roda os scripts do tlc
 - **Dicas técnicas**:
-  - `npm run smoke -- <trecho>`; `?debug&seed=N&round=N&fragments=N&tech=<id>&noshop=1&fxlab`
-  - Todo dano ao player passa por `Player.receiveHit` (`src/game/Player.ts:161`): é ali que a guarda/parry/esquiva decidem
-  - T10 troca `K` (pegar) por `E` e `K` vira golpe forte: varrer `KeyK` em todos os `scripts/smoke/*.smoke.mjs`
-  - Teclas lidas com `JustDown` precisam ficar seguradas durante um `step` no smoke (`tap`/`press1`)
-  - Worktree antigo travado em `.claude/worktrees/agent-ab5458ae76ebf5ebf` e o worktree `Documents/surGue-player-refine` (branch `feat/player-sprite-refine`) NÃO são desta linha de trabalho: não mexer
-- **In-progress** (file:line): arte da F7 no worktree `wt-art7` (acima)
-- **Blockers**: UAT do usuário (visual, F0–F5) antes de `dev` ir para `main`
-- **Uncommitted files**: só no worktree `wt-art7` (acima); na árvore principal, nenhum (fora `skills-lock.json` e pastas de ferramentas do usuário)
+  - `tests/core/lightning.test.ts` (1000 seeds) estoura 5 s com a máquina carregada; passa com a máquina livre ou `--maxWorkers=2`. `heal.smoke.mjs` HEAL-09 é instável já em `44e59cc` (2/6)
+  - Ciclo do inimigo: 450 ms windup + 120 ms ataque + 800 ms descanso; `step(16.7)` do harness = 2 frames; anti-spam do parry 300 ms; recarga da esquiva 450 ms
+  - `Enemy.guarding` existe (sempre 0) para a T16 ligar; frame `parry` da arte sem uso (CTL-09 mostra `guard`)
+  - Desvios da fase 1/3 listados nos relatórios: tempos/hitboxes inventados em `src/data/moves.ts`; parry anula até imbloqueável (leitura literal de PAR-02); zoom do finalizador em 80 ms; `Health.chip` para o bloqueio do chefe
+  - UAT visual: pé solto nos frames `chuteGiratorio-wind` e `chuteCarregado-wind`
+- **Blockers**: UAT do usuário (visual, F0–F5 e F7) antes de `dev` ir para `main`
 - **Branch**: `feat/combate-estilo-luta`
