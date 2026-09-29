@@ -208,5 +208,11 @@ export const ENEMY_GUARD = {
   triggerRangePx: 60,
 } as const;
 
+/**
+ * Tolerância do gancho ascendente (AD-011): um `J` até este tempo (ms, inclusive) depois de um pulo que saiu do chão
+ * com `W` cancela o pulo e vira `ganchoAscendente`.
+ */
+export const UPPERCUT_JUMP_CANCEL_MS = 100;
+
 /** Meia-lua (SPC-01). */
 export const MOTION = { windowMs: 300 } as const;

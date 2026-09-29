@@ -7,6 +7,8 @@ export interface InputSnapshot {
   down: boolean;
   jumpPressed: boolean;
   jumpHeld: boolean;
+  /** `W` apertada no frame (pulo que o `J` seguinte pode virar gancho ascendente, AD-011). */
+  jumpWPressed: boolean;
   /** `W`/`↑` segurada (golpe para cima, MOV-07). */
   upHeld: boolean;
   /** `J`/`X` apertada no frame, sem `K`/`Z` junto (CTL-01). */
@@ -39,6 +41,7 @@ export class PlayerInput {
   private readonly down: Key[];
   private readonly jump: Key[];
   private readonly up: Key[];
+  private readonly keyW: Key;
   private readonly light: Key[];
   private readonly heavy: Key[];
   private readonly guard: Key[];
@@ -54,6 +57,7 @@ export class PlayerInput {
     this.down = keys(K.S, K.DOWN);
     this.jump = keys(K.SPACE, K.W, K.UP);
     this.up = keys(K.W, K.UP);
+    this.keyW = kb.addKey(K.W);
     this.light = keys(K.J, K.X);
     this.heavy = keys(K.K, K.Z);
     this.guard = keys(K.U, K.SHIFT);
@@ -63,13 +67,16 @@ export class PlayerInput {
 
   /** Chamar uma vez por frame. */
   read(): InputSnapshot {
+    // `W` e o pulo dividem o mesmo objeto Key: consumir a borda de W primeiro e somá-la ao pulo evita perdê-la.
+    const wPressed = Phaser.Input.Keyboard.JustDown(this.keyW);
     const strikes = combineStrikePresses(anyJustDown(this.light), anyJustDown(this.heavy));
     return {
       left: anyDown(this.left),
       right: anyDown(this.right),
       down: anyDown(this.down),
-      jumpPressed: anyJustDown(this.jump),
+      jumpPressed: anyJustDown(this.jump) || wPressed,
       jumpHeld: anyDown(this.jump),
+      jumpWPressed: wPressed,
       upHeld: anyDown(this.up),
       ...strikes,
       heavyHeld: anyDown(this.heavy),

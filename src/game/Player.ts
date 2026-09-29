@@ -8,6 +8,7 @@ import { Guard, resolveIncomingHit } from '../core/defense';
 import { Dodge } from '../core/dodge';
 import { Health } from '../core/health';
 import { MotionInput } from '../core/motionInput';
+import { shouldCancelJumpForUppercut } from '../core/fightInput';
 import { MoveMachine, moveTravelAt, type MoveContext, type MoveEvent } from '../core/moveMachine';
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
@@ -102,6 +103,9 @@ export class Player implements Hittable {
   private activeElapsedMs = 0;
   private travelDone = { forward: 0, down: 0 };
   private chargeTinted = false;
+  /** Pulo iniciado com `W` (AD-011): relógio de jogo (ms) da saída do chão, y do chão e o aperto de `W` mais recente. */
+  private wJump: { startMs: number; groundY: number } | null = null;
+  private lastWPressMs = -Infinity;
   /** Evento de debug do player (`move:<nome>`, `block`, `parry`, `dodge`, ...), entregue à cena. */
   onEvent: ((name: string) => void) | null = null;
   /** Quem bateu, por `hit.ownerId` (a cena procura em inimigos, chefe e projéteis). */
@@ -308,6 +312,9 @@ export class Player implements Hittable {
     if (input.interactPressed && !attacking && !stunned && !casting && !dodging) this.interact(input.down);
 
     const before = this.move;
+    const wPressedAt = input.jumpWPressed ? this.clockMs : this.lastWPressMs;
+    this.lastWPressMs = wPressedAt;
+    const groundYBefore = this.sprite.y;
     // MOD-06: velocidade de corrida lida de `modifiers` a cada frame, sem cache; CAST-11: gravidade a 30% em
     // `sign`/`charge` (só nesses dois estados: em `release`/`recover` a gravidade já volta ao normal).
     const castAirGravity = this.castLock?.state === 'sign' || this.castLock?.state === 'charge';
@@ -321,6 +328,7 @@ export class Player implements Hittable {
     this.applyMoveTravel(dtMs);
     this.applyDash(dtMs);
     this.applyBlockPush(dtMs);
+    this.trackWJump(before, groundYBefore, wPressedAt);
     this.kickUpDust(before, sensors.grounded);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
     if (this.health.staggered) this.move = { ...this.move, vx: this.knockDir * PLAYER_KNOCKBACK };
@@ -334,6 +342,17 @@ export class Player implements Hittable {
     this.animate(sensors.grounded);
     this.blink(dtMs);
     this.tickFlash(dtMs);
+  }
+
+  /** Guarda de onde saiu um pulo iniciado com `W` (AD-011); qualquer outro pulo ou o pouso apaga a marca. */
+  private trackWJump(before: MoveState, groundY: number, wPressedAt: number): void {
+    const jumped = this.move.jumping && !before.jumping;
+    if (jumped) {
+      const fromW = this.clockMs - wPressedAt <= PLAYER_MOVE.jumpBufferMs;
+      this.wJump = fromW ? { startMs: this.clockMs, groundY } : null;
+    } else if (this.wJump && this.touchesTerrain('below') && this.move.vy >= 0) {
+      this.wJump = null;
+    }
   }
 
   /** Poeira nos pés (FX-04): ao pular, ao pousar e ao virar enquanto corre no chão. */
@@ -697,7 +716,10 @@ export class Player implements Hittable {
     const ctx: MoveContext = { grounded: onGround, down: input.down, up: input.upHeld, forward };
     if (locked) this.heavyHoldMs = -1;
     if (!locked && this.held === null) {
-      if (input.lightPressed) this.onMove(this.moves.press('light', { ...ctx, motion: this.motion.matches(this.clockMs) }));
+      if (input.lightPressed && !onGround && this.tryUppercutCancel()) {
+        // AD-011: o pulo com `W` some e o gancho ascendente sai do chão, como se `W`+`J` fossem no mesmo frame.
+        this.onMove(this.moves.press('light', { grounded: true, down: false, up: true, forward }));
+      } else if (input.lightPressed) this.onMove(this.moves.press('light', { ...ctx, motion: this.motion.matches(this.clockMs) }));
       if (input.heavyPressed) {
         this.onMove(this.moves.press('heavy', ctx));
         this.heavyHoldMs = 0;
@@ -714,6 +736,16 @@ export class Player implements Hittable {
     }
     this.onMove(this.moves.update(dtMs));
     if (this.moves.phase === 'active') this.activeElapsedMs += dtMs;
+  }
+
+  /** `J` logo depois de um pulo com `W` (AD-011): volta ao chão e zera o pulo; `false` fora da janela. */
+  private tryUppercutCancel(): boolean {
+    const jump = this.wJump;
+    if (!jump || this.moves.isMoving || !shouldCancelJumpForUppercut(this.clockMs - jump.startMs)) return false;
+    this.wJump = null;
+    this.sprite.setPosition(this.sprite.x, jump.groundY);
+    this.move = { ...this.move, vy: 0, jumping: false, jumpHoldMs: 0, jumpBufferMs: 0 };
+    return true;
   }
 
   private onMove(events: MoveEvent[]): void {
