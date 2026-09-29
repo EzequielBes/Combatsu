@@ -651,23 +651,23 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] MOV-02 conferido: WHEN a light press happens with no move in progress on the ground THEN the move `jab` SHALL start.
-- [ ] MOV-03 conferido: WHEN a press matching a follow-up of the current move happens between the start of its recovery and 260 ms after the recovery ends THEN that follow-up SHALL start at the end of the recovery.
-- [ ] MOV-05 conferido: WHEN a heavy press happens with no move in progress on the ground THEN the move `chuteFrontal` SHALL start.
-- [ ] MOV-06 conferido: WHEN a light press happens while `S` is held on the ground with no move in progress THEN `socoBaixo` SHALL start.
-- [ ] MOV-17 conferido: WHEN a heavy press happens while `S` is held on the ground with no move in progress THEN `rasteira` SHALL start.
-- [ ] MOV-07 conferido: WHEN a light press happens while `W` is held on the ground with no move in progress THEN `ganchoAscendente` SHALL start.
-- [ ] MOV-08 conferido: WHEN a heavy press happens while the direction the player faces is held on the ground with no move in progress THEN `chuteEmpurrao` SHALL start.
-- [ ] MOV-09 conferido: WHEN `K` is released after being held for at least 400 ms since its press THEN `chuteCarregado` SHALL start as soon as the current move ends.
-- [ ] MOV-10 conferido: WHEN `rasteira` hits a regular enemy that survives THEN the enemy SHALL be knocked down for 900 ms.
-- [ ] MOV-11 conferido: WHEN `ganchoAscendente` hits a regular enemy that survives THEN the enemy SHALL receive an upward impulse that lifts its center at least 64 px.
-- [ ] MOV-13 conferido: WHEN a move starts THEN `events` SHALL get exactly one `move:<name>` with its name.
-- [ ] AIR-02 conferido: WHEN a heavy press happens in the air with no move in progress THEN `voadora` (16 heavy) SHALL start and move the player 120 px (±8 px) forward and down over its active time.
-- [ ] AIR-05 conferido: WHILE `voadora` is active, `fx.layers` SHALL include `air.kickTrail`.
-- [ ] SPC-01 conferido: WHEN `S`, then the facing direction, then a light press happen within 300 ms in that order THEN `palmaExplosiva` (20 heavy) SHALL start instead of the move the last press would start.
-- [ ] CTL-03 conferido: WHEN `E` is pressed with free hands and a prop within reach THEN the player SHALL hold that prop.
-- [ ] CTL-06 conferido: The on-screen controls panel SHALL list `J leve · K forte · U guarda/parry · Q esquiva · E pegar`.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] MOV-02 conferido: WHEN a light press happens with no move in progress on the ground THEN the move `jab` SHALL start.
+- [x] MOV-03 conferido: WHEN a press matching a follow-up of the current move happens between the start of its recovery and 260 ms after the recovery ends THEN that follow-up SHALL start at the end of the recovery.
+- [x] MOV-05 conferido: WHEN a heavy press happens with no move in progress on the ground THEN the move `chuteFrontal` SHALL start.
+- [x] MOV-06 conferido: WHEN a light press happens while `S` is held on the ground with no move in progress THEN `socoBaixo` SHALL start.
+- [x] MOV-17 conferido: WHEN a heavy press happens while `S` is held on the ground with no move in progress THEN `rasteira` SHALL start.
+- [x] MOV-07 conferido: WHEN a light press happens while `W` is held on the ground with no move in progress THEN `ganchoAscendente` SHALL start.
+- [x] MOV-08 conferido: WHEN a heavy press happens while the direction the player faces is held on the ground with no move in progress THEN `chuteEmpurrao` SHALL start.
+- [x] MOV-09 conferido: WHEN `K` is released after being held for at least 400 ms since its press THEN `chuteCarregado` SHALL start as soon as the current move ends.
+- [x] MOV-10 conferido: WHEN `rasteira` hits a regular enemy that survives THEN the enemy SHALL be knocked down for 900 ms.
+- [x] MOV-11 conferido: WHEN `ganchoAscendente` hits a regular enemy that survives THEN the enemy SHALL receive an upward impulse that lifts its center at least 64 px.
+- [x] MOV-13 conferido: WHEN a move starts THEN `events` SHALL get exactly one `move:<name>` with its name.
+- [x] AIR-02 conferido: WHEN a heavy press happens in the air with no move in progress THEN `voadora` (16 heavy) SHALL start and move the player 120 px (±8 px) forward and down over its active time.
+- [x] AIR-05 conferido: WHILE `voadora` is active, `fx.layers` SHALL include `air.kickTrail`.
+- [x] SPC-01 conferido: WHEN `S`, then the facing direction, then a light press happen within 300 ms in that order THEN `palmaExplosiva` (20 heavy) SHALL start instead of the move the last press would start.
+- [x] CTL-03 conferido: WHEN `E` is pressed with free hands and a prop within reach THEN the player SHALL hold that prop.
+- [x] CTL-06 conferido: The on-screen controls panel SHALL list `J leve · K forte · U guarda/parry · Q esquiva · E pegar`.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
