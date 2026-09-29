@@ -691,28 +691,28 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] GRD-02 conferido: WHEN a regular enemy hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take 0 damage.
-- [ ] GRD-07 conferido: WHEN a hit is blocked by the guard THEN `events` SHALL get exactly one `block`.
-- [ ] GRD-08 conferido: WHEN a hit is blocked THEN `fx.layers` SHALL include `guard.spark` in that frame.
-- [ ] GRD-03 conferido: IF a regular enemy hit reaches the guarding player while the attacker center x is on the side opposite to the player facing THEN the player SHALL take exactly the hit damage.
-- [ ] CTL-09 conferido: WHILE `player.guard` is `guard` or `parry`, the player sprite SHALL show the `guard` frame.
-- [ ] PAR-02 conferido: WHEN an enemy or boss hit reaches the player during an open parry window THEN the player SHALL take 0 damage.
-- [ ] PAR-11 conferido: WHEN a hit is parried THEN `fx.layers` SHALL include `parry.flash` and `parry.ring` in that frame.
-- [ ] DOD-11 conferido: WHILE a dodge is active, `fx.layers` SHALL include `dodge.trail`.
-- [ ] DOD-12 conferido: WHILE `timeScale` is 0.3, `fx.layers` SHALL include `dodge.slowTint`.
-- [ ] PAR-09 conferido: WHEN a hit is parried THEN `events` SHALL get exactly one `parry`.
-- [ ] PAR-03 conferido: WHEN a regular enemy hit is parried THEN that enemy structure SHALL increase by 35, capped at 100.
-- [ ] PAR-10 conferido: WHEN a regular enemy hit is parried THEN that enemy SHALL neither attack nor move for 400 ms.
-- [ ] PAR-04 conferido: IF `U` or `Shift` is pressed less than 300 ms after the previous press THEN no parry window SHALL open.
-- [ ] DOD-01 conferido: WHEN `Q` is pressed on the ground with no dodge cooldown and no move or cast in progress THEN the player SHALL move 96 px (±4 px) in 200 ms toward the held horizontal direction, or away from the facing direction if none is held.
-- [ ] DOD-03 conferido: WHEN a hit reaches the player while it is invulnerable by DOD-02 THEN `events` SHALL get exactly one `perfectDodge` for that dodge.
-- [ ] DOD-07 conferido: WHEN a perfect dodge happens THEN `timeScale` SHALL be 0.3 for 400 ms of real time and then return to 1.
-- [ ] DOD-08 conferido: WHEN the player hits a target within 1000 ms after a perfect dodge THEN that hit damage SHALL be multiplied by 1.5 (rounded, halves up), once.
-- [ ] STR-05 conferido: WHEN a regular enemy structure reaches 100 THEN it SHALL be broken and stunned (no attack, no movement) for 1500 ms.
-- [ ] STR-06 conferido: WHEN the player structure reaches 100 THEN the player SHALL be stunned for 800 ms, ignoring input.
-- [ ] FIN-01 conferido: WHEN a `both` press (CTL-04) happens within 40 px of a broken regular enemy THEN the finisher SHALL hit that enemy for 40 damage and `events` SHALL get `finisher:<id>`.
-- [ ] FIN-02 conferido: WHEN the finisher hits THEN the game SHALL apply a hitstop of 150 ms.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] GRD-02 conferido: WHEN a regular enemy hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take 0 damage.
+- [x] GRD-07 conferido: WHEN a hit is blocked by the guard THEN `events` SHALL get exactly one `block`.
+- [x] GRD-08 conferido: WHEN a hit is blocked THEN `fx.layers` SHALL include `guard.spark` in that frame.
+- [x] GRD-03 conferido: IF a regular enemy hit reaches the guarding player while the attacker center x is on the side opposite to the player facing THEN the player SHALL take exactly the hit damage.
+- [x] CTL-09 conferido: WHILE `player.guard` is `guard` or `parry`, the player sprite SHALL show the `guard` frame.
+- [x] PAR-02 conferido: WHEN an enemy or boss hit reaches the player during an open parry window THEN the player SHALL take 0 damage.
+- [x] PAR-11 conferido: WHEN a hit is parried THEN `fx.layers` SHALL include `parry.flash` and `parry.ring` in that frame.
+- [x] DOD-11 conferido: WHILE a dodge is active, `fx.layers` SHALL include `dodge.trail`.
+- [x] DOD-12 conferido: WHILE `timeScale` is 0.3, `fx.layers` SHALL include `dodge.slowTint`.
+- [x] PAR-09 conferido: WHEN a hit is parried THEN `events` SHALL get exactly one `parry`.
+- [x] PAR-03 conferido: WHEN a regular enemy hit is parried THEN that enemy structure SHALL increase by 35, capped at 100.
+- [x] PAR-10 conferido: WHEN a regular enemy hit is parried THEN that enemy SHALL neither attack nor move for 400 ms.
+- [x] PAR-04 conferido: IF `U` or `Shift` is pressed less than 300 ms after the previous press THEN no parry window SHALL open.
+- [x] DOD-01 conferido: WHEN `Q` is pressed on the ground with no dodge cooldown and no move or cast in progress THEN the player SHALL move 96 px (±4 px) in 200 ms toward the held horizontal direction, or away from the facing direction if none is held.
+- [x] DOD-03 conferido: WHEN a hit reaches the player while it is invulnerable by DOD-02 THEN `events` SHALL get exactly one `perfectDodge` for that dodge.
+- [x] DOD-07 conferido: WHEN a perfect dodge happens THEN `timeScale` SHALL be 0.3 for 400 ms of real time and then return to 1.
+- [x] DOD-08 conferido: WHEN the player hits a target within 1000 ms after a perfect dodge THEN that hit damage SHALL be multiplied by 1.5 (rounded, halves up), once.
+- [x] STR-05 conferido: WHEN a regular enemy structure reaches 100 THEN it SHALL be broken and stunned (no attack, no movement) for 1500 ms.
+- [x] STR-06 conferido: WHEN the player structure reaches 100 THEN the player SHALL be stunned for 800 ms, ignoring input.
+- [x] FIN-01 conferido: WHEN a `both` press (CTL-04) happens within 40 px of a broken regular enemy THEN the finisher SHALL hit that enemy for 40 damage and `events` SHALL get `finisher:<id>`.
+- [x] FIN-02 conferido: WHEN the finisher hits THEN the game SHALL apply a hitstop of 150 ms.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
