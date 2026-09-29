@@ -108,6 +108,7 @@ const NEUTRAL_INPUT: InputSnapshot = {
   down: false,
   jumpPressed: false,
   jumpHeld: false,
+  jumpWPressed: false,
   upHeld: false,
   lightPressed: false,
   heavyPressed: false,
