@@ -285,16 +285,16 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Expiração 1499/1500 ms; notas nos limites 2/3/4/5/6 golpes distintos; chance nas rodadas 1, 11 e 20 (teto 0,4)
-- [ ] CMB-01 conferido: WHEN a player hit lands on a target THEN `combo.hits` SHALL increase by 1.
-- [ ] CMB-02 conferido: WHEN 1500 ms pass without a new landed hit, or the player takes damage, THEN `combo.hits` SHALL become 0 and `combo.grade` null.
-- [ ] CMB-03 conferido: WHILE `combo.hits` ≥ 2, `combo.grade` SHALL be D for 1–2 distinct moves in the combo, C for 3, B for 4, A for 5 and S for 6 or more.
-- [ ] EBL-01 conferido: WHEN the player starts a light move facing a regular enemy in `idle` within 60 px THEN that enemy SHALL guard for 600 ms with probability `min(0.1 + 0.03 × (round − 1), 0.4)`, drawn from the run RNG.
-- [ ] EBL-02 conferido: WHILE a regular enemy guards, a light hit from its front SHALL deal 0 damage, add 8 structure and give `events` one `enemyBlock:<id>`.
-- [ ] EBL-03 conferido: WHILE a regular enemy guards, a heavy hit from its front SHALL deal its full damage.
-- [ ] EBL-05 conferido: WHEN a guarding regular enemy takes a heavy hit THEN its guard SHALL end in that frame.
-- [ ] EBL-04 conferido: WHEN `chuteCarregado` hits a guarding regular enemy THEN it SHALL deal its full damage and add 40 structure.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Expiração 1499/1500 ms; notas nos limites 2/3/4/5/6 golpes distintos; chance nas rodadas 1, 11 e 20 (teto 0,4)
+- [x] CMB-01 conferido: WHEN a player hit lands on a target THEN `combo.hits` SHALL increase by 1.
+- [x] CMB-02 conferido: WHEN 1500 ms pass without a new landed hit, or the player takes damage, THEN `combo.hits` SHALL become 0 and `combo.grade` null.
+- [x] CMB-03 conferido: WHILE `combo.hits` ≥ 2, `combo.grade` SHALL be D for 1–2 distinct moves in the combo, C for 3, B for 4, A for 5 and S for 6 or more.
+- [x] EBL-01 conferido: WHEN the player starts a light move facing a regular enemy in `idle` within 60 px THEN that enemy SHALL guard for 600 ms with probability `min(0.1 + 0.03 × (round − 1), 0.4)`, drawn from the run RNG.
+- [x] EBL-02 conferido: WHILE a regular enemy guards, a light hit from its front SHALL deal 0 damage, add 8 structure and give `events` one `enemyBlock:<id>`.
+- [x] EBL-03 conferido: WHILE a regular enemy guards, a heavy hit from its front SHALL deal its full damage.
+- [x] EBL-05 conferido: WHEN a guarding regular enemy takes a heavy hit THEN its guard SHALL end in that frame.
+- [x] EBL-04 conferido: WHEN `chuteCarregado` hits a guarding regular enemy THEN it SHALL deal its full damage and add 40 structure.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

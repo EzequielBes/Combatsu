@@ -433,14 +433,14 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | AIR-03 | P2: Aéreos e voadora | Specify | Implementing |
 | AIR-04 | P2: Aéreos e voadora | Specify | Implementing |
 | AIR-05 | P2: Aéreos e voadora | Specify | Pending |
-| EBL-01 | P2: Inimigos que bloqueiam | Specify | Pending |
-| EBL-02 | P2: Inimigos que bloqueiam | Specify | Pending |
-| EBL-03 | P2: Inimigos que bloqueiam | Specify | Pending |
-| EBL-05 | P2: Inimigos que bloqueiam | Specify | Pending |
-| EBL-04 | P2: Inimigos que bloqueiam | Specify | Pending |
-| CMB-01 | P2: Contador de combo e nota de estilo | Specify | Pending |
-| CMB-02 | P2: Contador de combo e nota de estilo | Specify | Pending |
-| CMB-03 | P2: Contador de combo e nota de estilo | Specify | Pending |
+| EBL-01 | P2: Inimigos que bloqueiam | Specify | Implementing |
+| EBL-02 | P2: Inimigos que bloqueiam | Specify | Implementing |
+| EBL-03 | P2: Inimigos que bloqueiam | Specify | Implementing |
+| EBL-05 | P2: Inimigos que bloqueiam | Specify | Implementing |
+| EBL-04 | P2: Inimigos que bloqueiam | Specify | Implementing |
+| CMB-01 | P2: Contador de combo e nota de estilo | Specify | Implementing |
+| CMB-02 | P2: Contador de combo e nota de estilo | Specify | Implementing |
+| CMB-03 | P2: Contador de combo e nota de estilo | Specify | Implementing |
 | CMB-04 | P2: Contador de combo e nota de estilo | Specify | Pending |
 | CMB-05 | P2: Contador de combo e nota de estilo | Specify | Pending |
 | SPC-01 | P3: Palma explosiva (meia-lua) | Specify | Implementing |
