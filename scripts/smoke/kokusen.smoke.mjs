@@ -44,6 +44,7 @@ export default async function ({ page, baseUrl, assert }) {
    * não houver nenhum intacto, força o fim da rodada (mata todo mundo com o golpe de teste forte) e espera a
    * próxima rodada nascer com um lote novo (`noshop=1` pula a loja, SHOP-47).
    */
+  let ce08Checked = false;
   const approachFreshEnemy = async () => {
     let target = snap.enemies.find(freshFilter);
     for (let i = 0; i < 20 && !target; i++) {
@@ -124,13 +125,21 @@ export default async function ({ page, baseUrl, assert }) {
       let impact = null;
       let cancelled = false;
       for (let i = 0; i < 20 && impact === null && !cancelled; i++) {
+        const prev = snap;
         snap = await frame();
         if (snap.tech.cast === null) {
           cancelled = true;
           break;
         }
         const now = snap.enemies.find((e) => e.id === targetId);
-        if (now && now.hp < before) impact = now.hp;
+        if (now && now.hp < before) {
+          impact = now.hp;
+          // CE-08: dano de técnica não dá os +3 do golpe corpo a corpo; já em `release`, sem regen (CE-05) nem custo.
+          if (prev.tech.cast && prev.tech.cast.state === 'release') {
+            assert(snap.ce.cur === prev.ce.cur, `CE-08: o 1º impacto não deveria mexer na energia: ${prev.ce.cur} -> ${snap.ce.cur}`);
+            ce08Checked = true;
+          }
+        }
       }
       if (impact !== null) {
         assert(impact === before - 12, `DIV-03: 1º impacto deveria tirar 12: ${before} -> ${impact}`);
@@ -171,6 +180,36 @@ export default async function ({ page, baseUrl, assert }) {
   // antes da conjuração — dá bastante folga (700 ms reais) para tudo (aura, eco/anel, estouro, fantasma) sumir.
   snap = await stepAndSnap(700);
   assert(snap.fx.live === fxBaseline, `TFX-09: fx.live deveria voltar a ${fxBaseline}, veio ${snap.fx.live}: ${JSON.stringify(snap.fx.layers)}`);
+  assert(ce08Checked, 'CE-08: nenhum 1º impacto caiu num frame já em release para conferir a energia');
+
+  // CE-06: um jab aplicado num inimigo soma exatamente 3 de energia (a energia está abaixo do teto depois do
+  // custo do Divergente). Anda até o alvo 1, que sobreviveu com 30 de hp, e bate até um jab conectar.
+  let ce06 = null;
+  for (let attempt = 0; attempt < 10 && ce06 === null; attempt++) {
+    let t = snap.enemies.find((e) => e.id === target1);
+    if (!t) break;
+    for (let i = 0; i < 60 && Math.abs(t.x - snap.player.x) > 28; i++) {
+      const dir = t.x >= snap.player.x ? 'KeyD' : 'KeyA';
+      await page.keyboard.down(dir);
+      snap = await stepAndSnap(33);
+      await page.keyboard.up(dir);
+      t = snap.enemies.find((e) => e.id === target1) || t;
+    }
+    const hpBefore = t.hp;
+    assert(snap.ce.cur <= snap.ce.max - 3, `CE-06: pré-condição, energia deveria estar abaixo do teto: ${snap.ce.cur}/${snap.ce.max}`);
+    let prev = snap;
+    snap = await press1('KeyJ');
+    for (let i = 0; i < 12 && ce06 === null; i++) {
+      const now = snap.enemies.find((e) => e.id === target1);
+      if (now && now.hp < hpBefore) ce06 = snap.ce.cur - prev.ce.cur;
+      prev = snap;
+      snap = await frame();
+    }
+    if (ce06 === null) snap = await stepAndSnap(400);
+  }
+  assert(ce06 !== null, 'CE-06: nenhum jab conectou no alvo 1');
+  // +3 do golpe mais, no máximo, a regen de um passo (8/s × 16,7 ms ≈ 0,13).
+  assert(ce06 >= 3 && ce06 <= 3.2, `CE-06: jab aplicado deveria somar 3 de energia: ${ce06}`);
 
   // --- Cenário 2: tecla do slot ~160 ms depois do 1º impacto, dentro da janela → Kokusen -----------------------
   await waitSlotReady();
