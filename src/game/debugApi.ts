@@ -27,6 +27,8 @@ export interface GameSnapshot {
     weapon: ToolKey | null;
     /** Sprite da ferramenta visível (ARM-10); `null` sem arma. */
     weaponVisible: boolean | null;
+    /** Estrutura do inimigo comum (STR-01), arredondada; `broken` = atordoado pela quebra (CTL-05). */
+    structure: { cur: number; max: number; broken: boolean };
   }[];
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */

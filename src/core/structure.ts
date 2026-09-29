@@ -1,4 +1,5 @@
-import { STRUCTURE } from '../data/moves';
+import { MOVES, STRUCTURE, STRUCTURE_HEAVY, STRUCTURE_LIGHT } from '../data/moves';
+import type { Hit } from './hit';
 
 export interface StructureTuning {
   max: number;
@@ -22,6 +23,16 @@ export const PLAYER_STRUCTURE: StructureTuning = {
   decayPerSec: STRUCTURE.player.decayPerSec,
   stunMs: STRUCTURE.player.stunMs,
 };
+
+/**
+ * Estrutura que um golpe soma no inimigo comum (STR-02): o valor do golpe do grafo, ou 4/10 por força para o que
+ * não vem do grafo (objeto na mão, golpe de teste).
+ */
+export function enemyStructureGain(hit: Pick<Hit, 'moveName' | 'strength'>): number {
+  const def = hit.moveName ? MOVES[hit.moveName] : undefined;
+  if (def) return def.structureGain;
+  return hit.strength === 'heavy' ? STRUCTURE_HEAVY : STRUCTURE_LIGHT;
+}
 
 /**
  * Barra de estrutura (postura) de 0 a 100 (STR-01): sobe com `add` até o teto, cai depois de `decayDelayMs` sem

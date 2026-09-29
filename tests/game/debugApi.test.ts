@@ -34,7 +34,7 @@ describe('installDebugApi', () => {
     const snap: GameSnapshot = {
       player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0 },
       enemies: [
-        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null, weaponVisible: null },
+        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false } },
       ],
       events: ['enemyDied:3'],
       deaths: [{ id: 3, x: 50, y: 60 }],

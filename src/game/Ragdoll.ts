@@ -85,6 +85,11 @@ export class Ragdoll {
     this.parts[0].setAngularVelocity(0.12 * Math.sign(d.x || 1));
   }
 
+  /** Sobe todas as partes com a velocidade vertical dada (px/step, negativa = para cima): gancho ascendente (MOV-11). */
+  launch(vyStep: number): void {
+    for (const p of this.parts) p.setVelocityY(vyStep);
+  }
+
   flash(): void {
     for (const p of this.parts) p.setTintFill(PALETTE.w);
     this.scene.time.delayedCall(60, () => {

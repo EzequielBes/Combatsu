@@ -45,8 +45,9 @@ export const MOVE_WINDOW_MS = 260;
 /** Tempo segurando `K` desde o aperto para o carregado sair na soltura (MOV-09, MOV-16). */
 export const CHARGE_MS = 400;
 
-const STRUCTURE_LIGHT = 4;
-const STRUCTURE_HEAVY = 10;
+/** Estrutura que um golpe leve e um forte somam no inimigo comum (STR-02). */
+export const STRUCTURE_LIGHT = 4;
+export const STRUCTURE_HEAVY = 10;
 
 const FIST = { offsetX: 22, offsetY: -4, width: 26, height: 18 };
 const KICK = { offsetX: 26, offsetY: 6, width: 32, height: 20 };
