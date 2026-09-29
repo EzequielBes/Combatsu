@@ -360,7 +360,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | CTL-07 | P1: Controles de luta | Specify | Implementing |
 | CTL-08 | P1: Controles de luta | Specify | Implementing |
 | CTL-04 | P1: Controles de luta | Specify | Implementing |
-| CTL-05 | P1: Controles de luta | Specify | Pending |
+| CTL-05 | P1: Controles de luta | Specify | Implementing |
 | CTL-06 | P1: Controles de luta | Specify | Implementing |
 | CTL-09 | P1: Controles de luta | Specify | Implementing |
 | MOV-01 | P1: Grafo de golpes | Specify | Implementing |
@@ -412,7 +412,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | DOD-05 | P1: Esquiva | Specify | Implementing |
 | DOD-06 | P1: Esquiva | Specify | Implementing |
 | DOD-11 | P1: Esquiva | Specify | Implementing |
-| DOD-12 | P1: Esquiva | Specify | Pending |
+| DOD-12 | P1: Esquiva | Specify | Implementing |
 | STR-01 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-02 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-03 | P1: Estrutura e finalizador | Specify | Implementing |
@@ -423,10 +423,10 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | STR-06 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-11 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-08 | P1: Estrutura e finalizador | Specify | Implementing |
-| FIN-01 | P1: Estrutura e finalizador | Specify | Pending |
-| FIN-02 | P1: Estrutura e finalizador | Specify | Pending |
-| FIN-04 | P1: Estrutura e finalizador | Specify | Pending |
-| FIN-03 | P1: Estrutura e finalizador | Specify | Pending |
+| FIN-01 | P1: Estrutura e finalizador | Specify | Implementing |
+| FIN-02 | P1: Estrutura e finalizador | Specify | Implementing |
+| FIN-04 | P1: Estrutura e finalizador | Specify | Implementing |
+| FIN-03 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-09 | P1: Estrutura e finalizador | Specify | Implementing |
 | AIR-01 | P2: Aéreos e voadora | Specify | Implementing |
 | AIR-02 | P2: Aéreos e voadora | Specify | Implementing |

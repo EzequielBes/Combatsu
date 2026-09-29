@@ -5,6 +5,7 @@ import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
 import type { CastState } from '../core/cast';
+import { ComboCounter } from '../core/comboCounter';
 import { CursedEnergy } from '../core/energy';
 import { FxRegistry } from '../core/fxRegistry';
 import { FxTimeline } from '../core/fxTimeline';
@@ -19,10 +20,11 @@ import type { PropState } from '../core/props';
 import type { Rng } from '../core/rng';
 import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
 import { Shop, type BuyContext } from '../core/shop';
+import { SlowMo } from '../core/slowMo';
 import { Wallet } from '../core/wallet';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
-import { DEFENSE } from '../data/moves';
+import { DEFENSE, FINISHER_MOVE, STRUCTURE } from '../data/moves';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
@@ -43,6 +45,7 @@ import {
   WAVE,
 } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
+import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
 import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
 import { routeContact, tagBody } from '../game/bodyTags';
@@ -80,6 +83,15 @@ const SPAWN_LIFT = 2;
 const WORLD_ZOOM = 1.5;
 /** Folga (px de tela) em que o player anda sem a câmera andar junto. */
 const FOLLOW_DEADZONE = { w: 40, h: 24 };
+/** Finalizador (FIN-04): zoom da câmera no golpe, tempo até chegar (ms; 80 para fechar em 100 ms reais com o frame de atraso do efeito) e depois de quanto tempo real volta ao normal. */
+const FINISHER_ZOOM = 1.7;
+const FINISHER_ZOOM_IN_MS = 80;
+/** Hitstop do finalizador (FIN-02, ms). */
+const FINISHER_HITSTOP_MS = 150;
+const FINISHER_ZOOM_HOLD_MS = 450;
+const FINISHER_ZOOM_OUT_MS = 250;
+/** Alpha do tom azulado da câmera lenta (DOD-12). */
+const SLOWMO_TINT_ALPHA = 0.22;
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
 const CONTROLS_MS = 8000;
 
@@ -173,6 +185,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Detecta a transição para morto (RUN-04): só o primeiro frame morto conta como evento. */
   private wasPlayerDead = false;
   private readonly hitstop = new Hitstop();
+  /** Câmera lenta da esquiva perfeita (DOD-07), em tempo real; a escala vai para o tempo de jogo (`applyTimeScale`). */
+  private slowMo = new SlowMo();
+  /** Contador de combo e nota de estilo (CMB-01..03). */
+  private comboCounter = new ComboCounter();
+  private lastPlayerHp = 0;
+  /** Tom azulado sobre a tela enquanto a câmera lenta está ativa (DOD-12), na câmera de UI. */
+  private slowTint!: Phaser.GameObjects.Rectangle;
+  /** Tempo real (ms) até o zoom do finalizador voltar ao normal; 0 = sem finalizador em curso. */
+  private finisherZoomMs = 0;
   /** Se a pausa do hitstop está aplicada (física, animações, tweens e timers). */
   private frozen = false;
   /** Eventos lidos pelo smoke no snapshot de debug, ex.: `enemyDied:7`. */
@@ -190,11 +211,17 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Reinício no meio de um hitstop (R): a cena nova começa descongelada. As animações são do jogo, não da cena.
     this.hitstop.reset();
     this.unfreeze();
+    this.slowMo = new SlowMo();
+    this.comboCounter = new ComboCounter();
+    this.finisherZoomMs = 0;
     this.events.on(Phaser.Scenes.Events.PRE_UPDATE, this.tickHitstop, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off(Phaser.Scenes.Events.PRE_UPDATE, this.tickHitstop, this);
       this.hitstop.reset();
       this.unfreeze();
+      // Câmera lenta em andamento não vaza para a cena nova.
+      this.time.timeScale = 1;
+      this.tweens.timeScale = 1;
     });
     this.debugEvents = [];
     this.debugDeaths = [];
@@ -233,6 +260,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.player.onEvent = (ev) => this.debugEvents.push(ev);
     this.player.attackerOf = (ownerId) => this.attackerOf(ownerId);
     this.player.onDefense = (kind, point) => this.onDefense(kind, point);
+    this.lastPlayerHp = this.player.hp;
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
     this.techCaster = new TechCaster(this, this.player, this.energy, this.loadout);
     this.realtimeFx = new FxTimeline();
@@ -317,15 +345,28 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setPlayerStructure(this.player.structureView);
     // FXL-03: a câmera lenta multiplica o `dt` de jogo/efeitos junto com `time`/`tweens`/física do Matter
     // (aplicados em `fxLab.toggleTimeScale`) - um só fator, tudo anda devagar junto.
-    const clamped = Math.min(delta, MAX_FRAME_MS) * (this.fxLab?.timeScale ?? 1);
+    const realDt = Math.min(delta, MAX_FRAME_MS);
+    // Câmera lenta da esquiva perfeita (DOD-07): conta em tempo real e, enquanto dura, o tempo de jogo (física,
+    // tweens, timers e a lógica pelo `dt` abaixo) anda a 30%. O relógio real dos efeitos (`base`) não desacelera.
+    this.slowMo.update(realDt);
+    this.applyTimeScale();
+    const base = realDt * (this.fxLab?.timeScale ?? 1);
+    const clamped = base * this.slowMo.timeScale;
+    this.slowTint.setVisible(this.slowMo.active);
+    if (this.finisherZoomMs > 0) {
+      this.finisherZoomMs -= realDt;
+      if (this.finisherZoomMs <= 0) this.cameras.main.zoomTo(WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, 'Linear', true);
+    }
     // Dois relógios (design): a parte `real` das camadas de efeito (as cinemáticas do Kokusen, T24) anda mesmo
     // congelada; a parte `game` (hoje só `cast.aura`) para no hitstop (TFX-05) — por isso este `update` roda
     // ANTES do retorno adiante, mas com `gameDt` zerado enquanto `frozen`.
-    this.realtimeFx.update(this.frozen ? 0 : clamped, clamped);
+    this.realtimeFx.update(this.frozen ? 0 : clamped, base);
+    // DOD-12: a camada `dodge.slowTint` fica viva enquanto a câmera lenta dura (re-adicionada a cada frame).
+    if (this.slowMo.active) this.realtimeFx.add('dodge.slowTint', 1, 'real');
     // TFX-03/09: a destruição agendada dos objetos de efeito é em tempo real, independe do hitstop.
-    this.fxRegistry.update(clamped);
+    this.fxRegistry.update(base);
     // T24 (TFX-05): negativo/duotom/raios/faíscas/cartão do Kokusen andam com o relógio real, mesmo congelados.
-    this.kokusenFx.update(clamped, this.frozen);
+    this.kokusenFx.update(base, this.frozen);
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
     const dt = clamped;
@@ -335,7 +376,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     } else {
       // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
       const raw = this.controls.read();
-      this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+      const input = acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT;
+      this.player.update(dt, input);
+      // FIN-01/03: `J`+`K` juntos perto de um inimigo quebrado é o finalizador; sem alvo, nada acontece.
+      if (input.bothPressed && !this.player.dead) this.tryFinisher();
+      this.comboCounter.update(dt);
+      // CMB-02: o jogador levar dano zera o combo (a vida caiu neste frame, seja golpe cheio ou o que passa pela guarda).
+      if (this.player.hp < this.lastPlayerHp) this.comboCounter.playerDamaged();
+      this.lastPlayerHp = this.player.hp;
       // DOD-11: enquanto a esquiva está ativa a camada `dodge.trail` fica viva (o rastro em si sai do Player).
       if (this.player.dodgeView.active) this.realtimeFx.add('dodge.trail', 100);
       this.techCaster.update(dt);
@@ -630,6 +678,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const proj of this.projectiles) proj.destroyNow();
     this.projectiles = [];
     this.player.resetForRun();
+    // Edge case: nova run zera o combo e a câmera lenta (estruturas zeram no reset do player e dos inimigos).
+    this.comboCounter.reset();
+    this.slowMo.reset();
+    this.lastPlayerHp = this.player.hp;
     // ECO-14/27: carteira zerada e nenhum pickup/texto flutuante sobrevive à run anterior.
     this.wallet.reset();
     // SHOP-23: `?debug&fragments=N` (inteiro >= 0) começa a run com N fragmentos; inválido é ignorado.
@@ -908,6 +960,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         weapon: e.weapon,
         weaponVisible: e.weaponVisible,
         structure: e.structureView,
+        guarding: e.guarding,
       })),
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),
@@ -942,6 +995,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         callout: this.callout.debug(),
         kokusenCard: this.kokusenFx.cardDebug(),
       },
+      combo: { hits: this.comboCounter.hits, grade: this.comboCounter.grade },
+      timeScale: this.slowMo.timeScale,
       hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
       wallet: { fragments: this.wallet.fragments },
@@ -994,6 +1049,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (hit.ownerId === this.player.id) {
       this.energy.gain(CE.meleeGain);
       if (hit.moveName) this.player.hitLanded();
+      // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
+      this.comboCounter.hit(hit.moveName ?? 'objeto');
     }
   }
 
@@ -1024,7 +1081,60 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.realtimeFx.add('parry.ring', 200);
       this.hitstop.trigger(DEFENSE.parryHitstopMs);
       this.freeze();
+    } else {
+      // Esquiva perfeita (DOD-07): câmera lenta com tom azulado e o "tique" branco no jogador.
+      this.slowMo.trigger();
+      this.player.flash('w', 60);
     }
+  }
+
+  /** Aplica a escala da câmera lenta (e do laboratório de efeitos) ao tempo de jogo: timers, tweens e física. */
+  private applyTimeScale(): void {
+    const scale = this.slowMo.timeScale * (this.fxLab?.timeScale ?? 1);
+    if (this.time.timeScale !== scale) this.time.timeScale = scale;
+    if (this.tweens.timeScale !== scale) this.tweens.timeScale = scale;
+    const timing = this.matter.world.engine.timing;
+    if (timing.timeScale !== scale) timing.timeScale = scale;
+  }
+
+  /**
+   * Finalizador (FIN-01..04): com `J`+`K` a até 40 px de um inimigo comum quebrado (e ainda não finalizado nesta
+   * quebra) o golpe causa 40 de dano, congela 150 ms e a câmera dá zoom 1,7 em 100 ms; sem alvo, nada (FIN-03).
+   */
+  private tryFinisher(): void {
+    const pr = this.player.hurtRect();
+    let target: Enemy | null = null;
+    let best = Infinity;
+    for (const e of this.enemies) {
+      if (!e.finishable) continue;
+      const r = e.hurtRect();
+      const dist = Math.hypot(r.x - pr.x, r.y - pr.y);
+      if (dist <= STRUCTURE.finisherRangePx && dist < best) {
+        target = e;
+        best = dist;
+      }
+    }
+    if (!target) return;
+    const at = target.hurtRect();
+    const dir: 1 | -1 = at.x >= pr.x ? 1 : -1;
+    const hit: Hit = {
+      ownerId: this.player.id,
+      damage: STRUCTURE.finisherDamage,
+      strength: 'heavy',
+      force: 12,
+      direction: { x: dir, y: -0.6 },
+      moveName: FINISHER_MOVE,
+    };
+    this.player.finisherPose(dir);
+    if (!target.receiveHit(hit)) return;
+    target.markFinished();
+    this.debugEvents.push(`finisher:${target.id}`);
+    // Faísca, tremida, energia e combo do golpe comum; depois o congelamento maior do finalizador (o maior vence).
+    this.onConnect(hit, { x: at.x, y: at.y }, 'heavy');
+    this.hitstop.trigger(FINISHER_HITSTOP_MS);
+    this.freeze();
+    this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
+    this.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
   }
 
   /**
@@ -1120,6 +1230,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud = new Hud(this, this.uiLayer, this.controlsLines().join('\n'));
     this.energyHud = new EnergyHud(this, this.uiLayer);
     this.callout = new Callout(this, this.uiLayer);
+    // DOD-12: tom azulado por cima do mundo na câmera lenta, na `uiLayer` (a câmera de UI é a que o desenha).
+    this.slowTint = this.add
+      .rectangle(0, 0, this.scale.width, this.scale.height, SLOWMO_TINT_COLOR, SLOWMO_TINT_ALPHA)
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(90)
+      .setVisible(false);
+    this.uiLayer.add(this.slowTint);
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     // FXL-04: no laboratório a legenda fica sempre visível, não só os primeiros `CONTROLS_MS`.
     this.hud.showControls(this.fxLab ? Number.MAX_SAFE_INTEGER : CONTROLS_MS);
