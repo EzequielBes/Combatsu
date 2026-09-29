@@ -181,20 +181,20 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Janela 149/150 ms; anti-spam 299/300 ms; parry e esquiva no mesmo frame → só parry
-- [ ] GRD-01 conferido: WHILE `U` or `Shift` is held on the ground and no move, dodge or cast is in progress, `player.guard` SHALL be `guard` (or `parry` during the parry window).
-- [ ] GRD-02 conferido: WHEN a regular enemy hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take 0 damage.
-- [ ] GRD-06 conferido: WHEN a boss hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take `round(damage × 0.25)`.
-- [ ] GRD-03 conferido: IF a regular enemy hit reaches the guarding player while the attacker center x is on the side opposite to the player facing THEN the player SHALL take exactly the hit damage.
-- [ ] GRD-04 conferido: IF the hit is marked unblockable THEN the guard SHALL NOT reduce its damage.
-- [ ] GRD-07 conferido: WHEN a hit is blocked by the guard THEN `events` SHALL get exactly one `block`.
-- [ ] PAR-01 conferido: WHEN `U` or `Shift` is pressed and at least 300 ms have passed since the previous press THEN a parry window of 150 ms SHALL open (`player.guard` = `parry`).
-- [ ] PAR-02 conferido: WHEN an enemy or boss hit reaches the player during an open parry window THEN the player SHALL take 0 damage.
-- [ ] PAR-09 conferido: WHEN a hit is parried THEN `events` SHALL get exactly one `parry`.
-- [ ] PAR-04 conferido: IF `U` or `Shift` is pressed less than 300 ms after the previous press THEN no parry window SHALL open.
-- [ ] PAR-05 conferido: IF a regular enemy hit reaches the player after the parry window closed while `U` or `Shift` is still held and the attacker is in front THEN the player SHALL take 0 damage (normal guard, GRD-02).
-- [ ] PAR-06 conferido: WHEN a hit is parried THEN the player structure SHALL NOT increase.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Janela 149/150 ms; anti-spam 299/300 ms; parry e esquiva no mesmo frame → só parry
+- [x] GRD-01 conferido: WHILE `U` or `Shift` is held on the ground and no move, dodge or cast is in progress, `player.guard` SHALL be `guard` (or `parry` during the parry window).
+- [x] GRD-02 conferido: WHEN a regular enemy hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take 0 damage.
+- [x] GRD-06 conferido: WHEN a boss hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take `round(damage × 0.25)`.
+- [x] GRD-03 conferido: IF a regular enemy hit reaches the guarding player while the attacker center x is on the side opposite to the player facing THEN the player SHALL take exactly the hit damage.
+- [x] GRD-04 conferido: IF the hit is marked unblockable THEN the guard SHALL NOT reduce its damage.
+- [x] GRD-07 conferido: WHEN a hit is blocked by the guard THEN `events` SHALL get exactly one `block`.
+- [x] PAR-01 conferido: WHEN `U` or `Shift` is pressed and at least 300 ms have passed since the previous press THEN a parry window of 150 ms SHALL open (`player.guard` = `parry`).
+- [x] PAR-02 conferido: WHEN an enemy or boss hit reaches the player during an open parry window THEN the player SHALL take 0 damage.
+- [x] PAR-09 conferido: WHEN a hit is parried THEN `events` SHALL get exactly one `parry`.
+- [x] PAR-04 conferido: IF `U` or `Shift` is pressed less than 300 ms after the previous press THEN no parry window SHALL open.
+- [x] PAR-05 conferido: IF a regular enemy hit reaches the player after the parry window closed while `U` or `Shift` is still held and the attacker is in front THEN the player SHALL take 0 damage (normal guard, GRD-02).
+- [x] PAR-06 conferido: WHEN a hit is parried THEN the player structure SHALL NOT increase.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

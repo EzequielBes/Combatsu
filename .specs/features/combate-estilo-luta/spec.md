@@ -381,25 +381,25 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | MOV-18 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-14 | P1: Grafo de golpes | Specify | Pending |
 | MOV-15 | P1: Grafo de golpes | Specify | Pending |
-| GRD-01 | P1: Guarda | Specify | Pending |
-| GRD-02 | P1: Guarda | Specify | Pending |
-| GRD-07 | P1: Guarda | Specify | Pending |
-| GRD-06 | P1: Guarda | Specify | Pending |
-| GRD-03 | P1: Guarda | Specify | Pending |
-| GRD-04 | P1: Guarda | Specify | Pending |
+| GRD-01 | P1: Guarda | Specify | Implementing |
+| GRD-02 | P1: Guarda | Specify | Implementing |
+| GRD-07 | P1: Guarda | Specify | Implementing |
+| GRD-06 | P1: Guarda | Specify | Implementing |
+| GRD-03 | P1: Guarda | Specify | Implementing |
+| GRD-04 | P1: Guarda | Specify | Implementing |
 | GRD-05 | P1: Guarda | Specify | Pending |
 | GRD-08 | P1: Guarda | Specify | Pending |
 | GRD-09 | P1: Guarda | Specify | Pending |
-| PAR-01 | P1: Parry | Specify | Pending |
-| PAR-02 | P1: Parry | Specify | Pending |
-| PAR-09 | P1: Parry | Specify | Pending |
+| PAR-01 | P1: Parry | Specify | Implementing |
+| PAR-02 | P1: Parry | Specify | Implementing |
+| PAR-09 | P1: Parry | Specify | Implementing |
 | PAR-03 | P1: Parry | Specify | Pending |
 | PAR-10 | P1: Parry | Specify | Pending |
 | PAR-07 | P1: Parry | Specify | Pending |
 | PAR-08 | P1: Parry | Specify | Pending |
-| PAR-04 | P1: Parry | Specify | Pending |
-| PAR-05 | P1: Parry | Specify | Pending |
-| PAR-06 | P1: Parry | Specify | Pending |
+| PAR-04 | P1: Parry | Specify | Implementing |
+| PAR-05 | P1: Parry | Specify | Implementing |
+| PAR-06 | P1: Parry | Specify | Implementing |
 | PAR-11 | P1: Parry | Specify | Pending |
 | DOD-01 | P1: Esquiva | Specify | Pending |
 | DOD-09 | P1: Esquiva | Specify | Pending |
