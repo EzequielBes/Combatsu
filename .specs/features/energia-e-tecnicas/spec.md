@@ -453,173 +453,173 @@ fx: { live: number; degraded: boolean; layers: string[] };
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CE-01 | P1: Energia e slots | Specify | Implemented |
-| CE-02 | P1: Energia e slots | Specify | Implemented |
-| CE-03 | P1: Energia e slots | Specify | Implemented |
-| CE-04 | P1: Energia e slots | Specify | Implemented |
-| CE-05 | P1: Energia e slots | Specify | Implemented |
-| CE-06 | P1: Energia e slots | Specify | Implemented |
-| CE-07 | P1: Energia e slots | Specify | Implemented |
-| CE-09 | P1: Energia e slots | Specify | Implemented |
-| CE-08 | P1: Energia e slots | Specify | Implemented |
-| TEC-01 | P1: Energia e slots | Specify | Implemented |
-| TEC-02 | P1: Energia e slots | Specify | Implemented |
-| TEC-03 | P1: Energia e slots | Specify | Implemented |
-| TEC-04 | P1: Energia e slots | Specify | Implemented |
-| TEC-13 | P1: Energia e slots | Specify | Implemented |
-| TEC-05 | P1: Energia e slots | Specify | Implemented |
-| TEC-06 | P1: Energia e slots | Specify | Implemented |
-| TEC-14 | P1: Energia e slots | Specify | Implemented |
-| TEC-07 | P1: Energia e slots | Specify | Implemented |
-| TEC-12 | P1: Energia e slots | Specify | Implemented |
-| TEC-09 | P1: Energia e slots | Specify | Implemented |
-| TEC-10 | P1: Energia e slots | Specify | Implemented |
-| TEC-08 | P1: Energia e slots | Specify | Implemented |
-| TEC-11 | P1: Energia e slots | Specify | Implemented |
-| TEC-15 | P1: Energia e slots | Specify | Implemented |
-| TSH-01 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-02 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-03 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-04 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-05 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-06 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-07 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-08 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-09 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-10 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-11 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-12 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-13 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-14 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-15 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-16 | P1: Técnicas na loja | Specify | Implemented |
-| TSH-17 | P1: Técnicas na loja | Specify | Implemented |
-| CAST-01 | P1: Conjuração | Specify | Implemented |
-| CAST-02 | P1: Conjuração | Specify | Implemented |
-| CAST-03 | P1: Conjuração | Specify | Implemented |
-| CAST-04 | P1: Conjuração | Specify | Implemented |
-| CAST-05 | P1: Conjuração | Specify | Implemented |
-| CAST-06 | P1: Conjuração | Specify | Implemented |
-| CAST-07 | P1: Conjuração | Specify | Implemented |
-| CAST-21 | P1: Conjuração | Specify | Implemented |
-| CAST-20 | P1: Conjuração | Specify | Implemented |
-| CAST-08 | P1: Conjuração | Specify | Implemented |
-| CAST-09 | P1: Conjuração | Specify | Implemented |
-| CAST-10 | P1: Conjuração | Specify | Implemented |
-| CAST-11 | P1: Conjuração | Specify | Implemented |
-| CAST-12 | P1: Conjuração | Specify | Implemented |
-| CAST-13 | P1: Conjuração | Specify | Implemented |
-| CAST-14 | P1: Conjuração | Specify | Implemented |
-| CAST-15 | P1: Conjuração | Specify | Implemented |
-| CAST-19 | P1: Conjuração | Specify | Implemented |
-| CAST-16 | P1: Conjuração | Specify | Implemented |
-| CAST-17 | P1: Conjuração | Specify | Implemented |
-| CAST-18 | P1: Conjuração | Specify | Implemented |
-| CAST-22 | P1: Conjuração | Specify | Implemented |
-| DIV-01 | P1: Punho Divergente | Specify | Implemented |
-| DIV-02 | P1: Punho Divergente | Specify | Implemented |
-| DIV-11 | P1: Punho Divergente | Specify | Implemented |
-| DIV-03 | P1: Punho Divergente | Specify | Implemented |
-| DIV-04 | P1: Punho Divergente | Specify | Implemented |
-| DIV-12 | P1: Punho Divergente | Specify | Implemented |
-| DIV-05 | P1: Punho Divergente | Specify | Implemented |
-| DIV-06 | P1: Punho Divergente | Specify | Implemented |
-| DIV-07 | P1: Punho Divergente | Specify | Implemented |
-| DIV-08 | P1: Punho Divergente | Specify | Implemented |
-| DIV-09 | P1: Punho Divergente | Specify | Implemented |
-| DIV-10 | P1: Punho Divergente | Specify | Implemented |
-| KOK-01 | P1: Kokusen | Specify | Implemented |
-| KOK-02 | P1: Kokusen | Specify | Implemented |
-| KOK-03 | P1: Kokusen | Specify | Implemented |
-| KOK-04 | P1: Kokusen | Specify | Implemented |
-| KOK-05 | P1: Kokusen | Specify | Implemented |
-| KOK-06 | P1: Kokusen | Specify | Implemented |
-| KOK-07 | P1: Kokusen | Specify | Implemented |
-| KOK-08 | P1: Kokusen | Specify | Implemented |
-| KOK-09 | P1: Kokusen | Specify | Implemented |
-| KOK-10 | P1: Kokusen | Specify | Implemented |
-| KOK-30 | P1: Kokusen | Specify | Implemented |
-| KOK-11 | P1: Kokusen | Specify | Implemented |
-| KOK-31 | P1: Kokusen | Specify | Implemented |
-| KOK-12 | P1: Kokusen | Specify | Implemented |
-| KOK-32 | P1: Kokusen | Specify | Implemented |
-| KOK-13 | P1: Kokusen | Specify | Implemented |
-| KOK-14 | P1: Kokusen | Specify | Implemented |
-| KOK-15 | P1: Kokusen | Specify | Implemented |
-| KOK-16 | P1: Kokusen | Specify | Implemented |
-| KOK-17 | P1: Kokusen | Specify | Implemented |
-| KOK-18 | P1: Kokusen | Specify | Implemented |
-| KOK-33 | P1: Kokusen | Specify | Implemented |
-| KOK-19 | P1: Kokusen | Specify | Implemented |
-| KOK-20 | P1: Kokusen | Specify | Implemented |
-| KOK-21 | P1: Kokusen | Specify | Implemented |
-| KOK-22 | P1: Kokusen | Specify | Implemented |
-| KOK-23 | P1: Kokusen | Specify | Implemented |
-| KOK-24 | P1: Kokusen | Specify | Implemented |
-| KOK-25 | P1: Kokusen | Specify | Implemented |
-| KOK-26 | P1: Kokusen | Specify | Implemented |
-| KOK-27 | P1: Kokusen | Specify | Implemented |
-| KOK-28 | P1: Kokusen | Specify | Implemented |
-| KOK-29 | P1: Kokusen | Specify | Implemented |
-| KOK-34 | P1: Kokusen | Specify | Implemented |
-| RED-01 | P1: Vermelho | Specify | Implemented |
-| RED-02 | P1: Vermelho | Specify | Implemented |
-| RED-03 | P1: Vermelho | Specify | Implemented |
-| RED-04 | P1: Vermelho | Specify | Implemented |
-| RED-05 | P1: Vermelho | Specify | Implemented |
-| RED-15 | P1: Vermelho | Specify | Implemented |
-| RED-06 | P1: Vermelho | Specify | Implemented |
-| RED-07 | P1: Vermelho | Specify | Implemented |
-| RED-08 | P1: Vermelho | Specify | Implemented |
-| RED-09 | P1: Vermelho | Specify | Implemented |
-| RED-10 | P1: Vermelho | Specify | Implemented |
-| RED-11 | P1: Vermelho | Specify | Implemented |
-| RED-16 | P1: Vermelho | Specify | Implemented |
-| RED-12 | P1: Vermelho | Specify | Implemented |
-| RED-17 | P1: Vermelho | Specify | Implemented |
-| RED-13 | P1: Vermelho | Specify | Implemented |
-| RED-14 | P1: Vermelho | Specify | Implemented |
-| BLU-01 | P2: Azul | Specify | Implemented |
-| BLU-02 | P2: Azul | Specify | Implemented |
-| BLU-03 | P2: Azul | Specify | Implemented |
-| BLU-12 | P2: Azul | Specify | Implemented |
-| BLU-04 | P2: Azul | Specify | Implemented |
-| BLU-05 | P2: Azul | Specify | Implemented |
-| BLU-06 | P2: Azul | Specify | Implemented |
-| BLU-07 | P2: Azul | Specify | Implemented |
-| BLU-11 | P2: Azul | Specify | Implemented |
-| BLU-08 | P2: Azul | Specify | Implemented |
-| BLU-09 | P2: Azul | Specify | Implemented |
-| BLU-10 | P2: Azul | Specify | Implemented |
-| CUT-01 | P2: Desmantelar | Specify | Implemented |
-| CUT-02 | P2: Desmantelar | Specify | Implemented |
-| CUT-03 | P2: Desmantelar | Specify | Implemented |
-| CUT-04 | P2: Desmantelar | Specify | Implemented |
-| CUT-08 | P2: Desmantelar | Specify | Implemented |
-| CUT-05 | P2: Desmantelar | Specify | Implemented |
-| CUT-06 | P2: Desmantelar | Specify | Implemented |
-| FXL-01 | P2: Laboratório de efeitos | Specify | Implemented |
-| FXL-05 | P2: Laboratório de efeitos | Specify | Implemented |
-| FXL-06 | P2: Laboratório de efeitos | Specify | Implemented |
-| FXL-02 | P2: Laboratório de efeitos | Specify | Implemented |
-| FXL-07 | P2: Laboratório de efeitos | Specify | Implemented |
-| FXL-09 | P2: Laboratório de efeitos | Specify | Implemented |
-| FXL-03 | P2: Laboratório de efeitos | Specify | Implemented |
-| FXL-04 | P2: Laboratório de efeitos | Specify | Implemented |
-| FXL-08 | P2: Laboratório de efeitos | Specify | Implemented |
-| TFX-01 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-08 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-02 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-03 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-09 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-04 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-05 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-06 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-10 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-11 | P1: Invariantes dos efeitos | Specify | Implemented |
-| TFX-07 | P1: Invariantes dos efeitos | Specify | Implemented |
+| CE-01 | P1: Energia e slots | Specify | Verified |
+| CE-02 | P1: Energia e slots | Specify | Verified |
+| CE-03 | P1: Energia e slots | Specify | Verified |
+| CE-04 | P1: Energia e slots | Specify | Verified |
+| CE-05 | P1: Energia e slots | Specify | Verified |
+| CE-06 | P1: Energia e slots | Specify | Verified |
+| CE-07 | P1: Energia e slots | Specify | Verified |
+| CE-09 | P1: Energia e slots | Specify | Verified |
+| CE-08 | P1: Energia e slots | Specify | Verified |
+| TEC-01 | P1: Energia e slots | Specify | Verified |
+| TEC-02 | P1: Energia e slots | Specify | Verified |
+| TEC-03 | P1: Energia e slots | Specify | Verified |
+| TEC-04 | P1: Energia e slots | Specify | Verified |
+| TEC-13 | P1: Energia e slots | Specify | Verified |
+| TEC-05 | P1: Energia e slots | Specify | Verified |
+| TEC-06 | P1: Energia e slots | Specify | Verified |
+| TEC-14 | P1: Energia e slots | Specify | Verified |
+| TEC-07 | P1: Energia e slots | Specify | Verified |
+| TEC-12 | P1: Energia e slots | Specify | Verified |
+| TEC-09 | P1: Energia e slots | Specify | Verified |
+| TEC-10 | P1: Energia e slots | Specify | Verified |
+| TEC-08 | P1: Energia e slots | Specify | Verified |
+| TEC-11 | P1: Energia e slots | Specify | Verified |
+| TEC-15 | P1: Energia e slots | Specify | Verified |
+| TSH-01 | P1: Técnicas na loja | Specify | Verified |
+| TSH-02 | P1: Técnicas na loja | Specify | Verified |
+| TSH-03 | P1: Técnicas na loja | Specify | Verified |
+| TSH-04 | P1: Técnicas na loja | Specify | Verified |
+| TSH-05 | P1: Técnicas na loja | Specify | Verified |
+| TSH-06 | P1: Técnicas na loja | Specify | Verified |
+| TSH-07 | P1: Técnicas na loja | Specify | Verified |
+| TSH-08 | P1: Técnicas na loja | Specify | Verified |
+| TSH-09 | P1: Técnicas na loja | Specify | Verified |
+| TSH-10 | P1: Técnicas na loja | Specify | Verified |
+| TSH-11 | P1: Técnicas na loja | Specify | Verified |
+| TSH-12 | P1: Técnicas na loja | Specify | Verified |
+| TSH-13 | P1: Técnicas na loja | Specify | Verified |
+| TSH-14 | P1: Técnicas na loja | Specify | Verified |
+| TSH-15 | P1: Técnicas na loja | Specify | Verified |
+| TSH-16 | P1: Técnicas na loja | Specify | Verified |
+| TSH-17 | P1: Técnicas na loja | Specify | Verified |
+| CAST-01 | P1: Conjuração | Specify | Verified |
+| CAST-02 | P1: Conjuração | Specify | Verified |
+| CAST-03 | P1: Conjuração | Specify | Verified |
+| CAST-04 | P1: Conjuração | Specify | Verified |
+| CAST-05 | P1: Conjuração | Specify | Verified |
+| CAST-06 | P1: Conjuração | Specify | Verified |
+| CAST-07 | P1: Conjuração | Specify | Verified |
+| CAST-21 | P1: Conjuração | Specify | Verified |
+| CAST-20 | P1: Conjuração | Specify | Verified |
+| CAST-08 | P1: Conjuração | Specify | Verified |
+| CAST-09 | P1: Conjuração | Specify | Verified |
+| CAST-10 | P1: Conjuração | Specify | Verified |
+| CAST-11 | P1: Conjuração | Specify | Verified |
+| CAST-12 | P1: Conjuração | Specify | Verified |
+| CAST-13 | P1: Conjuração | Specify | Verified |
+| CAST-14 | P1: Conjuração | Specify | Verified |
+| CAST-15 | P1: Conjuração | Specify | Verified |
+| CAST-19 | P1: Conjuração | Specify | Verified |
+| CAST-16 | P1: Conjuração | Specify | Verified |
+| CAST-17 | P1: Conjuração | Specify | Verified |
+| CAST-18 | P1: Conjuração | Specify | Verified |
+| CAST-22 | P1: Conjuração | Specify | Verified |
+| DIV-01 | P1: Punho Divergente | Specify | Verified |
+| DIV-02 | P1: Punho Divergente | Specify | Verified |
+| DIV-11 | P1: Punho Divergente | Specify | Verified |
+| DIV-03 | P1: Punho Divergente | Specify | Verified |
+| DIV-04 | P1: Punho Divergente | Specify | Verified |
+| DIV-12 | P1: Punho Divergente | Specify | Verified |
+| DIV-05 | P1: Punho Divergente | Specify | Verified |
+| DIV-06 | P1: Punho Divergente | Specify | Verified |
+| DIV-07 | P1: Punho Divergente | Specify | Verified |
+| DIV-08 | P1: Punho Divergente | Specify | Verified |
+| DIV-09 | P1: Punho Divergente | Specify | Verified |
+| DIV-10 | P1: Punho Divergente | Specify | Verified |
+| KOK-01 | P1: Kokusen | Specify | Verified |
+| KOK-02 | P1: Kokusen | Specify | Verified |
+| KOK-03 | P1: Kokusen | Specify | Verified |
+| KOK-04 | P1: Kokusen | Specify | Verified |
+| KOK-05 | P1: Kokusen | Specify | Verified |
+| KOK-06 | P1: Kokusen | Specify | Verified |
+| KOK-07 | P1: Kokusen | Specify | Verified |
+| KOK-08 | P1: Kokusen | Specify | Verified |
+| KOK-09 | P1: Kokusen | Specify | Verified |
+| KOK-10 | P1: Kokusen | Specify | Verified |
+| KOK-30 | P1: Kokusen | Specify | Verified |
+| KOK-11 | P1: Kokusen | Specify | Verified |
+| KOK-31 | P1: Kokusen | Specify | Verified |
+| KOK-12 | P1: Kokusen | Specify | Verified |
+| KOK-32 | P1: Kokusen | Specify | Verified |
+| KOK-13 | P1: Kokusen | Specify | Verified |
+| KOK-14 | P1: Kokusen | Specify | Verified |
+| KOK-15 | P1: Kokusen | Specify | Verified |
+| KOK-16 | P1: Kokusen | Specify | Verified |
+| KOK-17 | P1: Kokusen | Specify | Verified |
+| KOK-18 | P1: Kokusen | Specify | Verified |
+| KOK-33 | P1: Kokusen | Specify | Verified |
+| KOK-19 | P1: Kokusen | Specify | Verified |
+| KOK-20 | P1: Kokusen | Specify | Verified |
+| KOK-21 | P1: Kokusen | Specify | Verified |
+| KOK-22 | P1: Kokusen | Specify | Verified |
+| KOK-23 | P1: Kokusen | Specify | Verified |
+| KOK-24 | P1: Kokusen | Specify | Verified |
+| KOK-25 | P1: Kokusen | Specify | Verified |
+| KOK-26 | P1: Kokusen | Specify | Verified |
+| KOK-27 | P1: Kokusen | Specify | Verified |
+| KOK-28 | P1: Kokusen | Specify | Verified |
+| KOK-29 | P1: Kokusen | Specify | Verified |
+| KOK-34 | P1: Kokusen | Specify | Verified |
+| RED-01 | P1: Vermelho | Specify | Verified |
+| RED-02 | P1: Vermelho | Specify | Verified |
+| RED-03 | P1: Vermelho | Specify | Verified |
+| RED-04 | P1: Vermelho | Specify | Verified |
+| RED-05 | P1: Vermelho | Specify | Verified |
+| RED-15 | P1: Vermelho | Specify | Verified |
+| RED-06 | P1: Vermelho | Specify | Verified |
+| RED-07 | P1: Vermelho | Specify | Verified |
+| RED-08 | P1: Vermelho | Specify | Verified |
+| RED-09 | P1: Vermelho | Specify | Verified |
+| RED-10 | P1: Vermelho | Specify | Verified |
+| RED-11 | P1: Vermelho | Specify | Verified |
+| RED-16 | P1: Vermelho | Specify | Verified |
+| RED-12 | P1: Vermelho | Specify | Verified |
+| RED-17 | P1: Vermelho | Specify | Verified |
+| RED-13 | P1: Vermelho | Specify | Verified |
+| RED-14 | P1: Vermelho | Specify | Verified |
+| BLU-01 | P2: Azul | Specify | Verified |
+| BLU-02 | P2: Azul | Specify | Verified |
+| BLU-03 | P2: Azul | Specify | Verified |
+| BLU-12 | P2: Azul | Specify | Verified |
+| BLU-04 | P2: Azul | Specify | Verified |
+| BLU-05 | P2: Azul | Specify | Verified |
+| BLU-06 | P2: Azul | Specify | Verified |
+| BLU-07 | P2: Azul | Specify | Verified |
+| BLU-11 | P2: Azul | Specify | Verified |
+| BLU-08 | P2: Azul | Specify | Verified |
+| BLU-09 | P2: Azul | Specify | Verified |
+| BLU-10 | P2: Azul | Specify | Verified |
+| CUT-01 | P2: Desmantelar | Specify | Verified |
+| CUT-02 | P2: Desmantelar | Specify | Verified |
+| CUT-03 | P2: Desmantelar | Specify | Verified |
+| CUT-04 | P2: Desmantelar | Specify | Verified |
+| CUT-08 | P2: Desmantelar | Specify | Verified |
+| CUT-05 | P2: Desmantelar | Specify | Verified |
+| CUT-06 | P2: Desmantelar | Specify | Verified |
+| FXL-01 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-05 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-06 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-02 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-07 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-09 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-03 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-04 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-08 | P2: Laboratório de efeitos | Specify | Verified |
+| TFX-01 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-08 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-02 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-03 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-09 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-04 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-05 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-06 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-10 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-11 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-07 | P1: Invariantes dos efeitos | Specify | Verified |
 
-**Coverage:** 165 total, 0 Verified
+**Coverage:** 165 total, 165 Verified (Verifier rodada 2, `validation.md`, PASS; 9 ACs com evidência indireta listados no backlog) ✅
 
 ---
 

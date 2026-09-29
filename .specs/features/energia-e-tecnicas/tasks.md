@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/energia-e-tecnicas/spec.md`
 **Design**: `.specs/features/energia-e-tecnicas/design.md`
-**Status**: Ready
+**Status**: Done (Verifier PASS, rodada 2)
 **Branch**: `feat/energia-e-tecnicas` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS, AD-008)
 **Test count before this feature**: 654
 
