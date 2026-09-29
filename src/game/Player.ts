@@ -3,13 +3,16 @@ import { RUN_THRESHOLD, attackFrame, pickPlayerAnim, type AttackPhase, type Play
 import type { CastState } from '../core/cast';
 import { Filters } from '../core/collision';
 import { ComboTracker, type ComboEvent } from '../core/combo';
-import type { Hit } from '../core/hit';
+import type { Hit, Vec2 } from '../core/hit';
+import { Guard, resolveIncomingHit } from '../core/defense';
+import { Dodge } from '../core/dodge';
 import { Health } from '../core/health';
 import { MotionInput } from '../core/motionInput';
 import { MoveMachine, moveTravelAt, type MoveContext, type MoveEvent } from '../core/moveMachine';
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
-import { CHARGE_MS, type MoveDef } from '../data/moves';
+import { PLAYER_STRUCTURE, Structure } from '../core/structure';
+import { CHARGE_MS, DEFENSE, DODGE, type MoveDef } from '../data/moves';
 import { CAST_FX, type TechId } from '../data/techniques';
 import {
   PLAYER_HEALTH,
@@ -51,6 +54,26 @@ export interface CastPose {
   state: CastState;
 }
 
+/** Quem atacou, para o lado do golpe (GRD-02/03), o tipo (GRD-06) e o efeito do parry no atacante (PAR-03/07/10). */
+export interface Attacker {
+  x: number;
+  isBoss: boolean;
+  parried(): void;
+}
+
+/** Desfecho de defesa avisado à cena (faíscas, hitstop, câmera lenta) no ponto de contato. */
+export type DefenseKind = 'block' | 'parry' | 'perfectDodge';
+
+/** Recuo do bloqueio (GRD-09, px) e a velocidade dele (px/s): 8 px em 100 ms. */
+const BLOCK_PUSH_PX = DEFENSE.blockPushPx;
+const BLOCK_PUSH_MS = 100;
+/** Troca de frame do atordoamento da guarda quebrada (ms). */
+const STUN_FRAME_MS = 120;
+/** Alpha do corpo enquanto a esquiva torna invulnerável. */
+const DODGE_ALPHA = 0.6;
+/** Frame da esquiva pelo tempo que falta de recarga (450 ms desde o início): primeira metade `dodge-0`, depois `dodge-1`. */
+const DODGE_ELAPSED_HALF = (cooldownMs: number): 0 | 1 => (DODGE.cooldownMs - cooldownMs < DODGE.durationMs / 2 ? 0 : 1);
+
 export class Player implements Hittable {
   readonly id = newEntityId();
   readonly team = 'player';
@@ -77,8 +100,19 @@ export class Player implements Hittable {
   private activeElapsedMs = 0;
   private travelDone = { forward: 0, down: 0 };
   private chargeTinted = false;
-  /** Evento de debug do player (`move:<nome>`, ...), entregue à cena. */
+  /** Evento de debug do player (`move:<nome>`, `block`, `parry`, `dodge`, ...), entregue à cena. */
   onEvent: ((name: string) => void) | null = null;
+  /** Quem bateu, por `hit.ownerId` (a cena procura em inimigos, chefe e projéteis). */
+  attackerOf: ((ownerId: number) => Attacker | null) | null = null;
+  /** Bloqueio, parry ou esquiva perfeita aconteceram, no ponto de contato (efeitos ficam com a cena). */
+  onDefense: ((kind: DefenseKind, point: Vec2) => void) | null = null;
+  private guard = new Guard();
+  private readonly dodge = new Dodge();
+  private readonly structure = new Structure(PLAYER_STRUCTURE);
+  /** Recuo do bloqueio em curso (GRD-09). */
+  private blockPush: { dir: 1 | -1; remainingPx: number } | null = null;
+  /** O frame anterior era de dash da esquiva: no seguinte a velocidade zera, sem escorregar além dos 96 px. */
+  private wasDashing = false;
   private readonly propSwing = new ComboTracker([PROP_SWING], 0);
   private readonly hitbox: AttackHitbox;
   private held: Prop | null = null;
@@ -166,10 +200,61 @@ export class Player implements Hittable {
   }
 
   /**
-   * Golpe recebido (HP-01..04): perde vida, fica invulnerável (piscando) e atordoado, com recuo na direção do
-   * golpe. O golpe em andamento é cancelado. Ao zerar, larga o objeto e a tela escurece até o respawn.
+   * Golpe recebido: a única decisão de dano é `resolveIncomingHit` (parry → esquiva → guarda → golpe cheio). Só o
+   * golpe cheio devolve `true` (faísca e hitstop do golpe); parry, esquiva e bloqueio têm feedback próprio.
    */
   receiveHit(hit: Hit): boolean {
+    if (this.health.dead) return false;
+    const attacker = this.attackerOf?.(hit.ownerId) ?? null;
+    // Sem atacante conhecido (golpe de teste), o lado sai da direção do golpe: vindo "de frente" se ela aponta para trás.
+    const attackerX = attacker ? attacker.x : this.sprite.x - Math.sign(hit.direction.x || 1);
+    const inFront = this.facing === 1 ? attackerX >= this.sprite.x : attackerX <= this.sprite.x;
+    const res = resolveIncomingHit({
+      hit,
+      attackerInFront: inFront,
+      isBoss: attacker?.isBoss ?? false,
+      guard: this.guard.state,
+      dodgeInvulnerable: this.dodge.invulnerable,
+    });
+    const awayDir: 1 | -1 = attackerX >= this.sprite.x ? -1 : 1;
+    const point: Vec2 = { x: this.sprite.x - awayDir * 14, y: this.sprite.y - 4 };
+    switch (res.outcome) {
+      case 'parry':
+        this.onEvent?.('parry');
+        attacker?.parried();
+        this.onDefense?.('parry', point);
+        return false;
+      case 'dodged':
+        if (this.dodge.registerIncomingHit()) {
+          this.onEvent?.('perfectDodge');
+          this.onDefense?.('perfectDodge', point);
+        }
+        return false;
+      case 'block':
+        this.onEvent?.('block');
+        this.blockPush = { dir: awayDir, remainingPx: BLOCK_PUSH_PX };
+        this.onDefense?.('block', point);
+        if (this.structure.add(res.playerStructureGain)) this.onGuardBreak();
+        if (res.damage > 0 && this.health.chip(res.damage) === 'died') this.die();
+        return false;
+      default:
+        return this.takeHit(hit);
+    }
+  }
+
+  /** Estrutura cheia (STR-06, STR-11): atordoa e larga o golpe; um `guardBreak:player`. */
+  private onGuardBreak(): void {
+    this.onMove(this.moves.cancel());
+    this.heavyHoldMs = -1;
+    this.onPropSwing(this.propSwing.cancel());
+    this.onEvent?.('guardBreak:player');
+  }
+
+  /**
+   * Dano cheio (HP-01..04): perde vida, fica invulnerável (piscando) e atordoado, com recuo na direção do golpe.
+   * O golpe em andamento é cancelado. Ao zerar, larga o objeto e a tela escurece até o respawn.
+   */
+  private takeHit(hit: Hit): boolean {
     const result = this.health.receive(hit.damage);
     if (result === 'ignored') return false;
     this.onMove(this.moves.cancel());
@@ -185,8 +270,9 @@ export class Player implements Hittable {
 
   update(dtMs: number, input: InputSnapshot): void {
     for (const ev of this.health.update(dtMs)) if (ev === 'respawn') this.respawn();
-    // Atordoado ou morto: sem golpe, sem pegar objeto e sem controle de movimento (HP-03).
-    const stunned = this.health.staggered || this.health.dead;
+    this.structure.update(dtMs);
+    // Atordoado, morto ou com a guarda quebrada (STR-06): sem golpe, sem pegar objeto e sem controle (HP-03).
+    const stunned = this.health.staggered || this.health.dead || this.structure.broken;
     // Conjurando (CAST-12/13): trava golpe, interação e movimento por input igual a um golpe em andamento — o
     // "Selo" da direção de arte trava o player por inteiro, não só o eixo horizontal citado na letra da AC.
     const casting = this.castLock !== null;
@@ -200,11 +286,18 @@ export class Player implements Hittable {
 
     const sensors = { grounded: this.touchesTerrain('below'), ceiling: this.touchesTerrain('above') };
     this.clockMs += dtMs;
-    this.updateStrikes(dtMs, input, sensors.grounded && this.move.vy >= 0, stunned || casting);
+    const onGround = sensors.grounded && this.move.vy >= 0;
+    if (input.dodgePressed && !stunned && !casting) this.tryDodge(input, onGround);
+    const dodging = this.dodge.active;
+    this.updateStrikes(dtMs, input, onGround, stunned || casting || dodging);
     this.onPropSwing(this.propSwing.update(dtMs));
+    // Guarda no chão sem golpe, esquiva nem conjuração (GRD-01); o aperto abre a janela de parry (PAR-01/04).
+    const canGuard = onGround && !this.moves.isMoving && !dodging && !casting && !stunned;
+    if (input.guardPressed) this.guard.press(canGuard);
+    this.guard.update(dtMs, input.guardHeld, canGuard);
 
     const attacking = this.moves.isMoving || this.propSwing.isAttacking;
-    if (input.interactPressed && !attacking && !stunned && !casting) this.interact(input.down);
+    if (input.interactPressed && !attacking && !stunned && !casting && !dodging) this.interact(input.down);
 
     const before = this.move;
     // MOD-06: velocidade de corrida lida de `modifiers` a cada frame, sem cache; CAST-11: gravidade a 30% em
@@ -212,11 +305,14 @@ export class Player implements Hittable {
     const castAirGravity = this.castLock?.state === 'sign' || this.castLock?.state === 'charge';
     const moveTuning = {
       ...PLAYER_MOVE,
-      runSpeed: this.modifiers.runSpeed,
+      // GRD-05: guardando anda a 40% da velocidade de corrida.
+      runSpeed: this.modifiers.runSpeed * (this.guard.state === 'none' ? 1 : DEFENSE.guardSpeedFactor),
       gravity: castAirGravity ? PLAYER_MOVE.gravity * CAST_FX.airGravity : PLAYER_MOVE.gravity,
     };
-    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting);
+    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting || dodging);
     this.applyMoveTravel(dtMs);
+    this.applyDash(dtMs);
+    this.applyBlockPush(dtMs);
     this.kickUpDust(before, sensors.grounded);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
     if (this.health.staggered) this.move = { ...this.move, vx: this.knockDir * PLAYER_KNOCKBACK };
@@ -244,7 +340,7 @@ export class Player implements Hittable {
   private blink(dtMs: number): void {
     if (!this.health.invulnerable) {
       this.blinkMs = 0;
-      this.view.setAlpha(1);
+      this.view.setAlpha(this.dodge.invulnerable ? DODGE_ALPHA : 1);
       return;
     }
     this.blinkMs += dtMs;
@@ -265,7 +361,19 @@ export class Player implements Hittable {
     this.sprite.setPosition(this.spawn.x, this.spawn.y);
     this.sprite.setVelocity(0, 0);
     this.move = initialMoveState();
+    this.resetDefense();
     this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
+  }
+
+  /** Zera guarda, esquiva, estrutura, golpe em curso e recuo (respawn e nova run). */
+  private resetDefense(): void {
+    this.onMove(this.moves.cancel());
+    this.heavyHoldMs = -1;
+    this.guard = new Guard();
+    this.dodge.reset();
+    this.structure.reset();
+    this.blockPush = null;
+    this.wasDashing = false;
   }
 
   /**
@@ -280,6 +388,7 @@ export class Player implements Hittable {
     this.sprite.setPosition(this.spawn.x, this.spawn.y);
     this.sprite.setVelocity(0, 0);
     this.move = initialMoveState();
+    this.resetDefense();
     this.health.reset();
     this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
   }
@@ -346,17 +455,43 @@ export class Player implements Hittable {
 
   /** CAST-09: segurando objeto ou em hitstun (atordoado) impedem conjurar. */
   isBusyForCast(): boolean {
-    return this.held !== null || this.health.staggered;
+    return (
+      this.held !== null ||
+      this.health.staggered ||
+      this.structure.broken ||
+      this.guard.state !== 'none' ||
+      this.dodge.active
+    );
+  }
+
+  /** Guarda para o snapshot (`player.guard`): `parry` = janela aberta. */
+  get guardState(): 'none' | 'guard' | 'parry' {
+    return this.guard.state;
+  }
+
+  /** Estrutura para o snapshot e a barra do HUD (STR-01); `cur` arredondado. */
+  get structureView(): { cur: number; max: number; broken: boolean } {
+    return { cur: Math.round(this.structure.cur), max: this.structure.max, broken: this.structure.broken };
+  }
+
+  /** Esquiva para o snapshot (`player.dodge`). */
+  get dodgeView(): { active: boolean; invulnerable: boolean; cooldownMs: number } {
+    return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.dodge.cooldownMs) };
+  }
+
+  /** Dado ao `applyCounterBonus` da esquiva perfeita (DOD-08), uma vez, no golpe do jogador. */
+  counterDamage(damage: number): number {
+    return this.dodge.applyCounterBonus(damage);
   }
 
   /** Mata o player pelo caminho normal de morte (tecla 3 em `?debug`, RUN-03/04). */
   /** Dano de teste (só debug, tecla 4) pelo caminho normal de golpe. */
   debugHurt(damage: number): void {
-    this.receiveHit({ ownerId: 0, damage, strength: 'light', force: 0, direction: { x: this.facing, y: 0 } });
+    this.takeHit({ ownerId: 0, damage, strength: 'light', force: 0, direction: { x: this.facing, y: 0 } });
   }
 
   debugKill(): void {
-    this.receiveHit({
+    this.takeHit({
       ownerId: 0,
       damage: this.health.max,
       strength: 'heavy',
@@ -389,6 +524,34 @@ export class Player implements Hittable {
       v.setScale(this.facing, 1);
       v.anims.stop();
       v.setFrame(`${this.castLock.id}-${this.castLock.state}`);
+      return;
+    }
+    if (this.structure.broken && !this.health.dead) {
+      // Guarda quebrada (STR-06): cambaleia alternando os dois frames de atordoamento.
+      const v = this.view;
+      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      v.setScale(this.facing, 1);
+      v.anims.stop();
+      v.setFrame(`stunned-${Math.floor(this.clockMs / STUN_FRAME_MS) % 2}`);
+      return;
+    }
+    if (this.dodge.active) {
+      // Esquiva (DOD-01/11): corpo encolhido e rastro de imagens; o segundo frame na metade final do dash.
+      const v = this.view;
+      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      v.setScale(this.facing, 1);
+      v.anims.stop();
+      v.setFrame(`dodge-${DODGE_ELAPSED_HALF(this.dodge.cooldownMs)}`);
+      this.fx.afterimage(v);
+      return;
+    }
+    if (this.guard.state !== 'none' && !this.health.staggered && !this.health.dead && !this.moves.isMoving) {
+      // CTL-09: guarda ou janela de parry mostram o frame `guard`.
+      const v = this.view;
+      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      v.setScale(this.facing, 1);
+      v.anims.stop();
+      v.setFrame('guard');
       return;
     }
     const mv = this.moves.def;
@@ -545,6 +708,42 @@ export class Player implements Hittable {
       } else if (ev.type === 'hitboxOn') this.openHitbox(ev.move);
       else if (ev.type === 'hitboxOff' || ev.type === 'moveEnd') this.hitbox.close();
     }
+  }
+
+  /**
+   * Esquiva (DOD-01, DOD-04..06, DOD-09, DOD-10): no chão, sem golpe nem objeto em andamento, com a recarga zerada.
+   * Um golpe que já acertou pode ser cancelado na recovery pela esquiva, no mesmo frame (DOD-06).
+   */
+  private tryDodge(input: InputSnapshot, onGround: boolean): void {
+    if (!onGround || this.dodge.cooldownMs > 0 || this.propSwing.isAttacking) return;
+    if (this.moves.isMoving && !this.moves.canDodgeCancel) return;
+    const held = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+    if (this.moves.isMoving) this.onMove(this.moves.cancel());
+    this.heavyHoldMs = -1;
+    const started = this.dodge.start({ grounded: onGround, busy: false, held: held as -1 | 0 | 1, facing: this.facing });
+    if (started) this.onEvent?.('dodge');
+  }
+
+  /** Dash da esquiva (DOD-01): velocidade dirigida por frame, e zerada no frame seguinte ao fim (sem escorregar). */
+  private applyDash(dtMs: number): void {
+    const dx = this.dodge.update(dtMs);
+    if (dx !== 0 && dtMs > 0) {
+      this.move = { ...this.move, vx: dx / (dtMs / 1000) };
+      this.wasDashing = true;
+    } else if (this.wasDashing) {
+      this.move = { ...this.move, vx: 0 };
+      this.wasDashing = false;
+    }
+  }
+
+  /** Recuo do bloqueio (GRD-09): 8 px para longe do atacante em 100 ms. */
+  private applyBlockPush(dtMs: number): void {
+    const push = this.blockPush;
+    if (!push || dtMs <= 0) return;
+    const px = Math.min(push.remainingPx, (BLOCK_PUSH_PX * dtMs) / BLOCK_PUSH_MS);
+    this.move = { ...this.move, vx: (push.dir * px) / (dtMs / 1000) };
+    push.remainingPx -= px;
+    if (push.remainingPx <= 0) this.blockPush = null;
   }
 
   /** Voadora (AIR-02): durante o `active` o corpo anda 120 px à frente e 60 px para baixo, com velocidade dirigida. */

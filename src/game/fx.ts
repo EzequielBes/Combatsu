@@ -4,8 +4,11 @@ import { PALETTE, PALETTE_KEYS } from './art/palette';
 import { registerSheet } from './art/render';
 import { TEX } from './textures';
 
-/** Tipo da faísca (FX-03): branca no leve, âmbar no forte, roxa no golpe de objeto. */
-export type SparkKind = 'light' | 'heavy' | 'prop';
+/**
+ * Tipo da faísca (FX-03): branca no leve, âmbar no forte, roxa no golpe de objeto; azul na guarda e estrela branca
+ * com miolo dourado no parry.
+ */
+export type SparkKind = 'light' | 'heavy' | 'prop' | 'guard' | 'parry';
 
 /**
  * Estrela do ponto de contato (9x9 texels): raios no tom base, miolo no tom claro de cada tipo e contorno escuro,
@@ -27,12 +30,16 @@ const STAR_FRAMES: Record<SparkKind, readonly string[]> = {
   light: star('w', 'w'),
   heavy: star('a', 'A'),
   prop: star('u', 'U'),
+  guard: star('c', 'w'),
+  parry: star('w', 'A'),
 };
 /** Pedacinhos que voam da faísca e da poeira (2x2 texels). */
 const BIT_FRAMES: Record<SparkKind | 'dust', readonly string[]> = {
   light: ['ww', 'ww'],
   heavy: ['AA', 'Aa'],
   prop: ['UU', 'Uu'],
+  guard: ['cc', 'cw'],
+  parry: ['ww', 'wA'],
   dust: ['SS', 'Ss'],
 };
 
@@ -40,6 +47,8 @@ const BIT_FRAMES: Record<SparkKind | 'dust', readonly string[]> = {
 const FX_DEPTH = 3;
 /** Quanto tempo (ms) a estrela fica na tela depois do congelamento. */
 const STAR_MS = 110;
+/** Duração (ms) do anel dourado do parry. */
+const RING_MS = 200;
 /** Rastro (FX-05): cor, alpha inicial, tempo para sumir e intervalo mínimo entre cópias (ms). */
 const AFTERIMAGE_COLOR = PALETTE.c;
 const AFTERIMAGE_ALPHA = 0.5;
@@ -74,11 +83,18 @@ export class Fx {
     // Tween pausa junto com o hitstop: a estrela fica acesa durante todo o congelamento e só depois apaga.
     s.tweens.add({ targets: img, alpha: 0, duration: STAR_MS, onComplete: () => img.destroy() });
     this.burst(x, y, kind, {
-      speed: { min: 70, max: kind === 'light' ? 150 : 210 },
+      speed: { min: 70, max: kind === 'light' || kind === 'guard' ? 150 : 210 },
       lifespan: 220,
       gravityY: 300,
-      count: kind === 'light' ? 6 : 10,
+      count: kind === 'light' || kind === 'guard' ? 6 : 10,
     });
+  }
+
+  /** Anel dourado curto que confirma o parry (PAR-11): cresce e some em 200 ms. */
+  parryRing(x: number, y: number): void {
+    const s = this.scene;
+    const ring = s.add.circle(x, y, 6).setStrokeStyle(2, PALETTE.A).setDepth(FX_DEPTH);
+    s.tweens.add({ targets: ring, scale: 3.5, alpha: 0, duration: RING_MS, onComplete: () => ring.destroy() });
   }
 
   /** Poeira nos pés: ao pular, ao pousar e ao virar correndo (FX-04). */

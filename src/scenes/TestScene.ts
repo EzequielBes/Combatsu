@@ -22,6 +22,7 @@ import { Shop, type BuyContext } from '../core/shop';
 import { Wallet } from '../core/wallet';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
+import { DEFENSE } from '../data/moves';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
@@ -59,7 +60,7 @@ import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Pickups } from '../game/Pickups';
-import { Player } from '../game/Player';
+import { Player, type Attacker, type DefenseKind } from '../game/Player';
 import { Prop } from '../game/Prop';
 import { ShopPanel } from '../game/ShopPanel';
 import { TechCaster } from '../game/TechCaster';
@@ -230,6 +231,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
     this.player.onEvent = (ev) => this.debugEvents.push(ev);
+    this.player.attackerOf = (ownerId) => this.attackerOf(ownerId);
+    this.player.onDefense = (kind, point) => this.onDefense(kind, point);
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
     this.techCaster = new TechCaster(this, this.player, this.energy, this.loadout);
     this.realtimeFx = new FxTimeline();
@@ -311,6 +314,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   update(_time: number, delta: number): void {
     // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
+    this.hud.setPlayerStructure(this.player.structureView);
     // FXL-03: a câmera lenta multiplica o `dt` de jogo/efeitos junto com `time`/`tweens`/física do Matter
     // (aplicados em `fxLab.toggleTimeScale`) - um só fator, tudo anda devagar junto.
     const clamped = Math.min(delta, MAX_FRAME_MS) * (this.fxLab?.timeScale ?? 1);
@@ -332,6 +336,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
       const raw = this.controls.read();
       this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+      // DOD-11: enquanto a esquiva está ativa a camada `dodge.trail` fica viva (o rastro em si sai do Player).
+      if (this.player.dodgeView.active) this.realtimeFx.add('dodge.trail', 100);
       this.techCaster.update(dt);
       // FXL-02/KOK-03: a tecla 3 arma o Kokusen sem timing manual - injeta a "tecla apertada de novo" no exato
       // frame em que a janela abre (o `windowOpen` já reflete o começo deste frame, antes do `techRunner.update`).
@@ -884,6 +890,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         flash: this.player.activeFlash,
         maxHp: this.player.maxHp,
         vy: this.player.verticalSpeed,
+        move: this.player.moveName,
+        guard: this.player.guardState,
+        structure: this.player.structureView,
+        dodge: this.player.dodgeView,
       },
       enemies: this.enemies.map((e) => ({
         id: e.id,
@@ -984,6 +994,36 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (hit.ownerId === this.player.id) {
       this.energy.gain(CE.meleeGain);
       if (hit.moveName) this.player.hitLanded();
+    }
+  }
+
+  /** Quem bateu no jogador, para o lado do golpe, o tipo (chefe) e o efeito do parry (PAR-03/07/10). */
+  private attackerOf(ownerId: number): Attacker | null {
+    const enemy = this.enemies.find((e) => e.id === ownerId);
+    if (enemy) return { x: enemy.x, isBoss: false, parried: () => enemy.parried() };
+    const boss = this.boss;
+    if (boss && boss.id === ownerId) return { x: boss.x, isBoss: true, parried: () => boss.parried() };
+    // Projéteis e ondas de choque só existem pelo chefe.
+    const proj = this.projectiles.find((p) => p.id === ownerId);
+    if (proj) return { x: proj.x, isBoss: true, parried: () => undefined };
+    return null;
+  }
+
+  /**
+   * Defesa do jogador (GRD-08, PAR-08, PAR-11): faíscas azuis no bloqueio; no parry flash em estrela, anel dourado
+   * e hitstop de 80 ms. As camadas `game` seguem vivas durante o hitstop, como a estrela do golpe.
+   */
+  private onDefense(kind: DefenseKind, point: Vec2): void {
+    if (kind === 'block') {
+      this.fx.spark(point.x, point.y, 'guard');
+      this.realtimeFx.add('guard.spark', 100);
+    } else if (kind === 'parry') {
+      this.fx.spark(point.x, point.y, 'parry');
+      this.fx.parryRing(point.x, point.y);
+      this.realtimeFx.add('parry.flash', 100);
+      this.realtimeFx.add('parry.ring', 200);
+      this.hitstop.trigger(DEFENSE.parryHitstopMs);
+      this.freeze();
     }
   }
 

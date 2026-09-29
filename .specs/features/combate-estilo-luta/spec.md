@@ -362,7 +362,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | CTL-04 | P1: Controles de luta | Specify | Implementing |
 | CTL-05 | P1: Controles de luta | Specify | Pending |
 | CTL-06 | P1: Controles de luta | Specify | Implementing |
-| CTL-09 | P1: Controles de luta | Specify | Pending |
+| CTL-09 | P1: Controles de luta | Specify | Implementing |
 | MOV-01 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-02 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-03 | P1: Grafo de golpes | Specify | Implementing |
@@ -387,22 +387,22 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | GRD-06 | P1: Guarda | Specify | Implementing |
 | GRD-03 | P1: Guarda | Specify | Implementing |
 | GRD-04 | P1: Guarda | Specify | Implementing |
-| GRD-05 | P1: Guarda | Specify | Pending |
-| GRD-08 | P1: Guarda | Specify | Pending |
-| GRD-09 | P1: Guarda | Specify | Pending |
+| GRD-05 | P1: Guarda | Specify | Implementing |
+| GRD-08 | P1: Guarda | Specify | Implementing |
+| GRD-09 | P1: Guarda | Specify | Implementing |
 | PAR-01 | P1: Parry | Specify | Implementing |
 | PAR-02 | P1: Parry | Specify | Implementing |
 | PAR-09 | P1: Parry | Specify | Implementing |
 | PAR-03 | P1: Parry | Specify | Implementing |
 | PAR-10 | P1: Parry | Specify | Implementing |
-| PAR-07 | P1: Parry | Specify | Pending |
-| PAR-08 | P1: Parry | Specify | Pending |
+| PAR-07 | P1: Parry | Specify | Implementing |
+| PAR-08 | P1: Parry | Specify | Implementing |
 | PAR-04 | P1: Parry | Specify | Implementing |
 | PAR-05 | P1: Parry | Specify | Implementing |
 | PAR-06 | P1: Parry | Specify | Implementing |
-| PAR-11 | P1: Parry | Specify | Pending |
+| PAR-11 | P1: Parry | Specify | Implementing |
 | DOD-01 | P1: Esquiva | Specify | Implementing |
-| DOD-09 | P1: Esquiva | Specify | Pending |
+| DOD-09 | P1: Esquiva | Specify | Implementing |
 | DOD-02 | P1: Esquiva | Specify | Implementing |
 | DOD-03 | P1: Esquiva | Specify | Implementing |
 | DOD-07 | P1: Esquiva | Specify | Implementing |
@@ -410,8 +410,8 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | DOD-04 | P1: Esquiva | Specify | Implementing |
 | DOD-10 | P1: Esquiva | Specify | Implementing |
 | DOD-05 | P1: Esquiva | Specify | Implementing |
-| DOD-06 | P1: Esquiva | Specify | Pending |
-| DOD-11 | P1: Esquiva | Specify | Pending |
+| DOD-06 | P1: Esquiva | Specify | Implementing |
+| DOD-11 | P1: Esquiva | Specify | Implementing |
 | DOD-12 | P1: Esquiva | Specify | Pending |
 | STR-01 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-02 | P1: Estrutura e finalizador | Specify | Implementing |
@@ -421,7 +421,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | STR-05 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-10 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-06 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-11 | P1: Estrutura e finalizador | Specify | Pending |
+| STR-11 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-08 | P1: Estrutura e finalizador | Specify | Implementing |
 | FIN-01 | P1: Estrutura e finalizador | Specify | Pending |
 | FIN-02 | P1: Estrutura e finalizador | Specify | Pending |

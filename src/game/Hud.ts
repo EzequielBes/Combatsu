@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_BREAK_COLOR, STRUCTURE_BAR_FILL_COLOR } from './art/combatColors';
 import { HUD_BAR_WELL } from './art/hud';
 import { ART_SCALE, PALETTE } from './art/palette';
 import { TEX } from './textures';
@@ -57,6 +58,9 @@ export class Hud {
   private readonly bossBarMarks: Phaser.GameObjects.Rectangle[];
   private readonly bossBarName: Phaser.GameObjects.Text;
   private bossBarVisible = false;
+  /** Barra de estrutura do jogador (STR-01), fina, logo abaixo da barra de vida; só aparece com estrutura acumulada. */
+  private readonly structBg: Phaser.GameObjects.Rectangle;
+  private readonly structFill: Phaser.GameObjects.Rectangle;
   /** Contador de fragmentos (ECO-16), abaixo da barra de HP: ícone + número, que pulsa ao mudar. */
   private readonly fragmentIcon: Phaser.GameObjects.Image;
   private readonly fragmentText: Phaser.GameObjects.Text;
@@ -116,6 +120,17 @@ export class Hud {
       .setOrigin(0.5, 1)
       .setVisible(false);
 
+    // Estrutura do jogador: 3 px de altura entre a barra de vida (termina em y=28) e o contador de fragmentos (y=32).
+    const structW = w.w * ART_SCALE;
+    const structY = MARGIN + 17;
+    this.structBg = scene.add
+      .rectangle(barX + w.x * ART_SCALE, structY, structW, 3, STRUCTURE_BAR_BG_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.structFill = scene.add
+      .rectangle(barX + w.x * ART_SCALE, structY, 0, 3, STRUCTURE_BAR_FILL_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
     // Contador de fragmentos (ECO-16), logo abaixo da barra de HP.
     const fragY = MARGIN + 20;
     this.fragmentIcon = scene.add.image(MARGIN, fragY, TEX.fragmentIcon, 'icon').setOrigin(0, 0);
@@ -125,7 +140,7 @@ export class Hud {
 
     const runObjs = [this.roundText, this.remainingText, this.bannerText, this.centerText];
     const bossBarObjs = [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName];
-    const fragmentObjs = [this.fragmentIcon, this.fragmentText, this.heldItemText];
+    const fragmentObjs = [this.fragmentIcon, this.fragmentText, this.heldItemText, this.structBg, this.structFill];
     for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]) {
       obj.setScrollFactor(0).setDepth(100);
     }
@@ -151,6 +166,16 @@ export class Hud {
     this.lastFragments = n;
     this.fragmentText.setScale(1.3);
     this.scene.tweens.add({ targets: this.fragmentText, scale: 1, duration: 150 });
+  }
+
+  /** Barra de estrutura do jogador (STR-01): amarela subindo, branca na quebra; escondida em 0. */
+  setPlayerStructure(s: { cur: number; max: number; broken: boolean }): void {
+    const show = s.cur > 0 || s.broken;
+    this.structBg.setVisible(show);
+    this.structFill
+      .setVisible(show && s.cur > 0)
+      .setSize(Math.round((HUD_BAR_WELL.w * ART_SCALE * s.cur) / s.max), 3)
+      .setFillStyle(s.broken ? STRUCTURE_BAR_BREAK_COLOR : STRUCTURE_BAR_FILL_COLOR);
   }
 
   /** Enche a barra na proporção da vida, em passos de 1 texel (2 px). */

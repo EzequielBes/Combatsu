@@ -46,7 +46,15 @@ export class Projectile {
   ) {
     this.mover = new Mover(x, dir, speed, maxDist);
     this.size = SIZE[kind];
-    this.hit = { ownerId: this.id, damage, strength: 'light', force: HIT_FORCE, direction: { x: dir, y: 0 } };
+    this.hit = {
+      ownerId: this.id,
+      damage,
+      strength: 'light',
+      force: HIT_FORCE,
+      direction: { x: dir, y: 0 },
+      // A onda do pouso do chefe ignora a guarda (GRD-04): só esquivando ou apagando o golpe com parry.
+      unblockable: kind === 'shockwave',
+    };
     this.body = scene.matter.add.rectangle(x, y, this.size.width, this.size.height, {
       isSensor: true,
       collisionFilter: { ...Filters.projectile },

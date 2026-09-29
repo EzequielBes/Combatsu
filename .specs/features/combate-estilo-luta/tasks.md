@@ -464,26 +464,26 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] GRD-01 conferido: WHILE `U` or `Shift` is held on the ground and no move, dodge or cast is in progress, `player.guard` SHALL be `guard` (or `parry` during the parry window).
-- [ ] GRD-02 conferido: WHEN a regular enemy hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take 0 damage.
-- [ ] GRD-07 conferido: WHEN a hit is blocked by the guard THEN `events` SHALL get exactly one `block`.
-- [ ] GRD-05 conferido: WHILE guarding, the player run speed SHALL be 40% of the normal run speed.
-- [ ] GRD-08 conferido: WHEN a hit is blocked THEN `fx.layers` SHALL include `guard.spark` in that frame.
-- [ ] GRD-09 conferido: WHEN a hit is blocked THEN the player SHALL be pushed 8 px (±2 px) away from the attacker.
-- [ ] CTL-09 conferido: WHILE `player.guard` is `guard` or `parry`, the player sprite SHALL show the `guard` frame.
-- [ ] PAR-02 conferido: WHEN an enemy or boss hit reaches the player during an open parry window THEN the player SHALL take 0 damage.
-- [ ] PAR-09 conferido: WHEN a hit is parried THEN `events` SHALL get exactly one `parry`.
-- [ ] PAR-07 conferido: WHEN a boss hit is parried THEN the boss poise SHALL decrease by 30, never below 0.
-- [ ] PAR-08 conferido: WHEN a hit is parried THEN the game SHALL apply a hitstop of 80 ms.
-- [ ] PAR-11 conferido: WHEN a hit is parried THEN `fx.layers` SHALL include `parry.flash` and `parry.ring` in that frame.
-- [ ] DOD-01 conferido: WHEN `Q` is pressed on the ground with no dodge cooldown and no move or cast in progress THEN the player SHALL move 96 px (±4 px) in 200 ms toward the held horizontal direction, or away from the facing direction if none is held.
-- [ ] DOD-09 conferido: WHEN a dodge starts THEN `events` SHALL get exactly one `dodge`.
-- [ ] DOD-06 conferido: WHEN a move that already hit a target is in its recovery and `Q` is pressed with no dodge cooldown THEN the move SHALL end and the dodge SHALL start in that frame.
-- [ ] DOD-11 conferido: WHILE a dodge is active, `fx.layers` SHALL include `dodge.trail`.
-- [ ] STR-03 conferido: WHEN a player hit is blocked by the player guard THEN the player structure SHALL increase by 15 for a regular enemy hit and 25 for a boss hit, capped at 100.
-- [ ] STR-06 conferido: WHEN the player structure reaches 100 THEN the player SHALL be stunned for 800 ms, ignoring input.
-- [ ] STR-11 conferido: WHEN the player structure reaches 100 THEN `events` SHALL get exactly one `guardBreak:player`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] GRD-01 conferido: WHILE `U` or `Shift` is held on the ground and no move, dodge or cast is in progress, `player.guard` SHALL be `guard` (or `parry` during the parry window).
+- [x] GRD-02 conferido: WHEN a regular enemy hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take 0 damage.
+- [x] GRD-07 conferido: WHEN a hit is blocked by the guard THEN `events` SHALL get exactly one `block`.
+- [x] GRD-05 conferido: WHILE guarding, the player run speed SHALL be 40% of the normal run speed.
+- [x] GRD-08 conferido: WHEN a hit is blocked THEN `fx.layers` SHALL include `guard.spark` in that frame.
+- [x] GRD-09 conferido: WHEN a hit is blocked THEN the player SHALL be pushed 8 px (±2 px) away from the attacker.
+- [x] CTL-09 conferido: WHILE `player.guard` is `guard` or `parry`, the player sprite SHALL show the `guard` frame.
+- [x] PAR-02 conferido: WHEN an enemy or boss hit reaches the player during an open parry window THEN the player SHALL take 0 damage.
+- [x] PAR-09 conferido: WHEN a hit is parried THEN `events` SHALL get exactly one `parry`.
+- [x] PAR-07 conferido: WHEN a boss hit is parried THEN the boss poise SHALL decrease by 30, never below 0.
+- [x] PAR-08 conferido: WHEN a hit is parried THEN the game SHALL apply a hitstop of 80 ms.
+- [x] PAR-11 conferido: WHEN a hit is parried THEN `fx.layers` SHALL include `parry.flash` and `parry.ring` in that frame.
+- [x] DOD-01 conferido: WHEN `Q` is pressed on the ground with no dodge cooldown and no move or cast in progress THEN the player SHALL move 96 px (±4 px) in 200 ms toward the held horizontal direction, or away from the facing direction if none is held.
+- [x] DOD-09 conferido: WHEN a dodge starts THEN `events` SHALL get exactly one `dodge`.
+- [x] DOD-06 conferido: WHEN a move that already hit a target is in its recovery and `Q` is pressed with no dodge cooldown THEN the move SHALL end and the dodge SHALL start in that frame.
+- [x] DOD-11 conferido: WHILE a dodge is active, `fx.layers` SHALL include `dodge.trail`.
+- [x] STR-03 conferido: WHEN a player hit is blocked by the player guard THEN the player structure SHALL increase by 15 for a regular enemy hit and 25 for a boss hit, capped at 100.
+- [x] STR-06 conferido: WHEN the player structure reaches 100 THEN the player SHALL be stunned for 800 ms, ignoring input.
+- [x] STR-11 conferido: WHEN the player structure reaches 100 THEN `events` SHALL get exactly one `guardBreak:player`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 5)
 **Gate**: build

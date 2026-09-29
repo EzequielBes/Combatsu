@@ -11,7 +11,23 @@ import type { TechId } from '../data/techniques';
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
   /** `facing` e `flash` (cor do flash em andamento, HEAL-10) servem ao smoke da economia. */
-  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null; maxHp: number; vy: number };
+  player: {
+    x: number;
+    y: number;
+    hp: number;
+    dead: boolean;
+    facing: 1 | -1;
+    flash: string | null;
+    maxHp: number;
+    vy: number;
+    /** Nome do golpe em curso, `null` sem golpe (MOV-18). */
+    move: string | null;
+    /** `parry` = janela de parry aberta (GRD-01, PAR-01). */
+    guard: 'none' | 'guard' | 'parry';
+    /** Estrutura 0..100 arredondada; `broken` = atordoado pela guarda quebrada (STR-01, STR-06). */
+    structure: { cur: number; max: number; broken: boolean };
+    dodge: { active: boolean; invulnerable: boolean; cooldownMs: number };
+  };
   enemies: {
     id: number;
     x: number;
