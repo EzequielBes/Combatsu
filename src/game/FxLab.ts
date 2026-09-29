@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Filters } from '../core/collision';
+import { DummyHealth } from '../core/dummyHealth';
 import type { CursedEnergy } from '../core/energy';
 import type { Hit, Vec2 } from '../core/hit';
 import type { Loadout } from '../core/loadout';
@@ -33,8 +34,7 @@ export class TrainingDummy implements TechTarget {
   readonly team = 'enemy' as const;
   private readonly body: MatterJS.BodyType;
   private readonly view: Phaser.GameObjects.Sprite;
-  private hp = DUMMY_MAX_HP;
-  private regenMsLeft = 0;
+  private readonly health = new DummyHealth(DUMMY_MAX_HP, DUMMY_REGEN_MS);
 
   constructor(scene: Phaser.Scene, spawn: Vec2) {
     const { w, h } = SIZE.enemy;
@@ -75,25 +75,18 @@ export class TrainingDummy implements TechTarget {
   }
 
   receiveHit(hit: Hit): boolean {
-    const wasAlive = this.hp > 0;
-    this.hp = Math.max(0, this.hp - hit.damage);
-    if (wasAlive && this.hp === 0) this.regenMsLeft = DUMMY_REGEN_MS; // FXL-06: 1000 ms até renascer com hp cheio
+    this.health.receive(hit.damage); // FXL-06: ao zerar, 1000 ms até voltar ao hp cheio
     return true;
   }
 
   /** FXL-06: conta os 1000 ms até o hp voltar ao máximo. */
   update(dtMs: number): void {
     this.view.setPosition(this.body.position.x, this.body.position.y + SIZE.enemy.h / 2);
-    if (this.hp > 0) return;
-    this.regenMsLeft -= dtMs;
-    if (this.regenMsLeft <= 0) {
-      this.hp = DUMMY_MAX_HP;
-      this.regenMsLeft = 0;
-    }
+    this.health.update(dtMs);
   }
 
   debug(): { id: number; x: number; y: number; hp: number; maxHp: number } {
-    return { id: this.id, x: this.x, y: this.body.position.y, hp: this.hp, maxHp: DUMMY_MAX_HP };
+    return { id: this.id, x: this.x, y: this.body.position.y, hp: this.health.hp, maxHp: DUMMY_MAX_HP };
   }
 
   destroyNow(): void {
