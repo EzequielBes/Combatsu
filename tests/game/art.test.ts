@@ -12,6 +12,7 @@ import {
   TECH_ICON_OVERLAY_COLOR,
 } from '../../src/game/art/techColors';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
 import { KANJI_FRAMES } from '../../src/game/art/sprites/kanji';
 import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from '../../src/game/art/sprites/techFx';
@@ -682,3 +683,56 @@ describe('molduras das barras de vida (HUD-01/02, ART-01)', () => {
     }
   });
 });
+
+describe('frames dos golpes do chão (MOV-14, T8)', () => {
+  // `jab` já existe em PLAYER_FRAMES (feature anterior); os outros 12 vêm de PLAYER_MOVE_FRAMES (T8).
+  const GROUND_MOVES = [
+    'jab',
+    'direto',
+    'gancho',
+    'cotovelada',
+    'chuteFrontal',
+    'chuteAlto',
+    'joelhada',
+    'chuteGiratorio',
+    'socoBaixo',
+    'rasteira',
+    'ganchoAscendente',
+    'chuteEmpurrao',
+    'chuteCarregado',
+  ] as const;
+  const ALL_FRAMES = { ...PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES };
+  const sheet = parseSheet('player+moves', ALL_FRAMES, PALETTE_KEYS);
+
+  it('passa no parseSheet só com cores da paleta, todo frame 32x24 texels', () => {
+    expect(sheet.width).toBe(PLAYER_FRAME_W);
+    expect(sheet.height).toBe(PLAYER_FRAME_H);
+  });
+
+  it('cada um dos 13 golpes do chão tem os frames wind, hit e recover', () => {
+    for (const move of GROUND_MOVES) {
+      for (const part of ['wind', 'hit', 'recover']) {
+        expect(Object.hasOwn(ALL_FRAMES, `${move}-${part}`), `${move}-${part}`).toBe(true);
+      }
+    }
+  });
+
+  it('os 3 frames de cada golpe são distintos entre si', () => {
+    for (const move of GROUND_MOVES) {
+      const wind = ALL_FRAMES[`${move}-wind`];
+      const hit = ALL_FRAMES[`${move}-hit`];
+      const recover = ALL_FRAMES[`${move}-recover`];
+      expect(wind, `${move}: wind vs hit`).not.toEqual(hit);
+      expect(hit, `${move}: hit vs recover`).not.toEqual(recover);
+      expect(wind, `${move}: wind vs recover`).not.toEqual(recover);
+    }
+  });
+
+  it('nenhum frame novo de PLAYER_MOVE_FRAMES repete um nome já usado por PLAYER_FRAMES ou PLAYER_TECH_FRAMES', () => {
+    for (const key of Object.keys(PLAYER_MOVE_FRAMES)) {
+      expect(Object.hasOwn(PLAYER_FRAMES, key), key).toBe(false);
+      expect(Object.hasOwn(PLAYER_TECH_FRAMES, key), key).toBe(false);
+    }
+  });
+});
+
