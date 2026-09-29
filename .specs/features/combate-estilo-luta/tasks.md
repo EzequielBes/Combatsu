@@ -115,23 +115,23 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Janela 260/261 ms; carregado 399/400 ms; sem golpe em andamento vs com golpe
-- [ ] MOV-02 conferido: WHEN a light press happens with no move in progress on the ground THEN the move `jab` SHALL start.
-- [ ] MOV-03 conferido: WHEN a press matching a follow-up of the current move happens between the start of its recovery and 260 ms after the recovery ends THEN that follow-up SHALL start at the end of the recovery.
-- [ ] MOV-05 conferido: WHEN a heavy press happens with no move in progress on the ground THEN the move `chuteFrontal` SHALL start.
-- [ ] MOV-06 conferido: WHEN a light press happens while `S` is held on the ground with no move in progress THEN `socoBaixo` SHALL start.
-- [ ] MOV-17 conferido: WHEN a heavy press happens while `S` is held on the ground with no move in progress THEN `rasteira` SHALL start.
-- [ ] MOV-07 conferido: WHEN a light press happens while `W` is held on the ground with no move in progress THEN `ganchoAscendente` SHALL start.
-- [ ] MOV-08 conferido: WHEN a heavy press happens while the direction the player faces is held on the ground with no move in progress THEN `chuteEmpurrao` SHALL start.
-- [ ] MOV-09 conferido: WHEN `K` is released after being held for at least 400 ms since its press THEN `chuteCarregado` SHALL start as soon as the current move ends.
-- [ ] MOV-16 conferido: IF `K` is released before 400 ms since its press THEN no `chuteCarregado` SHALL start.
-- [ ] MOV-13 conferido: WHEN a move starts THEN `events` SHALL get exactly one `move:<name>` with its name.
-- [ ] MOV-18 conferido: WHILE a move is in progress, `player.move` SHALL be its name, and `null` while no move is in progress.
-- [ ] AIR-01 conferido: WHEN a light press happens in the air with no move in progress THEN `socoAereo` (7 light) SHALL start.
-- [ ] AIR-02 conferido: WHEN a heavy press happens in the air with no move in progress THEN `voadora` (16 heavy) SHALL start and move the player 120 px (±8 px) forward and down over its active time.
-- [ ] AIR-03 conferido: WHEN a heavy press happens in the air while `S` is held THEN `pisao` (14 heavy) SHALL start and set the player vertical speed to the max fall speed.
-- [ ] AIR-04 conferido: The player SHALL start at most one air move per jump.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Janela 260/261 ms; carregado 399/400 ms; sem golpe em andamento vs com golpe
+- [x] MOV-02 conferido: WHEN a light press happens with no move in progress on the ground THEN the move `jab` SHALL start.
+- [x] MOV-03 conferido: WHEN a press matching a follow-up of the current move happens between the start of its recovery and 260 ms after the recovery ends THEN that follow-up SHALL start at the end of the recovery.
+- [x] MOV-05 conferido: WHEN a heavy press happens with no move in progress on the ground THEN the move `chuteFrontal` SHALL start.
+- [x] MOV-06 conferido: WHEN a light press happens while `S` is held on the ground with no move in progress THEN `socoBaixo` SHALL start.
+- [x] MOV-17 conferido: WHEN a heavy press happens while `S` is held on the ground with no move in progress THEN `rasteira` SHALL start.
+- [x] MOV-07 conferido: WHEN a light press happens while `W` is held on the ground with no move in progress THEN `ganchoAscendente` SHALL start.
+- [x] MOV-08 conferido: WHEN a heavy press happens while the direction the player faces is held on the ground with no move in progress THEN `chuteEmpurrao` SHALL start.
+- [x] MOV-09 conferido: WHEN `K` is released after being held for at least 400 ms since its press THEN `chuteCarregado` SHALL start as soon as the current move ends.
+- [x] MOV-16 conferido: IF `K` is released before 400 ms since its press THEN no `chuteCarregado` SHALL start.
+- [x] MOV-13 conferido: WHEN a move starts THEN `events` SHALL get exactly one `move:<name>` with its name.
+- [x] MOV-18 conferido: WHILE a move is in progress, `player.move` SHALL be its name, and `null` while no move is in progress.
+- [x] AIR-01 conferido: WHEN a light press happens in the air with no move in progress THEN `socoAereo` (7 light) SHALL start.
+- [x] AIR-02 conferido: WHEN a heavy press happens in the air with no move in progress THEN `voadora` (16 heavy) SHALL start and move the player 120 px (±8 px) forward and down over its active time.
+- [x] AIR-03 conferido: WHEN a heavy press happens in the air while `S` is held THEN `pisao` (14 heavy) SHALL start and set the player vertical speed to the max fall speed.
+- [x] AIR-04 conferido: The player SHALL start at most one air move per jump.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
