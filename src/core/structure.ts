@@ -1,0 +1,98 @@
+import { STRUCTURE } from '../data/moves';
+
+export interface StructureTuning {
+  max: number;
+  decayDelayMs: number;
+  decayPerSec: number;
+  stunMs: number;
+}
+
+/** Números da estrutura do inimigo comum (STR-04, STR-05). */
+export const ENEMY_STRUCTURE: StructureTuning = {
+  max: STRUCTURE.max,
+  decayDelayMs: STRUCTURE.enemy.decayDelayMs,
+  decayPerSec: STRUCTURE.enemy.decayPerSec,
+  stunMs: STRUCTURE.enemy.stunMs,
+};
+
+/** Números da estrutura do jogador (STR-06, STR-07). */
+export const PLAYER_STRUCTURE: StructureTuning = {
+  max: STRUCTURE.max,
+  decayDelayMs: STRUCTURE.player.decayDelayMs,
+  decayPerSec: STRUCTURE.player.decayPerSec,
+  stunMs: STRUCTURE.player.stunMs,
+};
+
+/**
+ * Barra de estrutura (postura) de 0 a 100 (STR-01): sobe com `add` até o teto, cai depois de `decayDelayMs` sem
+ * subir, e ao chegar em 100 quebra e atordoa por `stunMs`; ao fim do atordoamento volta a 0 (STR-08).
+ * O tempo é o de jogo, passado em `update`.
+ */
+export class Structure {
+  private _cur = 0;
+  private _broken = false;
+  private sinceGainMs = 0;
+  private stunLeftMs = 0;
+
+  constructor(private readonly tuning: StructureTuning) {}
+
+  get cur(): number {
+    return this._cur;
+  }
+
+  get max(): number {
+    return this.tuning.max;
+  }
+
+  get broken(): boolean {
+    return this._broken;
+  }
+
+  /** Tempo de atordoamento que falta (0 fora da quebra). */
+  get stunRemainingMs(): number {
+    return this._broken ? this.stunLeftMs : 0;
+  }
+
+  /** Soma estrutura com teto. `true` se este ganho quebrou a barra (um `guardBreak` por quebra); ignora se já quebrada. */
+  add(amount: number): boolean {
+    if (this._broken || amount <= 0) return false;
+    this._cur = Math.min(this._cur + amount, this.tuning.max);
+    this.sinceGainMs = 0;
+    if (this._cur >= this.tuning.max) {
+      this._broken = true;
+      this.stunLeftMs = this.tuning.stunMs;
+      return true;
+    }
+    return false;
+  }
+
+  /** Avança o tempo de jogo. `true` no passo em que o atordoamento acaba e a barra volta a 0. */
+  update(dtMs: number): boolean {
+    if (this._broken) {
+      this.stunLeftMs -= dtMs;
+      if (this.stunLeftMs > 0) return false;
+      this._broken = false;
+      this._cur = 0;
+      this.stunLeftMs = 0;
+      this.sinceGainMs = 0;
+      return true;
+    }
+    if (this._cur <= 0) {
+      this.sinceGainMs += dtMs;
+      return false;
+    }
+    const before = Math.max(0, this.sinceGainMs - this.tuning.decayDelayMs);
+    this.sinceGainMs += dtMs;
+    const after = Math.max(0, this.sinceGainMs - this.tuning.decayDelayMs);
+    this._cur = Math.max(0, this._cur - (this.tuning.decayPerSec * (after - before)) / 1000);
+    return false;
+  }
+
+  /** Nova run ou morte: zera. */
+  reset(): void {
+    this._cur = 0;
+    this._broken = false;
+    this.sinceGainMs = 0;
+    this.stunLeftMs = 0;
+  }
+}
