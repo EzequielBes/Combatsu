@@ -51,7 +51,7 @@ export class EnemyBrain {
     return this._state === 'deadRagdoll' || this._state === 'dissolving' || this._state === 'gone';
   }
 
-  receiveHit(hit: Hit): EnemyEvent[] {
+  receiveHit(hit: Hit, opts: { ragdollStunMs?: number } = {}): EnemyEvent[] {
     if (this.isDead) return [];
     this._hp = Math.max(0, this._hp - hit.damage);
     if (this._hp === 0) {
@@ -59,7 +59,7 @@ export class EnemyBrain {
       return [{ type: 'died', hit }, { type: 'ragdoll', hit }];
     }
     if (hit.strength === 'heavy') {
-      this.enter('ragdollStun', this.t.ragdollStunMs);
+      this.enter('ragdollStun', opts.ragdollStunMs ?? this.t.ragdollStunMs);
       return [{ type: 'ragdoll', hit }];
     }
     if (this._state === 'ragdollStun') return [{ type: 'hurtWhileDown', hit }];

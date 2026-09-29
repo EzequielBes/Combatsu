@@ -433,14 +433,14 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] MOV-10 conferido: WHEN `rasteira` hits a regular enemy that survives THEN the enemy SHALL be knocked down for 900 ms.
-- [ ] MOV-11 conferido: WHEN `ganchoAscendente` hits a regular enemy that survives THEN the enemy SHALL receive an upward impulse that lifts its center at least 64 px.
-- [ ] STR-02 conferido: WHEN a regular enemy takes a light hit, a heavy hit, the `chuteCarregado` or the `joelhada` THEN its structure SHALL increase by 4, 10, 40 or 30 (10 + 20), respectively, capped at 100.
-- [ ] STR-05 conferido: WHEN a regular enemy structure reaches 100 THEN it SHALL be broken and stunned (no attack, no movement) for 1500 ms.
-- [ ] STR-10 conferido: WHEN a regular enemy structure reaches 100 THEN `events` SHALL get exactly one `guardBreak:<id>`.
-- [ ] PAR-10 conferido: WHEN a regular enemy hit is parried THEN that enemy SHALL neither attack nor move for 400 ms.
-- [ ] SPC-02 conferido: WHEN `palmaExplosiva` hits a regular enemy that survives THEN it SHALL push the enemy 200 px (±16 px) away.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] MOV-10 conferido: WHEN `rasteira` hits a regular enemy that survives THEN the enemy SHALL be knocked down for 900 ms.
+- [x] MOV-11 conferido: WHEN `ganchoAscendente` hits a regular enemy that survives THEN the enemy SHALL receive an upward impulse that lifts its center at least 64 px.
+- [x] STR-02 conferido: WHEN a regular enemy takes a light hit, a heavy hit, the `chuteCarregado` or the `joelhada` THEN its structure SHALL increase by 4, 10, 40 or 30 (10 + 20), respectively, capped at 100.
+- [x] STR-05 conferido: WHEN a regular enemy structure reaches 100 THEN it SHALL be broken and stunned (no attack, no movement) for 1500 ms.
+- [x] STR-10 conferido: WHEN a regular enemy structure reaches 100 THEN `events` SHALL get exactly one `guardBreak:<id>`.
+- [x] PAR-10 conferido: WHEN a regular enemy hit is parried THEN that enemy SHALL neither attack nor move for 400 ms.
+- [x] SPC-02 conferido: WHEN `palmaExplosiva` hits a regular enemy that survives THEN it SHALL push the enemy 200 px (±16 px) away.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 5)
 **Gate**: build

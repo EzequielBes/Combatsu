@@ -790,6 +790,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       },
       armedRoll,
     );
+    enemy.onEvent = (ev) => this.debugEvents.push(ev);
     this.enemies.push(enemy);
     this.debugEvents.push(`spawnFx:${enemy.id}`);
     this.fx.curseSmoke(spawnAt.x, spawnAt.y);
@@ -896,6 +897,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         chaseSpeed: e.chaseSpeed,
         weapon: e.weapon,
         weaponVisible: e.weaponVisible,
+        structure: e.structureView,
       })),
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),

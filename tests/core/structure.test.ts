@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ENEMY_STRUCTURE, PLAYER_STRUCTURE, Structure } from '../../src/core/structure';
+import { ENEMY_STRUCTURE, PLAYER_STRUCTURE, Structure, enemyStructureGain } from '../../src/core/structure';
 import { MOVES } from '../../src/data/moves';
 
 const enemy = () => new Structure(ENEMY_STRUCTURE);
@@ -215,5 +215,15 @@ describe('STR-05, STR-06, STR-08: quebra, atordoamento e volta a 0', () => {
     s.add(100);
     s.reset();
     expect([s.cur, s.broken]).toEqual([0, false]);
+  });
+});
+
+describe('STR-02: ganho aplicado ao inimigo pelo golpe que acertou', () => {
+  it('golpe do grafo soma o valor dele; sem golpe do grafo, leve soma 4 e forte soma 10', () => {
+    expect(enemyStructureGain({ moveName: 'chuteCarregado', strength: 'heavy' })).toBe(40);
+    expect(enemyStructureGain({ moveName: 'joelhada', strength: 'heavy' })).toBe(30);
+    expect(enemyStructureGain({ moveName: 'jab', strength: 'light' })).toBe(4);
+    expect(enemyStructureGain({ strength: 'light' })).toBe(4);
+    expect(enemyStructureGain({ strength: 'heavy' })).toBe(10);
   });
 });

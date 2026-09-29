@@ -374,8 +374,8 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | MOV-08 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-09 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-16 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-10 | P1: Grafo de golpes | Specify | Pending |
-| MOV-11 | P1: Grafo de golpes | Specify | Pending |
+| MOV-10 | P1: Grafo de golpes | Specify | Implementing |
+| MOV-11 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-12 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-13 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-18 | P1: Grafo de golpes | Specify | Implementing |
@@ -394,7 +394,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | PAR-02 | P1: Parry | Specify | Implementing |
 | PAR-09 | P1: Parry | Specify | Implementing |
 | PAR-03 | P1: Parry | Specify | Implementing |
-| PAR-10 | P1: Parry | Specify | Pending |
+| PAR-10 | P1: Parry | Specify | Implementing |
 | PAR-07 | P1: Parry | Specify | Pending |
 | PAR-08 | P1: Parry | Specify | Pending |
 | PAR-04 | P1: Parry | Specify | Implementing |
@@ -419,7 +419,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | STR-04 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-07 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-05 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-10 | P1: Estrutura e finalizador | Specify | Pending |
+| STR-10 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-06 | P1: Estrutura e finalizador | Specify | Implementing |
 | STR-11 | P1: Estrutura e finalizador | Specify | Pending |
 | STR-08 | P1: Estrutura e finalizador | Specify | Implementing |
@@ -444,7 +444,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | CMB-04 | P2: Contador de combo e nota de estilo | Specify | Pending |
 | CMB-05 | P2: Contador de combo e nota de estilo | Specify | Pending |
 | SPC-01 | P3: Palma explosiva (meia-lua) | Specify | Implementing |
-| SPC-02 | P3: Palma explosiva (meia-lua) | Specify | Pending |
+| SPC-02 | P3: Palma explosiva (meia-lua) | Specify | Implementing |
 
 **Coverage:** 91 total, 0 Verified
 
