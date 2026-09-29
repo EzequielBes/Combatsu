@@ -87,11 +87,11 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] `tests/data/moves.test.ts` confere cada golpe (dano, força, tipo) e cada follow-up contra a spec
-- [ ] MOV-01 conferido: The move graph SHALL be data in `src/data/moves.ts`, where each move has name, damage, strength, force, startup, active and recovery times, hitbox, the input that starts it and the moves that can follow it.
-- [ ] MOV-04 conferido: The ground follow-ups SHALL be: `jab`→J→`direto`→J→`gancho`→J→`cotovelada`; `chuteFrontal`→K→`chuteAlto`; `jab`→K→`joelhada`; `direto`→K→`chuteGiratorio`.
-- [ ] MOV-12 conferido: The damage and strength of each ground move SHALL be: `jab` 6 light, `direto` 7 light, `gancho` 9 light, `cotovelada` 14 heavy, `chuteFrontal` 12 heavy, `chuteAlto` 14 heavy, `joelhada` 12 heavy, `chuteGiratorio` 18 heavy, `socoBaixo` 6 light, `rasteira` 10 heavy, `ganchoAscendente` 10 heavy, `chuteEmpurrao` 12 heavy, `chuteCarregado` 24 heavy.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] `tests/data/moves.test.ts` confere cada golpe (dano, força, tipo) e cada follow-up contra a spec
+- [x] MOV-01 conferido: The move graph SHALL be data in `src/data/moves.ts`, where each move has name, damage, strength, force, startup, active and recovery times, hitbox, the input that starts it and the moves that can follow it.
+- [x] MOV-04 conferido: The ground follow-ups SHALL be: `jab`→J→`direto`→J→`gancho`→J→`cotovelada`; `chuteFrontal`→K→`chuteAlto`; `jab`→K→`joelhada`; `direto`→K→`chuteGiratorio`.
+- [x] MOV-12 conferido: The damage and strength of each ground move SHALL be: `jab` 6 light, `direto` 7 light, `gancho` 9 light, `cotovelada` 14 heavy, `chuteFrontal` 12 heavy, `chuteAlto` 14 heavy, `joelhada` 12 heavy, `chuteGiratorio` 18 heavy, `socoBaixo` 6 light, `rasteira` 10 heavy, `ganchoAscendente` 10 heavy, `chuteEmpurrao` 12 heavy, `chuteCarregado` 24 heavy.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
