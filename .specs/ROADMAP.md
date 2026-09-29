@@ -18,10 +18,10 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F2 | `boss-a-cada-5` | Large | BOSS, BAT, BAI, BHUD, BWIN, BTIER | Done (Verifier PASS, rodada 3) |
 | F3 | `economia-drops-cura` | Large | ECO, HEAL, ARM, ITEM, RAR | Done (Verifier PASS, rodada 2) |
 | F4 | `loja-da-run` | Large | SHOP, MOD | Done (Verifier PASS, rodada 2) |
-| F5 | `energia-e-tecnicas` | Complex | CE, TEC, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Specify feito (148 ACs, Jev em 3 rodadas); Design, Tasks e Execute depois de F4 |
+| F5 | `energia-e-tecnicas` | Complex | CE, TEC, TSH, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Done (Verifier PASS, rodada 2) |
 | F6 | `meta-progressao` | Large | META, SAVE | Planejada |
-| F7 | `moveset-e-voadora` | Complex | MOV, AIR | Planejada |
-| F8 | `combos-estilo-luta` | Complex | CMB, STY | Planejada |
+| F7 | `combate-estilo-luta` | Complex | CTL, MOV, GRD, PAR, DOD, STR, FIN, AIR, EBL, CMB, SPC | Specify feito (84 ACs, Jev em 3 rodadas); absorve a antiga F8 |
+| F8 | ~~`combos-estilo-luta`~~ | — | — | Absorvida pela F7 `combate-estilo-luta` (28/09) |
 | F9 | `tecnicas-avancadas` | Complex | PUR, DOM, CHT | Planejada |
 
 ## Esboço das stories (viram spec.md completa no Specify de cada feature)
@@ -80,3 +80,5 @@ Parte B — Corpo a corpo estilo jogo de luta
 
 - `tests/core/enemyAI.test.ts` só usa o tuning 35/70: um mutante que fixa 70 na perseguição (`src/core/enemyAI.ts:120`) sobrevive. Adicionar um caso com tuning diferente (achado fora de escopo pelo Verifier da F1, rodada 3).
 - `held-item.smoke.mjs` falha de vez em quando no suite completo e passa isolado (F4, 26/09: "pips de 4 para 2: 1"). Provável dependência de tempo real entre `keyboard.press` e `step`; trocar por tecla segurada durante um passo, como em `shop.smoke.mjs`. (`armed` corrigido na F4: a tecla 3 caía na invulnerabilidade.)
+- F5: ACs com evidência só indireta (TEC-11, CAST-12, CAST-13, KOK-26, RED-04, RED-15, TFX-06, TFX-10, TFX-11): implementados, mas nenhum teste lê o valor vivo (validation.md da F5).
+- Smokes: entre o `page.goto` e o 1º `step()` o loop do Phaser roda em rAF real, o que deixa `kokusen`/`heal`/`armed` instáveis sob carga. Dormir o loop no registro da cena quebrou 13 smokes que dependem de tempo real entre `keyboard.down/up`; a correção precisa migrar esses smokes para teclas seguradas durante `step` antes.

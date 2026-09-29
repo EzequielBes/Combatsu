@@ -72,10 +72,25 @@ export class BossBrain {
    */
   receiveHit(hit: Hit): BossEvent[] {
     if (this._state === 'dead' || this._state === 'intro' || this._state === 'roar') return [];
-
-    this.sinceHit = 0;
-    this._hp = Math.max(0, this._hp - hit.damage);
     const poiseDamage = hit.strength === 'heavy' ? hit.damage * 2 : hit.damage;
+    return this.applyDamage(hit.damage, poiseDamage);
+  }
+
+  /**
+   * KOK-06/08/12/32: dano do Kokusen no chefe — mesmas regras de fase/morte/rugido de `receiveHit`, mas a
+   * postura cai por um valor próprio (`poiseDamage`, KOK-08: 3× o dano, não a fórmula 2× de um golpe forte
+   * comum), e nunca é ignorado por intro/rugido invulneráveis (BOSS-08 continua valendo — quem chama decide se
+   * o Kokusen pode acontecer nesse estado; ver o edge case do Punho Divergente contra o chefe em `roar`/`intro`).
+   */
+  receiveKokusen(damage: number, poiseDamage: number): BossEvent[] {
+    if (this._state === 'dead' || this._state === 'intro' || this._state === 'roar') return [];
+    return this.applyDamage(damage, poiseDamage);
+  }
+
+  /** Núcleo comum de `receiveHit`/`receiveKokusen`: hp e postura (nunca abaixo de 0), fase/rugido/morte/stagger. */
+  private applyDamage(damage: number, poiseDamage: number): BossEvent[] {
+    this.sinceHit = 0;
+    this._hp = Math.max(0, this._hp - damage);
     const poiseBefore = this._poise;
     this._poise = Math.max(0, this._poise - poiseDamage);
 

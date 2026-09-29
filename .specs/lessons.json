@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 35,
+  "next_id": 39,
   "lessons": [
     {
       "id": "L-001",
@@ -618,6 +618,78 @@
       ],
       "created": "2026-09-26T19:43:49Z",
       "last_seen": "2026-09-26T19:43:49Z"
+    },
+    {
+      "id": "L-035",
+      "key": "surviving_mutant::when a core rule s live wiring is a single boolean passed into a pure function update e g cursedenergy update dt castinprogress add a smoke assertion for the wired value itself not just a unit test on the pure function a mutant on the wiring line survives 858 unit tests otherwise",
+      "text": "When a core rule's live wiring is a single boolean passed into a pure-function update (e.g. CursedEnergy.update(dt, castInProgress)), add a smoke assertion for the wired value itself, not just a unit test on the pure function - a mutant on the wiring line survives 858 unit tests otherwise.",
+      "signal": "surviving_mutant",
+      "scope": "src/scenes/TestScene.ts",
+      "status": "candidate",
+      "features": [
+        "energia-e-tecnicas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/scenes/TestScene.ts:343 (src/scenes/TestScene.ts)"
+      ],
+      "created": "2026-09-29T00:37:42Z",
+      "last_seen": "2026-09-29T00:37:42Z"
+    },
+    {
+      "id": "L-036",
+      "key": "ac_gap::energy gain side effects wired only inside phaser scene callbacks onconnect ontechconnect need a dedicated smoke assertion on ce cur before after the hit implementation only comments do not substitute for a test",
+      "text": "Energy-gain side effects wired only inside Phaser scene callbacks (onConnect/onTechConnect) need a dedicated smoke assertion on ce.cur before/after the hit - implementation-only comments do not substitute for a test.",
+      "signal": "ac_gap",
+      "scope": "src/scenes/TestScene.ts",
+      "status": "candidate",
+      "features": [
+        "energia-e-tecnicas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CE-06,CE-08 (src/scenes/TestScene.ts)"
+      ],
+      "created": "2026-09-29T00:37:42Z",
+      "last_seen": "2026-09-29T00:37:42Z"
+    },
+    {
+      "id": "L-037",
+      "key": "ac_gap::a gravity scale while casting rule player ts gravity cast fx airgravity needs a smoke case that puts the player airborne during sign charge and reads back vertical velocity position it has no other test surface",
+      "text": "A gravity-scale-while-casting rule (Player.ts gravity * CAST_FX.airGravity) needs a smoke case that puts the player airborne during sign/charge and reads back vertical velocity/position - it has no other test surface.",
+      "signal": "ac_gap",
+      "scope": "src/game/Player.ts",
+      "status": "candidate",
+      "features": [
+        "energia-e-tecnicas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CAST-11 (src/game/Player.ts)"
+      ],
+      "created": "2026-09-29T00:37:43Z",
+      "last_seen": "2026-09-29T00:37:43Z"
+    },
+    {
+      "id": "L-038",
+      "key": "ac_gap::debug lab respawn reset timers training dummy hp 0 then back to max after 1000ms are easy to implement and easy to forget to smoke test end to end the precondition check dummies start full is not the same ac as the respawn behavior",
+      "text": "Debug-lab respawn/reset timers (training dummy hp->0 then back to max after 1000ms) are easy to implement and easy to forget to smoke-test end to end; the precondition check (dummies start full) is not the same AC as the respawn behavior.",
+      "signal": "ac_gap",
+      "scope": "src/game/FxLab.ts",
+      "status": "candidate",
+      "features": [
+        "energia-e-tecnicas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "FXL-06 (src/game/FxLab.ts)"
+      ],
+      "created": "2026-09-29T00:37:43Z",
+      "last_seen": "2026-09-29T00:37:43Z"
     }
   ]
 }

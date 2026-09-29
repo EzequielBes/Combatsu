@@ -1,15 +1,17 @@
 import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
+import type { CastState } from '../core/cast';
 import type { EnemyState } from '../core/enemyBrain';
 import type { ToolKey } from '../core/loot';
 import type { PropState } from '../core/props';
 import type { RunState } from '../core/run';
+import type { TechId } from '../data/techniques';
 
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
   /** `facing` e `flash` (cor do flash em andamento, HEAL-10) servem ao smoke da economia. */
-  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null; maxHp: number };
+  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null; maxHp: number; vy: number };
   enemies: {
     id: number;
     x: number;
@@ -80,6 +82,21 @@ export interface GameSnapshot {
     fragments: string;
     /** Objeto na mão (ITEM-01..03), `null` de mãos vazias. */
     heldItem: { name: string; pips: number; maxPips: number } | null;
+    /** Barra de energia e ícones de slot na `uiLayer` (TEC-11). */
+    techIgnoredByMain: boolean;
+    /** Chamada da conjuração (CAST-16), `null` fora da janela de 900 ms. */
+    callout: { id: TechId; name: string } | null;
+    /** Cartão 黒閃 do Kokusen (KOK-25/26), `null` fora da janela de 800 ms. */
+    kokusenCard: { streak: number } | null;
+    /** Estado vivo da barra de energia e dos ícones de slot (TEC-07/09/10/12). */
+    energy: {
+      width: number;
+      fillWidth: number;
+      /** Offset (px) da marca de custo a partir do início da barra; `null` sem técnica no slot (TEC-12). */
+      marks: (number | null)[];
+      icons: { cooldownOverlayHeight: number; iconHeight: number }[];
+      flashing: boolean;
+    };
   };
   /** Estado do hitstop (BWIN-02). */
   hitstop: { frozen: boolean; remainingMs: number };
@@ -102,6 +119,37 @@ export interface GameSnapshot {
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
   worldProps: { id: number; key: string; state: PropState; x: number; y: number; durabilityLeft: number; rare: boolean; vx: number }[];
+  /** Energia amaldiçoada do player (CE-01..09, TEC-08), lida do estado vivo. */
+  ce: { cur: number; max: number; regen: number };
+  /** Loadout de técnicas e a conjuração ativa (TEC-01..06/08, CAST-*), contrato exato da spec. */
+  tech: {
+    slots: [
+      { id: TechId; level: 1 | 2 | 3; cooldownMs: number } | null,
+      { id: TechId; level: 1 | 2 | 3; cooldownMs: number } | null,
+    ];
+    cast: { slot: 0 | 1; id: TechId; state: CastState; elapsedMs: number } | null;
+  };
+  /** Janela e zona do Kokusen (KOK-01/02/10/11/30/31), lidas do estado vivo. */
+  kokusen: { zone: boolean; zoneMs: number; streak: number; windowOpen: boolean };
+  /** Orbes vivos (RED-14, BLU-*); placeholder `[]` até a Fase 5 criar orbes de verdade. */
+  techObjects: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[];
+  /** Camadas de efeito de técnica vivas (TFX-*), lidas do `FxTimeline`/`FxRegistry` da cena. */
+  fx: { live: number; degraded: boolean; layers: string[] };
+  /**
+   * Desvio da Fase 6 (T29/T30, CAST-15/KOK-24): a spec não tinha um jeito de o smoke ler o zoom da câmera
+   * principal; acrescentado aqui só para o smoke observar o zoom durante a conjuração e o Kokusen.
+   */
+  camera: { zoom: number };
+  /**
+   * Laboratório de efeitos (T28, `?debug&fxlab`), sem contrato prévio na spec: `null` fora do fxlab. Legenda e
+   * rótulo de velocidade exatos (FXL-04/08) e o estado vivo dos bonecos de treino (FXL-05/06).
+   */
+  fxlab: {
+    legend: string;
+    speedLabel: string;
+    timeScale: number;
+    dummies: { id: number; x: number; y: number; hp: number; maxHp: number }[];
+  } | null;
 }
 
 export interface DebugProbe {
@@ -112,6 +160,12 @@ export interface DebugProbe {
 export interface SteppableGame {
   loop: { sleep(): void; now: number };
   headlessStep(time: number, delta: number): void;
+  /**
+   * Passo completo do Phaser (com render), opcional - o game falso dos testes não precisa dele. T31
+   * (`fxlab.smoke.mjs`): `render()` usa isto com `delta=0` para desenhar o quadro atual sem avançar nenhum
+   * relógio, só para a captura de tela sair fiel ao estado vivo (o `headlessStep` normal nunca desenha, FND-22).
+   */
+  step?(time: number, delta: number): void;
 }
 
 const STEP_MS = 1000 / 60;
@@ -146,6 +200,15 @@ export function installDebugApi(game: SteppableGame, target: object, debugOn: bo
         time += STEP_MS;
         game.headlessStep(time, STEP_MS);
       }
+    },
+    /** T31: desenha o quadro atual (delta 0, nenhum relógio anda) para uma captura fiel ao vivo (`page.screenshot`). */
+    render(): void {
+      if (!manual) {
+        game.loop.sleep();
+        manual = true;
+        time = game.loop.now;
+      }
+      game.step?.(time, 0);
     },
   };
   (target as { __game?: typeof api }).__game = api;

@@ -70,10 +70,12 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.shop.selected === 0 && snap.shop.rerollCost === 5, `seleção/reroll iniciais errados: ${JSON.stringify(snap.shop)}`);
 
   // SHOP-21/31: cada carta mostra nome, `Nv`, prévia e custo; só a selecionada tem realce.
+  // F5 (TSH-01/12/16): técnicas também não têm "Nv X/Y" — a prévia delas é "Nova · slot k" ou "Dano ×a → ×b".
+  const TECH_IDS = ['divergente', 'vermelho', 'azul', 'corte'];
   const cards = snap.shop.panel.cards;
   snap.shop.offers.forEach((o, i) => {
     assert(cards[i].lines.includes(String(o.cost)), `SHOP-21: carta ${i} sem o custo ${o.cost}: ${JSON.stringify(cards[i])}`);
-    if (o.id !== 'cura') {
+    if (o.id !== 'cura' && !TECH_IDS.includes(o.id)) {
       assert(cards[i].lines.includes(`Nv ${o.level + 1}/${o.maxLevel}`), `SHOP-21: carta ${i} sem o nível: ${JSON.stringify(cards[i])}`);
     }
   });
@@ -108,8 +110,9 @@ export default async function ({ page, baseUrl, assert }) {
     assert(snap.wallet.fragments === wallet, `SHOP-13: carteira mudou na recusa: ${snap.wallet.fragments}`);
   }
 
-  // SHOP-45/19/41/42/43: compra a primeira oferta de modificador pela tecla do slot.
-  const slot = snap.shop.offers.findIndex((o) => o.id !== 'cura');
+  // SHOP-45/19/41/42/43: compra a primeira oferta de modificador pela tecla do slot (F5: pula técnicas, que têm
+  // seu próprio fluxo de compra e não aparecem em `snap.modifiers`, TSH-06/07).
+  const slot = snap.shop.offers.findIndex((o) => o.id !== 'cura' && !TECH_IDS.includes(o.id));
   const offer = snap.shop.offers[slot];
   const walletBefore = snap.wallet.fragments;
   const levelBefore = snap.modifiers[offer.id];
@@ -228,4 +231,32 @@ export default async function ({ page, baseUrl, assert }) {
     prevFrags.every((id) => snap.pickups.some((p) => p.id === id)),
     `SHOP-47: fragmentos sumiram: ${JSON.stringify(prevFrags)} vs ${JSON.stringify(snap.pickups)}`,
   );
+
+  // F5 (TSH-05/06/14): sem `tech=`, os dois slots começam vazios - o espaço 0 de toda loja é então garantido
+  // como uma técnica (SHOP-08 decide qual). Comprá-la equipa no primeiro slot vazio (slot 1) e gera exatamente
+  // um `techUnlock:<id>`.
+  ({ snap } = await openShop(200));
+  assert(
+    snap.tech.slots[0] === null && snap.tech.slots[1] === null,
+    `pré-condição: loadout deveria estar vazio: ${JSON.stringify(snap.tech.slots)}`,
+  );
+  assert(TECH_IDS.includes(snap.shop.offers[0].id), `TSH-05: espaço 0 deveria ser uma técnica: ${JSON.stringify(snap.shop.offers)}`);
+  const techId = snap.shop.offers[0].id;
+  const techCost = snap.shop.offers[0].cost;
+  const walletBeforeTech = snap.wallet.fragments;
+  snap = await tap('Digit1');
+  assert(
+    snap.events.filter((e) => e === `techUnlock:${techId}`).length === 1,
+    `TSH-14: esperava um techUnlock:${techId}: ${JSON.stringify(snap.events)}`,
+  );
+  assert(
+    snap.events.filter((e) => e === `buy:${techId}:${techCost}`).length === 1,
+    `esperava um buy:${techId}:${techCost}: ${JSON.stringify(snap.events)}`,
+  );
+  assert(
+    snap.tech.slots[0] && snap.tech.slots[0].id === techId && snap.tech.slots[0].level === 1,
+    `TSH-06: ${techId} deveria estar equipada no slot 1, nível 1: ${JSON.stringify(snap.tech.slots)}`,
+  );
+  assert(snap.tech.slots[1] === null, `TSH-06: slot 2 deveria continuar vazio: ${JSON.stringify(snap.tech.slots)}`);
+  assert(snap.wallet.fragments === walletBeforeTech - techCost, `carteira deveria ter descontado ${techCost}: ${snap.wallet.fragments}`);
 }

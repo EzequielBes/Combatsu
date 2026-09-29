@@ -1,7 +1,9 @@
 import type Phaser from 'phaser';
+import type { OfferView, ShopView } from '../core/shop';
+import { TECHNIQUES, type TechId } from '../data/techniques';
 import { PALETTE } from './art/palette';
 import { SHOP_PANEL_COLORS } from './art/shopPanel';
-import type { OfferView, ShopView } from '../core/shop';
+import { TEX } from './textures';
 
 /** Cor da paleta em CSS (`#rrggbb` ou `#rrggbbaa`), para o texto do Phaser, que não aceita número (ART-01). */
 const css = (color: number, alpha = 1): string =>
@@ -44,6 +46,11 @@ const FLASH_MS = 120;
 const FLIP_MS = 75; // + 75 de volta (yoyo) = 150 ms (T11)
 const FLOAT_MS = 400;
 const FLOAT_RISE = 16;
+/** Kanji no topo da carta de técnica (T21 "Direção de feel"). */
+const KANJI_SIZE = 18;
+const KANJI_Y = CARD_TOP - 12;
+/** Ícone voa da carta ao slot do HUD em 300 ms, na 1ª técnica equipada (TSH-06). */
+const FLY_MS = 300;
 
 interface CardObjs {
   border: Phaser.GameObjects.Rectangle;
@@ -57,6 +64,8 @@ interface CardObjs {
   flash: Phaser.GameObjects.Rectangle;
   /** "−N" que sobe do custo e some (T11). */
   costFloat: Phaser.GameObjects.Text;
+  /** Kanji no topo da carta (T21), só visível quando a oferta é uma técnica. */
+  kanji: Phaser.GameObjects.Sprite;
 }
 
 /**
@@ -76,7 +85,7 @@ export class ShopPanel {
 
   constructor(
     private readonly scene: Phaser.Scene,
-    layer: Phaser.GameObjects.Layer,
+    private readonly layer: Phaser.GameObjects.Layer,
   ) {
     const w = scene.scale.width;
     const h = scene.scale.height;
@@ -92,10 +101,14 @@ export class ShopPanel {
       .setOrigin(0.5, 1)
       .setVisible(false);
 
-    const objs: (Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle)[] = [this.bg, this.hint, this.rerollFloat];
-    for (const c of this.cards) objs.push(c.border, c.name, c.level, c.preview, c.cost, c.status, c.flash, c.costFloat);
+    const objs: (Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Sprite)[] = [
+      this.bg,
+      this.hint,
+      this.rerollFloat,
+    ];
+    for (const c of this.cards) objs.push(c.border, c.name, c.level, c.preview, c.cost, c.status, c.flash, c.costFloat, c.kanji);
     for (const o of objs) o.setScrollFactor(0).setDepth(DEPTH);
-    layer.add(objs);
+    this.layer.add(objs);
   }
 
   private buildCard(x: number): CardObjs {
@@ -125,7 +138,12 @@ export class ShopPanel {
       .text(cx, ROW_Y.cost, '', textStyle('12px', SHOP_PANEL_COLORS.textDanger))
       .setOrigin(0.5, 1)
       .setVisible(false);
-    return { border, name, level, preview, cost, status, flash, costFloat };
+    const kanji = this.scene.add
+      .sprite(cx, KANJI_Y, TEX.kanji, 'kuro')
+      .setOrigin(0.5, 0.5)
+      .setDisplaySize(KANJI_SIZE, KANJI_SIZE)
+      .setVisible(false);
+    return { border, name, level, preview, cost, status, flash, costFloat, kanji };
   }
 
   /** Abre a loja: desce em 200 ms (T11) e mostra o painel já com a primeira `view` (SHOP-01). */
@@ -156,6 +174,7 @@ export class ShopPanel {
       c.cost.y = ROW_Y.cost + v;
       c.status.y = ROW_Y.status + v;
       c.flash.y = ROW_Y.border + v;
+      c.kanji.y = KANJI_Y + v;
     }
     this.hint.y = HINT_Y + v;
   }
@@ -196,6 +215,12 @@ export class ShopPanel {
       .setColor(css(PALETTE[dim ? SHOP_PANEL_COLORS.textDanger : SHOP_PANEL_COLORS.text]));
     const alpha = dim ? DIM_ALPHA : 1;
     for (const o of [c.border, c.name, c.level, c.preview, c.cost]) o.setAlpha(alpha);
+    // T21 "Direção de feel": kanji da técnica no topo da carta, só quando a oferta é uma técnica.
+    const techId = offer.id !== null && offer.id in TECHNIQUES ? (offer.id as TechId) : null;
+    c.kanji
+      .setFrame(techId ? TECHNIQUES[techId].kanji : 'kuro')
+      .setAlpha(alpha)
+      .setVisible(showContent && techId !== null);
     // SHOP-31: borda realçada só no slot selecionado; senão, a cor de raridade (comum `g`, raro `U`).
     const borderKey = selected
       ? SHOP_PANEL_COLORS.borderSelected
@@ -217,6 +242,32 @@ export class ShopPanel {
       onComplete: () => c.flash.setVisible(false),
     });
     this.riseAndFade(c.costFloat, `−${cost}`, c.cost.x, ROW_Y.cost + this.offset);
+  }
+
+  /**
+   * T21 "Direção de feel": ícone kanji voa do topo da carta `slot` até `target` (o slot do HUD) em 300 ms, na 1ª
+   * técnica equipada (TSH-06). Um sprite à parte, para não mexer no kanji da própria carta.
+   */
+  flyToSlot(slot: number, kanjiFrame: string, target: { x: number; y: number }): void {
+    const c = this.cards[slot];
+    if (!c) return;
+    const fly = this.scene.add
+      .sprite(c.kanji.x, c.kanji.y, TEX.kanji, kanjiFrame)
+      .setOrigin(0.5, 0.5)
+      .setDisplaySize(KANJI_SIZE, KANJI_SIZE)
+      .setScrollFactor(0)
+      .setDepth(DEPTH + 1);
+    // Precisa estar na `uiLayer` (AD-003): sem isso a câmera de UI o ignora e ele desaparece atrás do fundo da loja.
+    this.layer.add(fly);
+    this.scene.tweens.add({
+      targets: fly,
+      x: target.x,
+      y: target.y,
+      scale: 0.6,
+      duration: FLY_MS,
+      ease: 'Cubic.In',
+      onComplete: () => fly.destroy(),
+    });
   }
 
   /** Reroll pago (T11): as 3 cartas viram de costas e voltam em 150 ms; o custo pago sobe da dica. */
@@ -250,10 +301,11 @@ export class ShopPanel {
     this.bg.setVisible(false);
     this.hint.setVisible(false);
     for (const c of this.cards) {
-      const objs = [c.border, c.name, c.level, c.preview, c.cost, c.status, c.flash, c.costFloat];
+      const objs = [c.border, c.name, c.level, c.preview, c.cost, c.status, c.flash, c.costFloat, c.kanji];
       this.scene.tweens.killTweensOf(objs);
       for (const o of objs) o.setVisible(false);
       for (const o of [c.border, c.name, c.level, c.preview, c.cost]) o.setAlpha(1).setScale(1);
+      c.kanji.setAlpha(1); // sem `setScale(1)`: desfaria o `setDisplaySize` do construtor (T21).
     }
     this.scene.tweens.killTweensOf(this.rerollFloat);
     this.rerollFloat.setVisible(false);

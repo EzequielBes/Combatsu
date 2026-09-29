@@ -4,9 +4,14 @@ import { bossSpecFor } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
+import type { CastState } from '../core/cast';
+import { CursedEnergy } from '../core/energy';
+import { FxRegistry } from '../core/fxRegistry';
+import { FxTimeline } from '../core/fxTimeline';
 import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
+import { Loadout } from '../core/loadout';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
 import type { PickupPlayer } from '../core/pickup';
@@ -19,7 +24,8 @@ import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
-import { SHOP_CATALOG, type ModifierId } from '../data/shop';
+import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
+import { CAST_FX, CE, TECHNIQUES, type TechId } from '../data/techniques';
 import {
   ARMED,
   BOSS,
@@ -44,7 +50,9 @@ import { Projectile } from '../game/Projectile';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { registerDebugProbe, type DebugProbe, type GameSnapshot } from '../game/debugApi';
 import { Enemy } from '../game/Enemy';
+import { EnergyHud } from '../game/EnergyHud';
 import { Fx, type SparkKind } from '../game/fx';
+import { FxLab } from '../game/FxLab';
 import { GAME_NAME, Hud } from '../game/Hud';
 import type { InputSnapshot } from '../game/input';
 import { PlayerInput, ShopInput } from '../game/input';
@@ -54,6 +62,11 @@ import { Pickups } from '../game/Pickups';
 import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
 import { ShopPanel } from '../game/ShopPanel';
+import { TechCaster } from '../game/TechCaster';
+import { TechRunner, type TechTarget } from '../game/TechRunner';
+import { Aura } from '../game/techFx/Aura';
+import { Callout } from '../game/techFx/Callout';
+import { KokusenFx } from '../game/techFx/KokusenFx';
 import { TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
@@ -107,13 +120,40 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private uiLayer!: Phaser.GameObjects.Layer;
   private fx!: Fx;
   private hud!: Hud;
+  /** Barra de energia e slots de técnica (TEC-07..12), na `uiLayer`. */
+  private energyHud!: EnergyHud;
   private run!: Run;
   /** Carteira de fragmentos da run (ECO-12..14) e os sorteios de drop, criados a cada `startRun` com o `lootRng`. */
   private wallet!: Wallet;
   /** Níveis de modificador da run (MOD-01..09): lidos na hora por Player/Pickups/Loot; zerados a cada `startRun`. */
   private modifiers!: Modifiers;
+  /** Energia amaldiçoada do player (CE-01..09), zerada a cada `startRun`. */
+  private energy!: CursedEnergy;
+  /** Slots de técnica (TEC-01..06), vazios a cada `startRun` (ou `?debug&tech=`, TEC-02). */
+  private loadout!: Loadout;
+  /** Conjuração de técnicas (CAST-*), dona da `CastMachine` e dos ganchos do `Player`. */
+  private techCaster!: TechCaster;
+  /** Executa a técnica na soltura (T22+: Punho Divergente/Kokusen), dona da hitbox e das camadas próprias dela. */
+  private techRunner!: TechRunner;
+  /** T28 (`?debug&fxlab`): laboratório de efeitos, `null` fora dele. */
+  private fxLab: FxLab | null = null;
+  /**
+   * Camadas de efeito de técnica (design "Dois relógios"): `game` para (hoje) `cast.aura`, `real` para as
+   * cinemáticas do Kokusen (T24), que a Fase 6 confere continuarem andando durante o hitstop (TFX-05).
+   */
+  private realtimeFx!: FxTimeline;
+  /** Objetos de efeito de técnica vivos (TFX-03/09); `fx.live` do snapshot é `fxRegistry.size`. */
+  private fxRegistry!: FxRegistry;
+  private aura!: Aura;
+  private callout!: Callout;
+  /** Cinema do Kokusen (T24): negativo/duotom/raios/faíscas/zoom/cartão, tudo em tempo real (TFX-05). */
+  private kokusenFx!: KokusenFx;
+  /** Último estado de conjuração visto (CAST-15/19): dispara o zoom da câmera só na troca de estado. */
+  private lastCastState: CastState | null = null;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
   private shop: Shop | null = null;
+  /** 1ª técnica equipada nesta compra (TSH-06), para o ícone voar da carta ao slot (T21); `null` fora disso. */
+  private pendingTechEquip: { id: TechId; slot: 0 | 1 } | null = null;
   /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
   private shopPanel!: ShopPanel;
   private loot!: Loot;
@@ -166,6 +206,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.wasPlayerDead = false;
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
     this.modifiers = new Modifiers();
+    // F5: uma instância por cena, zeradas a cada `startRun` (CE-01, TEC-01).
+    this.energy = new CursedEnergy();
+    this.loadout = new Loadout();
 
     this.props = [];
     for (const s of this.level.props) {
@@ -180,6 +223,37 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
+    this.techCaster = new TechCaster(this, this.player, this.energy, this.loadout);
+    this.realtimeFx = new FxTimeline();
+    this.fxRegistry = new FxRegistry();
+    this.aura = new Aura(this, this.realtimeFx, this.fxRegistry);
+    // T24: cartão/raios/faíscas/zoom do Kokusen, na `uiLayer` (o cartão é HUD) + câmera/mundo (raios, faíscas).
+    this.kokusenFx = new KokusenFx(this, this.realtimeFx, this.fxRegistry, this.uiLayer);
+    // T22+: dono da hitbox do Punho Divergente/Kokusen e das camadas de fx próprias delas (eco, anel, estouro...).
+    this.techRunner = new TechRunner(
+      this,
+      this.player,
+      this.loadout,
+      this.energy,
+      this.realtimeFx,
+      this.fxRegistry,
+      this.uiLayer,
+      this.terrain,
+      (hit, point) => this.onTechConnect(hit, point),
+      (ms) => {
+        this.hitstop.trigger(ms);
+        this.freeze();
+      },
+      (target, point, facing, streak) => this.kokusenFx.trigger(target, point, facing, streak),
+    );
+
+    // T28: laboratório de efeitos (`?debug&fxlab`) - bonecos de treino + teclas 1-6/0, sem ondas (FXL-01).
+    if (debugParam('fxlab') !== null) {
+      this.fxLab = new FxLab(this, this.player, this.loadout, this.energy, this.techCaster);
+      this.fxLab.spawnDummies({ x: p.x, y: p.y - SPAWN_LIFT });
+      const lab = this.fxLab;
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => lab.destroyNow());
+    }
 
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
     this.wallet = new Wallet();
@@ -202,11 +276,21 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     bindDebugToggle(this);
     // Na loja, 1/2/3 compram (SHOP-45) e nunca disparam as teclas de debug.
     const debugKeys = (): boolean => isDebug() && this.run.state !== 'shop';
-    this.onKey('ONE', () => debugKeys() && this.debugHit('light'));
-    this.onKey('TWO', () => debugKeys() && this.debugHit('heavy'));
-    this.onKey('THREE', () => debugKeys() && this.player.debugKill());
+    // T28: no fxlab as teclas 1-4 (e as novas 5/6/0) são só do laboratório - nunca golpe leve/forte, matar ou
+    // machucar o player (essas continuam fora do fxlab, como sempre foram).
+    this.onKey('ONE', () => (this.fxLab ? debugKeys() && this.fxLab.pressKey(1) : debugKeys() && this.debugHit('light')));
+    this.onKey('TWO', () => (this.fxLab ? debugKeys() && this.fxLab.pressKey(2) : debugKeys() && this.debugHit('heavy')));
+    this.onKey('THREE', () => (this.fxLab ? debugKeys() && this.fxLab.pressKey(3) : debugKeys() && this.player.debugKill()));
     // Tecla 4 (só debug): 50 de dano no player, para o smoke medir a cura da vitória abaixo do teto (BWIN-01).
-    this.onKey('FOUR', () => debugKeys() && this.player.debugHurt(50));
+    this.onKey('FOUR', () => (this.fxLab ? debugKeys() && this.fxLab.pressKey(4) : debugKeys() && this.player.debugHurt(50)));
+    this.onKey('FIVE', () => debugKeys() && this.fxLab?.pressKey(5));
+    this.onKey('SIX', () => debugKeys() && this.fxLab?.pressKey(6));
+    // FXL-03: tecla 0 alterna a câmera lenta; refaz o texto do painel para o rótulo de velocidade (FXL-08).
+    this.onKey('ZERO', () => {
+      if (!debugKeys() || !this.fxLab) return;
+      this.fxLab.toggleTimeScale();
+      this.refreshControlsText();
+    });
     this.onKey('H', () => isDebug() && this.toggleDebugDraw());
     // Fora da loja, R reinicia a cena; dentro dela é reroll (SHOP-16), lido por `ShopInput` no `update`.
     this.onKey('R', () => {
@@ -219,9 +303,20 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   update(_time: number, delta: number): void {
     // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
+    // FXL-03: a câmera lenta multiplica o `dt` de jogo/efeitos junto com `time`/`tweens`/física do Matter
+    // (aplicados em `fxLab.toggleTimeScale`) - um só fator, tudo anda devagar junto.
+    const clamped = Math.min(delta, MAX_FRAME_MS) * (this.fxLab?.timeScale ?? 1);
+    // Dois relógios (design): a parte `real` das camadas de efeito (as cinemáticas do Kokusen, T24) anda mesmo
+    // congelada; a parte `game` (hoje só `cast.aura`) para no hitstop (TFX-05) — por isso este `update` roda
+    // ANTES do retorno adiante, mas com `gameDt` zerado enquanto `frozen`.
+    this.realtimeFx.update(this.frozen ? 0 : clamped, clamped);
+    // TFX-03/09: a destruição agendada dos objetos de efeito é em tempo real, independe do hitstop.
+    this.fxRegistry.update(clamped);
+    // T24 (TFX-05): negativo/duotom/raios/faíscas/cartão do Kokusen andam com o relógio real, mesmo congelados.
+    this.kokusenFx.update(clamped, this.frozen);
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
-    const dt = Math.min(delta, MAX_FRAME_MS);
+    const dt = clamped;
     // SHOP-33: na loja, nada de gameplay anda; só o input da loja, `run.update`, o painel e o HUD.
     if (this.run.state === 'shop') {
       this.updateShop();
@@ -229,6 +324,41 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
       const raw = this.controls.read();
       this.player.update(dt, acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT);
+      this.techCaster.update(dt);
+      // FXL-02/KOK-03: a tecla 3 arma o Kokusen sem timing manual - injeta a "tecla apertada de novo" no exato
+      // frame em que a janela abre (o `windowOpen` já reflete o começo deste frame, antes do `techRunner.update`).
+      if (this.fxLab?.consumeKokusenAutoPress(this.techRunner.kokusenSnapshot.windowOpen)) this.techCaster.forcePress(0);
+      this.debugEvents.push(...this.techCaster.events);
+      // T28: no laboratório, o Vermelho/Azul/Desmantelar também miram os bonecos de treino, não só os inimigos.
+      const techTargets: readonly TechTarget[] = this.fxLab ? [...this.enemies, ...this.fxLab.dummies] : this.enemies;
+      // T22+: executa a técnica a partir do estado de conjuração, dos eventos deste frame e do slot apertado (Kokusen).
+      this.techRunner.update(dt, this.techCaster.cast, this.techCaster.events, this.techCaster.slotPressed, techTargets, this.boss);
+      this.debugEvents.push(...this.techRunner.events);
+      // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
+      if (this.techCaster.events.includes('techDenied:energy')) this.energyHud.flashDenied();
+      // TSH-10/11: níveis de `energia`/`fluxo` lidos na hora, sem cache (mesmo padrão de `modifiers.runSpeed`).
+      this.energy.setLevels(this.modifiers.level('energia'), this.modifiers.level('fluxo'));
+      this.loadout.tick(dt);
+      // CE-04/05: sem regen enquanto há uma conjuração em andamento.
+      this.energy.update(dt, this.techCaster.cast !== null);
+      // FXL-07/09: no laboratório a energia fica sempre no teto e a recarga do slot 0 sempre zerada - nenhuma
+      // técnica de teste gasta ou deixa recarga pendente, mesmo enquanto uma conjuração está no meio do caminho.
+      if (this.fxLab) {
+        this.energy.gain(this.energy.max);
+        this.loadout.clearCooldown(0);
+        this.loadout.clearCooldown(1);
+      }
+      this.fxLab?.update(dt);
+      // CAST-14: aura por técnica em sign/charge, sobre o corpo do player; tecla 1 do fxlab mostra só a aura.
+      this.aura.update(dt, this.techCaster.cast ?? this.fxLab?.auraDemoCast() ?? null, this.player.sprite.x, this.player.sprite.y);
+      // KOK-27: aura preta com faíscas vermelhas no player enquanto a zona do Kokusen está ativa.
+      this.kokusenFx.zoneAura(dt, this.techRunner.kokusenSnapshot.zone, this.player.sprite.x, this.player.sprite.y);
+      // CAST-16: a chamada aparece exatamente no frame em que a soltura começa (`techCast:<id>`).
+      for (const ev of this.techCaster.events) {
+        if (ev.startsWith('techCast:')) this.callout.show(ev.slice('techCast:'.length) as TechId);
+      }
+      this.callout.update(dt);
+      this.updateCastZoom();
       this.updatePickups(dt);
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
@@ -256,9 +386,31 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     }
     for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
-    this.hud.setRun(this.run.round > 0 ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
+    // T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner interno da `Run` segue contando como se
+    // tivesse nascido - sem isso "Inimigos: N" mentiria na tela do laboratório.
+    this.hud.setRun(this.run.round > 0 && !this.fxLab ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
+    this.energyHud.update(dt, this.energy, this.loadout);
+  }
+
+  /**
+   * Zoom da câmera principal na conjuração (CAST-15/19): dispara só na troca de estado, nunca a cada frame — a
+   * carga anima até 1,6 ao longo do `chargeMs` da técnica, e a soltura (ou um cancelamento em `sign`/`charge`,
+   * CAST-07) devolve o zoom base em 250 ms.
+   */
+  private updateCastZoom(): void {
+    const state = this.techCaster.cast?.state ?? null;
+    if (state === this.lastCastState) return;
+    const cam = this.cameras.main;
+    if (state === 'charge' && this.techCaster.cast) {
+      cam.zoomTo(CAST_FX.zoomCharge, Math.max(1, TECHNIQUES[this.techCaster.cast.id].chargeMs), 'Linear', true);
+    } else if (state === 'release') {
+      cam.zoomTo(CAST_FX.zoomBase, CAST_FX.zoomBackMs, 'Linear', true);
+    } else if (state === null && (this.lastCastState === 'sign' || this.lastCastState === 'charge')) {
+      cam.zoomTo(CAST_FX.zoomBase, CAST_FX.zoomBackMs, 'Linear', true);
+    }
+    this.lastCastState = state;
   }
 
   /**
@@ -284,6 +436,18 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       },
       // SHOP-12/MOD-11: cura (consumível) e o +15 de HP da compra de `vida` passam pelo mesmo `heal` com teto.
       healPlayer: (amount) => this.player.heal(amount),
+      // TSH-06/07: equipa no primeiro slot vazio (não equipada) ou sobe 1 nível (já equipada); TSH-14: exatamente
+      // um `techUnlock:<id>` quando os dois slots estavam vazios antes desta compra.
+      applyTechnique: (id) => {
+        const bothEmptyBefore = !this.loadout.hasAny();
+        if (this.loadout.levelOf(id) > 0) {
+          this.loadout.upgrade(id);
+        } else {
+          const slot = this.loadout.firstEmpty();
+          if (slot !== null && this.loadout.equip(slot, id, 1)) this.pendingTechEquip = { id, slot };
+        }
+        if (bothEmptyBefore) this.debugEvents.push(`techUnlock:${id}`);
+      },
     };
     if (input.buySlot !== null) this.resolveBuy(shop, input.buySlot, ctx);
     else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);
@@ -300,11 +464,20 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Traduz o `BuyResult` tipado do `Shop` num evento de debug (design "Error Handling Strategy"). */
   private resolveBuy(shop: Shop, slot: number, ctx: BuyContext): void {
     const offerId = shop.view(ctx.wallet, ctx.hp, ctx.maxHp).offers[slot]?.id ?? null;
+    this.pendingTechEquip = null;
     const result = shop.buy(slot, ctx);
+    // `shop.buy` pode ter escrito em `pendingTechEquip` de dentro de `ctx.applyTechnique` (outro método): o TS não
+    // enxerga essa escrita através da chamada e estreitaria a leitura para o `null` de cima sem este cast.
+    const equipped = this.pendingTechEquip as { id: TechId; slot: 0 | 1 } | null;
     if (result.ok) {
       this.debugEvents.push(`buy:${result.id}:${result.cost}`);
       // T11: carta pisca branco e o custo pago sobe em "−N".
       this.shopPanel.flashBuy(slot, result.cost);
+      // Direção de feel (T21): 1ª técnica equipada faz o ícone voar da carta ao slot do HUD em 300 ms.
+      if (equipped) {
+        const kanji = TECHNIQUES[equipped.id].kanji;
+        this.shopPanel.flyToSlot(slot, kanji, this.energyHud.slotIconPosition(equipped.slot));
+      }
     } else if (result.reason === 'funds' && offerId) this.debugEvents.push(`buyRefused:${offerId}:funds`);
     else if (result.reason === 'fullHp') this.debugEvents.push('buyRefused:cura:fullHp');
   }
@@ -316,11 +489,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     else this.debugEvents.push('rerollRefused');
   }
 
-  /** Abre a loja (SHOP-01): varre os fragmentos vivos para a carteira e pausa o Matter (SHOP-05/33/36/37). */
+  /**
+   * Abre a loja (SHOP-01): varre os fragmentos vivos para a carteira e pausa o Matter (SHOP-05/33/36/37).
+   * `FULL_SHOP_CATALOG` (F5) inclui as técnicas e `energia`/`fluxo`; o `loadout` decide elegibilidade e a
+   * garantia do espaço 0 (TSH-05).
+   */
   private openShop(round: number): void {
     this.wallet.add(this.pickups.collectFragments());
     this.matter.world.pause();
-    this.shop = new Shop(SHOP_CATALOG, this.modifiers, this.run.shopRng!, round);
+    this.shop = new Shop(FULL_SHOP_CATALOG, this.modifiers, this.run.shopRng!, round, this.loadout);
     this.shopPanel.show(this.shop.view(this.wallet, this.player.hp, this.player.maxHp));
     this.debugEvents.push(`shopOpen:${round}`);
   }
@@ -334,7 +511,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.debugEvents.push('shopClose');
   }
 
-  /** Campo `shop` do snapshot (SHOP-22): `open` só no estado `shop`; nível e máximo vêm dos modificadores. */
+  /**
+   * Campo `shop` do snapshot (SHOP-22): `open` só no estado `shop`; nível vem dos modificadores ou do `loadout`
+   * (técnica, F5) conforme o `kind` da entrada.
+   */
   private shopSnapshot(): GameSnapshot['shop'] {
     const view = this.shop?.view(this.wallet, this.player.hp, this.player.maxHp);
     return {
@@ -342,8 +522,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       offers: (view?.offers ?? [])
         .filter((o) => o.id !== null)
         .map((o) => {
-          const entry = SHOP_CATALOG.find((e) => e.id === o.id)!;
-          const level = entry.kind === 'modifier' ? this.modifiers.level(entry.id as ModifierId) : 0;
+          const entry = FULL_SHOP_CATALOG.find((e) => e.id === o.id)!;
+          const level =
+            entry.kind === 'modifier'
+              ? this.modifiers.level(entry.id as ModifierId)
+              : entry.kind === 'technique'
+                ? this.loadout.levelOf(entry.id as TechId)
+                : 0;
           return { id: o.id!, level, maxLevel: entry.maxLevel, cost: o.cost!, sold: o.sold, affordable: o.affordable };
         }),
       rerollCost: view?.rerollCost ?? 0,
@@ -379,6 +564,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.onStartRun();
         break;
       case 'spawn':
+        // FXL-01: nenhuma onda nasce no laboratório de efeitos - só os bonecos de treino (FXL-05).
+        if (this.fxLab) break;
         if (cmd.kind === 'boss') this.spawnBoss(cmd.round);
         else this.spawnFromCommand(cmd.point, cmd.round);
         break;
@@ -442,9 +629,28 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.droppedTools.clear();
     // MOD-01/MOD-10: upgrades da run anterior não sobrevivem (AD-004).
     this.modifiers.reset();
+    // CE-01/TEC-01: energia e slots voltam ao início da run; `?debug&tech=` equipa por cima (TEC-02).
+    this.energy.reset();
+    this.loadout.reset();
+    this.equipDebugTech();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
     this.lootRng = this.run.lootRng!;
     this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides(), this.modifiers);
+  }
+
+  /**
+   * `?debug&tech=<id>[,<id>]` (TEC-02): equipa em nível 1, na ordem, ignorando ids desconhecidos e o segundo id
+   * quando os dois slots já couberam; sem o parâmetro, os dois slots ficam vazios (TEC-01, AD-005).
+   */
+  private equipDebugTech(): void {
+    const raw = debugParam('tech');
+    if (raw === null) return;
+    const ids = raw.split(',').filter((id): id is TechId => id in TECHNIQUES);
+    let slot = 0;
+    for (const id of ids) {
+      if (slot > 1) break;
+      if (this.loadout.equip(slot as 0 | 1, id, 1)) slot++;
+    }
   }
 
   /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
@@ -668,6 +874,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         facing: this.player.facing,
         flash: this.player.activeFlash,
         maxHp: this.player.maxHp,
+        vy: this.player.verticalSpeed,
       },
       enemies: this.enemies.map((e) => ({
         id: e.id,
@@ -709,7 +916,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         traveled: p.traveled,
       })),
       run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
-      hud: this.hud.debugState(),
+      hud: {
+        ...this.hud.debugState(),
+        ...this.energyHud.debugState(),
+        callout: this.callout.debug(),
+        kokusenCard: this.kokusenFx.cardDebug(),
+      },
       hitstop: { frozen: this.hitstop.frozen, remainingMs: this.hitstop.remaining },
       level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
       wallet: { fragments: this.wallet.fragments },
@@ -727,7 +939,24 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         rare: p.rare,
         vx: p.vx,
       })),
+      ce: { cur: this.energy.cur, max: this.energy.max, regen: this.energy.regen },
+      tech: this.techSnapshot(),
+      kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
+      techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
+      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers() },
+      // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
+      camera: { zoom: this.cameras.main.zoom },
+      // T28: laboratório de efeitos, sem contrato prévio no snapshot; `null` fora do fxlab.
+      fxlab: this.fxLab?.debug() ?? null,
     };
+  }
+
+  /** `tech` do snapshot (TEC-08): slots do loadout e a conjuração ativa (CAST-*). */
+  private techSnapshot(): GameSnapshot['tech'] {
+    const [s0, s1] = this.loadout.slotsView;
+    const slotView = (slot: 0 | 1, s: { id: TechId; level: 1 | 2 | 3 } | null) =>
+      s ? { id: s.id, level: s.level, cooldownMs: this.loadout.cooldownOf(slot) } : null;
+    return { slots: [slotView(0, s0), slotView(1, s1)], cast: this.techCaster.cast };
   }
 
   /**
@@ -736,6 +965,21 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    */
   private onConnect(hit: Hit, point: Vec2, kind: SparkKind): void {
     this.fx.spark(point.x, point.y, kind);
+    if (hit.strength === 'heavy') this.fx.shake();
+    this.hitstop.trigger(HITSTOP_MS[hit.strength]);
+    this.freeze();
+    // CE-06/CE-08: só o golpe corpo a corpo do próprio player (soco do combo ou objeto na mão, `ownerId` é o
+    // dele) aplicado a um alvo ganha energia; golpes que o player recebe têm outro dono, e dano de técnica (T22+)
+    // não passa por este caminho.
+    if (hit.ownerId === this.player.id) this.energy.gain(CE.meleeGain);
+  }
+
+  /**
+   * Golpe de técnica que conectou (T22+): mesma faísca + tremida + hitstop de FX-01..03, mas sem o +3 de CE-06
+   * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito).
+   */
+  private onTechConnect(hit: Hit, point: Vec2): void {
+    this.fx.spark(point.x, point.y, hit.strength);
     if (hit.strength === 'heavy') this.fx.shake();
     this.hitstop.trigger(HITSTOP_MS[hit.strength]);
     this.freeze();
@@ -802,24 +1046,37 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.ADDED_TO_SCENE, route));
   }
 
-  private addHud(): void {
-    const lines = (): string[] => [
+  /** FXL-04/08: legenda e rótulo de velocidade do laboratório, só linhas extras quando `fxLab` existe. */
+  private controlsLines(): string[] {
+    return [
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
       'J/X: golpe (combo de 3)   com objeto na mão: golpe forte',
       'K/Z: pegar / arremessar   S+K: largar',
       'R: reiniciar   Tab: mostrar/esconder controles',
       ...(isDebug() ? ['F1: sair do debug   H: debug da física   1/2: golpe leve/forte de teste'] : []),
+      ...(this.fxLab ? [FxLab.LEGEND, this.fxLab.speedLabel] : []),
     ];
-    this.hud = new Hud(this, this.uiLayer, lines().join('\n'));
+  }
+
+  /** Reaplica `controlsLines()` no painel (FXL-08: o rótulo de velocidade muda ao apertar 0). */
+  private refreshControlsText(): void {
+    this.hud.setControlsText(this.controlsLines().join('\n'));
+  }
+
+  private addHud(): void {
+    this.hud = new Hud(this, this.uiLayer, this.controlsLines().join('\n'));
+    this.energyHud = new EnergyHud(this, this.uiLayer);
+    this.callout = new Callout(this, this.uiLayer);
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
-    this.hud.showControls(CONTROLS_MS);
+    // FXL-04: no laboratório a legenda fica sempre visível, não só os primeiros `CONTROLS_MS`.
+    this.hud.showControls(this.fxLab ? Number.MAX_SAFE_INTEGER : CONTROLS_MS);
     // Boot em `title` (RUN-01/RHUD-05): tela com o nome do jogo até o primeiro J/Enter.
     this.hud.setCenter([GAME_NAME, 'J / Enter para começar']);
     // Tab alterna o painel; a captura impede o navegador de tirar o foco do jogo (HUD-03).
     this.input.keyboard!.addCapture('TAB');
     this.onKey('TAB', () => this.hud.toggleControls());
     const off = onDebugChange((on) => {
-      this.hud.setControlsText(lines().join('\n'));
+      this.refreshControlsText();
       // Saindo do debug, o desenho da física não pode continuar ligado.
       if (!on && this.matter.world.drawDebug) this.toggleDebugDraw();
     });

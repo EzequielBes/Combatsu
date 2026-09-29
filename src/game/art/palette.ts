@@ -50,6 +50,11 @@ export const PALETTE: Readonly<Record<string, number>> = {
   // Cinza-arroxeado do espírito amaldiçoado: tons médio e claro, para destacar do fundo noturno escuro
   i: 0x8e7fa6, // cinza-arroxeado (corpo)
   I: 0xc4b6da, // cinza-arroxeado claro (luz de cima)
+  // Energia amaldiçoada e técnicas (TFX-08): preto puro do Kokusen, vermelho vivo, branco puro e azul-profundo do Azul
+  b: 0x050205, // preto puro (silhueta do Kokusen, tinta do kanji 黒)
+  R: 0xff3344, // vermelho vivo (borda dos raios do Kokusen, esfera Vermelha)
+  W: 0xffffff, // branco puro (núcleo da esfera Vermelha, corte do Desmantelar)
+  d: 0x14307a, // azul-profundo (núcleo da esfera Azul)
 };
 
 export const PALETTE_KEYS: ReadonlySet<string> = new Set(Object.keys(PALETTE));

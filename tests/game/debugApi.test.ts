@@ -32,7 +32,7 @@ describe('installDebugApi', () => {
 
   it('snapshot devolve o que o probe registrado devolve (FND-09)', () => {
     const snap: GameSnapshot = {
-      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100 },
+      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0 },
       enemies: [
         { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null, weaponVisible: null },
       ],
@@ -53,6 +53,10 @@ describe('installDebugApi', () => {
         bossBarIgnoredByMain: true,
         fragments: '4',
         heldItem: null,
+        techIgnoredByMain: true,
+        energy: { width: 104, fillWidth: 104, marks: [null, null], icons: [{ cooldownOverlayHeight: 0, iconHeight: 48 }, { cooldownOverlayHeight: 0, iconHeight: 48 }], flashing: false },
+        callout: null,
+        kokusenCard: null,
       },
       hitstop: { frozen: false, remainingMs: 0 },
       wallet: { fragments: 4 },
@@ -61,6 +65,13 @@ describe('installDebugApi', () => {
       pickups: [{ id: 1, kind: 'fragment', value: 1, x: 70, y: 80, ageMs: 100, magnet: false }],
       floatTexts: [{ text: '+1', color: 'U', x: 70, y: 76 }],
       worldProps: [{ id: 2, key: 'cursedKnife', state: 'rest', x: 90, y: 100, durabilityLeft: 6, rare: false, vx: 0 }],
+      ce: { cur: 100, max: 100, regen: 8 },
+      tech: { slots: [null, null], cast: null },
+      kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
+      techObjects: [],
+      fx: { live: 0, degraded: false, layers: [] },
+      camera: { zoom: 1.5 },
+      fxlab: null,
     };
     registerDebugProbe({ debugSnapshot: () => snap });
     const target: { __game?: Api } = {};
