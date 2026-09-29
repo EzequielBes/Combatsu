@@ -218,16 +218,16 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Invencível 179/180 ms; recarga 449/450 ms; bônus 999/1000 ms e só uma vez
-- [ ] DOD-01 conferido: WHEN `Q` is pressed on the ground with no dodge cooldown and no move or cast in progress THEN the player SHALL move 96 px (±4 px) in 200 ms toward the held horizontal direction, or away from the facing direction if none is held.
-- [ ] DOD-02 conferido: WHILE the dodge time is between 0 and 180 ms, the player SHALL take no damage from any hit.
-- [ ] DOD-03 conferido: WHEN a hit reaches the player while it is invulnerable by DOD-02 THEN `events` SHALL get exactly one `perfectDodge` for that dodge.
-- [ ] DOD-07 conferido: WHEN a perfect dodge happens THEN `timeScale` SHALL be 0.3 for 400 ms of real time and then return to 1.
-- [ ] DOD-08 conferido: WHEN the player hits a target within 1000 ms after a perfect dodge THEN that hit damage SHALL be multiplied by 1.5 (rounded, halves up), once.
-- [ ] DOD-04 conferido: WHEN a dodge starts THEN its cooldown SHALL be 450 ms.
-- [ ] DOD-10 conferido: IF `Q` is pressed while the dodge cooldown is above 0 THEN no dodge SHALL start.
-- [ ] DOD-05 conferido: IF `Q` is pressed in the air THEN no dodge SHALL start.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Invencível 179/180 ms; recarga 449/450 ms; bônus 999/1000 ms e só uma vez
+- [x] DOD-01 conferido: WHEN `Q` is pressed on the ground with no dodge cooldown and no move or cast in progress THEN the player SHALL move 96 px (±4 px) in 200 ms toward the held horizontal direction, or away from the facing direction if none is held.
+- [x] DOD-02 conferido: WHILE the dodge time is between 0 and 180 ms, the player SHALL take no damage from any hit.
+- [x] DOD-03 conferido: WHEN a hit reaches the player while it is invulnerable by DOD-02 THEN `events` SHALL get exactly one `perfectDodge` for that dodge.
+- [x] DOD-07 conferido: WHEN a perfect dodge happens THEN `timeScale` SHALL be 0.3 for 400 ms of real time and then return to 1.
+- [x] DOD-08 conferido: WHEN the player hits a target within 1000 ms after a perfect dodge THEN that hit damage SHALL be multiplied by 1.5 (rounded, halves up), once.
+- [x] DOD-04 conferido: WHEN a dodge starts THEN its cooldown SHALL be 450 ms.
+- [x] DOD-10 conferido: IF `Q` is pressed while the dodge cooldown is above 0 THEN no dodge SHALL start.
+- [x] DOD-05 conferido: IF `Q` is pressed in the air THEN no dodge SHALL start.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
