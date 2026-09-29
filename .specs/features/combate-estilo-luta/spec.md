@@ -380,7 +380,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | MOV-13 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-18 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-14 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-15 | P1: Grafo de golpes | Specify | Pending |
+| MOV-15 | P1: Grafo de golpes | Specify | Implementing |
 | GRD-01 | P1: Guarda | Specify | Implementing |
 | GRD-02 | P1: Guarda | Specify | Implementing |
 | GRD-07 | P1: Guarda | Specify | Implementing |

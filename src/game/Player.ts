@@ -1,16 +1,17 @@
 import Phaser from 'phaser';
-import { RUN_THRESHOLD, attackFrame, pickPlayerAnim, type AttackAnim, type PlayerAnimInput } from '../core/animState';
+import { RUN_THRESHOLD, attackFrame, pickPlayerAnim, type AttackPhase, type PlayerAnimInput } from '../core/animState';
 import type { CastState } from '../core/cast';
 import { Filters } from '../core/collision';
-import { ComboTracker, type AttackStep, type ComboEvent, type ComboPhase } from '../core/combo';
+import { ComboTracker, type ComboEvent } from '../core/combo';
 import type { Hit } from '../core/hit';
 import { Health } from '../core/health';
+import { MotionInput } from '../core/motionInput';
+import { MoveMachine, moveTravelAt, type MoveContext, type MoveEvent } from '../core/moveMachine';
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
+import { CHARGE_MS, type MoveDef } from '../data/moves';
 import { CAST_FX, type TechId } from '../data/techniques';
 import {
-  COMBO_WINDOW_MS,
-  PLAYER_COMBO,
   PLAYER_HEALTH,
   PLAYER_KNOCKBACK,
   PLAYER_MOVE,
@@ -33,8 +34,6 @@ const SENSOR_DEPTH = 3;
 const SENSOR_INSET = 3;
 /** Alcance da zona de coleta à frente do player (px); atrás vale metade. */
 const PICKUP_REACH = 24;
-/** Animação de cada golpe do combo de socos, pela posição no PLAYER_COMBO. */
-const COMBO_ANIMS: readonly AttackAnim[] = ['jab', 'cross', 'kick'];
 /** Tempo (ms) que a pose de arremesso fica na tela depois de soltar o objeto. */
 const THROW_POSE_MS = 200;
 /** Profundidade do sprite do player (inimigos e objetos ficam em 0). */
@@ -67,7 +66,19 @@ export class Player implements Hittable {
   /** Chamado quando um golpe é de fato aplicado (CAST-07); o `TechCaster` usa para cancelar a conjuração. */
   onDamaged: (() => void) | null = null;
   private move: MoveState = initialMoveState();
-  private readonly fists = new ComboTracker(PLAYER_COMBO, COMBO_WINDOW_MS);
+  /** Grafo de golpes do jogador (MOV-*): escolhe o golpe por botão + direção + ar; o swing com objeto segue no `propSwing`. */
+  private readonly moves = new MoveMachine();
+  private readonly motion = new MotionInput();
+  /** Relógio de jogo do player (ms), para a meia-lua (SPC-01). */
+  private clockMs = 0;
+  /** Tempo (ms) segurando `K` desde o aperto que abriu o carregado; -1 sem aperto em andamento (MOV-09). */
+  private heavyHoldMs = -1;
+  /** Tempo no `active` do golpe atual e deslocamento já aplicado (voadora, AIR-02). */
+  private activeElapsedMs = 0;
+  private travelDone = { forward: 0, down: 0 };
+  private chargeTinted = false;
+  /** Evento de debug do player (`move:<nome>`, ...), entregue à cena. */
+  onEvent: ((name: string) => void) | null = null;
   private readonly propSwing = new ComboTracker([PROP_SWING], 0);
   private readonly hitbox: AttackHitbox;
   private held: Prop | null = null;
@@ -161,7 +172,8 @@ export class Player implements Hittable {
   receiveHit(hit: Hit): boolean {
     const result = this.health.receive(hit.damage);
     if (result === 'ignored') return false;
-    this.onCombo(this.fists.cancel());
+    this.onMove(this.moves.cancel());
+    this.heavyHoldMs = -1;
     this.onPropSwing(this.propSwing.cancel());
     this.throwPoseMs = 0;
     this.knockDir = hit.direction.x < 0 ? -1 : 1;
@@ -186,17 +198,14 @@ export class Player implements Hittable {
       this.onPropSwing(this.propSwing.cancel());
     }
 
-    if ((input.lightPressed || input.heavyPressed) && !stunned && !casting) {
-      if (this.held) this.onPropSwing(this.propSwing.press());
-      else this.onCombo(this.fists.press());
-    }
-    this.onCombo(this.fists.update(dtMs));
+    const sensors = { grounded: this.touchesTerrain('below'), ceiling: this.touchesTerrain('above') };
+    this.clockMs += dtMs;
+    this.updateStrikes(dtMs, input, sensors.grounded && this.move.vy >= 0, stunned || casting);
     this.onPropSwing(this.propSwing.update(dtMs));
 
-    const attacking = this.fists.isAttacking || this.propSwing.isAttacking;
+    const attacking = this.moves.isMoving || this.propSwing.isAttacking;
     if (input.interactPressed && !attacking && !stunned && !casting) this.interact(input.down);
 
-    const sensors = { grounded: this.touchesTerrain('below'), ceiling: this.touchesTerrain('above') };
     const before = this.move;
     // MOD-06: velocidade de corrida lida de `modifiers` a cada frame, sem cache; CAST-11: gravidade a 30% em
     // `sign`/`charge` (só nesses dois estados: em `release`/`recover` a gravidade já volta ao normal).
@@ -207,6 +216,7 @@ export class Player implements Hittable {
       gravity: castAirGravity ? PLAYER_MOVE.gravity * CAST_FX.airGravity : PLAYER_MOVE.gravity,
     };
     this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting);
+    this.applyMoveTravel(dtMs);
     this.kickUpDust(before, sensors.grounded);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
     if (this.health.staggered) this.move = { ...this.move, vx: this.knockDir * PLAYER_KNOCKBACK };
@@ -313,7 +323,7 @@ export class Player implements Hittable {
 
   /** Fase do golpe de socos para o `TechCaster` (CAST-09/10); objeto na mão já é coberto por `isBusyForCast`. */
   meleePhase(): 'none' | 'startup' | 'active' | 'recover' {
-    const phase: ComboPhase = this.fists.phase;
+    const phase = this.moves.phase;
     if (phase === 'startup' || phase === 'active') return phase;
     if (phase === 'recovery') return 'recover';
     return 'none';
@@ -321,7 +331,17 @@ export class Player implements Hittable {
 
   /** CAST-10: encerra o golpe corpo a corpo em andamento (a `recover`) para a conjuração começar no mesmo frame. */
   cancelMelee(): void {
-    this.onCombo(this.fists.cancel());
+    this.onMove(this.moves.cancel());
+  }
+
+  /** Nome do golpe em andamento, `null` sem golpe (MOV-18, `player.move` do snapshot). */
+  get moveName(): string | null {
+    return this.moves.current;
+  }
+
+  /** O golpe em andamento acertou um alvo (libera o cancelamento da recovery por esquiva, DOD-06). */
+  hitLanded(): void {
+    this.moves.hitLanded();
   }
 
   /** CAST-09: segurando objeto ou em hitstun (atordoado) impedem conjurar. */
@@ -371,6 +391,19 @@ export class Player implements Hittable {
       v.setFrame(`${this.castLock.id}-${this.castLock.state}`);
       return;
     }
+    const mv = this.moves.def;
+    if (mv && !(this.health.staggered || this.health.dead)) {
+      // Golpe do grafo: o frame vem da fase (wind/hit/recover), não do relógio da animação (CHR-02).
+      const v = this.view;
+      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      v.setScale(this.facing, 1);
+      v.anims.stop();
+      const phase = this.moves.phase as AttackPhase;
+      v.setFrame(`${mv.name}-${attackFrame(phase)}`);
+      if (phase === 'active' && mv.strength === 'heavy') this.fx.afterimage(v);
+      return;
+    }
+    this.tickChargeGlow();
     const input: PlayerAnimInput = {
       // Atordoado pelo golpe ou morto até o respawn.
       hurt: this.health.staggered || this.health.dead,
@@ -396,16 +429,26 @@ export class Player implements Hittable {
     if ((anim === 'kick' && input.attack?.phase === 'active') || anim === 'throw') this.fx.afterimage(v);
   }
 
+  /** Chute carregado pronto (segurando `K` há CHARGE_MS): o corpo pisca branco (direção de arte do grafo). */
+  private tickChargeGlow(): void {
+    if (this.flashMs > 0) return;
+    const charged = this.heavyHoldMs >= CHARGE_MS;
+    if (charged) {
+      this.chargeTinted = true;
+      if (Math.floor(this.clockMs / 80) % 2 === 0) this.view.setTintFill(PALETTE.w);
+      else this.view.clearTint();
+    } else if (this.chargeTinted) {
+      this.chargeTinted = false;
+      this.view.clearTint();
+    }
+  }
+
   /** Golpe em andamento para a animação. Na janela do combo, só enquanto o player está parado no chão. */
   private currentAttack(grounded: boolean): PlayerAnimInput['attack'] {
     if (this.throwPoseMs > 0) return { name: 'throw', phase: 'active' };
     const still = grounded && Math.abs(this.move.vx) <= RUN_THRESHOLD;
     const swing = this.propSwing.phase;
     if (swing !== 'idle' && (swing !== 'window' || still)) return { name: 'swing', phase: swing };
-    const fist = this.fists.phase;
-    if (fist !== 'idle' && (fist !== 'window' || still)) {
-      return { name: COMBO_ANIMS[this.fists.currentIndex], phase: fist };
-    }
     return null;
   }
 
@@ -420,7 +463,8 @@ export class Player implements Hittable {
     const target = this.findPickup();
     if (target && target.pickUp(this.id)) {
       this.held = target;
-      this.onCombo(this.fists.cancel());
+      this.onMove(this.moves.cancel());
+      this.heavyHoldMs = -1;
     }
   }
 
@@ -464,23 +508,71 @@ export class Player implements Hittable {
     }
   }
 
-  private onCombo(events: ComboEvent[]): void {
+  /** Aperto de golpe, soltura do carregado e relógio do grafo (MOV-02..09, MOV-13, MOV-16..18, SPC-01). */
+  private updateStrikes(dtMs: number, input: InputSnapshot, onGround: boolean, locked: boolean): void {
+    const forward = this.facing === 1 ? input.right : input.left;
+    this.motion.sample(this.clockMs, { down: input.down, forward });
+    const ctx: MoveContext = { grounded: onGround, down: input.down, up: input.upHeld, forward };
+    if (locked) this.heavyHoldMs = -1;
+    if (!locked && this.held === null) {
+      if (input.lightPressed) this.onMove(this.moves.press('light', { ...ctx, motion: this.motion.matches(this.clockMs) }));
+      if (input.heavyPressed) {
+        this.onMove(this.moves.press('heavy', ctx));
+        this.heavyHoldMs = 0;
+      } else if (this.heavyHoldMs >= 0) {
+        this.heavyHoldMs += dtMs;
+        if (!input.heavyHeld) {
+          this.onMove(this.moves.release('heavy', this.heavyHoldMs, ctx));
+          this.heavyHoldMs = -1;
+        }
+      }
+    } else if (!locked && (input.lightPressed || input.heavyPressed)) {
+      // Com objeto na mão J e K balançam o objeto (edge case da spec).
+      this.onPropSwing(this.propSwing.press());
+    }
+    this.onMove(this.moves.update(dtMs));
+    if (this.moves.phase === 'active') this.activeElapsedMs += dtMs;
+  }
+
+  private onMove(events: MoveEvent[]): void {
     for (const ev of events) {
-      if (ev.type === 'hitboxOn') this.openHitbox(ev.step);
-      else if (ev.type === 'hitboxOff' || ev.type === 'comboEnd') this.hitbox.close();
+      if (ev.type === 'moveStart') {
+        this.onEvent?.(`move:${ev.move.name}`);
+        this.activeElapsedMs = 0;
+        this.travelDone = { forward: 0, down: 0 };
+        // Pisão (AIR-03): a velocidade vertical vai direto para a queda máxima.
+        if (ev.move.slam) this.move = { ...this.move, vy: PLAYER_MOVE.maxFallSpeed };
+      } else if (ev.type === 'hitboxOn') this.openHitbox(ev.move);
+      else if (ev.type === 'hitboxOff' || ev.type === 'moveEnd') this.hitbox.close();
     }
   }
 
-  private openHitbox(step: AttackStep): void {
-    const shape = step.hitbox;
+  /** Voadora (AIR-02): durante o `active` o corpo anda 120 px à frente e 60 px para baixo, com velocidade dirigida. */
+  private applyMoveTravel(dtMs: number): void {
+    const def = this.moves.def;
+    if (!def?.travel || this.moves.phase !== 'active' || dtMs <= 0) return;
+    const target = moveTravelAt(def, this.activeElapsedMs);
+    const dt = dtMs / 1000;
+    this.move = {
+      ...this.move,
+      vx: (this.facing * (target.forward - this.travelDone.forward)) / dt,
+      vy: (target.down - this.travelDone.down) / dt,
+    };
+    this.travelDone = target;
+  }
+
+  private openHitbox(move: MoveDef): void {
+    const shape = move.hitbox;
     if (!shape) return;
     const hit: Hit = {
       ownerId: this.id,
       // MOD-05: dano do golpe escalado por `forca`, lido na hora.
-      damage: this.modifiers.meleeDamage(step.damage),
-      strength: step.strength,
-      force: step.force,
-      direction: { x: this.facing, y: step.strength === 'heavy' ? -0.6 : -0.15 },
+      damage: this.modifiers.meleeDamage(move.damage),
+      strength: move.strength,
+      force: move.force,
+      direction: { x: this.facing, y: move.strength === 'heavy' ? -0.6 : -0.15 },
+      moveName: move.name,
+      unblockable: move.unblockable,
     };
     this.hitbox.open(shape, hit, this.sprite.x, this.sprite.y, this.facing);
   }
