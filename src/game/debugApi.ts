@@ -22,6 +22,8 @@ export interface GameSnapshot {
     vy: number;
     /** Nome do golpe em curso, `null` sem golpe (MOV-18). */
     move: string | null;
+    /** Frame do sprite do jogador em cena, ex.: `guard` (CTL-09). */
+    frame: string;
     /** `parry` = janela de parry aberta (GRD-01, PAR-01). */
     guard: 'none' | 'guard' | 'parry';
     /** Estrutura 0..100 arredondada; `broken` = atordoado pela guarda quebrada (STR-01, STR-06). */
@@ -104,6 +106,8 @@ export interface GameSnapshot {
     heldItem: { name: string; pips: number; maxPips: number } | null;
     /** HUD do combo (CMB-04/05): texto `N hits` e letra da nota, `null` escondidos; `x` é a borda direita. */
     combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
+    /** Texto do painel de controles na tela (CTL-06). */
+    controls: string;
     /** Barra de energia e ícones de slot na `uiLayer` (TEC-11). */
     techIgnoredByMain: boolean;
     /** Chamada da conjuração (CAST-16), `null` fora da janela de 900 ms. */
