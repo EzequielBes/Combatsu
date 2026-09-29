@@ -186,7 +186,7 @@ export class Player implements Hittable {
       this.onPropSwing(this.propSwing.cancel());
     }
 
-    if (input.attackPressed && !stunned && !casting) {
+    if ((input.lightPressed || input.heavyPressed) && !stunned && !casting) {
       if (this.held) this.onPropSwing(this.propSwing.press());
       else this.onCombo(this.fists.press());
     }

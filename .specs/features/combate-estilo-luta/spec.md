@@ -354,14 +354,14 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CTL-01 | P1: Controles de luta | Specify | Pending |
-| CTL-02 | P1: Controles de luta | Specify | Pending |
-| CTL-03 | P1: Controles de luta | Specify | Pending |
-| CTL-07 | P1: Controles de luta | Specify | Pending |
-| CTL-08 | P1: Controles de luta | Specify | Pending |
-| CTL-04 | P1: Controles de luta | Specify | Pending |
+| CTL-01 | P1: Controles de luta | Specify | Implementing |
+| CTL-02 | P1: Controles de luta | Specify | Implementing |
+| CTL-03 | P1: Controles de luta | Specify | Implementing |
+| CTL-07 | P1: Controles de luta | Specify | Implementing |
+| CTL-08 | P1: Controles de luta | Specify | Implementing |
+| CTL-04 | P1: Controles de luta | Specify | Implementing |
 | CTL-05 | P1: Controles de luta | Specify | Pending |
-| CTL-06 | P1: Controles de luta | Specify | Pending |
+| CTL-06 | P1: Controles de luta | Specify | Implementing |
 | CTL-09 | P1: Controles de luta | Specify | Pending |
 | MOV-01 | P1: Grafo de golpes | Specify | Implementing |
 | MOV-02 | P1: Grafo de golpes | Specify | Implementing |

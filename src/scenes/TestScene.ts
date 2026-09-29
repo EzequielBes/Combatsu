@@ -95,7 +95,14 @@ const NEUTRAL_INPUT: InputSnapshot = {
   down: false,
   jumpPressed: false,
   jumpHeld: false,
-  attackPressed: false,
+  upHeld: false,
+  lightPressed: false,
+  heavyPressed: false,
+  heavyHeld: false,
+  bothPressed: false,
+  guardHeld: false,
+  guardPressed: false,
+  dodgePressed: false,
   interactPressed: false,
 };
 
@@ -1050,8 +1057,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private controlsLines(): string[] {
     return [
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
-      'J/X: golpe (combo de 3)   com objeto na mão: golpe forte',
-      'K/Z: pegar / arremessar   S+K: largar',
+      'J leve · K forte · U guarda/parry · Q esquiva · E pegar',
+      'E: pegar / arremessar   S+E: largar   J/X leve   K/Z forte',
       'R: reiniciar   Tab: mostrar/esconder controles',
       ...(isDebug() ? ['F1: sair do debug   H: debug da física   1/2: golpe leve/forte de teste'] : []),
       ...(this.fxLab ? [FxLab.LEGEND, this.fxLab.speedLabel] : []),

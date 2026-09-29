@@ -371,16 +371,16 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Leitura de teclas → snapshot testada em Node se extraída para `src/core`
-- [ ] Os 17 smokes atuais passam
-- [ ] CTL-01 conferido: WHEN `J` or `X` is pressed THEN the input snapshot SHALL report a light press in that frame.
-- [ ] CTL-02 conferido: WHEN `K` or `Z` is pressed THEN the input snapshot SHALL report a heavy press in that frame.
-- [ ] CTL-04 conferido: WHEN `J` and `K` are pressed in the same frame THEN the input snapshot SHALL report one `both` press and no separate light or heavy press.
-- [ ] CTL-03 conferido: WHEN `E` is pressed with free hands and a prop within reach THEN the player SHALL hold that prop.
-- [ ] CTL-07 conferido: WHEN `E` is pressed while holding a prop and `S` is not held THEN the prop SHALL leave the hands in the `thrown` state.
-- [ ] CTL-08 conferido: WHEN `E` is pressed while holding a prop and `S` is held THEN the player SHALL drop it.
-- [ ] CTL-06 conferido: The on-screen controls panel SHALL list `J leve · K forte · U guarda/parry · Q esquiva · E pegar`.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Leitura de teclas → snapshot testada em Node se extraída para `src/core`
+- [x] Os 17 smokes atuais passam
+- [x] CTL-01 conferido: WHEN `J` or `X` is pressed THEN the input snapshot SHALL report a light press in that frame.
+- [x] CTL-02 conferido: WHEN `K` or `Z` is pressed THEN the input snapshot SHALL report a heavy press in that frame.
+- [x] CTL-04 conferido: WHEN `J` and `K` are pressed in the same frame THEN the input snapshot SHALL report one `both` press and no separate light or heavy press.
+- [x] CTL-03 conferido: WHEN `E` is pressed with free hands and a prop within reach THEN the player SHALL hold that prop.
+- [x] CTL-07 conferido: WHEN `E` is pressed while holding a prop and `S` is not held THEN the prop SHALL leave the hands in the `thrown` state.
+- [x] CTL-08 conferido: WHEN `E` is pressed while holding a prop and `S` is held THEN the player SHALL drop it.
+- [x] CTL-06 conferido: The on-screen controls panel SHALL list `J leve · K forte · U guarda/parry · Q esquiva · E pegar`.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
