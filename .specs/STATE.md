@@ -84,21 +84,21 @@
 
 ## Handoff
 
-- **Feature**: F4 `.specs/features/loja-da-run` concluída e mergeada em `dev` → próxima: **F5 `energia-e-tecnicas`** (Specify já feito: `.specs/features/energia-e-tecnicas/spec.md`, 148 ACs; falta Design → Tasks → Execute → Verifier). A F5 vende técnicas pela loja da F4: acrescentar `kind: 'technique'` e os upgrades de energia (CE-07, CE-09) ao `SHOP_CATALOG`
-- **Phase / Task**: F5 Design (rodar `node tools/jev-align.mjs .specs/features/energia-e-tecnicas` depois do tasks.md)
+- **Feature**: F5 `.specs/features/energia-e-tecnicas` concluída e mergeada em `dev` → próxima: **F7 `combate-estilo-luta`** (pedido do usuário em 28/09: combate inspirado em Sifu; absorve a antiga F8). Specify feito em `.specs/features/combate-estilo-luta/spec.md` (84 ACs, Jev em 3 rodadas com glossário da spec) → falta Design, Tasks, Execute, Verifier
 - **Completed**:
-  - F0–F4 mergeadas em `dev` (F4: loja entre rodadas, 5 modificadores com teto, cura, reroll, navegação, painel com animações)
-  - 654 testes, 12 cenários de smoke
+  - F0–F5 mergeadas em `dev` (F5: energia, 2 slots, conjuração com selo/carga/soltura, Punho Divergente, Kokusen com cinema em tempo real, Vermelho, Azul, Desmantelar, técnicas na loja, laboratório `?debug&fxlab`)
+  - 865 testes, 17 cenários de smoke
 - **Como trabalhar** (memória do usuário):
-  - Opus planeja; workers Sonnet, um por lote de fase; integração/smoke com no máximo ~3 tasks; fixes pequenos e smokes direto pelo orquestrador para ganhar tempo
-  - Jev: `jev-refine` no Specify e `jev-align` nas tasks (tasks × ACs e stories × diversão)
-  - Context7 liberado: `/phaserjs/phaser/v3_90_0` para a API do Phaser (postFX, câmera, partículas na F5)
-  - Verifier em Sonnet com sensor leve; merge em `dev` com `--no-ff`; `main` só com validação do usuário; push só da branch da feature (a `dev` sobe quando o usuário pedir)
+  - Opus planeja; workers Sonnet, um por lote de fase; **no máximo 2 agentes ao mesmo tempo** (pedido de 27/09); arte e smokes podem rodar num worktree separado criado à mão em `scratchpad\wt-*` (o `isolation: worktree` recusa o repo por causa de maiúsculas no caminho `Documents/surGue`)
+  - Jev: `jev-refine` no Specify (agora lê `## Glossário` da spec) e `jev-align` nas tasks
+  - Context7 liberado: `/phaserjs/phaser/v3_90_0`
+  - Worker que cair por limite de sessão: conferir `git status`/`git diff`, relançar com "retome a partir do diff"
+  - Merge em `dev` com `--no-ff`; `main` só com validação do usuário; push só da branch da feature
 - **Dicas técnicas**:
-  - `npm run smoke -- <trecho>` roda um cenário; `?debug&seed=N&round=N&fragments=N`; `?debug&noshop=1` pula a loja
-  - Teclas de debug 1–4 (golpe leve/forte em todos, mata o player, 50 de dano) não valem dentro da loja; `R` reinicia a cena só fora da loja
-  - Smoke: tecla que o jogo lê com `JustDown` precisa ficar segurada durante um `step` (ver `tap` em `shop.smoke.mjs`)
+  - `npm run smoke -- <trecho>`; `?debug&seed=N&round=N&fragments=N&tech=<id>[,<id>]&noshop=1&fxlab`
+  - Capturas visuais: `window.__game.step` usa `headlessStep`, que não desenha; para screenshot, use `window.__game.render()` (fxlab) ou rode em tempo real
+  - Teclas que o jogo lê com `JustDown` precisam ficar seguradas durante um `step` no smoke (`tap`/`press1`)
 - **In-progress** (file:line): none
-- **Blockers**: UAT do usuário (visual, F0–F4) antes de `dev` ir para `main`
-- **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas, que são do usuário)
+- **Blockers**: UAT do usuário (visual, F0–F5) antes de `dev` ir para `main`
+- **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas do usuário)
 - **Branch**: `dev`

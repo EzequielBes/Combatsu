@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import { RUN_THRESHOLD, attackFrame, pickPlayerAnim, type AttackAnim, type PlayerAnimInput } from '../core/animState';
+import type { CastState } from '../core/cast';
 import { Filters } from '../core/collision';
-import { ComboTracker, type AttackStep, type ComboEvent } from '../core/combo';
+import { ComboTracker, type AttackStep, type ComboEvent, type ComboPhase } from '../core/combo';
 import type { Hit } from '../core/hit';
 import { Health } from '../core/health';
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
+import { CAST_FX, type TechId } from '../data/techniques';
 import {
   COMBO_WINDOW_MS,
   PLAYER_COMBO,
@@ -44,6 +46,12 @@ const BLINK_ALPHA = 0.25;
 const DEATH_FADE_MS = 600;
 const RESPAWN_FADE_MS = 300;
 
+/** Conjuração ativa que trava o player (CAST-11/12/13): id da técnica e estado atual, escrito pelo `TechCaster`. */
+export interface CastPose {
+  id: TechId;
+  state: CastState;
+}
+
 export class Player implements Hittable {
   readonly id = newEntityId();
   readonly team = 'player';
@@ -51,6 +59,13 @@ export class Player implements Hittable {
   readonly sprite: Phaser.Physics.Matter.Image;
   /** O que aparece na tela: sprite animado com a origem no pé, seguindo o corpo. */
   readonly view: Phaser.GameObjects.Sprite;
+  /**
+   * Conjuração ativa (CAST-11/12/13), escrita pelo `TechCaster` a cada frame; gancho fino, sem lógica de técnica
+   * aqui (design "Integration Points").
+   */
+  castLock: CastPose | null = null;
+  /** Chamado quando um golpe é de fato aplicado (CAST-07); o `TechCaster` usa para cancelar a conjuração. */
+  onDamaged: (() => void) | null = null;
   private move: MoveState = initialMoveState();
   private readonly fists = new ComboTracker(PLAYER_COMBO, COMBO_WINDOW_MS);
   private readonly propSwing = new ComboTracker([PROP_SWING], 0);
@@ -102,8 +117,18 @@ export class Player implements Hittable {
       .setDepth(PLAYER_DEPTH);
   }
 
+  /** Velocidade vertical do movimento (px/s, + para baixo), lida pelo smoke da gravidade na conjuração (CAST-11). */
+  get verticalSpeed(): number {
+    return this.move.vy;
+  }
+
   get facing(): 1 | -1 {
     return this.move.facing;
+  }
+
+  /** RED-15: no chão agora, para decidir se o recuo da soltura do Vermelho se aplica (design "Vermelho"). */
+  get grounded(): boolean {
+    return this.touchesTerrain('below');
   }
 
   /** Objeto segurado agora (ITEM-01..03), `null` de mãos vazias. */
@@ -140,6 +165,8 @@ export class Player implements Hittable {
     this.onPropSwing(this.propSwing.cancel());
     this.throwPoseMs = 0;
     this.knockDir = hit.direction.x < 0 ? -1 : 1;
+    // CAST-07: golpe de fato aplicado avisa quem cuida da conjuração (TechCaster), sem lógica de técnica aqui.
+    this.onDamaged?.();
     if (result === 'died') this.die();
     return true;
   }
@@ -148,6 +175,9 @@ export class Player implements Hittable {
     for (const ev of this.health.update(dtMs)) if (ev === 'respawn') this.respawn();
     // Atordoado ou morto: sem golpe, sem pegar objeto e sem controle de movimento (HP-03).
     const stunned = this.health.staggered || this.health.dead;
+    // Conjurando (CAST-12/13): trava golpe, interação e movimento por input igual a um golpe em andamento — o
+    // "Selo" da direção de arte trava o player por inteiro, não só o eixo horizontal citado na letra da AC.
+    const casting = this.castLock !== null;
 
     // O objeto pode ter quebrado na mão durante o step de física.
     if (this.held && this.held.machine.holderId !== this.id) {
@@ -156,7 +186,7 @@ export class Player implements Hittable {
       this.onPropSwing(this.propSwing.cancel());
     }
 
-    if (input.attackPressed && !stunned) {
+    if (input.attackPressed && !stunned && !casting) {
       if (this.held) this.onPropSwing(this.propSwing.press());
       else this.onCombo(this.fists.press());
     }
@@ -164,13 +194,19 @@ export class Player implements Hittable {
     this.onPropSwing(this.propSwing.update(dtMs));
 
     const attacking = this.fists.isAttacking || this.propSwing.isAttacking;
-    if (input.interactPressed && !attacking && !stunned) this.interact(input.down);
+    if (input.interactPressed && !attacking && !stunned && !casting) this.interact(input.down);
 
     const sensors = { grounded: this.touchesTerrain('below'), ceiling: this.touchesTerrain('above') };
     const before = this.move;
-    // MOD-06: velocidade de corrida lida de `modifiers` a cada frame, sem cache.
-    const moveTuning = { ...PLAYER_MOVE, runSpeed: this.modifiers.runSpeed };
-    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned);
+    // MOD-06: velocidade de corrida lida de `modifiers` a cada frame, sem cache; CAST-11: gravidade a 30% em
+    // `sign`/`charge` (só nesses dois estados: em `release`/`recover` a gravidade já volta ao normal).
+    const castAirGravity = this.castLock?.state === 'sign' || this.castLock?.state === 'charge';
+    const moveTuning = {
+      ...PLAYER_MOVE,
+      runSpeed: this.modifiers.runSpeed,
+      gravity: castAirGravity ? PLAYER_MOVE.gravity * CAST_FX.airGravity : PLAYER_MOVE.gravity,
+    };
+    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting);
     this.kickUpDust(before, sensors.grounded);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
     if (this.health.staggered) this.move = { ...this.move, vx: this.knockDir * PLAYER_KNOCKBACK };
@@ -275,6 +311,24 @@ export class Player implements Hittable {
     this.scene.matter.body.setVelocity(body, { x: body.velocity.x + dir * pxPerStep, y: body.velocity.y });
   }
 
+  /** Fase do golpe de socos para o `TechCaster` (CAST-09/10); objeto na mão já é coberto por `isBusyForCast`. */
+  meleePhase(): 'none' | 'startup' | 'active' | 'recover' {
+    const phase: ComboPhase = this.fists.phase;
+    if (phase === 'startup' || phase === 'active') return phase;
+    if (phase === 'recovery') return 'recover';
+    return 'none';
+  }
+
+  /** CAST-10: encerra o golpe corpo a corpo em andamento (a `recover`) para a conjuração começar no mesmo frame. */
+  cancelMelee(): void {
+    this.onCombo(this.fists.cancel());
+  }
+
+  /** CAST-09: segurando objeto ou em hitstun (atordoado) impedem conjurar. */
+  isBusyForCast(): boolean {
+    return this.held !== null || this.health.staggered;
+  }
+
   /** Mata o player pelo caminho normal de morte (tecla 3 em `?debug`, RUN-03/04). */
   /** Dano de teste (só debug, tecla 4) pelo caminho normal de golpe. */
   debugHurt(damage: number): void {
@@ -291,11 +345,32 @@ export class Player implements Hittable {
     });
   }
 
+  /** FxLab (T28): vira o player para `dir` antes de disparar uma técnica mirada no boneco mais próximo. */
+  debugFace(dir: 1 | -1): void {
+    this.move.facing = dir;
+  }
+
+  /** FxLab (T28): teleporta o player no eixo x (y intacto) para o alcance curto do Punho Divergente/Kokusen. */
+  debugTeleportX(x: number): void {
+    const body = bodyOf(this.sprite);
+    this.scene.matter.body.setPosition(body, { x, y: body.position.y });
+    this.scene.matter.body.setVelocity(body, { x: 0, y: body.velocity.y });
+  }
+
   /**
    * Escolhe a animação pelo animState (CHR-01). Nos golpes o frame sai da fase do combo (CHR-02), não do relógio
    * da animação: na fase ativa, com a hitbox ligada, aparece o frame *-hit com o membro esticado.
    */
   private animate(grounded: boolean): void {
+    // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
+    if (this.castLock) {
+      const v = this.view;
+      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      v.setScale(this.facing, 1);
+      v.anims.stop();
+      v.setFrame(`${this.castLock.id}-${this.castLock.state}`);
+      return;
+    }
     const input: PlayerAnimInput = {
       // Atordoado pelo golpe ou morto até o respawn.
       hurt: this.health.staggered || this.health.dead,

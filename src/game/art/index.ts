@@ -5,7 +5,10 @@ import { ENEMY_BAR, HUD_BAR } from './hud';
 import { PALETTE_KEYS } from './palette';
 import { registerSheet } from './render';
 import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
+import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
+import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
+import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from './sprites/techFx';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from './sprites/economy';
 import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
@@ -35,7 +38,8 @@ export const shardsKey = (texture: string): string => `${texture}-shards`;
 export function createArt(scene: Phaser.Scene): void {
   createPlaceholderTextures(scene);
   registerTiles(scene);
-  registerSheet(scene, TEX.playerArt, parseSheet('player', PLAYER_FRAMES, PALETTE_KEYS));
+  // Folha do player + os frames de conjuração das técnicas (CAST-18), na mesma textura (CAST-13 troca de frame).
+  registerSheet(scene, TEX.playerArt, parseSheet('player', { ...PLAYER_FRAMES, ...PLAYER_TECH_FRAMES }, PALETTE_KEYS));
   registerAnims(scene, TEX.playerArt, PLAYER_ANIMS, playerAnimKey);
   registerSheet(scene, TEX.enemy, parseSheet('enemy', ENEMY_FRAMES, PALETTE_KEYS));
   registerAnims(scene, TEX.enemy, ENEMY_ANIMS, enemyAnimKey);
@@ -68,6 +72,20 @@ export function createArt(scene: Phaser.Scene): void {
     const shards = Object.fromEntries(TOOL_SHARDS[key].map((s) => [s.key, s.grid]));
     registerSheet(scene, shardsKey(texture), parseSheet(shardsKey(key), shards, PALETTE_KEYS));
   }
+  // Kanji das técnicas (TEC-09, CAST-16): ícones de slot do HUD e a chamada da conjuração, na mesma folha.
+  registerSheet(scene, TEX.kanji, parseSheet('kanji', KANJI_FRAMES, PALETTE_KEYS));
+  // Aura de conjuração (CAST-14): 2 frames de chama por cor (blue-a/b, red-a/b, white-a/b).
+  registerSheet(scene, TEX.techAura, parseSheet('tech-aura', AURA_FRAMES, PALETTE_KEYS));
+  // Faíscas de técnica (KOK-23): kokusen (preta/vermelha), redOut, blueIn.
+  registerSheet(scene, TEX.techSpark, parseSheet('tech-spark', TECH_SPARK_FRAMES, PALETTE_KEYS));
+  // Orbe Vermelho (RED-02): um frame por terço da carga, cada tamanho na sua própria textura (parseSheet exige
+  // frames do mesmo tamanho dentro de uma folha, e os 3 tamanhos são diferentes).
+  const redOrbTex = { 4: TEX.techOrbRed4, 8: TEX.techOrbRed8, 12: TEX.techOrbRed12 } as const;
+  for (const size of RED_ORB_SIZES) {
+    registerSheet(scene, redOrbTex[size], parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS));
+  }
+  // Orbe Azul ativo (BLU-08): um frame só.
+  registerSheet(scene, TEX.techOrbBlue, parseSheet('blue-orb', { orb: BLUE_ORB_FRAME }, PALETTE_KEYS));
   registerSheet(scene, TEX.hudBar, parseSheet('hud-bar', { bar: HUD_BAR }, PALETTE_KEYS));
   registerSheet(scene, TEX.enemyBar, parseSheet('enemy-bar', { bar: ENEMY_BAR }, PALETTE_KEYS));
   // Chefe (BTIER-06): uma folha por arquétipo, com o mesmo conjunto de frames e animações.

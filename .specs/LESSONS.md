@@ -216,6 +216,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SHOP-47 (debug-api)
 - last seen: 2026-09-26T19:43:49Z
 
+### L-035 - When a core rule's live wiring is a single boolean passed into a pure-function update (e.g. CursedEnergy.update(dt, castInProgress)), add a smoke assertion for the wired value itself, not just a unit test on the pure function - a mutant on the wiring line survives 858 unit tests otherwise.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/scenes/TestScene.ts` · harmful: 0
+- features: energia-e-tecnicas
+- evidence: src/scenes/TestScene.ts:343 (src/scenes/TestScene.ts)
+- last seen: 2026-09-29T00:37:42Z
+
+### L-036 - Energy-gain side effects wired only inside Phaser scene callbacks (onConnect/onTechConnect) need a dedicated smoke assertion on ce.cur before/after the hit - implementation-only comments do not substitute for a test.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/scenes/TestScene.ts` · harmful: 0
+- features: energia-e-tecnicas
+- evidence: CE-06,CE-08 (src/scenes/TestScene.ts)
+- last seen: 2026-09-29T00:37:42Z
+
+### L-037 - A gravity-scale-while-casting rule (Player.ts gravity * CAST_FX.airGravity) needs a smoke case that puts the player airborne during sign/charge and reads back vertical velocity/position - it has no other test surface.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/game/Player.ts` · harmful: 0
+- features: energia-e-tecnicas
+- evidence: CAST-11 (src/game/Player.ts)
+- last seen: 2026-09-29T00:37:43Z
+
+### L-038 - Debug-lab respawn/reset timers (training dummy hp->0 then back to max after 1000ms) are easy to implement and easy to forget to smoke-test end to end; the precondition check (dummies start full) is not the same AC as the respawn behavior.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/game/FxLab.ts` · harmful: 0
+- features: energia-e-tecnicas
+- evidence: FXL-06 (src/game/FxLab.ts)
+- last seen: 2026-09-29T00:37:43Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

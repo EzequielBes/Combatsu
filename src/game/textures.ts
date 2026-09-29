@@ -36,6 +36,18 @@ export const TEX = {
   /** Ferramentas amaldiçoadas: comum/rara e as poses na mão do inimigo (ARM-19). */
   cursedKnife: 'cursed-knife',
   cursedClub: 'cursed-club',
+  /** Kanji das técnicas (KOK-29): ícones de slot do HUD (TEC-09) e a chamada da conjuração (CAST-16). */
+  kanji: 'kanji',
+  /** Chama da aura de conjuração (CAST-14), 2 frames por cor. */
+  techAura: 'tech-aura',
+  /** Faíscas de técnica (2x2 texels): Kokusen, expelidas pelo Vermelho, sugadas pelo Azul (KOK-23). */
+  techSpark: 'tech-spark',
+  /** Orbe Vermelho (RED-02): um frame por terço da carga, 4/8/12 texels, cada um numa textura própria. */
+  techOrbRed4: 'tech-orb-red-4',
+  techOrbRed8: 'tech-orb-red-8',
+  techOrbRed12: 'tech-orb-red-12',
+  /** Orbe Azul ativo (BLU-08): um frame só. */
+  techOrbBlue: 'tech-orb-blue',
 } as const;
 
 export const SIZE = {
