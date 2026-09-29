@@ -102,6 +102,8 @@ export interface GameSnapshot {
     fragments: string;
     /** Objeto na mão (ITEM-01..03), `null` de mãos vazias. */
     heldItem: { name: string; pips: number; maxPips: number } | null;
+    /** HUD do combo (CMB-04/05): texto `N hits` e letra da nota, `null` escondidos; `x` é a borda direita. */
+    combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
     /** Barra de energia e ícones de slot na `uiLayer` (TEC-11). */
     techIgnoredByMain: boolean;
     /** Chamada da conjuração (CAST-16), `null` fora da janela de 900 ms. */

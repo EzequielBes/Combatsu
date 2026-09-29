@@ -347,6 +347,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     this.hud.setPlayerStructure(this.player.structureView);
+    this.hud.setCombo(this.comboCounter.hits, this.comboCounter.grade);
     // FXL-03: a câmera lenta multiplica o `dt` de jogo/efeitos junto com `time`/`tweens`/física do Matter
     // (aplicados em `fxLab.toggleTimeScale`) - um só fator, tudo anda devagar junto.
     const realDt = Math.min(delta, MAX_FRAME_MS);
