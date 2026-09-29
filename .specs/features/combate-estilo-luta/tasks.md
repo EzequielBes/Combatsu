@@ -404,12 +404,12 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] `tech.smoke` e `kokusen.smoke` (F5) continuam passando
-- [ ] MOV-02 conferido: WHEN a light press happens with no move in progress on the ground THEN the move `jab` SHALL start.
-- [ ] MOV-13 conferido: WHEN a move starts THEN `events` SHALL get exactly one `move:<name>` with its name.
-- [ ] MOV-18 conferido: WHILE a move is in progress, `player.move` SHALL be its name, and `null` while no move is in progress.
-- [ ] MOV-15 conferido: WHEN a move deals damage to a target THEN the damage SHALL pass through `modifiers.meleeDamage` (F4) and give the +3 cursed energy of CE-06 (F5).
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] `tech.smoke` e `kokusen.smoke` (F5) continuam passando
+- [x] MOV-02 conferido: WHEN a light press happens with no move in progress on the ground THEN the move `jab` SHALL start.
+- [x] MOV-13 conferido: WHEN a move starts THEN `events` SHALL get exactly one `move:<name>` with its name.
+- [x] MOV-18 conferido: WHILE a move is in progress, `player.move` SHALL be its name, and `null` while no move is in progress.
+- [x] MOV-15 conferido: WHEN a move deals damage to a target THEN the damage SHALL pass through `modifiers.meleeDamage` (F4) and give the +3 cursed energy of CE-06 (F5).
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

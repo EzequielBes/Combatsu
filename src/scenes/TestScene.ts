@@ -229,6 +229,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
+    this.player.onEvent = (ev) => this.debugEvents.push(ev);
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
     this.techCaster = new TechCaster(this, this.player, this.energy, this.loadout);
     this.realtimeFx = new FxTimeline();
@@ -978,7 +979,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // CE-06/CE-08: só o golpe corpo a corpo do próprio player (soco do combo ou objeto na mão, `ownerId` é o
     // dele) aplicado a um alvo ganha energia; golpes que o player recebe têm outro dono, e dano de técnica (T22+)
     // não passa por este caminho.
-    if (hit.ownerId === this.player.id) this.energy.gain(CE.meleeGain);
+    if (hit.ownerId === this.player.id) {
+      this.energy.gain(CE.meleeGain);
+      if (hit.moveName) this.player.hitLanded();
+    }
   }
 
   /**
