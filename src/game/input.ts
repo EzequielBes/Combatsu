@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { combineStrikePresses } from '../core/fightInput';
 
 export interface InputSnapshot {
   left: boolean;
@@ -6,7 +7,23 @@ export interface InputSnapshot {
   down: boolean;
   jumpPressed: boolean;
   jumpHeld: boolean;
-  attackPressed: boolean;
+  /** `W`/`↑` segurada (golpe para cima, MOV-07). */
+  upHeld: boolean;
+  /** `J`/`X` apertada no frame, sem `K`/`Z` junto (CTL-01). */
+  lightPressed: boolean;
+  /** `K`/`Z` apertada no frame, sem `J`/`X` junto (CTL-02). */
+  heavyPressed: boolean;
+  /** `K`/`Z` segurada (chute carregado, MOV-09). */
+  heavyHeld: boolean;
+  /** `J` e `K` apertadas no mesmo frame (CTL-04, finalizador). */
+  bothPressed: boolean;
+  /** `U`/`Shift` segurada (guarda). */
+  guardHeld: boolean;
+  /** `U`/`Shift` apertada no frame (parry). */
+  guardPressed: boolean;
+  /** `Q` apertada no frame (esquiva). */
+  dodgePressed: boolean;
+  /** `E` apertada no frame: pegar, arremessar ou largar (CTL-03, CTL-07, CTL-08). */
   interactPressed: boolean;
 }
 
@@ -21,7 +38,11 @@ export class PlayerInput {
   private readonly right: Key[];
   private readonly down: Key[];
   private readonly jump: Key[];
-  private readonly attack: Key[];
+  private readonly up: Key[];
+  private readonly light: Key[];
+  private readonly heavy: Key[];
+  private readonly guard: Key[];
+  private readonly dodge: Key[];
   private readonly interact: Key[];
 
   constructor(scene: Phaser.Scene) {
@@ -32,19 +53,29 @@ export class PlayerInput {
     this.right = keys(K.D, K.RIGHT);
     this.down = keys(K.S, K.DOWN);
     this.jump = keys(K.SPACE, K.W, K.UP);
-    this.attack = keys(K.J, K.X);
-    this.interact = keys(K.K, K.Z);
+    this.up = keys(K.W, K.UP);
+    this.light = keys(K.J, K.X);
+    this.heavy = keys(K.K, K.Z);
+    this.guard = keys(K.U, K.SHIFT);
+    this.dodge = keys(K.Q);
+    this.interact = keys(K.E);
   }
 
   /** Chamar uma vez por frame. */
   read(): InputSnapshot {
+    const strikes = combineStrikePresses(anyJustDown(this.light), anyJustDown(this.heavy));
     return {
       left: anyDown(this.left),
       right: anyDown(this.right),
       down: anyDown(this.down),
       jumpPressed: anyJustDown(this.jump),
       jumpHeld: anyDown(this.jump),
-      attackPressed: anyJustDown(this.attack),
+      upHeld: anyDown(this.up),
+      ...strikes,
+      heavyHeld: anyDown(this.heavy),
+      guardHeld: anyDown(this.guard),
+      guardPressed: anyJustDown(this.guard),
+      dodgePressed: anyJustDown(this.dodge),
       interactPressed: anyJustDown(this.interact),
     };
   }
