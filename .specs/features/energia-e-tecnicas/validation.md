@@ -1,6 +1,6 @@
 # Energia e técnicas amaldiçoadas Validation
 
-## Validation: energia-e-tecnicas - FAIL ❌
+## Validation: energia-e-tecnicas - PASS ✅ (Rodada 2)
 
 **Result**: Gate is fully green (typecheck clean, 858/858 unit tests, build clean, 17/17 smoke scenarios) and the discrimination sensor kills 7/8 targeted mutants. The block is coverage, not broken gameplay: three P1 ACs (CE-06, CE-08, CAST-11) have **zero** test evidence anywhere in the repo — not unit, not smoke — despite being implemented, and the sensor's 8th mutation (CE-05's live wiring in `TestScene.ts`) **survived** because nothing exercises it above the isolated `CursedEnergy` unit test. Per the coordinator's bar, a green verdict requires every P1 AC to have evidence and no unjustified surviving mutant; both conditions come up short here. Everything else — energy math, slots, the shop's technique economy, the cast state machine, Punho Divergente, Kokusen, Vermelho, Azul, Desmantelar, the fx-lab, and the fx invariants — is solidly evidenced, much of it live in Phaser via smoke, not just in isolated Node tests.
 
@@ -335,3 +335,69 @@ Per the coordinator's instruction, `spec.md`'s traceability table is left as `Im
 **What's missing**: automated proof for three P1 rules (energy stays flat while casting — live; melee hits give +3 energy; technique hits don't; airborne casting halves gravity) that are all correctly implemented but currently unprotected against regression, plus one P2 debug-tool path (dummy respawn) and nine weak/indirect ACs where the implementation is right but nothing reads the live value back.
 
 **Next steps**: Fixes 1-3 (CE-05 live, CE-06/CE-08, CAST-11) must land before this feature can be marked done — each is a one-assertion addition to an existing smoke file, not new code. Fixes 4-6 are optional hardening and do not block a re-verify once 1-3 land.
+
+---
+
+## Rodada 2 — Re-verificação independente (sensor leve)
+
+**Date**: 2026-09-28
+**Diff range**: `b57755b..HEAD` (`0fe259d`, `847ad41`, `cbd1827` — 3 commits, all test/coverage-only, no production-behavior change beyond the FXL-06 extraction to `src/core/dummyHealth.ts`)
+**Verifier**: independent sub-agent, round 2 (author ≠ verifier; fresh from round 1)
+
+### Spec-anchored closure of the 5 flagged gaps
+
+| AC | Fix commit | Evidence (`file:line`) | Asserts spec value? | Result |
+| --- | --- | --- | --- | --- |
+| CE-05 (live wiring) | `847ad41` | `scripts/smoke/tech.smoke.mjs:191-205` — samples `ce.cur` on entering `sign`, then every frame through `sign`/`charge` asserts `snap.ce.cur === ceAtSign` (exact equality, not a tolerance), and asserts `charge` was actually observed (`sawCharge`). Live-wires the gate at `src/scenes/TestScene.ts:343` (`this.energy.update(dt, this.techCaster.cast !== null)`), unchanged since round 1. | Yes — CE-05: "no regen while a cast is in progress", asserted as exact `cur` equality across real frames of a real cast. | ✅ Closed |
+| CAST-11 | `847ad41` | `scripts/smoke/tech.smoke.mjs:207-229` — pre-condition asserts free-fall gravity ≈30 px/s per step (`PLAYER_MOVE.gravity=1800` / 60fps = 30, `src/data/tuning.ts:15`), then asserts every in-cast airborne step is ≈9 px/s (`1800×0.3/60=9`, `CAST_FX.airGravity=0.3` at `src/data/techniques.ts:120`), tolerance ±1.5. Reads `player.vy` newly exposed via `src/game/Player.ts:121-123` (`verticalSpeed` getter) → `src/scenes/TestScene.ts:877` (`vy: this.player.verticalSpeed`) → `src/game/debugApi.ts:14` (`GameSnapshot.player.vy`). | Yes — CAST-11: "gravity ×0.3 while airborne in sign/charge", asserted against the exact numeric derivation of the spec's 30%. | ✅ Closed |
+| CE-06 | `cbd1827` | `scripts/smoke/kokusen.smoke.mjs:185-212` — walks the player to a surviving enemy, snapshots `ce.cur` before a jab connects, asserts the delta on connect is in `[3, 3.2]` (the 0.2 headroom is exactly one frame's regen at 8/s, called out inline). Live-wires `src/scenes/TestScene.ts:974` (`this.energy.gain(CE.meleeGain)`, `CE.meleeGain=3`). | Yes — CE-06: "+3 energy on melee hit", asserted as an exact numeric delta (not just "increased"). | ✅ Closed |
+| CE-08 | `cbd1827` | `scripts/smoke/kokusen.smoke.mjs:128-139,183` — inside the existing Divergente first-impact loop, when the impact frame's *previous* snapshot was already in `release` state, asserts `snap.ce.cur === prev.ce.cur` (exact equality across the technique-damage frame), plus a closing assertion (`ce08Checked`, line 183) that the check actually fired at least once rather than silently no-op'ing. Confirms `src/scenes/TestScene.ts:981-986` (`onTechConnect`, structurally never calls `energy.gain`) live. | Yes — CE-08: "technique damage does NOT trigger the CE-06 +3", asserted as exact `cur` equality on a real technique hit. | ✅ Closed |
+| FXL-06 | `0fe259d` | `tests/core/dummyHealth.test.ts:14-21` — drives `DummyHealth(1000,1000)` to 0 hp, asserts `hp===0` at 999ms and `hp===1000` at exactly 1000ms (boundary asserted both sides), plus a "damage while regen-timer running doesn't restart it" case (`:30-37`). Extracted from `src/game/FxLab.ts` (`TrainingDummy.receiveHit`/`update`, now delegating to `src/core/dummyHealth.ts:20-34`) — same rule, now Node-testable per AD-001 instead of only reachable via Phaser/smoke. | Yes — FXL-06: "hp reaches 0 → stays in place, hp=max 1000ms later", asserted at the exact 999/1000ms boundary. | ✅ Closed |
+
+All 5 previously-flagged P1/P2 gaps now carry spec-value assertions (exact deltas/boundaries, not loose "changed" checks). No new gaps introduced: the only production-code change (`src/game/FxLab.ts`, `src/game/Player.ts`, `src/game/debugApi.ts`, `src/scenes/TestScene.ts:877`) is a mechanical extraction (dummy regen logic → `DummyHealth`) and a read-only debug-snapshot addition (`player.vy`), both behavior-preserving — confirmed by the unchanged 858→865 unit test delta (+7 new tests, 0 removed, 0 modified assertions on pre-existing behavior).
+
+### Discrimination sensor (5 mutants, isolated worktree)
+
+Isolated scratch: `git worktree add <scratchpad>/verify-wt2 HEAD` (`HEAD`=`cbd1827`), `node_modules` linked via `New-Item -ItemType Junction` (PowerShell; the `cmd /c mklink /J` attempt failed with "invalid option" under this shell and was superseded by the PowerShell call, which succeeded — noted for anyone re-running this sensor from Git Bash on Windows). Every mutation applied with `sed`/direct edit inside the worktree only, reverted with `git checkout --` before the next mutation; worktree removed with `git worktree remove --force` afterward. `git stash` never used.
+
+| # | AC | `file:line` | Mutation | Command | Killed? |
+| --- | --- | --- | --- | --- | --- |
+| a | CE-05 | `src/scenes/TestScene.ts:343` | `this.energy.update(dt, this.techCaster.cast !== null)` → `this.energy.update(dt, false)` | `npm run smoke -- tech.smoke` | ✅ Killed — `FALHA tech.smoke.mjs: CE-05: energia mudou durante sign: 28.800000000001376 -> 28.93333333333471` |
+| b | CE-06 | `src/scenes/TestScene.ts:974` | `this.energy.gain(CE.meleeGain)` → `this.energy.gain((CE.meleeGain - 1))` | `npm run smoke -- kokusen` | ✅ Killed — `FALHA kokusen.smoke.mjs: CE-06: jab aplicado deveria somar 3 de energia: 2` |
+| c | CE-08 | `src/scenes/TestScene.ts:981` (`onTechConnect` body, first line) | inserted `this.energy.gain(CE.meleeGain);` at the top of `onTechConnect` | `npm run smoke -- kokusen` | ✅ Killed — `FALHA kokusen.smoke.mjs: CE-08: o 1º impacto não deveria mexer na energia: 80 -> 83` |
+| d | CAST-11 | `src/game/Player.ts:207` | `PLAYER_MOVE.gravity * CAST_FX.airGravity` → `PLAYER_MOVE.gravity * (CAST_FX.airGravity / CAST_FX.airGravity)` (compiles, neutralizes the 0.3 factor to 1) | `npm run smoke -- tech.smoke` | ✅ Killed — `FALHA tech.smoke.mjs: CAST-11: no ar em sign/charge a gravidade deveria ser 30% (~9 px/s por passo): [30,30,30,30,30,30]` |
+| e | FXL-06 | `src/core/dummyHealth.ts:24` | `this.regenMsLeft = this.regenMs;` → `this.regenMsLeft = this.regenMs + 1;` (regenMs is an injected constructor param, not a literal in this file — this simulates the instructed "1000→1001" shift without a hardcoded 1000 to touch) | `npx vitest run tests/core/dummyHealth.test.ts` | ✅ Killed — 2 failures at the 1000ms boundary (`expected +0 to be 1000`, both the plain-boundary and the damage-during-regen cases) |
+
+**Sensor verdict**: 5/5 killed. Every mutant targeting the round-1 gaps is now caught by a real test at the exact frame/step/boundary the spec defines.
+
+**Isolation confirmation**: `git status --porcelain` on the real worktree, immediately before sensor setup and immediately after `git worktree remove --force`, both showed the identical unrelated drift below (a concurrent agent's changes to `tests/tools/jevRefine.test.ts` / `tools/jev-refine/lib.ts` / `.specs/features/combate-estilo-luta/` — untouched by this session, consistent with round 1's note that several agents/worktrees share this machine):
+```
+ M tests/tools/jevRefine.test.ts
+ M tools/jev-refine/lib.ts
+?? .agents/
+?? .claude/
+?? .cursor/
+?? .specs/features/combate-estilo-luta/
+?? .windsurf/
+?? skills-lock.json
+```
+None of the 3 files this session mutated (`src/scenes/TestScene.ts`, `src/game/Player.ts`, `src/core/dummyHealth.ts`) appear in that status — confirming every mutation was confined to, and fully reverted within, the isolated worktree. `git worktree list` after removal shows only the three worktrees that predate this session.
+
+### Gate check (real tree)
+
+- **`npm run typecheck`**: ✅ 0 errors
+- **`npm test`** (`vitest run`): ✅ 865/865 passed, 57 test files (was 858/56 at round 1; +7 tests from `tests/core/dummyHealth.test.ts` and the `debugApi.test.ts` `vy` field update)
+- **`npm run build`**: ✅ clean (`tsc --noEmit && vite build`)
+- **`npm run smoke`**: full suite 13/15 clean on the first pass; `armed.smoke.mjs` (`ARM-12`) and `heal.smoke.mjs` (`HEAL-09`) failed — both on the coordinator's known-flaky list. Isolated retry: `npm run smoke -- armed.smoke` → `ok` (1st attempt); `npm run smoke -- heal.smoke` → `ok` (1st attempt). 15/15 confirmed passing; no new instability, no boot-race symptom on `tech`/`kokusen`/`techniques` this run (round 1's diagnosed `debugApi.ts` boot window, left in the backlog, did not reproduce here).
+
+### Backlog carried forward (not blocking)
+
+- `kokusen.smoke.mjs`/`armed.smoke.mjs`/`heal.smoke.mjs` intermittent boot-time flakiness under shared-machine load — diagnosed in round 1 (`src/game/debugApi.ts:183-202`, lazy `game.loop.sleep()`), fix attempted and reverted because it broke 13 real-time-dependent smokes; stays in the backlog per the coordinator's brief.
+- Round 1's 9 weak/indirect ACs (TEC-11, CAST-12, CAST-13, KOK-26, RED-04, RED-15, TFX-06, TFX-10, TFX-11) are unchanged by this round — out of scope for this re-verification, which targeted only the 5 named gaps.
+
+### Updated overall verdict
+
+**Rodada 1**: ❌ FAIL — 4 zero-evidence P1/P2 gaps (CE-05 live, CE-06, CE-08, CAST-11, FXL-06) + 1 surviving sensor mutant.
+**Rodada 2**: ✅ PASS — all 5 gaps now closed with exact spec-value assertions (`file:line` above); 5/5 targeted sensor mutants killed in an isolated worktree with confirmed real-tree porcelain isolation; typecheck/test/build/smoke all green (smoke 15/15 after isolated retry of the two known-flaky scenarios). The remaining 9 weak/indirect ACs and the kokusen/armed/heal boot-flakiness are pre-existing, out-of-scope backlog items, not new findings — no new lessons recorded.
+
+**Top-of-report verdict updated to PASS ✅** per this round's evidence.
