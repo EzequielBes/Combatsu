@@ -125,6 +125,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 6. CTL-04: WHEN `J` and `K` are pressed in the same frame THEN the input snapshot SHALL report one `both` press and no separate light or heavy press.
 7. CTL-05: WHERE the debug mode is on, the snapshot SHALL include the `player.move`, `player.guard`, `player.structure`, `player.dodge`, `enemies[].structure`, `enemies[].guarding`, `combo` and `timeScale` fields of the contract above.
 8. CTL-06: The on-screen controls panel SHALL list `J leve · K forte · U guarda/parry · Q esquiva · E pegar`.
+9. CTL-09: WHILE `player.guard` is `guard` or `parry`, the player sprite SHALL show the `guard` frame.
 
 **Independent Test**: `input.test.ts` (pura: leitura de teclas → snapshot de input); smoke `combat.smoke.mjs` confere `E` com a cadeira e o painel.
 
@@ -180,6 +181,8 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 5. GRD-03: IF a regular enemy hit reaches the guarding player while the attacker center x is on the side opposite to the player facing THEN the player SHALL take exactly the hit damage.
 6. GRD-04: IF the hit is marked unblockable THEN the guard SHALL NOT reduce its damage.
 7. GRD-05: WHILE guarding, the player run speed SHALL be 40% of the normal run speed.
+8. GRD-08: WHEN a hit is blocked THEN `fx.layers` SHALL include `guard.spark` in that frame.
+9. GRD-09: WHEN a hit is blocked THEN the player SHALL be pushed 8 px (±2 px) away from the attacker.
 
 **Independent Test**: `defense.test.ts` em Node (frente/costas, comum/chefe, imbloqueável); smoke com um inimigo atacando o jogador em guarda confere hp e `block`.
 
@@ -205,6 +208,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 8. PAR-04: IF `U` or `Shift` is pressed less than 300 ms after the previous press THEN no parry window SHALL open.
 9. PAR-05: IF a regular enemy hit reaches the player after the parry window closed while `U` or `Shift` is still held and the attacker is in front THEN the player SHALL take 0 damage (normal guard, GRD-02).
 10. PAR-06: WHEN a hit is parried THEN the player structure SHALL NOT increase.
+11. PAR-11: WHEN a hit is parried THEN `fx.layers` SHALL include `parry.flash` and `parry.ring` in that frame.
 
 **Independent Test**: `defense.test.ts` (janela 149/150 ms, anti-spam 299/300 ms, estrutura do atacante, poise do chefe); smoke aperta `U` 60 ms antes do golpe do inimigo e confere `parry`, hp intacto e estrutura do inimigo.
 
@@ -230,6 +234,8 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 8. DOD-10: IF `Q` is pressed while the dodge cooldown is above 0 THEN no dodge SHALL start.
 9. DOD-05: IF `Q` is pressed in the air THEN no dodge SHALL start.
 10. DOD-06: WHEN a move that already hit a target is in its recovery and `Q` is pressed with no dodge cooldown THEN the move SHALL end and the dodge SHALL start in that frame.
+11. DOD-11: WHILE a dodge is active, `fx.layers` SHALL include `dodge.trail`.
+12. DOD-12: WHILE `timeScale` is 0.3, `fx.layers` SHALL include `dodge.slowTint`.
 
 **Independent Test**: `defense.test.ts` (distância e tempo, 179/180 ms de invencibilidade, 449/450 ms de recarga, perfeita uma vez, bônus uma vez); smoke esquiva através do golpe do inimigo e confere `perfectDodge`, `timeScale` e hp.
 
@@ -277,6 +283,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 2. AIR-02: WHEN a heavy press happens in the air with no move in progress THEN `voadora` (16 heavy) SHALL start and move the player 120 px (±8 px) forward and down over its active time.
 3. AIR-03: WHEN a heavy press happens in the air while `S` is held THEN `pisao` (14 heavy) SHALL start and set the player vertical speed to the max fall speed.
 4. AIR-04: The player SHALL start at most one air move per jump.
+5. AIR-05: WHILE `voadora` is active, `fx.layers` SHALL include `air.kickTrail`.
 
 **Independent Test**: `moveGraph.test.ts` (entradas no ar, um por pulo); smoke pula e usa voadora.
 
@@ -355,6 +362,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | CTL-04 | P1: Controles de luta | Specify | Pending |
 | CTL-05 | P1: Controles de luta | Specify | Pending |
 | CTL-06 | P1: Controles de luta | Specify | Pending |
+| CTL-09 | P1: Controles de luta | Specify | Pending |
 | MOV-01 | P1: Grafo de golpes | Specify | Pending |
 | MOV-02 | P1: Grafo de golpes | Specify | Pending |
 | MOV-03 | P1: Grafo de golpes | Specify | Pending |
@@ -380,6 +388,8 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | GRD-03 | P1: Guarda | Specify | Pending |
 | GRD-04 | P1: Guarda | Specify | Pending |
 | GRD-05 | P1: Guarda | Specify | Pending |
+| GRD-08 | P1: Guarda | Specify | Pending |
+| GRD-09 | P1: Guarda | Specify | Pending |
 | PAR-01 | P1: Parry | Specify | Pending |
 | PAR-02 | P1: Parry | Specify | Pending |
 | PAR-09 | P1: Parry | Specify | Pending |
@@ -390,6 +400,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | PAR-04 | P1: Parry | Specify | Pending |
 | PAR-05 | P1: Parry | Specify | Pending |
 | PAR-06 | P1: Parry | Specify | Pending |
+| PAR-11 | P1: Parry | Specify | Pending |
 | DOD-01 | P1: Esquiva | Specify | Pending |
 | DOD-09 | P1: Esquiva | Specify | Pending |
 | DOD-02 | P1: Esquiva | Specify | Pending |
@@ -400,6 +411,8 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | DOD-10 | P1: Esquiva | Specify | Pending |
 | DOD-05 | P1: Esquiva | Specify | Pending |
 | DOD-06 | P1: Esquiva | Specify | Pending |
+| DOD-11 | P1: Esquiva | Specify | Pending |
+| DOD-12 | P1: Esquiva | Specify | Pending |
 | STR-01 | P1: Estrutura e finalizador | Specify | Pending |
 | STR-02 | P1: Estrutura e finalizador | Specify | Pending |
 | STR-03 | P1: Estrutura e finalizador | Specify | Pending |
@@ -419,6 +432,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | AIR-02 | P2: Aéreos e voadora | Specify | Pending |
 | AIR-03 | P2: Aéreos e voadora | Specify | Pending |
 | AIR-04 | P2: Aéreos e voadora | Specify | Pending |
+| AIR-05 | P2: Aéreos e voadora | Specify | Pending |
 | EBL-01 | P2: Inimigos que bloqueiam | Specify | Pending |
 | EBL-02 | P2: Inimigos que bloqueiam | Specify | Pending |
 | EBL-03 | P2: Inimigos que bloqueiam | Specify | Pending |
@@ -432,7 +446,7 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 | SPC-01 | P3: Palma explosiva (meia-lua) | Specify | Pending |
 | SPC-02 | P3: Palma explosiva (meia-lua) | Specify | Pending |
 
-**Coverage:** 84 total, 0 Verified
+**Coverage:** 91 total, 0 Verified
 
 ---
 
