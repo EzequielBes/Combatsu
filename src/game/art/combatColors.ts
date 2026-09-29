@@ -21,3 +21,6 @@ export const COMBO_GRADE_COLORS: Readonly<Record<'D' | 'C' | 'B' | 'A' | 'S', nu
   A: PALETTE.A,
   S: PALETTE.W,
 };
+
+/** Tom azulado que cobre a tela na câmera lenta da esquiva perfeita (DOD-12). */
+export const SLOWMO_TINT_COLOR = PALETTE.d;

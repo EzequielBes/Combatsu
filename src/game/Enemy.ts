@@ -7,7 +7,7 @@ import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structur
 import type { EnemyBase } from '../core/difficulty';
 import type { ToolKey } from '../core/loot';
 import { SpawnGrace } from '../core/spawnGrace';
-import { DEFENSE, MOVES, STRUCTURE } from '../data/moves';
+import { DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
 import { normalize, type Hit, type Vec2 } from '../core/hit';
 import { enemyAnimKey } from './art';
 import { ENEMY_BAR_WELL } from './art/hud';
@@ -79,6 +79,10 @@ export class Enemy implements Hittable {
   private readonly structure = new Structure(ENEMY_STRUCTURE);
   /** Tempo (ms de jogo) sem atacar nem andar depois de um parry (PAR-10). */
   private suppressedMs = 0;
+  /** O finalizador já bateu nesta quebra (um por quebra, FIN-03). */
+  private finished = false;
+  /** Tempo (ms de jogo) que a guarda do inimigo ainda dura (EBL-01, T16); 0 = sem guarda. */
+  private guardMs = 0;
   /** Empurrão scriptado em curso (SPC-02, MOV-*): velocidade x por step e steps que faltam. */
   private slide: { vxStep: number; stepsLeft: number; friction: Map<MatterJS.BodyType, { f: number; fs: number }> } | null =
     null;
@@ -234,10 +238,11 @@ export class Enemy implements Hittable {
   receiveHit(hit: Hit): boolean {
     if (this.brain.isDead) return false;
     const wasBroken = this.structure.broken;
+    const isFinisher = hit.moveName === FINISHER_MOVE;
     const effect = !wasBroken && hit.moveName ? MOVES[hit.moveName]?.effect : undefined;
     // Quebrado e atordoado: o golpe tira vida mas não derruba nem empurra, para o finalizador ainda alcançar (FIN-01).
     let reaction: Hit = hit;
-    if (wasBroken) reaction = { ...hit, strength: 'light', force: 0 };
+    if (wasBroken && !isFinisher) reaction = { ...hit, strength: 'light', force: 0 };
     // Empurrão (SPC-02): sai rente ao chão, para o deslocamento horizontal não esbarrar em plataformas.
     else if (effect?.type === 'push') reaction = { ...hit, direction: { x: hit.direction.x, y: PUSH_LIFT } };
     const events = this.brain.receiveHit(reaction, effect?.type === 'knockdown' ? { ragdollStunMs: effect.ms } : {});
@@ -331,6 +336,21 @@ export class Enemy implements Hittable {
     return this.structure.broken;
   }
 
+  /** Quebrado e ainda sem finalizador nesta quebra (FIN-01, um por quebra). */
+  get finishable(): boolean {
+    return this.structure.broken && !this.finished && !this.brain.isDead;
+  }
+
+  /** O finalizador acertou: não vale de novo até uma nova quebra. */
+  markFinished(): void {
+    this.finished = true;
+  }
+
+  /** Guardando (EBL-01), para o snapshot. */
+  get guarding(): boolean {
+    return this.guardMs > 0;
+  }
+
   /** Mostra a barra depois do primeiro dano e até morrer, cheia na proporção da vida, em passos de 1 texel. */
   private updateBar(): void {
     const show = !this.brain.isDead && this.brain.hp < this.tuning.brain.maxHp;
@@ -372,6 +392,8 @@ export class Enemy implements Hittable {
     this.grace.update(dtMs);
     this.suppressedMs = Math.max(0, this.suppressedMs - dtMs);
     this.structure.update(dtMs);
+    if (!this.structure.broken) this.finished = false;
+    this.guardMs = Math.max(0, this.guardMs - dtMs);
     this.handle(this.brain.update(dtMs));
     if (this._removed) return;
     // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto,

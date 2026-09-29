@@ -67,6 +67,8 @@ export type DefenseKind = 'block' | 'parry' | 'perfectDodge';
 /** Recuo do bloqueio (GRD-09, px) e a velocidade dele (px/s): 8 px em 100 ms. */
 const BLOCK_PUSH_PX = DEFENSE.blockPushPx;
 const BLOCK_PUSH_MS = 100;
+/** Pose do finalizador (FIN-01): frame do golpe mais forte do grafo, por este tempo (ms). */
+const FINISHER_POSE_MS = 350;
 /** Troca de frame do atordoamento da guarda quebrada (ms). */
 const STUN_FRAME_MS = 120;
 /** Alpha do corpo enquanto a esquiva torna invulnerável. */
@@ -113,6 +115,8 @@ export class Player implements Hittable {
   private blockPush: { dir: 1 | -1; remainingPx: number } | null = null;
   /** O frame anterior era de dash da esquiva: no seguinte a velocidade zera, sem escorregar além dos 96 px. */
   private wasDashing = false;
+  /** Tempo (ms) que a pose do finalizador segue na tela. */
+  private poseMs = 0;
   private readonly propSwing = new ComboTracker([PROP_SWING], 0);
   private readonly hitbox: AttackHitbox;
   private held: Prop | null = null;
@@ -153,7 +157,11 @@ export class Player implements Hittable {
     this.sprite.setIgnoreGravity(true);
     this.sprite.setVisible(false);
     tagBody(bodyOf(this.sprite), { kind: 'character', target: this });
-    this.hitbox = new AttackHitbox(scene, this.id, this.team, onConnect);
+    // DOD-08: o primeiro golpe em até 1000 ms de uma esquiva perfeita causa ×1,5, uma vez (o `Dodge` cuida da janela).
+    this.hitbox = new AttackHitbox(scene, this.id, this.team, onConnect, (h) => ({
+      ...h,
+      damage: this.dodge.applyCounterBonus(h.damage),
+    }));
     this.spawn = { x, y };
     this.view = scene.add
       .sprite(x, y + SIZE.player.h / 2, TEX.playerArt, 'idle-0')
@@ -322,6 +330,7 @@ export class Player implements Hittable {
     this.hitbox.follow(this.sprite.x, this.sprite.y, this.facing);
     this.held?.follow(this.sprite.x, this.sprite.y, this.facing);
     this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
+    this.poseMs = Math.max(0, this.poseMs - dtMs);
     this.animate(sensors.grounded);
     this.blink(dtMs);
     this.tickFlash(dtMs);
@@ -479,9 +488,10 @@ export class Player implements Hittable {
     return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.dodge.cooldownMs) };
   }
 
-  /** Dado ao `applyCounterBonus` da esquiva perfeita (DOD-08), uma vez, no golpe do jogador. */
-  counterDamage(damage: number): number {
-    return this.dodge.applyCounterBonus(damage);
+  /** Finalizador (FIN-01): vira para o alvo e mostra a pose de golpe por um instante. */
+  finisherPose(dir: 1 | -1): void {
+    this.move = { ...this.move, facing: dir };
+    this.poseMs = FINISHER_POSE_MS;
   }
 
   /** Mata o player pelo caminho normal de morte (tecla 3 em `?debug`, RUN-03/04). */
@@ -524,6 +534,15 @@ export class Player implements Hittable {
       v.setScale(this.facing, 1);
       v.anims.stop();
       v.setFrame(`${this.castLock.id}-${this.castLock.state}`);
+      return;
+    }
+    if (this.poseMs > 0 && !this.health.dead && !this.health.staggered) {
+      const v = this.view;
+      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      v.setScale(this.facing, 1);
+      v.anims.stop();
+      v.setFrame('palmaExplosiva-hit');
+      this.fx.afterimage(v);
       return;
     }
     if (this.structure.broken && !this.health.dead) {

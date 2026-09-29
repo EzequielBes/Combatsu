@@ -507,15 +507,15 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] DOD-07 conferido: WHEN a perfect dodge happens THEN `timeScale` SHALL be 0.3 for 400 ms of real time and then return to 1.
-- [ ] DOD-08 conferido: WHEN the player hits a target within 1000 ms after a perfect dodge THEN that hit damage SHALL be multiplied by 1.5 (rounded, halves up), once.
-- [ ] DOD-12 conferido: WHILE `timeScale` is 0.3, `fx.layers` SHALL include `dodge.slowTint`.
-- [ ] FIN-01 conferido: WHEN a `both` press (CTL-04) happens within 40 px of a broken regular enemy THEN the finisher SHALL hit that enemy for 40 damage and `events` SHALL get `finisher:<id>`.
-- [ ] FIN-02 conferido: WHEN the finisher hits THEN the game SHALL apply a hitstop of 150 ms.
-- [ ] FIN-04 conferido: WHEN the finisher hits THEN the main camera zoom SHALL reach 1.7 within 100 ms of real time.
-- [ ] FIN-03 conferido: IF a `both` press happens and no broken enemy is within 40 px THEN no finisher SHALL happen.
-- [ ] CTL-05 conferido: WHERE the debug mode is on, the snapshot SHALL include the `player.move`, `player.guard`, `player.structure`, `player.dodge`, `enemies[].structure`, `enemies[].guarding`, `combo` and `timeScale` fields of the contract above.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] DOD-07 conferido: WHEN a perfect dodge happens THEN `timeScale` SHALL be 0.3 for 400 ms of real time and then return to 1.
+- [x] DOD-08 conferido: WHEN the player hits a target within 1000 ms after a perfect dodge THEN that hit damage SHALL be multiplied by 1.5 (rounded, halves up), once.
+- [x] DOD-12 conferido: WHILE `timeScale` is 0.3, `fx.layers` SHALL include `dodge.slowTint`.
+- [x] FIN-01 conferido: WHEN a `both` press (CTL-04) happens within 40 px of a broken regular enemy THEN the finisher SHALL hit that enemy for 40 damage and `events` SHALL get `finisher:<id>`.
+- [x] FIN-02 conferido: WHEN the finisher hits THEN the game SHALL apply a hitstop of 150 ms.
+- [x] FIN-04 conferido: WHEN the finisher hits THEN the main camera zoom SHALL reach 1.7 within 100 ms of real time.
+- [x] FIN-03 conferido: IF a `both` press happens and no broken enemy is within 40 px THEN no finisher SHALL happen.
+- [x] CTL-05 conferido: WHERE the debug mode is on, the snapshot SHALL include the `player.move`, `player.guard`, `player.structure`, `player.dodge`, `enemies[].structure`, `enemies[].guarding`, `combo` and `timeScale` fields of the contract above.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelos smokes da fase 5)
 **Gate**: build

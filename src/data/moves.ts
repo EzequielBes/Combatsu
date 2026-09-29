@@ -39,6 +39,9 @@ export interface MoveDef extends AttackStep {
   slam?: boolean;
 }
 
+/** Nome do golpe do finalizador (FIN-01): não está no grafo (`MOVES`), só marca o `Hit` e a nota do combo. */
+export const FINISHER_MOVE = 'finalizador';
+
 /** Janela para encadear depois da recovery (MOV-03). */
 export const MOVE_WINDOW_MS = 260;
 

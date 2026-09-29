@@ -45,6 +45,8 @@ export interface GameSnapshot {
     weaponVisible: boolean | null;
     /** Estrutura do inimigo comum (STR-01), arredondada; `broken` = atordoado pela quebra (CTL-05). */
     structure: { cur: number; max: number; broken: boolean };
+    /** Guardando (EBL-01) (CTL-05). */
+    guarding: boolean;
   }[];
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
@@ -116,6 +118,10 @@ export interface GameSnapshot {
       flashing: boolean;
     };
   };
+  /** Contador de combo (CMB-01..03): hits e nota (`null` com menos de 2 hits). */
+  combo: { hits: number; grade: 'D' | 'C' | 'B' | 'A' | 'S' | null };
+  /** Escala de tempo da cena: 1, ou 0.3 na câmera lenta da esquiva perfeita (DOD-07). */
+  timeScale: number;
   /** Estado do hitstop (BWIN-02). */
   hitstop: { frozen: boolean; remainingMs: number };
   /** Carteira de fragmentos da run (ECO-19). */
