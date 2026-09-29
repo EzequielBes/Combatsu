@@ -117,6 +117,11 @@ export class Player implements Hittable {
       .setDepth(PLAYER_DEPTH);
   }
 
+  /** Velocidade vertical do movimento (px/s, + para baixo), lida pelo smoke da gravidade na conjuração (CAST-11). */
+  get verticalSpeed(): number {
+    return this.move.vy;
+  }
+
   get facing(): 1 | -1 {
     return this.move.facing;
   }

@@ -11,7 +11,7 @@ import type { TechId } from '../data/techniques';
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
   /** `facing` e `flash` (cor do flash em andamento, HEAL-10) servem ao smoke da economia. */
-  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null; maxHp: number };
+  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null; maxHp: number; vy: number };
   enemies: {
     id: number;
     x: number;

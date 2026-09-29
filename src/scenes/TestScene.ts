@@ -874,6 +874,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         facing: this.player.facing,
         flash: this.player.activeFlash,
         maxHp: this.player.maxHp,
+        vy: this.player.verticalSpeed,
       },
       enemies: this.enemies.map((e) => ({
         id: e.id,
