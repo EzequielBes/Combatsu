@@ -84,21 +84,26 @@
 
 ## Handoff
 
-- **Feature**: F5 `.specs/features/energia-e-tecnicas` concluída e mergeada em `dev` → próxima: **F7 `combate-estilo-luta`** (pedido do usuário em 28/09: combate inspirado em Sifu; absorve a antiga F8). Specify feito em `.specs/features/combate-estilo-luta/spec.md` (84 ACs, Jev em 3 rodadas com glossário da spec) → falta Design, Tasks, Execute, Verifier
+- **Feature**: F7 `.specs/features/combate-estilo-luta` (combate estilo Sifu; absorve a antiga F8) em Execute, branch `feat/combate-estilo-luta` (a partir de `dev`, que já tem F0–F5)
+- **Feito**: Specify (91 ACs, Jev em 3 rodadas + glossário da spec), Design, Tasks (21 tasks em 5 fases), alinhamento Jev (0 stories sinalizadas; revisão em `alignment.md`)
+- **Phase / Task — RETOMAR ASSIM**:
+  1. **Fase 1 (T1–T7, núcleo puro)**: ainda NÃO começou (o worker travou sem gravar nada; árvore limpa). Lançar 1 worker Sonnet com as tasks T1–T7.
+  2. **Fase 2 (T8–T9, arte)**: PARCIAL e SEM commit no worktree `C:\Users\Usuario\AppData\Local\Temp\claude\C--Users-Usuario-documents-surgue\fc11ceb2-8480-4cb5-a593-ee9b3e9fd301\scratchpad\wt-art7` (branch `art/combate-estilo-luta`): modificados `src/game/art/index.ts`, `tests/game/art.test.ts`; novos `src/game/art/combatColors.ts`, `src/game/art/sprites/playerMoves.ts`. Último sinal: typecheck passando. Relançar 1 worker Sonnet "retome a partir do `git status`/`git diff` do worktree", gerar a prévia em `scratchpad\art7-preview\art7-preview.png`, commitar T8 e T9 separados, sem editar `tasks.md`/`spec.md`.
+  3. Depois das duas: `git merge --no-ff art/combate-estilo-luta` na branch da feature, marcar T8/T9 em `tasks.md`/`spec.md`, remover o worktree e a branch `art/*`, e lançar a fase 3 (T10–T14).
 - **Completed**:
-  - F0–F5 mergeadas em `dev` (F5: energia, 2 slots, conjuração com selo/carga/soltura, Punho Divergente, Kokusen com cinema em tempo real, Vermelho, Azul, Desmantelar, técnicas na loja, laboratório `?debug&fxlab`)
-  - 865 testes, 17 cenários de smoke
+  - F0–F5 mergeadas em `dev` (865 testes, 17 smokes); `feat/energia-e-tecnicas` publicada; `dev` local 110+ commits à frente do `origin` (sobe só quando o usuário pedir)
 - **Como trabalhar** (memória do usuário):
-  - Opus planeja; workers Sonnet, um por lote de fase; **no máximo 2 agentes ao mesmo tempo** (pedido de 27/09); arte e smokes podem rodar num worktree separado criado à mão em `scratchpad\wt-*` (o `isolation: worktree` recusa o repo por causa de maiúsculas no caminho `Documents/surGue`)
-  - Jev: `jev-refine` no Specify (agora lê `## Glossário` da spec) e `jev-align` nas tasks
-  - Context7 liberado: `/phaserjs/phaser/v3_90_0`
-  - Worker que cair por limite de sessão: conferir `git status`/`git diff`, relançar com "retome a partir do diff"
+  - Opus planeja; workers Sonnet, um por lote de fase; **no máximo 2 agentes ao mesmo tempo**; arte/smokes em worktree criado à mão em `scratchpad\wt-*` (o `isolation: worktree` recusa o repo por causa de maiúsculas em `Documents/surGue`)
+  - Worker que cair por limite ou travar: conferir `git status`/`git diff` e relançar com "retome a partir do diff"; nunca descartar trabalho parcial que compila
+  - Jev: `jev-refine` no Specify (lê `## Glossário` da spec) e `jev-align` nas tasks; Context7 `/phaserjs/phaser/v3_90_0`
   - Merge em `dev` com `--no-ff`; `main` só com validação do usuário; push só da branch da feature
 - **Dicas técnicas**:
-  - `npm run smoke -- <trecho>`; `?debug&seed=N&round=N&fragments=N&tech=<id>[,<id>]&noshop=1&fxlab`
-  - Capturas visuais: `window.__game.step` usa `headlessStep`, que não desenha; para screenshot, use `window.__game.render()` (fxlab) ou rode em tempo real
-  - Teclas que o jogo lê com `JustDown` precisam ficar seguradas durante um `step` no smoke (`tap`/`press1`)
-- **In-progress** (file:line): none
+  - `npm run smoke -- <trecho>`; `?debug&seed=N&round=N&fragments=N&tech=<id>&noshop=1&fxlab`
+  - Todo dano ao player passa por `Player.receiveHit` (`src/game/Player.ts:161`): é ali que a guarda/parry/esquiva decidem
+  - T10 troca `K` (pegar) por `E` e `K` vira golpe forte: varrer `KeyK` em todos os `scripts/smoke/*.smoke.mjs`
+  - Teclas lidas com `JustDown` precisam ficar seguradas durante um `step` no smoke (`tap`/`press1`)
+  - Worktree antigo travado em `.claude/worktrees/agent-ab5458ae76ebf5ebf` e o worktree `Documents/surGue-player-refine` (branch `feat/player-sprite-refine`) NÃO são desta linha de trabalho: não mexer
+- **In-progress** (file:line): arte da F7 no worktree `wt-art7` (acima)
 - **Blockers**: UAT do usuário (visual, F0–F5) antes de `dev` ir para `main`
-- **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas do usuário)
-- **Branch**: `dev`
+- **Uncommitted files**: só no worktree `wt-art7` (acima); na árvore principal, nenhum (fora `skills-lock.json` e pastas de ferramentas do usuário)
+- **Branch**: `feat/combate-estilo-luta`
