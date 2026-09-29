@@ -179,4 +179,53 @@ export default async function ({ page, baseUrl, assert }) {
     `CAST-07: energia não deveria ser gasta no cancelamento: ${ceBeforeCancel} -> ${snap.ce.cur}`,
   );
   assert(snap.tech.slots[0].cooldownMs === 0, `CAST-21: cancelar não deveria armar a recarga: ${JSON.stringify(snap.tech.slots)}`);
+
+  // Espera o dano do CAST-07 passar (atordoamento/invulnerabilidade), a recarga zerar e a energia bastar.
+  const waitCastReady = async () => {
+    for (let i = 0; i < 60 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0 || snap.ce.cur < 20); i++) {
+      snap = await stepAndSnap(100);
+    }
+    snap = await stepAndSnap(800);
+  };
+
+  // CE-05: durante `sign` e `charge` a energia não regenera (8/s daria ~+0,13 por passo).
+  await waitCastReady();
+  snap = await press1('KeyL');
+  assert(snap.tech.cast && snap.tech.cast.state === 'sign', `CE-05: deveria ter entrado em sign: ${JSON.stringify(snap.tech.cast)}`);
+  const ceAtSign = snap.ce.cur;
+  let sawCharge = false;
+  for (let i = 0; i < 20 && snap.tech.cast && (snap.tech.cast.state === 'sign' || snap.tech.cast.state === 'charge'); i++) {
+    snap = await frame();
+    const st = snap.tech.cast && snap.tech.cast.state;
+    if (st === 'sign' || st === 'charge') {
+      if (st === 'charge') sawCharge = true;
+      assert(snap.ce.cur === ceAtSign, `CE-05: energia mudou durante ${st}: ${ceAtSign} -> ${snap.ce.cur}`);
+    }
+  }
+  assert(sawCharge, 'CE-05: nunca vi o estado charge');
+
+  // CAST-11: no ar, em sign/charge, a gravidade vale 30% (1800 × 0,3 / 60 = 9 px/s por passo; em queda livre, 30).
+  await waitCastReady();
+  snap = await press1('Space');
+  snap = await frame();
+  const vyA = (snap = await frame()).player.vy;
+  const vyB = (snap = await frame()).player.vy;
+  const freeDelta = vyB - vyA;
+  assert(Math.abs(freeDelta - 30) <= 1.5, `CAST-11: pré-condição, gravidade normal no ar deveria somar ~30 px/s por passo: ${freeDelta}`);
+  snap = await press1('KeyL');
+  assert(snap.tech.cast && snap.tech.cast.state === 'sign', `CAST-11: deveria ter conjurado no ar: ${JSON.stringify(snap.tech.cast)}`);
+  const castDeltas = [];
+  let prevVy = snap.player.vy;
+  for (let i = 0; i < 6; i++) {
+    snap = await frame();
+    const st = snap.tech.cast && snap.tech.cast.state;
+    if (st !== 'sign' && st !== 'charge') break;
+    castDeltas.push(snap.player.vy - prevVy);
+    prevVy = snap.player.vy;
+  }
+  assert(castDeltas.length >= 3, `CAST-11: poucos passos em sign/charge no ar: ${JSON.stringify(castDeltas)}`);
+  assert(
+    castDeltas.every((d) => Math.abs(d - 9) <= 1.5),
+    `CAST-11: no ar em sign/charge a gravidade deveria ser 30% (~9 px/s por passo): ${JSON.stringify(castDeltas)}`,
+  );
 }
