@@ -1096,14 +1096,21 @@ describe('alinhamento dos frames do inimigo contra a linha de base congelada (EV
   });
 });
 
-describe('aparência corcunda do inimigo (EVR-01, EVR-03, EVR-10)', () => {
-  const IDS: EnemyVariantId[] = ['corcunda'];
+describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => {
+  const IDS: EnemyVariantId[] = ['corcunda', 'rastejante', 'bruto'];
   const nonEmpty = (rows: readonly string[]) => rows.flatMap((r, y) => [...r].map((c, x) => ({ c, x, y }))).filter((t) => t.c !== TRANSPARENT);
+  const dominant = (rows: readonly string[]): string => {
+    const count = new Map<string, number>();
+    for (const { c } of nonEmpty(rows)) count.set(c, (count.get(c) ?? 0) + 1);
+    // ignora contorno e cores de detalhe (olho, boca, osso): a cor do corpo é a mais frequente fora delas
+    const skip = new Set(['k', 'K', 'b', 'w', 'A', 'a', 'r', 'R', 'S', 'H', 'n']);
+    return [...count].filter(([c]) => !skip.has(c)).sort((a, b) => b[1] - a[1])[0][0];
+  };
 
   it('EVR-01: as 3 aparências têm todo frame citado por ENEMY_ANIMS, em 32x24, só com cores da paleta', () => {
-    expect(Object.keys(ENEMY_VARIANT_FRAMES)).toContain('corcunda');
+    expect(Object.keys(ENEMY_VARIANT_FRAMES).sort()).toEqual([...IDS].sort());
     for (const id of IDS) {
-      const frames = ENEMY_VARIANT_FRAMES[id]!;
+      const frames = ENEMY_VARIANT_FRAMES[id];
       const sheet = parseSheet(`enemy-${id}`, frames, PALETTE_KEYS);
       expect(sheet.width, id).toBe(ENEMY_FRAME_W);
       expect(sheet.height, id).toBe(ENEMY_FRAME_H);
@@ -1114,12 +1121,36 @@ describe('aparência corcunda do inimigo (EVR-01, EVR-03, EVR-10)', () => {
     expect(ENEMY_FRAMES).toBe(ENEMY_VARIANT_FRAMES.corcunda);
   });
 
+  it('EVR-02: cada par difere em pelo menos 25% dos texels do idle-0 e a cor dominante é distinta', () => {
+    const idle = (id: EnemyVariantId) => ENEMY_VARIANT_FRAMES[id]['idle-0'];
+    const pairs: [EnemyVariantId, EnemyVariantId][] = [
+      ['corcunda', 'rastejante'],
+      ['corcunda', 'bruto'],
+      ['rastejante', 'bruto'],
+    ];
+    for (const [a, b] of pairs) {
+      const ra = idle(a);
+      const rb = idle(b);
+      const cellsA = nonEmpty(ra);
+      const cellsB = nonEmpty(rb);
+      const union = new Map<string, true>();
+      for (const t of [...cellsA, ...cellsB]) union.set(`${t.x},${t.y}`, true);
+      let differ = 0;
+      for (const key of union.keys()) {
+        const [x, y] = key.split(',').map(Number);
+        if (ra[y][x] !== rb[y][x]) differ++;
+      }
+      expect(differ / Math.min(cellsA.length, cellsB.length), `${a} x ${b}`).toBeGreaterThanOrEqual(0.25);
+    }
+    expect(IDS.map((id) => dominant(idle(id)))).toEqual(['i', 'g', 'u']);
+  });
+
   it('EVR-03: no frame attack a garra de cada aparência chega à borda da hitbox do ENEMY_ATTACK (até 1 texel além), na altura', () => {
     const originCol = ENEMY_ORIGIN.x * ENEMY_FRAME_W;
     const box = ENEMY_ATTACK.hitbox!;
     const edge = box.offsetX + box.width / 2;
     for (const id of IDS) {
-      const rows = ENEMY_VARIANT_FRAMES[id]![ENEMY_ANIMS.attack.frames[0]];
+      const rows = ENEMY_VARIANT_FRAMES[id][ENEMY_ANIMS.attack.frames[0]];
       const cells = nonEmpty(rows);
       const maxX = Math.max(...cells.map((t) => t.x));
       const reach = (maxX + 1 - originCol) * ART_SCALE;
@@ -1136,7 +1167,7 @@ describe('aparência corcunda do inimigo (EVR-01, EVR-03, EVR-10)', () => {
 
   it('EVR-10: o idle-0 de cada aparência tem no máximo 4 texels k internos (sel-out aplicado)', () => {
     for (const id of IDS) {
-      const rows = ENEMY_VARIANT_FRAMES[id]!['idle-0'];
+      const rows = ENEMY_VARIANT_FRAMES[id]['idle-0'];
       let interior = 0;
       for (let y = 1; y < rows.length - 1; y++) {
         for (let x = 1; x < rows[y].length - 1; x++) {
@@ -1149,9 +1180,9 @@ describe('aparência corcunda do inimigo (EVR-01, EVR-03, EVR-10)', () => {
     }
   });
 
-  it('as partes do ragdoll da corcunda têm 8x7, 8x10 e 3x8 texels e só cores da paleta', () => {
+  it('as partes do ragdoll das 3 aparências têm 8x7, 8x10 e 3x8 texels e só cores da paleta', () => {
     for (const id of IDS) {
-      const { head, torso, limb } = ENEMY_RAG_VARIANTS[id]!;
+      const { head, torso, limb } = ENEMY_RAG_VARIANTS[id];
       const size = (g: readonly string[]) => [Math.max(...g.map((r) => r.length)), g.length];
       expect(size(head), id).toEqual([8, 7]);
       expect(size(torso), id).toEqual([8, 10]);
