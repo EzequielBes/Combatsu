@@ -132,7 +132,7 @@ A animação também é rígida: o idle tem 2 frames a 2 fps, pulo e queda têm 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | SPR-01 | P1: Protagonista | Tasks | Done |
-| SPR-02 | P1: Protagonista | Tasks | Pending |
+| SPR-02 | P1: Protagonista | Tasks | Done |
 | SPR-03 | P1: Protagonista | Tasks | Pending |
 | SPR-04 | P1: Protagonista | Tasks | Pending |
 | SPR-05 | P1: Protagonista | Tasks | Pending |
