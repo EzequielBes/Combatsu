@@ -234,9 +234,9 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] SPR-14 conferido: The frames `jab-hit`, `cross-hit` and `kick-hit` SHALL each have at least 3 more `S` texels than their own `*-wind` frame, and every `S` texel added SHALL sit at a column smaller than the frame's rightmost non-transparent column (the limb tip used by the reach test).
-- [ ] SPR-07 verde.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] SPR-14 conferido: The frames `jab-hit`, `cross-hit` and `kick-hit` SHALL each have at least 3 more `S` texels than their own `*-wind` frame, and every `S` texel added SHALL sit at a column smaller than the frame's rightmost non-transparent column (the limb tip used by the reach test).
+- [x] SPR-07 verde.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

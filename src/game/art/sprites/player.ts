@@ -262,6 +262,26 @@ export function pose(p: Pose): string[] {
   return compose(...parts);
 }
 
+/**
+ * Rastro de movimento (SPR-14): duas linhas curtas de `S`, uma logo acima e outra logo abaixo do membro esticado
+ * (que ocupa `limbRows` linhas a partir de `limbY`), começando 2 texels atrás da ponta (`tipCol`, coluna da área de
+ * desenho) e indo para trás. Só pinta texels vazios e nunca chega à ponta, então o alcance medido não muda.
+ */
+export function smear(frame: readonly string[], tipCol: number, limbY: number, limbRows: number, lengths: readonly [number, number]): string[] {
+  const rows = frame.map((r) => [...r]);
+  const lines: Array<[number, number]> = [
+    [limbY - 1, lengths[0]],
+    [limbY + limbRows, lengths[1]],
+  ];
+  for (const [y, n] of lines) {
+    for (let i = 0; i < n; i++) {
+      const x = tipCol - 2 - i + FRAME_PAD;
+      if (y >= 0 && y < rows.length && rows[y][x] === '.') rows[y][x] = 'S';
+    }
+  }
+  return rows.map((r) => r.join(''));
+}
+
 export const far = (g: Grid): string[] => recolor(g, FAR);
 
 export const PLAYER_FRAMES: Record<string, readonly string[]> = {
@@ -281,18 +301,18 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   // Jab (braço da frente). No hit, o punho chega à coluna 25 = 18 texels (36 px) à frente do centro,
   // a borda da hitbox do jab (offsetX 22 + largura/2 13 = 35 px).
   'jab-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_COCK, 3, 12], far: [far(ARM_GUARD), 8, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  'jab-hit': pose({ lean: 2, head: HEAD_FOCUS, near: [armStraight(17), 9, 11], far: [far(ARM_GUARD), 9, 11], legs: [[LEGS_WIDE, 1, Y_LEGS]] }),
+  'jab-hit': smear(pose({ lean: 2, head: HEAD_FOCUS, near: [armStraight(17), 9, 11], far: [far(ARM_GUARD), 9, 11], legs: [[LEGS_WIDE, 1, Y_LEGS]] }), 25, 11, 5, [5, 3]),
   'jab-recover': pose({ lean: 1, head: HEAD_FOCUS, near: [armStraight(10), 9, 11], far: [far(ARM_GUARD), 8, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
 
   // Direto (braço de trás, mais escuro), com o tronco girado para a frente.
   'cross-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 8, 11], far: [far(ARM_COCK), 1, 12], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  'cross-hit': pose({ lean: 3, head: HEAD_FOCUS, near: [ARM_GUARD, 9, 12], far: [far(armStraight(16)), 10, 11], legs: [[LEGS_WIDE, 2, Y_LEGS]] }),
+  'cross-hit': smear(pose({ lean: 3, head: HEAD_FOCUS, near: [ARM_GUARD, 9, 12], far: [far(armStraight(16)), 10, 11], legs: [[LEGS_WIDE, 2, Y_LEGS]] }), 25, 11, 5, [5, 3]),
   'cross-recover': pose({ lean: 1, head: HEAD_FOCUS, near: [ARM_GUARD, 8, 11], far: [far(armStraight(10)), 9, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
 
   // Chute: no hit, a ponta do pé chega à coluna 28 = 21 texels (42 px) à frente do centro,
   // a borda da hitbox do chute (offsetX 26 + largura/2 16 = 42 px).
   'kick-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 7, 11], far: [far(ARM_GUARD), 3, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 15]] }),
-  'kick-hit': pose({ lean: -2, head: HEAD_FOCUS, near: [ARM_GUARD, 5, 11], far: [far(ARM_BACK), 0, 11], legs: [[LEG_SUPPORT, 3, 17], [legStraight(20), 9, 14]] }),
+  'kick-hit': smear(pose({ lean: -2, head: HEAD_FOCUS, near: [ARM_GUARD, 5, 11], far: [far(ARM_BACK), 0, 11], legs: [[LEG_SUPPORT, 3, 17], [legStraight(20), 9, 14]] }), 28, 14, 5, [6, 4]),
   'kick-recover': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 7, 11], far: [far(ARM_GUARD), 3, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 16]] }),
 
   // Carregando objeto: braços para cima segurando.
