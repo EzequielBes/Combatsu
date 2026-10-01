@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 46,
+  "next_id": 47,
   "lessons": [
     {
       "id": "L-001",
@@ -771,17 +771,19 @@
       "text": "Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it",
       "signal": "surviving_mutant",
       "scope": "art-adapter",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "sprite-player-polish"
+        "sprite-player-polish",
+        "enemy-sprite-variety"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "M7 src/game/art/index.ts:128 (art-adapter)"
+        "M7 src/game/art/index.ts:128 (art-adapter)",
+        "M2b src/scenes/TestScene.ts:843 (art-adapter) (art-adapter)"
       ],
       "created": "2026-10-01T14:45:04Z",
-      "last_seen": "2026-10-01T14:45:04Z"
+      "last_seen": "2026-10-01T16:00:05Z"
     },
     {
       "id": "L-044",
@@ -818,6 +820,24 @@
       ],
       "created": "2026-10-01T14:45:04Z",
       "last_seen": "2026-10-01T14:45:04Z"
+    },
+    {
+      "id": "L-046",
+      "key": "surviving_mutant::when a spec requires an animation to restart on a repeated trigger smoke the same trigger twice in a row and read the frame again because a different key sequence hides a missing restart",
+      "text": "When a spec requires an animation to restart on a repeated trigger, smoke the same trigger twice in a row and read the frame again, because a different-key sequence hides a missing restart",
+      "signal": "surviving_mutant",
+      "scope": "adapter",
+      "status": "candidate",
+      "features": [
+        "enemy-sprite-variety"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M4 src/game/Enemy.ts:620 (adapter) (adapter)"
+      ],
+      "created": "2026-10-01T16:00:05Z",
+      "last_seen": "2026-10-01T16:00:05Z"
     }
   ]
 }
