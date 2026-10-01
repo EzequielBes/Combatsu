@@ -274,8 +274,8 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] SPR-13 conferido: WHEN the player touches the ground after being airborne THEN `Player` SHALL feed `landMs = 0` to the animation selection and count it up with the frame time.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] SPR-13 conferido: WHEN the player touches the ground after being airborne THEN `Player` SHALL feed `landMs = 0` to the animation selection and count it up with the frame time.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none (coberto pelo smoke da T12)
 **Gate**: build
