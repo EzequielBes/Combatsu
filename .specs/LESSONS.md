@@ -9,10 +9,10 @@
 Corroborated across multiple features. Safe to apply as guidance.
 
 ### L-010 - Test every spec threshold exactly at its boundary value on both sides, because flipping a strict comparison to non-strict survives tests that only probe values away from the limit.
-- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `tests core` · harmful: 0
-- features: visual-e-jogabilidade, run-e-rodadas
-- evidence: M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core) (+1 more)
-- last seen: 2026-09-24T16:44:30Z
+- signal: `surviving_mutant` · recurrence: 3 feature(s) · scope: `tests core` · harmful: 0
+- features: visual-e-jogabilidade, run-e-rodadas, combate-estilo-luta
+- evidence: M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core) (+2 more)
+- last seen: 2026-10-01T12:33:06Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -239,6 +239,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: energia-e-tecnicas
 - evidence: FXL-06 (src/game/FxLab.ts)
 - last seen: 2026-09-29T00:37:43Z
+
+### L-039 - Assert the effect of every tuned data constant a spec states through the code path that consumes it, because a constant defined in data survives mutation when no test or smoke reads what it changes.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/data adapters` · harmful: 0
+- features: combate-estilo-luta
+- evidence: M8 src/data/moves.ts:160, M9 src/data/moves.ts:163 (validation.md combate-estilo-luta, GRD-05/PAR-07) (src/data adapters)
+- last seen: 2026-10-01T12:33:05Z
+
+### L-040 - Every AC of an adapter task marked Tests none must appear in the Requirement list of a later smoke task, because ACs left out of that list reach the Verifier with zero evidence.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tasks adapters` · harmful: 0
+- features: combate-estilo-luta
+- evidence: CTL-08, FIN-03, FIN-04 (validation.md combate-estilo-luta, tasks T19-T21 Requirement lists) (tasks adapters)
+- last seen: 2026-10-01T12:33:06Z
+
+### L-041 - State the precedence when two defensive rules can apply to the same hit, such as parry versus unblockable, because the implementation picks one silently and no test fixes it.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec combat` · harmful: 0
+- features: combate-estilo-luta
+- evidence: PAR-02/GRD-04 (validation.md combate-estilo-luta, gap 1) (spec combat)
+- last seen: 2026-10-01T12:33:06Z
 
 ## Quarantined (failed when applied - ignore)
 

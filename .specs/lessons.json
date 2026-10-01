@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 39,
+  "next_id": 42,
   "lessons": [
     {
       "id": "L-001",
@@ -176,16 +176,18 @@
       "status": "confirmed",
       "features": [
         "visual-e-jogabilidade",
-        "run-e-rodadas"
+        "run-e-rodadas",
+        "combate-estilo-luta"
       ],
-      "recurrence": 2,
+      "recurrence": 3,
       "harmful": 0,
       "evidence": [
         "M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core)",
-        "A13 src/game/Hud.ts:125; scripts/smoke/hud.smoke.mjs:36,46 (tests core)"
+        "A13 src/game/Hud.ts:125; scripts/smoke/hud.smoke.mjs:36,46 (tests core)",
+        "M10 src/data/moves.ts:186 (validation.md combate-estilo-luta, FIN-01 reach 40 px) (tests core)"
       ],
       "created": "2026-09-24T02:09:18Z",
-      "last_seen": "2026-09-24T16:44:30Z"
+      "last_seen": "2026-10-01T12:33:06Z"
     },
     {
       "id": "L-011",
@@ -690,6 +692,60 @@
       ],
       "created": "2026-09-29T00:37:43Z",
       "last_seen": "2026-09-29T00:37:43Z"
+    },
+    {
+      "id": "L-039",
+      "key": "surviving_mutant::assert the effect of every tuned data constant a spec states through the code path that consumes it because a constant defined in data survives mutation when no test or smoke reads what it changes",
+      "text": "Assert the effect of every tuned data constant a spec states through the code path that consumes it, because a constant defined in data survives mutation when no test or smoke reads what it changes.",
+      "signal": "surviving_mutant",
+      "scope": "src/data adapters",
+      "status": "candidate",
+      "features": [
+        "combate-estilo-luta"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M8 src/data/moves.ts:160, M9 src/data/moves.ts:163 (validation.md combate-estilo-luta, GRD-05/PAR-07) (src/data adapters)"
+      ],
+      "created": "2026-10-01T12:33:05Z",
+      "last_seen": "2026-10-01T12:33:05Z"
+    },
+    {
+      "id": "L-040",
+      "key": "ac_gap::every ac of an adapter task marked tests none must appear in the requirement list of a later smoke task because acs left out of that list reach the verifier with zero evidence",
+      "text": "Every AC of an adapter task marked Tests none must appear in the Requirement list of a later smoke task, because ACs left out of that list reach the Verifier with zero evidence.",
+      "signal": "ac_gap",
+      "scope": "tasks adapters",
+      "status": "candidate",
+      "features": [
+        "combate-estilo-luta"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CTL-08, FIN-03, FIN-04 (validation.md combate-estilo-luta, tasks T19-T21 Requirement lists) (tasks adapters)"
+      ],
+      "created": "2026-10-01T12:33:06Z",
+      "last_seen": "2026-10-01T12:33:06Z"
+    },
+    {
+      "id": "L-041",
+      "key": "spec_precision_gap::state the precedence when two defensive rules can apply to the same hit such as parry versus unblockable because the implementation picks one silently and no test fixes it",
+      "text": "State the precedence when two defensive rules can apply to the same hit, such as parry versus unblockable, because the implementation picks one silently and no test fixes it.",
+      "signal": "spec_precision_gap",
+      "scope": "spec combat",
+      "status": "candidate",
+      "features": [
+        "combate-estilo-luta"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PAR-02/GRD-04 (validation.md combate-estilo-luta, gap 1) (spec combat)"
+      ],
+      "created": "2026-10-01T12:33:06Z",
+      "last_seen": "2026-10-01T12:33:06Z"
     }
   ]
 }
