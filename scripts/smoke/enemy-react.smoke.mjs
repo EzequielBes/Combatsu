@@ -2,6 +2,8 @@
 // o golpe sempre conecta). Lê `enemies[].variant/frame/spriteVisible/ragdollVisible/ragdollTextures` e `hitstop` do snapshot.
 // Os valores vêm da spec: frames `hurt-<reação>-0` logo após o golpe, `impact` durante o hitstop, ragdoll só depois dele.
 import { makeKit } from './fight-kit.mjs';
+import { Rng } from '../../src/core/rng.ts';
+import { pickEnemyVariant } from '../../src/core/enemyVariant.ts';
 
 export default async function (ctx) {
   const { page, baseUrl, assert } = ctx;
@@ -79,6 +81,10 @@ export default async function (ctx) {
   const a2 = await twoRounds(7);
   assert(a1.length >= 3, `EVR-04: esperava aparências de várias ondas: ${JSON.stringify(a1)}`);
   assert(JSON.stringify(a1.map(([, v]) => v)) === JSON.stringify(a2.map(([, v]) => v)), `EVR-04: mesma seed, sequência diferente: ${JSON.stringify({ a1, a2 })}`);
+  // O adaptador usa o stream próprio (`seed ^ 0x6a09e667`), não outro: a sequência por ordem de spawn (ids crescentes; outros objetos também consomem ids) bate com ele.
+  const rng = new Rng(7 ^ 0x6a09e667);
+  const expected = a1.map(() => pickEnemyVariant(rng));
+  assert(JSON.stringify(a1.map(([, v]) => v)) === JSON.stringify(expected), `EVR-04: a sequência deveria vir do stream da aparência: ${JSON.stringify({ a1, expected })}`);
   const all = new Set();
   for (const seed of [1, 2, 3]) for (const [, v] of await twoRounds(seed)) all.add(v);
   assert(all.size >= 2, `EVR-04: o sorteio deveria variar a aparência: ${JSON.stringify([...all])}`);
@@ -137,6 +143,11 @@ export default async function (ctx) {
   };
   s = await land(s, ['KeyS', 'KeyJ'], 'socoBaixo');
   expectFrame(s, 'hurt-body-0', 'HRX-02 socoBaixo');
+  // O mesmo golpe de novo, com o inimigo ainda na mesma reação: ela recomeça do frame 0 (L-046).
+  s = await settleChain(s);
+  assert(byId(s, id).frame.startsWith('hurt-body-') && byId(s, id).frame !== 'hurt-body-0', `HRX-02: a 1ª reação deveria ter avançado: ${byId(s, id).frame}`);
+  s = await land(s, ['KeyS', 'KeyJ'], 'socoBaixo');
+  expectFrame(s, 'hurt-body-0', 'HRX-02 socoBaixo de novo (reinicia a mesma reação)');
   s = await settleFresh(s);
   s = await land(s, ['KeyJ'], 'jab');
   expectFrame(s, 'hurt-head-a-0', 'HRX-02 jab');
