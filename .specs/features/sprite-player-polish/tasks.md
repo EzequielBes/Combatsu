@@ -194,10 +194,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] SPR-02 conferido: Every frame of `PLAYER_FRAMES`, `PLAYER_MOVE_FRAMES` and `PLAYER_TECH_FRAMES` SHALL parse with `parseSheet` using only palette keys, at 32x24 texels.
-- [ ] SPR-07 conferido: In every `*-hit` frame checked by the hitbox reach test, the limb SHALL still reach the hitbox edge (up to 1 texel beyond), at the hitbox height.
-- [ ] SPR-06 verde.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] SPR-02 conferido: Every frame of `PLAYER_FRAMES`, `PLAYER_MOVE_FRAMES` and `PLAYER_TECH_FRAMES` SHALL parse with `parseSheet` using only palette keys, at 32x24 texels.
+- [x] SPR-07 conferido: In every `*-hit` frame checked by the hitbox reach test, the limb SHALL still reach the hitbox edge (up to 1 texel beyond), at the hitbox height.
+- [x] SPR-06 verde.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
