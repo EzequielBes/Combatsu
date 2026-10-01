@@ -155,6 +155,8 @@ export class Player implements Hittable {
   private readonly spawn: { x: number; y: number };
   /** Sensor de chão do frame anterior, para a poeira do pouso (FX-04). */
   private wasGrounded = true;
+  /** ms desde o último pouso (SPR-13); Infinity até o primeiro. Alimenta a animação `land`. */
+  private landMs = Infinity;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -352,7 +354,7 @@ export class Player implements Hittable {
     this.applyDash(dtMs);
     this.applyBlockPush(dtMs);
     this.trackWJump(before, groundYBefore, wPressedAt);
-    this.kickUpDust(before, sensors.grounded);
+    this.kickUpDust(before, sensors.grounded, dtMs);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
     if (this.health.staggered) this.move = { ...this.move, vx: this.knockDir * PLAYER_KNOCKBACK };
     else if (this.health.dead) this.move = { ...this.move, vx: 0 };
@@ -379,11 +381,12 @@ export class Player implements Hittable {
   }
 
   /** Poeira nos pés (FX-04): ao pular, ao pousar e ao virar enquanto corre no chão. */
-  private kickUpDust(before: MoveState, grounded: boolean): void {
+  private kickUpDust(before: MoveState, grounded: boolean, dtMs: number): void {
     const jumped = this.move.jumping && !before.jumping;
     const landed = grounded && !this.wasGrounded;
     const turned = grounded && this.move.facing !== before.facing && Math.abs(before.vx) > RUN_THRESHOLD;
     this.wasGrounded = grounded;
+    this.landMs = landed ? 0 : this.landMs + dtMs;
     if (jumped || landed || turned) this.fx.dust(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
   }
 
@@ -646,7 +649,7 @@ export class Player implements Hittable {
       vx: this.move.vx,
       vy: this.move.vy,
       holding: this.held !== null,
-      landMs: Infinity, // provisório até a T11 ligar o tempo de pouso
+      landMs: this.landMs,
     };
     const anim = pickPlayerAnim(input);
     const v = this.view;
