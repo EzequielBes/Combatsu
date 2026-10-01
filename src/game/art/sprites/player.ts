@@ -146,91 +146,93 @@ const BODY: Grid = [
 ];
 
 // ---------------------------------------------------------------- braços (o da frente; o de trás via recolor)
+// Manga com punho claro (`s`) antes da mão; mão com sombra `P`.
 /** Caído ao lado do corpo. */
-const ARM_DOWN: Grid = ['ksNk', 'kNnk', 'kNnk', 'kNnk', 'kPpk', 'kppk', '.kk.'];
+const ARM_DOWN: Grid = ['ksNk', 'kNNk', 'kNnk', 'ksnk', 'kppk', 'kPPk', '.kk.'];
 /** Balançando para trás (corrida). */
-const ARM_BACK: Grid = ['...ksNk', '..kNNk.', '.kNnk..', 'kNnk...', 'kppk...', '.kk....'];
+const ARM_BACK: Grid = ['...ksNk', '..kNNk.', '.kNnk..', 'ksnk...', 'kpPk...', '.kk....'];
 /** Balançando para a frente (corrida). */
-const ARM_FWD: Grid = ['ksNk...', '.kNNk..', '..kNNk.', '...kNpk', '...kppk', '....kk.'];
+const ARM_FWD: Grid = ['ksNk...', '.kNNk..', '..kNnk.', '...kspk', '...kpPk', '....kk.'];
 /** Guarda: cotovelo embaixo, punho na altura do queixo. */
-export const ARM_GUARD: Grid = ['...kkk', '..kppk', 'ksNppk', 'kNNNk.', 'knNk..', '.kk...'];
+export const ARM_GUARD: Grid = ['...kkk', '..kppk', 'ksNpPk', 'kNNsk.', 'knNk..', '.kk...'];
 /** Punho puxado para trás do ombro (preparo do soco). */
-export const ARM_COCK: Grid = ['kkkNNk', 'kppNnk', 'kppnk.', '.kkk..'];
+export const ARM_COCK: Grid = ['kkksNk', 'kppNnk', 'kPpnk.', '.kkk..'];
 /** Para cima segurando (carregar / preparo do arremesso). Também vira a mão erguida da Azul via `recolor`
  * (troca `p` pelo núcleo de energia): `playerTech` reusa esta peça em vez de desenhar um braço novo. */
-export const ARM_UP: Grid = ['.kk.', 'kppk', 'kppk', 'kNnk', 'kNnk', 'ksNk'];
+export const ARM_UP: Grid = ['.kk.', 'kppk', 'kPpk', 'ksnk', 'kNnk', 'ksNk'];
 
 /**
- * Braço esticado na horizontal: manga com luz em cima, punho 3x3 na ponta. `len` = colunas do ombro até o
- * contorno da ponta do punho, inclusive.
+ * Braço esticado na horizontal: manga com luz em cima, punho de manga claro (`s`) e punho 3x3 com sombra na ponta.
+ * `len` = colunas do ombro até o contorno da ponta do punho, inclusive.
  */
 export function armStraight(len: number): string[] {
-  const sleeve = len - 6;
+  const sleeve = len - 7;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + 'kpppk',
-    'k' + 'N'.repeat(sleeve) + 'kppPk',
-    'k' + 'n'.repeat(sleeve) + 'kPPqk',
+    'k' + 's'.repeat(sleeve) + 'skpppk',
+    'k' + 'N'.repeat(sleeve) + 'skppPk',
+    'k' + 'n'.repeat(sleeve) + 'NkPPxk',
     'k'.repeat(len - 1) + '.',
   ];
 }
 
 // ---------------------------------------------------------------- pernas (16x6, na base do frame)
+// Dobra de joelho `s` na perna da frente, sombra `n` na de trás, sapato `K` com brilho `s` em cima.
 const LEGS_STAND: Grid = [
   '....knNNNNNk',
   '....kKnkknNk',
+  '....kKnk.ksNk',
   '....kKnk.knNk',
-  '....kKnk.knNk',
-  '...kKKKk.kKKKk',
+  '...kKKKk.kKsKk',
   '...kkkkk.kkkkkk',
 ];
 /** Base firme, pés afastados (golpes). */
 export const LEGS_WIDE: Grid = [
   '....knNNNNNk',
   '...kKnkkknNk',
-  '..kKnk...knNk',
+  '..kKnk...ksNk',
   '.kKnk....knNk',
-  'kKKKk....kKKKk',
+  'kKKKk....kKsKk',
   'kkkkk....kkkkkk',
 ];
 // Ciclo de corrida (6 poses): perna da frente em N, a de trás em n/K.
 const RUN_LEGS: Grid[] = [
   // 0: contato, perna da frente esticada à frente
-  ['....knNNNNk', '...kKnkknNNk', '..kKnk...knNk', '.kKnk.....knNk', 'kKKk......kKKKk', 'kkk.......kkkkk'],
+  ['....knNNNNk', '...kKnkknNNk', '..kKnk...ksNk', '.kKnk.....knNk', 'kKKk......kKsKk', 'kkk.......kkkkk'],
   // 1: apoio, perna da frente dobrada
-  ['....knNNNNk', '...kKnkknNk', '...kKnkknNk', '..kKnk.knNk', '.kKKk..kKKKk', '.kkk...kkkkk'],
+  ['....knNNNNk', '...kKnkknNk', '...kKnkksNk', '..kKnk.knNk', '.kKKk..kKsKk', '.kkk...kkkkk'],
   // 2: passagem, perna de trás subindo atrás
-  ['....knNNNNk', '..kKKknNNk', '.kKKk.knNk', '.kkk..knNk', '......kKKKk', '......kkkkk'],
+  ['....knNNNNk', '..kKKknNNk', '.kKKk.ksNk', '.kkk..knNk', '......kKsKk', '......kkkkk'],
   // 3: contato, perna de trás esticada à frente
-  ['....knNNNNk', '...knNkkKnNk', '..knNk...kKnk', '.knNk.....kKnk', 'kKKk......kKKKk', 'kkk.......kkkkk'],
+  ['....knNNNNk', '...ksNkkKnNk', '..knNk...kKnk', '.knNk.....kKnk', 'kKKk......kKKKk', 'kkk.......kkkkk'],
   // 4: apoio, perna de trás dobrada
-  ['....knNNNNk', '...knNkkKnk', '...knNkkKnk', '..knNk.kKnk', '.kKKk..kKKKk', '.kkk...kkkkk'],
+  ['....knNNNNk', '...knNkkKnk', '...ksNkkKnk', '..knNk.kKnk', '.kKKk..kKKKk', '.kkk...kkkkk'],
   // 5: passagem, perna da frente subindo atrás
-  ['....knNNNNk', '..kNNkkKnk', '.kKKk.kKnk', '.kkk..kKnk', '......kKKKk', '......kkkkk'],
+  ['....knNNNNk', '..ksNkkKnk', '.kKKk.kKnk', '.kkk..kKnk', '......kKKKk', '......kkkkk'],
 ];
 /** Pulo: joelhos recolhidos. */
-const LEGS_TUCK: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.kNNNk', '....kkk.kKKKk', '.........kkkk', ''];
+const LEGS_TUCK: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.ksNNk', '....kkk.kKsKk', '.........kkkk', ''];
 /** Queda: pernas soltas, uma à frente. */
-const LEGS_DANGLE: Grid = ['....knNNNNNk', '....kKnk.knNk', '...kKnk..knNk', '...kKKk...knNk', '...kkk....kKKKk', '...........kkkk'];
+const LEGS_DANGLE: Grid = ['....knNNNNNk', '....kKnk.knNk', '...kKnk..ksNk', '...kKKk...knNk', '...kkk....kKsKk', '...........kkkk'];
 /**
- * Chute: perna da frente esticada na horizontal, com o sapato na ponta. `len` = colunas do quadril até o
- * contorno da ponta do pé, inclusive.
+ * Chute: perna da frente esticada na horizontal, com o sapato (brilho `s`) na ponta. `len` = colunas do quadril
+ * até o contorno da ponta do pé, inclusive.
  */
 export function legStraight(len: number): string[] {
   const leg = len - 6;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 'N'.repeat(leg) + 'kKKKk',
+    'k' + 's'.repeat(leg) + 'kKsKk',
     'k' + 'N'.repeat(leg) + 'kKKKk',
     'k' + 'n'.repeat(leg) + 'kKKKk',
     'k'.repeat(len),
   ];
 }
-/** Joelho da frente dobrado para cima (preparo e volta do chute). */
-const LEG_CHAMBER: Grid = ['kkkkkk.', 'kNNNNNk', 'knnnnNk', '.kkkkNk', '....kKKk', '....kkkk'];
+/** Joelho da frente dobrado para cima (preparo e volta do chute). Também usado por `playerMoves`. */
+export const LEG_CHAMBER: Grid = ['kkkkkk.', 'ksNNNNk', 'knnnnNk', '.kkkkNk', '....ksKk', '....kkkk'];
 /** Só a perna de trás, de apoio (usada também por `playerTech` no release: perna da frente plantada e curta,
  * enquanto a de trás esticada carrega o avanço do golpe). */
-export const LEG_SUPPORT: Grid = ['knNk', 'kKnk', 'kKnk', 'kKnk', 'kKnk', 'kKKKk', 'kkkkk'];
+export const LEG_SUPPORT: Grid = ['knNk', 'kKnk', 'kKnk', 'kKnk', 'kKnk', 'kKsKk', 'kkkkk'];
 
 // ---------------------------------------------------------------- montagem
 const Y_HEAD = 0;
