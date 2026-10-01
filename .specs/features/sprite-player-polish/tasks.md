@@ -111,7 +111,7 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [x] SPR-01 conferido: The palette SHALL contain exactly the 5 new keys `o`, `x`, `j`, `y`, `z` in addition to the previous 34, totalling 39 keys.
+- [x] SPR-01 conferido: The palette SHALL contain exactly the 5 new keys `o`, `x`, `j`, `y`, `z` in addition to the previous 35, totalling 40 keys.
 - [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
