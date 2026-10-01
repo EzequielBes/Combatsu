@@ -155,9 +155,9 @@ T13
 
 **Done when**:
 
-- [ ] EVR-07 conferido (sobre a folha atual): Each frame that existed before this feature SHALL, in the `corcunda` variant, have its bounding box within 2 texels of the frozen baseline on each edge.
-- [ ] `node tools/sprite-preview.mjs` gera também as pranchas do inimigo e sai com 0.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] EVR-07 conferido (sobre a folha atual): Each frame that existed before this feature SHALL, in the `corcunda` variant, have its bounding box within 2 texels of the frozen baseline on each edge.
+- [x] `node tools/sprite-preview.mjs` gera também as pranchas do inimigo e sai com 0.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

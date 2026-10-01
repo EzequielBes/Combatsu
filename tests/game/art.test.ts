@@ -15,6 +15,7 @@ import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, selOut, PLAYER_FRAME_H, 
 import { selOut as sharedSelOut, type SelOutConfig } from '../../src/game/art/selOut';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
+import enemyBBoxBaseline from './fixtures/enemyBBoxBaseline.json';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
 import {
   COMBO_GRADE_COLORS,
@@ -1044,5 +1045,50 @@ describe('selOut compartilhado e configurável (EVR-10)', () => {
 
   it('o player reexporta o mesmo selOut', () => {
     expect(selOut).toBe(sharedSelOut);
+  });
+});
+
+describe('alinhamento dos frames do inimigo contra a linha de base congelada (EVR-07)', () => {
+  const bboxOf = (rows: readonly string[]): [number, number, number, number] => {
+    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    rows.forEach((row, y) => {
+      [...row].forEach((c, x) => {
+        if (c === TRANSPARENT) return;
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      });
+    });
+    return [x0, y0, x1, y1];
+  };
+  const baseline = enemyBBoxBaseline as Record<string, number[]>;
+  const entries = Object.entries(baseline);
+
+  it('a fixture congelada cobre os 11 frames pré-existentes', () => {
+    expect(entries).toHaveLength(11);
+    expect(Object.keys(ENEMY_FRAMES)).toEqual(expect.arrayContaining(entries.map(([n]) => n)));
+  });
+
+  it('cada borda da bbox fica a até 2 texels da linha de base', () => {
+    for (const [name, base] of entries) {
+      expect(ENEMY_FRAMES[name], `frame ${name} existe`).toBeDefined();
+      const now = bboxOf(ENEMY_FRAMES[name]);
+      for (let i = 0; i < 4; i++) {
+        expect(Math.abs(now[i] - base[i]), `${name} borda ${i}: ${now[i]} vs ${base[i]}`).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+
+  it('o limite de 2 texels vale dos dois lados: deslocar o frame 2 texels dá desvio 2, 3 dá desvio 3', () => {
+    const base = baseline['idle-0'];
+    const rows = ENEMY_FRAMES['idle-0'];
+    const shiftRight = (d: number) => rows.map((r) => '.'.repeat(d) + r.slice(0, r.length - d));
+    const shiftLeft = (d: number) => rows.map((r) => r.slice(d) + '.'.repeat(d));
+    const off = (r: readonly string[]) => Math.max(...bboxOf(r).map((v, i) => Math.abs(v - base[i])));
+    // o idle-0 ocupa as colunas 4..20 de 0..31, então o deslocamento não corta nada
+    expect(off(rows)).toBe(0);
+    expect(off(shiftRight(2))).toBe(2);
+    expect(off(shiftRight(3))).toBe(3);
+    expect(off(shiftLeft(2))).toBe(2);
+    expect(off(shiftLeft(3))).toBe(3);
   });
 });
