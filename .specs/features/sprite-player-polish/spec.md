@@ -137,14 +137,14 @@ A animação também é rígida: o idle tem 2 frames a 2 fps, pulo e queda têm 
 | SPR-04 | P1: Protagonista | Tasks | Done |
 | SPR-05 | P1: Protagonista | Tasks | Done |
 | SPR-06 | P1: Protagonista | Tasks | Done |
-| SPR-07 | P1: Protagonista | Tasks | Pending |
+| SPR-07 | P1: Protagonista | Tasks | Done |
 | SPR-08 | P1: Movimento | Tasks | Pending |
 | SPR-09 | P1: Movimento | Tasks | Pending |
 | SPR-10 | P1: Movimento | Tasks | Pending |
 | SPR-11 | P1: Movimento | Tasks | Pending |
 | SPR-12 | P1: Movimento | Tasks | Pending |
 | SPR-13 | P1: Movimento | Tasks | Pending |
-| SPR-14 | P2: Smear | Tasks | Pending |
+| SPR-14 | P2: Smear | Tasks | Done |
 | SPR-15 | P2: Preview | Tasks | Pending |
 
 **Coverage:** 15 total, 15 mapped to tasks, 0 unmapped

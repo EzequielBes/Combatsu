@@ -922,3 +922,26 @@ describe('passe de sel-out e acabamento do idle-0 (SPR-03, SPR-04, SPR-05)', () 
     for (const c of ['A', 'y', 'o']) expect(joined, c).toContain(c);
   });
 });
+
+describe('rastros de movimento nos golpes (SPR-14)', () => {
+  const count = (rows: readonly string[], ch: string): number => rows.join('').split(ch).length - 1;
+  const tipCol = (rows: readonly string[]): number => Math.max(...rows.map((r) => [...r].reduce((m, c, x) => (c === TRANSPARENT ? m : x), -1)));
+
+  it.each(['jab', 'cross', 'kick'])('%s-hit tem pelo menos 3 S a mais que o %s-wind e todos ficam antes da ponta', (name) => {
+    const hit = PLAYER_FRAMES[`${name}-hit`];
+    const wind = PLAYER_FRAMES[`${name}-wind`];
+    expect(count(hit, 'S') - count(wind, 'S')).toBeGreaterThanOrEqual(3);
+    const tip = tipCol(hit);
+    hit.forEach((row, y) =>
+      [...row].forEach((c, x) => {
+        if (c === 'S') expect(x, `${name}-hit S em (${x},${y})`).toBeLessThan(tip);
+      }),
+    );
+  });
+
+  it('o rastro não muda o alcance: a ponta do membro continua na mesma coluna de antes', () => {
+    expect(tipCol(PLAYER_FRAMES['jab-hit'])).toBe(27);
+    expect(tipCol(PLAYER_FRAMES['cross-hit'])).toBe(27);
+    expect(tipCol(PLAYER_FRAMES['kick-hit'])).toBe(30);
+  });
+});
