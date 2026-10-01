@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 42,
+  "next_id": 43,
   "lessons": [
     {
       "id": "L-001",
@@ -746,6 +746,24 @@
       ],
       "created": "2026-10-01T12:33:06Z",
       "last_seen": "2026-10-01T12:33:06Z"
+    },
+    {
+      "id": "L-042",
+      "key": "gate_fail::when a feature adds randomness to hit outcomes pin that randomness off in the debug query of every older smoke that asserts exact damage or energy because a seeded draw still varies with frame jitter and makes those smokes flaky",
+      "text": "When a feature adds randomness to hit outcomes, pin that randomness off in the debug query of every older smoke that asserts exact damage or energy, because a seeded draw still varies with frame jitter and makes those smokes flaky.",
+      "signal": "gate_fail",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "combate-estilo-luta"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "scripts/smoke/kokusen.smoke.mjs:31 (validation.md combate-estilo-luta rodada 2, atribuição do kokusen) (smoke)"
+      ],
+      "created": "2026-10-01T13:38:37Z",
+      "last_seen": "2026-10-01T13:38:37Z"
     }
   ]
 }
