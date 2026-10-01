@@ -314,15 +314,15 @@ T13
 
 **Done when**:
 
-- [ ] EVR-05 conferido: WHERE `?debug&enemyVariant=<id>` is set with a valid id, every common enemy SHALL spawn with that variant; IF the id is invalid THEN the normal draw SHALL be used.
-- [ ] EVR-04 conferido no jogo: mesma seed, mesma sequência de aparências nas 2 primeiras ondas.
-- [ ] EVR-06 conferido: WHEN an enemy enters ragdoll THEN each of its 6 ragdoll part images SHALL use the texture key `rag-<part>-<variant>` (`part` = `head`, `torso` or `limb`) of that enemy's own variant.
-- [ ] HRX-02 conferido: WHEN a light hit lands on an enemy that survives THEN the enemy SHALL play the `hurt-<reaction>` animation chosen by `pickHitReaction` with its effective strength, from its first frame, even if it was already in a hit reaction.
-- [ ] HRX-04 conferido: WHILE the enemy is stunned by structure break or suppressed, the system SHALL keep showing the existing `hurt` frame (not a reaction animation).
-- [ ] HRX-05 conferido: WHEN a heavy hit sends a surviving or dying enemy into ragdoll THEN, while the hitstop freeze lasts, the enemy sprite SHALL stay visible showing the `impact` frame and the ragdoll SHALL be hidden; on the first enemy update after the freeze, the sprite SHALL hide and the ragdoll SHALL show.
-- [ ] HRX-06 conferido: IF a heavy hit lands with no hitstop freeze active THEN the swap to ragdoll SHALL happen on the next enemy update.
-- [ ] O smoke falha se a troca sprite → ragdoll for imediata (testado localmente e revertido).
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] EVR-05 conferido: WHERE `?debug&enemyVariant=<id>` is set with a valid id, every common enemy SHALL spawn with that variant; IF the id is invalid THEN the normal draw SHALL be used.
+- [x] EVR-04 conferido no jogo: mesma seed, mesma sequência de aparências nas 2 primeiras ondas.
+- [x] EVR-06 conferido: WHEN an enemy enters ragdoll THEN each of its 6 ragdoll part images SHALL use the texture key `rag-<part>-<variant>` (`part` = `head`, `torso` or `limb`) of that enemy's own variant.
+- [x] HRX-02 conferido: WHEN a light hit lands on an enemy that survives THEN the enemy SHALL play the `hurt-<reaction>` animation chosen by `pickHitReaction` with its effective strength, from its first frame, even if it was already in a hit reaction.
+- [x] HRX-04 conferido: WHILE the enemy is stunned by structure break or suppressed, the system SHALL keep showing the existing `hurt` frame (not a reaction animation).
+- [x] HRX-05 conferido: WHEN a heavy hit sends a surviving or dying enemy into ragdoll THEN, while the hitstop freeze lasts, the enemy sprite SHALL stay visible showing the `impact` frame and the ragdoll SHALL be hidden; on the first enemy update after the freeze, the sprite SHALL hide and the ragdoll SHALL show.
+- [x] HRX-06 conferido: IF a heavy hit lands with no hitstop freeze active THEN the swap to ragdoll SHALL happen on the next enemy update.
+- [x] O smoke falha se a troca sprite → ragdoll for imediata (testado localmente e revertido).
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
