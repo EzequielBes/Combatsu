@@ -70,10 +70,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] A fixture tem 102 entradas, geradas antes de qualquer mudança de arte.
-- [ ] SPR-06 conferido: Each frame that existed before this feature SHALL have its bounding box within 2 texels of the frozen baseline on each edge.
-- [ ] O teste falha se uma borda se move 3 texels (testado localmente e revertido).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] A fixture tem 102 entradas, geradas antes de qualquer mudança de arte.
+- [x] SPR-06 conferido: Each frame that existed before this feature SHALL have its bounding box within 2 texels of the frozen baseline on each edge.
+- [x] O teste falha se uma borda se move 3 texels (testado localmente e revertido).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
