@@ -29,7 +29,7 @@ A animação também é rígida: o idle tem 2 frames a 2 fps, pulo e queda têm 
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| Cores novas | Exatamente 5: `o` (linha interna do uniforme), `x` (linha de pele), `j` (meio-tom do cabelo), `y` (luz de borda fria), `z` (dourado escuro); total de 39 ≤ 40 | Teto do teste de paleta; rampas de 3 tons por material | y |
+| Cores novas | Exatamente 5: `o` (linha interna do uniforme), `x` (linha de pele), `j` (meio-tom do cabelo), `y` (luz de borda fria), `z` (dourado escuro); total de 40 = teto do teste | Teto do teste de paleta; rampas de 3 tons por material | y |
 | Métrica de "contorno interno" | Texel `k` cujos 4 vizinhos (cima, baixo, esquerda, direita) estão dentro do frame e não são `.` | Mede o sel-out de forma objetiva; a linha de base do `idle-0` é 17 | y |
 | Tolerância de alinhamento | A caixa (bbox) de cada frame pré-existente fica a até 2 texels da linha de base em cada borda; a linha de base é congelada em fixture antes da mudança | Pega peça deslocada sem impedir refinamento de silhueta | y |
 | Duração do pouso | `LAND_MS = 120` ms após tocar o chão | Curto o bastante para não atrasar a corrida, longo o bastante para ser visto (≈7 frames a 60 fps) | y |
@@ -60,7 +60,7 @@ A animação também é rígida: o idle tem 2 frames a 2 fps, pulo e queda têm 
 
 **Acceptance Criteria**:
 
-1. SPR-01: The palette SHALL contain exactly the 5 new keys `o`, `x`, `j`, `y`, `z` in addition to the previous 34, totalling 39 keys.
+1. SPR-01: The palette SHALL contain exactly the 5 new keys `o`, `x`, `j`, `y`, `z` in addition to the previous 35, totalling 40 keys.
 2. SPR-02: Every frame of `PLAYER_FRAMES`, `PLAYER_MOVE_FRAMES` and `PLAYER_TECH_FRAMES` SHALL parse with `parseSheet` using only palette keys, at 32x24 texels.
 3. SPR-03: The `idle-0` frame SHALL have at most 8 interior `k` texels (baseline 17).
 4. SPR-04: The head rows (0–10) of `idle-0` SHALL contain the eye white `w` horizontally adjacent to a dark pupil (`b` or `k`), and the three hair tones `h`, `j` and `H`.
