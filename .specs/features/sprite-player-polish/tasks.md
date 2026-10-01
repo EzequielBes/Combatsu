@@ -215,8 +215,8 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] SPR-02 e SPR-06 verdes, incluindo o teste de silhuetas distintas das técnicas.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] SPR-02 e SPR-06 verdes, incluindo o teste de silhuetas distintas das técnicas.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

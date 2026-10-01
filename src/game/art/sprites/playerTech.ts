@@ -36,38 +36,38 @@ import {
 } from './player';
 
 /** Punho do Divergente envolto em energia azul (carga): mistura tremulante de `c`/`C` no lugar da pele do punho. */
-const ARM_DIVERGENT_CHARGE: Grid = ['kkkNNk', 'kCcNnk', 'kcCnk.', '.kkk..'];
+const ARM_DIVERGENT_CHARGE: Grid = ['kkksNk', 'kCcNnk', 'kcCnk.', '.kkk..'];
 
 /**
  * Braço esticado com dois dedos (indicador e médio) unidos na ponta, tingidos por `hi`/`fill` em vez do punho
  * fechado de `armStraight` — usado pelo Desmantelar (branco) e pela Vermelho (vermelho).
  */
 function armPointed(len: number, hi: string, fill: string): string[] {
-  const sleeve = len - 6;
+  const sleeve = len - 7;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + `k${hi}${hi}${fill}k`,
-    'k' + 'N'.repeat(sleeve) + `k${hi}${hi}${fill}k`,
-    'k' + 'n'.repeat(sleeve) + 'kPPqk',
+    'k' + 's'.repeat(sleeve) + `sk${hi}${hi}${fill}k`,
+    'k' + 'N'.repeat(sleeve) + `sk${hi}${hi}${fill}k`,
+    'k' + 'n'.repeat(sleeve) + 'NkPPxk',
     'k'.repeat(len - 1) + '.',
   ];
 }
 
 /** Mão de apoio segurando o pulso por baixo (Vermelho, charge): uma peça `far` própria, curta, colocada logo
  * abaixo da manga do braço esticado — mais simples e mais confiável que sobrepor o braço já pronto. */
-const WRIST_GRIP: Grid = ['.kkk.', 'kppPk', 'kNnNk', '.kkk.'];
+const WRIST_GRIP: Grid = ['.kkk.', 'kppPk', 'ksnNk', '.kkk.'];
 
 /**
  * Palma aberta à frente, dedos juntos, com um núcleo `core` entre eles em vez do punho fechado — usada pela
  * Azul no release (a esfera azul nasce nesse núcleo, fora do sprite, via `techFx`).
  */
 function armPalm(len: number, core: string): string[] {
-  const sleeve = len - 6;
+  const sleeve = len - 7;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + `kp${core}pk`,
-    'k' + 'N'.repeat(sleeve) + `kP${core}Pk`,
-    'k' + 'n'.repeat(sleeve) + 'kPPqk',
+    'k' + 's'.repeat(sleeve) + `skp${core}pk`,
+    'k' + 'N'.repeat(sleeve) + `skP${core}Pk`,
+    'k' + 'n'.repeat(sleeve) + 'NkPPxk',
     'k'.repeat(len - 1) + '.',
   ];
 }
