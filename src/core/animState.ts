@@ -7,6 +7,8 @@ export type PlayerAnim =
   | 'run'
   | 'jump'
   | 'fall'
+  | 'apex'
+  | 'land'
   | 'jab'
   | 'cross'
   | 'kick'
@@ -31,22 +33,34 @@ export interface PlayerAnimInput {
   vx: number;
   vy: number;
   holding: boolean;
+  /** ms desde o último pouso; `Infinity` se nunca pousou. */
+  landMs: number;
 }
 
 /** Abaixo disso (px/s) o personagem está parado para a animação. */
 export const RUN_THRESHOLD = 10;
 
+/** Duração (ms) da animação de pouso depois de tocar o chão (SPR-10). */
+export const LAND_MS = 120;
+/** Abaixo disso (px/s) em |vy|, no ar, o personagem está no ápice do pulo (SPR-11). */
+export const APEX_VY = 60;
+
 /**
- * Animação do player (CHR-01), com precedência hurt > golpe/swing/throw > ar > run > idle.
- * No ar: jump se vy < 0, senão fall. Segurando objeto no chão, run/idle viram carry-run/carry-idle
- * (no ar a precedência do ar vale, porque não há variante carry de pulo).
+ * Animação do player (CHR-01), com precedência hurt > golpe/swing/throw > ar > carry > land > run > idle.
+ * No ar: apex se |vy| < APEX_VY, senão jump se vy < 0, senão fall. Segurando objeto no chão, run/idle viram
+ * carry-run/carry-idle e não mostram land (no ar a precedência do ar vale, porque não há variante carry de pulo).
+ * No chão, land vale enquanto landMs < LAND_MS, mesmo correndo.
  */
 export function pickPlayerAnim(i: PlayerAnimInput): PlayerAnim {
   if (i.hurt) return 'hurt';
   if (i.attack) return i.attack.name;
-  if (!i.grounded) return i.vy < 0 ? 'jump' : 'fall';
+  if (!i.grounded) {
+    if (Math.abs(i.vy) < APEX_VY) return 'apex';
+    return i.vy < 0 ? 'jump' : 'fall';
+  }
   const running = Math.abs(i.vx) > RUN_THRESHOLD;
   if (i.holding) return running ? 'carry-run' : 'carry-idle';
+  if (i.landMs < LAND_MS) return 'land';
   return running ? 'run' : 'idle';
 }
 
