@@ -96,9 +96,9 @@ T13
 
 **Done when**:
 
-- [ ] EVR-04 (parte pura) conferido: uniforme (10.000 sorteios, 33% ± 3% cada); mesma seed → mesma sequência; `lootRng` e `guardRng` dão, para a mesma seed, os mesmos números de antes.
-- [ ] EVR-05 (parte pura): `parseVariant` aceita os 3 ids e devolve `null` para qualquer outro.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] EVR-04 (parte pura) conferido: uniforme (10.000 sorteios, 33% ± 3% cada); mesma seed → mesma sequência; `lootRng` e `guardRng` dão, para a mesma seed, os mesmos números de antes.
+- [x] EVR-05 (parte pura): `parseVariant` aceita os 3 ids e devolve `null` para qualquer outro.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
