@@ -101,6 +101,8 @@ export interface EnemyKit {
   windupAt: readonly [number, number];
   /** Coluna da parte do braço do golpe (a ponta fica na coluna 28). */
   reachX: number;
+  /** Linha do braço do golpe (padrão: `yArm`). */
+  reachY?: number;
 }
 
 interface Pose {
@@ -192,7 +194,7 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
       lean: 2,
       eye: kit.eyeGlow,
       mouth: kit.mouthOpen,
-      near: [kit.armReach, kit.reachX, yArm],
+      near: [kit.armReach, kit.reachX, kit.reachY ?? yArm],
       far: [far(armBack), 1, yArm],
       legs: step(legFar - 1, legNear + 2),
     }),
@@ -332,84 +334,64 @@ const CORCUNDA_KIT: EnemyKit = {
   reachX: 14,
 };
 
-// ================================================================ rastejante (verde, magro e alto, 3 olhos)
-// Tronco 9x16: cabeça pequena no alto, pescoço fino, costelas em `G`, pélvis; braços até o chão.
+/**
+ * Membro diagonal de 3 texels de largura interna (contorno `k` por fora, luz `G` à esquerda, tom médio `g`, sombra
+ * `n`), com garras finas `w` na ponta. `shift(row)` é o deslocamento horizontal de cada linha (cotovelo/inclinação).
+ */
+function limb(len: number, shift: (row: number) => number): string[] {
+  const rows: string[] = [];
+  let maxX = 0;
+  for (let r = 0; r < len; r++) maxX = Math.max(maxX, shift(r));
+  const w = maxX + 5;
+  for (let r = 0; r < len; r++) {
+    const x0 = shift(r);
+    const inner = r < 2 ? 'GGg' : r % 2 ? 'Ggn' : 'Ggg';
+    rows.push(('.'.repeat(x0) + 'k' + inner + 'k').padEnd(w, '.'));
+  }
+  const x0 = shift(len - 1);
+  rows.push(('.'.repeat(x0) + 'kwkwk').padEnd(w, '.'));
+  rows.push(('.'.repeat(x0) + 'w.w.w').padEnd(w, '.'));
+  return rows;
+}
+
+// ================================================================ rastejante (verde, magro, inclinado, 3 olhos)
+// De perfil, olhando para a direita: cabeça alongada à frente com os 3 olhos em fileira, coluna e costelas nas costas,
+// quadril recuado. Braços longos de 3 texels de largura em 2 tons, com garras finas.
 const R_BODY: Grid = [
-  '..kkkkk..',
-  '.kGGGGGk.',
-  'kGGgggggk',
-  'kGggggggk',
-  'kgggggggk',
-  'kgggggggk',
-  'kggnnnggk',
-  '.kgggggnk',
-  '..kGggnk.',
-  '.kGggggnk',
-  '.kGGGGgnk',
-  '.kgnnggnk',
-  '.kGGGGgnk',
-  '..kgnggnk',
-  '..kGggnk.',
-  '..kkkkk..',
+  '........kkkkkk...',
+  '.......kGGGGGggk.',
+  '..kk...kGgggggggk',
+  '.kGGk..kggggggggk',
+  '.kGgGk.kggggggggk',
+  '.kGGggkkggggggggk',
+  '.kGGgggggggkkkkk.',
+  'kwGgggggggggk....',
+  'kGGGGGGgggggk....',
+  'kwgnnnnnnggk.....',
+  '.kGGGGGGggk......',
+  'kwgnnnnnngk......',
+  '.kGGGGGggk.......',
+  '..kGgggnk.......',
+  '..kgggggk.......',
+  '...kkkkkk.......',
 ];
-const R_EYE: Grid = ['.......', 'kRkRkRk', 'krkrkrk', '.......'];
-const R_EYE_GLOW: Grid = ['.......', 'kwkwkwk', 'kRkRkRk', '.......'];
-const R_EYE_SQUINT: Grid = ['.......', '.......', 'krkrkrk', '.......'];
-const R_MOUTH: Grid = ['kwkkwkw', '.kkkkk.'];
-const R_MOUTH_OPEN: Grid = ['kwkwkwk', 'krrrrrk', '.kwkwk.'];
-const R_ARM_HANG: Grid = [
-  '.kGk.',
-  '.kgk.',
-  '.kgk.',
-  '..kgk',
-  '..kgk',
-  '.kgnk',
-  '.kgk.',
-  '.kgk.',
-  '.kgnk',
-  '.kgk.',
-  '.kgk.',
-  '.kgk.',
-  'kgggk',
-  'kwkwk',
-  'w.w.w',
-];
-const R_ARM_FWD: Grid = [
-  'kGk.....',
-  'kgGk....',
-  '.kgGk...',
-  '..kgGk..',
-  '...kgk..',
-  '...kgnk.',
-  '...kgk..',
-  '...kgk..',
-  '...kgnk.',
-  '...kgk..',
-  '...kgk..',
-  '..kgggk.',
-  '..kwkwk.',
-  '..w.w.w.',
-];
-const R_ARM_WINDUP: Grid = [
-  'w.w.w.....',
-  'kwkwk.....',
-  'kgggk.....',
-  '.kgnk.....',
-  '.kgGk.....',
-  '..kgGk....',
-  '...kgGk...',
-  '....kgGk..',
-  '.....kgGk.',
-  '......kgk.',
-  '.......kk.',
-];
+const R_EYE: Grid = ['RkRkR', 'rkrkr'];
+const R_EYE_GLOW: Grid = ['wkwkw', 'RkRkR'];
+const R_EYE_SQUINT: Grid = ['.....', 'rkrkr'];
+const R_MOUTH: Grid = ['kkkkkkkk', 'kwkwkwkk', '.kkkkkk.'];
+const R_MOUTH_OPEN: Grid = ['kwkwkwkk', 'krrrrrrk', 'kwkwkwkk', '.kkkkkk.'];
+const R_ARM_HANG: Grid = limb(12, (r) => (r < 5 ? 0 : r < 9 ? 1 : 2));
+const R_ARM_FWD: Grid = limb(11, (r) => Math.floor(r / 2));
+const R_ARM_WINDUP: Grid = limb(10, (r) => Math.round((9 - r) * 0.9)).reverse();
 const R_ARM_REACH: Grid = [
-  'kkkkkkkkkkk.kw.',
-  'kGgggggggggkkww',
-  'kkkkkkkkkkk.kw.',
+  'kkkkkkkkkkkkk..',
+  'kGGGGGGGGGGGGkw',
+  'kgggggggggggkww',
+  'kgnnnnnnnnnnkw.',
+  'kkkkkkkkkkkkk..',
 ];
-const R_LEG: Grid = ['.kgk.', 'kGgnk', '.kgnk', 'kgnk.', 'kgk..', 'kggk.', 'kkkkk'];
-const R_LEG_UP: Grid = ['.kgk.', 'kGgnk', 'kgnk.', 'kggk.', 'kkkkk', 'kkkkk'].slice(0, 6);
+const R_LEG: Grid = ['..kGk.', '.kGgk.', '.kggk.', '..kgk.', '..kggk', '.kkkkk'];
+const R_LEG_UP: Grid = ['.kgk.', '.kGgk', '..kgk', '..kggk', '.kkkkk'];
 
 const RASTEJANTE_KIT: EnemyKit = {
   sel: {
@@ -419,16 +401,16 @@ const RASTEJANTE_KIT: EnemyKit = {
     ],
     fallback: 'K',
   },
-  farMap: { G: 'g', n: 'g', w: 'S' },
+  farMap: { G: 'g', g: 'n', n: 'K', w: 'S' },
   body: R_BODY,
-  bodyX: 8,
-  bodyY: 1,
+  bodyX: 6,
+  bodyY: 3,
   eye: R_EYE,
   eyeGlow: R_EYE_GLOW,
   eyeSquint: R_EYE_SQUINT,
-  eyeAt: [1, 2],
+  eyeAt: [9, 3],
   mouth: R_MOUTH,
-  mouthAt: [1, 6],
+  mouthAt: [9, 5],
   mouthOpen: R_MOUTH_OPEN,
   armHang: R_ARM_HANG,
   armFwd: R_ARM_FWD,
@@ -436,93 +418,85 @@ const RASTEJANTE_KIT: EnemyKit = {
   armReach: R_ARM_REACH,
   leg: R_LEG,
   legUp: R_LEG_UP,
-  yArm: 9,
-  xNear: 15,
-  xFar: 3,
-  legFar: 8,
-  legNear: 13,
-  windupAt: [0, 0],
+  yArm: 10,
+  xNear: 13,
+  xFar: 11,
+  legFar: 5,
+  legNear: 9,
+  windupAt: [2, 0],
   reachX: 14,
 };
 
-// ================================================================ bruto (roxo, largo e baixo, chifres, boca acesa)
-// Tronco 15x13 com ombros enormes; a cabeça com chifres (13x10) senta entre os ombros.
+// ================================================================ bruto (roxo, massa de ombros, cabeça baixa à frente)
+// De perfil, olhando para a direita: ombros/costas enormes à esquerda, cabeça projetada e mais baixa que os ombros,
+// chifres curvando para trás, olho pequeno e fundo, mandíbula pesada acesa e punho grande na frente.
 const B_BODY: Grid = [
-  'wk.kkk...kkk.kw',
-  'kUUUUUkkkUUUUUk',
-  'kUUuuuuuuuuuUUk',
-  'kUuuuvuuuvuuuuk',
-  'kuuuuuvuuuvuuuk',
-  'kuuuuuuuuuuuuuk',
-  'kuuuvuuuuuuuubk',
-  'kuuuuuuuuuuuubk',
-  'kvuuuuuuuuuuvbk',
-  'kvvuuuuuuuuvvbk',
-  '.kvvuuuuuuvvbk.',
-  '..kvvvvvvvvbk..',
-  '...kkkkkkkkk...',
+  '.......kwSSk........',
+  '.........kSSsk......',
+  '...........kSSsk....',
+  '..kkkkkkk..kSSsk....',
+  '.kUUUUUUUk..kSSsk...',
+  'kUUUUuuuuuk.kSSsk...',
+  'kUUuuuuuuuukkkkkkkk.',
+  'kUuuuuvuuuukUuuuuuuk',
+  'kuuuuuuuuuukuuuuuuuk',
+  'kuuuvuuuuuukuuuuuuuk',
+  'kvuuuuuuuuuuuk......',
+  'kvuuuuuuuuuuuuk.....',
+  'kvvuuuuuuuuuuuk.....',
+  '.kvvuuuuuuuuuvk.....',
+  '.kvvvuuuuuuvvvk.....',
+  '..kvvvvvvvvvvk......',
+  '...kkkkkkkkkk.......',
 ];
-const B_HEAD: Grid = [
-  '..kwk.....kwk..',
-  '.kSSk.....kSSk.',
-  '.kSk.......kSk.',
-  'kSSk.......kSSk',
-  'kSSkkkkkkkkkSSk',
-  '...kuUuuuUuk...',
-  '...kuuuuuuuk...',
-  '...kuuuuuuuk...',
-  '...kvuuuuuvk...',
-  '....kkkkkkk....',
-];
-const B_EYE: Grid = ['aA...Aa'];
-const B_EYE_GLOW: Grid = ['AwA.AwA'];
-const B_EYE_SQUINT: Grid = ['kk...kk'];
-const B_MOUTH: Grid = ['kkkkkkk', 'kAwAwAk', 'kaAAAak', '.kkkkk.'];
-const B_MOUTH_OPEN: Grid = ['kkkkkkk', 'kAwAwAk', 'kaAAAak', 'kaaAaak', '.kkkkk.'];
+const B_EYE: Grid = ['kkk', 'aAk'];
+const B_EYE_GLOW: Grid = ['kkk', 'AwA'];
+const B_EYE_SQUINT: Grid = ['kkk', 'kkk'];
+const B_MOUTH: Grid = ['kkkkkkkk', 'kAwAwAak', 'kaAAAAak', '.kkkkkk.'];
+const B_MOUTH_OPEN: Grid = ['kkkkkkkk', 'kAwAwAAk', 'kaAAAAak', 'kaaAAaak', '.kkkkkk.'];
 const B_ARM_HANG: Grid = [
-  '.kUUk.',
-  'kUUuuk',
-  'kUuuuk',
-  'kuuuvk',
-  'kuuuuk',
-  'kvuuuk',
-  'kuuuuk',
-  'kvuuvk',
-  'kUUUuk',
-  'kUuuuk',
-  'kuuvvk',
-  'kkkkkk',
+  '.kUUUk..',
+  'kUUuuuk.',
+  'kUuuuuk.',
+  'kuuuvuk.',
+  'kuuuuuk.',
+  'kvuuuuk.',
+  '.kuuuuk.',
+  'kUUUUUUk',
+  'kUvUvUvk',
+  'kUuuuuuk',
+  'kuuvuuvk',
+  'kkkkkkkk',
 ];
 const B_ARM_FWD: Grid = [
-  'kUUk....',
-  'kUuuk...',
-  '.kuuuk..',
-  '..kuuvk.',
-  '...kuuk.',
-  '...kvuk.',
-  '..kUUUuk',
-  '..kUuuuk',
-  '..kuuvvk',
-  '..kkkkkk',
-];
-const B_ARM_WINDUP: Grid = [
-  'AAAAk.....',
-  'AwwAk.....',
-  'kAAkk.....',
-  '.kuuk.....',
+  'kUUk......',
+  'kUuuk.....',
   '.kuuuk....',
   '..kuuuk...',
-  '...kuuuk..',
-  '....kuuuk.',
-  '.....kuuuk',
-  '......kuuk',
-  '.......kk.',
+  '...kuuvk..',
+  '....kvvk..',
+  '....kUUUUk',
+  '....kUuuuk',
+  '....kuuvvk',
+  '....kkkkkk',
+];
+const B_ARM_WINDUP: Grid = [
+  '.kAAAAk.....',
+  'kAwwAAAk....',
+  'kAAAAAAk....',
+  '.kkkkkk.....',
+  '..kuuuuk....',
+  '...kuuuuk...',
+  '....kuuuuk..',
+  '.....kUuuuk.',
+  '......kUUuk.',
+  '.......kkkk.',
 ];
 const B_ARM_REACH: Grid = [
   'kkkkkkkkkkkkkkk',
-  'kUUUUUUUUUUkkkk',
-  'kuuuuuuuuuuUUUk',
-  'kvvvvvvvvvvuuuk',
+  'kUUUUUUUUUkkkkk',
+  'kuuuuuuuuUUUUUk',
+  'kuuvvvvvuuuuuuk',
   'kkkkkkkkkkkkkkk',
 ];
 const B_LEG: Grid = ['kuuuk', 'kvuuk', 'kkkkk'];
@@ -538,15 +512,14 @@ const BRUTO_KIT: EnemyKit = {
   },
   farMap: { U: 'u', u: 'v', v: 'b', w: 'S', S: 's' },
   body: B_BODY,
-  bodyX: 5,
-  bodyY: 8,
-  front: { grid: B_HEAD, dx: 0, dy: -5 },
+  bodyX: 4,
+  bodyY: 4,
   eye: B_EYE,
   eyeGlow: B_EYE_GLOW,
   eyeSquint: B_EYE_SQUINT,
-  eyeAt: [4, 0],
+  eyeAt: [15, 8],
   mouth: B_MOUTH,
-  mouthAt: [4, 1],
+  mouthAt: [12, 10],
   mouthOpen: B_MOUTH_OPEN,
   armHang: B_ARM_HANG,
   armFwd: B_ARM_FWD,
@@ -554,13 +527,14 @@ const BRUTO_KIT: EnemyKit = {
   armReach: B_ARM_REACH,
   leg: B_LEG,
   legUp: B_LEG_UP,
-  yArm: 10,
-  xNear: 18,
-  xFar: 1,
+  yArm: 11,
+  xNear: 12,
+  xFar: 7,
   legFar: 7,
-  legNear: 13,
-  windupAt: [1, 1],
+  legNear: 12,
+  windupAt: [2, 2],
   reachX: 14,
+  reachY: 15,
 };
 
 // ================================================================ exportações
