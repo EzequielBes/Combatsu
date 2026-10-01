@@ -285,6 +285,28 @@ export interface AnimDef {
   frameRate: number;
   /** -1 = repete sempre; 0 = toca uma vez. */
   repeat: number;
+  /** Duração em ms de cada frame (um por frame, todas > 0). Sem isso, vale 1000 / frameRate para todos. */
+  durations?: readonly number[];
+}
+
+/** Configuração de um frame de animação para o Phaser: `duration` só existe quando a animação declara `durations`. */
+export interface AnimFrameConfig {
+  frame: string;
+  duration?: number;
+}
+
+/** Frames de uma animação com a duração de cada um (SPR-08). Lança erro com o nome da animação se `durations` for inválido. */
+export function animFrameConfigs(name: string, def: AnimDef): AnimFrameConfig[] {
+  const { durations } = def;
+  if (!durations) return def.frames.map((frame) => ({ frame }));
+  if (durations.length !== def.frames.length) {
+    throw new Error(`Animação '${name}' tem ${durations.length} durations para ${def.frames.length} frames`);
+  }
+  return def.frames.map((frame, i) => {
+    const duration = durations[i];
+    if (!(duration > 0)) throw new Error(`Animação '${name}' tem a duration ${duration} no frame '${frame}'; precisa ser > 0`);
+    return { frame, duration };
+  });
 }
 
 /**

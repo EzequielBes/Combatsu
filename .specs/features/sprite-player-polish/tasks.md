@@ -130,9 +130,9 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] SPR-08 conferido: WHEN an `AnimDef` declares `durations` THEN it SHALL have one positive duration per frame, and `registerAnims` SHALL pass each one as the frame's `duration`.
-- [ ] Edge: tamanho diferente lança erro com o nome da animação; duração 0 lança erro, duração 1 passa.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] SPR-08 conferido: WHEN an `AnimDef` declares `durations` THEN it SHALL have one positive duration per frame, and `registerAnims` SHALL pass each one as the frame's `duration`.
+- [x] Edge: tamanho diferente lança erro com o nome da animação; duração 0 lança erro, duração 1 passa.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

@@ -11,7 +11,7 @@ import {
   ENERGY_BAR_MARK_COLOR,
   TECH_ICON_OVERLAY_COLOR,
 } from '../../src/game/art/techColors';
-import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
@@ -841,5 +841,32 @@ describe('alinhamento dos frames do player contra a linha de base congelada (SPR
         expect(Math.abs(now[i] - base[i]), `${name} borda ${i}: ${now[i]} vs ${base[i]}`).toBeLessThanOrEqual(2);
       }
     }
+  });
+});
+
+describe('duração por frame nas animações (SPR-08)', () => {
+  const base = { frames: ['a', 'b', 'c'], frameRate: 10, repeat: 0 };
+
+  it('devolve cada frame com a sua duration quando a animação declara durations', () => {
+    expect(animFrameConfigs('x', { ...base, durations: [70, 1000, 1] })).toEqual([
+      { frame: 'a', duration: 70 },
+      { frame: 'b', duration: 1000 },
+      { frame: 'c', duration: 1 },
+    ]);
+  });
+
+  it('sem durations, devolve só os frames, sem duration', () => {
+    expect(animFrameConfigs('x', base)).toEqual([{ frame: 'a' }, { frame: 'b' }, { frame: 'c' }]);
+  });
+
+  it('lança erro com o nome da animação quando durations tem tamanho diferente de frames', () => {
+    expect(() => animFrameConfigs('minha-anim', { ...base, durations: [10, 10] })).toThrow(/minha-anim/);
+    expect(() => animFrameConfigs('minha-anim', { ...base, durations: [10, 10, 10, 10] })).toThrow(/minha-anim/);
+  });
+
+  it('duração 0 (ou negativa) lança erro com o nome da animação; duração 1 passa', () => {
+    expect(() => animFrameConfigs('zero', { ...base, durations: [10, 0, 10] })).toThrow(/zero/);
+    expect(() => animFrameConfigs('neg', { ...base, durations: [10, -5, 10] })).toThrow(/neg/);
+    expect(() => animFrameConfigs('um', { ...base, durations: [1, 1, 1] })).not.toThrow();
   });
 });

@@ -6,7 +6,7 @@ import { PALETTE_KEYS } from './palette';
 import { registerSheet } from './render';
 import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
 import { KANJI_FRAMES } from './sprites/kanji';
-import { PLAYER_ANIMS, PLAYER_FRAMES, type AnimDef } from './sprites/player';
+import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, type AnimDef } from './sprites/player';
 import { PLAYER_MOVE_FRAMES } from './sprites/playerMoves';
 import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
 import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from './sprites/techFx';
@@ -115,6 +115,7 @@ export function registerAnims(
 ): void {
   const texture = scene.textures.get(textureKey);
   for (const [name, def] of Object.entries(anims)) {
+    const configs = animFrameConfigs(name, def);
     for (const frame of def.frames) {
       if (!texture.has(frame)) {
         throw new Error(`Animação '${name}' cita o frame '${frame}', que não existe na textura '${textureKey}'`);
@@ -124,7 +125,7 @@ export function registerAnims(
     if (scene.anims.exists(key)) scene.anims.remove(key);
     scene.anims.create({
       key,
-      frames: def.frames.map((frame) => ({ key: textureKey, frame })),
+      frames: configs.map(({ frame, duration }) => (duration ? { key: textureKey, frame, duration } : { key: textureKey, frame })),
       frameRate: def.frameRate,
       repeat: def.repeat,
     });
