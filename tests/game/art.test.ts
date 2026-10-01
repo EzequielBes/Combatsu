@@ -11,8 +11,9 @@ import {
   ENERGY_BAR_MARK_COLOR,
   TECH_ICON_OVERLAY_COLOR,
 } from '../../src/game/art/techColors';
-import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, selOut, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
+import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
 import {
   COMBO_GRADE_COLORS,
@@ -65,6 +66,19 @@ describe('paleta única (ART-01)', () => {
     expect(keys.length).toBeGreaterThan(0);
     expect(keys.length).toBeLessThanOrEqual(40);
     for (const k of keys) expect([...k]).toHaveLength(1);
+  });
+
+  it('tem as 5 chaves novas do player (o, x, j, y, z) somando 40 cores (SPR-01)', () => {
+    const keys = Object.keys(PALETTE);
+    for (const k of ['o', 'x', 'j', 'y', 'z']) expect(keys, k).toContain(k);
+    // SPEC_DEVIATION: a spec diz 34 + 5 = 39, mas a paleta já tinha 35 chaves; o total real é 40, o teto do teste de paleta.
+    // Reason: contagem da spec desatualizada; as 5 chaves novas e o teto de 40 se mantêm.
+    expect(keys).toHaveLength(40);
+    expect(PALETTE.o).toBe(0x161d3d);
+    expect(PALETTE.x).toBe(0x6b3a2e);
+    expect(PALETTE.j).toBe(0x33263b);
+    expect(PALETTE.y).toBe(0x8fa3c9);
+    expect(PALETTE.z).toBe(0x9c6a1f);
   });
 
   it('reserva "." para transparente: não está na paleta', () => {
@@ -796,6 +810,183 @@ describe('cores da barra de estrutura e do combo (STR-09)', () => {
     for (const grade of order) expect(Object.values(PALETTE)).toContain(COMBO_GRADE_COLORS[grade]);
     for (let i = 1; i < order.length; i++) {
       expect(COMBO_GRADE_COLORS[order[i]], order[i]).not.toBe(COMBO_GRADE_COLORS[order[i - 1]]);
+    }
+  });
+});
+
+describe('alinhamento dos frames do player contra a linha de base congelada (SPR-06)', () => {
+  const bboxOf = (rows: readonly string[]): [number, number, number, number] => {
+    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    rows.forEach((row, y) => {
+      [...row].forEach((c, x) => {
+        if (c === TRANSPARENT) return;
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      });
+    });
+    return [x0, y0, x1, y1];
+  };
+  const all: Record<string, readonly string[]> = { ...PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES, ...PLAYER_TECH_FRAMES };
+  const entries = Object.entries(playerBBoxBaseline as Record<string, number[]>);
+
+  it('a fixture congelada cobre os 102 frames pré-existentes', () => {
+    expect(entries).toHaveLength(102);
+  });
+
+  it('cada borda da bbox fica a até 2 texels da linha de base', () => {
+    for (const [name, base] of entries) {
+      expect(all[name], `frame ${name} existe`).toBeDefined();
+      const now = bboxOf(all[name]);
+      for (let i = 0; i < 4; i++) {
+        expect(Math.abs(now[i] - base[i]), `${name} borda ${i}: ${now[i]} vs ${base[i]}`).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+});
+
+describe('duração por frame nas animações (SPR-08)', () => {
+  const base = { frames: ['a', 'b', 'c'], frameRate: 10, repeat: 0 };
+
+  it('devolve cada frame com a sua duration quando a animação declara durations', () => {
+    expect(animFrameConfigs('x', { ...base, durations: [70, 1000, 1] })).toEqual([
+      { frame: 'a', duration: 70 },
+      { frame: 'b', duration: 1000 },
+      { frame: 'c', duration: 1 },
+    ]);
+  });
+
+  it('sem durations, devolve só os frames, sem duration', () => {
+    expect(animFrameConfigs('x', base)).toEqual([{ frame: 'a' }, { frame: 'b' }, { frame: 'c' }]);
+  });
+
+  it('lança erro com o nome da animação quando durations tem tamanho diferente de frames', () => {
+    expect(() => animFrameConfigs('minha-anim', { ...base, durations: [10, 10] })).toThrow(/minha-anim/);
+    expect(() => animFrameConfigs('minha-anim', { ...base, durations: [10, 10, 10, 10] })).toThrow(/minha-anim/);
+  });
+
+  it('duração 0 (ou negativa) lança erro com o nome da animação; duração 1 passa', () => {
+    expect(() => animFrameConfigs('zero', { ...base, durations: [10, 0, 10] })).toThrow(/zero/);
+    expect(() => animFrameConfigs('neg', { ...base, durations: [10, -5, 10] })).toThrow(/neg/);
+    expect(() => animFrameConfigs('um', { ...base, durations: [1, 1, 1] })).not.toThrow();
+  });
+});
+
+describe('passe de sel-out e acabamento do idle-0 (SPR-03, SPR-04, SPR-05)', () => {
+  const toCanvas = (rows: string[]): string[][] => rows.map((r) => [...r]);
+
+  it('k interno vira x (vizinhos de pele), h (cabelo) ou o (demais); k de borda e b não mudam', () => {
+    const canvas = toCanvas([
+      '.pp.hh..bbb',
+      '.pkp.kh.bkb',
+      '.pp.hh..bbb',
+      '...........',
+      'NNNk.......',
+      'NkN........',
+      'NNN........',
+    ]);
+    selOut(canvas);
+    expect(canvas[1][2]).toBe('x'); // cercado de pele
+    expect(canvas[4][3]).toBe('k'); // contorno: encosta em transparente
+    expect(canvas[5][1]).toBe('o'); // cercado de uniforme
+    expect(canvas[0][8]).toBe('b'); // b nunca muda
+  });
+
+  it('limiar da maioria: exatamente 2 vizinhos de pele viram x; 1 de pele e 3 de uniforme viram o', () => {
+    const two = toCanvas(['.p.', 'NkN', '.p.']);
+    selOut(two);
+    expect(two[1][1]).toBe('x');
+    const one = toCanvas(['.p.', 'NkN', '.N.']);
+    selOut(one);
+    expect(one[1][1]).toBe('o');
+  });
+
+  it('limiar da maioria no cabelo: 1 vizinho de cabelo e 3 de uniforme viram o', () => {
+    const canvas = toCanvas(['.h.', 'NkN', '.N.']);
+    selOut(canvas);
+    expect(canvas[1][1]).toBe('o');
+  });
+
+  it('k interno com 2 vizinhos de cabelo vira h', () => {
+    const canvas = toCanvas(['.hh.', 'hkhk', '.hh.']);
+    selOut(canvas);
+    expect(canvas[1][1]).toBe('h');
+  });
+
+  it('o idle-0 tem no máximo 8 texels k internos (a linha de base era 17)', () => {
+    const rows = PLAYER_FRAMES['idle-0'];
+    let n = 0;
+    rows.forEach((row, y) =>
+      [...row].forEach((c, x) => {
+        if (c !== 'k' || y === 0 || y === rows.length - 1 || x === 0 || x === row.length - 1) return;
+        const nb = [rows[y - 1][x], rows[y + 1][x], row[x - 1], row[x + 1]];
+        if (nb.every((v) => v !== TRANSPARENT)) n++;
+      }),
+    );
+    expect(n).toBeLessThanOrEqual(8);
+  });
+
+  it('a cabeça (linhas 0-10) tem o branco do olho w ao lado de uma pupila escura e os 3 tons de cabelo', () => {
+    const head = PLAYER_FRAMES['idle-0'].slice(0, 11);
+    expect(head.some((r) => /w[bk]|[bk]w/.test(r))).toBe(true);
+    const joined = head.join('');
+    for (const tone of ['h', 'j', 'H']) expect(joined, tone).toContain(tone);
+  });
+
+  it('o tronco (linhas 11-17) tem o botão dourado A, a luz de borda y e a linha interna o', () => {
+    const joined = PLAYER_FRAMES['idle-0'].slice(11, 18).join('');
+    for (const c of ['A', 'y', 'o']) expect(joined, c).toContain(c);
+  });
+});
+
+describe('rastros de movimento nos golpes (SPR-14)', () => {
+  const count = (rows: readonly string[], ch: string): number => rows.join('').split(ch).length - 1;
+  const tipCol = (rows: readonly string[]): number => Math.max(...rows.map((r) => [...r].reduce((m, c, x) => (c === TRANSPARENT ? m : x), -1)));
+
+  it.each(['jab', 'cross', 'kick'])('$0-hit tem pelo menos 3 S a mais que o próprio wind e todos ficam antes da ponta', (name) => {
+    const hit = PLAYER_FRAMES[`${name}-hit`];
+    const wind = PLAYER_FRAMES[`${name}-wind`];
+    expect(count(hit, 'S') - count(wind, 'S')).toBeGreaterThanOrEqual(3);
+    const tip = tipCol(hit);
+    hit.forEach((row, y) =>
+      [...row].forEach((c, x) => {
+        if (c === 'S') expect(x, `${name}-hit S em (${x},${y})`).toBeLessThan(tip);
+      }),
+    );
+  });
+
+  it('o rastro não muda o alcance: a ponta do membro continua na mesma coluna de antes', () => {
+    expect(tipCol(PLAYER_FRAMES['jab-hit'])).toBe(27);
+    expect(tipCol(PLAYER_FRAMES['cross-hit'])).toBe(27);
+    expect(tipCol(PLAYER_FRAMES['kick-hit'])).toBe(30);
+  });
+});
+
+describe('animações de movimento do player (SPR-09, SPR-12)', () => {
+  it('idle tem 4 frames, repete, e nenhum par consecutivo (inclusive o de volta ao início) é igual (SPR-09)', () => {
+    const { frames, repeat } = PLAYER_ANIMS.idle;
+    expect(frames).toHaveLength(4);
+    expect(repeat).toBe(-1);
+    frames.forEach((f, i) => {
+      const next = frames[(i + 1) % frames.length];
+      expect(PLAYER_FRAMES[f], `${f} vs ${next}`).not.toEqual(PLAYER_FRAMES[next]);
+    });
+  });
+
+  it('jump, apex, fall, land e hurt têm o tamanho e o repeat do spec e só citam frames existentes (SPR-12)', () => {
+    const spec: Array<[string, number, number, 'min' | 'exact']> = [
+      ['jump', 2, 0, 'min'],
+      ['apex', 1, 0, 'min'],
+      ['fall', 2, -1, 'min'],
+      ['land', 2, 0, 'exact'],
+      ['hurt', 2, 0, 'exact'],
+    ];
+    for (const [name, n, repeat, mode] of spec) {
+      const anim = PLAYER_ANIMS[name];
+      expect(anim, name).toBeDefined();
+      if (mode === 'exact') expect(anim.frames, name).toHaveLength(n);
+      else expect(anim.frames.length, name).toBeGreaterThanOrEqual(n);
+      expect(anim.repeat, name).toBe(repeat);
+      for (const f of anim.frames) expect(Object.hasOwn(PLAYER_FRAMES, f), `${name}: ${f}`).toBe(true);
     }
   });
 });

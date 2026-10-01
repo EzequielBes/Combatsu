@@ -55,6 +55,12 @@ export const PALETTE: Readonly<Record<string, number>> = {
   R: 0xff3344, // vermelho vivo (borda dos raios do Kokusen, esfera Vermelha)
   W: 0xffffff, // branco puro (núcleo da esfera Vermelha, corte do Desmantelar)
   d: 0x14307a, // azul-profundo (núcleo da esfera Azul)
+  // Acabamento do player (SPR-01): linha interna seletiva, rampa de pele/cabelo, luz de borda e dourado escuro
+  o: 0x161d3d, // linha interna do uniforme (sel-out)
+  x: 0x6b3a2e, // linha de pele (orelha, queixo)
+  j: 0x33263b, // meio-tom do cabelo
+  y: 0x8fa3c9, // luz de borda fria da lua (costas)
+  z: 0x9c6a1f, // sombra do dourado (botão, fivela)
 };
 
 export const PALETTE_KEYS: ReadonlySet<string> = new Set(Object.keys(PALETTE));

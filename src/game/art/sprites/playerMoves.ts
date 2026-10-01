@@ -38,6 +38,7 @@ import {
   mirror,
   pose,
   type Grid,
+  LEG_CHAMBER,
 } from './player';
 
 // ---------------------------------------------------------------- partes novas (mesmo estilo de player.ts)
@@ -48,7 +49,7 @@ function armElbow(len: number): string[] {
   const sleeve = len - 3;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + 'kNk',
+    'k' + 's'.repeat(sleeve) + 'ksk',
     'k' + 'N'.repeat(sleeve) + 'kNk',
     'k' + 'n'.repeat(sleeve) + 'knk',
     'k'.repeat(len - 1) + '.',
@@ -58,33 +59,32 @@ function armElbow(len: number): string[] {
 /** Palma aberta à frente (palmaExplosiva): como `armStraight`, mas a ponta é uma palma achatada com o brilho
  * quente de golpe forte (`a`/`A`) no centro, em vez do punho fechado. */
 function armPalm(len: number): string[] {
-  const sleeve = len - 6;
+  const sleeve = len - 7;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + 'kpApk',
-    'k' + 'N'.repeat(sleeve) + 'kPAPk',
-    'k' + 'n'.repeat(sleeve) + 'kPPqk',
+    'k' + 's'.repeat(sleeve) + 'skpApk',
+    'k' + 'N'.repeat(sleeve) + 'skPAPk',
+    'k' + 'n'.repeat(sleeve) + 'NkPPxk',
     'k'.repeat(len - 1) + '.',
   ];
 }
 
-/** Joelho dobrado subindo e avançando (joelhada, chambers de chute e preparo do pisão). Réplica local do
- * `LEG_CHAMBER` de `player.ts` (não exportado ali) para não alterar o módulo base. */
-const LEG_KNEE_UP: Grid = ['kkkkkk.', 'kNNNNNk', 'knnnnNk', '.kkkkNk', '....kKKk', '....kkkk'];
+/* Joelho dobrado subindo e avançando (joelhada, chambers de chute e preparo do pisão): `LEG_CHAMBER` de `player.ts`. */
+const LEG_KNEE_UP: Grid = LEG_CHAMBER;
 
 /** Perna esticada para baixo (pisão, impacto): coluna vertical com a sola na ponta inferior. `len` = linhas do
  * quadril até a sola, inclusive. */
 function legDown(len: number): string[] {
   const shin = len - 2;
-  const rows: string[] = ['kNNk'];
+  const rows: string[] = ['ksNk'];
   for (let i = 0; i < shin; i++) rows.push('kNnk');
-  rows.push('kKKk');
+  rows.push('kKsk');
   return rows;
 }
 
 /** Pernas dobradas no ar (golpes aéreos): réplica local do `LEGS_TUCK` de `player.ts` (não exportado ali),
  * para manter o mesmo desenho enquanto o personagem está no ar. */
-const LEGS_AIR: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.kNNNk', '....kkk.kKKKk'];
+const LEGS_AIR: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.ksNNk', '....kkk.kKsKk'];
 
 // ---------------------------------------------------------------- golpes do chão (T8)
 

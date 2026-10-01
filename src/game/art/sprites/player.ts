@@ -27,6 +27,30 @@ export const PLAYER_ORIGIN = { x: CENTER_COL / PLAYER_FRAME_W, y: 1 } as const;
 export type Grid = readonly string[];
 export type Placed = readonly [Grid, number, number];
 
+const SKIN = new Set(['p', 'P', 'q', 'x']);
+const HAIR = new Set(['h', 'j', 'H']);
+
+/**
+ * Passe de sel-out (SPR-03): todo `k` cujos 4 vizinhos estão dentro do canvas e não são `.` é contorno interno e
+ * vira linha colorida pelo material vizinho (2+ vizinhos de pele -> `x`, 2+ de cabelo -> `h`, senão `o`).
+ * O contorno externo (que encosta em transparente ou na borda) continua `k`, e `b` (detalhe preto de propósito)
+ * não é tocado. Altera o canvas no lugar, lendo os vizinhos de uma cópia.
+ */
+export function selOut(canvas: string[][]): void {
+  const h = canvas.length;
+  const snap = canvas.map((row) => row.slice());
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < snap[y].length - 1; x++) {
+      if (snap[y][x] !== 'k') continue;
+      const n = [snap[y - 1][x], snap[y + 1][x], snap[y][x - 1], snap[y][x + 1]];
+      if (n.some((c) => c === '.')) continue;
+      const skin = n.filter((c) => SKIN.has(c)).length;
+      const hair = n.filter((c) => HAIR.has(c)).length;
+      canvas[y][x] = skin >= 2 ? 'x' : hair >= 2 ? 'h' : 'o';
+    }
+  }
+}
+
 /** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
 export function compose(...parts: Placed[]): string[] {
   const w = PLAYER_FRAME_W - FRAME_PAD;
@@ -41,6 +65,7 @@ export function compose(...parts: Placed[]): string[] {
       }),
     );
   }
+  selOut(canvas);
   return canvas.map((row) => '.'.repeat(FRAME_PAD) + row.join(''));
 }
 
@@ -58,145 +83,160 @@ export function mirror(grid: Grid): string[] {
 const FAR = { s: 'N', N: 'n', n: 'K', p: 'P', P: 'q' };
 
 // ---------------------------------------------------------------- cabeça (13x11)
+// Rampa de cabelo em 3 tons (h base, j meio-tom, H brilho), orelha em x/P, olho com branco `w` e pupila `b`,
+// luz de borda `y` na nuca. Linhas 0-2: mechas espetadas.
 const HEAD: Grid = [
-  '...k...k.....',
-  '..khk.khk.k..',
-  '.khHhkhHhkhk.',
-  'khhHhhhHhhhk.',
-  'khhhhhhhhhhhk',
-  'khhhhhhhhhhk.',
-  'khhhhhphpppk.',
-  'khhhhPppkppk.',
-  'khhhhPppppppk',
-  '.khhhPpppqpk.',
-  '.knnnkPppkk..',
+  '...k..k..k...',
+  '..kHk.kHkjk..',
+  '.kjHjkjHjHjk.',
+  'kjjjHjjHjjjjk',
+  'kjhjjhjjhjjhk',
+  'khhhhhhjhhjk.',
+  'kjhhhhpphhpk.',
+  'khhhxPpwbppk.',
+  'khhhxPppppppk',
+  '.khhhxPppxpk.',
+  '.knnNkxPPxk..',
 ];
-/** Olhos apertados e boca aberta (dor). */
+/** Olho fechado, sobrancelha torta e boca aberta (dor). */
 const HEAD_HURT: Grid = [
-  '...k...k.....',
-  '..khk.khk.k..',
-  '.khHhkhHhkhk.',
-  'khhHhhhHhhhk.',
-  'khhhhhhhhhhhk',
-  'khhhhhhhhhhk.',
-  'khhhhhphpppk.',
-  'khhhhPppkkpk.',
-  'khhhhPppppppk',
-  '.khhhPppprpk.',
-  '.knnnkPppkk..',
+  '...k..k..k...',
+  '..kHk.kHkjk..',
+  '.kjHjkjHjHjk.',
+  'kjjjHjjHjjjjk',
+  'kjhjjhjjhjjhk',
+  'khhhhhhjhhjk.',
+  'kjhhhhhpphpk.',
+  'khhhxPpbbppk.',
+  'khhhxPppppppk',
+  '.khhhxPpprpk.',
+  '.knnNkxPPxk..',
 ];
-/** Cabeça concentrada no golpe: sobrancelha baixa. */
+/** Cabeça concentrada no golpe: sobrancelha desce sobre o olho e a boca cerra os dentes. */
 export const HEAD_FOCUS: Grid = [
-  '...k...k.....',
-  '..khk.khk.k..',
-  '.khHhkhHhkhk.',
-  'khhHhhhHhhhk.',
-  'khhhhhhhhhhhk',
-  'khhhhhhhhhhk.',
-  'khhhhhphhhpk.',
-  'khhhhPppkppk.',
-  'khhhhPppppppk',
-  '.khhhPppqqpk.',
-  '.knnnkPppkk..',
+  '...k..k..k...',
+  '..kHk.kHkjk..',
+  '.kjHjkjHjHjk.',
+  'kjjjHjjHjjjjk',
+  'kjhjjhjjhjjhk',
+  'khhhhhhjhhjk.',
+  'kjhhhhphhhpk.',
+  'khhhxPpwbppk.',
+  'khhhxPppppppk',
+  '.khhhxPpbbpk.',
+  '.knnNkxPPxk..',
+];
+/** Igual à cabeça base, com as pontas das mechas das linhas 0-1 1 texel para trás (overlap do idle e da queda). */
+export const HEAD_SWAY: Grid = [
+  '..k..k..k....',
+  '.kHk.kHkjk...',
+  ...HEAD.slice(2),
 ];
 
-// ---------------------------------------------------------------- tronco (8x7), gola alta e botões
+// ---------------------------------------------------------------- tronco (8x7), gakuran
+// Gola alta com luz `s`, botões `A`/`z` na coluna 5, luz de borda `y` nas costas, sombra `n` e cinto `K` com fivela.
 const BODY: Grid = [
-  'knNNNNnk',
-  'kNsssNNk',
-  'kNNNNANk',
-  'kNNNNNNk',
-  'kNNNNANk',
-  'knnnnnnk',
-  'kKKKKKKk',
+  'koyNNsNk',
+  'kysNNANk',
+  'kyNNNNnk',
+  'kyNsNANk',
+  'kyNNNNnk',
+  'konnnnnk',
+  'kKKzAKKk',
 ];
 
 // ---------------------------------------------------------------- braços (o da frente; o de trás via recolor)
+// Manga com punho claro (`s`) antes da mão; mão com sombra `P`.
 /** Caído ao lado do corpo. */
-const ARM_DOWN: Grid = ['ksNk', 'kNnk', 'kNnk', 'kNnk', 'kPpk', 'kppk', '.kk.'];
+const ARM_DOWN: Grid = ['ksNk', 'kNNk', 'kNnk', 'ksnk', 'kppk', 'kPPk', '.kk.'];
 /** Balançando para trás (corrida). */
-const ARM_BACK: Grid = ['...ksNk', '..kNNk.', '.kNnk..', 'kNnk...', 'kppk...', '.kk....'];
+const ARM_BACK: Grid = ['...ksNk', '..kNNk.', '.kNnk..', 'ksnk...', 'kpPk...', '.kk....'];
 /** Balançando para a frente (corrida). */
-const ARM_FWD: Grid = ['ksNk...', '.kNNk..', '..kNNk.', '...kNpk', '...kppk', '....kk.'];
+const ARM_FWD: Grid = ['ksNk...', '.kNNk..', '..kNnk.', '...kspk', '...kpPk', '....kk.'];
 /** Guarda: cotovelo embaixo, punho na altura do queixo. */
-export const ARM_GUARD: Grid = ['...kkk', '..kppk', 'ksNppk', 'kNNNk.', 'knNk..', '.kk...'];
+export const ARM_GUARD: Grid = ['...kkk', '..kppk', 'ksNpPk', 'kNNsk.', 'knNk..', '.kk...'];
 /** Punho puxado para trás do ombro (preparo do soco). */
-export const ARM_COCK: Grid = ['kkkNNk', 'kppNnk', 'kppnk.', '.kkk..'];
+export const ARM_COCK: Grid = ['kkksNk', 'kppNnk', 'kPpnk.', '.kkk..'];
 /** Para cima segurando (carregar / preparo do arremesso). Também vira a mão erguida da Azul via `recolor`
  * (troca `p` pelo núcleo de energia): `playerTech` reusa esta peça em vez de desenhar um braço novo. */
-export const ARM_UP: Grid = ['.kk.', 'kppk', 'kppk', 'kNnk', 'kNnk', 'ksNk'];
+export const ARM_UP: Grid = ['.kk.', 'kppk', 'kPpk', 'ksnk', 'kNnk', 'ksNk'];
 
 /**
- * Braço esticado na horizontal: manga com luz em cima, punho 3x3 na ponta. `len` = colunas do ombro até o
- * contorno da ponta do punho, inclusive.
+ * Braço esticado na horizontal: manga com luz em cima, punho de manga claro (`s`) e punho 3x3 com sombra na ponta.
+ * `len` = colunas do ombro até o contorno da ponta do punho, inclusive.
  */
 export function armStraight(len: number): string[] {
-  const sleeve = len - 6;
+  const sleeve = len - 7;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + 'kpppk',
-    'k' + 'N'.repeat(sleeve) + 'kppPk',
-    'k' + 'n'.repeat(sleeve) + 'kPPqk',
+    'k' + 's'.repeat(sleeve) + 'skpppk',
+    'k' + 'N'.repeat(sleeve) + 'skppPk',
+    'k' + 'n'.repeat(sleeve) + 'NkPPxk',
     'k'.repeat(len - 1) + '.',
   ];
 }
 
 // ---------------------------------------------------------------- pernas (16x6, na base do frame)
+// Dobra de joelho `s` na perna da frente, sombra `n` na de trás, sapato `K` com brilho `s` em cima.
 const LEGS_STAND: Grid = [
   '....knNNNNNk',
   '....kKnkknNk',
+  '....kKnk.ksNk',
   '....kKnk.knNk',
-  '....kKnk.knNk',
-  '...kKKKk.kKKKk',
+  '...kKKKk.kKsKk',
   '...kkkkk.kkkkkk',
 ];
 /** Base firme, pés afastados (golpes). */
 export const LEGS_WIDE: Grid = [
   '....knNNNNNk',
   '...kKnkkknNk',
-  '..kKnk...knNk',
+  '..kKnk...ksNk',
   '.kKnk....knNk',
-  'kKKKk....kKKKk',
+  'kKKKk....kKsKk',
   'kkkkk....kkkkkk',
 ];
 // Ciclo de corrida (6 poses): perna da frente em N, a de trás em n/K.
 const RUN_LEGS: Grid[] = [
   // 0: contato, perna da frente esticada à frente
-  ['....knNNNNk', '...kKnkknNNk', '..kKnk...knNk', '.kKnk.....knNk', 'kKKk......kKKKk', 'kkk.......kkkkk'],
+  ['....knNNNNk', '...kKnkknNNk', '..kKnk...ksNk', '.kKnk.....knNk', 'kKKk......kKsKk', 'kkk.......kkkkk'],
   // 1: apoio, perna da frente dobrada
-  ['....knNNNNk', '...kKnkknNk', '...kKnkknNk', '..kKnk.knNk', '.kKKk..kKKKk', '.kkk...kkkkk'],
+  ['....knNNNNk', '...kKnkknNk', '...kKnkksNk', '..kKnk.knNk', '.kKKk..kKsKk', '.kkk...kkkkk'],
   // 2: passagem, perna de trás subindo atrás
-  ['....knNNNNk', '..kKKknNNk', '.kKKk.knNk', '.kkk..knNk', '......kKKKk', '......kkkkk'],
+  ['....knNNNNk', '..kKKknNNk', '.kKKk.ksNk', '.kkk..knNk', '......kKsKk', '......kkkkk'],
   // 3: contato, perna de trás esticada à frente
-  ['....knNNNNk', '...knNkkKnNk', '..knNk...kKnk', '.knNk.....kKnk', 'kKKk......kKKKk', 'kkk.......kkkkk'],
+  ['....knNNNNk', '...ksNkkKnNk', '..knNk...kKnk', '.knNk.....kKnk', 'kKKk......kKKKk', 'kkk.......kkkkk'],
   // 4: apoio, perna de trás dobrada
-  ['....knNNNNk', '...knNkkKnk', '...knNkkKnk', '..knNk.kKnk', '.kKKk..kKKKk', '.kkk...kkkkk'],
+  ['....knNNNNk', '...knNkkKnk', '...ksNkkKnk', '..knNk.kKnk', '.kKKk..kKKKk', '.kkk...kkkkk'],
   // 5: passagem, perna da frente subindo atrás
-  ['....knNNNNk', '..kNNkkKnk', '.kKKk.kKnk', '.kkk..kKnk', '......kKKKk', '......kkkkk'],
+  ['....knNNNNk', '..ksNkkKnk', '.kKKk.kKnk', '.kkk..kKnk', '......kKKKk', '......kkkkk'],
 ];
 /** Pulo: joelhos recolhidos. */
-const LEGS_TUCK: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.kNNNk', '....kkk.kKKKk', '.........kkkk', ''];
+const LEGS_TUCK: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.ksNNk', '....kkk.kKsKk', '.........kkkk', ''];
 /** Queda: pernas soltas, uma à frente. */
-const LEGS_DANGLE: Grid = ['....knNNNNNk', '....kKnk.knNk', '...kKnk..knNk', '...kKKk...knNk', '...kkk....kKKKk', '...........kkkk'];
+const LEGS_DANGLE: Grid = ['....knNNNNNk', '....kKnk.knNk', '...kKnk..ksNk', '...kKKk...knNk', '...kkk....kKsKk', '...........kkkk'];
+/** Queda, segundo tempo: a outra perna vai à frente (alterna com LEGS_DANGLE). */
+const LEGS_DANGLE_B: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKnk.ksNk', '..kKKk...knNk', '..kkk....kKsKk', '..........kkkk'];
+/** Agachado do pouso (4 linhas): joelhos para fora, pés afastados. */
+const LEGS_CROUCH: Grid = ['...knNNNNNk', '.kKnskkknNk', 'kKKKk...kKsKk', 'kkkkk...kkkkk'];
 /**
- * Chute: perna da frente esticada na horizontal, com o sapato na ponta. `len` = colunas do quadril até o
- * contorno da ponta do pé, inclusive.
+ * Chute: perna da frente esticada na horizontal, com o sapato (brilho `s`) na ponta. `len` = colunas do quadril
+ * até o contorno da ponta do pé, inclusive.
  */
 export function legStraight(len: number): string[] {
   const leg = len - 6;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 'N'.repeat(leg) + 'kKKKk',
+    'k' + 's'.repeat(leg) + 'kKsKk',
     'k' + 'N'.repeat(leg) + 'kKKKk',
     'k' + 'n'.repeat(leg) + 'kKKKk',
     'k'.repeat(len),
   ];
 }
-/** Joelho da frente dobrado para cima (preparo e volta do chute). */
-const LEG_CHAMBER: Grid = ['kkkkkk.', 'kNNNNNk', 'knnnnNk', '.kkkkNk', '....kKKk', '....kkkk'];
+/** Joelho da frente dobrado para cima (preparo e volta do chute). Também usado por `playerMoves`. */
+export const LEG_CHAMBER: Grid = ['kkkkkk.', 'ksNNNNk', 'knnnnNk', '.kkkkNk', '....ksKk', '....kkkk'];
 /** Só a perna de trás, de apoio (usada também por `playerTech` no release: perna da frente plantada e curta,
  * enquanto a de trás esticada carrega o avanço do golpe). */
-export const LEG_SUPPORT: Grid = ['knNk', 'kKnk', 'kKnk', 'kKnk', 'kKnk', 'kKKKk', 'kkkkk'];
+export const LEG_SUPPORT: Grid = ['knNk', 'kKnk', 'kKnk', 'kKnk', 'kKnk', 'kKsKk', 'kkkkk'];
 
 // ---------------------------------------------------------------- montagem
 const Y_HEAD = 0;
@@ -226,11 +266,33 @@ export function pose(p: Pose): string[] {
   return compose(...parts);
 }
 
+/**
+ * Rastro de movimento (SPR-14): duas linhas curtas de `S`, uma logo acima e outra logo abaixo do membro esticado
+ * (que ocupa `limbRows` linhas a partir de `limbY`), começando atrás do punho (5 texels antes da ponta) (`tipCol`, coluna da área de
+ * desenho) e indo para trás. Só pinta texels vazios e nunca chega à ponta, então o alcance medido não muda.
+ */
+export function smear(frame: readonly string[], tipCol: number, limbY: number, limbRows: number, lengths: readonly [number, number]): string[] {
+  const rows = frame.map((r) => [...r]);
+  const lines: Array<[number, number]> = [
+    [limbY - 1, lengths[0]],
+    [limbY + limbRows, lengths[1]],
+  ];
+  for (const [y, n] of lines) {
+    for (let i = 0; i < n; i++) {
+      const x = tipCol - 5 - i + FRAME_PAD;
+      if (y >= 0 && y < rows.length && rows[y][x] === '.') rows[y][x] = 'S';
+    }
+  }
+  return rows.map((r) => r.join(''));
+}
+
 export const far = (g: Grid): string[] => recolor(g, FAR);
 
 export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'idle-0': pose({ near: [ARM_DOWN, 5, 12] }),
   'idle-1': pose({ drop: 1, near: [ARM_DOWN, 5, 13] }),
+  'idle-2': pose({ drop: 1, head: HEAD_SWAY, near: [ARM_DOWN, 5, 13] }),
+  'idle-3': pose({ head: HEAD_SWAY, near: [ARM_DOWN, 5, 12] }),
 
   'run-0': pose({ lean: 1, near: [ARM_BACK, 2, 12], far: [far(ARM_FWD), 8, 12], legs: [[RUN_LEGS[0], 0, Y_LEGS]] }),
   'run-1': pose({ lean: 1, drop: 1, near: [ARM_DOWN, 6, 13], far: [far(ARM_DOWN), 8, 13], legs: [[RUN_LEGS[1], 0, Y_LEGS]] }),
@@ -239,24 +301,32 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'run-4': pose({ lean: 1, drop: 1, near: [ARM_DOWN, 6, 13], far: [far(ARM_DOWN), 8, 13], legs: [[RUN_LEGS[4], 0, Y_LEGS]] }),
   'run-5': pose({ lean: 1, near: [ARM_BACK, 2, 12], far: [far(ARM_FWD), 8, 12], legs: [[RUN_LEGS[5], 0, Y_LEGS]] }),
 
-  'jump-0': pose({ near: [ARM_FWD, 7, 11], far: [far(ARM_BACK), 1, 11], legs: [[LEGS_TUCK, 0, Y_LEGS - 1]] }),
+  // Decolagem: pernas esticadas, braços para cima; depois a subida (pose antiga do jump-0).
+  'jump-0': pose({ drop: -1, near: [ARM_UP, 0, 6], far: [far(ARM_UP), 2, 5], legs: [[LEGS_STAND, 0, Y_LEGS - 1]] }),
+  'jump-1': pose({ near: [ARM_FWD, 7, 11], far: [far(ARM_BACK), 1, 11], legs: [[LEGS_TUCK, 0, Y_LEGS - 1]] }),
+  // Ápice: joelhos bem recolhidos, braços abertos.
+  'apex-0': pose({ near: [ARM_FWD, 8, 10], far: [far(ARM_BACK), 0, 10], legs: [[LEGS_TUCK, 0, Y_LEGS - 2]] }),
   'fall-0': pose({ near: [mirror(ARM_BACK), 8, 10], far: [far(ARM_BACK), 1, 10], legs: [[LEGS_DANGLE, 0, Y_LEGS]] }),
+  'fall-1': pose({ head: HEAD_SWAY, near: [mirror(ARM_BACK), 8, 9], far: [far(ARM_BACK), 1, 9], legs: [[LEGS_DANGLE_B, 0, Y_LEGS]] }),
+  // Pouso: agacha fundo (squash) e levanta.
+  'land-0': pose({ drop: 2, near: [ARM_FWD, 8, 13], far: [far(ARM_BACK), 1, 13], legs: [[LEGS_CROUCH, 0, Y_LEGS + 2]] }),
+  'land-1': pose({ drop: 1, near: [ARM_DOWN, 5, 13] }),
 
   // Jab (braço da frente). No hit, o punho chega à coluna 25 = 18 texels (36 px) à frente do centro,
   // a borda da hitbox do jab (offsetX 22 + largura/2 13 = 35 px).
   'jab-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_COCK, 3, 12], far: [far(ARM_GUARD), 8, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  'jab-hit': pose({ lean: 2, head: HEAD_FOCUS, near: [armStraight(17), 9, 11], far: [far(ARM_GUARD), 9, 11], legs: [[LEGS_WIDE, 1, Y_LEGS]] }),
+  'jab-hit': smear(pose({ lean: 2, head: HEAD_FOCUS, near: [armStraight(17), 9, 11], far: [far(ARM_GUARD), 9, 11], legs: [[LEGS_WIDE, 1, Y_LEGS]] }), 25, 11, 5, [5, 3]),
   'jab-recover': pose({ lean: 1, head: HEAD_FOCUS, near: [armStraight(10), 9, 11], far: [far(ARM_GUARD), 8, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
 
   // Direto (braço de trás, mais escuro), com o tronco girado para a frente.
   'cross-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 8, 11], far: [far(ARM_COCK), 1, 12], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  'cross-hit': pose({ lean: 3, head: HEAD_FOCUS, near: [ARM_GUARD, 9, 12], far: [far(armStraight(16)), 10, 11], legs: [[LEGS_WIDE, 2, Y_LEGS]] }),
+  'cross-hit': smear(pose({ lean: 3, head: HEAD_FOCUS, near: [ARM_GUARD, 9, 12], far: [far(armStraight(16)), 10, 11], legs: [[LEGS_WIDE, 2, Y_LEGS]] }), 25, 11, 5, [5, 3]),
   'cross-recover': pose({ lean: 1, head: HEAD_FOCUS, near: [ARM_GUARD, 8, 11], far: [far(armStraight(10)), 9, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
 
   // Chute: no hit, a ponta do pé chega à coluna 28 = 21 texels (42 px) à frente do centro,
   // a borda da hitbox do chute (offsetX 26 + largura/2 16 = 42 px).
   'kick-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 7, 11], far: [far(ARM_GUARD), 3, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 15]] }),
-  'kick-hit': pose({ lean: -2, head: HEAD_FOCUS, near: [ARM_GUARD, 5, 11], far: [far(ARM_BACK), 0, 11], legs: [[LEG_SUPPORT, 3, 17], [legStraight(20), 9, 14]] }),
+  'kick-hit': smear(pose({ lean: -2, head: HEAD_FOCUS, near: [ARM_GUARD, 5, 11], far: [far(ARM_BACK), 0, 11], legs: [[LEG_SUPPORT, 3, 17], [legStraight(20), 9, 14]] }), 28, 14, 5, [6, 4]),
   'kick-recover': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 7, 11], far: [far(ARM_GUARD), 3, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 16]] }),
 
   // Carregando objeto: braços para cima segurando.
@@ -277,6 +347,7 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'throw-1': pose({ lean: 2, near: [armStraight(13), 9, 11], far: [far(ARM_BACK), 1, 12], legs: [[LEGS_WIDE, 1, Y_LEGS]] }),
 
   // Levando golpe: tronco para trás, braços soltos.
+  'hurt-1': pose({ lean: -3, head: HEAD_HURT, near: [ARM_DOWN, 3, 13], far: [far(ARM_DOWN), 7, 13], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
   hurt: pose({ lean: -2, head: HEAD_HURT, near: [mirror(ARM_FWD), 0, 12], far: [far(ARM_BACK), 5, 12], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
 };
 
@@ -285,6 +356,28 @@ export interface AnimDef {
   frameRate: number;
   /** -1 = repete sempre; 0 = toca uma vez. */
   repeat: number;
+  /** Duração em ms de cada frame (um por frame, todas > 0). Sem isso, vale 1000 / frameRate para todos. */
+  durations?: readonly number[];
+}
+
+/** Configuração de um frame de animação para o Phaser: `duration` só existe quando a animação declara `durations`. */
+export interface AnimFrameConfig {
+  frame: string;
+  duration?: number;
+}
+
+/** Frames de uma animação com a duração de cada um (SPR-08). Lança erro com o nome da animação se `durations` for inválido. */
+export function animFrameConfigs(name: string, def: AnimDef): AnimFrameConfig[] {
+  const { durations } = def;
+  if (!durations) return def.frames.map((frame) => ({ frame }));
+  if (durations.length !== def.frames.length) {
+    throw new Error(`Animação '${name}' tem ${durations.length} durations para ${def.frames.length} frames`);
+  }
+  return def.frames.map((frame, i) => {
+    const duration = durations[i];
+    if (!(duration > 0)) throw new Error(`Animação '${name}' tem a duration ${duration} no frame '${frame}'; precisa ser > 0`);
+    return { frame, duration };
+  });
 }
 
 /**
@@ -292,10 +385,12 @@ export interface AnimDef {
  * pela fase do combo com setFrame; a animação registrada serve de sequência de referência.
  */
 export const PLAYER_ANIMS: Record<string, AnimDef> = {
-  idle: { frames: ['idle-0', 'idle-1'], frameRate: 2, repeat: -1 },
-  run: { frames: ['run-0', 'run-1', 'run-2', 'run-3', 'run-4', 'run-5'], frameRate: 12, repeat: -1 },
-  jump: { frames: ['jump-0'], frameRate: 1, repeat: 0 },
-  fall: { frames: ['fall-0'], frameRate: 1, repeat: 0 },
+  idle: { frames: ['idle-0', 'idle-1', 'idle-2', 'idle-3'], frameRate: 2, repeat: -1, durations: [520, 160, 520, 160] },
+  run: { frames: ['run-0', 'run-1', 'run-2', 'run-3', 'run-4', 'run-5'], frameRate: 12, repeat: -1, durations: [70, 90, 80, 70, 90, 80] },
+  jump: { frames: ['jump-0', 'jump-1'], frameRate: 1, repeat: 0, durations: [70, 1000] },
+  apex: { frames: ['apex-0'], frameRate: 1, repeat: 0 },
+  fall: { frames: ['fall-0', 'fall-1'], frameRate: 7, repeat: -1, durations: [140, 140] },
+  land: { frames: ['land-0', 'land-1'], frameRate: 16, repeat: 0, durations: [60, 60] },
   jab: { frames: ['jab-wind', 'jab-hit', 'jab-recover'], frameRate: 12, repeat: 0 },
   cross: { frames: ['cross-wind', 'cross-hit', 'cross-recover'], frameRate: 12, repeat: 0 },
   kick: { frames: ['kick-wind', 'kick-hit', 'kick-recover'], frameRate: 10, repeat: 0 },
@@ -303,5 +398,5 @@ export const PLAYER_ANIMS: Record<string, AnimDef> = {
   'carry-run': { frames: ['carry-run-0', 'carry-run-1', 'carry-run-2', 'carry-run-3'], frameRate: 10, repeat: -1 },
   swing: { frames: ['swing-wind', 'swing-hit', 'swing-recover'], frameRate: 10, repeat: 0 },
   throw: { frames: ['throw-0', 'throw-1'], frameRate: 10, repeat: 0 },
-  hurt: { frames: ['hurt'], frameRate: 1, repeat: 0 },
+  hurt: { frames: ['hurt', 'hurt-1'], frameRate: 8, repeat: 0, durations: [90, 220] },
 };
