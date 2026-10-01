@@ -1,10 +1,12 @@
 import type Phaser from 'phaser';
+import type { EnemyVariant } from '../../core/enemyVariant';
 import { parseSheet } from '../../core/pixelGrid';
-import { TEX, createPlaceholderTextures } from '../textures';
+import { ENEMY_VARIANTS } from '../../core/enemyVariant';
+import { TEX, createPlaceholderTextures, enemyTex, ragTex, type RagPart } from '../textures';
 import { ENEMY_BAR, HUD_BAR } from './hud';
 import { PALETTE_KEYS } from './palette';
 import { registerSheet } from './render';
-import { ENEMY_ANIMS, ENEMY_FRAMES, ENEMY_RAG_PARTS } from './sprites/enemy';
+import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites/enemy';
 import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, type AnimDef } from './sprites/player';
 import { PLAYER_MOVE_FRAMES } from './sprites/playerMoves';
@@ -26,7 +28,7 @@ import { registerTiles } from './tiles';
 /** Chave da animação do player no AnimationManager (global do jogo). */
 export const playerAnimKey = (name: string): string => `player-${name}`;
 /** Chave da animação do inimigo no AnimationManager. */
-export const enemyAnimKey = (name: string): string => `enemy-${name}`;
+export const enemyAnimKey = (v: EnemyVariant, name: string): string => `enemy-${v}-${name}`;
 
 /** Textura dos estilhaços de um objeto, pela textura do próprio objeto (PRP-01). */
 export const shardsKey = (texture: string): string => `${texture}-shards`;
@@ -47,16 +49,15 @@ export function createArt(scene: Phaser.Scene): void {
     parseSheet('player', { ...PLAYER_FRAMES, ...PLAYER_TECH_FRAMES, ...PLAYER_MOVE_FRAMES }, PALETTE_KEYS),
   );
   registerAnims(scene, TEX.playerArt, PLAYER_ANIMS, playerAnimKey);
-  registerSheet(scene, TEX.enemy, parseSheet('enemy', ENEMY_FRAMES, PALETTE_KEYS));
-  registerAnims(scene, TEX.enemy, ENEMY_ANIMS, enemyAnimKey);
-  // Uma textura por parte do ragdoll, nas cores da folha do inimigo (CHR-04).
-  const rag = {
-    [TEX.ragHead]: ENEMY_RAG_PARTS.head,
-    [TEX.ragTorso]: ENEMY_RAG_PARTS.torso,
-    [TEX.ragLimb]: ENEMY_RAG_PARTS.limb,
-  };
-  for (const [key, grid] of Object.entries(rag)) {
-    registerSheet(scene, key, parseSheet(key, { [key]: grid }, PALETTE_KEYS));
+  // Uma folha, as animações e as 3 partes do ragdoll por aparência (EVR-06), nas cores da folha (CHR-04).
+  for (const v of ENEMY_VARIANTS) {
+    const tex = enemyTex(v);
+    registerSheet(scene, tex, parseSheet(tex, ENEMY_VARIANT_FRAMES[v], PALETTE_KEYS));
+    registerAnims(scene, tex, ENEMY_ANIMS, (name) => enemyAnimKey(v, name));
+    for (const [part, grid] of Object.entries(ENEMY_RAG_VARIANTS[v]) as [RagPart, string[] | readonly string[]][]) {
+      const key = ragTex(part, v);
+      registerSheet(scene, key, parseSheet(key, { [key]: grid }, PALETTE_KEYS));
+    }
   }
   // Objetos: a textura de 1 frame define o corpo físico (26x26 e 8x20 px, iguais aos placeholders antigos).
   const props = { [TEX.chair]: 'chair', [TEX.bottle]: 'bottle' } as const;

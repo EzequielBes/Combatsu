@@ -258,8 +258,8 @@ T13
 
 **Done when**:
 
-- [ ] EVR-06 (registro): as 9 texturas de ragdoll (`rag-<part>-<v>`) e as 3 folhas existem depois de `createArt`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] EVR-06 (registro): as 9 texturas de ragdoll (`rag-<part>-<v>`) e as 3 folhas existem depois de `createArt`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none
 **Gate**: build
