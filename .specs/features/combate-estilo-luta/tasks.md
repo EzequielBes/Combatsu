@@ -773,12 +773,12 @@ T22 → T23 → T24
 
 **Done when**:
 
-- [ ] GRD-05 conferido: WHILE guarding, the player run speed SHALL be 40% of the normal run speed (velocidade medida nos dois estados; mata `guardSpeedFactor` 0.4→0.5).
-- [ ] GRD-06 conferido: WHEN a boss hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take `round(damage × 0.25)` (golpe real do chefe no smoke).
-- [ ] PAR-07 conferido: WHEN a boss hit is parried THEN the boss poise SHALL decrease by 30, never below 0 (30 e o piso 0; mata `parryBossPoiseDamage` 30→29).
-- [ ] DOD-06 conferido: WHEN a move that already hit a target is in its recovery and `Q` is pressed with no dodge cooldown THEN the move SHALL end and the dodge SHALL start in that frame.
-- [ ] Edge cases conferidos: com objeto na mão, guarda, parry e esquiva funcionam; golpes do chefe durante o `roar` seguem as regras da guarda.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] GRD-05 conferido: WHILE guarding, the player run speed SHALL be 40% of the normal run speed (velocidade medida nos dois estados; mata `guardSpeedFactor` 0.4→0.5).
+- [x] GRD-06 conferido: WHEN a boss hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take `round(damage × 0.25)` (golpe real do chefe no smoke).
+- [x] PAR-07 conferido: WHEN a boss hit is parried THEN the boss poise SHALL decrease by 30, never below 0 (30 e o piso 0; mata `parryBossPoiseDamage` 30→29).
+- [x] DOD-06 conferido: WHEN a move that already hit a target is in its recovery and `Q` is pressed with no dodge cooldown THEN the move SHALL end and the dodge SHALL start in that frame.
+- [x] Edge cases conferidos: com objeto na mão, guarda, parry e esquiva funcionam; golpes do chefe durante o `roar` seguem as regras da guarda.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
