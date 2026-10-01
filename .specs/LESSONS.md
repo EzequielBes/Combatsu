@@ -264,6 +264,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: scripts/smoke/kokusen.smoke.mjs:31 (validation.md combate-estilo-luta rodada 2, atribuição do kokusen) (smoke)
 - last seen: 2026-10-01T13:38:37Z
 
+### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `art-adapter` · harmful: 0
+- features: sprite-player-polish
+- evidence: M7 src/game/art/index.ts:128 (art-adapter)
+- last seen: 2026-10-01T14:45:04Z
+
+### L-044 - When a spec fixes only an aggregate outcome, state the per-rule thresholds that tests must pin, or the rule boundary goes unasserted
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `art` · harmful: 0
+- features: sprite-player-polish
+- evidence: M3 src/game/art/sprites/player.ts:49 (art)
+- last seen: 2026-10-01T14:45:04Z
+
+### L-045 - Give tool-output ACs an automated check on the produced files, not only a manual run
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `tools` · harmful: 0
+- features: sprite-player-polish
+- evidence: SPR-15 tools/sprite-preview.mjs (tools)
+- last seen: 2026-10-01T14:45:04Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

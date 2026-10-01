@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { attackFrame, pickEnemyAnim, pickPlayerAnim, type EnemyAnim, type EnemyAnimInput, type PlayerAnimInput } from '../../src/core/animState';
+import { APEX_VY, LAND_MS, attackFrame, pickEnemyAnim, pickPlayerAnim, type EnemyAnim, type EnemyAnimInput, type PlayerAnimInput } from '../../src/core/animState';
 
 /** Parado no chão, sem golpe, sem objeto. */
-const base: PlayerAnimInput = { hurt: false, attack: null, grounded: true, vx: 0, vy: 0, holding: false };
+const base: PlayerAnimInput = { hurt: false, attack: null, grounded: true, vx: 0, vy: 0, holding: false, landMs: Infinity };
 const pick = (over: Partial<PlayerAnimInput>) => pickPlayerAnim({ ...base, ...over });
 
 describe('pickPlayerAnim (CHR-01)', () => {
@@ -17,9 +17,9 @@ describe('pickPlayerAnim (CHR-01)', () => {
     expect(pick({ vx: -220 })).toBe('run');
   });
 
-  it('no ar: jump se vy < 0, senão fall (ar vence run)', () => {
+  it('no ar: jump se vy <= -60, fall se vy >= 60 (ar vence run)', () => {
     expect(pick({ grounded: false, vy: -300, vx: 220 })).toBe('jump');
-    expect(pick({ grounded: false, vy: 0, vx: 220 })).toBe('fall');
+    expect(pick({ grounded: false, vy: 400, vx: 220 })).toBe('fall');
     expect(pick({ grounded: false, vy: 400 })).toBe('fall');
   });
 
@@ -44,6 +44,44 @@ describe('pickPlayerAnim (CHR-01)', () => {
     expect(pick({ holding: true })).toBe('carry-idle');
     expect(pick({ holding: true, vx: 10 })).toBe('carry-idle');
     expect(pick({ holding: true, vx: -150 })).toBe('carry-run');
+  });
+
+  it('apex (SPR-11): no ar com |vy| < 60; em |vy| = 60 já é jump (vy < 0) ou fall (vy > 0)', () => {
+    expect(APEX_VY).toBe(60);
+    expect(pick({ grounded: false, vy: 0 })).toBe('apex');
+    expect(pick({ grounded: false, vy: 59 })).toBe('apex');
+    expect(pick({ grounded: false, vy: -59 })).toBe('apex');
+    expect(pick({ grounded: false, vy: 60 })).toBe('fall');
+    expect(pick({ grounded: false, vy: -60 })).toBe('jump');
+    expect(pick({ grounded: false, vy: 59, vx: 220 })).toBe('apex');
+  });
+
+  it('apex perde para hurt e golpe, e vale também segurando objeto (sem variante carry no ar)', () => {
+    expect(pick({ grounded: false, vy: 0, hurt: true })).toBe('hurt');
+    expect(pick({ grounded: false, vy: 0, attack: { name: 'kick', phase: 'active' } })).toBe('kick');
+    expect(pick({ grounded: false, vy: 0, holding: true })).toBe('apex');
+  });
+
+  it('land (SPR-10): no chão com landMs < 120; em 120 deixa de ser land', () => {
+    expect(LAND_MS).toBe(120);
+    expect(pick({ landMs: 0 })).toBe('land');
+    expect(pick({ landMs: 119 })).toBe('land');
+    expect(pick({ landMs: 119.9 })).toBe('land');
+    expect(pick({ landMs: 120 })).toBe('idle');
+    expect(pick({ landMs: 121 })).toBe('idle');
+    expect(pick({ landMs: Infinity })).toBe('idle');
+  });
+
+  it('land vale mesmo correndo, nos 119 ms, e vira run em 120', () => {
+    expect(pick({ landMs: 119, vx: 220 })).toBe('land');
+    expect(pick({ landMs: 120, vx: 220 })).toBe('run');
+  });
+
+  it('land perde para hurt, golpe e objeto na mão (carry-*)', () => {
+    expect(pick({ landMs: 0, hurt: true })).toBe('hurt');
+    expect(pick({ landMs: 0, attack: { name: 'jab', phase: 'startup' } })).toBe('jab');
+    expect(pick({ landMs: 0, holding: true })).toBe('carry-idle');
+    expect(pick({ landMs: 0, holding: true, vx: 150 })).toBe('carry-run');
   });
 
   it('segurando objeto no ar: o ar vem antes (jump/fall)', () => {
