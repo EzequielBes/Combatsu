@@ -76,9 +76,9 @@ T13
 
 **Done when**:
 
-- [ ] HRX-01 conferido: `pickHitReaction(hit, last)` SHALL return `impact` for a heavy hit; `body` for `socoBaixo`, `rasteira`, `cotovelada`, `joelhada`, `chuteFrontal` and `chuteEmpurrao`; `uppercut` for `gancho`, `ganchoAscendente` and `chuteAlto`; and otherwise `head-b` WHEN `last` is `head-a`, else `head-a`.
-- [ ] Casos: cada nome das listas; golpe sem `moveName`; `last` nulo, `head-a`, `head-b`, `body`; forte com nome de corpo dá `impact`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] HRX-01 conferido: `pickHitReaction(hit, last)` SHALL return `impact` for a heavy hit; `body` for `socoBaixo`, `rasteira`, `cotovelada`, `joelhada`, `chuteFrontal` and `chuteEmpurrao`; `uppercut` for `gancho`, `ganchoAscendente` and `chuteAlto`; and otherwise `head-b` WHEN `last` is `head-a`, else `head-a`.
+- [x] Casos: cada nome das listas; golpe sem `moveName`; `last` nulo, `head-a`, `head-b`, `body`; forte com nome de corpo dá `impact`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
