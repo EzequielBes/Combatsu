@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 43,
+  "next_id": 46,
   "lessons": [
     {
       "id": "L-001",
@@ -764,6 +764,60 @@
       ],
       "created": "2026-10-01T13:38:37Z",
       "last_seen": "2026-10-01T13:38:37Z"
+    },
+    {
+      "id": "L-043",
+      "key": "surviving_mutant::test the adapter call that forwards a config field to the engine not only the pure helper that builds it",
+      "text": "Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it",
+      "signal": "surviving_mutant",
+      "scope": "art-adapter",
+      "status": "candidate",
+      "features": [
+        "sprite-player-polish"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M7 src/game/art/index.ts:128 (art-adapter)"
+      ],
+      "created": "2026-10-01T14:45:04Z",
+      "last_seen": "2026-10-01T14:45:04Z"
+    },
+    {
+      "id": "L-044",
+      "key": "spec_precision_gap::when a spec fixes only an aggregate outcome state the per rule thresholds that tests must pin or the rule boundary goes unasserted",
+      "text": "When a spec fixes only an aggregate outcome, state the per-rule thresholds that tests must pin, or the rule boundary goes unasserted",
+      "signal": "spec_precision_gap",
+      "scope": "art",
+      "status": "candidate",
+      "features": [
+        "sprite-player-polish"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M3 src/game/art/sprites/player.ts:49 (art)"
+      ],
+      "created": "2026-10-01T14:45:04Z",
+      "last_seen": "2026-10-01T14:45:04Z"
+    },
+    {
+      "id": "L-045",
+      "key": "spec_precision_gap::give tool output acs an automated check on the produced files not only a manual run",
+      "text": "Give tool-output ACs an automated check on the produced files, not only a manual run",
+      "signal": "spec_precision_gap",
+      "scope": "tools",
+      "status": "candidate",
+      "features": [
+        "sprite-player-polish"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPR-15 tools/sprite-preview.mjs (tools)"
+      ],
+      "created": "2026-10-01T14:45:04Z",
+      "last_seen": "2026-10-01T14:45:04Z"
     }
   ]
 }
