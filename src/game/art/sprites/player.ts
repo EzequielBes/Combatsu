@@ -90,8 +90,8 @@ const HEAD: Grid = [
   '..kHk.kHkjk..',
   '.kjHjkjHjHjk.',
   'kjjjHjjHjjjjk',
-  'kyhjjhjjhjjhk',
-  'kyhhhhhjhhjk.',
+  'kjhjjhjjhjjhk',
+  'khhhhhhjhhjk.',
   'kjhhhhpphhpk.',
   'khhhxPpwbppk.',
   'khhhxPppppppk',
@@ -104,8 +104,8 @@ const HEAD_HURT: Grid = [
   '..kHk.kHkjk..',
   '.kjHjkjHjHjk.',
   'kjjjHjjHjjjjk',
-  'kyhjjhjjhjjhk',
-  'kyhhhhhjhhjk.',
+  'kjhjjhjjhjjhk',
+  'khhhhhhjhhjk.',
   'kjhhhhhpphpk.',
   'khhhxPpbbppk.',
   'khhhxPppppppk',
@@ -118,8 +118,8 @@ export const HEAD_FOCUS: Grid = [
   '..kHk.kHkjk..',
   '.kjHjkjHjHjk.',
   'kjjjHjjHjjjjk',
-  'kyhjjhjjhjjhk',
-  'kyhhhhhjhhjk.',
+  'kjhjjhjjhjjhk',
+  'khhhhhhjhhjk.',
   'kjhhhhphhhpk.',
   'khhhxPpwbppk.',
   'khhhxPppppppk',
@@ -138,11 +138,11 @@ export const HEAD_SWAY: Grid = [
 const BODY: Grid = [
   'koyNNsNk',
   'kysNNANk',
-  'kyNNNznk',
+  'kyNNNNnk',
   'kyNsNANk',
-  'kyNNNznk',
+  'kyNNNNnk',
   'konnnnnk',
-  'kKKKAKKk',
+  'kKKzAKKk',
 ];
 
 // ---------------------------------------------------------------- braços (o da frente; o de trás via recolor)
@@ -264,7 +264,7 @@ export function pose(p: Pose): string[] {
 
 /**
  * Rastro de movimento (SPR-14): duas linhas curtas de `S`, uma logo acima e outra logo abaixo do membro esticado
- * (que ocupa `limbRows` linhas a partir de `limbY`), começando 2 texels atrás da ponta (`tipCol`, coluna da área de
+ * (que ocupa `limbRows` linhas a partir de `limbY`), começando atrás do punho (5 texels antes da ponta) (`tipCol`, coluna da área de
  * desenho) e indo para trás. Só pinta texels vazios e nunca chega à ponta, então o alcance medido não muda.
  */
 export function smear(frame: readonly string[], tipCol: number, limbY: number, limbRows: number, lengths: readonly [number, number]): string[] {
@@ -275,7 +275,7 @@ export function smear(frame: readonly string[], tipCol: number, limbY: number, l
   ];
   for (const [y, n] of lines) {
     for (let i = 0; i < n; i++) {
-      const x = tipCol - 2 - i + FRAME_PAD;
+      const x = tipCol - 5 - i + FRAME_PAD;
       if (y >= 0 && y < rows.length && rows[y][x] === '.') rows[y][x] = 'S';
     }
   }
