@@ -13,6 +13,7 @@ import type { Hit, Strength, Vec2 } from '../core/hit';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
+import { parseVariant, pickEnemyVariant } from '../core/enemyVariant';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
 import type { PickupPlayer } from '../core/pickup';
@@ -837,6 +838,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // ARM-01..03: sorteado depois da escala da rodada (armFor multiplica o dano já escalado).
     const armedRoll = this.loot.rollArmed(round);
     const tuning = armedRoll ? armFor(armedRoll.tool, scaled, ARMED) : scaled;
+    // EVR-04/05: o sorteio sempre consome o stream próprio (a sequência não muda com o override); `?debug&enemyVariant=`
+    // com um id válido manda no resultado, um inválido cai no sorteio normal.
+    const drawn = this.run.variantRng ? pickEnemyVariant(this.run.variantRng) : 'corcunda';
+    const variant = parseVariant(debugParam('enemyVariant')) ?? drawn;
     const enemy = new Enemy(
       this,
       spawnAt,
@@ -854,6 +859,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         if (dead.weapon) this.dropTool(dead.weapon, dead.weaponRare, x, y);
       },
       armedRoll,
+      variant,
     );
     enemy.onEvent = (ev) => this.debugEvents.push(ev);
     enemy.guardRng = this.run.guardRng;
@@ -974,6 +980,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         weaponVisible: e.weaponVisible,
         structure: e.structureView,
         guarding: e.guarding,
+        variant: e.variant,
+        frame: e.frame,
+        spriteVisible: e.spriteVisible,
+        ragdollVisible: e.ragdollVisible,
+        ragdollTextures: e.ragdollTextures,
       })),
       events: [...this.debugEvents],
       deaths: this.debugDeaths.map((d) => ({ ...d })),

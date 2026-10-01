@@ -14,6 +14,12 @@ Corroborated across multiple features. Safe to apply as guidance.
 - evidence: M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core) (+2 more)
 - last seen: 2026-10-01T12:33:06Z
 
+### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
+- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `art-adapter` · harmful: 0
+- features: sprite-player-polish, enemy-sprite-variety
+- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+1 more)
+- last seen: 2026-10-01T16:00:05Z
+
 ## Candidates (under observation - do NOT load as guidance yet)
 
 Seen once or not yet corroborated. Tracked, not trusted.
@@ -264,12 +270,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: scripts/smoke/kokusen.smoke.mjs:31 (validation.md combate-estilo-luta rodada 2, atribuição do kokusen) (smoke)
 - last seen: 2026-10-01T13:38:37Z
 
-### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
-- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `art-adapter` · harmful: 0
-- features: sprite-player-polish
-- evidence: M7 src/game/art/index.ts:128 (art-adapter)
-- last seen: 2026-10-01T14:45:04Z
-
 ### L-044 - When a spec fixes only an aggregate outcome, state the per-rule thresholds that tests must pin, or the rule boundary goes unasserted
 - signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `art` · harmful: 0
 - features: sprite-player-polish
@@ -281,6 +281,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: sprite-player-polish
 - evidence: SPR-15 tools/sprite-preview.mjs (tools)
 - last seen: 2026-10-01T14:45:04Z
+
+### L-046 - When a spec requires an animation to restart on a repeated trigger, smoke the same trigger twice in a row and read the frame again, because a different-key sequence hides a missing restart
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `adapter` · harmful: 0
+- features: enemy-sprite-variety
+- evidence: M4 src/game/Enemy.ts:620 (adapter) (adapter)
+- last seen: 2026-10-01T16:00:05Z
 
 ## Quarantined (failed when applied - ignore)
 

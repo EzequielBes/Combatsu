@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import type { EnemyVariant } from '../core/enemyVariant';
 
 /** Chaves de textura. Trocar placeholder por arte real = carregar um PNG com a mesma chave. */
 export const TEX = {
@@ -6,16 +7,12 @@ export const TEX = {
   player: 'player',
   /** Folha animada do player (o `player` acima é o corpo físico invisível). */
   playerArt: 'player-art',
-  /** Folha animada do inimigo (o corpo físico é um retângulo Matter, sem textura). */
+  /** Folha animada do inimigo `corcunda` (o corpo físico é um retângulo Matter, sem textura); veja `enemyTex`. */
   enemy: 'enemy',
   chair: 'chair',
   bottle: 'bottle',
   smoke: 'smoke',
   smokeCurse: 'smoke-curse',
-  /** Partes do ragdoll do inimigo, desenhadas com as cores da folha dele (CHR-04). */
-  ragHead: 'rag-head',
-  ragTorso: 'rag-torso',
-  ragLimb: 'rag-limb',
   /** Efeitos (FX-03/04): estrela do ponto de contato e pedacinhos da faísca e da poeira. */
   fxStar: 'fx-star',
   fxBit: 'fx-bit',
@@ -49,6 +46,13 @@ export const TEX = {
   /** Orbe Azul ativo (BLU-08): um frame só. */
   techOrbBlue: 'tech-orb-blue',
 } as const;
+
+export type RagPart = 'head' | 'torso' | 'limb';
+
+/** Textura da folha do inimigo de uma aparência: `enemy` para a `corcunda` (FxLab), `enemy-<v>` nas outras. */
+export const enemyTex = (v: EnemyVariant): string => (v === 'corcunda' ? TEX.enemy : `enemy-${v}`);
+/** Partes do ragdoll do inimigo, desenhadas com as cores da folha da aparência (CHR-04, EVR-06). */
+export const ragTex = (part: RagPart, v: EnemyVariant): string => `rag-${part}-${v}`;
 
 export const SIZE = {
   player: { w: 20, h: 36 },

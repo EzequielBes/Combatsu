@@ -3,10 +3,11 @@ import { ragdollFilter } from '../core/collision';
 import { normalize, type Vec2 } from '../core/hit';
 import { PALETTE } from './art/palette';
 import { bodyOf } from './physics';
-import { TEX } from './textures';
+import type { EnemyVariant } from '../core/enemyVariant';
+import { TEX, ragTex, type RagPart } from './textures';
 
 interface PartSpec {
-  key: string;
+  part: RagPart;
   dx: number;
   dy: number;
 }
@@ -16,12 +17,12 @@ interface PartSpec {
  * Tamanhos vindos da arte (ENEMY_RAG_PARTS, 2 px por texel): tronco 16x20, cabeça 16x14, membro 6x16.
  */
 const PARTS: readonly PartSpec[] = [
-  { key: TEX.ragTorso, dx: 0, dy: 0 },
-  { key: TEX.ragHead, dx: 0, dy: -17 },
-  { key: TEX.ragLimb, dx: -11, dy: -1 },
-  { key: TEX.ragLimb, dx: 11, dy: -1 },
-  { key: TEX.ragLimb, dx: -4, dy: 12 },
-  { key: TEX.ragLimb, dx: 4, dy: 12 },
+  { part: 'torso', dx: 0, dy: 0 },
+  { part: 'head', dx: 0, dy: -17 },
+  { part: 'limb', dx: -11, dy: -1 },
+  { part: 'limb', dx: 11, dy: -1 },
+  { part: 'limb', dx: -4, dy: 12 },
+  { part: 'limb', dx: 4, dy: 12 },
 ];
 
 /** [parte A, parte B, x da junta, y da junta] relativos ao centro do inimigo: pescoço, ombros, quadris. */
@@ -44,10 +45,12 @@ export class Ragdoll {
     private readonly scene: Phaser.Scene,
     x: number,
     y: number,
+    /** Aparência do inimigo: define as texturas das partes (EVR-06). */
+    readonly variant: EnemyVariant = 'corcunda',
   ) {
     const filter = ragdollFilter(scene.matter.world.nextGroup(true));
     this.parts = PARTS.map((p) =>
-      scene.matter.add.image(x + p.dx, y + p.dy, p.key, undefined, {
+      scene.matter.add.image(x + p.dx, y + p.dy, ragTex(p.part, variant), undefined, {
         collisionFilter: { ...filter },
         friction: 0.6,
         frictionAir: 0.03,
@@ -88,6 +91,16 @@ export class Ragdoll {
   /** Sobe todas as partes com a velocidade vertical dada (px/step, negativa = para cima): gancho ascendente (MOV-11). */
   launch(vyStep: number): void {
     for (const p of this.parts) p.setVelocityY(vyStep);
+  }
+
+  /** Mostra ou esconde as 6 partes (a pose de impacto esconde o ragdoll até o fim do hitstop, HRX-05). */
+  setVisible(v: boolean): void {
+    for (const p of this.parts) p.setVisible(v);
+  }
+
+  /** Chaves de textura das partes, para o debug (EVR-06). */
+  get textureKeys(): string[] {
+    return this.parts.map((p) => p.texture.key);
   }
 
   flash(): void {
