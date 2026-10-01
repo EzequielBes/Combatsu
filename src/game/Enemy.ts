@@ -538,7 +538,7 @@ export class Enemy implements Hittable {
       this.view.clearTint();
       this.guardTinted = false;
     }
-    this.view.anims.play(enemyAnimKey(anim), true);
+    this.view.anims.play(enemyAnimKey('corcunda', anim), true);
   }
 
   private handle(events: EnemyEvent[]): void {
