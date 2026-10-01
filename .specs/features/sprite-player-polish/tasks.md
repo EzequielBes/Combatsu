@@ -293,8 +293,8 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] O smoke novo passa e falha se `landMs` não for zerado (testado localmente e revertido).
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] O smoke novo passa e falha se `landMs` não for zerado (testado localmente e revertido).
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
