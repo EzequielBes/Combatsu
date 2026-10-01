@@ -1,11 +1,11 @@
-# Validation: sprite-player-polish - FAIL
+# Validation: sprite-player-polish - PASS
 
-**Result**: FAIL
+**Result**: PASS
 **Branch**: `feat/sprite-player-polish`
 **Diff range**: `dev..HEAD` = `4620da2..9178d33` (17 arquivos, +1313/-116)
 **Verifier**: independente (autor != verificador), Sonnet 5.5. Nenhum código de produção foi alterado.
 
-Motivo do FAIL: 1 mutante sobrevivente que expõe cláusula de AC sem teste (SPR-08, `registerAnims` repassar `duration`) e 1 mutante sobrevivente de baixa severidade (regra do `selOut`). Tudo o mais passa.
+Rodada 1 (histórico, superada pela Rodada 2): reprovada. Motivo: 1 mutante sobrevivente que expõe cláusula de AC sem teste (SPR-08, `registerAnims` repassar `duration`) e 1 mutante sobrevivente de baixa severidade (regra do `selOut`). Tudo o mais passa.
 
 ## Checagem ancorada na spec
 
@@ -71,3 +71,50 @@ Escopo restrito aos arquivos da feature; `animFrameConfigs` é pura e reutilizad
 **Spec-anchored check**: 14/15 ACs com asserção no resultado da spec; 1 AC (SPR-08) com cláusula sem teste; 2 imprecisões de spec (SPR-15, regra do selOut)
 **Sensor**: 5/7 mortos
 **Gate**: 1078 passed, typecheck e build ok
+
+
+---
+
+## Rodada 2
+
+**Veredito**: PASS. **Diff verificado**: `9178d33..affa8f5` (testes + 1 linha de Assumptions na spec; nenhum código de produção alterado). Verifier independente, Sonnet 5.5.
+
+### Lacunas da rodada 1
+
+| # | Lacuna | Correção | Evidência `file:line` | Resultado |
+| --- | --- | --- | --- | --- |
+| 1 | Major, SPR-08 (M7) | Teste de `registerAnims` com cena falsa que captura o `config.frames` | `tests/game/registerAnims.test.ts:19-26` afirma `duration` `[520, 160]` por frame (resultado do AC SPR-08, spec.md:84); `:28-32` sem `durations` não há `duration`; `:34-38` erro nomeia a animação. Alvo: `src/game/art/index.ts:128` | Fechada |
+| 2 | Minor, limiar do `selOut` (M3) | Regra fixada na spec e testada | `spec.md:41` (2 vizinhos de pele -> `x`, senão 2 de cabelo -> `h`, senão `o`); `tests/game/art.test.ts:894-906` (2 de pele -> `x`; 1 de pele + 3 de uniforme -> `o`; 1 de cabelo -> `o`). Alvo: `src/game/art/sprites/player.ts:49` | Fechada |
+| 4 | Cosmético, rastreabilidade | SPR-08 e SPR-15 marcados Done | `spec.md:142`, `spec.md:149` | Fechada |
+| 5 | Cosmético, título do `it.each` | `$0-hit ... próprio wind` | `tests/game/art.test.ts:945` | Fechada |
+| 3 | Minor, SPR-15 sem teste automatizado | Não tratada (aceita na rodada 1 pelo Independent Test da spec) | n/a | Aberta, aceita |
+
+Os testes novos assertam valores definidos pela spec (durations declaradas, limiar de 2 vizinhos escrito na spec), não a implementação: os valores esperados vêm de entradas literais, não de chamar o código sob teste.
+
+### Sensor (scratch: git worktree temporário em detached HEAD, `node_modules` por junction)
+
+| Mutante | Alvo | Resultado |
+| --- | --- | --- |
+| M3 `skin >= 2` -> `>= 3` | `player.ts:49` | MORTO (`art.test.ts` limiar da pele) |
+| Variante `hair >= 2` -> `>= 1` | `player.ts:49` | MORTO (`art.test.ts` limiar do cabelo) |
+| M7 `registerAnims` não repassa `duration` | `index.ts:128` | MORTO (`registerAnims.test.ts` "cada frame recebe a duration") |
+
+Base limpa: 104/104 nos dois arquivos. 3/3 mortos; somando a rodada 1 (M1, M2, M4, M5, M6): 7/7 mortos. Scratch descartado (junction removida antes do `worktree remove`); `git status --porcelain` da árvore real idêntico ao baseline (`?? .agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`).
+
+### Gates
+
+| Gate | Resultado |
+| --- | --- |
+| `npm run typecheck` | exit 0 |
+| `npm test` | 67 arquivos, 1083 passed, 0 failed |
+| `npm run build` | exit 0 (aviso de chunk > 500 kB, pré-existente) |
+| `npm run smoke` | todos ok exceto `heal.smoke.mjs` (HEAL-09 "gota não deveria entrar em ímã com vida cheia") na execução completa; reexecutado 2x isolado na branch: ok; no baseline `dev` (4620da2) falhou 1 de 2. Flake pré-existente, fora do escopo da feature (smoke `player-anim` ok) |
+
+### Lacunas restantes
+
+1. Minor (aceita): SPR-15 sem teste automatizado.
+2. Observação: `heal.smoke.mjs` HEAL-09 é intermitente também no `dev`; vale uma tarefa própria de estabilização.
+
+**Overall**: PASS
+**Sensor**: 7/7 mortos (rodadas 1+2)
+**Gate**: 1083 passed, typecheck e build ok
