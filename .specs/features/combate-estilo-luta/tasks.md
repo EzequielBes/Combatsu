@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/combate-estilo-luta/spec.md`
 **Design**: `.specs/features/combate-estilo-luta/design.md`
-**Status**: Ready
+**Status**: Done (Verifier PASS, rodada 3)
 **Branch**: `feat/combate-estilo-luta` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS, AD-008)
 **Test count before this feature**: 865
 

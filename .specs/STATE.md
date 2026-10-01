@@ -92,15 +92,14 @@
 
 ## Handoff
 
-- **Feature**: F7 `.specs/features/combate-estilo-luta` em Execute, branch `feat/combate-estilo-luta`
-- **Feito**: fases 1–3 (T1–T14) commitadas; arte mergeada; worktree `wt-art7` e branch `art/*` removidos; 1048 testes, 16 smokes
-- **Phase / Task — RETOMAR ASSIM**: fase 4 (fix AD-011 + T15–T18) com 1 worker Sonnet 5.5; depois fase 5 (T19–T21, smokes); depois Verifier automático, `validate_state.py`, merge `--no-ff` em `dev`
+- **Feature**: nenhuma em andamento. F7 `combate-estilo-luta` fechada (Verifier PASS na rodada 3, 91/91 ACs) e mergeada em `dev`
+- **Feito**: F0–F5 e F7 em `dev`; 1055 testes, 22 smokes (3 rodadas completas 22/22)
+- **Próximo**: UAT visual do usuário (F0–F5 e F7) antes de `dev` ir para `main`; depois F6 `meta-progressao` ou F9 `tecnicas-avancadas` (Specify)
 - **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; worker que cair é retomado do `git diff`; `python` (não `python3`) roda os scripts do tlc
 - **Dicas técnicas**:
-  - `tests/core/lightning.test.ts` (1000 seeds) estoura 5 s com a máquina carregada; passa com a máquina livre ou `--maxWorkers=2`. `heal.smoke.mjs` HEAL-09 é instável já em `44e59cc` (2/6)
-  - Ciclo do inimigo: 450 ms windup + 120 ms ataque + 800 ms descanso; `step(16.7)` do harness = 2 frames; anti-spam do parry 300 ms; recarga da esquiva 450 ms
-  - `Enemy.guarding` existe (sempre 0) para a T16 ligar; frame `parry` da arte sem uso (CTL-09 mostra `guard`)
-  - Desvios da fase 1/3 listados nos relatórios: tempos/hitboxes inventados em `src/data/moves.ts`; parry anula até imbloqueável (leitura literal de PAR-02); zoom do finalizador em 80 ms; `Health.chip` para o bloqueio do chefe
-  - UAT visual: pé solto nos frames `chuteGiratorio-wind` e `chuteCarregado-wind`
-- **Blockers**: UAT do usuário (visual, F0–F5 e F7) antes de `dev` ir para `main`
-- **Branch**: `feat/combate-estilo-luta`
+  - Smoke novo que golpeia inimigo comum precisa de `enemyGuard=0` (ou `=1` de propósito): a guarda aleatória do EBL-01 deixa dano/energia não determinísticos (L-042)
+  - `tests/core/lightning.test.ts` (1000 seeds) estoura 5 s com a máquina carregada; passa livre ou com `--maxWorkers=2`
+  - Ciclo do inimigo: 450 ms windup + 120 ms ataque + 800 ms descanso; `step(16)` = 1 frame, `step(16.7)` pode virar 2
+- **Para o UAT da F7**: pé solto nos frames `chuteGiratorio-wind` e `chuteCarregado-wind`; parry anula até golpe imbloqueável e a onda de choque do chefe (leitura literal de PAR-02; decidir se fica); tempos/hitboxes dos golpes ajustáveis em `src/data/moves.ts`; 6 spec-precision gaps de redação listados em `validation.md`
+- **Blockers**: UAT do usuário antes de `main`
+- **Branch**: `dev`
