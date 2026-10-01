@@ -51,6 +51,7 @@ export class Run {
   private lootRngValue: Rng | null = null;
   private shopRngValue: Rng | null = null;
   private guardRngValue: Rng | null = null;
+  private variantRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -111,6 +112,11 @@ export class Run {
   /** Stream de sorteio da guarda dos inimigos (EBL-01): próprio, `seed ^ 0x2545f491`, para não mexer nos drops nem na loja. */
   get guardRng(): Rng | null {
     return this.guardRngValue;
+  }
+
+  /** Stream de sorteio da aparência dos inimigos (EVR-04): próprio, `seed ^ 0x6a09e667`, para não mexer nos outros streams. */
+  get variantRng(): Rng | null {
+    return this.variantRngValue;
   }
 
   startPressed(): void {
@@ -193,6 +199,7 @@ export class Run {
         this.lootRngValue = new Rng(seed ^ 0x9e3779b9);
         this.shopRngValue = new Rng(seed ^ SHOP.rngSalt);
         this.guardRngValue = new Rng(seed ^ 0x2545f491);
+        this.variantRngValue = new Rng(seed ^ 0x6a09e667);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;

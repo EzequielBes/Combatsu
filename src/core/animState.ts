@@ -1,4 +1,5 @@
 import type { ComboPhase } from './combo';
+import type { HitReaction } from './hitReaction';
 import type { EnemyAIState } from './enemyAI';
 import type { EnemyState } from './enemyBrain';
 
@@ -73,13 +74,18 @@ export function attackFrame(phase: AttackPhase): AttackFrame {
   return 'recover';
 }
 
-export type EnemyAnim = 'idle' | 'walk' | 'windup' | 'attack' | 'hurt' | 'getup';
+/** Reação leve a golpe: as que viram animação `hurt-<reação>` (o `impact` é um frame, não uma animação). */
+export type LightReaction = Exclude<HitReaction, 'impact'>;
+
+export type EnemyAnim = 'idle' | 'walk' | 'windup' | 'attack' | 'hurt' | 'getup' | `hurt-${LightReaction}`;
 
 export interface EnemyAnimInput {
   brain: EnemyState;
   ai: EnemyAIState;
   /** O corpo está andando (|vx| acima de RUN_THRESHOLD). */
   moving: boolean;
+  /** Reação do golpe leve que está valendo (HRX-02); só é lida com `brain === 'hitstun'`. */
+  reaction?: LightReaction | null;
 }
 
 /**
@@ -87,7 +93,8 @@ export interface EnemyAnimInput {
  *
  * | brain                                          | IA              | moving | animação |
  * | ---------------------------------------------- | --------------- | ------ | -------- |
- * | hitstun                                        | qualquer        | -      | hurt     |
+ * | hitstun, com `reaction`                        | qualquer        | -      | hurt-<reaction> |
+ * | hitstun, sem `reaction`                        | qualquer        | -      | hurt     |
  * | ragdollStun, deadRagdoll, dissolving, gone     | qualquer        | -      | hurt     |
  * | gettingUp                                      | qualquer        | -      | getup    |
  * | idle                                           | windup          | -      | windup   |
@@ -101,6 +108,7 @@ export interface EnemyAnimInput {
  */
 export function pickEnemyAnim(i: EnemyAnimInput): EnemyAnim {
   if (i.brain === 'gettingUp') return 'getup';
+  if (i.brain === 'hitstun' && i.reaction) return `hurt-${i.reaction}`;
   if (i.brain !== 'idle') return 'hurt';
   if (i.ai === 'windup') return 'windup';
   if (i.ai === 'attack') return 'attack';

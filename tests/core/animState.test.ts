@@ -155,3 +155,26 @@ describe('pickEnemyAnim (CHR-03): uma linha da tabela brain x IA por teste', () 
         for (const moving of [false, true]) expect(ALL).toContain(pickEnemyAnim({ brain, ai, moving }));
   });
 });
+
+describe('pickEnemyAnim com reação (HRX-02, HRX-04)', () => {
+  const REACTIONS = ['head-a', 'head-b', 'uppercut', 'body'] as const;
+
+  it('hitstun com reaction devolve hurt-<reaction>, qualquer que seja a IA', () => {
+    for (const reaction of REACTIONS)
+      for (const ai of ['patrol', 'chase', 'windup', 'attack', 'rest'] as const)
+        expect(pickEnemyAnim({ brain: 'hitstun', ai, moving: false, reaction })).toBe(`hurt-${reaction}`);
+  });
+
+  it('hitstun sem reaction (ausente ou null) continua hurt', () => {
+    expect(pickEnemyAnim({ brain: 'hitstun', ai: 'chase', moving: true })).toBe('hurt');
+    expect(pickEnemyAnim({ brain: 'hitstun', ai: 'chase', moving: true, reaction: null })).toBe('hurt');
+  });
+
+  it('os outros estados do cérebro ignoram a reaction', () => {
+    expect(pickEnemyAnim({ brain: 'idle', ai: 'chase', moving: true, reaction: 'body' })).toBe('walk');
+    expect(pickEnemyAnim({ brain: 'idle', ai: 'windup', moving: false, reaction: 'body' })).toBe('windup');
+    expect(pickEnemyAnim({ brain: 'gettingUp', ai: 'chase', moving: false, reaction: 'head-a' })).toBe('getup');
+    for (const brain of ['ragdollStun', 'deadRagdoll', 'dissolving', 'gone'] as const)
+      expect(pickEnemyAnim({ brain, ai: 'chase', moving: false, reaction: 'uppercut' })).toBe('hurt');
+  });
+});

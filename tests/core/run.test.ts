@@ -472,3 +472,28 @@ describe('Run: chefe e player morrem antes do mesmo update (BOSS-05)', () => {
     expect(commands).toContainEqual({ type: 'gameOver', round: 5, kills: 0 });
   });
 });
+
+describe('Run: stream da aparência dos inimigos e streams anteriores intactos (EVR-04)', () => {
+  it('variantRng é null antes do start e, depois dele com seed s, começa como new Rng(s ^ 0x6a09e667)', () => {
+    const run = newRun();
+    expect(run.variantRng).toBeNull();
+    run.startPressed();
+    run.update(0, SEED);
+    expect(run.variantRng!.next()).toBe(new Rng(7 ^ 0x6a09e667).next());
+  });
+
+  it('com seed 7, lootRng e guardRng dão os mesmos números de antes da feature (valores fixados)', () => {
+    const run = started();
+    const take = (r: Rng) => Array.from({ length: 4 }, () => r.next());
+    expect(take(run.lootRng!)).toEqual([0.9823943767696619, 0.3341257639694959, 0.6892532545607537, 0.12651141709648073]);
+    expect(take(run.guardRng!)).toEqual([0.5889583916869015, 0.13402440771460533, 0.4920719088986516, 0.7194477405864745]);
+  });
+
+  it('consumir o variantRng não muda lootRng nem guardRng', () => {
+    const a = started();
+    const b = started();
+    for (let i = 0; i < 100; i++) b.variantRng!.next();
+    expect(b.lootRng!.next()).toBe(a.lootRng!.next());
+    expect(b.guardRng!.next()).toBe(a.guardRng!.next());
+  });
+});

@@ -12,8 +12,10 @@ import {
   TECH_ICON_OVERLAY_COLOR,
 } from '../../src/game/art/techColors';
 import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, selOut, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { selOut as sharedSelOut, type SelOutConfig } from '../../src/game/art/selOut';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
+import enemyBBoxBaseline from './fixtures/enemyBBoxBaseline.json';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
 import {
   COMBO_GRADE_COLORS,
@@ -37,7 +39,7 @@ import {
   RUN_BG_COLOR,
   RUN_TEXT_COLOR,
 } from '../../src/game/Hud';
-import { ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
+import { ENEMY_AI, ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
 import type { EnemyAnim } from '../../src/core/animState';
 import {
   ENEMY_ANIMS,
@@ -46,6 +48,9 @@ import {
   ENEMY_FRAME_W,
   ENEMY_ORIGIN,
   ENEMY_RAG_PARTS,
+  ENEMY_RAG_VARIANTS,
+  ENEMY_VARIANT_FRAMES,
+  type EnemyVariantId,
 } from '../../src/game/art/sprites/enemy';
 import {
   BOSS_ANIMS,
@@ -988,5 +993,253 @@ describe('animações de movimento do player (SPR-09, SPR-12)', () => {
       expect(anim.repeat, name).toBe(repeat);
       for (const f of anim.frames) expect(Object.hasOwn(PLAYER_FRAMES, f), `${name}: ${f}`).toBe(true);
     }
+  });
+});
+
+describe('selOut compartilhado e configurável (EVR-10)', () => {
+  const toCanvas = (rows: string[]): string[][] => rows.map((r) => [...r]);
+  const cfg: SelOutConfig = {
+    rules: [
+      { keys: new Set(['g', 'G']), line: 'n' },
+      { keys: new Set(['A']), line: 'b' },
+    ],
+    fallback: 'K',
+  };
+
+  it('com regra própria, k cercado de 2+ vizinhos do grupo vira a linha do grupo', () => {
+    const c = toCanvas(['.g.', 'GkG', '.g.']);
+    selOut(c, cfg);
+    expect(c[1][1]).toBe('n');
+  });
+
+  it('limiar dos dois lados: 2 vizinhos do grupo valem, 1 não', () => {
+    const two = toCanvas(['.g.', 'NkN', '.G.']);
+    selOut(two, cfg);
+    expect(two[1][1]).toBe('n');
+    const one = toCanvas(['.g.', 'NkN', '.N.']);
+    selOut(one, cfg);
+    expect(one[1][1]).toBe('K');
+  });
+
+  it('o fallback vale quando nenhuma regra bate; as regras valem na ordem', () => {
+    const none = toCanvas(['.N.', 'NkN', '.N.']);
+    selOut(none, cfg);
+    expect(none[1][1]).toBe('K');
+    const both = toCanvas(['.g.', 'gkA', '.A.']); // 2 de g e 2 de A: a primeira regra ganha
+    selOut(both, cfg);
+    expect(both[1][1]).toBe('n');
+    const second = toCanvas(['.A.', 'NkA', '.N.']);
+    selOut(second, cfg);
+    expect(second[1][1]).toBe('b');
+  });
+
+  it('contorno externo (vizinho transparente ou borda) e outras teclas não mudam', () => {
+    const c = toCanvas(['.g.', 'gkg', '...', 'gbg']);
+    selOut(c, cfg);
+    expect(c[1][1]).toBe('k');
+    expect(c[3][1]).toBe('b');
+  });
+
+  it('sem configuração vale a regra do player (pele -> x)', () => {
+    const c = toCanvas(['.p.', 'pkN', '.N.']);
+    selOut(c);
+    expect(c[1][1]).toBe('x');
+  });
+
+  it('o player reexporta o mesmo selOut', () => {
+    expect(selOut).toBe(sharedSelOut);
+  });
+});
+
+describe('alinhamento dos frames do inimigo contra a linha de base congelada (EVR-07)', () => {
+  const bboxOf = (rows: readonly string[]): [number, number, number, number] => {
+    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    rows.forEach((row, y) => {
+      [...row].forEach((c, x) => {
+        if (c === TRANSPARENT) return;
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      });
+    });
+    return [x0, y0, x1, y1];
+  };
+  const baseline = enemyBBoxBaseline as Record<string, number[]>;
+  const entries = Object.entries(baseline);
+
+  it('a fixture congelada cobre os 11 frames pré-existentes', () => {
+    expect(entries).toHaveLength(11);
+    expect(Object.keys(ENEMY_FRAMES)).toEqual(expect.arrayContaining(entries.map(([n]) => n)));
+  });
+
+  it('cada borda da bbox fica a até 2 texels da linha de base', () => {
+    for (const [name, base] of entries) {
+      expect(ENEMY_FRAMES[name], `frame ${name} existe`).toBeDefined();
+      const now = bboxOf(ENEMY_FRAMES[name]);
+      for (let i = 0; i < 4; i++) {
+        expect(Math.abs(now[i] - base[i]), `${name} borda ${i}: ${now[i]} vs ${base[i]}`).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+
+  it('o limite de 2 texels vale dos dois lados: deslocar o frame 2 texels dá desvio 2, 3 dá desvio 3', () => {
+    const base = baseline['idle-0'];
+    const rows = ENEMY_FRAMES['idle-0'];
+    const shiftRight = (d: number) => rows.map((r) => '.'.repeat(d) + r.slice(0, r.length - d));
+    const shiftLeft = (d: number) => rows.map((r) => r.slice(d) + '.'.repeat(d));
+    const off = (r: readonly string[]) => Math.max(...bboxOf(r).map((v, i) => Math.abs(v - base[i])));
+    // o idle-0 ocupa as colunas 4..20 de 0..31, então o deslocamento não corta nada
+    expect(off(rows)).toBe(0);
+    expect(off(shiftRight(2))).toBe(2);
+    expect(off(shiftRight(3))).toBe(3);
+    expect(off(shiftLeft(2))).toBe(2);
+    expect(off(shiftLeft(3))).toBe(3);
+  });
+});
+
+describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => {
+  const IDS: EnemyVariantId[] = ['corcunda', 'rastejante', 'bruto'];
+  const nonEmpty = (rows: readonly string[]) => rows.flatMap((r, y) => [...r].map((c, x) => ({ c, x, y }))).filter((t) => t.c !== TRANSPARENT);
+  const dominant = (rows: readonly string[]): string => {
+    const count = new Map<string, number>();
+    for (const { c } of nonEmpty(rows)) count.set(c, (count.get(c) ?? 0) + 1);
+    // ignora contorno e cores de detalhe (olho, boca, osso): a cor do corpo é a mais frequente fora delas
+    const skip = new Set(['k', 'K', 'b', 'w', 'A', 'a', 'r', 'R', 'S', 'H', 'n']);
+    return [...count].filter(([c]) => !skip.has(c)).sort((a, b) => b[1] - a[1])[0][0];
+  };
+
+  it('EVR-01: as 3 aparências têm todo frame citado por ENEMY_ANIMS, em 32x24, só com cores da paleta', () => {
+    expect(Object.keys(ENEMY_VARIANT_FRAMES).sort()).toEqual([...IDS].sort());
+    for (const id of IDS) {
+      const frames = ENEMY_VARIANT_FRAMES[id];
+      const sheet = parseSheet(`enemy-${id}`, frames, PALETTE_KEYS);
+      expect(sheet.width, id).toBe(ENEMY_FRAME_W);
+      expect(sheet.height, id).toBe(ENEMY_FRAME_H);
+      for (const [name, anim] of Object.entries(ENEMY_ANIMS)) {
+        for (const f of anim.frames) expect(Object.hasOwn(frames, f), `${id} ${name}: ${f}`).toBe(true);
+      }
+    }
+    expect(ENEMY_FRAMES).toBe(ENEMY_VARIANT_FRAMES.corcunda);
+  });
+
+  it('EVR-02: cada par difere em pelo menos 25% dos texels do idle-0 e a cor dominante é distinta', () => {
+    const idle = (id: EnemyVariantId) => ENEMY_VARIANT_FRAMES[id]['idle-0'];
+    const pairs: [EnemyVariantId, EnemyVariantId][] = [
+      ['corcunda', 'rastejante'],
+      ['corcunda', 'bruto'],
+      ['rastejante', 'bruto'],
+    ];
+    for (const [a, b] of pairs) {
+      const ra = idle(a);
+      const rb = idle(b);
+      const cellsA = nonEmpty(ra);
+      const cellsB = nonEmpty(rb);
+      const union = new Map<string, true>();
+      for (const t of [...cellsA, ...cellsB]) union.set(`${t.x},${t.y}`, true);
+      let differ = 0;
+      for (const key of union.keys()) {
+        const [x, y] = key.split(',').map(Number);
+        if (ra[y][x] !== rb[y][x]) differ++;
+      }
+      expect(differ / Math.min(cellsA.length, cellsB.length), `${a} x ${b}`).toBeGreaterThanOrEqual(0.25);
+    }
+    expect(IDS.map((id) => dominant(idle(id)))).toEqual(['i', 'g', 'u']);
+  });
+
+  it('EVR-03: no frame attack a garra de cada aparência chega à borda da hitbox do ENEMY_ATTACK (até 1 texel além), na altura', () => {
+    const originCol = ENEMY_ORIGIN.x * ENEMY_FRAME_W;
+    const box = ENEMY_ATTACK.hitbox!;
+    const edge = box.offsetX + box.width / 2;
+    for (const id of IDS) {
+      const rows = ENEMY_VARIANT_FRAMES[id][ENEMY_ANIMS.attack.frames[0]];
+      const cells = nonEmpty(rows);
+      const maxX = Math.max(...cells.map((t) => t.x));
+      const reach = (maxX + 1 - originCol) * ART_SCALE;
+      expect(reach, id).toBeGreaterThanOrEqual(edge);
+      expect(reach, id).toBeLessThanOrEqual(edge + ART_SCALE);
+      // a ponta (coluna mais à frente) fica na faixa vertical da hitbox: linhas 9..19 do frame (pé na linha 24, centro 18 px acima)
+      for (const t of cells.filter((c) => c.x === maxX)) {
+        const rowTop = (t.y - ENEMY_FRAME_H) * ART_SCALE + 18;
+        expect(rowTop, id).toBeGreaterThanOrEqual(box.offsetY - box.height / 2 - ART_SCALE);
+        expect(rowTop + ART_SCALE, id).toBeLessThanOrEqual(box.offsetY + box.height / 2 + ART_SCALE);
+      }
+    }
+  });
+
+  it('EVR-10: o idle-0 de cada aparência tem no máximo 4 texels k internos (sel-out aplicado)', () => {
+    for (const id of IDS) {
+      const rows = ENEMY_VARIANT_FRAMES[id]['idle-0'];
+      let interior = 0;
+      for (let y = 1; y < rows.length - 1; y++) {
+        for (let x = 1; x < rows[y].length - 1; x++) {
+          if (rows[y][x] !== 'k') continue;
+          const n = [rows[y - 1][x], rows[y + 1][x], rows[y][x - 1], rows[y][x + 1]];
+          if (n.every((c) => c !== TRANSPARENT)) interior++;
+        }
+      }
+      expect(interior, id).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('EVR-08: idle >= 4, walk >= 6, windup 2, attack 2 e getup >= 3 frames, todos com durations e todo frame citado existe', () => {
+    const min: Record<string, number> = { idle: 4, walk: 6, windup: 2, attack: 2, getup: 3 };
+    for (const [name, n] of Object.entries(min)) {
+      const anim = ENEMY_ANIMS[name];
+      if (name === 'windup' || name === 'attack') expect(anim.frames, name).toHaveLength(n);
+      else expect(anim.frames.length, name).toBeGreaterThanOrEqual(n);
+      expect(anim.durations, name).toBeDefined();
+      expect(anim.durations!.length, name).toBe(anim.frames.length);
+      for (const d of anim.durations!) expect(d, name).toBeGreaterThan(0);
+      for (const id of IDS) for (const f of anim.frames) expect(Object.hasOwn(ENEMY_VARIANT_FRAMES[id], f), `${id} ${name}: ${f}`).toBe(true);
+    }
+  });
+
+  it('EVR-09: o windup segura windup-1 nos últimos 200 ms do preparo (soma antes dele <= 250 ms; 250 passa, 251 falha)', () => {
+    const holdsFinal200 = (durations: readonly number[]) => durations.slice(0, -1).reduce((a, b) => a + b, 0) <= ENEMY_AI.windupMs - 200;
+    expect(ENEMY_AI.windupMs).toBe(450);
+    expect(ENEMY_ANIMS.windup.frames.at(-1)).toBe('windup-1');
+    expect(holdsFinal200(ENEMY_ANIMS.windup.durations!)).toBe(true);
+    expect(holdsFinal200([250, 200])).toBe(true);
+    expect(holdsFinal200([251, 199])).toBe(false);
+    for (const id of IDS) {
+      const frames = ENEMY_VARIANT_FRAMES[id];
+      // o frame de máximo preparo é distinto do início e o alias `windup` aponta para ele
+      expect(frames['windup-1'], id).not.toEqual(frames['windup-0']);
+      expect(frames.windup, id).toEqual(frames['windup-1']);
+    }
+  });
+
+  it('HRX-03: as 4 reações leves têm 3 frames (60, 90, 70 ms, uma vez), o frame 0 difere >= 2 texels de bbox do idle-0 e head-a difere de head-b; impact existe', () => {
+    const bbox = (rows: readonly string[]): number[] => {
+      const cells = nonEmpty(rows);
+      return [Math.min(...cells.map((c) => c.x)), Math.min(...cells.map((c) => c.y)), Math.max(...cells.map((c) => c.x)), Math.max(...cells.map((c) => c.y))];
+    };
+    const names = ['hurt-head-a', 'hurt-head-b', 'hurt-uppercut', 'hurt-body'];
+    for (const id of IDS) {
+      const frames = ENEMY_VARIANT_FRAMES[id];
+      const idle = bbox(frames['idle-0']);
+      for (const n of names) {
+        const anim = ENEMY_ANIMS[n];
+        expect(anim.frames, `${id} ${n}`).toEqual([0, 1, 2].map((i) => `${n}-${i}`));
+        expect(anim.durations, `${id} ${n}`).toEqual([60, 90, 70]);
+        expect(anim.repeat, `${id} ${n}`).toBe(0);
+        const b = bbox(frames[`${n}-0`]);
+        expect(Math.max(...b.map((v, i) => Math.abs(v - idle[i]))), `${id} ${n} bbox`).toBeGreaterThanOrEqual(2);
+      }
+      expect(frames['hurt-head-a-0'], id).not.toEqual(frames['hurt-head-b-0']);
+      expect(ENEMY_ANIMS.impact.frames).toEqual(['impact']);
+      expect(Object.hasOwn(frames, 'impact'), id).toBe(true);
+    }
+  });
+
+  it('as partes do ragdoll das 3 aparências têm 8x7, 8x10 e 3x8 texels e só cores da paleta', () => {
+    for (const id of IDS) {
+      const { head, torso, limb } = ENEMY_RAG_VARIANTS[id];
+      const size = (g: readonly string[]) => [Math.max(...g.map((r) => r.length)), g.length];
+      expect(size(head), id).toEqual([8, 7]);
+      expect(size(torso), id).toEqual([8, 10]);
+      expect(size(limb), id).toEqual([3, 8]);
+      for (const [n, g] of Object.entries({ head, torso, limb })) parseSheet(`rag-${n}-${id}`, { [n]: g }, PALETTE_KEYS);
+    }
+    expect(ENEMY_RAG_PARTS).toBe(ENEMY_RAG_VARIANTS.corcunda);
   });
 });
