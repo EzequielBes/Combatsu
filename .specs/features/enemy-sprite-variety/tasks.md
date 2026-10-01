@@ -237,10 +237,10 @@ T13
 
 **Done when**:
 
-- [ ] HRX-03 conferido: Each light reaction animation (`hurt-head-a`, `hurt-head-b`, `hurt-uppercut`, `hurt-body`) SHALL have 3 frames with durations 60, 90 and 70 ms, plays once, in every variant; the first frame SHALL differ from the `idle-0` bounding box by at least 2 texels on some edge (visible snap).
-- [ ] O frame `impact` existe nas 3 aparências.
-- [ ] Tiras conferidas visualmente.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] HRX-03 conferido: Each light reaction animation (`hurt-head-a`, `hurt-head-b`, `hurt-uppercut`, `hurt-body`) SHALL have 3 frames with durations 60, 90 and 70 ms, plays once, in every variant; the first frame SHALL differ from the `idle-0` bounding box by at least 2 texels on some edge (visible snap).
+- [x] O frame `impact` existe nas 3 aparências.
+- [x] Tiras conferidas visualmente.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

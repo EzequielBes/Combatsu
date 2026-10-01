@@ -1208,6 +1208,29 @@ describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => 
     }
   });
 
+  it('HRX-03: as 4 reações leves têm 3 frames (60, 90, 70 ms, uma vez), o frame 0 difere >= 2 texels de bbox do idle-0 e head-a difere de head-b; impact existe', () => {
+    const bbox = (rows: readonly string[]): number[] => {
+      const cells = nonEmpty(rows);
+      return [Math.min(...cells.map((c) => c.x)), Math.min(...cells.map((c) => c.y)), Math.max(...cells.map((c) => c.x)), Math.max(...cells.map((c) => c.y))];
+    };
+    const names = ['hurt-head-a', 'hurt-head-b', 'hurt-uppercut', 'hurt-body'];
+    for (const id of IDS) {
+      const frames = ENEMY_VARIANT_FRAMES[id];
+      const idle = bbox(frames['idle-0']);
+      for (const n of names) {
+        const anim = ENEMY_ANIMS[n];
+        expect(anim.frames, `${id} ${n}`).toEqual([0, 1, 2].map((i) => `${n}-${i}`));
+        expect(anim.durations, `${id} ${n}`).toEqual([60, 90, 70]);
+        expect(anim.repeat, `${id} ${n}`).toBe(0);
+        const b = bbox(frames[`${n}-0`]);
+        expect(Math.max(...b.map((v, i) => Math.abs(v - idle[i]))), `${id} ${n} bbox`).toBeGreaterThanOrEqual(2);
+      }
+      expect(frames['hurt-head-a-0'], id).not.toEqual(frames['hurt-head-b-0']);
+      expect(ENEMY_ANIMS.impact.frames).toEqual(['impact']);
+      expect(Object.hasOwn(frames, 'impact'), id).toBe(true);
+    }
+  });
+
   it('as partes do ragdoll das 3 aparências têm 8x7, 8x10 e 3x8 texels e só cores da paleta', () => {
     for (const id of IDS) {
       const { head, torso, limb } = ENEMY_RAG_VARIANTS[id];
