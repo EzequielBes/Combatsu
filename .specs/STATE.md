@@ -90,16 +90,27 @@
 - **Date**: 2026-09-29
 - **Status**: active
 
+### AD-012
+- **Decision**: O player ganha acabamento sem mudar proporção, frame (32x24) nem encaixes das partes: um passe de sel-out em `compose` troca todo `k` interno pela linha do material (`x` pele, `h` cabelo, `o` uniforme), detalhes pretos de propósito usam `b`, e as animações aceitam duração por frame (`AnimDef.durations`). A bbox de cada frame antigo fica congelada em `tests/game/fixtures/playerBBoxBaseline.json` (±2 texels).
+- **Reason**: Pedido do usuário por sprite "mais profissional e fluido, sem refazer do zero"; o passe automático melhora os ~100 frames de golpes e técnicas de uma vez.
+- **Trade-off**: A paleta chegou ao teto de 40 cores; arte nova de outros personagens precisa reaproveitar cores ou subir o teto.
+- **Scope**: Sprites do player (e, se adotado, de inimigos e chefes).
+- **Date**: 2026-10-01
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: nenhuma em andamento. F7 `combate-estilo-luta` fechada (Verifier PASS na rodada 3, 91/91 ACs) e mergeada em `dev`
-- **Feito**: F0–F5 e F7 em `dev`; 1055 testes, 22 smokes (3 rodadas completas 22/22)
-- **Próximo**: UAT visual do usuário (F0–F5 e F7) antes de `dev` ir para `main`; depois F6 `meta-progressao` ou F9 `tecnicas-avancadas` (Specify)
-- **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; worker que cair é retomado do `git diff`; `python` (não `python3`) roda os scripts do tlc
+- **Feature**: nenhuma em andamento. `sprite-player-polish` fechada (Verifier PASS na rodada 2, 15/15 ACs, 7/7 mutantes) e mergeada em `dev`
+- **Feito**: F0–F5, F7 e `sprite-player-polish` em `dev`; 1083 testes, 23 smokes
+- **Próximo**: UAT visual do usuário (F0–F5, F7 e o sprite novo) antes de `dev` ir para `main`; depois F6 `meta-progressao` ou F9 `tecnicas-avancadas` (Specify)
+- **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; worker que cair é retomado do `git diff`; `py`/`python` (não `python3`) roda os scripts do tlc
 - **Dicas técnicas**:
+  - Revisão de arte: `node tools/sprite-preview.mjs [dir]` (com `SPRITE_SCALE=8` para zoom) gera a prancha e as tiras por animação em PNG
   - Smoke novo que golpeia inimigo comum precisa de `enemyGuard=0` (ou `=1` de propósito): a guarda aleatória do EBL-01 deixa dano/energia não determinísticos (L-042)
+  - `heal.smoke.mjs` (HEAL-09) é intermitente também em `dev`; merece tarefa de estabilização
   - `tests/core/lightning.test.ts` (1000 seeds) estoura 5 s com a máquina carregada; passa livre ou com `--maxWorkers=2`
   - Ciclo do inimigo: 450 ms windup + 120 ms ataque + 800 ms descanso; `step(16)` = 1 frame, `step(16.7)` pode virar 2
 - **Para o UAT da F7**: pé solto nos frames `chuteGiratorio-wind` e `chuteCarregado-wind`; parry anula até golpe imbloqueável e a onda de choque do chefe (leitura literal de PAR-02; decidir se fica); tempos/hitboxes dos golpes ajustáveis em `src/data/moves.ts`; 6 spec-precision gaps de redação listados em `validation.md`
+- **Para o UAT do sprite**: pontos fracos conhecidos: `land-1` com pernas um pouco longas, braço de trás solto no `jump-0`, `ganchoAscendente-hit` com cabeça torta (já vinha de antes)
 - **Blockers**: UAT do usuário antes de `main`
 - **Branch**: `dev`
