@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/sprite-player-polish/spec.md`
 **Design**: `.specs/features/sprite-player-polish/design.md`
-**Status**: In progress
+**Status**: Done (Verifier PASS, rodada 2)
 **Branch**: `feat/sprite-player-polish` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS, AD-008)
 
 ---
