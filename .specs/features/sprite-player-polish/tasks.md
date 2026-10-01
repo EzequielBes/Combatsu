@@ -91,9 +91,9 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] SPR-15 conferido: WHEN `node tools/sprite-preview.mjs [outDir]` runs THEN it SHALL write `player-sheet.png` (every player frame labelled) and one `anim-<name>.png` per player animation into `outDir` (default `docs/art/`) and exit 0.
-- [ ] `docs/art/before/player-sheet.png` existe (não versionado).
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] SPR-15 conferido: WHEN `node tools/sprite-preview.mjs [outDir]` runs THEN it SHALL write `player-sheet.png` (every player frame labelled) and one `anim-<name>.png` per player animation into `outDir` (default `docs/art/`) and exit 0.
+- [x] `docs/art/before/player-sheet.png` existe (não versionado).
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: none
 **Gate**: quick
