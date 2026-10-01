@@ -254,9 +254,9 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] SPR-09 conferido: The `idle` animation SHALL have 4 frames with no two consecutive frames identical, looping.
-- [ ] SPR-12 conferido: The animations `jump` (≥ 2 frames, plays once), `apex` (≥ 1 frame), `fall` (≥ 2 frames, loops), `land` (2 frames, plays once) and `hurt` (2 frames) SHALL exist, and every frame they cite SHALL exist in the sheet.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] SPR-09 conferido: The `idle` animation SHALL have 4 frames with no two consecutive frames identical, looping.
+- [x] SPR-12 conferido: The animations `jump` (≥ 2 frames, plays once), `apex` (≥ 1 frame), `fall` (≥ 2 frames, loops), `land` (2 frames, plays once) and `hurt` (2 frames) SHALL exist, and every frame they cite SHALL exist in the sheet.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

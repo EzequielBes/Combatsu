@@ -214,6 +214,10 @@ const RUN_LEGS: Grid[] = [
 const LEGS_TUCK: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.ksNNk', '....kkk.kKsKk', '.........kkkk', ''];
 /** Queda: pernas soltas, uma à frente. */
 const LEGS_DANGLE: Grid = ['....knNNNNNk', '....kKnk.knNk', '...kKnk..ksNk', '...kKKk...knNk', '...kkk....kKsKk', '...........kkkk'];
+/** Queda, segundo tempo: a outra perna vai à frente (alterna com LEGS_DANGLE). */
+const LEGS_DANGLE_B: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKnk.ksNk', '..kKKk...knNk', '..kkk....kKsKk', '..........kkkk'];
+/** Agachado do pouso (4 linhas): joelhos para fora, pés afastados. */
+const LEGS_CROUCH: Grid = ['...knNNNNNk', '.kKnskkknNk', 'kKKKk...kKsKk', 'kkkkk...kkkkk'];
 /**
  * Chute: perna da frente esticada na horizontal, com o sapato (brilho `s`) na ponta. `len` = colunas do quadril
  * até o contorno da ponta do pé, inclusive.
@@ -287,6 +291,8 @@ export const far = (g: Grid): string[] => recolor(g, FAR);
 export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'idle-0': pose({ near: [ARM_DOWN, 5, 12] }),
   'idle-1': pose({ drop: 1, near: [ARM_DOWN, 5, 13] }),
+  'idle-2': pose({ drop: 1, head: HEAD_SWAY, near: [ARM_DOWN, 5, 13] }),
+  'idle-3': pose({ head: HEAD_SWAY, near: [ARM_DOWN, 5, 12] }),
 
   'run-0': pose({ lean: 1, near: [ARM_BACK, 2, 12], far: [far(ARM_FWD), 8, 12], legs: [[RUN_LEGS[0], 0, Y_LEGS]] }),
   'run-1': pose({ lean: 1, drop: 1, near: [ARM_DOWN, 6, 13], far: [far(ARM_DOWN), 8, 13], legs: [[RUN_LEGS[1], 0, Y_LEGS]] }),
@@ -295,8 +301,16 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'run-4': pose({ lean: 1, drop: 1, near: [ARM_DOWN, 6, 13], far: [far(ARM_DOWN), 8, 13], legs: [[RUN_LEGS[4], 0, Y_LEGS]] }),
   'run-5': pose({ lean: 1, near: [ARM_BACK, 2, 12], far: [far(ARM_FWD), 8, 12], legs: [[RUN_LEGS[5], 0, Y_LEGS]] }),
 
-  'jump-0': pose({ near: [ARM_FWD, 7, 11], far: [far(ARM_BACK), 1, 11], legs: [[LEGS_TUCK, 0, Y_LEGS - 1]] }),
+  // Decolagem: pernas esticadas, braços para cima; depois a subida (pose antiga do jump-0).
+  'jump-0': pose({ drop: -1, near: [ARM_UP, 0, 6], far: [far(ARM_UP), 2, 5], legs: [[LEGS_STAND, 0, Y_LEGS - 1]] }),
+  'jump-1': pose({ near: [ARM_FWD, 7, 11], far: [far(ARM_BACK), 1, 11], legs: [[LEGS_TUCK, 0, Y_LEGS - 1]] }),
+  // Ápice: joelhos bem recolhidos, braços abertos.
+  'apex-0': pose({ near: [ARM_FWD, 8, 10], far: [far(ARM_BACK), 0, 10], legs: [[LEGS_TUCK, 0, Y_LEGS - 2]] }),
   'fall-0': pose({ near: [mirror(ARM_BACK), 8, 10], far: [far(ARM_BACK), 1, 10], legs: [[LEGS_DANGLE, 0, Y_LEGS]] }),
+  'fall-1': pose({ head: HEAD_SWAY, near: [mirror(ARM_BACK), 8, 9], far: [far(ARM_BACK), 1, 9], legs: [[LEGS_DANGLE_B, 0, Y_LEGS]] }),
+  // Pouso: agacha fundo (squash) e levanta.
+  'land-0': pose({ drop: 2, near: [ARM_FWD, 8, 13], far: [far(ARM_BACK), 1, 13], legs: [[LEGS_CROUCH, 0, Y_LEGS + 2]] }),
+  'land-1': pose({ drop: 1, near: [ARM_DOWN, 5, 13] }),
 
   // Jab (braço da frente). No hit, o punho chega à coluna 25 = 18 texels (36 px) à frente do centro,
   // a borda da hitbox do jab (offsetX 22 + largura/2 13 = 35 px).
@@ -333,6 +347,7 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'throw-1': pose({ lean: 2, near: [armStraight(13), 9, 11], far: [far(ARM_BACK), 1, 12], legs: [[LEGS_WIDE, 1, Y_LEGS]] }),
 
   // Levando golpe: tronco para trás, braços soltos.
+  'hurt-1': pose({ lean: -3, head: HEAD_HURT, near: [ARM_DOWN, 3, 13], far: [far(ARM_DOWN), 7, 13], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
   hurt: pose({ lean: -2, head: HEAD_HURT, near: [mirror(ARM_FWD), 0, 12], far: [far(ARM_BACK), 5, 12], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
 };
 
@@ -370,10 +385,12 @@ export function animFrameConfigs(name: string, def: AnimDef): AnimFrameConfig[] 
  * pela fase do combo com setFrame; a animação registrada serve de sequência de referência.
  */
 export const PLAYER_ANIMS: Record<string, AnimDef> = {
-  idle: { frames: ['idle-0', 'idle-1'], frameRate: 2, repeat: -1 },
-  run: { frames: ['run-0', 'run-1', 'run-2', 'run-3', 'run-4', 'run-5'], frameRate: 12, repeat: -1 },
-  jump: { frames: ['jump-0'], frameRate: 1, repeat: 0 },
-  fall: { frames: ['fall-0'], frameRate: 1, repeat: 0 },
+  idle: { frames: ['idle-0', 'idle-1', 'idle-2', 'idle-3'], frameRate: 2, repeat: -1, durations: [520, 160, 520, 160] },
+  run: { frames: ['run-0', 'run-1', 'run-2', 'run-3', 'run-4', 'run-5'], frameRate: 12, repeat: -1, durations: [70, 90, 80, 70, 90, 80] },
+  jump: { frames: ['jump-0', 'jump-1'], frameRate: 1, repeat: 0, durations: [70, 1000] },
+  apex: { frames: ['apex-0'], frameRate: 1, repeat: 0 },
+  fall: { frames: ['fall-0', 'fall-1'], frameRate: 7, repeat: -1, durations: [140, 140] },
+  land: { frames: ['land-0', 'land-1'], frameRate: 16, repeat: 0, durations: [60, 60] },
   jab: { frames: ['jab-wind', 'jab-hit', 'jab-recover'], frameRate: 12, repeat: 0 },
   cross: { frames: ['cross-wind', 'cross-hit', 'cross-recover'], frameRate: 12, repeat: 0 },
   kick: { frames: ['kick-wind', 'kick-hit', 'kick-recover'], frameRate: 10, repeat: 0 },
@@ -381,5 +398,5 @@ export const PLAYER_ANIMS: Record<string, AnimDef> = {
   'carry-run': { frames: ['carry-run-0', 'carry-run-1', 'carry-run-2', 'carry-run-3'], frameRate: 10, repeat: -1 },
   swing: { frames: ['swing-wind', 'swing-hit', 'swing-recover'], frameRate: 10, repeat: 0 },
   throw: { frames: ['throw-0', 'throw-1'], frameRate: 10, repeat: 0 },
-  hurt: { frames: ['hurt'], frameRate: 1, repeat: 0 },
+  hurt: { frames: ['hurt', 'hurt-1'], frameRate: 8, repeat: 0, durations: [90, 220] },
 };
