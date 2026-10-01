@@ -27,6 +27,30 @@ export const PLAYER_ORIGIN = { x: CENTER_COL / PLAYER_FRAME_W, y: 1 } as const;
 export type Grid = readonly string[];
 export type Placed = readonly [Grid, number, number];
 
+const SKIN = new Set(['p', 'P', 'q', 'x']);
+const HAIR = new Set(['h', 'j', 'H']);
+
+/**
+ * Passe de sel-out (SPR-03): todo `k` cujos 4 vizinhos estão dentro do canvas e não são `.` é contorno interno e
+ * vira linha colorida pelo material vizinho (2+ vizinhos de pele -> `x`, 2+ de cabelo -> `h`, senão `o`).
+ * O contorno externo (que encosta em transparente ou na borda) continua `k`, e `b` (detalhe preto de propósito)
+ * não é tocado. Altera o canvas no lugar, lendo os vizinhos de uma cópia.
+ */
+export function selOut(canvas: string[][]): void {
+  const h = canvas.length;
+  const snap = canvas.map((row) => row.slice());
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < snap[y].length - 1; x++) {
+      if (snap[y][x] !== 'k') continue;
+      const n = [snap[y - 1][x], snap[y + 1][x], snap[y][x - 1], snap[y][x + 1]];
+      if (n.some((c) => c === '.')) continue;
+      const skin = n.filter((c) => SKIN.has(c)).length;
+      const hair = n.filter((c) => HAIR.has(c)).length;
+      canvas[y][x] = skin >= 2 ? 'x' : hair >= 2 ? 'h' : 'o';
+    }
+  }
+}
+
 /** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
 export function compose(...parts: Placed[]): string[] {
   const w = PLAYER_FRAME_W - FRAME_PAD;
@@ -41,6 +65,7 @@ export function compose(...parts: Placed[]): string[] {
       }),
     );
   }
+  selOut(canvas);
   return canvas.map((row) => '.'.repeat(FRAME_PAD) + row.join(''));
 }
 
@@ -58,57 +83,66 @@ export function mirror(grid: Grid): string[] {
 const FAR = { s: 'N', N: 'n', n: 'K', p: 'P', P: 'q' };
 
 // ---------------------------------------------------------------- cabeça (13x11)
+// Rampa de cabelo em 3 tons (h base, j meio-tom, H brilho), orelha em x/P, olho com branco `w` e pupila `b`,
+// luz de borda `y` na nuca. Linhas 0-2: mechas espetadas.
 const HEAD: Grid = [
-  '...k...k.....',
-  '..khk.khk.k..',
-  '.khHhkhHhkhk.',
-  'khhHhhhHhhhk.',
-  'khhhhhhhhhhhk',
-  'khhhhhhhhhhk.',
-  'khhhhhphpppk.',
-  'khhhhPppkppk.',
-  'khhhhPppppppk',
-  '.khhhPpppqpk.',
-  '.knnnkPppkk..',
+  '...k..k..k...',
+  '..kHk.kHkjk..',
+  '.kjHjkjHjHjk.',
+  'kjjjHjjHjjjjk',
+  'kyhjjhjjhjjhk',
+  'kyhhhhhjhhjk.',
+  'kjhhhhpphhpk.',
+  'khhhxPpwbppk.',
+  'khhhxPppppppk',
+  '.khhhxPppxpk.',
+  '.knnNkxPPxk..',
 ];
-/** Olhos apertados e boca aberta (dor). */
+/** Olho fechado, sobrancelha torta e boca aberta (dor). */
 const HEAD_HURT: Grid = [
-  '...k...k.....',
-  '..khk.khk.k..',
-  '.khHhkhHhkhk.',
-  'khhHhhhHhhhk.',
-  'khhhhhhhhhhhk',
-  'khhhhhhhhhhk.',
-  'khhhhhphpppk.',
-  'khhhhPppkkpk.',
-  'khhhhPppppppk',
-  '.khhhPppprpk.',
-  '.knnnkPppkk..',
+  '...k..k..k...',
+  '..kHk.kHkjk..',
+  '.kjHjkjHjHjk.',
+  'kjjjHjjHjjjjk',
+  'kyhjjhjjhjjhk',
+  'kyhhhhhjhhjk.',
+  'kjhhhhhpphpk.',
+  'khhhxPpbbppk.',
+  'khhhxPppppppk',
+  '.khhhxPpprpk.',
+  '.knnNkxPPxk..',
 ];
-/** Cabeça concentrada no golpe: sobrancelha baixa. */
+/** Cabeça concentrada no golpe: sobrancelha desce sobre o olho e a boca cerra os dentes. */
 export const HEAD_FOCUS: Grid = [
-  '...k...k.....',
-  '..khk.khk.k..',
-  '.khHhkhHhkhk.',
-  'khhHhhhHhhhk.',
-  'khhhhhhhhhhhk',
-  'khhhhhhhhhhk.',
-  'khhhhhphhhpk.',
-  'khhhhPppkppk.',
-  'khhhhPppppppk',
-  '.khhhPppqqpk.',
-  '.knnnkPppkk..',
+  '...k..k..k...',
+  '..kHk.kHkjk..',
+  '.kjHjkjHjHjk.',
+  'kjjjHjjHjjjjk',
+  'kyhjjhjjhjjhk',
+  'kyhhhhhjhhjk.',
+  'kjhhhhphhhpk.',
+  'khhhxPpwbppk.',
+  'khhhxPppppppk',
+  '.khhhxPpbbpk.',
+  '.knnNkxPPxk..',
+];
+/** Igual à cabeça base, com as pontas das mechas das linhas 0-1 1 texel para trás (overlap do idle e da queda). */
+export const HEAD_SWAY: Grid = [
+  '..k..k..k....',
+  '.kHk.kHkjk...',
+  ...HEAD.slice(2),
 ];
 
-// ---------------------------------------------------------------- tronco (8x7), gola alta e botões
+// ---------------------------------------------------------------- tronco (8x7), gakuran
+// Gola alta com luz `s`, botões `A`/`z` na coluna 5, luz de borda `y` nas costas, sombra `n` e cinto `K` com fivela.
 const BODY: Grid = [
-  'knNNNNnk',
-  'kNsssNNk',
-  'kNNNNANk',
-  'kNNNNNNk',
-  'kNNNNANk',
-  'knnnnnnk',
-  'kKKKKKKk',
+  'koyNNsNk',
+  'kysNNANk',
+  'kyNNNznk',
+  'kyNsNANk',
+  'kyNNNznk',
+  'konnnnnk',
+  'kKKKAKKk',
 ];
 
 // ---------------------------------------------------------------- braços (o da frente; o de trás via recolor)

@@ -39,7 +39,7 @@ if (!edge) {
 }
 
 const pageFn = (data) => {
-  const S = 4, BG = '#2a3863';
+  const S = data.scale, BG = '#2a3863';
   const hex = (n) => '#' + n.toString(16).padStart(6, '0');
   const sprite = (ctx, rows, x, y) => {
     rows.forEach((row, ry) => [...row].forEach((c, rx) => {
@@ -86,7 +86,7 @@ const browser = await puppeteer.launch({ executablePath: edge, headless: true })
 try {
   const page = await browser.newPage();
   await page.setContent('<body style="margin:0;background:#000"></body>');
-  await page.evaluate(pageFn, { palette: PALETTE, frames, anims });
+  await page.evaluate(pageFn, { palette: PALETTE, frames, anims, scale: Number(process.env.SPRITE_SCALE) || 4 });
   const shot = async (sel, file) => {
     const el = await page.$(sel);
     await el.screenshot({ path: join(outDir, file) });

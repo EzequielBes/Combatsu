@@ -171,12 +171,12 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Teste unitário do passe: `k` interno com vizinhos de pele vira `x`, de cabelo vira `h`, os demais viram `o`; `k` na borda e `b` não mudam.
-- [ ] SPR-03 conferido: The `idle-0` frame SHALL have at most 8 interior `k` texels (baseline 17).
-- [ ] SPR-04 conferido: The head rows (0–10) of `idle-0` SHALL contain the eye white `w` horizontally adjacent to a dark pupil (`b` or `k`), and the three hair tones `h`, `j` and `H`.
-- [ ] SPR-05 conferido: The torso rows (11–17) of `idle-0` SHALL contain the gold button `A`, the rim light `y` and the inner line `o`.
-- [ ] SPR-06 e o teste de alcance continuam verdes.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Teste unitário do passe: `k` interno com vizinhos de pele vira `x`, de cabelo vira `h`, os demais viram `o`; `k` na borda e `b` não mudam.
+- [x] SPR-03 conferido: The `idle-0` frame SHALL have at most 8 interior `k` texels (baseline 17).
+- [x] SPR-04 conferido: The head rows (0–10) of `idle-0` SHALL contain the eye white `w` horizontally adjacent to a dark pupil (`b` or `k`), and the three hair tones `h`, `j` and `H`.
+- [x] SPR-05 conferido: The torso rows (11–17) of `idle-0` SHALL contain the gold button `A`, the rim light `y` and the inner line `o`.
+- [x] SPR-06 e o teste de alcance continuam verdes.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

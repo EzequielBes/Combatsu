@@ -11,7 +11,7 @@ import {
   ENERGY_BAR_MARK_COLOR,
   TECH_ICON_OVERLAY_COLOR,
 } from '../../src/game/art/techColors';
-import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, selOut, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
@@ -868,5 +868,57 @@ describe('duração por frame nas animações (SPR-08)', () => {
     expect(() => animFrameConfigs('zero', { ...base, durations: [10, 0, 10] })).toThrow(/zero/);
     expect(() => animFrameConfigs('neg', { ...base, durations: [10, -5, 10] })).toThrow(/neg/);
     expect(() => animFrameConfigs('um', { ...base, durations: [1, 1, 1] })).not.toThrow();
+  });
+});
+
+describe('passe de sel-out e acabamento do idle-0 (SPR-03, SPR-04, SPR-05)', () => {
+  const toCanvas = (rows: string[]): string[][] => rows.map((r) => [...r]);
+
+  it('k interno vira x (vizinhos de pele), h (cabelo) ou o (demais); k de borda e b não mudam', () => {
+    const canvas = toCanvas([
+      '.pp.hh..bbb',
+      '.pkp.kh.bkb',
+      '.pp.hh..bbb',
+      '...........',
+      'NNNk.......',
+      'NkN........',
+      'NNN........',
+    ]);
+    selOut(canvas);
+    expect(canvas[1][2]).toBe('x'); // cercado de pele
+    expect(canvas[4][3]).toBe('k'); // contorno: encosta em transparente
+    expect(canvas[5][1]).toBe('o'); // cercado de uniforme
+    expect(canvas[0][8]).toBe('b'); // b nunca muda
+  });
+
+  it('k interno com 2 vizinhos de cabelo vira h', () => {
+    const canvas = toCanvas(['.hh.', 'hkhk', '.hh.']);
+    selOut(canvas);
+    expect(canvas[1][1]).toBe('h');
+  });
+
+  it('o idle-0 tem no máximo 8 texels k internos (a linha de base era 17)', () => {
+    const rows = PLAYER_FRAMES['idle-0'];
+    let n = 0;
+    rows.forEach((row, y) =>
+      [...row].forEach((c, x) => {
+        if (c !== 'k' || y === 0 || y === rows.length - 1 || x === 0 || x === row.length - 1) return;
+        const nb = [rows[y - 1][x], rows[y + 1][x], row[x - 1], row[x + 1]];
+        if (nb.every((v) => v !== TRANSPARENT)) n++;
+      }),
+    );
+    expect(n).toBeLessThanOrEqual(8);
+  });
+
+  it('a cabeça (linhas 0-10) tem o branco do olho w ao lado de uma pupila escura e os 3 tons de cabelo', () => {
+    const head = PLAYER_FRAMES['idle-0'].slice(0, 11);
+    expect(head.some((r) => /w[bk]|[bk]w/.test(r))).toBe(true);
+    const joined = head.join('');
+    for (const tone of ['h', 'j', 'H']) expect(joined, tone).toContain(tone);
+  });
+
+  it('o tronco (linhas 11-17) tem o botão dourado A, a luz de borda y e a linha interna o', () => {
+    const joined = PLAYER_FRAMES['idle-0'].slice(11, 18).join('');
+    for (const c of ['A', 'y', 'o']) expect(joined, c).toContain(c);
   });
 });
