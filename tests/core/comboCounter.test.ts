@@ -114,3 +114,16 @@ describe('CMB-03: nota pelos golpes distintos com 2 hits ou mais', () => {
     expect([c.hits, c.grade]).toEqual([6, 'D']);
   });
 });
+
+describe('Edge case: nova run zera o combo (reset explícito, sem esperar os 1500 ms)', () => {
+  it('reset() zera hits, nota e golpes distintos no meio de um combo', () => {
+    const c = withDistinct(5);
+    expect([c.hits, c.grade]).toEqual([5, 'A']);
+    c.reset();
+    expect([c.hits, c.grade]).toEqual([0, null]);
+    // Os distintos também zeram: dois golpes depois do reset valem nota D, não a nota do combo antigo.
+    c.hit('jab');
+    c.hit('direto');
+    expect([c.hits, c.grade]).toEqual([2, 'D']);
+  });
+});

@@ -830,10 +830,10 @@ T22 → T23 → T24
 
 **Done when**:
 
-- [ ] CTL-08 conferido: WHEN `E` is pressed while holding a prop and `S` is held THEN the player SHALL drop it.
-- [ ] MOV-15 conferido: WHEN a move deals damage to a target THEN the damage SHALL pass through `modifiers.meleeDamage` (F4) and give the +3 cursed energy of CE-06 (F5) (dano com modificador ≠ 1 conferido).
-- [ ] Edge cases conferidos: com técnica em conjuração, guarda, parry e esquiva não começam; numa nova run toda estrutura é 0, o combo zera e `timeScale` é 1.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] CTL-08 conferido: WHEN `E` is pressed while holding a prop and `S` is held THEN the player SHALL drop it.
+- [x] MOV-15 conferido: WHEN a move deals damage to a target THEN the damage SHALL pass through `modifiers.meleeDamage` (F4) and give the +3 cursed energy of CE-06 (F5) (dano com modificador ≠ 1 conferido).
+- [x] Edge cases conferidos: com técnica em conjuração, guarda, parry e esquiva não começam; numa nova run toda estrutura é 0, o combo zera e `timeScale` é 1.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
