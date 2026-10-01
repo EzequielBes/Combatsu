@@ -945,3 +945,33 @@ describe('rastros de movimento nos golpes (SPR-14)', () => {
     expect(tipCol(PLAYER_FRAMES['kick-hit'])).toBe(30);
   });
 });
+
+describe('animações de movimento do player (SPR-09, SPR-12)', () => {
+  it('idle tem 4 frames, repete, e nenhum par consecutivo (inclusive o de volta ao início) é igual (SPR-09)', () => {
+    const { frames, repeat } = PLAYER_ANIMS.idle;
+    expect(frames).toHaveLength(4);
+    expect(repeat).toBe(-1);
+    frames.forEach((f, i) => {
+      const next = frames[(i + 1) % frames.length];
+      expect(PLAYER_FRAMES[f], `${f} vs ${next}`).not.toEqual(PLAYER_FRAMES[next]);
+    });
+  });
+
+  it('jump, apex, fall, land e hurt têm o tamanho e o repeat do spec e só citam frames existentes (SPR-12)', () => {
+    const spec: Array<[string, number, number, 'min' | 'exact']> = [
+      ['jump', 2, 0, 'min'],
+      ['apex', 1, 0, 'min'],
+      ['fall', 2, -1, 'min'],
+      ['land', 2, 0, 'exact'],
+      ['hurt', 2, 0, 'exact'],
+    ];
+    for (const [name, n, repeat, mode] of spec) {
+      const anim = PLAYER_ANIMS[name];
+      expect(anim, name).toBeDefined();
+      if (mode === 'exact') expect(anim.frames, name).toHaveLength(n);
+      else expect(anim.frames.length, name).toBeGreaterThanOrEqual(n);
+      expect(anim.repeat, name).toBe(repeat);
+      for (const f of anim.frames) expect(Object.hasOwn(PLAYER_FRAMES, f), `${name}: ${f}`).toBe(true);
+    }
+  });
+});
