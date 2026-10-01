@@ -1,5 +1,7 @@
-// Preview de sprites do player (SPR-15): grava player-sheet.png (todos os frames, rotulados, a 4x) e um
-// anim-<name>.png por animação de PLAYER_ANIMS. Uso, a partir da raiz do repo: node tools/sprite-preview.mjs [outDir]
+// Preview de sprites (SPR-15, EVR-07): do player grava player-sheet.png (todos os frames, rotulados, a 4x) e um
+// anim-<name>.png por animação de PLAYER_ANIMS; do inimigo grava enemy-<aparência>-sheet.png e
+// enemy-<aparência>-anim-<name>.png por aparência. Uso, a partir da raiz do repo:
+//   node tools/sprite-preview.mjs [outDir] [--only player|enemy]
 // Os .ts são importados em Node com um hook de resolução (imports sem extensão); o desenho roda no Edge via puppeteer-core.
 import { existsSync, mkdirSync } from 'node:fs';
 import { register } from 'node:module';
@@ -8,7 +10,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = resolve(process.argv[2] ?? join(root, 'docs', 'art'));
+const args = process.argv.slice(2);
+const onlyIdx = args.indexOf('--only');
+const only = onlyIdx >= 0 ? args.splice(onlyIdx, 2)[1] : 'all';
+if (!['all', 'player', 'enemy'].includes(only)) {
+  console.error('--only aceita player, enemy ou all.');
+  process.exit(2);
+}
+const outDir = resolve(args[0] ?? join(root, 'docs', 'art'));
 mkdirSync(outDir, { recursive: true });
 
 const hookSrc = `export async function resolve(spec, ctx, next) {
@@ -26,11 +35,36 @@ const { PLAYER_MOVE_FRAMES } = await src('game/art/sprites/playerMoves.ts');
 const { PLAYER_TECH_FRAMES } = await src('game/art/sprites/playerTech.ts');
 const { DEFAULT_EDGE_PATHS, findEdge } = await import(pathToFileURL(join(root, 'scripts', 'smoke', 'lib.ts')).href);
 
-const frames = { ...P.PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES, ...PLAYER_TECH_FRAMES };
-const anims = Object.entries(P.PLAYER_ANIMS).map(([name, def]) => ({
-  name,
-  frames: def.frames.map((f, i) => ({ name: f, ms: def.durations?.[i] ?? Math.round(1000 / def.frameRate) })),
-}));
+const E = await src('game/art/sprites/enemy.ts');
+
+const toAnims = (defs) =>
+  Object.entries(defs).map(([name, def]) => ({
+    name,
+    frames: def.frames.map((f, i) => ({ name: f, ms: def.durations?.[i] ?? Math.round(1000 / def.frameRate) })),
+  }));
+
+// Cada alvo: prefixo do arquivo da prancha e das tiras, frames e animações. O inimigo gera um alvo por aparência
+// (ENEMY_VARIANT_FRAMES, quando existir; antes disso, só a folha atual, que é a corcunda).
+const targets = [];
+if (only !== 'enemy') {
+  targets.push({
+    sheet: 'player-sheet.png',
+    anim: (n) => `anim-${n}.png`,
+    frames: { ...P.PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES, ...PLAYER_TECH_FRAMES },
+    anims: toAnims(P.PLAYER_ANIMS),
+  });
+}
+if (only !== 'player') {
+  const variants = E.ENEMY_VARIANT_FRAMES ?? { corcunda: E.ENEMY_FRAMES };
+  for (const [v, vFrames] of Object.entries(variants)) {
+    targets.push({
+      sheet: `enemy-${v}-sheet.png`,
+      anim: (n) => `enemy-${v}-anim-${n}.png`,
+      frames: vFrames,
+      anims: toAnims(E.ENEMY_ANIMS),
+    });
+  }
+}
 
 const edge = findEdge(process.env.EDGE_PATH, DEFAULT_EDGE_PATHS, existsSync);
 if (!edge) {
@@ -85,16 +119,19 @@ const pageFn = (data) => {
 const browser = await puppeteer.launch({ executablePath: edge, headless: true });
 try {
   const page = await browser.newPage();
-  await page.setContent('<body style="margin:0;background:#000"></body>');
-  await page.evaluate(pageFn, { palette: PALETTE, frames, anims, scale: Number(process.env.SPRITE_SCALE) || 4 });
+  const scale = Number(process.env.SPRITE_SCALE) || 4;
   const shot = async (sel, file) => {
     const el = await page.$(sel);
     await el.screenshot({ path: join(outDir, file) });
     console.log('  ' + file);
   };
-  await shot('#sheet', 'player-sheet.png');
-  for (let i = 0; i < anims.length; i++) await shot('#anim-' + i, `anim-${anims[i].name}.png`);
-  console.log(`Prancha e ${anims.length} animações em ${outDir}`);
+  for (const t of targets) {
+    await page.setContent('<body style="margin:0;background:#000"></body>');
+    await page.evaluate(pageFn, { palette: PALETTE, frames: t.frames, anims: t.anims, scale });
+    await shot('#sheet', t.sheet);
+    for (let i = 0; i < t.anims.length; i++) await shot('#anim-' + i, t.anim(t.anims[i].name));
+    console.log(`Prancha e ${t.anims.length} animações de ${t.sheet} em ${outDir}`);
+  }
 } finally {
   await browser.close();
 }
