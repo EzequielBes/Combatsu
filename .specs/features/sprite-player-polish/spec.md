@@ -38,6 +38,7 @@ A animação também é rígida: o idle tem 2 frames a 2 fps, pulo e queda têm 
 | Pouso vs. corrida | `land` vale mesmo correndo, durante `LAND_MS` | O squash curto dá peso ao pouso; 120 ms não atrapalha | y |
 | ACs sinalizados pelo Jev como ambíguos (SPR-02..07) | Mantidos: os termos "interior `k`", "linha de base congelada", "head rows" e "torso rows" estão definidos nesta tabela e no próprio AC por número de linha/coluna | Cada um vira uma asserção numérica direta no `art.test.ts` | y |
 | ACs sinalizados como agrupados (SPR-12, SPR-13, SPR-15) | Mantidos agrupados: SPR-12 é um catálogo de animações checado num laço só; SPR-13 é um único fio (zera no pouso, soma com o dt); SPR-15 é uma única execução da ferramenta | Separar geraria ACs triviais sem ganho de teste | y |
+| Regra do sel-out (achado do Verifier, rodada 1) | `k` interno com 2 ou mais vizinhos de pele vira `x`; senão, com 2 ou mais de cabelo vira `h`; senão vira `o` | Pina o limiar da maioria por regra, não só o resultado agregado do SPR-03 | y |
 | Cor do smear | `S` (cinza-azulado claro), atrás do membro, nunca além da ponta | Não muda o alcance medido pelo teste de hitbox | y |
 | Saída do preview | `tools/sprite-preview.mjs` grava PNGs em `docs/art/` (no `.gitignore`) ou na pasta passada como 1º argumento | Revisão visual antes/depois sem versionar binários | y |
 
@@ -138,14 +139,14 @@ A animação também é rígida: o idle tem 2 frames a 2 fps, pulo e queda têm 
 | SPR-05 | P1: Protagonista | Tasks | Done |
 | SPR-06 | P1: Protagonista | Tasks | Done |
 | SPR-07 | P1: Protagonista | Tasks | Done |
-| SPR-08 | P1: Movimento | Tasks | Pending |
+| SPR-08 | P1: Movimento | Tasks | Done |
 | SPR-09 | P1: Movimento | Tasks | Done |
 | SPR-10 | P1: Movimento | Tasks | Done |
 | SPR-11 | P1: Movimento | Tasks | Done |
 | SPR-12 | P1: Movimento | Tasks | Done |
 | SPR-13 | P1: Movimento | Tasks | Done |
 | SPR-14 | P2: Smear | Tasks | Done |
-| SPR-15 | P2: Preview | Tasks | Pending |
+| SPR-15 | P2: Preview | Tasks | Done |
 
 **Coverage:** 15 total, 15 mapped to tasks, 0 unmapped
 
