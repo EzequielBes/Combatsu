@@ -1,6 +1,6 @@
 // Loop completo da run (RUN-01..11, WAVE-05/09, DIF-04, RHUD-08) com `?debug&seed=1` para reprodutibilidade.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

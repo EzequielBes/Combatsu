@@ -1,7 +1,7 @@
 // Com `?debug`: J começa a run e golpes fortes de teste (tecla 2) até os inimigos morrerem; cada morte gera um
 // único `enemyDied:<id>` no snapshot, e nada a mais depois (FND-08). Inimigos não renascem sozinhos (WAVE-05).
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

@@ -71,7 +71,7 @@ T19 → T20 → T21
 ### Phase 6: Correções do Verifier (rodada 1) — worker W6
 
 ```
-T22 → T23 → T24
+T22 → T23 → T24 → T25
 ```
 
 ---
@@ -839,3 +839,30 @@ T22 → T23 → T24
 **Gate**: full
 
 **Commit**: `test(smoke): cover prop drop, melee modifier and run reset`
+
+---
+
+### T25: Estabilidade dos smokes (Verifier rodada 2)
+
+**What**: Fixar `enemyGuard=0` em todo smoke anterior à F7 (a guarda aleatória do EBL-01 bloqueava golpes leves e deixava `kokusen`/`armed` instáveis), esperar o jogador no chão e segurar o pulo até o topo na pré-condição do pisão, e prender o edge case de `K` balançando o objeto na mão.
+**Where**: `scripts/smoke/*.smoke.mjs`
+**Depends on**: T24
+**Reuses**: `makeKit`
+**Requirement**: AIR-03, EBL-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Smokes anteriores à F7 abrem com `enemyGuard=0`; `kokusen.smoke.mjs` passa 3/3 isolado
+- [x] Pré-condição do pisão (`finisher.smoke.mjs`) passa 6/6
+- [x] Edge case conferido: com objeto na mão, `K` balança o objeto e nenhum golpe do grafo começa (mutante "só J balança" morre em `armed.smoke.mjs`)
+- [x] Gate check passes: `npm run build && npm test && npm run smoke` (22/22 em duas rodadas)
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): pin enemy guard in legacy smokes and harden stomp setup`

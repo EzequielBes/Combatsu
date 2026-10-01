@@ -28,7 +28,7 @@ export default async function ({ page, baseUrl, assert }) {
       { timeout: 15_000 },
     );
 
-  await page.goto(`${baseUrl}?debug&seed=1&noshop=1&fxlab`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&noshop=1&fxlab`, { waitUntil: 'load' });
   await waitReady();
   await stepAndSnap(20);
   await page.keyboard.press('KeyJ', { delay: 50 });

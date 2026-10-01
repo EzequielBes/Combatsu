@@ -1,7 +1,7 @@
 // Item na mão no HUD (ITEM-01..03) com `?debug&seed=1`: pega a cadeira do mapa, bate e confere o nome e as pips
 // caindo com o desgaste, e o hud.heldItem sumindo de mãos vazias.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
