@@ -13,6 +13,8 @@
  * e 8), que vira a coluna 10 do frame final (FRAME_PAD à esquerda).
  */
 
+import { selOut } from '../selOut';
+
 /** Tamanho final de todo frame da folha, em texels. */
 export const PLAYER_FRAME_W = 32;
 export const PLAYER_FRAME_H = 24;
@@ -27,29 +29,7 @@ export const PLAYER_ORIGIN = { x: CENTER_COL / PLAYER_FRAME_W, y: 1 } as const;
 export type Grid = readonly string[];
 export type Placed = readonly [Grid, number, number];
 
-const SKIN = new Set(['p', 'P', 'q', 'x']);
-const HAIR = new Set(['h', 'j', 'H']);
-
-/**
- * Passe de sel-out (SPR-03): todo `k` cujos 4 vizinhos estão dentro do canvas e não são `.` é contorno interno e
- * vira linha colorida pelo material vizinho (2+ vizinhos de pele -> `x`, 2+ de cabelo -> `h`, senão `o`).
- * O contorno externo (que encosta em transparente ou na borda) continua `k`, e `b` (detalhe preto de propósito)
- * não é tocado. Altera o canvas no lugar, lendo os vizinhos de uma cópia.
- */
-export function selOut(canvas: string[][]): void {
-  const h = canvas.length;
-  const snap = canvas.map((row) => row.slice());
-  for (let y = 1; y < h - 1; y++) {
-    for (let x = 1; x < snap[y].length - 1; x++) {
-      if (snap[y][x] !== 'k') continue;
-      const n = [snap[y - 1][x], snap[y + 1][x], snap[y][x - 1], snap[y][x + 1]];
-      if (n.some((c) => c === '.')) continue;
-      const skin = n.filter((c) => SKIN.has(c)).length;
-      const hair = n.filter((c) => HAIR.has(c)).length;
-      canvas[y][x] = skin >= 2 ? 'x' : hair >= 2 ? 'h' : 'o';
-    }
-  }
-}
+export { selOut };
 
 /** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
 export function compose(...parts: Placed[]): string[] {

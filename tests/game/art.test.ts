@@ -12,6 +12,7 @@ import {
   TECH_ICON_OVERLAY_COLOR,
 } from '../../src/game/art/techColors';
 import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, selOut, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { selOut as sharedSelOut, type SelOutConfig } from '../../src/game/art/selOut';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
@@ -988,5 +989,60 @@ describe('animações de movimento do player (SPR-09, SPR-12)', () => {
       expect(anim.repeat, name).toBe(repeat);
       for (const f of anim.frames) expect(Object.hasOwn(PLAYER_FRAMES, f), `${name}: ${f}`).toBe(true);
     }
+  });
+});
+
+describe('selOut compartilhado e configurável (EVR-10)', () => {
+  const toCanvas = (rows: string[]): string[][] => rows.map((r) => [...r]);
+  const cfg: SelOutConfig = {
+    rules: [
+      { keys: new Set(['g', 'G']), line: 'n' },
+      { keys: new Set(['A']), line: 'b' },
+    ],
+    fallback: 'K',
+  };
+
+  it('com regra própria, k cercado de 2+ vizinhos do grupo vira a linha do grupo', () => {
+    const c = toCanvas(['.g.', 'GkG', '.g.']);
+    selOut(c, cfg);
+    expect(c[1][1]).toBe('n');
+  });
+
+  it('limiar dos dois lados: 2 vizinhos do grupo valem, 1 não', () => {
+    const two = toCanvas(['.g.', 'NkN', '.G.']);
+    selOut(two, cfg);
+    expect(two[1][1]).toBe('n');
+    const one = toCanvas(['.g.', 'NkN', '.N.']);
+    selOut(one, cfg);
+    expect(one[1][1]).toBe('K');
+  });
+
+  it('o fallback vale quando nenhuma regra bate; as regras valem na ordem', () => {
+    const none = toCanvas(['.N.', 'NkN', '.N.']);
+    selOut(none, cfg);
+    expect(none[1][1]).toBe('K');
+    const both = toCanvas(['.g.', 'gkA', '.A.']); // 2 de g e 2 de A: a primeira regra ganha
+    selOut(both, cfg);
+    expect(both[1][1]).toBe('n');
+    const second = toCanvas(['.A.', 'NkA', '.N.']);
+    selOut(second, cfg);
+    expect(second[1][1]).toBe('b');
+  });
+
+  it('contorno externo (vizinho transparente ou borda) e outras teclas não mudam', () => {
+    const c = toCanvas(['.g.', 'gkg', '...', 'gbg']);
+    selOut(c, cfg);
+    expect(c[1][1]).toBe('k');
+    expect(c[3][1]).toBe('b');
+  });
+
+  it('sem configuração vale a regra do player (pele -> x)', () => {
+    const c = toCanvas(['.p.', 'pkN', '.N.']);
+    selOut(c);
+    expect(c[1][1]).toBe('x');
+  });
+
+  it('o player reexporta o mesmo selOut', () => {
+    expect(selOut).toBe(sharedSelOut);
   });
 });
