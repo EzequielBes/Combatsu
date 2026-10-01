@@ -214,19 +214,19 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
 // ================================================================ corcunda (cinza-arroxeado, um olho âmbar)
 // Tronco 11x16: cabeça à frente (direita), olho grande; a corcunda é uma massa separada atrás, com veias.
 const C_BODY: Grid = [
-  '..kkkk.....',
-  '.kIIIIkkkk.',
-  'kIIIIIIIIIk',
-  'kIIiivIIIIk',
-  'kIiivIiiiik',
-  'kIiiiiiiiik',
-  'kiivviiiiik',
-  'kiiiiiiiiik',
-  'kiiiiivviik',
-  'kiiiiiiiiik',
-  'kiiiiiiiiik',
+  '...kkkk....',
+  '..kIIIIkk..',
+  '.kIIIIIIIk.',
+  'kIIiIIIIIIk',
+  'kIivIiiIIIk',
+  'kiivIIkkkkk',
+  'kiiviKKKKKk',
+  'kiiiiKKKKKk',
+  'kHiiiKKKKKk',
+  'kHiviiKKKik',
   'kHiiiiiiiik',
-  'kHiiiiviiik',
+  'kHiiiiiiiik',
+  'kHiiviiiiik',
   'kHHiiiiiiHk',
   '.kHHHHHHHk.',
   '..kkkkkkk..',
@@ -244,11 +244,11 @@ const C_HUMP: Grid = [
   'kHiiiiii',
   'kHHiiiHi',
 ];
-const C_EYE: Grid = ['.kkkkkk', 'kwAAkAk', 'kAAAkAk', 'kAAAkAk', 'kaAAkak', '.kkkkk.'];
-const C_EYE_GLOW: Grid = ['.kkkkkk', 'kwwwrwk', 'kwwwrAk', 'kwwArAk', 'kAwArAk', '.kkkkk.'];
-const C_EYE_SQUINT: Grid = ['.......', '.......', 'kkkkkkk', 'kaAAAak', '.kkkkk.', '.......'];
-const C_MOUTH: Grid = ['kkkkkkkkkkk', 'kwkwwkwkwwk', '.kkkkkkkkk.', '.......w...'];
-const C_MOUTH_OPEN: Grid = ['kkkkkkkkkkk', 'kwrrrrrrrwk', 'krrrrrrrrrk', '.kwkwwkwwk.', '.......w...'];
+const C_EYE: Grid = ['.kkk.', 'kwAbk', 'kAAbk', 'kaAbk', '.kkk.'];
+const C_EYE_GLOW: Grid = ['.kkk.', 'kwwrk', 'kwArk', 'kAArk', '.kkk.'];
+const C_EYE_SQUINT: Grid = ['.....', '.....', 'kkkkk', 'kaAak', '.kkk.'];
+const C_MOUTH: Grid = ['.kkkkkkkkkk', 'kwkwwkwkkwk', 'kiIIIIIIIIk', '.kHHHHHHkk.'];
+const C_MOUTH_OPEN: Grid = ['.kkkkkkkkkk', 'kwrrrrrrrwk', 'krrrrrrrrrk', 'kwkwwkwwkIk', '.kHHHHHHkk.'];
 const C_ARM_HANG: Grid = [
   '.kIIk',
   '.kiIk',
@@ -313,7 +313,7 @@ const CORCUNDA_KIT: EnemyKit = {
   eye: C_EYE,
   eyeGlow: C_EYE_GLOW,
   eyeSquint: C_EYE_SQUINT,
-  eyeAt: [3, 3],
+  eyeAt: [5, 5],
   mouth: C_MOUTH,
   mouthOpen: C_MOUTH_OPEN,
   mouthAt: [2, 10],
