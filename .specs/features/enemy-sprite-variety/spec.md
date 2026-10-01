@@ -149,8 +149,8 @@ O combate estilo luta (F7) tem 17 golpes, mas a reação do alvo não conta qual
 | HRX-04 | P1: Golpe leve | Tasks | Pending |
 | HRX-05 | P1: Impacto forte | Tasks | Pending |
 | HRX-06 | P1: Impacto forte | Tasks | Pending |
-| EVR-08 | P2: Fluidez | Tasks | Pending |
-| EVR-09 | P2: Fluidez | Tasks | Pending |
+| EVR-08 | P2: Fluidez | Tasks | Done |
+| EVR-09 | P2: Fluidez | Tasks | Done |
 | EVR-10 | P2: Fluidez | Tasks | Done |
 
 **Coverage:** 16 total, 16 mapped to tasks, 0 unmapped

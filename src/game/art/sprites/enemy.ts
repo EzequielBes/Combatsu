@@ -16,6 +16,7 @@
  * com as partes do kit. '.' é transparente.
  */
 import { selOut, type SelOutConfig } from '../selOut';
+import type { AnimDef } from './player';
 
 /** Tamanho final de todo frame da folha, em texels. */
 export const ENEMY_FRAME_W = 32;
@@ -115,6 +116,8 @@ interface Pose {
   near?: Placed;
   far?: Placed;
   legs?: Placed[];
+  /** Partes extras por cima de tudo (rastro do golpe). */
+  extra?: Placed[];
 }
 
 /** Monta todos os frames de uma aparência a partir do seu kit. */
@@ -142,6 +145,7 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
     parts.push([p.eye ?? kit.eye, bx + kit.eyeAt[0], by + kit.eyeAt[1]]);
     parts.push([p.mouth ?? kit.mouth, bx + kit.mouthAt[0], by + kit.mouthAt[1]]);
     if (p.near) parts.push(p.near);
+    if (p.extra) parts.push(...p.extra);
     return compose(kit.sel, ...parts);
   };
 
@@ -160,9 +164,24 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
     [kit.legUp, legNear, legUpY],
   ];
 
-  return {
+  // Rastro do golpe: dois riscos de luz acima e abaixo do braço esticado, atrás da ponta.
+  const smearRow = '.ww.www.w';
+  const reachY = kit.reachY ?? yArm;
+  const smear: Placed[] = [
+    [[smearRow], kit.reachX + 2, reachY - 1],
+    [[smearRow], kit.reachX + 2, reachY + kit.armReach.length],
+  ];
+  // Passo de passagem: as pernas se cruzam sob o corpo e o corpo fica no ponto mais alto.
+  const passArms = {
+    near: [kit.armHang, xNear + 1, yArm] as Placed,
+    far: [far(kit.armHang), xFar + 1, yArm] as Placed,
+  };
+
+  const frames: Record<string, string[]> = {
     'idle-0': pose({ ...hang(0, 0) }),
     'idle-1': pose({ drop: 1, ...hang(0, 1) }),
+    'idle-2': pose({ ...hang(1, 0) }),
+    'idle-3': pose({ drop: 1, ...hang(1, 1) }),
 
     'walk-0': pose({
       lean: 1,
@@ -178,10 +197,19 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
       legs: step(legNear + 2, legFar - 2),
     }),
     'walk-3': pose({ lean: 1, drop: 1, ...hang(1, 1), legs: step(legFar + 1, legNear - 1, 'near') }),
+    'walk-4': pose({ lean: 1, ...passArms, legs: step(legFar, legNear, 'near') }),
+    'walk-5': pose({ lean: 1, ...passArms, legs: step(legFar, legNear, 'far') }),
 
     // Preparo (bem legível): corpo para trás, braço erguido pelas costas com as garras em cor de alerta acima da
-    // cabeça, olho aceso e boca aberta.
-    windup: pose({
+    // cabeça, olho aceso e boca aberta. `windup-0` é o início (encolhe e levanta o braço), `windup-1` é o máximo.
+    'windup-0': pose({
+      lean: -1,
+      drop: 1,
+      eye: kit.eyeGlow,
+      near: [kit.armHang, xNear - 1, yArm - 2],
+      far: [far(kit.armHang), xFar - 1, yArm],
+    }),
+    'windup-1': pose({
       lean: -1,
       eye: kit.eyeGlow,
       mouth: kit.mouthOpen,
@@ -189,14 +217,23 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
       far: [far(kit.armHang), xFar - 1, yArm],
     }),
     // Golpe: corpo para a frente e a garra do meio chega à coluna 28 = 16 texels (32 px) à frente do centro,
-    // na altura do ombro (dentro da faixa vertical da hitbox).
-    attack: pose({
+    // na altura do ombro (dentro da faixa vertical da hitbox). `attack-1` é a continuação: o braço recolhe.
+    'attack-0': pose({
       lean: 2,
       eye: kit.eyeGlow,
       mouth: kit.mouthOpen,
-      near: [kit.armReach, kit.reachX, kit.reachY ?? yArm],
+      near: [kit.armReach, kit.reachX, reachY],
       far: [far(armBack), 1, yArm],
       legs: step(legFar - 1, legNear + 2),
+      extra: smear,
+    }),
+    'attack-1': pose({
+      lean: 3,
+      drop: 1,
+      mouth: kit.mouthOpen,
+      near: [kit.armFwd, xNear + 2, yArm],
+      far: [far(armBack), 1, yArm],
+      legs: step(legFar - 2, legNear + 3),
     }),
 
     hurt: pose({
@@ -207,10 +244,15 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
       far: [far(kit.armFwd), xFar - 2, yArm - 2],
     }),
 
-    // Levantar: agachado com as garras no chão, depois meio de pé.
+    // Levantar: agachado com as garras no chão, depois meio de pé, depois quase em pé.
     'getup-0': pose({ drop: 4, eye: kit.eyeSquint, ...hang(1, 3), legs: crouchLegs }),
     'getup-1': pose({ drop: 2, ...hang(0, 2) }),
+    'getup-2': pose({ drop: 1, lean: -1, ...hang(0, 1) }),
   };
+  // Nomes antigos (linha de base e testes de alcance): `windup` e `attack` são o máximo do preparo e o golpe.
+  frames.windup = frames['windup-1'];
+  frames.attack = frames['attack-0'];
+  return frames;
 }
 
 // ================================================================ corcunda (cinza-arroxeado, um olho âmbar)
@@ -547,21 +589,20 @@ export const ENEMY_VARIANT_FRAMES: Record<EnemyVariantId, Record<string, readonl
 /** Compatibilidade: a folha da `corcunda` (linha de base de bbox, FxLab). */
 export const ENEMY_FRAMES: Record<string, readonly string[]> = ENEMY_VARIANT_FRAMES.corcunda;
 
-export interface EnemyAnimDef {
-  frames: readonly string[];
-  frameRate: number;
-  /** -1 = repete sempre; 0 = toca uma vez. */
-  repeat: number;
-}
-
-/** Animações do inimigo (CHR-03), com os nomes do pickEnemyAnim; os mesmos nomes de frame valem nas 3 aparências. */
-export const ENEMY_ANIMS: Record<string, EnemyAnimDef> = {
-  idle: { frames: ['idle-0', 'idle-1'], frameRate: 2, repeat: -1 },
-  walk: { frames: ['walk-0', 'walk-1', 'walk-2', 'walk-3'], frameRate: 6, repeat: -1 },
-  windup: { frames: ['windup'], frameRate: 1, repeat: 0 },
-  attack: { frames: ['attack'], frameRate: 1, repeat: 0 },
+/** Animações do inimigo (CHR-03, EVR-08), com os nomes do pickEnemyAnim; os mesmos nomes de frame valem nas 3 aparências. */
+export const ENEMY_ANIMS: Record<string, AnimDef> = {
+  idle: { frames: ['idle-0', 'idle-1', 'idle-2', 'idle-3'], frameRate: 4, repeat: -1, durations: [300, 200, 300, 200] },
+  walk: {
+    frames: ['walk-0', 'walk-1', 'walk-4', 'walk-2', 'walk-3', 'walk-5'],
+    frameRate: 10,
+    repeat: -1,
+    durations: [100, 100, 100, 100, 100, 100],
+  },
+  // O último frame (`windup-1`) segura 330 ms: cobre os últimos 200 ms do preparo de 450 ms (EVR-09).
+  windup: { frames: ['windup-0', 'windup-1'], frameRate: 4, repeat: 0, durations: [120, 330] },
+  attack: { frames: ['attack-0', 'attack-1'], frameRate: 16, repeat: 0, durations: [60, 60] },
   hurt: { frames: ['hurt'], frameRate: 1, repeat: 0 },
-  getup: { frames: ['getup-0', 'getup-1'], frameRate: 6, repeat: 0 },
+  getup: { frames: ['getup-0', 'getup-1', 'getup-2'], frameRate: 8, repeat: 0, durations: [120, 120, 120] },
 };
 
 // ---------------------------------------------------------------- partes do ragdoll (CHR-04)
