@@ -354,97 +354,97 @@ Eventos novos em `events`: `move:<nome>`, `block`, `parry`, `guardBreak:player`,
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CTL-01 | P1: Controles de luta | Specify | Implementing |
-| CTL-02 | P1: Controles de luta | Specify | Implementing |
-| CTL-03 | P1: Controles de luta | Specify | Implementing |
-| CTL-07 | P1: Controles de luta | Specify | Implementing |
-| CTL-08 | P1: Controles de luta | Specify | Implementing |
-| CTL-04 | P1: Controles de luta | Specify | Implementing |
-| CTL-05 | P1: Controles de luta | Specify | Implementing |
-| CTL-06 | P1: Controles de luta | Specify | Implementing |
-| CTL-09 | P1: Controles de luta | Specify | Implementing |
-| MOV-01 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-02 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-03 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-04 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-05 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-06 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-17 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-07 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-08 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-09 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-16 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-10 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-11 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-12 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-13 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-18 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-14 | P1: Grafo de golpes | Specify | Implementing |
-| MOV-15 | P1: Grafo de golpes | Specify | Implementing |
-| GRD-01 | P1: Guarda | Specify | Implementing |
-| GRD-02 | P1: Guarda | Specify | Implementing |
-| GRD-07 | P1: Guarda | Specify | Implementing |
-| GRD-06 | P1: Guarda | Specify | Implementing |
-| GRD-03 | P1: Guarda | Specify | Implementing |
-| GRD-04 | P1: Guarda | Specify | Implementing |
-| GRD-05 | P1: Guarda | Specify | Implementing |
-| GRD-08 | P1: Guarda | Specify | Implementing |
-| GRD-09 | P1: Guarda | Specify | Implementing |
-| PAR-01 | P1: Parry | Specify | Implementing |
-| PAR-02 | P1: Parry | Specify | Implementing |
-| PAR-09 | P1: Parry | Specify | Implementing |
-| PAR-03 | P1: Parry | Specify | Implementing |
-| PAR-10 | P1: Parry | Specify | Implementing |
-| PAR-07 | P1: Parry | Specify | Implementing |
-| PAR-08 | P1: Parry | Specify | Implementing |
-| PAR-04 | P1: Parry | Specify | Implementing |
-| PAR-05 | P1: Parry | Specify | Implementing |
-| PAR-06 | P1: Parry | Specify | Implementing |
-| PAR-11 | P1: Parry | Specify | Implementing |
-| DOD-01 | P1: Esquiva | Specify | Implementing |
-| DOD-09 | P1: Esquiva | Specify | Implementing |
-| DOD-02 | P1: Esquiva | Specify | Implementing |
-| DOD-03 | P1: Esquiva | Specify | Implementing |
-| DOD-07 | P1: Esquiva | Specify | Implementing |
-| DOD-08 | P1: Esquiva | Specify | Implementing |
-| DOD-04 | P1: Esquiva | Specify | Implementing |
-| DOD-10 | P1: Esquiva | Specify | Implementing |
-| DOD-05 | P1: Esquiva | Specify | Implementing |
-| DOD-06 | P1: Esquiva | Specify | Implementing |
-| DOD-11 | P1: Esquiva | Specify | Implementing |
-| DOD-12 | P1: Esquiva | Specify | Implementing |
-| STR-01 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-02 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-03 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-04 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-07 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-05 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-10 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-06 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-11 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-08 | P1: Estrutura e finalizador | Specify | Implementing |
-| FIN-01 | P1: Estrutura e finalizador | Specify | Implementing |
-| FIN-02 | P1: Estrutura e finalizador | Specify | Implementing |
-| FIN-04 | P1: Estrutura e finalizador | Specify | Implementing |
-| FIN-03 | P1: Estrutura e finalizador | Specify | Implementing |
-| STR-09 | P1: Estrutura e finalizador | Specify | Implementing |
-| AIR-01 | P2: Aéreos e voadora | Specify | Implementing |
-| AIR-02 | P2: Aéreos e voadora | Specify | Implementing |
-| AIR-03 | P2: Aéreos e voadora | Specify | Implementing |
-| AIR-04 | P2: Aéreos e voadora | Specify | Implementing |
-| AIR-05 | P2: Aéreos e voadora | Specify | Implementing |
-| EBL-01 | P2: Inimigos que bloqueiam | Specify | Implementing |
-| EBL-02 | P2: Inimigos que bloqueiam | Specify | Implementing |
-| EBL-03 | P2: Inimigos que bloqueiam | Specify | Implementing |
-| EBL-05 | P2: Inimigos que bloqueiam | Specify | Implementing |
-| EBL-04 | P2: Inimigos que bloqueiam | Specify | Implementing |
-| CMB-01 | P2: Contador de combo e nota de estilo | Specify | Implementing |
-| CMB-02 | P2: Contador de combo e nota de estilo | Specify | Implementing |
-| CMB-03 | P2: Contador de combo e nota de estilo | Specify | Implementing |
-| CMB-04 | P2: Contador de combo e nota de estilo | Specify | Implementing |
-| CMB-05 | P2: Contador de combo e nota de estilo | Specify | Implementing |
-| SPC-01 | P3: Palma explosiva (meia-lua) | Specify | Implementing |
-| SPC-02 | P3: Palma explosiva (meia-lua) | Specify | Implementing |
+| CTL-01 | P1: Controles de luta | Specify | Verified |
+| CTL-02 | P1: Controles de luta | Specify | Verified |
+| CTL-03 | P1: Controles de luta | Specify | Verified |
+| CTL-07 | P1: Controles de luta | Specify | Verified |
+| CTL-08 | P1: Controles de luta | Specify | Verified |
+| CTL-04 | P1: Controles de luta | Specify | Verified |
+| CTL-05 | P1: Controles de luta | Specify | Verified |
+| CTL-06 | P1: Controles de luta | Specify | Verified |
+| CTL-09 | P1: Controles de luta | Specify | Verified |
+| MOV-01 | P1: Grafo de golpes | Specify | Verified |
+| MOV-02 | P1: Grafo de golpes | Specify | Verified |
+| MOV-03 | P1: Grafo de golpes | Specify | Verified |
+| MOV-04 | P1: Grafo de golpes | Specify | Verified |
+| MOV-05 | P1: Grafo de golpes | Specify | Verified |
+| MOV-06 | P1: Grafo de golpes | Specify | Verified |
+| MOV-17 | P1: Grafo de golpes | Specify | Verified |
+| MOV-07 | P1: Grafo de golpes | Specify | Verified |
+| MOV-08 | P1: Grafo de golpes | Specify | Verified |
+| MOV-09 | P1: Grafo de golpes | Specify | Verified |
+| MOV-16 | P1: Grafo de golpes | Specify | Verified |
+| MOV-10 | P1: Grafo de golpes | Specify | Verified |
+| MOV-11 | P1: Grafo de golpes | Specify | Verified |
+| MOV-12 | P1: Grafo de golpes | Specify | Verified |
+| MOV-13 | P1: Grafo de golpes | Specify | Verified |
+| MOV-18 | P1: Grafo de golpes | Specify | Verified |
+| MOV-14 | P1: Grafo de golpes | Specify | Verified |
+| MOV-15 | P1: Grafo de golpes | Specify | Verified |
+| GRD-01 | P1: Guarda | Specify | Verified |
+| GRD-02 | P1: Guarda | Specify | Verified |
+| GRD-07 | P1: Guarda | Specify | Verified |
+| GRD-06 | P1: Guarda | Specify | Verified |
+| GRD-03 | P1: Guarda | Specify | Verified |
+| GRD-04 | P1: Guarda | Specify | Verified |
+| GRD-05 | P1: Guarda | Specify | Verified |
+| GRD-08 | P1: Guarda | Specify | Verified |
+| GRD-09 | P1: Guarda | Specify | Verified |
+| PAR-01 | P1: Parry | Specify | Verified |
+| PAR-02 | P1: Parry | Specify | Verified |
+| PAR-09 | P1: Parry | Specify | Verified |
+| PAR-03 | P1: Parry | Specify | Verified |
+| PAR-10 | P1: Parry | Specify | Verified |
+| PAR-07 | P1: Parry | Specify | Verified |
+| PAR-08 | P1: Parry | Specify | Verified |
+| PAR-04 | P1: Parry | Specify | Verified |
+| PAR-05 | P1: Parry | Specify | Verified |
+| PAR-06 | P1: Parry | Specify | Verified |
+| PAR-11 | P1: Parry | Specify | Verified |
+| DOD-01 | P1: Esquiva | Specify | Verified |
+| DOD-09 | P1: Esquiva | Specify | Verified |
+| DOD-02 | P1: Esquiva | Specify | Verified |
+| DOD-03 | P1: Esquiva | Specify | Verified |
+| DOD-07 | P1: Esquiva | Specify | Verified |
+| DOD-08 | P1: Esquiva | Specify | Verified |
+| DOD-04 | P1: Esquiva | Specify | Verified |
+| DOD-10 | P1: Esquiva | Specify | Verified |
+| DOD-05 | P1: Esquiva | Specify | Verified |
+| DOD-06 | P1: Esquiva | Specify | Verified |
+| DOD-11 | P1: Esquiva | Specify | Verified |
+| DOD-12 | P1: Esquiva | Specify | Verified |
+| STR-01 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-02 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-03 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-04 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-07 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-05 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-10 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-06 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-11 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-08 | P1: Estrutura e finalizador | Specify | Verified |
+| FIN-01 | P1: Estrutura e finalizador | Specify | Verified |
+| FIN-02 | P1: Estrutura e finalizador | Specify | Verified |
+| FIN-04 | P1: Estrutura e finalizador | Specify | Verified |
+| FIN-03 | P1: Estrutura e finalizador | Specify | Verified |
+| STR-09 | P1: Estrutura e finalizador | Specify | Verified |
+| AIR-01 | P2: Aéreos e voadora | Specify | Verified |
+| AIR-02 | P2: Aéreos e voadora | Specify | Verified |
+| AIR-03 | P2: Aéreos e voadora | Specify | Verified |
+| AIR-04 | P2: Aéreos e voadora | Specify | Verified |
+| AIR-05 | P2: Aéreos e voadora | Specify | Verified |
+| EBL-01 | P2: Inimigos que bloqueiam | Specify | Verified |
+| EBL-02 | P2: Inimigos que bloqueiam | Specify | Verified |
+| EBL-03 | P2: Inimigos que bloqueiam | Specify | Verified |
+| EBL-05 | P2: Inimigos que bloqueiam | Specify | Verified |
+| EBL-04 | P2: Inimigos que bloqueiam | Specify | Verified |
+| CMB-01 | P2: Contador de combo e nota de estilo | Specify | Verified |
+| CMB-02 | P2: Contador de combo e nota de estilo | Specify | Verified |
+| CMB-03 | P2: Contador de combo e nota de estilo | Specify | Verified |
+| CMB-04 | P2: Contador de combo e nota de estilo | Specify | Verified |
+| CMB-05 | P2: Contador de combo e nota de estilo | Specify | Verified |
+| SPC-01 | P3: Palma explosiva (meia-lua) | Specify | Verified |
+| SPC-02 | P3: Palma explosiva (meia-lua) | Specify | Verified |
 
 **Coverage:** 91 total, 0 Verified
 
