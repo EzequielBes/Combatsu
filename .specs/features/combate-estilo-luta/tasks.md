@@ -802,11 +802,11 @@ T22 → T23 → T24
 
 **Done when**:
 
-- [ ] FIN-01 conferido na borda: WHEN a `both` press (CTL-04) happens within 40 px of a broken regular enemy THEN the finisher SHALL hit that enemy for 40 damage and `events` SHALL get `finisher:<id>` (40 px faz; mata `finisherRangePx` 40→41).
-- [ ] FIN-03 conferido: IF a `both` press happens and no broken enemy is within 40 px THEN no finisher SHALL happen (41 px e inimigo não quebrado).
-- [ ] FIN-04 conferido: WHEN the finisher hits THEN the main camera zoom SHALL reach 1.7 within 100 ms of real time (lendo o zoom vivo da câmera principal).
-- [ ] AIR-03 conferido: WHEN a heavy press happens in the air while `S` is held THEN `pisao` (14 heavy) SHALL start and set the player vertical speed to the max fall speed (velocidade vertical viva).
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] FIN-01 conferido na borda: WHEN a `both` press (CTL-04) happens within 40 px of a broken regular enemy THEN the finisher SHALL hit that enemy for 40 damage and `events` SHALL get `finisher:<id>` (40 px faz; mata `finisherRangePx` 40→41).
+- [x] FIN-03 conferido: IF a `both` press happens and no broken enemy is within 40 px THEN no finisher SHALL happen (41 px e inimigo não quebrado).
+- [x] FIN-04 conferido: WHEN the finisher hits THEN the main camera zoom SHALL reach 1.7 within 100 ms of real time (lendo o zoom vivo da câmera principal).
+- [x] AIR-03 conferido: WHEN a heavy press happens in the air while `S` is held THEN `pisao` (14 heavy) SHALL start and set the player vertical speed to the max fall speed (velocidade vertical viva).
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
