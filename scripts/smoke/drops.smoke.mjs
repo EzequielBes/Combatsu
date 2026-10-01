@@ -2,7 +2,7 @@
 // Fragmentos (ECO-01, ECO-08..10, ECO-16, ECO-21..22, ECO-27) com `?debug&seed=1`: mata um inimigo, anda até os
 // fragmentos e confere carteira, ímã, eventos, HUD, expiração e a limpeza numa run nova.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1&noshop=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&noshop=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

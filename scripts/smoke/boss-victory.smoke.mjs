@@ -1,6 +1,6 @@
 // Barra do chefe, faixas e vitória (BHUD-01..07, BWIN-01..03, BOSS-04/07), com `?debug&seed=1&round=5`.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1&round=5`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5`, { waitUntil: 'load' });
   await page.waitForFunction(() => {
     try {
       return !!window.__game.snapshot();

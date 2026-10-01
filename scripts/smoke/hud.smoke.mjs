@@ -1,7 +1,7 @@
 // HUD da run (RHUD-01..07) com `?debug&seed=1`: rodada e restantes, faixa temporária, "rodada concluída", telas
 // de título e de game over, e a checagem de que o HUD está fora da câmera principal (AD-003).
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

@@ -1,6 +1,6 @@
 // Com `?debug`: o boot é a tela de título (RUN-01); J começa a run e a onda da rodada 1 nasce (FND-09, FND-22).
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
