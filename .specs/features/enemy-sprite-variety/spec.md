@@ -141,14 +141,14 @@ O combate estilo luta (F7) tem 17 golpes, mas a reação do alvo não conta qual
 | EVR-03 | P1: Variedade | Tasks | Done |
 | EVR-04 | P1: Variedade | Tasks | Pending |
 | EVR-05 | P1: Variedade | Tasks | Pending |
-| EVR-06 | P1: Variedade | Tasks | Pending |
+| EVR-06 | P1: Variedade | Tasks | Done |
 | EVR-07 | P1: Variedade | Tasks | Done |
 | HRX-01 | P1: Golpe leve | Tasks | Done |
-| HRX-02 | P1: Golpe leve | Tasks | Pending |
+| HRX-02 | P1: Golpe leve | Tasks | Done |
 | HRX-03 | P1: Golpe leve | Tasks | Done |
-| HRX-04 | P1: Golpe leve | Tasks | Pending |
-| HRX-05 | P1: Impacto forte | Tasks | Pending |
-| HRX-06 | P1: Impacto forte | Tasks | Pending |
+| HRX-04 | P1: Golpe leve | Tasks | Done |
+| HRX-05 | P1: Impacto forte | Tasks | Done |
+| HRX-06 | P1: Impacto forte | Tasks | Done |
 | EVR-08 | P2: Fluidez | Tasks | Done |
 | EVR-09 | P2: Fluidez | Tasks | Done |
 | EVR-10 | P2: Fluidez | Tasks | Done |

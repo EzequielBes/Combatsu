@@ -277,8 +277,8 @@ T13
 
 **Done when**:
 
-- [ ] Gate check passes: `npm run build && npm test`
-- [ ] Os smokes existentes do inimigo continuam passando (`fight`, `enemy-guard`, `enemy-died`, `finisher`): `npm run smoke`.
+- [x] Gate check passes: `npm run build && npm test`
+- [x] Os smokes existentes do inimigo continuam passando (`fight`, `enemy-guard`, `enemy-died`, `finisher`): `npm run smoke`.
 
 **Tests**: none (coberto pelo smoke da T13)
 **Gate**: full

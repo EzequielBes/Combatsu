@@ -2,6 +2,7 @@ import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { CastState } from '../core/cast';
+import type { EnemyVariant } from '../core/enemyVariant';
 import type { EnemyState } from '../core/enemyBrain';
 import type { ToolKey } from '../core/loot';
 import type { PropState } from '../core/props';
@@ -49,6 +50,15 @@ export interface GameSnapshot {
     structure: { cur: number; max: number; broken: boolean };
     /** Guardando (EBL-01) (CTL-05). */
     guarding: boolean;
+    /** Aparência sorteada (EVR-04/05). */
+    variant: EnemyVariant;
+    /** Frame atual do sprite e se ele está visível (HRX-02/05). */
+    frame: string;
+    spriteVisible: boolean;
+    /** Ragdoll visível; `null` fora de ragdoll (HRX-05/06). */
+    ragdollVisible: boolean | null;
+    /** Chaves de textura das 6 partes do ragdoll; `null` fora de ragdoll (EVR-06). */
+    ragdollTextures: string[] | null;
   }[];
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */

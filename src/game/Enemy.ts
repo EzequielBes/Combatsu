@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
-import { RUN_THRESHOLD, pickEnemyAnim } from '../core/animState';
+import { RUN_THRESHOLD, pickEnemyAnim, type LightReaction } from '../core/animState';
+import type { EnemyVariant } from '../core/enemyVariant';
+import { pickHitReaction, type HitReaction } from '../core/hitReaction';
 import { Filters } from '../core/collision';
 import { EnemyAI, type AIEvent } from '../core/enemyAI';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
@@ -19,7 +21,7 @@ import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { Ragdoll } from './Ragdoll';
-import { SIZE, TEX } from './textures';
+import { SIZE, TEX, enemyTex } from './textures';
 
 /** Duração (ms) do flash branco do golpe leve. */
 const HIT_FLASH_MS = 70;
@@ -60,6 +62,16 @@ export class Enemy implements Hittable {
   private readonly body: MatterJS.BodyType;
   private readonly view: Phaser.GameObjects.Sprite;
   private ragdoll: Ragdoll | null = null;
+  /** Reação leve em curso (HRX-02); só vale enquanto o cérebro está em hitstun. */
+  private reaction: LightReaction | null = null;
+  /** Última reação de cabeça, para a alternância cabeça-a/cabeça-b (HRX-01). */
+  private lastReaction: HitReaction | null = null;
+  /** Reação escolhida no `receiveHit`, consumida pelo evento `hitReaction` do cérebro. */
+  private pickedReaction: HitReaction | null = null;
+  /** Chave da animação de reação que está tocando: evita reiniciar a cada frame (HRX-02). */
+  private reactionKey: string | null = null;
+  /** O ragdoll nasceu escondido atrás da pose de impacto; o próximo `update` troca sprite por ragdoll (HRX-05/06). */
+  private pendingRagdollReveal = false;
   /** Sprite da ferramenta na mão (ARM-09/10), `null` se o inimigo não está armado. */
   private readonly weaponView: Phaser.GameObjects.Sprite | null;
   /** Barra de vida acima da cabeça, na câmera do mundo: aparece no primeiro dano e some ao morrer (HUD-02). */
@@ -127,6 +139,8 @@ export class Enemy implements Hittable {
     private readonly onDied?: (enemy: Enemy, x: number, y: number) => void,
     /** Ferramenta amaldiçoada na mão (ARM-01..03), `null` para um inimigo comum desarmado. */
     private readonly weaponInfo: { tool: ToolKey; rare: boolean } | null = null,
+    /** Aparência sorteada na cena (EVR-04/05): folha, animações e partes do ragdoll. */
+    readonly variant: EnemyVariant = 'corcunda',
   ) {
     const { w, h } = SIZE.enemy;
     this.brain = new EnemyBrain(tuning.brain);
@@ -142,7 +156,7 @@ export class Enemy implements Hittable {
     tagBody(this.body, { kind: 'character', target: this });
     this.ai = new EnemyAI(tuning.ai, spawn.x);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
-    this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, TEX.enemy, 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
+    this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, enemyTex(variant), 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
     this.weaponView = weaponInfo
       ? scene.add.sprite(spawn.x, spawn.y, weaponInfo.tool === 'cursedKnife' ? TEX.cursedKnife : TEX.cursedClub, 'hold-a')
       : null;
@@ -226,6 +240,26 @@ export class Enemy implements Hittable {
     return this.ai.chaseSpeed;
   }
 
+  /** Frame atual do sprite (debug, HRX-02/05). */
+  get frame(): string {
+    return String(this.view.frame.name);
+  }
+
+  /** Sprite visível (debug, HRX-05). */
+  get spriteVisible(): boolean {
+    return this.view.visible;
+  }
+
+  /** Ragdoll existe e está visível; `null` fora de ragdoll (debug, HRX-05). */
+  get ragdollVisible(): boolean | null {
+    return this.ragdoll ? this.ragdoll.parts[0].visible : null;
+  }
+
+  /** Chaves de textura das partes do ragdoll; `null` fora de ragdoll (debug, EVR-06). */
+  get ragdollTextures(): string[] | null {
+    return this.ragdoll ? this.ragdoll.textureKeys : null;
+  }
+
   /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
   get weapon(): ToolKey | null {
     return this.weaponInfo?.tool ?? null;
@@ -261,12 +295,14 @@ export class Enemy implements Hittable {
     if (wasBroken && !isFinisher) reaction = { ...hit, strength: 'light', force: 0 };
     // Empurrão (SPC-02): sai rente ao chão, para o deslocamento horizontal não esbarrar em plataformas.
     else if (effect?.type === 'push') reaction = { ...hit, direction: { x: hit.direction.x, y: PUSH_LIFT } };
+    this.pickedReaction = pickHitReaction({ strength: reaction.strength, moveName: hit.moveName }, this.lastReaction);
     const events = this.brain.receiveHit(reaction, effect?.type === 'knockdown' ? { ragdollStunMs: effect.ms } : {});
     if (events.length === 0) return false; // já morto
     this.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
     // Levar golpe cancela o preparo ou o golpe em andamento (AI-04).
     this.onAI(this.ai.interrupt());
     this.handle(events);
+    this.pickedReaction = null;
     const survived = !this.brain.isDead;
     if (survived && this.structure.add(enemyStructureGain(hit))) this.onBreak();
     if (survived && effect) this.applyEffect(effect, hit);
@@ -446,6 +482,7 @@ export class Enemy implements Hittable {
     this.structure.update(dtMs);
     if (!this.structure.broken) this.finished = false;
     this.guard.update(dtMs);
+    if (this.pendingRagdollReveal) this.revealRagdoll();
     this.handle(this.brain.update(dtMs));
     if (this._removed) return;
     // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto,
@@ -524,7 +561,13 @@ export class Enemy implements Hittable {
   private animate(): void {
     const vxPerS = this.body.velocity.x / PX_PER_S_TO_STEP;
     const stunned = this.suppressedMs > 0 || this.structure.broken;
-    const picked = pickEnemyAnim({ brain: this.brain.state, ai: this.ai.state, moving: Math.abs(vxPerS) > RUN_THRESHOLD });
+    if (this.brain.state !== 'hitstun') this.reaction = null;
+    const picked = pickEnemyAnim({
+      brain: this.brain.state,
+      ai: this.ai.state,
+      moving: Math.abs(vxPerS) > RUN_THRESHOLD,
+      reaction: this.reaction,
+    });
     const anim = stunned && picked !== 'getup' ? 'hurt' : picked;
     this.view.setPosition(this.body.position.x, this.body.position.y + SIZE.enemy.h / 2);
     // Escala negativa espelha em volta da origem (o pé no centro do corpo), não do centro do frame largo.
@@ -538,7 +581,17 @@ export class Enemy implements Hittable {
       this.view.clearTint();
       this.guardTinted = false;
     }
-    this.view.anims.play(enemyAnimKey('corcunda', anim), true);
+    const key = enemyAnimKey(this.variant, anim);
+    if (anim.startsWith('hurt-')) {
+      // Reação leve: já foi iniciada do frame 0 no golpe; aqui só garante a chave certa, sem reiniciar enquanto vale.
+      if (this.reactionKey !== key) {
+        this.view.anims.play(key, false);
+        this.reactionKey = key;
+      }
+      return;
+    }
+    this.reactionKey = null;
+    this.view.anims.play(key, true);
   }
 
   private handle(events: EnemyEvent[]): void {
@@ -553,8 +606,24 @@ export class Enemy implements Hittable {
     }
   }
 
-  /** Golpe leve: animação `hurt` (pelo pickEnemyAnim, com o cérebro em hitstun) + flash branco, sem ragdoll. */
+  /**
+   * Golpe leve: animação `hurt-<reaction>` do frame 0, mesmo se já estava em outra reação (HRX-02), + flash branco,
+   * sem ragdoll. Quebrado ou aparado continua mostrando `hurt` (HRX-04, decidido no `animate`).
+   */
   private playHitReaction(hit: Hit): void {
+    const picked = this.pickedReaction;
+    if (picked && picked !== 'impact') {
+      this.reaction = picked;
+      if (picked === 'head-a' || picked === 'head-b') this.lastReaction = picked;
+      if (!this.structure.broken && this.suppressedMs <= 0) {
+        const key = enemyAnimKey(this.variant, `hurt-${picked}`);
+        this.view.anims.play(key, false);
+        this.view.anims.restart();
+        this.reactionKey = key;
+      }
+    } else {
+      this.reaction = null;
+    }
     const d = normalize(hit.direction);
     this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
     this.view.setTintFill(PALETTE.w);
@@ -566,13 +635,28 @@ export class Enemy implements Hittable {
   private enterRagdoll(hit: Hit): void {
     this.view.clearTint();
     if (!this.ragdoll) {
-      this.ragdoll = new Ragdoll(this.scene, this.body.position.x, this.body.position.y - 3);
+      this.ragdoll = new Ragdoll(this.scene, this.body.position.x, this.body.position.y - 3, this.variant);
       for (const b of this.ragdoll.bodies) tagBody(b, { kind: 'character', target: this });
-      this.view.setVisible(false);
+      // Pose de impacto (HRX-05/06): a cena não atualiza o inimigo durante o hitstop, então o ragdoll nasce
+      // escondido e o sprite fica no frame `impact` até o próximo `update`, que faz a troca.
+      this.ragdoll.setVisible(false);
+      this.view.anims.stop();
+      this.view.setVisible(true).setFrame('impact');
+      this.reactionKey = null;
+      this.reaction = null;
+      this.pendingRagdollReveal = true;
       applyFilter(this.body, Filters.hidden);
       setIgnoreGravity(this.body, true);
     }
     this.ragdoll.impulse(hit.direction, hit.force);
+  }
+
+  /** Primeiro update depois da pose de impacto: o ragdoll aparece e o sprite some (HRX-05/06). */
+  private revealRagdoll(): void {
+    this.pendingRagdollReveal = false;
+    if (!this.ragdoll) return;
+    this.ragdoll.setVisible(true);
+    this.view.setVisible(false);
   }
 
   /** Levantar: o ragdoll some e o sprite volta tocando a animação `getup` (o cérebro fica em gettingUp). */
@@ -586,6 +670,8 @@ export class Enemy implements Hittable {
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
     applyFilter(this.body, Filters.enemy);
     setIgnoreGravity(this.body, false);
+    this.pendingRagdollReveal = false;
+    this.reactionKey = null;
     this.view.setVisible(true);
     this.animate();
   }
