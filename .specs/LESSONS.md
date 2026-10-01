@@ -258,6 +258,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: PAR-02/GRD-04 (validation.md combate-estilo-luta, gap 1) (spec combat)
 - last seen: 2026-10-01T12:33:06Z
 
+### L-042 - When a feature adds randomness to hit outcomes, pin that randomness off in the debug query of every older smoke that asserts exact damage or energy, because a seeded draw still varies with frame jitter and makes those smokes flaky.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: combate-estilo-luta
+- evidence: scripts/smoke/kokusen.smoke.mjs:31 (validation.md combate-estilo-luta rodada 2, atribuição do kokusen) (smoke)
+- last seen: 2026-10-01T13:38:37Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
