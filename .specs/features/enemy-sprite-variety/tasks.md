@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/enemy-sprite-variety/spec.md`
 **Design**: `.specs/features/enemy-sprite-variety/design.md`
-**Status**: In progress
+**Status**: Done (Verifier PASS, rodada 2)
 **Branch**: `feat/enemy-sprite-variety` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS, AD-008)
 
 ---

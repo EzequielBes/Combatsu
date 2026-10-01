@@ -24,6 +24,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F8 | ~~`combos-estilo-luta`~~ | — | — | Absorvida pela F7 `combate-estilo-luta` (28/09) |
 | F9 | `tecnicas-avancadas` | Complex | PUR, DOM, CHT | Planejada |
 | — | `sprite-player-polish` | Large | SPR | Done (Verifier PASS, rodada 2) |
+| — | `enemy-sprite-variety` | Large | EVR, HRX | Done (Verifier PASS, rodada 2) |
 
 ## Esboço das stories (viram spec.md completa no Specify de cada feature)
 
