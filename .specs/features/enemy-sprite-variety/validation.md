@@ -1,6 +1,6 @@
-# Validation: enemy-sprite-variety - FAIL
+# Validation: enemy-sprite-variety - PASS
 
-**Result**: FAIL
+**Resultado da rodada 1**: reprovada (EVR-04 e HRX-02), superada pela Rodada 2 no fim deste arquivo.
 **Branch**: `feat/enemy-sprite-variety`
 **Diff range**: `dev..HEAD` = `24cf298..840cc6e` (26 arquivos, +2226/-301)
 **Verifier**: independente (autor != verificador), Sonnet 5.5. Nenhum código de produção foi alterado.
@@ -61,3 +61,48 @@ Resultado: 8 mutantes, 6 mortos, 2 sobreviventes (M2b, M4). Isolamento: `git sta
 1. EVR-04 (média-alta): nenhum teste prende o stream usado pelo sorteio no adaptador. Trocar `run.variantRng` por `run.lootRng` em `src/scenes/TestScene.ts:843` desloca os drops sem que nada falhe. Correção: smoke que compara a sequência de aparências contra `new Rng(seed ^ 0x6a09e667)` ou os drops com e sem sorteio (M2b).
 2. HRX-02 (média): sem asserção de reinício do frame 0 quando a mesma reação se repete (dois `socoBaixo` seguidos) nem de que o frame segue em `hurt-<reação>-1` depois do tick do dano (M3 no smoke, M4). Correção: smoke com dois golpes `body` em sequência lendo `hurt-body-0` de novo, e leitura do frame 1-2 frames depois do golpe.
 3. Baixa: edge cases `hurtWhileDown` (sem sprite de reação) e morte por golpe leve via `impact` sem asserção; EVR-02 não define o denominador da fração.
+
+---
+
+## Rodada 2
+
+**Result**: PASS
+**Branch**: `feat/enemy-sprite-variety`, HEAD `fddf4c2` (correções sobre `22a8eed`). Verifier independente, Sonnet 5.5. Nenhum código de produção foi alterado.
+
+Veredito: as duas lacunas de AC da rodada 1 estão fechadas (EVR-04 por teste que mata o M2b; HRX-02 M4 aceito como mutante equivalente, com prova abaixo). As lacunas baixas viram nota.
+
+### Sensor (scratch em `git worktree` temporário com `node_modules` por junction)
+
+| # | Mutante | Resultado |
+| --- | --- | --- |
+| M2b | `src/scenes/TestScene.ts:843` sorteia com `run.lootRng` | MORTO: `enemy-react.smoke.mjs:87` falha (`a1` = bruto, rastejante, bruto... contra `expected` = bruto, corcunda, rastejante...) |
+| M4 | `src/game/Enemy.ts:620-621` `play(key,false)+restart()` vira `play(key,true)` | SOBREVIVE no smoke (`enemy-react` ok); aceito como equivalente, ver abaixo |
+
+Isolamento: worktree e junction removidos, `git worktree list` sem o scratch e `git status --porcelain` idêntico ao baseline (`.agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`).
+
+### M4 é equivalente no comportamento alcançável
+
+`play(key, true)` só difere de `play(key,false)+restart()` quando a mesma `hurt-<r>` é pedida enquanto ainda toca (os 3 frames somam 220 ms, `repeat 0`; terminada a animação, `play(key,true)` recomeça igual). Levantamento dos caminhos que pedem reação leve:
+
+- Só `Enemy.receiveHit` chega a `playHitReaction` (`src/game/Enemy.ts:298`); `moveName` só vem de `Player.ts:862` (golpes de `src/data/moves.ts`) e do finalizador (`TestScene.ts:1168`, fora das listas, alterna cabeça).
+- Golpe sem `moveName` (objeto, projétil, debug, técnica sem nome de golpe) e o finalizador caem em `head-a/head-b`, que alternam por `lastReaction` (`src/core/hitReaction.ts:25`): dois seguidos nunca pedem a mesma chave. Os que são fortes viram `impact` e não tocam `hurt`.
+- Só dois golpes leves dão chave repetível: `socoBaixo` (body) e `gancho` (uppercut). `gancho` só entra como follow-up (`input.via: 'followUp'`), então não repete sem recomeçar a cadeia. `socoBaixo` não é cancelável nele mesmo: o intervalo mínimo entre dois acertos é o resto do active (<= 80) + recovery 120 + startup 60 = 240 ms > 220 ms.
+- Hitstop pausa física, animações e timers juntos (`TestScene.ts:199`), então só alonga o intervalo na mesma proporção. Esquiva só cancela o recovery e não encurta o intervalo para um novo acerto.
+- Inimigo quebrado ou com `suppressedMs > 0` não toca a reação (`Enemy.ts:617`).
+
+Conclusão: nenhum caminho alcançável repete a chave durante a reprodução. O smoke ainda cobre o que é alcançável: `socoBaixo` repetido volta a `hurt-body-0` (`:150`), e `jab`/`direto` com chave alternada reiniciam do frame 0 (`:154-160`). Sem cenário novo.
+
+### Lacunas baixas
+- `hurtWhileDown` sem sprite de reação e morte por golpe leve via `impact`: a spec não os exige como AC; o primeiro é um ramo de uma linha (`ragdoll?.flash()`), o segundo passa pelo mesmo caminho do HRX-05. Nota, sem asserção.
+- Denominador do EVR-02: o teste divide pelo menor número de texels não transparentes do par; a spec diz só "dos texels". Nota de precisão para a próxima edição da spec, sem bloqueio.
+
+### Gates
+| Gate | Resultado |
+| --- | --- |
+| `npm run typecheck` | exit 0 |
+| `npm test` | 69 arquivos, 1135 testes passam |
+| `npm run build` | exit 0 (só o aviso de chunk > 500 kB já existente) |
+| `npm run smoke` completo | 23 de 24 ok na 1a rodada; só `heal` falhou (`HEAL-09`, intermitente conhecido) e passou isolado na repetição. `armed` e `enemy-react` ok |
+
+### Lacunas restantes
+Nenhuma de AC. Notas: `hurtWhileDown`, morte por golpe leve, denominador do EVR-02, M4 equivalente.
