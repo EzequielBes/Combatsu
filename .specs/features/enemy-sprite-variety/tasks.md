@@ -116,8 +116,8 @@ T13
 
 **Done when**:
 
-- [ ] `brain === 'hitstun'` + `reaction` → `hurt-<reaction>`; sem `reaction` → `hurt`; outros estados ignoram `reaction`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] `brain === 'hitstun'` + `reaction` → `hurt-<reaction>`; sem `reaction` → `hurt`; outros estados ignoram `reaction`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
