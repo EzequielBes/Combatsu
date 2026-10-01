@@ -13,6 +13,7 @@ import {
 } from '../../src/game/art/techColors';
 import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
+import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
 import {
   COMBO_GRADE_COLORS,
@@ -796,6 +797,36 @@ describe('cores da barra de estrutura e do combo (STR-09)', () => {
     for (const grade of order) expect(Object.values(PALETTE)).toContain(COMBO_GRADE_COLORS[grade]);
     for (let i = 1; i < order.length; i++) {
       expect(COMBO_GRADE_COLORS[order[i]], order[i]).not.toBe(COMBO_GRADE_COLORS[order[i - 1]]);
+    }
+  });
+});
+
+describe('alinhamento dos frames do player contra a linha de base congelada (SPR-06)', () => {
+  const bboxOf = (rows: readonly string[]): [number, number, number, number] => {
+    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    rows.forEach((row, y) => {
+      [...row].forEach((c, x) => {
+        if (c === TRANSPARENT) return;
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      });
+    });
+    return [x0, y0, x1, y1];
+  };
+  const all: Record<string, readonly string[]> = { ...PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES, ...PLAYER_TECH_FRAMES };
+  const entries = Object.entries(playerBBoxBaseline as Record<string, number[]>);
+
+  it('a fixture congelada cobre os 102 frames pré-existentes', () => {
+    expect(entries).toHaveLength(102);
+  });
+
+  it('cada borda da bbox fica a até 2 texels da linha de base', () => {
+    for (const [name, base] of entries) {
+      expect(all[name], `frame ${name} existe`).toBeDefined();
+      const now = bboxOf(all[name]);
+      for (let i = 0; i < 4; i++) {
+        expect(Math.abs(now[i] - base[i]), `${name} borda ${i}: ${now[i]} vs ${base[i]}`).toBeLessThanOrEqual(2);
+      }
     }
   });
 });
