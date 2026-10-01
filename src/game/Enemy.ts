@@ -3,14 +3,18 @@ import { RUN_THRESHOLD, pickEnemyAnim } from '../core/animState';
 import { Filters } from '../core/collision';
 import { EnemyAI, type AIEvent } from '../core/enemyAI';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
+import { EnemyGuard, type GuardRoll } from '../core/enemyGuard';
+import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structure';
 import type { EnemyBase } from '../core/difficulty';
 import type { ToolKey } from '../core/loot';
 import { SpawnGrace } from '../core/spawnGrace';
+import { DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
 import { normalize, type Hit, type Vec2 } from '../core/hit';
 import { enemyAnimKey } from './art';
 import { ENEMY_BAR_WELL } from './art/hud';
 import { ART_SCALE, PALETTE } from './art/palette';
 import { ENEMY_ORIGIN } from './art/sprites/enemy';
+import { STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_BREAK_COLOR, STRUCTURE_BAR_FILL_COLOR } from './art/combatColors';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
@@ -27,6 +31,18 @@ const ATTACK_DEPTH = 2;
 /** Barra de vida (HUD-02): altura do topo acima do centro do corpo (px) e profundidade, acima de todos. */
 const BAR_RISE = 44;
 const BAR_DEPTH = 3;
+/** Barra de estrutura (STR-01): fina, logo abaixo da barra de vida (px de mundo). */
+const STRUCTURE_BAR_H = 4;
+const STRUCTURE_BAR_GAP = 1;
+/** Ícone de estrela girando sobre a cabeça do inimigo quebrado (STR-05): altura acima do centro e giro (°/s). */
+const BREAK_STAR_RISE = 34;
+const BREAK_STAR_SPIN = 360;
+/** Empurrão scriptado (SPC-02): número de steps do Matter em que o corpo anda os px do golpe. */
+const SLIDE_STEPS = 25;
+/** Gancho ascendente (MOV-11): velocidade vertical inicial (px/step) que leva o centro além dos 64 px do golpe. */
+const LAUNCH_VY = -10;
+/** Componente vertical (normalizado com o horizontal) do impulso de um empurrão: quase rente ao chão. */
+const PUSH_LIFT = -0.15;
 
 /**
  * Corpo físico (retângulo Matter) separado do visual (sprite animado com a origem no pé, no centro do corpo).
@@ -60,7 +76,32 @@ export class Enemy implements Hittable {
   private lastAttackDamage: number;
   /** BLU-04: velocidade (px/step) do puxão do orbe Azul, reaplicada a cada step (L-001); `null` fora do raio. */
   private pull: Vec2 | null = null;
+  /** Estrutura do inimigo (STR-01..05, PAR-03): quebra atordoa; `update` avança o relógio de jogo. */
+  private readonly structure = new Structure(ENEMY_STRUCTURE);
+  /** Tempo (ms de jogo) sem atacar nem andar depois de um parry (PAR-10). */
+  private suppressedMs = 0;
+  /** O finalizador já bateu nesta quebra (um por quebra, FIN-03). */
+  private finished = false;
+  /** Sorteio da guarda (EBL-01): o stream da run, entregue pela cena; sem ele nunca levanta a guarda. */
+  guardRng: GuardRoll | null = null;
+  /** Guarda do inimigo comum (EBL-01..05): 600 ms, bloqueia leve de frente; forte e carregado passam. */
+  private readonly guard = new EnemyGuard({ chance: (p) => this.guardRng?.chance(p) ?? false });
+  /** Faísca azul do bloqueio (EBL-02), no ponto de contato; a cena liga ao `Fx`. */
+  onBlock: ((point: Vec2) => void) | null = null;
+  private guardTinted = false;
+  /** Empurrão scriptado em curso (SPC-02, MOV-*): velocidade x por step e steps que faltam. */
+  private slide: { vxStep: number; stepsLeft: number; friction: Map<MatterJS.BodyType, { f: number; fs: number }> } | null =
+    null;
+  private readonly structBg: Phaser.GameObjects.Rectangle;
+  private readonly structFill: Phaser.GameObjects.Rectangle;
+  private readonly breakStar: Phaser.GameObjects.Image;
+  /** Evento de debug do inimigo (`guardBreak:<id>`, ...), entregue à cena. */
+  onEvent: ((name: string) => void) | null = null;
   private readonly onStep = (): void => {
+    if (this.slide) {
+      this.stepSlide();
+      return;
+    }
     // Os steps do Matter rodam antes do update da cena: sem este teste, o vx de andar do frame anterior passava
     // por cima do empurrão de um golpe recebido neste frame.
     if (this.brain.state !== 'idle' || this.ragdoll) return;
@@ -114,6 +155,18 @@ export class Enemy implements Hittable {
       .setOrigin(0, 0)
       .setDepth(BAR_DEPTH)
       .setVisible(false);
+    const barW = this.barFrame.width;
+    this.structBg = scene.add
+      .rectangle(0, 0, barW, STRUCTURE_BAR_H, STRUCTURE_BAR_BG_COLOR)
+      .setOrigin(0, 0)
+      .setDepth(BAR_DEPTH)
+      .setVisible(false);
+    this.structFill = scene.add
+      .rectangle(0, 0, 0, STRUCTURE_BAR_H - 2, STRUCTURE_BAR_FILL_COLOR)
+      .setOrigin(0, 0)
+      .setDepth(BAR_DEPTH)
+      .setVisible(false);
+    this.breakStar = scene.add.image(0, 0, TEX.fxStar, 'heavy').setDepth(BAR_DEPTH).setVisible(false);
   }
 
   get x(): number {
@@ -189,13 +242,164 @@ export class Enemy implements Hittable {
   }
 
   receiveHit(hit: Hit): boolean {
-    const events = this.brain.receiveHit(hit);
+    if (this.brain.isDead) return false;
+    const wasBroken = this.structure.broken;
+    // EBL-02..05: a guarda segura o leve que vem de frente; forte e carregado passam com dano cheio e encerram a guarda.
+    const fromFront = hit.direction.x * this.facing < 0;
+    const res = this.guard.resolveHit({
+      damage: hit.damage,
+      strength: hit.strength,
+      unblockable: hit.unblockable,
+      fromFront,
+      structureGain: enemyStructureGain(hit),
+    });
+    if (res.blocked) return this.onBlocked(res.structureGain);
+    const isFinisher = hit.moveName === FINISHER_MOVE;
+    const effect = !wasBroken && hit.moveName ? MOVES[hit.moveName]?.effect : undefined;
+    // Quebrado e atordoado: o golpe tira vida mas não derruba nem empurra, para o finalizador ainda alcançar (FIN-01).
+    let reaction: Hit = hit;
+    if (wasBroken && !isFinisher) reaction = { ...hit, strength: 'light', force: 0 };
+    // Empurrão (SPC-02): sai rente ao chão, para o deslocamento horizontal não esbarrar em plataformas.
+    else if (effect?.type === 'push') reaction = { ...hit, direction: { x: hit.direction.x, y: PUSH_LIFT } };
+    const events = this.brain.receiveHit(reaction, effect?.type === 'knockdown' ? { ragdollStunMs: effect.ms } : {});
     if (events.length === 0) return false; // já morto
     this.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
     // Levar golpe cancela o preparo ou o golpe em andamento (AI-04).
     this.onAI(this.ai.interrupt());
     this.handle(events);
+    const survived = !this.brain.isDead;
+    if (survived && this.structure.add(enemyStructureGain(hit))) this.onBreak();
+    if (survived && effect) this.applyEffect(effect, hit);
     this.updateBar();
+    return true;
+  }
+
+  /** Golpe leve segurado pela guarda (EBL-02): sem dano nem reação, soma estrutura e avisa a cena. */
+  private onBlocked(structureGain: number): boolean {
+    this.onEvent?.(`enemyBlock:${this.id}`);
+    this.onBlock?.({ x: this.body.position.x + this.facing * 10, y: this.body.position.y - 4 });
+    if (this.structure.add(structureGain)) this.onBreak();
+    this.updateBar();
+    // `false`: o golpe não conectou de fato (sem faísca vermelha, hitstop nem combo); o feedback é o azul do bloqueio.
+    return false;
+  }
+
+  /** Reação de golpe que sobrevive (MOV-11, MOV-10 pelo `ragdollStunMs`, SPC-02): lançar e empurrar. */
+  private applyEffect(effect: NonNullable<(typeof MOVES)[string]['effect']>, hit: Hit): void {
+    if (effect.type === 'launch') this.ragdoll?.launch(LAUNCH_VY);
+    else if (effect.type === 'push') this.startSlide(hit.direction.x >= 0 ? 1 : -1, effect.px);
+  }
+
+  private startSlide(dir: 1 | -1, px: number): void {
+    this.slide = { vxStep: (dir * px) / SLIDE_STEPS, stepsLeft: SLIDE_STEPS, friction: new Map() };
+    // Sem atrito durante o empurrão: o chão não come o deslocamento, que fica exato (SPC-02); volta ao fim.
+    for (const b of this.ragdoll ? this.ragdoll.bodies : [this.body]) {
+      this.slide.friction.set(b, { f: b.friction, fs: b.frictionStatic });
+      b.friction = 0;
+      b.frictionStatic = 0;
+    }
+  }
+
+  /**
+   * Um step do empurrão: velocidade x fixa (L-001) em todas as partes por `SLIDE_STEPS` steps; o step seguinte
+   * zera o x e devolve o atrito (deslocamento exato).
+   */
+  private stepSlide(): void {
+    const slide = this.slide;
+    if (!slide) return;
+    const done = slide.stepsLeft === 0;
+    const bodies = this.ragdoll ? this.ragdoll.bodies : [this.body];
+    for (const b of bodies) {
+      // Matter descontou `frictionAir` da velocidade a cada step: compensa para o corpo andar os px pedidos.
+      const vx = done ? 0 : slide.vxStep / (1 - b.frictionAir);
+      this.scene.matter.body.setVelocity(b, { x: vx, y: b.velocity.y });
+    }
+    if (done) this.endSlide();
+    else slide.stepsLeft -= 1;
+  }
+
+  /** Devolve o atrito original às partes (as que já foram destruídas pelo getUp/remoção são ignoradas). */
+  private endSlide(): void {
+    const slide = this.slide;
+    this.slide = null;
+    if (!slide) return;
+    for (const [b, { f, fs }] of slide.friction) {
+      b.friction = f;
+      b.frictionStatic = fs;
+    }
+  }
+
+  /** Estrutura cheia (STR-05, STR-10): quebrou, atordoa e para no lugar; um `guardBreak:<id>`. */
+  private onBreak(): void {
+    this.guard.reset();
+    this.onAI(this.ai.interrupt());
+    this.walkVxStep = null;
+    if (!this.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
+    this.onEvent?.(`guardBreak:${this.id}`);
+  }
+
+  /** Golpe do inimigo aparado pelo jogador (PAR-03, PAR-10): +35 de estrutura e 400 ms parado. */
+  parried(): void {
+    if (this.brain.isDead) return;
+    this.onAI(this.ai.interrupt());
+    this.walkVxStep = null;
+    this.suppressedMs = DEFENSE.parrySuppressMs;
+    if (!this.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
+    if (this.structure.add(STRUCTURE.enemy.parryGain)) this.onBreak();
+    this.view.setTintFill(PALETTE.w);
+    this.scene.time.delayedCall(HIT_FLASH_MS, () => {
+      if (this.view.active) this.view.clearTint();
+    });
+    this.updateBar();
+  }
+
+  /** Estrutura viva para o snapshot (STR-01). */
+  get structureView(): { cur: number; max: number; broken: boolean } {
+    return { cur: Math.round(this.structure.cur), max: this.structure.max, broken: this.structure.broken };
+  }
+
+  /** Quebrado e atordoado: o finalizador procura por estes (FIN-01). */
+  get broken(): boolean {
+    return this.structure.broken;
+  }
+
+  /** Quebrado e ainda sem finalizador nesta quebra (FIN-01, um por quebra). */
+  get finishable(): boolean {
+    return this.structure.broken && !this.finished && !this.brain.isDead;
+  }
+
+  /** O finalizador acertou: não vale de novo até uma nova quebra. */
+  markFinished(): void {
+    this.finished = true;
+  }
+
+  /** Guardando (EBL-01), para o snapshot. */
+  get guarding(): boolean {
+    return this.guard.guarding;
+  }
+
+  /**
+   * O jogador iniciou um golpe leve (EBL-01): se está a até 60 px, virado para cá e este inimigo está `idle`, sorteia a
+   * guarda (`chanceOverride` fixa a chance em `?debug&enemyGuard=`). Ao subir, cancela o preparo e vira para o jogador
+   * (a guarda só segura o que vem de frente).
+   */
+  onPlayerLightMove(player: { x: number; facing: 1 | -1 }, round: number, chanceOverride?: number): boolean {
+    if (this._removed || this.ragdoll || this.brain.isDead || this.structure.broken) return false;
+    const ex = this.body.position.x;
+    const raised = this.guard.onPlayerLightMove(
+      {
+        round,
+        idle: this.brain.state === 'idle',
+        playerFacingEnemy: player.facing === 1 ? ex >= player.x : ex <= player.x,
+        distancePx: Math.abs(ex - player.x),
+      },
+      chanceOverride,
+    );
+    if (!raised) return false;
+    this.onAI(this.ai.interrupt());
+    this.walkVxStep = null;
+    this.facing = player.x >= ex ? 1 : -1;
+    this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
     return true;
   }
 
@@ -206,6 +410,7 @@ export class Enemy implements Hittable {
     const well = ENEMY_BAR_WELL;
     const texels = Math.round((well.w * this.brain.hp) / this.tuning.brain.maxHp);
     this.barFill.setVisible(show && texels > 0).setSize(texels * ART_SCALE, well.h * ART_SCALE);
+    this.updateStructureBar();
     if (!show) return;
     const { x, y } = this.body.position;
     const left = Math.round(x - this.barFrame.width / 2);
@@ -214,14 +419,39 @@ export class Enemy implements Hittable {
     this.barFill.setPosition(left + well.x * ART_SCALE, top + well.y * ART_SCALE);
   }
 
+  /** Barra de estrutura amarela sob a de vida; a quebra estoura em branco e a estrela gira sobre a cabeça (STR-05). */
+  private updateStructureBar(): void {
+    const s = this.structure;
+    const show = !this.brain.isDead && (s.cur > 0 || s.broken);
+    this.structBg.setVisible(show);
+    this.structFill.setVisible(show && s.cur > 0);
+    this.breakStar.setVisible(show && s.broken);
+    if (!show) return;
+    const { x, y } = this.body.position;
+    const left = Math.round(x - this.barFrame.width / 2);
+    const top = Math.round(y - BAR_RISE) + this.barFrame.height + STRUCTURE_BAR_GAP;
+    this.structBg.setPosition(left, top);
+    const inner = Math.max(0, this.barFrame.width - 2);
+    this.structFill
+      .setPosition(left + 1, top + 1)
+      .setSize(Math.round((inner * s.cur) / s.max), STRUCTURE_BAR_H - 2)
+      .setFillStyle(s.broken ? STRUCTURE_BAR_BREAK_COLOR : STRUCTURE_BAR_FILL_COLOR);
+    this.breakStar.setPosition(x, y - BREAK_STAR_RISE).setAngle((this.scene.time.now * BREAK_STAR_SPIN) / 1000);
+  }
+
   update(dtMs: number, playerX: number): void {
     if (this._removed) return;
     this.grace.update(dtMs);
+    this.suppressedMs = Math.max(0, this.suppressedMs - dtMs);
+    this.structure.update(dtMs);
+    if (!this.structure.broken) this.finished = false;
+    this.guard.update(dtMs);
     this.handle(this.brain.update(dtMs));
     if (this._removed) return;
-    // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto ou
-    // recém-nascido deixam a IA parada (AI-04, WAVE-09).
-    const canAct = this.brain.state === 'idle' && !this.brain.isDead && !this.grace.active;
+    // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto,
+    // recém-nascido, aparado (PAR-10) ou quebrado (STR-05) deixam a IA parada (AI-04, WAVE-09).
+    const canAct =
+      this.brain.state === 'idle' && !this.brain.isDead && !this.grace.active && this.suppressedMs <= 0 && !this.structure.broken && !this.guard.guarding;
     const out = this.ai.update(dtMs, { selfX: this.body.position.x, playerX, canAct });
     this.onAI(out.events);
     this.walkVxStep = canAct && !this.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
@@ -232,6 +462,10 @@ export class Enemy implements Hittable {
       this.updateBar();
       this.updateWeaponView(); // some junto com o sprite em ragdoll (ARM-10)
       return;
+    }
+    // Aparado ou quebrado com o cérebro livre: fica no lugar, sem andar (PAR-10, STR-05).
+    if (!canAct && this.brain.state === 'idle' && !this.grace.active && !this.slide) {
+      this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
     }
     if (canAct) {
       this.facing = out.facing;
@@ -289,11 +523,21 @@ export class Enemy implements Hittable {
 
   private animate(): void {
     const vxPerS = this.body.velocity.x / PX_PER_S_TO_STEP;
-    const anim = pickEnemyAnim({ brain: this.brain.state, ai: this.ai.state, moving: Math.abs(vxPerS) > RUN_THRESHOLD });
+    const stunned = this.suppressedMs > 0 || this.structure.broken;
+    const picked = pickEnemyAnim({ brain: this.brain.state, ai: this.ai.state, moving: Math.abs(vxPerS) > RUN_THRESHOLD });
+    const anim = stunned && picked !== 'getup' ? 'hurt' : picked;
     this.view.setPosition(this.body.position.x, this.body.position.y + SIZE.enemy.h / 2);
     // Escala negativa espelha em volta da origem (o pé no centro do corpo), não do centro do frame largo.
     this.view.setScale(this.facing, 1);
     this.view.setDepth(anim === 'attack' ? ATTACK_DEPTH : 0);
+    // Guarda (EBL-01): sem quadro próprio na arte, o corpo fica azulado enquanto a guarda está de pé.
+    if (this.guard.guarding) {
+      this.view.setTint(PALETTE.c);
+      this.guardTinted = true;
+    } else if (this.guardTinted) {
+      this.view.clearTint();
+      this.guardTinted = false;
+    }
     this.view.anims.play(enemyAnimKey(anim), true);
   }
 
@@ -371,6 +615,10 @@ export class Enemy implements Hittable {
     this.weaponView?.destroy();
     this.barFrame.destroy();
     this.barFill.destroy();
+    this.structBg.destroy();
+    this.structFill.destroy();
+    this.breakStar.destroy();
+    this.slide = null;
     this._removed = true;
   }
 }

@@ -50,6 +50,8 @@ export class AttackHitbox {
     private readonly team: Team,
     /** Chamado a cada golpe aceito pelo alvo. */
     private readonly onConnect?: OnConnect,
+    /** Ajusta o golpe logo antes de entregá-lo a cada alvo (bônus do contra-ataque, DOD-08). */
+    private readonly prepareHit?: (hit: Hit) => Hit,
   ) {}
 
   get isOpen(): boolean {
@@ -69,10 +71,11 @@ export class AttackHitbox {
       kind: 'active',
       onTouch: (other) => {
         if (other.kind !== 'character' || !canDamage(this.team, other.target.team) || !gate(other.target.id)) return;
-        if (!other.target.receiveHit(hit)) return; // ignorado: sem faísca nem hitstop (FX-06)
+        const delivered = this.prepareHit ? this.prepareHit(hit) : hit;
+        if (!other.target.receiveHit(delivered)) return; // ignorado: sem faísca nem hitstop (FX-06)
         // Posição + tamanho da hitbox (a posição do corpo sensor), nunca body.bounds.
         const { x, y } = body.position;
-        this.onConnect?.(hit, contactWith({ x, y, width: shape.width, height: shape.height }, other.target), other.target);
+        this.onConnect?.(delivered, contactWith({ x, y, width: shape.width, height: shape.height }, other.target), other.target);
       },
     });
     const color = hit.strength === 'heavy' ? PALETTE.A : PALETTE.w;

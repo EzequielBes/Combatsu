@@ -32,9 +32,9 @@ describe('installDebugApi', () => {
 
   it('snapshot devolve o que o probe registrado devolve (FND-09)', () => {
     const snap: GameSnapshot = {
-      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0 },
+      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0, move: null, frame: 'idle-0', guard: 'none', structure: { cur: 0, max: 100, broken: false }, dodge: { active: false, invulnerable: false, cooldownMs: 0 } },
       enemies: [
-        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null, weaponVisible: null },
+        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false }, guarding: false },
       ],
       events: ['enemyDied:3'],
       deaths: [{ id: 3, x: 50, y: 60 }],
@@ -53,11 +53,15 @@ describe('installDebugApi', () => {
         bossBarIgnoredByMain: true,
         fragments: '4',
         heldItem: null,
+        combo: { text: null, grade: null, x: 948, ignoredByMain: true },
+        controls: '',
         techIgnoredByMain: true,
         energy: { width: 104, fillWidth: 104, marks: [null, null], icons: [{ cooldownOverlayHeight: 0, iconHeight: 48 }, { cooldownOverlayHeight: 0, iconHeight: 48 }], flashing: false },
         callout: null,
         kokusenCard: null,
       },
+      combo: { hits: 0, grade: null },
+      timeScale: 1,
       hitstop: { frozen: false, remainingMs: 0 },
       wallet: { fragments: 4 },
       shop: { open: false, offers: [], rerollCost: 0, selected: 0, panel: null },
@@ -71,6 +75,7 @@ describe('installDebugApi', () => {
       techObjects: [],
       fx: { live: 0, degraded: false, layers: [] },
       camera: { zoom: 1.5 },
+      finisher: { distPx: null },
       fxlab: null,
     };
     registerDebugProbe({ debugSnapshot: () => snap });

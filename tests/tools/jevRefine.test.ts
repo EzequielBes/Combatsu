@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRequest, flagsFor, formatReport, parseAcs, type Answers } from '../../tools/jev-refine/lib';
+import { buildRequest, flagsFor, formatReport, parseAcs, parseGlossary, type Answers } from '../../tools/jev-refine/lib';
 
 const SPEC = `# Exemplo
 
@@ -110,5 +110,37 @@ describe('buildRequest', () => {
     for (const q of ['ambiguous', 'bundled', 'testable']) expect(req.questions[q].type).toBe('noul');
     expect(req.questions.precision.type).toBe('score');
     expect(req.questions.precision.criteria).toHaveLength(4);
+  });
+});
+
+describe('glossário da spec', () => {
+  const WITH_GLOSSARY = `## Glossário
+
+- **parry**: apertar a defesa no tempo exato e anular o golpe.
+- **estrutura**: barra de postura de 0 a 100.
+
+## User Stories
+
+### P1: Defesa
+
+1. PAR-01: WHEN the key is pressed THEN the parry window SHALL open.
+`;
+
+  it('lê só os termos da seção Glossário', () => {
+    expect(parseGlossary(WITH_GLOSSARY)).toEqual({
+      parry: 'apertar a defesa no tempo exato e anular o golpe.',
+      estrutura: 'barra de postura de 0 a 100.',
+    });
+  });
+
+  it('o pedido soma o glossário da spec ao padrão', () => {
+    const req = buildRequest(parseAcs(WITH_GLOSSARY)[0]) as { state: { glossary: Record<string, string> } };
+    expect(req.state.glossary.parry).toContain('anular o golpe');
+    expect(req.state.glossary.rodada).toBeDefined();
+  });
+
+  it('sem seção Glossário, o pedido usa só o padrão', () => {
+    const req = buildRequest(parseAcs(SPEC)[0]) as { state: { glossary: Record<string, string> } };
+    expect(req.state.glossary.parry).toBeUndefined();
   });
 });

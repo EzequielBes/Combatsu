@@ -11,7 +11,25 @@ import type { TechId } from '../data/techniques';
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
   /** `facing` e `flash` (cor do flash em andamento, HEAL-10) servem ao smoke da economia. */
-  player: { x: number; y: number; hp: number; dead: boolean; facing: 1 | -1; flash: string | null; maxHp: number; vy: number };
+  player: {
+    x: number;
+    y: number;
+    hp: number;
+    dead: boolean;
+    facing: 1 | -1;
+    flash: string | null;
+    maxHp: number;
+    vy: number;
+    /** Nome do golpe em curso, `null` sem golpe (MOV-18). */
+    move: string | null;
+    /** Frame do sprite do jogador em cena, ex.: `guard` (CTL-09). */
+    frame: string;
+    /** `parry` = janela de parry aberta (GRD-01, PAR-01). */
+    guard: 'none' | 'guard' | 'parry';
+    /** Estrutura 0..100 arredondada; `broken` = atordoado pela guarda quebrada (STR-01, STR-06). */
+    structure: { cur: number; max: number; broken: boolean };
+    dodge: { active: boolean; invulnerable: boolean; cooldownMs: number };
+  };
   enemies: {
     id: number;
     x: number;
@@ -27,6 +45,10 @@ export interface GameSnapshot {
     weapon: ToolKey | null;
     /** Sprite da ferramenta visível (ARM-10); `null` sem arma. */
     weaponVisible: boolean | null;
+    /** Estrutura do inimigo comum (STR-01), arredondada; `broken` = atordoado pela quebra (CTL-05). */
+    structure: { cur: number; max: number; broken: boolean };
+    /** Guardando (EBL-01) (CTL-05). */
+    guarding: boolean;
   }[];
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
@@ -82,6 +104,10 @@ export interface GameSnapshot {
     fragments: string;
     /** Objeto na mão (ITEM-01..03), `null` de mãos vazias. */
     heldItem: { name: string; pips: number; maxPips: number } | null;
+    /** HUD do combo (CMB-04/05): texto `N hits` e letra da nota, `null` escondidos; `x` é a borda direita. */
+    combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
+    /** Texto do painel de controles na tela (CTL-06). */
+    controls: string;
     /** Barra de energia e ícones de slot na `uiLayer` (TEC-11). */
     techIgnoredByMain: boolean;
     /** Chamada da conjuração (CAST-16), `null` fora da janela de 900 ms. */
@@ -98,6 +124,10 @@ export interface GameSnapshot {
       flashing: boolean;
     };
   };
+  /** Contador de combo (CMB-01..03): hits e nota (`null` com menos de 2 hits). */
+  combo: { hits: number; grade: 'D' | 'C' | 'B' | 'A' | 'S' | null };
+  /** Escala de tempo da cena: 1, ou 0.3 na câmera lenta da esquiva perfeita (DOD-07). */
+  timeScale: number;
   /** Estado do hitstop (BWIN-02). */
   hitstop: { frozen: boolean; remainingMs: number };
   /** Carteira de fragmentos da run (ECO-19). */
@@ -140,6 +170,8 @@ export interface GameSnapshot {
    * principal; acrescentado aqui só para o smoke observar o zoom durante a conjuração e o Kokusen.
    */
   camera: { zoom: number };
+  /** Distância (px, centro a centro) ao inimigo comum quebrado mais perto, a do finalizador (FIN-01/03); `null` sem alvo. */
+  finisher: { distPx: number | null };
   /**
    * Laboratório de efeitos (T28, `?debug&fxlab`), sem contrato prévio na spec: `null` fora do fxlab. Legenda e
    * rótulo de velocidade exatos (FXL-04/08) e o estado vivo dos bonecos de treino (FXL-05/06).

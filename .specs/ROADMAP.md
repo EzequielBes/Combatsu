@@ -20,7 +20,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F4 | `loja-da-run` | Large | SHOP, MOD | Done (Verifier PASS, rodada 2) |
 | F5 | `energia-e-tecnicas` | Complex | CE, TEC, TSH, CAST, DIV, KOK, RED, BLU, CUT, FXL, TFX | Done (Verifier PASS, rodada 2) |
 | F6 | `meta-progressao` | Large | META, SAVE | Planejada |
-| F7 | `combate-estilo-luta` | Complex | CTL, MOV, GRD, PAR, DOD, STR, FIN, AIR, EBL, CMB, SPC | Specify feito (84 ACs, Jev em 3 rodadas); absorve a antiga F8 |
+| F7 | `combate-estilo-luta` | Complex | CTL, MOV, GRD, PAR, DOD, STR, FIN, AIR, EBL, CMB, SPC | Done (Verifier PASS, rodada 3; 91 ACs); absorve a antiga F8 |
 | F8 | ~~`combos-estilo-luta`~~ | — | — | Absorvida pela F7 `combate-estilo-luta` (28/09) |
 | F9 | `tecnicas-avancadas` | Complex | PUR, DOM, CHT | Planejada |
 

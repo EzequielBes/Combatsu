@@ -16,7 +16,7 @@ export default async function ({ page, baseUrl, assert }) {
 
   /** Começa uma run e limpa a rodada 1 até a loja abrir; devolve o último snapshot antes dela e o primeiro nela. */
   const openShop = async (fragments) => {
-    await page.goto(`${baseUrl}?debug&seed=1&fragments=${fragments}`, { waitUntil: 'load' });
+    await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&fragments=${fragments}`, { waitUntil: 'load' });
     await page.waitForFunction(
       () => {
         try {
@@ -207,7 +207,7 @@ export default async function ({ page, baseUrl, assert }) {
   }
 
   // SHOP-47: com `noshop=1` a loja fecha no mesmo update, sem varrer: carteira e fragmentos do chão ficam iguais.
-  await page.goto(`${baseUrl}?debug&seed=1&noshop=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&noshop=1`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof window.__game?.snapshot === 'function', { timeout: 15_000 });
   await stepAndSnap(20);
   await page.keyboard.press('KeyJ', { delay: 50 });

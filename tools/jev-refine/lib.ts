@@ -5,6 +5,21 @@ export interface AcRow {
   id: string;
   story: string;
   criterion: string;
+  /** Termos da seção `## Glossário` da spec, somados ao glossário padrão no pedido ao Jev. */
+  glossary?: Record<string, string>;
+}
+
+/** Linhas `- **termo**: significado` da seção `## Glossário` (até a próxima seção `## `). */
+export function parseGlossary(markdown: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  let inside = false;
+  for (const line of markdown.split(/\r?\n/)) {
+    if (/^##\s/.test(line)) inside = /^##\s+Glossário\b/.test(line);
+    if (!inside) continue;
+    const m = line.match(/^\s*-\s+\*\*(.+?)\*\*:\s*(.+)$/);
+    if (m) out[m[1]] = m[2];
+  }
+  return out;
 }
 
 export interface Answers {
@@ -32,6 +47,8 @@ export function parseAcs(markdown: string): AcRow[] {
     if (m) acs.push({ id: m[1], story, criterion: m[2] });
   }
   if (acs.length === 0) throw new Error('nenhum AC encontrado');
+  const glossary = parseGlossary(markdown);
+  if (Object.keys(glossary).length > 0) for (const ac of acs) ac.glossary = glossary;
   return acs;
 }
 
@@ -96,7 +113,11 @@ const QUESTIONS = {
 
 /** Corpo do POST /v1/systemone para um AC. */
 export function buildRequest(ac: AcRow): object {
-  return { model: 'jev-latest', state: { story: ac.story, criterion: ac.criterion, glossary: GLOSSARY }, questions: QUESTIONS };
+  return {
+    model: 'jev-latest',
+    state: { story: ac.story, criterion: ac.criterion, glossary: { ...GLOSSARY, ...ac.glossary } },
+    questions: QUESTIONS,
+  };
 }
 
 const f = (x: number): string => x.toFixed(2);

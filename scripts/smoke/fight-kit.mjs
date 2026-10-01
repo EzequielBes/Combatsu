@@ -1,0 +1,99 @@
+// Apoio dos smokes de luta (fight, defense, enemy-guard): boot com query, teclas e aproximação do inimigo.
+// Não é um cenário (o runner só roda `*.smoke.mjs`). Toda tecla lida com `JustDown` fica segurada ao menos um passo.
+export function makeKit({ page, baseUrl, assert }) {
+  const snap = (ms) =>
+    page.evaluate((n) => {
+      window.__game.step(n);
+      return window.__game.snapshot();
+    }, ms);
+  /** Um único frame (`step(16)`; `step(16.7)` viraria dois). */
+  const frame = () => snap(16);
+  const down = (code) => page.keyboard.down(code);
+  const up = (code) => page.keyboard.up(code);
+  const tap = async (code, holdMs = 50) => {
+    await down(code);
+    await snap(holdMs);
+    await up(code);
+    return snap(20);
+  };
+  const count = (snapshot, ev) => snapshot.events.filter((e) => e === ev).length;
+
+  /** Abre a página com a query, aguarda o harness e começa a rodada 1 com `J` no título. */
+  const boot = async (query) => {
+    await page.goto(`${baseUrl}?debug&seed=1${query ? `&${query}` : ''}`, { waitUntil: 'load' });
+    await page.waitForFunction(
+      () => {
+        try {
+          return typeof window.__game.snapshot === 'function';
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 15_000 },
+    );
+    await snap(20);
+    await tap('KeyJ');
+    const s = await snap(50);
+    assert(s.run.state === 'roundActive', `run deveria começar: ${JSON.stringify(s.run)}`);
+    return s;
+  };
+
+  const nearest = (s) =>
+    s.enemies.filter((e) => e.state !== 'deadRagdoll' && e.state !== 'dissolving').sort((a, b) => Math.abs(a.x - s.player.x) - Math.abs(b.x - s.player.x))[0];
+
+  /**
+   * Anda rumo ao inimigo mais próximo até `|dx| < gap` (passos de um frame quando perto, para não passar dele), solta e
+   * vira para ele; devolve o snapshot. O inimigo fica à frente do jogador, a menos de `gap + 20` px.
+   */
+  const approach = async (gap = 36) => {
+    let s = await snap(20);
+    for (let i = 0; i < 400; i++) {
+      const t = nearest(s);
+      const dx = t.x - s.player.x;
+      if (Math.abs(dx) < gap) break;
+      const dir = dx > 0 ? 'KeyD' : 'KeyA';
+      await down(dir);
+      s = await snap(Math.abs(dx) > 120 ? 50 : 16);
+      await up(dir);
+    }
+    s = await snap(20);
+    const t = nearest(s);
+    const dir = t.x > s.player.x ? 'KeyD' : 'KeyA';
+    if (s.player.facing !== (t.x > s.player.x ? 1 : -1)) {
+      await down(dir);
+      await snap(16);
+      await up(dir);
+      s = await snap(20);
+    }
+    const e = nearest(s);
+    assert(
+      s.player.facing === (e.x > s.player.x ? 1 : -1) && Math.abs(e.x - s.player.x) < gap + 20,
+      `não encostou de frente no inimigo: ${JSON.stringify({ p: s.player.x, f: s.player.facing, e: s.enemies.map((x) => x.x) })}`,
+    );
+    return s;
+  };
+
+  /**
+   * Leva o jogador a ~110 px do inimigo mais próximo (de frente) e espera ele chegar a menos de 40 px, o `attackRange`:
+   * nesse frame (`f0`) a IA começa o preparo do golpe. O golpe abre a hitbox no update de `f0 + 27` e conecta no step de
+   * `f0 + 28`. Devolve o snapshot de `f0` (o inimigo à frente); nenhum frame depois dele foi consumido.
+   */
+  const startDuel = async () => {
+    let s = await approach(110);
+    for (let i = 0; i < 200; i++) {
+      s = await frame();
+      const t = nearest(s);
+      if (Math.abs(t.x - s.player.x) < 40) return s;
+    }
+    throw new Error(`o inimigo não chegou a 40 px: ${JSON.stringify(s.enemies.map((e) => e.x))}`);
+  };
+
+  /** Passa frames até nenhum golpe ficar em curso (e o jogador parado no chão). */
+  const settle = async () => {
+    let s = await snap(20);
+    for (let i = 0; i < 100 && (s.player.move !== null || s.player.guard !== 'none'); i++) s = await frame();
+    return snap(60);
+  };
+
+  return { snap, frame, down, up, tap, count, boot, nearest, approach, settle, startDuel, assert };
+}

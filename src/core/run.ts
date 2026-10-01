@@ -50,6 +50,7 @@ export class Run {
   private rng: Rng | null = null;
   private lootRngValue: Rng | null = null;
   private shopRngValue: Rng | null = null;
+  private guardRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -105,6 +106,11 @@ export class Run {
   /** Stream de sorteio da loja (SHOP-09): próprio, criado com `seed ^ SHOP.rngSalt`; `null` antes do 1º start. */
   get shopRng(): Rng | null {
     return this.shopRngValue;
+  }
+
+  /** Stream de sorteio da guarda dos inimigos (EBL-01): próprio, `seed ^ 0x2545f491`, para não mexer nos drops nem na loja. */
+  get guardRng(): Rng | null {
+    return this.guardRngValue;
   }
 
   startPressed(): void {
@@ -186,6 +192,7 @@ export class Run {
         this.rng = new Rng(seed);
         this.lootRngValue = new Rng(seed ^ 0x9e3779b9);
         this.shopRngValue = new Rng(seed ^ SHOP.rngSalt);
+        this.guardRngValue = new Rng(seed ^ 0x2545f491);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;

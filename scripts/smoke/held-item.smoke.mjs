@@ -1,7 +1,7 @@
 // Item na mão no HUD (ITEM-01..03) com `?debug&seed=1`: pega a cadeira do mapa, bate e confere o nome e as pips
 // caindo com o desgaste, e o hud.heldItem sumindo de mãos vazias.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -25,7 +25,7 @@ export default async function ({ page, baseUrl, assert }) {
   await page.keyboard.press('KeyJ', { delay: 50 });
   snap = await stepAndSnap(50);
 
-  // Cadeira em LEVEL_1 (coluna 7, x=240). Anda até ela e pega (K).
+  // Cadeira em LEVEL_1 (coluna 7, x=240). Anda até ela e pega (E).
   const chair = snap.worldProps.find((p) => p.key === 'chair');
   assert(chair, `esperava a cadeira do mapa em worldProps: ${JSON.stringify(snap.worldProps)}`);
   for (let i = 0; i < 100 && Math.abs(snap.player.x - chair.x) > 4; i++) {
@@ -34,9 +34,9 @@ export default async function ({ page, baseUrl, assert }) {
     snap = await stepAndSnap(50);
     await page.keyboard.up(dir);
   }
-  await page.keyboard.down('KeyK');
+  await page.keyboard.down('KeyE');
   snap = await stepAndSnap(20);
-  await page.keyboard.up('KeyK');
+  await page.keyboard.up('KeyE');
   snap = await stepAndSnap(50);
 
   // ITEM-01/02: nome "Cadeira" e 4/4 pips ao pegar.

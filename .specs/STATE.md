@@ -82,23 +82,24 @@
 - **Date**: 2026-09-25
 - **Status**: active
 
+### AD-011
+- **Decision**: O `ganchoAscendente` (MOV-07) aceita J até 100 ms depois de um pulo que saiu do chão com `W`: o pulo é cancelado (volta ao chão, sem gastar o pulo) e o gancho sai. `Space` e `↑` continuam pulando normalmente; `W` continua pulando se nenhum J vier na janela.
+- **Reason**: `W` é pulo e "cima" ao mesmo tempo; exigir `W`+`J` no mesmo frame deixava o golpe quase impossível e fazia o jogador pular sem querer (injusto, pouco divertido).
+- **Trade-off**: 100 ms de pulo podem ser "desfeitos"; o salto nesse tempo sobe poucos px, então visualmente é um tranco curto.
+- **Scope**: F7 (T11/T15, smoke T19).
+- **Date**: 2026-09-29
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: F5 `.specs/features/energia-e-tecnicas` concluída e mergeada em `dev` → próxima: **F7 `combate-estilo-luta`** (pedido do usuário em 28/09: combate inspirado em Sifu; absorve a antiga F8). Specify feito em `.specs/features/combate-estilo-luta/spec.md` (84 ACs, Jev em 3 rodadas com glossário da spec) → falta Design, Tasks, Execute, Verifier
-- **Completed**:
-  - F0–F5 mergeadas em `dev` (F5: energia, 2 slots, conjuração com selo/carga/soltura, Punho Divergente, Kokusen com cinema em tempo real, Vermelho, Azul, Desmantelar, técnicas na loja, laboratório `?debug&fxlab`)
-  - 865 testes, 17 cenários de smoke
-- **Como trabalhar** (memória do usuário):
-  - Opus planeja; workers Sonnet, um por lote de fase; **no máximo 2 agentes ao mesmo tempo** (pedido de 27/09); arte e smokes podem rodar num worktree separado criado à mão em `scratchpad\wt-*` (o `isolation: worktree` recusa o repo por causa de maiúsculas no caminho `Documents/surGue`)
-  - Jev: `jev-refine` no Specify (agora lê `## Glossário` da spec) e `jev-align` nas tasks
-  - Context7 liberado: `/phaserjs/phaser/v3_90_0`
-  - Worker que cair por limite de sessão: conferir `git status`/`git diff`, relançar com "retome a partir do diff"
-  - Merge em `dev` com `--no-ff`; `main` só com validação do usuário; push só da branch da feature
+- **Feature**: nenhuma em andamento. F7 `combate-estilo-luta` fechada (Verifier PASS na rodada 3, 91/91 ACs) e mergeada em `dev`
+- **Feito**: F0–F5 e F7 em `dev`; 1055 testes, 22 smokes (3 rodadas completas 22/22)
+- **Próximo**: UAT visual do usuário (F0–F5 e F7) antes de `dev` ir para `main`; depois F6 `meta-progressao` ou F9 `tecnicas-avancadas` (Specify)
+- **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; worker que cair é retomado do `git diff`; `python` (não `python3`) roda os scripts do tlc
 - **Dicas técnicas**:
-  - `npm run smoke -- <trecho>`; `?debug&seed=N&round=N&fragments=N&tech=<id>[,<id>]&noshop=1&fxlab`
-  - Capturas visuais: `window.__game.step` usa `headlessStep`, que não desenha; para screenshot, use `window.__game.render()` (fxlab) ou rode em tempo real
-  - Teclas que o jogo lê com `JustDown` precisam ficar seguradas durante um `step` no smoke (`tap`/`press1`)
-- **In-progress** (file:line): none
-- **Blockers**: UAT do usuário (visual, F0–F5) antes de `dev` ir para `main`
-- **Uncommitted files**: none (fora `skills-lock.json` e pastas de ferramentas do usuário)
+  - Smoke novo que golpeia inimigo comum precisa de `enemyGuard=0` (ou `=1` de propósito): a guarda aleatória do EBL-01 deixa dano/energia não determinísticos (L-042)
+  - `tests/core/lightning.test.ts` (1000 seeds) estoura 5 s com a máquina carregada; passa livre ou com `--maxWorkers=2`
+  - Ciclo do inimigo: 450 ms windup + 120 ms ataque + 800 ms descanso; `step(16)` = 1 frame, `step(16.7)` pode virar 2
+- **Para o UAT da F7**: pé solto nos frames `chuteGiratorio-wind` e `chuteCarregado-wind`; parry anula até golpe imbloqueável e a onda de choque do chefe (leitura literal de PAR-02; decidir se fica); tempos/hitboxes dos golpes ajustáveis em `src/data/moves.ts`; 6 spec-precision gaps de redação listados em `validation.md`
+- **Blockers**: UAT do usuário antes de `main`
 - **Branch**: `dev`

@@ -1,7 +1,7 @@
 // Inimigos armados e a ferramenta largada (ARM-02, ARM-08, ARM-12/13/17, ARM-18) com `?debug&armed=knife&round=3`.
 export default async function ({ page, baseUrl, assert }) {
   // ARM-02: sem override, a rodada 1 nunca tem inimigo armado (chance 0 antes da rodada 3).
-  await page.goto(`${baseUrl}?debug&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -27,7 +27,7 @@ export default async function ({ page, baseUrl, assert }) {
   );
 
   // Da rodada 3 em diante, com `?debug&armed=knife`, todo inimigo comum nasce armado com a faca.
-  await page.goto(`${baseUrl}?debug&armed=knife&round=3`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&armed=knife&round=3`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -87,7 +87,7 @@ export default async function ({ page, baseUrl, assert }) {
     `ARM-13: a faca deveria ter sumido aos 20 s: ${JSON.stringify(far.worldProps)}`,
   );
 
-  // ARM-12/17: mata outro armado, anda até a faca, pega (K) e acerta um inimigo vivo com ela (J).
+  // ARM-12/17: mata outro armado, anda até a faca, pega (E) e acerta um inimigo vivo com ela (J).
   snap = far;
   for (let i = 0; i < 20 && snap.worldProps.filter((p) => p.key === 'cursedKnife').length === 0; i++) {
     await page.keyboard.press('Digit2', { delay: 50 });
@@ -101,9 +101,9 @@ export default async function ({ page, baseUrl, assert }) {
     snap = await stepAndSnap(50);
     await page.keyboard.up(dir);
   }
-  await page.keyboard.down('KeyK');
+  await page.keyboard.down('KeyE');
   snap = await stepAndSnap(20);
-  await page.keyboard.up('KeyK');
+  await page.keyboard.up('KeyE');
   snap = await stepAndSnap(50);
   const held = snap.worldProps.find((p) => p.id === knife2.id);
   assert(held && held.state === 'held', `ARM-12: deveria estar segurando a faca: ${JSON.stringify(held)}`);
@@ -146,8 +146,28 @@ export default async function ({ page, baseUrl, assert }) {
   }
   assert(landedHit, 'ARM-17: nenhum golpe com a faca acertou um inimigo vivo');
 
+  // F7 edge case: com o objeto na mão, `K` também balança o objeto (nenhum golpe do grafo começa).
+  const knifeNow = () => snap.worldProps.find((p) => p.id === knife2.id);
+  for (let i = 0; i < 40 && knifeNow() && knifeNow().state === 'swing'; i++) snap = await stepAndSnap(20);
+  snap = await stepAndSnap(600); // fim da recuperação do balanço do J
+  const stillHeld = knifeNow();
+  assert(stillHeld && stillHeld.state === 'held', `a faca deveria seguir na mão depois do golpe: ${JSON.stringify(stillHeld)}`);
+  {
+    await page.keyboard.down('KeyK');
+    snap = await stepAndSnap(20);
+    await page.keyboard.up('KeyK');
+    let sawSwing = false;
+    for (let i = 0; i < 15 && !sawSwing; i++) {
+      sawSwing = knifeNow()?.state === 'swing';
+      assert(snap.player.move === null, `F7: K com a faca na mão não deveria começar golpe do grafo: ${snap.player.move}`);
+      if (!sawSwing) snap = await stepAndSnap(20);
+    }
+    assert(sawSwing, `F7: K com a faca na mão deveria balançar a faca: ${JSON.stringify(knifeNow())}`);
+    assert(snap.player.move === null, `F7: K com a faca na mão não deveria começar golpe do grafo: ${snap.player.move}`);
+  }
+
   // RAR-03/05: com `?debug&armed=knife&rare=1`, toda ferramenta nasce rara e o nome no HUD termina em " Rara".
-  await page.goto(`${baseUrl}?debug&armed=knife&rare=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&armed=knife&rare=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -178,18 +198,18 @@ export default async function ({ page, baseUrl, assert }) {
       snap = await stepAndSnap(50);
       await page.keyboard.up(dir);
     }
-    await page.keyboard.down('KeyK');
+    await page.keyboard.down('KeyE');
     snap = await stepAndSnap(20);
-    await page.keyboard.up('KeyK');
+    await page.keyboard.up('KeyE');
     snap = await stepAndSnap(50);
     const heldProp = snap.worldProps.find((p) => p.id === rareKnife.id);
     if (heldProp && heldProp.state === 'held') {
       rareHeld = true;
     } else if (snap.hud.heldItem) {
-      // Pegou outro objeto do mapa por engano: larga (K de novo, sem segurar down) e tenta de novo.
-      await page.keyboard.down('KeyK');
+      // Pegou outro objeto do mapa por engano: larga (E de novo, sem segurar down) e tenta de novo.
+      await page.keyboard.down('KeyE');
       snap = await stepAndSnap(20);
-      await page.keyboard.up('KeyK');
+      await page.keyboard.up('KeyE');
       snap = await stepAndSnap(50);
     }
   }
@@ -199,12 +219,12 @@ export default async function ({ page, baseUrl, assert }) {
     `RAR-07: nome no HUD deveria terminar em " Rara": ${JSON.stringify(snap.hud.heldItem)}`,
   );
 
-  // ARM-26: K segurando a ferramenta a arremessa em `thrown` a 820 px/s (throwSpeed da faca) para o lado do facing.
+  // ARM-26: E segurando a ferramenta a arremessa em `thrown` a 820 px/s (throwSpeed da faca) para o lado do facing.
   // Um frame depois o atrito do ar do Matter já tirou um pouco: tolerância de 10% para baixo.
   const facing = snap.player.facing;
-  await page.keyboard.down('KeyK');
+  await page.keyboard.down('KeyE');
   snap = await stepAndSnap(16);
-  await page.keyboard.up('KeyK');
+  await page.keyboard.up('KeyE');
   const thrown = snap.worldProps.find((p) => p.id === rareKnife.id);
   assert(thrown && thrown.state === 'thrown', `ARM-26: a faca deveria estar em thrown: ${JSON.stringify(thrown)}`);
   assert(

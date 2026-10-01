@@ -16,6 +16,10 @@ export interface Hit {
   direction: Vec2;
   /** Impulso em px por step do Matter (1/60 s). */
   force: number;
+  /** A guarda do alvo não reduz o dano (GRD-04, carregado e shockwave do chefe). */
+  unblockable?: boolean;
+  /** Nome do golpe do jogador que originou o hit (combo, eventos). */
+  moveName?: string;
 }
 
 export function normalize(v: Vec2): Vec2 {
