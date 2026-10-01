@@ -1034,6 +1034,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers() },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
       camera: { zoom: this.cameras.main.zoom },
+      // T23 (FIN-01/03): distância viva ao inimigo quebrado mais perto, a mesma que o finalizador usa; sem contrato prévio.
+      finisher: { distPx: this.nearestFinishable()?.dist ?? null },
       // T28: laboratório de efeitos, sem contrato prévio no snapshot; `null` fora do fxlab.
       fxlab: this.fxLab?.debug() ?? null,
     };
@@ -1122,24 +1124,28 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (timing.timeScale !== scale) timing.timeScale = scale;
   }
 
+  /** Inimigo comum quebrado (e ainda não finalizado) mais perto do jogador, com a distância entre os centros do corpo. */
+  private nearestFinishable(): { enemy: Enemy; dist: number } | null {
+    const pr = this.player.hurtRect();
+    let best: { enemy: Enemy; dist: number } | null = null;
+    for (const e of this.enemies) {
+      if (!e.finishable) continue;
+      const r = e.hurtRect();
+      const dist = Math.hypot(r.x - pr.x, r.y - pr.y);
+      if (!best || dist < best.dist) best = { enemy: e, dist };
+    }
+    return best;
+  }
+
   /**
    * Finalizador (FIN-01..04): com `J`+`K` a até 40 px de um inimigo comum quebrado (e ainda não finalizado nesta
    * quebra) o golpe causa 40 de dano, congela 150 ms e a câmera dá zoom 1,7 em 100 ms; sem alvo, nada (FIN-03).
    */
   private tryFinisher(): void {
-    const pr = this.player.hurtRect();
-    let target: Enemy | null = null;
-    let best = Infinity;
-    for (const e of this.enemies) {
-      if (!e.finishable) continue;
-      const r = e.hurtRect();
-      const dist = Math.hypot(r.x - pr.x, r.y - pr.y);
-      if (dist <= STRUCTURE.finisherRangePx && dist < best) {
-        target = e;
-        best = dist;
-      }
-    }
+    const near = this.nearestFinishable();
+    const target = near && near.dist <= STRUCTURE.finisherRangePx ? near.enemy : null;
     if (!target) return;
+    const pr = this.player.hurtRect();
     const at = target.hurtRect();
     const dir: 1 | -1 = at.x >= pr.x ? 1 : -1;
     const hit: Hit = {
