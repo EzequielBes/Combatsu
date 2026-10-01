@@ -118,6 +118,11 @@ interface Pose {
   legs?: Placed[];
   /** Partes extras por cima de tudo (rastro do golpe). */
   extra?: Placed[];
+  /** Deslocamento extra do olho e da boca em relação ao tronco (cabeça que sobe, desce ou torce). */
+  eyeAdj?: readonly [number, number];
+  mouthAdj?: readonly [number, number];
+  /** Borda branca `w` no lado do golpe (direita): o texel mais à direita de cada linha do tronco. */
+  rim?: boolean;
 }
 
 /** Monta todos os frames de uma aparência a partir do seu kit. */
@@ -142,11 +147,19 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
     if (kit.back) parts.push([kit.back.grid, bx + kit.back.dx, by + kit.back.dy]);
     parts.push([kit.body, bx, by]);
     if (kit.front) parts.push([kit.front.grid, bx + kit.front.dx, by + kit.front.dy]);
-    parts.push([p.eye ?? kit.eye, bx + kit.eyeAt[0], by + kit.eyeAt[1]]);
-    parts.push([p.mouth ?? kit.mouth, bx + kit.mouthAt[0], by + kit.mouthAt[1]]);
+    const [ex, ey] = p.eyeAdj ?? [0, 0];
+    const [mx, my] = p.mouthAdj ?? [0, 0];
+    parts.push([p.eye ?? kit.eye, bx + kit.eyeAt[0] + ex, by + kit.eyeAt[1] + ey]);
+    parts.push([p.mouth ?? kit.mouth, bx + kit.mouthAt[0] + mx, by + kit.mouthAt[1] + my]);
     if (p.near) parts.push(p.near);
     if (p.extra) parts.push(...p.extra);
-    return compose(kit.sel, ...parts);
+    const rows = compose(kit.sel, ...parts);
+    if (!p.rim) return rows;
+    return rows.map((row, y) => {
+      if (y < by + 3 || y >= by + kit.body.length - 2) return row;
+      const x = row.search(/[^.][.]*$/);
+      return x < 0 ? row : row.slice(0, x) + 'w' + row.slice(x + 1);
+    });
   };
 
   const { yArm, xNear, xFar, legFar, legNear } = kit;
@@ -249,6 +262,63 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
     'getup-1': pose({ drop: 2, ...hang(0, 2) }),
     'getup-2': pose({ drop: 1, lean: -1, ...hang(0, 1) }),
   };
+
+  // Reações ao golpe (HRX-03): frame 0 é o extremo (o corpo é jogado para trás, olho espremido, boca aberta), o 1
+  // segura um pouco menos e o 2 volta a meio caminho do idle. `k` escala a pose: 1, 0.7 e 0.3.
+  interface Recoil {
+    lean: number;
+    drop: number;
+    eyeAdj: [number, number];
+    mouthAdj: [number, number];
+    /** Braço da frente e de trás: [dx, dy]; `fwdFar` usa o braço esticado no de trás. */
+    near: [number, number];
+    far: [number, number];
+    fwdFar?: boolean;
+    /** Pernas jogadas para trás (texels) e erguidas do chão (texels). */
+    legBack: number;
+    legLift?: number;
+    rim?: boolean;
+  }
+  const react = (name: string, r: Recoil): void => {
+    [1, 0.7, 0.3].forEach((k, i) => {
+      const sc = (v: number): number => Math.round(v * k);
+      const e = sc(r.eyeAdj[1]);
+      const lift = sc(r.legLift ?? 0);
+      const back = sc(r.legBack);
+      const legs: Placed[] = [
+        [far(kit.leg), legFar - back, legY - lift],
+        [kit.leg, legNear - back - (i === 0 ? 1 : 0), legY - lift],
+      ];
+      frames[`${name}-${i}`] = pose({
+        lean: sc(r.lean),
+        drop: sc(r.drop),
+        eye: i < 2 ? kit.eyeSquint : undefined,
+        mouth: i < 2 ? kit.mouthOpen : undefined,
+        eyeAdj: [sc(r.eyeAdj[0]), e],
+        mouthAdj: [sc(r.mouthAdj[0]), sc(r.mouthAdj[1])],
+        near: [kit.armHang, xNear + sc(r.near[0]), yArm + sc(r.near[1])],
+        far: r.fwdFar
+          ? [far(kit.armFwd), xFar + sc(r.far[0]), yArm + sc(r.far[1])]
+          : [far(kit.armHang), xFar + sc(r.far[0]), yArm + sc(r.far[1])],
+        legs,
+        rim: r.rim && i === 0,
+      });
+    });
+  };
+  // Cabeça-a: cabeça jogada para trás e para cima, queixo à mostra, braço de trás esticado atrás.
+  react('hurt-head-a', { lean: -3, drop: 0, eyeAdj: [-1, -1], mouthAdj: [-1, -1], near: [-3, -3], far: [-4, -3], fwdFar: true, legBack: 2 });
+  // Cabeça-b: cabeça torcida para baixo, ombros afundam e o braço da frente fica solto.
+  react('hurt-head-b', { lean: -2, drop: 2, eyeAdj: [0, 2], mouthAdj: [0, 1], near: [-1, 3], far: [-3, 0], legBack: 1 });
+  // Gancho: queixo para cima, corpo esticado e solto do chão, braços abertos.
+  react('hurt-uppercut', { lean: -2, drop: -2, eyeAdj: [-1, -1], mouthAdj: [-1, -1], near: [-2, -4], far: [-3, -4], fwdFar: true, legBack: 2, legLift: 2 });
+  // Corpo: dobrado para a frente (cai o tronco), braços na barriga.
+  react('hurt-body', { lean: 1, drop: 4, eyeAdj: [0, 1], mouthAdj: [0, 1], near: [-4, 2], far: [-1, 3], legBack: 0 });
+  // Impacto: o mais dramático; arqueado, jogado para trás, braços soltos e a borda branca do golpe à direita.
+  react('impact', { lean: -4, drop: 2, eyeAdj: [-1, 0], mouthAdj: [-1, 0], near: [-5, -3], far: [-6, -2], fwdFar: true, legBack: 3, legLift: 1, rim: true });
+  frames.impact = frames['impact-0'];
+  delete frames['impact-0'];
+  delete frames['impact-1'];
+  delete frames['impact-2'];
   // Nomes antigos (linha de base e testes de alcance): `windup` e `attack` são o máximo do preparo e o golpe.
   frames.windup = frames['windup-1'];
   frames.attack = frames['attack-0'];
@@ -602,6 +672,11 @@ export const ENEMY_ANIMS: Record<string, AnimDef> = {
   windup: { frames: ['windup-0', 'windup-1'], frameRate: 4, repeat: 0, durations: [120, 330] },
   attack: { frames: ['attack-0', 'attack-1'], frameRate: 16, repeat: 0, durations: [60, 60] },
   hurt: { frames: ['hurt'], frameRate: 1, repeat: 0 },
+  'hurt-head-a': { frames: ['hurt-head-a-0', 'hurt-head-a-1', 'hurt-head-a-2'], frameRate: 12, repeat: 0, durations: [60, 90, 70] },
+  'hurt-head-b': { frames: ['hurt-head-b-0', 'hurt-head-b-1', 'hurt-head-b-2'], frameRate: 12, repeat: 0, durations: [60, 90, 70] },
+  'hurt-uppercut': { frames: ['hurt-uppercut-0', 'hurt-uppercut-1', 'hurt-uppercut-2'], frameRate: 12, repeat: 0, durations: [60, 90, 70] },
+  'hurt-body': { frames: ['hurt-body-0', 'hurt-body-1', 'hurt-body-2'], frameRate: 12, repeat: 0, durations: [60, 90, 70] },
+  impact: { frames: ['impact'], frameRate: 1, repeat: 0 },
   getup: { frames: ['getup-0', 'getup-1', 'getup-2'], frameRate: 8, repeat: 0, durations: [120, 120, 120] },
 };
 
