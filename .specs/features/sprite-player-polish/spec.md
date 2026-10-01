@@ -136,7 +136,7 @@ A animação também é rígida: o idle tem 2 frames a 2 fps, pulo e queda têm 
 | SPR-03 | P1: Protagonista | Tasks | Done |
 | SPR-04 | P1: Protagonista | Tasks | Done |
 | SPR-05 | P1: Protagonista | Tasks | Done |
-| SPR-06 | P1: Protagonista | Tasks | Pending |
+| SPR-06 | P1: Protagonista | Tasks | Done |
 | SPR-07 | P1: Protagonista | Tasks | Pending |
 | SPR-08 | P1: Movimento | Tasks | Pending |
 | SPR-09 | P1: Movimento | Tasks | Pending |
