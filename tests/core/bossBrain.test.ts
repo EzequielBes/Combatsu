@@ -332,3 +332,20 @@ describe('BossBrain: Kokusen (KOK-06, KOK-08, KOK-12, KOK-32)', () => {
     expect(dead.hp).toBe(0);
   });
 });
+
+describe('BossBrain: parry tira 30 de postura (PAR-07)', () => {
+  it('cada parry (0 de dano, 30 de postura) tira 30 sem mexer no hp; o piso é 0 e zerar atordoa', () => {
+    const brain = active();
+    expect(brain.receiveKokusen(0, 30)).toEqual([]);
+    expect(brain.poise).toBe(70);
+    expect(brain.hp).toBe(MAX_HP);
+    brain.receiveKokusen(0, 30);
+    brain.receiveKokusen(0, 30);
+    expect(brain.poise).toBe(10);
+    // 10 - 30 fica em 0, nunca negativo, e a postura zerada atordoa o chefe.
+    expect(brain.receiveKokusen(0, 30)).toEqual([{ type: 'staggerStart' }]);
+    expect(brain.poise).toBe(0);
+    expect(brain.state).toBe('stagger');
+    expect(brain.hp).toBe(MAX_HP);
+  });
+});

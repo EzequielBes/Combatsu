@@ -31,7 +31,7 @@ export default async function ({ page, baseUrl, assert }) {
     );
 
   // CE-01/TEC-01: sem `tech=`, a run começa com 100/100/8 de energia e os dois slots vazios (AD-005).
-  await page.goto(`${baseUrl}?debug&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1`, { waitUntil: 'load' });
   await waitReady();
   let snap = await stepAndSnap(20);
   assert(
@@ -42,7 +42,7 @@ export default async function ({ page, baseUrl, assert }) {
 
   // A partir daqui, `?debug&tech=divergente` (TEC-02): o `equipDebugTech` só roda no `startRun` (RunCommand
   // `startRun`, disparado ao apertar J) - por isso a run já começa aqui, antes de olhar os slots.
-  await page.goto(`${baseUrl}?debug&seed=1&tech=divergente`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&tech=divergente`, { waitUntil: 'load' });
   await waitReady();
   await stepAndSnap(20);
   await page.keyboard.press('KeyJ', { delay: 50 });

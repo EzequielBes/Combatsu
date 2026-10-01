@@ -2,7 +2,7 @@
 // run começar direto na rodada de chefe sem esperar as 4 rodadas anteriores. LEVEL_1 tem dois pontos `E`, em
 // x=624 e x=1200; o player nasce em x=112, então o ponto mais distante (BOSS-03) é o de x=1200.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&seed=1&round=5`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -322,7 +322,7 @@ export default async function ({ page, baseUrl, assert }) {
   );
 
   // BTIER-05/07: rodada 15 (tier 3) é a Tecelã de Maldições - rajada de 5 projéteis a 325 px/s (260 x 1.25).
-  await page.goto(`${baseUrl}?debug&seed=1&round=15`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=15`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

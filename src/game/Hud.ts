@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { COMBO_GRADE_COLORS, COMBO_TEXT_COLOR, STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_BREAK_COLOR, STRUCTURE_BAR_FILL_COLOR } from './art/combatColors';
 import { HUD_BAR_WELL } from './art/hud';
 import { ART_SCALE, PALETTE } from './art/palette';
 import { TEX } from './textures';
@@ -19,6 +20,10 @@ export const RUN_TEXT_COLOR = PALETTE.w;
 export const RUN_BG_COLOR = PALETTE.k;
 const RUN_TEXT_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(RUN_TEXT_COLOR) };
 const RUN_PANEL_STYLE = { ...RUN_TEXT_STYLE, backgroundColor: css(RUN_BG_COLOR, 0.8), align: 'center' as const };
+/** Contador de combo (CMB-04/05): à direita, abaixo de "Inimigos"; a nota fica embaixo do texto de hits. */
+const COMBO_Y = MARGIN + 48;
+const COMBO_HITS_STYLE = { fontFamily: 'monospace', fontSize: '22px', fontStyle: 'bold', color: css(COMBO_TEXT_COLOR) };
+const COMBO_GRADE_STYLE = { fontFamily: 'monospace', fontSize: '34px', fontStyle: 'bold', color: css(COMBO_GRADE_COLORS.D) };
 /** Nome do jogo, mostrado na tela de título (RHUD-05). */
 export const GAME_NAME = 'Combatsu';
 
@@ -57,10 +62,35 @@ export class Hud {
   private readonly bossBarMarks: Phaser.GameObjects.Rectangle[];
   private readonly bossBarName: Phaser.GameObjects.Text;
   private bossBarVisible = false;
+  /** Combo (CMB-04/05): com 2 hits ou mais mostra `N hits` e a nota embaixo; pulsa a cada hit novo. */
+  setCombo(hits: number, grade: 'D' | 'C' | 'B' | 'A' | 'S' | null): void {
+    const show = hits >= 2 && grade !== null;
+    this.comboHitsText.setVisible(show);
+    this.comboGradeText.setVisible(show);
+    if (!show) {
+      this.lastComboHits = hits;
+      return;
+    }
+    this.comboHitsText.setText(`${hits} hits`);
+    this.comboGradeText.setText(grade).setColor(css(COMBO_GRADE_COLORS[grade]));
+    if (hits > this.lastComboHits) {
+      this.comboHitsText.setScale(1.25).setOrigin(1, 0);
+      this.scene.tweens.add({ targets: this.comboHitsText, scale: 1, duration: 120 });
+    }
+    this.lastComboHits = hits;
+  }
+
+  /** Barra de estrutura do jogador (STR-01), fina, logo abaixo da barra de vida; só aparece com estrutura acumulada. */
+  private readonly structBg: Phaser.GameObjects.Rectangle;
+  private readonly structFill: Phaser.GameObjects.Rectangle;
   /** Contador de fragmentos (ECO-16), abaixo da barra de HP: ícone + número, que pulsa ao mudar. */
   private readonly fragmentIcon: Phaser.GameObjects.Image;
   private readonly fragmentText: Phaser.GameObjects.Text;
   private lastFragments = 0;
+  /** Combo (CMB-04/05): `N hits` e a letra da nota embaixo; escondidos com menos de 2 hits. */
+  private readonly comboHitsText: Phaser.GameObjects.Text;
+  private readonly comboGradeText: Phaser.GameObjects.Text;
+  private lastComboHits = 0;
   /** Objeto na mão (ITEM-01..03), abaixo do contador de fragmentos. */
   private readonly heldItemText: Phaser.GameObjects.Text;
   private heldItemState: { name: string; pips: number; maxPips: number } | null = null;
@@ -116,6 +146,17 @@ export class Hud {
       .setOrigin(0.5, 1)
       .setVisible(false);
 
+    // Estrutura do jogador: 3 px de altura entre a barra de vida (termina em y=28) e o contador de fragmentos (y=32).
+    const structW = w.w * ART_SCALE;
+    const structY = MARGIN + 17;
+    this.structBg = scene.add
+      .rectangle(barX + w.x * ART_SCALE, structY, structW, 3, STRUCTURE_BAR_BG_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.structFill = scene.add
+      .rectangle(barX + w.x * ART_SCALE, structY, 0, 3, STRUCTURE_BAR_FILL_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
     // Contador de fragmentos (ECO-16), logo abaixo da barra de HP.
     const fragY = MARGIN + 20;
     this.fragmentIcon = scene.add.image(MARGIN, fragY, TEX.fragmentIcon, 'icon').setOrigin(0, 0);
@@ -123,9 +164,11 @@ export class Hud {
     // Item na mão (ITEM-01..03), logo abaixo do contador de fragmentos; escondido de mãos vazias.
     this.heldItemText = scene.add.text(MARGIN, fragY + 16, '', TEXT_STYLE).setVisible(false);
 
-    const runObjs = [this.roundText, this.remainingText, this.bannerText, this.centerText];
+    this.comboHitsText = scene.add.text(w2 - MARGIN, COMBO_Y, '', COMBO_HITS_STYLE).setOrigin(1, 0).setVisible(false);
+    this.comboGradeText = scene.add.text(w2 - MARGIN, COMBO_Y + 26, '', COMBO_GRADE_STYLE).setOrigin(1, 0).setVisible(false);
+    const runObjs = [this.roundText, this.remainingText, this.bannerText, this.centerText, this.comboHitsText, this.comboGradeText];
     const bossBarObjs = [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName];
-    const fragmentObjs = [this.fragmentIcon, this.fragmentText, this.heldItemText];
+    const fragmentObjs = [this.fragmentIcon, this.fragmentText, this.heldItemText, this.structBg, this.structFill];
     for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]) {
       obj.setScrollFactor(0).setDepth(100);
     }
@@ -151,6 +194,16 @@ export class Hud {
     this.lastFragments = n;
     this.fragmentText.setScale(1.3);
     this.scene.tweens.add({ targets: this.fragmentText, scale: 1, duration: 150 });
+  }
+
+  /** Barra de estrutura do jogador (STR-01): amarela subindo, branca na quebra; escondida em 0. */
+  setPlayerStructure(s: { cur: number; max: number; broken: boolean }): void {
+    const show = s.cur > 0 || s.broken;
+    this.structBg.setVisible(show);
+    this.structFill
+      .setVisible(show && s.cur > 0)
+      .setSize(Math.round((HUD_BAR_WELL.w * ART_SCALE * s.cur) / s.max), 3)
+      .setFillStyle(s.broken ? STRUCTURE_BAR_BREAK_COLOR : STRUCTURE_BAR_FILL_COLOR);
   }
 
   /** Enche a barra na proporção da vida, em passos de 1 texel (2 px). */
@@ -241,6 +294,8 @@ export class Hud {
     bossBarIgnoredByMain: boolean;
     fragments: string;
     heldItem: { name: string; pips: number; maxPips: number } | null;
+    combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
+    controls: string;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -251,6 +306,17 @@ export class Hud {
       center: this.centerLines,
       fragments: this.fragmentText.text,
       heldItem: this.heldItemState,
+      // CTL-06: texto vivo do painel de controles.
+      controls: this.panel.text,
+      // CMB-04/05: texto e nota vivos (`null` escondidos), `x` = borda direita do texto na tela de UI, e ambos na `uiLayer`.
+      combo: {
+        text: this.comboHitsText.visible ? this.comboHitsText.text : null,
+        grade: this.comboGradeText.visible ? this.comboGradeText.text : null,
+        x: this.comboHitsText.x,
+        ignoredByMain:
+          (this.layer.cameraFilter & mainId) === mainId &&
+          [this.comboHitsText, this.comboGradeText].every((o) => o.displayList === this.layer),
+      },
       // Centro visual do texto (RHUD-02): com origem não centralizada, o ponto de âncora (x/y) não discriminaria
       // uma faixa que cresce só para um lado.
       bannerPos: (() => {

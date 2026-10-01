@@ -73,6 +73,21 @@ export class Health {
   }
 
   /**
+   * Dano que passa pela guarda (GRD-06): tira hp sem dar invulnerabilidade nem atordoamento, para o recuo do
+   * bloqueio ficar só nos 8 px do GRD-09. Morto ou invulnerável ignora; hp 0 mata como um golpe normal.
+   */
+  chip(damage: number): HealthResult {
+    if (this._dead || this.invulnerable || damage <= 0) return 'ignored';
+    this._hp = Math.max(0, this._hp - damage);
+    if (this._hp > 0) return 'hurt';
+    this._dead = true;
+    this.invulnTimer = 0;
+    this.staggerTimer = 0;
+    this.respawnTimer = this.t.respawnMs;
+    return 'died';
+  }
+
+  /**
    * Cura até o teto de `maxHp` e devolve o que foi restaurado (FND-05). Morto (FND-06), `n <= 0` ou `n` não
    * finito (FND-07) não mudam nada e devolvem 0.
    */
