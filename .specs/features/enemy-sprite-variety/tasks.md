@@ -175,10 +175,10 @@ T13
 
 **Done when**:
 
-- [ ] EVR-03 conferido para `corcunda`: In every variant, the `attack` frame claw SHALL reach the edge of the `ENEMY_ATTACK` hitbox (up to 1 texel beyond), at the hitbox height.
-- [ ] EVR-07 e EVR-10 (`corcunda`) verdes.
-- [ ] Prancha conferida visualmente contra `docs/art/enemy-before/`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] EVR-03 conferido para `corcunda`: In every variant, the `attack` frame claw SHALL reach the edge of the `ENEMY_ATTACK` hitbox (up to 1 texel beyond), at the hitbox height.
+- [x] EVR-07 e EVR-10 (`corcunda`) verdes.
+- [x] Prancha conferida visualmente contra `docs/art/enemy-before/`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
