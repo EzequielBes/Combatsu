@@ -142,7 +142,7 @@ O combate estilo luta (F7) tem 17 golpes, mas a reação do alvo não conta qual
 | EVR-04 | P1: Variedade | Tasks | Pending |
 | EVR-05 | P1: Variedade | Tasks | Pending |
 | EVR-06 | P1: Variedade | Tasks | Pending |
-| EVR-07 | P1: Variedade | Tasks | Pending |
+| EVR-07 | P1: Variedade | Tasks | Done |
 | HRX-01 | P1: Golpe leve | Tasks | Done |
 | HRX-02 | P1: Golpe leve | Tasks | Pending |
 | HRX-03 | P1: Golpe leve | Tasks | Pending |

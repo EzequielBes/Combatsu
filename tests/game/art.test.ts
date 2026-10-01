@@ -48,6 +48,9 @@ import {
   ENEMY_FRAME_W,
   ENEMY_ORIGIN,
   ENEMY_RAG_PARTS,
+  ENEMY_RAG_VARIANTS,
+  ENEMY_VARIANT_FRAMES,
+  type EnemyVariantId,
 } from '../../src/game/art/sprites/enemy';
 import {
   BOSS_ANIMS,
@@ -1090,5 +1093,71 @@ describe('alinhamento dos frames do inimigo contra a linha de base congelada (EV
     expect(off(shiftRight(3))).toBe(3);
     expect(off(shiftLeft(2))).toBe(2);
     expect(off(shiftLeft(3))).toBe(3);
+  });
+});
+
+describe('aparência corcunda do inimigo (EVR-01, EVR-03, EVR-10)', () => {
+  const IDS: EnemyVariantId[] = ['corcunda'];
+  const nonEmpty = (rows: readonly string[]) => rows.flatMap((r, y) => [...r].map((c, x) => ({ c, x, y }))).filter((t) => t.c !== TRANSPARENT);
+
+  it('EVR-01: as 3 aparências têm todo frame citado por ENEMY_ANIMS, em 32x24, só com cores da paleta', () => {
+    expect(Object.keys(ENEMY_VARIANT_FRAMES)).toContain('corcunda');
+    for (const id of IDS) {
+      const frames = ENEMY_VARIANT_FRAMES[id]!;
+      const sheet = parseSheet(`enemy-${id}`, frames, PALETTE_KEYS);
+      expect(sheet.width, id).toBe(ENEMY_FRAME_W);
+      expect(sheet.height, id).toBe(ENEMY_FRAME_H);
+      for (const [name, anim] of Object.entries(ENEMY_ANIMS)) {
+        for (const f of anim.frames) expect(Object.hasOwn(frames, f), `${id} ${name}: ${f}`).toBe(true);
+      }
+    }
+    expect(ENEMY_FRAMES).toBe(ENEMY_VARIANT_FRAMES.corcunda);
+  });
+
+  it('EVR-03: no frame attack a garra de cada aparência chega à borda da hitbox do ENEMY_ATTACK (até 1 texel além), na altura', () => {
+    const originCol = ENEMY_ORIGIN.x * ENEMY_FRAME_W;
+    const box = ENEMY_ATTACK.hitbox!;
+    const edge = box.offsetX + box.width / 2;
+    for (const id of IDS) {
+      const rows = ENEMY_VARIANT_FRAMES[id]![ENEMY_ANIMS.attack.frames[0]];
+      const cells = nonEmpty(rows);
+      const maxX = Math.max(...cells.map((t) => t.x));
+      const reach = (maxX + 1 - originCol) * ART_SCALE;
+      expect(reach, id).toBeGreaterThanOrEqual(edge);
+      expect(reach, id).toBeLessThanOrEqual(edge + ART_SCALE);
+      // a ponta (coluna mais à frente) fica na faixa vertical da hitbox: linhas 9..19 do frame (pé na linha 24, centro 18 px acima)
+      for (const t of cells.filter((c) => c.x === maxX)) {
+        const rowTop = (t.y - ENEMY_FRAME_H) * ART_SCALE + 18;
+        expect(rowTop, id).toBeGreaterThanOrEqual(box.offsetY - box.height / 2 - ART_SCALE);
+        expect(rowTop + ART_SCALE, id).toBeLessThanOrEqual(box.offsetY + box.height / 2 + ART_SCALE);
+      }
+    }
+  });
+
+  it('EVR-10: o idle-0 de cada aparência tem no máximo 4 texels k internos (sel-out aplicado)', () => {
+    for (const id of IDS) {
+      const rows = ENEMY_VARIANT_FRAMES[id]!['idle-0'];
+      let interior = 0;
+      for (let y = 1; y < rows.length - 1; y++) {
+        for (let x = 1; x < rows[y].length - 1; x++) {
+          if (rows[y][x] !== 'k') continue;
+          const n = [rows[y - 1][x], rows[y + 1][x], rows[y][x - 1], rows[y][x + 1]];
+          if (n.every((c) => c !== TRANSPARENT)) interior++;
+        }
+      }
+      expect(interior, id).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('as partes do ragdoll da corcunda têm 8x7, 8x10 e 3x8 texels e só cores da paleta', () => {
+    for (const id of IDS) {
+      const { head, torso, limb } = ENEMY_RAG_VARIANTS[id]!;
+      const size = (g: readonly string[]) => [Math.max(...g.map((r) => r.length)), g.length];
+      expect(size(head), id).toEqual([8, 7]);
+      expect(size(torso), id).toEqual([8, 10]);
+      expect(size(limb), id).toEqual([3, 8]);
+      for (const [n, g] of Object.entries({ head, torso, limb })) parseSheet(`rag-${n}-${id}`, { [n]: g }, PALETTE_KEYS);
+    }
+    expect(ENEMY_RAG_PARTS).toBe(ENEMY_RAG_VARIANTS.corcunda);
   });
 });
