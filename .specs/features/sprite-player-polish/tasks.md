@@ -150,10 +150,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] SPR-10 conferido: WHEN the player is grounded, not hurt, not attacking, not holding, and `landMs < LAND_MS` (120) THEN `pickPlayerAnim` SHALL return `land`; WHEN `landMs >= LAND_MS` THEN it SHALL NOT return `land`. Testado em 119 e 120.
-- [ ] SPR-11 conferido: WHILE the player is airborne, not hurt, not attacking, and `|vy| < APEX_VY` (60) `pickPlayerAnim` SHALL return `apex`; at `|vy| >= APEX_VY` it SHALL return `jump` (vy < 0) or `fall` (vy > 0). Testado em ±59 e ±60.
-- [ ] Edge: segurando objeto → `carry-*`; golpe e hurt vencem `land`.
-- [ ] Gate check passes: `npm run typecheck && npm test` (o `Player.ts` compila com `landMs: Infinity` provisório até a T11)
+- [x] SPR-10 conferido: WHEN the player is grounded, not hurt, not attacking, not holding, and `landMs < LAND_MS` (120) THEN `pickPlayerAnim` SHALL return `land`; WHEN `landMs >= LAND_MS` THEN it SHALL NOT return `land`. Testado em 119 e 120.
+- [x] SPR-11 conferido: WHILE the player is airborne, not hurt, not attacking, and `|vy| < APEX_VY` (60) `pickPlayerAnim` SHALL return `apex`; at `|vy| >= APEX_VY` it SHALL return `jump` (vy < 0) or `fall` (vy > 0). Testado em ±59 e ±60.
+- [x] Edge: segurando objeto → `carry-*`; golpe e hurt vencem `land`.
+- [x] Gate check passes: `npm run typecheck && npm test` (o `Player.ts` compila com `landMs: Infinity` provisório até a T11)
 
 **Tests**: unit
 **Gate**: quick

@@ -646,6 +646,7 @@ export class Player implements Hittable {
       vx: this.move.vx,
       vy: this.move.vy,
       holding: this.held !== null,
+      landMs: Infinity, // provisório até a T11 ligar o tempo de pouso
     };
     const anim = pickPlayerAnim(input);
     const v = this.view;
