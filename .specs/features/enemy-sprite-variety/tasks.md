@@ -196,10 +196,10 @@ T13
 
 **Done when**:
 
-- [ ] EVR-01 conferido: The enemy art SHALL provide the 3 variants `corcunda`, `rastejante` and `bruto`, each with every frame cited by `ENEMY_ANIMS`, at 32x24 texels, using only palette keys.
-- [ ] EVR-02 conferido: Each pair of variants SHALL differ in at least 25% of the non-transparent texels of the `idle-0` frame (same position, different key or transparency), and the dominant body color of each variant SHALL be different (`i`/`I`, `g`/`G`, `v`/`u`).
-- [ ] EVR-03 e EVR-10 verdes nas 3 aparências; as partes do ragdoll das 3 têm os tamanhos 8x7, 8x10 e 3x8.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] EVR-01 conferido: The enemy art SHALL provide the 3 variants `corcunda`, `rastejante` and `bruto`, each with every frame cited by `ENEMY_ANIMS`, at 32x24 texels, using only palette keys.
+- [x] EVR-02 conferido: Each pair of variants SHALL differ in at least 25% of the non-transparent texels of the `idle-0` frame (same position, different key or transparency), and the dominant body color of each variant SHALL be different (`i`/`I`, `g`/`G`, `v`/`u`).
+- [x] EVR-03 e EVR-10 verdes nas 3 aparências; as partes do ragdoll das 3 têm os tamanhos 8x7, 8x10 e 3x8.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

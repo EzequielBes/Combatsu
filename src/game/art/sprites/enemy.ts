@@ -332,11 +332,242 @@ const CORCUNDA_KIT: EnemyKit = {
   reachX: 14,
 };
 
+// ================================================================ rastejante (verde, magro e alto, 3 olhos)
+// Tronco 9x16: cabeça pequena no alto, pescoço fino, costelas em `G`, pélvis; braços até o chão.
+const R_BODY: Grid = [
+  '..kkkkk..',
+  '.kGGGGGk.',
+  'kGGgggggk',
+  'kGggggggk',
+  'kgggggggk',
+  'kgggggggk',
+  'kggnnnggk',
+  '.kgggggnk',
+  '..kGggnk.',
+  '.kGggggnk',
+  '.kGGGGgnk',
+  '.kgnnggnk',
+  '.kGGGGgnk',
+  '..kgnggnk',
+  '..kGggnk.',
+  '..kkkkk..',
+];
+const R_EYE: Grid = ['.......', 'kRkRkRk', 'krkrkrk', '.......'];
+const R_EYE_GLOW: Grid = ['.......', 'kwkwkwk', 'kRkRkRk', '.......'];
+const R_EYE_SQUINT: Grid = ['.......', '.......', 'krkrkrk', '.......'];
+const R_MOUTH: Grid = ['kwkkwkw', '.kkkkk.'];
+const R_MOUTH_OPEN: Grid = ['kwkwkwk', 'krrrrrk', '.kwkwk.'];
+const R_ARM_HANG: Grid = [
+  '.kGk.',
+  '.kgk.',
+  '.kgk.',
+  '..kgk',
+  '..kgk',
+  '.kgnk',
+  '.kgk.',
+  '.kgk.',
+  '.kgnk',
+  '.kgk.',
+  '.kgk.',
+  '.kgk.',
+  'kgggk',
+  'kwkwk',
+  'w.w.w',
+];
+const R_ARM_FWD: Grid = [
+  'kGk.....',
+  'kgGk....',
+  '.kgGk...',
+  '..kgGk..',
+  '...kgk..',
+  '...kgnk.',
+  '...kgk..',
+  '...kgk..',
+  '...kgnk.',
+  '...kgk..',
+  '...kgk..',
+  '..kgggk.',
+  '..kwkwk.',
+  '..w.w.w.',
+];
+const R_ARM_WINDUP: Grid = [
+  'w.w.w.....',
+  'kwkwk.....',
+  'kgggk.....',
+  '.kgnk.....',
+  '.kgGk.....',
+  '..kgGk....',
+  '...kgGk...',
+  '....kgGk..',
+  '.....kgGk.',
+  '......kgk.',
+  '.......kk.',
+];
+const R_ARM_REACH: Grid = [
+  'kkkkkkkkkkk.kw.',
+  'kGgggggggggkkww',
+  'kkkkkkkkkkk.kw.',
+];
+const R_LEG: Grid = ['.kgk.', 'kGgnk', '.kgnk', 'kgnk.', 'kgk..', 'kggk.', 'kkkkk'];
+const R_LEG_UP: Grid = ['.kgk.', 'kGgnk', 'kgnk.', 'kggk.', 'kkkkk', 'kkkkk'].slice(0, 6);
+
+const RASTEJANTE_KIT: EnemyKit = {
+  sel: {
+    rules: [
+      { keys: new Set(['G', 'g', 'n']), line: 'n' },
+      { keys: new Set(['R', 'r', 'w']), line: 'b' },
+    ],
+    fallback: 'K',
+  },
+  farMap: { G: 'g', n: 'g', w: 'S' },
+  body: R_BODY,
+  bodyX: 8,
+  bodyY: 1,
+  eye: R_EYE,
+  eyeGlow: R_EYE_GLOW,
+  eyeSquint: R_EYE_SQUINT,
+  eyeAt: [1, 2],
+  mouth: R_MOUTH,
+  mouthAt: [1, 6],
+  mouthOpen: R_MOUTH_OPEN,
+  armHang: R_ARM_HANG,
+  armFwd: R_ARM_FWD,
+  armWindup: R_ARM_WINDUP,
+  armReach: R_ARM_REACH,
+  leg: R_LEG,
+  legUp: R_LEG_UP,
+  yArm: 9,
+  xNear: 15,
+  xFar: 3,
+  legFar: 8,
+  legNear: 13,
+  windupAt: [0, 0],
+  reachX: 14,
+};
+
+// ================================================================ bruto (roxo, largo e baixo, chifres, boca acesa)
+// Tronco 15x13 com ombros enormes; a cabeça com chifres (13x10) senta entre os ombros.
+const B_BODY: Grid = [
+  'wk.kkk...kkk.kw',
+  'kUUUUUkkkUUUUUk',
+  'kUUuuuuuuuuuUUk',
+  'kUuuuvuuuvuuuuk',
+  'kuuuuuvuuuvuuuk',
+  'kuuuuuuuuuuuuuk',
+  'kuuuvuuuuuuuubk',
+  'kuuuuuuuuuuuubk',
+  'kvuuuuuuuuuuvbk',
+  'kvvuuuuuuuuvvbk',
+  '.kvvuuuuuuvvbk.',
+  '..kvvvvvvvvbk..',
+  '...kkkkkkkkk...',
+];
+const B_HEAD: Grid = [
+  '..kwk.....kwk..',
+  '.kSSk.....kSSk.',
+  '.kSk.......kSk.',
+  'kSSk.......kSSk',
+  'kSSkkkkkkkkkSSk',
+  '...kuUuuuUuk...',
+  '...kuuuuuuuk...',
+  '...kuuuuuuuk...',
+  '...kvuuuuuvk...',
+  '....kkkkkkk....',
+];
+const B_EYE: Grid = ['aA...Aa'];
+const B_EYE_GLOW: Grid = ['AwA.AwA'];
+const B_EYE_SQUINT: Grid = ['kk...kk'];
+const B_MOUTH: Grid = ['kkkkkkk', 'kAwAwAk', 'kaAAAak', '.kkkkk.'];
+const B_MOUTH_OPEN: Grid = ['kkkkkkk', 'kAwAwAk', 'kaAAAak', 'kaaAaak', '.kkkkk.'];
+const B_ARM_HANG: Grid = [
+  '.kUUk.',
+  'kUUuuk',
+  'kUuuuk',
+  'kuuuvk',
+  'kuuuuk',
+  'kvuuuk',
+  'kuuuuk',
+  'kvuuvk',
+  'kUUUuk',
+  'kUuuuk',
+  'kuuvvk',
+  'kkkkkk',
+];
+const B_ARM_FWD: Grid = [
+  'kUUk....',
+  'kUuuk...',
+  '.kuuuk..',
+  '..kuuvk.',
+  '...kuuk.',
+  '...kvuk.',
+  '..kUUUuk',
+  '..kUuuuk',
+  '..kuuvvk',
+  '..kkkkkk',
+];
+const B_ARM_WINDUP: Grid = [
+  'AAAAk.....',
+  'AwwAk.....',
+  'kAAkk.....',
+  '.kuuk.....',
+  '.kuuuk....',
+  '..kuuuk...',
+  '...kuuuk..',
+  '....kuuuk.',
+  '.....kuuuk',
+  '......kuuk',
+  '.......kk.',
+];
+const B_ARM_REACH: Grid = [
+  'kkkkkkkkkkkkkkk',
+  'kUUUUUUUUUUkkkk',
+  'kuuuuuuuuuuUUUk',
+  'kvvvvvvvvvvuuuk',
+  'kkkkkkkkkkkkkkk',
+];
+const B_LEG: Grid = ['kuuuk', 'kvuuk', 'kkkkk'];
+const B_LEG_UP: Grid = ['kuuuk', 'kkkkk'];
+
+const BRUTO_KIT: EnemyKit = {
+  sel: {
+    rules: [
+      { keys: new Set(['U', 'u', 'v', 'S']), line: 'b' },
+      { keys: new Set(['A', 'a', 'w']), line: 'b' },
+    ],
+    fallback: 'K',
+  },
+  farMap: { U: 'u', u: 'v', v: 'b', w: 'S', S: 's' },
+  body: B_BODY,
+  bodyX: 5,
+  bodyY: 8,
+  front: { grid: B_HEAD, dx: 0, dy: -5 },
+  eye: B_EYE,
+  eyeGlow: B_EYE_GLOW,
+  eyeSquint: B_EYE_SQUINT,
+  eyeAt: [4, 0],
+  mouth: B_MOUTH,
+  mouthAt: [4, 1],
+  mouthOpen: B_MOUTH_OPEN,
+  armHang: B_ARM_HANG,
+  armFwd: B_ARM_FWD,
+  armWindup: B_ARM_WINDUP,
+  armReach: B_ARM_REACH,
+  leg: B_LEG,
+  legUp: B_LEG_UP,
+  yArm: 10,
+  xNear: 18,
+  xFar: 1,
+  legFar: 7,
+  legNear: 13,
+  windupAt: [1, 1],
+  reachX: 14,
+};
+
 // ================================================================ exportações
-export const ENEMY_VARIANT_FRAMES: Partial<Record<EnemyVariantId, Record<string, readonly string[]>>> & {
-  corcunda: Record<string, readonly string[]>;
-} = {
+export const ENEMY_VARIANT_FRAMES: Record<EnemyVariantId, Record<string, readonly string[]>> = {
   corcunda: buildEnemyFrames(CORCUNDA_KIT),
+  rastejante: buildEnemyFrames(RASTEJANTE_KIT),
+  bruto: buildEnemyFrames(BRUTO_KIT),
 };
 
 /** Compatibilidade: a folha da `corcunda` (linha de base de bbox, FxLab). */
@@ -368,7 +599,7 @@ export type EnemyRagParts = { head: Grid; torso: Grid; limb: Grid };
 
 const sel = (k: EnemyKit) => k.sel;
 
-export const ENEMY_RAG_VARIANTS: Partial<Record<EnemyVariantId, EnemyRagParts>> & { corcunda: EnemyRagParts } = {
+export const ENEMY_RAG_VARIANTS: Record<EnemyVariantId, EnemyRagParts> = {
   corcunda: {
     head: finishPart(['..kkk.k.', '.kIIIkIk', 'kIIkkkkk', 'kIkwAkAk', 'kikAAkAk', 'kikaAkak', '.kkkkkk.'], sel(CORCUNDA_KIT)),
     torso: finishPart(
@@ -376,6 +607,22 @@ export const ENEMY_RAG_VARIANTS: Partial<Record<EnemyVariantId, EnemyRagParts>> 
       sel(CORCUNDA_KIT),
     ),
     limb: finishPart(['kIk', 'kik', 'kvk', 'kik', 'kik', 'kHk', 'kik', 'wkw'], sel(CORCUNDA_KIT)),
+  },
+  rastejante: {
+    head: finishPart(['.kkkkk..', 'kGGgggk.', 'kgggggk.', 'kRkRkRk.', 'krkrkrk.', 'kwkkwkk.', '.kkkkk..'], sel(RASTEJANTE_KIT)),
+    torso: finishPart(
+      ['.kkkkkk.', 'kGGggggk', 'kgnnnnnk', 'kGGGGGgk', 'kgnnnnnk', 'kGGGGGgk', 'kgnnnnnk', 'kgggggnk', 'kGgggnnk', '.kkkkkk.'],
+      sel(RASTEJANTE_KIT),
+    ),
+    limb: finishPart(['kGk', 'kgk', 'kgk', 'kgk', 'kgk', 'kgk', 'kgk', 'wkw'], sel(RASTEJANTE_KIT)),
+  },
+  bruto: {
+    head: finishPart(['wk...kw.', 'kSkkkSk.', 'kuUuUuk.', 'kuuuuuk.', 'kAwAwAk.', 'kaAAAak.', '.kkkkk..'], sel(BRUTO_KIT)),
+    torso: finishPart(
+      ['kkkkkkkk', 'kUUUUUUk', 'kuuvuuuk', 'kuuuuvbk', 'kuvuuubk', 'kuuuuubk', 'kuuvuubk', 'kvuuuvbk', 'kvvvvvbk', 'kkkkkkkk'],
+      sel(BRUTO_KIT),
+    ),
+    limb: finishPart(['kUk', 'kuk', 'kuk', 'kvk', 'kuk', 'kuk', 'kUk', 'kUk'].slice(0, 8), sel(BRUTO_KIT)),
   },
 };
 

@@ -136,9 +136,9 @@ O combate estilo luta (F7) tem 17 golpes, mas a reação do alvo não conta qual
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| EVR-01 | P1: Variedade | Tasks | Pending |
-| EVR-02 | P1: Variedade | Tasks | Pending |
-| EVR-03 | P1: Variedade | Tasks | Pending |
+| EVR-01 | P1: Variedade | Tasks | Done |
+| EVR-02 | P1: Variedade | Tasks | Done |
+| EVR-03 | P1: Variedade | Tasks | Done |
 | EVR-04 | P1: Variedade | Tasks | Pending |
 | EVR-05 | P1: Variedade | Tasks | Pending |
 | EVR-06 | P1: Variedade | Tasks | Pending |
@@ -151,7 +151,7 @@ O combate estilo luta (F7) tem 17 golpes, mas a reação do alvo não conta qual
 | HRX-06 | P1: Impacto forte | Tasks | Pending |
 | EVR-08 | P2: Fluidez | Tasks | Pending |
 | EVR-09 | P2: Fluidez | Tasks | Pending |
-| EVR-10 | P2: Fluidez | Tasks | Pending |
+| EVR-10 | P2: Fluidez | Tasks | Done |
 
 **Coverage:** 16 total, 16 mapped to tasks, 0 unmapped
 
