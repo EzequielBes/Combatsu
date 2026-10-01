@@ -68,6 +68,19 @@ describe('paleta única (ART-01)', () => {
     for (const k of keys) expect([...k]).toHaveLength(1);
   });
 
+  it('tem as 5 chaves novas do player (o, x, j, y, z) somando 40 cores (SPR-01)', () => {
+    const keys = Object.keys(PALETTE);
+    for (const k of ['o', 'x', 'j', 'y', 'z']) expect(keys, k).toContain(k);
+    // SPEC_DEVIATION: a spec diz 34 + 5 = 39, mas a paleta já tinha 35 chaves; o total real é 40, o teto do teste de paleta.
+    // Reason: contagem da spec desatualizada; as 5 chaves novas e o teto de 40 se mantêm.
+    expect(keys).toHaveLength(40);
+    expect(PALETTE.o).toBe(0x161d3d);
+    expect(PALETTE.x).toBe(0x6b3a2e);
+    expect(PALETTE.j).toBe(0x33263b);
+    expect(PALETTE.y).toBe(0x8fa3c9);
+    expect(PALETTE.z).toBe(0x9c6a1f);
+  });
+
   it('reserva "." para transparente: não está na paleta', () => {
     expect(TRANSPARENT).toBe('.');
     expect(Object.hasOwn(PALETTE, '.')).toBe(false);
