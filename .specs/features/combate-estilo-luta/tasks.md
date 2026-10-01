@@ -736,12 +736,12 @@ T19 → T20 → T21
 
 **Done when**:
 
-- [ ] EBL-02 conferido: WHILE a regular enemy guards, a light hit from its front SHALL deal 0 damage, add 8 structure and give `events` one `enemyBlock:<id>`.
-- [ ] EBL-03 conferido: WHILE a regular enemy guards, a heavy hit from its front SHALL deal its full damage.
-- [ ] EBL-04 conferido: WHEN `chuteCarregado` hits a guarding regular enemy THEN it SHALL deal its full damage and add 40 structure.
-- [ ] CMB-03 conferido: WHILE `combo.hits` ≥ 2, `combo.grade` SHALL be D for 1–2 distinct moves in the combo, C for 3, B for 4, A for 5 and S for 6 or more.
-- [ ] CMB-04 conferido: WHILE `combo.hits` ≥ 2, the HUD SHALL show the text `<hits> hits` at the right side of the screen.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] EBL-02 conferido: WHILE a regular enemy guards, a light hit from its front SHALL deal 0 damage, add 8 structure and give `events` one `enemyBlock:<id>`.
+- [x] EBL-03 conferido: WHILE a regular enemy guards, a heavy hit from its front SHALL deal its full damage.
+- [x] EBL-04 conferido: WHEN `chuteCarregado` hits a guarding regular enemy THEN it SHALL deal its full damage and add 40 structure.
+- [x] CMB-03 conferido: WHILE `combo.hits` ≥ 2, `combo.grade` SHALL be D for 1–2 distinct moves in the combo, C for 3, B for 4, A for 5 and S for 6 or more.
+- [x] CMB-04 conferido: WHILE `combo.hits` ≥ 2, the HUD SHALL show the text `<hits> hits` at the right side of the screen.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
