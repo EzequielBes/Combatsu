@@ -217,9 +217,9 @@ T13
 
 **Done when**:
 
-- [ ] EVR-08 conferido: In every variant, `idle` SHALL have at least 4 frames, `walk` at least 6, `windup` 2, `attack` 2 and `getup` at least 3, all with `durations`, and every cited frame SHALL exist.
-- [ ] EVR-09 conferido: The `windup` animation SHALL hold its last frame (`windup-1`) for at least the final 200 ms of `ENEMY_AI.windupMs` (450): the sum of the durations before `windup-1` SHALL be ≤ 250 ms. Testado com 250 e 251.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] EVR-08 conferido: In every variant, `idle` SHALL have at least 4 frames, `walk` at least 6, `windup` 2, `attack` 2 and `getup` at least 3, all with `durations`, and every cited frame SHALL exist.
+- [x] EVR-09 conferido: The `windup` animation SHALL hold its last frame (`windup-1`) for at least the final 200 ms of `ENEMY_AI.windupMs` (450): the sum of the durations before `windup-1` SHALL be ≤ 250 ms. Testado com 250 e 251.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

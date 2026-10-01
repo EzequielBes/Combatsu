@@ -39,7 +39,7 @@ import {
   RUN_BG_COLOR,
   RUN_TEXT_COLOR,
 } from '../../src/game/Hud';
-import { ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
+import { ENEMY_AI, ENEMY_ATTACK, PLAYER_COMBO } from '../../src/data/tuning';
 import type { EnemyAnim } from '../../src/core/animState';
 import {
   ENEMY_ANIMS,
@@ -1177,6 +1177,34 @@ describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => 
         }
       }
       expect(interior, id).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('EVR-08: idle >= 4, walk >= 6, windup 2, attack 2 e getup >= 3 frames, todos com durations e todo frame citado existe', () => {
+    const min: Record<string, number> = { idle: 4, walk: 6, windup: 2, attack: 2, getup: 3 };
+    for (const [name, n] of Object.entries(min)) {
+      const anim = ENEMY_ANIMS[name];
+      if (name === 'windup' || name === 'attack') expect(anim.frames, name).toHaveLength(n);
+      else expect(anim.frames.length, name).toBeGreaterThanOrEqual(n);
+      expect(anim.durations, name).toBeDefined();
+      expect(anim.durations!.length, name).toBe(anim.frames.length);
+      for (const d of anim.durations!) expect(d, name).toBeGreaterThan(0);
+      for (const id of IDS) for (const f of anim.frames) expect(Object.hasOwn(ENEMY_VARIANT_FRAMES[id], f), `${id} ${name}: ${f}`).toBe(true);
+    }
+  });
+
+  it('EVR-09: o windup segura windup-1 nos últimos 200 ms do preparo (soma antes dele <= 250 ms; 250 passa, 251 falha)', () => {
+    const holdsFinal200 = (durations: readonly number[]) => durations.slice(0, -1).reduce((a, b) => a + b, 0) <= ENEMY_AI.windupMs - 200;
+    expect(ENEMY_AI.windupMs).toBe(450);
+    expect(ENEMY_ANIMS.windup.frames.at(-1)).toBe('windup-1');
+    expect(holdsFinal200(ENEMY_ANIMS.windup.durations!)).toBe(true);
+    expect(holdsFinal200([250, 200])).toBe(true);
+    expect(holdsFinal200([251, 199])).toBe(false);
+    for (const id of IDS) {
+      const frames = ENEMY_VARIANT_FRAMES[id];
+      // o frame de máximo preparo é distinto do início e o alias `windup` aponta para ele
+      expect(frames['windup-1'], id).not.toEqual(frames['windup-0']);
+      expect(frames.windup, id).toEqual(frames['windup-1']);
     }
   });
 
