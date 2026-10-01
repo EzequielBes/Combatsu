@@ -891,6 +891,21 @@ describe('passe de sel-out e acabamento do idle-0 (SPR-03, SPR-04, SPR-05)', () 
     expect(canvas[0][8]).toBe('b'); // b nunca muda
   });
 
+  it('limiar da maioria: exatamente 2 vizinhos de pele viram x; 1 de pele e 3 de uniforme viram o', () => {
+    const two = toCanvas(['.p.', 'NkN', '.p.']);
+    selOut(two);
+    expect(two[1][1]).toBe('x');
+    const one = toCanvas(['.p.', 'NkN', '.N.']);
+    selOut(one);
+    expect(one[1][1]).toBe('o');
+  });
+
+  it('limiar da maioria no cabelo: 1 vizinho de cabelo e 3 de uniforme viram o', () => {
+    const canvas = toCanvas(['.h.', 'NkN', '.N.']);
+    selOut(canvas);
+    expect(canvas[1][1]).toBe('o');
+  });
+
   it('k interno com 2 vizinhos de cabelo vira h', () => {
     const canvas = toCanvas(['.hh.', 'hkhk', '.hh.']);
     selOut(canvas);
@@ -927,7 +942,7 @@ describe('rastros de movimento nos golpes (SPR-14)', () => {
   const count = (rows: readonly string[], ch: string): number => rows.join('').split(ch).length - 1;
   const tipCol = (rows: readonly string[]): number => Math.max(...rows.map((r) => [...r].reduce((m, c, x) => (c === TRANSPARENT ? m : x), -1)));
 
-  it.each(['jab', 'cross', 'kick'])('%s-hit tem pelo menos 3 S a mais que o %s-wind e todos ficam antes da ponta', (name) => {
+  it.each(['jab', 'cross', 'kick'])('$0-hit tem pelo menos 3 S a mais que o próprio wind e todos ficam antes da ponta', (name) => {
     const hit = PLAYER_FRAMES[`${name}-hit`];
     const wind = PLAYER_FRAMES[`${name}-wind`];
     expect(count(hit, 'S') - count(wind, 'S')).toBeGreaterThanOrEqual(3);
