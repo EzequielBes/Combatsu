@@ -135,9 +135,9 @@ T13
 
 **Done when**:
 
-- [ ] Os testes do player (sel-out, SPR-06 com a fixture) continuam verdes sem mudar asserções.
-- [ ] Teste novo: com regra personalizada, `k` cercado do grupo vira a linha do grupo, e o fallback vale nos demais casos.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] Os testes do player (sel-out, SPR-06 com a fixture) continuam verdes sem mudar asserções.
+- [x] Teste novo: com regra personalizada, `k` cercado do grupo vira a linha do grupo, e o fallback vale nos demais casos.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
