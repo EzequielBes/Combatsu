@@ -296,7 +296,7 @@ T13
 
 **Done when**:
 
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: none (coberto pelo smoke da T13)
 **Gate**: full
