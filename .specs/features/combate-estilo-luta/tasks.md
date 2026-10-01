@@ -68,6 +68,12 @@ T15 → T16 → T17 → T18
 T19 → T20 → T21
 ```
 
+### Phase 6: Correções do Verifier (rodada 1) — worker W6
+
+```
+T22 → T23 → T24
+```
+
 ---
 
 ## Task Breakdown
@@ -749,3 +755,87 @@ T19 → T20 → T21
 **Commit**: `test(smoke): cover enemy guard and combo grade`
 
 ---
+
+---
+
+### T22: Defesa sem evidência
+
+**What**: Prender por teste os ACs de defesa que o Verifier achou sem evidência ou parciais: velocidade em guarda, bloqueio de golpe real do chefe, parry no chefe tirando postura, cancelamento da recovery pela esquiva ao vivo, e os edge cases de guarda/esquiva com objeto na mão e golpes do chefe durante o `roar`. Lógica pura vai para teste unitário; o resto vai para smoke lendo o snapshot vivo.
+**Where**: `scripts/smoke/defense-extra.smoke.mjs`, `tests/core/*.test.ts` quando a regra for pura
+**Depends on**: None (fase anterior inteira)
+**Reuses**: `makeKit`, `approach`, `defense.smoke.mjs`
+**Requirement**: GRD-05, GRD-06, PAR-07, DOD-06
+
+**Tools**:
+
+- MCP: context7 (`/phaserjs/phaser/v3_90_0`)
+- Skill: `phaser-gamedev`
+
+**Done when**:
+
+- [ ] GRD-05 conferido: WHILE guarding, the player run speed SHALL be 40% of the normal run speed (velocidade medida nos dois estados; mata `guardSpeedFactor` 0.4→0.5).
+- [ ] GRD-06 conferido: WHEN a boss hit reaches the player from the front while `player.guard` is `guard` THEN the player SHALL take `round(damage × 0.25)` (golpe real do chefe no smoke).
+- [ ] PAR-07 conferido: WHEN a boss hit is parried THEN the boss poise SHALL decrease by 30, never below 0 (30 e o piso 0; mata `parryBossPoiseDamage` 30→29).
+- [ ] DOD-06 conferido: WHEN a move that already hit a target is in its recovery and `Q` is pressed with no dodge cooldown THEN the move SHALL end and the dodge SHALL start in that frame.
+- [ ] Edge cases conferidos: com objeto na mão, guarda, parry e esquiva funcionam; golpes do chefe durante o `roar` seguem as regras da guarda.
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): cover guard speed, boss guard and parry, and dodge cancel`
+
+---
+
+### T23: Finalizador e pisão sem evidência
+
+**What**: Prender o finalizador nas bordas (40 px faz, 41 px não; `both` sem inimigo quebrado perto não faz), o zoom de 1,7 em até 100 ms reais e a velocidade vertical do pisão.
+**Where**: `scripts/smoke/finisher.smoke.mjs`
+**Depends on**: T22
+**Reuses**: `makeKit`, `approach`, `fight.smoke.mjs`
+**Requirement**: FIN-01, FIN-03, FIN-04, AIR-03
+
+**Tools**:
+
+- MCP: context7 (`/phaserjs/phaser/v3_90_0`)
+- Skill: `phaser-gamedev`
+
+**Done when**:
+
+- [ ] FIN-01 conferido na borda: WHEN a `both` press (CTL-04) happens within 40 px of a broken regular enemy THEN the finisher SHALL hit that enemy for 40 damage and `events` SHALL get `finisher:<id>` (40 px faz; mata `finisherRangePx` 40→41).
+- [ ] FIN-03 conferido: IF a `both` press happens and no broken enemy is within 40 px THEN no finisher SHALL happen (41 px e inimigo não quebrado).
+- [ ] FIN-04 conferido: WHEN the finisher hits THEN the main camera zoom SHALL reach 1.7 within 100 ms of real time (lendo o zoom vivo da câmera principal).
+- [ ] AIR-03 conferido: WHEN a heavy press happens in the air while `S` is held THEN `pisao` (14 heavy) SHALL start and set the player vertical speed to the max fall speed (velocidade vertical viva).
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): cover finisher range, zoom and stomp fall speed`
+
+---
+
+### T24: Controles e integração sem evidência
+
+**What**: Prender `S`+`E` soltando o objeto, o dano dos golpes passando por `modifiers.meleeDamage`, e os edge cases de técnica em conjuração bloqueando a defesa e de nova run zerando estrutura, combo e `timeScale`.
+**Where**: `scripts/smoke/fight-integration.smoke.mjs`, `tests/core/*.test.ts` quando a regra for pura
+**Depends on**: T23
+**Reuses**: `makeKit`, `held-item.smoke.mjs`, `shop.smoke.mjs`
+**Requirement**: CTL-08, MOV-15
+
+**Tools**:
+
+- MCP: context7 (`/phaserjs/phaser/v3_90_0`)
+- Skill: `phaser-gamedev`
+
+**Done when**:
+
+- [ ] CTL-08 conferido: WHEN `E` is pressed while holding a prop and `S` is held THEN the player SHALL drop it.
+- [ ] MOV-15 conferido: WHEN a move deals damage to a target THEN the damage SHALL pass through `modifiers.meleeDamage` (F4) and give the +3 cursed energy of CE-06 (F5) (dano com modificador ≠ 1 conferido).
+- [ ] Edge cases conferidos: com técnica em conjuração, guarda, parry e esquiva não começam; numa nova run toda estrutura é 0, o combo zera e `timeScale` é 1.
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+
+**Commit**: `test(smoke): cover prop drop, melee modifier and run reset`
