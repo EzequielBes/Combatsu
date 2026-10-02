@@ -23,6 +23,7 @@ import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
 import { Shop, type BuyContext } from '../core/shop';
 import { SlowMo } from '../core/slowMo';
 import { Wallet } from '../core/wallet';
+import { pickSpawnPoint } from '../core/spawnPoint';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
@@ -99,6 +100,19 @@ const CONTROLS_MS = 8000;
 /** Parâmetro de URL que só vale em `?debug` (SHOP-23, SHOP-47); fora do debug, sempre `null`. */
 function debugParam(name: string): string | null {
   return isDebug() ? new URLSearchParams(window.location.search).get(name) : null;
+}
+
+/** Margem (px) além da borda da câmera em que um ponto ainda conta como visível (SPN-07). */
+const SPAWN_VIEW_MARGIN = 32;
+/** Chance de o spawn preferir os pontos às costas do player (SPN-08). */
+const SPAWN_PREFER_BACK_CHANCE = 0.35;
+
+/** Parâmetro de URL inteiro `>= min` só em `?debug` (`maxAlive`, `mastery`); ausente ou inválido vira `undefined`. */
+function debugIntParam(name: string, min: number): number | undefined {
+  const raw = debugParam(name);
+  if (raw === null || raw.trim() === '') return undefined;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= min ? n : undefined;
 }
 
 /** Input neutro (RUN-08): fora de `roundActive`/`intermission` o player ignora tudo, mas o input continua sendo
@@ -186,6 +200,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private droppedTools!: DroppedTools;
   /** Detecta a transição para morto (RUN-04): só o primeiro frame morto conta como evento. */
   private wasPlayerDead = false;
+  /** Relógio de jogo da cena (ms), só para o intervalo entre usos do mesmo ponto de spawn (SPN-08). */
+  private clockMs = 0;
+  /** Instante (`clockMs`) do último spawn comum em cada índice de ponto `E` (SPN-08). */
+  private spawnLastUsed = new Map<number, number>();
   private readonly hitstop = new Hitstop();
   /** Câmera lenta da esquiva perfeita (DOD-07), em tempo real; a escala vai para o tempo de jogo (`applyTimeScale`). */
   private slowMo = new SlowMo();
@@ -239,7 +257,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.buildTerrain();
     this.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
-    this.run = new Run(RUN, WAVE, { firstRound: this.firstRoundForDebug() });
+    // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
+    this.run = new Run(RUN, WAVE, { firstRound: this.firstRoundForDebug(), maxAliveOverride: debugIntParam('maxAlive', 1) });
+    this.clockMs = 0;
+    this.spawnLastUsed = new Map();
     this.wasPlayerDead = false;
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
     this.modifiers = new Modifiers();
@@ -376,6 +397,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
     const dt = clamped;
+    this.clockMs += dt;
     // SHOP-33: na loja, nada de gameplay anda; só o input da loja, `run.update`, o painel e o HUD.
     if (this.run.state === 'shop') {
       this.updateShop();
@@ -637,8 +659,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         // FXL-01: nenhuma onda nasce no laboratório de efeitos - só os bonecos de treino (FXL-05).
         if (this.fxLab) break;
         if (cmd.kind === 'boss') this.spawnBoss(cmd.round);
-        // T15: pickSpawnPoint fora da câmera; provisório: o ponto mais distante do player.
-        else this.spawnFromCommand(farthestPoint(this.level.enemies, this.player.sprite.x), cmd.round);
+        // SPN-07..09: comum nasce fora da câmera (worldView real, facing do player); o chefe segue no mais distante.
+        else this.spawnFromCommand(this.pickEnemySpawnPoint(), cmd.round);
         break;
       case 'roundStart':
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
@@ -678,6 +700,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.boss = null;
     this.bossDefeatedPending = false;
     this.clearedBanner = null;
+    this.spawnLastUsed.clear();
     // Higiene: uma loja não deveria sobreviver a um game over (gameOver só sai de roundActive/intermission), mas
     // uma run nova nunca deve carregar a loja da anterior.
     if (this.shop) this.matter.world.resume();
@@ -829,6 +852,26 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       p.destroyNow();
     }
     for (const p of this.props) if (isDroppedTool(p.def.key) && p.isGone) this.droppedTools.forget(p.id);
+  }
+
+  /** Ponto `E` do próximo inimigo comum (SPN-07..09) e registro do uso para o intervalo entre usos (SPN-08). */
+  private pickEnemySpawnPoint(): number {
+    const view = this.cameras.main.worldView;
+    const point = pickSpawnPoint({
+      points: this.level.enemies,
+      viewLeft: view.left,
+      viewRight: view.right,
+      margin: SPAWN_VIEW_MARGIN,
+      playerX: this.player.sprite.x,
+      playerFacing: this.player.facing,
+      lastUsedAt: this.spawnLastUsed,
+      nowMs: this.clockMs,
+      gapMs: WAVE.pointGapMs,
+      rng: this.run.spawnRng!,
+      preferBackChance: SPAWN_PREFER_BACK_CHANCE,
+    });
+    this.spawnLastUsed.set(point, this.clockMs);
+    return point;
   }
 
   /** Onda da rodada (WAVE-02): tuning escalado pela rodada (DIF-04) e graça ao nascer (WAVE-09). */
