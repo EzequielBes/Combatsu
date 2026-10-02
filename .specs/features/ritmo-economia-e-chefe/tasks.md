@@ -189,8 +189,8 @@ T22 → T23 → T24 → T25
 **Reuses**: `scaleFor` de `src/core/difficulty.ts`
 **Requirement**: SPN-13, SPN-14
 **Done when**:
-- [ ] `tests/core/difficulty.test.ts` verifica que `maxHp` e o dano em r = 1, 2 e 30 são iguais aos da rodada 1, e que a velocidade continua escalando.
-- [ ] O gate de build passa (última task da fase).
+- [x] `tests/core/difficulty.test.ts` verifica que `maxHp` e o dano em r = 1, 2 e 30 são iguais aos da rodada 1, e que a velocidade continua escalando.
+- [x] O gate de build passa (última task da fase).
 **Tests**: unit
 **Gate**: build
 

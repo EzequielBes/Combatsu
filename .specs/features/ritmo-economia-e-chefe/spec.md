@@ -286,8 +286,8 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | SPN-10 | P1: Mais inimigos | Specify | Implementing |
 | SPN-11 | P1: Mais inimigos | Specify | Implementing |
 | SPN-12 | P1: Mais inimigos | Specify | Implementing |
-| SPN-13 | P1: Mais inimigos | Specify | Pending |
-| SPN-14 | P1: Mais inimigos | Specify | Pending |
+| SPN-13 | P1: Mais inimigos | Specify | Implementing |
+| SPN-14 | P1: Mais inimigos | Specify | Implementing |
 | LIM-01 | P1: Limitador | Specify | Implementing |
 | LIM-02 | P1: Limitador | Specify | Implementing |
 | LIM-03 | P1: Limitador | Specify | Implementing |
