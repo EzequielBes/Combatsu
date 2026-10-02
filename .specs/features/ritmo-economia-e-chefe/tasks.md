@@ -218,7 +218,7 @@ T22 → T23 → T24 → T25
 **Reuses**: `waveSize` e `isBossRound` de `src/core/waves.ts`; `ECONOMY`
 **Requirement**: ECN-03, ECN-04
 **Done when**:
-- [ ] Testes verificam `expectedIncome(1) = 18` (≥ 15) e `expectedIncome(4) = 108` (≥ 100), e que a rodada 5 não soma inimigos comuns.
+- [x] Testes verificam `expectedIncome(1) = 18` (≥ 15) e `expectedIncome(4) = 108` (≥ 100), e que a rodada 5 não soma inimigos comuns.
 **Tests**: unit
 **Gate**: quick
 

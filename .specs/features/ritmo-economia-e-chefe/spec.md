@@ -298,8 +298,8 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | LIM-08 | P1: Limitador | Specify | Implementing |
 | ECN-01 | P1: Renda | Specify | Implementing |
 | ECN-02 | P1: Renda | Specify | Implementing |
-| ECN-03 | P1: Renda | Specify | Pending |
-| ECN-04 | P1: Renda | Specify | Pending |
+| ECN-03 | P1: Renda | Specify | Implementing |
+| ECN-04 | P1: Renda | Specify | Implementing |
 | ECN-05 | P1: Renda | Specify | Pending |
 | ECN-06 | P1: Renda | Specify | Pending |
 | ECN-07 | P1: Renda | Specify | Pending |
