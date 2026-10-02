@@ -76,8 +76,14 @@ export default async function (ctx) {
   }
   assert(hit, 'MOV-15: o jab deveria acertar');
   assert(hpE - hit.cur.enemies.find((e) => e.id === target.id).hp === 7, `MOV-15: com forca 1 o jab (6) deveria causar 7, causou ${hpE - hit.cur.enemies.find((e) => e.id === target.id).hp}`);
+  // CE-06: +3 por golpe que conecta. Sem limite de alvos nesta branch, o jab pode pegar dois inimigos empilhados no
+  // mesmo frame (o Vermelho, agora mais rápido, muda onde eles param): conta quantos perderam vida e exige +3 por cada.
+  const struck = hit.cur.enemies.filter((e) => {
+    const before = hit.prev.enemies.find((p) => p.id === e.id);
+    return before !== undefined && e.hp < before.hp;
+  }).length;
   const ceGain = hit.cur.ce.cur - hit.prev.ce.cur;
-  assert(ceGain >= 3 && ceGain <= 3.2, `MOV-15: o golpe deveria somar +3 de energia (CE-06), somou ${ceGain}`);
+  assert(struck >= 1 && ceGain >= 3 * struck && ceGain <= 3 * struck + 0.2, `MOV-15: cada golpe que conecta deveria somar +3 de energia (CE-06): ${struck} atingido(s), somou ${ceGain}`);
 
   // --- Edge case: com técnica em conjuração, guarda, parry e esquiva não começam -----------------------------------------------
   await boot('enemyGuard=0&tech=vermelho');
