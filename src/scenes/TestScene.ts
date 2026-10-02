@@ -1114,6 +1114,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         y: e.hurtRect().y,
         hp: e.hp,
         state: e.state,
+        ai: e.aiState,
         maxHp: e.maxHp,
         damage: e.damage,
         chaseSpeed: e.chaseSpeed,
@@ -1141,6 +1142,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
             name: this.boss.name,
             x: this.boss.x,
             y: this.boss.y,
+            finisherReady: this.boss.finisherReady,
           }
         : null,
       projectiles: this.projectiles.map((p) => ({
@@ -1153,7 +1155,16 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         height: p.height,
         traveled: p.traveled,
       })),
-      run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
+      run: {
+        state: this.run.state,
+        round: this.run.round,
+        kills: this.run.kills,
+        alive: this.run.alive,
+        queued: this.run.queued,
+        maxAlive: this.run.maxAlive,
+      },
+      attackers: this.enemies.filter((e) => e.aiState === 'windup' || e.aiState === 'attack').length,
+      gate: { active: this.attackGate.activeCount(), queue: [...this.attackGate.queueOrder()] },
       hud: {
         ...this.hud.debugState(),
         ...this.energyHud.debugState(),
@@ -1185,7 +1196,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
       fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers() },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
-      camera: { zoom: this.cameras.main.zoom },
+      camera: {
+        zoom: this.cameras.main.zoom,
+        worldView: { left: this.cameras.main.worldView.left, right: this.cameras.main.worldView.right },
+      },
       // T23 (FIN-01/03): distância viva ao inimigo quebrado mais perto, a mesma que o finalizador usa; sem contrato prévio.
       finisher: { distPx: this.nearestFinishable()?.dist ?? null },
       // T28: laboratório de efeitos, sem contrato prévio no snapshot; `null` fora do fxlab.
@@ -1197,7 +1211,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private techSnapshot(): GameSnapshot['tech'] {
     const [s0, s1] = this.loadout.slotsView;
     const slotView = (slot: 0 | 1, s: { id: TechId; level: 1 | 2 | 3 } | null) =>
-      s ? { id: s.id, level: s.level, cooldownMs: this.loadout.cooldownOf(slot) } : null;
+      s
+        ? {
+            id: s.id,
+            level: s.level,
+            cooldownMs: this.loadout.cooldownOf(slot),
+            mastery: { points: this.mastery.points(slot), threshold: this.mastery.threshold(s.level) },
+          }
+        : null;
     return { slots: [slotView(0, s0), slotView(1, s1)], cast: this.techCaster.cast };
   }
 
