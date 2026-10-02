@@ -158,6 +158,14 @@ export default async function ({ page, baseUrl, assert }) {
       if (has(s, 'red.repulse')) repulse = s;
     }
     assert(repulse, 'RDA-10: a soltura nunca mostrou red.repulse (cenário B)');
+    // RDA-10: sem acerto não há hitstop, então red.repulse fica ~120 ms (7-8 frames) em fx.layers, contando o da soltura.
+    let repulseFrames = 1;
+    for (let i = 0; i < 20; i++) {
+      s = await frame();
+      if (!has(s, 'red.repulse')) break;
+      repulseFrames++;
+    }
+    assert(repulseFrames >= 7 && repulseFrames <= 8, `RDA-10: red.repulse deveria durar ~120 ms (7-8 frames): ${repulseFrames}`);
     const after = repulse.enemies.find((e) => e.id === enemyId);
     const stillBehind = after && (after.x - repulse.player.x) * repulse.player.facing < 0;
     assert(after && stillBehind, `inimigo deveria continuar às costas: ${JSON.stringify({ p: repulse.player.x, e: after && after.x })}`);
