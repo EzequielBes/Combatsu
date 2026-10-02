@@ -20,7 +20,7 @@ export interface RunSummary {
 export type RunCommand =
   | { type: 'startRun' }
   | { type: 'roundStart'; round: number }
-  | { type: 'spawn'; point: number; round: number; kind: SpawnKind }
+  | { type: 'spawn'; round: number; kind: SpawnKind }
   | { type: 'roundCleared'; round: number }
   | { type: 'shopOpen'; round: number }
   | { type: 'gameOver'; round: number; kills: number };
@@ -28,6 +28,8 @@ export type RunCommand =
 /** Opções do construtor de `Run`; `firstRound` só serve para o debug começar direto numa rodada (ex.: de chefe). */
 export interface RunOptions {
   firstRound?: number;
+  /** `?debug&maxAlive=N`: fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02). */
+  maxAliveOverride?: number;
 }
 
 /** `true` só em `roundActive` e `intermission` (RUN-08, SHOP-04): em `shop` o player recebe input neutro. */
@@ -51,6 +53,7 @@ export class Run {
   private shopRngValue: Rng | null = null;
   private guardRngValue: Rng | null = null;
   private variantRngValue: Rng | null = null;
+  private spawnRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -60,14 +63,15 @@ export class Run {
   private pendingCloseShop = false;
 
   private readonly firstRound: number;
+  private readonly maxAliveOverride: number | undefined;
 
   constructor(
     private readonly t: RunTuning,
     private readonly waveT: WaveTuning,
-    _pointCount: number,
     options: RunOptions = {},
   ) {
     this.firstRound = options.firstRound ?? 1;
+    this.maxAliveOverride = options.maxAliveOverride;
   }
 
   get state(): RunState {
@@ -98,6 +102,11 @@ export class Run {
     return this.spawner?.remaining ?? 0;
   }
 
+  /** Teto de vivos da rodada atual (SPN-02, ou o override de debug); 0 antes do primeiro start. */
+  get maxAlive(): number {
+    return this.spawner?.maxAlive ?? 0;
+  }
+
   /** Stream de sorteio dos drops (ECO-17): próprio, criado com `seed ^ 0x9e3779b9`; `null` antes do primeiro start. */
   get lootRng(): Rng | null {
     return this.lootRngValue;
@@ -116,6 +125,11 @@ export class Run {
   /** Stream de sorteio da aparência dos inimigos (EVR-04): próprio, `seed ^ 0x6a09e667`, para não mexer nos outros streams. */
   get variantRng(): Rng | null {
     return this.variantRngValue;
+  }
+
+  /** Stream do ponto de spawn (SPN-08): próprio, `seed ^ 0x3c6ef372`, para não mexer nos outros streams. */
+  get spawnRng(): Rng | null {
+    return this.spawnRngValue;
   }
 
   startPressed(): void {
@@ -165,7 +179,7 @@ export class Run {
     if (this._state === startState) {
       if (this._state === 'roundActive' && this.spawner) {
         for (const order of this.spawner.update(dtMs)) {
-          commands.push({ type: 'spawn', point: 0, round: this._round, kind: order.kind }); // T2: ponto sai do comando
+          commands.push({ type: 'spawn', round: this._round, kind: order.kind });
         }
       } else if (this._state === 'intermission') {
         this.intermissionTimer += dtMs;
@@ -183,7 +197,7 @@ export class Run {
     // `shop` o pedido é descartado sem efeito.
     if (this.pendingCloseShop && this._state === 'shop') {
       this._round++;
-      this.spawner = new WaveSpawner(this._round, this.waveT);
+      this.spawner = new WaveSpawner(this._round, this.waveT, this.maxAliveOverride);
       this._state = 'roundActive';
       commands.push({ type: 'roundStart', round: this._round });
     }
@@ -198,10 +212,11 @@ export class Run {
         this.shopRngValue = new Rng(seed ^ SHOP.rngSalt);
         this.guardRngValue = new Rng(seed ^ 0x2545f491);
         this.variantRngValue = new Rng(seed ^ 0x6a09e667);
+        this.spawnRngValue = new Rng(seed ^ 0x3c6ef372);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;
-        this.spawner = new WaveSpawner(this._round, this.waveT);
+        this.spawner = new WaveSpawner(this._round, this.waveT, this.maxAliveOverride);
         this._state = 'roundActive';
         commands.push({ type: 'startRun' }, { type: 'roundStart', round: this._round });
       }
