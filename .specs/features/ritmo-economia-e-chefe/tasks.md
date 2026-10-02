@@ -465,7 +465,7 @@ O `startRun` chama `reset`.
 **Reuses**: `fight-kit.mjs`
 **Requirement**: SPN-01, SPN-03, SPN-07, SPN-10, LIM-01, LIM-02, LIM-05, PRG-01, PRG-05
 **Done when**:
-- [ ] O smoke passa no suite completo.
+- [x] O smoke passa no suite completo.
 **Tests**: smoke
 **Gate**: full
 
