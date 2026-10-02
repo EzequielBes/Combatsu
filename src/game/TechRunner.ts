@@ -48,7 +48,6 @@ export interface TechTarget extends Hittable {
 const RED_ORB_RADIUS = 6;
 /** RED-06/09/10: força (px/step) dos impactos do Vermelho - mesma escala do 2º impacto do Divergente. */
 const RED_FORCE = 8;
-/** RED-15: recuo do player na soltura, no chão, oposto ao facing. */
 /** BLU-02: alcance da consulta de parede à frente do player (folga acima dos 110 px do orbe). */
 const BLUE_WALL_QUERY_PX = 130;
 

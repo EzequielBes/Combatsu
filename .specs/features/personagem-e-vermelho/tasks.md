@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/personagem-e-vermelho/spec.md`
 **Design**: `.specs/features/personagem-e-vermelho/design.md`
-**Status**: Approved
+**Status**: Done (Verifier PASS, rodada 2)
 **Branch**: `feat/personagem-e-vermelho` (worktree `scratchpad/wt-f10`, a partir de `dev`)
 **Modelos**: workers e Verifier em Sonnet 5.5
 
