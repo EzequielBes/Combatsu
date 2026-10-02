@@ -25,6 +25,17 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F9 | `tecnicas-avancadas` | Complex | PUR, DOM, CHT | Planejada |
 | — | `sprite-player-polish` | Large | SPR | Done (Verifier PASS, rodada 2) |
 | — | `enemy-sprite-variety` | Large | EVR, HRX | Done (Verifier PASS, rodada 2) |
+| F10 | `personagem-e-vermelho` | Large | SPF, RDA | Planejada (Expansão Combate de Mestre) |
+| F11 | `progressao-fluida` | Medium | PRG, MST | Planejada |
+| F12 | `combate-mestre` | Complex | HGT, TGT, PST, DEF, CNT, RDG | Planejada |
+| F13 | `foco-e-ambiente` | Large | FOC, WAL, TKD | Planejada |
+| F14 | `ia-tatica` | Complex | DIR, RNG, STG, ARC, IND, SFX | Planejada |
+| F15 | `inimigos-a-distancia` | Large | CJR, PRJ | Planejada |
+| F16 | `pressao-e-curva` | Medium | PRS, CUR | Planejada |
+
+## Expansão "Combate de Mestre" (F10–F16)
+
+Design completo e aprovado em `docs/superpowers/specs/2026-10-02-combate-mestre-design.md` (loop ler → responder → punir → quebrar → finalizar, inspirado em Sifu; dificuldade por mecânica, AD-014..AD-017). Ordem: F10 (independente) e F11 → F12 → F13 → F14 → F15 → F16.
 
 ## Esboço das stories (viram spec.md completa no Specify de cada feature)
 
