@@ -272,8 +272,8 @@ T10 → T11 → T12 → T13
 **Reuses**: `fight-kit.mjs`, `techniques.smoke.mjs`
 **Requirement**: RDA-04, RDA-05, RDA-06, RDA-07, RDA-08, RDA-09, RDA-11, RDA-13, RDA-15
 **Done when**:
-- [ ] O smoke passa no suite completo.
-- [ ] `node tools/sprite-preview.mjs` gera a prancha para o UAT (os PNGs não são commitados).
+- [x] O smoke passa no suite completo.
+- [x] `node tools/sprite-preview.mjs` gera a prancha para o UAT (os PNGs não são commitados).
 **Tests**: smoke
 **Gate**: full
 
