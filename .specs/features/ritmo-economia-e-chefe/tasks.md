@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/ritmo-economia-e-chefe/spec.md`
 **Design**: `.specs/features/ritmo-economia-e-chefe/design.md`
-**Status**: Approved
+**Status**: Done (Verifier PASS, rodada 2)
 **Branch**: `feat/ritmo-economia-e-chefe` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS, AD-008)
 **Modelos**: Opus 5.5 planeja e orquestra; workers e Verifier rodam em Sonnet 5.5 (`model: sonnet`); no máximo 2 agentes ao mesmo tempo.
 
