@@ -31,22 +31,35 @@ export type Placed = readonly [Grid, number, number];
 
 export { selOut };
 
-/** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
-export function compose(...parts: Placed[]): string[] {
+/**
+ * Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. Além do frame,
+ * devolve `clipped`: quantos pixels opacos caíram fora da grade e foram descartados (SPF-02).
+ */
+export function composeWithStats(...parts: Placed[]): { frame: string[]; clipped: number } {
   const w = PLAYER_FRAME_W - FRAME_PAD;
   const canvas = Array.from({ length: PLAYER_FRAME_H }, () => Array<string>(w).fill('.'));
+  let clipped = 0;
   for (const [grid, x0, y0] of parts) {
     grid.forEach((row, dy) =>
       [...row].forEach((ch, dx) => {
+        if (ch === '.') return;
         const x = x0 + dx;
         const y = y0 + dy;
-        if (ch === '.' || y < 0 || y >= PLAYER_FRAME_H || x < 0 || x >= w) return;
+        if (y < 0 || y >= PLAYER_FRAME_H || x < 0 || x >= w) {
+          clipped++;
+          return;
+        }
         canvas[y][x] = ch;
       }),
     );
   }
   selOut(canvas);
-  return canvas.map((row) => '.'.repeat(FRAME_PAD) + row.join(''));
+  return { frame: canvas.map((row) => '.'.repeat(FRAME_PAD) + row.join('')), clipped };
+}
+
+/** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
+export function compose(...parts: Placed[]): string[] {
+  return composeWithStats(...parts).frame;
 }
 
 /** Troca cores de uma parte (ex.: braço de trás mais escuro). */
