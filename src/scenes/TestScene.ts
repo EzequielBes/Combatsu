@@ -1294,6 +1294,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * quebra) o golpe causa 40 de dano, congela 150 ms e a câmera dá zoom 1,7 em 100 ms; sem alvo, nada (FIN-03).
    */
   private tryFinisher(): void {
+    if (this.tryBossFinisher()) return;
     const near = this.nearestFinishable();
     const target = near && near.dist <= STRUCTURE.finisherRangePx ? near.enemy : null;
     if (!target) return;
@@ -1318,6 +1319,29 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.freeze();
     this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
     this.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
+  }
+
+  /**
+   * Finalizador do chefe (BFX-06..08): com ele vivo, em `stagger`, com o finalizador pronto e a até
+   * `BOSS.finisher.rangePx` do player (distância horizontal entre os centros), tira 12% do HP máximo, com o mesmo
+   * hitstop e zoom do finalizador comum. Devolve se foi aplicado; fora disso o fluxo do inimigo comum segue.
+   */
+  private tryBossFinisher(): boolean {
+    const boss = this.boss;
+    if (!boss || boss.state !== 'stagger' || !boss.finisherReady) return false;
+    if (Math.abs(boss.x - this.player.sprite.x) > BOSS.finisher.rangePx) return false;
+    const dir: 1 | -1 = boss.x >= this.player.sprite.x ? 1 : -1;
+    this.player.finisherPose(dir);
+    boss.receiveFinisher();
+    this.debugEvents.push('finisher:boss');
+    const at = boss.hurtRect();
+    this.fx.spark(at.x, at.y, 'heavy');
+    this.fx.shake();
+    this.hitstop.trigger(FINISHER_HITSTOP_MS);
+    this.freeze();
+    this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
+    this.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
+    return true;
   }
 
   /**
