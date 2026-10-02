@@ -217,7 +217,10 @@ export class Boss implements Hittable {
     }
 
     const canAct = this.brain.state === 'active';
-    const chargeDir: 1 | -1 = this.lastVx > 0 ? 1 : this.lastVx < 0 ? -1 : this.facing;
+    // Parado (preparo), a investida que começa neste frame mira o player, não o `facing` antigo: senão um chefe
+    // encostado na parede de trás (spawn em x=1232) leria "bloqueado" no primeiro frame e atordoaria sem andar.
+    const towardPlayer: 1 | -1 = playerX >= this.body.position.x ? 1 : -1;
+    const chargeDir: 1 | -1 = this.lastVx > 0 ? 1 : this.lastVx < 0 ? -1 : towardPlayer;
     const blocked = canAct ? this.isBlockedAhead(chargeDir) : false;
     const out = this.ai.update(dtMs, {
       selfX: this.body.position.x,
