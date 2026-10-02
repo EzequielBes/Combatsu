@@ -147,10 +147,10 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| SPF-01 | P1: Personagem | Specify | Pending |
+| SPF-01 | P1: Personagem | Specify | Implementing |
 | SPF-02 | P1: Personagem | Specify | Implementing |
-| SPF-03 | P1: Personagem | Specify | Pending |
-| SPF-04 | P1: Personagem | Specify | Pending |
+| SPF-03 | P1: Personagem | Specify | Implementing |
+| SPF-04 | P1: Personagem | Specify | Implementing |
 | SPF-05 | P1: Personagem | Specify | Pending |
 | SPF-06 | P1: Personagem | Specify | Pending |
 | SPF-07 | P1: Personagem | Specify | Pending |
