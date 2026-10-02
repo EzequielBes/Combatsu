@@ -8,7 +8,7 @@ import type { FxTimeline } from '../core/fxTimeline';
 import { canDamage, normalize, type Hit, type Vec2 } from '../core/hit';
 import { Kokusen } from '../core/kokusen';
 import type { Loadout } from '../core/loadout';
-import { RedOrbState, repulseTargets, type RedOrbTarget } from '../core/redOrb';
+import { RedOrbState, redReleaseEffects, repulseTargetsFor, type RedOrbTarget, type RepulseCandidate } from '../core/redOrb';
 import { BlueOrbState, blueOrbSpawn, type BlueOrbDamage, type BlueOrbTarget } from '../core/blueOrb';
 import { CutSchedule, cutAngles, type CutHit, type CutTarget } from '../core/cut';
 import { KOKUSEN, TECHNIQUES } from '../data/techniques';
@@ -49,7 +49,6 @@ const RED_ORB_RADIUS = 6;
 /** RED-06/09/10: força (px/step) dos impactos do Vermelho - mesma escala do 2º impacto do Divergente. */
 const RED_FORCE = 8;
 /** RED-15: recuo do player na soltura, no chão, oposto ao facing. */
-const RED_PUSH_PX = 12;
 /** BLU-02: alcance da consulta de parede à frente do player (folga acima dos 110 px do orbe). */
 const BLUE_WALL_QUERY_PX = 130;
 
@@ -320,9 +319,10 @@ export class TechRunner {
     }
 
     if (castEvents.includes('techCast:vermelho')) {
-      // RED-15: recuo no chão, oposto ao facing (fora do chão a soltura não empurra).
-      if (this.player.grounded) this.player.pushHorizontal(this.player.facing === 1 ? -1 : 1, RED_PUSH_PX);
-      this.repulseRed(enemies); // RDA-08/09, EDG-02: no chão ou no ar
+      // RED-15, EDG-02: recuo só no chão, oposto ao facing; a repulsão acontece no chão ou no ar.
+      const effects = redReleaseEffects({ grounded: this.player.grounded });
+      if (effects.pushPx > 0) this.player.pushHorizontal(this.player.facing === 1 ? -1 : 1, effects.pushPx);
+      if (effects.repulse) this.repulseRed(enemies); // RDA-08/09
       this.spawnRedOrb(this.player.facing);
     }
 
@@ -346,10 +346,13 @@ export class TechRunner {
   private repulseRed(enemies: readonly TechTarget[]): void {
     const origin = { x: this.player.sprite.x, y: this.player.sprite.y };
     this.redFx.repulse(origin, this.player.facing);
-    const commons = enemies.filter((e) => !(e instanceof Boss));
-    const targets: RedOrbTarget[] = commons.map((e) => ({ id: e.id, center: { x: e.x, y: e.hurtRect().y } }));
-    for (const r of repulseTargets(origin, this.player.facing, targets)) {
-      const enemy = commons.find((e) => e.id === r.targetId);
+    const candidates: RepulseCandidate[] = enemies.map((e) => ({
+      id: e.id,
+      kind: e instanceof Boss ? 'boss' : 'enemy',
+      center: { x: e.x, y: e.hurtRect().y },
+    }));
+    for (const r of repulseTargetsFor(origin, this.player.facing, candidates)) {
+      const enemy = enemies.find((e) => e.id === r.targetId);
       if (!enemy) continue;
       const hit: Hit = { ownerId: this.player.id, damage: r.damage, strength: r.strength, force: r.force, direction: r.direction };
       if (enemy.receiveHit(hit)) this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
