@@ -161,17 +161,17 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 | RDA-05 | P1: Vermelho carmim | Specify | Pending |
 | RDA-06 | P1: Vermelho carmim | Specify | Pending |
 | RDA-07 | P1: Vermelho carmim | Specify | Pending |
-| RDA-08 | P1: Repulsão | Specify | Pending |
-| RDA-09 | P1: Repulsão | Specify | Pending |
+| RDA-08 | P1: Repulsão | Specify | Implementing |
+| RDA-09 | P1: Repulsão | Specify | Implementing |
 | RDA-10 | P1: Repulsão | Specify | Pending |
-| RDA-11 | P1: Repulsão | Specify | Pending |
+| RDA-11 | P1: Repulsão | Specify | Implementing |
 | RDA-12 | P1: Repulsão | Specify | Pending |
 | RDA-13 | P1: Repulsão | Specify | Pending |
 | RDA-14 | P1: Repulsão | Specify | Implementing |
 | RDA-15 | P1: Repulsão | Specify | Pending |
 | EDG-01 | Edge cases | Specify | Pending |
 | EDG-02 | Edge cases | Specify | Pending |
-| EDG-03 | Edge cases | Specify | Pending |
+| EDG-03 | Edge cases | Specify | Implementing |
 
 **Coverage:** 25 total, 0 mapped to tasks, 25 unmapped ⚠️
 
