@@ -296,14 +296,14 @@ T22 → T23 → T24 → T25
 **Reuses**: `applyDamage` e as transições existentes
 **Requirement**: BFX-05, BFX-06, BFX-07, BFX-08, EDG-05, EDG-06
 **Done when**:
-- [ ] `tests/core/bossBrain.test.ts` cobre:
+- [x] `tests/core/bossBrain.test.ts` cobre:
   - `stun` não altera a postura, e a saída do atordoamento da parede não restaura a postura;
   - golpe de 10 em `stagger` tira 15;
   - o finalizador tira 48 com 400 de HP máximo, e um segundo uso devolve `[]`;
   - fora de `stagger` o finalizador devolve `[]`;
   - `stun` durante o `roar` é ignorado;
   - o finalizador que zera o HP emite `died`.
-- [ ] O gate de build passa (última task da fase).
+- [x] O gate de build passa (última task da fase).
 **Tests**: unit
 **Gate**: build
 

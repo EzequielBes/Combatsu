@@ -309,10 +309,10 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | BFX-02 | P1: Chefe | Specify | Implementing |
 | BFX-03 | P1: Chefe | Specify | Implementing |
 | BFX-04 | P1: Chefe | Specify | Implementing |
-| BFX-05 | P1: Chefe | Specify | Pending |
-| BFX-06 | P1: Chefe | Specify | Pending |
-| BFX-07 | P1: Chefe | Specify | Pending |
-| BFX-08 | P1: Chefe | Specify | Pending |
+| BFX-05 | P1: Chefe | Specify | Implementing |
+| BFX-06 | P1: Chefe | Specify | Implementing |
+| BFX-07 | P1: Chefe | Specify | Implementing |
+| BFX-08 | P1: Chefe | Specify | Implementing |
 | BFX-09 | P1: Chefe | Specify | Pending |
 | BFX-10 | P1: Chefe | Specify | Pending |
 | MST-01 | P2: Maestria | Specify | Implementing |
@@ -327,8 +327,8 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | EDG-02 | Edge cases | Specify | Implementing |
 | EDG-03 | Edge cases | Specify | Implementing |
 | EDG-04 | Edge cases | Specify | Implementing |
-| EDG-05 | Edge cases | Specify | Pending |
-| EDG-06 | Edge cases | Specify | Pending |
+| EDG-05 | Edge cases | Specify | Implementing |
+| EDG-06 | Edge cases | Specify | Implementing |
 
 **Coverage:** 61 total, 0 mapped to tasks, 61 unmapped ⚠️ (Tasks ainda não feitas)
 

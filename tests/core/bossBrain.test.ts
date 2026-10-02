@@ -246,8 +246,8 @@ describe('BossBrain: edge cases de prioridade entre fase, postura e morte', () =
     brain.receiveHit(hit(18, 'heavy')); // poise 0, hp 546, stagger
     expect(brain.state).toBe('stagger');
 
-    const events = brain.receiveHit(hit(200, 'light')); // hp 346, abaixo dos 66% (396)
-    expect(brain.hp).toBe(346);
+    const events = brain.receiveHit(hit(200, 'light')); // em stagger vale ×1,5 (BFX-05): hp 546 - 300 = 246, abaixo dos 66% (396)
+    expect(brain.hp).toBe(246);
     expect(brain.phase).toBe(2);
     expect(brain.state).toBe('roar');
     expect(events).toEqual([
@@ -347,5 +347,180 @@ describe('BossBrain: parry tira 30 de postura (PAR-07)', () => {
     expect(brain.poise).toBe(0);
     expect(brain.state).toBe('stagger');
     expect(brain.hp).toBe(MAX_HP);
+  });
+});
+
+describe('BossBrain: stun por parede não mexe na postura (BFX-02, BFX-08)', () => {
+  it('stun entra em stagger por ms dados, com causa wall e a postura intacta', () => {
+    const brain = active(400);
+    brain.receiveHit(hit(10, 'light')); // poise 90
+    const events = brain.stun(1500);
+    expect(events).toEqual([{ type: 'staggerStart' }]);
+    expect(brain.state).toBe('stagger');
+    expect(brain.staggerCause).toBe('wall');
+    expect(brain.poise).toBe(90);
+  });
+
+  it('1499 ms ainda em stagger; 1500 ms sai e a postura NÃO volta a 100', () => {
+    const brain = active(400);
+    brain.receiveHit(hit(10, 'light')); // poise 90
+    brain.stun(1500);
+    expect(brain.update(1499)).toEqual([]);
+    expect(brain.state).toBe('stagger');
+    expect(brain.update(1)).toEqual([{ type: 'staggerEnd' }]);
+    expect(brain.state).toBe('active');
+    expect(brain.poise).toBe(90);
+    expect(brain.staggerCause).toBeNull();
+  });
+
+  it('já o stagger por postura restaura a postura a 100 ao sair e tem causa poise', () => {
+    const brain = active(400);
+    brain.receiveHit(hit(50, 'heavy')); // poise 0
+    expect(brain.staggerCause).toBe('poise');
+    brain.update(BOSS.staggerMs);
+    expect(brain.poise).toBe(100);
+  });
+
+  it('golpes durante o stagger da parede não gastam a postura nem recomeçam o stagger', () => {
+    const brain = active(400);
+    brain.receiveHit(hit(10, 'light')); // poise 90
+    brain.stun(1500);
+    const events = brain.receiveHit(hit(60, 'heavy')); // poderia zerar a postura se contasse
+    expect(events).toEqual([]);
+    expect(brain.poise).toBe(90);
+    expect(brain.staggerCause).toBe('wall');
+  });
+
+  it.each(['intro', 'roar', 'dead'] as const)('stun é ignorado em %s', (state) => {
+    const brain = new BossBrain(400, HIGH_POISE);
+    if (state !== 'intro') brain.update(1500);
+    if (state === 'roar') brain.receiveHit(hit(150, 'light')); // cruza 66% de 400 (264): hp 250
+    if (state === 'dead') brain.receiveHit(hit(999, 'light'));
+    expect(brain.state).toBe(state);
+    expect(brain.stun(1500)).toEqual([]);
+    expect(brain.state).toBe(state);
+  });
+
+  it('stun durante um stagger por postura é ignorado e não troca a causa', () => {
+    const brain = active(400);
+    brain.receiveHit(hit(50, 'heavy'));
+    expect(brain.stun(1500)).toEqual([]);
+    expect(brain.staggerCause).toBe('poise');
+  });
+});
+
+describe('BossBrain: dano ×1,5 em stagger (BFX-05)', () => {
+  it('golpe de 10 em stagger tira 15; fora dele tira 10', () => {
+    const brain = active(400);
+    brain.receiveHit(hit(10, 'light'));
+    expect(brain.hp).toBe(390);
+    brain.stun(1500);
+    brain.receiveHit(hit(10, 'light'));
+    expect(brain.hp).toBe(375);
+  });
+
+  it('arredonda: golpe de 7 em stagger tira round(10,5) = 11', () => {
+    const brain = active(400);
+    brain.stun(1500);
+    brain.receiveHit(hit(7, 'light'));
+    expect(brain.hp).toBe(389);
+  });
+
+  it('depois que o stagger acaba o dano volta ao normal', () => {
+    const brain = active(400);
+    brain.stun(1500);
+    brain.update(1500);
+    brain.receiveHit(hit(10, 'light'));
+    expect(brain.hp).toBe(390);
+  });
+
+  it('tuning não padrão: staggerDamageMult 2 tira 20 com golpe de 10', () => {
+    const brain = active(400, { ...BOSS, staggerDamageMult: 2 });
+    brain.stun(1500);
+    brain.receiveHit(hit(10, 'light'));
+    expect(brain.hp).toBe(380);
+  });
+
+  it('receiveKokusen continua sem o multiplicador', () => {
+    const brain = active(400);
+    brain.stun(1500);
+    brain.receiveKokusen(10, 0);
+    expect(brain.hp).toBe(390);
+  });
+});
+
+describe('BossBrain: finalizador (BFX-06, BFX-07, BFX-08, EDG-06)', () => {
+  it('em stagger, tira round(0,12 × 400) = 48, sem o ×1,5, e um segundo uso devolve []', () => {
+    const brain = active(400);
+    brain.stun(1500);
+    expect(brain.finisherReady).toBe(true);
+    expect(brain.receiveFinisher()).toEqual([]);
+    expect(brain.hp).toBe(352);
+    expect(brain.finisherReady).toBe(false);
+    expect(brain.receiveFinisher()).toEqual([]);
+    expect(brain.hp).toBe(352);
+  });
+
+  it('o stagger por postura também libera o finalizador', () => {
+    const brain = active(400);
+    brain.receiveHit(hit(5, 'heavy')); // poise 90
+    brain.receiveHit(hit(50, 'heavy')); // poise 0, hp 345 (400-5-50)
+    expect(brain.state).toBe('stagger');
+    expect(brain.finisherReady).toBe(true);
+    brain.receiveFinisher();
+    expect(brain.hp).toBe(345 - 48);
+  });
+
+  it('fora de stagger devolve [] e não tira HP (active, intro, roar)', () => {
+    const brain = new BossBrain(400, HIGH_POISE);
+    expect(brain.receiveFinisher()).toEqual([]);
+    expect(brain.hp).toBe(400);
+    brain.update(1500);
+    expect(brain.finisherReady).toBe(false);
+    expect(brain.receiveFinisher()).toEqual([]);
+    brain.receiveHit(hit(150, 'light')); // roar
+    expect(brain.state).toBe('roar');
+    expect(brain.receiveFinisher()).toEqual([]);
+    expect(brain.hp).toBe(250);
+  });
+
+  it('um novo stagger rearma o finalizador (uma vez por stagger)', () => {
+    const brain = active(400);
+    brain.stun(1500);
+    brain.receiveFinisher();
+    brain.update(1500);
+    expect(brain.finisherReady).toBe(false);
+    expect(brain.receiveFinisher()).toEqual([]);
+    brain.stun(1500);
+    expect(brain.finisherReady).toBe(true);
+    brain.receiveFinisher();
+    expect(brain.hp).toBe(400 - 48 - 48);
+  });
+
+  it('o finalizador que zera o HP emite died e o chefe morre (EDG-06)', () => {
+    // Sem limiares de fase no caminho: o HP vai a 48 e o finalizador (48) zera.
+    const low = active(400, { ...BOSS, phaseThresholds: { phase2: 0, phase3: 0 } });
+    low.receiveHit(hit(352, 'light')); // hp 48
+    low.stun(1500);
+    expect(low.receiveFinisher()).toEqual([{ type: 'died' }]);
+    expect(low.hp).toBe(0);
+    expect(low.state).toBe('dead');
+    expect(low.finisherReady).toBe(false);
+  });
+
+  it('a saída por rugido (limiar de fase) desarma o finalizador', () => {
+    const brain = active(400);
+    brain.stun(1500);
+    brain.receiveHit(hit(120, 'light')); // ×1,5 = 180: hp 220, cruza 66% (264) e 33% (132)? 220 > 132: fase 2
+    expect(brain.state).toBe('roar');
+    expect(brain.finisherReady).toBe(false);
+    expect(brain.staggerCause).toBeNull();
+  });
+
+  it('tuning não padrão: hpFraction 0,25 tira 100 de 400', () => {
+    const brain = active(400, { ...BOSS, finisher: { hpFraction: 0.25 } });
+    brain.stun(1500);
+    brain.receiveFinisher();
+    expect(brain.hp).toBe(300);
   });
 });
