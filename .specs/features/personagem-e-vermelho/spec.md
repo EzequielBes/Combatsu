@@ -170,7 +170,7 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 | RDA-14 | P1: Repulsão | Specify | Implementing |
 | RDA-15 | P1: Repulsão | Specify | Implementing |
 | EDG-01 | Edge cases | Specify | Implementing |
-| EDG-02 | Edge cases | Specify | Pending |
+| EDG-02 | Edge cases | Specify | Implementing |
 | EDG-03 | Edge cases | Specify | Implementing |
 
 **Coverage:** 25 total, 0 mapped to tasks, 25 unmapped ⚠️

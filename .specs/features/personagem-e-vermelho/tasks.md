@@ -243,7 +243,7 @@ T10 → T11 → T12 → T13
 **Reuses**: `receiveHit`, `onTechHit`
 **Requirement**: RDA-08, RDA-09, EDG-02, EDG-03
 **Done when**:
-- [ ] Build passa.
+- [x] Build passa.
 **Tests**: none
 **Gate**: build
 

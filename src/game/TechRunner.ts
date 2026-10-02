@@ -8,7 +8,7 @@ import type { FxTimeline } from '../core/fxTimeline';
 import { canDamage, normalize, type Hit, type Vec2 } from '../core/hit';
 import { Kokusen } from '../core/kokusen';
 import type { Loadout } from '../core/loadout';
-import { RedOrbState, type RedOrbTarget } from '../core/redOrb';
+import { RedOrbState, repulseTargets, type RedOrbTarget } from '../core/redOrb';
 import { BlueOrbState, blueOrbSpawn, type BlueOrbDamage, type BlueOrbTarget } from '../core/blueOrb';
 import { CutSchedule, cutAngles, type CutHit, type CutTarget } from '../core/cut';
 import { KOKUSEN, TECHNIQUES } from '../data/techniques';
@@ -132,6 +132,11 @@ export class TechRunner {
       streak: this.kokusen.streak,
       windowOpen: this.divergentTarget !== null && this.kokusen.windowOpen(t),
     };
+  }
+
+  /** `fx.red` do snapshot (RDA-04/05/06/13): estado vivo das vistas do Vermelho. */
+  get redDebugState(): ReturnType<RedOrbFx['debugState']> {
+    return this.redFx.debugState();
   }
 
   /** `techObjects` do snapshot (RED-14, BLU-10): os orbes vivos agora. */
@@ -307,7 +312,9 @@ export class TechRunner {
     const charging = cast?.id === 'vermelho' && (cast.state === 'sign' || cast.state === 'charge');
     if (charging) {
       // RED-02/03/04: orbe crescendo + faíscas + anel + poeira, na ponta dos dedos.
-      this.redFx.chargeUpdate(dtMs, this.player.sprite.x, this.player.sprite.y, this.player.facing, cast!.elapsedMs, TECHNIQUES.vermelho.chargeMs);
+      // RDA-04: a âncora é a ponta dos dedos do frame atual; o offset sai da origem do sprite (o pé), não do corpo.
+      const { view } = this.player;
+      this.redFx.chargeUpdate(dtMs, view.x, view.y, this.player.facing, cast!.elapsedMs, TECHNIQUES.vermelho.chargeMs, this.player.frameName);
     } else {
       this.redFx.hideCharge();
     }
@@ -315,6 +322,7 @@ export class TechRunner {
     if (castEvents.includes('techCast:vermelho')) {
       // RED-15: recuo no chão, oposto ao facing (fora do chão a soltura não empurra).
       if (this.player.grounded) this.player.pushHorizontal(this.player.facing === 1 ? -1 : 1, RED_PUSH_PX);
+      this.repulseRed(enemies); // RDA-08/09, EDG-02: no chão ou no ar
       this.spawnRedOrb(this.player.facing);
     }
 
@@ -331,13 +339,30 @@ export class TechRunner {
     if (orb.state.detonated) this.finishRedDetonation(orb, enemies);
   }
 
+  /**
+   * RDA-08/09/10, EDG-03: na soltura, quem está à frente (até 80 px em x e 48 px em y do centro do player) leva 4 de
+   * dano leve e é empurrado; quem está atrás não. O chefe fica de fora (só o orbe o atinge, RED-09).
+   */
+  private repulseRed(enemies: readonly TechTarget[]): void {
+    const origin = { x: this.player.sprite.x, y: this.player.sprite.y };
+    this.redFx.repulse(origin, this.player.facing);
+    const commons = enemies.filter((e) => !(e instanceof Boss));
+    const targets: RedOrbTarget[] = commons.map((e) => ({ id: e.id, center: { x: e.x, y: e.hurtRect().y } }));
+    for (const r of repulseTargets(origin, this.player.facing, targets)) {
+      const enemy = commons.find((e) => e.id === r.targetId);
+      if (!enemy) continue;
+      const hit: Hit = { ownerId: this.player.id, damage: r.damage, strength: r.strength, force: r.force, direction: r.direction };
+      if (enemy.receiveHit(hit)) this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+    }
+  }
+
   private spawnRedOrb(facing: 1 | -1): void {
     if (this.redOrb) {
       this.scene.matter.world.remove(this.redOrb.body);
       this.redOrb.view.destroy();
       this.redOrb = null;
     }
-    const point = this.redFx.fingertip(this.player.sprite.x, this.player.sprite.y, facing);
+    const point = this.redFx.fingertip(this.player.view.x, this.player.view.y, facing, this.player.frameName); // RDA-04
     const state = new RedOrbState(point.x, facing);
     const body = this.scene.matter.add.circle(point.x, point.y, RED_ORB_RADIUS, {
       isSensor: true,
