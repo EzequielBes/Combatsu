@@ -1,6 +1,7 @@
 // Chefe no jogo (T8: BOSS-01/03/06/08, BAT-01/05/09/11, BAI-04/13, BHUD-04) com `?debug&seed=1&round=5`, para a
-// run começar direto na rodada de chefe sem esperar as 4 rodadas anteriores. LEVEL_1 tem dois pontos `E`, em
-// x=624 e x=1200; o player nasce em x=112, então o ponto mais distante (BOSS-03) é o de x=1200.
+// run começar direto na rodada de chefe sem esperar as 4 rodadas anteriores. LEVEL_1 tem quatro pontos `E`, em
+// x=48, 624, 1200 e 1232; o player nasce em x=112, então o ponto mais distante (BOSS-03) é o de x=1232 (a parede
+// da direita empurra o corpo para ~1228).
 export default async function ({ page, baseUrl, assert }) {
   await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5`, { waitUntil: 'load' });
   await page.waitForFunction(
@@ -33,13 +34,13 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.enemies.length === 0, `rodada de chefe não deveria ter inimigos comuns: ${snap.enemies.length}`);
   assert(snap.boss !== null, 'a rodada 5 deveria ter um chefe');
   assert(
-    snap.boss.name === 'Oni do Portão' && snap.boss.maxHp === 600,
+    snap.boss.name === 'Oni do Portão' && snap.boss.maxHp === 400,
     `chefe do tier 1 errado: ${JSON.stringify(snap.boss)}`,
   );
 
-  // BOSS-03: nasce no ponto E mais distante do player (E em x=624 e x=1200; player em x=112 -> o mais distante é 1200).
+  // BOSS-03: nasce no ponto E mais distante do player (player em x=112 -> o mais distante é o de x=1232).
   assert(Math.abs(snap.player.x - 112) < 1, `player não estava no spawn esperado: x=${snap.player.x}`);
-  assert(Math.abs(snap.boss.x - 1200) < 1, `chefe não nasceu no ponto E mais distante do player: x=${snap.boss.x}`);
+  assert(Math.abs(snap.boss.x - 1232) < 8, `chefe não nasceu no ponto E mais distante do player: x=${snap.boss.x}`);
 
   const introX = snap.boss.x;
   const maxHp = snap.boss.maxHp;
@@ -110,7 +111,7 @@ export default async function ({ page, baseUrl, assert }) {
     `player perdeu hp encostado no chefe sem hitbox aberta (BAT-08): ${hpBeforeContact} -> ${afterContact.player.hp}`,
   );
 
-  // BAI-04/13: golpes de teste até cruzar 66% de vida (396 de 600) - state vira 'roar', golpes durante o rugido
+  // BAI-04/13: golpes de teste até cruzar 66% de vida (264 de 400) - state vira 'roar', golpes durante o rugido
   // não tiram hp e o player recebe um empurrão para longe do chefe.
   let prev = afterContact;
   let roared = null;
