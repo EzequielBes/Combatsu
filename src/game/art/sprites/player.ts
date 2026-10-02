@@ -308,7 +308,8 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'run-5': pose({ lean: 1, near: [ARM_BACK, 2, 12], far: [far(ARM_FWD), 8, 12], legs: [[RUN_LEGS[5], 0, Y_LEGS]] }),
 
   // Decolagem: pernas esticadas, braços para cima; depois a subida (pose antiga do jump-0).
-  'jump-0': pose({ drop: -1, near: [ARM_UP, 0, 6], far: [far(ARM_UP), 2, 5], legs: [[LEGS_STAND, 0, Y_LEGS - 1]] }),
+  // `drop` 0: com `drop` negativo a cabeça saía da grade (mechas cortadas). Os ombros dos braços erguidos ficam na linha do tronco.
+  'jump-0': pose({ near: [ARM_UP, 1, 6], far: [far(ARM_UP), 3, 5], legs: [[LEGS_STAND, 0, Y_LEGS - 1]] }),
   'jump-1': pose({ near: [ARM_FWD, 7, 11], far: [far(ARM_BACK), 1, 11], legs: [[LEGS_TUCK, 0, Y_LEGS - 1]] }),
   // Ápice: joelhos bem recolhidos, braços abertos.
   'apex-0': pose({ near: [ARM_FWD, 8, 10], far: [far(ARM_BACK), 0, 10], legs: [[LEGS_TUCK, 0, Y_LEGS - 2]] }),

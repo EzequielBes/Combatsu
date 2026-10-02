@@ -105,8 +105,8 @@ T10 → T11 → T12 → T13
 **Reuses**: `pose`
 **Requirement**: SPF-01, SPF-05
 **Done when**:
-- [ ] Teste: altura opaca de `land-1` ≤ altura de `idle-0`.
-- [ ] Teste: `jump-0` com um único componente.
+- [x] Teste: altura opaca de `land-1` ≤ altura de `idle-0`.
+- [x] Teste: `jump-0` com um único componente.
 **Tests**: unit
 **Gate**: quick
 

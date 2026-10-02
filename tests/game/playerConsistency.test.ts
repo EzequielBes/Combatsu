@@ -50,6 +50,12 @@ function uniformCenter(rows: readonly string[]): number {
   return sum / count;
 }
 
+/** Altura opaca (linhas entre a primeira e a última com pixel). */
+function opaqueHeight(rows: readonly string[]): number {
+  const filled = rows.map((r, y) => ([...r].some((c) => c !== '.') ? y : -1)).filter((y) => y >= 0);
+  return filled[filled.length - 1] - filled[0] + 1;
+}
+
 describe('compose conta pixels opacos cortados (SPF-02)', () => {
   const part: Grid = ['kkk', 'k.k'];
 
@@ -95,5 +101,16 @@ describe('golpes sem salto, perna solta ou corte (SPF-01..04)', () => {
   it.each(['chuteGiratorio', 'chuteCarregado'])('%s: o centro do uniforme muda até 4 texels entre fases (SPF-03)', (move) => {
     const seq = ['wind', 'hit', 'recover'].map((p) => uniformCenter(frame(`${move}-${p}`)));
     for (let i = 1; i < seq.length; i++) expect(Math.abs(seq[i] - seq[i - 1]), `${move} fase ${i}`).toBeLessThanOrEqual(4);
+  });
+});
+
+describe('pouso e pulo (SPF-01, SPF-02, SPF-05)', () => {
+  it('a altura opaca de land-1 é menor ou igual à de idle-0 (SPF-05)', () => {
+    expect(opaqueHeight(frame('land-1'))).toBeLessThanOrEqual(opaqueHeight(frame('idle-0')));
+  });
+
+  it('jump-0 tem um único componente e nenhum pixel cortado (SPF-01, SPF-02)', () => {
+    expect(componentSizes(frame('jump-0'))).toHaveLength(1);
+    expect(clippedOf(frame('jump-0'))).toBe(0);
   });
 });
