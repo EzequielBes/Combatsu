@@ -150,7 +150,7 @@ T10 → T11 → T12 → T13
 **Reuses**: `PALETTE`
 **Requirement**: RDA-01
 **Done when**:
-- [ ] `tests/game/art.test.ts` exige exatamente 42 cores, com `t` e `T` nesses valores.
+- [x] `tests/game/art.test.ts` exige exatamente 42 cores, com `t` e `T` nesses valores.
 **Tests**: unit
 **Gate**: quick
 

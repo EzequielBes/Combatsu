@@ -61,6 +61,9 @@ export const PALETTE: Readonly<Record<string, number>> = {
   j: 0x33263b, // meio-tom do cabelo
   y: 0x8fa3c9, // luz de borda fria da lua (costas)
   z: 0x9c6a1f, // sombra do dourado (botão, fivela)
+  // Vermelho do anime (RDA-01, AD-017): carmim da borda/halo e magenta-claro dos arcos e da onda
+  t: 0xd1103a, // carmim
+  T: 0xff4f8b, // magenta-claro
 };
 
 export const PALETTE_KEYS: ReadonlySet<string> = new Set(Object.keys(PALETTE));
