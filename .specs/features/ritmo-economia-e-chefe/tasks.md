@@ -418,7 +418,7 @@ O `startRun` chama `reset`.
 **Reuses**: `tryFinisher` (`TestScene.ts:1155`), `FINISHER` fx
 **Requirement**: BFX-02, BFX-06, BFX-07, BFX-08
 **Done when**:
-- [ ] Build passa (a mudança de `tryFinisher` entra no mesmo commit, por ser a ligação do mesmo comportamento).
+- [x] Build passa (a mudança de `tryFinisher` entra no mesmo commit, por ser a ligação do mesmo comportamento).
 **Tests**: none
 **Gate**: build
 
