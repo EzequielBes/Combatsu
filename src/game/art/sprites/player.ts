@@ -31,22 +31,55 @@ export type Placed = readonly [Grid, number, number];
 
 export { selOut };
 
-/** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
-export function compose(...parts: Placed[]): string[] {
+/** Pixels cortados de cada frame montado por `compose`/`pose` (e preservados por `smear`), para os testes medirem SPF-02. */
+const CLIPPED = new WeakMap<readonly string[], number>();
+
+/** Quantos pixels opacos o `compose` descartou ao montar este frame; `undefined` se o frame não veio do `compose`. */
+export function clippedOf(frame: readonly string[]): number | undefined {
+  return CLIPPED.get(frame);
+}
+
+/**
+ * Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. Além do frame,
+ * devolve `clipped`: quantos pixels opacos caíram fora da grade e foram descartados (SPF-02).
+ */
+export function composeWithStats(...parts: Placed[]): { frame: string[]; clipped: number } {
   const w = PLAYER_FRAME_W - FRAME_PAD;
   const canvas = Array.from({ length: PLAYER_FRAME_H }, () => Array<string>(w).fill('.'));
+  let clipped = 0;
   for (const [grid, x0, y0] of parts) {
     grid.forEach((row, dy) =>
       [...row].forEach((ch, dx) => {
+        if (ch === '.') return;
         const x = x0 + dx;
         const y = y0 + dy;
-        if (ch === '.' || y < 0 || y >= PLAYER_FRAME_H || x < 0 || x >= w) return;
+        if (y < 0 || y >= PLAYER_FRAME_H || x < 0 || x >= w) {
+          clipped++;
+          return;
+        }
         canvas[y][x] = ch;
       }),
     );
   }
   selOut(canvas);
-  return canvas.map((row) => '.'.repeat(FRAME_PAD) + row.join(''));
+  const frame = canvas.map((row) => '.'.repeat(FRAME_PAD) + row.join(''));
+  CLIPPED.set(frame, clipped);
+  return { frame, clipped };
+}
+
+/** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
+export function compose(...parts: Placed[]): string[] {
+  return composeWithStats(...parts).frame;
+}
+
+/**
+ * Corta linhas de baixo e colunas da esquerda de uma parte que já ficariam fora da grade, mantendo o resto no mesmo
+ * lugar. O frame final é idêntico ao do `compose` sem o corte, mas sem pixels descartados em silêncio (SPF-02).
+ */
+export function cropPart([grid, x0, y0]: Placed, edges: { left?: number; bottom?: number }): Placed {
+  const left = edges.left ?? 0;
+  const bottom = edges.bottom ?? 0;
+  return [grid.slice(0, grid.length - bottom).map((row) => row.slice(left)), x0 + left, y0];
 }
 
 /** Troca cores de uma parte (ex.: braço de trás mais escuro). */
@@ -263,7 +296,10 @@ export function smear(frame: readonly string[], tipCol: number, limbY: number, l
       if (y >= 0 && y < rows.length && rows[y][x] === '.') rows[y][x] = 'S';
     }
   }
-  return rows.map((r) => r.join(''));
+  const out = rows.map((r) => r.join(''));
+  const clipped = CLIPPED.get(frame);
+  if (clipped !== undefined) CLIPPED.set(out, clipped);
+  return out;
 }
 
 export const far = (g: Grid): string[] => recolor(g, FAR);
@@ -282,7 +318,8 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'run-5': pose({ lean: 1, near: [ARM_BACK, 2, 12], far: [far(ARM_FWD), 8, 12], legs: [[RUN_LEGS[5], 0, Y_LEGS]] }),
 
   // Decolagem: pernas esticadas, braços para cima; depois a subida (pose antiga do jump-0).
-  'jump-0': pose({ drop: -1, near: [ARM_UP, 0, 6], far: [far(ARM_UP), 2, 5], legs: [[LEGS_STAND, 0, Y_LEGS - 1]] }),
+  // `drop` 0: com `drop` negativo a cabeça saía da grade (mechas cortadas). Os ombros dos braços erguidos ficam na linha do tronco.
+  'jump-0': pose({ near: [ARM_UP, 1, 6], far: [far(ARM_UP), 3, 5], legs: [[LEGS_STAND, 0, Y_LEGS - 1]] }),
   'jump-1': pose({ near: [ARM_FWD, 7, 11], far: [far(ARM_BACK), 1, 11], legs: [[LEGS_TUCK, 0, Y_LEGS - 1]] }),
   // Ápice: joelhos bem recolhidos, braços abertos.
   'apex-0': pose({ near: [ARM_FWD, 8, 10], far: [far(ARM_BACK), 0, 10], legs: [[LEGS_TUCK, 0, Y_LEGS - 2]] }),

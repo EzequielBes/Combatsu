@@ -12,10 +12,10 @@
  * - `cotovelada`: alcance curto, a ponta é o cotovelo (tons escuros da manga), nunca o punho de pele.
  * - `chuteFrontal`/`chuteAlto`: igual ao `kick` anterior; o alto tem a perna bem mais alta (altura da cabeça).
  * - `joelhada`: joelho dobrado subindo e avançando (LEG_KNEE_UP), não uma perna esticada.
- * - `chuteGiratorio`: chute normal, mas o frame de impacto é espelhado (o golpe chega de costas).
+ * - `chuteGiratorio`: chute normal, mas os braços do impacto são espelhados (o golpe chega de costas); o tronco fica na origem.
  * - `socoBaixo`: corpo agachado (`drop` grande), punho na altura do tronco/pernas do oponente.
  * - `rasteira`: corpo quase no chão (`drop` máximo), perna varrendo bem baixo.
- * - `ganchoAscendente`: punho acima da cabeça (`ARM_UP`), corpo subindo (`drop` negativo).
+ * - `ganchoAscendente`: punho subindo pela frente do rosto (`armRaised`), sem `drop` negativo (cabeça fica na grade).
  * - `chuteEmpurrao`: perna esticada ao máximo, corpo inclinado para trás (empurra, não avança).
  * - `chuteCarregado`: corpo torcido para trás no wind (`lean` bem negativo), extensão máxima no hit.
  *
@@ -33,6 +33,7 @@ import {
   LEG_SUPPORT,
   Y_LEGS,
   armStraight,
+  cropPart,
   far,
   legStraight,
   mirror,
@@ -80,6 +81,11 @@ function legDown(len: number): string[] {
   for (let i = 0; i < shin; i++) rows.push('kNnk');
   rows.push('kKsk');
   return rows;
+}
+
+/** Braço erguido na vertical (gancho ascendente): o `ARM_UP` esticado até `len` linhas, com a manga no meio. */
+function armRaised(len: number): string[] {
+  return [...ARM_UP.slice(0, 3), ...Array<string>(len - 6).fill('kNnk'), ...ARM_UP.slice(3)];
 }
 
 /** Pernas dobradas no ar (golpes aéreos): réplica local do `LEGS_TUCK` de `player.ts` (não exportado ali),
@@ -254,29 +260,28 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     ],
   }),
 
-  // Chute giratório (perna de trás): chute normal, mas o impacto chega de costas (frame espelhado).
+  // Chute giratório (perna de trás): o impacto chega "de costas" — só os braços são espelhados (sem mirror() no
+  // frame inteiro, que jogava o boneco ~11 texels para trás); tronco e pernas ficam na coluna da origem.
   'chuteGiratorio-wind': pose({
-    lean: -3,
+    lean: -2,
     head: HEAD_FOCUS,
-    near: [far(ARM_GUARD), 2, 11],
-    far: [ARM_COCK, 8, 12],
+    near: [far(ARM_GUARD), 3, 11],
+    far: [ARM_COCK, 9, 12],
     legs: [
-      [LEG_SUPPORT, 20, 17],
-      [LEG_KNEE_UP, 17, 15],
+      [LEG_SUPPORT, 3, 17],
+      [LEG_KNEE_UP, 6, 15],
     ],
   }),
-  'chuteGiratorio-hit': mirror(
-    pose({
-      lean: -2,
-      head: HEAD_FOCUS,
-      near: [ARM_GUARD, 5, 11],
-      far: [far(ARM_GUARD), 0, 11],
-      legs: [
-        [LEG_SUPPORT, 3, 17],
-        [legStraight(22), 9, 13],
-      ],
-    }),
-  ),
+  'chuteGiratorio-hit': pose({
+    lean: -2,
+    head: HEAD_FOCUS,
+    near: [mirror(ARM_GUARD), 2, 11],
+    far: [far(mirror(ARM_GUARD)), 0, 11],
+    legs: [
+      [LEG_SUPPORT, 3, 17],
+      [legStraight(19), 9, 13],
+    ],
+  }),
   'chuteGiratorio-recover': pose({
     lean: -1,
     head: HEAD_FOCUS,
@@ -292,7 +297,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [ARM_COCK, 3, 15],
     far: [far(ARM_GUARD), 8, 14],
-    legs: [[LEGS_WIDE, 0, Y_LEGS + 1]],
+    legs: [cropPart([LEGS_WIDE, 0, Y_LEGS + 1], { bottom: 1 })],
   }),
   'socoBaixo-hit': pose({
     lean: 2,
@@ -300,7 +305,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [armStraight(16), 9, 16],
     far: [far(ARM_GUARD), 9, 14],
-    legs: [[LEGS_WIDE, 1, Y_LEGS + 1]],
+    legs: [cropPart([LEGS_WIDE, 1, Y_LEGS + 1], { bottom: 1 })],
   }),
   'socoBaixo-recover': pose({
     lean: 1,
@@ -308,7 +313,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [armStraight(10), 9, 16],
     far: [far(ARM_GUARD), 8, 14],
-    legs: [[LEGS_WIDE, 0, Y_LEGS + 1]],
+    legs: [cropPart([LEGS_WIDE, 0, Y_LEGS + 1], { bottom: 1 })],
   }),
 
   // Rasteira (perna da frente): corpo quase no chão, perna varrendo bem baixo.
@@ -319,7 +324,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     near: [ARM_GUARD, 7, 13],
     far: [far(ARM_GUARD), 3, 13],
     legs: [
-      [LEG_SUPPORT, 5, 18],
+      cropPart([LEG_SUPPORT, 5, 18], { bottom: 1 }),
       [LEG_KNEE_UP, 8, 17],
     ],
   }),
@@ -330,8 +335,8 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     near: [ARM_GUARD, 6, 15],
     far: [far(ARM_GUARD), 2, 15],
     legs: [
-      [LEG_SUPPORT, 3, 19],
-      [legStraight(22), 9, 17],
+      cropPart([LEG_SUPPORT, 3, 19], { bottom: 2 }),
+      [legStraight(21), 9, 17],
     ],
   }),
   'rasteira-recover': pose({
@@ -341,12 +346,13 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     near: [ARM_GUARD, 7, 13],
     far: [far(ARM_GUARD), 3, 13],
     legs: [
-      [LEG_SUPPORT, 5, 18],
+      cropPart([LEG_SUPPORT, 5, 18], { bottom: 1 }),
       [LEG_KNEE_UP, 8, 18],
     ],
   }),
 
-  // Gancho ascendente (braço da frente): punho acima da cabeça, corpo subindo.
+  // Gancho ascendente (braço da frente): punho subindo pela frente do rosto. O tronco não sobe (`drop` >= 0):
+  // com `drop` negativo a cabeça saía da grade e as pernas ficavam soltas.
   'ganchoAscendente-wind': pose({
     lean: -1,
     drop: 1,
@@ -357,18 +363,16 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   }),
   'ganchoAscendente-hit': pose({
     lean: 1,
-    drop: -2,
     head: HEAD_FOCUS,
-    near: [ARM_UP, 9, 1],
-    far: [far(ARM_GUARD), 8, 9],
+    near: [armRaised(11), 13, 1],
+    far: [far(ARM_GUARD), 8, 11],
     legs: [[LEGS_WIDE, 1, Y_LEGS]],
   }),
   'ganchoAscendente-recover': pose({
     lean: 0,
-    drop: -1,
     head: HEAD_FOCUS,
-    near: [ARM_UP, 8, 5],
-    far: [far(ARM_GUARD), 8, 10],
+    near: [armRaised(8), 12, 4],
+    far: [far(ARM_GUARD), 8, 11],
     legs: [[LEGS_WIDE, 0, Y_LEGS]],
   }),
 
@@ -387,10 +391,10 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     lean: -3,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 4, 11],
-    far: [far(ARM_GUARD), -1, 11],
+    far: [far(ARM_GUARD), 0, 11],
     legs: [
       [LEG_SUPPORT, 2, 17],
-      [legStraight(23), 8, 15],
+      [legStraight(22), 8, 15],
     ],
   }),
   'chuteEmpurrao-recover': pose({
@@ -404,26 +408,27 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     ],
   }),
 
-  // Chute carregado (perna de trás): corpo torcido para trás no wind, extensão máxima no hit.
+  // Chute carregado (perna de trás): corpo torcido para trás no wind, extensão máxima no hit (a perna vai até a
+  // última coluna da grade, sem corte).
   'chuteCarregado-wind': pose({
-    lean: -5,
+    lean: -2,
     drop: 1,
     head: HEAD_FOCUS,
-    near: [far(ARM_GUARD), 1, 12],
-    far: [ARM_COCK, 9, 13],
+    near: [far(ARM_GUARD), 4, 12],
+    far: [ARM_COCK, 12, 13],
     legs: [
-      [LEG_SUPPORT, 21, 17],
-      [LEG_KNEE_UP, 18, 15],
+      [LEG_SUPPORT, 4, 17],
+      [LEG_KNEE_UP, 7, 15],
     ],
   }),
   'chuteCarregado-hit': pose({
-    lean: 6,
+    lean: 3,
     head: HEAD_FOCUS,
-    near: [ARM_GUARD, 6, 11],
-    far: [far(ARM_GUARD), 1, 11],
+    near: [ARM_GUARD, 3, 11],
+    far: [far(ARM_GUARD), 0, 11],
     legs: [
-      [LEG_SUPPORT, 2, 17],
-      [legStraight(26), 8, 13],
+      [LEG_SUPPORT, 0, 17],
+      [legStraight(22), 8, 13],
     ],
   }),
   'chuteCarregado-recover': pose({
@@ -578,10 +583,10 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     legs: [[LEGS_WIDE, 2, Y_LEGS]],
   }),
   'stunned-1': pose({
-    lean: -4,
+    lean: -3,
     drop: 2,
     near: [ARM_GUARD, 6, 14],
     far: [far(ARM_GUARD), 2, 13],
-    legs: [[LEGS_WIDE, -2, Y_LEGS]],
+    legs: [cropPart([LEGS_WIDE, -2, Y_LEGS], { left: 2 })],
   }),
 };

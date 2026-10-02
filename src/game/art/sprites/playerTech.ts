@@ -20,14 +20,19 @@
  * - Azul: no sign e no charge a mão fica ERGUIDA acima da linha dos ombros (reusa `ARM_UP` de `player.ts` com a
  *   palma trocada pelo núcleo `c`/`d`); no release a mão desce e empurra a esfera à frente do peito.
  */
+import { ART_SCALE } from '../palette';
 import {
   ARM_COCK,
   ARM_GUARD,
   ARM_UP,
   HEAD_FOCUS,
   LEGS_WIDE,
+  PLAYER_FRAME_H,
+  PLAYER_FRAME_W,
+  PLAYER_ORIGIN,
   Y_LEGS,
   armStraight,
+  cropPart,
   far,
   pose,
   recolor,
@@ -55,7 +60,9 @@ function armPointed(len: number, hi: string, fill: string): string[] {
 
 /** Mão de apoio segurando o pulso por baixo (Vermelho, charge): uma peça `far` própria, curta, colocada logo
  * abaixo da manga do braço esticado — mais simples e mais confiável que sobrepor o braço já pronto. */
-const WRIST_GRIP: Grid = ['.kkk.', 'kppPk', 'ksnNk', '.kkk.'];
+export const WRIST_GRIP: Grid = ['.kkk.', 'kppPk', 'ksnNk', '.kkk.'];
+/** Posição (x, y na área de desenho) da mão de apoio no `vermelho-charge`. */
+export const WRIST_GRIP_AT = { x: 13, y: 13 } as const;
 
 /**
  * Palma aberta à frente, dedos juntos, com um núcleo `core` entre eles em vez do punho fechado — usada pela
@@ -100,7 +107,7 @@ function armDiagonalCut(hi: string): Grid {
 
 /** Pernas do "charge": mesma base do `LEGS_WIDE`, afundada 1 texel (joelhos flexionados, corpo baixando junto
  * com o `drop` maior da cabeça/tronco). */
-const CHARGE_LEGS: Placed = [LEGS_WIDE, 0, Y_LEGS + 1];
+const CHARGE_LEGS: Placed = cropPart([LEGS_WIDE, 0, Y_LEGS + 1], { bottom: 1 });
 
 /** Pernas do "release": o mesmo `LEGS_WIDE` do `sign`/`recover`, mas empurrado bem mais à frente (o avanço do
  * golpe, igual ao `cross-hit`/`kick-hit` de `player.ts`) — a perna de trás fica visivelmente para trás do
@@ -185,7 +192,8 @@ export const PLAYER_TECH_FRAMES: Record<string, readonly string[]> = {
     drop: 2,
     head: HEAD_FOCUS,
     near: [armPointed(14, 'R', 'r'), 9, 9],
-    far: [WRIST_GRIP, 13, 13],
+    // Braço de trás: a mão de apoio passa pelo `far()` para não ficar na pele clara (`p`) do braço da frente.
+    far: [far(WRIST_GRIP), WRIST_GRIP_AT.x, WRIST_GRIP_AT.y],
     legs: [CHARGE_LEGS],
   }),
   // A soltura empurra o player para trás (RED-15): lean e pernas recuam em vez de avançar.
@@ -194,7 +202,7 @@ export const PLAYER_TECH_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [armPointed(17, 'R', 'r'), 9, 11],
     far: [far(ARM_GUARD), 8, 11],
-    legs: [[LEGS_WIDE, -1, Y_LEGS]],
+    legs: [cropPart([LEGS_WIDE, -1, Y_LEGS], { left: 1 })],
   }),
   'vermelho-recover': pose({
     lean: -1,
@@ -244,3 +252,32 @@ export const PLAYER_TECH_FRAMES: Record<string, readonly string[]> = {
     legs: [[LEGS_WIDE, 3, Y_LEGS]],
   }),
 };
+
+/**
+ * Ponta dos dedos do Vermelho (RDA-04): em `vermelho-sign|charge|release`, o pixel `R` de maior coluna do frame
+ * (os dedos já são pintados de `R`/`r`); com empate de coluna vale o mais alto. `col`/`row` são texels do frame.
+ */
+export function redFingertip(frameName: string): { col: number; row: number } {
+  const rows = PLAYER_TECH_FRAMES[frameName];
+  if (!rows || !/^vermelho-(sign|charge|release)$/.test(frameName)) {
+    throw new Error(`redFingertip: '${frameName}' não é um frame sign/charge/release do Vermelho`);
+  }
+  let tip: { col: number; row: number } | null = null;
+  rows.forEach((line, row) =>
+    [...line].forEach((ch, col) => {
+      if (ch === 'R' && (tip === null || col > tip.col)) tip = { col, row };
+    }),
+  );
+  if (!tip) throw new Error(`redFingertip: '${frameName}' não tem pixel R`);
+  return tip;
+}
+
+/**
+ * Deslocamento em px de mundo da ponta dos dedos em relação à origem do sprite (pé, centro do corpo), espelhado
+ * em x por `facing` (RDA-04): `x = (col − colunaDaOrigem)·ART_SCALE·facing`, `y = (row − altura)·ART_SCALE`.
+ */
+export function fingertipOffsetPx(frameName: string, facing: 1 | -1): { x: number; y: number } {
+  const { col, row } = redFingertip(frameName);
+  const originCol = PLAYER_ORIGIN.x * PLAYER_FRAME_W;
+  return { x: (col - originCol) * ART_SCALE * facing, y: (row - PLAYER_FRAME_H) * ART_SCALE };
+}

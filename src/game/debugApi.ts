@@ -190,7 +190,18 @@ export interface GameSnapshot {
   /** Orbes vivos (RED-14, BLU-*); placeholder `[]` até a Fase 5 criar orbes de verdade. */
   techObjects: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[];
   /** Camadas de efeito de técnica vivas (TFX-*), lidas do `FxTimeline`/`FxRegistry` da cena. */
-  fx: { live: number; degraded: boolean; layers: string[] };
+  fx: {
+    live: number;
+    degraded: boolean;
+    layers: string[];
+    /** Vermelho (RDA-04/05/06/13, EDG-01): cores do halo e do flash, Glow só com WebGL, centro do orbe na carga. */
+    red: {
+      glowColor: number | null;
+      glow: { active: boolean; color: number | null };
+      screenFlashColor: number | null;
+      orb: { x: number; y: number } | null;
+    };
+  };
   /**
    * Desvio da Fase 6 (T29/T30, CAST-15/KOK-24): a spec não tinha um jeito de o smoke ler o zoom da câmera
    * principal; acrescentado aqui só para o smoke observar o zoom durante a conjuração e o Kokusen.

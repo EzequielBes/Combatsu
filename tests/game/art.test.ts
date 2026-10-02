@@ -16,7 +16,7 @@ import { selOut as sharedSelOut, type SelOutConfig } from '../../src/game/art/se
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
 import enemyBBoxBaseline from './fixtures/enemyBBoxBaseline.json';
-import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
+import { PLAYER_TECH_FRAMES, fingertipOffsetPx, redFingertip } from '../../src/game/art/sprites/playerTech';
 import {
   COMBO_GRADE_COLORS,
   COMBO_TEXT_COLOR,
@@ -26,6 +26,7 @@ import {
 } from '../../src/game/art/combatColors';
 import { KANJI_FRAMES } from '../../src/game/art/sprites/kanji';
 import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from '../../src/game/art/sprites/techFx';
+import { RED_FX_COLORS } from '../../src/game/techFx/redPalette';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from '../../src/game/art/sprites/economy';
@@ -66,24 +67,30 @@ import {
 import { BOSS, PLAYER_MOVE } from '../../src/data/tuning';
 
 describe('paleta única (ART-01)', () => {
-  it('tem no máximo 40 cores, cada uma com chave de 1 caractere', () => {
+  it('tem no máximo 42 cores (RDA-01, AD-017), cada uma com chave de 1 caractere', () => {
     const keys = Object.keys(PALETTE);
     expect(keys.length).toBeGreaterThan(0);
-    expect(keys.length).toBeLessThanOrEqual(40);
+    expect(keys.length).toBeLessThanOrEqual(42);
     for (const k of keys) expect([...k]).toHaveLength(1);
   });
 
-  it('tem as 5 chaves novas do player (o, x, j, y, z) somando 40 cores (SPR-01)', () => {
+  it('tem as 5 chaves do player (o, x, j, y, z) e, com as 2 do Vermelho (t, T), soma 42 cores (SPR-01, RDA-01)', () => {
     const keys = Object.keys(PALETTE);
     for (const k of ['o', 'x', 'j', 'y', 'z']) expect(keys, k).toContain(k);
-    // SPEC_DEVIATION: a spec diz 34 + 5 = 39, mas a paleta já tinha 35 chaves; o total real é 40, o teto do teste de paleta.
-    // Reason: contagem da spec desatualizada; as 5 chaves novas e o teto de 40 se mantêm.
-    expect(keys).toHaveLength(40);
+    // SPEC_DEVIATION: a spec da SPR-01 dizia 34 + 5 = 39, mas a paleta já tinha 35 chaves (total real 40).
+    // Reason: contagem da spec desatualizada; a F10 (RDA-01, AD-017) soma `t` e `T` e fixa o total em 42.
+    expect(keys).toHaveLength(42);
     expect(PALETTE.o).toBe(0x161d3d);
     expect(PALETTE.x).toBe(0x6b3a2e);
     expect(PALETTE.j).toBe(0x33263b);
     expect(PALETTE.y).toBe(0x8fa3c9);
     expect(PALETTE.z).toBe(0x9c6a1f);
+  });
+
+  it('tem o carmim t e o magenta-claro T do Vermelho (RDA-01)', () => {
+    expect(Object.keys(PALETTE)).toHaveLength(42);
+    expect(PALETTE.t).toBe(0xd1103a);
+    expect(PALETTE.T).toBe(0xff4f8b);
   });
 
   it('reserva "." para transparente: não está na paleta', () => {
@@ -319,14 +326,62 @@ describe('kanji das técnicas (KOK-29, KOK-34, TFX-01)', () => {
 });
 
 describe('orbes e aura das técnicas (TFX-01)', () => {
-  it('o orbe Vermelho passa no parseSheet nos 3 tamanhos da carga (RED-02), com núcleo W e borda R', () => {
+  it('o orbe Vermelho passa no parseSheet nos 3 tamanhos da carga (RED-02), com núcleo W e borda carmim t', () => {
     for (const size of RED_ORB_SIZES) {
       const sheet = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS);
       expect(sheet.width).toBe(size);
       expect(sheet.height).toBe(size);
       const colors = new Set(sheet.frames[0].cells.flat());
       expect(colors.has('W')).toBe(true);
-      expect(colors.has('R')).toBe(true);
+      expect(colors.has('t')).toBe(true);
+    }
+  });
+
+  it('os orbes de 8 e 12 texels têm W no centro e passam por T, R e t até a borda (RDA-02)', () => {
+    for (const size of [8, 12] as const) {
+      const cells = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells;
+      const mid = Math.floor(size / 2);
+      // Anda do centro para a direita: W -> T -> R -> t, nessa ordem de aparição.
+      const order = cells[mid].slice(mid).filter((c): c is string => c !== null);
+      const firstSeen = [...new Set(order)];
+      expect(firstSeen, `${size}`).toEqual(['W', 'T', 'R', 't']);
+      expect(order[order.length - 1], `${size}`).toBe('t');
+    }
+  });
+
+  it('a rampa do orbe segue os raios W até 0,3, T até 0,55, R até 0,8 e t na borda (RDA-02)', () => {
+    for (const size of [8, 12] as const) {
+      const cells = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells;
+      const center = (size - 1) / 2;
+      const seen = new Set<string>();
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const r = Math.hypot(x - center, y - center) / (size / 2); // fração do raio do disco
+          const expected = r <= 0.3 ? 'W' : r <= 0.55 ? 'T' : r <= 0.8 ? 'R' : r <= 1 ? 't' : null;
+          expect(cells[y][x], `${size} (${x},${y}) r=${r.toFixed(3)}`).toBe(expected);
+          if (expected) seen.add(expected);
+        }
+      }
+      // Os quatro anéis existem de fato nesse tamanho (a rampa não degenerou).
+      expect([...seen].sort(), `${size}`).toEqual(['R', 'T', 'W', 't']);
+    }
+  });
+
+  it('nenhum frame do orbe Vermelho contém a nem A (RDA-03)', () => {
+    for (const size of RED_ORB_SIZES) {
+      const colors = new Set(parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells.flat());
+      expect(colors.has('a'), `${size}`).toBe(false);
+      expect(colors.has('A'), `${size}`).toBe(false);
+    }
+  });
+
+  it('todas as chaves de RED_FX_COLORS estão em {b, t, T, R, W} e existem na paleta (RDA-03, RDA-14)', () => {
+    const allowed = new Set(['b', 't', 'T', 'R', 'W']);
+    const keys = Object.values(RED_FX_COLORS).flat();
+    expect(keys.length).toBeGreaterThan(0);
+    for (const k of keys) {
+      expect(allowed.has(k), k).toBe(true);
+      expect(PALETTE_KEYS.has(k), k).toBe(true);
     }
   });
 
@@ -373,6 +428,14 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
   it('as faíscas das técnicas passam no parseSheet só com cores da paleta', () => {
     const sheet = parseSheet('tech-sparks', TECH_SPARK_FRAMES, PALETTE_KEYS);
     expect(sheet.frames).toHaveLength(3);
+  });
+
+  it('a faísca redOut do Vermelho não usa a nem A, só t, T e R (RDA-03, RDA-14)', () => {
+    const cells = parseSheet('tech-sparks', TECH_SPARK_FRAMES, PALETTE_KEYS).frames.find((f) => f.key === 'redOut')!.cells;
+    const colors = new Set(cells.flat().filter((c): c is string => c !== null));
+    expect(colors.has('a')).toBe(false);
+    expect(colors.has('A')).toBe(false);
+    expect([...colors].every((c) => ['t', 'T', 'R'].includes(c))).toBe(true);
   });
 });
 
@@ -1241,5 +1304,38 @@ describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => 
       for (const [n, g] of Object.entries({ head, torso, limb })) parseSheet(`rag-${n}-${id}`, { [n]: g }, PALETTE_KEYS);
     }
     expect(ENEMY_RAG_PARTS).toBe(ENEMY_RAG_VARIANTS.corcunda);
+  });
+});
+
+describe('ponta dos dedos do Vermelho por frame (RDA-04)', () => {
+  const FRAMES = ['vermelho-sign', 'vermelho-charge', 'vermelho-release'] as const;
+  const originCol = PLAYER_ORIGIN.x * PLAYER_FRAME_W;
+
+  it.each(FRAMES)('%s: o pixel devolvido é R e é o de maior coluna entre todos os R do frame', (name) => {
+    const rows = PLAYER_TECH_FRAMES[name];
+    const { col, row } = redFingertip(name);
+    expect(rows[row][col]).toBe('R');
+    let maxCol = -1;
+    rows.forEach((line) => [...line].forEach((ch, c) => { if (ch === 'R') maxCol = Math.max(maxCol, c); }));
+    expect(col).toBe(maxCol);
+  });
+
+  it('a ponta avança com o braço: sign < charge < release em coluna', () => {
+    expect(redFingertip('vermelho-sign').col).toBeLessThan(redFingertip('vermelho-charge').col);
+    expect(redFingertip('vermelho-charge').col).toBeLessThan(redFingertip('vermelho-release').col);
+  });
+
+  it.each(FRAMES)('%s: o deslocamento em px usa a origem e a escala, e espelha em x com facing -1', (name) => {
+    const { col, row } = redFingertip(name);
+    const right = fingertipOffsetPx(name, 1);
+    const left = fingertipOffsetPx(name, -1);
+    expect(right).toEqual({ x: (col - originCol) * ART_SCALE, y: (row - PLAYER_FRAME_H) * ART_SCALE });
+    expect(left.x).toBe(-right.x);
+    expect(left.y).toBe(right.y);
+    expect(right.x).toBeGreaterThan(0);
+  });
+
+  it('um frame que não é do Vermelho lança erro', () => {
+    expect(() => redFingertip('azul-charge')).toThrow(/azul-charge/);
   });
 });
