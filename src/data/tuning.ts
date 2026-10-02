@@ -112,11 +112,14 @@ export const ENEMY_ATTACK: AttackStep = {
   hitbox: { offsetX: 20, offsetY: -2, width: 24, height: 20 },
 };
 
-/** Escala de dificuldade por rodada (DIF-01, DIF-05, DIF-06): cresce até um teto. */
+/**
+ * Escala de dificuldade por rodada (DIF-06, SPN-13, SPN-14, AD-014): HP e dano dos comuns ficam fixos
+ * (a dificuldade vem de mecânica, não de números), só a velocidade cresce até um teto.
+ */
 export const DIFFICULTY: DifficultyTuning = {
-  hpPerRound: 0.12,
+  hpPerRound: 0,
   hpCap: 3.0,
-  damagePerRound: 0.08,
+  damagePerRound: 0,
   damageCap: 2.5,
   speedPerRound: 0.03,
   speedCap: 1.4,
