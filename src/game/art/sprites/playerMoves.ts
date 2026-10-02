@@ -33,6 +33,7 @@ import {
   LEG_SUPPORT,
   Y_LEGS,
   armStraight,
+  cropPart,
   far,
   legStraight,
   mirror,
@@ -296,7 +297,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [ARM_COCK, 3, 15],
     far: [far(ARM_GUARD), 8, 14],
-    legs: [[LEGS_WIDE, 0, Y_LEGS + 1]],
+    legs: [cropPart([LEGS_WIDE, 0, Y_LEGS + 1], { bottom: 1 })],
   }),
   'socoBaixo-hit': pose({
     lean: 2,
@@ -304,7 +305,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [armStraight(16), 9, 16],
     far: [far(ARM_GUARD), 9, 14],
-    legs: [[LEGS_WIDE, 1, Y_LEGS + 1]],
+    legs: [cropPart([LEGS_WIDE, 1, Y_LEGS + 1], { bottom: 1 })],
   }),
   'socoBaixo-recover': pose({
     lean: 1,
@@ -312,7 +313,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [armStraight(10), 9, 16],
     far: [far(ARM_GUARD), 8, 14],
-    legs: [[LEGS_WIDE, 0, Y_LEGS + 1]],
+    legs: [cropPart([LEGS_WIDE, 0, Y_LEGS + 1], { bottom: 1 })],
   }),
 
   // Rasteira (perna da frente): corpo quase no chão, perna varrendo bem baixo.
@@ -323,7 +324,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     near: [ARM_GUARD, 7, 13],
     far: [far(ARM_GUARD), 3, 13],
     legs: [
-      [LEG_SUPPORT, 5, 18],
+      cropPart([LEG_SUPPORT, 5, 18], { bottom: 1 }),
       [LEG_KNEE_UP, 8, 17],
     ],
   }),
@@ -334,8 +335,8 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     near: [ARM_GUARD, 6, 15],
     far: [far(ARM_GUARD), 2, 15],
     legs: [
-      [LEG_SUPPORT, 3, 19],
-      [legStraight(22), 9, 17],
+      cropPart([LEG_SUPPORT, 3, 19], { bottom: 2 }),
+      [legStraight(21), 9, 17],
     ],
   }),
   'rasteira-recover': pose({
@@ -345,7 +346,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     near: [ARM_GUARD, 7, 13],
     far: [far(ARM_GUARD), 3, 13],
     legs: [
-      [LEG_SUPPORT, 5, 18],
+      cropPart([LEG_SUPPORT, 5, 18], { bottom: 1 }),
       [LEG_KNEE_UP, 8, 18],
     ],
   }),
@@ -582,10 +583,10 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     legs: [[LEGS_WIDE, 2, Y_LEGS]],
   }),
   'stunned-1': pose({
-    lean: -4,
+    lean: -3,
     drop: 2,
     near: [ARM_GUARD, 6, 14],
     far: [far(ARM_GUARD), 2, 13],
-    legs: [[LEGS_WIDE, -2, Y_LEGS]],
+    legs: [cropPart([LEGS_WIDE, -2, Y_LEGS], { left: 2 })],
   }),
 };
