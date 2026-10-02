@@ -140,9 +140,15 @@
 
 ## Handoff
 
-- **Feature**: F11 `ritmo-economia-e-chefe` fechada (Verifier PASS na rodada 2: 61/61 ACs, 14/14 mutantes mortos) e mergeada em `dev`. F10 `personagem-e-vermelho` em correção de cobertura na worktree `scratchpad/wt-f10` (branch `feat/personagem-e-vermelho`)
-- **Feito**: F0–F5, F7, `sprite-player-polish`, `enemy-sprite-variety` e F11 em `dev`; 1300 testes, 27 smokes
-- **Próximo**: re-verificar a F10, mergear em `dev` (conflitos esperados em `debugApi.ts`, `TechRunner.ts`, `TestScene.ts`, `tests/game/debugApi.test.ts`), UAT do usuário; depois F12 `combate-mestre` (Specify)
+- **Feature**: nenhuma em andamento. F11 `ritmo-economia-e-chefe` e F10 `personagem-e-vermelho` fechadas (Verifier PASS na rodada 2 das duas) e mergeadas em `dev` (merge `16c35b3`)
+- **Feito**: F0–F5, F7, `sprite-player-polish`, `enemy-sprite-variety`, F10 e F11 em `dev`; 1612 testes unitários verdes após o merge
+- **Pendente antes da F12 (nesta ordem)**:
+  1. Rodar `npm run build && npm test && npm run smoke` em `dev`. A última tentativa foi morta por falta de memória da máquina, sem resultado.
+  2. Commitar a correção NÃO commitada em `src/game/TechRunner.ts` (`repulseRed`): a repulsão do Vermelho passa a chamar `masteryHit(this.currentCast, enemy)` (MST-01). Mensagem sugerida: `fix(tech-runner): count red repulse hits toward mastery`.
+  3. Remover a worktree `scratchpad/wt-f10` (`git worktree remove`; o `node_modules` dela é junction, então não apague com rm recursivo) e as branches de feature já mergeadas, se o usuário quiser.
+  4. UAT do usuário na versão de `dev`: ritmo e spawn, limitador de 2 atacantes, loja/maestria, chefe vencível no soco, Vermelho carmim e sprites.
+- **Próximo**: F12 `combate-mestre` (Specify), seguindo `docs/superpowers/specs/2026-10-02-combate-mestre-design.md`; depois F13–F16. F6 e F9 ficam para depois da expansão
+- **Lições**: as lições da F10 foram regravadas em `dev` como L-050/L-051 (as L-047/048 da branch colidiam com as da F11); L-043 confirmada com recorrência 3
 - **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; worker que cair é retomado do `git diff`; `py`/`python` (não `python3`) roda os scripts do tlc
 - **Dicas técnicas**:
   - Revisão de arte: `node tools/sprite-preview.mjs [dir]` (com `SPRITE_SCALE=8` para zoom) gera a prancha e as tiras por animação em PNG

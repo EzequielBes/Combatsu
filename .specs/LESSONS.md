@@ -15,10 +15,10 @@ Corroborated across multiple features. Safe to apply as guidance.
 - last seen: 2026-10-01T12:33:06Z
 
 ### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
-- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `art-adapter` · harmful: 0
-- features: sprite-player-polish, enemy-sprite-variety
-- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+1 more)
-- last seen: 2026-10-01T16:00:05Z
+- signal: `surviving_mutant` · recurrence: 3 feature(s) · scope: `art-adapter` · harmful: 0
+- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho
+- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+2 more)
+- last seen: 2026-10-02T21:33:41Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -305,6 +305,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: ritmo-economia-e-chefe
 - evidence: MST-08 src/game/EnergyHud.ts:160 (hud)
 - last seen: 2026-10-02T18:15:15Z
+
+### L-050 - Regras de exclusao feitas na camada de cena (ex.: filtro que poe o chefe fora de um efeito) precisam de teste proprio; extraia o filtro puro ou cubra no smoke, senao o mutante que remove o filtro sobrevive.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/game/TechRunner.ts` · harmful: 0
+- features: personagem-e-vermelho
+- evidence: M11 TechRunner.ts:348 / EDG-03 (src/game/TechRunner.ts)
+- last seen: 2026-10-02T21:33:40Z
+
+### L-051 - Duracoes e periodos de efeito visual (ms) citados no AC devem virar constantes exportadas ou camadas medidas no smoke; checar so a presenca da camada deixa o numero livre.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/game/techFx` · harmful: 0
+- features: personagem-e-vermelho
+- evidence: M10 RedOrb.ts:35,62,64 / RDA-07,RDA-10,RDA-12 (src/game/techFx)
+- last seen: 2026-10-02T21:33:41Z
 
 ## Quarantined (failed when applied - ignore)
 
