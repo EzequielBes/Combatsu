@@ -118,8 +118,18 @@ export const DIFFICULTY: DifficultyTuning = {
   speedCap: 1.4,
 };
 
-/** Onda de inimigos por rodada (WAVE-01, WAVE-03, WAVE-04). */
-export const WAVE: WaveTuning = { base: 3, max: 12, maxAlive: 4, pointGapMs: 800 };
+/** Onda de inimigos por rodada (SPN-01..05). */
+export const WAVE: WaveTuning = {
+  base: 6,
+  perRound: 2,
+  max: 20,
+  maxAliveBase: 5,
+  maxAliveEvery: 2,
+  maxAliveCap: 8,
+  initialBurst: 3,
+  trickleMs: 1500,
+  pointGapMs: 800,
+};
 
 /** Tempos da máquina de estados da run (RUN-10, RUN-11, RHUD-02). */
 export const RUN: RunTuning = { intermissionMs: 2500, gameOverLockMs: 1000, spawnGraceMs: 600, bannerMs: 1500 };

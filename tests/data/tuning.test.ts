@@ -14,8 +14,18 @@ describe('tuning da dificuldade, onda e run (T1, valores das Assumptions da spec
     });
   });
 
-  it('WAVE = base 3, max 12, maxAlive 4, pointGapMs 800', () => {
-    expect(WAVE).toEqual({ base: 3, max: 12, maxAlive: 4, pointGapMs: 800 });
+  it('WAVE = base 6, +2 por rodada, max 20, vivos 5..8, burst 3, gotejamento 1500 ms, pointGapMs 800 (SPN-01..04)', () => {
+    expect(WAVE).toEqual({
+      base: 6,
+      perRound: 2,
+      max: 20,
+      maxAliveBase: 5,
+      maxAliveEvery: 2,
+      maxAliveCap: 8,
+      initialBurst: 3,
+      trickleMs: 1500,
+      pointGapMs: 800,
+    });
   });
 
   it('RUN = intermissionMs 2500, gameOverLockMs 1000, spawnGraceMs 600, bannerMs 1500', () => {

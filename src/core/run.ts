@@ -47,7 +47,6 @@ export class Run {
   private _kills = 0;
   private _summary: RunSummary | null = null;
   private spawner: WaveSpawner | null = null;
-  private rng: Rng | null = null;
   private lootRngValue: Rng | null = null;
   private shopRngValue: Rng | null = null;
   private guardRngValue: Rng | null = null;
@@ -65,7 +64,7 @@ export class Run {
   constructor(
     private readonly t: RunTuning,
     private readonly waveT: WaveTuning,
-    private readonly pointCount: number,
+    _pointCount: number,
     options: RunOptions = {},
   ) {
     this.firstRound = options.firstRound ?? 1;
@@ -166,7 +165,7 @@ export class Run {
     if (this._state === startState) {
       if (this._state === 'roundActive' && this.spawner) {
         for (const order of this.spawner.update(dtMs)) {
-          commands.push({ type: 'spawn', point: order.point, round: this._round, kind: order.kind });
+          commands.push({ type: 'spawn', point: 0, round: this._round, kind: order.kind }); // T2: ponto sai do comando
         }
       } else if (this._state === 'intermission') {
         this.intermissionTimer += dtMs;
@@ -184,7 +183,7 @@ export class Run {
     // `shop` o pedido é descartado sem efeito.
     if (this.pendingCloseShop && this._state === 'shop') {
       this._round++;
-      this.spawner = new WaveSpawner(this._round, this.pointCount, this.rng as Rng, this.waveT);
+      this.spawner = new WaveSpawner(this._round, this.waveT);
       this._state = 'roundActive';
       commands.push({ type: 'roundStart', round: this._round });
     }
@@ -195,7 +194,6 @@ export class Run {
       const canStart = this._state === 'title' || (this._state === 'gameOver' && this.gameOverTimer >= this.t.gameOverLockMs);
       if (canStart) {
         const seed = seedForNewRun();
-        this.rng = new Rng(seed);
         this.lootRngValue = new Rng(seed ^ 0x9e3779b9);
         this.shopRngValue = new Rng(seed ^ SHOP.rngSalt);
         this.guardRngValue = new Rng(seed ^ 0x2545f491);
@@ -203,7 +201,7 @@ export class Run {
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;
-        this.spawner = new WaveSpawner(this._round, this.pointCount, this.rng, this.waveT);
+        this.spawner = new WaveSpawner(this._round, this.waveT);
         this._state = 'roundActive';
         commands.push({ type: 'startRun' }, { type: 'roundStart', round: this._round });
       }
