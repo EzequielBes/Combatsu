@@ -158,18 +158,18 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 | RDA-02 | P1: Vermelho carmim | Specify | Implementing |
 | RDA-03 | P1: Vermelho carmim | Specify | Implementing |
 | RDA-04 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-05 | P1: Vermelho carmim | Specify | Pending |
-| RDA-06 | P1: Vermelho carmim | Specify | Pending |
-| RDA-07 | P1: Vermelho carmim | Specify | Pending |
+| RDA-05 | P1: Vermelho carmim | Specify | Implementing |
+| RDA-06 | P1: Vermelho carmim | Specify | Implementing |
+| RDA-07 | P1: Vermelho carmim | Specify | Implementing |
 | RDA-08 | P1: Repulsão | Specify | Implementing |
 | RDA-09 | P1: Repulsão | Specify | Implementing |
-| RDA-10 | P1: Repulsão | Specify | Pending |
+| RDA-10 | P1: Repulsão | Specify | Implementing |
 | RDA-11 | P1: Repulsão | Specify | Implementing |
-| RDA-12 | P1: Repulsão | Specify | Pending |
-| RDA-13 | P1: Repulsão | Specify | Pending |
+| RDA-12 | P1: Repulsão | Specify | Implementing |
+| RDA-13 | P1: Repulsão | Specify | Implementing |
 | RDA-14 | P1: Repulsão | Specify | Implementing |
-| RDA-15 | P1: Repulsão | Specify | Pending |
-| EDG-01 | Edge cases | Specify | Pending |
+| RDA-15 | P1: Repulsão | Specify | Implementing |
+| EDG-01 | Edge cases | Specify | Implementing |
 | EDG-02 | Edge cases | Specify | Pending |
 | EDG-03 | Edge cases | Specify | Implementing |
 

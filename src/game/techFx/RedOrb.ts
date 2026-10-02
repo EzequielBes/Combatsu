@@ -1,23 +1,38 @@
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
 import { RedOrbState } from '../../core/redOrb';
 import type { Vec2 } from '../../core/hit';
 import { PALETTE } from '../art/palette';
+import { fingertipOffsetPx } from '../art/sprites/playerTech';
+import { RED_FX_COLORS } from './redPalette';
 import { TEX } from '../textures';
 
 /** Um frame a 60 fps (mesma convenção de KokusenFx.ts). */
 const FRAME_MS = 1000 / 60;
 
-/** Braço esticado, dois dedos apontados (Direção de arte, "Selo"): offset da ponta dos dedos a partir do centro. */
-export const RED_FINGERTIP_OFFSET: Vec2 = { x: 20, y: -8 };
+/** Cores do efeito, sempre lidas de `RED_FX_COLORS` (RDA-03/14): nunca `a`/`A`. */
+const C = {
+  core: PALETTE[RED_FX_COLORS.core],
+  glow: PALETTE[RED_FX_COLORS.glow],
+  ring: PALETTE[RED_FX_COLORS.ring],
+  edge: PALETTE[RED_FX_COLORS.edge],
+  shadow: PALETTE[RED_FX_COLORS.shadow],
+  flash: PALETTE[RED_FX_COLORS.flash],
+};
+
+/**
+ * Frame usado para achar a ponta dos dedos quando o player não está num frame sign/charge/release do Vermelho
+ * (ex.: o frame de transição, um tick antes da pose trocar): o `vermelho-charge`, o do braço esticado mais comum.
+ */
+const FALLBACK_FINGERTIP_FRAME = 'vermelho-charge';
 
 /** Textura do orbe por tamanho de carga (RED-02). */
 const CHARGE_TEX: Record<4 | 8 | 12, string> = { 4: TEX.techOrbRed4, 8: TEX.techOrbRed8, 12: TEX.techOrbRed12 };
 
 const SPARKS_OUT_MAX = 40; // TFX-04: bem abaixo de 64
 const DUST_EVERY_MS = 150;
-const TRAIL_EVERY_MS = 35;
+/** RDA-12: um fantasma por frame, que some em 180 ms. */
 const TRAIL_FADE_MS = 180;
 const CRACKLE_EVERY_MS = 90;
 /** Polimento (feat(fx)): "flash branco no núcleo (1-2 frames)" - era 100 ms (6 frames), tempo demais para um flash. */
@@ -38,11 +53,16 @@ const CHUNK_DEBRIS_COUNT = 9;
 const CHUNK_GRAVITY = 500; // px/s^2
 const SMOKE_COUNT = 10;
 const SMOKE_MS = 560;
-/** RED-12: a tela pisca vermelho por exatamente 80 ms. */
+/** RED-12 / RDA-15: a tela pisca carmim por exatamente 80 ms. */
 const SCREEN_FLASH_MS = 80;
 /** RED-17: a câmera treme por exatamente 200 ms. */
 const SHAKE_MS = 200;
 const SHAKE_INTENSITY = 0.02;
+/** RDA-07: dois arcos `T` girando em volta do orbe, uma volta a cada 400 ms. */
+const DISTORT_PERIOD_MS = 400;
+/** RDA-10: o cone da repulsão fica 120 ms e alcança 80 px à frente. */
+const REPULSE_MS = 120;
+const REPULSE_REACH_PX = 80;
 
 /** Snap para a grade de 2 px (AD-009/TFX-02): geometria procedural sempre em texels pares. */
 const evenPx = (v: number): number => Math.round(v / 2) * 2;
@@ -69,6 +89,12 @@ export class RedOrbFx {
   private trailMs = 0;
   private crackleMs = 0;
   private readonly screenFlash: Phaser.GameObjects.Rectangle;
+  /** RDA-06 / EDG-01 / AD-009: sem WebGL, nenhum postFX (Glow) é criado e o resto do efeito toca igual. */
+  private readonly degraded: boolean;
+  private glowFx: Phaser.FX.Glow | null = null;
+  private distortRing: Phaser.GameObjects.Graphics | null = null;
+  private distortMs = 0;
+  private screenFlashColor: number | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -76,8 +102,9 @@ export class RedOrbFx {
     private readonly registry: FxRegistry,
     uiLayer: Phaser.GameObjects.Layer,
   ) {
+    this.degraded = scene.game.renderer.type !== Phaser.WEBGL;
     this.screenFlash = scene.add
-      .rectangle(0, 0, scene.scale.width, scene.scale.height, PALETTE.R, 0)
+      .rectangle(0, 0, scene.scale.width, scene.scale.height, C.flash, 0)
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(200)
@@ -85,18 +112,39 @@ export class RedOrbFx {
     uiLayer.add(this.screenFlash);
   }
 
-  /** Ponta dos dedos (Direção de arte, "Selo"/"Carga"): mesmo offset usado para nascer e para lançar o orbe. */
-  fingertip(playerX: number, playerY: number, facing: 1 | -1): Vec2 {
-    return { x: playerX + RED_FINGERTIP_OFFSET.x * facing, y: playerY + RED_FINGERTIP_OFFSET.y };
+  /**
+   * Ponta dos dedos do frame atual do player (RDA-04): mesma âncora para nascer, carregar e lançar o orbe. Fora de
+   * um frame sign/charge/release do Vermelho (transição), usa o do `vermelho-charge`.
+   */
+  fingertip(playerX: number, playerY: number, facing: 1 | -1, frameName: string = FALLBACK_FINGERTIP_FRAME): Vec2 {
+    let offset: { x: number; y: number };
+    try {
+      offset = fingertipOffsetPx(frameName, facing);
+    } catch {
+      offset = fingertipOffsetPx(FALLBACK_FINGERTIP_FRAME, facing);
+    }
+    return { x: playerX + offset.x, y: playerY + offset.y };
   }
 
-  /** RED-02/03/04: orbe crescendo (4→8→12), faíscas expelidas, anel de brilho pulsando e poeira nos pés. */
-  chargeUpdate(dtMs: number, playerX: number, playerY: number, facing: 1 | -1, elapsedMs: number, chargeMs: number): void {
+  /**
+   * RED-02/03/04, RDA-04..07: orbe crescendo (4→8→12) na ponta dos dedos do frame atual, faíscas expelidas, anel
+   * de brilho `t` pulsando, Glow `t` (só WebGL), dois arcos `T` girando e poeira nos pés.
+   */
+  chargeUpdate(
+    dtMs: number,
+    playerX: number,
+    playerY: number,
+    facing: 1 | -1,
+    elapsedMs: number,
+    chargeMs: number,
+    frameName: string = FALLBACK_FINGERTIP_FRAME,
+  ): void {
     const size = RedOrbState.chargeFrame(elapsedMs, chargeMs);
-    const { x, y } = this.fingertip(playerX, playerY, facing);
+    const { x, y } = this.fingertip(playerX, playerY, facing, frameName);
     this.fx.add('red.orb', Math.max(dtMs, 1), 'game');
     this.fx.add('red.sparksOut', Math.max(dtMs, 1), 'game');
     this.fx.add('red.glowRing', Math.max(dtMs, 1), 'game');
+    this.fx.add('red.distortRing', Math.max(dtMs, 1), 'game'); // RDA-07
     this.fx.add('red.dustPush', Math.max(dtMs, 1), 'game');
 
     if (!this.chargeSprite) {
@@ -108,6 +156,9 @@ export class RedOrbFx {
       this.chargeSprite.setTexture(CHARGE_TEX[size], 'orb');
     }
     this.chargeSprite.setPosition(x, y);
+    if (!this.degraded && !this.glowFx) {
+      this.glowFx = this.chargeSprite.postFX.addGlow(C.glow, 4, 0, false, 0.1, 12); // RDA-06
+    }
 
     if (!this.sparksOut) {
       // RED-04: nascem no centro e o ângulo cheio (0-360) já as manda radialmente para fora dele.
@@ -135,7 +186,26 @@ export class RedOrbFx {
     }
     this.glowMs += dtMs;
     const pulse = 1 + 0.18 * Math.sin(this.glowMs / 90);
-    this.glowRing.clear().lineStyle(2, PALETTE.a, 0.7).strokeCircle(x, y, (size / 2 + 5) * pulse);
+    this.glowRing.clear().lineStyle(2, C.glow, 0.7).strokeCircle(x, y, (size / 2 + 5) * pulse);
+
+    // RDA-07: dois arcos `T` opostos girando em volta do orbe (2π a cada 400 ms).
+    if (!this.distortRing) {
+      this.distortRing = this.scene.add.graphics().setDepth(3);
+      this.registry.add(this.distortRing);
+      this.distortMs = 0;
+    }
+    this.distortMs += dtMs;
+    const spin = ((this.distortMs % DISTORT_PERIOD_MS) / DISTORT_PERIOD_MS) * Math.PI * 2;
+    const ringR = size / 2 + 9;
+    this.distortRing
+      .clear()
+      .lineStyle(2, C.ring, 0.9)
+      .beginPath()
+      .arc(x, y, ringR, spin, spin + Math.PI * 0.6)
+      .strokePath()
+      .beginPath()
+      .arc(x, y, ringR, spin + Math.PI, spin + Math.PI * 1.6)
+      .strokePath();
 
     this.dustMs += dtMs;
     if (this.dustMs >= DUST_EVERY_MS) {
@@ -161,6 +231,7 @@ export class RedOrbFx {
     if (this.chargeSprite) {
       this.registry.scheduleDestroy(this.chargeSprite, 0);
       this.chargeSprite = null;
+      this.glowFx = null;
       this.chargeSize = null;
     }
     if (this.sparksOut) {
@@ -171,6 +242,54 @@ export class RedOrbFx {
       this.registry.scheduleDestroy(this.glowRing, 0);
       this.glowRing = null;
     }
+    if (this.distortRing) {
+      this.registry.scheduleDestroy(this.distortRing, 0);
+      this.distortRing = null;
+    }
+  }
+
+  /**
+   * RDA-10: cone da repulsão `T`/`t`, 80 px à frente do player, por 120 ms. Só desenha; o dano é de
+   * `repulseTargets` (núcleo) aplicado pelo `TechRunner`.
+   */
+  repulse(origin: Vec2, facing: 1 | -1): void {
+    this.fx.add('red.repulse', REPULSE_MS, 'game');
+    const cone = this.scene.add.graphics().setDepth(5);
+    this.registry.add(cone);
+    this.registry.scheduleDestroy(cone, REPULSE_MS);
+    const half = 0.55; // meia abertura do cone (rad)
+    const tip = { x: origin.x + 4 * facing, y: origin.y };
+    const edge = (a: number): Vec2 => ({
+      x: evenPx(tip.x + Math.cos(a) * REPULSE_REACH_PX * facing),
+      y: evenPx(tip.y + Math.sin(a) * REPULSE_REACH_PX),
+    });
+    const a = edge(-half);
+    const b = edge(half);
+    cone
+      .fillStyle(C.glow, 0.45)
+      .fillTriangle(tip.x, tip.y, a.x, a.y, b.x, b.y)
+      .lineStyle(2, C.ring, 0.9)
+      .beginPath()
+      .moveTo(a.x, a.y)
+      .lineTo(tip.x, tip.y)
+      .lineTo(b.x, b.y)
+      .strokePath();
+    this.scene.tweens.add({ targets: cone, alpha: 0, duration: REPULSE_MS });
+  }
+
+  /** Estado vivo para o snapshot de debug (RDA-04/05/06/13, EDG-01). */
+  debugState(): {
+    glowColor: number | null;
+    glow: { active: boolean; color: number | null };
+    screenFlashColor: number | null;
+    orb: { x: number; y: number } | null;
+  } {
+    return {
+      glowColor: this.glowRing ? C.glow : null,
+      glow: { active: this.glowFx !== null, color: this.glowFx ? C.glow : null },
+      screenFlashColor: this.screenFlashColor,
+      orb: this.chargeSprite ? { x: this.chargeSprite.x, y: this.chargeSprite.y } : null,
+    };
   }
 
   /** RED-07: rastro (cópias do orbe some sozinhas) e estalos (faíscas curtas) durante o voo. */
@@ -178,11 +297,11 @@ export class RedOrbFx {
     this.fx.add('red.trail', Math.max(dtMs, 1), 'game');
     this.fx.add('red.crackle', Math.max(dtMs, 1), 'game');
     this.trailMs += dtMs;
-    if (this.trailMs >= TRAIL_EVERY_MS) {
-      this.trailMs -= TRAIL_EVERY_MS;
+    if (this.trailMs >= FRAME_MS) {
+      this.trailMs -= FRAME_MS;
       // Polimento (feat(fx)): riscos esticados no eixo do voo (Direção de arte "rastro de riscos vermelhos"),
       // não só cópias redondas do orbe - `scaleX` maior estica a mesma textura num risco horizontal.
-      const ghost = this.scene.add.sprite(x, y, TEX.techOrbRed12, 'orb').setAlpha(0.55).setScale(1.6, 0.8).setDepth(2);
+      const ghost = this.scene.add.sprite(x, y, TEX.techOrbRed12, 'orb').setTintFill(C.glow).setAlpha(0.55).setScale(1.6, 0.8).setDepth(2);
       this.registry.add(ghost);
       this.registry.scheduleDestroy(ghost, TRAIL_FADE_MS);
       this.scene.tweens.add({ targets: ghost, alpha: 0, scaleX: 0.6, duration: TRAIL_FADE_MS });
@@ -218,7 +337,7 @@ export class RedOrbFx {
     this.fx.add('red.debris', DEBRIS_MS, 'game');
     this.fx.add('red.screenFlash', SCREEN_FLASH_MS, 'game'); // RED-12
 
-    const flash = this.scene.add.sprite(point.x, point.y, TEX.techOrbRed12, 'orb').setTintFill(PALETTE.W).setScale(1.6).setDepth(6);
+    const flash = this.scene.add.sprite(point.x, point.y, TEX.techOrbRed12, 'orb').setTintFill(C.core).setScale(1.6).setDepth(6);
     this.registry.add(flash);
     this.registry.scheduleDestroy(flash, FLASH_CORE_MS);
     this.scene.tweens.add({ targets: flash, alpha: 0, scale: 0.8, duration: FLASH_CORE_MS });
@@ -238,11 +357,11 @@ export class RedOrbFx {
         const coreR = evenPx(Math.max(0, r * 0.5 * (1 - t)));
         sphere
           .clear()
-          .fillStyle(PALETTE.k, 0.85 * (1 - t))
+          .fillStyle(C.shadow, 0.85 * (1 - t))
           .fillCircle(point.x, point.y, r + 4)
-          .fillStyle(PALETTE.R, 0.9 - t * 0.2)
+          .fillStyle(C.glow, 0.9 - t * 0.2)
           .fillCircle(point.x, point.y, r)
-          .fillStyle(PALETTE.W, Math.max(0, 1 - t * 1.6))
+          .fillStyle(C.core, Math.max(0, 1 - t * 1.6))
           .fillCircle(point.x, point.y, coreR);
       },
     });
@@ -262,9 +381,9 @@ export class RedOrbFx {
         const a = 1 - t;
         shock
           .clear()
-          .lineStyle(SHOCK_RING_THICK_OUT, PALETTE.W, a)
+          .lineStyle(SHOCK_RING_THICK_OUT, C.ring, a)
           .strokeCircle(point.x, point.y, r)
-          .lineStyle(SHOCK_RING_THICK_IN, PALETTE.R, a)
+          .lineStyle(SHOCK_RING_THICK_IN, C.glow, a)
           .strokeCircle(point.x, point.y, r);
       },
     });
@@ -295,7 +414,7 @@ export class RedOrbFx {
         vx: Math.cos(angle) * speed,
         vy: -Math.abs(Math.sin(angle) * speed) - 40,
         size: evenPx(2 + Math.round(Math.random())) || 2,
-        color: i % 2 === 0 ? PALETTE.k : PALETTE.s,
+        color: i % 2 === 0 ? C.shadow : C.glow,
       };
     });
     const debris = this.scene.add.graphics().setDepth(4);
@@ -334,7 +453,8 @@ export class RedOrbFx {
     this.registry.add(smoke);
     this.registry.scheduleDestroy(smoke, SMOKE_MS);
 
-    this.screenFlash.setFillStyle(PALETTE.R, 0.4).setVisible(true);
+    this.screenFlashColor = C.flash; // RDA-13
+    this.screenFlash.setFillStyle(C.flash, 0.4).setVisible(true);
     this.scene.tweens.add({
       targets: this.screenFlash,
       alpha: 0,

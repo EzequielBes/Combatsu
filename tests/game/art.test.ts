@@ -411,6 +411,14 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
     const sheet = parseSheet('tech-sparks', TECH_SPARK_FRAMES, PALETTE_KEYS);
     expect(sheet.frames).toHaveLength(3);
   });
+
+  it('a faísca redOut do Vermelho não usa a nem A, só t, T e R (RDA-03, RDA-14)', () => {
+    const cells = parseSheet('tech-sparks', TECH_SPARK_FRAMES, PALETTE_KEYS).frames.find((f) => f.key === 'redOut')!.cells;
+    const colors = new Set(cells.flat().filter((c): c is string => c !== null));
+    expect(colors.has('a')).toBe(false);
+    expect(colors.has('A')).toBe(false);
+    expect([...colors].every((c) => ['t', 'T', 'R'].includes(c))).toBe(true);
+  });
 });
 
 describe('folha do inimigo (CHR-03, CHR-04, ART-01)', () => {
