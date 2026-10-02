@@ -300,10 +300,10 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | ECN-02 | P1: Renda | Specify | Implementing |
 | ECN-03 | P1: Renda | Specify | Implementing |
 | ECN-04 | P1: Renda | Specify | Implementing |
-| ECN-05 | P1: Renda | Specify | Pending |
-| ECN-06 | P1: Renda | Specify | Pending |
-| ECN-07 | P1: Renda | Specify | Pending |
-| ECN-08 | P1: Renda | Specify | Pending |
+| ECN-05 | P1: Renda | Specify | Implementing |
+| ECN-06 | P1: Renda | Specify | Implementing |
+| ECN-07 | P1: Renda | Specify | Implementing |
+| ECN-08 | P1: Renda | Specify | Implementing |
 | ECN-09 | P1: Renda | Specify | Implementing |
 | BFX-01 | P1: Chefe | Specify | Pending |
 | BFX-02 | P1: Chefe | Specify | Pending |
@@ -326,7 +326,7 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | EDG-01 | Edge cases | Specify | Implementing |
 | EDG-02 | Edge cases | Specify | Implementing |
 | EDG-03 | Edge cases | Specify | Implementing |
-| EDG-04 | Edge cases | Specify | Pending |
+| EDG-04 | Edge cases | Specify | Implementing |
 | EDG-05 | Edge cases | Specify | Pending |
 | EDG-06 | Edge cases | Specify | Pending |
 
