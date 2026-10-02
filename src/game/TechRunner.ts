@@ -53,7 +53,14 @@ const RED_PUSH_PX = 12;
 /** BLU-02: alcance da consulta de parede à frente do player (folga acima dos 110 px do orbe). */
 const BLUE_WALL_QUERY_PX = 130;
 
+/** Conjuração que originou um golpe: `id` cresce a cada conjuração iniciada, `slot` é o do loadout (MST-01, MST-02). */
+interface CastRef {
+  readonly id: number;
+  readonly slot: 0 | 1;
+}
+
 interface RedOrbEntry {
+  readonly cast: CastRef | null;
   readonly id: number;
   readonly state: RedOrbState;
   readonly body: MatterJS.BodyType;
@@ -61,6 +68,7 @@ interface RedOrbEntry {
 }
 
 interface BlueOrbEntry {
+  readonly cast: CastRef | null;
   readonly id: number;
   readonly state: BlueOrbState;
 }
@@ -93,6 +101,12 @@ export class TechRunner {
   private blueOrb: BlueOrbEntry | null = null;
   private cutSchedule: CutSchedule | null = null;
   private frameEvents: string[] = [];
+  /** Contador de conjurações iniciadas (MST-02): cada `techCast:<id>` ganha um `castId` novo. */
+  private castSeq = 0;
+  /** Conjuração mais recente; as técnicas que vivem além do cast (orbes, cortes) guardam a própria cópia. */
+  private currentCast: CastRef | null = null;
+  private divergentCast: CastRef | null = null;
+  private cutCast: CastRef | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -110,6 +124,8 @@ export class TechRunner {
     private readonly triggerHitstop: (ms: number) => void,
     /** T24: cinema do Kokusen (negativo/duotom/raios/faíscas/zoom/cartão), chamado uma vez por acerto. */
     private readonly onKokusen: (target: Hittable, point: Vec2, facing: 1 | -1, streak: number) => void,
+    /** MST-01/02: o alvo aceitou um golpe da técnica do `slot` na conjuração `castId` (a cena aplica a maestria). */
+    private readonly onMasteryHit: (slot: 0 | 1, castId: number, targetId: number, isBoss: boolean) => void,
   ) {
     this.hitbox = new AttackHitbox(scene, player.id, player.team, (hit, point, target) => this.onFirstImpact(hit, point, target!));
     this.divergentFx = new DivergentFx(scene, fx, registry);
@@ -151,6 +167,9 @@ export class TechRunner {
     boss: Boss | null,
   ): void {
     this.frameEvents = [];
+    if (castEvents.some((ev) => ev.startsWith('techCast:'))) {
+      this.currentCast = cast ? { id: ++this.castSeq, slot: cast.slot } : null;
+    }
     this.kokusen.tick(dtMs); // KOK-11/31: a zona esfria com o relógio de jogo, mesmo sem nenhum cast em curso.
     this.updateDivergent(dtMs, cast, castEvents, slotPressed);
     this.updateRed(dtMs, cast, castEvents, enemies);
@@ -168,6 +187,7 @@ export class TechRunner {
     // vale por cast; um cast anterior já resolvido não deve vazar alvo para este).
     if (castEvents.includes('techCast:divergente')) {
       this.divergent = new DivergentState();
+      this.divergentCast = this.currentCast;
       this.divergentTarget = null;
       this.divergentSlot = cast!.slot;
       this.pendingKokusen = false;
@@ -237,6 +257,7 @@ export class TechRunner {
     this.divergentTarget = target;
     this.kokusen.armFirstImpact(); // KOK-05: só a partir do 1º impacto a tecla do slot conta para o Kokusen.
     this.onTechHit(hit, point);
+    this.masteryHit(this.divergentCast, target);
   }
 
   /** DIV-04/09/12: 200 ms depois do 1º impacto, sem Kokusen (T23 decide quando isso não vale). */
@@ -251,7 +272,10 @@ export class TechRunner {
       force: DIVERGENT_FORCE.second,
       direction: { x: this.player.facing, y: -0.3 },
     };
-    if (target.receiveHit(hit)) this.onTechHit(hit, point);
+    if (target.receiveHit(hit)) {
+      this.onTechHit(hit, point);
+      this.masteryHit(this.divergentCast, target);
+    }
     // DIV-12: desenhado no centro ATUAL do alvo (`point`, lido agora, não no ponto do 1º impacto).
     this.divergentFx.burst(point.x, point.y, this.player.facing);
     this.frameEvents.push('divergent2');
@@ -276,6 +300,7 @@ export class TechRunner {
         { ownerId: this.player.id, damage: KOKUSEN.damage, strength: 'heavy', force: 0, direction: { x: this.player.facing, y: -0.3 } },
         point,
       );
+      this.masteryHit(this.divergentCast, target);
     } else {
       const hit: Hit = {
         ownerId: this.player.id,
@@ -284,7 +309,10 @@ export class TechRunner {
         force: DIVERGENT_FORCE.second * KOKUSEN.knockbackMul, // KOK-07: 2× o impulso do 2º impacto comum
         direction: { x: this.player.facing, y: -0.3 },
       };
-      if (target.receiveHit(hit)) this.onTechHit(hit, point);
+      if (target.receiveHit(hit)) {
+        this.onTechHit(hit, point);
+        this.masteryHit(this.divergentCast, target);
+      }
     }
     this.kokusen.land(this.energy); // KOK-09/10/30
     this.triggerHitstop(KOKUSEN.hitstopMs); // KOK-13
@@ -298,7 +326,13 @@ export class TechRunner {
     this.divergentTarget = null;
     this.divergent = null;
     this.divergentSlot = null;
+    this.divergentCast = null;
     this.pendingKokusen = false;
+  }
+
+  /** MST-01/02: avisa a cena que `target` aceitou um golpe da conjuração `cast`; sem conjuração conhecida, ignora. */
+  private masteryHit(cast: CastRef | null, target: Hittable): void {
+    if (cast) this.onMasteryHit(cast.slot, cast.id, target.id, target instanceof Boss);
   }
 
   // --- Vermelho (T25) --------------------------------------------------------------------------------------
@@ -345,7 +379,7 @@ export class TechRunner {
     });
     setIgnoreGravity(body, true);
     const view = this.scene.add.sprite(point.x, point.y, TEX.techOrbRed12, 'orb').setDepth(2);
-    const entry: RedOrbEntry = { id: newEntityId(), state, body, view };
+    const entry: RedOrbEntry = { cast: this.currentCast, id: newEntityId(), state, body, view };
     tagBody(body, { kind: 'active', onTouch: (other) => this.onRedTouch(entry, other) });
     this.redOrb = entry;
   }
@@ -371,7 +405,10 @@ export class TechRunner {
         force: RED_FORCE,
         direction,
       };
-      if (target.receiveHit(hit)) this.onTechHit(hit, center);
+      if (target.receiveHit(hit)) {
+        this.onTechHit(hit, center);
+        this.masteryHit(orb.cast, target);
+      }
       orb.state.detonate(); // RED-08: toque no chefe também detona
       return;
     }
@@ -384,7 +421,10 @@ export class TechRunner {
       force: RED_FORCE,
       direction: result.direction,
     };
-    if (target.receiveHit(hit)) this.onTechHit(hit, center);
+    if (target.receiveHit(hit)) {
+      this.onTechHit(hit, center);
+      this.masteryHit(orb.cast, target);
+    }
   }
 
   private finishRedDetonation(orb: RedOrbEntry, enemies: readonly TechTarget[]): void {
@@ -400,7 +440,10 @@ export class TechRunner {
         force: RED_FORCE,
         direction: splash.direction,
       };
-      if (enemy.receiveHit(hit)) this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+      if (enemy.receiveHit(hit)) {
+        this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+        this.masteryHit(orb.cast, enemy);
+      }
     }
     this.redFx.detonate(point, this.player.facing); // RED-11/12/17
     this.frameEvents.push('redDetonate'); // RED-16
@@ -433,10 +476,10 @@ export class TechRunner {
 
     const { ticksCrossed, ended } = orb.state.update(dtMs);
     for (let i = 0; i < ticksCrossed; i++) {
-      for (const dmg of orb.state.tickTargets(allTargets)) this.applyBlueDamage(dmg, enemies, boss); // BLU-06
+      for (const dmg of orb.state.tickTargets(allTargets)) this.applyBlueDamage(dmg, enemies, boss, orb.cast); // BLU-06
     }
     if (ended) {
-      for (const dmg of orb.state.implosionTargets(allTargets)) this.applyBlueDamage(dmg, enemies, boss); // BLU-07
+      for (const dmg of orb.state.implosionTargets(allTargets)) this.applyBlueDamage(dmg, enemies, boss, orb.cast); // BLU-07
       this.blueFx.implode(point.x, point.y); // BLU-11
       this.frameEvents.push('blueImplode'); // BLU-11
       for (const e of enemies) e.setPull(null);
@@ -451,7 +494,7 @@ export class TechRunner {
     }
     const center = { x: this.player.sprite.x, y: this.player.sprite.y };
     const point = blueOrbSpawn(center, facing, this.wallDistanceAhead(facing)); // BLU-02
-    this.blueOrb = { id: newEntityId(), state: new BlueOrbState(point) };
+    this.blueOrb = { cast: this.currentCast, id: newEntityId(), state: new BlueOrbState(point) };
   }
 
   /** BLU-02: distância (px) até a primeira parede à frente do player, `Infinity` se nenhuma dentro da consulta. */
@@ -478,7 +521,7 @@ export class TechRunner {
     return Math.max(0, closest);
   }
 
-  private applyBlueDamage(dmg: BlueOrbDamage, enemies: readonly TechTarget[], boss: Boss | null): void {
+  private applyBlueDamage(dmg: BlueOrbDamage, enemies: readonly TechTarget[], boss: Boss | null, cast: CastRef | null): void {
     const hit: Hit = {
       ownerId: this.player.id,
       damage: this.loadout.damage('azul', dmg.damage), // BLU-06/07, TEC-06
@@ -488,16 +531,25 @@ export class TechRunner {
     };
     const enemy = enemies.find((e) => e.id === dmg.targetId);
     if (enemy) {
-      if (enemy.receiveHit(hit)) this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+      if (enemy.receiveHit(hit)) {
+        this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+        this.masteryHit(cast, enemy);
+      }
       return;
     }
-    if (boss && boss.id === dmg.targetId && boss.receiveHit(hit)) this.onTechHit(hit, { x: boss.x, y: boss.hurtRect().y });
+    if (boss && boss.id === dmg.targetId && boss.receiveHit(hit)) {
+      this.onTechHit(hit, { x: boss.x, y: boss.hurtRect().y });
+      this.masteryHit(cast, boss);
+    }
   }
 
   // --- Desmantelar (T27) ------------------------------------------------------------------------------------
 
   private updateCut(dtMs: number, castEvents: readonly string[], enemies: readonly TechTarget[], boss: Boss | null): void {
-    if (castEvents.includes('techCast:corte')) this.cutSchedule = new CutSchedule();
+    if (castEvents.includes('techCast:corte')) {
+      this.cutSchedule = new CutSchedule();
+      this.cutCast = this.currentCast;
+    }
     if (!this.cutSchedule) return;
     const due = this.cutSchedule.update(dtMs);
     if (due.length === 0) return;
@@ -529,12 +581,14 @@ export class TechRunner {
     if (enemy) {
       if (enemy.receiveHit(dealt)) {
         this.onTechHit(dealt, { x: enemy.x, y: enemy.hurtRect().y });
+        this.masteryHit(this.cutCast, enemy);
         this.cutFx.split(enemy.x, enemy.hurtRect().y); // CUT-06
       }
       return;
     }
     if (boss && boss.id === hit.targetId && boss.receiveHit(dealt)) {
       this.onTechHit(dealt, { x: boss.x, y: boss.hurtRect().y });
+      this.masteryHit(this.cutCast, boss);
       this.cutFx.split(boss.x, boss.hurtRect().y); // CUT-06
     }
   }

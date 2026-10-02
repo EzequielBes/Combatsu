@@ -367,7 +367,7 @@ O `startRun` chama `reset`.
 **Reuses**: os pontos de `onTechHit` (linhas 239–537)
 **Requirement**: MST-01, MST-02
 **Done when**:
-- [ ] Build passa; nenhum caminho de acerto do Vermelho, do Azul, do Desmantelar ou do Divergente fica sem a chamada.
+- [x] Build passa; nenhum caminho de acerto do Vermelho, do Azul, do Desmantelar ou do Divergente fica sem a chamada.
 **Tests**: none
 **Gate**: build
 

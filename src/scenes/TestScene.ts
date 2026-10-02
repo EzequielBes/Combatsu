@@ -315,6 +315,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.freeze();
       },
       (target, point, facing, streak) => this.kokusenFx.trigger(target, point, facing, streak),
+      // T18: a maestria liga aqui (Mastery + loadout.upgrade + banner); até lá o acerto é só repassado.
+      () => undefined,
     );
 
     // T28: laboratório de efeitos (`?debug&fxlab`) - bonecos de treino + teclas 1-6/0, sem ondas (FXL-01).
