@@ -87,7 +87,7 @@ T10 → T11 → T12 → T13
 **Reuses**: `pose`, `recolor`, `mirror` nas partes
 **Requirement**: SPF-01, SPF-02, SPF-03, SPF-04
 **Done when**:
-- [ ] Teste focado nesses 5 frames:
+- [x] Teste focado nesses 5 frames:
   - SPF-01: um componente, ignorando `S`;
   - SPF-02: `clipped = 0`;
   - SPF-04: centro do uniforme do giratório a ≤ 4 da coluna 10;

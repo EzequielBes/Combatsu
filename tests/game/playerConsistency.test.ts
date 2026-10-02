@@ -1,11 +1,59 @@
 import { describe, expect, it } from 'vitest';
-import { composeWithStats, type Grid } from '../../src/game/art/sprites/player';
+import { PLAYER_FRAMES, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
+import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
+import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
+
+const ALL: Record<string, readonly string[]> = { ...PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES, ...PLAYER_TECH_FRAMES };
+const frame = (name: string): readonly string[] => {
+  const f = ALL[name];
+  expect(f, `frame ${name} existe`).toBeDefined();
+  return f;
+};
+
+/** Tamanhos dos componentes 8-conexos de pixels opacos, sem contar `S` (rastro de movimento, SPR-14). */
+function componentSizes(rows: readonly string[]): number[] {
+  const opaque = (x: number, y: number): boolean => {
+    const c = rows[y]?.[x];
+    return c !== undefined && c !== '.' && c !== 'S';
+  };
+  const seen = new Set<string>();
+  const sizes: number[] = [];
+  rows.forEach((row, y) =>
+    [...row].forEach((_, x) => {
+      if (!opaque(x, y) || seen.has(`${x},${y}`)) return;
+      let size = 0;
+      const stack: Array<[number, number]> = [[x, y]];
+      seen.add(`${x},${y}`);
+      while (stack.length) {
+        const [cx, cy] = stack.pop()!;
+        size++;
+        for (let dx = -1; dx <= 1; dx++)
+          for (let dy = -1; dy <= 1; dy++) {
+            const k = `${cx + dx},${cy + dy}`;
+            if (opaque(cx + dx, cy + dy) && !seen.has(k)) {
+              seen.add(k);
+              stack.push([cx + dx, cy + dy]);
+            }
+          }
+      }
+      sizes.push(size);
+    }),
+  );
+  return sizes;
+}
+
+/** Coluna média dos pixels de uniforme (`n`, `N`, `o`). */
+function uniformCenter(rows: readonly string[]): number {
+  let sum = 0;
+  let count = 0;
+  rows.forEach((row) => [...row].forEach((c, x) => { if (c === 'n' || c === 'N' || c === 'o') { sum += x; count++; } }));
+  return sum / count;
+}
 
 describe('compose conta pixels opacos cortados (SPF-02)', () => {
   const part: Grid = ['kkk', 'k.k'];
 
   it('uma parte com 3 pixels opacos em x = -1 gera clipped = 3', () => {
-    // Coluna 0 da parte cai em x = -1: 'k','k' ... 3 opacos na coluna cortada.
     const col: Grid = ['k', 'k', 'k'];
     expect(composeWithStats([col, -1, 5]).clipped).toBe(3);
   });
@@ -20,5 +68,32 @@ describe('compose conta pixels opacos cortados (SPF-02)', () => {
     expect(composeWithStats([['k'], 0, 24]).clipped).toBe(1);
     expect(composeWithStats([['k'], 30, 0]).clipped).toBe(1);
     expect(composeWithStats([['k'], 29, 0]).clipped).toBe(0);
+  });
+});
+
+describe('golpes sem salto, perna solta ou corte (SPF-01..04)', () => {
+  const FIXED = [
+    'chuteGiratorio-hit',
+    'chuteGiratorio-wind',
+    'chuteCarregado-wind',
+    'chuteEmpurrao-hit',
+    'ganchoAscendente-hit',
+  ];
+
+  it.each(FIXED)('%s: um componente só (SPF-01)', (name) => {
+    expect(componentSizes(frame(name)), name).toHaveLength(1);
+  });
+
+  it.each(FIXED)('%s: nenhum pixel cortado (SPF-02)', (name) => {
+    expect(clippedOf(frame(name)), name).toBe(0);
+  });
+
+  it('o centro do uniforme do chuteGiratorio-hit fica a até 4 texels da coluna 10 (SPF-04)', () => {
+    expect(Math.abs(uniformCenter(frame('chuteGiratorio-hit')) - 10)).toBeLessThanOrEqual(4);
+  });
+
+  it.each(['chuteGiratorio', 'chuteCarregado'])('%s: o centro do uniforme muda até 4 texels entre fases (SPF-03)', (move) => {
+    const seq = ['wind', 'hit', 'recover'].map((p) => uniformCenter(frame(`${move}-${p}`)));
+    for (let i = 1; i < seq.length; i++) expect(Math.abs(seq[i] - seq[i - 1]), `${move} fase ${i}`).toBeLessThanOrEqual(4);
   });
 });

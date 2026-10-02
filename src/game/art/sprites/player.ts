@@ -31,6 +31,14 @@ export type Placed = readonly [Grid, number, number];
 
 export { selOut };
 
+/** Pixels cortados de cada frame montado por `compose`/`pose` (e preservados por `smear`), para os testes medirem SPF-02. */
+const CLIPPED = new WeakMap<readonly string[], number>();
+
+/** Quantos pixels opacos o `compose` descartou ao montar este frame; `undefined` se o frame não veio do `compose`. */
+export function clippedOf(frame: readonly string[]): number | undefined {
+  return CLIPPED.get(frame);
+}
+
 /**
  * Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. Além do frame,
  * devolve `clipped`: quantos pixels opacos caíram fora da grade e foram descartados (SPF-02).
@@ -54,7 +62,9 @@ export function composeWithStats(...parts: Placed[]): { frame: string[]; clipped
     );
   }
   selOut(canvas);
-  return { frame: canvas.map((row) => '.'.repeat(FRAME_PAD) + row.join('')), clipped };
+  const frame = canvas.map((row) => '.'.repeat(FRAME_PAD) + row.join(''));
+  CLIPPED.set(frame, clipped);
+  return { frame, clipped };
 }
 
 /** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
@@ -276,7 +286,10 @@ export function smear(frame: readonly string[], tipCol: number, limbY: number, l
       if (y >= 0 && y < rows.length && rows[y][x] === '.') rows[y][x] = 'S';
     }
   }
-  return rows.map((r) => r.join(''));
+  const out = rows.map((r) => r.join(''));
+  const clipped = CLIPPED.get(frame);
+  if (clipped !== undefined) CLIPPED.set(out, clipped);
+  return out;
 }
 
 export const far = (g: Grid): string[] => recolor(g, FAR);
