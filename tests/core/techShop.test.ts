@@ -47,28 +47,28 @@ describe('TSH-01: catálogo tem as 4 técnicas, kind e maxLevel certos', () => {
 });
 
 describe('TSH-02: custo = base + step × nível atual (0 se não equipada)', () => {
-  it('bases e steps do catálogo: divergente 20+15n, corte 30+15n, azul 35+20n, vermelho 40+20n', () => {
-    expect(technique('divergente').cost).toEqual({ base: 20, step: 15 });
-    expect(technique('corte').cost).toEqual({ base: 30, step: 15 });
-    expect(technique('azul').cost).toEqual({ base: 35, step: 20 });
-    expect(technique('vermelho').cost).toEqual({ base: 40, step: 20 });
+  it('bases e steps do catálogo: divergente 15+11n, corte 23+11n, azul 26+15n, vermelho 30+15n (ECN-01)', () => {
+    expect(technique('divergente').cost).toEqual({ base: 15, step: 11 });
+    expect(technique('corte').cost).toEqual({ base: 23, step: 11 });
+    expect(technique('azul').cost).toEqual({ base: 26, step: 15 });
+    expect(technique('vermelho').cost).toEqual({ base: 30, step: 15 });
   });
 
-  it('Shop.view reporta o custo real: vermelho equipada no nível 2 custa 40 + 20×2 = 80', () => {
+  it('Shop.view reporta o custo real: vermelho equipada no nível 2 custa 30 + 15×2 = 60', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'vermelho', 2);
     const shop = new Shop([technique('vermelho')], new Modifiers(FULL_SHOP_CATALOG), fakeRng([0]), 6, loadout);
     const wallet = new Wallet();
     wallet.add(200);
-    expect(shop.view(wallet, 100, 100).offers[0].cost).toBe(80);
+    expect(shop.view(wallet, 100, 100).offers[0].cost).toBe(60);
   });
 
-  it('não equipada (n=0): divergente custa 20', () => {
+  it('não equipada (n=0): divergente custa 15', () => {
     const loadout = new Loadout();
     const shop = new Shop([technique('divergente')], new Modifiers(FULL_SHOP_CATALOG), fakeRng([0]), 1, loadout);
     const wallet = new Wallet();
     wallet.add(100);
-    expect(shop.view(wallet, 100, 100).offers[0].cost).toBe(20);
+    expect(shop.view(wallet, 100, 100).offers[0].cost).toBe(15);
   });
 });
 
@@ -91,18 +91,18 @@ describe('TSH-03: técnica não equipada entra no pool se e só se houver slot v
 describe('TSH-04: técnica equipada entra no pool se nível < 3 e a rodada mínima do próximo nível já passou (L-010)', () => {
   const modifiers = new Modifiers(FULL_SHOP_CATALOG);
 
-  it('nível 1 → 2 exige rodada ≥ 3: fora na 2, dentro na 3', () => {
+  it('nível 1 → 2 exige rodada ≥ 2 (ECN-02): fora na 1, dentro na 2', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 1);
-    expect(eligible(FULL_SHOP_CATALOG, modifiers, 2, loadout).some((e) => e.id === 'divergente')).toBe(false);
-    expect(eligible(FULL_SHOP_CATALOG, modifiers, 3, loadout).some((e) => e.id === 'divergente')).toBe(true);
+    expect(eligible(FULL_SHOP_CATALOG, modifiers, 1, loadout).some((e) => e.id === 'divergente')).toBe(false);
+    expect(eligible(FULL_SHOP_CATALOG, modifiers, 2, loadout).some((e) => e.id === 'divergente')).toBe(true);
   });
 
-  it('nível 2 → 3 exige rodada ≥ 6: fora na 5, dentro na 6', () => {
+  it('nível 2 → 3 exige rodada ≥ 4 (ECN-09): fora na 3, dentro na 4', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 2);
-    expect(eligible(FULL_SHOP_CATALOG, modifiers, 5, loadout).some((e) => e.id === 'divergente')).toBe(false);
-    expect(eligible(FULL_SHOP_CATALOG, modifiers, 6, loadout).some((e) => e.id === 'divergente')).toBe(true);
+    expect(eligible(FULL_SHOP_CATALOG, modifiers, 3, loadout).some((e) => e.id === 'divergente')).toBe(false);
+    expect(eligible(FULL_SHOP_CATALOG, modifiers, 4, loadout).some((e) => e.id === 'divergente')).toBe(true);
   });
 
   it('nível 3 (máximo): nunca elegível, mesmo em rodada alta', () => {
@@ -145,7 +145,7 @@ describe('TSH-06: comprar técnica não equipada equipa nível 1 no primeiro slo
     const wallet = new Wallet();
     wallet.add(100);
     const result = shop.buy(0, techBuyCtx(loadout, wallet));
-    expect(result).toEqual({ ok: true, id: 'divergente', cost: 20 });
+    expect(result).toEqual({ ok: true, id: 'divergente', cost: 15 });
     expect(loadout.slotsView[0]).toEqual({ id: 'divergente', level: 1 });
   });
 
@@ -161,14 +161,14 @@ describe('TSH-06: comprar técnica não equipada equipa nível 1 no primeiro slo
 });
 
 describe('TSH-07: comprar técnica já equipada sobe exatamente 1 nível', () => {
-  it('divergente equipada no nível 1, comprada de novo na rodada 3: vira nível 2', () => {
+  it('divergente equipada no nível 1, comprada de novo na rodada 2: vira nível 2', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 1);
-    const shop = new Shop([technique('divergente')], new Modifiers(FULL_SHOP_CATALOG), fakeRng([0]), 3, loadout);
+    const shop = new Shop([technique('divergente')], new Modifiers(FULL_SHOP_CATALOG), fakeRng([0]), 2, loadout);
     const wallet = new Wallet();
     wallet.add(100);
     const result = shop.buy(0, techBuyCtx(loadout, wallet));
-    expect(result).toEqual({ ok: true, id: 'divergente', cost: 35 }); // 20 + 15×1
+    expect(result).toEqual({ ok: true, id: 'divergente', cost: 26 }); // 15 + 11×1
     expect(loadout.levelOf('divergente')).toBe(2);
   });
 });
