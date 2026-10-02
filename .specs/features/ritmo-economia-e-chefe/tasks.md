@@ -502,7 +502,7 @@ O `startRun` chama `reset`.
 **Reuses**: `shop.smoke.mjs`, `techniques.smoke.mjs`
 **Requirement**: ECN-05, ECN-08, MST-01, MST-03, MST-07, MST-08
 **Done when**:
-- [ ] O suite completo de smokes passa.
+- [x] O suite completo de smokes passa.
 **Tests**: smoke
 **Gate**: full
 
