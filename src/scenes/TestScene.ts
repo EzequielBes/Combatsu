@@ -239,7 +239,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.buildTerrain();
     this.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
-    this.run = new Run(RUN, WAVE, this.level.enemies.length, { firstRound: this.firstRoundForDebug() });
+    this.run = new Run(RUN, WAVE, { firstRound: this.firstRoundForDebug() });
     this.wasPlayerDead = false;
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
     this.modifiers = new Modifiers();
@@ -637,7 +637,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         // FXL-01: nenhuma onda nasce no laboratório de efeitos - só os bonecos de treino (FXL-05).
         if (this.fxLab) break;
         if (cmd.kind === 'boss') this.spawnBoss(cmd.round);
-        else this.spawnFromCommand(cmd.point, cmd.round);
+        // T15: pickSpawnPoint fora da câmera; provisório: o ponto mais distante do player.
+        else this.spawnFromCommand(farthestPoint(this.level.enemies, this.player.sprite.x), cmd.round);
         break;
       case 'roundStart':
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.

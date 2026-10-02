@@ -98,8 +98,8 @@ T22 → T23 → T24 → T25
 **Reuses**: o padrão dos streams `variantRng` e `guardRng`
 **Requirement**: SPN-02, SPN-04, SPN-08
 **Done when**:
-- [ ] `tests/core/run.test.ts` atualizado: o `spawnRng` é reproduzível pela seed; `maxAlive` reflete a rodada e o override.
-- [ ] As sequências de `variantRng`, `guardRng` e `shopRng` continuam iguais às de antes (regressão).
+- [x] `tests/core/run.test.ts` atualizado: o `spawnRng` é reproduzível pela seed; `maxAlive` reflete a rodada e o override.
+- [x] As sequências de `variantRng`, `guardRng` e `shopRng` continuam iguais às de antes (regressão).
 **Tests**: unit
 **Gate**: quick
 

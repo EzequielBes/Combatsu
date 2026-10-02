@@ -69,7 +69,8 @@ export function requireSpawnPoints(level: { enemies: unknown[] }, name: string):
  */
 export class WaveSpawner {
   private readonly size: number;
-  private readonly maxAlive: number;
+  /** Teto de vivos desta rodada (já com o override de debug). */
+  readonly maxAlive: number;
   private readonly bossRound: boolean;
   private elapsedMs = 0;
   private lastSpawnAtMs = 0;
