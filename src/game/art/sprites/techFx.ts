@@ -113,6 +113,6 @@ export const AURA_FRAMES: Record<string, readonly string[]> = Object.fromEntries
 /** Faíscas (2x2 texels): negras/vermelhas do Kokusen, vermelhas expelidas pelo Vermelho, azuis sugadas pelo Azul. */
 export const TECH_SPARK_FRAMES: Record<'kokusen' | 'redOut' | 'blueIn', readonly string[]> = {
   kokusen: ['Rb', 'bR'],
-  redOut: ['rA', 'Ra'],
+  redOut: ['tT', 'Rt'], // RDA-03/14: carmim/magenta/vermelho, nunca a/A
   blueIn: ['cC', 'Cc'],
 };

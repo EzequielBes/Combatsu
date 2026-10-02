@@ -227,9 +227,9 @@ T10 → T11 → T12 → T13
 **Reuses**: `FxTimeline`, `FxRegistry`, o padrão do `KokusenFx`
 **Requirement**: RDA-04, RDA-05, RDA-06, RDA-07, RDA-10, RDA-12, RDA-13, RDA-14, RDA-15, EDG-01
 **Done when**:
-- [ ] Build passa.
-- [ ] Nenhuma referência a `PALETTE.a` ou `PALETTE.A` sobra no arquivo.
-- [ ] `RED_FINGERTIP_OFFSET` deixa de ser usado.
+- [x] Build passa.
+- [x] Nenhuma referência a `PALETTE.a` ou `PALETTE.A` sobra no arquivo.
+- [x] `RED_FINGERTIP_OFFSET` deixa de ser usado.
 **Tests**: none
 **Gate**: build
 
