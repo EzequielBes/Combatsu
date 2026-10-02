@@ -232,7 +232,7 @@ T22 → T23 → T24 → T25
 **Reuses**: `eligible`, `drawOffers`, a garantia TSH-05
 **Requirement**: ECN-05, ECN-06, ECN-07, ECN-08, EDG-04
 **Done when**:
-- [ ] `tests/core/techShop.test.ts` cobre:
+- [x] `tests/core/techShop.test.ts` cobre:
   - técnica equipada no Nv1 na loja da rodada 2 → `offers[0]` é ela;
   - a mesma técnica na loja da rodada 1 → sem reserva (o gate é 2);
   - reroll mantém a reserva;
