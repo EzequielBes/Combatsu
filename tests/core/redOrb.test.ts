@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RED_ORB_SPEED, RedOrbState, repulseTargets } from '../../src/core/redOrb';
+import { RED_ORB_SPEED, RedOrbState, redReleaseEffects, repulseTargets, repulseTargetsFor } from '../../src/core/redOrb';
 import { TECHNIQUES } from '../../src/data/techniques';
 
 describe('RED-02: o frame do núcleo do orbe segue o terço da carga', () => {
@@ -200,5 +200,33 @@ describe('RDA-08, RDA-09, EDG-03: repulseTargets na soltura', () => {
   it('cada alvo da lista vira um hit, na ordem; lista vazia não gera hit', () => {
     expect(repulseTargets(origin, 1, [at(1, 10), at(2, 20), at(3, 200)]).map((h) => h.targetId)).toEqual([1, 2]);
     expect(repulseTargets(origin, 1, [])).toEqual([]);
+  });
+});
+
+describe('EDG-03: repulseTargetsFor exclui o chefe', () => {
+  const origin = { x: 100, y: 200 };
+  const cand = (id: number, kind: 'enemy' | 'boss', dx: number) => ({ id, kind, center: { x: origin.x + dx, y: origin.y } });
+
+  it('o chefe colado à frente não entra; o inimigo comum ao lado dele entra', () => {
+    const hits = repulseTargetsFor(origin, 1, [cand(1, 'boss', 10), cand(2, 'enemy', 40)]);
+    expect(hits.map((h) => h.targetId)).toEqual([2]);
+  });
+
+  it('só o chefe à frente gera lista vazia', () => {
+    expect(repulseTargetsFor(origin, 1, [cand(1, 'boss', 10)])).toEqual([]);
+  });
+
+  it('inimigos comuns seguem as regras de alcance e lado de repulseTargets', () => {
+    expect(repulseTargetsFor(origin, 1, [cand(1, 'enemy', 80), cand(2, 'enemy', 81), cand(3, 'enemy', -30)]).map((h) => h.targetId)).toEqual([1]);
+  });
+});
+
+describe('EDG-02, RED-15: redReleaseEffects', () => {
+  it('no chão repele e recua 12 px', () => {
+    expect(redReleaseEffects({ grounded: true })).toEqual({ repulse: true, pushPx: 12 });
+  });
+
+  it('no ar repele igual e não recua', () => {
+    expect(redReleaseEffects({ grounded: false })).toEqual({ repulse: true, pushPx: 0 });
   });
 });

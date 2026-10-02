@@ -50,6 +50,33 @@ export function repulseTargets(origin: Vec2, facing: 1 | -1, targets: readonly R
   return hits;
 }
 
+/** Candidato à repulsão: o `kind` distingue o inimigo comum do chefe (EDG-03). */
+export interface RepulseCandidate extends RedOrbTarget {
+  kind: 'enemy' | 'boss';
+}
+
+/**
+ * EDG-03: seleção de alvos da repulsão a partir de todos os candidatos. O chefe nunca entra (só o orbe o atinge,
+ * RED-09), mesmo colado à frente do player; o resto segue as regras de `repulseTargets`.
+ */
+export function repulseTargetsFor(origin: Vec2, facing: 1 | -1, candidates: readonly RepulseCandidate[]): RepulseHit[] {
+  return repulseTargets(
+    origin,
+    facing,
+    candidates.filter((c) => c.kind !== 'boss'),
+  );
+}
+
+/** Recuo do player na soltura, em px (RED-15). */
+export const RED_RELEASE_PUSH_PX = 12;
+
+/**
+ * EDG-02: efeitos da soltura. A repulsão acontece sempre (no chão ou no ar); o recuo de 12 px (RED-15) só no chão.
+ */
+export function redReleaseEffects(state: { grounded: boolean }): { repulse: true; pushPx: number } {
+  return { repulse: true, pushPx: state.grounded ? RED_RELEASE_PUSH_PX : 0 };
+}
+
 export interface RedOrbHit {
   targetId: number;
   damage: number;
