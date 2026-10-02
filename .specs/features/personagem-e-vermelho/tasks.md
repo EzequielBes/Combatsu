@@ -257,8 +257,8 @@ T10 → T11 → T12 → T13
 **Reuses**: `GameSnapshot`
 **Requirement**: RDA-04, RDA-05, RDA-06, RDA-13
 **Done when**:
-- [ ] Build e testes passam.
-- [ ] A fixture de `debugApi.test.ts` muda só pelos campos novos.
+- [x] Build e testes passam.
+- [x] A fixture de `debugApi.test.ts` muda só pelos campos novos.
 **Tests**: none
 **Gate**: build
 
