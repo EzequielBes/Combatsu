@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SHOP_CATALOG, type ShopEntry } from '../../src/data/shop';
+import { SHOP_CATALOG, TECHNIQUE_SHOP_ENTRIES, type ShopEntry } from '../../src/data/shop';
 import { SHOP } from '../../src/data/tuning';
 
 const entry = (id: string): ShopEntry => {
@@ -89,5 +89,43 @@ describe('SHOP_CATALOG: minRound (SHOP-18)', () => {
     expect(entry('sorte').minRound(1)).toBe(1);
     expect(entry('sorte').minRound(3)).toBe(1);
     expect(entry('cura').minRound(1)).toBe(1);
+  });
+});
+
+const tech = (id: string): ShopEntry => {
+  const found = TECHNIQUE_SHOP_ENTRIES.find((e) => e.id === id);
+  if (!found) throw new Error(`técnica ausente do catálogo: ${id}`);
+  return found;
+};
+
+describe('TECHNIQUE_SHOP_ENTRIES: preços das técnicas (ECN-01)', () => {
+  it('divergente 15/11, corte 23/11, azul 26/15, vermelho 30/15', () => {
+    expect(tech('divergente').cost).toEqual({ base: 15, step: 11 });
+    expect(tech('corte').cost).toEqual({ base: 23, step: 11 });
+    expect(tech('azul').cost).toEqual({ base: 26, step: 15 });
+    expect(tech('vermelho').cost).toEqual({ base: 30, step: 15 });
+  });
+});
+
+describe('TECHNIQUE_SHOP_ENTRIES: techGate nos dois lados dos limites (ECN-02, ECN-09)', () => {
+  it('nível 1 (compra inicial) abre desde a rodada 1', () => {
+    for (const e of TECHNIQUE_SHOP_ENTRIES) expect(e.minRound(1)).toBe(1);
+  });
+
+  it('nível 2 só a partir da rodada 2: rodada 1 fica fora, 2 e 3 dentro', () => {
+    for (const e of TECHNIQUE_SHOP_ENTRIES) {
+      expect(e.minRound(2)).toBe(2);
+      expect(e.minRound(2) <= 1).toBe(false);
+      expect(e.minRound(2) <= 2).toBe(true);
+      expect(e.minRound(2) <= 3).toBe(true);
+    }
+  });
+
+  it('nível 3 só a partir da rodada 4: rodada 3 fica fora, 4 dentro', () => {
+    for (const e of TECHNIQUE_SHOP_ENTRIES) {
+      expect(e.minRound(3)).toBe(4);
+      expect(e.minRound(3) <= 3).toBe(false);
+      expect(e.minRound(3) <= 4).toBe(true);
+    }
   });
 });

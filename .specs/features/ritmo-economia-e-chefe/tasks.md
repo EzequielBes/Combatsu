@@ -204,7 +204,7 @@ T22 → T23 → T24 → T25
 **Reuses**: `TECHNIQUE_SHOP_ENTRIES`
 **Requirement**: ECN-01, ECN-02, ECN-09
 **Done when**:
-- [ ] Testes verificam os 4 pares `base/step` e `techGate` com 1/2/3 nas rodadas 1, 2, 3 e 4, nos dois lados de cada limite.
+- [x] Testes verificam os 4 pares `base/step` e `techGate` com 1/2/3 nas rodadas 1, 2, 3 e 4, nos dois lados de cada limite.
 **Tests**: unit
 **Gate**: quick
 
