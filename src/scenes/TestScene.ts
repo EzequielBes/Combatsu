@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { armFor, propName, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
 import { bossFinisherDamage } from '../core/bossFinisher';
+import { bossRewardSlot } from '../core/bossReward';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
@@ -807,10 +808,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * (empate: slot 0). Devolve o texto do banner (BFX-10), ou `null` se nada era upável.
    */
   private bossRewardUpgrade(): string | null {
-    let pick: { id: TechId; level: number } | null = null;
-    for (const s of this.loadout.slotsView) {
-      if (s && s.level < 3 && (pick === null || s.level < pick.level)) pick = s;
-    }
+    const slot = bossRewardSlot(this.loadout.slotsView);
+    const pick = slot === null ? null : this.loadout.slotsView[slot];
     if (!pick || !this.loadout.upgrade(pick.id)) return null;
     return `${this.techName(pick.id)} Nv ${this.loadout.levelOf(pick.id)}!`;
   }
