@@ -280,9 +280,9 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | SPN-04 | P1: Mais inimigos | Specify | Implementing |
 | SPN-05 | P1: Mais inimigos | Specify | Implementing |
 | SPN-06 | P1: Mais inimigos | Specify | Pending |
-| SPN-07 | P1: Mais inimigos | Specify | Pending |
+| SPN-07 | P1: Mais inimigos | Specify | Implementing |
 | SPN-08 | P1: Mais inimigos | Specify | Implementing |
-| SPN-09 | P1: Mais inimigos | Specify | Pending |
+| SPN-09 | P1: Mais inimigos | Specify | Implementing |
 | SPN-10 | P1: Mais inimigos | Specify | Pending |
 | SPN-11 | P1: Mais inimigos | Specify | Pending |
 | SPN-12 | P1: Mais inimigos | Specify | Pending |
