@@ -432,7 +432,7 @@ O `startRun` chama `reset`.
 **Reuses**: `GameSnapshot`
 **Requirement**: SPN-07, LIM-01, MST-08, BFX-06
 **Done when**:
-- [ ] Build e testes passam (última task da fase).
+- [x] Build e testes passam (última task da fase).
 **Tests**: none
 **Gate**: build
 
