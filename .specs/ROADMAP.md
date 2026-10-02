@@ -26,12 +26,12 @@ Parte B — Corpo a corpo estilo jogo de luta
 | — | `sprite-player-polish` | Large | SPR | Done (Verifier PASS, rodada 2) |
 | — | `enemy-sprite-variety` | Large | EVR, HRX | Done (Verifier PASS, rodada 2) |
 | F10 | `personagem-e-vermelho` | Large | SPF, RDA | Planejada (Expansão Combate de Mestre) |
-| F11 | `progressao-fluida` | Medium | PRG, MST | Planejada |
+| F11 | `ritmo-economia-e-chefe` | Large | PRG, MST, SPN, ECN, BFX | Planejada (prioridade 1: playtest 02/10) |
 | F12 | `combate-mestre` | Complex | HGT, TGT, PST, DEF, CNT, RDG | Planejada |
 | F13 | `foco-e-ambiente` | Large | FOC, WAL, TKD | Planejada |
 | F14 | `ia-tatica` | Complex | DIR, RNG, STG, ARC, IND, SFX | Planejada |
 | F15 | `inimigos-a-distancia` | Large | CJR, PRJ | Planejada |
-| F16 | `pressao-e-curva` | Medium | PRS, CUR | Planejada |
+| F16 | `pressao-e-curva` | Medium | PRS, CUR | Planejada (só curva/composição; volume de spawn foi para F11) |
 
 ## Expansão "Combate de Mestre" (F10–F16)
 
