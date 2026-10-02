@@ -6,6 +6,8 @@ import { ARMED, DIFFICULTY, ENEMY, ENEMY_AI, ENEMY_ATTACK } from '../../src/data
 import { TOOL_DEFS } from '../../src/data/props';
 
 const BASE: EnemyBase = { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK };
+/** Tuning com crescimento de dano (o do jogo antes do AD-014), para testar arma sobre dano já escalado. */
+const GROWING = { ...DIFFICULTY, damagePerRound: 0.08 };
 
 describe('armFor: cursedKnife (ARM-05, ARM-20, ARM-21)', () => {
   it('rodada 1 (dano base 12): dano 15, hitbox +8 de largura e +4 de offsetX, força e preparo iguais', () => {
@@ -20,7 +22,7 @@ describe('armFor: cursedKnife (ARM-05, ARM-20, ARM-21)', () => {
   });
 
   it('rodada 10 escalada (dano base 21): dano 26', () => {
-    const base = scaleFor(10, BASE, DIFFICULTY);
+    const base = scaleFor(10, BASE, GROWING);
     expect(base.attack.damage).toBe(21);
     const armed = armFor('cursedKnife', base, ARMED);
     expect(armed.attack.damage).toBe(26);

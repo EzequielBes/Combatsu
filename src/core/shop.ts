@@ -167,6 +167,11 @@ function costOf(entry: ShopEntry, modifiers: Modifiers, loadout?: Loadout): numb
   return modifiers.cost(entry);
 }
 
+/** `Nv <n+1>/<max>` para modificador e técnica (SHOP-21, ECN-08); vazio para consumível. */
+function levelText(entry: ShopEntry, level: number): string {
+  return entry.kind === 'consumable' ? '' : `Nv ${level + 1}/${entry.maxLevel}`;
+}
+
 const EMPTY_OFFER_VIEW = (slot: number): OfferView => ({
   slot,
   id: null,
@@ -202,7 +207,8 @@ export class Shop {
   /**
    * TSH-05: enquanto os dois slots estão vazios, o slot 0 de toda loja (também no reroll, já que `reroll` chama
    * este método de novo) é garantido como uma técnica, sorteada entre as elegíveis pelo peso de SHOP-08 antes
-   * dos outros slots. Sem `loadout`, comportamento antigo da F4 (sem garantia).
+   * dos outros slots. Sem `loadout`, comportamento antigo da F4 (sem garantia). Com técnica equipada, o slot 0
+   * é reservado para aprimorá-la (ECN-05, ECN-06; o reroll passa por aqui de novo).
    */
   private drawFresh(): (Offer | null)[] {
     const pool = eligible(this.catalog, this.modifiers, this.round, this.loadout);
@@ -214,6 +220,17 @@ export class Shop {
       if (guaranteed) {
         slots.push({ id: guaranteed.id, entry: guaranteed });
         rest = pool.filter((e) => e.id !== guaranteed.id);
+      }
+    } else if (this.loadout) {
+      // ECN-05..07: reserva o slot 0 para aprimorar uma técnica equipada (nível < 3 e rodada mínima já passada;
+      // o `eligible` já filtra isso). Sem candidata, os 3 slots vêm do sorteio por peso (ECN-07, EDG-04).
+      const upgrades = pool.filter((e) => e.kind === 'technique' && this.loadout!.levelOf(e.id as TechId) > 0);
+      if (upgrades.length > 0) {
+        // Com uma só candidata não consome o rng; com várias escolhe uma (mesma conta de `Rng.int(0, n - 1)`).
+        const idx = upgrades.length > 1 ? Math.floor(this.rng.next() * upgrades.length) : 0;
+        const chosen = upgrades[idx];
+        slots.push({ id: chosen.id, entry: chosen });
+        rest = pool.filter((e) => e.id !== chosen.id);
       }
     }
     const drawn = drawOffers(rest, this.rng, SHOP.offers - slots.length);
@@ -270,12 +287,17 @@ export class Shop {
     const offers = this.offers.map((offer, slot): OfferView => {
       if (!offer) return EMPTY_OFFER_VIEW(slot);
       const cost = costOf(offer.entry, this.modifiers, this.loadout);
-      const level = offer.entry.kind === 'modifier' ? this.modifiers.level(offer.entry.id as ModifierId) : 0;
+      const level =
+        offer.entry.kind === 'modifier'
+          ? this.modifiers.level(offer.entry.id as ModifierId)
+          : offer.entry.kind === 'technique'
+            ? (this.loadout?.levelOf(offer.entry.id as TechId) ?? 0)
+            : 0;
       return {
         slot,
         id: offer.entry.id,
         name: offer.entry.name,
-        levelText: offer.entry.kind === 'modifier' ? `Nv ${level + 1}/${offer.entry.maxLevel}` : '',
+        levelText: levelText(offer.entry, level),
         preview: previewText(offer.entry, this.modifiers, hp, maxHp, this.loadout),
         cost,
         sold: this.sold.has(slot),

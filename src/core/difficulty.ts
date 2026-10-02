@@ -45,7 +45,7 @@ export function multipliersFor(round: number, t: DifficultyTuning): DifficultyMu
 
 /**
  * Tuning do inimigo escalado para a rodada `r` (DIF-04): copia `base` sem mutá-lo, arredondando `maxHp` e `damage`
- * para inteiro e multiplicando só `patrolSpeed`/`chaseSpeed`; os demais campos da IA ficam iguais.
+ * para inteiro e multiplicando só `chaseSpeed`; os demais campos da IA ficam iguais.
  */
 export function scaleFor(round: number, base: EnemyBase, t: DifficultyTuning): EnemyBase {
   const m = multipliersFor(round, t);
@@ -53,7 +53,6 @@ export function scaleFor(round: number, base: EnemyBase, t: DifficultyTuning): E
     brain: { ...base.brain, maxHp: Math.round(base.brain.maxHp * m.hp) },
     ai: {
       ...base.ai,
-      patrolSpeed: base.ai.patrolSpeed * m.speed,
       chaseSpeed: base.ai.chaseSpeed * m.speed,
     },
     attack: { ...base.attack, damage: Math.round(base.attack.damage * m.damage) },

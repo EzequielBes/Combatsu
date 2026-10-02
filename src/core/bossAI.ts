@@ -7,7 +7,8 @@ export type BossAIState = 'rest' | 'windup' | 'charge' | 'leap' | 'volley';
 export interface BossAITuning {
   phases: readonly { windupMult: number; restMs: number }[];
   charge: { windupMs: number; speed: number; maxDist: number };
-  leap: { windupMs: number; durationMs: number };
+  /** `recoveryMs`: descanso mínimo depois do pouso (BFX-04). */
+  leap: { windupMs: number; durationMs: number; recoveryMs: number };
   volley: { windupMs: number; intervalMs: number };
 }
 
@@ -27,7 +28,9 @@ export type BossAIEvent =
   | { type: 'hitboxOn' }
   | { type: 'hitboxOff' }
   | { type: 'fire'; dir: 1 | -1; speed: number }
-  | { type: 'landed' };
+  | { type: 'landed' }
+  /** A investida terminou batendo na parede: quem chama atordoa o chefe (BFX-02). */
+  | { type: 'wallStun' };
 
 export interface BossAIOutput {
   /** px/s, só horizontal; só != 0 durante a investida. */
@@ -180,6 +183,8 @@ export class BossAI {
     const reachedMax = this.chargeTraveled >= this.t.charge.maxDist;
     if (reachedMax || obs.blocked) {
       events.push({ type: 'hitboxOff' });
+      // BFX-02/03: só a parede atordoa; chegar ao alcance máximo cai no descanso normal.
+      if (obs.blocked) events.push({ type: 'wallStun' });
       this.currentVx = 0;
       const overrun = reachedMax ? dtMs - (stepDist / this.t.charge.speed) * 1000 : 0;
       this.enterRestAfterAttack();
@@ -196,7 +201,7 @@ export class BossAI {
       this.leapProgress = 1;
       events.push({ type: 'landed' });
       const overrun = -this.timer;
-      this.enterRestAfterAttack();
+      this.enterRestAfterAttack(this.t.leap.recoveryMs);
       if (overrun > 0) this.step(overrun, obs, events);
     }
   }
@@ -217,10 +222,13 @@ export class BossAI {
     }
   }
 
-  /** Fim de um ataque (BAI-11): descansa pelo tempo da fase e avança o ciclo para o próximo ataque. */
-  private enterRestAfterAttack(): void {
+  /**
+   * Fim de um ataque (BAI-11): descansa pelo tempo da fase e avança o ciclo para o próximo ataque. `minRestMs`
+   * é o piso do descanso (recuperação do pouso do salto, BFX-04).
+   */
+  private enterRestAfterAttack(minRestMs = 0): void {
     this._state = 'rest';
-    this.timer = this.t.phases[this.currentPhase - 1].restMs;
+    this.timer = Math.max(this.t.phases[this.currentPhase - 1].restMs, minRestMs);
     this.currentAttack = null;
     this.cycleIndex = (this.cycleIndex + 1) % CYCLES[this.currentPhase].length;
   }

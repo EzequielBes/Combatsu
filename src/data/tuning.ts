@@ -5,6 +5,7 @@ import type { AttackStep } from '../core/combo';
 import type { MoveTuning } from '../core/movement';
 import type { DifficultyTuning } from '../core/difficulty';
 import type { WaveTuning } from '../core/waves';
+import type { AttackGateTuning } from '../core/attackGate';
 import type { RunTuning } from '../core/run';
 
 /** Pulo máximo ≈ 130 px (4 tiles); toque ≈ 30 px. Ajustar jogando. */
@@ -84,16 +85,19 @@ export const ENEMY: EnemyTuning = {
   dissolveMs: 700,
 };
 
-/** IA simples do inimigo (AI-01..03): distâncias só na horizontal, em px; velocidades em px/s. */
+/** IA do inimigo (SPN-10..12, LIM-03/05/07, AI-03): distâncias só na horizontal, em px; velocidades em px/s. */
 export const ENEMY_AI: EnemyAITuning = {
-  patrolRange: 48,
-  patrolSpeed: 35,
-  chaseRange: 200,
   chaseSpeed: 70,
   attackRange: 40,
   windupMs: 450,
   attackMs: 120,
   restMs: 800,
+  holdRange: 96,
+  holdBase: 64,
+  holdStep: 24,
+  holdTolerance: 2,
+  farRange: 320,
+  farSpeedMult: 1.6,
 };
 
 /** Garra do inimigo: a hitbox fica ligada enquanto a IA está em `attack` (activeMs = ENEMY_AI.attackMs). */
@@ -108,18 +112,37 @@ export const ENEMY_ATTACK: AttackStep = {
   hitbox: { offsetX: 20, offsetY: -2, width: 24, height: 20 },
 };
 
-/** Escala de dificuldade por rodada (DIF-01, DIF-05, DIF-06): cresce até um teto. */
+/**
+ * Escala de dificuldade por rodada (DIF-06, SPN-13, SPN-14, AD-014): HP e dano dos comuns ficam fixos
+ * (a dificuldade vem de mecânica, não de números), só a velocidade cresce até um teto.
+ */
 export const DIFFICULTY: DifficultyTuning = {
-  hpPerRound: 0.12,
+  hpPerRound: 0,
   hpCap: 3.0,
-  damagePerRound: 0.08,
+  damagePerRound: 0,
   damageCap: 2.5,
   speedPerRound: 0.03,
   speedCap: 1.4,
 };
 
-/** Onda de inimigos por rodada (WAVE-01, WAVE-03, WAVE-04). */
-export const WAVE: WaveTuning = { base: 3, max: 12, maxAlive: 4, pointGapMs: 800 };
+/** Onda de inimigos por rodada (SPN-01..05). */
+export const WAVE: WaveTuning = {
+  base: 6,
+  perRound: 2,
+  max: 20,
+  maxAliveBase: 5,
+  maxAliveEvery: 2,
+  maxAliveCap: 8,
+  initialBurst: 3,
+  trickleMs: 1500,
+  pointGapMs: 800,
+};
+
+/** Spawn (SPN-08): chance de preferir os pontos às costas do player. */
+export const SPAWN = { preferBackChance: 0.35 } as const;
+
+/** Limitador de atacantes (LIM-01, LIM-02): 2 vagas e 350 ms entre windups. */
+export const ATTACK_GATE: AttackGateTuning = { maxActive: 2, minWindupGapMs: 350 };
 
 /** Tempos da máquina de estados da run (RUN-10, RUN-11, RHUD-02). */
 export const RUN: RunTuning = { intermissionMs: 2500, gameOverLockMs: 1000, spawnGraceMs: 600, bannerMs: 1500 };
@@ -239,6 +262,17 @@ export const SHOP: ShopTuning = {
   sortePerLevel: 0.03,
 };
 
+/** Maestria das técnicas (MST-01..06): pontos para subir do Nv1 e do Nv2, e pontos por acerto no chefe. */
+export interface MasteryTuning {
+  thresholds: { 1: number; 2: number };
+  bossPoints: number;
+}
+
+export const MASTERY: MasteryTuning = {
+  thresholds: { 1: 15, 2: 25 },
+  bossPoints: 3,
+};
+
 export const BOSS = {
   /** Entrada parado e invulnerável antes de poder atacar (BOSS-06). */
   introMs: 1500,
@@ -250,6 +284,12 @@ export const BOSS = {
   roarImpulse: 6,
   /** Atordoamento com a postura zerada: sem mover, sem atacar (BAI-08). */
   staggerMs: 1200,
+  /** Atordoamento ao bater na parede no fim da investida; não mexe na postura (BFX-02). */
+  wallStunMs: 1500,
+  /** Multiplicador do dano recebido durante o `stagger` (BFX-05). */
+  staggerDamageMult: 1.5,
+  /** Finalizador (J+K) no `stagger`: fração do HP máximo e alcance até o centro do chefe (BFX-06). */
+  finisher: { hpFraction: 0.12, rangePx: 48 },
   poise: {
     max: 100,
     /** Por segundo, depois de `regenDelayMs` sem apanhar (BAI-09). */
@@ -264,15 +304,15 @@ export const BOSS = {
   ] as const,
   /** Investida: preparo base, velocidade, alcance máximo e dano forte (BAT-01, BAT-09). */
   charge: { windupMs: 600, speed: 320, maxDist: 360, damage: 18 },
-  /** Salto: preparo base, duração do salto e dano forte do pouso (BAT-02, BAT-10). */
-  leap: { windupMs: 500, durationMs: 700, damage: 20 },
+  /** Salto: preparo base, duração do salto, dano forte do pouso e descanso mínimo depois do pouso (BAT-02, BAT-10, BFX-04). */
+  leap: { windupMs: 500, durationMs: 700, recoveryMs: 800, damage: 20 },
   /** Onda de choque do pouso: velocidade, alcance, altura e dano leve (BAT-03). */
   shockwave: { speed: 240, maxDist: 600, height: 20, damage: 12 },
   /** Rajada: preparo base, quantidade padrão, intervalo, velocidade, dano leve e alcance do projétil (BAT-04). */
   volley: { windupMs: 700, count: 3, intervalMs: 150, speed: 260, damage: 10, maxDist: 1200 },
   /** Escala por tier (BTIER-01, BTIER-02): hp = round(hpBase * min(1 + hpPerTier*(tier-1), hpCap)); dano dos
    * ataques = base * min(1 + damagePerTier*(tier-1), damageCap), arredondado. */
-  tier: { hpBase: 600, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 },
+  tier: { hpBase: 400, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 },
   /** Arquétipos (BTIER-04, BTIER-05, BTIER-07): a Tecelã multiplica a velocidade do projétil e troca o volleyCount. */
   archetypes: {
     oni: { name: 'Oni do Portão' },

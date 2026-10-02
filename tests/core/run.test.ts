@@ -9,9 +9,8 @@ function isSpawn(c: RunCommand): c is Extract<RunCommand, { type: 'spawn' }> {
 
 /** seed 7: rng.int(0, 1) = 0, então s = 0 para P = 2 (checado em waves.test.ts). */
 const SEED = () => 7;
-const POINTS = 2;
 
-const newRun = (): Run => new Run(RUN, WAVE, POINTS);
+const newRun = (): Run => new Run(RUN, WAVE);
 
 /** Começa a run e chega em `roundActive`, round 1, kills 0. */
 const started = (): Run => {
@@ -21,12 +20,15 @@ const started = (): Run => {
   return run;
 };
 
-/** A partir de `roundActive` round 1, mata as 3 (base) inimigas da rodada e chega em `intermission`. */
+/** A partir de `roundActive` round 1, mata as 6 (SPN-01) inimigos da rodada e chega em `intermission`. */
 const cleared = (): { run: Run; roundCommands: ReturnType<Run['update']> } => {
   const run = started();
   run.enemyDied(1);
   run.enemyDied(2);
   run.enemyDied(3);
+  run.enemyDied(4);
+  run.enemyDied(5);
+  run.enemyDied(6);
   const roundCommands = run.update(0, SEED);
   return { run, roundCommands };
 };
@@ -177,7 +179,7 @@ describe('Run: eventos fora de hora são ignorados (RUN-07)', () => {
     expect(commands).toEqual([]);
     expect(run.state).toBe('intermission');
     expect(run.round).toBe(1);
-    expect(run.kills).toBe(3);
+    expect(run.kills).toBe(6);
   });
 
   it('abate em gameOver não muda kills nem round', () => {
@@ -209,7 +211,7 @@ describe('Run: eventos fora de hora são ignorados (RUN-07)', () => {
     expect(commands.some((c) => c.type === 'startRun' || c.type === 'roundStart')).toBe(false);
     expect(run.state).toBe('intermission');
     expect(run.round).toBe(1);
-    expect(run.kills).toBe(3);
+    expect(run.kills).toBe(6);
   });
 });
 
@@ -220,7 +222,7 @@ describe('Run: dedupe de abate (WAVE-06)', () => {
     run.enemyDied(1); // mesmo id, ainda pendente
     run.update(0, SEED);
     expect(run.kills).toBe(1);
-    expect(run.remaining).toBe(2); // 3 (base da rodada 1) - 1
+    expect(run.remaining).toBe(5); // 6 (SPN-01, rodada 1) - 1
   });
 
   it('o mesmo id morto de novo num update seguinte não soma kills nem derruba remaining de novo', () => {
@@ -228,11 +230,11 @@ describe('Run: dedupe de abate (WAVE-06)', () => {
     run.enemyDied(1);
     run.update(0, SEED);
     expect(run.kills).toBe(1);
-    expect(run.remaining).toBe(2);
+    expect(run.remaining).toBe(5);
     run.enemyDied(1); // já contado antes, agora num update diferente
     run.update(0, SEED);
     expect(run.kills).toBe(1);
-    expect(run.remaining).toBe(2);
+    expect(run.remaining).toBe(5);
   });
 });
 
@@ -268,8 +270,8 @@ describe('Run: edge cases de prioridade', () => {
     run.playerDied();
     const commands = run.update(0, SEED);
     expect(run.state).toBe('gameOver');
-    expect(commands).toContainEqual({ type: 'gameOver', round: 1, kills: 3 });
-    expect(run.summary).toEqual({ round: 1, kills: 3 });
+    expect(commands).toContainEqual({ type: 'gameOver', round: 1, kills: 6 });
+    expect(run.summary).toEqual({ round: 1, kills: 6 });
   });
 });
 
@@ -282,7 +284,7 @@ describe('Run: firstRound opcional no construtor', () => {
   });
 
   it('com { firstRound: 5 }: começa direto na rodada 5', () => {
-    const run = new Run(RUN, WAVE, POINTS, { firstRound: 5 });
+    const run = new Run(RUN, WAVE, { firstRound: 5 });
     run.startPressed();
     const commands = run.update(0, SEED);
     expect(run.round).toBe(5);
@@ -300,7 +302,7 @@ describe('Run: o comando spawn carrega kind (BOSS-01, BOSS-02)', () => {
   });
 
   it('rodada 5 (de chefe): um único spawn com kind boss', () => {
-    const run = new Run(RUN, WAVE, POINTS, { firstRound: 5 });
+    const run = new Run(RUN, WAVE, { firstRound: 5 });
     run.startPressed();
     run.update(0, SEED); // startRun + roundStart(5), sem spawn ainda
     const commands = run.update(0, SEED); // libera o spawn do chefe
@@ -313,7 +315,7 @@ describe('Run: o comando spawn carrega kind (BOSS-01, BOSS-02)', () => {
 
 describe('Run: morte do chefe conta kills e entra em intermission (BOSS-04, BOSS-07)', () => {
   it('o chefe é o único inimigo da onda de tamanho 1; sua morte limpa a rodada', () => {
-    const run = new Run(RUN, WAVE, POINTS, { firstRound: 5 });
+    const run = new Run(RUN, WAVE, { firstRound: 5 });
     run.startPressed();
     run.update(0, SEED); // roundStart(5)
     run.update(0, SEED); // spawn do chefe
@@ -353,7 +355,7 @@ describe('Run: stream de loot com seed própria (ECO-17, ECO-31)', () => {
     // Mata cada inimigo assim que nasce, para as rodadas 1-3 se sucederem dentro de um número fixo de passos;
     // fecha a loja assim que ela abre (SHOP-03), como faria o jogador, para a run seguir de rodada em rodada.
     const run = (withLoot: boolean): { spawns: number[]; rounds: number[] } => {
-      const r = new Run(RUN, WAVE, POINTS);
+      const r = new Run(RUN, WAVE);
       r.startPressed();
       const spawns: number[] = [];
       const rounds: number[] = [];
@@ -363,7 +365,7 @@ describe('Run: stream de loot com seed própria (ECO-17, ECO-31)', () => {
         const cmds = r.update(50, SEED);
         for (const c of cmds) {
           if (c.type === 'spawn') {
-            spawns.push(c.point);
+            spawns.push(step); // passo em que o spawn sai (o ponto não vem mais do comando)
             r.enemyDied(nextId++); // morre assim que nasce: a rodada some rápido
           }
           if (c.type === 'roundStart') rounds.push(c.round);
@@ -412,7 +414,7 @@ describe('Run: stream da loja com seed própria (SHOP-09, SHOP-40)', () => {
 
   it('sorteios no shopRng entre updates não mudam a ordem de spawn nem os sorteios de loot (SHOP-40)', () => {
     const run = (withShopDraws: boolean): { spawns: number[]; rounds: number[]; loot: number[] } => {
-      const r = new Run(RUN, WAVE, POINTS);
+      const r = new Run(RUN, WAVE);
       r.startPressed();
       const spawns: number[] = [];
       const rounds: number[] = [];
@@ -423,7 +425,7 @@ describe('Run: stream da loja com seed própria (SHOP-09, SHOP-40)', () => {
         const cmds = r.update(50, SEED);
         for (const c of cmds) {
           if (c.type === 'spawn') {
-            spawns.push(c.point);
+            spawns.push(step); // passo em que o spawn sai (o ponto não vem mais do comando)
             r.enemyDied(nextId++);
           }
           if (c.type === 'roundStart') rounds.push(c.round);
@@ -460,7 +462,7 @@ describe('Run: stream da loja com seed própria (SHOP-09, SHOP-40)', () => {
 
 describe('Run: chefe e player morrem antes do mesmo update (BOSS-05)', () => {
   it('a morte do player tem prioridade sobre a morte do chefe no mesmo frame: gameOver, não intermission', () => {
-    const run = new Run(RUN, WAVE, POINTS, { firstRound: 5 });
+    const run = new Run(RUN, WAVE, { firstRound: 5 });
     run.startPressed();
     run.update(0, SEED); // roundStart(5)
     run.update(0, SEED); // spawn do chefe
@@ -495,5 +497,69 @@ describe('Run: stream da aparência dos inimigos e streams anteriores intactos (
     for (let i = 0; i < 100; i++) b.variantRng!.next();
     expect(b.lootRng!.next()).toBe(a.lootRng!.next());
     expect(b.guardRng!.next()).toBe(a.guardRng!.next());
+  });
+});
+
+describe('Run: stream do ponto de spawn e teto de vivos (SPN-02, SPN-04, SPN-08)', () => {
+  it('spawnRng é null antes do start e, depois dele com seed s, começa como new Rng(s ^ 0x3c6ef372)', () => {
+    const run = newRun();
+    expect(run.spawnRng).toBeNull();
+    run.startPressed();
+    run.update(0, SEED);
+    expect(run.spawnRng!.next()).toBe(new Rng(7 ^ 0x3c6ef372).next());
+  });
+
+  it('a mesma seed reproduz a sequência do spawnRng', () => {
+    const a = started();
+    const b = started();
+    for (let i = 0; i < 5; i++) expect(a.spawnRng!.next()).toBe(b.spawnRng!.next());
+  });
+
+  it('consumir o spawnRng não muda lootRng, shopRng, guardRng nem variantRng (regressão)', () => {
+    const a = started();
+    const b = started();
+    for (let i = 0; i < 100; i++) b.spawnRng!.next();
+    expect(b.lootRng!.next()).toBe(a.lootRng!.next());
+    expect(b.shopRng!.next()).toBe(a.shopRng!.next());
+    expect(b.guardRng!.next()).toBe(a.guardRng!.next());
+    expect(b.variantRng!.next()).toBe(a.variantRng!.next());
+  });
+
+  it('as sequências de variant, guard e shop continuam as de seed 7 (valores fixados)', () => {
+    const run = started();
+    expect(new Rng(7 ^ 0x6a09e667).next()).toBe(run.variantRng!.next());
+    expect(new Rng(7 ^ 0x2545f491).next()).toBe(run.guardRng!.next());
+    expect(new Rng(7 ^ SHOP.rngSalt).next()).toBe(run.shopRng!.next());
+  });
+
+  it('maxAlive é 0 antes do start e reflete a rodada: 5 na rodada 1, 6 na rodada 3', () => {
+    const run = newRun();
+    expect(run.maxAlive).toBe(0);
+    run.startPressed();
+    run.update(0, SEED);
+    expect(run.maxAlive).toBe(5);
+    const r3 = new Run(RUN, WAVE, { firstRound: 3 });
+    r3.startPressed();
+    r3.update(0, SEED);
+    expect(r3.maxAlive).toBe(6);
+  });
+
+  it('maxAliveOverride vale no maxAlive e limita os spawns (1 vivo)', () => {
+    const run = new Run(RUN, WAVE, { maxAliveOverride: 1 });
+    run.startPressed();
+    run.update(0, SEED);
+    expect(run.maxAlive).toBe(1);
+    const spawns = run.update(0, SEED).filter(isSpawn);
+    expect(spawns).toHaveLength(1);
+    expect(run.update(5000, SEED).filter(isSpawn)).toHaveLength(0);
+  });
+
+  it('o 1º update da rodada 1 emite o burst de 3 spawns sem ponto; 1500 ms depois sai mais 1', () => {
+    const run = started();
+    const burst = run.update(0, SEED).filter(isSpawn);
+    expect(burst).toHaveLength(3);
+    expect(burst[0]).toEqual({ type: 'spawn', round: 1, kind: 'enemy' });
+    expect(run.update(1499, SEED).filter(isSpawn)).toHaveLength(0);
+    expect(run.update(1, SEED).filter(isSpawn)).toHaveLength(1);
   });
 });

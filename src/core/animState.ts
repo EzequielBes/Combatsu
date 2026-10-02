@@ -100,8 +100,8 @@ export interface EnemyAnimInput {
  * | idle                                           | windup          | -      | windup   |
  * | idle                                           | attack          | -      | attack   |
  * | idle                                           | rest            | -      | idle     |
- * | idle                                           | patrol, chase   | sim    | walk     |
- * | idle                                           | patrol, chase   | não    | idle     |
+ * | idle                                           | chase, hold, approach | sim | walk |
+ * | idle                                           | chase, hold, approach | não | idle |
  *
  * Em ragdoll o sprite fica escondido (as partes do ragdoll aparecem no lugar), então 'hurt' ali é só o frame que
  * fica guardado.

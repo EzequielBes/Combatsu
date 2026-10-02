@@ -3,11 +3,18 @@ import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { CastState } from '../core/cast';
 import type { EnemyVariant } from '../core/enemyVariant';
+import type { EnemyAIState } from '../core/enemyAI';
 import type { EnemyState } from '../core/enemyBrain';
 import type { ToolKey } from '../core/loot';
 import type { PropState } from '../core/props';
 import type { RunState } from '../core/run';
 import type { TechId } from '../data/techniques';
+
+/** Maestria do slot (MST-08): pontos atuais e limiar do nível atual (`null` no Nv3, que não acumula). */
+export interface TechMasteryView {
+  points: number;
+  threshold: number | null;
+}
 
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
@@ -37,10 +44,11 @@ export interface GameSnapshot {
     y: number;
     hp: number;
     state: EnemyState;
+    /** Estado da IA (`chase|hold|approach|windup|attack|rest`, SPN-10, LIM-03). */
+    ai: EnemyAIState;
     maxHp: number;
     damage: number;
-    /** Velocidades da IA em uso, já escaladas pela rodada (DIF-04/06). */
-    patrolSpeed: number;
+    /** Velocidade de perseguição da IA em uso, já escalada pela rodada (DIF-04/06). */
     chaseSpeed: number;
     /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
     weapon: ToolKey | null;
@@ -80,6 +88,8 @@ export interface GameSnapshot {
     x: number;
     /** Centro do corpo; fica dentro da sala (0..544) durante toda a luta. */
     y: number;
+    /** O finalizador (J+K) ainda pode ser usado neste `stagger` (BFX-06, BFX-07). */
+    finisherReady: boolean;
   } | null;
   /**
    * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
@@ -97,7 +107,11 @@ export interface GameSnapshot {
     traveled: number;
   }[];
   /** Estado da máquina de run (RUN-09). */
-  run: { state: RunState; round: number; kills: number; alive: number; queued: number };
+  run: { state: RunState; round: number; kills: number; alive: number; queued: number; maxAlive: number };
+  /** Inimigos comuns em `windup` ou `attack` agora (LIM-01). */
+  attackers: number;
+  /** Limitador de atacantes (LIM-01, LIM-04): vagas ocupadas e ids na fila FIFO. */
+  gate: { active: number; queue: number[] };
   /** Spawn do player no level, já com o mesmo ajuste que a cena aplica (RUN-02/05). */
   level: { playerSpawn: { x: number; y: number } };
   /** Estado do HUD da run (RHUD-01..07). */
@@ -131,6 +145,8 @@ export interface GameSnapshot {
       /** Offset (px) da marca de custo a partir do início da barra; `null` sem técnica no slot (TEC-12). */
       marks: (number | null)[];
       icons: { cooldownOverlayHeight: number; iconHeight: number }[];
+      /** MST-08: largura (px) da barra de maestria de cada slot, `null` se não está desenhada (vazio ou Nv3). */
+      masteryBars: (number | null)[];
       flashing: boolean;
     };
   };
@@ -164,8 +180,8 @@ export interface GameSnapshot {
   /** Loadout de técnicas e a conjuração ativa (TEC-01..06/08, CAST-*), contrato exato da spec. */
   tech: {
     slots: [
-      { id: TechId; level: 1 | 2 | 3; cooldownMs: number } | null,
-      { id: TechId; level: 1 | 2 | 3; cooldownMs: number } | null,
+      { id: TechId; level: 1 | 2 | 3; cooldownMs: number; mastery: TechMasteryView } | null,
+      { id: TechId; level: 1 | 2 | 3; cooldownMs: number; mastery: TechMasteryView } | null,
     ];
     cast: { slot: 0 | 1; id: TechId; state: CastState; elapsedMs: number } | null;
   };
@@ -179,7 +195,7 @@ export interface GameSnapshot {
    * Desvio da Fase 6 (T29/T30, CAST-15/KOK-24): a spec não tinha um jeito de o smoke ler o zoom da câmera
    * principal; acrescentado aqui só para o smoke observar o zoom durante a conjuração e o Kokusen.
    */
-  camera: { zoom: number };
+  camera: { zoom: number; worldView: { left: number; right: number } };
   /** Distância (px, centro a centro) ao inimigo comum quebrado mais perto, a do finalizador (FIN-01/03); `null` sem alvo. */
   finisher: { distPx: number | null };
   /**

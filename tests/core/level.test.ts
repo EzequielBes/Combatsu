@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TILE, parseLevel, tileVariant } from '../../src/core/level';
+import { LEVEL_1 } from '../../src/data/level1';
 
 describe('parseLevel', () => {
   it('junta blocos sólidos vizinhos da mesma linha num retângulo só', () => {
@@ -88,5 +89,26 @@ describe('tileVariant (ENV-01)', () => {
     expect(tileVariant(['###', '###'], 1, 0)).toBe('top');
     // Linha 0 sem sólido embaixo é plataforma fina.
     expect(tileVariant(['###', '...'], 1, 0)).toBe('thin');
+  });
+});
+
+describe('LEVEL_1: pontos de spawn E (SPN-06)', () => {
+  const lvl = parseLevel(LEVEL_1);
+
+  it('tem exatamente 4 pontos E', () => {
+    expect(lvl.enemies).toHaveLength(4);
+  });
+
+  it('os novos nas colunas 1 e 38 ficam em x = coluna * TILE + TILE / 2 (48 e 1232)', () => {
+    const xs = lvl.enemies.map((e) => e.x);
+    expect(xs).toContain(1 * TILE + TILE / 2);
+    expect(xs).toContain(38 * TILE + TILE / 2);
+    expect(1 * TILE + TILE / 2).toBe(48);
+    expect(38 * TILE + TILE / 2).toBe(1232);
+  });
+
+  it('os dois pontos antigos continuam (624 e 1200) e todos estão na linha do chão', () => {
+    expect(lvl.enemies.map((e) => e.x)).toEqual([48, 624, 1200, 1232]);
+    expect(new Set(lvl.enemies.map((e) => e.y)).size).toBe(1);
   });
 });

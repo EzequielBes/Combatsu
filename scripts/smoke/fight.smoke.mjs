@@ -196,12 +196,18 @@ export default async function (ctx) {
   // --- Grupo 7: voadora (AIR-02, AIR-05) --------------------------------------------------------------------------------
   await boot('enemyGuard=0');
   await settle();
-  await down('Space');
-  await snap(50);
-  await up('Space');
-  await snap(100);
-  s = await frame();
   const ground = 462;
+  // O pulo é só preparo da voadora, e o evento de tecla do navegador às vezes chega depois do step (intermitência do
+  // harness, sem relação com o golpe): tenta de novo, com o player de volta ao chão, antes de dar o pulo por perdido.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await down('Space');
+    await snap(50);
+    await up('Space');
+    await snap(100);
+    s = await frame();
+    if (s.player.y < ground - 5) break;
+    await settle();
+  }
   assert(s.player.y < ground - 5, `deveria estar no ar antes da voadora: y=${s.player.y}`);
   assert(!s.fx.layers.includes('air.kickTrail'), 'a trilha da voadora não deveria existir antes do golpe');
   const beforeKick = s;

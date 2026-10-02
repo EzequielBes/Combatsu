@@ -288,6 +288,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M4 src/game/Enemy.ts:620 (adapter) (adapter)
 - last seen: 2026-10-01T16:00:05Z
 
+### L-047 - Test a range-gated action at the boundary value and one unit past it, in the scene or adapter that applies the check, not only in the pure core
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `scene-adapter` · harmful: 0
+- features: ritmo-economia-e-chefe
+- evidence: BFX-06 src/scenes/TestScene.ts:1353 (scene-adapter)
+- last seen: 2026-10-02T18:15:14Z
+
+### L-048 - Extract selection rules (lowest level wins, tie goes to first slot, nothing eligible) into a pure function and unit-test each branch instead of leaving them to a single-candidate smoke
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `scene-adapter` · harmful: 0
+- features: ritmo-economia-e-chefe
+- evidence: BFX-09 src/scenes/TestScene.ts:805 (scene-adapter)
+- last seen: 2026-10-02T18:15:15Z
+
+### L-049 - Assert the exact computed value of a spec-defined formula (such as a HUD bar width), not only that it is above or equal to zero
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `hud` · harmful: 0
+- features: ritmo-economia-e-chefe
+- evidence: MST-08 src/game/EnergyHud.ts:160 (hud)
+- last seen: 2026-10-02T18:15:15Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

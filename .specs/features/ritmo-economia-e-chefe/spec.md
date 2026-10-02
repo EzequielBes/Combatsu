@@ -57,7 +57,7 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | Perseguição | O estado `patrol` deixa de existir: todo inimigo que pode agir anda rumo ao jogador. Acima de 320 px de distância anda a ×1,6 da `chaseSpeed` | Comportamento roguelike pedido; quem nasce longe chega logo | y |
 | Limitador de atacantes | No máximo 2 inimigos em `windup` ou `attack` ao mesmo tempo, e no mínimo 350 ms entre dois inícios de `windup`. Um inimigo ao alcance sem permissão para em `hold`, a 64–96 px do jogador | Decisão do usuário ("2 por vez"); a F14 troca pelo diretor completo | y |
 | Ordem da permissão | Quem chegou primeiro ao alcance (FIFO pelo instante em que entrou em `hold`) | Simples e justo; a F14 introduz prioridade | y |
-| Inimigos em `hold` | Mantêm pelo menos 24 px de distância entre si no eixo x | Evita a pilha de bonecos no mesmo pixel | y |
+| Inimigos em `hold` | Cada um fica a `64 + 24·k` ± 2 px do jogador (k = ordem na fila do seu lado), então dois parados ficam a pelo menos 20 px. Ajustado no Design (a faixa de 64–96 px não comportava 8) e no Execute (a tolerância de ±8 deixava pares a 8 px; agora é ±2). Na troca de vaga a distância pode ficar menor por um instante | Evita a pilha de bonecos no mesmo pixel | y |
 | HP e dano dos comuns | `DIFFICULTY.hpPerRound = 0` e `damagePerRound = 0`; `speedPerRound` continua 0,03 | AD-014: dificuldade por mecânica | y |
 
 ### Economia e loja
@@ -162,9 +162,9 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 2. LIM-02: WHEN um inimigo começa `windup` THEN nenhum outro inimigo SHALL começar `windup` antes de 350 ms.
 3. LIM-03: WHEN um inimigo sem permissão de ataque fica a 96 px ou menos do jogador THEN ele SHALL entrar no estado `hold`.
 4. LIM-04: WHEN abre uma vaga de ataque THEN a permissão SHALL ir para o inimigo que está há mais tempo em `hold`.
-5. LIM-05: WHILE dois inimigos estão em `hold` do mesmo lado do jogador, a distância entre eles no eixo x SHALL ser de pelo menos 24 px.
+5. LIM-05: WHILE dois inimigos estão em `hold` do mesmo lado do jogador e os dois estão parados há pelo menos 10 frames, a distância entre eles no eixo x SHALL ser de pelo menos 20 px.
 6. LIM-06: IF um inimigo com permissão é interrompido (golpe, ragdoll, morte) THEN a vaga dele SHALL ser liberada no mesmo frame.
-7. LIM-07: WHILE um inimigo está em `hold`, ele SHALL se mover para manter `|x − player.x|` entre 64 e 96 px.
+7. LIM-07: WHILE um inimigo está em `hold` com `holdRank` k (posição na fila de espera entre os do mesmo lado do jogador, começando em 0), ele SHALL se mover para manter `|x − player.x|` em `64 + 24·k` ± 2 px.
 8. LIM-08: WHEN um inimigo em `hold` recebe a permissão THEN ele SHALL sair de `hold`, avançar até `attackRange` e iniciar `windup`.
 
 **Independent Test**: `?debug&maxAlive=6&enemyGuard=0`, jogador parado por 20 s: nenhum frame tem mais de 2 inimigos em `windup|attack`.
@@ -268,69 +268,69 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PRG-01 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-02 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-03 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-04 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-05 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-06 | P1: Energia e Fluxo | Specify | Pending |
-| SPN-01 | P1: Mais inimigos | Specify | Pending |
-| SPN-02 | P1: Mais inimigos | Specify | Pending |
-| SPN-03 | P1: Mais inimigos | Specify | Pending |
-| SPN-04 | P1: Mais inimigos | Specify | Pending |
-| SPN-05 | P1: Mais inimigos | Specify | Pending |
-| SPN-06 | P1: Mais inimigos | Specify | Pending |
-| SPN-07 | P1: Mais inimigos | Specify | Pending |
-| SPN-08 | P1: Mais inimigos | Specify | Pending |
-| SPN-09 | P1: Mais inimigos | Specify | Pending |
-| SPN-10 | P1: Mais inimigos | Specify | Pending |
-| SPN-11 | P1: Mais inimigos | Specify | Pending |
-| SPN-12 | P1: Mais inimigos | Specify | Pending |
-| SPN-13 | P1: Mais inimigos | Specify | Pending |
-| SPN-14 | P1: Mais inimigos | Specify | Pending |
-| LIM-01 | P1: Limitador | Specify | Pending |
-| LIM-02 | P1: Limitador | Specify | Pending |
-| LIM-03 | P1: Limitador | Specify | Pending |
-| LIM-04 | P1: Limitador | Specify | Pending |
-| LIM-05 | P1: Limitador | Specify | Pending |
-| LIM-06 | P1: Limitador | Specify | Pending |
-| LIM-07 | P1: Limitador | Specify | Pending |
-| LIM-08 | P1: Limitador | Specify | Pending |
-| ECN-01 | P1: Renda | Specify | Pending |
-| ECN-02 | P1: Renda | Specify | Pending |
-| ECN-03 | P1: Renda | Specify | Pending |
-| ECN-04 | P1: Renda | Specify | Pending |
-| ECN-05 | P1: Renda | Specify | Pending |
-| ECN-06 | P1: Renda | Specify | Pending |
-| ECN-07 | P1: Renda | Specify | Pending |
-| ECN-08 | P1: Renda | Specify | Pending |
-| ECN-09 | P1: Renda | Specify | Pending |
-| BFX-01 | P1: Chefe | Specify | Pending |
-| BFX-02 | P1: Chefe | Specify | Pending |
-| BFX-03 | P1: Chefe | Specify | Pending |
-| BFX-04 | P1: Chefe | Specify | Pending |
-| BFX-05 | P1: Chefe | Specify | Pending |
-| BFX-06 | P1: Chefe | Specify | Pending |
-| BFX-07 | P1: Chefe | Specify | Pending |
-| BFX-08 | P1: Chefe | Specify | Pending |
-| BFX-09 | P1: Chefe | Specify | Pending |
-| BFX-10 | P1: Chefe | Specify | Pending |
-| MST-01 | P2: Maestria | Specify | Pending |
-| MST-02 | P2: Maestria | Specify | Pending |
-| MST-03 | P2: Maestria | Specify | Pending |
-| MST-04 | P2: Maestria | Specify | Pending |
-| MST-05 | P2: Maestria | Specify | Pending |
-| MST-06 | P2: Maestria | Specify | Pending |
-| MST-07 | P2: Maestria | Specify | Pending |
-| MST-08 | P2: Maestria | Specify | Pending |
-| EDG-01 | Edge cases | Specify | Pending |
-| EDG-02 | Edge cases | Specify | Pending |
-| EDG-03 | Edge cases | Specify | Pending |
-| EDG-04 | Edge cases | Specify | Pending |
-| EDG-05 | Edge cases | Specify | Pending |
-| EDG-06 | Edge cases | Specify | Pending |
+| PRG-01 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-02 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-03 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-04 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-05 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-06 | P1: Energia e Fluxo | Specify | Verified |
+| SPN-01 | P1: Mais inimigos | Specify | Verified |
+| SPN-02 | P1: Mais inimigos | Specify | Verified |
+| SPN-03 | P1: Mais inimigos | Specify | Verified |
+| SPN-04 | P1: Mais inimigos | Specify | Verified |
+| SPN-05 | P1: Mais inimigos | Specify | Verified |
+| SPN-06 | P1: Mais inimigos | Specify | Verified |
+| SPN-07 | P1: Mais inimigos | Specify | Verified |
+| SPN-08 | P1: Mais inimigos | Specify | Verified |
+| SPN-09 | P1: Mais inimigos | Specify | Verified |
+| SPN-10 | P1: Mais inimigos | Specify | Verified |
+| SPN-11 | P1: Mais inimigos | Specify | Verified |
+| SPN-12 | P1: Mais inimigos | Specify | Verified |
+| SPN-13 | P1: Mais inimigos | Specify | Verified |
+| SPN-14 | P1: Mais inimigos | Specify | Verified |
+| LIM-01 | P1: Limitador | Specify | Verified |
+| LIM-02 | P1: Limitador | Specify | Verified |
+| LIM-03 | P1: Limitador | Specify | Verified |
+| LIM-04 | P1: Limitador | Specify | Verified |
+| LIM-05 | P1: Limitador | Specify | Verified |
+| LIM-06 | P1: Limitador | Specify | Verified |
+| LIM-07 | P1: Limitador | Specify | Verified |
+| LIM-08 | P1: Limitador | Specify | Verified |
+| ECN-01 | P1: Renda | Specify | Verified |
+| ECN-02 | P1: Renda | Specify | Verified |
+| ECN-03 | P1: Renda | Specify | Verified |
+| ECN-04 | P1: Renda | Specify | Verified |
+| ECN-05 | P1: Renda | Specify | Verified |
+| ECN-06 | P1: Renda | Specify | Verified |
+| ECN-07 | P1: Renda | Specify | Verified |
+| ECN-08 | P1: Renda | Specify | Verified |
+| ECN-09 | P1: Renda | Specify | Verified |
+| BFX-01 | P1: Chefe | Specify | Verified |
+| BFX-02 | P1: Chefe | Specify | Verified |
+| BFX-03 | P1: Chefe | Specify | Verified |
+| BFX-04 | P1: Chefe | Specify | Verified |
+| BFX-05 | P1: Chefe | Specify | Verified |
+| BFX-06 | P1: Chefe | Specify | Verified |
+| BFX-07 | P1: Chefe | Specify | Verified |
+| BFX-08 | P1: Chefe | Specify | Verified |
+| BFX-09 | P1: Chefe | Specify | Verified |
+| BFX-10 | P1: Chefe | Specify | Verified |
+| MST-01 | P2: Maestria | Specify | Verified |
+| MST-02 | P2: Maestria | Specify | Verified |
+| MST-03 | P2: Maestria | Specify | Verified |
+| MST-04 | P2: Maestria | Specify | Verified |
+| MST-05 | P2: Maestria | Specify | Verified |
+| MST-06 | P2: Maestria | Specify | Verified |
+| MST-07 | P2: Maestria | Specify | Verified |
+| MST-08 | P2: Maestria | Specify | Verified |
+| EDG-01 | Edge cases | Specify | Verified |
+| EDG-02 | Edge cases | Specify | Verified |
+| EDG-03 | Edge cases | Specify | Verified |
+| EDG-04 | Edge cases | Specify | Verified |
+| EDG-05 | Edge cases | Specify | Verified |
+| EDG-06 | Edge cases | Specify | Verified |
 
-**Coverage:** 61 total, 0 mapped to tasks, 61 unmapped ⚠️ (Tasks ainda não feitas)
+**Coverage:** 61 total, 61 mapped to tasks, 0 unmapped (Tasks ainda não feitas)
 
 ---
 

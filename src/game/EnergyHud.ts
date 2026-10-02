@@ -1,6 +1,8 @@
 import type Phaser from 'phaser';
 import type { CursedEnergy } from '../core/energy';
 import type { Loadout } from '../core/loadout';
+import type { Mastery } from '../core/mastery';
+import { masteryBarWidth } from '../core/masteryBar';
 import { TECHNIQUES } from '../data/techniques';
 import { ART_SCALE, PALETTE } from './art/palette';
 import { HUD_BAR } from './art/hud';
@@ -28,6 +30,9 @@ const ICON_SIZE = 48;
 const ICON_BORDER_W = 2;
 const ICON_GAP = 10;
 const ICON_Y = BAR_Y + BAR_H + 8;
+/** Barra de maestria (MST-08): 2 px de altura, colada sob o ícone, com a largura do slot. */
+const MASTERY_BAR_H = 2;
+const MASTERY_BAR_Y = ICON_Y + ICON_SIZE + ICON_BORDER_W + 2;
 /** Tecla principal de cada slot (TechCaster.ts: slot 1 = L/C, slot 2 = I/V). */
 const SLOT_LABEL: readonly ['L', 'I'] = ['L', 'I'];
 /** Duração do flash de recusa por falta de energia (TEC-10). */
@@ -51,6 +56,7 @@ export class EnergyHud {
   private readonly fill: Phaser.GameObjects.Rectangle;
   private readonly marks: [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
   private readonly slots: [SlotIcon, SlotIcon];
+  private readonly masteryBars: [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
   private flashMs = 0;
 
   constructor(
@@ -92,10 +98,18 @@ export class EnergyHud {
       return { icon, border, overlay, label };
     }) as [SlotIcon, SlotIcon];
 
+    this.masteryBars = [0, 1].map((i) =>
+      scene.add
+        .rectangle(BAR_X + i * (ICON_SIZE + ICON_GAP), MASTERY_BAR_Y, 0, MASTERY_BAR_H, ENERGY_BAR_FILL_COLOR)
+        .setOrigin(0, 0)
+        .setVisible(false),
+    ) as [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
+
     const objs: (Phaser.GameObjects.Rectangle | Phaser.GameObjects.Sprite | Phaser.GameObjects.Text)[] = [
       this.bg,
       this.fill,
       ...this.marks,
+      ...this.masteryBars,
       ...this.slots.flatMap((s) => [s.border, s.icon, s.overlay, s.label]),
     ];
     for (const o of objs) o.setScrollFactor(0).setDepth(DEPTH);
@@ -113,14 +127,16 @@ export class EnergyHud {
     return { x: icon.x + ICON_SIZE / 2, y: icon.y + ICON_SIZE / 2 };
   }
 
-  update(dtMs: number, energy: CursedEnergy, loadout: Loadout): void {
+  update(dtMs: number, energy: CursedEnergy, loadout: Loadout, mastery: Mastery): void {
     const frac = Math.max(0, Math.min(1, energy.cur / energy.max));
     this.fill.width = BAR_W * frac; // TEC-07
 
     loadout.slotsView.forEach((s, i) => {
       const mark = this.marks[i];
       const slot = this.slots[i];
+      const bar = this.masteryBars[i];
       if (!s) {
+        bar.setVisible(false);
         mark.setVisible(false);
         slot.icon.setVisible(false);
         slot.border.setVisible(false);
@@ -137,6 +153,14 @@ export class EnergyHud {
       const cdFrac = Math.max(0, Math.min(1, loadout.cooldownOf(i as 0 | 1) / def.cooldownMs));
       slot.overlay.height = ICON_SIZE * cdFrac; // TEC-09
       slot.overlay.setVisible(cdFrac > 0);
+      // MST-08: sob o slot ocupado abaixo do Nv3, largura = round(largura do slot × pontos / limiar).
+      const width = masteryBarWidth(ICON_SIZE, mastery.points(i as 0 | 1), mastery.threshold(s.level));
+      if (width === null) {
+        bar.setVisible(false);
+      } else {
+        bar.width = width;
+        bar.setVisible(true);
+      }
     });
 
     this.flashMs = Math.max(0, this.flashMs - dtMs);
@@ -151,6 +175,8 @@ export class EnergyHud {
       fillWidth: number;
       marks: (number | null)[];
       icons: { cooldownOverlayHeight: number; iconHeight: number }[];
+      /** MST-08: largura (px) da barra de maestria de cada slot, `null` se não está desenhada (vazio ou Nv3). */
+      masteryBars: (number | null)[];
       flashing: boolean;
     };
   } {
@@ -159,6 +185,7 @@ export class EnergyHud {
       this.bg,
       this.fill,
       ...this.marks,
+      ...this.masteryBars,
       ...this.slots.flatMap((s) => [s.border, s.icon, s.overlay, s.label]),
     ];
     return {
@@ -169,6 +196,7 @@ export class EnergyHud {
         fillWidth: this.fill.width,
         marks: this.marks.map((m) => (m.visible ? m.x - BAR_X : null)),
         icons: this.slots.map((s) => ({ cooldownOverlayHeight: s.overlay.visible ? s.overlay.height : 0, iconHeight: ICON_SIZE })),
+        masteryBars: this.masteryBars.map((b) => (b.visible ? b.width : null)),
         flashing: this.flashMs > 0,
       },
     };
