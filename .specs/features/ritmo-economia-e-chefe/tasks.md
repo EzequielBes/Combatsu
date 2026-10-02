@@ -317,7 +317,7 @@ T22 → T23 → T24 → T25
 **Reuses**: o fluxo atual de `update` e `canAct`
 **Requirement**: SPN-10, SPN-11, LIM-03
 **Done when**:
-- [ ] Typecheck e build passam; nenhum uso de `patrolSpeed` sobra em `src/`.
+- [x] Typecheck e build passam; nenhum uso de `patrolSpeed` sobra em `src/`.
 **Tests**: none
 **Gate**: build
 

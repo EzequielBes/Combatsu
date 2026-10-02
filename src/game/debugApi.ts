@@ -39,8 +39,7 @@ export interface GameSnapshot {
     state: EnemyState;
     maxHp: number;
     damage: number;
-    /** Velocidades da IA em uso, já escaladas pela rodada (DIF-04/06). */
-    patrolSpeed: number;
+    /** Velocidade de perseguição da IA em uso, já escalada pela rodada (DIF-04/06). */
     chaseSpeed: number;
     /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
     weapon: ToolKey | null;
