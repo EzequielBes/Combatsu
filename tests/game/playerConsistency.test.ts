@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PLAYER_FRAMES, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
-import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
+import { PLAYER_TECH_FRAMES, WRIST_GRIP, WRIST_GRIP_AT } from '../../src/game/art/sprites/playerTech';
 
 const ALL: Record<string, readonly string[]> = { ...PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES, ...PLAYER_TECH_FRAMES };
 const frame = (name: string): readonly string[] => {
@@ -112,5 +112,20 @@ describe('pouso e pulo (SPF-01, SPF-02, SPF-05)', () => {
   it('jump-0 tem um único componente e nenhum pixel cortado (SPF-01, SPF-02)', () => {
     expect(componentSizes(frame('jump-0'))).toHaveLength(1);
     expect(clippedOf(frame('jump-0'))).toBe(0);
+  });
+});
+
+describe('mão do pulso no tom do braço de trás (SPF-06)', () => {
+  // A área de desenho começa 2 colunas à direita do início do frame (FRAME_PAD).
+  const FRAME_PAD = 2;
+
+  it('nenhum pixel da região WRIST_GRIP no vermelho-charge usa a pele clara p', () => {
+    const rows = frame('vermelho-charge');
+    const region = WRIST_GRIP.map((_, dy) =>
+      rows[WRIST_GRIP_AT.y + dy].slice(FRAME_PAD + WRIST_GRIP_AT.x, FRAME_PAD + WRIST_GRIP_AT.x + WRIST_GRIP[0].length),
+    );
+    expect(region.join('')).not.toContain('p');
+    // A região tem a mão de verdade (não está vazia): pelo menos um pixel de pele da mão de trás (P).
+    expect(region.join('')).toContain('P');
   });
 });
