@@ -180,7 +180,7 @@ T10 → T11 → T12 → T13
 **Reuses**: `PLAYER_ORIGIN`, `ART_SCALE`
 **Requirement**: RDA-04
 **Done when**:
-- [ ] Testes nos 3 frames (sign, charge, release):
+- [x] Testes nos 3 frames (sign, charge, release):
   - o pixel devolvido é `R`;
   - é o de maior coluna do braço;
   - o offset é espelhado com `facing = −1`.
