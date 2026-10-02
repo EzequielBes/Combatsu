@@ -268,12 +268,12 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PRG-01 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-02 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-03 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-04 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-05 | P1: Energia e Fluxo | Specify | Pending |
-| PRG-06 | P1: Energia e Fluxo | Specify | Pending |
+| PRG-01 | P1: Energia e Fluxo | Specify | Implementing |
+| PRG-02 | P1: Energia e Fluxo | Specify | Implementing |
+| PRG-03 | P1: Energia e Fluxo | Specify | Implementing |
+| PRG-04 | P1: Energia e Fluxo | Specify | Implementing |
+| PRG-05 | P1: Energia e Fluxo | Specify | Implementing |
+| PRG-06 | P1: Energia e Fluxo | Specify | Implementing |
 | SPN-01 | P1: Mais inimigos | Specify | Implementing |
 | SPN-02 | P1: Mais inimigos | Specify | Implementing |
 | SPN-03 | P1: Mais inimigos | Specify | Implementing |
@@ -313,15 +313,15 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | BFX-06 | P1: Chefe | Specify | Implementing |
 | BFX-07 | P1: Chefe | Specify | Implementing |
 | BFX-08 | P1: Chefe | Specify | Implementing |
-| BFX-09 | P1: Chefe | Specify | Pending |
-| BFX-10 | P1: Chefe | Specify | Pending |
+| BFX-09 | P1: Chefe | Specify | Implementing |
+| BFX-10 | P1: Chefe | Specify | Implementing |
 | MST-01 | P2: Maestria | Specify | Implementing |
 | MST-02 | P2: Maestria | Specify | Implementing |
 | MST-03 | P2: Maestria | Specify | Implementing |
 | MST-04 | P2: Maestria | Specify | Implementing |
 | MST-05 | P2: Maestria | Specify | Implementing |
 | MST-06 | P2: Maestria | Specify | Implementing |
-| MST-07 | P2: Maestria | Specify | Pending |
+| MST-07 | P2: Maestria | Specify | Implementing |
 | MST-08 | P2: Maestria | Specify | Pending |
 | EDG-01 | Edge cases | Specify | Implementing |
 | EDG-02 | Edge cases | Specify | Implementing |

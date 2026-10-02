@@ -14,6 +14,7 @@ import { AttackGate } from '../core/attackGate';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
+import { Mastery, type MasterySlot } from '../core/mastery';
 import { parseVariant, pickEnemyVariant } from '../core/enemyVariant';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
@@ -104,6 +105,8 @@ function debugParam(name: string): string | null {
   return isDebug() ? new URLSearchParams(window.location.search).get(name) : null;
 }
 
+/** Duração (ms) do banner do upgrade grátis do chefe: o fim da faixa "Chefe derrotado!", sem atrasar "Rodada N concluída" (BFX-10). */
+const BOSS_UPGRADE_BANNER_MS = 800;
 /** Margem (px) além da borda da câmera em que um ponto ainda conta como visível (SPN-07). */
 const SPAWN_VIEW_MARGIN = 32;
 /** Chance de o spawn preferir os pontos às costas do player (SPN-08). */
@@ -152,7 +155,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
   private bossDefeatedPending = false;
   /** Na rodada de chefe, "Rodada N concluída" entra depois da faixa "Chefe derrotado!" (BHUD-03 + RHUD-03). */
-  private clearedBanner: { round: number; afterMs: number } | null = null;
+  private clearedBanner: { round: number; afterMs: number; upgradeText: string | null } | null = null;
   /** Projéteis da rajada e ondas de choque do pouso do chefe (BAT-03/04/06/12). */
   private projectiles: Projectile[] = [];
   private props: Prop[] = [];
@@ -171,6 +174,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private energy!: CursedEnergy;
   /** Slots de técnica (TEC-01..06), vazios a cada `startRun` (ou `?debug&tech=`, TEC-02). */
   private loadout!: Loadout;
+  /** Pontos de maestria por slot (MST-01..06): zerados a cada `startRun` e ao equipar técnica nova no slot. */
+  private mastery = new Mastery();
   /** Conjuração de técnicas (CAST-*), dona da `CastMachine` e dos ganchos do `Player`. */
   private techCaster!: TechCaster;
   /** Executa a técnica na soltura (T22+: Punho Divergente/Kokusen), dona da hitbox e das camadas próprias dela. */
@@ -268,10 +273,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.spawnLastUsed = new Map();
     this.wasPlayerDead = false;
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
-    this.modifiers = new Modifiers();
+    this.modifiers = new Modifiers(FULL_SHOP_CATALOG);
     // F5: uma instância por cena, zeradas a cada `startRun` (CE-01, TEC-01).
     this.energy = new CursedEnergy();
     this.loadout = new Loadout();
+    this.mastery = new Mastery();
 
     this.props = [];
     for (const s of this.level.props) {
@@ -315,8 +321,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.freeze();
       },
       (target, point, facing, streak) => this.kokusenFx.trigger(target, point, facing, streak),
-      // T18: a maestria liga aqui (Mastery + loadout.upgrade + banner); até lá o acerto é só repassado.
-      () => undefined,
+      // MST-01/02: acerto de técnica em alvo real vira ponto de maestria.
+      (slot, castId, targetId, isBoss) => this.onMasteryHit(slot, castId, targetId, isBoss),
     );
 
     // T28: laboratório de efeitos (`?debug&fxlab`) - bonecos de treino + teclas 1-6/0, sem ondas (FXL-01).
@@ -472,6 +478,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
       if (this.clearedBanner) {
         this.clearedBanner.afterMs -= dt;
+        // BFX-10: o banner do upgrade grátis ocupa o fim da faixa "Chefe derrotado!", antes de "Rodada N concluída".
+        if (this.clearedBanner.upgradeText && this.clearedBanner.afterMs <= BOSS_UPGRADE_BANNER_MS) {
+          this.hud.banner(this.clearedBanner.upgradeText, BOSS_UPGRADE_BANNER_MS);
+          this.clearedBanner.upgradeText = null;
+        }
         if (this.clearedBanner.afterMs <= 0) {
           if (this.run.state === 'intermission') this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
           this.clearedBanner = null;
@@ -543,7 +554,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
           this.loadout.upgrade(id);
         } else {
           const slot = this.loadout.firstEmpty();
-          if (slot !== null && this.loadout.equip(slot, id, 1)) this.pendingTechEquip = { id, slot };
+          if (slot !== null && this.loadout.equip(slot, id, 1)) {
+            this.pendingTechEquip = { id, slot };
+            this.mastery.resetSlot(slot); // PRG-04 / reequipar: técnica nova no slot começa sem pontos
+          }
         }
         if (bothEmptyBefore) this.debugEvents.push(`techUnlock:${id}`);
       },
@@ -738,7 +752,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // CE-01/TEC-01: energia e slots voltam ao início da run; `?debug&tech=` equipa por cima (TEC-02).
     this.energy.reset();
     this.loadout.reset();
+    this.mastery.reset();
     this.equipDebugTech();
+    this.applyDebugMastery();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
     this.lootRng = this.run.lootRng!;
     this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides(), this.modifiers);
@@ -757,6 +773,45 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       if (slot > 1) break;
       if (this.loadout.equip(slot as 0 | 1, id, 1)) slot++;
     }
+  }
+
+  /** `?debug&mastery=N` (inteiro >= 0): cada técnica equipada começa a run com N pontos de maestria; inválido é ignorado. */
+  private applyDebugMastery(): void {
+    const n = debugIntParam('mastery', 0);
+    if (n === undefined) return;
+    for (const slot of [0, 1] as const) if (this.loadout.slotsView[slot]) this.mastery.setPoints(slot, n);
+  }
+
+  /** Nome da técnica como a loja mostra, para os banners de nível (MST-07, BFX-10). */
+  private techName(id: TechId): string {
+    return FULL_SHOP_CATALOG.find((e) => e.id === id)?.name ?? TECHNIQUES[id].name;
+  }
+
+  /**
+   * Acerto de técnica em alvo real (MST-01..07): soma maestria ao slot e, no limiar, sobe 1 nível com o banner
+   * `"{nome} Nv {n}!"`. No laboratório de efeitos (bonecos de treino) não há maestria.
+   */
+  private onMasteryHit(slot: MasterySlot, castId: number, targetId: number, isBoss: boolean): void {
+    if (this.fxLab) return;
+    const equipped = this.loadout.slotsView[slot];
+    if (!equipped) return;
+    const { levelUp } = this.mastery.registerHit(slot, equipped.level, castId, targetId, isBoss);
+    if (levelUp && this.loadout.upgrade(equipped.id)) {
+      this.hud.banner(`${this.techName(equipped.id)} Nv ${this.loadout.levelOf(equipped.id)}!`, RUN.bannerMs);
+    }
+  }
+
+  /**
+   * Upgrade grátis da vitória sobre o chefe (BFX-09): sobe 1 nível a técnica equipada de menor nível abaixo do 3
+   * (empate: slot 0). Devolve o texto do banner (BFX-10), ou `null` se nada era upável.
+   */
+  private bossRewardUpgrade(): string | null {
+    let pick: { id: TechId; level: number } | null = null;
+    for (const s of this.loadout.slotsView) {
+      if (s && s.level < 3 && (pick === null || s.level < pick.level)) pick = s;
+    }
+    if (!pick || !this.loadout.upgrade(pick.id)) return null;
+    return `${this.techName(pick.id)} Nv ${this.loadout.levelOf(pick.id)}!`;
   }
 
   /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
@@ -1010,7 +1065,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.hideBossBar();
     // BHUD-03: a faixa entra na hora da morte; "Rodada N concluída" vem depois dela (RHUD-03).
     this.hud.banner('Chefe derrotado!', BOSS.defeatBannerMs);
-    this.clearedBanner = { round: this.run.round, afterMs: BOSS.defeatBannerMs };
+    this.clearedBanner = { round: this.run.round, afterMs: BOSS.defeatBannerMs, upgradeText: this.bossRewardUpgrade() };
     this.bossDefeatedPending = true;
   }
 

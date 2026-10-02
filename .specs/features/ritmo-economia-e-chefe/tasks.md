@@ -387,7 +387,7 @@ O `startRun` chama `reset`.
 **Reuses**: `openShop`, `onBossDefeated`, `Hud.banner`
 **Requirement**: PRG-01, PRG-02, PRG-03, PRG-04, PRG-05, PRG-06, MST-03, MST-07, BFX-09, BFX-10
 **Done when**:
-- [ ] Build passa.
+- [x] Build passa.
 **Tests**: none
 **Gate**: build
 
