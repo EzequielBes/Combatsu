@@ -485,7 +485,7 @@ O `startRun` chama `reset`.
 **Reuses**: o padrão de `boss.smoke.mjs`
 **Requirement**: BFX-02, BFX-05, BFX-06, BFX-07, BFX-08, BFX-09, BFX-10
 **Done when**:
-- [ ] O smoke passa no suite completo.
+- [x] O smoke passa no suite completo.
 **Tests**: smoke
 **Gate**: full
 
