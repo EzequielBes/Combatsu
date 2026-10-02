@@ -3,6 +3,7 @@
 // 2) `maxAlive=6&enemyGuard=0` com o player parado por 20 s: `attackers <= 2` em todo frame, dois `windup` nunca a
 //    menos de 350 ms e inimigos parados em `hold` do mesmo lado a >= 20 px um do outro.
 // 3) `tech=divergente&fragments=200`: comprar Energia sobe `energy.max` (`ce.max`).
+// 4) Game over com vaga/fila ocupadas e run nova (J): `gate.active === 0` e fila vazia (EDG-03).
 export default async function ({ page, baseUrl, assert }) {
   const FRAME_MS = 1000 / 60;
   const ready = () =>
@@ -167,5 +168,25 @@ export default async function ({ page, baseUrl, assert }) {
     s = await tap('Enter');
     s = await snap(50);
     assert(s.run.state === 'roundActive' && s.ce.max === 120, `PRG-05: o teto de 120 deveria seguir na rodada 2: ${JSON.stringify({ run: s.run, ce: s.ce })}`);
+  }
+
+  // --- 4) Nova run libera as vagas e a fila do limitador (EDG-03) ------------------------------------------------------
+  {
+    let s = await boot('maxAlive=6&enemyGuard=0');
+    // Player parado até o limitador ter vaga ocupada ou fila (inimigos pedindo para atacar).
+    for (let i = 0; i < 1200 && s.gate.active === 0 && s.gate.queue.length === 0 && s.player.hp > 25; i++) s = await frame();
+    assert(s.gate.active > 0 || s.gate.queue.length > 0, `EDG-03: o cenário nunca ocupou vaga nem fila: ${JSON.stringify(s.gate)}`);
+    // Mata o player com o dano de debug (tecla 4) até o game over.
+    for (let i = 0; i < 40 && s.run.state !== 'gameOver'; i++) {
+      await page.keyboard.press('Digit4', { delay: 30 });
+      s = await snap(100);
+    }
+    assert(s.run.state === 'gameOver', `EDG-03: esperava gameOver: ${JSON.stringify(s.run)}`);
+    s = await snap(1500); // passa o bloqueio do game over
+    // Run nova (J): `onStartRun` zera o limitador no mesmo frame, antes de qualquer inimigo novo pedir vaga.
+    await page.keyboard.press('KeyJ', { delay: 50 });
+    s = await frame();
+    assert(s.run.state === 'roundActive', `EDG-03: a run nova deveria começar: ${JSON.stringify(s.run)}`);
+    assert(s.gate.active === 0 && s.gate.queue.length === 0, `EDG-03: vagas/fila deveriam zerar com a run nova: ${JSON.stringify(s.gate)}`);
   }
 }
