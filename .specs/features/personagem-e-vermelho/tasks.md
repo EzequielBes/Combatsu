@@ -120,7 +120,7 @@ T10 → T11 → T12 → T13
 **Reuses**: `far()`/`recolor`
 **Requirement**: SPF-06
 **Done when**:
-- [ ] Teste: nenhum pixel da região `WRIST_GRIP` nos frames `vermelho-charge-*` usa `p`.
+- [x] Teste: nenhum pixel da região `WRIST_GRIP` nos frames `vermelho-charge-*` usa `p`.
 **Tests**: unit
 **Gate**: quick
 

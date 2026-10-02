@@ -55,7 +55,9 @@ function armPointed(len: number, hi: string, fill: string): string[] {
 
 /** Mão de apoio segurando o pulso por baixo (Vermelho, charge): uma peça `far` própria, curta, colocada logo
  * abaixo da manga do braço esticado — mais simples e mais confiável que sobrepor o braço já pronto. */
-const WRIST_GRIP: Grid = ['.kkk.', 'kppPk', 'ksnNk', '.kkk.'];
+export const WRIST_GRIP: Grid = ['.kkk.', 'kppPk', 'ksnNk', '.kkk.'];
+/** Posição (x, y na área de desenho) da mão de apoio no `vermelho-charge`. */
+export const WRIST_GRIP_AT = { x: 13, y: 13 } as const;
 
 /**
  * Palma aberta à frente, dedos juntos, com um núcleo `core` entre eles em vez do punho fechado — usada pela
@@ -185,7 +187,8 @@ export const PLAYER_TECH_FRAMES: Record<string, readonly string[]> = {
     drop: 2,
     head: HEAD_FOCUS,
     near: [armPointed(14, 'R', 'r'), 9, 9],
-    far: [WRIST_GRIP, 13, 13],
+    // Braço de trás: a mão de apoio passa pelo `far()` para não ficar na pele clara (`p`) do braço da frente.
+    far: [far(WRIST_GRIP), WRIST_GRIP_AT.x, WRIST_GRIP_AT.y],
     legs: [CHARGE_LEGS],
   }),
   // A soltura empurra o player para trás (RED-15): lean e pernas recuam em vez de avançar.
