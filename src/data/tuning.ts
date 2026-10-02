@@ -259,6 +259,17 @@ export const SHOP: ShopTuning = {
   sortePerLevel: 0.03,
 };
 
+/** Maestria das técnicas (MST-01..06): pontos para subir do Nv1 e do Nv2, e pontos por acerto no chefe. */
+export interface MasteryTuning {
+  thresholds: { 1: number; 2: number };
+  bossPoints: number;
+}
+
+export const MASTERY: MasteryTuning = {
+  thresholds: { 1: 15, 2: 25 },
+  bossPoints: 3,
+};
+
 export const BOSS = {
   /** Entrada parado e invulnerável antes de poder atacar (BOSS-06). */
   introMs: 1500,

@@ -252,7 +252,7 @@ T22 → T23 → T24 → T25
 **Reuses**: nenhum (módulo novo)
 **Requirement**: MST-01, MST-02, MST-03, MST-04, MST-05, MST-06
 **Done when**:
-- [ ] Testes cobrem:
+- [x] Testes cobrem:
   - 14 pontos não sobem de nível, 15 sobem;
   - no Nv2, 24 não sobem e 25 sobem;
   - o mesmo alvo na mesma conjuração conta 1 vez; em conjurações diferentes conta 2;
