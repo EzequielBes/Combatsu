@@ -206,7 +206,7 @@ F11 ritmo-economia-e-chefe ─► F12 combate-mestre ─► F13 foco-e-ambiente 
 | F13 | `foco-e-ambiente` | Large | Barra de Foco e os 3 golpes de Foco (tecla F); parede (impacto que atordoa); empurrão em corrente; finalizadores contextuais (normal, parede, arremesso no grupo); cura e Foco no finalizador. |
 | F14 | `ia-tatica` | Complex | `AttackDirector` com 2 tokens e token de oportunidade; anel com fintas e flanco; sequências de golpes por arquétipo; parry e esquiva do inimigo; superarmadura; agarrão; Elite; indicador de costas/fora da tela; áudio ZzFX. |
 | F15 | `inimigos-a-distancia` | Large | Arquétipo Conjurador: sprite novo nas 3 aparências (AD-013), dash para trás e kiting. Os 4 ataques (dardo, esfera, morteiro com marca no chão, rajada), parry que rebate o projétil, Deflexão à distância, token à distância, regra de linha bloqueada e Conjurador Elite. |
-| F16 | `pressao-e-curva` | Medium | Sem patrulha, todos perseguem sempre. `maxAlive` 5 → 8 (+1 a cada 2 rodadas). Onda de 6 + 2 por rodada, teto 20. Nasce um a cada ~1,5 s enquanto houver vaga. Pontos de spawn nas bordas e **fora da câmera** (35% de chance de nascer nas costas do jogador). HP e dano fixos. Escalada por composição e comportamento, curva de ensino e dicas contextuais. |
+| F16 | `pressao-e-curva` | Medium | O volume de spawn já entrou na F11. Aqui fica a escalada por composição e comportamento (Rastejantes, Brutos, Conjuradores, Elites, fintas, leitura, cadência de tokens de 350 para 220 ms), HP e dano fixos (AD-014), a curva de ensino por rodada e as dicas contextuais. |
 
 **Rejeitado:** Yuka e outras bibliotecas de steering. A IA atual é TypeScript puro e determinístico (AD-001), e o diretor mais o anel cabem em código testável. **Adotado:** ZzFX, para áudio sem assets.
 
