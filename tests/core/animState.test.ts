@@ -107,16 +107,18 @@ describe('attackFrame (CHR-02)', () => {
 
 describe('pickEnemyAnim (CHR-03): uma linha da tabela brain x IA por teste', () => {
   const enemy = (over: Partial<EnemyAnimInput>): EnemyAnim =>
-    pickEnemyAnim({ brain: 'idle', ai: 'patrol', moving: false, ...over });
+    pickEnemyAnim({ brain: 'idle', ai: 'chase', moving: false, ...over });
   const ALL: EnemyAnim[] = ['idle', 'walk', 'windup', 'attack', 'hurt', 'getup'];
 
-  it('brain idle + IA patrol/chase andando -> walk', () => {
-    expect(enemy({ ai: 'patrol', moving: true })).toBe('walk');
+  it('brain idle + IA chase/hold/approach andando -> walk', () => {
+    expect(enemy({ ai: 'hold', moving: true })).toBe('walk');
+    expect(enemy({ ai: 'approach', moving: true })).toBe('walk');
     expect(enemy({ ai: 'chase', moving: true })).toBe('walk');
   });
 
-  it('brain idle + IA patrol/chase parado -> idle', () => {
-    expect(enemy({ ai: 'patrol', moving: false })).toBe('idle');
+  it('brain idle + IA chase/hold/approach parado -> idle', () => {
+    expect(enemy({ ai: 'hold', moving: false })).toBe('idle');
+    expect(enemy({ ai: 'approach', moving: false })).toBe('idle');
     expect(enemy({ ai: 'chase', moving: false })).toBe('idle');
   });
 
@@ -149,7 +151,7 @@ describe('pickEnemyAnim (CHR-03): uma linha da tabela brain x IA por teste', () 
 
   it('sempre devolve exatamente uma das 6 animações do CHR-03', () => {
     const brains = ['idle', 'hitstun', 'ragdollStun', 'gettingUp', 'deadRagdoll', 'dissolving', 'gone'] as const;
-    const ais = ['patrol', 'chase', 'windup', 'attack', 'rest'] as const;
+    const ais = ['chase', 'hold', 'approach', 'windup', 'attack', 'rest'] as const;
     for (const brain of brains)
       for (const ai of ais)
         for (const moving of [false, true]) expect(ALL).toContain(pickEnemyAnim({ brain, ai, moving }));
@@ -161,7 +163,7 @@ describe('pickEnemyAnim com reação (HRX-02, HRX-04)', () => {
 
   it('hitstun com reaction devolve hurt-<reaction>, qualquer que seja a IA', () => {
     for (const reaction of REACTIONS)
-      for (const ai of ['patrol', 'chase', 'windup', 'attack', 'rest'] as const)
+      for (const ai of ['chase', 'hold', 'approach', 'windup', 'attack', 'rest'] as const)
         expect(pickEnemyAnim({ brain: 'hitstun', ai, moving: false, reaction })).toBe(`hurt-${reaction}`);
   });
 

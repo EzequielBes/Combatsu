@@ -1,37 +1,67 @@
 import { describe, expect, it } from 'vitest';
-import { EnemyAI, type AIOutput } from '../../src/core/enemyAI';
+import { EnemyAI, type AIInput, type AIOutput, type EnemyAITuning } from '../../src/core/enemyAI';
 import { ENEMY_AI, ENEMY_ATTACK } from '../../src/data/tuning';
 
-/** Números do spec (Assumptions: "Distâncias da IA" e "Números de vida e IA"). */
-const SPEC = {
-  patrolRange: 48,
-  patrolSpeed: 35,
-  chaseRange: 200,
+/** Números do spec (SPN-12, LIM-03, LIM-07, AI-03). */
+const SPEC: EnemyAITuning = {
   chaseSpeed: 70,
   attackRange: 40,
   windupMs: 450,
   attackMs: 120,
   restMs: 800,
+  holdRange: 96,
+  holdBase: 64,
+  holdStep: 24,
+  holdTolerance: 8,
+  farRange: 320,
+  farSpeedMult: 1.6,
 };
-const SPAWN = 500;
+/** Tuning diferente do padrão em todos os campos: pega constante fixa no código (fecha o item do backlog). */
+const ALT: EnemyAITuning = {
+  chaseSpeed: 50,
+  attackRange: 25,
+  windupMs: 200,
+  attackMs: 60,
+  restMs: 300,
+  holdRange: 150,
+  holdBase: 100,
+  holdStep: 10,
+  holdTolerance: 4,
+  farRange: 500,
+  farSpeedMult: 2,
+};
+const SELF = 500;
 const FRAME = 16;
 
+/** Entrada com o player `dist` px à direita (ou à esquerda, com `dist` negativo) e, por padrão, sem permissão. */
+function at(dist: number, over: Partial<AIInput> = {}): AIInput {
+  return { selfX: SELF, playerX: SELF + dist, canAct: true, granted: false, windupAllowed: true, holdRank: 0, ...over };
+}
+
 /** Roda a IA por `ms` em passos de 1 frame, acumulando os eventos. */
-function run(ai: EnemyAI, ms: number, s: { selfX: number; playerX: number; canAct?: boolean }): AIOutput {
+function run(ai: EnemyAI, ms: number, s: AIInput): AIOutput {
   let last: AIOutput = { vx: 0, facing: 1, events: [] };
   const events: AIOutput['events'] = [];
   for (let t = 0; t < ms; t += FRAME) {
-    last = ai.update(Math.min(FRAME, ms - t), { canAct: true, ...s });
+    last = ai.update(Math.min(FRAME, ms - t), s);
     events.push(...last.events);
   }
   return { ...last, events };
 }
 
-/** IA colada no player (a 20 px), já em windup. */
-function inWindup(): EnemyAI {
-  const ai = new EnemyAI(ENEMY_AI, SPAWN);
-  const out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 20, canAct: true });
+/** IA com permissão e colada no player (a 20 px), já em windup. */
+function inWindup(t: EnemyAITuning = SPEC): EnemyAI {
+  const ai = new EnemyAI(t);
+  const out = ai.update(FRAME, at(20, { granted: true }));
   expect(out.events).toEqual(['windupStart']);
+  return ai;
+}
+
+/** IA já em `hold` com o rank dado, num dist dado (entra a 96/holdRange e depois testa a faixa). */
+function inHold(t: EnemyAITuning, rank: number): EnemyAI {
+  const ai = new EnemyAI(t);
+  ai.update(FRAME, at(t.holdRange, { holdRank: rank }));
+  expect(ai.state).toBe('hold');
   return ai;
 }
 
@@ -46,263 +76,390 @@ describe('tuning real da IA do inimigo (números do spec)', () => {
   });
 });
 
-describe('EnemyAI: patrulha (AI-01)', () => {
-  it('com o player a 200 px ou mais, patrulha a 35 px/s', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    const out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 200, canAct: true });
-    expect(ai.state).toBe('patrol');
-    expect(Math.abs(out.vx)).toBe(35);
-    expect(out.facing).toBe(Math.sign(out.vx));
-  });
-
-  it('vira na borda de spawn ± 48 px e volta', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    const far = SPAWN + 1000;
-    expect(ai.update(FRAME, { selfX: SPAWN + 48, playerX: far, canAct: true }).vx).toBe(-35);
-    expect(ai.update(FRAME, { selfX: SPAWN, playerX: far, canAct: true }).vx).toBe(-35);
-    expect(ai.update(FRAME, { selfX: SPAWN - 48, playerX: far, canAct: true }).vx).toBe(35);
-    expect(ai.update(FRAME, { selfX: SPAWN, playerX: far, canAct: true }).vx).toBe(35);
-  });
-
-  it('simulado, nunca sai de spawn ± 48 px (com folga de 1 frame)', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    let x = SPAWN;
-    let min = x;
-    let max = x;
-    for (let i = 0; i < 1000; i++) {
-      x += (ai.update(FRAME, { selfX: x, playerX: SPAWN - 900, canAct: true }).vx * FRAME) / 1000;
-      min = Math.min(min, x);
-      max = Math.max(max, x);
+describe('EnemyAI: nunca patrulha (SPN-10)', () => {
+  it('começa em chase e, por qualquer distância e permissão, nunca entra em patrol', () => {
+    const ai = new EnemyAI(SPEC);
+    expect(ai.state).toBe('chase');
+    const seen = new Set<string>();
+    for (const dist of [-1000, -400, -321, -100, -96, -50, -20, 0, 20, 39, 40, 41, 96, 97, 150, 321, 900]) {
+      for (const granted of [false, true]) {
+        for (const windupAllowed of [false, true]) {
+          const a = new EnemyAI(SPEC);
+          for (let i = 0; i < 40; i++) {
+            a.update(FRAME, at(dist, { granted, windupAllowed }));
+            seen.add(a.state);
+          }
+          seen.add(ai.state);
+        }
+      }
     }
-    const step = (35 * FRAME) / 1000;
-    expect(max).toBeLessThanOrEqual(SPAWN + 48 + step);
-    expect(min).toBeGreaterThanOrEqual(SPAWN - 48 - step);
-    // E vai de fato até as duas bordas.
-    expect(max).toBeGreaterThanOrEqual(SPAWN + 48);
-    expect(min).toBeLessThanOrEqual(SPAWN - 48);
+    expect(seen.has('patrol')).toBe(false);
+    expect([...seen].every((s) => ['chase', 'hold', 'approach', 'windup', 'attack', 'rest'].includes(s))).toBe(true);
   });
 
-  it('longe do spawn (depois de perseguir), volta para a faixa de patrulha', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    expect(ai.update(FRAME, { selfX: SPAWN + 150, playerX: SPAWN + 400, canAct: true }).vx).toBe(-35);
-    expect(ai.update(FRAME, { selfX: SPAWN - 150, playerX: SPAWN - 400, canAct: true }).vx).toBe(35);
+  it('o player longe (900 px) não faz o inimigo ficar parado: ele corre atrás', () => {
+    const ai = new EnemyAI(SPEC);
+    const out = ai.update(FRAME, at(900));
+    expect(ai.state).toBe('chase');
+    expect(out.vx).toBeGreaterThan(0);
+  });
+
+  it('depois do descanso volta a perseguir, mesmo com o player longe', () => {
+    const ai = inWindup();
+    run(ai, 450 + 120 + 800, at(20, { granted: true }));
+    const out = ai.update(FRAME, at(600));
+    expect(ai.state).toBe('chase');
+    expect(out.vx).toBeCloseTo(112); // acima de 320 px corre a x1,6
   });
 });
 
-describe('EnemyAI: perseguição (AI-02)', () => {
-  it('com o player a menos de 200 px na horizontal, anda até ele a 70 px/s', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    let out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 199, canAct: true });
-    expect(ai.state).toBe('chase');
+describe('EnemyAI: perseguição (SPN-11)', () => {
+  it('o sinal do vx segue o sinal de playerX - selfX, e facing acompanha', () => {
+    const right = new EnemyAI(SPEC).update(FRAME, at(200));
+    expect(right.vx).toBe(70);
+    expect(right.facing).toBe(1);
+    const left = new EnemyAI(SPEC).update(FRAME, at(-200));
+    expect(left.vx).toBe(-70);
+    expect(left.facing).toBe(-1);
+  });
+
+  it('a distância é só horizontal: a IA nem recebe y', () => {
+    expect(new EnemyAI(SPEC).update(FRAME, at(150)).vx).toBe(70);
+  });
+});
+
+describe('EnemyAI: corrida acima de 320 px (SPN-12)', () => {
+  it('a 320 px: velocidade x1; a 321 px: x1,6', () => {
+    const near = new EnemyAI(SPEC).update(FRAME, at(320));
+    expect(near.vx).toBeCloseTo(70);
+    const far = new EnemyAI(SPEC).update(FRAME, at(321));
+    expect(far.vx).toBeCloseTo(112);
+  });
+
+  it('o mesmo vale para o lado esquerdo', () => {
+    expect(new EnemyAI(SPEC).update(FRAME, at(-320)).vx).toBeCloseTo(-70);
+    expect(new EnemyAI(SPEC).update(FRAME, at(-321)).vx).toBeCloseTo(-112);
+  });
+
+  it('usa farRange e farSpeedMult do tuning (500 e x2)', () => {
+    expect(new EnemyAI(ALT).update(FRAME, at(500)).vx).toBeCloseTo(50);
+    expect(new EnemyAI(ALT).update(FRAME, at(501)).vx).toBeCloseTo(100);
+  });
+});
+
+describe('EnemyAI: espera em hold (LIM-03)', () => {
+  it('sem permissão a 96 px entra em hold e pede para atacar; a 97 px continua em chase', () => {
+    const inside = new EnemyAI(SPEC);
+    const out = inside.update(FRAME, at(96));
+    expect(inside.state).toBe('hold');
+    expect(out.events).toEqual(['wantAttack']);
+    const outside = new EnemyAI(SPEC);
+    const out2 = outside.update(FRAME, at(97));
+    expect(outside.state).toBe('chase');
+    expect(out2.events).toEqual([]);
+  });
+
+  it('usa holdRange do tuning (150): 150 px é hold e 151 px é chase', () => {
+    const a = new EnemyAI(ALT);
+    a.update(FRAME, at(150));
+    expect(a.state).toBe('hold');
+    const b = new EnemyAI(ALT);
+    b.update(FRAME, at(151));
+    expect(b.state).toBe('chase');
+  });
+
+  it('colado no player (20 px) sem permissão também espera em hold, sem iniciar windup', () => {
+    const ai = new EnemyAI(SPEC);
+    const out = ai.update(FRAME, at(20));
+    expect(ai.state).toBe('hold');
+    expect(out.events).toEqual(['wantAttack']);
+    expect(out.events).not.toContain('windupStart');
+  });
+
+  it('o pedido wantAttack sai a cada frame em hold e só em hold', () => {
+    const ai = new EnemyAI(SPEC);
+    expect(ai.update(FRAME, at(90)).events).toEqual(['wantAttack']);
+    expect(ai.update(FRAME, at(90)).events).toEqual(['wantAttack']);
+    expect(new EnemyAI(SPEC).update(FRAME, at(300)).events).toEqual([]);
+    expect(new EnemyAI(SPEC).update(FRAME, at(90, { granted: true })).events).toEqual([]);
+  });
+});
+
+describe('EnemyAI: distância de espera 64 + 24k ± 8 (LIM-07)', () => {
+  it('k = 0: alvo 64; parado em 56 e 72 px, anda para dentro em 73 px e para fora em 55 px', () => {
+    const p = (dist: number): number => inHold(SPEC, 0).update(FRAME, at(dist)).vx;
+    expect(p(72)).toBe(0);
+    expect(p(56)).toBe(0);
+    expect(p(64)).toBe(0);
+    expect(p(73)).toBe(70); // longe demais: aproxima
+    expect(p(55)).toBe(-70); // perto demais: afasta
+  });
+
+  it('k = 0 com o player à esquerda: os sentidos se invertem', () => {
+    const ai = inHold(SPEC, 0);
+    expect(ai.update(FRAME, at(-73)).vx).toBe(-70); // aproxima (player à esquerda)
+    expect(ai.update(FRAME, at(-55)).vx).toBe(70); // afasta
+  });
+
+  it('k = 2: alvo 112; parado em 104 e 120 px, anda em 103 e 121 px (e continua em hold até 120)', () => {
+    const p = (dist: number): AIOutput => inHold(SPEC, 2).update(FRAME, at(dist, { holdRank: 2 }));
+    expect(p(104).vx).toBe(0);
+    expect(p(120).vx).toBe(0);
+    expect(p(112).vx).toBe(0);
+    expect(p(103).vx).toBe(-70);
+    expect(p(121).vx).toBe(70);
+    const ai = inHold(SPEC, 2);
+    ai.update(FRAME, at(120, { holdRank: 2 }));
+    expect(ai.state).toBe('hold');
+    ai.update(FRAME, at(121, { holdRank: 2 }));
+    expect(ai.state).toBe('chase'); // 121 > alvo + folga: sai de hold e persegue
+  });
+
+  it('k = 2 saindo de chase a 96 px entra em hold e se afasta até o alvo', () => {
+    const ai = new EnemyAI(SPEC);
+    const out = ai.update(FRAME, at(96, { holdRank: 2 }));
+    expect(ai.state).toBe('hold');
+    expect(out.vx).toBe(-70); // 96 < 112 - 8
+  });
+
+  it('usa holdBase, holdStep e holdTolerance do tuning (100 + 10k ± 4; k = 1 => 110)', () => {
+    const p = (dist: number): number => inHold(ALT, 1).update(FRAME, at(dist, { holdRank: 1 })).vx;
+    expect(p(106)).toBe(0);
+    expect(p(114)).toBe(0);
+    expect(p(105)).toBe(-50);
+    expect(p(115)).toBe(50);
+  });
+
+  it('holdDistance(k) = holdBase + holdStep * k', () => {
+    expect(new EnemyAI(SPEC).holdDistance(0)).toBe(64);
+    expect(new EnemyAI(SPEC).holdDistance(2)).toBe(112);
+    expect(new EnemyAI(ALT).holdDistance(3)).toBe(130);
+  });
+
+  it('em hold o inimigo olha sempre para o player', () => {
+    const ai = inHold(SPEC, 0);
+    expect(ai.update(FRAME, at(-70)).facing).toBe(-1);
+    expect(ai.update(FRAME, at(70)).facing).toBe(1);
+  });
+});
+
+describe('EnemyAI: permissão, aproximação e golpe (LIM-08)', () => {
+  it('com permissão e fora do alcance, avança em approach a chaseSpeed', () => {
+    const ai = inHold(SPEC, 0);
+    const out = ai.update(FRAME, at(70, { granted: true }));
+    expect(ai.state).toBe('approach');
     expect(out.vx).toBe(70);
-    expect(out.facing).toBe(1);
-    out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN - 150, canAct: true });
-    expect(out.vx).toBe(-70);
-    expect(out.facing).toBe(-1);
+    expect(out.events).toEqual([]);
   });
 
-  it('a distância é só horizontal: player 150 px acima e 100 px ao lado ainda é perseguido', () => {
-    // A IA nem recebe y: 100 px em x decidem sozinhos.
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    expect(ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 100, canAct: true }).vx).toBe(70);
+  it('approach vai até attackRange: 41 px ainda avança, 40 px inicia windup parado', () => {
+    const near = new EnemyAI(SPEC);
+    const o41 = near.update(FRAME, at(41, { granted: true }));
+    expect(near.state).toBe('approach');
+    expect(o41.vx).toBe(70);
+    const o40 = near.update(FRAME, at(40, { granted: true }));
+    expect(near.state).toBe('windup');
+    expect(o40.events).toEqual(['windupStart']);
+    expect(o40.vx).toBe(0);
   });
 
-  it('o player sai para 200 px ou mais: volta a patrulhar', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 150, canAct: true });
+  it('usa attackRange do tuning (25): 26 px approach, 25 px windup', () => {
+    const ai = new EnemyAI(ALT);
+    ai.update(FRAME, at(26, { granted: true }));
+    expect(ai.state).toBe('approach');
+    ai.update(FRAME, at(25, { granted: true }));
+    expect(ai.state).toBe('windup');
+  });
+
+  it('granted sem windupAllowed no alcance não entra em windup: espera parado em approach', () => {
+    const ai = new EnemyAI(SPEC);
+    const out = ai.update(FRAME, at(20, { granted: true, windupAllowed: false }));
+    expect(ai.state).toBe('approach');
+    expect(out.events).toEqual([]);
+    expect(out.vx).toBe(0);
+    const out2 = ai.update(FRAME, at(20, { granted: true, windupAllowed: true }));
+    expect(ai.state).toBe('windup');
+    expect(out2.events).toEqual(['windupStart']);
+  });
+
+  it('windupAllowed falso não impede o approach fora do alcance', () => {
+    const ai = new EnemyAI(SPEC);
+    expect(ai.update(FRAME, at(80, { granted: true, windupAllowed: false })).vx).toBe(70);
+  });
+
+  it('perder a permissão em approach volta a esperar (hold) ou perseguir', () => {
+    const ai = new EnemyAI(SPEC);
+    ai.update(FRAME, at(80, { granted: true }));
+    ai.update(FRAME, at(80, { granted: false }));
+    expect(ai.state).toBe('hold');
+    ai.update(FRAME, at(200, { granted: false }));
     expect(ai.state).toBe('chase');
-    const out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 200, canAct: true });
-    expect(ai.state).toBe('patrol');
-    expect(Math.abs(out.vx)).toBe(35);
   });
 });
 
 describe('EnemyAI: preparo, golpe e descanso (AI-03)', () => {
-  it('a menos de 40 px entra em windup parado e virado para o player', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN - 100, canAct: true });
-    const out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN - 39, canAct: true });
+  it('o windup vira para o player', () => {
+    const ai = new EnemyAI(SPEC);
+    const out = ai.update(FRAME, at(-39, { granted: true }));
     expect(ai.state).toBe('windup');
-    expect(out.events).toEqual(['windupStart']);
-    expect(out.vx).toBe(0);
     expect(out.facing).toBe(-1);
-  });
-
-  it('a exatamente 40 px ainda persegue', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    const out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 40, canAct: true });
-    expect(ai.state).toBe('chase');
-    expect(out.vx).toBe(70);
+    expect(out.vx).toBe(0);
   });
 
   it('windup dura 450 ms, parado; o golpe liga a hitbox por 120 ms; descansa 800 ms parado', () => {
     const ai = inWindup();
-    const at = { selfX: SPAWN, playerX: SPAWN + 20, canAct: true };
-    let out = ai.update(449, at);
+    const s = at(20, { granted: true });
+    let out = ai.update(449, s);
     expect(ai.state).toBe('windup');
     expect(out.events).toEqual([]);
     expect(out.vx).toBe(0);
-    out = ai.update(1, at);
+    out = ai.update(1, s);
     expect(ai.state).toBe('attack');
     expect(out.events).toEqual(['hitboxOn']);
     expect(out.vx).toBe(0);
-    out = ai.update(119, at);
+    out = ai.update(119, s);
     expect(out.events).toEqual([]);
     expect(ai.state).toBe('attack');
-    out = ai.update(1, at);
+    out = ai.update(1, s);
     expect(out.events).toEqual(['hitboxOff']);
     expect(ai.state).toBe('rest');
-    out = ai.update(799, { ...at, playerX: SPAWN + 150 });
+    out = ai.update(799, at(150));
     expect(ai.state).toBe('rest');
     expect(out.vx).toBe(0);
     expect(out.events).toEqual([]);
-    ai.update(1, { ...at, playerX: SPAWN + 150 });
-    // Depois do descanso, volta a perseguir (player a 150 px).
-    out = ai.update(FRAME, { ...at, playerX: SPAWN + 150 });
+    ai.update(1, at(150));
+    // Depois do descanso, volta a perseguir (player a 150 px, sem permissão).
+    out = ai.update(FRAME, at(150));
     expect(ai.state).toBe('chase');
     expect(out.vx).toBe(70);
   });
 
-  it('depois do descanso, com o player longe, volta a patrulhar', () => {
-    const ai = inWindup();
-    run(ai, 450 + 120 + 800, { selfX: SPAWN, playerX: SPAWN + 20 });
-    const out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 600, canAct: true });
-    expect(ai.state).toBe('patrol');
-    expect(Math.abs(out.vx)).toBe(35);
+  it('usa windupMs, attackMs e restMs do tuning (200, 60 e 300)', () => {
+    const ai = inWindup(ALT);
+    const s = at(20, { granted: true });
+    expect(ai.update(199, s).events).toEqual([]);
+    expect(ai.update(1, s).events).toEqual(['hitboxOn']);
+    expect(ai.update(59, s).events).toEqual([]);
+    expect(ai.update(1, s).events).toEqual(['hitboxOff']);
+    ai.update(299, at(400));
+    expect(ai.state).toBe('rest');
+    ai.update(1, at(400));
+    ai.update(1, at(400));
+    expect(ai.state).toBe('chase');
   });
 
   it('eventos de um ciclo inteiro, na ordem: windupStart, hitboxOn, hitboxOff', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    const out = run(ai, FRAME + 450 + 120, { selfX: SPAWN, playerX: SPAWN + 20 });
+    const ai = new EnemyAI(SPEC);
+    const out = run(ai, FRAME + 450 + 120, at(20, { granted: true }));
     expect(out.events).toEqual(['windupStart', 'hitboxOn', 'hitboxOff']);
   });
 
   it('o player muda de lado no preparo: o inimigo vira para ele', () => {
     const ai = inWindup();
-    const out = ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN - 10, canAct: true });
+    const out = ai.update(FRAME, at(-10, { granted: true }));
     expect(ai.state).toBe('windup');
     expect(out.facing).toBe(-1);
   });
+
+  it('o golpe e o descanso não viram o inimigo, mesmo se o player trocar de lado', () => {
+    const ai = inWindup();
+    ai.update(450, at(20, { granted: true })); // attack, facing 1
+    expect(ai.update(FRAME, at(-50, { granted: true })).facing).toBe(1);
+    run(ai, 120, at(-50, { granted: true })); // vai ao rest
+    expect(ai.state).toBe('rest');
+    expect(ai.update(FRAME, at(-50)).facing).toBe(1);
+  });
 });
 
-describe('EnemyAI: interrupção (AI-04)', () => {
-  it('canAct = false zera vx na patrulha e na perseguição', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    expect(ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 900, canAct: false }).vx).toBe(0);
-    expect(ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 100, canAct: false }).vx).toBe(0);
+describe('EnemyAI: interrupção (AI-04, LIM-06)', () => {
+  it('canAct = false zera vx no chase e no hold', () => {
+    const ai = new EnemyAI(SPEC);
+    expect(ai.update(FRAME, at(900, { canAct: false })).vx).toBe(0);
+    expect(ai.update(FRAME, at(73, { canAct: false })).vx).toBe(0);
   });
 
-  it('canAct = false no preparo cancela o golpe: nunca emite hitboxOn', () => {
+  it('canAct = false no preparo cancela o golpe: nunca emite hitboxOn e volta a chase', () => {
     const ai = inWindup();
-    const out = run(ai, 2000, { selfX: SPAWN, playerX: SPAWN + 20, canAct: false });
+    const out = run(ai, 2000, at(20, { canAct: false, granted: true }));
     expect(out.vx).toBe(0);
     expect(out.events).not.toContain('hitboxOn');
-    expect(ai.state).not.toBe('windup');
-    expect(ai.state).not.toBe('attack');
+    expect(ai.state).toBe('chase');
+  });
+
+  it('canAct = false na aproximação a cancela: volta a chase', () => {
+    const ai = new EnemyAI(SPEC);
+    ai.update(FRAME, at(80, { granted: true }));
+    expect(ai.state).toBe('approach');
+    ai.update(FRAME, at(80, { granted: true, canAct: false }));
+    expect(ai.state).toBe('chase');
   });
 
   it('canAct = false no golpe fecha a hitbox (hitboxOff) e não abre de novo', () => {
     const ai = inWindup();
-    const at = { selfX: SPAWN, playerX: SPAWN + 20, canAct: true };
-    expect(ai.update(450, at).events).toEqual(['hitboxOn']);
-    const first = ai.update(FRAME, { ...at, canAct: false });
+    const s = at(20, { granted: true });
+    expect(ai.update(450, s).events).toEqual(['hitboxOn']);
+    const first = ai.update(FRAME, { ...s, canAct: false });
     expect(first.events).toEqual(['hitboxOff']);
     expect(first.vx).toBe(0);
-    const rest = run(ai, 2000, { ...at, canAct: false });
+    const rest = run(ai, 2000, { ...s, canAct: false });
     expect(rest.events).toEqual([]);
   });
 
-  it('interrupt() no preparo: sem eventos, e o ciclo recomeça do zero ao voltar a agir', () => {
+  it('canAct = false no descanso: o relógio do descanso continua correndo', () => {
     const ai = inWindup();
-    const at = { selfX: SPAWN, playerX: SPAWN + 20, canAct: true };
-    ai.update(400, at);
-    expect(ai.interrupt()).toEqual([]);
-    expect(ai.state).not.toBe('windup');
-    // Recomeça: novo windupStart e mais 450 ms inteiros até o golpe.
-    const again = ai.update(FRAME, at);
-    expect(again.events).toEqual(['windupStart']);
-    expect(ai.update(449, at).events).toEqual([]);
-    expect(ai.update(1, at).events).toEqual(['hitboxOn']);
+    run(ai, 450 + 120, at(20, { granted: true }));
+    expect(ai.state).toBe('rest');
+    ai.update(800, at(20, { canAct: false }));
+    expect(ai.state).toBe('rest');
+    ai.update(FRAME, at(150));
+    expect(ai.state).toBe('chase');
   });
 
-  it('interrupt() no golpe devolve hitboxOff', () => {
+  it('interrupt() no preparo volta para chase sem eventos, e o ciclo recomeça do zero', () => {
     const ai = inWindup();
-    ai.update(450, { selfX: SPAWN, playerX: SPAWN + 20, canAct: true });
+    const s = at(20, { granted: true });
+    ai.update(400, s);
+    expect(ai.interrupt()).toEqual([]);
+    expect(ai.state).toBe('chase');
+    const again = ai.update(FRAME, s);
+    expect(again.events).toEqual(['windupStart']);
+    expect(ai.update(449, s).events).toEqual([]);
+    expect(ai.update(1, s).events).toEqual(['hitboxOn']);
+  });
+
+  it('interrupt() no golpe devolve hitboxOff e volta para chase', () => {
+    const ai = inWindup();
+    ai.update(450, at(20, { granted: true }));
     expect(ai.state).toBe('attack');
     expect(ai.interrupt()).toEqual(['hitboxOff']);
-    expect(ai.state).not.toBe('attack');
+    expect(ai.state).toBe('chase');
   });
 
-  it('interrupt() fora do preparo/golpe não emite nada', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    ai.update(FRAME, { selfX: SPAWN, playerX: SPAWN + 100, canAct: true });
+  it('interrupt() na aproximação volta para chase', () => {
+    const ai = new EnemyAI(SPEC);
+    ai.update(FRAME, at(80, { granted: true }));
     expect(ai.interrupt()).toEqual([]);
+    expect(ai.state).toBe('chase');
+  });
+
+  it('interrupt() em chase, hold ou rest não emite nada nem muda o estado', () => {
+    const ai = new EnemyAI(SPEC);
+    ai.update(FRAME, at(150));
+    expect(ai.interrupt()).toEqual([]);
+    expect(ai.state).toBe('chase');
+    ai.update(FRAME, at(80));
+    expect(ai.interrupt()).toEqual([]);
+    expect(ai.state).toBe('hold');
+    const r = inWindup();
+    run(r, 450 + 120, at(20, { granted: true }));
+    expect(r.interrupt()).toEqual([]);
+    expect(r.state).toBe('rest');
   });
 
   it('borda: morrer no preparo nunca abre a hitbox', () => {
     const ai = inWindup();
-    const at = { selfX: SPAWN, playerX: SPAWN + 20 };
-    ai.update(300, { ...at, canAct: true });
-    // Morto: canAct fica false para sempre.
-    const out = run(ai, 5000, { ...at, canAct: false });
+    ai.update(300, at(20, { granted: true }));
+    const out = run(ai, 5000, at(20, { canAct: false, granted: true }));
     expect(out.events).toEqual([]);
-  });
-});
-
-describe('EnemyAI: patrulha presa por obstáculo (caso de borda do AI-01)', () => {
-  const FAR = SPAWN - 1000; // player longe: só patrulha
-
-  it('parado no mesmo x por 200 ms patrulhando, inverte o sentido', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    const first = ai.update(FRAME, { selfX: SPAWN + 20, playerX: FAR, canAct: true });
-    expect(first.vx).toBe(35);
-    const stuck = run(ai, 208, { selfX: SPAWN + 20, playerX: FAR });
-    expect(stuck.vx).toBe(-35);
-    expect(stuck.facing).toBe(-1);
-  });
-
-  it('parado por menos de 200 ms continua no mesmo sentido', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    ai.update(FRAME, { selfX: SPAWN + 20, playerX: FAR, canAct: true });
-    const out = run(ai, 160, { selfX: SPAWN + 20, playerX: FAR });
-    expect(out.vx).toBe(35);
-  });
-
-  it('avançando pelo menos 1 px a cada 200 ms não inverte', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    let x = SPAWN;
-    const vxs: number[] = [ai.update(FRAME, { selfX: x, playerX: FAR, canAct: true }).vx];
-    for (let t = 0; t < 600; t += FRAME) {
-      x += 0.1; // 0,1 px por frame = ~1,2 px a cada 200 ms
-      vxs.push(ai.update(FRAME, { selfX: x, playerX: FAR, canAct: true }).vx);
-    }
-    // Em TODOS os frames, não só no último: uma inversão dupla terminaria no mesmo sentido.
-    expect(vxs.every((vx) => vx === 35)).toBe(true);
-  });
-
-  it('fronteira: parado exatamente 200 ms inverte no frame em que completa os 200 ms', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    const at = { selfX: SPAWN, playerX: FAR, canAct: true };
-    ai.update(50, at); // âncora
-    const vxs = [50, 50, 50, 50].map((dt) => ai.update(dt, at).vx);
-    expect(vxs).toEqual([35, 35, 35, -35]);
-  });
-
-  it('fronteira: avançando exatamente 1 px a cada 200 ms nunca inverte', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    let x = SPAWN;
-    const vxs: number[] = [ai.update(50, { selfX: x, playerX: FAR, canAct: true }).vx];
-    for (let i = 0; i < 16; i++) {
-      x += 0.25; // 4 passos de 50 ms = exatamente 1 px em 200 ms
-      vxs.push(ai.update(50, { selfX: x, playerX: FAR, canAct: true }).vx);
-    }
-    expect(vxs.every((vx) => vx === 35)).toBe(true);
-  });
-
-  it('perseguindo parado contra algo não inverte (só a patrulha vira)', () => {
-    const ai = new EnemyAI(ENEMY_AI, SPAWN);
-    const out = run(ai, 400, { selfX: SPAWN, playerX: SPAWN + 150 });
-    expect(ai.state).toBe('chase');
-    expect(out.vx).toBe(70);
   });
 });

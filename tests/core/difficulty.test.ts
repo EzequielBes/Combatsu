@@ -33,26 +33,24 @@ describe('scaleFor: dano por rodada (DIF-05)', () => {
 describe('scaleFor: velocidade por rodada (DIF-06)', () => {
   it('rodada 1: velocidade sem mudança', () => {
     const scaled = scaleFor(1, BASE, DIFFICULTY);
-    expect(scaled.ai.patrolSpeed).toBeCloseTo(ENEMY_AI.patrolSpeed * 1);
     expect(scaled.ai.chaseSpeed).toBeCloseTo(ENEMY_AI.chaseSpeed * 1);
   });
 
   it('rodada 15: teto de x1.4', () => {
     const scaled = scaleFor(15, BASE, DIFFICULTY);
-    expect(scaled.ai.patrolSpeed).toBeCloseTo(ENEMY_AI.patrolSpeed * 1.4);
     expect(scaled.ai.chaseSpeed).toBeCloseTo(ENEMY_AI.chaseSpeed * 1.4);
   });
 
   it('rodada 30: continua no teto de x1.4', () => {
     const scaled = scaleFor(30, BASE, DIFFICULTY);
-    expect(scaled.ai.patrolSpeed).toBeCloseTo(ENEMY_AI.patrolSpeed * 1.4);
     expect(scaled.ai.chaseSpeed).toBeCloseTo(ENEMY_AI.chaseSpeed * 1.4);
   });
 
-  it('só patrolSpeed e chaseSpeed mudam; os outros campos da IA ficam iguais', () => {
+  it('só chaseSpeed muda; os outros campos da IA ficam iguais', () => {
     const scaled = scaleFor(15, BASE, DIFFICULTY);
-    expect(scaled.ai.patrolRange).toBe(ENEMY_AI.patrolRange);
-    expect(scaled.ai.chaseRange).toBe(ENEMY_AI.chaseRange);
+    expect(scaled.ai.holdRange).toBe(ENEMY_AI.holdRange);
+    expect(scaled.ai.farRange).toBe(ENEMY_AI.farRange);
+    expect(scaled.ai.farSpeedMult).toBe(ENEMY_AI.farSpeedMult);
     expect(scaled.ai.attackRange).toBe(ENEMY_AI.attackRange);
     expect(scaled.ai.windupMs).toBe(ENEMY_AI.windupMs);
     expect(scaled.ai.attackMs).toBe(ENEMY_AI.attackMs);

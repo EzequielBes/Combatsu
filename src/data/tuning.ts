@@ -85,16 +85,19 @@ export const ENEMY: EnemyTuning = {
   dissolveMs: 700,
 };
 
-/** IA simples do inimigo (AI-01..03): distâncias só na horizontal, em px; velocidades em px/s. */
+/** IA do inimigo (SPN-10..12, LIM-03/05/07, AI-03): distâncias só na horizontal, em px; velocidades em px/s. */
 export const ENEMY_AI: EnemyAITuning = {
-  patrolRange: 48,
-  patrolSpeed: 35,
-  chaseRange: 200,
   chaseSpeed: 70,
   attackRange: 40,
   windupMs: 450,
   attackMs: 120,
   restMs: 800,
+  holdRange: 96,
+  holdBase: 64,
+  holdStep: 24,
+  holdTolerance: 8,
+  farRange: 320,
+  farSpeedMult: 1.6,
 };
 
 /** Garra do inimigo: a hitbox fica ligada enquanto a IA está em `attack` (activeMs = ENEMY_AI.attackMs). */

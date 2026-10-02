@@ -1,24 +1,25 @@
-export type EnemyAIState = 'patrol' | 'chase' | 'windup' | 'attack' | 'rest';
-export type AIEvent = 'windupStart' | 'hitboxOn' | 'hitboxOff';
-
-/** Patrulhando, se o x avança menos que isso em PATROL_STALL_MS, algo bloqueou: vira (caso de borda do AI-01). */
-export const PATROL_STALL_PX = 1;
-export const PATROL_STALL_MS = 200;
+export type EnemyAIState = 'chase' | 'hold' | 'approach' | 'windup' | 'attack' | 'rest';
+export type AIEvent = 'windupStart' | 'hitboxOn' | 'hitboxOff' | 'wantAttack';
 
 export interface EnemyAITuning {
-  /** Meia largura da faixa de patrulha em volta do spawn (px). */
-  patrolRange: number;
-  /** px/s */
-  patrolSpeed: number;
-  /** Persegue quando o player está a menos disso na horizontal (px). */
-  chaseRange: number;
   /** px/s */
   chaseSpeed: number;
-  /** Prepara o golpe quando o player está a menos disso na horizontal (px). */
+  /** Prepara o golpe quando o player está a no máximo isso na horizontal (px). */
   attackRange: number;
   windupMs: number;
   attackMs: number;
   restMs: number;
+  /** Sem permissão de ataque, a no máximo isso do player o inimigo espera em `hold` (px, LIM-03). */
+  holdRange: number;
+  /** Distância de espera do 1º da fila (`holdRank` 0), em px (LIM-07). */
+  holdBase: number;
+  /** Distância a mais para cada posição na fila de espera, em px (LIM-05, LIM-07). */
+  holdStep: number;
+  /** Folga em volta da distância de espera, em px (LIM-07). */
+  holdTolerance: number;
+  /** Acima disso o inimigo corre a `farSpeedMult` × `chaseSpeed` (px, SPN-12). */
+  farRange: number;
+  farSpeedMult: number;
 }
 
 export interface AIInput {
@@ -26,6 +27,12 @@ export interface AIInput {
   playerX: number;
   /** false quando o cérebro não está idle ou o inimigo morreu. */
   canAct: boolean;
+  /** Tem a vaga de ataque do limitador (LIM-01). */
+  granted: boolean;
+  /** O limitador permite iniciar um `windup` agora (LIM-02). */
+  windupAllowed: boolean;
+  /** Posição na fila de espera entre os do mesmo lado do player, começando em 0 (LIM-07). */
+  holdRank: number;
 }
 
 export interface AIOutput {
@@ -36,32 +43,20 @@ export interface AIOutput {
 }
 
 /**
- * Ciclo simples do inimigo (AI-01..04): patrulha → persegue → prepara → golpeia → descansa → volta a patrulhar
- * ou perseguir. Todas as distâncias são só no eixo horizontal. Sem `canAct` ele fica parado, e um preparo ou golpe
- * em andamento é cancelado (a hitbox fecha se estava aberta e nunca abre depois).
+ * Ciclo do inimigo comum (SPN-10..12, LIM-03, LIM-05, LIM-07, LIM-08): persegue sempre (sem patrulha); sem
+ * permissão de ataque espera em `hold` perto do player; com permissão avança (`approach`), prepara, golpeia e
+ * descansa. Todas as distâncias são só no eixo horizontal. Sem `canAct` ele fica parado, e um preparo ou golpe em
+ * andamento é cancelado (a hitbox fecha se estava aberta e nunca abre depois).
  */
 export class EnemyAI {
-  private _state: EnemyAIState = 'patrol';
+  private _state: EnemyAIState = 'chase';
   private timer = 0;
   private facing: 1 | -1 = 1;
-  /** Sentido atual da patrulha. */
-  private patrolDir: 1 | -1 = 1;
-  /** x de referência e tempo sem avançar na patrulha (null = fora da patrulha). */
-  private stallX: number | null = null;
-  private stallMs = 0;
 
-  constructor(
-    private readonly t: EnemyAITuning,
-    private readonly spawnX: number,
-  ) {}
+  constructor(private readonly t: EnemyAITuning) {}
 
   get state(): EnemyAIState {
     return this._state;
-  }
-
-  /** Velocidade de patrulha do tuning com que a IA foi criada (px/s), já escalada pela rodada (DIF-04/06). */
-  get patrolSpeed(): number {
-    return this.t.patrolSpeed;
   }
 
   /** Velocidade de perseguição do tuning com que a IA foi criada (px/s), já escalada pela rodada (DIF-04/06). */
@@ -69,14 +64,12 @@ export class EnemyAI {
     return this.t.chaseSpeed;
   }
 
-  update(dtMs: number, s: AIInput): AIOutput {
-    const wasPatrolling = this._state === 'patrol';
-    const out = this.decide(dtMs, s);
-    if (this._state !== 'patrol' || !wasPatrolling) this.stallX = null;
-    return out;
+  /** Distância de espera em `hold` para a posição `rank` da fila (LIM-07), sem a folga. */
+  holdDistance(rank: number): number {
+    return this.t.holdBase + this.t.holdStep * rank;
   }
 
-  private decide(dtMs: number, s: AIInput): AIOutput {
+  update(dtMs: number, s: AIInput): AIOutput {
     if (!s.canAct) {
       const events = this.interrupt();
       if (this._state === 'rest') this.timer -= dtMs;
@@ -103,52 +96,49 @@ export class EnemyAI {
       case 'rest':
         this.timer -= dtMs;
         if (this.timer > 0) return this.out(0);
-        this.enter(dist < this.t.chaseRange ? 'chase' : 'patrol', 0);
+        this.enter('chase', 0);
         return this.out(0);
       default:
         break;
     }
 
-    if (dist < this.t.attackRange) {
-      towardPlayer();
-      this.enter('windup', this.t.windupMs);
-      return this.out(0, ['windupStart']);
-    }
-    if (dist < this.t.chaseRange) {
-      this._state = 'chase';
-      towardPlayer();
+    towardPlayer();
+    if (s.granted) {
+      if (dist <= this.t.attackRange) {
+        if (!s.windupAllowed) {
+          this._state = 'approach';
+          return this.out(0);
+        }
+        this.enter('windup', this.t.windupMs);
+        return this.out(0, ['windupStart']);
+      }
+      this._state = 'approach';
       return this.out(this.facing * this.t.chaseSpeed);
     }
-    this._state = 'patrol';
-    if (s.selfX >= this.spawnX + this.t.patrolRange) this.patrolDir = -1;
-    else if (s.selfX <= this.spawnX - this.t.patrolRange) this.patrolDir = 1;
-    this.checkStall(dtMs, s.selfX);
-    this.facing = this.patrolDir;
-    return this.out(this.patrolDir * this.t.patrolSpeed);
-  }
 
-  /** Parede ou obstáculo: sem avançar PATROL_STALL_PX em PATROL_STALL_MS, inverte a patrulha. */
-  private checkStall(dtMs: number, x: number): void {
-    if (this.stallX === null || Math.abs(x - this.stallX) >= PATROL_STALL_PX) {
-      this.stallX = x;
-      this.stallMs = 0;
-      return;
+    const target = this.holdDistance(s.holdRank);
+    // Quem já espera fica em `hold` até a própria distância de espera (+ folga), que pode passar de `holdRange`.
+    const holdLimit = this._state === 'hold' ? Math.max(this.t.holdRange, target + this.t.holdTolerance) : this.t.holdRange;
+    if (dist <= holdLimit) {
+      this._state = 'hold';
+      if (dist < target - this.t.holdTolerance) return this.out(-this.facing * this.t.chaseSpeed, ['wantAttack']);
+      if (dist > target + this.t.holdTolerance) return this.out(this.facing * this.t.chaseSpeed, ['wantAttack']);
+      return this.out(0, ['wantAttack']);
     }
-    this.stallMs += dtMs;
-    if (this.stallMs < PATROL_STALL_MS) return;
-    this.patrolDir = this.patrolDir === 1 ? -1 : 1;
-    this.stallX = x;
-    this.stallMs = 0;
+
+    this._state = 'chase';
+    const speed = dist > this.t.farRange ? this.t.chaseSpeed * this.t.farSpeedMult : this.t.chaseSpeed;
+    return this.out(this.facing * speed);
   }
 
-  /** Levou golpe: cancela preparo ou golpe. Devolve `hitboxOff` se a hitbox estava aberta. */
+  /** Levou golpe: cancela aproximação, preparo ou golpe e volta a perseguir. Devolve `hitboxOff` se a hitbox estava aberta. */
   interrupt(): AIEvent[] {
-    if (this._state === 'windup') {
-      this.enter('patrol', 0);
+    if (this._state === 'windup' || this._state === 'approach') {
+      this.enter('chase', 0);
       return [];
     }
     if (this._state === 'attack') {
-      this.enter('patrol', 0);
+      this.enter('chase', 0);
       return ['hitboxOff'];
     }
     return [];
