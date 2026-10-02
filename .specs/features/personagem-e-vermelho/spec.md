@@ -147,33 +147,33 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| SPF-01 | P1: Personagem | Specify | Implementing |
-| SPF-02 | P1: Personagem | Specify | Implementing |
-| SPF-03 | P1: Personagem | Specify | Implementing |
-| SPF-04 | P1: Personagem | Specify | Implementing |
-| SPF-05 | P1: Personagem | Specify | Implementing |
-| SPF-06 | P1: Personagem | Specify | Implementing |
-| SPF-07 | P1: Personagem | Specify | Implementing |
-| RDA-01 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-02 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-03 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-04 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-05 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-06 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-07 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-08 | P1: Repulsão | Specify | Implementing |
-| RDA-09 | P1: Repulsão | Specify | Implementing |
-| RDA-10 | P1: Repulsão | Specify | Implementing |
-| RDA-11 | P1: Repulsão | Specify | Implementing |
-| RDA-12 | P1: Repulsão | Specify | Implementing |
-| RDA-13 | P1: Repulsão | Specify | Implementing |
-| RDA-14 | P1: Repulsão | Specify | Implementing |
-| RDA-15 | P1: Repulsão | Specify | Implementing |
-| EDG-01 | Edge cases | Specify | Implementing |
-| EDG-02 | Edge cases | Specify | Implementing |
-| EDG-03 | Edge cases | Specify | Implementing |
+| SPF-01 | P1: Personagem | Specify | Verified |
+| SPF-02 | P1: Personagem | Specify | Verified |
+| SPF-03 | P1: Personagem | Specify | Verified |
+| SPF-04 | P1: Personagem | Specify | Verified |
+| SPF-05 | P1: Personagem | Specify | Verified |
+| SPF-06 | P1: Personagem | Specify | Verified |
+| SPF-07 | P1: Personagem | Specify | Verified |
+| RDA-01 | P1: Vermelho carmim | Specify | Verified |
+| RDA-02 | P1: Vermelho carmim | Specify | Verified |
+| RDA-03 | P1: Vermelho carmim | Specify | Verified |
+| RDA-04 | P1: Vermelho carmim | Specify | Verified |
+| RDA-05 | P1: Vermelho carmim | Specify | Verified |
+| RDA-06 | P1: Vermelho carmim | Specify | Verified |
+| RDA-07 | P1: Vermelho carmim | Specify | Verified |
+| RDA-08 | P1: Repulsão | Specify | Verified |
+| RDA-09 | P1: Repulsão | Specify | Verified |
+| RDA-10 | P1: Repulsão | Specify | Verified |
+| RDA-11 | P1: Repulsão | Specify | Verified |
+| RDA-12 | P1: Repulsão | Specify | Verified |
+| RDA-13 | P1: Repulsão | Specify | Verified |
+| RDA-14 | P1: Repulsão | Specify | Verified |
+| RDA-15 | P1: Repulsão | Specify | Verified |
+| EDG-01 | Edge cases | Specify | Verified |
+| EDG-02 | Edge cases | Specify | Verified |
+| EDG-03 | Edge cases | Specify | Verified |
 
-**Coverage:** 25 total, 0 mapped to tasks, 25 unmapped ⚠️
+**Coverage:** 25 total, 25 mapped to tasks, 0 unmapped
 
 ---
 
