@@ -1,7 +1,7 @@
 // Pressão da onda e limitador de atacantes (SPN-01/03/07/10, LIM-01/02/05, PRG-01/05), com `?debug&seed=1`.
 // 1) Rodada 1: 6 na onda, ao menos 5 nascidos em 6 s, todo spawn fora do `worldView` com margem, nenhum `patrol`.
 // 2) `maxAlive=6&enemyGuard=0` com o player parado por 20 s: `attackers <= 2` em todo frame, dois `windup` nunca a
-//    menos de 350 ms e inimigos em `hold` do mesmo lado a >= 24 px um do outro.
+//    menos de 350 ms e inimigos parados em `hold` do mesmo lado a >= 20 px um do outro.
 // 3) `tech=divergente&fragments=200`: comprar Energia sobe `energy.max` (`ce.max`).
 export default async function ({ page, baseUrl, assert }) {
   const FRAME_MS = 1000 / 60;
@@ -74,13 +74,15 @@ export default async function ({ page, baseUrl, assert }) {
     let frames = 0;
     let maxAttackers = 0;
     let holdSamples = 0;
+    let settledPairs = 0;
     let minHoldGap = Infinity;
     const windupFrames = []; // frame em que cada `windup` começou, de qualquer inimigo
     for (let segment = 0; segment < 12 && sampledMs < TARGET_MS; segment++) {
       let s = await boot('maxAlive=6&enemyGuard=0');
       assert(s.run.maxAlive === 6, `SPN-06: ?debug&maxAlive=6 deveria fixar o teto: ${JSON.stringify(s.run)}`);
       const prevAi = new Map();
-      const closeFrames = new Map(); // par de ids -> frames seguidos a menos de 8 px em hold
+      const lastX = new Map(); // id -> x do frame anterior
+      const stillFrames = new Map(); // id -> frames seguidos sem mudar de x
       while (sampledMs < TARGET_MS && s.run.state === 'roundActive' && s.player.hp > 25) {
         s = await frame();
         frames++;
@@ -95,12 +97,17 @@ export default async function ({ page, baseUrl, assert }) {
           if (e.ai === 'windup' && prevAi.get(e.id) !== 'windup') windupFrames.push({ frame: frames, id: e.id });
           prevAi.set(e.id, e.ai);
         }
-        // LIM-05: em `hold` do mesmo lado do player, vagas vizinhas ficam a 24 px (`64 + 24k`). O design deixa cada um
-        // assentar na vaga ± 8 (LIM-07 ajustado) e a vaga muda quando a fila anda, então um par pode ficar a menos de
-        // 24 px (até 24 − 2·8 = 8 em repouso) e, na troca de vaga ou na chegada de dois que nasceram juntos, a menos
-        // ainda. O que não pode existir é um par colado que não se separa: abaixo de 8 px por mais de 40 frames (~0,67 s;
-        // trocar de vaga custa ~0,35 s a 70 px/s) é falha.
-        const close = new Set();
+        // LIM-05: dois em `hold` do mesmo lado, ambos parados (x sem mudar) há pelo menos 10 frames, ficam a >= 20 px
+        // (vagas 64 + 24k com folga de ±2, LIM-07). Na troca de vaga a distância pode cair por um instante.
+        // Só conta "parado" em frame que anda (fora do hitstop), com o inimigo livre para agir e já em `hold` (cérebro `idle`, fora
+        // da graça de nascimento): congelado, atordoado ou descansando do golpe (`rest`) ele fica parado sem estar na vaga.
+        for (const e of s.enemies) {
+          const last = lastX.get(e.id);
+          const free = !s.hitstop.frozen && e.state === 'idle' && e.ai === 'hold';
+          if (!free) stillFrames.set(e.id, 0);
+          else stillFrames.set(e.id, last !== undefined && Math.abs(e.x - last) < 0.5 ? (stillFrames.get(e.id) ?? 0) + 1 : 0);
+          lastX.set(e.id, e.x);
+        }
         for (const side of [-1, 1]) {
           const holders = s.enemies
             .filter((e) => e.ai === 'hold' && Math.sign(e.x - s.player.x) === side)
@@ -109,15 +116,12 @@ export default async function ({ page, baseUrl, assert }) {
             const gap = Math.abs(holders[i].x - holders[i - 1].x);
             minHoldGap = Math.min(minHoldGap, gap);
             holdSamples++;
-            if (gap >= 8) continue;
-            const key = [holders[i].id, holders[i - 1].id].sort().join('-');
-            close.add(key);
-            const n = (closeFrames.get(key) ?? 0) + 1;
-            closeFrames.set(key, n);
-            assert(n <= 40, `LIM-05: o par ${key} ficou a ${gap.toFixed(1)} px por ${n} frames: ${JSON.stringify({ px: s.player.x, q: s.gate, h: holders.map((h) => [h.id, h.x]) })}`);
+            const settled = (stillFrames.get(holders[i].id) ?? 0) >= 10 && (stillFrames.get(holders[i - 1].id) ?? 0) >= 10;
+            if (!settled) continue;
+            settledPairs++;
+            assert(gap >= 20, `LIM-05: par parado a ${gap.toFixed(1)} px: ${JSON.stringify({ px: s.player.x, q: s.gate, h: holders.map((h) => [h.id, h.x]) })}`);
           }
         }
-        for (const key of [...closeFrames.keys()]) if (!close.has(key)) closeFrames.delete(key);
       }
     }
     assert(sampledMs >= TARGET_MS, `esperava 20 s amostrados, vieram ${(sampledMs / 1000).toFixed(1)} s`);
@@ -131,6 +135,7 @@ export default async function ({ page, baseUrl, assert }) {
     }
     // Os dois lados da regra do `hold`: pelo menos uma amostra com dois ou mais segurados no mesmo lado.
     assert(holdSamples > 0, `LIM-03/05: nunca houve dois em hold no mesmo lado em 20 s (min=${minHoldGap})`);
+    assert(settledPairs > 0, `LIM-05: nenhum par parado em hold foi medido (amostras=${holdSamples})`);
   }
 
   // --- 3) Energia: comprar sobe energy.max (PRG-01, PRG-05) --------------------------------------------------------------

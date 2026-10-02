@@ -12,7 +12,7 @@ const SPEC: EnemyAITuning = {
   holdRange: 96,
   holdBase: 64,
   holdStep: 24,
-  holdTolerance: 8,
+  holdTolerance: 2,
   farRange: 320,
   farSpeedMult: 1.6,
 };
@@ -185,41 +185,41 @@ describe('EnemyAI: espera em hold (LIM-03)', () => {
   });
 });
 
-describe('EnemyAI: distância de espera 64 + 24k ± 8 (LIM-07)', () => {
-  it('k = 0: alvo 64; parado em 56 e 72 px, anda para dentro em 73 px e para fora em 55 px', () => {
+describe('EnemyAI: distância de espera 64 + 24k ± 2 (LIM-07)', () => {
+  it('k = 0: alvo 64; parado em 62 e 66 px, anda para dentro em 67 px e para fora em 61 px', () => {
     const p = (dist: number): number => inHold(SPEC, 0).update(FRAME, at(dist)).vx;
-    expect(p(72)).toBe(0);
-    expect(p(56)).toBe(0);
+    expect(p(66)).toBe(0);
+    expect(p(62)).toBe(0);
     expect(p(64)).toBe(0);
-    expect(p(73)).toBe(70); // longe demais: aproxima
-    expect(p(55)).toBe(-70); // perto demais: afasta
+    expect(p(67)).toBe(70); // longe demais: aproxima
+    expect(p(61)).toBe(-70); // perto demais: afasta
   });
 
   it('k = 0 com o player à esquerda: os sentidos se invertem', () => {
     const ai = inHold(SPEC, 0);
-    expect(ai.update(FRAME, at(-73)).vx).toBe(-70); // aproxima (player à esquerda)
-    expect(ai.update(FRAME, at(-55)).vx).toBe(70); // afasta
+    expect(ai.update(FRAME, at(-67)).vx).toBe(-70); // aproxima (player à esquerda)
+    expect(ai.update(FRAME, at(-61)).vx).toBe(70); // afasta
   });
 
-  it('k = 2: alvo 112; parado em 104 e 120 px, anda em 103 e 121 px (e continua em hold até 120)', () => {
+  it('k = 2: alvo 112; parado em 110 e 114 px, anda em 109 e 115 px (e continua em hold até 114)', () => {
     const p = (dist: number): AIOutput => inHold(SPEC, 2).update(FRAME, at(dist, { holdRank: 2 }));
-    expect(p(104).vx).toBe(0);
-    expect(p(120).vx).toBe(0);
+    expect(p(110).vx).toBe(0);
+    expect(p(114).vx).toBe(0);
     expect(p(112).vx).toBe(0);
-    expect(p(103).vx).toBe(-70);
-    expect(p(121).vx).toBe(70);
+    expect(p(109).vx).toBe(-70);
+    expect(p(115).vx).toBe(70);
     const ai = inHold(SPEC, 2);
-    ai.update(FRAME, at(120, { holdRank: 2 }));
+    ai.update(FRAME, at(114, { holdRank: 2 }));
     expect(ai.state).toBe('hold');
-    ai.update(FRAME, at(121, { holdRank: 2 }));
-    expect(ai.state).toBe('chase'); // 121 > alvo + folga: sai de hold e persegue
+    ai.update(FRAME, at(115, { holdRank: 2 }));
+    expect(ai.state).toBe('chase'); // 115 > alvo + folga: sai de hold e persegue
   });
 
   it('k = 2 saindo de chase a 96 px entra em hold e se afasta até o alvo', () => {
     const ai = new EnemyAI(SPEC);
     const out = ai.update(FRAME, at(96, { holdRank: 2 }));
     expect(ai.state).toBe('hold');
-    expect(out.vx).toBe(-70); // 96 < 112 - 8
+    expect(out.vx).toBe(-70); // 96 < 112 - 2
   });
 
   it('usa holdBase, holdStep e holdTolerance do tuning (100 + 10k ± 4; k = 1 => 110)', () => {
@@ -461,5 +461,42 @@ describe('EnemyAI: interrupção (AI-04, LIM-06)', () => {
     ai.update(300, at(20, { granted: true }));
     const out = run(ai, 5000, at(20, { canAct: false, granted: true }));
     expect(out.events).toEqual([]);
+  });
+});
+
+describe('LIM-05 com o tuning real: vizinhos parados em hold ficam a pelo menos 20 px', () => {
+  /** Anda o inimigo (x integrado pela vx da IA) até parar em `hold` com o rank dado; devolve a distância final. */
+  function settle(rank: number, startDist: number): number {
+    const ai = new EnemyAI(ENEMY_AI);
+    const playerX = 0;
+    let x = startDist;
+    let still = 0;
+    for (let i = 0; i < 2000 && still < 10; i++) {
+      const out = ai.update(1000 / 60, { selfX: x, playerX, canAct: true, granted: false, windupAllowed: false, holdRank: rank });
+      x += (out.vx * 1000) / 60 / 1000;
+      still = out.vx === 0 ? still + 1 : 0;
+    }
+    expect(ai.state).toBe('hold');
+    return Math.abs(x - playerX);
+  }
+
+  it('o tuning do jogo usa tolerância de ±2 px em volta de 64 + 24k (LIM-07)', () => {
+    expect(ENEMY_AI.holdTolerance).toBe(2);
+    expect(ENEMY_AI.holdBase).toBe(64);
+    expect(ENEMY_AI.holdStep).toBe(24);
+  });
+
+  it('vindo de perto ou de longe, ranks vizinhos param a >= 20 px um do outro', () => {
+    for (const k of [0, 1, 2]) {
+      const pairs = [
+        [settle(k, 30), settle(k + 1, 96)],
+        [settle(k, 96), settle(k + 1, 40)],
+      ];
+      for (const [a, b] of pairs) {
+        expect(Math.abs(a - (64 + 24 * k))).toBeLessThanOrEqual(2);
+        expect(Math.abs(b - (64 + 24 * (k + 1)))).toBeLessThanOrEqual(2);
+        expect(Math.abs(b - a)).toBeGreaterThanOrEqual(20);
+      }
+    }
   });
 });

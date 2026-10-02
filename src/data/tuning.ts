@@ -95,7 +95,7 @@ export const ENEMY_AI: EnemyAITuning = {
   holdRange: 96,
   holdBase: 64,
   holdStep: 24,
-  holdTolerance: 8,
+  holdTolerance: 2,
   farRange: 320,
   farSpeedMult: 1.6,
 };
