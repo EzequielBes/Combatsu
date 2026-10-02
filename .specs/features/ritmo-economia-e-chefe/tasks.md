@@ -132,7 +132,7 @@ T22 → T23 → T24 → T25
 **Reuses**: o parser de `src/core/level.ts`
 **Requirement**: SPN-06
 **Done when**:
-- [ ] `tests/core/level.test.ts` verifica 4 pontos `E` e o `x` dos dois novos (coluna 1 → 48 px e coluna 38 → 1232 px, pela fórmula do parser).
+- [x] `tests/core/level.test.ts` verifica 4 pontos `E` e o `x` dos dois novos (coluna 1 → 48 px e coluna 38 → 1232 px, pela fórmula do parser).
 **Tests**: unit
 **Gate**: quick
 

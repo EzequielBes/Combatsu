@@ -14,9 +14,9 @@ describe('LEVEL_1', () => {
     expect(LEVEL_1[LEVEL_1.length - 1]).toBe('#'.repeat(40));
   });
 
-  it('tem 1 player, 2 inimigos, 2 cadeiras e 2 garrafas', () => {
+  it('tem 1 player, 4 pontos de spawn E (SPN-06), 2 cadeiras e 2 garrafas', () => {
     const lvl = parseLevel(LEVEL_1);
-    expect(lvl.enemies).toHaveLength(2);
+    expect(lvl.enemies).toHaveLength(4);
     expect(lvl.props.filter((p) => p.key === 'chair')).toHaveLength(2);
     expect(lvl.props.filter((p) => p.key === 'bottle')).toHaveLength(2);
   });
