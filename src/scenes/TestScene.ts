@@ -501,7 +501,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setRun(this.run.round > 0 && !this.fxLab ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
-    this.energyHud.update(dt, this.energy, this.loadout);
+    this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
   }
 
   /**

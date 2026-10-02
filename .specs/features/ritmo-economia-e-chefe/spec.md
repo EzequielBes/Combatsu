@@ -322,7 +322,7 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | MST-05 | P2: Maestria | Specify | Implementing |
 | MST-06 | P2: Maestria | Specify | Implementing |
 | MST-07 | P2: Maestria | Specify | Implementing |
-| MST-08 | P2: Maestria | Specify | Pending |
+| MST-08 | P2: Maestria | Specify | Implementing |
 | EDG-01 | Edge cases | Specify | Implementing |
 | EDG-02 | Edge cases | Specify | Implementing |
 | EDG-03 | Edge cases | Specify | Implementing |

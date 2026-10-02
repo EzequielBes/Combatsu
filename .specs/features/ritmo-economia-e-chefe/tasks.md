@@ -401,7 +401,7 @@ O `startRun` chama `reset`.
 **Reuses**: o layout dos slots existente
 **Requirement**: MST-08
 **Done when**:
-- [ ] Build passa; a largura da barra fica exposta para o snapshot (`energyHud.masteryBars`).
+- [x] Build passa; a largura da barra fica exposta para o snapshot (`energyHud.masteryBars`).
 **Tests**: none
 **Gate**: build
 
