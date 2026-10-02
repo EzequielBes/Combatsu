@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 47,
+  "next_id": 50,
   "lessons": [
     {
       "id": "L-001",
@@ -838,6 +838,60 @@
       ],
       "created": "2026-10-01T16:00:05Z",
       "last_seen": "2026-10-01T16:00:05Z"
+    },
+    {
+      "id": "L-047",
+      "key": "ac_gap::test a range gated action at the boundary value and one unit past it in the scene or adapter that applies the check not only in the pure core",
+      "text": "Test a range-gated action at the boundary value and one unit past it, in the scene or adapter that applies the check, not only in the pure core",
+      "signal": "ac_gap",
+      "scope": "scene-adapter",
+      "status": "candidate",
+      "features": [
+        "ritmo-economia-e-chefe"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "BFX-06 src/scenes/TestScene.ts:1353 (scene-adapter)"
+      ],
+      "created": "2026-10-02T18:15:14Z",
+      "last_seen": "2026-10-02T18:15:14Z"
+    },
+    {
+      "id": "L-048",
+      "key": "ac_gap::extract selection rules lowest level wins tie goes to first slot nothing eligible into a pure function and unit test each branch instead of leaving them to a single candidate smoke",
+      "text": "Extract selection rules (lowest level wins, tie goes to first slot, nothing eligible) into a pure function and unit-test each branch instead of leaving them to a single-candidate smoke",
+      "signal": "ac_gap",
+      "scope": "scene-adapter",
+      "status": "candidate",
+      "features": [
+        "ritmo-economia-e-chefe"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "BFX-09 src/scenes/TestScene.ts:805 (scene-adapter)"
+      ],
+      "created": "2026-10-02T18:15:15Z",
+      "last_seen": "2026-10-02T18:15:15Z"
+    },
+    {
+      "id": "L-049",
+      "key": "ac_gap::assert the exact computed value of a spec defined formula such as a hud bar width not only that it is above or equal to zero",
+      "text": "Assert the exact computed value of a spec-defined formula (such as a HUD bar width), not only that it is above or equal to zero",
+      "signal": "ac_gap",
+      "scope": "hud",
+      "status": "candidate",
+      "features": [
+        "ritmo-economia-e-chefe"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MST-08 src/game/EnergyHud.ts:160 (hud)"
+      ],
+      "created": "2026-10-02T18:15:15Z",
+      "last_seen": "2026-10-02T18:15:15Z"
     }
   ]
 }

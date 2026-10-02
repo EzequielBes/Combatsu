@@ -268,69 +268,69 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PRG-01 | P1: Energia e Fluxo | Specify | Implementing |
-| PRG-02 | P1: Energia e Fluxo | Specify | Implementing |
-| PRG-03 | P1: Energia e Fluxo | Specify | Implementing |
-| PRG-04 | P1: Energia e Fluxo | Specify | Implementing |
-| PRG-05 | P1: Energia e Fluxo | Specify | Implementing |
-| PRG-06 | P1: Energia e Fluxo | Specify | Implementing |
-| SPN-01 | P1: Mais inimigos | Specify | Implementing |
-| SPN-02 | P1: Mais inimigos | Specify | Implementing |
-| SPN-03 | P1: Mais inimigos | Specify | Implementing |
-| SPN-04 | P1: Mais inimigos | Specify | Implementing |
-| SPN-05 | P1: Mais inimigos | Specify | Implementing |
-| SPN-06 | P1: Mais inimigos | Specify | Implementing |
-| SPN-07 | P1: Mais inimigos | Specify | Implementing |
-| SPN-08 | P1: Mais inimigos | Specify | Implementing |
-| SPN-09 | P1: Mais inimigos | Specify | Implementing |
-| SPN-10 | P1: Mais inimigos | Specify | Implementing |
-| SPN-11 | P1: Mais inimigos | Specify | Implementing |
-| SPN-12 | P1: Mais inimigos | Specify | Implementing |
-| SPN-13 | P1: Mais inimigos | Specify | Implementing |
-| SPN-14 | P1: Mais inimigos | Specify | Implementing |
-| LIM-01 | P1: Limitador | Specify | Implementing |
-| LIM-02 | P1: Limitador | Specify | Implementing |
-| LIM-03 | P1: Limitador | Specify | Implementing |
-| LIM-04 | P1: Limitador | Specify | Implementing |
-| LIM-05 | P1: Limitador | Specify | Implementing |
-| LIM-06 | P1: Limitador | Specify | Implementing |
-| LIM-07 | P1: Limitador | Specify | Implementing |
-| LIM-08 | P1: Limitador | Specify | Implementing |
-| ECN-01 | P1: Renda | Specify | Implementing |
-| ECN-02 | P1: Renda | Specify | Implementing |
-| ECN-03 | P1: Renda | Specify | Implementing |
-| ECN-04 | P1: Renda | Specify | Implementing |
-| ECN-05 | P1: Renda | Specify | Implementing |
-| ECN-06 | P1: Renda | Specify | Implementing |
-| ECN-07 | P1: Renda | Specify | Implementing |
-| ECN-08 | P1: Renda | Specify | Implementing |
-| ECN-09 | P1: Renda | Specify | Implementing |
-| BFX-01 | P1: Chefe | Specify | Implementing |
-| BFX-02 | P1: Chefe | Specify | Implementing |
-| BFX-03 | P1: Chefe | Specify | Implementing |
-| BFX-04 | P1: Chefe | Specify | Implementing |
-| BFX-05 | P1: Chefe | Specify | Implementing |
-| BFX-06 | P1: Chefe | Specify | Implementing |
-| BFX-07 | P1: Chefe | Specify | Implementing |
-| BFX-08 | P1: Chefe | Specify | Implementing |
-| BFX-09 | P1: Chefe | Specify | Implementing |
-| BFX-10 | P1: Chefe | Specify | Implementing |
-| MST-01 | P2: Maestria | Specify | Implementing |
-| MST-02 | P2: Maestria | Specify | Implementing |
-| MST-03 | P2: Maestria | Specify | Implementing |
-| MST-04 | P2: Maestria | Specify | Implementing |
-| MST-05 | P2: Maestria | Specify | Implementing |
-| MST-06 | P2: Maestria | Specify | Implementing |
-| MST-07 | P2: Maestria | Specify | Implementing |
-| MST-08 | P2: Maestria | Specify | Implementing |
-| EDG-01 | Edge cases | Specify | Implementing |
-| EDG-02 | Edge cases | Specify | Implementing |
-| EDG-03 | Edge cases | Specify | Implementing |
-| EDG-04 | Edge cases | Specify | Implementing |
-| EDG-05 | Edge cases | Specify | Implementing |
-| EDG-06 | Edge cases | Specify | Implementing |
+| PRG-01 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-02 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-03 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-04 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-05 | P1: Energia e Fluxo | Specify | Verified |
+| PRG-06 | P1: Energia e Fluxo | Specify | Verified |
+| SPN-01 | P1: Mais inimigos | Specify | Verified |
+| SPN-02 | P1: Mais inimigos | Specify | Verified |
+| SPN-03 | P1: Mais inimigos | Specify | Verified |
+| SPN-04 | P1: Mais inimigos | Specify | Verified |
+| SPN-05 | P1: Mais inimigos | Specify | Verified |
+| SPN-06 | P1: Mais inimigos | Specify | Verified |
+| SPN-07 | P1: Mais inimigos | Specify | Verified |
+| SPN-08 | P1: Mais inimigos | Specify | Verified |
+| SPN-09 | P1: Mais inimigos | Specify | Verified |
+| SPN-10 | P1: Mais inimigos | Specify | Verified |
+| SPN-11 | P1: Mais inimigos | Specify | Verified |
+| SPN-12 | P1: Mais inimigos | Specify | Verified |
+| SPN-13 | P1: Mais inimigos | Specify | Verified |
+| SPN-14 | P1: Mais inimigos | Specify | Verified |
+| LIM-01 | P1: Limitador | Specify | Verified |
+| LIM-02 | P1: Limitador | Specify | Verified |
+| LIM-03 | P1: Limitador | Specify | Verified |
+| LIM-04 | P1: Limitador | Specify | Verified |
+| LIM-05 | P1: Limitador | Specify | Verified |
+| LIM-06 | P1: Limitador | Specify | Verified |
+| LIM-07 | P1: Limitador | Specify | Verified |
+| LIM-08 | P1: Limitador | Specify | Verified |
+| ECN-01 | P1: Renda | Specify | Verified |
+| ECN-02 | P1: Renda | Specify | Verified |
+| ECN-03 | P1: Renda | Specify | Verified |
+| ECN-04 | P1: Renda | Specify | Verified |
+| ECN-05 | P1: Renda | Specify | Verified |
+| ECN-06 | P1: Renda | Specify | Verified |
+| ECN-07 | P1: Renda | Specify | Verified |
+| ECN-08 | P1: Renda | Specify | Verified |
+| ECN-09 | P1: Renda | Specify | Verified |
+| BFX-01 | P1: Chefe | Specify | Verified |
+| BFX-02 | P1: Chefe | Specify | Verified |
+| BFX-03 | P1: Chefe | Specify | Verified |
+| BFX-04 | P1: Chefe | Specify | Verified |
+| BFX-05 | P1: Chefe | Specify | Verified |
+| BFX-06 | P1: Chefe | Specify | Verified |
+| BFX-07 | P1: Chefe | Specify | Verified |
+| BFX-08 | P1: Chefe | Specify | Verified |
+| BFX-09 | P1: Chefe | Specify | Verified |
+| BFX-10 | P1: Chefe | Specify | Verified |
+| MST-01 | P2: Maestria | Specify | Verified |
+| MST-02 | P2: Maestria | Specify | Verified |
+| MST-03 | P2: Maestria | Specify | Verified |
+| MST-04 | P2: Maestria | Specify | Verified |
+| MST-05 | P2: Maestria | Specify | Verified |
+| MST-06 | P2: Maestria | Specify | Verified |
+| MST-07 | P2: Maestria | Specify | Verified |
+| MST-08 | P2: Maestria | Specify | Verified |
+| EDG-01 | Edge cases | Specify | Verified |
+| EDG-02 | Edge cases | Specify | Verified |
+| EDG-03 | Edge cases | Specify | Verified |
+| EDG-04 | Edge cases | Specify | Verified |
+| EDG-05 | Edge cases | Specify | Verified |
+| EDG-06 | Edge cases | Specify | Verified |
 
-**Coverage:** 61 total, 0 mapped to tasks, 61 unmapped ⚠️ (Tasks ainda não feitas)
+**Coverage:** 61 total, 61 mapped to tasks, 0 unmapped (Tasks ainda não feitas)
 
 ---
 
