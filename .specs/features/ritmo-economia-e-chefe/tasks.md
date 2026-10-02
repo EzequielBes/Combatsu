@@ -331,7 +331,7 @@ T22 → T23 → T24 → T25
 **Reuses**: `spawnFromCommand`, `debugParam`
 **Requirement**: SPN-03, SPN-07, SPN-08, SPN-09
 **Done when**:
-- [ ] Build passa; a cena repassa ao `pickSpawnPoint` o `worldView` real da câmera, não um valor fixo (L-043).
+- [x] Build passa; a cena repassa ao `pickSpawnPoint` o `worldView` real da câmera, não um valor fixo (L-043).
 **Tests**: none
 **Gate**: build
 
