@@ -35,6 +35,12 @@ Além do combate, ele pediu:
   - `WRIST_GRIP` tem a pele clara demais;
   - continuam as pendências de `land-1`, `jump-0` e `ganchoAscendente-hit`.
 
+### Achados do playtest do usuário (02/10)
+
+- Nascem poucos inimigos, então entram poucos fragmentos: o jogador só consegue comprar uma técnica boa uma rodada antes do chefe.
+- O 1º chefe sempre venceu. Medição no harness (`?debug&round=5`, socos e chutes colado nele por cerca de 13 s): o soco **acerta** (não é bug de colisão), mas tirou só 100 dos 600 de HP, enquanto o player perdeu 76 dos 100. Hoje só técnica à distância compensa, e mesmo assim causa pouco dano.
+- Decisão: economia, volume de inimigos e chefe sobem para a F11, que vira a primeira entrega de combate.
+
 ### Decisões do usuário
 
 - Corrigir os sprites listados.
@@ -189,13 +195,13 @@ Os ataques à distância obrigam o jogador a se mover e a escolher prioridades, 
 
 ```
 F10 personagem-e-vermelho (independente, pode correr junto com F11)
-F11 progressao-fluida ─► F12 combate-mestre ─► F13 foco-e-ambiente ─► F14 ia-tatica ─► F15 inimigos-a-distancia ─► F16 pressao-e-curva
+F11 ritmo-economia-e-chefe ─► F12 combate-mestre ─► F13 foco-e-ambiente ─► F14 ia-tatica ─► F15 inimigos-a-distancia ─► F16 pressao-e-curva
 ```
 
 | # | Feature | Tamanho | Conteúdo |
 |---|---|---|---|
 | F10 | `personagem-e-vermelho` | Large | Correções de sprite (lista acima). Teste de alinhamento: tronco a ±2 texels da origem e pés no chão em todos os frames. Novos frames `duck`, `duck-counter` e `counter`. Paleta de 40 para 42 cores (carmim `0xd1103a`, magenta-claro `0xff4f8b`). Vermelho: núcleo branco→rosa→carmim, halo Glow carmim, anel de distorção, âncora nos dedos por fase, onda de repulsão em cone de ~80 px na soltura, orbe a ~760 px/s com rastro carmim e detonação carmim. |
-| F11 | `progressao-fluida` | Medium | Corrigir o bug de Energia/Fluxo. Oferta "Aprimorar" garantida para técnica equipada. Nv2 a partir da rodada 2 e Nv3 a partir da rodada 4. Técnicas 25% mais baratas. **Maestria:** acertos com a técnica a fazem subir de nível (15 / 25). Chefe dá 1 upgrade grátis. A carta mostra "Nv 1→2". |
+| F11 | `ritmo-economia-e-chefe` | Large | **Prioridade 1 (playtest de 02/10).** (a) Bug de Energia/Fluxo. (b) **Mais inimigos já**: sem patrulha, todos perseguem; onda de 6 + 2 por rodada (teto 20); `maxAlive` 5 → 8; nasce um a cada ~1,5 s enquanto houver vaga; spawn nas bordas e fora da câmera. Inclui um **limitador simples de 2 atacantes** (a F14 troca pelo `AttackDirector` completo). (c) **Economia**: mais inimigos rendem mais fragmentos; meta de comprar a 1ª técnica ao fim da rodada 1 e ter uma técnica no Nv2 antes do 1º chefe. Oferta "Aprimorar" garantida, Nv2 a partir da rodada 2 e Nv3 a partir da rodada 4, maestria (15/25 acertos), chefe dá upgrade grátis, carta mostra "Nv 1→2". (d) **Chefe vencível no corpo a corpo**: HP base 600 → ~400; janelas de punição (investida que bate na parede atordoa 1,5 s; pouso do salto com 800 ms de recuperação vulnerável); postura zerada abre o **finalizador do chefe** (J+K, ~12% do HP). |
 | F12 | `combate-mestre` | Complex | Altura e cor de telegrafo nos golpes; `maxTargets`; regras de ragdoll; limite de 1 golpe no chão; ponto de compromisso; tabela de defesa (parry só de frente, virar, abaixar, pular, desvio com custo/ganho de postura); Deflexão; janela de Contra; voadora com custo e quique; leitura de repetição; invulnerabilidade de 700 para 300 ms. |
 | F13 | `foco-e-ambiente` | Large | Barra de Foco e os 3 golpes de Foco (tecla F); parede (impacto que atordoa); empurrão em corrente; finalizadores contextuais (normal, parede, arremesso no grupo); cura e Foco no finalizador. |
 | F14 | `ia-tatica` | Complex | `AttackDirector` com 2 tokens e token de oportunidade; anel com fintas e flanco; sequências de golpes por arquétipo; parry e esquiva do inimigo; superarmadura; agarrão; Elite; indicador de costas/fora da tela; áudio ZzFX. |
