@@ -25,7 +25,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F9 | `tecnicas-avancadas` | Complex | PUR, DOM, CHT | Planejada |
 | — | `sprite-player-polish` | Large | SPR | Done (Verifier PASS, rodada 2) |
 | — | `enemy-sprite-variety` | Large | EVR, HRX | Done (Verifier PASS, rodada 2) |
-| F10 | `personagem-e-vermelho` | Large | SPF, RDA | Em verificação (worktree; Verifier rodada 1 FAIL por cobertura) |
+| F10 | `personagem-e-vermelho` | Large | SPF, RDA | Done (Verifier PASS, rodada 2; 25 ACs) |
 | F11 | `ritmo-economia-e-chefe` | Large | PRG, SPN, LIM, ECN, BFX, MST | Done (Verifier PASS, rodada 2; 61 ACs) |
 | F12 | `combate-mestre` | Complex | HGT, TGT, PST, DEF, CNT, RDG | Planejada |
 | F13 | `foco-e-ambiente` | Large | FOC, WAL, TKD | Planejada |

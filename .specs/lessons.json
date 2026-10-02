@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 50,
+  "next_id": 52,
   "lessons": [
     {
       "id": "L-001",
@@ -774,16 +774,18 @@
       "status": "confirmed",
       "features": [
         "sprite-player-polish",
-        "enemy-sprite-variety"
+        "enemy-sprite-variety",
+        "personagem-e-vermelho"
       ],
-      "recurrence": 2,
+      "recurrence": 3,
       "harmful": 0,
       "evidence": [
         "M7 src/game/art/index.ts:128 (art-adapter)",
-        "M2b src/scenes/TestScene.ts:843 (art-adapter) (art-adapter)"
+        "M2b src/scenes/TestScene.ts:843 (art-adapter) (art-adapter)",
+        "M11-adapt TechRunner.ts:350 (art-adapter)"
       ],
       "created": "2026-10-01T14:45:04Z",
-      "last_seen": "2026-10-01T16:00:05Z"
+      "last_seen": "2026-10-02T21:33:41Z"
     },
     {
       "id": "L-044",
@@ -892,6 +894,42 @@
       ],
       "created": "2026-10-02T18:15:15Z",
       "last_seen": "2026-10-02T18:15:15Z"
+    },
+    {
+      "id": "L-050",
+      "key": "surviving_mutant::regras de exclusao feitas na camada de cena ex filtro que poe o chefe fora de um efeito precisam de teste proprio extraia o filtro puro ou cubra no smoke senao o mutante que remove o filtro sobrevive",
+      "text": "Regras de exclusao feitas na camada de cena (ex.: filtro que poe o chefe fora de um efeito) precisam de teste proprio; extraia o filtro puro ou cubra no smoke, senao o mutante que remove o filtro sobrevive.",
+      "signal": "surviving_mutant",
+      "scope": "src/game/TechRunner.ts",
+      "status": "candidate",
+      "features": [
+        "personagem-e-vermelho"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M11 TechRunner.ts:348 / EDG-03 (src/game/TechRunner.ts)"
+      ],
+      "created": "2026-10-02T21:33:40Z",
+      "last_seen": "2026-10-02T21:33:40Z"
+    },
+    {
+      "id": "L-051",
+      "key": "surviving_mutant::duracoes e periodos de efeito visual ms citados no ac devem virar constantes exportadas ou camadas medidas no smoke checar so a presenca da camada deixa o numero livre",
+      "text": "Duracoes e periodos de efeito visual (ms) citados no AC devem virar constantes exportadas ou camadas medidas no smoke; checar so a presenca da camada deixa o numero livre.",
+      "signal": "surviving_mutant",
+      "scope": "src/game/techFx",
+      "status": "candidate",
+      "features": [
+        "personagem-e-vermelho"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M10 RedOrb.ts:35,62,64 / RDA-07,RDA-10,RDA-12 (src/game/techFx)"
+      ],
+      "created": "2026-10-02T21:33:41Z",
+      "last_seen": "2026-10-02T21:33:41Z"
     }
   ]
 }
