@@ -446,8 +446,8 @@ O `startRun` chama `reset`.
 **Reuses**: os helpers do `fight-kit`
 **Requirement**: SPN-01, SPN-06, BFX-01
 **Done when**:
-- [ ] `npm run smoke` passa. Falhas só de `heal` ou `armed` com a mesma natureza intermitente de antes ficam registradas, não mascaradas.
-- [ ] Cada smoke alterado é listado no commit.
+- [x] `npm run smoke` passa. Falhas só de `heal` ou `armed` com a mesma natureza intermitente de antes ficam registradas, não mascaradas.
+- [x] Cada smoke alterado é listado no commit.
 **Tests**: smoke
 **Gate**: full
 

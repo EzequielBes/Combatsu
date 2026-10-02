@@ -18,9 +18,14 @@ export function makeKit({ page, baseUrl, assert }) {
   };
   const count = (snapshot, ev) => snapshot.events.filter((e) => e === ev).length;
 
-  /** Abre a página com a query, aguarda o harness e começa a rodada 1 com `J` no título. */
+  /**
+   * Abre a página com a query, aguarda o harness e começa a rodada 1 com `J` no título. Os duelos precisam de um inimigo
+   * isolado, então `maxAlive=1` é o padrão (SPN-06); a query pode trazer o seu próprio `maxAlive`.
+   */
   const boot = async (query) => {
-    await page.goto(`${baseUrl}?debug&seed=1${query ? `&${query}` : ''}`, { waitUntil: 'load' });
+    const q = query ?? '';
+    const full = /(^|&)maxAlive=/.test(q) ? q : `${q}${q ? '&' : ''}maxAlive=1`;
+    await page.goto(`${baseUrl}?debug&seed=1&${full}`, { waitUntil: 'load' });
     await page.waitForFunction(
       () => {
         try {

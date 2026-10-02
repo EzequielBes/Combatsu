@@ -27,19 +27,17 @@ export default async function ({ page, baseUrl, assert }) {
   assert(run.state === 'roundActive' && run.round === 1, `run deveria estar na rodada 1: ${JSON.stringify(run)}`);
   assert(typeof player.x === 'number' && typeof player.y === 'number', `player sem posição: ${JSON.stringify(player)}`);
   assert(player.hp === 100 && player.dead === false, `player inicial errado: ${JSON.stringify(player)}`);
-  // A rodada 1 tem 3 inimigos e o LEVEL_1 tem 2 pontos E: os 2 primeiros nascem juntos, o 3º só 800 ms depois no
-  // mesmo ponto do 1º (WAVE-02/04).
-  assert(enemies.length >= 2, `esperava ao menos 2 inimigos, veio ${enemies.length}`);
+  // A rodada 1 tem 6 inimigos (SPN-01) e começa com um burst de 3 (SPN-02): em 1200 ms há ao menos 3 vivos.
+  assert(run.maxAlive === 5, `teto de vivos da rodada 1 deveria ser 5: ${JSON.stringify(run)}`);
+  assert(enemies.length >= 3, `esperava ao menos 3 inimigos, veio ${enemies.length}`);
   for (const e of enemies) {
     assert(typeof e.id === 'number', `inimigo sem id: ${JSON.stringify(e)}`);
     assert(e.hp === 60 && e.maxHp === 60 && e.state === 'idle', `inimigo inicial errado: ${JSON.stringify(e)}`);
     // Centro do corpo (36 px de altura) sobre o chão da linha 14 do LEVEL_1, cujo topo fica em y = 480.
     assert(typeof e.y === 'number' && e.y > 430 && e.y < 480, `inimigo fora do chão: ${JSON.stringify(e)}`);
-    // DIF-04/06: velocidades da IA em uso na rodada 1, sem escala (multiplicador ×1).
-    assert(
-      Math.abs(e.patrolSpeed - 35) < 0.01 && Math.abs(e.chaseSpeed - 70) < 0.01,
-      `velocidades da rodada 1 erradas: ${JSON.stringify(e)}`,
-    );
+    // DIF-04/06: velocidade da IA em uso na rodada 1, sem escala (multiplicador ×1); a patrulha não existe mais (SPN-10).
+    assert(Math.abs(e.chaseSpeed - 70) < 0.01, `velocidade da rodada 1 errada: ${JSON.stringify(e)}`);
+    assert(e.patrolSpeed === undefined && e.ai !== 'patrol', `não deveria haver patrulha: ${JSON.stringify(e)}`);
   }
 
   const after = await page.evaluate(() => {
