@@ -45,7 +45,7 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 | Rampa do orbe | núcleo `W` → `T` → `R` → borda `t` | Branco no centro e carmim na borda, como no anime | y |
 | Parte solta | Os pixels opacos do frame formam um único componente 8-conexo, ignorando `S` (rastro de movimento, SPR-14) | Pega as pernas soltas e o braço solto; o rastro é solto de propósito | y |
 | Parte cortada | O `compose` conta os pixels opacos descartados por cair fora da grade; tem que ser 0 em todo frame | Hoje o corte é silencioso | y |
-| Salto de tronco | O centro horizontal dos pixels de uniforme (`n`, `N`, `o`) muda no máximo 4 texels entre frames seguidos da mesma animação ou do mesmo golpe (wind → hit → recover) | O defeito do giratório é de ~11 texels; inclinação legítima fica abaixo de 4 | y |
+| Salto de tronco | O centro horizontal dos pixels de uniforme (`n`, `N`, `o`) muda no máximo 8 texels entre frames seguidos da mesma animação ou do mesmo golpe (wind → hit → recover) | Ajustado no Execute (02/10). As investidas intencionais dos golpes (wind → hit) medem de 4,0 a 5,9 e a soltura do Divergente mede 7,6, enquanto o defeito do giratório era de ~11. O limite de 8 separa as duas coisas | y |
 | `land-1` | A altura opaca de `land-1` é ≤ a de `idle-0` | Aterrissar agacha; pernas mais longas que o normal são o defeito | y |
 | Cabeça torta no `ganchoAscendente-hit` | Verificação visual no UAT (sprite-preview) | Não há medida objetiva simples | y |
 | Ponta dos dedos | Em cada frame `vermelho-sign/charge/release`, o pixel `R` mais à frente (maior coluna) do braço esticado é a âncora do orbe | Os dedos já são pintados de `R`/`r` | y |
@@ -68,7 +68,7 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 
 1. SPF-01: The conjunto de pixels opacos de todo frame do player (exceto `S`) SHALL formar um único componente 8-conexo.
 2. SPF-02: The `compose` SHALL descartar 0 pixels opacos fora da grade 32×24 em todo frame do player.
-3. SPF-03: The centro horizontal dos pixels `n`/`N`/`o` SHALL mudar no máximo 4 texels entre dois frames seguidos de uma mesma animação ou de um mesmo golpe (wind → hit → recover).
+3. SPF-03: The centro horizontal dos pixels `n`/`N`/`o` SHALL mudar no máximo 8 texels entre dois frames seguidos de uma mesma animação ou de um mesmo golpe (wind → hit → recover).
 4. SPF-04: The `chuteGiratorio-hit` SHALL ter o centro horizontal dos pixels `n`/`N`/`o` a no máximo 4 texels da coluna 10 (origem).
 5. SPF-05: The altura opaca de `land-1` SHALL ser menor ou igual à de `idle-0`.
 6. SPF-06: The pixels da mão `WRIST_GRIP` nos frames do Vermelho SHALL não usar a chave `p` (pele clara do braço da frente).
@@ -153,7 +153,7 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 | SPF-04 | P1: Personagem | Specify | Implementing |
 | SPF-05 | P1: Personagem | Specify | Implementing |
 | SPF-06 | P1: Personagem | Specify | Implementing |
-| SPF-07 | P1: Personagem | Specify | Pending |
+| SPF-07 | P1: Personagem | Specify | Implementing |
 | RDA-01 | P1: Vermelho carmim | Specify | Pending |
 | RDA-02 | P1: Vermelho carmim | Specify | Pending |
 | RDA-03 | P1: Vermelho carmim | Specify | Pending |
