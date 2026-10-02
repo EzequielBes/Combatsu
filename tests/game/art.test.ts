@@ -16,7 +16,7 @@ import { selOut as sharedSelOut, type SelOutConfig } from '../../src/game/art/se
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
 import enemyBBoxBaseline from './fixtures/enemyBBoxBaseline.json';
-import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
+import { PLAYER_TECH_FRAMES, fingertipOffsetPx, redFingertip } from '../../src/game/art/sprites/playerTech';
 import {
   COMBO_GRADE_COLORS,
   COMBO_TEXT_COLOR,
@@ -1278,5 +1278,38 @@ describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => 
       for (const [n, g] of Object.entries({ head, torso, limb })) parseSheet(`rag-${n}-${id}`, { [n]: g }, PALETTE_KEYS);
     }
     expect(ENEMY_RAG_PARTS).toBe(ENEMY_RAG_VARIANTS.corcunda);
+  });
+});
+
+describe('ponta dos dedos do Vermelho por frame (RDA-04)', () => {
+  const FRAMES = ['vermelho-sign', 'vermelho-charge', 'vermelho-release'] as const;
+  const originCol = PLAYER_ORIGIN.x * PLAYER_FRAME_W;
+
+  it.each(FRAMES)('%s: o pixel devolvido é R e é o de maior coluna entre todos os R do frame', (name) => {
+    const rows = PLAYER_TECH_FRAMES[name];
+    const { col, row } = redFingertip(name);
+    expect(rows[row][col]).toBe('R');
+    let maxCol = -1;
+    rows.forEach((line) => [...line].forEach((ch, c) => { if (ch === 'R') maxCol = Math.max(maxCol, c); }));
+    expect(col).toBe(maxCol);
+  });
+
+  it('a ponta avança com o braço: sign < charge < release em coluna', () => {
+    expect(redFingertip('vermelho-sign').col).toBeLessThan(redFingertip('vermelho-charge').col);
+    expect(redFingertip('vermelho-charge').col).toBeLessThan(redFingertip('vermelho-release').col);
+  });
+
+  it.each(FRAMES)('%s: o deslocamento em px usa a origem e a escala, e espelha em x com facing -1', (name) => {
+    const { col, row } = redFingertip(name);
+    const right = fingertipOffsetPx(name, 1);
+    const left = fingertipOffsetPx(name, -1);
+    expect(right).toEqual({ x: (col - originCol) * ART_SCALE, y: (row - PLAYER_FRAME_H) * ART_SCALE });
+    expect(left.x).toBe(-right.x);
+    expect(left.y).toBe(right.y);
+    expect(right.x).toBeGreaterThan(0);
+  });
+
+  it('um frame que não é do Vermelho lança erro', () => {
+    expect(() => redFingertip('azul-charge')).toThrow(/azul-charge/);
   });
 });

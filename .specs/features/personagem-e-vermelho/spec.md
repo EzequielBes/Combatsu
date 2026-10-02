@@ -157,7 +157,7 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 | RDA-01 | P1: Vermelho carmim | Specify | Implementing |
 | RDA-02 | P1: Vermelho carmim | Specify | Implementing |
 | RDA-03 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-04 | P1: Vermelho carmim | Specify | Pending |
+| RDA-04 | P1: Vermelho carmim | Specify | Implementing |
 | RDA-05 | P1: Vermelho carmim | Specify | Pending |
 | RDA-06 | P1: Vermelho carmim | Specify | Pending |
 | RDA-07 | P1: Vermelho carmim | Specify | Pending |

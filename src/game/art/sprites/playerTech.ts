@@ -20,12 +20,16 @@
  * - Azul: no sign e no charge a mão fica ERGUIDA acima da linha dos ombros (reusa `ARM_UP` de `player.ts` com a
  *   palma trocada pelo núcleo `c`/`d`); no release a mão desce e empurra a esfera à frente do peito.
  */
+import { ART_SCALE } from '../palette';
 import {
   ARM_COCK,
   ARM_GUARD,
   ARM_UP,
   HEAD_FOCUS,
   LEGS_WIDE,
+  PLAYER_FRAME_H,
+  PLAYER_FRAME_W,
+  PLAYER_ORIGIN,
   Y_LEGS,
   armStraight,
   cropPart,
@@ -248,3 +252,32 @@ export const PLAYER_TECH_FRAMES: Record<string, readonly string[]> = {
     legs: [[LEGS_WIDE, 3, Y_LEGS]],
   }),
 };
+
+/**
+ * Ponta dos dedos do Vermelho (RDA-04): em `vermelho-sign|charge|release`, o pixel `R` de maior coluna do frame
+ * (os dedos já são pintados de `R`/`r`); com empate de coluna vale o mais alto. `col`/`row` são texels do frame.
+ */
+export function redFingertip(frameName: string): { col: number; row: number } {
+  const rows = PLAYER_TECH_FRAMES[frameName];
+  if (!rows || !/^vermelho-(sign|charge|release)$/.test(frameName)) {
+    throw new Error(`redFingertip: '${frameName}' não é um frame sign/charge/release do Vermelho`);
+  }
+  let tip: { col: number; row: number } | null = null;
+  rows.forEach((line, row) =>
+    [...line].forEach((ch, col) => {
+      if (ch === 'R' && (tip === null || col > tip.col)) tip = { col, row };
+    }),
+  );
+  if (!tip) throw new Error(`redFingertip: '${frameName}' não tem pixel R`);
+  return tip;
+}
+
+/**
+ * Deslocamento em px de mundo da ponta dos dedos em relação à origem do sprite (pé, centro do corpo), espelhado
+ * em x por `facing` (RDA-04): `x = (col − colunaDaOrigem)·ART_SCALE·facing`, `y = (row − altura)·ART_SCALE`.
+ */
+export function fingertipOffsetPx(frameName: string, facing: 1 | -1): { x: number; y: number } {
+  const { col, row } = redFingertip(frameName);
+  const originCol = PLAYER_ORIGIN.x * PLAYER_FRAME_W;
+  return { x: (col - originCol) * ART_SCALE * facing, y: (row - PLAYER_FRAME_H) * ART_SCALE };
+}
