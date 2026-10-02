@@ -68,7 +68,7 @@ T10 → T11 → T12 → T13
 **Reuses**: `compose`
 **Requirement**: SPF-02
 **Done when**:
-- [ ] Teste: uma parte com 3 pixels opacos em x = −1 gera `clipped = 3`; uma parte inteira dentro da grade gera 0.
+- [x] Teste: uma parte com 3 pixels opacos em x = −1 gera `clipped = 3`; uma parte inteira dentro da grade gera 0.
 **Tests**: unit
 **Gate**: quick
 
