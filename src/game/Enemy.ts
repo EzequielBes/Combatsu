@@ -154,7 +154,7 @@ export class Enemy implements Hittable {
     });
     scene.matter.body.setInertia(this.body, Infinity); // não tomba
     tagBody(this.body, { kind: 'character', target: this });
-    this.ai = new EnemyAI(tuning.ai, spawn.x);
+    this.ai = new EnemyAI(tuning.ai);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, enemyTex(variant), 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
     this.weaponView = weaponInfo
@@ -230,9 +230,10 @@ export class Enemy implements Hittable {
     return this.lastAttackDamage;
   }
 
-  /** Velocidade de patrulha da IA em uso, já escalada pela rodada (DIF-04/06), para o snapshot de debug. */
+  /** Sem patrulha (SPN-10): devolve a velocidade de perseguição só para o snapshot de debug compilar. */
+  // T14: patrolSpeed sai na fase 3
   get patrolSpeed(): number {
-    return this.ai.patrolSpeed;
+    return this.ai.chaseSpeed;
   }
 
   /** Velocidade de perseguição da IA em uso, já escalada pela rodada (DIF-04/06), para o snapshot de debug. */
@@ -489,7 +490,8 @@ export class Enemy implements Hittable {
     // recém-nascido, aparado (PAR-10) ou quebrado (STR-05) deixam a IA parada (AI-04, WAVE-09).
     const canAct =
       this.brain.state === 'idle' && !this.brain.isDead && !this.grace.active && this.suppressedMs <= 0 && !this.structure.broken && !this.guard.guarding;
-    const out = this.ai.update(dtMs, { selfX: this.body.position.x, playerX, canAct });
+    // T14/T16: ligação completa na fase 3 (granted/windupAllowed/holdRank vêm do AttackGate da cena).
+    const out = this.ai.update(dtMs, { selfX: this.body.position.x, playerX, canAct, granted: true, windupAllowed: true, holdRank: 0 });
     this.onAI(out.events);
     this.walkVxStep = canAct && !this.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
     if (this.ragdoll) {

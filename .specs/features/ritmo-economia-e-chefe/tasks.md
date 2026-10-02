@@ -166,8 +166,8 @@ T22 → T23 → T24 → T25
 **Reuses**: as fases `windup`, `attack` e `rest` e o `next()` com a sobra do frame
 **Requirement**: SPN-10, SPN-11, SPN-12, LIM-03, LIM-05, LIM-07, LIM-08
 **Done when**:
-- [ ] `tests/core/enemyAI.test.ts` reescrito: os casos de `patrol` saem porque o SPN-10 removeu o requisito (registrar no commit).
-- [ ] Testes novos cobrem:
+- [x] `tests/core/enemyAI.test.ts` reescrito: os casos de `patrol` saem porque o SPN-10 removeu o requisito (registrar no commit).
+- [x] Testes novos cobrem:
   - nunca `patrol`;
   - 320 px (velocidade ×1) e 321 px (×1,6);
   - 96 px (`hold`) e 97 px (`chase`) sem permissão;

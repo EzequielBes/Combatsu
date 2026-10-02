@@ -283,19 +283,19 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | SPN-07 | P1: Mais inimigos | Specify | Implementing |
 | SPN-08 | P1: Mais inimigos | Specify | Implementing |
 | SPN-09 | P1: Mais inimigos | Specify | Implementing |
-| SPN-10 | P1: Mais inimigos | Specify | Pending |
-| SPN-11 | P1: Mais inimigos | Specify | Pending |
-| SPN-12 | P1: Mais inimigos | Specify | Pending |
+| SPN-10 | P1: Mais inimigos | Specify | Implementing |
+| SPN-11 | P1: Mais inimigos | Specify | Implementing |
+| SPN-12 | P1: Mais inimigos | Specify | Implementing |
 | SPN-13 | P1: Mais inimigos | Specify | Pending |
 | SPN-14 | P1: Mais inimigos | Specify | Pending |
 | LIM-01 | P1: Limitador | Specify | Implementing |
 | LIM-02 | P1: Limitador | Specify | Implementing |
-| LIM-03 | P1: Limitador | Specify | Pending |
+| LIM-03 | P1: Limitador | Specify | Implementing |
 | LIM-04 | P1: Limitador | Specify | Implementing |
-| LIM-05 | P1: Limitador | Specify | Pending |
+| LIM-05 | P1: Limitador | Specify | Implementing |
 | LIM-06 | P1: Limitador | Specify | Implementing |
-| LIM-07 | P1: Limitador | Specify | Pending |
-| LIM-08 | P1: Limitador | Specify | Pending |
+| LIM-07 | P1: Limitador | Specify | Implementing |
+| LIM-08 | P1: Limitador | Specify | Implementing |
 | ECN-01 | P1: Renda | Specify | Pending |
 | ECN-02 | P1: Renda | Specify | Pending |
 | ECN-03 | P1: Renda | Specify | Pending |
