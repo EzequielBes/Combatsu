@@ -28,6 +28,7 @@ import {
   LEGS_WIDE,
   Y_LEGS,
   armStraight,
+  cropPart,
   far,
   pose,
   recolor,
@@ -102,7 +103,7 @@ function armDiagonalCut(hi: string): Grid {
 
 /** Pernas do "charge": mesma base do `LEGS_WIDE`, afundada 1 texel (joelhos flexionados, corpo baixando junto
  * com o `drop` maior da cabeça/tronco). */
-const CHARGE_LEGS: Placed = [LEGS_WIDE, 0, Y_LEGS + 1];
+const CHARGE_LEGS: Placed = cropPart([LEGS_WIDE, 0, Y_LEGS + 1], { bottom: 1 });
 
 /** Pernas do "release": o mesmo `LEGS_WIDE` do `sign`/`recover`, mas empurrado bem mais à frente (o avanço do
  * golpe, igual ao `cross-hit`/`kick-hit` de `player.ts`) — a perna de trás fica visivelmente para trás do
@@ -197,7 +198,7 @@ export const PLAYER_TECH_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [armPointed(17, 'R', 'r'), 9, 11],
     far: [far(ARM_GUARD), 8, 11],
-    legs: [[LEGS_WIDE, -1, Y_LEGS]],
+    legs: [cropPart([LEGS_WIDE, -1, Y_LEGS], { left: 1 })],
   }),
   'vermelho-recover': pose({
     lean: -1,

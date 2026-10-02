@@ -72,6 +72,16 @@ export function compose(...parts: Placed[]): string[] {
   return composeWithStats(...parts).frame;
 }
 
+/**
+ * Corta linhas de baixo e colunas da esquerda de uma parte que já ficariam fora da grade, mantendo o resto no mesmo
+ * lugar. O frame final é idêntico ao do `compose` sem o corte, mas sem pixels descartados em silêncio (SPF-02).
+ */
+export function cropPart([grid, x0, y0]: Placed, edges: { left?: number; bottom?: number }): Placed {
+  const left = edges.left ?? 0;
+  const bottom = edges.bottom ?? 0;
+  return [grid.slice(0, grid.length - bottom).map((row) => row.slice(left)), x0 + left, y0];
+}
+
 /** Troca cores de uma parte (ex.: braço de trás mais escuro). */
 export function recolor(grid: Grid, map: Record<string, string>): string[] {
   return grid.map((row) => [...row].map((ch) => map[ch] ?? ch).join(''));
