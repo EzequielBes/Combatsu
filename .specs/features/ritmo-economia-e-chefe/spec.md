@@ -57,7 +57,7 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | Perseguição | O estado `patrol` deixa de existir: todo inimigo que pode agir anda rumo ao jogador. Acima de 320 px de distância anda a ×1,6 da `chaseSpeed` | Comportamento roguelike pedido; quem nasce longe chega logo | y |
 | Limitador de atacantes | No máximo 2 inimigos em `windup` ou `attack` ao mesmo tempo, e no mínimo 350 ms entre dois inícios de `windup`. Um inimigo ao alcance sem permissão para em `hold`, a 64–96 px do jogador | Decisão do usuário ("2 por vez"); a F14 troca pelo diretor completo | y |
 | Ordem da permissão | Quem chegou primeiro ao alcance (FIFO pelo instante em que entrou em `hold`) | Simples e justo; a F14 introduz prioridade | y |
-| Inimigos em `hold` | Mantêm pelo menos 24 px de distância entre si no eixo x | Evita a pilha de bonecos no mesmo pixel | y |
+| Inimigos em `hold` | Cada um fica a `64 + 24·k` px do jogador (k = ordem na fila do seu lado), então ficam 24 px um do outro. Ajustado no Design: a faixa fixa de 64–96 px não comporta 8 inimigos | Evita a pilha de bonecos no mesmo pixel | y |
 | HP e dano dos comuns | `DIFFICULTY.hpPerRound = 0` e `damagePerRound = 0`; `speedPerRound` continua 0,03 | AD-014: dificuldade por mecânica | y |
 
 ### Economia e loja
@@ -164,7 +164,7 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 4. LIM-04: WHEN abre uma vaga de ataque THEN a permissão SHALL ir para o inimigo que está há mais tempo em `hold`.
 5. LIM-05: WHILE dois inimigos estão em `hold` do mesmo lado do jogador, a distância entre eles no eixo x SHALL ser de pelo menos 24 px.
 6. LIM-06: IF um inimigo com permissão é interrompido (golpe, ragdoll, morte) THEN a vaga dele SHALL ser liberada no mesmo frame.
-7. LIM-07: WHILE um inimigo está em `hold`, ele SHALL se mover para manter `|x − player.x|` entre 64 e 96 px.
+7. LIM-07: WHILE um inimigo está em `hold` com `holdRank` k (posição na fila de espera entre os do mesmo lado do jogador, começando em 0), ele SHALL se mover para manter `|x − player.x|` em `64 + 24·k` ± 8 px.
 8. LIM-08: WHEN um inimigo em `hold` recebe a permissão THEN ele SHALL sair de `hold`, avançar até `attackRange` e iniciar `windup`.
 
 **Independent Test**: `?debug&maxAlive=6&enemyGuard=0`, jogador parado por 20 s: nenhum frame tem mais de 2 inimigos em `windup|attack`.
