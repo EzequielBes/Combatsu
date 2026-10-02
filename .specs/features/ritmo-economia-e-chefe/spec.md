@@ -288,12 +288,12 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | SPN-12 | P1: Mais inimigos | Specify | Pending |
 | SPN-13 | P1: Mais inimigos | Specify | Pending |
 | SPN-14 | P1: Mais inimigos | Specify | Pending |
-| LIM-01 | P1: Limitador | Specify | Pending |
-| LIM-02 | P1: Limitador | Specify | Pending |
+| LIM-01 | P1: Limitador | Specify | Implementing |
+| LIM-02 | P1: Limitador | Specify | Implementing |
 | LIM-03 | P1: Limitador | Specify | Pending |
-| LIM-04 | P1: Limitador | Specify | Pending |
+| LIM-04 | P1: Limitador | Specify | Implementing |
 | LIM-05 | P1: Limitador | Specify | Pending |
-| LIM-06 | P1: Limitador | Specify | Pending |
+| LIM-06 | P1: Limitador | Specify | Implementing |
 | LIM-07 | P1: Limitador | Specify | Pending |
 | LIM-08 | P1: Limitador | Specify | Pending |
 | ECN-01 | P1: Renda | Specify | Pending |
@@ -325,7 +325,7 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | MST-08 | P2: Maestria | Specify | Pending |
 | EDG-01 | Edge cases | Specify | Implementing |
 | EDG-02 | Edge cases | Specify | Implementing |
-| EDG-03 | Edge cases | Specify | Pending |
+| EDG-03 | Edge cases | Specify | Implementing |
 | EDG-04 | Edge cases | Specify | Pending |
 | EDG-05 | Edge cases | Specify | Pending |
 | EDG-06 | Edge cases | Specify | Pending |

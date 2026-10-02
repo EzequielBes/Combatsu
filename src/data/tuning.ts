@@ -5,6 +5,7 @@ import type { AttackStep } from '../core/combo';
 import type { MoveTuning } from '../core/movement';
 import type { DifficultyTuning } from '../core/difficulty';
 import type { WaveTuning } from '../core/waves';
+import type { AttackGateTuning } from '../core/attackGate';
 import type { RunTuning } from '../core/run';
 
 /** Pulo máximo ≈ 130 px (4 tiles); toque ≈ 30 px. Ajustar jogando. */
@@ -130,6 +131,9 @@ export const WAVE: WaveTuning = {
   trickleMs: 1500,
   pointGapMs: 800,
 };
+
+/** Limitador de atacantes (LIM-01, LIM-02): 2 vagas e 350 ms entre windups. */
+export const ATTACK_GATE: AttackGateTuning = { maxActive: 2, minWindupGapMs: 350 };
 
 /** Tempos da máquina de estados da run (RUN-10, RUN-11, RHUD-02). */
 export const RUN: RunTuning = { intermissionMs: 2500, gameOverLockMs: 1000, spawnGraceMs: 600, bannerMs: 1500 };

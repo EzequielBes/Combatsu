@@ -146,7 +146,7 @@ T22 → T23 → T24 → T25
 **Reuses**: nenhum (módulo novo)
 **Requirement**: LIM-01, LIM-02, LIM-04, LIM-06, EDG-03
 **Done when**:
-- [ ] Testes cobrem:
+- [x] Testes cobrem:
   - a 3ª requisição não ganha vaga;
   - a ordem FIFO;
   - `windupAllowed` em 349 ms (falso) e 350 ms (verdadeiro);
