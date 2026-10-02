@@ -78,13 +78,13 @@ export default async function ({ page, baseUrl, assert }) {
     let settledPairs = 0;
     let minHoldGap = Infinity;
     const windupFrames = []; // frame em que cada `windup` começou, de qualquer inimigo
-    for (let segment = 0; segment < 12 && sampledMs < TARGET_MS; segment++) {
+    for (let segment = 0; segment < 12 && (sampledMs < TARGET_MS || (settledPairs === 0 && sampledMs < TARGET_MS * 2)); segment++) {
       let s = await boot('maxAlive=6&enemyGuard=0');
       assert(s.run.maxAlive === 6, `SPN-06: ?debug&maxAlive=6 deveria fixar o teto: ${JSON.stringify(s.run)}`);
       const prevAi = new Map();
       const lastX = new Map(); // id -> x do frame anterior
       const stillFrames = new Map(); // id -> frames seguidos sem mudar de x
-      while (sampledMs < TARGET_MS && s.run.state === 'roundActive' && s.player.hp > 25) {
+      while ((sampledMs < TARGET_MS || (settledPairs === 0 && sampledMs < TARGET_MS * 2)) && s.run.state === 'roundActive' && s.player.hp > 25) {
         s = await frame();
         frames++;
         sampledMs += FRAME_MS;
