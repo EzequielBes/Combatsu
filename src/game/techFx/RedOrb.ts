@@ -6,10 +6,8 @@ import type { Vec2 } from '../../core/hit';
 import { PALETTE } from '../art/palette';
 import { fingertipOffsetPx } from '../art/sprites/playerTech';
 import { RED_FX_COLORS } from './redPalette';
+import { DISTORT_PERIOD_MS, FRAME_MS, REPULSE_MS, TRAIL_EVERY_MS, TRAIL_FADE_MS } from './redTiming';
 import { TEX } from '../textures';
-
-/** Um frame a 60 fps (mesma convenção de KokusenFx.ts). */
-const FRAME_MS = 1000 / 60;
 
 /** Cores do efeito, sempre lidas de `RED_FX_COLORS` (RDA-03/14): nunca `a`/`A`. */
 const C = {
@@ -32,8 +30,6 @@ const CHARGE_TEX: Record<4 | 8 | 12, string> = { 4: TEX.techOrbRed4, 8: TEX.tech
 
 const SPARKS_OUT_MAX = 40; // TFX-04: bem abaixo de 64
 const DUST_EVERY_MS = 150;
-/** RDA-12: um fantasma por frame, que some em 180 ms. */
-const TRAIL_FADE_MS = 180;
 const CRACKLE_EVERY_MS = 90;
 /** Polimento (feat(fx)): "flash branco no núcleo (1-2 frames)" - era 100 ms (6 frames), tempo demais para um flash. */
 const FLASH_CORE_MS = FRAME_MS * 2;
@@ -58,10 +54,7 @@ const SCREEN_FLASH_MS = 80;
 /** RED-17: a câmera treme por exatamente 200 ms. */
 const SHAKE_MS = 200;
 const SHAKE_INTENSITY = 0.02;
-/** RDA-07: dois arcos `T` girando em volta do orbe, uma volta a cada 400 ms. */
-const DISTORT_PERIOD_MS = 400;
-/** RDA-10: o cone da repulsão fica 120 ms e alcança 80 px à frente. */
-const REPULSE_MS = 120;
+/** RDA-10: o cone da repulsão alcança 80 px à frente (duração em `redTiming`). */
 const REPULSE_REACH_PX = 80;
 
 /** Snap para a grade de 2 px (AD-009/TFX-02): geometria procedural sempre em texels pares. */
@@ -297,8 +290,8 @@ export class RedOrbFx {
     this.fx.add('red.trail', Math.max(dtMs, 1), 'game');
     this.fx.add('red.crackle', Math.max(dtMs, 1), 'game');
     this.trailMs += dtMs;
-    if (this.trailMs >= FRAME_MS) {
-      this.trailMs -= FRAME_MS;
+    if (this.trailMs >= TRAIL_EVERY_MS) {
+      this.trailMs -= TRAIL_EVERY_MS;
       // Polimento (feat(fx)): riscos esticados no eixo do voo (Direção de arte "rastro de riscos vermelhos"),
       // não só cópias redondas do orbe - `scaleX` maior estica a mesma textura num risco horizontal.
       const ghost = this.scene.add.sprite(x, y, TEX.techOrbRed12, 'orb').setTintFill(C.glow).setAlpha(0.55).setScale(1.6, 0.8).setDepth(2);
