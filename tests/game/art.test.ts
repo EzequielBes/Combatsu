@@ -349,6 +349,24 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
     }
   });
 
+  it('a rampa do orbe segue os raios W até 0,3, T até 0,55, R até 0,8 e t na borda (RDA-02)', () => {
+    for (const size of [8, 12] as const) {
+      const cells = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells;
+      const center = (size - 1) / 2;
+      const seen = new Set<string>();
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const r = Math.hypot(x - center, y - center) / (size / 2); // fração do raio do disco
+          const expected = r <= 0.3 ? 'W' : r <= 0.55 ? 'T' : r <= 0.8 ? 'R' : r <= 1 ? 't' : null;
+          expect(cells[y][x], `${size} (${x},${y}) r=${r.toFixed(3)}`).toBe(expected);
+          if (expected) seen.add(expected);
+        }
+      }
+      // Os quatro anéis existem de fato nesse tamanho (a rampa não degenerou).
+      expect([...seen].sort(), `${size}`).toEqual(['R', 'T', 'W', 't']);
+    }
+  });
+
   it('nenhum frame do orbe Vermelho contém a nem A (RDA-03)', () => {
     for (const size of RED_ORB_SIZES) {
       const colors = new Set(parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells.flat());
