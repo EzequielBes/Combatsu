@@ -97,6 +97,21 @@ export default async function ({ page, baseUrl, assert }) {
     const groundRecoil = Math.abs(s.player.x - prev.player.x);
     assert(groundRecoil >= 8, `RED-15: no chão a soltura deveria recuar ~12 px: ${groundRecoil.toFixed(2)}`);
 
+    // RDA-04 (release): no release só existe o orbe em voo (o de carga some em hideCharge). Ele nasce na ponta dos
+    // dedos do frame em cena no tick da soltura (ainda `vermelho-charge`; a pose `vermelho-release` só aparece no
+    // frame seguinte), então a posição de lançamento (x menos o 1º passo de voo) fica a <= 2 px dessa ponta.
+    {
+      const orb = repulse.techObjects.find((o) => o.kind === 'red');
+      assert(orb, `RDA-04: o orbe em voo deveria existir no frame da soltura: ${JSON.stringify(repulse.techObjects)}`);
+      const off = FINGERTIP[repulse.player.frame];
+      assert(off, `RDA-04: frame inesperado na soltura: ${repulse.player.frame}`);
+      const launchX = orb.x - repulse.player.facing * orb.traveled;
+      const tipX = repulse.player.x + off.x * repulse.player.facing;
+      const tipY = repulse.player.y + FEET_OFFSET + off.y;
+      const dist = Math.hypot(launchX - tipX, orb.y - tipY);
+      assert(dist <= 2, `RDA-04: orbe lançado a ${dist.toFixed(2)} px da ponta dos dedos (${repulse.player.frame}): ${JSON.stringify({ orb, launchX, tipX, tipY })}`);
+    }
+
     // RDA-08: no frame da soltura o inimigo da frente perdeu exatamente 4 de HP e foi empurrado/cambaleou.
     const hit = repulse.enemies.find((e) => e.id === frontId);
     assert(hit, `inimigo da frente sumiu na soltura: ${JSON.stringify(repulse.enemies)}`);
