@@ -155,8 +155,8 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 | SPF-06 | P1: Personagem | Specify | Implementing |
 | SPF-07 | P1: Personagem | Specify | Implementing |
 | RDA-01 | P1: Vermelho carmim | Specify | Implementing |
-| RDA-02 | P1: Vermelho carmim | Specify | Pending |
-| RDA-03 | P1: Vermelho carmim | Specify | Pending |
+| RDA-02 | P1: Vermelho carmim | Specify | Implementing |
+| RDA-03 | P1: Vermelho carmim | Specify | Implementing |
 | RDA-04 | P1: Vermelho carmim | Specify | Pending |
 | RDA-05 | P1: Vermelho carmim | Specify | Pending |
 | RDA-06 | P1: Vermelho carmim | Specify | Pending |
@@ -167,7 +167,7 @@ Esta feature corrige os sprites, cria testes que impedem a volta desses defeitos
 | RDA-11 | P1: Repulsão | Specify | Pending |
 | RDA-12 | P1: Repulsão | Specify | Pending |
 | RDA-13 | P1: Repulsão | Specify | Pending |
-| RDA-14 | P1: Repulsão | Specify | Pending |
+| RDA-14 | P1: Repulsão | Specify | Implementing |
 | RDA-15 | P1: Repulsão | Specify | Pending |
 | EDG-01 | Edge cases | Specify | Pending |
 | EDG-02 | Edge cases | Specify | Pending |

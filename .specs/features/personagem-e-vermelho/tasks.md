@@ -164,9 +164,9 @@ T10 → T11 → T12 → T13
 **Reuses**: `disc()`
 **Requirement**: RDA-02, RDA-03, RDA-14
 **Done when**:
-- [ ] Testes: os frames de 8 e 12 têm `W` no centro e passam por `T`, `R` e `t` (borda).
-- [ ] Testes: nenhum frame do orbe contém `a` ou `A`.
-- [ ] Testes: todas as chaves de `RED_FX_COLORS` estão em {`b`, `t`, `T`, `R`, `W`}.
+- [x] Testes: os frames de 8 e 12 têm `W` no centro e passam por `T`, `R` e `t` (borda).
+- [x] Testes: nenhum frame do orbe contém `a` ou `A`.
+- [x] Testes: todas as chaves de `RED_FX_COLORS` estão em {`b`, `t`, `T`, `R`, `W`}.
 **Tests**: unit
 **Gate**: quick
 

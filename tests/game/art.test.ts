@@ -26,6 +26,7 @@ import {
 } from '../../src/game/art/combatColors';
 import { KANJI_FRAMES } from '../../src/game/art/sprites/kanji';
 import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from '../../src/game/art/sprites/techFx';
+import { RED_FX_COLORS } from '../../src/game/techFx/redPalette';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from '../../src/game/art/sprites/economy';
@@ -325,14 +326,44 @@ describe('kanji das técnicas (KOK-29, KOK-34, TFX-01)', () => {
 });
 
 describe('orbes e aura das técnicas (TFX-01)', () => {
-  it('o orbe Vermelho passa no parseSheet nos 3 tamanhos da carga (RED-02), com núcleo W e borda R', () => {
+  it('o orbe Vermelho passa no parseSheet nos 3 tamanhos da carga (RED-02), com núcleo W e borda carmim t', () => {
     for (const size of RED_ORB_SIZES) {
       const sheet = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS);
       expect(sheet.width).toBe(size);
       expect(sheet.height).toBe(size);
       const colors = new Set(sheet.frames[0].cells.flat());
       expect(colors.has('W')).toBe(true);
-      expect(colors.has('R')).toBe(true);
+      expect(colors.has('t')).toBe(true);
+    }
+  });
+
+  it('os orbes de 8 e 12 texels têm W no centro e passam por T, R e t até a borda (RDA-02)', () => {
+    for (const size of [8, 12] as const) {
+      const cells = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells;
+      const mid = Math.floor(size / 2);
+      // Anda do centro para a direita: W -> T -> R -> t, nessa ordem de aparição.
+      const order = cells[mid].slice(mid).filter((c): c is string => c !== null);
+      const firstSeen = [...new Set(order)];
+      expect(firstSeen, `${size}`).toEqual(['W', 'T', 'R', 't']);
+      expect(order[order.length - 1], `${size}`).toBe('t');
+    }
+  });
+
+  it('nenhum frame do orbe Vermelho contém a nem A (RDA-03)', () => {
+    for (const size of RED_ORB_SIZES) {
+      const colors = new Set(parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells.flat());
+      expect(colors.has('a'), `${size}`).toBe(false);
+      expect(colors.has('A'), `${size}`).toBe(false);
+    }
+  });
+
+  it('todas as chaves de RED_FX_COLORS estão em {b, t, T, R, W} e existem na paleta (RDA-03, RDA-14)', () => {
+    const allowed = new Set(['b', 't', 'T', 'R', 'W']);
+    const keys = Object.values(RED_FX_COLORS).flat();
+    expect(keys.length).toBeGreaterThan(0);
+    for (const k of keys) {
+      expect(allowed.has(k), k).toBe(true);
+      expect(PALETTE_KEYS.has(k), k).toBe(true);
     }
   });
 
