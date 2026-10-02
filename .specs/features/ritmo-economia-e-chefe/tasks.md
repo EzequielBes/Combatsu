@@ -353,7 +353,7 @@ O `startRun` chama `reset`.
 **Reuses**: o loop de inimigos do `update`
 **Requirement**: LIM-01, LIM-02, LIM-04, LIM-05, LIM-06, LIM-07, EDG-03
 **Done when**:
-- [ ] Build passa.
+- [x] Build passa.
 **Tests**: none
 **Gate**: build
 

@@ -10,6 +10,7 @@ import { CursedEnergy } from '../core/energy';
 import { FxRegistry } from '../core/fxRegistry';
 import { FxTimeline } from '../core/fxTimeline';
 import type { Hit, Strength, Vec2 } from '../core/hit';
+import { AttackGate } from '../core/attackGate';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
@@ -39,6 +40,7 @@ import {
   ECONOMY,
   ENEMY,
   ENEMY_AI,
+  ATTACK_GATE,
   ENEMY_ATTACK,
   PICKUP,
   PLAYER_COMBO,
@@ -143,6 +145,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private shopInput!: ShopInput;
   private player!: Player;
   private enemies: Enemy[] = [];
+  /** Limitador de atacantes (LIM-01..07): 2 vagas, fila FIFO e 350 ms entre windups; zerado a cada `startRun` (EDG-03). */
+  private attackGate = new AttackGate(ATTACK_GATE);
   /** Só existe numa rodada de chefe (BOSS-01); `null` fora dela ou depois de removido. */
   private boss: Boss | null = null;
   /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
@@ -253,6 +257,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     buildBackground(this, this.level.widthPx, this.level.heightPx);
     this.terrain = [];
     this.enemies = [];
+    this.attackGate = new AttackGate(ATTACK_GATE);
     this.projectiles = [];
     this.buildTerrain();
     this.listenForContacts();
@@ -455,7 +460,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
       this.wasPlayerDead = this.player.dead;
-      for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
+      this.updateEnemies(dt);
       this.boss?.update(dt, this.player.sprite.x);
       if (this.bossDefeatedPending) {
         this.boss?.destroyNow();
@@ -701,6 +706,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.bossDefeatedPending = false;
     this.clearedBanner = null;
     this.spawnLastUsed.clear();
+    this.attackGate.reset();
     // Higiene: uma loja não deveria sobreviver a um game over (gameOver só sai de roundActive/intermission), mas
     // uma run nova nunca deve carregar a loja da anterior.
     if (this.shop) this.matter.world.resume();
@@ -854,6 +860,40 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const p of this.props) if (isDroppedTool(p.def.key) && p.isGone) this.droppedTools.forget(p.id);
   }
 
+  /**
+   * Inimigos comuns + limitador de atacantes (LIM-01..07, EDG-03). Por inimigo, a cena entrega `granted`,
+   * `windupAllowed` e `holdRank`; depois do `update` lê o que a IA emitiu: `windupStart` → `noteWindup`,
+   * `wantAttack` → `request`, e libera a vaga (ou a fila) no mesmo frame em que o estado sai de
+   * {approach, windup, attack} ou o inimigo morre/some.
+   */
+  private updateEnemies(dt: number): void {
+    const gate = this.attackGate;
+    gate.update(dt);
+    const px = this.player.sprite.x;
+    const sideOf = (x: number): 1 | -1 => (x - px >= 0 ? 1 : -1);
+    for (const e of [...this.enemies]) {
+      // Posição na fila de espera entre os que esperam do mesmo lado do player (LIM-05, LIM-07).
+      const side = sideOf(e.x);
+      const sameSide = gate
+        .queueOrder()
+        .filter((id) => {
+          const other = this.enemies.find((o) => o.id === id);
+          return other !== undefined && other.aiState === 'hold' && sideOf(other.x) === side;
+        });
+      const at = sameSide.indexOf(e.id);
+      e.update(dt, px, {
+        granted: gate.isGranted(e.id),
+        windupAllowed: gate.windupAllowed(),
+        holdRank: at >= 0 ? at : sameSide.length,
+      });
+      if (e.windupStarted) gate.noteWindup(e.id);
+      const s = e.aiState;
+      if (e.removed || e.isDead()) gate.release(e.id);
+      else if (e.wantsAttack) gate.request(e.id);
+      else if (s !== 'approach' && s !== 'windup' && s !== 'attack') gate.release(e.id);
+    }
+  }
+
   /** Ponto `E` do próximo inimigo comum (SPN-07..09) e registro do uso para o intervalo entre usos (SPN-08). */
   private pickEnemySpawnPoint(): number {
     const view = this.cameras.main.worldView;
@@ -893,6 +933,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       RUN.spawnGraceMs,
       (dead) => {
         this.enemies = this.enemies.filter((e) => e !== dead);
+        this.attackGate.release(dead.id);
       },
       // A garra que acerta o player também é um golpe que conecta.
       (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength),
