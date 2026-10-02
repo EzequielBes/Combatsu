@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import type { CursedEnergy } from '../core/energy';
 import type { Loadout } from '../core/loadout';
 import type { Mastery } from '../core/mastery';
+import { masteryBarWidth } from '../core/masteryBar';
 import { TECHNIQUES } from '../data/techniques';
 import { ART_SCALE, PALETTE } from './art/palette';
 import { HUD_BAR } from './art/hud';
@@ -153,11 +154,11 @@ export class EnergyHud {
       slot.overlay.height = ICON_SIZE * cdFrac; // TEC-09
       slot.overlay.setVisible(cdFrac > 0);
       // MST-08: sob o slot ocupado abaixo do Nv3, largura = round(largura do slot × pontos / limiar).
-      const limit = mastery.threshold(s.level);
-      if (limit === null) {
+      const width = masteryBarWidth(ICON_SIZE, mastery.points(i as 0 | 1), mastery.threshold(s.level));
+      if (width === null) {
         bar.setVisible(false);
       } else {
-        bar.width = Math.round((ICON_SIZE * mastery.points(i as 0 | 1)) / limit);
+        bar.width = width;
         bar.setVisible(true);
       }
     });
