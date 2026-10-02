@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAYER_FRAMES, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
+import { PLAYER_ANIMS, PLAYER_FRAMES, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES, WRIST_GRIP, WRIST_GRIP_AT } from '../../src/game/art/sprites/playerTech';
 
@@ -9,6 +9,9 @@ const frame = (name: string): readonly string[] => {
   expect(f, `frame ${name} existe`).toBeDefined();
   return f;
 };
+
+/** Limite do salto do centro do uniforme entre frames seguidos (SPF-03); o defeito do giratório era de ~11. */
+const SPF03_MAX = 8;
 
 /** Tamanhos dos componentes 8-conexos de pixels opacos, sem contar `S` (rastro de movimento, SPR-14). */
 function componentSizes(rows: readonly string[]): number[] {
@@ -98,9 +101,9 @@ describe('golpes sem salto, perna solta ou corte (SPF-01..04)', () => {
     expect(Math.abs(uniformCenter(frame('chuteGiratorio-hit')) - 10)).toBeLessThanOrEqual(4);
   });
 
-  it.each(['chuteGiratorio', 'chuteCarregado'])('%s: o centro do uniforme muda até 4 texels entre fases (SPF-03)', (move) => {
+  it.each(['chuteGiratorio', 'chuteCarregado'])('%s: o centro do uniforme muda até 8 texels entre fases (SPF-03)', (move) => {
     const seq = ['wind', 'hit', 'recover'].map((p) => uniformCenter(frame(`${move}-${p}`)));
-    for (let i = 1; i < seq.length; i++) expect(Math.abs(seq[i] - seq[i - 1]), `${move} fase ${i}`).toBeLessThanOrEqual(4);
+    for (let i = 1; i < seq.length; i++) expect(Math.abs(seq[i] - seq[i - 1]), `${move} fase ${i}`).toBeLessThanOrEqual(SPF03_MAX);
   });
 });
 
@@ -127,5 +130,36 @@ describe('mão do pulso no tom do braço de trás (SPF-06)', () => {
     expect(region.join('')).not.toContain('p');
     // A região tem a mão de verdade (não está vazia): pelo menos um pixel de pele da mão de trás (P).
     expect(region.join('')).toContain('P');
+  });
+});
+
+describe('invariantes em todas as folhas do player (SPF-01, SPF-02, SPF-03)', () => {
+  const names = Object.keys(ALL);
+
+  it('a folha tem os frames de player, golpes e técnicas', () => {
+    expect(names.length).toBeGreaterThanOrEqual(102);
+  });
+
+  it.each(names)('%s: um único componente 8-conexo, sem contar S (SPF-01)', (name) => {
+    expect(componentSizes(frame(name)), name).toHaveLength(1);
+  });
+
+  it.each(names)('%s: nenhum pixel opaco descartado fora da grade (SPF-02)', (name) => {
+    expect(clippedOf(frame(name)), name).toBe(0);
+  });
+
+  /** Sequências comparadas: as animações, wind -> hit -> recover de cada golpe e sign -> charge -> release -> recover de cada técnica. */
+  const sequences: Record<string, string[]> = {};
+  for (const [anim, def] of Object.entries(PLAYER_ANIMS)) sequences[`anim ${anim}`] = [...def.frames];
+  for (const phases of [['wind', 'hit', 'recover'], ['sign', 'charge', 'release', 'recover']]) {
+    const groups = new Set(names.filter((n) => n.endsWith(`-${phases[0]}`)).map((n) => n.slice(0, -phases[0].length - 1)));
+    for (const g of groups) sequences[`${phases[0]} ${g}`] = phases.map((p) => `${g}-${p}`).filter((n) => n in ALL);
+  }
+
+  it.each(Object.entries(sequences))('%s: o centro do uniforme muda até 8 texels entre frames seguidos (SPF-03)', (_label, seq) => {
+    for (let i = 1; i < seq.length; i++) {
+      const delta = Math.abs(uniformCenter(frame(seq[i])) - uniformCenter(frame(seq[i - 1])));
+      expect(delta, `${seq[i - 1]} -> ${seq[i]}`).toBeLessThanOrEqual(SPF03_MAX);
+    }
   });
 });

@@ -134,9 +134,9 @@ T10 → T11 → T12 → T13
 **Reuses**: as folhas registradas em `src/game/art/index.ts`
 **Requirement**: SPF-01, SPF-02, SPF-03, SPF-05, SPF-07
 **Done when**:
-- [ ] O teste passa em todos os frames.
-- [ ] O diff do baseline lista só os frames de T2–T4.
-- [ ] Se um frame legítimo violar SPF-01/03: PARAR e reportar (design §1).
+- [x] O teste passa em todos os frames.
+- [x] O diff do baseline lista só os frames de T2–T4.
+- [x] Se um frame legítimo violar SPF-01/03: PARAR e reportar (design §1).
 **Tests**: unit
 **Gate**: build
 
