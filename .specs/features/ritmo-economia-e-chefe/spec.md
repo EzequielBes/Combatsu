@@ -274,11 +274,11 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | PRG-04 | P1: Energia e Fluxo | Specify | Pending |
 | PRG-05 | P1: Energia e Fluxo | Specify | Pending |
 | PRG-06 | P1: Energia e Fluxo | Specify | Pending |
-| SPN-01 | P1: Mais inimigos | Specify | Pending |
-| SPN-02 | P1: Mais inimigos | Specify | Pending |
-| SPN-03 | P1: Mais inimigos | Specify | Pending |
-| SPN-04 | P1: Mais inimigos | Specify | Pending |
-| SPN-05 | P1: Mais inimigos | Specify | Pending |
+| SPN-01 | P1: Mais inimigos | Specify | Implementing |
+| SPN-02 | P1: Mais inimigos | Specify | Implementing |
+| SPN-03 | P1: Mais inimigos | Specify | Implementing |
+| SPN-04 | P1: Mais inimigos | Specify | Implementing |
+| SPN-05 | P1: Mais inimigos | Specify | Implementing |
 | SPN-06 | P1: Mais inimigos | Specify | Pending |
 | SPN-07 | P1: Mais inimigos | Specify | Pending |
 | SPN-08 | P1: Mais inimigos | Specify | Pending |
@@ -323,8 +323,8 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | MST-06 | P2: Maestria | Specify | Pending |
 | MST-07 | P2: Maestria | Specify | Pending |
 | MST-08 | P2: Maestria | Specify | Pending |
-| EDG-01 | Edge cases | Specify | Pending |
-| EDG-02 | Edge cases | Specify | Pending |
+| EDG-01 | Edge cases | Specify | Implementing |
+| EDG-02 | Edge cases | Specify | Implementing |
 | EDG-03 | Edge cases | Specify | Pending |
 | EDG-04 | Edge cases | Specify | Pending |
 | EDG-05 | Edge cases | Specify | Pending |

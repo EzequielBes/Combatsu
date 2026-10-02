@@ -21,12 +21,15 @@ const started = (): Run => {
   return run;
 };
 
-/** A partir de `roundActive` round 1, mata as 3 (base) inimigas da rodada e chega em `intermission`. */
+/** A partir de `roundActive` round 1, mata as 6 (SPN-01) inimigos da rodada e chega em `intermission`. */
 const cleared = (): { run: Run; roundCommands: ReturnType<Run['update']> } => {
   const run = started();
   run.enemyDied(1);
   run.enemyDied(2);
   run.enemyDied(3);
+  run.enemyDied(4);
+  run.enemyDied(5);
+  run.enemyDied(6);
   const roundCommands = run.update(0, SEED);
   return { run, roundCommands };
 };
@@ -177,7 +180,7 @@ describe('Run: eventos fora de hora são ignorados (RUN-07)', () => {
     expect(commands).toEqual([]);
     expect(run.state).toBe('intermission');
     expect(run.round).toBe(1);
-    expect(run.kills).toBe(3);
+    expect(run.kills).toBe(6);
   });
 
   it('abate em gameOver não muda kills nem round', () => {
@@ -209,7 +212,7 @@ describe('Run: eventos fora de hora são ignorados (RUN-07)', () => {
     expect(commands.some((c) => c.type === 'startRun' || c.type === 'roundStart')).toBe(false);
     expect(run.state).toBe('intermission');
     expect(run.round).toBe(1);
-    expect(run.kills).toBe(3);
+    expect(run.kills).toBe(6);
   });
 });
 
@@ -220,7 +223,7 @@ describe('Run: dedupe de abate (WAVE-06)', () => {
     run.enemyDied(1); // mesmo id, ainda pendente
     run.update(0, SEED);
     expect(run.kills).toBe(1);
-    expect(run.remaining).toBe(2); // 3 (base da rodada 1) - 1
+    expect(run.remaining).toBe(5); // 6 (SPN-01, rodada 1) - 1
   });
 
   it('o mesmo id morto de novo num update seguinte não soma kills nem derruba remaining de novo', () => {
@@ -228,11 +231,11 @@ describe('Run: dedupe de abate (WAVE-06)', () => {
     run.enemyDied(1);
     run.update(0, SEED);
     expect(run.kills).toBe(1);
-    expect(run.remaining).toBe(2);
+    expect(run.remaining).toBe(5);
     run.enemyDied(1); // já contado antes, agora num update diferente
     run.update(0, SEED);
     expect(run.kills).toBe(1);
-    expect(run.remaining).toBe(2);
+    expect(run.remaining).toBe(5);
   });
 });
 
@@ -268,8 +271,8 @@ describe('Run: edge cases de prioridade', () => {
     run.playerDied();
     const commands = run.update(0, SEED);
     expect(run.state).toBe('gameOver');
-    expect(commands).toContainEqual({ type: 'gameOver', round: 1, kills: 3 });
-    expect(run.summary).toEqual({ round: 1, kills: 3 });
+    expect(commands).toContainEqual({ type: 'gameOver', round: 1, kills: 6 });
+    expect(run.summary).toEqual({ round: 1, kills: 6 });
   });
 });
 

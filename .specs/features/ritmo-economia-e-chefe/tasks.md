@@ -74,9 +74,9 @@ T22 → T23 → T24 → T25
 **Reuses**: `WaveSpawner` atual (contagem de vivos, mortos e fila)
 **Requirement**: SPN-01, SPN-02, SPN-03, SPN-04, SPN-05, EDG-01, EDG-02
 **Done when**:
-- [ ] `WAVE` em `src/data/tuning.ts` = `{ base: 6, perRound: 2, max: 20, maxAliveBase: 5, maxAliveEvery: 2, maxAliveCap: 8, initialBurst: 3, trickleMs: 1500, pointGapMs: 800 }`.
-- [ ] O construtor aceita `maxAliveOverride`.
-- [ ] Testes cobrem:
+- [x] `WAVE` em `src/data/tuning.ts` = `{ base: 6, perRound: 2, max: 20, maxAliveBase: 5, maxAliveEvery: 2, maxAliveCap: 8, initialBurst: 3, trickleMs: 1500, pointGapMs: 800 }`.
+- [x] O construtor aceita `maxAliveOverride`.
+- [x] Testes cobrem:
   - `waveSize` em r = 1, 2, 4, 8 (= 20) e 9 (teto);
   - `maxAliveFor` em r = 1, 2, 3, 7 (= 8) e 30;
   - o burst de 3 no 1º `update`;
