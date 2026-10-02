@@ -50,6 +50,7 @@ import {
   RUN,
   SHOP,
   WAVE,
+  SPAWN,
 } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
@@ -111,8 +112,6 @@ function debugParam(name: string): string | null {
 const BOSS_UPGRADE_BANNER_MS = 800;
 /** Margem (px) além da borda da câmera em que um ponto ainda conta como visível (SPN-07). */
 const SPAWN_VIEW_MARGIN = 32;
-/** Chance de o spawn preferir os pontos às costas do player (SPN-08). */
-const SPAWN_PREFER_BACK_CHANCE = 0.35;
 
 /** Parâmetro de URL inteiro `>= min` só em `?debug` (`maxAlive`, `mastery`); ausente ou inválido vira `undefined`. */
 function debugIntParam(name: string, min: number): number | undefined {
@@ -965,7 +964,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       nowMs: this.clockMs,
       gapMs: WAVE.pointGapMs,
       rng: this.run.spawnRng!,
-      preferBackChance: SPAWN_PREFER_BACK_CHANCE,
+      preferBackChance: SPAWN.preferBackChance,
     });
     this.spawnLastUsed.set(point, this.clockMs);
     return point;

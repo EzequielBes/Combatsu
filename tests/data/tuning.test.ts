@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTY, WAVE, RUN, BOSS, ECONOMY, PICKUP, ARMED, DROPPED_TOOLS } from '../../src/data/tuning';
+import { DIFFICULTY, WAVE, SPAWN, RUN, BOSS, ECONOMY, PICKUP, ARMED, DROPPED_TOOLS } from '../../src/data/tuning';
 import { BOSS_DEFEAT_HITSTOP_MS } from '../../src/data/fx';
 
 describe('tuning da dificuldade, onda e run (T1, valores das Assumptions da spec)', () => {
@@ -151,5 +151,11 @@ describe('tuning da economia (T1, valores das Assumptions da spec economia-drops
 
   it('DROPPED_TOOLS = 20 s em repouso, teto de 6', () => {
     expect(DROPPED_TOOLS).toEqual({ restMs: 20000, max: 6 });
+  });
+});
+
+describe('SPAWN (SPN-08)', () => {
+  it('prefere as costas com chance 0,35', () => {
+    expect(SPAWN.preferBackChance).toBe(0.35);
   });
 });
