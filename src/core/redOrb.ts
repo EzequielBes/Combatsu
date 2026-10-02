@@ -2,13 +2,52 @@ import { normalize, type Vec2 } from './hit';
 import { Mover } from './mover';
 import { TECHNIQUES } from '../data/techniques';
 
-const SPEED = 560; // RED-05
+/** Velocidade do orbe em px/s (RDA-11, supersede RED-05: era 560). */
+export const RED_ORB_SPEED = 760;
+const SPEED = RED_ORB_SPEED;
 const RANGE = 420; // RED-08
 const DETONATION_RADIUS = 96; // RED-10
 
 export interface RedOrbTarget {
   id: number;
   center: Vec2;
+}
+
+/** Golpe da repulsão na soltura (RDA-08): dano leve e força 10 para longe do player. */
+export interface RepulseHit {
+  targetId: number;
+  damage: number;
+  strength: 'light';
+  force: number;
+  direction: Vec2;
+}
+
+/** Alcance horizontal e vertical da repulsão em px, medidos do centro do alvo ao do player (RDA-08). */
+const REPULSE_REACH_X = 80;
+const REPULSE_REACH_Y = 48;
+const REPULSE_DAMAGE = 4;
+const REPULSE_FORCE = 10;
+
+/**
+ * RDA-08, RDA-09: alvos à frente de `origin` (sinal de `x − origin.x` igual ao `facing`, `dx = 0` fica de fora)
+ * com `|dx| <= 80` e `|dy| <= 48` levam 4 de dano `light` e força 10 para longe do player. Quem está atrás, ou
+ * além do alcance, não entra. Cada alvo aparece uma vez.
+ */
+export function repulseTargets(origin: Vec2, facing: 1 | -1, targets: readonly RedOrbTarget[]): RepulseHit[] {
+  const hits: RepulseHit[] = [];
+  for (const target of targets) {
+    const dx = target.center.x - origin.x;
+    const dy = target.center.y - origin.y;
+    if (dx * facing <= 0 || Math.abs(dx) > REPULSE_REACH_X || Math.abs(dy) > REPULSE_REACH_Y) continue;
+    hits.push({
+      targetId: target.id,
+      damage: REPULSE_DAMAGE,
+      strength: 'light',
+      force: REPULSE_FORCE,
+      direction: normalize({ x: dx, y: dy }),
+    });
+  }
+  return hits;
 }
 
 export interface RedOrbHit {
@@ -19,7 +58,7 @@ export interface RedOrbHit {
 }
 
 /**
- * Estado do orbe Vermelho em voo (RED-02, 05, 06, 08, 10, 13, 14): avança horizontalmente por `Mover` a 560 px/s
+ * Estado do orbe Vermelho em voo (RED-02, 05, 06, 08, 10, 13, 14): avança horizontalmente por `Mover` a 760 px/s
  * até 420 px, marca quem já foi atingido (uma vez cada) e decide o dano/impulso do toque e da detonação (parede,
  * chefe ou alcance). A física (sensor Matter, aplicar o impulso) fica para a fase 5. Sem `phaser` aqui.
  */

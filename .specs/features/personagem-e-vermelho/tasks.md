@@ -197,7 +197,7 @@ T10 → T11 → T12 → T13
 **Reuses**: `normalize`
 **Requirement**: RDA-08, RDA-09, RDA-11, EDG-03
 **Done when**:
-- [ ] Testes:
+- [x] Testes:
   - 80 px entra, 81 px não;
   - `dy` de 48 entra, 49 não;
   - alvo atrás não entra;

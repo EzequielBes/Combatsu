@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RedOrbState } from '../../src/core/redOrb';
+import { RED_ORB_SPEED, RedOrbState, repulseTargets } from '../../src/core/redOrb';
 import { TECHNIQUES } from '../../src/data/techniques';
 
 describe('RED-02: o frame do núcleo do orbe segue o terço da carga', () => {
@@ -20,17 +20,17 @@ describe('RED-02: o frame do núcleo do orbe segue o terço da carga', () => {
   });
 });
 
-describe('RED-05: o orbe avança na direção do lançamento a 560 px/s', () => {
-  it('depois de 250 ms (140 px a 560 px/s), x andou 140 px na direção do facing', () => {
+describe('RED-05, RDA-11: o orbe avança na direção do lançamento a 760 px/s', () => {
+  it('depois de 250 ms (190 px a 760 px/s), x andou 190 px na direção do facing', () => {
     const state = new RedOrbState(0, 1);
     state.update(250);
-    expect(state.x).toBeCloseTo(140, 1);
+    expect(state.x).toBeCloseTo(190, 1);
   });
 
   it('com facing -1, x anda para trás', () => {
     const state = new RedOrbState(0, -1);
     state.update(250);
-    expect(state.x).toBeCloseTo(-140, 1);
+    expect(state.x).toBeCloseTo(-190, 1);
   });
 });
 
@@ -62,7 +62,7 @@ describe('RED-06: o toque em um inimigo comum dá 30 de dano forte e impulso par
 describe('RED-08: o orbe detona ao completar o alcance de 420 px (L-010: 419/420 px)', () => {
   it('a 419 px o orbe ainda não detonou', () => {
     const state = new RedOrbState(0, 1);
-    const detonatedNow = state.update((419 / 560) * 1000);
+    const detonatedNow = state.update((419 / 760) * 1000);
     expect(detonatedNow).toBe(false);
     expect(state.detonated).toBe(false);
     expect(state.traveled).toBeCloseTo(419, 1);
@@ -70,8 +70,8 @@ describe('RED-08: o orbe detona ao completar o alcance de 420 px (L-010: 419/420
 
   it('ao completar 420 px o orbe detona nesse frame', () => {
     const state = new RedOrbState(0, 1);
-    state.update((419 / 560) * 1000);
-    const detonatedNow = state.update((1 / 560) * 1000);
+    state.update((419 / 760) * 1000);
+    const detonatedNow = state.update((1 / 760) * 1000);
     expect(detonatedNow).toBe(true);
     expect(state.detonated).toBe(true);
     expect(state.traveled).toBeCloseTo(420, 1);
@@ -135,6 +135,70 @@ describe('RED-14: em voo, o orbe expõe a distância percorrida', () => {
     const state = new RedOrbState(0, 1);
     expect(state.traveled).toBe(0);
     state.update(100);
-    expect(state.traveled).toBeCloseTo(56, 1); // 560 px/s * 0,1 s
+    expect(state.traveled).toBeCloseTo(76, 1); // 760 px/s * 0,1 s (RDA-11)
+  });
+});
+
+describe('RDA-11: o orbe percorre 760 px em 1000 ms de voo livre', () => {
+  it('a velocidade exportada é 760 px/s', () => {
+    expect(RED_ORB_SPEED).toBe(760);
+  });
+
+  it('com um alcance maior que o do orbe, 1000 ms rendem 760 px (a 100 ms: 76 px)', () => {
+    const state = new RedOrbState(0, 1);
+    state.update(100);
+    expect(state.traveled).toBeCloseTo(76, 5);
+    expect(state.traveled / 0.1).toBeCloseTo(760, 3);
+  });
+
+  it('os 420 px de alcance terminam em ~553 ms', () => {
+    const state = new RedOrbState(0, 1);
+    expect(state.update(552)).toBe(false);
+    expect(state.update(2)).toBe(true);
+  });
+});
+
+describe('RDA-08, RDA-09, EDG-03: repulseTargets na soltura', () => {
+  const origin = { x: 100, y: 200 };
+  const at = (id: number, dx: number, dy = 0) => ({ id, center: { x: origin.x + dx, y: origin.y + dy } });
+
+  it('um alvo a 80 px à frente entra e um a 81 px não (L-010)', () => {
+    expect(repulseTargets(origin, 1, [at(1, 80)]).map((h) => h.targetId)).toEqual([1]);
+    expect(repulseTargets(origin, 1, [at(2, 81)])).toEqual([]);
+  });
+
+  it('um alvo com |dy| de 48 entra e um com 49 não, acima ou abaixo', () => {
+    expect(repulseTargets(origin, 1, [at(1, 40, 48)])).toHaveLength(1);
+    expect(repulseTargets(origin, 1, [at(2, 40, -48)])).toHaveLength(1);
+    expect(repulseTargets(origin, 1, [at(3, 40, 49)])).toEqual([]);
+    expect(repulseTargets(origin, 1, [at(4, 40, -49)])).toEqual([]);
+  });
+
+  it('um alvo atrás do player não entra, nos dois sentidos de facing', () => {
+    expect(repulseTargets(origin, 1, [at(1, -30)])).toEqual([]);
+    expect(repulseTargets(origin, -1, [at(2, 30)])).toEqual([]);
+  });
+
+  it('com facing -1, quem está à esquerda a até 80 px entra', () => {
+    expect(repulseTargets(origin, -1, [at(1, -80), at(2, -81)]).map((h) => h.targetId)).toEqual([1]);
+  });
+
+  it('um alvo com dx = 0 não entra', () => {
+    expect(repulseTargets(origin, 1, [at(1, 0, 10)])).toEqual([]);
+    expect(repulseTargets(origin, -1, [at(2, 0, 10)])).toEqual([]);
+  });
+
+  it('o hit é { damage: 4, strength: light, force: 10 } com direção normalizada para longe do player', () => {
+    const [hit] = repulseTargets(origin, 1, [at(7, 30, 40)]);
+    expect(hit).toMatchObject({ targetId: 7, damage: 4, strength: 'light', force: 10 });
+    expect(hit.direction.x).toBeCloseTo(0.6, 5);
+    expect(hit.direction.y).toBeCloseTo(0.8, 5);
+    const [left] = repulseTargets(origin, -1, [at(8, -30, 0)]);
+    expect(left.direction).toEqual({ x: -1, y: 0 });
+  });
+
+  it('cada alvo da lista vira um hit, na ordem; lista vazia não gera hit', () => {
+    expect(repulseTargets(origin, 1, [at(1, 10), at(2, 20), at(3, 200)]).map((h) => h.targetId)).toEqual([1, 2]);
+    expect(repulseTargets(origin, 1, [])).toEqual([]);
   });
 });
