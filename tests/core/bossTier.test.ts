@@ -12,14 +12,19 @@ describe('tierFor: tier = round / 5', () => {
   });
 });
 
-describe('bossHpFor: vida por tier (BTIER-01)', () => {
+describe('bossHpFor: vida por tier (BTIER-01, BFX-01)', () => {
+  it('o chefe do tier 1 tem 400 de HP (BFX-01)', () => {
+    expect(bossHpFor(1)).toBe(400);
+    expect(bossSpecFor(5).maxHp).toBe(400);
+  });
+
   it.each([
-    [1, 600],
-    [2, 900],
-    [3, 1200],
-    [6, 2100],
-    [7, 2400],
-    [20, 2400],
+    [1, 400],
+    [2, 600],
+    [3, 800],
+    [6, 1400],
+    [7, 1600],
+    [20, 1600],
   ])('tier %i => maxHp %i', (tier, expected) => {
     expect(bossHpFor(tier)).toBe(expected);
   });

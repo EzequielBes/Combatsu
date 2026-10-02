@@ -281,6 +281,12 @@ export const BOSS = {
   roarImpulse: 6,
   /** Atordoamento com a postura zerada: sem mover, sem atacar (BAI-08). */
   staggerMs: 1200,
+  /** Atordoamento ao bater na parede no fim da investida; não mexe na postura (BFX-02). */
+  wallStunMs: 1500,
+  /** Multiplicador do dano recebido durante o `stagger` (BFX-05). */
+  staggerDamageMult: 1.5,
+  /** Finalizador (J+K) no `stagger`: fração do HP máximo e alcance até o centro do chefe (BFX-06). */
+  finisher: { hpFraction: 0.12, rangePx: 48 },
   poise: {
     max: 100,
     /** Por segundo, depois de `regenDelayMs` sem apanhar (BAI-09). */
@@ -295,15 +301,15 @@ export const BOSS = {
   ] as const,
   /** Investida: preparo base, velocidade, alcance máximo e dano forte (BAT-01, BAT-09). */
   charge: { windupMs: 600, speed: 320, maxDist: 360, damage: 18 },
-  /** Salto: preparo base, duração do salto e dano forte do pouso (BAT-02, BAT-10). */
-  leap: { windupMs: 500, durationMs: 700, damage: 20 },
+  /** Salto: preparo base, duração do salto, dano forte do pouso e descanso mínimo depois do pouso (BAT-02, BAT-10, BFX-04). */
+  leap: { windupMs: 500, durationMs: 700, recoveryMs: 800, damage: 20 },
   /** Onda de choque do pouso: velocidade, alcance, altura e dano leve (BAT-03). */
   shockwave: { speed: 240, maxDist: 600, height: 20, damage: 12 },
   /** Rajada: preparo base, quantidade padrão, intervalo, velocidade, dano leve e alcance do projétil (BAT-04). */
   volley: { windupMs: 700, count: 3, intervalMs: 150, speed: 260, damage: 10, maxDist: 1200 },
   /** Escala por tier (BTIER-01, BTIER-02): hp = round(hpBase * min(1 + hpPerTier*(tier-1), hpCap)); dano dos
    * ataques = base * min(1 + damagePerTier*(tier-1), damageCap), arredondado. */
-  tier: { hpBase: 600, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 },
+  tier: { hpBase: 400, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 },
   /** Arquétipos (BTIER-04, BTIER-05, BTIER-07): a Tecelã multiplica a velocidade do projétil e troca o volleyCount. */
   archetypes: {
     oni: { name: 'Oni do Portão' },

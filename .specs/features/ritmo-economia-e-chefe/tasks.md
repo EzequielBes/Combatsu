@@ -272,12 +272,12 @@ T22 → T23 → T24 → T25
 **Reuses**: a lógica de `blocked` e `landed` existente
 **Requirement**: BFX-01, BFX-02, BFX-03, BFX-04
 **Done when**:
-- [ ] `tests/core/bossAI.test.ts` cobre:
+- [x] `tests/core/bossAI.test.ts` cobre:
   - `blocked` → `wallStun`;
   - alcance máximo → sem `wallStun`;
   - pouso na fase 3 → descanso de 800 ms;
   - pouso na fase 1 → descanso de 900 ms.
-- [ ] `tests/core/bossTier.test.ts` verifica 400 de HP no tier 1.
+- [x] `tests/core/bossTier.test.ts` verifica 400 de HP no tier 1.
 **Tests**: unit
 **Gate**: quick
 

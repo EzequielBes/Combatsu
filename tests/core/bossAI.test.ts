@@ -26,12 +26,17 @@ function restMs(phase: 1 | 2 | 3): number {
   return BOSS.phases[phase - 1].restMs;
 }
 
+/** Descanso depois do ataque: o pouso do salto impõe o piso `leap.recoveryMs` (BFX-04). */
+function restAfter(attack: BossAttack, phase: 1 | 2 | 3): number {
+  return attack === 'leap' ? Math.max(restMs(phase), BOSS.leap.recoveryMs) : restMs(phase);
+}
+
 /** ms decorridos até o início do preparo do ataque no índice `idx` do ciclo da fase (soma dos anteriores). */
 function timeBeforeIndex(phase: 1 | 2 | 3, idx: number): number {
   let total = 0;
   for (let i = 0; i < idx; i++) {
     const a = CYCLES[phase][i];
-    total += windupMs(a, phase) + bodyMs(a) + restMs(phase);
+    total += windupMs(a, phase) + bodyMs(a) + restAfter(a, phase);
   }
   return total;
 }
@@ -209,7 +214,7 @@ describe('BossAI: investida (BAT-01, BAT-09)', () => {
     const out = ai.update(10, { ...obs, blocked: true });
     expect(out.state).not.toBe('charge');
     expect(out.vx).toBe(0);
-    expect(out.events).toEqual([{ type: 'hitboxOff' }]);
+    expect(out.events).toEqual([{ type: 'hitboxOff' }, { type: 'wallStun' }]);
   });
 
   it('player no mesmo x do chefe usa o facing atual, não um valor fixo (edge case)', () => {
@@ -318,5 +323,99 @@ describe('BossAI: sem canAct cancela o ataque em andamento (BAI-05)', () => {
     ai.update(10, { ...obs, canAct: false }); // interrompe
     const resumed = ai.update(1, obs); // canAct volta
     expect(resumed.state).not.toBe('charge');
+  });
+});
+
+describe('BossAI: atordoamento na parede (BFX-02, BFX-03)', () => {
+  function intoCharge(ai: BossAI, obs: BossAIObservation): void {
+    ai.update(windupMs('charge', 1), obs); // entra na investida
+  }
+
+  it('blocked no meio da investida emite wallStun junto do hitboxOff, uma única vez', () => {
+    const ai = new BossAI();
+    const obs = obsFor(1, { selfX: 0, playerX: 500 });
+    intoCharge(ai, obs);
+    ai.update(50, obs);
+    const out = ai.update(10, { ...obs, blocked: true });
+    expect(out.events.filter((e) => e.type === 'wallStun')).toHaveLength(1);
+    expect(out.state).toBe('rest');
+    const next = ai.update(10, { ...obs, blocked: true });
+    expect(next.events.some((e) => e.type === 'wallStun')).toBe(false);
+  });
+
+  it('alcance máximo sem parede: nenhum wallStun, descanso normal da fase', () => {
+    const ai = new BossAI();
+    const obs = obsFor(1, { selfX: 0, playerX: 500 });
+    intoCharge(ai, obs);
+    const end = ai.update(bodyMs('charge'), obs);
+    expect(end.events).toEqual([{ type: 'hitboxOff' }]);
+    expect(end.state).toBe('rest');
+    expect(ai.update(restMs(1) - 1, obs).state).toBe('rest');
+    expect(ai.update(1, obs).state).toBe('windup');
+  });
+
+  it('blocked a 1 ms do alcance máximo ainda atordoa; sem blocked no mesmo frame, não', () => {
+    const a = new BossAI();
+    const obs = obsFor(1, { selfX: 0, playerX: 500 });
+    intoCharge(a, obs);
+    a.update(bodyMs('charge') - 1, obs);
+    expect(a.update(1, { ...obs, blocked: true }).events.map((e) => e.type)).toContain('wallStun');
+    const b = new BossAI();
+    intoCharge(b, obs);
+    b.update(bodyMs('charge') - 1, obs);
+    expect(b.update(1, obs).events.map((e) => e.type)).not.toContain('wallStun');
+  });
+});
+
+describe('BossAI: descanso depois do pouso do salto = max(restMs, 800) (BFX-04)', () => {
+  /** Leva a IA até o instante exato do pouso do `idx`-ésimo ataque do ciclo (um salto). */
+  function landAt(phase: 1 | 2 | 3, idx: number, ai = new BossAI()): BossAI {
+    const obs = obsFor(phase);
+    ai.update(timeBeforeIndex(phase, idx) + windupMs('leap', phase) + BOSS.leap.durationMs, obs);
+    return ai;
+  }
+
+  it('fase 3 (restMs 500): 799 ms ainda descansando, 800 ms começa o próximo preparo', () => {
+    const ai = landAt(3, 2);
+    const obs = obsFor(3);
+    expect(ai.update(799, obs).state).toBe('rest');
+    const after = ai.update(1, obs);
+    expect(after.state).toBe('windup');
+    expect(after.attack).toBe('charge');
+  });
+
+  it('fase 2 (restMs 700): 799 ms ainda descansando, 800 ms começa o próximo preparo', () => {
+    const ai = landAt(2, 2);
+    const obs = obsFor(2);
+    expect(ai.update(799, obs).state).toBe('rest');
+    expect(ai.update(1, obs).state).toBe('windup');
+  });
+
+  it('fase 1 (restMs 900): o piso não encurta nada, 899 ms descansando e 900 ms começa o preparo', () => {
+    const ai = landAt(1, 1);
+    const obs = obsFor(1);
+    expect(ai.update(899, obs).state).toBe('rest');
+    const after = ai.update(1, obs);
+    expect(after.state).toBe('windup');
+    expect(after.attack).toBe('charge');
+  });
+
+  it('o piso vale só depois do salto: na fase 3 a investida ainda descansa 500 ms', () => {
+    const ai = new BossAI();
+    const obs = obsFor(3);
+    ai.update(windupMs('volley', 3) + bodyMs('volley'), obs);
+    ai.update(500, obs); // rest da rajada
+    ai.update(windupMs('charge', 3) + bodyMs('charge'), obs); // investida até o alcance máximo
+    expect(ai.update(499, obs).state).toBe('rest');
+    expect(ai.update(1, obs).state).toBe('windup');
+  });
+
+  it('tuning não padrão: recoveryMs 1200 manda no descanso da fase 1 (900)', () => {
+    const t = { ...BOSS, leap: { ...BOSS.leap, recoveryMs: 1200 } };
+    const ai = new BossAI(t);
+    const obs = obsFor(1);
+    ai.update(timeBeforeIndex(1, 1) + windupMs('leap', 1) + BOSS.leap.durationMs, obs);
+    expect(ai.update(1199, obs).state).toBe('rest');
+    expect(ai.update(1, obs).state).toBe('windup');
   });
 });

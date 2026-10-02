@@ -305,10 +305,10 @@ Decisões do agente por delegação do usuário ("decidir seguindo a própria re
 | ECN-07 | P1: Renda | Specify | Implementing |
 | ECN-08 | P1: Renda | Specify | Implementing |
 | ECN-09 | P1: Renda | Specify | Implementing |
-| BFX-01 | P1: Chefe | Specify | Pending |
-| BFX-02 | P1: Chefe | Specify | Pending |
-| BFX-03 | P1: Chefe | Specify | Pending |
-| BFX-04 | P1: Chefe | Specify | Pending |
+| BFX-01 | P1: Chefe | Specify | Implementing |
+| BFX-02 | P1: Chefe | Specify | Implementing |
+| BFX-03 | P1: Chefe | Specify | Implementing |
+| BFX-04 | P1: Chefe | Specify | Implementing |
 | BFX-05 | P1: Chefe | Specify | Pending |
 | BFX-06 | P1: Chefe | Specify | Pending |
 | BFX-07 | P1: Chefe | Specify | Pending |

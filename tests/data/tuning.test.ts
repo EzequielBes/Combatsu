@@ -67,8 +67,8 @@ describe('tuning do chefe (T1, valores das Assumptions da spec boss-a-cada-5)', 
     expect(BOSS.charge).toEqual({ windupMs: 600, speed: 320, maxDist: 360, damage: 18 });
   });
 
-  it('leap = windupMs 500, durationMs 700, damage 20 (BAT-02, BAT-10)', () => {
-    expect(BOSS.leap).toEqual({ windupMs: 500, durationMs: 700, damage: 20 });
+  it('leap = windupMs 500, durationMs 700, recoveryMs 800, damage 20 (BAT-02, BAT-10, BFX-04)', () => {
+    expect(BOSS.leap).toEqual({ windupMs: 500, durationMs: 700, recoveryMs: 800, damage: 20 });
   });
 
   it('shockwave = speed 240, maxDist 600, height 20, damage 12 (BAT-03)', () => {
@@ -79,8 +79,8 @@ describe('tuning do chefe (T1, valores das Assumptions da spec boss-a-cada-5)', 
     expect(BOSS.volley).toEqual({ windupMs: 700, count: 3, intervalMs: 150, speed: 260, damage: 10, maxDist: 1200 });
   });
 
-  it('tier = hpBase 600, hpPerTier 0.5, hpCap 4.0, damagePerTier 0.15, damageCap 2.0 (BTIER-01, BTIER-02)', () => {
-    expect(BOSS.tier).toEqual({ hpBase: 600, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 });
+  it('tier = hpBase 400, hpPerTier 0.5, hpCap 4.0, damagePerTier 0.15, damageCap 2.0 (BTIER-01, BTIER-02, BFX-01)', () => {
+    expect(BOSS.tier).toEqual({ hpBase: 400, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 });
   });
 
   it('archetypes: oni só tem nome; tecela tem nome, volleyCount 5 e projectileSpeedMult 1.25 (BTIER-04, BTIER-05, BTIER-07)', () => {
@@ -90,6 +90,12 @@ describe('tuning do chefe (T1, valores das Assumptions da spec boss-a-cada-5)', 
       volleyCount: 5,
       projectileSpeedMult: 1.25,
     });
+  });
+
+  it('wallStunMs 1500, staggerDamageMult 1.5, finisher 12% do HP a 48 px (BFX-02, BFX-05, BFX-06)', () => {
+    expect(BOSS.wallStunMs).toBe(1500);
+    expect(BOSS.staggerDamageMult).toBe(1.5);
+    expect(BOSS.finisher).toEqual({ hpFraction: 0.12, rangePx: 48 });
   });
 
   it('healFraction 0.3 (BWIN-01)', () => {
