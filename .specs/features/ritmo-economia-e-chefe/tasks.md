@@ -113,7 +113,7 @@ T22 → T23 → T24 → T25
 **Reuses**: `farthestPoint` de `src/core/waves.ts`; `Rng`
 **Requirement**: SPN-07, SPN-08, SPN-09
 **Done when**:
-- [ ] Testes cobrem:
+- [x] Testes cobrem:
   - ponto exatamente em `viewRight + 32` (dentro) e em `viewRight + 33` (fora);
   - preferência pelas costas com o `rng` forçado nos dois resultados;
   - o `rng.chance` é consumido sempre;
