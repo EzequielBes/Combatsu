@@ -4,6 +4,7 @@ import { Modifiers } from '../../src/core/modifiers';
 import { Loadout } from '../../src/core/loadout';
 import { Rng } from '../../src/core/rng';
 import { Wallet } from '../../src/core/wallet';
+import { CursedEnergy, cursedEnergyRegenAtLevel } from '../../src/core/energy';
 import { FULL_SHOP_CATALOG, type ShopEntry } from '../../src/data/shop';
 import type { TechId } from '../../src/data/techniques';
 
@@ -361,5 +362,54 @@ describe('ECN-08: a carta de técnica mostra Nv {nível atual + 1}/3', () => {
     const cura = FULL_SHOP_CATALOG.find((e) => e.id === 'cura')!;
     const shop = new Shop([cura], new Modifiers(FULL_SHOP_CATALOG), fakeRng([0]), 1, new Loadout());
     expect(shop.view(new Wallet(), 100, 100).offers[0].levelText).toBe('');
+  });
+});
+
+describe('PRG-02, PRG-06: comprar Fluxo sobe o nível em 1 e a regen aplicada é a do nível', () => {
+  it('Shop.buy de fluxo: fluxo 0 -> 1, e CursedEnergy.setLevels aplica cursedEnergyRegenAtLevel(1)', () => {
+    const modifiers = new Modifiers(FULL_SHOP_CATALOG);
+    const loadout = new Loadout();
+    loadout.equip(0, 'divergente', 1);
+    const shop = new Shop([technique('fluxo')], modifiers, fakeRng([0]), 10, loadout);
+    const wallet = new Wallet();
+    wallet.add(100);
+    const ctx: BuyContext = { ...techBuyCtx(loadout, wallet), applyModifier: (id) => void modifiers.apply(id) };
+    expect(modifiers.level('fluxo')).toBe(0);
+    expect(shop.buy(0, ctx)).toEqual({ ok: true, id: 'fluxo', cost: 12 }); // 12 + 6×0
+    expect(modifiers.level('fluxo')).toBe(1);
+    expect(modifiers.level('energia')).toBe(0);
+    const energy = new CursedEnergy();
+    energy.setLevels(modifiers.level('energia'), modifiers.level('fluxo'));
+    expect(energy.regen).toBe(cursedEnergyRegenAtLevel(1));
+    expect(energy.regen).toBeGreaterThan(8); // acima da regen base (CE-01)
+  });
+});
+
+describe('PRG-03, PRG-04: no teto, energia (Nv 5) e fluxo (Nv 4) saem do sorteio', () => {
+  const loadout = new Loadout();
+  loadout.equip(0, 'divergente', 1);
+  const ids = (m: Modifiers) => eligible(FULL_SHOP_CATALOG, m, 30, loadout).map((e) => e.id);
+  const levelTo = (m: Modifiers, id: 'energia' | 'fluxo', n: number) => {
+    for (let i = 0; i < n; i++) m.apply(id);
+  };
+
+  it('energia: no nível 4 ainda entra; no 5 sai (e fluxo segue elegível)', () => {
+    const m = new Modifiers(FULL_SHOP_CATALOG);
+    levelTo(m, 'energia', 4);
+    expect(ids(m)).toContain('energia');
+    levelTo(m, 'energia', 1);
+    expect(m.level('energia')).toBe(5);
+    expect(ids(m)).not.toContain('energia');
+    expect(ids(m)).toContain('fluxo');
+  });
+
+  it('fluxo: no nível 3 ainda entra; no 4 sai (e energia segue elegível)', () => {
+    const m = new Modifiers(FULL_SHOP_CATALOG);
+    levelTo(m, 'fluxo', 3);
+    expect(ids(m)).toContain('fluxo');
+    levelTo(m, 'fluxo', 1);
+    expect(m.level('fluxo')).toBe(4);
+    expect(ids(m)).not.toContain('fluxo');
+    expect(ids(m)).toContain('energia');
   });
 });
