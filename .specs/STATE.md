@@ -106,11 +106,43 @@
 - **Date**: 2026-10-01
 - **Status**: active
 
+### AD-014
+- **Decision**: A dificuldade do jogo vem de mecânica (composição de inimigos, leitura, fintas, golpes atrasados, cadência de tokens), não de vida/dano: HP e dano dos inimigos comuns ficam fixos por rodada.
+- **Reason**: Pedido explícito do usuário (02/10): desafio estilo Sifu, "lutar bem", não inimigos esponja.
+- **Trade-off**: `difficulty.ts` perde o escalonamento numérico; a curva depende de IA e composição bem afinadas.
+- **Scope**: Inimigos comuns (F12–F16); chefes mantêm o tier próprio.
+- **Date**: 2026-10-02
+- **Status**: active
+
+### AD-015
+- **Decision**: A postura (estrutura) é a barra central: golpe forte só cambaleia; ragdoll apenas com postura quebrada, flag `knockdown`, morte ou impacto em parede/inimigo. Golpes têm `maxTargets` (leve 1, forte 2) e inimigo no chão leva no máximo 1 golpe.
+- **Reason**: Acabar com o spam de voadora e o "bato e os 3 apanham" relatados pelo usuário.
+- **Trade-off**: Reabre o balanceamento de F7 (moves.ts) e exige rever smokes que esperam ragdoll em golpe forte.
+- **Scope**: Combate do player contra inimigos comuns.
+- **Date**: 2026-10-02
+- **Status**: active
+
+### AD-016
+- **Decision**: Um `AttackDirector` puro concede no máximo 2 tokens de ataque corpo a corpo (+1 de oportunidade em whiff) e 1 token à distância (2 a partir da rodada 8); quem não tem token fica no anel tático (90–140 px), finta e flanqueia.
+- **Reason**: Escolha do usuário ("2 por vez") e padrão Sifu/battle circle: pressão legível com consciência das costas.
+- **Trade-off**: A IA vira dependente de um estado global da cena; precisa estar no snapshot de debug para os smokes.
+- **Scope**: Inimigos comuns e Conjurador.
+- **Date**: 2026-10-02
+- **Status**: active
+
+### AD-017
+- **Decision**: A paleta sobe de 40 para 42 cores (carmim `0xd1103a`, magenta-claro `0xff4f8b`) para o Vermelho no estilo do anime; áudio procedural via ZzFX (sem arquivos).
+- **Reason**: O Vermelho atual lê como laranja/fogo; a consciência espacial estilo Sifu depende de deixas sonoras.
+- **Trade-off**: Teto da paleta (AD-012) muda; nova dependência npm pequena (MIT).
+- **Scope**: VFX de técnica e feedback de combate.
+- **Date**: 2026-10-02
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: nenhuma em andamento. `sprite-player-polish` e `enemy-sprite-variety` fechadas (Verifier PASS na rodada 2) e mergeadas em `dev`
 - **Feito**: F0–F5, F7, `sprite-player-polish` e `enemy-sprite-variety` em `dev`; 1135 testes, 24 smokes
-- **Próximo**: UAT visual do usuário (F0–F5, F7, o sprite novo do player e os inimigos novos) antes de `dev` ir para `main`; depois F6 `meta-progressao` ou F9 `tecnicas-avancadas` (Specify)
+- **Próximo**: Expansão Combate de Mestre (F10–F16, design em `docs/superpowers/specs/2026-10-02-combate-mestre-design.md`): começar por F10 `personagem-e-vermelho` e F11 `progressao-fluida` (Specify). F6/F9 ficam depois
 - **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; worker que cair é retomado do `git diff`; `py`/`python` (não `python3`) roda os scripts do tlc
 - **Dicas técnicas**:
   - Revisão de arte: `node tools/sprite-preview.mjs [dir]` (com `SPRITE_SCALE=8` para zoom) gera a prancha e as tiras por animação em PNG
