@@ -146,7 +146,7 @@ T10 → T11 → T12 → T13
 
 **What**: Acrescentar `t: 0xd1103a` e `T: 0xff4f8b` à `PALETTE` e subir o teto do teste para 42.
 **Where**: `src/game/art/palette.ts`
-**Depends on**: T5
+**Depends on**: None (fase 2 começa após a fase 1)
 **Reuses**: `PALETTE`
 **Requirement**: RDA-01
 **Done when**:
@@ -223,7 +223,7 @@ T10 → T11 → T12 → T13
 - `debugState()`.
 
 **Where**: `src/game/techFx/RedOrb.ts`
-**Depends on**: T9
+**Depends on**: None (fase 3 começa após a fase 2)
 **Reuses**: `FxTimeline`, `FxRegistry`, o padrão do `KokusenFx`
 **Requirement**: RDA-04, RDA-05, RDA-06, RDA-07, RDA-10, RDA-12, RDA-13, RDA-14, RDA-15, EDG-01
 **Done when**:
@@ -285,9 +285,9 @@ T10 → T11 → T12 → T13
 | --- | --- | --- | --- |
 | T1 | None | início da fase 1 | ✅ |
 | T2–T5 | a anterior | `T1 → … → T5` | ✅ |
-| T6 | T5 (fase anterior) | início da fase 2 | ✅ |
+| T6 | None | início da fase 2 | ✅ |
 | T7–T9 | a anterior | `T6 → … → T9` | ✅ |
-| T10 | T9 (fase anterior) | início da fase 3 | ✅ |
+| T10 | None | início da fase 3 | ✅ |
 | T11–T13 | a anterior | `T10 → … → T13` | ✅ |
 
 ## Test Co-location Validation
