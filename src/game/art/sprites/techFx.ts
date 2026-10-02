@@ -1,5 +1,5 @@
 /**
- * Arte procedural dos efeitos de técnica (AD-002/AD-009): orbe vermelho (4/8/12 texels, núcleo `W`, borda `R`),
+ * Arte procedural dos efeitos de técnica (AD-002/AD-009): orbe vermelho (4/8/12 texels, núcleo `W`, borda carmim `t`),
  * orbe azul (núcleo `d`, borda `C`), chama da aura de conjuração (2 frames, por técnica) e faíscas. Dados puros
  * (sem `phaser` como valor): rodam no Vitest.
  */
@@ -24,26 +24,27 @@ function disc(size: number, stops: ReadonlyArray<readonly [number, string]>): st
 }
 
 /**
- * Tamanhos do orbe Vermelho por terço da carga (RED-02): 4, 8 e 12 texels, discos (não quadrados) com núcleo
- * branco-quente `W`, passando por um anel de laranja/âmbar (`a`/`A`) até a borda vermelha `R`.
+ * Tamanhos do orbe Vermelho por terço da carga (RED-02, RDA-02): 4, 8 e 12 texels, discos (não quadrados) com
+ * núcleo branco `W` e borda carmim `t`; os de 8 e 12 passam por magenta `T` e vermelho vivo `R` no caminho. Sem
+ * laranja nem âmbar (RDA-03): a técnica é o carmim da Reversão, não fogo.
  */
 export const RED_ORB_SIZES = [4, 8, 12] as const;
 export const RED_ORB_FRAMES: Record<(typeof RED_ORB_SIZES)[number], readonly string[]> = {
   4: disc(4, [
     [0.5, 'W'],
-    [1, 'R'],
+    [1, 't'],
   ]),
   8: disc(8, [
     [0.3, 'W'],
-    [0.55, 'A'],
-    [0.8, 'a'],
-    [1, 'R'],
+    [0.55, 'T'],
+    [0.8, 'R'],
+    [1, 't'],
   ]),
   12: disc(12, [
     [0.3, 'W'],
-    [0.55, 'A'],
-    [0.8, 'a'],
-    [1, 'R'],
+    [0.55, 'T'],
+    [0.8, 'R'],
+    [1, 't'],
   ]),
 };
 
@@ -112,6 +113,6 @@ export const AURA_FRAMES: Record<string, readonly string[]> = Object.fromEntries
 /** Faíscas (2x2 texels): negras/vermelhas do Kokusen, vermelhas expelidas pelo Vermelho, azuis sugadas pelo Azul. */
 export const TECH_SPARK_FRAMES: Record<'kokusen' | 'redOut' | 'blueIn', readonly string[]> = {
   kokusen: ['Rb', 'bR'],
-  redOut: ['rA', 'Ra'],
+  redOut: ['tT', 'Rt'], // RDA-03/14: carmim/magenta/vermelho, nunca a/A
   blueIn: ['cC', 'Cc'],
 };

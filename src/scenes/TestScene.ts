@@ -1193,7 +1193,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       tech: this.techSnapshot(),
       kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
       techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
-      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers() },
+      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
       camera: {
         zoom: this.cameras.main.zoom,

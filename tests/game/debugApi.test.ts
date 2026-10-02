@@ -75,7 +75,7 @@ describe('installDebugApi', () => {
       tech: { slots: [null, null], cast: null },
       kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
       techObjects: [],
-      fx: { live: 0, degraded: false, layers: [] },
+      fx: { live: 0, degraded: false, layers: [], red: { glowColor: null, glow: { active: false, color: null }, screenFlashColor: null, orb: null } },
       camera: { zoom: 1.5, worldView: { left: 0, right: 640 } },
       finisher: { distPx: null },
       fxlab: null,
