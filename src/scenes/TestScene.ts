@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { armFor, propName, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
+import { bossFinisherDamage } from '../core/bossFinisher';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
@@ -1349,8 +1350,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    */
   private tryBossFinisher(): boolean {
     const boss = this.boss;
-    if (!boss || boss.state !== 'stagger' || !boss.finisherReady) return false;
-    if (Math.abs(boss.x - this.player.sprite.x) > BOSS.finisher.rangePx) return false;
+    if (!boss) return false;
+    const damage = bossFinisherDamage({
+      dist: Math.abs(boss.x - this.player.sprite.x),
+      state: boss.state,
+      finisherReady: boss.finisherReady,
+      maxHp: boss.maxHp,
+      t: BOSS.finisher,
+    });
+    if (damage <= 0) return false;
     const dir: 1 | -1 = boss.x >= this.player.sprite.x ? 1 : -1;
     this.player.finisherPose(dir);
     boss.receiveFinisher();
