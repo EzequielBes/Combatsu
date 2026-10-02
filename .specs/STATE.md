@@ -140,9 +140,9 @@
 
 ## Handoff
 
-- **Feature**: nenhuma em andamento. `sprite-player-polish` e `enemy-sprite-variety` fechadas (Verifier PASS na rodada 2) e mergeadas em `dev`
-- **Feito**: F0–F5, F7, `sprite-player-polish` e `enemy-sprite-variety` em `dev`; 1135 testes, 24 smokes
-- **Próximo**: Expansão Combate de Mestre (F10–F16, design em `docs/superpowers/specs/2026-10-02-combate-mestre-design.md`): começar por F10 `personagem-e-vermelho` e F11 `progressao-fluida` (Specify). F6/F9 ficam depois
+- **Feature**: F11 `ritmo-economia-e-chefe` fechada (Verifier PASS na rodada 2: 61/61 ACs, 14/14 mutantes mortos) e mergeada em `dev`. F10 `personagem-e-vermelho` em correção de cobertura na worktree `scratchpad/wt-f10` (branch `feat/personagem-e-vermelho`)
+- **Feito**: F0–F5, F7, `sprite-player-polish`, `enemy-sprite-variety` e F11 em `dev`; 1300 testes, 27 smokes
+- **Próximo**: re-verificar a F10, mergear em `dev` (conflitos esperados em `debugApi.ts`, `TechRunner.ts`, `TestScene.ts`, `tests/game/debugApi.test.ts`), UAT do usuário; depois F12 `combate-mestre` (Specify)
 - **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; worker que cair é retomado do `git diff`; `py`/`python` (não `python3`) roda os scripts do tlc
 - **Dicas técnicas**:
   - Revisão de arte: `node tools/sprite-preview.mjs [dir]` (com `SPRITE_SCALE=8` para zoom) gera a prancha e as tiras por animação em PNG

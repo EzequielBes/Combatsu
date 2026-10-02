@@ -45,13 +45,13 @@ export default async function (ctx) {
     for (let i = 0; i < 30; i++) s = await snap(100);
     return s.enemies.map((e) => [e.id, e.variant]);
   };
-  await boot('enemyGuard=0&enemyVariant=bruto');
+  await boot('enemyGuard=0&maxAlive=5&enemyVariant=bruto');
   const forced = await spawnSeq();
   assert(forced.length >= 2, `EVR-05: esperava ao menos 2 inimigos: ${JSON.stringify(forced)}`);
   assert(forced.every(([, v]) => v === 'bruto'), `EVR-05: todo inimigo deveria ser bruto: ${JSON.stringify(forced)}`);
-  await boot('enemyGuard=0');
+  await boot('enemyGuard=0&maxAlive=5');
   const plain = await spawnSeq();
-  await boot('enemyGuard=0&enemyVariant=zzz');
+  await boot('enemyGuard=0&maxAlive=5&enemyVariant=zzz');
   const invalid = await spawnSeq();
   assert(invalid.every(([, v]) => VARIANTS.includes(v)), `EVR-05: id inválido deveria cair no sorteio: ${JSON.stringify(invalid)}`);
   assert(JSON.stringify(invalid) === JSON.stringify(plain), `EVR-05: id inválido deveria dar o mesmo sorteio da run normal: ${JSON.stringify({ invalid, plain })}`);

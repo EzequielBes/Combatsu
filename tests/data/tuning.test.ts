@@ -1,21 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTY, WAVE, RUN, BOSS, ECONOMY, PICKUP, ARMED, DROPPED_TOOLS } from '../../src/data/tuning';
+import { DIFFICULTY, WAVE, SPAWN, RUN, BOSS, ECONOMY, PICKUP, ARMED, DROPPED_TOOLS } from '../../src/data/tuning';
 import { BOSS_DEFEAT_HITSTOP_MS } from '../../src/data/fx';
 
 describe('tuning da dificuldade, onda e run (T1, valores das Assumptions da spec)', () => {
-  it('DIFFICULTY = hpPerRound 0.12, hpCap 3.0, damagePerRound 0.08, damageCap 2.5, speedPerRound 0.03, speedCap 1.4', () => {
+  it('DIFFICULTY = hp e dano fixos por rodada (0), hpCap 3.0, damageCap 2.5, speedPerRound 0.03, speedCap 1.4 (SPN-13, SPN-14)', () => {
     expect(DIFFICULTY).toEqual({
-      hpPerRound: 0.12,
+      hpPerRound: 0,
       hpCap: 3.0,
-      damagePerRound: 0.08,
+      damagePerRound: 0,
       damageCap: 2.5,
       speedPerRound: 0.03,
       speedCap: 1.4,
     });
   });
 
-  it('WAVE = base 3, max 12, maxAlive 4, pointGapMs 800', () => {
-    expect(WAVE).toEqual({ base: 3, max: 12, maxAlive: 4, pointGapMs: 800 });
+  it('WAVE = base 6, +2 por rodada, max 20, vivos 5..8, burst 3, gotejamento 1500 ms, pointGapMs 800 (SPN-01..04)', () => {
+    expect(WAVE).toEqual({
+      base: 6,
+      perRound: 2,
+      max: 20,
+      maxAliveBase: 5,
+      maxAliveEvery: 2,
+      maxAliveCap: 8,
+      initialBurst: 3,
+      trickleMs: 1500,
+      pointGapMs: 800,
+    });
   });
 
   it('RUN = intermissionMs 2500, gameOverLockMs 1000, spawnGraceMs 600, bannerMs 1500', () => {
@@ -57,8 +67,8 @@ describe('tuning do chefe (T1, valores das Assumptions da spec boss-a-cada-5)', 
     expect(BOSS.charge).toEqual({ windupMs: 600, speed: 320, maxDist: 360, damage: 18 });
   });
 
-  it('leap = windupMs 500, durationMs 700, damage 20 (BAT-02, BAT-10)', () => {
-    expect(BOSS.leap).toEqual({ windupMs: 500, durationMs: 700, damage: 20 });
+  it('leap = windupMs 500, durationMs 700, recoveryMs 800, damage 20 (BAT-02, BAT-10, BFX-04)', () => {
+    expect(BOSS.leap).toEqual({ windupMs: 500, durationMs: 700, recoveryMs: 800, damage: 20 });
   });
 
   it('shockwave = speed 240, maxDist 600, height 20, damage 12 (BAT-03)', () => {
@@ -69,8 +79,8 @@ describe('tuning do chefe (T1, valores das Assumptions da spec boss-a-cada-5)', 
     expect(BOSS.volley).toEqual({ windupMs: 700, count: 3, intervalMs: 150, speed: 260, damage: 10, maxDist: 1200 });
   });
 
-  it('tier = hpBase 600, hpPerTier 0.5, hpCap 4.0, damagePerTier 0.15, damageCap 2.0 (BTIER-01, BTIER-02)', () => {
-    expect(BOSS.tier).toEqual({ hpBase: 600, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 });
+  it('tier = hpBase 400, hpPerTier 0.5, hpCap 4.0, damagePerTier 0.15, damageCap 2.0 (BTIER-01, BTIER-02, BFX-01)', () => {
+    expect(BOSS.tier).toEqual({ hpBase: 400, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 });
   });
 
   it('archetypes: oni só tem nome; tecela tem nome, volleyCount 5 e projectileSpeedMult 1.25 (BTIER-04, BTIER-05, BTIER-07)', () => {
@@ -80,6 +90,12 @@ describe('tuning do chefe (T1, valores das Assumptions da spec boss-a-cada-5)', 
       volleyCount: 5,
       projectileSpeedMult: 1.25,
     });
+  });
+
+  it('wallStunMs 1500, staggerDamageMult 1.5, finisher 12% do HP a 48 px (BFX-02, BFX-05, BFX-06)', () => {
+    expect(BOSS.wallStunMs).toBe(1500);
+    expect(BOSS.staggerDamageMult).toBe(1.5);
+    expect(BOSS.finisher).toEqual({ hpFraction: 0.12, rangePx: 48 });
   });
 
   it('healFraction 0.3 (BWIN-01)', () => {
@@ -135,5 +151,11 @@ describe('tuning da economia (T1, valores das Assumptions da spec economia-drops
 
   it('DROPPED_TOOLS = 20 s em repouso, teto de 6', () => {
     expect(DROPPED_TOOLS).toEqual({ restMs: 20000, max: 6 });
+  });
+});
+
+describe('SPAWN (SPN-08)', () => {
+  it('prefere as costas com chance 0,35', () => {
+    expect(SPAWN.preferBackChance).toBe(0.35);
   });
 });

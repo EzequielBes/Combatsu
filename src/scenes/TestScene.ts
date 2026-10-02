@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { armFor, propName, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
+import { bossFinisherDamage } from '../core/bossFinisher';
+import { bossRewardSlot } from '../core/bossReward';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
@@ -10,9 +12,11 @@ import { CursedEnergy } from '../core/energy';
 import { FxRegistry } from '../core/fxRegistry';
 import { FxTimeline } from '../core/fxTimeline';
 import type { Hit, Strength, Vec2 } from '../core/hit';
+import { AttackGate } from '../core/attackGate';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
+import { Mastery, type MasterySlot } from '../core/mastery';
 import { parseVariant, pickEnemyVariant } from '../core/enemyVariant';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
@@ -23,6 +27,7 @@ import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
 import { Shop, type BuyContext } from '../core/shop';
 import { SlowMo } from '../core/slowMo';
 import { Wallet } from '../core/wallet';
+import { pickSpawnPoint } from '../core/spawnPoint';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
 import { DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
@@ -38,12 +43,14 @@ import {
   ECONOMY,
   ENEMY,
   ENEMY_AI,
+  ATTACK_GATE,
   ENEMY_ATTACK,
   PICKUP,
   PLAYER_COMBO,
   RUN,
   SHOP,
   WAVE,
+  SPAWN,
 } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
@@ -101,6 +108,19 @@ function debugParam(name: string): string | null {
   return isDebug() ? new URLSearchParams(window.location.search).get(name) : null;
 }
 
+/** Duração (ms) do banner do upgrade grátis do chefe: o fim da faixa "Chefe derrotado!", sem atrasar "Rodada N concluída" (BFX-10). */
+const BOSS_UPGRADE_BANNER_MS = 800;
+/** Margem (px) além da borda da câmera em que um ponto ainda conta como visível (SPN-07). */
+const SPAWN_VIEW_MARGIN = 32;
+
+/** Parâmetro de URL inteiro `>= min` só em `?debug` (`maxAlive`, `mastery`); ausente ou inválido vira `undefined`. */
+function debugIntParam(name: string, min: number): number | undefined {
+  const raw = debugParam(name);
+  if (raw === null || raw.trim() === '') return undefined;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= min ? n : undefined;
+}
+
 /** Input neutro (RUN-08): fora de `roundActive`/`intermission` o player ignora tudo, mas o input continua sendo
  * lido (para não vazar um `JustDown` represado quando a run volta a aceitar). */
 const NEUTRAL_INPUT: InputSnapshot = {
@@ -129,12 +149,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private shopInput!: ShopInput;
   private player!: Player;
   private enemies: Enemy[] = [];
+  /** Limitador de atacantes (LIM-01..07): 2 vagas, fila FIFO e 350 ms entre windups; zerado a cada `startRun` (EDG-03). */
+  private attackGate = new AttackGate(ATTACK_GATE);
   /** Só existe numa rodada de chefe (BOSS-01); `null` fora dela ou depois de removido. */
   private boss: Boss | null = null;
   /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
   private bossDefeatedPending = false;
   /** Na rodada de chefe, "Rodada N concluída" entra depois da faixa "Chefe derrotado!" (BHUD-03 + RHUD-03). */
-  private clearedBanner: { round: number; afterMs: number } | null = null;
+  private clearedBanner: { round: number; afterMs: number; upgradeText: string | null } | null = null;
   /** Projéteis da rajada e ondas de choque do pouso do chefe (BAT-03/04/06/12). */
   private projectiles: Projectile[] = [];
   private props: Prop[] = [];
@@ -153,6 +175,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private energy!: CursedEnergy;
   /** Slots de técnica (TEC-01..06), vazios a cada `startRun` (ou `?debug&tech=`, TEC-02). */
   private loadout!: Loadout;
+  /** Pontos de maestria por slot (MST-01..06): zerados a cada `startRun` e ao equipar técnica nova no slot. */
+  private mastery = new Mastery();
   /** Conjuração de técnicas (CAST-*), dona da `CastMachine` e dos ganchos do `Player`. */
   private techCaster!: TechCaster;
   /** Executa a técnica na soltura (T22+: Punho Divergente/Kokusen), dona da hitbox e das camadas próprias dela. */
@@ -186,6 +210,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private droppedTools!: DroppedTools;
   /** Detecta a transição para morto (RUN-04): só o primeiro frame morto conta como evento. */
   private wasPlayerDead = false;
+  /** Relógio de jogo da cena (ms), só para o intervalo entre usos do mesmo ponto de spawn (SPN-08). */
+  private clockMs = 0;
+  /** Instante (`clockMs`) do último spawn comum em cada índice de ponto `E` (SPN-08). */
+  private spawnLastUsed = new Map<number, number>();
   private readonly hitstop = new Hitstop();
   /** Câmera lenta da esquiva perfeita (DOD-07), em tempo real; a escala vai para o tempo de jogo (`applyTimeScale`). */
   private slowMo = new SlowMo();
@@ -235,17 +263,22 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     buildBackground(this, this.level.widthPx, this.level.heightPx);
     this.terrain = [];
     this.enemies = [];
+    this.attackGate = new AttackGate(ATTACK_GATE);
     this.projectiles = [];
     this.buildTerrain();
     this.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
-    this.run = new Run(RUN, WAVE, this.level.enemies.length, { firstRound: this.firstRoundForDebug() });
+    // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
+    this.run = new Run(RUN, WAVE, { firstRound: this.firstRoundForDebug(), maxAliveOverride: debugIntParam('maxAlive', 1) });
+    this.clockMs = 0;
+    this.spawnLastUsed = new Map();
     this.wasPlayerDead = false;
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
-    this.modifiers = new Modifiers();
+    this.modifiers = new Modifiers(FULL_SHOP_CATALOG);
     // F5: uma instância por cena, zeradas a cada `startRun` (CE-01, TEC-01).
     this.energy = new CursedEnergy();
     this.loadout = new Loadout();
+    this.mastery = new Mastery();
 
     this.props = [];
     for (const s of this.level.props) {
@@ -289,6 +322,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.freeze();
       },
       (target, point, facing, streak) => this.kokusenFx.trigger(target, point, facing, streak),
+      // MST-01/02: acerto de técnica em alvo real vira ponto de maestria.
+      (slot, castId, targetId, isBoss) => this.onMasteryHit(slot, castId, targetId, isBoss),
     );
 
     // T28: laboratório de efeitos (`?debug&fxlab`) - bonecos de treino + teclas 1-6/0, sem ondas (FXL-01).
@@ -376,6 +411,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.frozen) return;
     const dt = clamped;
+    this.clockMs += dt;
     // SHOP-33: na loja, nada de gameplay anda; só o input da loja, `run.update`, o painel e o HUD.
     if (this.run.state === 'shop') {
       this.updateShop();
@@ -433,7 +469,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
       this.wasPlayerDead = this.player.dead;
-      for (const e of [...this.enemies]) e.update(dt, this.player.sprite.x);
+      this.updateEnemies(dt);
       this.boss?.update(dt, this.player.sprite.x);
       if (this.bossDefeatedPending) {
         this.boss?.destroyNow();
@@ -443,6 +479,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
       if (this.clearedBanner) {
         this.clearedBanner.afterMs -= dt;
+        // BFX-10: o banner do upgrade grátis ocupa o fim da faixa "Chefe derrotado!", antes de "Rodada N concluída".
+        if (this.clearedBanner.upgradeText && this.clearedBanner.afterMs <= BOSS_UPGRADE_BANNER_MS) {
+          this.hud.banner(this.clearedBanner.upgradeText, BOSS_UPGRADE_BANNER_MS);
+          this.clearedBanner.upgradeText = null;
+        }
         if (this.clearedBanner.afterMs <= 0) {
           if (this.run.state === 'intermission') this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
           this.clearedBanner = null;
@@ -461,7 +502,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setRun(this.run.round > 0 && !this.fxLab ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
-    this.energyHud.update(dt, this.energy, this.loadout);
+    this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
   }
 
   /**
@@ -514,7 +555,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
           this.loadout.upgrade(id);
         } else {
           const slot = this.loadout.firstEmpty();
-          if (slot !== null && this.loadout.equip(slot, id, 1)) this.pendingTechEquip = { id, slot };
+          if (slot !== null && this.loadout.equip(slot, id, 1)) {
+            this.pendingTechEquip = { id, slot };
+            this.mastery.resetSlot(slot); // PRG-04 / reequipar: técnica nova no slot começa sem pontos
+          }
         }
         if (bothEmptyBefore) this.debugEvents.push(`techUnlock:${id}`);
       },
@@ -637,7 +681,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         // FXL-01: nenhuma onda nasce no laboratório de efeitos - só os bonecos de treino (FXL-05).
         if (this.fxLab) break;
         if (cmd.kind === 'boss') this.spawnBoss(cmd.round);
-        else this.spawnFromCommand(cmd.point, cmd.round);
+        // SPN-07..09: comum nasce fora da câmera (worldView real, facing do player); o chefe segue no mais distante.
+        else this.spawnFromCommand(this.pickEnemySpawnPoint(), cmd.round);
         break;
       case 'roundStart':
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
@@ -677,6 +722,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.boss = null;
     this.bossDefeatedPending = false;
     this.clearedBanner = null;
+    this.spawnLastUsed.clear();
+    this.attackGate.reset();
     // Higiene: uma loja não deveria sobreviver a um game over (gameOver só sai de roundActive/intermission), mas
     // uma run nova nunca deve carregar a loja da anterior.
     if (this.shop) this.matter.world.resume();
@@ -706,7 +753,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // CE-01/TEC-01: energia e slots voltam ao início da run; `?debug&tech=` equipa por cima (TEC-02).
     this.energy.reset();
     this.loadout.reset();
+    this.mastery.reset();
     this.equipDebugTech();
+    this.applyDebugMastery();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
     this.lootRng = this.run.lootRng!;
     this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides(), this.modifiers);
@@ -725,6 +774,43 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       if (slot > 1) break;
       if (this.loadout.equip(slot as 0 | 1, id, 1)) slot++;
     }
+  }
+
+  /** `?debug&mastery=N` (inteiro >= 0): cada técnica equipada começa a run com N pontos de maestria; inválido é ignorado. */
+  private applyDebugMastery(): void {
+    const n = debugIntParam('mastery', 0);
+    if (n === undefined) return;
+    for (const slot of [0, 1] as const) if (this.loadout.slotsView[slot]) this.mastery.setPoints(slot, n);
+  }
+
+  /** Nome da técnica como a loja mostra, para os banners de nível (MST-07, BFX-10). */
+  private techName(id: TechId): string {
+    return FULL_SHOP_CATALOG.find((e) => e.id === id)?.name ?? TECHNIQUES[id].name;
+  }
+
+  /**
+   * Acerto de técnica em alvo real (MST-01..07): soma maestria ao slot e, no limiar, sobe 1 nível com o banner
+   * `"{nome} Nv {n}!"`. No laboratório de efeitos (bonecos de treino) não há maestria.
+   */
+  private onMasteryHit(slot: MasterySlot, castId: number, targetId: number, isBoss: boolean): void {
+    if (this.fxLab) return;
+    const equipped = this.loadout.slotsView[slot];
+    if (!equipped) return;
+    const { levelUp } = this.mastery.registerHit(slot, equipped.level, castId, targetId, isBoss);
+    if (levelUp && this.loadout.upgrade(equipped.id)) {
+      this.hud.banner(`${this.techName(equipped.id)} Nv ${this.loadout.levelOf(equipped.id)}!`, RUN.bannerMs);
+    }
+  }
+
+  /**
+   * Upgrade grátis da vitória sobre o chefe (BFX-09): sobe 1 nível a técnica equipada de menor nível abaixo do 3
+   * (empate: slot 0). Devolve o texto do banner (BFX-10), ou `null` se nada era upável.
+   */
+  private bossRewardUpgrade(): string | null {
+    const slot = bossRewardSlot(this.loadout.slotsView);
+    const pick = slot === null ? null : this.loadout.slotsView[slot];
+    if (!pick || !this.loadout.upgrade(pick.id)) return null;
+    return `${this.techName(pick.id)} Nv ${this.loadout.levelOf(pick.id)}!`;
   }
 
   /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
@@ -830,6 +916,60 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const p of this.props) if (isDroppedTool(p.def.key) && p.isGone) this.droppedTools.forget(p.id);
   }
 
+  /**
+   * Inimigos comuns + limitador de atacantes (LIM-01..07, EDG-03). Por inimigo, a cena entrega `granted`,
+   * `windupAllowed` e `holdRank`; depois do `update` lê o que a IA emitiu: `windupStart` → `noteWindup`,
+   * `wantAttack` → `request`, e libera a vaga (ou a fila) no mesmo frame em que o estado sai de
+   * {approach, windup, attack} ou o inimigo morre/some.
+   */
+  private updateEnemies(dt: number): void {
+    const gate = this.attackGate;
+    gate.update(dt);
+    const px = this.player.sprite.x;
+    const sideOf = (x: number): 1 | -1 => (x - px >= 0 ? 1 : -1);
+    for (const e of [...this.enemies]) {
+      // Posição na fila de espera entre os que esperam do mesmo lado do player (LIM-05, LIM-07).
+      const side = sideOf(e.x);
+      const sameSide = gate
+        .queueOrder()
+        .filter((id) => {
+          const other = this.enemies.find((o) => o.id === id);
+          return other !== undefined && other.aiState === 'hold' && sideOf(other.x) === side;
+        });
+      const at = sameSide.indexOf(e.id);
+      e.update(dt, px, {
+        granted: gate.isGranted(e.id),
+        windupAllowed: gate.windupAllowed(),
+        holdRank: at >= 0 ? at : sameSide.length,
+      });
+      if (e.windupStarted) gate.noteWindup(e.id);
+      const s = e.aiState;
+      if (e.removed || e.isDead()) gate.release(e.id);
+      else if (e.wantsAttack) gate.request(e.id);
+      else if (s !== 'approach' && s !== 'windup' && s !== 'attack') gate.release(e.id);
+    }
+  }
+
+  /** Ponto `E` do próximo inimigo comum (SPN-07..09) e registro do uso para o intervalo entre usos (SPN-08). */
+  private pickEnemySpawnPoint(): number {
+    const view = this.cameras.main.worldView;
+    const point = pickSpawnPoint({
+      points: this.level.enemies,
+      viewLeft: view.left,
+      viewRight: view.right,
+      margin: SPAWN_VIEW_MARGIN,
+      playerX: this.player.sprite.x,
+      playerFacing: this.player.facing,
+      lastUsedAt: this.spawnLastUsed,
+      nowMs: this.clockMs,
+      gapMs: WAVE.pointGapMs,
+      rng: this.run.spawnRng!,
+      preferBackChance: SPAWN.preferBackChance,
+    });
+    this.spawnLastUsed.set(point, this.clockMs);
+    return point;
+  }
+
   /** Onda da rodada (WAVE-02): tuning escalado pela rodada (DIF-04) e graça ao nascer (WAVE-09). */
   private spawnFromCommand(point: number, round: number): void {
     const at = this.level.enemies[point];
@@ -849,6 +989,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       RUN.spawnGraceMs,
       (dead) => {
         this.enemies = this.enemies.filter((e) => e !== dead);
+        this.attackGate.release(dead.id);
       },
       // A garra que acerta o player também é um golpe que conecta.
       (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength),
@@ -923,7 +1064,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.hideBossBar();
     // BHUD-03: a faixa entra na hora da morte; "Rodada N concluída" vem depois dela (RHUD-03).
     this.hud.banner('Chefe derrotado!', BOSS.defeatBannerMs);
-    this.clearedBanner = { round: this.run.round, afterMs: BOSS.defeatBannerMs };
+    this.clearedBanner = { round: this.run.round, afterMs: BOSS.defeatBannerMs, upgradeText: this.bossRewardUpgrade() };
     this.bossDefeatedPending = true;
   }
 
@@ -972,9 +1113,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         y: e.hurtRect().y,
         hp: e.hp,
         state: e.state,
+        ai: e.aiState,
         maxHp: e.maxHp,
         damage: e.damage,
-        patrolSpeed: e.patrolSpeed,
         chaseSpeed: e.chaseSpeed,
         weapon: e.weapon,
         weaponVisible: e.weaponVisible,
@@ -1000,6 +1141,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
             name: this.boss.name,
             x: this.boss.x,
             y: this.boss.y,
+            finisherReady: this.boss.finisherReady,
           }
         : null,
       projectiles: this.projectiles.map((p) => ({
@@ -1012,7 +1154,16 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         height: p.height,
         traveled: p.traveled,
       })),
-      run: { state: this.run.state, round: this.run.round, kills: this.run.kills, alive: this.run.alive, queued: this.run.queued },
+      run: {
+        state: this.run.state,
+        round: this.run.round,
+        kills: this.run.kills,
+        alive: this.run.alive,
+        queued: this.run.queued,
+        maxAlive: this.run.maxAlive,
+      },
+      attackers: this.enemies.filter((e) => e.aiState === 'windup' || e.aiState === 'attack').length,
+      gate: { active: this.attackGate.activeCount(), queue: [...this.attackGate.queueOrder()] },
       hud: {
         ...this.hud.debugState(),
         ...this.energyHud.debugState(),
@@ -1044,7 +1195,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
       fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers() },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
-      camera: { zoom: this.cameras.main.zoom },
+      camera: {
+        zoom: this.cameras.main.zoom,
+        worldView: { left: this.cameras.main.worldView.left, right: this.cameras.main.worldView.right },
+      },
       // T23 (FIN-01/03): distância viva ao inimigo quebrado mais perto, a mesma que o finalizador usa; sem contrato prévio.
       finisher: { distPx: this.nearestFinishable()?.dist ?? null },
       // T28: laboratório de efeitos, sem contrato prévio no snapshot; `null` fora do fxlab.
@@ -1056,7 +1210,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private techSnapshot(): GameSnapshot['tech'] {
     const [s0, s1] = this.loadout.slotsView;
     const slotView = (slot: 0 | 1, s: { id: TechId; level: 1 | 2 | 3 } | null) =>
-      s ? { id: s.id, level: s.level, cooldownMs: this.loadout.cooldownOf(slot) } : null;
+      s
+        ? {
+            id: s.id,
+            level: s.level,
+            cooldownMs: this.loadout.cooldownOf(slot),
+            mastery: { points: this.mastery.points(slot), threshold: this.mastery.threshold(s.level) },
+          }
+        : null;
     return { slots: [slotView(0, s0), slotView(1, s1)], cast: this.techCaster.cast };
   }
 
@@ -1153,6 +1314,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * quebra) o golpe causa 40 de dano, congela 150 ms e a câmera dá zoom 1,7 em 100 ms; sem alvo, nada (FIN-03).
    */
   private tryFinisher(): void {
+    if (this.tryBossFinisher()) return;
     const near = this.nearestFinishable();
     const target = near && near.dist <= STRUCTURE.finisherRangePx ? near.enemy : null;
     if (!target) return;
@@ -1177,6 +1339,36 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.freeze();
     this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
     this.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
+  }
+
+  /**
+   * Finalizador do chefe (BFX-06..08): com ele vivo, em `stagger`, com o finalizador pronto e a até
+   * `BOSS.finisher.rangePx` do player (distância horizontal entre os centros), tira 12% do HP máximo, com o mesmo
+   * hitstop e zoom do finalizador comum. Devolve se foi aplicado; fora disso o fluxo do inimigo comum segue.
+   */
+  private tryBossFinisher(): boolean {
+    const boss = this.boss;
+    if (!boss) return false;
+    const damage = bossFinisherDamage({
+      dist: Math.abs(boss.x - this.player.sprite.x),
+      state: boss.state,
+      finisherReady: boss.finisherReady,
+      maxHp: boss.maxHp,
+      t: BOSS.finisher,
+    });
+    if (damage <= 0) return false;
+    const dir: 1 | -1 = boss.x >= this.player.sprite.x ? 1 : -1;
+    this.player.finisherPose(dir);
+    boss.receiveFinisher();
+    this.debugEvents.push('finisher:boss');
+    const at = boss.hurtRect();
+    this.fx.spark(at.x, at.y, 'heavy');
+    this.fx.shake();
+    this.hitstop.trigger(FINISHER_HITSTOP_MS);
+    this.freeze();
+    this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
+    this.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
+    return true;
   }
 
   /**

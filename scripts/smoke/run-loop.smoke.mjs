@@ -46,7 +46,7 @@ export default async function ({ page, baseUrl, assert }) {
   );
 
   // Limpa a rodada 1 (golpe forte de teste, tecla 2, em todos os vivos) até a run entrar em intermission (RUN-06).
-  for (let i = 0; i < 20 && snap.run.state !== 'intermission'; i++) {
+  for (let i = 0; i < 60 && snap.run.state !== 'intermission'; i++) {
     await page.keyboard.press('Digit2', { delay: 50 });
     snap = await page.evaluate(() => {
       window.__game.step(300);
@@ -54,7 +54,7 @@ export default async function ({ page, baseUrl, assert }) {
     });
   }
   assert(snap.run.state === 'intermission', `rodada 1 não limpou a tempo: ${JSON.stringify(snap.run)}`);
-  assert(snap.run.kills === 3, `rodada 1 tem 3 inimigos: kills=${snap.run.kills}`);
+  assert(snap.run.kills === 6, `rodada 1 tem 6 inimigos (SPN-01): kills=${snap.run.kills}`);
 
   // Cada inimigo que já existiu (vivo ou morto) tem seu spawnFx:<id> no snapshot (RHUD-08).
   const spawnedIds = new Set([...snap.enemies.map((e) => e.id), ...snap.deaths.map((d) => d.id)]);
@@ -64,8 +64,8 @@ export default async function ({ page, baseUrl, assert }) {
 
   // WAVE-05: da limpeza da rodada 1 até a rodada 2 começar, em passos de 100 ms, os "vivos" (por state) batem com
   // run.alive - nenhum inimigo morto da rodada 1 volta a existir vivo em nenhum instante dessa janela - e todo
-  // inimigo que nasce a partir daqui (só pode ser da onda nova) já nasce com maxHp 67 (um respawn órfão da rodada
-  // 1 reapareceria com maxHp 60). A checagem continua mais 3000 ms depois do início da rodada 2 logo abaixo, após
+  // inimigo que nasce a partir daqui (só pode ser da onda nova) já nasce com maxHp 60 (HP fixo; o id inédito prova a onda nova; um respawn órfão da rodada
+  // 1 reapareceria com id repetido). A checagem continua mais 3000 ms depois do início da rodada 2 logo abaixo, após
   // o teste de WAVE-09 aproveitar a fila ainda não esgotada da onda nova.
   const ALIVE_STATES = new Set(['idle', 'hitstun', 'ragdollStun', 'gettingUp']);
   const seenIds = new Set(snap.enemies.map((e) => e.id));
@@ -75,11 +75,11 @@ export default async function ({ page, baseUrl, assert }) {
     for (const e of s.enemies) {
       if (seenIds.has(e.id)) continue;
       seenIds.add(e.id);
-      assert(e.maxHp === 67, `inimigo novo ${e.id} nasceu com maxHp errado: ${JSON.stringify(e)}`);
-      // DIF-04/06: velocidades escaladas da rodada 2 (35 × 1,03 e 70 × 1,03).
+      assert(e.maxHp === 60, `inimigo novo ${e.id} nasceu com maxHp errado (HP fixo por rodada, SPN-13): ${JSON.stringify(e)}`);
+      // DIF-04/06: a velocidade ainda escala 3% por rodada (70 × 1,03); a patrulha não existe mais (SPN-10).
       assert(
-        Math.abs(e.patrolSpeed - 36.05) < 0.01 && Math.abs(e.chaseSpeed - 72.1) < 0.01,
-        `inimigo novo ${e.id} nasceu com velocidades erradas: ${JSON.stringify(e)}`,
+        Math.abs(e.chaseSpeed - 72.1) < 0.01 && e.patrolSpeed === undefined,
+        `inimigo novo ${e.id} nasceu com velocidade errada: ${JSON.stringify(e)}`,
       );
     }
   };
@@ -104,7 +104,7 @@ export default async function ({ page, baseUrl, assert }) {
     `rodada 2 não começou a tempo: ${JSON.stringify(round2.run)}`,
   );
 
-  // DIF-04: os inimigos da rodada 2 têm hp 67 e dano 13 (arredondado de 60 × 1,12 e 12 × 1,08). Um inimigo da
+  // SPN-13/14: os inimigos da rodada 2 mantêm hp 60 e dano 12 (HP e dano fixos por rodada). Um inimigo da
   // rodada 1 ainda pode estar dissolvendo (hp 0) neste snapshot; só os vivos pertencem à onda nova.
   const round2EnemiesAtStart = round2.enemies.filter((e) => e.hp > 0);
   assert(round2EnemiesAtStart.length > 0, 'rodada 2 sem inimigos vivos para conferir a escala');
@@ -117,7 +117,7 @@ export default async function ({ page, baseUrl, assert }) {
   let freshId = null;
   let freshX = null;
   let scan = round2;
-  for (let i = 0; i < 20 && freshId === null; i++) {
+  for (let i = 0; i < 60 && freshId === null; i++) {
     scan = await page.evaluate(() => {
       window.__game.step(50);
       return window.__game.snapshot();
@@ -176,11 +176,11 @@ export default async function ({ page, baseUrl, assert }) {
   }
   if (holding) await page.keyboard.up(moveKey);
   assert(attacked !== null, `nenhum inimigo da rodada 2 chegou a atacar o player: player.hp=${chase.player.hp}`);
-  assert(attacked.player.hp === 87, `player deveria perder 13 de hp no golpe da rodada 2: ${attacked.player.hp}`);
+  assert(attacked.player.hp === 88, `player deveria perder 12 de hp no golpe da rodada 2: ${attacked.player.hp}`);
   const attacker = attacked.enemies.find((e) => e.hp > 0 && Math.abs(e.x - attacked.player.x) < 60);
   assert(attacker !== undefined, `nenhum inimigo perto do player logo após o golpe: ${JSON.stringify(attacked.enemies)}`);
   assert(
-    attacker.hp === 67 && attacker.maxHp === 67 && attacker.damage === 13,
+    attacker.hp === 60 && attacker.maxHp === 60 && attacker.damage === 12,
     `escala da rodada 2 errada no inimigo que atacou: ${JSON.stringify(attacker)}`,
   );
   // Passa a invulnerabilidade do golpe (HP-02, invulnMs 700 ms) antes da tecla 3, para o golpe de morte não ser ignorado.
@@ -193,7 +193,7 @@ export default async function ({ page, baseUrl, assert }) {
     return window.__game.snapshot();
   });
   assert(
-    snap.run.state === 'gameOver' && snap.run.round === 2 && snap.run.kills === 3,
+    snap.run.state === 'gameOver' && snap.run.round === 2 && snap.run.kills === 6,
     `gameOver deveria trazer o resumo da rodada 2: ${JSON.stringify(snap.run)}`,
   );
   assert(snap.player.dead === true, `player deveria estar morto: ${JSON.stringify(snap.player)}`);
@@ -205,7 +205,7 @@ export default async function ({ page, baseUrl, assert }) {
     return window.__game.snapshot();
   });
   assert(
-    snap.run.state === 'gameOver' && snap.run.round === 2 && snap.run.kills === 3,
+    snap.run.state === 'gameOver' && snap.run.round === 2 && snap.run.kills === 6,
     `J antes de 1000 ms não deveria sair do gameOver: ${JSON.stringify(snap.run)}`,
   );
 

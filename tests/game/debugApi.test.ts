@@ -34,13 +34,15 @@ describe('installDebugApi', () => {
     const snap: GameSnapshot = {
       player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0, move: null, frame: 'idle-0', guard: 'none', structure: { cur: 0, max: 100, broken: false }, dodge: { active: false, invulnerable: false, cooldownMs: 0 } },
       enemies: [
-        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', maxHp: 60, damage: 12, patrolSpeed: 35, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false }, guarding: false, variant: 'corcunda', frame: 'idle-0', spriteVisible: true, ragdollVisible: null, ragdollTextures: null },
+        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', ai: 'chase', maxHp: 60, damage: 12, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false }, guarding: false, variant: 'corcunda', frame: 'idle-0', spriteVisible: true, ragdollVisible: null, ragdollTextures: null },
       ],
       events: ['enemyDied:3'],
       deaths: [{ id: 3, x: 50, y: 60 }],
       boss: null,
       projectiles: [],
-      run: { state: 'roundActive', round: 1, kills: 0, alive: 1, queued: 2 },
+      run: { state: 'roundActive', round: 1, kills: 0, alive: 1, queued: 2, maxAlive: 5 },
+      attackers: 0,
+      gate: { active: 0, queue: [] },
       level: { playerSpawn: { x: 96, y: 460 } },
       hud: {
         ignoredByMain: true,
@@ -56,7 +58,7 @@ describe('installDebugApi', () => {
         combo: { text: null, grade: null, x: 948, ignoredByMain: true },
         controls: '',
         techIgnoredByMain: true,
-        energy: { width: 104, fillWidth: 104, marks: [null, null], icons: [{ cooldownOverlayHeight: 0, iconHeight: 48 }, { cooldownOverlayHeight: 0, iconHeight: 48 }], flashing: false },
+        energy: { width: 104, fillWidth: 104, marks: [null, null], masteryBars: [null, null], icons: [{ cooldownOverlayHeight: 0, iconHeight: 48 }, { cooldownOverlayHeight: 0, iconHeight: 48 }], flashing: false },
         callout: null,
         kokusenCard: null,
       },
@@ -74,7 +76,7 @@ describe('installDebugApi', () => {
       kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
       techObjects: [],
       fx: { live: 0, degraded: false, layers: [] },
-      camera: { zoom: 1.5 },
+      camera: { zoom: 1.5, worldView: { left: 0, right: 640 } },
       finisher: { distPx: null },
       fxlab: null,
     };

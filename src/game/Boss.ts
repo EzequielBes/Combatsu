@@ -5,6 +5,7 @@ import type { BossSpec } from '../core/bossTier';
 import { Filters } from '../core/collision';
 import type { Hit, Vec2 } from '../core/hit';
 import { DEFENSE } from '../data/moves';
+import { BOSS } from '../data/tuning';
 import { bossAnimKey, BOSS_ORIGIN } from './art/sprites/boss';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
@@ -162,6 +163,25 @@ export class Boss implements Hittable {
     return true;
   }
 
+  /** O finalizador (J+K) ainda pode ser usado neste `stagger` (BFX-06, BFX-07). */
+  get finisherReady(): boolean {
+    return this.brain.finisherReady;
+  }
+
+  /**
+   * Finalizador (BFX-06..08, EDG-06): tira `round(12% × maxHp)` uma vez por `stagger`. Mesmos efeitos colaterais
+   * de `receiveKokusen` (rugido empurra o player; a morte avisa a cena, que dá a recompensa e o BFX-09).
+   * Fora do `stagger`, ou depois do primeiro uso, devolve `[]`.
+   */
+  receiveFinisher(): BossEvent[] {
+    const events = this.brain.receiveFinisher();
+    for (const ev of events) {
+      if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
+      else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
+    }
+    return events;
+  }
+
   /** Golpe do chefe aparado pelo jogador (PAR-07): a postura cai 30, nunca abaixo de 0, sem tirar vida. */
   parried(): void {
     this.receiveKokusen(0, DEFENSE.parryBossPoiseDamage);
@@ -197,7 +217,10 @@ export class Boss implements Hittable {
     }
 
     const canAct = this.brain.state === 'active';
-    const chargeDir: 1 | -1 = this.lastVx > 0 ? 1 : this.lastVx < 0 ? -1 : this.facing;
+    // Parado (preparo), a investida que começa neste frame mira o player, não o `facing` antigo: senão um chefe
+    // encostado na parede de trás (spawn em x=1232) leria "bloqueado" no primeiro frame e atordoaria sem andar.
+    const towardPlayer: 1 | -1 = playerX >= this.body.position.x ? 1 : -1;
+    const chargeDir: 1 | -1 = this.lastVx > 0 ? 1 : this.lastVx < 0 ? -1 : towardPlayer;
     const blocked = canAct ? this.isBlockedAhead(chargeDir) : false;
     const out = this.ai.update(dtMs, {
       selfX: this.body.position.x,
@@ -228,6 +251,7 @@ export class Boss implements Hittable {
       if (ev.type === 'hitboxOn') this.openChargeHitbox();
       else if (ev.type === 'hitboxOff') this.attack.close();
       else if (ev.type === 'landed') this.onLand();
+      else if (ev.type === 'wallStun') this.brain.stun(BOSS.wallStunMs); // BFX-02: bateu na parede, fica atordoado
       else if (ev.type === 'fire') {
         const { x, y } = this.body.position;
         // Altura de tronco a partir do chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).

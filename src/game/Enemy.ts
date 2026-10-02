@@ -3,7 +3,7 @@ import { RUN_THRESHOLD, pickEnemyAnim, type LightReaction } from '../core/animSt
 import type { EnemyVariant } from '../core/enemyVariant';
 import { pickHitReaction, type HitReaction } from '../core/hitReaction';
 import { Filters } from '../core/collision';
-import { EnemyAI, type AIEvent } from '../core/enemyAI';
+import { EnemyAI, type AIEvent, type EnemyAIState } from '../core/enemyAI';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
 import { EnemyGuard, type GuardRoll } from '../core/enemyGuard';
 import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structure';
@@ -46,6 +46,16 @@ const LAUNCH_VY = -10;
 /** Componente vertical (normalizado com o horizontal) do impulso de um empurrão: quase rente ao chão. */
 const PUSH_LIFT = -0.15;
 
+/** O que o limitador de atacantes da cena entrega ao inimigo a cada frame (LIM-01..03, LIM-07). */
+export interface EnemyGateInput {
+  granted: boolean;
+  windupAllowed: boolean;
+  holdRank: number;
+}
+
+/** Sem limitador (inimigo isolado): nunca tem vaga, então só persegue e espera. */
+const NO_GATE: EnemyGateInput = { granted: false, windupAllowed: true, holdRank: 0 };
+
 /**
  * Corpo físico (retângulo Matter) separado do visual (sprite animado com a origem no pé, no centro do corpo).
  * A animação sai do pickEnemyAnim (CHR-03); em ragdoll o sprite some e as partes do ragdoll aparecem (CHR-04).
@@ -56,6 +66,8 @@ export class Enemy implements Hittable {
   readonly team = 'enemy';
   private readonly brain: EnemyBrain;
   private readonly ai: EnemyAI;
+  private wantAttackNow = false;
+  private windupStartNow = false;
   /** Graça ao nascer (WAVE-09): segura `canAct` pelos primeiros `graceMs`. */
   private readonly grace: SpawnGrace;
   private readonly attack: AttackHitbox;
@@ -154,7 +166,7 @@ export class Enemy implements Hittable {
     });
     scene.matter.body.setInertia(this.body, Infinity); // não tomba
     tagBody(this.body, { kind: 'character', target: this });
-    this.ai = new EnemyAI(tuning.ai, spawn.x);
+    this.ai = new EnemyAI(tuning.ai);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, enemyTex(variant), 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
     this.weaponView = weaponInfo
@@ -230,9 +242,19 @@ export class Enemy implements Hittable {
     return this.lastAttackDamage;
   }
 
-  /** Velocidade de patrulha da IA em uso, já escalada pela rodada (DIF-04/06), para o snapshot de debug. */
-  get patrolSpeed(): number {
-    return this.ai.patrolSpeed;
+  /** Estado atual da IA (`chase|hold|approach|windup|attack|rest`), lido pela cena para o limitador e pelo debug. */
+  get aiState(): EnemyAIState {
+    return this.ai.state;
+  }
+
+  /** `true` no frame em que a IA emitiu `wantAttack` (espera em `hold`, LIM-03): a cena pede vaga ao limitador. */
+  get wantsAttack(): boolean {
+    return this.wantAttackNow;
+  }
+
+  /** `true` no frame em que a IA emitiu `windupStart`: a cena avisa o limitador (`noteWindup`, LIM-02). */
+  get windupStarted(): boolean {
+    return this.windupStartNow;
   }
 
   /** Velocidade de perseguição da IA em uso, já escalada pela rodada (DIF-04/06), para o snapshot de debug. */
@@ -475,8 +497,14 @@ export class Enemy implements Hittable {
     this.breakStar.setPosition(x, y - BREAK_STAR_RISE).setAngle((this.scene.time.now * BREAK_STAR_SPIN) / 1000);
   }
 
-  update(dtMs: number, playerX: number): void {
+  /**
+   * `gate` vem da cena a cada frame (limitador de atacantes): `granted` (tem a vaga), `windupAllowed` (intervalo
+   * entre windups) e `holdRank` (posição na fila de espera do lado do player). A IA continua pura.
+   */
+  update(dtMs: number, playerX: number, gate: EnemyGateInput = NO_GATE): void {
     if (this._removed) return;
+    this.wantAttackNow = false;
+    this.windupStartNow = false;
     this.grace.update(dtMs);
     this.suppressedMs = Math.max(0, this.suppressedMs - dtMs);
     this.structure.update(dtMs);
@@ -489,7 +517,14 @@ export class Enemy implements Hittable {
     // recém-nascido, aparado (PAR-10) ou quebrado (STR-05) deixam a IA parada (AI-04, WAVE-09).
     const canAct =
       this.brain.state === 'idle' && !this.brain.isDead && !this.grace.active && this.suppressedMs <= 0 && !this.structure.broken && !this.guard.guarding;
-    const out = this.ai.update(dtMs, { selfX: this.body.position.x, playerX, canAct });
+    const out = this.ai.update(dtMs, {
+      selfX: this.body.position.x,
+      playerX,
+      canAct,
+      granted: gate.granted,
+      windupAllowed: gate.windupAllowed,
+      holdRank: gate.holdRank,
+    });
     this.onAI(out.events);
     this.walkVxStep = canAct && !this.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
     if (this.ragdoll) {
@@ -541,6 +576,8 @@ export class Enemy implements Hittable {
     for (const ev of events) {
       if (ev === 'hitboxOn') this.openAttack();
       else if (ev === 'hitboxOff') this.attack.close();
+      else if (ev === 'wantAttack') this.wantAttackNow = true;
+      else if (ev === 'windupStart') this.windupStartNow = true;
     }
   }
 

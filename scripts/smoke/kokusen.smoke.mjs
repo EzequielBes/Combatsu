@@ -28,7 +28,7 @@ export default async function ({ page, baseUrl, assert }) {
     );
   const countOf = (events, name) => events.filter((e) => e === name).length;
 
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&noshop=1&tech=divergente`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&seed=1&noshop=1&tech=divergente`, { waitUntil: 'load' });
   await waitReady();
   await stepAndSnap(20);
   await page.keyboard.press('KeyJ', { delay: 50 });
@@ -40,7 +40,7 @@ export default async function ({ page, baseUrl, assert }) {
   /**
    * Anda até um inimigo intacto (hp === maxHp), ainda não usado num teste anterior, na mesma plataforma. Por
    * causa do bug documentado abaixo (hitbox do Divergente reabrindo sozinha em `release`), os inimigos que
-   * sobram na rodada 1 (WAVE.base = 3) podem já estar todos feridos/mortos quando chega a vez do 3º teste; se
+   * sobram na rodada 1 (WAVE.base = 6, um por vez com maxAlive=1) podem já estar todos feridos/mortos quando chega a vez do 3º teste; se
    * não houver nenhum intacto, força o fim da rodada (mata todo mundo com o golpe de teste forte) e espera a
    * próxima rodada nascer com um lote novo (`noshop=1` pula a loja, SHOP-47).
    */
@@ -48,13 +48,13 @@ export default async function ({ page, baseUrl, assert }) {
   const approachFreshEnemy = async () => {
     let target = snap.enemies.find(freshFilter);
     for (let i = 0; i < 20 && !target; i++) {
-      // Ainda não nasceu (rodízio de 800 ms, WAVE-04): espera um pouco mais.
+      // Ainda não nasceu (intervalo de 1500 ms, SPN-02): espera um pouco mais.
       snap = await stepAndSnap(300);
       target = snap.enemies.find(freshFilter);
     }
     if (!target) {
       const round = snap.run.round;
-      for (let i = 0; i < 40 && snap.run.round === round; i++) {
+      for (let i = 0; i < 120 && snap.run.round === round; i++) {
         await page.keyboard.press('Digit2', { delay: 30 });
         snap = await stepAndSnap(300);
       }

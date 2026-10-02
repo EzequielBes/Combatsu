@@ -9,7 +9,14 @@ export interface BossBrainTuning {
   roarMs: number;
   staggerMs: number;
   poise: { max: number; regenPerSec: number; regenDelayMs: number };
+  /** Multiplicador do dano de `receiveHit` durante o `stagger` (BFX-05). */
+  staggerDamageMult: number;
+  /** `hpFraction`: fração do HP máximo que o finalizador tira (BFX-06). */
+  finisher: { hpFraction: number };
 }
+
+/** O que causou o `stagger`: postura zerada (restaura a postura ao sair) ou parede (não mexe nela, BFX-02). */
+export type StaggerCause = 'poise' | 'wall';
 
 export type BossEvent =
   | { type: 'introEnd' }
@@ -34,6 +41,8 @@ export class BossBrain {
   private timer: number;
   /** Tempo desde o último golpe que de fato mudou hp/postura (fora da intro e do rugido), para BAI-09. */
   private sinceHit = 0;
+  private _staggerCause: StaggerCause | null = null;
+  private _finisherReady = false;
 
   constructor(
     public readonly maxHp: number,
@@ -60,6 +69,16 @@ export class BossBrain {
     return this._poise;
   }
 
+  /** Causa do `stagger` atual; `null` fora dele. */
+  get staggerCause(): StaggerCause | null {
+    return this._staggerCause;
+  }
+
+  /** `true` desde que o `stagger` começa até o finalizador ser usado ou o `stagger` acabar (BFX-06, BFX-07). */
+  get finisherReady(): boolean {
+    return this._finisherReady;
+  }
+
   get isDead(): boolean {
     return this._state === 'dead';
   }
@@ -73,7 +92,43 @@ export class BossBrain {
   receiveHit(hit: Hit): BossEvent[] {
     if (this._state === 'dead' || this._state === 'intro' || this._state === 'roar') return [];
     const poiseDamage = hit.strength === 'heavy' ? hit.damage * 2 : hit.damage;
-    return this.applyDamage(hit.damage, poiseDamage);
+    // BFX-05: durante o `stagger` o golpe causa `round(dano × staggerDamageMult)`.
+    const damage = this._state === 'stagger' ? Math.round(hit.damage * this.t.staggerDamageMult) : hit.damage;
+    return this.applyDamage(damage, poiseDamage);
+  }
+
+  /**
+   * Atordoa o chefe por `ms` sem mexer na postura (BFX-02): chamado quando a investida bate na parede. Ignorado
+   * na intro, no rugido (o rugido vence, EDG-05), morto e se já está em `stagger`.
+   */
+  stun(ms: number): BossEvent[] {
+    if (this._state !== 'active') return [];
+    this.beginStagger('wall', ms);
+    return [{ type: 'staggerStart' }];
+  }
+
+  /**
+   * Finalizador (BFX-06..08, EDG-06): com `finisherReady`, tira `round(hpFraction × maxHp)` uma única vez por
+   * `stagger`, sem o multiplicador do `stagger`; pode matar (emite `died`) ou cruzar um limiar de fase. Fora do
+   * `stagger`, ou depois do primeiro uso, devolve `[]` e não muda nada.
+   */
+  receiveFinisher(): BossEvent[] {
+    if (this._state !== 'stagger' || !this._finisherReady) return [];
+    this._finisherReady = false;
+    return this.applyDamage(Math.round(this.t.finisher.hpFraction * this.maxHp), 0);
+  }
+
+  private beginStagger(cause: StaggerCause, ms: number): void {
+    this._state = 'stagger';
+    this.timer = ms;
+    this._staggerCause = cause;
+    this._finisherReady = true;
+  }
+
+  /** Limpa o estado do `stagger` ao sair dele por qualquer caminho (fim, rugido ou morte). */
+  private endStagger(): void {
+    this._staggerCause = null;
+    this._finisherReady = false;
   }
 
   /**
@@ -92,10 +147,12 @@ export class BossBrain {
     this.sinceHit = 0;
     this._hp = Math.max(0, this._hp - damage);
     const poiseBefore = this._poise;
-    this._poise = Math.max(0, this._poise - poiseDamage);
+    // Em `stagger` a postura não muda: ou já está em 0 (causa postura) ou foi preservada pela parede (BFX-02).
+    if (this._state !== 'stagger') this._poise = Math.max(0, this._poise - poiseDamage);
 
     if (this._hp <= 0) {
       this._state = 'dead';
+      this.endStagger();
       return [{ type: 'died' }];
     }
 
@@ -103,14 +160,14 @@ export class BossBrain {
     if (newPhase > this._phase) {
       this._phase = newPhase;
       this._state = 'roar';
+      this.endStagger();
       this.timer = this.t.roarMs;
       // newPhase > this._phase (que já era >= 1) só pode ser 2 ou 3 aqui.
       return [{ type: 'phaseChanged', phase: newPhase as 2 | 3 }, { type: 'roarStart' }];
     }
 
     if (poiseBefore > 0 && this._poise <= 0) {
-      this._state = 'stagger';
-      this.timer = this.t.staggerMs;
+      this.beginStagger('poise', this.t.staggerMs);
       return [{ type: 'staggerStart' }];
     }
 
@@ -141,7 +198,9 @@ export class BossBrain {
         this.timer -= dtMs;
         if (this.timer <= 0) {
           this._state = 'active';
-          this._poise = this.t.poise.max;
+          // Só o `stagger` por postura restaura a postura; o da parede a deixou como estava (BFX-02).
+          if (this._staggerCause === 'poise') this._poise = this.t.poise.max;
+          this.endStagger();
           events.push({ type: 'staggerEnd' });
         }
         break;

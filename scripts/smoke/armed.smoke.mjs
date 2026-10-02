@@ -1,7 +1,7 @@
 // Inimigos armados e a ferramenta largada (ARM-02, ARM-08, ARM-12/13/17, ARM-18) com `?debug&armed=knife&round=3`.
 export default async function ({ page, baseUrl, assert }) {
   // ARM-02: sem override, a rodada 1 nunca tem inimigo armado (chance 0 antes da rodada 3).
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&seed=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -27,7 +27,7 @@ export default async function ({ page, baseUrl, assert }) {
   );
 
   // Da rodada 3 em diante, com `?debug&armed=knife`, todo inimigo comum nasce armado com a faca.
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&armed=knife&round=3`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&armed=knife&round=3`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -76,12 +76,25 @@ export default async function ({ page, baseUrl, assert }) {
   assert(knife.state === 'rest' && knife.durabilityLeft === 6, `ARM-08: faca deveria nascer em rest/6: ${JSON.stringify(knife)}`);
 
   // ARM-13: se ninguém pegar, a ferramenta some aos 20 s.
-  let far = await stepAndSnap(19500);
+  // Os inimigos agora perseguem e atacam em vez de patrulhar (SPN-10): parado por 20 s o player apanharia até
+  // morrer. Passa o tempo em fatias de 500 ms e derruba (golpe de teste, tecla 2) quem chega a menos de 260 px; as
+  // facas que eles largam têm id próprio e não interferem na que está sendo cronometrada.
+  const waitGuarded = async (totalMs) => {
+    let cur = snap;
+    for (let t = 0; t < totalMs; t += 500) {
+      if (cur.enemies.some((e) => e.hp > 0 && Math.abs(e.x - cur.player.x) < 260)) {
+        await page.keyboard.press('Digit2', { delay: 30 });
+      }
+      cur = await stepAndSnap(Math.min(500, totalMs - t));
+    }
+    return cur;
+  };
+  let far = await waitGuarded(19500);
   assert(
     far.worldProps.some((p) => p.id === knife.id),
     `ARM-13: a faca sumiu cedo demais: ${JSON.stringify(far.worldProps)}`,
   );
-  far = await stepAndSnap(700);
+  far = await waitGuarded(700);
   assert(
     !far.worldProps.some((p) => p.id === knife.id),
     `ARM-13: a faca deveria ter sumido aos 20 s: ${JSON.stringify(far.worldProps)}`,
@@ -95,11 +108,27 @@ export default async function ({ page, baseUrl, assert }) {
   }
   const knife2 = snap.worldProps.find((p) => p.key === 'cursedKnife');
   assert(knife2, 'nenhuma segunda faca largada para testar o uso');
-  for (let i = 0; i < 150 && Math.abs(snap.player.x - knife2.x) > 6; i++) {
-    const dir = knife2.x >= snap.player.x ? 'KeyD' : 'KeyA';
+  // A faca ainda rola um pouco ao cair: segue a posição viva dela, em passos de um frame quando perto.
+  for (let i = 0; i < 300; i++) {
+    const live = snap.worldProps.find((p) => p.id === knife2.id) ?? knife2;
+    const dxk = live.x - snap.player.x;
+    if (Math.abs(dxk) <= 6) break;
+    const dir = dxk >= 0 ? 'KeyD' : 'KeyA';
     await page.keyboard.down(dir);
-    snap = await stepAndSnap(50);
+    snap = await stepAndSnap(Math.abs(dxk) > 40 ? 50 : 16);
     await page.keyboard.up(dir);
+  }
+  // A zona de coleta é maior para a frente: vira o player para a faca antes do E.
+  {
+    const live = snap.worldProps.find((p) => p.id === knife2.id) ?? knife2;
+    const want = live.x >= snap.player.x ? 1 : -1;
+    if (snap.player.facing !== want) {
+      const turn = want > 0 ? 'KeyD' : 'KeyA';
+      await page.keyboard.down(turn);
+      await stepAndSnap(16);
+      await page.keyboard.up(turn);
+    }
+    snap = await stepAndSnap(60);
   }
   await page.keyboard.down('KeyE');
   snap = await stepAndSnap(20);
@@ -167,7 +196,7 @@ export default async function ({ page, baseUrl, assert }) {
   }
 
   // RAR-03/05: com `?debug&armed=knife&rare=1`, toda ferramenta nasce rara e o nome no HUD termina em " Rara".
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&armed=knife&rare=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&armed=knife&rare=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

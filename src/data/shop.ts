@@ -100,12 +100,12 @@ export const SHOP_CATALOG: readonly ShopEntry[] = [
 ];
 
 /**
- * Rodada mínima do próximo nível de uma técnica (TSH-04, AD-005): nível 2 exige rodada ≥ 3, nível 3 exige
- * rodada ≥ 6.
+ * Rodada mínima do próximo nível de uma técnica (TSH-04, AD-005): nível 2 exige rodada ≥ 2 (ECN-02), nível 3 exige
+ * rodada ≥ 4 (ECN-09).
  */
 const techGate = (nextLevel: number): number => {
-  if (nextLevel >= 3) return 6;
-  if (nextLevel >= 2) return 3;
+  if (nextLevel >= 3) return 4;
+  if (nextLevel >= 2) return 2;
   return 1;
 };
 
@@ -120,7 +120,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     rarity: 'common',
     name: 'Punho Divergente',
     maxLevel: 3,
-    cost: { base: 20, step: 15 },
+    cost: { base: 15, step: 11 },
     minRound: techGate,
   },
   {
@@ -129,7 +129,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     rarity: 'common',
     name: 'Desmantelar',
     maxLevel: 3,
-    cost: { base: 30, step: 15 },
+    cost: { base: 23, step: 11 },
     minRound: techGate,
   },
   {
@@ -138,7 +138,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     rarity: 'rare',
     name: 'Azul',
     maxLevel: 3,
-    cost: { base: 35, step: 20 },
+    cost: { base: 26, step: 15 },
     minRound: techGate,
   },
   {
@@ -147,7 +147,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     rarity: 'rare',
     name: 'Reversão de Técnica: Vermelho',
     maxLevel: 3,
-    cost: { base: 40, step: 20 },
+    cost: { base: 30, step: 15 },
     minRound: techGate,
   },
 ];

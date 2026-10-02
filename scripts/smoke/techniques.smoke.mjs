@@ -27,7 +27,7 @@ export default async function ({ page, baseUrl, assert }) {
   const countOf = (events, name) => events.filter((e) => e === name).length;
 
   const startRun = async (query) => {
-    await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&noshop=1&${query}`, { waitUntil: 'load' });
+    await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&seed=1&noshop=1&${query}`, { waitUntil: 'load' });
     await waitReady();
     await stepAndSnap(20);
     await page.keyboard.press('KeyJ', { delay: 50 });
@@ -97,17 +97,38 @@ export default async function ({ page, baseUrl, assert }) {
   // --- Vermelho (RED-10): alvo bem além dos 420 px de alcance, dentro dos 96 px de detonação, nunca tocado -------
   {
     let snap = await startRun('tech=vermelho');
-    const launchX = snap.player.x; // o player não anda neste cenário (RED-10 não depende de perseguição).
+    // Os pontos E de x=1200 e x=1232 ficam fora da câmera quando o player está em x~630 (e a 570-600 px dele). O inimigo
+    // recém-nascido espera parado na graça de 600 ms e depois anda ~75 px até a detonação (orbe: ~458 px à frente do
+    // player), então termina a ~20-70 px do estouro e nunca no caminho do orbe. Anda até lá, derrubando com
+    // o golpe de teste (tecla 2) quem aparecer no caminho.
+    await page.keyboard.down('KeyD');
+    for (let i = 0; i < 200 && snap.player.x < 628; i++) {
+      snap = await stepAndSnap(snap.player.x < 560 ? 50 : 16);
+      if (snap.enemies.some((e) => e.hp > 0)) await page.keyboard.press('Digit2', { delay: 30 });
+    }
+    await page.keyboard.up('KeyD');
+    snap = await stepAndSnap(300);
+    assert(Math.abs(snap.player.x - 630) < 20, `o player não chegou perto de x=630: ${snap.player.x}`);
     let splashHp = null;
     for (let attempt = 0; attempt < 6 && splashHp === null; attempt++) {
-      // Espera o slot ficar livre (recarga de 3000 ms entre tentativas) e um inimigo estar na janela de detonação
-      // (a ~512 px do spawn, oscilando com o patrulhamento de ±48 px, fora do alcance de perseguição do player).
+      // Espera o slot ficar livre (recarga de 3000 ms entre tentativas).
       for (let i = 0; i < 40 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++) snap = await stepAndSnap(100);
+      // Os inimigos agora perseguem em vez de patrulhar (SPN-10): o único jeito de ter um alvo na janela de detonação
+      // (fora do alcance do orbe) é pegá-lo recém-nascido num ponto E (1200 ou 1232), ainda
+      // parado na graça de 600 ms. Quem nasce em outro ponto é derrubado pelo golpe de teste (tecla 2) para a vaga abrir de novo.
       let candidate = null;
-      for (let i = 0; i < 30 && !candidate; i++) {
-        candidate = snap.enemies.find((e) => e.x - launchX > 424 && e.x - launchX <= 510 && e.hp === e.maxHp);
+      const lastX = new Map();
+      for (let i = 0; i < 120 && !candidate; i++) {
+        snap = await stepAndSnap(50);
+        const alive = snap.enemies.filter((e) => e.hp > 0 && e.state === 'idle');
+        candidate = alive.find((e) => {
+          const dx = e.x - snap.player.x;
+          return e.hp === e.maxHp && dx > 560 && dx <= 610 && lastX.get(e.id) === e.x;
+        });
         if (candidate) break;
-        snap = await stepAndSnap(150);
+        const settling = alive.some((e) => e.x - snap.player.x > 560 && e.x - snap.player.x <= 610 && !lastX.has(e.id));
+        for (const e of alive) lastX.set(e.id, e.x);
+        if (alive.length > 0 && !settling) await page.keyboard.press('Digit2', { delay: 30 });
       }
       if (!candidate) continue; // nenhum inimigo na janela desta vez - tenta de novo na próxima folga de recarga.
       const targetId = candidate.id;
