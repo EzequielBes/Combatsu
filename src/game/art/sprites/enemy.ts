@@ -104,6 +104,8 @@ export interface EnemyKit {
   reachX: number;
   /** Linha do braço do golpe (padrão: `yArm`). */
   reachY?: number;
+  /** Primeira linha do tronco que recebe a borda branca do impacto (padrão 3); abaixo dos chifres, quando há. */
+  rimFrom?: number;
 }
 
 interface Pose {
@@ -156,7 +158,7 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
     const rows = compose(kit.sel, ...parts);
     if (!p.rim) return rows;
     return rows.map((row, y) => {
-      if (y < by + 3 || y >= by + kit.body.length - 2) return row;
+      if (y < by + (kit.rimFrom ?? 3) || y >= by + kit.body.length - 2) return row;
       const x = row.search(/[^.][.]*$/);
       return x < 0 ? row : row.slice(0, x) + 'w' + row.slice(x + 1);
     });
@@ -309,8 +311,8 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
   react('hurt-head-a', { lean: -3, drop: 0, eyeAdj: [-1, -1], mouthAdj: [-1, -1], near: [-3, -3], far: [-4, -3], fwdFar: true, legBack: 2 });
   // Cabeça-b: cabeça torcida para baixo, ombros afundam e o braço da frente fica solto.
   react('hurt-head-b', { lean: -2, drop: 2, eyeAdj: [0, 2], mouthAdj: [0, 1], near: [-1, 3], far: [-3, 0], legBack: 1 });
-  // Gancho: queixo para cima, corpo esticado e solto do chão, braços abertos.
-  react('hurt-uppercut', { lean: -2, drop: -2, eyeAdj: [-1, -1], mouthAdj: [-1, -1], near: [-2, -4], far: [-3, -4], fwdFar: true, legBack: 2, legLift: 2 });
+  // Gancho: queixo para cima e o corpo inteiro sai do chão, quase sem inclinar, com os braços soltos ao lado.
+  react('hurt-uppercut', { lean: -1, drop: -3, eyeAdj: [-1, -1], mouthAdj: [-1, -1], near: [0, -3], far: [-1, -3], legBack: 1, legLift: 3 });
   // Corpo: dobrado para a frente (cai o tronco), braços na barriga.
   react('hurt-body', { lean: 1, drop: 4, eyeAdj: [0, 1], mouthAdj: [0, 1], near: [-4, 2], far: [-1, 3], legBack: 0 });
   // Impacto: o mais dramático; arqueado, jogado para trás, braços soltos e a borda branca do golpe à direita.
@@ -566,6 +568,7 @@ const B_EYE_GLOW: Grid = ['kkk', 'AwA'];
 const B_EYE_SQUINT: Grid = ['kkk', 'kkk'];
 const B_MOUTH: Grid = ['kkkkkkkk', 'kAwAwAak', 'kaAAAAak', '.kkkkkk.'];
 const B_MOUTH_OPEN: Grid = ['kkkkkkkk', 'kAwAwAAk', 'kaAAAAak', 'kaaAAaak', '.kkkkkk.'];
+// Punho fechado de cantos arredondados, com a linha dos nós dos dedos.
 const B_ARM_HANG: Grid = [
   '.kUUUk..',
   'kUUuuuk.',
@@ -574,11 +577,11 @@ const B_ARM_HANG: Grid = [
   'kuuuuuk.',
   'kvuuuuk.',
   '.kuuuuk.',
-  'kUUUUUUk',
-  'kUvUvUvk',
+  '.kUUUUk.',
+  'kUUuUuUk',
   'kUuuuuuk',
-  'kuuvuuvk',
-  'kkkkkkkk',
+  'kuvuvuvk',
+  '.kkkkkk.',
 ];
 const B_ARM_FWD: Grid = [
   'kUUk......',
@@ -587,10 +590,10 @@ const B_ARM_FWD: Grid = [
   '..kuuuk...',
   '...kuuvk..',
   '....kvvk..',
-  '....kUUUUk',
+  '....kUUUk.',
   '....kUuuuk',
   '....kuuvvk',
-  '....kkkkkk',
+  '.....kkkk.',
 ];
 const B_ARM_WINDUP: Grid = [
   '.kAAAAk.....',
@@ -604,12 +607,13 @@ const B_ARM_WINDUP: Grid = [
   '......kUUuk.',
   '.......kkkk.',
 ];
+// O punho tem a altura do braço e a ponta arredondada: só as 3 linhas do meio chegam à última coluna.
 const B_ARM_REACH: Grid = [
-  'kkkkkkkkkkkkkkk',
-  'kUUUUUUUUUkkkkk',
-  'kuuuuuuuuUUUUUk',
-  'kuuvvvvvuuuuuuk',
-  'kkkkkkkkkkkkkkk',
+  'kkkkkkkkkkkkkk.',
+  'kUUUUUUUUkUUUUk',
+  'kuuuuuuuukUuUuk',
+  'kuuvvvvvukuuvvk',
+  'kkkkkkkkkkkkkk.',
 ];
 const B_LEG: Grid = ['kuuuk', 'kvuuk', 'kkkkk'];
 const B_LEG_UP: Grid = ['kuuuk', 'kkkkk'];
@@ -647,6 +651,7 @@ const BRUTO_KIT: EnemyKit = {
   windupAt: [2, 2],
   reachX: 14,
   reachY: 15,
+  rimFrom: 6,
 };
 
 // ================================================================ exportações

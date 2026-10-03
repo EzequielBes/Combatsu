@@ -1016,6 +1016,29 @@ describe('ferramentas com volume (OBJ-03, OBJ-04)', () => {
   });
 });
 
+describe('pendências dos inimigos (EPD-01..04)', () => {
+  it('EPD-01: no impact do bruto, as linhas 0 a 11 têm exatamente 1 texel w (a ponta do chifre)', () => {
+    expect(artMeasure.countOf(ENEMY_VARIANT_FRAMES.bruto.impact.slice(0, 12), 'w')).toBe(1);
+  });
+
+  it('EPD-02: no attack-0 do bruto, a coluna da ponta do punho tem exatamente 3 texels opacos', () => {
+    const rows = ENEMY_VARIANT_FRAMES.bruto['attack-0'];
+    const tip = artMeasure.box(rows)[2];
+    expect(rows.filter((row) => row[tip] !== TRANSPARENT)).toHaveLength(3);
+  });
+
+  it('EPD-03: no rastejante, o topo do hurt-uppercut-0 fica pelo menos 3 linhas acima do topo do hurt-head-a-0', () => {
+    const frames = ENEMY_VARIANT_FRAMES.rastejante;
+    const headTop = artMeasure.box(frames['hurt-head-a-0'])[1];
+    const uppercutTop = artMeasure.box(frames['hurt-uppercut-0'])[1];
+    expect(headTop - uppercutTop).toBeGreaterThanOrEqual(3);
+  });
+
+  it.each(['corcunda', 'rastejante', 'bruto'] as const)('EPD-04: no hurt-uppercut-0 do %s, a base da caixa opaca fica na linha 20 ou acima', (id) => {
+    expect(artMeasure.box(ENEMY_VARIANT_FRAMES[id]['hurt-uppercut-0'])[3]).toBeLessThanOrEqual(20);
+  });
+});
+
 describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
   it('o projétil passa no parseSheet só com cores da paleta', () => {
     const sheet = parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS);

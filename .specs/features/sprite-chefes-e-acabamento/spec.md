@@ -248,10 +248,10 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | OBJ-02 | P2: Objetos | Execute | Implementing |
 | OBJ-03 | P2: Objetos | Execute | Implementing |
 | OBJ-04 | P2: Objetos | Execute | Implementing |
-| EPD-01 | P3: Pendências dos inimigos | Tasks | In Tasks |
-| EPD-02 | P3: Pendências dos inimigos | Tasks | In Tasks |
-| EPD-03 | P3: Pendências dos inimigos | Tasks | In Tasks |
-| EPD-04 | P3: Pendências dos inimigos | Tasks | In Tasks |
+| EPD-01 | P3: Pendências dos inimigos | Execute | Implementing |
+| EPD-02 | P3: Pendências dos inimigos | Execute | Implementing |
+| EPD-03 | P3: Pendências dos inimigos | Execute | Implementing |
+| EPD-04 | P3: Pendências dos inimigos | Execute | Implementing |
 | EDG-01 | Edge cases | Execute | Implementing |
 | EDG-02 | Edge cases | Execute | Implementing |
 

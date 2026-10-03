@@ -235,11 +235,11 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] EPD-01: no `impact` do bruto, as linhas 0 a 11 têm exatamente 1 `w`.
-- [ ] EPD-02: no `attack-0` do bruto, a coluna da ponta do punho tem exatamente 3 texels opacos.
-- [ ] EPD-03: no rastejante, o topo do `hurt-uppercut-0` fica pelo menos 3 linhas acima do topo do `hurt-head-a-0`.
-- [ ] EPD-04: nas três aparências, a base da caixa opaca do `hurt-uppercut-0` fica na linha 20 ou acima.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke -- boot && npm run smoke -- boss`
+- [x] EPD-01: no `impact` do bruto, as linhas 0 a 11 têm exatamente 1 `w`.
+- [x] EPD-02: no `attack-0` do bruto, a coluna da ponta do punho tem exatamente 3 texels opacos.
+- [x] EPD-03: no rastejante, o topo do `hurt-uppercut-0` fica pelo menos 3 linhas acima do topo do `hurt-head-a-0`.
+- [x] EPD-04: nas três aparências, a base da caixa opaca do `hurt-uppercut-0` fica na linha 20 ou acima.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke -- boot && npm run smoke -- boss`
 
 **Tests**: unit
 **Gate**: full
