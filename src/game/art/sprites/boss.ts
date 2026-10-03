@@ -396,31 +396,31 @@ export const BOSS_ANIMS: Record<string, AnimDef> = {
 /** Chave da animação do chefe no AnimationManager: uma por arquétipo, para não compartilhar frames entre eles. */
 export const bossAnimKey = (archetype: 'oni' | 'tecela', name: string): string => `boss-${archetype}-${name}`;
 
-/** Projétil da rajada (BAT-04): orbe roxo pequeno, 8x8 texels (16x16 px). */
+/** Projétil da rajada (BAT-04): esfera roxa de energia com brilho, 8x8 texels (16x16 px). */
 export const PROJECTILE_FRAME: readonly string[] = [
-  '.kkkkkk.',
-  'kuuuuuuk',
-  'kuukkuuk',
-  'kukUUkuk',
-  'kukUUkuk',
-  'kuukkuuk',
-  'kuuuuuuk',
-  '.kkkkkk.',
+  '..kkkk..',
+  '.kUUUuk.',
+  'kUwwUuuk',
+  'kUwUUuvk',
+  'kUUUuuvk',
+  'kuuuuvvk',
+  '.kuvvvk.',
+  '..kkkk..',
 ];
 
 /**
- * Onda de choque do pouso (BAT-03): 16x10 texels, 20 px de altura de mundo com ART_SCALE 2 (BAT-07 exige menos
- * que o ápice do pulo do player, 49 px).
+ * Onda de choque do pouso (BAT-03): labaredas que crescem para a frente, 16x10 texels, 20 px de altura de mundo
+ * com ART_SCALE 2 (BAT-07 exige menos que o ápice do pulo do player, 49 px).
  */
 export const SHOCKWAVE_FRAME: readonly string[] = [
-  '................',
-  '.kkkkkkkkkkkkkk.',
-  'kaaaaaaaaaaaaaak',
-  'kaakkkkkkkkkkaak',
-  'kakAAAAAAAAAAkak',
-  'kakAAAAAAAAAAkak',
-  'kaakkkkkkkkkkaak',
-  'kaaaaaaaaaaaaaak',
-  '.kkkkkkkkkkkkkk.',
-  '................',
+  '............k...',
+  '...........kwk..',
+  '.......k...kAk..',
+  '......kwk.kAAk..',
+  '..k...kAk.kAaAk.',
+  '.kwk.kAAkkAaaAk.',
+  '.kAk.kAaAAaaaak.',
+  'kAAkkAaaaaazaak.',
+  'kAaAAaaazaazzaak',
+  'kzazzazzzazzazzk',
 ];

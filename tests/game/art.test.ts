@@ -922,6 +922,29 @@ describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
     expect(sheet.height * ART_SCALE).toBe(BOSS.shockwave.height);
   });
 
+  it('BPW-01: o projétil tem 8x8 texels, os 4 cantos transparentes e os tons w, U, u e v', () => {
+    const sheet = parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS);
+    expect(sheet.width).toBe(8);
+    expect(sheet.height).toBe(8);
+    const cells = sheet.frames[0].cells;
+    for (const [x, y] of [[0, 0], [7, 0], [0, 7], [7, 7]]) expect(cells[y][x], `(${x}, ${y})`).toBeNull();
+    const keys = artMeasure.keysOf(PROJECTILE_FRAME);
+    for (const tone of ['w', 'U', 'u', 'v']) expect(keys.has(tone), tone).toBe(true);
+  });
+
+  it('BPW-02: a onda de choque tem 16x10 texels, pelo menos 30% transparentes e os tons w, A, a e z', () => {
+    const sheet = parseSheet('boss-shockwave', { shockwave: SHOCKWAVE_FRAME }, PALETTE_KEYS);
+    expect(sheet.width).toBe(16);
+    expect(sheet.height).toBe(10);
+    expect(artMeasure.countOf(SHOCKWAVE_FRAME, TRANSPARENT) / (16 * 10)).toBeGreaterThanOrEqual(0.3);
+    const keys = artMeasure.keysOf(SHOCKWAVE_FRAME);
+    for (const tone of ['w', 'A', 'a', 'z']) expect(keys.has(tone), tone).toBe(true);
+  });
+
+  it('BPW-03: a linha 9 (a base) da onda de choque tem pelo menos 12 texels opacos', () => {
+    expect([...SHOCKWAVE_FRAME[9]].filter((c) => c !== TRANSPARENT).length).toBeGreaterThanOrEqual(12);
+  });
+
   it('a altura da onda é menor que o ápice do pulo do player, computado do PLAYER_MOVE (BAT-07)', () => {
     const jumpApex = PLAYER_MOVE.jumpSpeed ** 2 / (2 * PLAYER_MOVE.gravity);
     expect(jumpApex).toBeCloseTo(49, 5);

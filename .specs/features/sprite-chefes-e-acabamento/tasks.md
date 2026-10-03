@@ -128,10 +128,10 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] BPW-01: projétil 8×8, 4 cantos transparentes, tons `w`, `U`, `u` e `v`.
-- [ ] BPW-02: onda 16×10, pelo menos 30% de texels transparentes, tons `w`, `A`, `a` e `z`.
-- [ ] BPW-03: linha 9 da onda com pelo menos 12 texels opacos.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] BPW-01: projétil 8×8, 4 cantos transparentes, tons `w`, `U`, `u` e `v`.
+- [x] BPW-02: onda 16×10, pelo menos 30% de texels transparentes, tons `w`, `A`, `a` e `z`.
+- [x] BPW-03: linha 9 da onda com pelo menos 12 texels opacos.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
