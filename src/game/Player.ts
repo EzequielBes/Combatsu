@@ -402,7 +402,7 @@ export class Player implements Hittable {
     const dodging = this.dodge.active;
     // Abaixado (DEF-07..10): travado como na esquiva, sem golpe, guarda, pegar objeto nem andar.
     const ducking = this.duck.active;
-    this.updateStrikes(dtMs, input, onGround, stunned || casting || dodging || ducking);
+    this.updateStrikes(dtMs, input, onGround, stunned || casting, dodging || ducking);
     this.onPropSwing(this.propSwing.update(dtMs));
     // Guarda no chão sem golpe, esquiva, abaixar nem conjuração (GRD-01); o aperto abre a janela de parry (PAR-01/04).
     const canGuard = onGround && !this.moves.isMoving && !dodging && !ducking && !casting && !stunned;
@@ -484,6 +484,8 @@ export class Player implements Hittable {
 
   /** hp 0 (HP-04): larga o objeto (ele cai em repouso), e a tela escurece até o respawn. */
   private die(): void {
+    // EDG-07: morrer fecha a janela de Contra (e descarta o aperto guardado).
+    this.counter.close();
     if (this.held) {
       this.held.holderGone(this.sprite.x, this.sprite.y);
       this.held = null;
@@ -861,13 +863,22 @@ export class Player implements Hittable {
     }
   }
 
-  /** Aperto de golpe, soltura do carregado e relógio do grafo (MOV-02..09, MOV-13, MOV-16..18, SPC-01). */
-  private updateStrikes(dtMs: number, input: InputSnapshot, onGround: boolean, locked: boolean): void {
+  /**
+   * Aperto de golpe, soltura do carregado e relógio do grafo (MOV-02..09, MOV-13, MOV-16..18, SPC-01). `locked` =
+   * atordoado ou conjurando; `evading` = esquiva ou abaixar ativos, que também travam o golpe mas deixam o aperto do
+   * Contra guardado (CNT-07).
+   */
+  private updateStrikes(dtMs: number, input: InputSnapshot, onGround: boolean, lockedByState: boolean, evading: boolean): void {
     const forward = this.facing === 1 ? input.right : input.left;
     this.motion.sample(this.clockMs, { down: input.down, forward });
     const ctx: MoveContext = { grounded: onGround, down: input.down, up: input.upHeld, forward };
+    const locked = lockedByState || evading;
     if (locked) this.heavyHoldMs = -1;
-    if (!locked && this.held === null) {
+    const counter = this.takeCounter(input, onGround, lockedByState, evading);
+    if (counter) {
+      this.heavyHoldMs = -1;
+      this.onMove(this.moves.startCounter(counter));
+    } else if (!locked && this.held === null) {
       if (input.lightPressed && !onGround && this.tryUppercutCancel()) {
         // AD-011: o pulo com `W` some e o gancho ascendente sai do chão, como se `W`+`J` fossem no mesmo frame.
         this.onMove(this.moves.press('light', { grounded: true, down: false, up: true, forward }));
@@ -889,6 +900,18 @@ export class Player implements Hittable {
     }
     this.onMove(this.moves.update(dtMs));
     if (this.moves.phase === 'active') this.activeElapsedMs += dtMs;
+  }
+
+  /**
+   * Contra (CNT-05..07, CNT-16, CNT-18, CNT-19): com a janela aberta, no chão, sem golpe em curso e de mãos vazias, `J`
+   * ou `K` inicia o Contra da janela, seja qual for a direção segurada (CNT-18). Durante a esquiva ou o abaixar o aperto
+   * fica guardado e sai no primeiro frame livre, se a janela ainda estiver aberta (CNT-07). No ar ou com objeto na mão
+   * o aperto segue o caminho normal (golpe aéreo, balanço do objeto).
+   */
+  private takeCounter(input: InputSnapshot, onGround: boolean, locked: boolean, evading: boolean): CounterKind | null {
+    if (locked || !onGround || this.held !== null || this.moves.isMoving) return null;
+    if (input.lightPressed || input.heavyPressed) this.counter.buffer();
+    return this.counter.take(!evading);
   }
 
   /** `J` logo depois de um pulo com `W` (AD-011): volta ao chão e zera o pulo; `false` fora da janela. */
@@ -993,6 +1016,9 @@ export class Player implements Hittable {
       direction: { x: this.facing, y: move.strength === 'heavy' ? -0.6 : -0.15 },
       moveName: move.name,
       unblockable: move.unblockable,
+      // Contra (CNT-09, CNT-21): cambaleia até o inimigo comprometido; `knockdown` só nos golpes que derrubam (PST-04).
+      counter: move.counter,
+      knockdown: move.knockdown,
     };
     this.hitbox.open(shape, hit, this.sprite.x, this.sprite.y, this.facing, move.maxTargets);
   }

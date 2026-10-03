@@ -550,10 +550,10 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `CounterWindow.take` e `buffer`, `MoveMachine.startCounter`
 **Requirement**: CNT-05, CNT-06, CNT-07, CNT-08, CNT-11, CNT-12, CNT-16, CNT-18, CNT-19, EDG-07
 **Done when**:
-- [ ] A direção segurada é ignorada com a janela aberta (CNT-18); no ar sai o golpe aéreo (CNT-19); com objeto na mão sai o balanço (CNT-16).
-- [ ] O `Hit` do Contra leva `counter: true`, `unblockable: true` e o `knockdown` do `MoveDef` (ausente).
-- [ ] Morte fecha a janela (EDG-07).
-- [ ] `npm run build` passa.
+- [x] A direção segurada é ignorada com a janela aberta (CNT-18); no ar sai o golpe aéreo (CNT-19); com objeto na mão sai o balanço (CNT-16).
+- [x] O `Hit` do Contra leva `counter: true`, `unblockable: true` e o `knockdown` do `MoveDef` (ausente).
+- [x] Morte fecha a janela (EDG-07).
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
