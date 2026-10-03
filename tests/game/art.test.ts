@@ -854,11 +854,12 @@ describe('chefes desenhados por pose articulada (BSP-01..13)', () => {
     expect(artMeasure.dominant(TECELA_FRAMES.idle)).toBe('u');
   });
 
-  it.each(['A', 'a', 'z', 'm', 'H', 'j', 'h', 'U', 'u', 'v'])('BSP-13: o mapa da Tecelã troca %s por outra chave da paleta', (key) => {
-    const to = TECELA_COLOR_MAP[key];
-    expect(to, key).toBeDefined();
-    expect(PALETTE_KEYS.has(to), key).toBe(true);
-    expect(to, key).not.toBe(key);
+  it('BSP-13: o mapa da Tecelã tem exatamente as 11 trocas da spec (pele, juba, pano e brilho do olho)', () => {
+    expect(TECELA_COLOR_MAP).toEqual({ A: 'U', a: 'u', z: 'v', m: 'K', H: 'w', j: 'I', h: 'i', U: 'l', u: 'L', v: 'q', R: 'C' });
+  });
+
+  it('BSP-14: o leap tem os pés recolhidos: a base da caixa opaca fica na linha 28 ou acima', () => {
+    expect(artMeasure.box(BOSS_FRAMES.leap)[3]).toBeLessThanOrEqual(28);
   });
 });
 
@@ -981,6 +982,24 @@ describe('chute alto saindo do quadril (LMB-07, LMB-08)', () => {
   });
 });
 
+describe('golpes derivados no formato novo (LMB-09, LMB-10, LMB-11)', () => {
+  it('LMB-09: a palmaExplosiva-hit tem exatamente 2 texels A à direita da coluna 20 (o brilho da palma)', () => {
+    const beyond = PLAYER_MOVE_FRAMES['palmaExplosiva-hit'].map((row) => row.slice(21));
+    expect(artMeasure.countOf(beyond, 'A')).toBe(2);
+  });
+
+  it('LMB-10: a cotovelada-hit termina em ponta: a ponta do frame fica na coluna 23 e tem 1 texel opaco', () => {
+    const rows = PLAYER_MOVE_FRAMES['cotovelada-hit'];
+    const tip = artMeasure.box(rows)[2];
+    expect(tip).toBe(23);
+    expect(rows.filter((row) => row[tip] !== TRANSPARENT)).toHaveLength(1);
+  });
+
+  it('LMB-11: o pisao-hit tem a sola do sapato: pelo menos 3 texels s na linha 22', () => {
+    expect(artMeasure.countOf([PLAYER_MOVE_FRAMES['pisao-hit'][22]], 's')).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe('objetos com volume (OBJ-01, OBJ-02)', () => {
   it('OBJ-01: a cadeira tem 13x13 texels e pelo menos 6 chaves distintas, entre elas m, M, s e S', () => {
     const sheet = parseSheet('chair', { chair: PROP_SPRITES.chair }, PALETTE_KEYS);
@@ -1032,6 +1051,21 @@ describe('pendências dos inimigos (EPD-01..04)', () => {
     const headTop = artMeasure.box(frames['hurt-head-a-0'])[1];
     const uppercutTop = artMeasure.box(frames['hurt-uppercut-0'])[1];
     expect(headTop - uppercutTop).toBeGreaterThanOrEqual(3);
+  });
+
+  it.each([
+    ['corcunda', 9],
+    ['rastejante', 8],
+  ] as const)('EPD-05: no impact do %s, a borda branca começa na linha %i e não na de cima', (id, firstRimRow) => {
+    const rightmost = (row: string): string => [...row].filter((c) => c !== TRANSPARENT).at(-1)!;
+    const rows = ENEMY_VARIANT_FRAMES[id].impact;
+    expect(rightmost(rows[firstRimRow])).toBe('w');
+    expect(rightmost(rows[firstRimRow - 1])).not.toBe('w');
+  });
+
+  it('EPD-06: o punho do bruto tem os cantos arredondados fora do golpe (idle-0 e walk-0)', () => {
+    expect(ENEMY_VARIANT_FRAMES.bruto['idle-0'][22][19]).toBe(TRANSPARENT);
+    expect(ENEMY_VARIANT_FRAMES.bruto['walk-0'][20][21]).toBe(TRANSPARENT);
   });
 
   it.each(['corcunda', 'rastejante', 'bruto'] as const)('EPD-04: no hurt-uppercut-0 do %s, a base da caixa opaca fica na linha 20 ou acima', (id) => {

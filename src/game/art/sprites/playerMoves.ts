@@ -45,15 +45,15 @@ import {
 // ---------------------------------------------------------------- partes novas (mesmo estilo de player.ts)
 
 /** Cotovelo à frente (cotovelada): sem punho de pele na ponta, só a manga terminando em ponta no cotovelo (`o`).
- * `len` = colunas do ombro até a ponta do cotovelo, inclusive. */
+ * Ocupa `len + 1` colunas: a ponta do cotovelo fica uma coluna além de `len`, numa linha só. */
 function armElbow(len: number): string[] {
   const sleeve = len - 3;
   return [
-    'k'.repeat(len - 2) + '..',
-    'k' + 's'.repeat(sleeve) + 'k.',
-    'k' + 'N'.repeat(sleeve) + 'ok',
-    'k' + 'n'.repeat(sleeve) + 'k.',
-    'k'.repeat(len - 2) + '..',
+    'k'.repeat(len - 1) + '..',
+    'k' + 's'.repeat(sleeve) + 'Nk.',
+    'k' + 'N'.repeat(sleeve + 1) + 'ok',
+    'k' + 'n'.repeat(sleeve + 1) + 'k.',
+    'k'.repeat(len - 1) + '..',
   ];
 }
 

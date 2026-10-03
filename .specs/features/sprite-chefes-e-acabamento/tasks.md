@@ -263,14 +263,14 @@ T9
 
 **Done when**:
 
-- [ ] BSP-13: `TECELA_COLOR_MAP` é exatamente o mapa de 11 trocas da spec.
-- [ ] BSP-14: a base da caixa opaca do `leap` fica na linha 28 ou acima.
-- [ ] LMB-09: `palmaExplosiva-hit` com exatamente 2 texels `A` à direita da coluna 20.
-- [ ] LMB-10: `cotovelada-hit` com a ponta na coluna 23 e 1 texel opaco nela.
-- [ ] LMB-11: `pisao-hit` com pelo menos 3 texels `s` na linha 22.
-- [ ] EPD-05: borda do `impact` começando na linha 9 do corcunda e na 8 do rastejante, e não na linha de cima.
-- [ ] EPD-06: cantos do punho do bruto transparentes no `idle-0` (19, 22) e no `walk-0` (21, 20).
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] BSP-13: `TECELA_COLOR_MAP` é exatamente o mapa de 11 trocas da spec.
+- [x] BSP-14: a base da caixa opaca do `leap` fica na linha 28 ou acima.
+- [x] LMB-09: `palmaExplosiva-hit` com exatamente 2 texels `A` à direita da coluna 20.
+- [x] LMB-10: `cotovelada-hit` com a ponta na coluna 23 e 1 texel opaco nela.
+- [x] LMB-11: `pisao-hit` com pelo menos 3 texels `s` na linha 22.
+- [x] EPD-05: borda do `impact` começando na linha 9 do corcunda e na 8 do rastejante, e não na linha de cima.
+- [x] EPD-06: cantos do punho do bruto transparentes no `idle-0` (19, 22) e no `walk-0` (21, 20).
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build
