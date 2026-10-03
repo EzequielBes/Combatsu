@@ -79,10 +79,10 @@ T7
 
 **Done when**:
 
-- [ ] PRB-01: `collides(Filters.propThrown, Filters.boss)` é `true`.
-- [ ] PRB-02: `collides(Filters.propSwing, Filters.boss)` é `true`.
-- [ ] PRB-03: `propThrown` e `propSwing` colidem com `bossAirborne` e não colidem com `propRest`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] PRB-01: `collides(Filters.propThrown, Filters.boss)` é `true`.
+- [x] PRB-02: `collides(Filters.propSwing, Filters.boss)` é `true`.
+- [x] PRB-03: `propThrown` e `propSwing` colidem com `bossAirborne` e não colidem com `propRest`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
