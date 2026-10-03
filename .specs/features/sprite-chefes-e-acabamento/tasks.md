@@ -174,10 +174,10 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] LMB-07: no `chuteAlto-hit`, nenhum `s`, `N`, `n` ou `o` nas linhas 0 a 6 à esquerda da coluna 20.
-- [ ] LMB-08: no `chuteAlto-hit`, a ponta do pé fica na coluna 31, numa linha de 2 a 6.
-- [ ] LMB-05 e LMB-06 continuam valendo para os frames de `PLAYER_MOVE_FRAMES`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] LMB-07: no `chuteAlto-hit`, nenhum `s`, `N`, `n` ou `o` nas linhas 0 a 6 à esquerda da coluna 20.
+- [x] LMB-08: no `chuteAlto-hit`, a ponta do pé fica na coluna 31, numa linha de 2 a 6.
+- [x] LMB-05 e LMB-06 continuam valendo para os frames de `PLAYER_MOVE_FRAMES`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: unit
 **Gate**: build

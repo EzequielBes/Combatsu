@@ -235,10 +235,10 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | LMB-02 | P1: Soco e chute | Execute | Implementing |
 | LMB-03 | P1: Soco e chute | Execute | Implementing |
 | LMB-04 | P1: Soco e chute | Execute | Implementing |
-| LMB-05 | P1: Soco e chute | Tasks | In Tasks |
-| LMB-06 | P1: Soco e chute | Tasks | In Tasks |
-| LMB-07 | P1: Soco e chute | Tasks | In Tasks |
-| LMB-08 | P1: Soco e chute | Tasks | In Tasks |
+| LMB-05 | P1: Soco e chute | Execute | Implementing |
+| LMB-06 | P1: Soco e chute | Execute | Implementing |
+| LMB-07 | P1: Soco e chute | Execute | Implementing |
+| LMB-08 | P1: Soco e chute | Execute | Implementing |
 | BPW-01 | P2: Projétil e onda | Execute | Implementing |
 | BPW-02 | P2: Projétil e onda | Execute | Implementing |
 | BPW-03 | P2: Projétil e onda | Execute | Implementing |
