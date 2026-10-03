@@ -352,8 +352,8 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `Health`
 **Requirement**: PST-15
 **Done when**:
-- [ ] Teste com `PLAYER_HEALTH`: golpe em 299 ms depois do primeiro é `ignored`; em 300 ms é aceito.
-- [ ] Nenhum teste fixa mais 700 ms (AC substituído: HP-02).
+- [x] Teste com `PLAYER_HEALTH`: golpe em 299 ms depois do primeiro é `ignored`; em 300 ms é aceito.
+- [x] Nenhum teste fixa mais 700 ms (AC substituído: HP-02).
 **Tests**: unit
 **Gate**: quick
 
