@@ -657,6 +657,201 @@ describe('folha do chefe (BTIER-06, BAT-05, ART-01)', () => {
   });
 });
 
+/** Medidas do Glossário da spec `sprite-chefes-e-acabamento`, usadas pelos blocos BSP, BAN, BPW, LMB, OBJ e EPD. */
+const artMeasure = {
+  /** Menor retângulo com todos os texels opacos: [esquerda, topo, direita, base]. */
+  box(rows: readonly string[]): [number, number, number, number] {
+    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    rows.forEach((row, y) =>
+      [...row].forEach((c, x) => {
+        if (c === TRANSPARENT) return;
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      }),
+    );
+    return [x0, y0, x1, y1];
+  },
+  /** Posições em que os dois frames diferem, sobre as posições em que pelo menos um é opaco. */
+  difference(a: readonly string[], b: readonly string[]): number {
+    let union = 0;
+    let differ = 0;
+    a.forEach((row, y) =>
+      [...row].forEach((c, x) => {
+        const other = b[y][x];
+        if (c === TRANSPARENT && other === TRANSPARENT) return;
+        union++;
+        if (c !== other) differ++;
+      }),
+    );
+    return differ / union;
+  },
+  /** Quantidade de componentes 8-conexos de texels opacos. */
+  components(rows: readonly string[]): number {
+    const opaque = (x: number, y: number): boolean => rows[y]?.[x] !== undefined && rows[y][x] !== TRANSPARENT;
+    const seen = new Set<string>();
+    let count = 0;
+    rows.forEach((row, y) =>
+      [...row].forEach((_, x) => {
+        if (!opaque(x, y) || seen.has(`${x},${y}`)) return;
+        count++;
+        const stack: Array<[number, number]> = [[x, y]];
+        seen.add(`${x},${y}`);
+        while (stack.length) {
+          const [cx, cy] = stack.pop()!;
+          for (let dx = -1; dx <= 1; dx++)
+            for (let dy = -1; dy <= 1; dy++) {
+              const key = `${cx + dx},${cy + dy}`;
+              if (opaque(cx + dx, cy + dy) && !seen.has(key)) {
+                seen.add(key);
+                stack.push([cx + dx, cy + dy]);
+              }
+            }
+        }
+      }),
+    );
+    return count;
+  },
+  /** Texels `k` cujos 4 vizinhos estão dentro do frame e são opacos. */
+  interiorK(rows: readonly string[]): number {
+    let n = 0;
+    for (let y = 1; y < rows.length - 1; y++) {
+      for (let x = 1; x < rows[y].length - 1; x++) {
+        if (rows[y][x] !== 'k') continue;
+        if ([rows[y - 1][x], rows[y + 1][x], rows[y][x - 1], rows[y][x + 1]].every((c) => c !== TRANSPARENT)) n++;
+      }
+    }
+    return n;
+  },
+  /** Quantos texels do frame têm a chave `key`. */
+  countOf(rows: readonly string[], key: string): number {
+    return rows.join('').split(key).length - 1;
+  },
+  /** Chaves distintas do frame, sem o transparente. */
+  keysOf(rows: readonly string[]): Set<string> {
+    return new Set([...rows.join('')].filter((c) => c !== TRANSPARENT));
+  },
+  /** A chave mais frequente do frame, sem contar `k`. */
+  dominant(rows: readonly string[]): string {
+    const count = new Map<string, number>();
+    for (const c of rows.join('')) if (c !== TRANSPARENT && c !== 'k') count.set(c, (count.get(c) ?? 0) + 1);
+    return [...count].sort((a, b) => b[1] - a[1])[0][0];
+  },
+  /** Texels opacos de cada coluna de uma parte (linhas de larguras diferentes contam como transparente). */
+  profile(part: readonly string[]): number[] {
+    const width = Math.max(...part.map((r) => r.length));
+    return Array.from({ length: width }, (_, x) => part.filter((r) => (r[x] ?? TRANSPARENT) !== TRANSPARENT).length);
+  },
+};
+
+describe('medidas de arte do glossário (limiares dos dois lados)', () => {
+  it('difference: 1 posição diferente em 5 da união dá 0,2; em 6 dá menos que 0,2', () => {
+    expect(artMeasure.difference(['aaaaa'], ['aaaab'])).toBeCloseTo(0.2, 10);
+    expect(artMeasure.difference(['aaaaaa'], ['aaaaab'])).toBeLessThan(0.2);
+    // Posição transparente nos dois não entra na união; opaca em um só entra e conta como diferente.
+    expect(artMeasure.difference(['a..'], ['ab.'])).toBe(0.5);
+  });
+
+  it('components: diagonal liga (8-conexo); um texel de vão separa', () => {
+    expect(artMeasure.components(['a.', '.a'])).toBe(1);
+    expect(artMeasure.components(['a.a'])).toBe(2);
+  });
+
+  it('interiorK: só conta o k com os 4 vizinhos opacos e dentro do frame', () => {
+    expect(artMeasure.interiorK(['aaa', 'aka', 'aaa'])).toBe(1);
+    expect(artMeasure.interiorK(['a.a', 'aka', 'aaa'])).toBe(0);
+    expect(artMeasure.interiorK(['kkk', 'aaa', 'aaa'])).toBe(0);
+  });
+
+  it('box, dominant e profile leem o que o glossário define', () => {
+    expect(artMeasure.box(['....', '.ab.', '..c.'])).toEqual([1, 1, 2, 2]);
+    expect(artMeasure.dominant(['kkkk', 'aab.'])).toBe('a');
+    expect(artMeasure.profile(['ab', 'a', '.b'])).toEqual([2, 2]);
+  });
+});
+
+describe('chefes desenhados por pose articulada (BSP-01..13)', () => {
+  const NAMES = Object.keys(BOSS_FRAMES);
+  const WINDUPS = ['windup-charge', 'windup-leap', 'windup-volley'];
+
+  it('BSP-01: as folhas do Oni e da Tecelã passam no parseSheet com 40x32 texels e só chaves da paleta', () => {
+    for (const [name, frames] of [['boss-oni', BOSS_FRAMES], ['boss-tecela', TECELA_FRAMES]] as const) {
+      const sheet = parseSheet(name, frames, PALETTE_KEYS);
+      expect(sheet.width, name).toBe(40);
+      expect(sheet.height, name).toBe(32);
+    }
+  });
+
+  it('BSP-03: o idle do Oni tem cada tom de pele (A, a, z, m) em pelo menos 10 texels', () => {
+    for (const tone of ['A', 'a', 'z', 'm']) {
+      expect(artMeasure.countOf(BOSS_FRAMES.idle, tone), tone).toBeGreaterThanOrEqual(10);
+    }
+  });
+
+  it('BSP-04: o idle do Oni tem no máximo 12 texels k internos', () => {
+    expect(artMeasure.interiorK(BOSS_FRAMES.idle)).toBeLessThanOrEqual(12);
+  });
+
+  it('BSP-05: a caixa opaca do idle cobre a hurtbox (colunas 10 a 29, linhas 4 a 31)', () => {
+    const [x0, y0, x1, y1] = artMeasure.box(BOSS_FRAMES.idle);
+    expect(x0).toBeLessThanOrEqual(10);
+    expect(x1).toBeGreaterThanOrEqual(29);
+    expect(y0).toBeLessThanOrEqual(4);
+    expect(y1).toBe(31);
+  });
+
+  it.each(NAMES)('BSP-06: %s forma um único componente', (name) => {
+    expect(artMeasure.components(BOSS_FRAMES[name]), name).toBe(1);
+  });
+
+  it('BSP-07: idle e os três preparos diferem entre si em pelo menos 0,20', () => {
+    const group = ['idle', ...WINDUPS];
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const d = artMeasure.difference(BOSS_FRAMES[group[i]], BOSS_FRAMES[group[j]]);
+        expect(d, `${group[i]} x ${group[j]}`).toBeGreaterThanOrEqual(0.2);
+      }
+    }
+  });
+
+  it('BSP-08: cada ataque difere do próprio preparo em pelo menos 0,20', () => {
+    for (const attack of ['charge', 'leap', 'volley']) {
+      const d = artMeasure.difference(BOSS_FRAMES[attack], BOSS_FRAMES[`windup-${attack}`]);
+      expect(d, attack).toBeGreaterThanOrEqual(0.2);
+    }
+  });
+
+  it('BSP-09: o dead tem no máximo 14 linhas de altura e fica apoiado na linha 31', () => {
+    const [, y0, , y1] = artMeasure.box(BOSS_FRAMES.dead);
+    expect(y1).toBe(31);
+    expect(y1 - y0 + 1).toBeLessThanOrEqual(14);
+  });
+
+  it('BSP-10: o topo do stagger fica pelo menos 2 linhas abaixo do topo do idle', () => {
+    expect(artMeasure.box(BOSS_FRAMES.stagger)[1] - artMeasure.box(BOSS_FRAMES.idle)[1]).toBeGreaterThanOrEqual(2);
+  });
+
+  it('BSP-11: as duas folhas têm os mesmos frames', () => {
+    expect(Object.keys(TECELA_FRAMES).sort()).toEqual([...NAMES].sort());
+  });
+
+  it.each(NAMES)('BSP-11: %s da Tecelã é o do Oni com o TECELA_COLOR_MAP aplicado texel a texel', (name) => {
+    const mapped = BOSS_FRAMES[name].map((row) => [...row].map((c) => TECELA_COLOR_MAP[c] ?? c).join(''));
+    expect(TECELA_FRAMES[name]).toEqual(mapped);
+  });
+
+  it('BSP-12: a cor dominante do idle é a no Oni e u na Tecelã', () => {
+    expect(artMeasure.dominant(BOSS_FRAMES.idle)).toBe('a');
+    expect(artMeasure.dominant(TECELA_FRAMES.idle)).toBe('u');
+  });
+
+  it.each(['A', 'a', 'z', 'm', 'H', 'j', 'h', 'U', 'u', 'v'])('BSP-13: o mapa da Tecelã troca %s por outra chave da paleta', (key) => {
+    const to = TECELA_COLOR_MAP[key];
+    expect(to, key).toBeDefined();
+    expect(PALETTE_KEYS.has(to), key).toBe(true);
+    expect(to, key).not.toBe(key);
+  });
+});
+
 describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
   it('o projétil passa no parseSheet só com cores da paleta', () => {
     const sheet = parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS);

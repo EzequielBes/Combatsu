@@ -211,19 +211,19 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| BSP-01 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-02 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-03 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-04 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-05 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-06 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-07 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-08 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-09 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-10 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-11 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-12 | P1: Chefes com desenho | Tasks | In Tasks |
-| BSP-13 | P1: Chefes com desenho | Tasks | In Tasks |
+| BSP-01 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-02 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-03 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-04 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-05 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-06 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-07 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-08 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-09 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-10 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-11 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-12 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-13 | P1: Chefes com desenho | Execute | Implementing |
 | BAN-01 | P1: Chefes que se mexem | Tasks | In Tasks |
 | BAN-02 | P1: Chefes que se mexem | Tasks | In Tasks |
 | BAN-03 | P1: Chefes que se mexem | Tasks | In Tasks |

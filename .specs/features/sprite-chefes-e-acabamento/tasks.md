@@ -71,20 +71,20 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] BSP-01: `BOSS_FRAMES` e `TECELA_FRAMES` passam no `parseSheet` com 40×32 e só chaves da paleta.
-- [ ] BSP-02: a `PALETTE` tem exatamente 42 chaves.
-- [ ] BSP-03: no `idle` do Oni, `A`, `a`, `z` e `m` aparecem em pelo menos 10 texels cada.
-- [ ] BSP-04: o `idle` do Oni tem no máximo 12 `k` internos.
-- [ ] BSP-05: caixa opaca do `idle` com esquerda ≤ 10, direita ≥ 29, topo ≤ 4 e base = 31.
-- [ ] BSP-06: todo frame de `BOSS_FRAMES` tem um único componente.
-- [ ] BSP-07: cada par entre `idle` e os três preparos tem diferença ≥ 0,20.
-- [ ] BSP-08: `charge`, `leap` e `volley` têm diferença ≥ 0,20 em relação ao próprio preparo.
-- [ ] BSP-09: caixa opaca do `dead` com altura ≤ 14 e base = 31.
-- [ ] BSP-10: topo do `stagger` pelo menos 2 linhas abaixo do topo do `idle`.
-- [ ] BSP-11: cada frame da Tecelã é igual ao do Oni com o mapa aplicado texel a texel.
-- [ ] BSP-12: cor dominante do `idle` é `a` no Oni e `u` na Tecelã.
-- [ ] BSP-13: para cada chave de pele, juba e pano, o mapa aponta para outra chave da paleta.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] BSP-01: `BOSS_FRAMES` e `TECELA_FRAMES` passam no `parseSheet` com 40×32 e só chaves da paleta.
+- [x] BSP-02: a `PALETTE` tem exatamente 42 chaves.
+- [x] BSP-03: no `idle` do Oni, `A`, `a`, `z` e `m` aparecem em pelo menos 10 texels cada.
+- [x] BSP-04: o `idle` do Oni tem no máximo 12 `k` internos.
+- [x] BSP-05: caixa opaca do `idle` com esquerda ≤ 10, direita ≥ 29, topo ≤ 4 e base = 31.
+- [x] BSP-06: todo frame de `BOSS_FRAMES` tem um único componente.
+- [x] BSP-07: cada par entre `idle` e os três preparos tem diferença ≥ 0,20.
+- [x] BSP-08: `charge`, `leap` e `volley` têm diferença ≥ 0,20 em relação ao próprio preparo.
+- [x] BSP-09: caixa opaca do `dead` com altura ≤ 14 e base = 31.
+- [x] BSP-10: topo do `stagger` pelo menos 2 linhas abaixo do topo do `idle`.
+- [x] BSP-11: cada frame da Tecelã é igual ao do Oni com o mapa aplicado texel a texel.
+- [x] BSP-12: cor dominante do `idle` é `a` no Oni e `u` na Tecelã.
+- [x] BSP-13: para cada chave de pele, juba e pano, o mapa aponta para outra chave da paleta.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
