@@ -17,6 +17,13 @@ const FINGERTIP = {
 const FEET_OFFSET = 18;
 const FRAME_MS = 1000 / 60;
 const SPEED = 760; // RDA-11
+/** Plataformas baixas de `LEVEL_1` (linha 12, colunas 8-12 e 22-25, tiles de 32 px): o pulo embaixo delas bate no teto. */
+const LOW_PLATFORMS = [
+  [256, 416],
+  [704, 832],
+];
+/** Folga além da borda da plataforma: meia largura do corpo do player com sobra. */
+const CLEAR_PX = 16;
 
 export default async function ({ page, baseUrl, assert }) {
   const kit = makeKit({ page, baseUrl, assert });
@@ -190,6 +197,27 @@ export default async function ({ page, baseUrl, assert }) {
   // --- C: solta no ar (EDG-02): a repulsão é igual e o recuo de 12 px do chão não acontece -----------------------
   {
     let s = await setupFront();
+    // Embaixo de uma plataforma baixa o pulo bate no teto e a soltura cai no chão: sai para céu aberto (afastando-se
+    // do inimigo) e espera ele voltar à distância de `setupFront`.
+    const under = (x) => LOW_PLATFORMS.some(([a, b]) => x > a - CLEAR_PX && x < b + CLEAR_PX);
+    if (under(s.player.x)) {
+      const gap = 70 + kit.nearest(s).chaseSpeed * 0.6;
+      const away = kit.nearest(s).x > s.player.x ? 'KeyA' : 'KeyD';
+      for (let i = 0; i < 200 && under(s.player.x); i++) {
+        await kit.down(away);
+        s = await snap(16);
+        await kit.up(away);
+      }
+      for (let i = 0; i < 200 && Math.abs(kit.nearest(s).x - s.player.x) >= gap; i++) s = await snap(16);
+      const toward = kit.nearest(s).x > s.player.x ? 'KeyD' : 'KeyA';
+      if (s.player.facing !== (toward === 'KeyD' ? 1 : -1)) {
+        await kit.down(toward);
+        await snap(16);
+        await kit.up(toward);
+        s = await snap(16);
+      }
+      assert(!under(s.player.x), `EDG-02: o player deveria estar em céu aberto: x=${s.player.x}`);
+    }
     const frontId = kit.nearest(s).id;
     const hpBefore = kit.nearest(s).hp;
     // Pula e conjura no mesmo instante: a soltura (~600 ms depois) cai ainda no ar (a conjuração segura a queda).
