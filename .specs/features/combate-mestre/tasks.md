@@ -316,11 +316,11 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `COUNTER`
 **Requirement**: CNT-01, CNT-02, CNT-03, CNT-04, CNT-06, CNT-07, CNT-13, CNT-20
 **Done when**:
-- [ ] Aberta com 450 ms: `isOpen` em 449 ms e fechada em 450 ms; idem 899 e 900 ms.
-- [ ] `take(true)` com aperto devolve o `kind` e fecha; uma segunda chamada devolve `null`.
-- [ ] `buffer()` seguido de `take(false)` devolve `null` e mantém o aperto; o `take(true)` seguinte devolve o `kind`; se a janela fecha antes, devolve `null` e o aperto guardado some.
-- [ ] `open` com a janela aberta troca `kind` e tempo pelos novos.
-- [ ] O tempo só anda em `update(dt)`: sem `update`, `remainingMs` não muda.
+- [x] Aberta com 450 ms: `isOpen` em 449 ms e fechada em 450 ms; idem 899 e 900 ms.
+- [x] `take(true)` com aperto devolve o `kind` e fecha; uma segunda chamada devolve `null`.
+- [x] `buffer()` seguido de `take(false)` devolve `null` e mantém o aperto; o `take(true)` seguinte devolve o `kind`; se a janela fecha antes, devolve `null` e o aperto guardado some.
+- [x] `open` com a janela aberta troca `kind` e tempo pelos novos.
+- [x] O tempo só anda em `update(dt)`: sem `update`, `remainingMs` não muda.
 **Tests**: unit
 **Gate**: quick
 
