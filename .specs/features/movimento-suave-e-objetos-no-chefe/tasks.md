@@ -122,9 +122,9 @@ T7
 
 **Done when**:
 
-- [ ] CAM-01 a CAM-06 conferidos com os valores da spec.
-- [ ] ITP-04: a simulação dá variação na tela ≤ 1 px nas quatro taxas; a mesma simulação com o método antigo (floor na realimentação, sem interpolar) passa de 1 px.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] CAM-01 a CAM-06 conferidos com os valores da spec.
+- [x] ITP-04: a simulação dá variação na tela ≤ 1 px nas quatro taxas; a mesma simulação com o método antigo (floor na realimentação, sem interpolar) passa de 1 px.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
