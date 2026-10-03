@@ -138,6 +138,14 @@
 - **Date**: 2026-10-02
 - **Status**: active
 
+### AD-018
+- **Decision**: A arte dos chefes é montada por pose articulada: volumes (ovais e membros afilados) pintados por código com rampa de 4 tons e contorno `k`, partes desenhadas à mão por cima (rosto, chifres, pés, pano) e o `selOut` no fim. O resultado continua sendo uma grade de texto validada pelo `parseSheet`.
+- **Reason**: Um chefe de 40x32 com 20 frames desenhado texel a texel custa caro e sai com sombra incoerente entre os frames; por articulação, uma pose nova são só as posições das juntas.
+- **Trade-off**: O acabamento fino (um texel fora do lugar) se resolve ajustando raio e junta, não editando a grade; quem lê `boss.ts` não vê o desenho no código.
+- **Scope**: Chefes atuais e futuros. Player, inimigos comuns, objetos e tiles continuam em grades escritas à mão (AD-002).
+- **Date**: 2026-10-03
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: nenhuma em andamento. F11 `ritmo-economia-e-chefe` e F10 `personagem-e-vermelho` fechadas (Verifier PASS na rodada 2 das duas) e mergeadas em `dev` (merge `16c35b3`)
