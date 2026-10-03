@@ -60,6 +60,7 @@ canvas na inicialização com 1 texel = 2 px de mundo.
 
 - Paleta única (até 32 cores): `src/game/art/palette.ts`
 - Sprites do player, do inimigo e dos objetos: `src/game/art/sprites/`
+- Chefes: `src/game/art/sprites/boss.ts` monta cada frame por pose (volumes pintados por código, rosto, chifres e pés desenhados à mão por cima); o resultado é a mesma grade de texto
 - Tiles do cenário: `src/game/art/tiles.ts`
 - Fundo com parallax: `src/game/art/background.ts`
 - Molduras das barras de vida: `src/game/art/hud.ts`
