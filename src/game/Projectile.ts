@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Filters } from '../core/collision';
-import { canDamage, type Hit } from '../core/hit';
+import { canDamage, type Hit, type HitHeight } from '../core/hit';
 import { Mover } from '../core/mover';
 import { newEntityId, tagBody, type BodyTag } from './bodyTags';
 import { contactWith, type OnConnect } from './hitbox';
@@ -11,6 +11,9 @@ import { TEX } from './textures';
 const HIT_FORCE = 4;
 
 export type ProjectileKind = 'projectile' | 'shockwave';
+
+/** Altura do golpe por tipo (HGT-10, HGT-11): a rajada voa alta e se abaixa; a onda corre rente ao chão e se pula. */
+const HEIGHT: Record<ProjectileKind, HitHeight> = { projectile: 'high', shockwave: 'low' };
 
 /** Tamanho do corpo/sprite por tipo, em px de mundo (BAT-03: onda com 20 px de altura). */
 const SIZE: Record<ProjectileKind, { width: number; height: number }> = {
@@ -52,6 +55,7 @@ export class Projectile {
       strength: 'light',
       force: HIT_FORCE,
       direction: { x: dir, y: 0 },
+      height: HEIGHT[kind],
       // A onda do pouso do chefe ignora a guarda (GRD-04): só esquivando ou apagando o golpe com parry.
       unblockable: kind === 'shockwave',
     };

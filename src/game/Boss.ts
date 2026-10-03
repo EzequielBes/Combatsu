@@ -269,6 +269,7 @@ export class Boss implements Hittable {
   }
 
   private openChargeHitbox(): void {
+    // Sem `height` (HGT-12): a investida cobre o corpo inteiro, então não dá para abaixar nem pular.
     const hit: Hit = {
       ownerId: this.id,
       damage: this.spec.damage.charge,
@@ -313,6 +314,7 @@ export class Boss implements Hittable {
     const y = this.groundTopBelow(x, this.leapGroundY + BODY_H / 2 - 4) - BODY_H / 2;
     this.scene.matter.body.setPosition(this.body, { x, y });
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
+    // Sem `height` (HGT-12): o pouso cobre o corpo inteiro, então não dá para abaixar nem pular.
     const hit: Hit = {
       ownerId: this.id,
       damage: this.spec.damage.leap,

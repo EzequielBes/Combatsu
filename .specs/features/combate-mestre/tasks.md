@@ -500,8 +500,8 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: o `Hit` montado no construtor
 **Requirement**: HGT-10, HGT-11, HGT-12
 **Done when**:
-- [ ] `height` sai do `kind` do projétil; `src/game/Boss.ts` não ganha `height` (comentário de uma linha dizendo por quê).
-- [ ] `npm run build` passa.
+- [x] `height` sai do `kind` do projétil; `src/game/Boss.ts` não ganha `height` (comentário de uma linha dizendo por quê).
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
