@@ -5,7 +5,7 @@ import { bossFinisherDamage } from '../core/bossFinisher';
 import { bossRewardSlot } from '../core/bossReward';
 import { clampCenter, followCenter, scrollFor, type FollowConfig } from '../core/cameraFollow';
 import { Filters } from '../core/collision';
-import { scaleFor } from '../core/difficulty';
+import { scaleFor, type EnemyBase } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
 import type { CastState } from '../core/cast';
 import { ComboCounter } from '../core/comboCounter';
@@ -17,7 +17,9 @@ import { AttackGate } from '../core/attackGate';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
+import { MoveReading } from '../core/moveReading';
 import { Mastery, type MasterySlot } from '../core/mastery';
+import { attackKindFor, parseAttackKind, parseStringLength } from '../core/attackKind';
 import { parseVariant, pickEnemyVariant } from '../core/enemyVariant';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
@@ -31,7 +33,7 @@ import { Wallet } from '../core/wallet';
 import { pickSpawnPoint } from '../core/spawnPoint';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
-import { DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
+import { DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE } from '../data/moves';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
@@ -57,7 +59,7 @@ import { buildBackground } from '../game/art/background';
 import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
 import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
-import { routeContacts, tagBody } from '../game/bodyTags';
+import { routeContacts, tagBody, type Hittable } from '../game/bodyTags';
 import { Boss } from '../game/Boss';
 import { Projectile } from '../game/Projectile';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
@@ -225,6 +227,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Contador de combo e nota de estilo (CMB-01..03). */
   private comboCounter = new ComboCounter();
   private lastPlayerHp = 0;
+  /** Histórico dos golpes do jogador nos últimos 3000 ms, para o inimigo ler a repetição (RDG-01); zerado a cada run. */
+  private reading = new MoveReading();
+  /** Foco da postura (PST-13): id do último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador. */
+  private focusId: number | null = null;
   /** Tom azulado sobre a tela enquanto a câmera lenta está ativa (DOD-12), na câmera de UI. */
   private slowTint!: Phaser.GameObjects.Rectangle;
   /** Tempo real (ms) até o zoom do finalizador voltar ao normal; 0 = sem finalizador em curso. */
@@ -248,6 +254,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.unfreeze();
     this.slowMo = new SlowMo();
     this.comboCounter = new ComboCounter();
+    this.reading = new MoveReading();
+    this.focusId = null;
     this.finisherZoomMs = 0;
     this.events.on(Phaser.Scenes.Events.PRE_UPDATE, this.tickHitstop, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -289,13 +297,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const s of this.level.props) {
       const def = PROP_DEFS[s.key];
       if (!def) throw new Error(`Objeto sem definição: ${s.key}`);
-      this.props.push(new Prop(this, s.x, s.y, def, this.modifiers, (hit, at) => this.onConnect(hit, at, 'prop')));
+      this.props.push(new Prop(this, s.x, s.y, def, this.modifiers, (hit, at, target) => this.onConnect(hit, at, 'prop', target)));
     }
 
     this.controls = new PlayerInput(this);
     this.shopInput = new ShopInput(this);
     const p = this.level.player;
-    const strike = (hit: Hit, at: Vec2): void => this.onConnect(hit, at, hit.strength);
+    const strike = (hit: Hit, at: Vec2, target?: Hittable): void => this.onConnect(hit, at, hit.strength, target);
     this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
     this.player.onEvent = (ev) => {
       this.debugEvents.push(ev);
@@ -764,6 +772,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Edge case: nova run zera o combo e a câmera lenta (estruturas zeram no reset do player e dos inimigos).
     this.comboCounter.reset();
     this.slowMo.reset();
+    // EDG-03, EDG-04: a leitura e o foco não sobrevivem à run anterior (a janela de Contra e o abaixar zeram no
+    // `player.resetForRun`, EDG-01 e EDG-02).
+    this.reading.reset();
+    this.focusId = null;
     this.lastPlayerHp = this.player.hp;
     // ECO-14/27: carteira zerada e nenhum pickup/texto flutuante sobrevive à run anterior.
     this.wallet.reset();
@@ -916,7 +928,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    */
   private dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
     const def = rare ? rareDef(TOOL_DEFS[tool]) : TOOL_DEFS[tool];
-    const prop = new Prop(this, x, y, def, this.modifiers, (hit, at) => this.onConnect(hit, at, 'prop'), rare);
+    const prop = new Prop(this, x, y, def, this.modifiers, (hit, at, target) => this.onConnect(hit, at, 'prop', target), rare);
     const evictId = this.droppedTools.admit(prop.id, this.toolStates());
     if (evictId !== null) {
       this.props.find((p) => p.id === evictId)?.destroyNow();
@@ -969,8 +981,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         granted: gate.isGranted(e.id),
         windupAllowed: gate.windupAllowed(),
         holdRank: at >= 0 ? at : sameSide.length,
-        // O foco da postura (PST-13) é da T29; até lá nenhum inimigo é o foco.
-        focus: false,
+        // PST-14, PST-16: só o foco da postura cai devagar.
+        focus: e.id === this.focusId,
       });
       if (e.windupStarted) gate.noteWindup(e.id);
       const s = e.aiState;
@@ -1007,11 +1019,16 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const scaled = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
     // ARM-01..03: sorteado depois da escala da rodada (armFor multiplica o dano já escalado).
     const armedRoll = this.loot.rollArmed(round);
-    const tuning = armedRoll ? armFor(armedRoll.tool, scaled, ARMED) : scaled;
+    const armed = armedRoll ? armFor(armedRoll.tool, scaled, ARMED) : scaled;
     // EVR-04/05: o sorteio sempre consome o stream próprio (a sequência não muda com o override); `?debug&enemyVariant=`
     // com um id válido manda no resultado, um inválido cai no sorteio normal.
     const drawn = this.run.variantRng ? pickEnemyVariant(this.run.variantRng) : 'corcunda';
     const variant = parseVariant(debugParam('enemyVariant')) ?? drawn;
+    // HGT-13, EDG-08: `?debug&enemyAttack=white|red|low` manda no tipo do golpe; inválido cai no `attackKindFor`.
+    // DFL-14, EDG-09: `?debug&enemyString=1..4` manda no tamanho da sequência; inválido vale a sequência da arma (DFL-01).
+    const kind = parseAttackKind(debugParam('enemyAttack')) ?? attackKindFor({ variant, weapon: armedRoll?.tool ?? null });
+    const hits = parseStringLength(debugParam('enemyString')) ?? armed.ai.hits;
+    const tuning: EnemyBase = { ...armed, attack: { ...armed.attack, kind }, ai: { ...armed.ai, hits } };
     const enemy = new Enemy(
       this,
       spawnAt,
@@ -1034,6 +1051,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     );
     enemy.onEvent = (ev) => this.debugEvents.push(ev);
     enemy.guardRng = this.run.guardRng;
+    // RDG-23: `?debug&shove=N` fixa a chance do empurrão; RDG-19: o empurrão chega ao jogador pelo `shoved`.
+    enemy.shoveChance = this.debugShoveChance();
+    enemy.onShove = (dir) => this.player.shoved(dir);
     enemy.onBlock = (at) => {
       this.fx.spark(at.x, at.y, 'guard');
       this.realtimeFx.add('guard.spark', 100);
@@ -1041,6 +1061,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.enemies.push(enemy);
     this.debugEvents.push(`spawnFx:${enemy.id}`);
     this.fx.curseSmoke(spawnAt.x, spawnAt.y);
+  }
+
+  /** `?debug&shove=N` (número de 0 a 1): chance do empurrão no 4º leve seguido (RDG-23); ausente ou inválido vale o padrão. */
+  private debugShoveChance(): number {
+    const raw = debugParam('shove');
+    if (raw === null || raw.trim() === '') return READING.shoveChance;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 && n <= 1 ? n : READING.shoveChance;
   }
 
   /**
@@ -1263,9 +1291,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   /**
    * Golpe que conectou: faísca no ponto de contato (FX-03), tremida só no forte e hitstop (FX-01/02). Golpe de
-   * objeto é forte (hitstop de 90 ms) e tem a faísca roxa.
+   * objeto é forte (hitstop de 90 ms) e tem a faísca roxa. `target` é quem aceitou o golpe (foco, PST-13).
    */
-  private onConnect(hit: Hit, point: Vec2, kind: SparkKind): void {
+  private onConnect(hit: Hit, point: Vec2, kind: SparkKind, target?: Hittable): void {
     this.fx.spark(point.x, point.y, kind);
     if (hit.strength === 'heavy') this.fx.shake();
     this.hitstop.trigger(HITSTOP_MS[hit.strength]);
@@ -1278,21 +1306,24 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       if (hit.moveName) this.player.hitLanded();
       // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
       this.comboCounter.hit(hit.moveName ?? 'objeto');
+      // PST-13: o foco é o último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (não o chefe).
+      if (target instanceof Enemy) this.focusId = target.id;
     }
   }
 
   /**
-   * O jogador começou um golpe do grafo (`move:<nome>`): os inimigos comuns de frente e perto sorteiam a guarda
-   * (RDG-03). Contra não conta (RDG-12). `?debug&enemyGuard=N` fixa a chance (N=1: sempre levantam). As repetições
-   * da leitura (`repeats`) entram na fase 4; até lá valem 0.
+   * O jogador começou um golpe do grafo (`move:<nome>`): entra no histórico de leitura (RDG-01) e os inimigos comuns
+   * de frente e perto sorteiam a guarda (RDG-03). Contra não conta nem sorteia (RDG-11, RDG-12); o finalizador não
+   * emite `move:`. `?debug&enemyGuard=N` fixa a chance total (N=1: sempre levantam) e ignora a leitura (RDG-10).
    */
   private onPlayerMoveStart(name: string): void {
     const move = MOVES[name];
     if (!move || move.counter) return;
+    const repeats = this.reading.note(name, this.clockMs);
     const raw = debugParam('enemyGuard');
     const override = raw !== null && Number.isFinite(Number(raw)) ? Number(raw) : undefined;
     const me = { x: this.player.sprite.x, facing: this.player.facing };
-    for (const e of this.enemies) e.onPlayerMove(me, move, this.run.round, { repeats: 0, override });
+    for (const e of this.enemies) e.onPlayerMove(me, move, this.run.round, { repeats, override });
   }
 
   /** Quem bateu no jogador, para o lado do golpe, o tipo (chefe) e o efeito do parry (PAR-03/07/10). */
@@ -1371,13 +1402,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       force: 12,
       direction: { x: dir, y: -0.6 },
       moveName: FINISHER_MOVE,
+      // PST-06: o finalizador derruba o inimigo quebrado que sobrevive.
+      knockdown: true,
     };
     this.player.finisherPose(dir);
     if (!target.receiveHit(hit)) return;
     target.markFinished();
     this.debugEvents.push(`finisher:${target.id}`);
     // Faísca, tremida, energia e combo do golpe comum; depois o congelamento maior do finalizador (o maior vence).
-    this.onConnect(hit, { x: at.x, y: at.y }, 'heavy');
+    this.onConnect(hit, { x: at.x, y: at.y }, 'heavy', target);
     this.hitstop.trigger(FINISHER_HITSTOP_MS);
     this.freeze();
     this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
@@ -1462,6 +1495,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       strength,
       force: step.force,
       direction: { x: targetX >= this.player.sprite.x ? 1 : -1, y: -0.6 },
+      // PST-12: o golpe forte de teste (tecla 2) derruba, como antes de o forte passar a cambalear.
+      ...(strength === 'heavy' ? { knockdown: true } : {}),
     });
     for (const e of this.enemies) e.receiveHit(hitToward(e.x));
     // Golpe aceito pelo chefe vai para o snapshot: na intro e no rugido ele recusa (BOSS-08, BAI-12).

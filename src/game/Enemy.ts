@@ -559,7 +559,8 @@ export class Enemy implements Hittable {
    * até `READING.rangePx + travel.forwardPx` dele, sorteia a guarda com `guardChance`: a base do EBL-01 (golpe leve,
    * `idle`, a 60 px) mais o bônus de leitura das `repeats`; `override` fixa a chance (`?debug&enemyGuard=`). Ao subir,
    * cancela o preparo e vira para o jogador (a guarda só segura o que vem de frente). A guarda de leitura (bônus acima
-   * de 0) tira o inimigo do `hitstun` ou do `stagger` (RDG-09) e emite `read:<id>` (RDG-05).
+   * de 0, sem `override`) tira o inimigo do `hitstun` ou do `stagger` (RDG-09) e emite `read:<id>` (RDG-05); com
+   * `override` a leitura não conta e a guarda é sempre a comum (RDG-10).
    */
   onPlayerMove(
     player: { x: number; facing: 1 | -1 },
@@ -581,7 +582,8 @@ export class Enemy implements Hittable {
       override: reading.override,
       baseConditions: baseConditionsHold({ round, idle: this.brain.state === 'idle', playerFacingEnemy, distancePx }, move.strength),
     });
-    const read = bonus > 0;
+    // RDG-10: com `enemyGuard=N` a leitura é ignorada; a guarda que sobe é a comum, sem `read:<id>`.
+    const read = bonus > 0 && reading.override === undefined;
     if (!this.guard.tryRaise(chance, read)) return false;
     if (read) {
       this.brain.recover();
