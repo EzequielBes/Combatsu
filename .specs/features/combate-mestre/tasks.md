@@ -383,9 +383,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `routeContact`
 **Requirement**: TGT-04
 **Done when**:
-- [ ] Teste: com 3 pares, as funções adiadas rodam depois do 3º `onTouch`, uma vez cada, e a fila esvazia.
-- [ ] Uma função adiada registrada durante a fila também roda no mesmo `routeContacts`.
-- [ ] `TestScene.listenForContacts` chama `routeContacts(event.pairs)`.
+- [x] Teste: com 3 pares, as funções adiadas rodam depois do 3º `onTouch`, uma vez cada, e a fila esvazia.
+- [x] Uma função adiada registrada durante a fila também roda no mesmo `routeContacts`.
+- [x] `TestScene.listenForContacts` chama `routeContacts(event.pairs)`.
 **Tests**: unit
 **Gate**: quick
 
