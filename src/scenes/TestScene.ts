@@ -82,7 +82,7 @@ import { TechRunner, type TechTarget } from '../game/TechRunner';
 import { Aura } from '../game/techFx/Aura';
 import { Callout } from '../game/techFx/Callout';
 import { KokusenFx } from '../game/techFx/KokusenFx';
-import { TEX } from '../game/textures';
+import { SIZE, TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
 
@@ -438,6 +438,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.realtimeFx.update(this.frozen ? 0 : clamped, base);
     // DOD-12: a camada `dodge.slowTint` fica viva enquanto a câmera lenta dura (re-adicionada a cada frame).
     if (this.slowMo.active) this.realtimeFx.add('dodge.slowTint', 1, 'real');
+    // CNT-14: a camada `counter.ready` fica viva enquanto a janela de Contra está aberta (re-adicionada a cada frame,
+    // também no hitstop, que não gasta a janela).
+    if (this.player.counterView.open) this.realtimeFx.add('counter.ready', 1, 'real');
     // TFX-03/09: a destruição agendada dos objetos de efeito é em tempo real, independe do hitstop.
     this.fxRegistry.update(base);
     // T24 (TFX-05): negativo/duotom/raios/faíscas/cartão do Kokusen andam com o relógio real, mesmo congelados.
@@ -1353,12 +1356,23 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.realtimeFx.add('parry.ring', 200);
       this.hitstop.trigger(DEFENSE.parryHitstopMs);
       this.freeze();
+      // CNT-15, DFL-13: a Deflexão avisa só `DEFLEXÃO`; o parry comum avisa `CONTRA`.
+      if (kind === 'deflect') this.warnAboveHead('DEFLEXÃO', 'w');
+      else this.warnAboveHead('CONTRA', 'A');
     } else if (kind === 'perfectDodge') {
       // Esquiva perfeita (DOD-07): câmera lenta com tom azulado e o "tique" branco no jogador.
       this.slowMo.trigger();
       this.player.flash('w', 60);
+      this.warnAboveHead('CONTRA', 'A');
+    } else if (kind === 'duckEvade') {
+      this.warnAboveHead('CONTRA', 'A');
     }
-    // `duckEvade` e `jumpEvade` ainda sem efeito de cena (os textos de aviso entram na T30).
+    // `jumpEvade` não abre janela de Contra: sem aviso (DEF-18).
+  }
+
+  /** Texto flutuante sobre a cabeça do jogador, a menos de 40 px do centro do corpo (CNT-15, DFL-13); cor da paleta. */
+  private warnAboveHead(text: string, colorKey: string): void {
+    this.floatTexts.spawn(text, colorKey, this.player.sprite.x, this.player.sprite.y - SIZE.player.h / 2);
   }
 
   /** Aplica a escala da câmera lenta (e do laboratório de efeitos) ao tempo de jogo: timers, tweens e física. */
@@ -1527,6 +1541,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
       'J leve · K forte · U guarda/parry · Q esquiva · E pegar',
       'E: pegar / arremessar   S+E: largar   J/X leve   K/Z forte',
+      'S+Q: abaixar   U+direção: virar na guarda   defesa certa + J: Contra',
       'R: reiniciar   Tab: mostrar/esconder controles',
       ...(isDebug() ? ['F1: sair do debug   H: debug da física   1/2: golpe leve/forte de teste'] : []),
       ...(this.fxLab ? [FxLab.LEGEND, this.fxLab.speedLabel] : []),
