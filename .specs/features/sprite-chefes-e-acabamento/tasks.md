@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/sprite-chefes-e-acabamento/spec.md`
 **Design**: `.specs/features/sprite-chefes-e-acabamento/design.md`
-**Status**: Done (Verifier PASS, rodada 2); falta o UAT do usuário antes do merge em `dev`
+**Status**: Done (Verifier PASS, rodada 2); UAT do usuário ok e merge em `dev` em 03/10
 **Branch**: `feat/sprite-chefes-e-acabamento` (a partir de `dev`; volta para `dev` com `--no-ff` após o Verifier PASS e o UAT do usuário, AD-008)
 
 ---
