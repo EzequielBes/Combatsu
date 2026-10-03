@@ -142,9 +142,9 @@ T7
 
 **Done when**:
 
-- [ ] O sprite visível e o objeto na mão usam `renderPos`; hitbox e física continuam no corpo.
-- [ ] O snapshot expõe `player.view`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] O sprite visível e o objeto na mão usam `renderPos`; hitbox e física continuam no corpo.
+- [x] O snapshot expõe `player.view`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none
 **Gate**: build
