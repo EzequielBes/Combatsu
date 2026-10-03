@@ -98,9 +98,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `makeHitGate` (fica como está)
 **Requirement**: TGT-03, TGT-04, TGT-05, TGT-06
 **Done when**:
-- [ ] `TargetGate.wants` devolve `false` para o dono, para alvo já tentado e sem vaga; `note` com `accepted` e `blocked` gasta vaga, com `refused` não gasta.
-- [ ] Testes com `maxTargets` 1 e 2: o 2º alvo é recusado com teto 1 e aceito com teto 2; um alvo `refused` não impede o seguinte (TGT-05); um `blocked` com teto 1 impede (TGT-06).
-- [ ] `orderTargets` ordena por `dist` crescente e desempata por `id`; teste com entrada fora de ordem e com empate.
+- [x] `TargetGate.wants` devolve `false` para o dono, para alvo já tentado e sem vaga; `note` com `accepted` e `blocked` gasta vaga, com `refused` não gasta.
+- [x] Testes com `maxTargets` 1 e 2: o 2º alvo é recusado com teto 1 e aceito com teto 2; um alvo `refused` não impede o seguinte (TGT-05); um `blocked` com teto 1 impede (TGT-06).
+- [x] `orderTargets` ordena por `dist` crescente e desempata por `id`; teste com entrada fora de ordem e com empate.
 **Tests**: unit
 **Gate**: quick
 
