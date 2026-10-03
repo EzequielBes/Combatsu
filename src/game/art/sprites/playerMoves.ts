@@ -44,30 +44,51 @@ import {
 
 // ---------------------------------------------------------------- partes novas (mesmo estilo de player.ts)
 
-/** Cotovelo à frente (cotovelada): sem punho de pele na ponta, só a manga/cotovelo escuro. `len` = colunas do
- * ombro até a ponta do cotovelo, inclusive. */
+/** Cotovelo à frente (cotovelada): sem punho de pele na ponta, só a manga terminando em ponta no cotovelo (`o`).
+ * `len` = colunas do ombro até a ponta do cotovelo, inclusive. */
 function armElbow(len: number): string[] {
   const sleeve = len - 3;
   return [
-    'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + 'ksk',
-    'k' + 'N'.repeat(sleeve) + 'kNk',
-    'k' + 'n'.repeat(sleeve) + 'knk',
-    'k'.repeat(len - 1) + '.',
+    'k'.repeat(len - 2) + '..',
+    'k' + 's'.repeat(sleeve) + 'k.',
+    'k' + 'N'.repeat(sleeve) + 'ok',
+    'k' + 'n'.repeat(sleeve) + 'k.',
+    'k'.repeat(len - 2) + '..',
   ];
 }
 
-/** Palma aberta à frente (palmaExplosiva): como `armStraight`, mas a ponta é uma palma achatada com o brilho
- * quente de golpe forte (`a`/`A`) no centro, em vez do punho fechado. */
+/** Palma aberta à frente (palmaExplosiva): o `armStraight` com o brilho quente de golpe forte (`A`) no centro da
+ * mão, em vez do punho fechado. */
 function armPalm(len: number): string[] {
-  const sleeve = len - 7;
-  return [
-    'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + 'skpApk',
-    'k' + 'N'.repeat(sleeve) + 'skPAPk',
-    'k' + 'n'.repeat(sleeve) + 'NkPPxk',
-    'k'.repeat(len - 1) + '.',
-  ];
+  return armStraight(len).map((row, y) => (y === 1 || y === 2 ? row.slice(0, len - 3) + 'A' + row.slice(len - 2) : row));
+}
+
+/**
+ * Perna esticada subindo na diagonal (chute alto): sai do quadril, embaixo à esquerda, e termina no pé, `rise`
+ * linhas acima, com a mesma coxa grossa, canela fina e sapato do `legStraight`. `len` = colunas do quadril até o
+ * contorno da ponta do pé, inclusive; a ponta fica nas 5 primeiras linhas da parte.
+ */
+function legRaised(len: number, rise: number): string[] {
+  const leg = len - 6;
+  const thigh = Math.ceil(leg / 2);
+  const cells = Array.from({ length: rise + 5 }, () => Array<string>(len).fill('.'));
+  for (let x = 1; x <= leg; x++) {
+    const top = 1 + Math.round(rise * (1 - (x - 1) / (leg - 1)));
+    if (x <= thigh) {
+      cells[top][x] = 's';
+      cells[top + 1][x] = x === thigh ? 'o' : 'N';
+      cells[top + 2][x] = 'n';
+    } else {
+      cells[top][x] = 'N';
+      cells[top + 1][x] = 'n';
+    }
+  }
+  for (let y = 1; y <= 3; y++) cells[y].splice(leg + 2, 3, 'K', 'K', 's');
+  const filled = cells.map((row) => row.map((c) => c !== '.'));
+  const near = (x: number, y: number): boolean => filled[y]?.[x] === true;
+  return cells.map((row, y) =>
+    row.map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c)).join(''),
+  );
 }
 
 /* Joelho dobrado subindo e avançando (joelhada, chambers de chute e preparo do pisão): `LEG_CHAMBER` de `player.ts`. */
@@ -76,10 +97,10 @@ const LEG_KNEE_UP: Grid = LEG_CHAMBER;
 /** Perna esticada para baixo (pisão, impacto): coluna vertical com a sola na ponta inferior. `len` = linhas do
  * quadril até a sola, inclusive. */
 function legDown(len: number): string[] {
-  const shin = len - 2;
+  const shin = len - 3;
   const rows: string[] = ['ksNk'];
-  for (let i = 0; i < shin; i++) rows.push('kNnk');
-  rows.push('kKsk');
+  for (let i = 0; i < shin; i++) rows.push(i === Math.floor(shin / 2) ? 'koNk' : 'kNnk');
+  rows.push('kKKKk', 'ksssk');
   return rows;
 }
 
@@ -214,7 +235,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     far: [far(ARM_GUARD), 0, 10],
     legs: [
       [LEG_SUPPORT, 3, 17],
-      [legStraight(21), 9, 2],
+      [legRaised(21, 12), 9, 2],
     ],
   }),
   'chuteAlto-recover': pose({

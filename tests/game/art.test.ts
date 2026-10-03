@@ -961,6 +961,26 @@ describe('braço e perna esticados do player com antebraço e canela finos (LMB-
   });
 });
 
+describe('chute alto saindo do quadril (LMB-07, LMB-08)', () => {
+  const rows = PLAYER_MOVE_FRAMES['chuteAlto-hit'];
+
+  it('LMB-07: nenhum texel de uniforme (s, N, n, o) fica nas linhas 0 a 6 à esquerda da coluna 20', () => {
+    for (let y = 0; y <= 6; y++) {
+      for (let x = 0; x < 20; x++) expect('sNno'.includes(rows[y][x]), `(${x}, ${y}) = ${rows[y][x]}`).toBe(false);
+    }
+  });
+
+  it('LMB-08: a ponta do pé continua na coluna 31, numa linha de 2 a 6', () => {
+    expect(artMeasure.box(rows)[2]).toBe(31);
+    const tipRows = rows.map((row, y) => (row[31] !== TRANSPARENT ? y : -1)).filter((y) => y >= 0);
+    expect(tipRows.length).toBeGreaterThan(0);
+    for (const y of tipRows) {
+      expect(y).toBeGreaterThanOrEqual(2);
+      expect(y).toBeLessThanOrEqual(6);
+    }
+  });
+});
+
 describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
   it('o projétil passa no parseSheet só com cores da paleta', () => {
     const sheet = parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS);
