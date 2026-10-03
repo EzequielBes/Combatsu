@@ -104,7 +104,7 @@
 - **Trade-off**: Toda arte nova de inimigo precisa existir nas 3 aparências; o ragdoll aparece 1 hitstop mais tarde do que antes.
 - **Scope**: Inimigo comum (não chefes).
 - **Date**: 2026-10-01
-- **Status**: active
+- **Status**: active (emendada pela AD-020: a aparência também define o tipo do golpe)
 
 ### AD-014
 - **Decision**: A dificuldade do jogo vem de mecânica (composição de inimigos, leitura, fintas, golpes atrasados, cadência de tokens), não de vida/dano: HP e dano dos inimigos comuns ficam fixos por rodada.
@@ -151,6 +151,22 @@
 - **Reason**: O usuário sentiu o personagem "dando flicadas" (03/10). O seguidor do Phaser arredondava o scroll para baixo dentro da realimentação do lerp (tremor de até 1,5 px de tela por quadro), e a física em passo fixo de 60 Hz virava degrau em monitor mais rápido.
 - **Trade-off**: A tela mostra até um passo de atraso (meio passo, ~8 ms, a 60 Hz). Todo ator novo com sprite separado do corpo precisa de um `BodyRenderPos`, e tudo que fica preso ao sprite do player (objeto na mão, aura) segue `player.renderPos`, não `player.sprite`. O alfa depende da margem de 1,5 do runner do Phaser 3.90, presa por teste de contrato.
 - **Scope**: Câmera do mundo e todo ator desenhado a partir de um corpo do Matter. Objetos soltos, ragdoll, projéteis e drops continuam no ritmo da física.
+- **Date**: 2026-10-03
+- **Status**: active
+
+### AD-020
+- **Decision**: Todo golpe de inimigo declara um tipo (`white`, `red` ou `low`), que vira `height` e `unblockable` no `Hit`; mostra o marcador do tipo sobre a cabeça durante o preparo e o golpe; e tem um ponto de compromisso (200 ms antes da hitbox), a partir do qual só golpe que derruba, quebra de postura, morte ou Contra o interrompe. Golpe de sequência leva `string: { id, index, length }` no `Hit`. O tipo sai da arma e da aparência (`attackKindFor`): porrete `red`, `rastejante` `low`, o resto `white`.
+- **Reason**: O loop ler → responder → punir da F12 depende de o jogador saber o tipo antes do golpe e de a defesa certa ser a única resposta depois do compromisso. Emenda a AD-013: a aparência deixa de ser só visual no tipo do golpe; corpo, hitbox e tuning continuam iguais.
+- **Trade-off**: Todo ataque novo de inimigo (arquétipos da F14, Conjurador da F15) precisa declarar tipo, marcador e compromisso; `rastejante` passa a exigir pulo ou esquiva desde a rodada 1.
+- **Scope**: Inimigos comuns e seus projéteis futuros. O chefe só ganha `height` nos golpes que já tem.
+- **Date**: 2026-10-03
+- **Status**: active
+
+### AD-021
+- **Decision**: O inimigo comum que sobrevive a um golpe só entra em ragdoll se o `Hit` tem `knockdown: true`; golpe forte sem a marca cambaleia (`stagger`). Golpe de técnica amaldiçoada leva `tech: true`, fica fora do limite de 1 golpe no chão e, quando forte, leva `knockdown`. Golpe do jogador com limite de alvos passa pelo `TargetGate`; o alvo avisa o bloqueio pelo `report` de `receiveHit`.
+- **Reason**: Implementa a AD-015 com uma regra única e legível no dado do golpe, sem reabrir o balanceamento das técnicas da F5.
+- **Trade-off**: Quem cria um `Hit` novo precisa decidir as marcas; esquecer `knockdown` num golpe que deveria derrubar só aparece jogando ou no smoke.
+- **Scope**: Todo `Hit` contra inimigo comum.
 - **Date**: 2026-10-03
 - **Status**: active
 
