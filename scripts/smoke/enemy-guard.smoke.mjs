@@ -88,6 +88,17 @@ export default async function (ctx) {
   await boot('enemyGuard=0');
   s = await approach();
   const cmbId = nearest(s).id;
+  // AI-04 -> CMT-03/04: o inimigo que já decidiu atacar não é cancelado pelo primeiro golpe do combo: ele bate de volta e tira vida
+  // do jogador (o `hp` do combo deixaria de ser 100). Para o combo começar no descanso do inimigo (800 ms), o jogador segura a
+  // guarda e deixa o primeiro golpe dele ser bloqueado ou aparado antes (sem dano).
+  {
+    const swings0 = count(s, 'block') + count(s, 'parry');
+    await down('KeyU');
+    s = await until(s, (st) => count(st, 'block') + count(st, 'parry') > swings0, 80, 'o primeiro golpe do inimigo deveria ser bloqueado ou aparado');
+    await up('KeyU');
+    s = await until(s, (st) => st.player.guard === 'none' && !st.hitstop.frozen, 60, 'guarda baixa');
+    assert(s.player.hp === 100, `o bloqueio não deveria custar vida: ${s.player.hp}`);
+  }
   /** Vai até o inimigo (até 34 px) e espera o jogador parar; não passa por cima dele. */
   const closeIn = async (st) => {
     let cur = st;

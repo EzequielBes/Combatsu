@@ -183,7 +183,7 @@ export default async function ({ page, baseUrl, assert }) {
     attacker.hp === 60 && attacker.maxHp === 60 && attacker.damage === 12,
     `escala da rodada 2 errada no inimigo que atacou: ${JSON.stringify(attacker)}`,
   );
-  // Passa a invulnerabilidade do golpe (HP-02, invulnMs 700 ms) antes da tecla 3, para o golpe de morte não ser ignorado.
+  // Passa a invulnerabilidade do golpe (PST-15, 300 ms; antes HP-02, 700 ms) antes da tecla 3, para o golpe de morte não ser ignorado.
   await page.evaluate(() => window.__game.step(800));
 
   // Tecla 3 mata o player pelo caminho normal de morte: gameOver com o resumo da rodada 2 (RUN-04).

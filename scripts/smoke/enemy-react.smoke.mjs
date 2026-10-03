@@ -7,7 +7,7 @@ import { pickEnemyVariant } from '../../src/core/enemyVariant.ts';
 
 export default async function (ctx) {
   const { page, baseUrl, assert } = ctx;
-  const { snap, frame, down, up, tap, count, boot, nearest, approach } = makeKit(ctx);
+  const { snap, frame, down, up, tap, count, boot, nearest, approach, waitQuiet } = makeKit(ctx);
   const dist = (s) => Math.abs(nearest(s).x - s.player.x);
   const byId = (s, id) => s.enemies.find((e) => e.id === id);
   const VARIANTS = ['corcunda', 'rastejante', 'bruto'];
@@ -115,8 +115,10 @@ export default async function (ctx) {
     return cur;
   };
   /** Executa o golpe e devolve o snapshot do frame em que o alvo perdeu vida (a leitura mais cedo possível). */
-  const land = async (st, keys, name) => {
-    let cur = await closeIn(st);
+  const land = async (_st, keys, name) => {
+    // AI-04 -> CMT-03/04: o golpe só cancela o preparo antes do ponto de compromisso; depois dele o inimigo mantém a pose de preparo
+    // (armadura) e bate de volta. Espera o ataque dele acabar para a reação do golpe aparecer.
+    let cur = await closeIn(await waitQuiet());
     const hp0 = byId(cur, id).hp;
     for (const k of keys) await down(k);
     cur = await frame();
@@ -207,10 +209,14 @@ export default async function (ctx) {
     await boot(`enemyGuard=0&enemyVariant=${variant}`);
     s = await approach();
     const vid = nearest(s).id;
+    // PST-01/PST-05: o chute forte agora cambaleia sem ragdoll; o golpe que derruba é a rasteira (S+K, `knockdown`), meio equivalente.
+    await down('KeyS');
+    await snap(30);
     await down('KeyK');
     s = await frame();
     await up('KeyK');
-    assert(s.player.move === 'chuteFrontal', `esperava chuteFrontal: ${s.player.move}`);
+    await up('KeyS');
+    assert(s.player.move === 'rasteira', `esperava rasteira: ${s.player.move}`);
     for (let i = 0; i < 40 && !s.hitstop.frozen; i++) s = await frame();
     assert(s.hitstop.frozen, `HRX-05 (${variant}): o golpe forte deveria disparar hitstop`);
     let frozenFrames = 0;

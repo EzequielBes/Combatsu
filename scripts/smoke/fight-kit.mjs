@@ -97,10 +97,13 @@ export function makeKit({ page, baseUrl, assert }) {
     throw new Error(`o inimigo não chegou a 40 px: ${JSON.stringify(s.enemies.map((e) => e.x))}`);
   };
 
-  /** Passa frames até nenhum golpe ficar em curso (e o jogador parado no chão). */
+  /**
+   * Passa frames até nenhum golpe ficar em curso, a guarda baixar e o jogador sair do atordoamento do golpe sofrido (o
+   * inimigo comprometido não é mais interrompido pelo golpe, CMT-04: ele bate de volta, e o aperto seguinte se perderia).
+   */
   const settle = async () => {
     let s = await snap(20);
-    for (let i = 0; i < 100 && (s.player.move !== null || s.player.guard !== 'none'); i++) s = await frame();
+    for (let i = 0; i < 100 && (s.player.move !== null || s.player.guard !== 'none' || s.player.frame.startsWith('hurt')); i++) s = await frame();
     return snap(60);
   };
 
@@ -114,6 +117,18 @@ export function makeKit({ page, baseUrl, assert }) {
     assert(pred(s), `${what}: não aconteceu em ${maxFrames} frames (${JSON.stringify({ hp: s.player.hp, move: s.player.move, ev: s.events.slice(-3), en: s.enemies.map((e) => [e.id, e.state, e.ai, e.committed]) })})`);
     return s;
   };
+
+  /**
+   * Espera o inimigo sair de `windup` e `attack` e o jogador sair do atordoamento (e do hitstop). O inimigo comprometido não é
+   * mais cancelado pelo golpe (CMT-04) e bate de volta; um golpe dado a partir daqui, no descanso dele ou antes de um preparo
+   * novo chegar ao ponto de compromisso (250 ms depois do começo), cancela o ataque como antes. Devolve o snapshot.
+   */
+  const waitQuiet = (maxFrames = 200) =>
+    waitFor(
+      (s) => !s.hitstop.frozen && !s.player.frame.startsWith('hurt') && s.enemies.every((e) => e.ai !== 'windup' && e.ai !== 'attack'),
+      maxFrames,
+      'o inimigo deveria sair do ataque',
+    );
 
   /** Espera o inimigo mais perto ficar `committed` (200 ms ou menos de preparo pela frente, CMT-01); devolve o snapshot desse frame. */
   const waitCommit = (maxFrames = 200) =>
@@ -134,5 +149,5 @@ export function makeKit({ page, baseUrl, assert }) {
     return s;
   };
 
-  return { snap, frame, down, up, tap, count, boot, nearest, approach, settle, startDuel, waitFor, waitCommit, faceEnemy, assert };
+  return { snap, frame, down, up, tap, count, boot, nearest, approach, settle, startDuel, waitFor, waitQuiet, waitCommit, faceEnemy, assert };
 }

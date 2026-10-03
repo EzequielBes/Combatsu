@@ -646,9 +646,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: tecla 2 do debug (continua derrubando), `enemyGuard=0`
 **Requirement**: PST-09, PST-12, DFL-01
 **Done when**:
-- [ ] `npm run smoke` passa inteiro (os intermitentes conhecidos, repetidos isolados, passam).
-- [ ] Cada assert alterado tem, no commit, o AC antigo e o AC novo; nenhum assert de comportamento não substituído foi removido.
-- [ ] `techniques.smoke.mjs` continua vendo `ragdollStun` no golpe forte de técnica (PST-09).
+- [x] `npm run smoke` passa inteiro (os intermitentes conhecidos, repetidos isolados, passam).
+- [x] Cada assert alterado tem, no commit, o AC antigo e o AC novo; nenhum assert de comportamento não substituído foi removido.
+- [x] `techniques.smoke.mjs` continua vendo `ragdollStun` no golpe forte de técnica (PST-09).
 **Tests**: smoke
 **Gate**: full
 

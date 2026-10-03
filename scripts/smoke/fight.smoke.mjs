@@ -14,8 +14,16 @@ export default async function (ctx) {
     for (const k of keys.slice().reverse()) await up(k);
     return s;
   };
+  /**
+   * AI-04 -> CMT-03/04: o golpe não cancela mais o ataque do inimigo comprometido, que bate de volta e deixa o jogador atordoado
+   * (o aperto seguinte se perderia). Para checar só o golpe do jogador, derruba o inimigo com a tecla 2 do debug (PST-12).
+   */
+  const calm = async () => {
+    await press(['Digit2']);
+  };
   /** Começa um golpe pelas teclas e confere `player.move` e um único `move:<nome>` novo (MOV-13). */
   const expectMove = async (keys, name, req) => {
+    await calm();
     await settle();
     const before = await snap(16);
     const s = await press(keys);
@@ -153,6 +161,7 @@ export default async function (ctx) {
 
   await boot('enemyGuard=0');
   await approach();
+  await calm();
   await settle();
   // MOV-09: segurar K por 400 ms ou mais e soltar dispara o chuteCarregado assim que o golpe atual acaba.
   const beforeCharge = await snap(16);
