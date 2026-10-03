@@ -223,53 +223,53 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| BSP-01 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-02 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-03 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-04 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-05 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-06 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-07 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-08 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-09 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-10 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-11 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-12 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-13 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-14 | P1: Chefes com desenho | Execute | Implementing |
-| BAN-01 | P1: Chefes que se mexem | Execute | Implementing |
-| BAN-02 | P1: Chefes que se mexem | Execute | Implementing |
-| BAN-03 | P1: Chefes que se mexem | Execute | Implementing |
-| BAN-04 | P1: Chefes que se mexem | Execute | Implementing |
-| BAN-05 | P1: Chefes que se mexem | Execute | Implementing |
-| BAN-06 | P1: Chefes que se mexem | Execute | Implementing |
-| BAN-07 | P1: Chefes que se mexem | Execute | Implementing |
-| LMB-01 | P1: Soco e chute | Execute | Implementing |
-| LMB-02 | P1: Soco e chute | Execute | Implementing |
-| LMB-03 | P1: Soco e chute | Execute | Implementing |
-| LMB-04 | P1: Soco e chute | Execute | Implementing |
-| LMB-05 | P1: Soco e chute | Execute | Implementing |
-| LMB-06 | P1: Soco e chute | Execute | Implementing |
-| LMB-07 | P1: Soco e chute | Execute | Implementing |
-| LMB-08 | P1: Soco e chute | Execute | Implementing |
-| LMB-09 | P1: Soco e chute | Execute | Implementing |
-| LMB-10 | P1: Soco e chute | Execute | Implementing |
-| LMB-11 | P1: Soco e chute | Execute | Implementing |
-| BPW-01 | P2: Projétil e onda | Execute | Implementing |
-| BPW-02 | P2: Projétil e onda | Execute | Implementing |
-| BPW-03 | P2: Projétil e onda | Execute | Implementing |
-| OBJ-01 | P2: Objetos | Execute | Implementing |
-| OBJ-02 | P2: Objetos | Execute | Implementing |
-| OBJ-03 | P2: Objetos | Execute | Implementing |
-| OBJ-04 | P2: Objetos | Execute | Implementing |
-| EPD-01 | P3: Pendências dos inimigos | Execute | Implementing |
-| EPD-02 | P3: Pendências dos inimigos | Execute | Implementing |
-| EPD-03 | P3: Pendências dos inimigos | Execute | Implementing |
-| EPD-04 | P3: Pendências dos inimigos | Execute | Implementing |
-| EPD-05 | P3: Pendências dos inimigos | Execute | Implementing |
-| EPD-06 | P3: Pendências dos inimigos | Execute | Implementing |
-| EDG-01 | Edge cases | Execute | Implementing |
-| EDG-02 | Edge cases | Execute | Implementing |
+| BSP-01 | P1: Chefes com desenho | Execute | Verified |
+| BSP-02 | P1: Chefes com desenho | Execute | Verified |
+| BSP-03 | P1: Chefes com desenho | Execute | Verified |
+| BSP-04 | P1: Chefes com desenho | Execute | Verified |
+| BSP-05 | P1: Chefes com desenho | Execute | Verified |
+| BSP-06 | P1: Chefes com desenho | Execute | Verified |
+| BSP-07 | P1: Chefes com desenho | Execute | Verified |
+| BSP-08 | P1: Chefes com desenho | Execute | Verified |
+| BSP-09 | P1: Chefes com desenho | Execute | Verified |
+| BSP-10 | P1: Chefes com desenho | Execute | Verified |
+| BSP-11 | P1: Chefes com desenho | Execute | Verified |
+| BSP-12 | P1: Chefes com desenho | Execute | Verified |
+| BSP-13 | P1: Chefes com desenho | Execute | Verified |
+| BSP-14 | P1: Chefes com desenho | Execute | Verified |
+| BAN-01 | P1: Chefes que se mexem | Execute | Verified |
+| BAN-02 | P1: Chefes que se mexem | Execute | Verified |
+| BAN-03 | P1: Chefes que se mexem | Execute | Verified |
+| BAN-04 | P1: Chefes que se mexem | Execute | Verified |
+| BAN-05 | P1: Chefes que se mexem | Execute | Verified |
+| BAN-06 | P1: Chefes que se mexem | Execute | Verified |
+| BAN-07 | P1: Chefes que se mexem | Execute | Verified |
+| LMB-01 | P1: Soco e chute | Execute | Verified |
+| LMB-02 | P1: Soco e chute | Execute | Verified |
+| LMB-03 | P1: Soco e chute | Execute | Verified |
+| LMB-04 | P1: Soco e chute | Execute | Verified |
+| LMB-05 | P1: Soco e chute | Execute | Verified |
+| LMB-06 | P1: Soco e chute | Execute | Verified |
+| LMB-07 | P1: Soco e chute | Execute | Verified |
+| LMB-08 | P1: Soco e chute | Execute | Verified |
+| LMB-09 | P1: Soco e chute | Execute | Verified |
+| LMB-10 | P1: Soco e chute | Execute | Verified |
+| LMB-11 | P1: Soco e chute | Execute | Verified |
+| BPW-01 | P2: Projétil e onda | Execute | Verified |
+| BPW-02 | P2: Projétil e onda | Execute | Verified |
+| BPW-03 | P2: Projétil e onda | Execute | Verified |
+| OBJ-01 | P2: Objetos | Execute | Verified |
+| OBJ-02 | P2: Objetos | Execute | Verified |
+| OBJ-03 | P2: Objetos | Execute | Verified |
+| OBJ-04 | P2: Objetos | Execute | Verified |
+| EPD-01 | P3: Pendências dos inimigos | Execute | Verified |
+| EPD-02 | P3: Pendências dos inimigos | Execute | Verified |
+| EPD-03 | P3: Pendências dos inimigos | Execute | Verified |
+| EPD-04 | P3: Pendências dos inimigos | Execute | Verified |
+| EPD-05 | P3: Pendências dos inimigos | Execute | Verified |
+| EPD-06 | P3: Pendências dos inimigos | Execute | Verified |
+| EDG-01 | Edge cases | Execute | Verified |
+| EDG-02 | Edge cases | Execute | Verified |
 
 **Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
 
