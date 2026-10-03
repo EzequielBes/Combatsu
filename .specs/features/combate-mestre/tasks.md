@@ -367,9 +367,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `parseSheet`, `registerSheet`
 **Requirement**: HGT-09
 **Done when**:
-- [ ] `TEX.fxTelegraph` existe e `createArt` registra a folha.
-- [ ] Teste: 3 frames do mesmo tamanho, paleta válida, e o conjunto de texels opacos difere em cada par de frames.
-- [ ] Teste: cada frame usa a cor do seu tipo (`KIND_COLOR`) além do `k`.
+- [x] `TEX.fxTelegraph` existe e `createArt` registra a folha.
+- [x] Teste: 3 frames do mesmo tamanho, paleta válida, e o conjunto de texels opacos difere em cada par de frames.
+- [x] Teste: cada frame usa a cor do seu tipo (`KIND_COLOR`) além do `k`.
 **Tests**: unit
 **Gate**: quick
 

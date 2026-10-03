@@ -76,6 +76,11 @@ import {
 } from '../../src/game/art/sprites/boss';
 import { BOSS, PLAYER_MOVE } from '../../src/data/tuning';
 import { MOVE_NAMES } from '../../src/data/moves';
+import type Phaser from 'phaser';
+import { createArt } from '../../src/game/art';
+import { TEX } from '../../src/game/textures';
+import { TELEGRAPH_FRAMES } from '../../src/game/art/sprites/telegraph';
+import { KIND_COLOR, type AttackKind } from '../../src/core/attackKind';
 
 describe('paleta única (ART-01)', () => {
   it('tem no máximo 42 cores (RDA-01, AD-017), cada uma com chave de 1 caractere', () => {
@@ -1827,5 +1832,58 @@ describe('ponta dos dedos do Vermelho por frame (RDA-04)', () => {
 
   it('um frame que não é do Vermelho lança erro', () => {
     expect(() => redFingertip('azul-charge')).toThrow(/azul-charge/);
+  });
+});
+
+describe('marcador de telegrafo (HGT-09, T16 da combate-mestre)', () => {
+  const KINDS: AttackKind[] = ['white', 'red', 'low'];
+  const opaque = (kind: AttackKind): string[] =>
+    TELEGRAPH_FRAMES[kind].flatMap((row, y) => [...row].flatMap((c, x) => (c === TRANSPARENT ? [] : [`${x},${y}`])));
+
+  it('a folha tem os frames white, red e low, todos do mesmo tamanho (7x7 texels), só com cores da paleta', () => {
+    expect(Object.keys(TELEGRAPH_FRAMES).sort()).toEqual(['low', 'red', 'white']);
+    const sheet = parseSheet('telegraph', TELEGRAPH_FRAMES, PALETTE_KEYS);
+    expect(sheet.frames).toHaveLength(3);
+    expect(sheet.width).toBe(7);
+    expect(sheet.height).toBe(7);
+  });
+
+  it('o conjunto de texels opacos difere em cada par de frames', () => {
+    for (const [a, b] of [['white', 'red'], ['white', 'low'], ['red', 'low']] as const) {
+      expect(opaque(a), `${a} vs ${b}`).not.toEqual(opaque(b));
+    }
+  });
+
+  it.each(KINDS)('%s: usa a cor do tipo (KIND_COLOR) e o contorno k, e mais nenhuma', (kind) => {
+    const colors = new Set(TELEGRAPH_FRAMES[kind].flatMap((row) => [...row]).filter((c) => c !== TRANSPARENT));
+    expect([...colors].sort()).toEqual(['k', KIND_COLOR[kind]].sort());
+  });
+
+  it('TEX.fxTelegraph existe e não repete a chave de outra textura', () => {
+    expect(typeof TEX.fxTelegraph).toBe('string');
+    const sameKey = Object.entries(TEX).filter(([, key]) => key === TEX.fxTelegraph);
+    expect(sameKey).toHaveLength(1);
+  });
+
+  it('createArt registra a folha do marcador em TEX.fxTelegraph, com um frame por tipo', () => {
+    const sheets = new Map<string, string[]>();
+    const ctx = new Proxy({}, { get: () => () => undefined, set: () => true });
+    const graphics = new Proxy({}, { get: () => () => undefined });
+    const scene = {
+      textures: {
+        exists: () => false,
+        remove: () => undefined,
+        createCanvas: (key: string) => {
+          const frames: string[] = [];
+          sheets.set(key, frames);
+          return { getContext: () => ctx, add: (name: string) => frames.push(name), refresh: () => undefined };
+        },
+        get: (key: string) => ({ has: (frame: string) => sheets.get(key)?.includes(frame) ?? false }),
+      },
+      anims: { exists: () => false, remove: () => undefined, create: () => undefined },
+      add: { graphics: () => graphics },
+    } as unknown as Phaser.Scene;
+    createArt(scene);
+    expect(sheets.get(TEX.fxTelegraph)).toEqual(['white', 'red', 'low']);
   });
 });

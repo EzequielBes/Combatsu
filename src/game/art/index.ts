@@ -14,6 +14,7 @@ import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
 import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from './sprites/techFx';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from './sprites/economy';
+import { TELEGRAPH_FRAMES } from './sprites/telegraph';
 import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
 import {
   BOSS_ANIMS,
@@ -72,6 +73,8 @@ export function createArt(scene: Phaser.Scene): void {
   registerSheet(scene, TEX.fragment, parseSheet('fragment', FRAGMENT_FRAMES, PALETTE_KEYS));
   registerSheet(scene, TEX.healDrop, parseSheet('heal-drop', HEAL_FRAMES, PALETTE_KEYS));
   registerSheet(scene, TEX.fragmentIcon, parseSheet('fragment-icon', { icon: FRAGMENT_ICON }, PALETTE_KEYS));
+  // Marcador do tipo do golpe inimigo (HGT-09): 3 frames de 7x7 texels, `white`, `red` e `low`.
+  registerSheet(scene, TEX.fxTelegraph, parseSheet('telegraph', TELEGRAPH_FRAMES, PALETTE_KEYS));
   // Ferramentas amaldiçoadas (ARM-19): comum, rara e as poses na mão, com os estilhaços do frame comum.
   const tools = { [TEX.cursedKnife]: 'cursedKnife', [TEX.cursedClub]: 'cursedClub' } as const;
   for (const [texture, key] of Object.entries(tools)) {
