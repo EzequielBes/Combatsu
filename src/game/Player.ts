@@ -268,6 +268,10 @@ export class Player implements Hittable {
       isBoss: attacker?.isBoss ?? false,
       guard: this.guard.state,
       dodgeInvulnerable: this.dodge.invulnerable,
+      // Valores neutros até a T25 ligar o Contra, o abaixar e o pulo.
+      counterInvulnerable: false,
+      ducking: false,
+      airborne: false,
     });
     const awayDir: 1 | -1 = attackerX >= this.sprite.x ? -1 : 1;
     const point: Vec2 = { x: this.sprite.x - awayDir * 14, y: this.sprite.y - 4 };
@@ -289,6 +293,11 @@ export class Player implements Hittable {
         this.onDefense?.('block', point);
         if (this.structure.add(res.playerStructureGain)) this.onGuardBreak();
         if (res.damage > 0 && this.health.chip(res.damage) === 'died') this.die();
+        return false;
+      case 'countered':
+      case 'ducked':
+      case 'jumped':
+        // O efeito (eventos, postura, janela de Contra) é da T25; até lá o golpe passa sem efeito.
         return false;
       default:
         return this.takeHit(hit);

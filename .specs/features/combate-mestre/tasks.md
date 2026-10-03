@@ -279,13 +279,13 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `Guard`, `HitResolution`
 **Requirement**: DEF-01, DEF-02, DEF-03, DEF-11, DEF-14, DEF-17, DEF-20, CNT-11, DFL-10, DFL-12, DFL-16
 **Done when**:
-- [ ] Parry só com `attackerInFront` e sem `unblockable`: de costas e contra `red` ou `low` dá `hit` com o dano inteiro.
-- [ ] `ducked` com golpe `high` (com e sem `unblockable`); abaixado com `low` e sem `height` dá `hit`.
-- [ ] `jumped` com golpe `low` fora do chão; `low` no chão com guarda dá `hit`; `high` fora do chão dá `hit`.
-- [ ] `countered` com `counterInvulnerable`.
-- [ ] Um teste por par vizinho da ordem (parry antes da esquiva, esquiva antes do Contra, Contra antes do abaixar, abaixar antes do pulo, pulo antes da guarda, guarda antes do golpe cheio).
-- [ ] `DeflectTracker`: 2 de 2 e 3 de 3 aparados dão `true` só no último; falta de um parry dá `false`; sequência de 1 dá `false`; `undefined` dá `false`; duas sequências intercaladas não se misturam.
-- [ ] Os casos antigos de PAR-02 (parry de qualquer lado e contra imbloqueável) foram reescritos (AC substituído: PAR-02).
+- [x] Parry só com `attackerInFront` e sem `unblockable`: de costas e contra `red` ou `low` dá `hit` com o dano inteiro.
+- [x] `ducked` com golpe `high` (com e sem `unblockable`); abaixado com `low` e sem `height` dá `hit`.
+- [x] `jumped` com golpe `low` fora do chão; `low` no chão com guarda dá `hit`; `high` fora do chão dá `hit`.
+- [x] `countered` com `counterInvulnerable`.
+- [x] Um teste por par vizinho da ordem (parry antes da esquiva, esquiva antes do Contra, Contra antes do abaixar, abaixar antes do pulo, pulo antes da guarda, guarda antes do golpe cheio).
+- [x] `DeflectTracker`: 2 de 2 e 3 de 3 aparados dão `true` só no último; falta de um parry dá `false`; sequência de 1 dá `false`; `undefined` dá `false`; duas sequências intercaladas não se misturam.
+- [x] Os casos antigos de PAR-02 (parry de qualquer lado e contra imbloqueável) foram reescritos (AC substituído: PAR-02). Nenhum caso unitário antigo afirmava o parry de qualquer lado; os casos de frente seguem iguais e os novos (DEF-01, DEF-02) estão em `tests/core/defense.test.ts`. As afirmações antigas são dos smokes `defense`, que a T33 ajusta.
 **Tests**: unit
 **Gate**: quick
 
