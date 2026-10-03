@@ -1304,6 +1304,48 @@ describe('frames aéreos, de defesa e de status (MOV-14, T9)', () => {
   });
 });
 
+describe('frames do abaixar e dos Contras (CNT-17, T9 da combate-mestre)', () => {
+  const COUNTER_MOVES = ['contra', 'contraGancho'] as const;
+  const NEW_FRAMES = [
+    'duck',
+    'contra-wind',
+    'contra-hit',
+    'contra-recover',
+    'contraGancho-wind',
+    'contraGancho-hit',
+    'contraGancho-recover',
+  ] as const;
+  const topRow = (rows: readonly string[]): number => rows.findIndex((r) => [...r].some((c) => c !== TRANSPARENT));
+
+  it('os 7 frames existem em PLAYER_MOVE_FRAMES (CNT-17)', () => {
+    for (const name of NEW_FRAMES) expect(Object.hasOwn(PLAYER_MOVE_FRAMES, name), name).toBe(true);
+  });
+
+  it('passam no parseSheet só com cores da paleta, no tamanho dos outros frames (32x24 texels)', () => {
+    const subset = Object.fromEntries(NEW_FRAMES.map((n) => [n, PLAYER_MOVE_FRAMES[n]]));
+    const sheet = parseSheet('player-moves-counter', subset, PALETTE_KEYS);
+    expect(sheet.frames).toHaveLength(7);
+    expect(sheet.width).toBe(PLAYER_FRAME_W);
+    expect(sheet.height).toBe(PLAYER_FRAME_H);
+  });
+
+  it('as 3 fases de cada Contra são distintas entre si (golpe legível)', () => {
+    for (const move of COUNTER_MOVES) {
+      const wind = PLAYER_MOVE_FRAMES[`${move}-wind`];
+      const hit = PLAYER_MOVE_FRAMES[`${move}-hit`];
+      const recover = PLAYER_MOVE_FRAMES[`${move}-recover`];
+      expect(wind, `${move}: wind vs hit`).not.toEqual(hit);
+      expect(hit, `${move}: hit vs recover`).not.toEqual(recover);
+      expect(wind, `${move}: wind vs recover`).not.toEqual(recover);
+    }
+  });
+
+  it('o topo opaco do duck fica pelo menos 3 texels abaixo do topo do idle-0', () => {
+    expect(topRow(PLAYER_MOVE_FRAMES.duck) - topRow(PLAYER_FRAMES['idle-0'])).toBeGreaterThanOrEqual(3);
+  });
+
+});
+
 describe('cores da barra de estrutura e do combo (STR-09)', () => {
   it('fundo, preenchimento e quebra da barra de estrutura são cores da paleta', () => {
     for (const c of [STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_FILL_COLOR, STRUCTURE_BAR_BREAK_COLOR]) {
