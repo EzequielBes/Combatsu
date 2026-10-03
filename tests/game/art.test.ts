@@ -75,6 +75,7 @@ import {
   TECELA_FRAMES,
 } from '../../src/game/art/sprites/boss';
 import { BOSS, PLAYER_MOVE } from '../../src/data/tuning';
+import { MOVE_NAMES } from '../../src/data/moves';
 
 describe('paleta única (ART-01)', () => {
   it('tem no máximo 42 cores (RDA-01, AD-017), cada uma com chave de 1 caractere', () => {
@@ -1327,6 +1328,14 @@ describe('frames do abaixar e dos Contras (CNT-17, T9 da combate-mestre)', () =>
     expect(sheet.frames).toHaveLength(7);
     expect(sheet.width).toBe(PLAYER_FRAME_W);
     expect(sheet.height).toBe(PLAYER_FRAME_H);
+  });
+
+  it('todo golpe de MOVE_NAMES tem os frames wind, hit e recover na folha do jogador (MOV-14)', () => {
+    const all = { ...PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES };
+    expect(MOVE_NAMES).toEqual(expect.arrayContaining(['contra', 'contraGancho']));
+    for (const move of MOVE_NAMES) {
+      for (const part of ['wind', 'hit', 'recover']) expect(Object.hasOwn(all, `${move}-${part}`), `${move}-${part}`).toBe(true);
+    }
   });
 
   it('as 3 fases de cada Contra são distintas entre si (golpe legível)', () => {

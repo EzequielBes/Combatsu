@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CHARGE_MS, MOVES, MOVE_WINDOW_MS, type MoveDef } from '../../src/data/moves';
+import { CHARGE_MS, COUNTER, DEFENSE, DUCK, MOVES, MOVE_WINDOW_MS, type MoveDef } from '../../src/data/moves';
+import { MoveMachine } from '../../src/core/moveMachine';
 import type { Hit } from '../../src/core/hit';
 
 describe('grafo de golpes em dados (MOV-01)', () => {
@@ -108,5 +109,120 @@ describe('Hit ganha campos opcionais (T1)', () => {
     };
     expect(hit.unblockable).toBe(true);
     expect(hit.moveName).toBe('jab');
+  });
+});
+
+describe('limite de alvos por golpe (TGT-01, TGT-02)', () => {
+  const ONE_TARGET = ['voadora', 'rasteira', 'contra', 'contraGancho'];
+
+  it('todo golpe light, a voadora, a rasteira, o contra e o contraGancho têm maxTargets 1 (TGT-01)', () => {
+    for (const m of Object.values(MOVES)) {
+      if (m.strength === 'light' || ONE_TARGET.includes(m.name)) expect(m.maxTargets, m.name).toBe(1);
+    }
+    for (const name of ONE_TARGET) expect(MOVES[name], name).toBeDefined();
+  });
+
+  it('todo outro golpe heavy tem maxTargets 2 (TGT-02)', () => {
+    const others = Object.values(MOVES).filter((m) => m.strength === 'heavy' && !ONE_TARGET.includes(m.name));
+    expect(others.length).toBeGreaterThan(0);
+    for (const m of others) expect(m.maxTargets, m.name).toBe(2);
+  });
+});
+
+describe('golpes que derrubam (PST-04)', () => {
+  it('knockdown é true só em rasteira, ganchoAscendente e palmaExplosiva e ausente nos outros', () => {
+    const KNOCKDOWN = ['rasteira', 'ganchoAscendente', 'palmaExplosiva'];
+    for (const m of Object.values(MOVES)) {
+      if (KNOCKDOWN.includes(m.name)) expect(m.knockdown, m.name).toBe(true);
+      else expect(m.knockdown, m.name).toBeUndefined();
+    }
+  });
+});
+
+describe('Contras (CNT-09, CNT-10)', () => {
+  it('contra: 10 de dano, heavy, 50/80/160 ms, +30 de estrutura, unblockable e counter', () => {
+    expect(MOVES.contra).toMatchObject({
+      damage: 10, strength: 'heavy', startupMs: 50, activeMs: 80, recoveryMs: 160,
+      structureGain: 30, unblockable: true, counter: true,
+    });
+  });
+
+  it('contraGancho: 12 de dano, heavy, 50/90/200 ms, +30 de estrutura, unblockable e counter', () => {
+    expect(MOVES.contraGancho).toMatchObject({
+      damage: 12, strength: 'heavy', startupMs: 50, activeMs: 90, recoveryMs: 200,
+      structureGain: 30, unblockable: true, counter: true,
+    });
+  });
+
+  it('os dois entram por via counter, sem follow-ups, e nenhum outro golpe tem counter', () => {
+    expect(MOVES.contra.input).toEqual({ via: 'counter' });
+    expect(MOVES.contraGancho.input).toEqual({ via: 'counter' });
+    expect(MOVES.contra.followUps).toEqual({});
+    expect(MOVES.contraGancho.followUps).toEqual({});
+    const withCounter = Object.values(MOVES).filter((m) => m.counter).map((m) => m.name);
+    expect(withCounter.sort()).toEqual(['contra', 'contraGancho']);
+  });
+
+  it('o contraGancho usa a hitbox do ganchoAscendente e o contra a do punho (FIST, a do jab)', () => {
+    expect(MOVES.contraGancho.hitbox).toEqual(MOVES.ganchoAscendente.hitbox);
+    expect(MOVES.contra.hitbox).toEqual(MOVES.jab.hitbox);
+  });
+
+  it('nenhum golpe tem um Contra em followUps (CNT-08: só a janela inicia o Contra)', () => {
+    for (const m of Object.values(MOVES)) {
+      for (const target of Object.values(m.followUps)) expect(MOVES[target as string].counter, `${m.name} -> ${target}`).toBeUndefined();
+    }
+  });
+
+  it('a MoveMachine nunca escolhe um Contra por botão, direção, ar ou meia-lua (initialMove)', () => {
+    const bools = [false, true];
+    const started: string[] = [];
+    for (const button of ['light', 'heavy'] as const)
+      for (const grounded of bools)
+        for (const down of bools)
+          for (const up of bools)
+            for (const forward of bools)
+              for (const motion of bools) {
+                const m = new MoveMachine();
+                for (const e of m.press(button, { grounded, down, up, forward, motion })) {
+                  if (e.type === 'moveStart') started.push(e.move.name);
+                }
+              }
+    expect(started.length).toBeGreaterThan(0);
+    for (const name of started) expect(MOVES[name].counter, name).toBeUndefined();
+  });
+});
+
+describe('voadora com custo, quique e erro punível (VOA-01, VOA-04..07, VOA-09)', () => {
+  it('postureCost 15, whiffRecoveryMs 460, recoveryMs 160 e bounce { backPx 36, ms 150, vy -240 }', () => {
+    expect(MOVES.voadora.postureCost).toBe(15);
+    expect(MOVES.voadora.whiffRecoveryMs).toBe(460);
+    expect(MOVES.voadora.recoveryMs).toBe(160);
+    expect(MOVES.voadora.bounce).toEqual({ backPx: 36, ms: 150, vy: -240 });
+  });
+
+  it('só a voadora tem postureCost, whiffRecoveryMs e bounce', () => {
+    for (const m of Object.values(MOVES)) {
+      if (m.name === 'voadora') continue;
+      expect(m.postureCost, m.name).toBeUndefined();
+      expect(m.whiffRecoveryMs, m.name).toBeUndefined();
+      expect(m.bounce, m.name).toBeUndefined();
+    }
+  });
+});
+
+describe('abaixar e janela de Contra em dados (DEF-07, DEF-15, CNT-01, CNT-04, DFL-11)', () => {
+  it('DUCK = 320 ms ativo e recarga de 450 ms', () => {
+    expect(DUCK).toEqual({ durationMs: 320, cooldownMs: 450 });
+  });
+
+  it('COUNTER = janela de 450 ms, 900 ms na Deflexão e cambaleio de 900 ms', () => {
+    expect(COUNTER).toEqual({ windowMs: 450, deflectWindowMs: 900, deflectStaggerMs: 900 });
+  });
+});
+
+describe('guarda sem andar (DEF-05, substitui GRD-05)', () => {
+  it('a velocidade com a guarda de pé vale 0 da de corrida (era 0,4 no GRD-05)', () => {
+    expect(DEFENSE.guardSpeedFactor).toBe(0);
   });
 });

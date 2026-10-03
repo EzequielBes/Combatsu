@@ -259,13 +259,13 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `MOVES`, `FIST`, hitbox do `ganchoAscendente`
 **Requirement**: TGT-01, TGT-02, PST-04, CNT-09, CNT-10, VOA-01, VOA-07, VOA-09, DEF-05
 **Done when**:
-- [ ] Teste de dados: `maxTargets` 1 em todo `light`, `voadora`, `rasteira`, `contra` e `contraGancho`; 2 nos outros `heavy`.
-- [ ] `knockdown` verdadeiro só em `rasteira`, `ganchoAscendente` e `palmaExplosiva`.
-- [ ] `contra` e `contraGancho` com os números de CNT-09 e CNT-10.
-- [ ] `voadora`: `postureCost` 15, `whiffRecoveryMs` 460, `recoveryMs` 160, `bounce` `{ backPx: 36, ms: 150, vy: -240 }`.
-- [ ] `DUCK = { durationMs: 320, cooldownMs: 450 }`, `COUNTER = { windowMs: 450, deflectWindowMs: 900, deflectStaggerMs: 900 }`.
-- [ ] O teste antigo da velocidade com a guarda (GRD-05, 40%) foi reescrito para o fator 0 (AC substituído: GRD-05).
-- [ ] Os Contras não entram em `initialMove` nem em `followUps` de nenhum golpe (teste).
+- [x] Teste de dados: `maxTargets` 1 em todo `light`, `voadora`, `rasteira`, `contra` e `contraGancho`; 2 nos outros `heavy`.
+- [x] `knockdown` verdadeiro só em `rasteira`, `ganchoAscendente` e `palmaExplosiva`.
+- [x] `contra` e `contraGancho` com os números de CNT-09 e CNT-10.
+- [x] `voadora`: `postureCost` 15, `whiffRecoveryMs` 460, `recoveryMs` 160, `bounce` `{ backPx: 36, ms: 150, vy: -240 }`.
+- [x] `DUCK = { durationMs: 320, cooldownMs: 450 }`, `COUNTER = { windowMs: 450, deflectWindowMs: 900, deflectStaggerMs: 900 }`.
+- [x] O teste antigo da velocidade com a guarda (GRD-05, 40%) foi reescrito para o fator 0 (AC substituído: GRD-05). Não havia teste unitário do fator 0,4: o teste novo está em `tests/data/moves.test.ts` e o assert antigo (88 px/s) é do smoke `defense-extra`, que a T33 reescreve.
+- [x] Os Contras não entram em `initialMove` nem em `followUps` de nenhum golpe (teste).
 **Tests**: unit
 **Gate**: quick
 
