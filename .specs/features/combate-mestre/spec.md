@@ -129,6 +129,7 @@ reading: { move: string | null; repeats: number };  // último golpe iniciado e 
 | STR-04 (postura do inimigo cai 10/s) | 10/s só no foco; 40/s fora dele | PST-14, PST-16 |
 | AIR-02 (voadora anda 120 px) | Vale quando ela não acerta; ao acertar, para e recua | VOA-04, VOA-05 |
 | EBL-01 (guarda só contra início de golpe leve) | A leitura soma chance e vale para qualquer golpe | RDG-03 |
+| Golpe em quem está no chão ou levantando (`EnemyBrain`, sub-projeto 1: forte no chão dava novo impulso e reiniciava o tempo; leve em quem levanta interrompia) | No chão só o primeiro golpe entra e o tempo não reinicia; levantando, nenhum entra. Golpe de técnica segue como antes | GND-01, GND-02, GND-03, GND-04, GND-06 |
 
 ---
 
