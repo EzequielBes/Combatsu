@@ -45,7 +45,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 ## Execution Plan
 
-7 tasks, um lote só: execução inline.
+7 tasks, um lote só: execução inline. A T8 fecha as lacunas da rodada 1 do Verifier.
 
 ### Phase 1: Núcleo puro
 
@@ -63,6 +63,12 @@ T4 → T5 → T6
 
 ```
 T7
+```
+
+### Phase 4: Lacunas do Verifier (rodada 1)
+
+```
+T8
 ```
 
 ---
@@ -216,14 +222,38 @@ T7
 
 ---
 
+### T8: Fechar as lacunas da rodada 1 do Verifier
+
+**What**: o snapshot lê o sprite desenhado (`spritePos`); a aura de conjuração segue a posição de desenho; teste de contrato da margem do Phaser; blocos novos no smoke `feel` (renascer, objeto na mão, aura).
+**Where**: `src/game/Player.ts`, `src/game/Enemy.ts`, `src/game/Boss.ts`, `src/game/techFx/Aura.ts`, `src/scenes/TestScene.ts`, `src/game/debugApi.ts`, `tests/game/matterRunnerContract.test.ts`, `scripts/smoke/feel.smoke.mjs`
+**Depends on**: None
+**Reuses**: `fight-kit.mjs`; tecla 3 do debug (mata o player) e tecla 1 do fxlab (aura)
+**Requirement**: EDG-02, ITP-05, ITP-07, ITP-08, ITP-09, ITP-10
+
+**Done when**:
+
+- [ ] EDG-02: `scripts/smoke/feel.smoke.mjs` mata o player a menos de 48 px do spawn, recomeça com J e confere `player.view` nos 3 primeiros quadros.
+- [ ] ITP-05 e ITP-07: `view` do snapshot vem do sprite desenhado (`spritePos`), não do getter de cálculo.
+- [ ] ITP-08: correndo com a cadeira na mão, o x dela é `player.view.x − 8 × facing` (±0,01).
+- [ ] ITP-09: `tests/game/matterRunnerContract.test.ts` compara `STEP_BUFFER_MARGIN` com o `Runner` do Phaser instalado.
+- [ ] ITP-10: com a aura visível e o player correndo, `fx.aura.x` é `player.view.x` (±0,01).
+- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `fix(game): read the drawn sprite in the snapshot and close verifier gaps`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3
+Phase 1 → Phase 2 → Phase 3 → Phase 4
 
 Phase 1:  T1 ------→ T2 ------→ T3
 Phase 2:  T4 ------→ T5 ------→ T6
 Phase 3:  T7
+Phase 4:  T8
 ```
 
 ## Task Granularity Check
@@ -237,6 +267,7 @@ Phase 3:  T7
 | T5 | inimigo e chefe, mesma mudança | ⚠️ Coeso |
 | T6 | câmera da cena + campos do snapshot | ✅ Coeso |
 | T7 | 2 cenários de smoke | ✅ Coeso |
+| T8 | correções da rodada 1 do Verifier | ⚠️ Coeso (uma rodada de correção) |
 
 ## Diagram-Definition Cross-Check
 
@@ -249,6 +280,7 @@ Phase 3:  T7
 | T5 | T4 | T4 → T5 | ✅ Match |
 | T6 | T5 | T5 → T6 | ✅ Match |
 | T7 | None | sozinha na fase 3 | ✅ Match |
+| T8 | None | sozinha na fase 4 | ✅ Match |
 
 ## Test Co-location Validation
 
@@ -261,3 +293,4 @@ Phase 3:  T7
 | T5 | Adaptador | smoke (none na task, coberto pela T7) | none | ✅ OK |
 | T6 | Adaptador | smoke (none na task, coberto pela T7) | none | ✅ OK |
 | T7 | Smoke | smoke | smoke | ✅ OK |
+| T8 | Adaptador + smoke | smoke | smoke | ✅ OK |
