@@ -22,8 +22,8 @@ export const PLAYER_MOVE: MoveTuning = {
   jumpBufferMs: 110,
 };
 
-/** Vida do player (HP-01..04). */
-export const PLAYER_HEALTH: HealthTuning = { maxHp: 100, invulnMs: 700, staggerMs: 200, respawnMs: 1000 };
+/** Vida do player (HP-01..04); `invulnMs` 300 depois de um golpe cheio (PST-15, substitui os 700 ms do HP-02). */
+export const PLAYER_HEALTH: HealthTuning = { maxHp: 100, invulnMs: 300, staggerMs: 200, respawnMs: 1000 };
 
 /** Recuo do player ao levar golpe (px/s na horizontal), mantido durante o atordoamento (HP-03). */
 export const PLAYER_KNOCKBACK = 180;
