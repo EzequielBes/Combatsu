@@ -31,6 +31,7 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 - **alfa**: fração entre o penúltimo e o último passo que a tela mostra neste quadro.
 - **centro da câmera**: ponto do mundo no meio da tela, guardado em ponto flutuante.
 - **posição de desenho**: posição do corpo interpolada pelo alfa.
+- **view do snapshot**: posição do sprite desenhado de fato (`player.view`, `enemies[].view`, `boss.view`), convertida para o centro do corpo. Não é o valor do cálculo: é onde o sprite está.
 - **variação na tela**: módulo da diferença, entre dois quadros seguidos, de (posição de desenho − scroll) × zoom.
 
 ## Assumptions & Open Questions
@@ -45,6 +46,8 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 | Câmera | Segue a posição de desenho do player com a mesma deadzone (40×24) e o mesmo lerp (0,15 por quadro de 60 Hz), agora por tempo; o scroll aplicado cai na grade de pixel de tela e o arredondamento não volta para o estado | Mantém o enquadramento atual e tira o tremor | n |
 | `roundPixels` da câmera do mundo | Desligado | Com 2 px por texel e zoom 1,5, todo texel ocupa 3 px de tela em qualquer posição; o floor só servia para criar o tremor | n |
 | Alfa no harness de debug | O smoke lê o alfa do snapshot (`physics.alpha`) em vez de supor 0,5 | Entre o `page.goto` e o primeiro `step()` o loop roda em tempo real e deixa uma sobra diferente no acumulador do Matter; o alfa fica constante, mas nem sempre em 0,5 | n |
+| Lacunas do Verifier (rodada 1) | O snapshot passa a ler o sprite desenhado; entram ITP-08 (objeto na mão), ITP-09 (contrato com a margem do Phaser) e ITP-10 (aura de conjuração); o smoke `feel` ganha o bloco do EDG-02 | EDG-02 não tinha teste no nível do player e nenhum teste olhava o sprite desenhado | n |
+| Faíscas da zona do Kokusen, poeira, faísca de golpe e hitboxes | Continuam saindo da posição do corpo | São efeitos de um quadro; o desvio é de no máximo um passo | n |
 | Quem interpola | Player, inimigo comum e chefe (os três têm sprite separado do corpo) e o objeto na mão | São o que o olho segue | n |
 
 **Open questions:** none - all resolved or logged above.
@@ -105,15 +108,18 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 5. ITP-05: WHILE o player corre, em todo quadro com exatamente um passo de física, `player.view.x` do snapshot SHALL ser `anterior + (atual − anterior) × physics.alpha`, com erro de até 0,01 px, onde anterior e atual são o x do corpo no quadro anterior e neste.
 6. ITP-06: WHILE o player corre em passo fixo, a variação na tela calculada com `player.view.x` e `camera.scroll.x` SHALL ser de no máximo 1 px em regime.
 7. ITP-07: Em todo quadro com exatamente um passo de física, `view.x` do inimigo comum andando e do chefe na investida SHALL ser `anterior + (atual − anterior) × physics.alpha`, com erro de até 0,01 px.
+8. ITP-08: WHILE o player corre segurando a cadeira, o x da cadeira no snapshot SHALL ser `player.view.x − 8 × facing`, com erro de até 0,01 px.
+9. ITP-09: The `STEP_BUFFER_MARGIN` SHALL ser igual ao `_timeBufferMargin` do `Runner` do Matter do Phaser instalado.
+10. ITP-10: WHILE a aura de conjuração está visível e o player corre, `fx.aura.x` do snapshot SHALL ser igual a `player.view.x`, com erro de até 0,01 px.
 
-**Independent Test**: `tests/core/stepLerp.test.ts`, `tests/core/cameraFollow.test.ts` (simulação) e o smoke `feel`.
+**Independent Test**: `tests/core/stepLerp.test.ts`, `tests/core/cameraFollow.test.ts` (simulação), `tests/game/matterRunnerContract.test.ts` e o smoke `feel`.
 
 ---
 
 ## Edge Cases
 
 - EDG-01: IF `stepAlpha` recebe passo menor ou igual a 0 THEN ele SHALL devolver 1.
-- EDG-02: WHEN o player renasce THEN `player.view` SHALL estar na posição do corpo no primeiro quadro depois do reposicionamento (sem deslizar).
+- EDG-02: WHEN o player morre a menos de 48 px do spawn e a run recomeça THEN `player.view` SHALL estar na posição do corpo, com erro de até 0,01 px, em cada um dos 3 primeiros quadros da run nova.
 
 ---
 
@@ -139,10 +145,13 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 | ITP-05 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-06 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-07 | P1: Movimento sem degraus | Execute | Implementing |
+| ITP-08 | P1: Movimento sem degraus | Tasks | In Tasks |
+| ITP-09 | P1: Movimento sem degraus | Tasks | In Tasks |
+| ITP-10 | P1: Movimento sem degraus | Tasks | In Tasks |
 | EDG-01 | Edge cases | Execute | Implementing |
 | EDG-02 | Edge cases | Execute | Implementing |
 
-**Coverage:** 20 total, 20 mapped to tasks, 0 unmapped
+**Coverage:** 23 total, 23 mapped to tasks, 0 unmapped
 
 ---
 
