@@ -251,3 +251,137 @@ describe('cancelamento (DOD-06 regra)', () => {
     expect(m.cancel().map((e) => e.type)).toEqual(['hitboxOff', 'moveEnd']);
   });
 });
+
+describe('Contra iniciado pela janela (CNT-05, CNT-08)', () => {
+  it('startCounter("contra") sem golpe em curso emite moveStart do contra', () => {
+    const m = new MoveMachine();
+    expect(starts(m.startCounter('contra'))).toEqual(['contra']);
+    expect(m.current).toBe('contra');
+    expect(m.phase).toBe('startup');
+  });
+
+  it('startCounter("contraGancho") também começa o golpe pelo nome', () => {
+    const m = new MoveMachine();
+    expect(starts(m.startCounter('contraGancho'))).toEqual(['contraGancho']);
+    expect(m.def?.name).toBe('contraGancho');
+  });
+
+  it('com golpe em curso não faz nada: o golpe segue o mesmo e nenhum evento sai', () => {
+    const m = new MoveMachine();
+    m.press('light', GROUND);
+    expect(m.startCounter('contra')).toEqual([]);
+    expect(m.current).toBe('jab');
+    m.update(MOVES.jab.startupMs);
+    expect(m.startCounter('contra')).toEqual([]);
+    expect(m.current).toBe('jab');
+  });
+
+  it('CNT-08: press sem contexto de Contra continua dando jab', () => {
+    const m = new MoveMachine();
+    expect(starts(m.press('light', GROUND))).toEqual(['jab']);
+  });
+});
+
+describe('endActive encerra a fase active (VOA-04, VOA-09)', () => {
+  it('em active emite hitboxOff e a recovery dura recoveryMs (160 ms na voadora)', () => {
+    const m = new MoveMachine();
+    m.press('heavy', AIR);
+    m.update(MOVES.voadora.startupMs);
+    expect(m.phase).toBe('active');
+    expect(m.endActive().map((e) => e.type)).toEqual(['hitboxOff']);
+    expect(m.phase).toBe('recovery');
+    m.update(159);
+    expect(m.current).toBe('voadora');
+    expect(m.update(1).map((e) => e.type)).toEqual(['moveEnd']);
+    expect(m.current).toBeNull();
+  });
+
+  it('endActive não emite whiff, mesmo sem hitLanded', () => {
+    const m = new MoveMachine();
+    m.press('heavy', AIR);
+    m.update(MOVES.voadora.startupMs);
+    expect(m.endActive().some((e) => e.type === 'whiff')).toBe(false);
+  });
+
+  it('fora de active não faz nada: em startup, em recovery e sem golpe', () => {
+    const m = new MoveMachine();
+    expect(m.endActive()).toEqual([]);
+    m.press('light', GROUND);
+    expect(m.endActive()).toEqual([]);
+    expect(m.phase).toBe('startup');
+    m.update(MOVES.jab.startupMs);
+    m.update(MOVES.jab.activeMs);
+    expect(m.phase).toBe('recovery');
+    expect(m.endActive()).toEqual([]);
+    expect(m.phase).toBe('recovery');
+  });
+
+  it('depois do endActive o active não termina de novo: só um hitboxOff no golpe todo', () => {
+    const m = new MoveMachine();
+    m.press('heavy', AIR);
+    m.update(MOVES.voadora.startupMs);
+    const evs = [...m.endActive(), ...m.update(MOVES.voadora.recoveryMs)];
+    expect(evs.filter((e) => e.type === 'hitboxOff')).toHaveLength(1);
+  });
+});
+
+describe('recovery de quem erra a voadora (VOA-07, VOA-08, VOA-09)', () => {
+  const whiffs = (evs: MoveEvent[]): number => evs.filter((e) => e.type === 'whiff').length;
+
+  it('voadora sem hitLanded: recovery de 460 ms (ainda em golpe em 459 ms) e exatamente um whiff', () => {
+    const m = new MoveMachine();
+    m.press('heavy', AIR);
+    const evs = [...m.update(MOVES.voadora.startupMs), ...m.update(MOVES.voadora.activeMs)];
+    expect(m.phase).toBe('recovery');
+    expect(whiffs(evs)).toBe(1);
+    m.update(459);
+    expect(m.current).toBe('voadora');
+    expect(m.update(1).map((e) => e.type)).toEqual(['moveEnd']);
+    expect(m.current).toBeNull();
+  });
+
+  it('o whiff leva o golpe que errou e sai junto do hitboxOff, depois dele', () => {
+    const m = new MoveMachine();
+    m.press('heavy', AIR);
+    m.update(MOVES.voadora.startupMs);
+    const evs = m.update(MOVES.voadora.activeMs);
+    expect(evs.map((e) => e.type)).toEqual(['hitboxOff', 'whiff']);
+    const whiff = evs[1];
+    expect(whiff.type === 'whiff' && whiff.move.name).toBe('voadora');
+  });
+
+  it('voadora com hitLanded: recovery de 160 ms (ainda em golpe em 159 ms) e nenhum whiff', () => {
+    const m = new MoveMachine();
+    m.press('heavy', AIR);
+    m.update(MOVES.voadora.startupMs);
+    m.hitLanded();
+    const evs = m.update(MOVES.voadora.activeMs);
+    expect(whiffs(evs)).toBe(0);
+    m.update(159);
+    expect(m.current).toBe('voadora');
+    expect(m.update(1).map((e) => e.type)).toEqual(['moveEnd']);
+  });
+
+  it('golpe sem whiffRecoveryMs que erra mantém a recovery normal e não emite whiff', () => {
+    const m = new MoveMachine();
+    m.press('light', GROUND);
+    const evs = [...m.update(MOVES.jab.startupMs), ...m.update(MOVES.jab.activeMs)];
+    expect(whiffs(evs)).toBe(0);
+    m.update(MOVES.jab.recoveryMs - 1);
+    expect(m.current).toBe('jab');
+    m.update(1);
+    expect(m.current).toBeNull();
+  });
+
+  it('com um mapa de golpes de tuning diferente (whiffRecoveryMs 300) a recovery de quem erra muda junto', () => {
+    const quick = { ...MOVES.voadora, whiffRecoveryMs: 300 };
+    const m = new MoveMachine({ ...MOVES, voadora: quick });
+    m.press('heavy', AIR);
+    m.update(quick.startupMs);
+    m.update(quick.activeMs);
+    m.update(299);
+    expect(m.current).toBe('voadora');
+    m.update(1);
+    expect(m.current).toBeNull();
+  });
+});

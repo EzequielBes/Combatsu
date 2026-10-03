@@ -334,11 +334,11 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `startMove`, `hitLanded`
 **Requirement**: CNT-05, CNT-08, VOA-04, VOA-07, VOA-08, VOA-09
 **Done when**:
-- [ ] `startCounter('contra')` sem golpe em curso emite `moveStart` do `contra`; com golpe em curso não faz nada.
-- [ ] `endActive()` em `active` emite `hitboxOff` e a `recovery` dura `recoveryMs`; fora de `active` não faz nada.
-- [ ] Voadora sem `hitLanded`: `recovery` de 460 ms (ainda em golpe em 459 ms) e exatamente um evento `whiff`; com `hitLanded`: 160 ms e nenhum `whiff`.
-- [ ] Golpe sem `whiffRecoveryMs` que erra mantém a `recovery` normal e não emite `whiff`.
-- [ ] `press` sem contexto de Contra continua dando `jab` (CNT-08).
+- [x] `startCounter('contra')` sem golpe em curso emite `moveStart` do `contra`; com golpe em curso não faz nada.
+- [x] `endActive()` em `active` emite `hitboxOff` e a `recovery` dura `recoveryMs`; fora de `active` não faz nada.
+- [x] Voadora sem `hitLanded`: `recovery` de 460 ms (ainda em golpe em 459 ms) e exatamente um evento `whiff`; com `hitLanded`: 160 ms e nenhum `whiff`.
+- [x] Golpe sem `whiffRecoveryMs` que erra mantém a `recovery` normal e não emite `whiff`.
+- [x] `press` sem contexto de Contra continua dando `jab` (CNT-08).
 **Tests**: unit
 **Gate**: quick
 
