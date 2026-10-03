@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/movimento-suave-e-objetos-no-chefe/spec.md`
 **Design**: inline nesta página (feature Medium, sem `design.md`)
-**Status**: In Progress
+**Status**: Done (Verifier PASS, rodada 2); falta o UAT do usuário antes do merge em `dev`
 **Branch**: `feat/movimento-suave-e-objetos-no-chefe`, a partir de `feat/sprite-chefes-e-acabamento` (ainda fora de `dev`); vai para `dev` depois dela, com `--no-ff` (AD-008)
 
 ## Design inline

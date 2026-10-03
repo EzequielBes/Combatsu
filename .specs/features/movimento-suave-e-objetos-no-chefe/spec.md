@@ -127,29 +127,29 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PRB-01 | P1: Objetos acertam o chefe | Execute | Implementing |
-| PRB-02 | P1: Objetos acertam o chefe | Execute | Implementing |
-| PRB-03 | P1: Objetos acertam o chefe | Execute | Implementing |
-| PRB-04 | P1: Objetos acertam o chefe | Execute | Implementing |
-| CAM-01 | P1: Câmera sem tremor | Execute | Implementing |
-| CAM-02 | P1: Câmera sem tremor | Execute | Implementing |
-| CAM-03 | P1: Câmera sem tremor | Execute | Implementing |
-| CAM-04 | P1: Câmera sem tremor | Execute | Implementing |
-| CAM-05 | P1: Câmera sem tremor | Execute | Implementing |
-| CAM-06 | P1: Câmera sem tremor | Execute | Implementing |
-| CAM-07 | P1: Câmera sem tremor | Execute | Implementing |
-| ITP-01 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-02 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-03 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-04 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-05 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-06 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-07 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-08 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-09 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-10 | P1: Movimento sem degraus | Execute | Implementing |
-| EDG-01 | Edge cases | Execute | Implementing |
-| EDG-02 | Edge cases | Execute | Implementing |
+| PRB-01 | P1: Objetos acertam o chefe | Execute | Verified |
+| PRB-02 | P1: Objetos acertam o chefe | Execute | Verified |
+| PRB-03 | P1: Objetos acertam o chefe | Execute | Verified |
+| PRB-04 | P1: Objetos acertam o chefe | Execute | Verified |
+| CAM-01 | P1: Câmera sem tremor | Execute | Verified |
+| CAM-02 | P1: Câmera sem tremor | Execute | Verified |
+| CAM-03 | P1: Câmera sem tremor | Execute | Verified |
+| CAM-04 | P1: Câmera sem tremor | Execute | Verified |
+| CAM-05 | P1: Câmera sem tremor | Execute | Verified |
+| CAM-06 | P1: Câmera sem tremor | Execute | Verified |
+| CAM-07 | P1: Câmera sem tremor | Execute | Verified |
+| ITP-01 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-02 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-03 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-04 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-05 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-06 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-07 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-08 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-09 | P1: Movimento sem degraus | Execute | Verified |
+| ITP-10 | P1: Movimento sem degraus | Execute | Verified |
+| EDG-01 | Edge cases | Execute | Verified |
+| EDG-02 | Edge cases | Execute | Verified |
 
 **Coverage:** 23 total, 23 mapped to tasks, 0 unmapped
 
