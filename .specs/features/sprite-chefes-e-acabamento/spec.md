@@ -236,7 +236,7 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | BSP-11 | P1: Chefes com desenho | Execute | Implementing |
 | BSP-12 | P1: Chefes com desenho | Execute | Implementing |
 | BSP-13 | P1: Chefes com desenho | Execute | Implementing |
-| BSP-14 | P1: Chefes com desenho | Tasks | In Tasks |
+| BSP-14 | P1: Chefes com desenho | Execute | Implementing |
 | BAN-01 | P1: Chefes que se mexem | Execute | Implementing |
 | BAN-02 | P1: Chefes que se mexem | Execute | Implementing |
 | BAN-03 | P1: Chefes que se mexem | Execute | Implementing |
@@ -252,9 +252,9 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | LMB-06 | P1: Soco e chute | Execute | Implementing |
 | LMB-07 | P1: Soco e chute | Execute | Implementing |
 | LMB-08 | P1: Soco e chute | Execute | Implementing |
-| LMB-09 | P1: Soco e chute | Tasks | In Tasks |
-| LMB-10 | P1: Soco e chute | Tasks | In Tasks |
-| LMB-11 | P1: Soco e chute | Tasks | In Tasks |
+| LMB-09 | P1: Soco e chute | Execute | Implementing |
+| LMB-10 | P1: Soco e chute | Execute | Implementing |
+| LMB-11 | P1: Soco e chute | Execute | Implementing |
 | BPW-01 | P2: Projétil e onda | Execute | Implementing |
 | BPW-02 | P2: Projétil e onda | Execute | Implementing |
 | BPW-03 | P2: Projétil e onda | Execute | Implementing |
@@ -266,8 +266,8 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | EPD-02 | P3: Pendências dos inimigos | Execute | Implementing |
 | EPD-03 | P3: Pendências dos inimigos | Execute | Implementing |
 | EPD-04 | P3: Pendências dos inimigos | Execute | Implementing |
-| EPD-05 | P3: Pendências dos inimigos | Tasks | In Tasks |
-| EPD-06 | P3: Pendências dos inimigos | Tasks | In Tasks |
+| EPD-05 | P3: Pendências dos inimigos | Execute | Implementing |
+| EPD-06 | P3: Pendências dos inimigos | Execute | Implementing |
 | EDG-01 | Edge cases | Execute | Implementing |
 | EDG-02 | Edge cases | Execute | Implementing |
 
