@@ -1282,15 +1282,17 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /**
-   * O jogador começou um golpe (`move:<nome>`): se é leve, os inimigos comuns perto e de frente sorteiam a guarda
-   * (EBL-01). `?debug&enemyGuard=N` fixa a chance (N=1: sempre levantam).
+   * O jogador começou um golpe do grafo (`move:<nome>`): os inimigos comuns de frente e perto sorteiam a guarda
+   * (RDG-03). Contra não conta (RDG-12). `?debug&enemyGuard=N` fixa a chance (N=1: sempre levantam). As repetições
+   * da leitura (`repeats`) entram na fase 4; até lá valem 0.
    */
   private onPlayerMoveStart(name: string): void {
-    if (MOVES[name]?.strength !== 'light') return;
+    const move = MOVES[name];
+    if (!move || move.counter) return;
     const raw = debugParam('enemyGuard');
     const override = raw !== null && Number.isFinite(Number(raw)) ? Number(raw) : undefined;
     const me = { x: this.player.sprite.x, facing: this.player.facing };
-    for (const e of this.enemies) e.onPlayerLightMove(me, this.run.round, override);
+    for (const e of this.enemies) e.onPlayerMove(me, move, this.run.round, { repeats: 0, override });
   }
 
   /** Quem bateu no jogador, para o lado do golpe, o tipo (chefe) e o efeito do parry (PAR-03/07/10). */

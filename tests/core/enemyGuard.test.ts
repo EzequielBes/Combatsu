@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { EnemyGuard, type GuardTrigger } from '../../src/core/enemyGuard';
+import { EnemyGuard } from '../../src/core/enemyGuard';
 import { Rng } from '../../src/core/rng';
-
-const NEAR: GuardTrigger = { round: 1, idle: true, playerFacingEnemy: true, distancePx: 40 };
 
 /** Sorteio que grava a probabilidade pedida e responde `answer`. */
 function fakeRoll(answer: boolean): { chance: (p: number) => boolean; asked: number[] } {
@@ -18,7 +16,7 @@ function fakeRoll(answer: boolean): { chance: (p: number) => boolean; asked: num
 
 const guardUp = (): EnemyGuard => {
   const g = new EnemyGuard(fakeRoll(true));
-  expect(g.onPlayerLightMove(NEAR)).toBe(true);
+  expect(g.tryRaise(EnemyGuard.chanceFor(1), false)).toBe(true);
   return g;
 };
 
@@ -37,8 +35,8 @@ describe('EBL-01: chance por rodada = min(0.1 + 0.03 × (rodada − 1), 0.4)', (
   it('sorteia com a chance da rodada', () => {
     const roll = fakeRoll(false);
     const g = new EnemyGuard(roll);
-    g.onPlayerLightMove({ ...NEAR, round: 1 });
-    g.onPlayerLightMove({ ...NEAR, round: 20 });
+    g.tryRaise(EnemyGuard.chanceFor(1), false);
+    g.tryRaise(EnemyGuard.chanceFor(20), false);
     expect(roll.asked[0]).toBeCloseTo(0.1, 10);
     expect(roll.asked[1]).toBe(0.4);
   });
@@ -47,7 +45,7 @@ describe('EBL-01: chance por rodada = min(0.1 + 0.03 × (rodada − 1), 0.4)', (
     for (let seed = 0; seed < 20; seed++) {
       const expected = new Rng(seed).next() < 0.4;
       const g = new EnemyGuard(new Rng(seed));
-      expect(g.onPlayerLightMove({ ...NEAR, round: 20 })).toBe(expected);
+      expect(g.tryRaise(EnemyGuard.chanceFor(20), false)).toBe(expected);
     }
   });
 
@@ -61,24 +59,8 @@ describe('EBL-01: chance por rodada = min(0.1 + 0.03 × (rodada − 1), 0.4)', (
 
   it('sorteio que falha não levanta a guarda', () => {
     const g = new EnemyGuard(fakeRoll(false));
-    expect(g.onPlayerLightMove(NEAR)).toBe(false);
+    expect(g.tryRaise(EnemyGuard.chanceFor(1), false)).toBe(false);
     expect(g.guarding).toBe(false);
-  });
-
-  it('só reage a 60 px ou menos (60 sim, 61 não), sem sortear fora das condições', () => {
-    const roll = fakeRoll(true);
-    const g = new EnemyGuard(roll);
-    expect(g.onPlayerLightMove({ ...NEAR, distancePx: 61 })).toBe(false);
-    expect(roll.asked).toEqual([]);
-    expect(g.onPlayerLightMove({ ...NEAR, distancePx: 60 })).toBe(true);
-  });
-
-  it('só em `idle` e com o jogador virado para ele', () => {
-    const roll = fakeRoll(true);
-    const g = new EnemyGuard(roll);
-    expect(g.onPlayerLightMove({ ...NEAR, idle: false })).toBe(false);
-    expect(g.onPlayerLightMove({ ...NEAR, playerFacingEnemy: false })).toBe(false);
-    expect(roll.asked).toEqual([]);
   });
 });
 
@@ -180,16 +162,6 @@ describe('EnemyGuard.tryRaise (RDG-04)', () => {
     expect(g.guarding).toBe(true);
     g.update(1);
     expect(g.guarding).toBe(false);
-  });
-
-  it('onPlayerLightMove continua funcionando por cima de tryRaise (EBL-01)', () => {
-    const roll = fakeRoll(true);
-    const g = new EnemyGuard(roll);
-    expect(g.onPlayerLightMove(NEAR, 0)).toBe(false);
-    expect(roll.asked).toEqual([]);
-    expect(g.onPlayerLightMove(NEAR, 1)).toBe(true);
-    expect(g.guarding).toBe(true);
-    expect(g.read).toBe(false);
   });
 });
 

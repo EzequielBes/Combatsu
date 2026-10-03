@@ -450,12 +450,12 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `guardChance`, `baseConditionsHold`, `readingBonus`, `LightStreak`, `shoveRoll`
 **Requirement**: RDG-03, RDG-05, RDG-09, RDG-16, RDG-17, RDG-18, RDG-22, CMT-10
 **Done when**:
-- [ ] Alcance da leitura: `READING.rangePx + (move.travel?.forwardPx ?? 0)`.
-- [ ] Comprometido, em `attack`, em ragdoll, quebrado, levantando ou morto: não sorteia.
-- [ ] `EnemyGuard.onPlayerLightMove` sai; os casos de teste dele vivem em `baseConditionsHold` (T7).
-- [ ] Getters `lightStreak` e `guardRead`; `shoveChance` vem da cena (padrão `READING.shoveChance`).
-- [ ] A cena chama `onPlayerMove` para todo golpe do grafo que não é `counter`, com `repeats` 0 por enquanto.
-- [ ] `npm run build` passa.
+- [x] Alcance da leitura: `READING.rangePx + (move.travel?.forwardPx ?? 0)`.
+- [x] Comprometido, em `attack`, em ragdoll, quebrado, levantando ou morto: não sorteia.
+- [x] `EnemyGuard.onPlayerLightMove` sai; os casos de teste dele vivem em `baseConditionsHold` (T7).
+- [x] Getters `lightStreak` e `guardRead`; `shoveChance` vem da cena (padrão `READING.shoveChance`).
+- [x] A cena chama `onPlayerMove` para todo golpe do grafo que não é `counter`, com `repeats` 0 por enquanto.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
