@@ -124,7 +124,7 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 | PRB-01 | P1: Objetos acertam o chefe | Execute | Implementing |
 | PRB-02 | P1: Objetos acertam o chefe | Execute | Implementing |
 | PRB-03 | P1: Objetos acertam o chefe | Execute | Implementing |
-| PRB-04 | P1: Objetos acertam o chefe | Tasks | In Tasks |
+| PRB-04 | P1: Objetos acertam o chefe | Execute | Implementing |
 | CAM-01 | P1: Câmera sem tremor | Execute | Implementing |
 | CAM-02 | P1: Câmera sem tremor | Execute | Implementing |
 | CAM-03 | P1: Câmera sem tremor | Execute | Implementing |
@@ -136,11 +136,11 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 | ITP-02 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-03 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-04 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-05 | P1: Movimento sem degraus | Tasks | In Tasks |
-| ITP-06 | P1: Movimento sem degraus | Tasks | In Tasks |
-| ITP-07 | P1: Movimento sem degraus | Tasks | In Tasks |
+| ITP-05 | P1: Movimento sem degraus | Execute | Implementing |
+| ITP-06 | P1: Movimento sem degraus | Execute | Implementing |
+| ITP-07 | P1: Movimento sem degraus | Execute | Implementing |
 | EDG-01 | Edge cases | Execute | Implementing |
-| EDG-02 | Edge cases | Tasks | In Tasks |
+| EDG-02 | Edge cases | Execute | Implementing |
 
 **Coverage:** 20 total, 20 mapped to tasks, 0 unmapped
 
