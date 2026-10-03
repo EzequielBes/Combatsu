@@ -149,14 +149,14 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] LMB-01: para `len` de 9 a 22, as duas funções devolvem 5 linhas, `len` colunas na mais larga e texel opaco na coluna `len − 1`.
-- [ ] LMB-02: para `len` de 12 a 22, o braço tem ≥ 3 colunas seguidas de perfil ≤ 4 antes do punho e ≥ 1 coluna de perfil 5 entre as 5 últimas.
-- [ ] LMB-03: para `len` de 12 a 22, a perna tem ≥ 3 colunas seguidas de perfil ≤ 4 antes do pé e ≥ 2 colunas de perfil 5 entre as 6 últimas.
-- [ ] LMB-04: ponta do membro em `jab-hit`, `cross-hit` e `kick-hit` nas colunas 27, 27 e 30.
-- [ ] LMB-05: todos os 102 frames da linha de base continuam a até 2 texels dela.
-- [ ] LMB-06: todo frame do player com um único componente (sem `S`) e 0 pixels cortados.
-- [ ] EDG-01: com `len` de 9 a 11, toda coluna do braço antes do punho tem perfil 5.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] LMB-01: para `len` de 9 a 22, as duas funções devolvem 5 linhas, `len` colunas na mais larga e texel opaco na coluna `len − 1`.
+- [x] LMB-02: para `len` de 12 a 22, o braço tem ≥ 3 colunas seguidas de perfil ≤ 4 antes do punho e ≥ 1 coluna de perfil 5 entre as 5 últimas.
+- [x] LMB-03: para `len` de 12 a 22, a perna tem ≥ 3 colunas seguidas de perfil ≤ 4 antes do pé e ≥ 2 colunas de perfil 5 entre as 6 últimas.
+- [x] LMB-04: ponta do membro em `jab-hit`, `cross-hit` e `kick-hit` nas colunas 27, 27 e 30.
+- [x] LMB-05: todos os 102 frames da linha de base continuam a até 2 texels dela.
+- [x] LMB-06: todo frame do player com um único componente (sem `S`) e 0 pixels cortados.
+- [x] EDG-01: com `len` de 9 a 11, toda coluna do braço antes do punho tem perfil 5.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

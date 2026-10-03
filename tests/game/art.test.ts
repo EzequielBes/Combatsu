@@ -11,7 +11,17 @@ import {
   ENERGY_BAR_MARK_COLOR,
   TECH_ICON_OVERLAY_COLOR,
 } from '../../src/game/art/techColors';
-import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, selOut, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import {
+  PLAYER_ANIMS,
+  PLAYER_FRAMES,
+  animFrameConfigs,
+  armStraight,
+  legStraight,
+  selOut,
+  PLAYER_FRAME_H,
+  PLAYER_FRAME_W,
+  PLAYER_ORIGIN,
+} from '../../src/game/art/sprites/player';
 import { selOut as sharedSelOut, type SelOutConfig } from '../../src/game/art/selOut';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import playerBBoxBaseline from './fixtures/playerBBoxBaseline.json';
@@ -907,6 +917,47 @@ describe('animações dos chefes em laço (BAN-01..06)', () => {
         expect(Object.hasOwn(TECELA_FRAMES, f), `tecela ${name}: ${f}`).toBe(true);
       }
     }
+  });
+});
+
+describe('braço e perna esticados do player com antebraço e canela finos (LMB-01..03, EDG-01)', () => {
+  const lens = (from: number, to: number): number[] => Array.from({ length: to - from + 1 }, (_, i) => from + i);
+  /** As 5 últimas colunas são a ponta do membro: contorno do pulso ou tornozelo, punho ou pé (3) e contorno da ponta. */
+  const TIP_COLS = 5;
+  /** Maior sequência de colunas seguidas com perfil até `max`, antes da ponta. */
+  const thinRunBeforeTip = (profile: number[], max: number): number => {
+    let best = 0;
+    let run = 0;
+    for (let x = 0; x < profile.length - TIP_COLS; x++) {
+      run = profile[x] <= max ? run + 1 : 0;
+      best = Math.max(best, run);
+    }
+    return best;
+  };
+
+  it.each(lens(9, 22))('LMB-01: com len %i, braço e perna têm 5 linhas, len colunas e texel opaco na última coluna', (len) => {
+    for (const [name, part] of [['armStraight', armStraight(len)], ['legStraight', legStraight(len)]] as const) {
+      expect(part, name).toHaveLength(5);
+      expect(Math.max(...part.map((row) => row.length)), name).toBe(len);
+      expect(artMeasure.profile(part)[len - 1], name).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it.each(lens(12, 22))('LMB-02: armStraight(%i) tem 3+ colunas seguidas de perfil até 4 antes do punho e 1+ coluna de perfil 5 entre as 5 últimas', (len) => {
+    const profile = artMeasure.profile(armStraight(len));
+    expect(thinRunBeforeTip(profile, 4)).toBeGreaterThanOrEqual(3);
+    expect(profile.slice(len - 5).filter((p) => p === 5).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it.each(lens(12, 22))('LMB-03: legStraight(%i) tem 3+ colunas seguidas de perfil até 4 antes do pé e 2+ colunas de perfil 5 entre as 6 últimas', (len) => {
+    const profile = artMeasure.profile(legStraight(len));
+    expect(thinRunBeforeTip(profile, 4)).toBeGreaterThanOrEqual(3);
+    expect(profile.slice(len - 6).filter((p) => p === 5).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it.each(lens(9, 11))('EDG-01: armStraight(%i) não afina: toda coluna antes do punho tem perfil 5', (len) => {
+    const profile = artMeasure.profile(armStraight(len));
+    expect(profile.slice(0, len - TIP_COLS)).toEqual(Array<number>(len - TIP_COLS).fill(5));
   });
 });
 
