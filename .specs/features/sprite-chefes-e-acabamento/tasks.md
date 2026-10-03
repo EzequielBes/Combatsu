@@ -37,7 +37,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 ## Execution Plan
 
-8 tasks, um lote só: execução inline, sem workers.
+8 tasks, um lote só: execução inline, sem workers. A T9 fecha as lacunas de precisão da rodada 1 do Verifier.
 
 ### Phase 1: Chefes
 
@@ -55,6 +55,12 @@ T4 → T5
 
 ```
 T6 → T7 → T8
+```
+
+### Phase 4: Lacunas do Verifier (rodada 1)
+
+```
+T9
 ```
 
 ---
@@ -247,14 +253,40 @@ T6 → T7 → T8
 
 ---
 
+### T9: Fechar as lacunas de precisão da rodada 1 do Verifier
+
+**What**: Testes para os ACs novos e o reescrito; `armElbow` volta a ocupar `len + 1` colunas, com a ponta numa linha só.
+**Where**: `tests/game/art.test.ts`, `src/game/art/sprites/playerMoves.ts`
+**Depends on**: None
+**Reuses**: medidas `artMeasure` de `tests/game/art.test.ts`
+**Requirement**: BSP-13, BSP-14, LMB-09, LMB-10, LMB-11, EPD-05, EPD-06
+
+**Done when**:
+
+- [ ] BSP-13: `TECELA_COLOR_MAP` é exatamente o mapa de 11 trocas da spec.
+- [ ] BSP-14: a base da caixa opaca do `leap` fica na linha 28 ou acima.
+- [ ] LMB-09: `palmaExplosiva-hit` com exatamente 2 texels `A` à direita da coluna 20.
+- [ ] LMB-10: `cotovelada-hit` com a ponta na coluna 23 e 1 texel opaco nela.
+- [ ] LMB-11: `pisao-hit` com pelo menos 3 texels `s` na linha 22.
+- [ ] EPD-05: borda do `impact` começando na linha 9 do corcunda e na 8 do rastejante, e não na linha de cima.
+- [ ] EPD-06: cantos do punho do bruto transparentes no `idle-0` (19, 22) e no `walk-0` (21, 20).
+- [ ] Gate check passes: `npm run build && npm test`
+
+**Tests**: unit
+**Gate**: build
+**Commit**: `test(art): pin the behavior the first verifier round left open`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3
+Phase 1 → Phase 2 → Phase 3 → Phase 4
 
 Phase 1:  T1 ------→ T2 ------→ T3
 Phase 2:  T4 ------→ T5
 Phase 3:  T6 ------→ T7 ------→ T8
+Phase 4:  T9
 ```
 
 ---
@@ -271,6 +303,7 @@ Phase 3:  T6 ------→ T7 ------→ T8
 | T6: cadeira e garrafa | 2 grades + testes | ✅ Coeso |
 | T7: faca e porrete | 2 grades + testes | ✅ Coeso |
 | T8: pendências dos inimigos | 3 ajustes do mesmo arquivo + testes | ⚠️ Coeso (mesmo kit e mesmo bloco de teste) |
+| T9: lacunas do Verifier | testes de 7 ACs + 1 função | ⚠️ Coeso (uma rodada de correção) |
 
 ## Diagram-Definition Cross-Check
 
@@ -284,6 +317,7 @@ Phase 3:  T6 ------→ T7 ------→ T8
 | T6 | None | início da fase 3 | ✅ Match |
 | T7 | T6 | T6 → T7 | ✅ Match |
 | T8 | T7 | T7 → T8 | ✅ Match |
+| T9 | None | sozinha na fase 4 | ✅ Match |
 
 ## Test Co-location Validation
 
@@ -297,3 +331,4 @@ Phase 3:  T6 ------→ T7 ------→ T8
 | T6 | Arte | unit | unit | ✅ OK |
 | T7 | Arte | unit | unit | ✅ OK |
 | T8 | Arte | unit | unit | ✅ OK |
+| T9 | Arte | unit | unit | ✅ OK |

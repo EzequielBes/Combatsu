@@ -41,6 +41,8 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 - **cor dominante**: a chave mais frequente do frame, sem contar `k`.
 - **perfil de uma coluna**: quantidade de texels opacos naquela coluna da parte.
 - **caixa opaca**: menor retângulo que contém todos os texels opacos do frame.
+- **ponta de um frame**: a coluna da borda direita da caixa opaca.
+- **antes do punho / antes do pé**: as colunas de `armStraight` ou `legStraight` anteriores às 5 últimas (contorno do pulso ou do tornozelo, 3 colunas de punho ou pé e contorno da ponta).
 
 ## Assumptions & Open Questions
 
@@ -52,6 +54,8 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | Rampa de pele do Oni | `A` (luz), `a` (base), `z` (sombra), `m` (sombra profunda) | Todas já estão na paleta; nenhuma cor nova (teto de 42, AD-017) | n |
 | Mapa da Tecelã | Pele `A`/`a`/`z`/`m` → `U`/`u`/`v`/`K`; juba `H`/`j`/`h` → `w`/`I`/`i`; pano `U`/`u`/`v` → `l`/`L`/`q`; brilho do olho `R` → `C` | Mantém a Tecelã roxa (como hoje) e a separa do Oni em juba (branca), pano (creme) e olho (ciano). A esfera do preparo da rajada usa as chaves do pano: no Oni é roxa, na Tecelã vira um novelo creme | n |
 | Grilhões e chifres | Ferro `S`/`s`/`N`/`n` e osso `w`/`l`/`L`, iguais nos dois arquétipos | Não entram no mapa; dão leitura de "Oni do Portão" sem cor nova | n |
+| Lacunas de precisão do Verifier (rodada 1) | Fechadas com ACs novos ou reescritos: mapa literal da Tecelã (BSP-13), pés recolhidos no `leap` (BSP-14), palma, cotovelo e pisão (LMB-09 a LMB-11), borda do `impact` dos outros kits (EPD-05) e punho do bruto fora do golpe (EPD-06). O `repeat` de `leap` e `dead` fica sem AC | 10 mutantes sobreviveram em comportamento sem AC. Com 1 frame, o `repeat` não muda nada na tela | n |
+| Ponta do cotovelo | O `armElbow` volta a ocupar `len + 1` colunas, como antes da feature, com a ponta numa linha só | A primeira versão encurtou o cotovelo 1 texel; a feature não muda alcance | n |
 | ACs sinalizados pelo Jev (25 de 38) | BSP-13 reescrito (precisão 1,20). Os outros 24 ficam como estão: os termos "diferença", "perfil", "caixa opaca", "componente" e "k interno" estão no Glossário, e cada AC "agrupado" é um catálogo conferido num laço só (frames, animações, chaves de cor) | Mesmo critério de `sprite-player-polish` e `enemy-sprite-variety`: separar geraria ACs triviais sem ganho de teste | n |
 | Laço das animações do chefe | Toda animação de 2 frames repete (`repeat` −1); nenhuma depende de "tocar uma vez e segurar" | `Boss.animate` chama `play(key, true)` a cada frame: uma animação de uma volta recomeçaria ao terminar. Com laço, o adaptador não muda | n |
 | Ciclo da rajada | A animação `volley` dura um ciclo de `BOSS.volley.intervalMs` (150 ms) | O braço bate no ritmo dos disparos | n |
@@ -89,7 +93,8 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 10. BSP-10: The topo da caixa opaca do `stagger` SHALL ficar pelo menos 2 linhas abaixo do topo da caixa opaca do `idle`.
 11. BSP-11: Todo frame de `TECELA_FRAMES` SHALL ser igual ao frame de mesmo nome de `BOSS_FRAMES` com o `TECELA_COLOR_MAP` aplicado texel a texel.
 12. BSP-12: The cor dominante do `idle` SHALL ser `a` no Oni e `u` na Tecelã.
-13. BSP-13: Para cada chave `k` entre `A`, `a`, `z`, `m`, `H`, `j`, `h`, `U`, `u` e `v`, `TECELA_COLOR_MAP[k]` SHALL ser uma chave da `PALETTE` diferente de `k`.
+13. BSP-13: The `TECELA_COLOR_MAP` SHALL ter exatamente estas 11 trocas: `A`→`U`, `a`→`u`, `z`→`v`, `m`→`K`, `H`→`w`, `j`→`I`, `h`→`i`, `U`→`l`, `u`→`L`, `v`→`q` e `R`→`C`.
+14. BSP-14: The caixa opaca do `leap` SHALL ter a base na linha 28 ou acima.
 
 **Independent Test**: `npm test` (bloco do chefe em `tests/game/art.test.ts`) e a prancha antes/depois.
 
@@ -131,6 +136,9 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 6. LMB-06: Todo frame do player SHALL continuar com um único componente (sem contar `S`) e 0 pixels cortados (SPF-01, SPF-02).
 7. LMB-07: No `chuteAlto-hit`, nenhum texel de uniforme (`s`, `N`, `n`, `o`) SHALL ficar nas linhas 0 a 6 à esquerda da coluna 20.
 8. LMB-08: No `chuteAlto-hit`, a ponta do pé SHALL continuar na coluna 31, numa linha de 2 a 6.
+9. LMB-09: No `palmaExplosiva-hit`, SHALL haver exatamente 2 texels `A` à direita da coluna 20.
+10. LMB-10: No `cotovelada-hit`, a ponta do frame SHALL ficar na coluna 23 e ter exatamente 1 texel opaco.
+11. LMB-11: No `pisao-hit`, a linha 22 SHALL ter pelo menos 3 texels `s`.
 
 **Independent Test**: `npm test` (`art.test.ts` e `playerConsistency.test.ts`) e a prancha ampliada dos golpes.
 
@@ -181,6 +189,8 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 2. EPD-02: No `attack-0` do `bruto`, a coluna da ponta do punho SHALL ter exatamente 3 texels opacos.
 3. EPD-03: No `rastejante`, o topo da caixa opaca do `hurt-uppercut-0` SHALL ficar pelo menos 3 linhas acima do topo da caixa opaca do `hurt-head-a-0`.
 4. EPD-04: No `hurt-uppercut-0` de cada uma das três aparências, a base da caixa opaca SHALL ficar na linha 20 ou acima.
+5. EPD-05: No `impact`, o texel opaco mais à direita SHALL ser `w` na linha 9 do `corcunda` e na linha 8 do `rastejante`, e SHALL não ser `w` na linha 8 do `corcunda` nem na linha 7 do `rastejante`.
+6. EPD-06: No `bruto`, o texel da coluna 19, linha 22, do `idle-0` e o da coluna 21, linha 20, do `walk-0` SHALL ser transparentes.
 
 **Independent Test**: `npm test` (bloco das três aparências) e a prancha dos inimigos.
 
@@ -226,6 +236,7 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | BSP-11 | P1: Chefes com desenho | Execute | Implementing |
 | BSP-12 | P1: Chefes com desenho | Execute | Implementing |
 | BSP-13 | P1: Chefes com desenho | Execute | Implementing |
+| BSP-14 | P1: Chefes com desenho | Tasks | In Tasks |
 | BAN-01 | P1: Chefes que se mexem | Execute | Implementing |
 | BAN-02 | P1: Chefes que se mexem | Execute | Implementing |
 | BAN-03 | P1: Chefes que se mexem | Execute | Implementing |
@@ -241,6 +252,9 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | LMB-06 | P1: Soco e chute | Execute | Implementing |
 | LMB-07 | P1: Soco e chute | Execute | Implementing |
 | LMB-08 | P1: Soco e chute | Execute | Implementing |
+| LMB-09 | P1: Soco e chute | Tasks | In Tasks |
+| LMB-10 | P1: Soco e chute | Tasks | In Tasks |
+| LMB-11 | P1: Soco e chute | Tasks | In Tasks |
 | BPW-01 | P2: Projétil e onda | Execute | Implementing |
 | BPW-02 | P2: Projétil e onda | Execute | Implementing |
 | BPW-03 | P2: Projétil e onda | Execute | Implementing |
@@ -252,10 +266,12 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | EPD-02 | P3: Pendências dos inimigos | Execute | Implementing |
 | EPD-03 | P3: Pendências dos inimigos | Execute | Implementing |
 | EPD-04 | P3: Pendências dos inimigos | Execute | Implementing |
+| EPD-05 | P3: Pendências dos inimigos | Tasks | In Tasks |
+| EPD-06 | P3: Pendências dos inimigos | Tasks | In Tasks |
 | EDG-01 | Edge cases | Execute | Implementing |
 | EDG-02 | Edge cases | Execute | Implementing |
 
-**Coverage:** 41 total, 41 mapped to tasks, 0 unmapped
+**Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
 
 ---
 
