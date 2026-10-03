@@ -162,9 +162,9 @@ T7
 
 **Done when**:
 
-- [ ] Sprite, barra e arma do inimigo e sprite do chefe usam a posição de desenho.
-- [ ] O snapshot expõe `enemies[].view` e `boss.view`.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] Sprite, barra e arma do inimigo e sprite do chefe usam a posição de desenho.
+- [x] O snapshot expõe `enemies[].view` e `boss.view`.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none
 **Gate**: build

@@ -62,6 +62,8 @@ export interface GameSnapshot {
     guarding: boolean;
     /** Aparência sorteada (EVR-04/05). */
     variant: EnemyVariant;
+    /** Centro do corpo como a tela o mostra (ITP-07). */
+    view: { x: number; y: number };
     /** Frame atual do sprite e se ele está visível (HRX-02/05). */
     frame: string;
     spriteVisible: boolean;
@@ -90,6 +92,8 @@ export interface GameSnapshot {
     x: number;
     /** Centro do corpo; fica dentro da sala (0..544) durante toda a luta. */
     y: number;
+    /** Centro do corpo como a tela o mostra (ITP-07). */
+    view: { x: number; y: number };
     /** O finalizador (J+K) ainda pode ser usado neste `stagger` (BFX-06, BFX-07). */
     finisherReady: boolean;
   } | null;

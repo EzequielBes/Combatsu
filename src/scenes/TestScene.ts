@@ -1123,6 +1123,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         structure: e.structureView,
         guarding: e.guarding,
         variant: e.variant,
+        view: e.renderPos,
         frame: e.frame,
         spriteVisible: e.spriteVisible,
         ragdollVisible: e.ragdollVisible,
@@ -1142,6 +1143,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
             name: this.boss.name,
             x: this.boss.x,
             y: this.boss.y,
+            view: this.boss.renderPos,
             finisherReady: this.boss.finisherReady,
           }
         : null,
