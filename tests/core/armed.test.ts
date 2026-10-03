@@ -36,6 +36,37 @@ describe('armFor: cursedKnife (ARM-05, ARM-20, ARM-21)', () => {
   });
 });
 
+describe('armFor: sequência da faca (DFL-01)', () => {
+  it('a faca dá 2 golpes e não muda o resto do tuning do inimigo (dano ×1,25 como antes)', () => {
+    const base = scaleFor(1, BASE, DIFFICULTY);
+    const armed = armFor('cursedKnife', base, ARMED);
+    expect(armed.ai.hits).toBe(2);
+    expect(armed.ai).toEqual({ ...base.ai, hits: 2 });
+    expect(armed.brain).toEqual(base.brain);
+    expect(armed.attack.damage).toBe(15);
+    expect({ ...armed.attack, damage: base.attack.damage, hitbox: base.attack.hitbox }).toEqual(base.attack);
+  });
+
+  it('o porrete mantém a sequência de 1 golpe e só muda o preparo', () => {
+    const base = scaleFor(1, BASE, DIFFICULTY);
+    const armed = armFor('cursedClub', base, ARMED);
+    expect(armed.ai.hits).toBe(1);
+    expect(armed.ai).toEqual({ ...base.ai, windupMs: base.ai.windupMs + 150 });
+  });
+
+  it('o número de golpes vem do tuning recebido (3)', () => {
+    const base = scaleFor(1, BASE, DIFFICULTY);
+    const armed = armFor('cursedKnife', base, { ...ARMED, knife: { ...ARMED.knife, hits: 3 } });
+    expect(armed.ai.hits).toBe(3);
+  });
+
+  it('o tipo do golpe do inimigo base passa intacto pela faca e pelo porrete', () => {
+    const base: EnemyBase = { ...scaleFor(1, BASE, DIFFICULTY), attack: { ...ENEMY_ATTACK, kind: 'low' } };
+    expect(armFor('cursedKnife', base, ARMED).attack.kind).toBe('low');
+    expect(armFor('cursedClub', base, ARMED).attack.kind).toBe('low');
+  });
+});
+
 describe('armFor: cursedClub (ARM-06, ARM-07, ARM-22, ARM-23)', () => {
   it('rodada 1: dano 19, strength heavy, hitbox +12 de largura e +6 de offsetX, preparo 450 -> 600', () => {
     const base = scaleFor(1, BASE, DIFFICULTY);

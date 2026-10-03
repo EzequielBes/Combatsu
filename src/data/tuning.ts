@@ -3,7 +3,7 @@ import type { EnemyTuning } from '../core/enemyBrain';
 import type { HealthTuning } from '../core/health';
 import type { AttackStep } from '../core/combo';
 import type { MoveTuning } from '../core/movement';
-import type { DifficultyTuning } from '../core/difficulty';
+import type { DifficultyTuning, EnemyAttackDef } from '../core/difficulty';
 import type { WaveTuning } from '../core/waves';
 import type { AttackGateTuning } from '../core/attackGate';
 import type { RunTuning } from '../core/run';
@@ -104,8 +104,12 @@ export const ENEMY_AI: EnemyAITuning = {
   hits: 1,
 };
 
-/** Garra do inimigo: a hitbox fica ligada enquanto a IA está em `attack` (activeMs = ENEMY_AI.attackMs). */
-export const ENEMY_ATTACK: AttackStep = {
+/**
+ * Garra do inimigo: a hitbox fica ligada enquanto a IA está em `attack` (activeMs = ENEMY_AI.attackMs). O `kind` é o
+ * tipo padrão; a cena troca pelo de `attackKindFor` ou do debug (HGT-01..03, HGT-13).
+ */
+export const ENEMY_ATTACK: EnemyAttackDef = {
+  kind: 'white',
   name: 'garra',
   damage: 12,
   strength: 'light',
@@ -218,13 +222,14 @@ export const PICKUP: PickupTuning = {
 
 /** Multiplicadores do inimigo armado por ferramenta (ARM-05..07). */
 export interface ArmedTuning {
-  knife: { dmg: number; widen: number };
+  /** `hits`: golpes da sequência do inimigo com faca (DFL-01). */
+  knife: { dmg: number; widen: number; hits: number };
   club: { dmg: number; widen: number; windupPlus: number };
 }
 
 /** Números do inimigo armado (Assumptions da spec economia-drops-cura). */
 export const ARMED: ArmedTuning = {
-  knife: { dmg: 1.25, widen: 8 },
+  knife: { dmg: 1.25, widen: 8, hits: 2 },
   club: { dmg: 1.6, widen: 12, windupPlus: 150 },
 };
 
