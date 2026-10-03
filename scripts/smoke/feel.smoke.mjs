@@ -1,4 +1,4 @@
-// Movimento suave (ITP-05, ITP-06, ITP-07, CAM-07): o sprite do player e o do inimigo são desenhados entre os dois
+// Movimento suave (ITP-05, ITP-06, ITP-07, ITP-08, ITP-10, CAM-07, EDG-02): o sprite do player e o do inimigo são desenhados entre os dois
 // últimos passos de física, e a câmera do mundo segue o player sem o `startFollow` do Phaser e sem tremer.
 // No harness cada `frame()` costuma ser um passo de física, mas a sobra no acumulador do Matter depende do que o loop
 // em tempo real deixou antes do primeiro `step()`. Por isso o alfa vem do snapshot (`physics.alpha`) e só contam os
@@ -88,6 +88,62 @@ export default async function ({ page, baseUrl, assert }) {
   // E a câmera anda de verdade: o scroll avança junto com o player.
   assert(steady[steady.length - 1].scroll - steady[0].scroll > 100, 'a câmera deveria acompanhar a corrida');
 
+  // --- Objeto na mão (ITP-08): a cadeira acompanha o sprite, não o corpo ---------------------------------------
+  const chair = s.worldProps.filter((pr) => pr.key === 'chair').sort((a, b) => a.x - b.x)[0];
+  assert(chair, `nenhuma cadeira no mapa: ${JSON.stringify(s.worldProps)}`);
+  for (let i = 0; i < 400 && Math.abs(s.player.x - chair.x) > 14; i++) {
+    const dir = chair.x > s.player.x ? 'KeyD' : 'KeyA';
+    await page.keyboard.down(dir);
+    s = await frame();
+    await page.keyboard.up(dir);
+  }
+  for (let i = 0; i < 8; i++) s = await frame();
+  await page.keyboard.down('KeyE');
+  for (let i = 0; i < 3; i++) s = await frame();
+  await page.keyboard.up('KeyE');
+  s = await frame();
+  assert(s.hud.heldItem !== null, `ITP-08: deveria estar segurando a cadeira: ${JSON.stringify(s.hud.heldItem)}`);
+  await page.keyboard.down('KeyA');
+  let heldFrames = 0;
+  for (let i = 0; i < 36; i++) {
+    s = await frame();
+    const held = s.worldProps.find((pr) => pr.state === 'held');
+    assert(held, `ITP-08: a cadeira deveria continuar na mão: ${JSON.stringify(s.worldProps)}`);
+    if (i < 10) continue; // já em velocidade de cruzeiro
+    const expected = s.player.view.x - 8 * s.player.facing;
+    assert(Math.abs(held.x - expected) <= 0.01, `ITP-08: cadeira em ${held.x}, deveria estar em ${expected} (view ${s.player.view.x})`);
+    heldFrames++;
+  }
+  await page.keyboard.up('KeyA');
+  assert(heldFrames >= 20 && s.player.facing === -1, `ITP-08: esperava 20+ quadros correndo para a esquerda: ${heldFrames}`);
+  // Larga a cadeira (S + E) para ficar de mãos livres.
+  await page.keyboard.down('KeyS');
+  await page.keyboard.down('KeyE');
+  for (let i = 0; i < 3; i++) s = await frame();
+  await page.keyboard.up('KeyE');
+  await page.keyboard.up('KeyS');
+  for (let i = 0; i < 20; i++) s = await frame();
+  assert(s.hud.heldItem === null, `deveria ter largado a cadeira: ${JSON.stringify(s.hud.heldItem)}`);
+
+  // --- Aura de conjuração (ITP-10): tecla 1 do laboratório, com o player correndo ------------------------------
+  await page.keyboard.down('KeyD');
+  for (let i = 0; i < 12; i++) s = await frame();
+  await page.keyboard.down('Digit1');
+  s = await frame();
+  await page.keyboard.up('Digit1');
+  let auraFrames = 0;
+  for (let i = 0; i < 40; i++) {
+    s = await frame();
+    if (!s.fx.aura) continue;
+    assert(
+      Math.abs(s.fx.aura.x - s.player.view.x) <= 0.01 && Math.abs(s.fx.aura.y - s.player.view.y) <= 0.01,
+      `ITP-10: aura em ${JSON.stringify(s.fx.aura)}, sprite em ${JSON.stringify(s.player.view)}`,
+    );
+    auraFrames++;
+  }
+  await page.keyboard.up('KeyD');
+  assert(auraFrames >= 8, `ITP-10: a aura deveria aparecer por pelo menos 8 quadros com o player correndo: ${auraFrames}`);
+
   // --- Inimigo comum andando (ITP-07) --------------------------------------------------------------------------
   const kit = makeKit({ page, baseUrl, assert });
   s = await kit.boot('enemyGuard=0');
@@ -113,4 +169,30 @@ export default async function ({ page, baseUrl, assert }) {
     }
   }
   assert(checked >= 30, `ITP-07: o inimigo deveria andar pelo menos 30 quadros seguidos: ${checked}`);
+  // --- Renascer (EDG-02): morrer a menos de 48 px do spawn e recomeçar não faz o sprite deslizar ----------------
+  s = await kit.boot('enemyGuard=0');
+  const spawnX = s.level.playerSpawn.x;
+  await kit.down('KeyD');
+  for (let i = 0; i < 9; i++) s = await kit.frame();
+  await kit.up('KeyD');
+  s = await kit.snap(120);
+  const away = Math.abs(s.player.x - spawnX);
+  // Menos que os 48 px do teleporte: sem o `snap` do Player, o sprite deslizaria do ponto da morte até o spawn.
+  assert(away > 15 && away < 48, `EDG-02: o player deveria morrer entre 15 e 48 px do spawn: ${away}`);
+  await page.keyboard.press('Digit3', { delay: 50 }); // tecla de debug: mata o player pelo caminho normal
+  s = await kit.snap(1200);
+  assert(s.run.state === 'gameOver' && s.player.dead === true, `EDG-02: esperava gameOver: ${JSON.stringify(s.run)}`);
+  await page.keyboard.press('KeyJ', { delay: 50 });
+  let fresh = 0;
+  for (let i = 0; i < 12 && fresh < 3; i++) {
+    s = await kit.frame();
+    if (s.run.state !== 'roundActive') continue;
+    assert(Math.abs(s.player.x - spawnX) < 1, `EDG-02: o corpo deveria estar no spawn: ${s.player.x} vs ${spawnX}`);
+    assert(
+      Math.abs(s.player.view.x - s.player.x) <= 0.01 && Math.abs(s.player.view.y - s.player.y) <= 0.01,
+      `EDG-02: quadro ${fresh} da run nova: sprite em ${JSON.stringify(s.player.view)}, corpo em ${s.player.x},${s.player.y}`,
+    );
+    fresh++;
+  }
+  assert(fresh === 3, `EDG-02: a run nova deveria começar em até 12 quadros: ${JSON.stringify(s.run)}`);
 }

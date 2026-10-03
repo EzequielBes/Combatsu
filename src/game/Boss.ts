@@ -135,9 +135,9 @@ export class Boss implements Hittable {
     return this._removed;
   }
 
-  /** Centro do corpo como a tela o mostra neste quadro (ITP-07), para o snapshot de debug. */
-  get renderPos(): Vec2 {
-    return this.drawPos.get();
+  /** Onde o sprite visível está de fato, convertido para o centro do corpo (ITP-07), para o snapshot de debug. */
+  get spritePos(): Vec2 {
+    return { x: this.view.x, y: this.view.y - BODY_H / 2 };
   }
 
   /** KOK-16: sprite visual para a silhueta do negativo do Kokusen. */
