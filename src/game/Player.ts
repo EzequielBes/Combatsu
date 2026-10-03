@@ -898,7 +898,7 @@ export class Player implements Hittable {
       moveName: move.name,
       unblockable: move.unblockable,
     };
-    this.hitbox.open(shape, hit, this.sprite.x, this.sprite.y, this.facing);
+    this.hitbox.open(shape, hit, this.sprite.x, this.sprite.y, this.facing, move.maxTargets);
   }
 
   /**

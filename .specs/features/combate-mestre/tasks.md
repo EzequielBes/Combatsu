@@ -399,9 +399,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `TargetGate`, `orderTargets`, `deferContact`
 **Requirement**: TGT-03, TGT-04, TGT-05, TGT-06
 **Done when**:
-- [ ] Sem `maxTargets` (inimigo, chefe) o comportamento é o de hoje.
-- [ ] Com `maxTargets`, a distância usada é `|x do alvo (hurtRect) − x do dono|` e o desfecho de cada alvo vai para `gate.note` (`blocked` lido do `report`).
-- [ ] `npm run build` passa.
+- [x] Sem `maxTargets` (inimigo, chefe) o comportamento é o de hoje.
+- [x] Com `maxTargets`, a distância usada é `|x do alvo (hurtRect) − x do dono|` e o desfecho de cada alvo vai para `gate.note` (`blocked` lido do `report`).
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
