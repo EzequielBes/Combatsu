@@ -1,6 +1,6 @@
 /*
- * Objetos (PRP-01): cadeira escolar e garrafa em pixel art, com contorno `k`, e os estilhaços recortados do próprio
- * sprite. Dados puros (sem `phaser` como valor).
+ * Objetos (PRP-01, OBJ-01/02): cadeira escolar e garrafa em pixel art, com contorno `k`, e os estilhaços recortados
+ * do próprio sprite. Dados puros (sem `phaser` como valor).
  *
  * Os corpos físicos dos objetos saem do tamanho da textura: a cadeira tem 13x13 texels (26x26 px) e a garrafa 4x10
  * texels (8x20 px), exatamente o tamanho dos placeholders que elas substituem, para a física não mudar.
@@ -8,34 +8,37 @@
 
 type Grid = readonly string[];
 
-/** Cadeira escolar de perfil, virada para a direita: encosto atrás, assento e pernas em madeira de dois tons. */
+/**
+ * Cadeira escolar de perfil, virada para a direita: estrutura de tubo de aço (`S`/`s`) com o encosto e o assento de
+ * madeira (`M`/`m`, brilho `P`) presos nela.
+ */
 const CHAIR: Grid = [
-  'kkkk.........',
-  'kMMk.........',
-  'kMmk.........',
-  'kMmk.........',
-  'kMmk.........',
-  'kMmk.........',
-  'kMmkkkkkkkkkk',
-  'kMMMMMMMMMMMk',
-  'kmmmmmmmmmmmk',
-  'kkkkkkkkkkkkk',
-  '.kmk.....kmk.',
-  '.kmk.....kmk.',
-  '.kkk.....kkk.',
+  '.kkk.........',
+  'kSskk........',
+  'kSkMMk.......',
+  'kSkPMk.......',
+  'kSkMmk.......',
+  'kSkmmk.......',
+  'kSskkkkkkkkk.',
+  'kSkPPMMMMMMMk',
+  'kskmmmmmmmmmk',
+  'kSkkkkkkkkkkk',
+  'kSk.......kSk',
+  'ksk.......ksk',
+  'kkk.......kkk',
 ];
 
-/** Garrafa verde em pé: tampa escura, gargalo, corpo em dois tons e um brilho branco. */
+/** Garrafa verde em pé: gargalo, ombro com um brilho branco, rótulo creme (`l`/`L`) e fundo na sombra. */
 const BOTTLE: Grid = [
   '.kk.',
   '.Gg.',
   '.Gg.',
   'kGgk',
-  'kwgk',
-  'kwgk',
+  'kwGk',
+  'kllk',
+  'kLlk',
   'kGgk',
-  'kGgk',
-  'kGgk',
+  'kggk',
   'kkkk',
 ];
 
