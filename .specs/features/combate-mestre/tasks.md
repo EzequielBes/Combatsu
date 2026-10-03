@@ -662,11 +662,11 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `makeKit`, `enemyAttack=`, `enemyVariant=`, `armed=club`
 **Requirement**: HGT-07, HGT-08, HGT-13, EDG-08, CMT-01, CMT-02, CMT-03, CMT-04, CMT-05, CMT-06, CMT-07, CMT-08, CMT-10, HGT-01, HGT-02, HGT-03
 **Done when**:
-- [ ] Marcador: `telegraph` vale o tipo em todo frame de `windup` e `attack` e `null` nos outros estados; `rastejante` dá `low`, `armed=club` dá `red`, `corcunda` dá `white`; `enemyAttack=red` manda; valor inválido é ignorado.
-- [ ] `committed` vira `true` com 200 ms ou menos de preparo e `commitFlash` mostra `w`, `t` e `A` por 80 ms (±1 frame).
-- [ ] `jab` antes do compromisso: a garra não sai. `jab` depois: tira 6 de vida, `armored:<id>` uma vez, a hitbox abre no mesmo frame previsto e o jogador leva o golpe.
-- [ ] `rasteira` depois do compromisso: `ragdollStun` e nenhum golpe. Postura cheia depois do compromisso: quebrado e nenhum golpe.
-- [ ] Comprometido não levanta guarda com `enemyGuard=1`.
+- [x] Marcador: `telegraph` vale o tipo em todo frame de `windup` e `attack` e `null` nos outros estados; `rastejante` dá `low`, `armed=club` dá `red`, `corcunda` dá `white`; `enemyAttack=red` manda; valor inválido é ignorado.
+- [x] `committed` vira `true` com 200 ms ou menos de preparo e `commitFlash` mostra `w`, `t` e `A` por 80 ms (±1 frame).
+- [x] `jab` antes do compromisso: a garra não sai. `jab` depois: tira 6 de vida, `armored:<id>` uma vez, a hitbox abre no mesmo frame previsto e o jogador leva o golpe.
+- [x] `rasteira` depois do compromisso: `ragdollStun` e nenhum golpe. Postura cheia depois do compromisso: quebrado e nenhum golpe.
+- [x] Comprometido não levanta guarda com `enemyGuard=1`.
 **Tests**: smoke
 **Gate**: full
 
