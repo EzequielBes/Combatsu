@@ -20,7 +20,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 - `src/core/cameraFollow.ts` (novo, puro): `followCenter(centro, alvo, cfg, dtMs)`, `clampCenter`, `scrollFor(centro, canvas, zoom)`.
 - `src/game/physics.ts`: `renderAlpha(scene)` lê `matter.world.runner.timeBuffer` e `.delta`.
 - `Player`, `Enemy`, `Boss`: um `StepLerp` alimentado no evento `afterupdate` do Matter; o sprite visível, a barra e a arma usam `renderPos`; o objeto na mão segue a posição de desenho do player.
-- `TestScene`: a câmera do mundo perde `startFollow`/`setDeadzone`/`roundPixels`; `followCamera(dt)` roda todo quadro com o `dt` real, inclusive no hitstop. O snapshot ganha `player.view`, `enemies[].view`, `boss.view`, `camera.center`, `camera.scroll`, `camera.roundPixels` e `camera.phaserFollow`.
+- `TestScene`: a câmera do mundo perde `startFollow`/`setDeadzone`/`roundPixels`; `followCamera(dt)` roda todo quadro com o `dt` real, inclusive no hitstop. O snapshot ganha `player.view`, `enemies[].view`, `boss.view`, `physics.alpha`, `camera.center`, `camera.scroll`, `camera.roundPixels` e `camera.phaserFollow`.
 
 ---
 
@@ -182,9 +182,9 @@ T7
 
 **Done when**:
 
-- [ ] A câmera segue `player.renderPos` todo quadro com o `dt` real.
-- [ ] O snapshot expõe os quatro campos novos da câmera.
-- [ ] Gate check passes: `npm run build && npm test`
+- [x] A câmera segue `player.renderPos` todo quadro com o `dt` real.
+- [x] O snapshot expõe os quatro campos novos da câmera.
+- [x] Gate check passes: `npm run build && npm test`
 
 **Tests**: none
 **Gate**: build
@@ -203,9 +203,9 @@ T7
 **Done when**:
 
 - [ ] PRB-04: garrafa arremessada no chefe em `rest` tira exatamente 12 de vida e fica `breaking`.
-- [ ] ITP-05: correndo, `player.view.x` é o ponto médio dos dois últimos x do corpo (±0,01).
+- [ ] ITP-05: correndo, em quadro de um passo, `player.view.x` é `anterior + (atual − anterior) × physics.alpha` (±0,01).
 - [ ] ITP-06: correndo em regime, a variação na tela é ≤ 1 px.
-- [ ] ITP-07: andando, `enemies[].view.x` é o ponto médio dos dois últimos x do corpo (±0,01); o mesmo para `boss.view.x` na investida.
+- [ ] ITP-07: em quadro de um passo, `enemies[].view.x` andando e `boss.view.x` na investida são `anterior + (atual − anterior) × physics.alpha` (±0,01).
 - [ ] CAM-07: `camera.roundPixels` é `false` e `camera.phaserFollow` é `false`.
 - [ ] EDG-02: depois de renascer, `player.view` é igual à posição do corpo.
 - [ ] Gate check passes: `npm run build && npm test && npm run smoke`
