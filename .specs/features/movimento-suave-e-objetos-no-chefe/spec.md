@@ -44,6 +44,7 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 | Teleporte | Um salto de mais de 48 px num passo não interpola | Renascer e reposicionar não devem deslizar pela tela | n |
 | Câmera | Segue a posição de desenho do player com a mesma deadzone (40×24) e o mesmo lerp (0,15 por quadro de 60 Hz), agora por tempo; o scroll aplicado cai na grade de pixel de tela e o arredondamento não volta para o estado | Mantém o enquadramento atual e tira o tremor | n |
 | `roundPixels` da câmera do mundo | Desligado | Com 2 px por texel e zoom 1,5, todo texel ocupa 3 px de tela em qualquer posição; o floor só servia para criar o tremor | n |
+| Alfa no harness de debug | O smoke lê o alfa do snapshot (`physics.alpha`) em vez de supor 0,5 | Entre o `page.goto` e o primeiro `step()` o loop roda em tempo real e deixa uma sobra diferente no acumulador do Matter; o alfa fica constante, mas nem sempre em 0,5 | n |
 | Quem interpola | Player, inimigo comum e chefe (os três têm sprite separado do corpo) e o objeto na mão | São o que o olho segue | n |
 
 **Open questions:** none - all resolved or logged above.
@@ -101,9 +102,9 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 2. ITP-02: The `StepLerp.at(alfa)` SHALL devolver `anterior + (atual − anterior) × alfa`, onde `push` guarda a posição atual como anterior antes de registrar a nova.
 3. ITP-03: IF um `push` anda mais de 48 px THEN `at(alfa)` SHALL devolver a posição nova para qualquer alfa.
 4. ITP-04: Para um alvo a 220 px/s com física a 60 Hz, deadzone de 40 px, lerp 0,15 e zoom 1,5, a variação na tela em regime SHALL ser de no máximo 1 px a 60, 75, 120 e 144 Hz.
-5. ITP-05: WHILE o player corre em passo fixo, `player.view.x` do snapshot SHALL ser o ponto médio entre o x do corpo no passo anterior e no atual, com erro de até 0,01 px.
+5. ITP-05: WHILE o player corre, em todo quadro com exatamente um passo de física, `player.view.x` do snapshot SHALL ser `anterior + (atual − anterior) × physics.alpha`, com erro de até 0,01 px, onde anterior e atual são o x do corpo no quadro anterior e neste.
 6. ITP-06: WHILE o player corre em passo fixo, a variação na tela calculada com `player.view.x` e `camera.scroll.x` SHALL ser de no máximo 1 px em regime.
-7. ITP-07: The sprite do inimigo comum e o do chefe SHALL ser posicionados na posição de desenho do próprio corpo.
+7. ITP-07: Em todo quadro com exatamente um passo de física, `view.x` do inimigo comum andando e do chefe na investida SHALL ser `anterior + (atual − anterior) × physics.alpha`, com erro de até 0,01 px.
 
 **Independent Test**: `tests/core/stepLerp.test.ts`, `tests/core/cameraFollow.test.ts` (simulação) e o smoke `feel`.
 
@@ -130,7 +131,7 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 | CAM-04 | P1: Câmera sem tremor | Execute | Implementing |
 | CAM-05 | P1: Câmera sem tremor | Execute | Implementing |
 | CAM-06 | P1: Câmera sem tremor | Execute | Implementing |
-| CAM-07 | P1: Câmera sem tremor | Tasks | In Tasks |
+| CAM-07 | P1: Câmera sem tremor | Execute | Implementing |
 | ITP-01 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-02 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-03 | P1: Movimento sem degraus | Execute | Implementing |
