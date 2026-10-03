@@ -9,6 +9,7 @@
  * desenhadas à mão por cima. No fim, o `selOut` troca o `k` interno pela linha do material. Assim uma pose nova
  * custa só as posições das juntas, e a sombra fica coerente entre os frames.
  */
+import { BOSS } from '../../../data/tuning';
 import { selOut, type SelOutConfig } from '../selOut';
 import type { AnimDef } from './player';
 
@@ -365,13 +366,32 @@ export const TECELA_FRAMES: Record<string, readonly string[]> = Object.fromEntri
   Object.entries(BOSS_FRAMES).map(([key, grid]) => [key, recolor(grid, TECELA_COLOR_MAP)]),
 );
 
-/** Estados do chefe: o adaptador toca `bossAnimKey(arquétipo, estado)`. */
-const STATES = ['idle', 'windup-charge', 'charge', 'windup-leap', 'leap', 'windup-volley', 'volley', 'roar', 'stagger', 'dead'];
+/** Dois frames em laço (`<nome>` e `<nome>-1`), com a mesma duração por frame. */
+const loop = (name: string, ms: number): AnimDef => ({
+  frames: [name, `${name}-1`],
+  frameRate: Math.round(1000 / ms),
+  repeat: -1,
+  durations: [ms, ms],
+});
+const still = (name: string): AnimDef => ({ frames: [name], frameRate: 1, repeat: 0 });
 
-/** Uma animação de um frame só por estado; `idle` repete, o resto toca uma vez (o adaptador troca o estado). */
-export const BOSS_ANIMS: Record<string, AnimDef> = Object.fromEntries(
-  STATES.map((name) => [name, { frames: [name], frameRate: 1, repeat: name === 'idle' ? -1 : 0 }]),
-);
+/**
+ * Animações do chefe (BAN-01..05), uma por estado: o adaptador toca `bossAnimKey(arquétipo, estado)` a cada frame
+ * com `play(key, true)`. Tudo que tem mais de um frame é laço, porque uma animação de uma volta recomeçaria ao
+ * terminar. A rajada dá um ciclo do braço por disparo.
+ */
+export const BOSS_ANIMS: Record<string, AnimDef> = {
+  idle: { frames: ['idle', 'idle-1', 'idle-2', 'idle-3'], frameRate: 3, repeat: -1, durations: [480, 160, 480, 160] },
+  'windup-charge': loop('windup-charge', 90),
+  charge: loop('charge', 80),
+  'windup-leap': loop('windup-leap', 90),
+  leap: still('leap'),
+  'windup-volley': loop('windup-volley', 90),
+  volley: loop('volley', BOSS.volley.intervalMs / 2),
+  roar: loop('roar', 80),
+  stagger: loop('stagger', 220),
+  dead: still('dead'),
+};
 
 /** Chave da animação do chefe no AnimationManager: uma por arquétipo, para não compartilhar frames entre eles. */
 export const bossAnimKey = (archetype: 'oni' | 'tecela', name: string): string => `boss-${archetype}-${name}`;

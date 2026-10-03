@@ -224,13 +224,13 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | BSP-11 | P1: Chefes com desenho | Execute | Implementing |
 | BSP-12 | P1: Chefes com desenho | Execute | Implementing |
 | BSP-13 | P1: Chefes com desenho | Execute | Implementing |
-| BAN-01 | P1: Chefes que se mexem | Tasks | In Tasks |
-| BAN-02 | P1: Chefes que se mexem | Tasks | In Tasks |
-| BAN-03 | P1: Chefes que se mexem | Tasks | In Tasks |
-| BAN-04 | P1: Chefes que se mexem | Tasks | In Tasks |
-| BAN-05 | P1: Chefes que se mexem | Tasks | In Tasks |
-| BAN-06 | P1: Chefes que se mexem | Tasks | In Tasks |
-| BAN-07 | P1: Chefes que se mexem | Tasks | In Tasks |
+| BAN-01 | P1: Chefes que se mexem | Execute | Implementing |
+| BAN-02 | P1: Chefes que se mexem | Execute | Implementing |
+| BAN-03 | P1: Chefes que se mexem | Execute | Implementing |
+| BAN-04 | P1: Chefes que se mexem | Execute | Implementing |
+| BAN-05 | P1: Chefes que se mexem | Execute | Implementing |
+| BAN-06 | P1: Chefes que se mexem | Execute | Implementing |
+| BAN-07 | P1: Chefes que se mexem | Execute | Implementing |
 | LMB-01 | P1: Soco e chute | Tasks | In Tasks |
 | LMB-02 | P1: Soco e chute | Tasks | In Tasks |
 | LMB-03 | P1: Soco e chute | Tasks | In Tasks |
@@ -250,7 +250,7 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | EPD-02 | P3: Pendências dos inimigos | Tasks | In Tasks |
 | EPD-03 | P3: Pendências dos inimigos | Tasks | In Tasks |
 | EDG-01 | Edge cases | Tasks | In Tasks |
-| EDG-02 | Edge cases | Tasks | In Tasks |
+| EDG-02 | Edge cases | Execute | Implementing |
 
 **Coverage:** 40 total, 40 mapped to tasks, 0 unmapped
 
