@@ -602,7 +602,7 @@ reading: { move: string | null; repeats: number };  // último golpe iniciado e 
 | EDG-10 | Edge cases | Specify | Pending |
 | EDG-11 | Edge cases | Specify | Pending |
 
-**Coverage:** 155 total, 0 mapped to tasks, 155 unmapped (Tasks ainda não feitas)
+**Coverage:** 155 total, 155 mapped to tasks, 0 unmapped
 
 ---
 
