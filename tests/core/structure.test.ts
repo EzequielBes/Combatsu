@@ -33,9 +33,10 @@ describe('STR-02: ganho do inimigo por golpe, com teto', () => {
     expect(MOVES.joelhada.structureGain).toBe(30);
   });
 
-  it('todo golpe leve soma 4 e todo forte soma 10, exceto o carregado (40) e a joelhada (30)', () => {
+  it('todo golpe leve soma 4 e todo forte soma 10, exceto o carregado (40), a joelhada (30) e os dois Contras (30, CNT-09/CNT-10)', () => {
     for (const m of Object.values(MOVES)) {
-      const expected = m.name === 'chuteCarregado' ? 40 : m.name === 'joelhada' ? 30 : m.strength === 'light' ? 4 : 10;
+      const expected =
+        m.name === 'chuteCarregado' ? 40 : ['joelhada', 'contra', 'contraGancho'].includes(m.name) ? 30 : m.strength === 'light' ? 4 : 10;
       expect(m.structureGain, m.name).toBe(expected);
     }
   });
