@@ -632,7 +632,7 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `snap`, `frame`, `nearest`
 **Requirement**: CMT-01
 **Done when**:
-- [ ] Os smokes que já usam o kit continuam carregando (`npm run smoke -- fight` roda até o primeiro assert de regra).
+- [x] Os smokes que já usam o kit continuam carregando (`npm run smoke -- fight` roda até o primeiro assert de regra).
 **Tests**: none
 **Gate**: build
 

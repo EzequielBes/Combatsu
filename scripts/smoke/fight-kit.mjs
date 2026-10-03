@@ -20,11 +20,15 @@ export function makeKit({ page, baseUrl, assert }) {
 
   /**
    * Abre a página com a query, aguarda o harness e começa a rodada 1 com `J` no título. Os duelos precisam de um inimigo
-   * isolado, então `maxAlive=1` é o padrão (SPN-06); a query pode trazer o seu próprio `maxAlive`.
+   * isolado, então `maxAlive=1` é o padrão (SPN-06); a query pode trazer o seu próprio `maxAlive`. Sem `shove` na query
+   * entra `shove=0`: quatro leves seguidos no mesmo inimigo sortearia o empurrão (RDG-16) e tornaria o cenário instável.
    */
   const boot = async (query) => {
     const q = query ?? '';
-    const full = /(^|&)maxAlive=/.test(q) ? q : `${q}${q ? '&' : ''}maxAlive=1`;
+    const has = (name) => new RegExp(`(^|&)${name}=`).test(q);
+    let full = q;
+    if (!has('maxAlive')) full += `${full ? '&' : ''}maxAlive=1`;
+    if (!has('shove')) full += `${full ? '&' : ''}shove=0`;
     await page.goto(`${baseUrl}?debug&seed=1&${full}`, { waitUntil: 'load' });
     await page.waitForFunction(
       () => {
@@ -100,5 +104,35 @@ export function makeKit({ page, baseUrl, assert }) {
     return snap(60);
   };
 
-  return { snap, frame, down, up, tap, count, boot, nearest, approach, settle, startDuel, assert };
+  /**
+   * Lê o frame atual e, se `pred` ainda não vale, passa um frame por vez até valer (no máximo `maxFrames`). Devolve o
+   * snapshot em que `pred` valeu; falha com `what` se nunca vier. O frame em que vale não é consumido além dele.
+   */
+  const waitFor = async (pred, maxFrames = 120, what = 'a condição esperada') => {
+    let s = await snap(0);
+    for (let i = 0; i < maxFrames && !pred(s); i++) s = await frame();
+    assert(pred(s), `${what}: não aconteceu em ${maxFrames} frames (${JSON.stringify({ hp: s.player.hp, move: s.player.move, ev: s.events.slice(-3), en: s.enemies.map((e) => [e.id, e.state, e.ai, e.committed]) })})`);
+    return s;
+  };
+
+  /** Espera o inimigo mais perto ficar `committed` (200 ms ou menos de preparo pela frente, CMT-01); devolve o snapshot desse frame. */
+  const waitCommit = (maxFrames = 200) =>
+    waitFor((s) => nearest(s)?.committed === true, maxFrames, 'o inimigo mais perto deveria ficar committed');
+
+  /** Vira o jogador para o inimigo mais perto com um toque de um frame na direção dele (como o fim do `approach`); devolve o snapshot. */
+  const faceEnemy = async () => {
+    let s = await snap(0);
+    const e = nearest(s);
+    const want = e.x > s.player.x ? 1 : -1;
+    if (s.player.facing === want) return s;
+    const dir = want === 1 ? 'KeyD' : 'KeyA';
+    await down(dir);
+    await frame();
+    await up(dir);
+    s = await snap(20);
+    assert(s.player.facing === want, `o jogador deveria olhar para o inimigo: facing=${s.player.facing}, esperava ${want}`);
+    return s;
+  };
+
+  return { snap, frame, down, up, tap, count, boot, nearest, approach, settle, startDuel, waitFor, waitCommit, faceEnemy, assert };
 }
