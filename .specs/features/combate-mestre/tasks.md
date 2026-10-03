@@ -242,10 +242,10 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `pose`, `armStraight`, `armRaised`, `LEGS_WIDE`, a base agachada do `socoBaixo`
 **Requirement**: CNT-17
 **Done when**:
-- [ ] Os 7 frames existem em `PLAYER_MOVE_FRAMES`, com o tamanho dos outros frames e só cores da paleta.
-- [ ] Passam nos testes de `tests/game/playerConsistency.test.ts` (sem parte solta, tronco alinhado, pés no chão), acrescentados para os frames novos.
-- [ ] `duck` tem o topo opaco pelo menos 3 texels abaixo do topo do `idle-0` (teste).
-- [ ] Prancha gerada com `SPRITE_SCALE=8 node tools/sprite-preview.mjs` e olhada: braço e pernas presos ao corpo, golpe legível.
+- [x] Os 7 frames existem em `PLAYER_MOVE_FRAMES`, com o tamanho dos outros frames e só cores da paleta.
+- [x] Passam nos testes de `tests/game/playerConsistency.test.ts` (sem parte solta, tronco alinhado, pés no chão), acrescentados para os frames novos.
+- [x] `duck` tem o topo opaco pelo menos 3 texels abaixo do topo do `idle-0` (teste).
+- [x] Prancha gerada com `SPRITE_SCALE=8 node tools/sprite-preview.mjs` e olhada: braço e pernas presos ao corpo, golpe legível.
 **Tests**: unit
 **Gate**: quick
 
