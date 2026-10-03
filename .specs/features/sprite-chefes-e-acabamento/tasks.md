@@ -102,15 +102,15 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] BAN-01: `idle` com 4 frames, `repeat` −1, 4 durações > 0 e nenhum par consecutivo igual (contando a volta).
-- [ ] BAN-02: os três preparos têm 2 frames distintos em laço, o primeiro com o nome do estado, 90 ms cada.
-- [ ] BAN-03: `charge`, `roar` e `stagger` têm 2 frames distintos em laço, o primeiro com o nome do estado, com 80, 80 e 220 ms por frame.
-- [ ] BAN-04: `volley` tem 2 frames distintos em laço, o primeiro com o nome do estado, e as durações somam `BOSS.volley.intervalMs`.
-- [ ] BAN-05: `leap` e `dead` têm 1 frame, com o nome do estado.
-- [ ] BAN-06: todo frame citado existe em `BOSS_FRAMES` e em `TECELA_FRAMES`.
-- [ ] BAN-07: `registerAnims` com `BOSS_ANIMS` entrega ao Phaser a `duration` de cada frame e o `repeat` de cada animação.
-- [ ] EDG-02: `durations` com tamanho errado numa animação do chefe lança erro com o nome da animação.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] BAN-01: `idle` com 4 frames, `repeat` −1, 4 durações > 0 e nenhum par consecutivo igual (contando a volta).
+- [x] BAN-02: os três preparos têm 2 frames distintos em laço, o primeiro com o nome do estado, 90 ms cada.
+- [x] BAN-03: `charge`, `roar` e `stagger` têm 2 frames distintos em laço, o primeiro com o nome do estado, com 80, 80 e 220 ms por frame.
+- [x] BAN-04: `volley` tem 2 frames distintos em laço, o primeiro com o nome do estado, e as durações somam `BOSS.volley.intervalMs`.
+- [x] BAN-05: `leap` e `dead` têm 1 frame, com o nome do estado.
+- [x] BAN-06: todo frame citado existe em `BOSS_FRAMES` e em `TECELA_FRAMES`.
+- [x] BAN-07: `registerAnims` com `BOSS_ANIMS` entrega ao Phaser a `duration` de cada frame e o `repeat` de cada animação.
+- [x] EDG-02: `durations` com tamanho errado numa animação do chefe lança erro com o nome da animação.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

@@ -852,6 +852,64 @@ describe('chefes desenhados por pose articulada (BSP-01..13)', () => {
   });
 });
 
+describe('animações dos chefes em laço (BAN-01..06)', () => {
+  /** Dois frames distintos, em laço, começando pelo frame com o nome do estado. */
+  const expectLoopOfTwo = (name: string): void => {
+    const anim = BOSS_ANIMS[name];
+    expect(anim.frames, name).toHaveLength(2);
+    expect(anim.frames[0], name).toBe(name);
+    expect(anim.repeat, name).toBe(-1);
+    expect(BOSS_FRAMES[anim.frames[0]], name).not.toEqual(BOSS_FRAMES[anim.frames[1]]);
+  };
+
+  it('BAN-01: idle tem 4 frames em laço, 4 durações maiores que 0 e nenhum par consecutivo igual (contando a volta)', () => {
+    const { frames, repeat, durations } = BOSS_ANIMS.idle;
+    expect(frames).toHaveLength(4);
+    expect(repeat).toBe(-1);
+    expect(durations).toHaveLength(4);
+    for (const d of durations!) expect(d).toBeGreaterThan(0);
+    frames.forEach((f, i) => {
+      const next = frames[(i + 1) % frames.length];
+      expect(BOSS_FRAMES[f], `${f} x ${next}`).not.toEqual(BOSS_FRAMES[next]);
+    });
+  });
+
+  it.each(['windup-charge', 'windup-leap', 'windup-volley'])('BAN-02: %s tem 2 frames distintos em laço, com 90 ms por frame', (name) => {
+    expectLoopOfTwo(name);
+    expect(BOSS_ANIMS[name].durations).toEqual([90, 90]);
+  });
+
+  it.each([
+    ['charge', 80],
+    ['roar', 80],
+    ['stagger', 220],
+  ] as const)('BAN-03: %s tem 2 frames distintos em laço, com %i ms por frame', (name, ms) => {
+    expectLoopOfTwo(name);
+    expect(BOSS_ANIMS[name].durations).toEqual([ms, ms]);
+  });
+
+  it('BAN-04: volley tem 2 frames distintos em laço e um ciclo dura BOSS.volley.intervalMs', () => {
+    expectLoopOfTwo('volley');
+    const durations = BOSS_ANIMS.volley.durations!;
+    expect(durations).toHaveLength(2);
+    for (const d of durations) expect(d).toBeGreaterThan(0);
+    expect(durations[0] + durations[1]).toBe(BOSS.volley.intervalMs);
+  });
+
+  it.each(['leap', 'dead'])('BAN-05: %s tem 1 frame, com o nome do estado', (name) => {
+    expect(BOSS_ANIMS[name].frames).toEqual([name]);
+  });
+
+  it('BAN-06: todo frame citado por BOSS_ANIMS existe nas folhas do Oni e da Tecelã', () => {
+    for (const [name, anim] of Object.entries(BOSS_ANIMS)) {
+      for (const f of anim.frames) {
+        expect(Object.hasOwn(BOSS_FRAMES, f), `oni ${name}: ${f}`).toBe(true);
+        expect(Object.hasOwn(TECELA_FRAMES, f), `tecela ${name}: ${f}`).toBe(true);
+      }
+    }
+  });
+});
+
 describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
   it('o projétil passa no parseSheet só com cores da paleta', () => {
     const sheet = parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS);
