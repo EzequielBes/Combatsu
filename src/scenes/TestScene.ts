@@ -1298,7 +1298,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Quem bateu no jogador, para o lado do golpe, o tipo (chefe) e o efeito do parry (PAR-03/07/10). */
   private attackerOf(ownerId: number): Attacker | null {
     const enemy = this.enemies.find((e) => e.id === ownerId);
-    if (enemy) return { x: enemy.x, isBoss: false, parried: () => enemy.parried() };
+    if (enemy) return { x: enemy.x, isBoss: false, parried: (info) => enemy.parried(info) };
     const boss = this.boss;
     if (boss && boss.id === ownerId) return { x: boss.x, isBoss: true, parried: () => boss.parried() };
     // Projéteis e ondas de choque só existem pelo chefe.
@@ -1315,18 +1315,19 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (kind === 'block') {
       this.fx.spark(point.x, point.y, 'guard');
       this.realtimeFx.add('guard.spark', 100);
-    } else if (kind === 'parry') {
+    } else if (kind === 'parry' || kind === 'deflect') {
       this.fx.spark(point.x, point.y, 'parry');
       this.fx.parryRing(point.x, point.y);
       this.realtimeFx.add('parry.flash', 100);
       this.realtimeFx.add('parry.ring', 200);
       this.hitstop.trigger(DEFENSE.parryHitstopMs);
       this.freeze();
-    } else {
+    } else if (kind === 'perfectDodge') {
       // Esquiva perfeita (DOD-07): câmera lenta com tom azulado e o "tique" branco no jogador.
       this.slowMo.trigger();
       this.player.flash('w', 60);
     }
+    // `duckEvade` e `jumpEvade` ainda sem efeito de cena (os textos de aviso entram na T30).
   }
 
   /** Aplica a escala da câmera lenta (e do laboratório de efeitos) ao tempo de jogo: timers, tweens e física. */
