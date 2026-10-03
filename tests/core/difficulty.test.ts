@@ -117,6 +117,30 @@ describe('multipliersFor: rodadas inválidas viram rodada 1 (DIF-03)', () => {
   });
 });
 
+describe('scaleFor: tipo do golpe e sequência (DFL-01, HGT-03)', () => {
+  it('o golpe base do inimigo é white e a sequência base tem 1 golpe', () => {
+    expect(ENEMY_ATTACK.kind).toBe('white');
+    expect(ENEMY_AI.hits).toBe(1);
+  });
+
+  it('preserva o kind e os hits em qualquer rodada', () => {
+    for (const round of [1, 2, 15, 30]) {
+      const scaled = scaleFor(round, BASE, DIFFICULTY);
+      expect(scaled.attack.kind).toBe('white');
+      expect(scaled.ai.hits).toBe(1);
+      expect(scaled.ai.commitMs).toBe(ENEMY_AI.commitMs);
+      expect(scaled.ai.stringGapMs).toBe(ENEMY_AI.stringGapMs);
+    }
+  });
+
+  it('preserva valores diferentes do padrão (kind red e 3 golpes)', () => {
+    const custom: EnemyBase = { brain: ENEMY, ai: { ...ENEMY_AI, hits: 3 }, attack: { ...ENEMY_ATTACK, kind: 'red' } };
+    const scaled = scaleFor(15, custom, DIFFICULTY);
+    expect(scaled.attack.kind).toBe('red');
+    expect(scaled.ai.hits).toBe(3);
+  });
+});
+
 describe('scaleFor: não muta o objeto base', () => {
   it('brain, ai e attack do base continuam com os valores originais', () => {
     const brainBefore = { ...ENEMY };

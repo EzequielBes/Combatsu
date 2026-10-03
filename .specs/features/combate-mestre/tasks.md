@@ -226,9 +226,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `armFor`, `scaleFor`
 **Requirement**: DFL-01
 **Done when**:
-- [ ] `ARMED.knife.hits = 2` e `ENEMY_ATTACK.kind = 'white'` em `src/data/tuning.ts`; o tipo `EnemyAttackDef` fica em `src/core/difficulty.ts`.
-- [ ] `armFor('cursedKnife')` devolve `ai.hits` 2 sem mudar o resto (dano ×1,25 como hoje); `armFor('cursedClub')` mantém `hits` 1.
-- [ ] `scaleFor` preserva `kind` e `hits`.
+- [x] `ARMED.knife.hits = 2` e `ENEMY_ATTACK.kind = 'white'` em `src/data/tuning.ts`; o tipo `EnemyAttackDef` fica em `src/core/difficulty.ts`.
+- [x] `armFor('cursedKnife')` devolve `ai.hits` 2 sem mudar o resto (dano ×1,25 como hoje); `armFor('cursedClub')` mantém `hits` 1.
+- [x] `scaleFor` preserva `kind` e `hits`.
 **Tests**: unit
 **Gate**: quick
 

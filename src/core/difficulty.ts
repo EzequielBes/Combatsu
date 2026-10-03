@@ -1,6 +1,7 @@
 import type { EnemyTuning } from './enemyBrain';
 import type { EnemyAITuning } from './enemyAI';
 import type { AttackStep } from './combo';
+import type { AttackKind } from './attackKind';
 
 /** Tuning da escala de dificuldade por rodada (DIF-01, DIF-05, DIF-06); lógica em T2. */
 export interface DifficultyTuning {
@@ -12,11 +13,14 @@ export interface DifficultyTuning {
   speedCap: number;
 }
 
+/** Golpe do inimigo comum: o passo de ataque mais o tipo do golpe (AD-020, HGT-01..06). */
+export type EnemyAttackDef = AttackStep & { kind: AttackKind };
+
 /** Tuning base do inimigo antes da escala por rodada. */
 export interface EnemyBase {
   brain: EnemyTuning;
   ai: EnemyAITuning;
-  attack: AttackStep;
+  attack: EnemyAttackDef;
 }
 
 export interface DifficultyMultipliers {
