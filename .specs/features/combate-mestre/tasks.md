@@ -114,11 +114,11 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `EnemyVariant`, `ToolKey`, `Hit`
 **Requirement**: HGT-01, HGT-02, HGT-03, HGT-04, HGT-05, HGT-06, HGT-13, DFL-14, EDG-08, EDG-09
 **Done when**:
-- [ ] `attackKindFor`: porrete dá `red` nas 3 aparências (inclusive `rastejante`); `rastejante` sem arma e com faca dá `low`; `corcunda` e `bruto` sem arma e com faca dão `white`.
-- [ ] `hitFieldsFor`: `white` = `{ height: 'high' }` sem `unblockable` verdadeiro; `red` = `high` + `unblockable: true`; `low` = `low` + `unblockable: true`.
-- [ ] `parseAttackKind` aceita só `white`, `red`, `low`; devolve `null` para `null`, `''`, `RED`, `high`.
-- [ ] `parseStringLength` aceita `1`, `2`, `3`, `4`; devolve `null` para `0`, `5`, `2.5`, `abc`, `''`, `null`.
-- [ ] `KIND_COLOR` aponta para chaves que existem em `PALETTE` (`w`, `t`, `A`).
+- [x] `attackKindFor`: porrete dá `red` nas 3 aparências (inclusive `rastejante`); `rastejante` sem arma e com faca dá `low`; `corcunda` e `bruto` sem arma e com faca dão `white`.
+- [x] `hitFieldsFor`: `white` = `{ height: 'high' }` sem `unblockable` verdadeiro; `red` = `high` + `unblockable: true`; `low` = `low` + `unblockable: true`.
+- [x] `parseAttackKind` aceita só `white`, `red`, `low`; devolve `null` para `null`, `''`, `RED`, `high`.
+- [x] `parseStringLength` aceita `1`, `2`, `3`, `4`; devolve `null` para `0`, `5`, `2.5`, `abc`, `''`, `null`.
+- [x] `KIND_COLOR` aponta para chaves que existem em `PALETTE` (`w`, `t`, `A`).
 **Tests**: unit
 **Gate**: quick
 
