@@ -981,6 +981,25 @@ describe('chute alto saindo do quadril (LMB-07, LMB-08)', () => {
   });
 });
 
+describe('objetos com volume (OBJ-01, OBJ-02)', () => {
+  it('OBJ-01: a cadeira tem 13x13 texels e pelo menos 6 chaves distintas, entre elas m, M, s e S', () => {
+    const sheet = parseSheet('chair', { chair: PROP_SPRITES.chair }, PALETTE_KEYS);
+    expect(sheet.width).toBe(13);
+    expect(sheet.height).toBe(13);
+    const keys = artMeasure.keysOf(PROP_SPRITES.chair);
+    expect(keys.size).toBeGreaterThanOrEqual(6);
+    for (const key of ['m', 'M', 's', 'S']) expect(keys.has(key), key).toBe(true);
+  });
+
+  it('OBJ-02: a garrafa tem 4x10 texels e as chaves G, g, w, l e L', () => {
+    const sheet = parseSheet('bottle', { bottle: PROP_SPRITES.bottle }, PALETTE_KEYS);
+    expect(sheet.width).toBe(4);
+    expect(sheet.height).toBe(10);
+    const keys = artMeasure.keysOf(PROP_SPRITES.bottle);
+    for (const key of ['G', 'g', 'w', 'l', 'L']) expect(keys.has(key), key).toBe(true);
+  });
+});
+
 describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
   it('o projétil passa no parseSheet só com cores da paleta', () => {
     const sheet = parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS);

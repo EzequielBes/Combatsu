@@ -243,8 +243,8 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | BPW-01 | P2: Projétil e onda | Execute | Implementing |
 | BPW-02 | P2: Projétil e onda | Execute | Implementing |
 | BPW-03 | P2: Projétil e onda | Execute | Implementing |
-| OBJ-01 | P2: Objetos | Tasks | In Tasks |
-| OBJ-02 | P2: Objetos | Tasks | In Tasks |
+| OBJ-01 | P2: Objetos | Execute | Implementing |
+| OBJ-02 | P2: Objetos | Execute | Implementing |
 | OBJ-03 | P2: Objetos | Tasks | In Tasks |
 | OBJ-04 | P2: Objetos | Tasks | In Tasks |
 | EPD-01 | P3: Pendências dos inimigos | Tasks | In Tasks |
