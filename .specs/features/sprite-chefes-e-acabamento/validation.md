@@ -1,4 +1,4 @@
-# Validation: sprite-chefes-e-acabamento - PASS
+# Validation: sprite-chefes-e-acabamento - PASS (rodadas 1 e 2)
 
 **Data**: 2026-10-03
 **Spec**: `.specs/features/sprite-chefes-e-acabamento/spec.md`
@@ -6,7 +6,9 @@
 **Diff range**: `cd5e62c..HEAD` (`dev` até `dfbda56`): 11 commits, 13 arquivos, +1674/-177. 8 commits de feature (T1 a T8), 3 de spec
 **Verifier**: independente (autor != verificador), Sonnet 5.5. Nenhum código de produção nem teste foi alterado. O único arquivo criado na árvore real é este.
 
-Veredito: PASS. Os 41 requisitos têm evidência `file:line` com asserção no valor que a spec define; build, typecheck, 1743 testes e os smokes `boot` e `boss*` passam; 56 mutantes injetados em scratch, 46 mortos, 10 sobreviventes. Os 10 sobreviventes estão todos em comportamento que nenhum AC fixa (lista em "Lacunas de precisão da spec"), então não bloqueiam. Nenhum mutante sobreviveu em comportamento fixado por AC.
+Veredito geral: PASS nas duas rodadas. Rodada 1 (`cd5e62c..dfbda56`, 41 requisitos): PASS, texto abaixo, sem reescrita. Rodada 2 (`dfbda56..9765173`, 47 requisitos): PASS, ver `## Rodada 2` no fim deste arquivo.
+
+Veredito da rodada 1: PASS. Os 41 requisitos têm evidência `file:line` com asserção no valor que a spec define; build, typecheck, 1743 testes e os smokes `boot` e `boss*` passam; 56 mutantes injetados em scratch, 46 mortos, 10 sobreviventes. Os 10 sobreviventes estão todos em comportamento que nenhum AC fixa (lista em "Lacunas de precisão da spec"), então não bloqueiam. Nenhum mutante sobreviveu em comportamento fixado por AC.
 
 Convenção desta página: "rodado" = executei e vi o resultado; "lido" = conferi lendo o código ou o teste, sem executar.
 
@@ -301,3 +303,198 @@ Não registrei nada via `scripts/lessons.py`: a tarefa me limitava a criar só e
 **O que funciona**: os dois chefes têm 20 frames por pose articulada com rampa de 4 tons e sel-out; os 3 preparos e seus ataques são distintos; as animações dos chefes repetem em laço e chegam ao Phaser com `duration` e `repeat`; braço e perna esticados afinam sem mudar alcance nem caixa; o chute alto sai do quadril; objetos e ferramentas têm mais de 2 tons; as 3 pendências dos inimigos estão fechadas.
 
 **Próximos passos**: UAT visual do usuário (`?debug&round=5` e `?debug&round=15`) e, se quiser fechar as lacunas de precisão, os ajustes 1 a 3 acima; depois atualizar `tasks.md` e `spec.md` e mesclar em `dev` com `--no-ff` (AD-008).
+
+---
+
+## Rodada 2
+
+**Data**: 2026-10-03
+**Branch**: `feat/sprite-chefes-e-acabamento`, HEAD `9765173`
+**Diff range**: `dfbda56..HEAD`: 4 commits (`dd04e0e` relatório da rodada 1, `709c8be` spec e tasks, `0b0859f` testes e `armElbow`, `9765173` lições L-052 a L-054). Em `src/` só muda `src/game/art/sprites/playerMoves.ts` (`armElbow`, +6/-6); em `tests/` só `tests/game/art.test.ts` (+39/-5). `boss.ts`, `enemy.ts`, `props.ts` e `tools.ts` não mudaram desde a rodada 1.
+**Verifier**: o mesmo Verifier independente (autor != verificador). Nenhum código nem teste foi alterado; a árvore real só ganha estas linhas.
+**Escopo**: só o que o orquestrador pediu: evidência dos 7 IDs novos ou reescritos, gate, sensor sobre os 10 sobreviventes da rodada 1 mais mutantes novos no `armElbow`, e a rastreabilidade dos 47 IDs. Os 41 requisitos antigos não foram reavaliados um a um; os testes deles seguem passando (suíte inteira abaixo).
+
+Veredito da rodada 2: PASS. Os 7 IDs têm evidência `file:line` no valor da spec; build, 1741 testes e o smoke `boot` passam; dos 10 sobreviventes da rodada 1, 8 morrem agora e 2 seguem vivos (R06 equivalente, M04 sem AC). Nenhum mutante sobrevive em comportamento fixado por AC.
+
+### Evidência dos 7 IDs (lido; os valores entre colchetes foram medidos rodando uma sonda em scratch)
+
+| ID | Resultado definido na spec | `file:line` + asserção | Resultado |
+| --- | --- | --- | --- |
+| BSP-13 | `TECELA_COLOR_MAP` com exatamente 11 trocas: `A`→`U`, `a`→`u`, `z`→`v`, `m`→`K`, `H`→`w`, `j`→`I`, `h`→`i`, `U`→`l`, `u`→`L`, `v`→`q`, `R`→`C` | `tests/game/art.test.ts:858` `expect(TECELA_COLOR_MAP).toEqual({ A: 'U', a: 'u', z: 'v', m: 'K', H: 'w', j: 'I', h: 'i', U: 'l', u: 'L', v: 'q', R: 'C' })`. Os 11 pares do teste são os da spec, um a um [o mapa real tem 11 chaves] | PASS |
+| BSP-14 | caixa opaca do `leap` com a base na linha 28 ou acima | `tests/game/art.test.ts:862` `expect(artMeasure.box(BOSS_FRAMES.leap)[3]).toBeLessThanOrEqual(28)` [base 28, no limite; o `idle` fica em 31] | PASS |
+| LMB-09 | `palmaExplosiva-hit` com exatamente 2 texels `A` à direita da coluna 20 | `tests/game/art.test.ts:987-988` `beyond = frame.map(row => row.slice(21))` (colunas 21 em diante = à direita da 20) e `expect(artMeasure.countOf(beyond, 'A')).toBe(2)` [2; o frame inteiro tem 3 e o terceiro fica à esquerda da coluna 21, fora da conta] | PASS |
+| LMB-10 | `cotovelada-hit`: ponta do frame na coluna 23 e exatamente 1 texel opaco nela (a "ponta de um frame" é a borda direita da caixa opaca, definida no Glossário) | `tests/game/art.test.ts:993-995` `tip = artMeasure.box(rows)[2]`, `expect(tip).toBe(23)`, `expect(rows.filter(row => row[tip] !== TRANSPARENT)).toHaveLength(1)` [caixa 3, 0, 23, 23; 1 texel]. A fixture congelada do SPR-06 tem `cotovelada-hit` em `[3,0,23,23]` (`tests/game/fixtures/playerBBoxBaseline.json:40`), então o alcance voltou ao original, e o `armElbow` de `cd5e62c` também ocupava `len + 1` colunas | PASS |
+| LMB-11 | `pisao-hit` com pelo menos 3 texels `s` na linha 22 | `tests/game/art.test.ts:999` `expect(artMeasure.countOf([PLAYER_MOVE_FRAMES['pisao-hit'][22]], 's')).toBeGreaterThanOrEqual(3)` [linha 22 = `...........ksssk`, exatamente 3, no limite] | PASS |
+| EPD-05 | no `impact`, o texel opaco mais à direita é `w` na linha 9 do `corcunda` e na 8 do `rastejante`, e não é `w` na linha 8 do `corcunda` nem na 7 do `rastejante` | `tests/game/art.test.ts:1062-1063` (`it.each` de `:1056-1059` com `['corcunda', 9]` e `['rastejante', 8]`) `expect(rightmost(rows[firstRimRow])).toBe('w')` e `expect(rightmost(rows[firstRimRow - 1])).not.toBe('w')`; `rightmost` pega o último não transparente da linha [corcunda: linhas 7, 8, 9 = `k`, `k`, `w`; rastejante: linhas 6, 7, 8 = `k`, `k`, `w`] | PASS |
+| EPD-06 | no `bruto`, o texel (coluna 19, linha 22) do `idle-0` e o (coluna 21, linha 20) do `walk-0` são transparentes | `tests/game/art.test.ts:1067-1068` `expect(ENEMY_VARIANT_FRAMES.bruto['idle-0'][22][19]).toBe(TRANSPARENT)` e `expect(ENEMY_VARIANT_FRAMES.bruto['walk-0'][20][21]).toBe(TRANSPARENT)` (linha primeiro, coluna depois, como a spec) [os dois são `.`] | PASS |
+
+Os termos novos do Glossário batem com os testes: "ponta de um frame" = borda direita da caixa opaca (`artMeasure.box(...)[2]`, usada em LMB-10 e no EPD-02 de `:1026`), e "antes do punho / antes do pé" = fora das 5 últimas colunas (`TIP_COLS = 5`, `:926`). A lacuna 6 da rodada 1 está fechada.
+
+### BSP-13: trocar 10 casos por um `toEqual` não afrouxou a cobertura (lido, confirmado por mutantes)
+
+- **Antes**: 10 casos (`it.each` das chaves `A a z m H j h U u v`), cada um com 3 asserções: definido, chave da paleta, diferente da chave.
+- **Depois**: um `toEqual` contra o mapa literal de 11 entradas. Igualdade profunda com o literal implica as 3 propriedades antigas para as 10 chaves (cada alvo do literal é diferente da sua chave) e acrescenta: os valores exatos, a chave `R` e a ausência de chave extra.
+- **"Alvo na paleta"**: continua guardado pelo teste antigo do BTIER-06 (`tests/game/art.test.ts:645-649`, não tocado: todo `from` e `to` do mapa em `PALETTE_KEYS`) e por BSP-01 (o `parseSheet` da Tecelã). Sonda: os 11 alvos estão na `PALETTE`.
+- **Contagem**: 1743 para 1741 = -10 (casos antigos) +1 (`toEqual`) +1 (BSP-14) +3 (LMB-09 a LMB-11) +2 (EPD-05, dois casos) +1 (EPD-06) = -2. Bate.
+- **Mutantes** (rodados): tirar `R` (B04), trocar o destino de `U` (B05), trocar o de `H` (X5), tirar `m` (X7) e acrescentar uma chave extra `s: 'i'` (X6) morrem só no BSP-13. Na rodada 1 os dois primeiros sobreviviam.
+- Resíduo: `toEqual` ignora propriedade `undefined`; uma chave extra com valor `undefined` passaria, mas o `recolor` usa `map[ch] ?? ch`, então seria equivalente a não ter a chave.
+
+Conclusão: sem perda de cobertura; a cobertura do BSP-13 subiu.
+
+### Gate (rodado)
+
+- `npm run build`: exit 0 (`tsc --noEmit` e `vite build`; só o aviso de chunk > 500 kB que já existia).
+- `npm test`: 79 arquivos, **1741 passaram, 0 falharam, 0 pulados**. Antes da feature 1612 (medido na rodada 1); delta +129. Contra os 1743 da rodada 1: -2, explicado acima.
+- `npm run smoke -- boot`: `ok boot.smoke.mjs`, 1 cenário ok, exit 0.
+- `npm run smoke -- boss`: **não rodei de novo**, como combinado. Nada do chefe mudou desde a rodada 1 (a única mudança em `src/` é o `armElbow` do player), e o resultado da rodada 1 (3 cenários ok em `dfbda56`) continua valendo para o código do chefe.
+- Árvore real: `git status --porcelain` antes e depois idênticos (só `.agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`, não rastreados). `git stash list` vazio. `git worktree list` sem o scratch; `node_modules` real conferido intacto depois de remover a junction.
+
+### Sensor de discriminação (rodado)
+
+**Isolamento**: `git worktree add` em scratch fora do repositório (HEAD `9765173`), `node_modules` por junction, troca textual de um trecho exato por mutante, `tests/game/art.test.ts` + `tests/game/registerAnims.test.ts` + `tests/game/playerConsistency.test.ts` (542 testes) a cada um, arquivo restaurado depois. Junction removida primeiro (`cmd /c rmdir`), depois `git worktree remove --force`.
+
+**27 mutantes rodados: 22 mortos, 5 sobreviventes.**
+
+#### A. Os 10 sobreviventes da rodada 1, de novo
+
+| # | Arquivo | Mutação | Resultado agora |
+| --- | --- | --- | --- |
+| B04 | `boss.ts:357` | tira `R: 'C'` do mapa da Tecelã | MORTO por BSP-13 |
+| B05 | `boss.ts:354` | `U: 'l'` vira `U: 'L'` | MORTO por BSP-13 |
+| R06 | `boss.ts:376` | `still()` com `repeat: -1` em vez de 0 | SOBREVIVEU, equivalente (abaixo) |
+| R07 | `boss.ts:332` | `leap` com `legs: 'stand'` em vez de `'tuck'` | MORTO por BSP-14 |
+| M03 | `playerMoves.ts:63` | `armPalm` sem o brilho `A` | MORTO por LMB-09 |
+| M04 | `playerMoves.ts:54` | `armElbow` sem a ponta `o` (`'ok'` vira `'Nk'`) | SOBREVIVEU (abaixo) |
+| M05 | `playerMoves.ts:103` | `legDown` sem o sapato (`rows.push('kKsk')`) | MORTO por LMB-11 |
+| E02 | `enemy.ts:161` | padrão do `rimFrom` de 3 para 4 | MORTO por EPD-05 (corcunda e rastejante) |
+| E06 | `enemy.ts:580-584` | `B_ARM_HANG` volta ao punho em bloco | MORTO por EPD-06 |
+| E07 | `enemy.ts:593-596` | `B_ARM_FWD` volta ao punho em bloco | MORTO por EPD-06 |
+
+**R06 é equivalente?** Concordo, no comportamento observável (lido, não rodei o Phaser). `still()` só entrega `leap` e `dead`, de 1 frame. O adaptador é o único consumidor: `src/game/Boss.ts:357` chama `anims.play(key, true)` a cada frame e não tem `animationcomplete`, `isPlaying` nem `currentAnim` (grep por `isPlaying`, `currentAnim`, `animationcomplete` e `ANIMATION_COMPLETE` em todo `src/` e `scripts/`: nenhuma ocorrência). Com `repeat: 0`, ao acabar o único frame o Phaser mantém esse frame na tela e o próximo `play(key, true)` o reinicia no mesmo frame; com `repeat: -1` ele fica em laço no mesmo frame. A tela é a mesma em qualquer instante. Não é equivalente no texto do dado (`repeat` muda), só no que o jogo faz com ele. Fica sem AC por decisão registrada nas Assumptions da spec.
+
+**M04** (a marca escura `o` ao lado da ponta do cotovelo) segue sem AC: o LMB-10 fixa a coluna da ponta e que ela tenha 1 texel, não o miolo. É um detalhe de cor de 1 texel numa linha interna; vira nota baixa de precisão (abaixo), não bloqueio.
+
+#### B. Mutantes novos no `armElbow` (LMB-10)
+
+| # | Arquivo | Mutação | Resultado |
+| --- | --- | --- | --- |
+| N1 | `playerMoves.ts:52-56` | `armElbow` volta à versão da rodada 1 (`len` colunas, 1 texel curta) | MORTO por LMB-10 |
+| N2 | `playerMoves.ts:53` | ponta com 2 texels opacos (`'Nk.'` vira `'Nkk'`) | MORTO por LMB-10 |
+| N3 | `playerMoves.ts:176` | `armElbow(13)` em vez de `(12)` na `cotovelada-hit` (alcance +1) | MORTO por LMB-10 |
+| N4 | `playerMoves.ts:176` | cotovelo deslocado 1 coluna para a esquerda (`9` vira `8`) | MORTO por LMB-10 |
+| N5 | `playerMoves.ts:52-53` | a mesma mutação do N2, aplicada com um trecho de duas linhas (duplicata, não é um mutante independente) | MORTO por LMB-10 |
+
+Os dois lados do limite de alcance foram exercitados: 22 (N1, N4) e 24 (N3).
+
+#### C. Mutantes novos nos outros ACs novos
+
+| # | Arquivo | Mutação | Resultado |
+| --- | --- | --- | --- |
+| X1 | `boss.ts:178` (`STANCES.tuck`) | pé de perto 1 texel mais baixo (`[12, 3]` vira `[12, 2]`; base 28 passa a 29) | MORTO por BSP-14 (no limite) |
+| X2 | `playerMoves.ts:63` | brilho da palma em 3 linhas em vez de 2 (3 `A` à direita da coluna 20) | MORTO por LMB-09 |
+| X3 | `playerMoves.ts:103` | sola com 2 `s` (`'ksssk'` vira `'ksskk'`) | MORTO por LMB-11 (no limite) |
+| X4 | `enemy.ts:161` | padrão do `rimFrom` de 3 para 2 (borda começa uma linha antes) | MORTO por EPD-05 (o lado "e não na de cima") |
+| X5 | `boss.ts:351` | `H: 'w'` vira `H: 'I'` | MORTO por BSP-13 |
+| X6 | `boss.ts:357` | chave extra `s: 'i'` no mapa | MORTO por BSP-13 |
+| X7 | `boss.ts:350` | tira `m: 'K'` | MORTO por BSP-13 |
+| X10 | `enemy.ts` (`B_ARM_HANG`, última linha) | enche o canto de baixo à direita do punho | MORTO por EPD-06 |
+| X12 | `enemy.ts` (`B_ARM_FWD`, última linha) | enche a linha de baixo do punho do `walk-0` | MORTO por EPD-06 |
+| X8 | `playerMoves.ts:63` | brilho da palma 1 coluna à esquerda | SOBREVIVEU |
+| X9 | `enemy.ts` (`B_ARM_HANG`, última linha) | enche o canto de baixo à esquerda do punho | SOBREVIVEU |
+| X11 | `enemy.ts` (`B_ARM_FWD`, primeira linha) | enche o canto de cima à direita do punho | SOBREVIVEU |
+
+Sobreviventes X8, X9 e X11: o LMB-09 conta os `A` mas não fixa a posição; o EPD-06 fixa um texel por frame (o canto de baixo à direita do `idle-0` e o do `walk-0`), como a spec pede, e os outros cantos do punho ficam livres. Dentro do que a spec diz; vira nota informativa.
+
+**Resultado**: 27 execuções (10 reinjeções da rodada 1 e 17 mutantes novos; o N5 repete o N2), 22 mortos, 5 sobreviventes (R06, M04, X8, X9, X11), nenhum em comportamento fixado por AC. Rodada 1: 56 mutantes. Os sobreviventes da rodada 1 que ganharam AC novo morreram todos (8 de 10; os 2 restantes estão explicados acima).
+
+### Code Quality da rodada 2 (lido)
+
+| Princípio | Status |
+| --- | --- |
+| Nada além do pedido | OK: a única mudança de produção é o `armElbow`, que o orquestrador explicou (voltar a `len + 1` colunas); o resto é teste e spec |
+| Superfície mínima | OK: 6 linhas em `playerMoves.ts`, comentário do `armElbow` atualizado para dizer `len + 1` |
+| Estilo dos vizinhos | OK: testes na ordem dos blocos existentes, `artMeasure` reaproveitado, `it.each` com `as const` como em `EPD-04` |
+| Testes mapeiam ACs e não são rasos | OK: cada `it` cita o ID; os limiares dos dois lados foram exercitados (X1, X3, N1, N3, N4, X4) |
+| Código morto | OK: o build roda `tsc --noEmit` com `noUnusedLocals` |
+| Edição de `spec.md` e `tasks.md` | Não fiz (só leitura); ver pendências |
+
+### Lacunas restantes (todas de precisão, nenhuma bloqueia)
+
+1. `armElbow`: a marca `o` do miolo (M04) não tem AC. Baixa.
+2. LMB-09 conta os 2 `A` mas não fixa a posição (X8). Baixa.
+3. EPD-06 fixa um canto por frame; os outros cantos do punho (X9, X11) ficam livres. Informativa, é o que a spec escreveu.
+4. `repeat` de `leap` e `dead` (R06): equivalente no jogo, sem AC por decisão da spec.
+5. EDG-02: só a direção "menos `durations` que `frames`" (lacuna 8 da rodada 1, mantida por decisão). A outra direção continua no teste antigo do SPR-08 (R05 morre lá).
+6. Margens largas do BSP-03, BSP-04 e BSP-07 (informativa, lacuna 7 da rodada 1): inalterada.
+7. Pendência de forma: `tasks.md` ainda tem `Status: In Progress` e a tabela de rastreabilidade de `spec.md` ainda diz `Implementing` nos 47 IDs. Não editei; o orquestrador atualiza depois do UAT.
+
+Lições L-052 a L-054 (`9765173`, `.specs/LESSONS.md` e `.specs/lessons.json`): estão no diff, mas não as revisei; não afetam o veredito.
+
+### Interactive UAT
+
+Continua fora do escopo do Verifier. O que a spec chama de "lê como um oni" e "punho e pé maiores que antebraço e canela" fica para o usuário em `?debug&round=5` e `?debug&round=15`; os ACs novos medem texels, não a leitura visual.
+
+### Atualização de rastreabilidade (a aplicar pelo orquestrador; `spec.md` não foi editado)
+
+| Requisito | Status anterior | Novo status |
+| --- | --- | --- |
+| BSP-01 | Implementing | Verified |
+| BSP-02 | Implementing | Verified |
+| BSP-03 | Implementing | Verified |
+| BSP-04 | Implementing | Verified |
+| BSP-05 | Implementing | Verified |
+| BSP-06 | Implementing | Verified |
+| BSP-07 | Implementing | Verified |
+| BSP-08 | Implementing | Verified |
+| BSP-09 | Implementing | Verified |
+| BSP-10 | Implementing | Verified |
+| BSP-11 | Implementing | Verified |
+| BSP-12 | Implementing | Verified |
+| BSP-13 | Implementing | Verified (rodada 2, mapa literal; B04 e B05 mortos) |
+| BSP-14 | Implementing | Verified (rodada 2) |
+| BAN-01 | Implementing | Verified |
+| BAN-02 | Implementing | Verified |
+| BAN-03 | Implementing | Verified |
+| BAN-04 | Implementing | Verified |
+| BAN-05 | Implementing | Verified |
+| BAN-06 | Implementing | Verified |
+| BAN-07 | Implementing | Verified |
+| LMB-01 | Implementing | Verified |
+| LMB-02 | Implementing | Verified |
+| LMB-03 | Implementing | Verified |
+| LMB-04 | Implementing | Verified (teste pré-existente) |
+| LMB-05 | Implementing | Verified (teste pré-existente) |
+| LMB-06 | Implementing | Verified (teste pré-existente) |
+| LMB-07 | Implementing | Verified |
+| LMB-08 | Implementing | Verified |
+| LMB-09 | Implementing | Verified (rodada 2) |
+| LMB-10 | Implementing | Verified (rodada 2) |
+| LMB-11 | Implementing | Verified (rodada 2) |
+| BPW-01 | Implementing | Verified |
+| BPW-02 | Implementing | Verified |
+| BPW-03 | Implementing | Verified |
+| OBJ-01 | Implementing | Verified |
+| OBJ-02 | Implementing | Verified |
+| OBJ-03 | Implementing | Verified |
+| OBJ-04 | Implementing | Verified |
+| EPD-01 | Implementing | Verified |
+| EPD-02 | Implementing | Verified |
+| EPD-03 | Implementing | Verified |
+| EPD-04 | Implementing | Verified |
+| EPD-05 | Implementing | Verified (rodada 2) |
+| EPD-06 | Implementing | Verified (rodada 2) |
+| EDG-01 | Implementing | Verified |
+| EDG-02 | Implementing | Verified |
+
+47 de 47 verificados (14 BSP, 7 BAN, 11 LMB, 3 BPW, 4 OBJ, 6 EPD, 2 EDG).
+
+### Resumo da rodada 2
+
+**Overall**: Pronto (PASS)
+
+**Spec-anchored check**: 7 de 7 IDs novos ou reescritos com evidência no valor da spec; 47 de 47 no total | 0 lacunas de precisão que mudem o veredito (restam 6 notas baixas)
+**Sensor**: 22 de 27 mortos; os 5 sobreviventes (R06, M04, X8, X9, X11) não têm AC
+**Gate**: build ok, 1741 testes passaram, 0 falharam, smoke `boot` ok (`boss*` não repetido; nada do chefe mudou)
+**Isolamento**: `git status --porcelain` da árvore real idêntico ao baseline; scratch removido (junction primeiro)
+
+**Próximos passos**: UAT visual do usuário; depois marcar os 47 IDs como Verified em `spec.md`, fechar `tasks.md` e mesclar em `dev` com `--no-ff` (AD-008).
