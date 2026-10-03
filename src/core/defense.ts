@@ -93,6 +93,15 @@ export function resolveIncomingHit(input: IncomingHit): HitResolution {
 }
 
 /**
+ * O que o atacante precisa saber de um parry (DFL-07..11): `final` é o parry do último golpe da sequência (só ele
+ * deixa o inimigo parado) e `deflect` marca a Deflexão, a sequência inteira aparada.
+ */
+export interface ParryInfo {
+  final: boolean;
+  deflect: boolean;
+}
+
+/**
  * Deflexão (DFL-10, DFL-12, DFL-16): conta os parries por id de sequência. O parry do último golpe de uma sequência de
  * 2 ou mais golpes dá `true` quando todos os anteriores também foram aparados; golpe sem sequência nunca dá.
  */

@@ -969,6 +969,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         granted: gate.isGranted(e.id),
         windupAllowed: gate.windupAllowed(),
         holdRank: at >= 0 ? at : sameSide.length,
+        // O foco da postura (PST-13) é da T29; até lá nenhum inimigo é o foco.
+        focus: false,
       });
       if (e.windupStarted) gate.noteWindup(e.id);
       const s = e.aiState;
