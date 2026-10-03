@@ -318,6 +318,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M10 RedOrb.ts:35,62,64 / RDA-07,RDA-10,RDA-12 (src/game/techFx)
 - last seen: 2026-10-02T21:33:41Z
 
+### L-052 - Pin the literal target of every entry in a mapping the spec chooses, because a test that recomputes the result with the production mapping cannot catch a wrong mapping
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `art` · harmful: 0
+- features: sprite-chefes-e-acabamento
+- evidence: B04/B05 src/game/art/sprites/boss.ts:354,357 (BSP-13, validation.md lacuna 1) (art)
+- last seen: 2026-10-03T17:23:24Z
+
+### L-053 - Measure a reshaped sprite part in every frame variant that uses it, not only in the one frame the acceptance criterion names
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `art` · harmful: 0
+- features: sprite-chefes-e-acabamento
+- evidence: E06/E07 src/game/art/sprites/enemy.ts:580-596 (EPD-02, validation.md lacuna 2) (art)
+- last seen: 2026-10-03T17:23:24Z
+
+### L-054 - Give every part a task reshapes at least one acceptance criterion, or leave the part out of the task
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec art` · harmful: 0
+- features: sprite-chefes-e-acabamento
+- evidence: M03/M04/M05 src/game/art/sprites/playerMoves.ts:54,63,103 (validation.md lacuna 3) (spec art)
+- last seen: 2026-10-03T17:23:24Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

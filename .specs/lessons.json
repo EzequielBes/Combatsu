@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 52,
+  "next_id": 55,
   "lessons": [
     {
       "id": "L-001",
@@ -930,6 +930,60 @@
       ],
       "created": "2026-10-02T21:33:41Z",
       "last_seen": "2026-10-02T21:33:41Z"
+    },
+    {
+      "id": "L-052",
+      "key": "surviving_mutant::pin the literal target of every entry in a mapping the spec chooses because a test that recomputes the result with the production mapping cannot catch a wrong mapping",
+      "text": "Pin the literal target of every entry in a mapping the spec chooses, because a test that recomputes the result with the production mapping cannot catch a wrong mapping",
+      "signal": "surviving_mutant",
+      "scope": "art",
+      "status": "candidate",
+      "features": [
+        "sprite-chefes-e-acabamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "B04/B05 src/game/art/sprites/boss.ts:354,357 (BSP-13, validation.md lacuna 1) (art)"
+      ],
+      "created": "2026-10-03T17:23:24Z",
+      "last_seen": "2026-10-03T17:23:24Z"
+    },
+    {
+      "id": "L-053",
+      "key": "surviving_mutant::measure a reshaped sprite part in every frame variant that uses it not only in the one frame the acceptance criterion names",
+      "text": "Measure a reshaped sprite part in every frame variant that uses it, not only in the one frame the acceptance criterion names",
+      "signal": "surviving_mutant",
+      "scope": "art",
+      "status": "candidate",
+      "features": [
+        "sprite-chefes-e-acabamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "E06/E07 src/game/art/sprites/enemy.ts:580-596 (EPD-02, validation.md lacuna 2) (art)"
+      ],
+      "created": "2026-10-03T17:23:24Z",
+      "last_seen": "2026-10-03T17:23:24Z"
+    },
+    {
+      "id": "L-054",
+      "key": "spec_precision_gap::give every part a task reshapes at least one acceptance criterion or leave the part out of the task",
+      "text": "Give every part a task reshapes at least one acceptance criterion, or leave the part out of the task",
+      "signal": "spec_precision_gap",
+      "scope": "spec art",
+      "status": "candidate",
+      "features": [
+        "sprite-chefes-e-acabamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M03/M04/M05 src/game/art/sprites/playerMoves.ts:54,63,103 (validation.md lacuna 3) (spec art)"
+      ],
+      "created": "2026-10-03T17:23:24Z",
+      "last_seen": "2026-10-03T17:23:24Z"
     }
   ]
 }

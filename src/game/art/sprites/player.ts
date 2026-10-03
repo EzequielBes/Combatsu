@@ -174,18 +174,33 @@ export const ARM_COCK: Grid = ['kkksNk', 'kppNnk', 'kPpnk.', '.kkk..'];
  * (troca `p` pelo núcleo de energia): `playerTech` reusa esta peça em vez de desenhar um braço novo. */
 export const ARM_UP: Grid = ['.kk.', 'kppk', 'kPpk', 'ksnk', 'kNnk', 'ksNk'];
 
+/** A partir deste comprimento o membro esticado tem colunas para afinar (antebraço e canela); abaixo, fica reto. */
+const TAPER_MIN_LEN = 12;
+
 /**
- * Braço esticado na horizontal: manga com luz em cima, punho de manga claro (`s`) e punho 3x3 com sombra na ponta.
- * `len` = colunas do ombro até o contorno da ponta do punho, inclusive.
+ * Braço esticado na horizontal: manga com luz em cima e dobra no cotovelo, antebraço um texel mais fino (o contorno
+ * de baixo sobe), punho de manga claro (`s`) e punho 3x3 com sombra na ponta. `len` = colunas do ombro até o
+ * contorno da ponta do punho, inclusive. Com `len` < 12 não há colunas para afinar e a manga fica reta.
  */
 export function armStraight(len: number): string[] {
   const sleeve = len - 7;
+  if (len < TAPER_MIN_LEN) {
+    return [
+      'k'.repeat(len - 1) + '.',
+      'k' + 's'.repeat(sleeve) + 'skpppk',
+      'k' + 'N'.repeat(sleeve) + 'skppPk',
+      'k' + 'n'.repeat(sleeve) + 'NkPPxk',
+      'k'.repeat(len - 1) + '.',
+    ];
+  }
+  const upper = Math.ceil(sleeve / 2);
+  const fore = sleeve - upper;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(sleeve) + 'skpppk',
-    'k' + 'N'.repeat(sleeve) + 'skppPk',
-    'k' + 'n'.repeat(sleeve) + 'NkPPxk',
-    'k'.repeat(len - 1) + '.',
+    'k' + 's'.repeat(upper) + 'N'.repeat(fore) + 'skpppk',
+    'k' + 'N'.repeat(upper - 1) + 'o' + 'n'.repeat(fore) + 'NkppPk',
+    'k' + 'n'.repeat(upper) + 'k'.repeat(fore + 2) + 'PPxk',
+    'k'.repeat(upper + 1) + '.'.repeat(fore + 2) + 'kkk.',
   ];
 }
 
@@ -232,17 +247,29 @@ const LEGS_DANGLE_B: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKnk.ksNk', '..
 /** Agachado do pouso (4 linhas): joelhos para fora, pés afastados. */
 const LEGS_CROUCH: Grid = ['...knNNNNNk', '.kKnskkknNk', 'kKKKk...kKsKk', 'kkkkk...kkkkk'];
 /**
- * Chute: perna da frente esticada na horizontal, com o sapato (brilho `s`) na ponta. `len` = colunas do quadril
- * até o contorno da ponta do pé, inclusive.
+ * Chute: perna da frente esticada na horizontal, com dobra no joelho, canela um texel mais fina (o contorno de baixo
+ * sobe) e o sapato na ponta, de sola clara (`s`) virada para o alvo. `len` = colunas do quadril até o contorno da
+ * ponta do pé, inclusive. Com `len` < 12 a perna fica reta.
  */
 export function legStraight(len: number): string[] {
   const leg = len - 6;
+  if (len < TAPER_MIN_LEN) {
+    return [
+      'k'.repeat(len - 1) + '.',
+      'k' + 's'.repeat(leg) + 'kKsKk',
+      'k' + 'N'.repeat(leg) + 'kKKKk',
+      'k' + 'n'.repeat(leg) + 'kKKKk',
+      'k'.repeat(len),
+    ];
+  }
+  const thigh = Math.ceil(leg / 2);
+  const shin = leg - thigh;
   return [
     'k'.repeat(len - 1) + '.',
-    'k' + 's'.repeat(leg) + 'kKsKk',
-    'k' + 'N'.repeat(leg) + 'kKKKk',
-    'k' + 'n'.repeat(leg) + 'kKKKk',
-    'k'.repeat(len),
+    'k' + 's'.repeat(thigh) + 'N'.repeat(shin) + 'kKKsk',
+    'k' + 'N'.repeat(thigh - 1) + 'o' + 'n'.repeat(shin) + 'kKKsk',
+    'k' + 'n'.repeat(thigh) + 'k'.repeat(shin + 1) + 'KKsk',
+    'k'.repeat(thigh + 1) + '.'.repeat(shin + 1) + 'kkkk',
   ];
 }
 /** Joelho da frente dobrado para cima (preparo e volta do chute). Também usado por `playerMoves`. */
