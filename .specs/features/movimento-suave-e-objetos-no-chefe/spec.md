@@ -120,9 +120,9 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PRB-01 | P1: Objetos acertam o chefe | Tasks | In Tasks |
-| PRB-02 | P1: Objetos acertam o chefe | Tasks | In Tasks |
-| PRB-03 | P1: Objetos acertam o chefe | Tasks | In Tasks |
+| PRB-01 | P1: Objetos acertam o chefe | Execute | Implementing |
+| PRB-02 | P1: Objetos acertam o chefe | Execute | Implementing |
+| PRB-03 | P1: Objetos acertam o chefe | Execute | Implementing |
 | PRB-04 | P1: Objetos acertam o chefe | Tasks | In Tasks |
 | CAM-01 | P1: Câmera sem tremor | Tasks | In Tasks |
 | CAM-02 | P1: Câmera sem tremor | Tasks | In Tasks |
