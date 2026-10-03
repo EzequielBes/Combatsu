@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 55,
+  "next_id": 59,
   "lessons": [
     {
       "id": "L-001",
@@ -984,6 +984,78 @@
       ],
       "created": "2026-10-03T17:23:24Z",
       "last_seen": "2026-10-03T17:23:24Z"
+    },
+    {
+      "id": "L-055",
+      "key": "surviving_mutant::make the debug snapshot read the object that is actually drawn because a field computed by the same getter the adapter uses cannot show whether the adapter applies it",
+      "text": "Make the debug snapshot read the object that is actually drawn, because a field computed by the same getter the adapter uses cannot show whether the adapter applies it",
+      "signal": "surviving_mutant",
+      "scope": "smoke debug snapshot",
+      "status": "candidate",
+      "features": [
+        "movimento-suave-e-objetos-no-chefe"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "A1/A4/A5 src/game/Player.ts:208, Enemy.ts:617, Boss.ts:363 (validation.md rodada 1) (smoke debug snapshot)"
+      ],
+      "created": "2026-10-03T19:12:38Z",
+      "last_seen": "2026-10-03T19:12:38Z"
+    },
+    {
+      "id": "L-056",
+      "key": "ac_gap::test an adapter edge case in a scenario where the old and new values differ by less than any automatic fallback threshold or the fallback hides the missing call",
+      "text": "Test an adapter edge case in a scenario where the old and new values differ by less than any automatic fallback threshold, or the fallback hides the missing call",
+      "signal": "ac_gap",
+      "scope": "smoke adapters",
+      "status": "candidate",
+      "features": [
+        "movimento-suave-e-objetos-no-chefe"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "EDG-02 / A6b src/game/Player.ts:460 (validation.md rodada 1) (smoke adapters)"
+      ],
+      "created": "2026-10-03T19:12:38Z",
+      "last_seen": "2026-10-03T19:12:38Z"
+    },
+    {
+      "id": "L-057",
+      "key": "spec_precision_gap::pin a constant copied from a private library field with a contract test that reads the installed library",
+      "text": "Pin a constant copied from a private library field with a contract test that reads the installed library",
+      "signal": "spec_precision_gap",
+      "scope": "core library contract",
+      "status": "candidate",
+      "features": [
+        "movimento-suave-e-objetos-no-chefe"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "STEP_BUFFER_MARGIN src/core/stepLerp.ts:7 (validation.md rodada 1, lacuna 3) (core library contract)"
+      ],
+      "created": "2026-10-03T19:12:38Z",
+      "last_seen": "2026-10-03T19:12:38Z"
+    },
+    {
+      "id": "L-058",
+      "key": "ac_gap::mark a done when item of a smoke task only when the smoke file has the check and cite its file and line",
+      "text": "Mark a Done-when item of a smoke task only when the smoke file has the check, and cite its file and line",
+      "signal": "ac_gap",
+      "scope": "tasks smoke",
+      "status": "candidate",
+      "features": [
+        "movimento-suave-e-objetos-no-chefe"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "tasks.md T7 EDG-02 marcado sem checagem (validation.md rodada 1, lacuna 6) (tasks smoke)"
+      ],
+      "created": "2026-10-03T19:12:38Z",
+      "last_seen": "2026-10-03T19:12:38Z"
     }
   ]
 }

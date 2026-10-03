@@ -336,6 +336,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M03/M04/M05 src/game/art/sprites/playerMoves.ts:54,63,103 (validation.md lacuna 3) (spec art)
 - last seen: 2026-10-03T17:23:24Z
 
+### L-055 - Make the debug snapshot read the object that is actually drawn, because a field computed by the same getter the adapter uses cannot show whether the adapter applies it
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke debug snapshot` · harmful: 0
+- features: movimento-suave-e-objetos-no-chefe
+- evidence: A1/A4/A5 src/game/Player.ts:208, Enemy.ts:617, Boss.ts:363 (validation.md rodada 1) (smoke debug snapshot)
+- last seen: 2026-10-03T19:12:38Z
+
+### L-056 - Test an adapter edge case in a scenario where the old and new values differ by less than any automatic fallback threshold, or the fallback hides the missing call
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `smoke adapters` · harmful: 0
+- features: movimento-suave-e-objetos-no-chefe
+- evidence: EDG-02 / A6b src/game/Player.ts:460 (validation.md rodada 1) (smoke adapters)
+- last seen: 2026-10-03T19:12:38Z
+
+### L-057 - Pin a constant copied from a private library field with a contract test that reads the installed library
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `core library contract` · harmful: 0
+- features: movimento-suave-e-objetos-no-chefe
+- evidence: STEP_BUFFER_MARGIN src/core/stepLerp.ts:7 (validation.md rodada 1, lacuna 3) (core library contract)
+- last seen: 2026-10-03T19:12:38Z
+
+### L-058 - Mark a Done-when item of a smoke task only when the smoke file has the check, and cite its file and line
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tasks smoke` · harmful: 0
+- features: movimento-suave-e-objetos-no-chefe
+- evidence: tasks.md T7 EDG-02 marcado sem checagem (validation.md rodada 1, lacuna 6) (tasks smoke)
+- last seen: 2026-10-03T19:12:38Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
