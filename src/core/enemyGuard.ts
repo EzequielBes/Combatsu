@@ -75,12 +75,6 @@ export class EnemyGuard {
     return true;
   }
 
-  /** O jogador iniciou um golpe leve; sorteia só se as condições da spec valem. `true` se a guarda subiu. */
-  onPlayerLightMove(t: GuardTrigger, chanceOverride?: number): boolean {
-    if (!t.idle || !t.playerFacingEnemy || t.distancePx > ENEMY_GUARD.triggerRangePx) return false;
-    return this.tryRaise(chanceOverride ?? EnemyGuard.chanceFor(t.round), false);
-  }
-
   update(dtMs: number): void {
     if (this.leftMs > 0) this.leftMs = Math.max(0, this.leftMs - dtMs);
   }

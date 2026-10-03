@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { GuardTrigger } from '../../src/core/enemyGuard';
+import { EnemyGuard, type GuardTrigger } from '../../src/core/enemyGuard';
 import { LightStreak, MoveReading, baseConditionsHold, guardChance, readingBonus, shoveRoll } from '../../src/core/moveReading';
 import { Rng } from '../../src/core/rng';
 import { READING } from '../../src/data/moves';
@@ -159,6 +159,45 @@ describe('guardChance (RDG-03, RDG-10)', () => {
   it('com override e sem as condições base devolve 0, mesmo com leitura', () => {
     expect(guardChance({ base: 0.1, reading: 1, override: 1, baseConditions: false })).toBe(0);
     expect(guardChance({ base: 0.1, reading: 0.5, override: 0.7, baseConditions: false })).toBe(0);
+  });
+});
+
+describe('guardChance com EnemyGuard.tryRaise (RDG-03, RDG-04)', () => {
+  const NEAR: GuardTrigger = { round: 1, idle: true, playerFacingEnemy: true, distancePx: 40 };
+  /** Sorteia a guarda como o `Enemy.onPlayerMove`: a chance sai de `guardChance`, o sorteio de `tryRaise`. */
+  const tryGuard = (trigger: GuardTrigger, repeats: number, roll: ReturnType<typeof fakeRoll>): boolean =>
+    new EnemyGuard(roll).tryRaise(
+      guardChance({
+        base: EnemyGuard.chanceFor(trigger.round),
+        reading: readingBonus(repeats),
+        baseConditions: baseConditionsHold(trigger, 'light'),
+      }),
+      repeats > 0,
+    );
+
+  it('dentro das condições do EBL-01 e sem leitura, sorteia com a chance da rodada (60 px)', () => {
+    const roll = fakeRoll(true);
+    expect(tryGuard({ ...NEAR, distancePx: 60 }, 0, roll)).toBe(true);
+    expect(roll.asked).toEqual([EnemyGuard.chanceFor(1)]);
+  });
+
+  it('61 px sem leitura: chance 0, nenhum sorteio e a guarda não sobe', () => {
+    const roll = fakeRoll(true);
+    expect(tryGuard({ ...NEAR, distancePx: 61 }, 0, roll)).toBe(false);
+    expect(roll.asked).toEqual([]);
+  });
+
+  it('fora de idle ou com o jogador de costas, sem leitura: nenhum sorteio', () => {
+    const roll = fakeRoll(true);
+    expect(tryGuard({ ...NEAR, idle: false }, 0, roll)).toBe(false);
+    expect(tryGuard({ ...NEAR, playerFacingEnemy: false }, 0, roll)).toBe(false);
+    expect(roll.asked).toEqual([]);
+  });
+
+  it('fora das condições do EBL-01 mas com leitura, sorteia só com o bônus de leitura', () => {
+    const roll = fakeRoll(true);
+    expect(tryGuard({ ...NEAR, distancePx: 61 }, 2, roll)).toBe(true);
+    expect(roll.asked).toEqual([0.5]);
   });
 });
 

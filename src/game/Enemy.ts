@@ -7,11 +7,12 @@ import { EnemyAI, type AIEvent, type EnemyAIState } from '../core/enemyAI';
 import { KIND_COLOR, hitFieldsFor, type AttackKind } from '../core/attackKind';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
 import { EnemyGuard, type GuardRoll } from '../core/enemyGuard';
+import { LightStreak, baseConditionsHold, guardChance, readingBonus, shoveRoll } from '../core/moveReading';
 import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structure';
 import type { EnemyBase } from '../core/difficulty';
 import type { ToolKey } from '../core/loot';
 import { SpawnGrace } from '../core/spawnGrace';
-import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
+import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE, type MoveDef } from '../data/moves';
 import type { ParryInfo } from '../core/defense';
 import { normalize, type Hit, type HitReport, type Vec2 } from '../core/hit';
 import { enemyAnimKey } from './art';
@@ -133,6 +134,14 @@ export class Enemy implements Hittable {
   private readonly guard = new EnemyGuard({ chance: (p) => this.guardRng?.chance(p) ?? false });
   /** Faísca azul do bloqueio (EBL-02), no ponto de contato; a cena liga ao `Fx`. */
   onBlock: ((point: Vec2) => void) | null = null;
+  /** Relógio de jogo do inimigo (ms): soma o `dt` do `update`, que não anda no hitstop; mede o intervalo dos leves (RDG-13). */
+  private clockMs = 0;
+  /** Leves seguidos aceitos por este inimigo (RDG-13..15). */
+  private readonly streak = new LightStreak();
+  /** Chance do empurrão no 4º leve seguido (RDG-16, `?debug&shove=`), entregue pela cena. */
+  shoveChance: number = READING.shoveChance;
+  /** O inimigo empurrou o jogador (RDG-17); `dir` é o sentido do deslocamento do jogador, para longe do inimigo. */
+  onShove: ((dir: 1 | -1) => void) | null = null;
   private guardTinted = false;
   /** Empurrão scriptado em curso (SPC-02, MOV-*): velocidade x por step e steps que faltam. */
   private slide: { vxStep: number; stepsLeft: number; friction: Map<MatterJS.BodyType, { f: number; fs: number }> } | null =
@@ -401,8 +410,30 @@ export class Enemy implements Hittable {
     const survived = !this.brain.isDead;
     if (survived && this.structure.add(enemyStructureGain(hit))) this.onBreak();
     if (survived && effect && !armored) this.applyEffect(effect, hit);
+    if (survived) this.trackStreak(hit);
     this.updateBar();
     return true;
+  }
+
+  /**
+   * Leves seguidos e empurrão (RDG-13..18), com o golpe do jogador já aceito: o golpe forte zera a contagem; o leve
+   * corpo a corpo soma, e do 4º em diante o inimigo livre sorteia o empurrão no stream de guarda da run. Objeto e
+   * técnica não entram na sequência de leves.
+   */
+  private trackStreak(hit: Hit): void {
+    if (hit.strength === 'heavy') {
+      this.streak.onHeavy();
+      return;
+    }
+    if (hit.tech || hit.moveName === undefined) return;
+    const count = this.streak.onLight(this.clockMs);
+    const free = !this.ai.committed && !this.structure.broken && !this.ragdoll && !this.brain.isDead;
+    if (!free || !this.guardRng || !shoveRoll({ streak: count, chance: this.shoveChance, roll: this.guardRng })) return;
+    this.streak.reset();
+    this.brain.recover();
+    this.onEvent?.(`shove:${this.id}`);
+    // O jogador bateu de frente: sai para o lado oposto ao do golpe.
+    this.onShove?.(hit.direction.x >= 0 ? -1 : 1);
   }
 
   /** Golpe leve segurado pela guarda (EBL-02): sem dano nem reação, soma estrutura e avisa a cena. */
@@ -513,24 +544,49 @@ export class Enemy implements Hittable {
     return this.guard.guarding;
   }
 
+  /** A guarda de pé é de leitura (RDG-06), para o snapshot. */
+  get guardRead(): boolean {
+    return this.guard.read;
+  }
+
+  /** Leves seguidos aceitos, para o snapshot (RDG-13). */
+  get lightStreak(): number {
+    return this.streak.count;
+  }
+
   /**
-   * O jogador iniciou um golpe leve (EBL-01): se está a até 60 px, virado para cá e este inimigo está `idle`, sorteia a
-   * guarda (`chanceOverride` fixa a chance em `?debug&enemyGuard=`). Ao subir, cancela o preparo e vira para o jogador
-   * (a guarda só segura o que vem de frente).
+   * O jogador iniciou um golpe do grafo (RDG-03, RDG-10). Se este inimigo é elegível, está de frente para o jogador e a
+   * até `READING.rangePx + travel.forwardPx` dele, sorteia a guarda com `guardChance`: a base do EBL-01 (golpe leve,
+   * `idle`, a 60 px) mais o bônus de leitura das `repeats`; `override` fixa a chance (`?debug&enemyGuard=`). Ao subir,
+   * cancela o preparo e vira para o jogador (a guarda só segura o que vem de frente). A guarda de leitura (bônus acima
+   * de 0) tira o inimigo do `hitstun` ou do `stagger` (RDG-09) e emite `read:<id>` (RDG-05).
    */
-  onPlayerLightMove(player: { x: number; facing: 1 | -1 }, round: number, chanceOverride?: number): boolean {
+  onPlayerMove(
+    player: { x: number; facing: 1 | -1 },
+    move: Pick<MoveDef, 'strength' | 'travel'>,
+    round: number,
+    reading: { repeats: number; override?: number },
+  ): boolean {
     if (this._removed || this.ragdoll || this.brain.isDead || this.structure.broken) return false;
+    // Comprometido (inclui `attack`, CMT-10) e levantando não levantam a guarda.
+    if (this.ai.committed || this.brain.state === 'gettingUp') return false;
     const ex = this.body.position.x;
-    const raised = this.guard.onPlayerLightMove(
-      {
-        round,
-        idle: this.brain.state === 'idle',
-        playerFacingEnemy: player.facing === 1 ? ex >= player.x : ex <= player.x,
-        distancePx: Math.abs(ex - player.x),
-      },
-      chanceOverride,
-    );
-    if (!raised) return false;
+    const distancePx = Math.abs(ex - player.x);
+    const playerFacingEnemy = player.facing === 1 ? ex >= player.x : ex <= player.x;
+    if (!playerFacingEnemy || distancePx > READING.rangePx + (move.travel?.forwardPx ?? 0)) return false;
+    const bonus = readingBonus(reading.repeats);
+    const chance = guardChance({
+      base: EnemyGuard.chanceFor(round),
+      reading: bonus,
+      override: reading.override,
+      baseConditions: baseConditionsHold({ round, idle: this.brain.state === 'idle', playerFacingEnemy, distancePx }, move.strength),
+    });
+    const read = bonus > 0;
+    if (!this.guard.tryRaise(chance, read)) return false;
+    if (read) {
+      this.brain.recover();
+      this.onEvent?.(`read:${this.id}`);
+    }
     this.onAI(this.ai.interrupt());
     this.walkVxStep = null;
     this.facing = player.x >= ex ? 1 : -1;
@@ -582,6 +638,7 @@ export class Enemy implements Hittable {
     if (this._removed) return;
     this.wantAttackNow = false;
     this.windupStartNow = false;
+    this.clockMs += dtMs;
     this.grace.update(dtMs);
     this.suppressedMs = Math.max(0, this.suppressedMs - dtMs);
     // PST-14, PST-16: no foco a postura cai devagar; fora dele, rápido. O atraso de 1500 ms vale nos dois.
