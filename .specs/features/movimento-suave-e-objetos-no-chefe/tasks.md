@@ -100,11 +100,11 @@ T7
 
 **Done when**:
 
-- [ ] ITP-01: `stepAlpha` devolve `buffer / passo − 0,5` limitado a 0..1, com os limites conferidos dos dois lados.
-- [ ] ITP-02: `at(alfa)` interpola entre a posição anterior e a atual.
-- [ ] ITP-03: salto de mais de 48 px não interpola; 48 px exatos interpola.
-- [ ] EDG-01: passo ≤ 0 devolve 1.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] ITP-01: `stepAlpha` devolve `buffer / passo − 0,5` limitado a 0..1, com os limites conferidos dos dois lados.
+- [x] ITP-02: `at(alfa)` interpola entre a posição anterior e a atual.
+- [x] ITP-03: salto de mais de 48 px não interpola; 48 px exatos interpola.
+- [x] EDG-01: passo ≤ 0 devolve 1.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
