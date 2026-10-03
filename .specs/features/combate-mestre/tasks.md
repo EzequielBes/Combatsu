@@ -132,13 +132,13 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `next()` (leva a sobra do frame) e `interrupt()`
 **Requirement**: CMT-01, DFL-02, DFL-03, DFL-04, DFL-06, DFL-15, EDG-05
 **Done when**:
-- [ ] `ENEMY_AI` em `src/data/tuning.ts` ganha `commitMs: 200`, `stringGapMs: 300`, `hits: 1`.
-- [ ] `committed` é `false` com 201 ms de preparo pela frente e `true` com 200 ms; continua `true` em `attack` e entre dois golpes; volta a `false` em `rest` e depois de `interrupt()`.
-- [ ] `commit` sai exatamente uma vez por ataque; `windupStart` só no primeiro preparo, também com `hits` 3.
-- [ ] Com `hits` 2: a 2ª `hitboxOn` sai 300 ms depois da 1ª `hitboxOff`, testado com `dt` de 16 ms e com `dt` que não divide os tempos; o estado entre os golpes é `windup`; `rest` só depois do último.
-- [ ] `hitIndex` vale 1 no primeiro golpe, 2 no segundo e 0 fora de golpe.
-- [ ] `interrupt()` e `canAct: false` no meio da sequência: nenhuma `hitboxOn` depois.
-- [ ] Com `hits` 1 o ciclo continua 450 + 120 + 800 ms (regressão) e um caso usa tuning diferente do padrão.
+- [x] `ENEMY_AI` em `src/data/tuning.ts` ganha `commitMs: 200`, `stringGapMs: 300`, `hits: 1`.
+- [x] `committed` é `false` com 201 ms de preparo pela frente e `true` com 200 ms; continua `true` em `attack` e entre dois golpes; volta a `false` em `rest` e depois de `interrupt()`.
+- [x] `commit` sai exatamente uma vez por ataque; `windupStart` só no primeiro preparo, também com `hits` 3.
+- [x] Com `hits` 2: a 2ª `hitboxOn` sai 300 ms depois da 1ª `hitboxOff`, testado com `dt` de 16 ms e com `dt` que não divide os tempos; o estado entre os golpes é `windup`; `rest` só depois do último.
+- [x] `hitIndex` vale 1 no primeiro golpe, 2 no segundo e 0 fora de golpe.
+- [x] `interrupt()` e `canAct: false` no meio da sequência: nenhuma `hitboxOn` depois.
+- [x] Com `hits` 1 o ciclo continua 450 + 120 + 800 ms (regressão) e um caso usa tuning diferente do padrão.
 **Tests**: unit
 **Gate**: quick
 

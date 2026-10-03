@@ -1,5 +1,5 @@
 export type EnemyAIState = 'chase' | 'hold' | 'approach' | 'windup' | 'attack' | 'rest';
-export type AIEvent = 'windupStart' | 'hitboxOn' | 'hitboxOff' | 'wantAttack';
+export type AIEvent = 'windupStart' | 'commit' | 'hitboxOn' | 'hitboxOff' | 'wantAttack';
 
 export interface EnemyAITuning {
   /** px/s */
@@ -20,6 +20,12 @@ export interface EnemyAITuning {
   /** Acima disso o inimigo corre a `farSpeedMult` × `chaseSpeed` (px, SPN-12). */
   farRange: number;
   farSpeedMult: number;
+  /** O inimigo fica comprometido quando faltam isso ou menos ms do primeiro preparo (CMT-01, em ms). */
+  commitMs: number;
+  /** Preparo entre dois golpes de uma sequência, já comprometido (DFL-02, em ms). */
+  stringGapMs: number;
+  /** Golpes de uma sequência: `windup → attack → (windup de stringGapMs → attack)* → rest` (DFL-04). */
+  hits: number;
 }
 
 export interface AIInput {
@@ -47,11 +53,19 @@ export interface AIOutput {
  * permissão de ataque espera em `hold` perto do player; com permissão avança (`approach`), prepara, golpeia e
  * descansa. Todas as distâncias são só no eixo horizontal. Sem `canAct` ele fica parado, e um preparo ou golpe em
  * andamento é cancelado (a hitbox fecha se estava aberta e nunca abre depois).
+ *
+ * Com `hits` maior que 1 o ataque é uma sequência: depois de cada golpe que não é o último a IA volta a `windup`
+ * por `stringGapMs`, sem novo `windupStart`, e só o último leva ao `rest` (DFL-02..04, DFL-06). O evento `commit`
+ * sai uma vez por ataque, quando o primeiro preparo chega a `commitMs` (CMT-01).
  */
 export class EnemyAI {
   private _state: EnemyAIState = 'chase';
   private timer = 0;
   private facing: 1 | -1 = 1;
+  /** Golpe da sequência que está sendo preparado ou dado, a partir de 1; 0 fora de um ataque. */
+  private strike = 0;
+  /** O `commit` deste ataque já saiu. */
+  private committedOut = false;
 
   constructor(private readonly t: EnemyAITuning) {}
 
@@ -62,6 +76,25 @@ export class EnemyAI {
   /** Velocidade de perseguição do tuning com que a IA foi criada (px/s), já escalada pela rodada (DIF-04/06). */
   get chaseSpeed(): number {
     return this.t.chaseSpeed;
+  }
+
+  /**
+   * Comprometido (CMT-01): faltam `commitMs` ou menos do primeiro preparo, ou já está num golpe ou no intervalo entre
+   * dois golpes. Em `rest`, `chase` e depois de `interrupt()` volta a falso.
+   */
+  get committed(): boolean {
+    if (this._state === 'attack') return true;
+    return this._state === 'windup' && (this.timer <= this.t.commitMs || this.strike > 1);
+  }
+
+  /** Posição do golpe atual na sequência, a partir de 1, em `windup` e `attack`; 0 nos outros estados (DFL-15). */
+  get hitIndex(): number {
+    return this._state === 'windup' || this._state === 'attack' ? this.strike : 0;
+  }
+
+  /** Golpes da sequência (DFL-01, DFL-14). */
+  get hits(): number {
+    return this.t.hits;
   }
 
   /** Distância de espera em `hold` para a posição `rank` da fila (LIM-07), sem a folga. */
@@ -82,16 +115,25 @@ export class EnemyAI {
     };
 
     switch (this._state) {
-      case 'windup':
+      case 'windup': {
         towardPlayer();
         this.timer -= dtMs;
-        if (this.timer > 0) return this.out(0);
+        const events: AIEvent[] = [];
+        this.markCommit(events);
+        if (this.timer > 0) return this.out(0, events);
         this.next('attack', this.t.attackMs);
-        return this.out(0, ['hitboxOn']);
+        events.push('hitboxOn');
+        return this.out(0, events);
+      }
       case 'attack':
         this.timer -= dtMs;
         if (this.timer > 0) return this.out(0);
-        this.next('rest', this.t.restMs);
+        if (this.strike < this.t.hits) {
+          this.strike += 1;
+          this.next('windup', this.t.stringGapMs);
+        } else {
+          this.next('rest', this.t.restMs);
+        }
         return this.out(0, ['hitboxOff']);
       case 'rest':
         this.timer -= dtMs;
@@ -110,7 +152,11 @@ export class EnemyAI {
           return this.out(0);
         }
         this.enter('windup', this.t.windupMs);
-        return this.out(0, ['windupStart']);
+        this.strike = 1;
+        this.committedOut = false;
+        const events: AIEvent[] = ['windupStart'];
+        this.markCommit(events);
+        return this.out(0, events);
       }
       this._state = 'approach';
       return this.out(this.facing * this.t.chaseSpeed);
@@ -147,6 +193,17 @@ export class EnemyAI {
   private enter(state: EnemyAIState, ms: number): void {
     this._state = state;
     this.timer = ms;
+    if (state !== 'windup') {
+      this.strike = 0;
+      this.committedOut = false;
+    }
+  }
+
+  /** Emite `commit` uma única vez por ataque, no passo em que o primeiro preparo chega a `commitMs` (CMT-01). */
+  private markCommit(events: AIEvent[]): void {
+    if (this.committedOut || this.timer > this.t.commitMs) return;
+    this.committedOut = true;
+    events.push('commit');
   }
 
   /** Passa para a fase seguinte levando a sobra do frame, para o ciclo durar exatamente o tuning. */
