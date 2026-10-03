@@ -299,10 +299,10 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: o padrão de relógio do `Dodge`
 **Requirement**: DEF-07, DEF-12, DEF-15, EDG-06
 **Done when**:
-- [ ] `active` é `true` em 319 ms e `false` em 320 ms.
-- [ ] `cooldownMs` vale 450 no início, 1 em 449 ms e 0 em 450 ms.
-- [ ] `registerEvade()` devolve `true` uma vez por abaixar e `false` fora dele; um novo `start()` libera de novo.
-- [ ] `reset()` deixa inativo e sem recarga.
+- [x] `active` é `true` em 319 ms e `false` em 320 ms.
+- [x] `cooldownMs` vale 450 no início, 1 em 449 ms e 0 em 450 ms.
+- [x] `registerEvade()` devolve `true` uma vez por abaixar e `false` fora dele; um novo `start()` libera de novo.
+- [x] `reset()` deixa inativo e sem recarga.
 **Tests**: unit
 **Gate**: quick
 
