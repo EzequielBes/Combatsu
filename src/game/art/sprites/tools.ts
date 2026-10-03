@@ -13,11 +13,14 @@ function withOutline(grid: Grid, color: string): string[] {
   return grid.map((row) => [...row].map((ch) => (ch === 'k' ? color : ch)).join(''));
 }
 
-/** Adaga fina (3x10 texels): lâmina cinza-azulada com um brilho roxo amaldiçoado e cabo de madeira. */
-const KNIFE: Grid = ['.k.', 'kSk', 'kSk', 'kSk', 'kUk', 'kUk', 'kvk', 'kvk', 'kmk', 'kkk'];
+/**
+ * Adaga fina (3x10 texels): ponta com brilho, lâmina cinza-azulada, o roxo amaldiçoado subindo da guarda, guarda
+ * dourada escura e cabo de madeira. O `k` fica só no contorno: `withOutline` troca todo `k` pela cor da aura.
+ */
+const KNIFE: Grid = ['.k.', 'kwk', 'kSk', 'kSk', 'kUk', 'kvk', 'kzk', 'kMk', 'kmk', 'kkk'];
 
-/** Porrete pesado (5x8 texels): cabeça roxa amaldiçoada e cabo de madeira. */
-const CLUB: Grid = ['.kkk.', 'kUUUk', 'kUuUk', 'kuuuk', '.kvk.', '.kvk.', '.kmk.', '.kkk.'];
+/** Porrete pesado (5x8 texels): cabeça roxa amaldiçoada com cravos de osso, sombra embaixo e cabo de madeira. */
+const CLUB: Grid = ['.kkk.', 'kUlUk', 'kluuk', 'kuuvk', '.kvk.', '.kMk.', '.kmk.', '.kkk.'];
 
 /** Folha de uma ferramenta: comum, rara e as poses na mão do inimigo, todas do mesmo tamanho (ARM-19). */
 function toolSheet(grid: Grid): Record<string, string[]> {
