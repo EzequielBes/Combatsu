@@ -432,11 +432,11 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `EnemyBrain`, `Structure.update(dt, rate)`, `playHitReaction`
 **Requirement**: CMT-03, CMT-04, CMT-05, CMT-06, CMT-07, CMT-08, CMT-09, PST-02, PST-14, PST-16, DFL-07, DFL-08, DFL-09, DFL-11, EDG-05, EDG-11, TGT-06
 **Done when**:
-- [ ] Eventos `armored:<id>` e `stagger:<id>` saem por `onEvent`.
-- [ ] `parried({ final: false })` só soma os 35; `{ final: true, deflect: false }` para 400 ms; `{ deflect: true }` chama `forceStagger(COUNTER.deflectStaggerMs)`.
-- [ ] `EnemyGateInput` vira `EnemyFrameInput` com `focus`; a cena passa `focus: false` por enquanto.
-- [ ] Getter `downHits` para o snapshot.
-- [ ] `npm run build` passa.
+- [x] Eventos `armored:<id>` e `stagger:<id>` saem por `onEvent`.
+- [x] `parried({ final: false })` só soma os 35; `{ final: true, deflect: false }` para 400 ms; `{ deflect: true }` chama `forceStagger(COUNTER.deflectStaggerMs)`.
+- [x] `EnemyGateInput` vira `EnemyFrameInput` com `focus`; a cena passa `focus: false` por enquanto.
+- [x] Getter `downHits` para o snapshot.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 

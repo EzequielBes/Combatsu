@@ -11,8 +11,9 @@ import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structur
 import type { EnemyBase } from '../core/difficulty';
 import type { ToolKey } from '../core/loot';
 import { SpawnGrace } from '../core/spawnGrace';
-import { DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
-import { normalize, type Hit, type Vec2 } from '../core/hit';
+import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../data/moves';
+import type { ParryInfo } from '../core/defense';
+import { normalize, type Hit, type HitReport, type Vec2 } from '../core/hit';
 import { enemyAnimKey } from './art';
 import { ENEMY_BAR_WELL } from './art/hud';
 import { ART_SCALE, PALETTE } from './art/palette';
@@ -51,18 +52,22 @@ const LAUNCH_VY = -10;
 /** Componente vertical (normalizado com o horizontal) do impulso de um empurrão: quase rente ao chão. */
 const PUSH_LIFT = -0.15;
 
-/** O que o limitador de atacantes da cena entrega ao inimigo a cada frame (LIM-01..03, LIM-07). */
-export interface EnemyGateInput {
+/**
+ * O que a cena entrega ao inimigo a cada frame: o limitador de atacantes (LIM-01..03, LIM-07) e `focus`, se este é o
+ * alvo em foco, que escolhe a taxa de queda da postura (PST-14, PST-16).
+ */
+export interface EnemyFrameInput {
   granted: boolean;
   windupAllowed: boolean;
   holdRank: number;
+  focus: boolean;
 }
 
 /** Id da próxima sequência de golpes (DFL-10): global, para duas sequências de inimigos diferentes não se misturarem. */
 let nextStringId = 1;
 
 /** Sem limitador (inimigo isolado): nunca tem vaga, então só persegue e espera. */
-const NO_GATE: EnemyGateInput = { granted: false, windupAllowed: true, holdRank: 0 };
+const NO_GATE: EnemyFrameInput = { granted: false, windupAllowed: true, holdRank: 0, focus: false };
 
 /**
  * Corpo físico (retângulo Matter) separado do visual (sprite animado com a origem no pé, no centro do corpo).
@@ -306,6 +311,11 @@ export class Enemy implements Hittable {
     return this.ragdoll ? this.ragdoll.textureKeys : null;
   }
 
+  /** Golpes aceitos no `ragdollStun` atual, para o snapshot (GND-05). */
+  get downHits(): number {
+    return this.brain.downHits;
+  }
+
   /** Tipo do golpe deste inimigo (HGT-01..06), resolvido pela cena no spawn. */
   private get kind(): AttackKind {
     return this.tuning.attack.kind;
@@ -346,7 +356,11 @@ export class Enemy implements Hittable {
     return this.weaponView ? this.weaponView.visible : null;
   }
 
-  receiveHit(hit: Hit): boolean {
+  /**
+   * `report` é de saída (TGT-06): `blocked` quando a guarda segurou o golpe. Golpe aceito devolve `true`, inclusive o
+   * que bateu num inimigo comprometido e foi absorvido (`armored`, CMT-04): ele perde vida e postura, mas o ataque sai.
+   */
+  receiveHit(hit: Hit, report?: HitReport): boolean {
     if (this.brain.isDead) return false;
     const wasBroken = this.structure.broken;
     // EBL-02..05: a guarda segura o leve que vem de frente; forte e carregado passam com dano cheio e encerram a guarda.
@@ -358,25 +372,35 @@ export class Enemy implements Hittable {
       fromFront,
       structureGain: enemyStructureGain(hit),
     });
-    if (res.blocked) return this.onBlocked(res.structureGain);
+    if (res.blocked) {
+      if (report) report.blocked = true;
+      return this.onBlocked(res.structureGain);
+    }
     const isFinisher = hit.moveName === FINISHER_MOVE;
     const effect = !wasBroken && hit.moveName ? MOVES[hit.moveName]?.effect : undefined;
-    // Quebrado e atordoado: o golpe tira vida mas não derruba nem empurra, para o finalizador ainda alcançar (FIN-01).
+    // Quebrado e atordoado: o golpe tira vida mas não derruba nem empurra, para o finalizador ainda alcançar (FIN-01, EDG-11).
     let reaction: Hit = hit;
-    if (wasBroken && !isFinisher) reaction = { ...hit, strength: 'light', force: 0 };
+    if (wasBroken && !isFinisher) reaction = { ...hit, strength: 'light', force: 0, knockdown: false };
     // Empurrão (SPC-02): sai rente ao chão, para o deslocamento horizontal não esbarrar em plataformas.
     else if (effect?.type === 'push') reaction = { ...hit, direction: { x: hit.direction.x, y: PUSH_LIFT } };
     this.pickedReaction = pickHitReaction({ strength: reaction.strength, moveName: hit.moveName }, this.lastReaction);
-    const events = this.brain.receiveHit(reaction, effect?.type === 'knockdown' ? { ragdollStunMs: effect.ms } : {});
-    if (events.length === 0) return false; // já morto
-    this.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
-    // Levar golpe cancela o preparo ou o golpe em andamento (AI-04).
-    this.onAI(this.ai.interrupt());
+    const events = this.brain.receiveHit(reaction, {
+      committed: this.ai.committed,
+      ...(effect?.type === 'knockdown' ? { ragdollStunMs: effect.ms } : {}),
+    });
+    if (events.length === 0) return false; // já morto, levantando ou no limite do chão (GND-02, GND-03)
+    // Comprometido e sem que o golpe derrube, mate ou seja Contra: a IA segue e o golpe pendente sai (CMT-05).
+    const armored = events.some((ev) => ev.type === 'armored');
+    if (!armored) {
+      this.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
+      // Levar golpe cancela o preparo ou o golpe em andamento antes do compromisso (AI-04, CMT-03).
+      this.onAI(this.ai.interrupt());
+    }
     this.handle(events);
     this.pickedReaction = null;
     const survived = !this.brain.isDead;
     if (survived && this.structure.add(enemyStructureGain(hit))) this.onBreak();
-    if (survived && effect) this.applyEffect(effect, hit);
+    if (survived && effect && !armored) this.applyEffect(effect, hit);
     this.updateBar();
     return true;
   }
@@ -445,18 +469,22 @@ export class Enemy implements Hittable {
     this.onEvent?.(`guardBreak:${this.id}`);
   }
 
-  /** Golpe do inimigo aparado pelo jogador (PAR-03, PAR-10): +35 de estrutura e 400 ms parado. */
-  parried(): void {
+  /**
+   * Golpe do inimigo aparado pelo jogador (PAR-03, DFL-07..11): +35 de estrutura sempre. Golpe do meio da sequência
+   * não faz mais nada e a sequência segue (DFL-07, DFL-08); o último deixa o inimigo 400 ms parado (DFL-09), e a
+   * Deflexão o põe em `stagger` por `COUNTER.deflectStaggerMs` (DFL-11).
+   */
+  parried(info: ParryInfo = { final: true, deflect: false }): void {
     if (this.brain.isDead) return;
-    this.onAI(this.ai.interrupt());
-    this.walkVxStep = null;
-    this.suppressedMs = DEFENSE.parrySuppressMs;
-    if (!this.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
+    if (info.final) {
+      this.onAI(this.ai.interrupt());
+      this.walkVxStep = null;
+      this.suppressedMs = DEFENSE.parrySuppressMs;
+      if (!this.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
+      if (info.deflect) this.brain.forceStagger(COUNTER.deflectStaggerMs);
+    }
     if (this.structure.add(STRUCTURE.enemy.parryGain)) this.onBreak();
-    this.view.setTintFill(PALETTE.w);
-    this.scene.time.delayedCall(HIT_FLASH_MS, () => {
-      if (this.view.active) this.view.clearTint();
-    });
+    this.flashWhite();
     this.updateBar();
   }
 
@@ -548,15 +576,16 @@ export class Enemy implements Hittable {
 
   /**
    * `gate` vem da cena a cada frame (limitador de atacantes): `granted` (tem a vaga), `windupAllowed` (intervalo
-   * entre windups) e `holdRank` (posição na fila de espera do lado do player). A IA continua pura.
+   * entre windups), `holdRank` (posição na fila de espera do lado do player) e `focus` (alvo em foco). A IA continua pura.
    */
-  update(dtMs: number, playerX: number, gate: EnemyGateInput = NO_GATE): void {
+  update(dtMs: number, playerX: number, gate: EnemyFrameInput = NO_GATE): void {
     if (this._removed) return;
     this.wantAttackNow = false;
     this.windupStartNow = false;
     this.grace.update(dtMs);
     this.suppressedMs = Math.max(0, this.suppressedMs - dtMs);
-    this.structure.update(dtMs);
+    // PST-14, PST-16: no foco a postura cai devagar; fora dele, rápido. O atraso de 1500 ms vale nos dois.
+    this.structure.update(dtMs, gate.focus ? STRUCTURE.enemy.decayPerSec : STRUCTURE.enemy.offFocusDecayPerSec);
     if (!this.structure.broken) this.finished = false;
     this.guard.update(dtMs);
     if (this.pendingRagdollReveal) this.revealRagdoll();
@@ -701,6 +730,13 @@ export class Enemy implements Hittable {
       this.view.clearTint();
       this.guardTinted = false;
     }
+    if (this.brain.state === 'stagger') {
+      // Cambaleio (PST-01) e Deflexão (DFL-11): o frame de impacto fica parado enquanto o estado dura.
+      this.view.anims.stop();
+      this.view.setFrame('impact');
+      this.reactionKey = null;
+      return;
+    }
     const key = enemyAnimKey(this.variant, anim);
     if (anim.startsWith('hurt-')) {
       // Reação leve: já foi iniciada do frame 0 no golpe; aqui só garante a chave certa, sem reiniciar enquanto vale.
@@ -717,6 +753,8 @@ export class Enemy implements Hittable {
   private handle(events: EnemyEvent[]): void {
     for (const ev of events) {
       if (ev.type === 'hitReaction') this.playHitReaction(ev.hit);
+      else if (ev.type === 'armored') this.onArmored();
+      else if (ev.type === 'stagger') this.playStagger(ev.hit);
       else if (ev.type === 'hurtWhileDown') this.ragdoll?.flash();
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
       else if (ev.type === 'ragdoll') this.enterRagdoll(ev.hit);
@@ -732,7 +770,8 @@ export class Enemy implements Hittable {
    */
   private playHitReaction(hit: Hit): void {
     const picked = this.pickedReaction;
-    if (picked && picked !== 'impact') {
+    // Em cambaleio o corpo segue no frame `impact` (o `animate` o segura); a animação leve não toca (PST-10).
+    if (picked && picked !== 'impact' && this.brain.state !== 'stagger') {
       this.reaction = picked;
       if (picked === 'head-a' || picked === 'head-b') this.lastReaction = picked;
       if (!this.structure.broken && this.suppressedMs <= 0) {
@@ -746,6 +785,35 @@ export class Enemy implements Hittable {
     }
     const d = normalize(hit.direction);
     this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
+    this.view.setTintFill(PALETTE.w);
+    this.scene.time.delayedCall(HIT_FLASH_MS, () => {
+      if (this.view.active) this.view.clearTint();
+    });
+  }
+
+  /** Golpe absorvido por quem está comprometido (CMT-04, CMT-06): só o flash branco e o evento; a IA segue. */
+  private onArmored(): void {
+    this.flashWhite();
+    this.onEvent?.(`armored:${this.id}`);
+  }
+
+  /**
+   * Golpe forte que não derruba (PST-01): cambaleia sem ragdoll, no frame `impact`, com o impulso horizontal do golpe
+   * como na reação leve.
+   */
+  private playStagger(hit: Hit): void {
+    this.reaction = null;
+    this.reactionKey = null;
+    this.view.anims.stop();
+    this.view.setFrame('impact');
+    const d = normalize(hit.direction);
+    this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
+    this.flashWhite();
+    this.onEvent?.(`stagger:${this.id}`);
+  }
+
+  /** Flash branco curto do corpo (golpe recebido ou aparado); o relógio da cena para no hitstop. */
+  private flashWhite(): void {
     this.view.setTintFill(PALETTE.w);
     this.scene.time.delayedCall(HIT_FLASH_MS, () => {
       if (this.view.active) this.view.clearTint();
