@@ -1,4 +1,4 @@
-# Validation: movimento-suave-e-objetos-no-chefe - FAIL
+# Validation: movimento-suave-e-objetos-no-chefe - PASS na rodada 2 (a rodada 1 reprovou)
 
 **Data**: 2026-10-03
 **Spec**: `.specs/features/movimento-suave-e-objetos-no-chefe/spec.md`
@@ -6,7 +6,9 @@
 **Diff range**: `a595f1b..HEAD`: 9 commits (7 de feature, T1 a T7, e 2 de spec), 18 arquivos, +1237/-29
 **Verifier**: independente (autor != verificador), Sonnet 5.5. Nenhum código nem teste foi alterado. O único arquivo criado na árvore real é este.
 
-Veredito: FAIL, por uma lacuna só e pequena de consertar. O EDG-02 ("ao renascer, `player.view` fica no corpo no primeiro quadro") não tem nenhum teste no nível do player: a chamada `drawPos.snap()` de `Player.resetForRun` pode ser apagada e os 1778 testes e o smoke `feel` seguem passando (mutante A6b; só `feel` e `boss-prop` leem `player.view`, nenhum outro smoke em `scripts/smoke` o faz). Uma sonda minha, só em scratch, mostra que o defeito é real (depois de renascer, `view` fica 29,3 px longe do corpo no primeiro quadro, 22,7 px no segundo) e que um smoke curto o pega. Todo o resto passa: 19 de 20 requisitos com evidência no valor da spec, build, 1778 testes e os 30 smokes (o `armed` caiu uma vez, intermitente, e passou na repetição). O sensor também achou um segundo furo, de precisão da spec e mais grave para o objetivo do usuário: nenhum teste olha o sprite que a tela desenha (mutantes A1, A4, A5), só o campo `view` do snapshot, que vem do mesmo getter.
+Veredito geral: PASS na rodada 2 (`a57759d..8f4e7f1`, 23 requisitos), depois de uma rodada 1 reprovada (`a595f1b..a57759d`, 20 requisitos). O texto da rodada 1 segue abaixo sem reescrita e a `## Rodada 2` fecha o arquivo.
+
+Veredito da rodada 1: FAIL, por uma lacuna só e pequena de consertar. O EDG-02 ("ao renascer, `player.view` fica no corpo no primeiro quadro") não tem nenhum teste no nível do player: a chamada `drawPos.snap()` de `Player.resetForRun` pode ser apagada e os 1778 testes e o smoke `feel` seguem passando (mutante A6b; só `feel` e `boss-prop` leem `player.view`, nenhum outro smoke em `scripts/smoke` o faz). Uma sonda minha, só em scratch, mostra que o defeito é real (depois de renascer, `view` fica 29,3 px longe do corpo no primeiro quadro, 22,7 px no segundo) e que um smoke curto o pega. Todo o resto passa: 19 de 20 requisitos com evidência no valor da spec, build, 1778 testes e os 30 smokes (o `armed` caiu uma vez, intermitente, e passou na repetição). O sensor também achou um segundo furo, de precisão da spec e mais grave para o objetivo do usuário: nenhum teste olha o sprite que a tela desenha (mutantes A1, A4, A5), só o campo `view` do snapshot, que vem do mesmo getter.
 
 Convenção: "rodado" = executei e vi o resultado; "lido" = conferi lendo o código, o teste ou a biblioteca.
 
@@ -243,3 +245,170 @@ Fora do escopo do Verifier; o usuário está testando. O que os smokes não pode
 **O que funciona**: `propThrown` e `propSwing` acertam o chefe, no chão e no salto, e a garrafa tira exatamente 12 e quebra no jogo; o seguidor da câmera é por tempo, em ponto flutuante, com o scroll na grade de pixel de tela; a interpolação entre passos bate com `anterior + (atual - anterior) × alfa` nos três corpos; `roundPixels` e o `startFollow` do Phaser estão desligados; a margem 1,5 confere com o Matter do Phaser 3.90.
 
 **Próximos passos**: (1) acrescentar o bloco do EDG-02 ao `feel.smoke.mjs` e repetir a verificação só do EDG-02 (sonda pronta no scratch, descrita acima); (2) decidir sobre o snapshot ler o sprite (lacuna 2) e o teste de contrato da margem; (3) UAT do usuário.
+
+---
+
+## Rodada 2
+
+**Data**: 2026-10-03
+**Branch**: `feat/movimento-suave-e-objetos-no-chefe`, HEAD `8f4e7f1`
+**Diff range**: `a57759d..HEAD`: 4 commits (`0301273` relatório da rodada 1, `399f013` spec e tasks, `ab6388c` código e testes, `8f4e7f1` lições L-055 a L-058). Em `src/`: `Player.ts`, `Enemy.ts`, `Boss.ts` (getters `spritePos`; `placeView()` ao renascer), `TestScene.ts` (aura e snapshot), `techFx/Aura.ts` (getter `pos`) e `debugApi.ts` (campo `fx.aura`). Em `tests/`: `matterRunnerContract.test.ts` (novo) e o fixture de `debugApi.test.ts`. Em `scripts/smoke/`: `feel.smoke.mjs` (+84 linhas, só acréscimos). `collision.ts`, `stepLerp.ts`, `cameraFollow.ts`, `physics.ts` e `boss-prop.smoke.mjs` não mudaram.
+**Verifier**: o mesmo Verifier independente (autor != verificador). Nenhum código nem teste foi alterado; a árvore real só ganha estas linhas.
+**Escopo**: o que o orquestrador pediu: evidência de EDG-02, ITP-05, ITP-07, ITP-08, ITP-09 e ITP-10, conferência rápida do resto, gate, sensor sobre os sobreviventes da rodada 1 mais mutantes novos, a opinião sobre o `enemy-react` e a rastreabilidade dos 23 IDs.
+
+Veredito da rodada 2: PASS. Os 6 IDs alterados ou novos têm evidência `file:line` no valor da spec; build, 1780 testes e os 30 smokes passam; dos 8 sobreviventes da rodada 1 só sobrevive um, equivalente (código inalcançável). Nenhum mutante sobrevive em comportamento fixado por AC.
+
+### Evidência dos IDs alterados ou novos (lido; os valores dos mutantes foram rodados)
+
+| ID | Resultado definido na spec | `file:line` + asserção | Resultado |
+| --- | --- | --- | --- |
+| EDG-02 | player morre a menos de 48 px do spawn, a run recomeça: `player.view` no corpo (±0,01) em cada um dos 3 primeiros quadros da run nova | `scripts/smoke/feel.smoke.mjs:179-181` pré-condição `away > 15 && away < 48`; `:182-185` Digit3 mata, J recomeça; `:187-196` nos 3 primeiros quadros em `roundActive`: `Math.abs(s.player.view.x - s.player.x) <= 0.01` e o mesmo em y, mais `Math.abs(s.player.x - spawnX) < 1`; `:197` `fresh === 3`. A6b e N1 morrem aqui (sprite a 35 px e a 46 px do corpo no quadro 0) | PASS |
+| ITP-05 | correndo, em quadro de um passo, `player.view.x` = `anterior + (atual - anterior) × physics.alpha` (±0,01), com `view` = o sprite desenhado de fato (Glossário novo) | `feel.smoke.mjs:58-67` (inalterado) agora lê `view` de `Player.spritePos` (`Player.ts:208-210`: `{ x: this.view.x, y: this.view.y - SIZE.player.h / 2 }`, ligado em `TestScene.ts:1134`), ou seja, a posição do `Phaser.GameObjects.Sprite`. A1 (sprite no corpo) morre aqui: `view 125,67 deveria ser 123,83` | PASS |
+| ITP-07 | `view.x` do inimigo andando e do chefe na investida = `anterior + (atual - anterior) × physics.alpha` (±0,01) | `feel.smoke.mjs:165-167` (inimigo) e `boss-prop.smoke.mjs:47-61,78` (chefe), agora sobre `Enemy.spritePos` (`Enemy.ts:211-213`, `TestScene.ts:1154`) e `Boss.spritePos` (`Boss.ts:139-141`, `TestScene.ts:1174`). A4 e A5 morrem aqui | PASS |
+| ITP-08 | correndo com a cadeira na mão, o x dela no snapshot = `player.view.x - 8 × facing` (±0,01) | `feel.smoke.mjs:92-126`: pega a cadeira, corre para a esquerda e, nos quadros em regime (`i >= 10`), `expect(held.x - (s.player.view.x - 8 * s.player.facing)) <= 0.01` (`:113-114`), com `heldFrames >= 20` (`:118`). A11 (objeto no corpo) morre: `cadeira em 218,67, deveria estar em 221,28` | PASS (só o sentido `facing = -1`; a fórmula é linear no `facing`, então inverter o sinal do encaixe também seria pego) |
+| ITP-09 | `STEP_BUFFER_MARGIN` igual ao `_timeBufferMargin` do `Runner` do Matter do Phaser instalado | `tests/game/matterRunnerContract.test.ts:15-17` lê o texto de `Runner.js` instalado, `match(/Runner\._timeBufferMargin\s*=\s*([\d.]+)\s*;/)` não nulo e `expect(Number(match![1])).toBe(STEP_BUFFER_MARGIN)`; `:21-22` fixa também o laço do `World.js` (`while (... timeBuffer >= engineDelta * MatterRunner._timeBufferMargin)` e `timeBuffer -= engineDelta`) | PASS |
+| ITP-10 | com a aura de conjuração visível e o player correndo, `fx.aura.x` = `player.view.x` (±0,01) | `feel.smoke.mjs:128-145`: tecla 1 do fxlab com o player correndo, por quadro com aura: `Math.abs(s.fx.aura.x - s.player.view.x) <= 0.01` e o mesmo em y (`:138-141`, mais estrito que a spec), com `auraFrames >= 8` (`:145`). Fonte: `Aura.pos` (`Aura.ts:47-49`, o sprite da aura) em `TestScene.ts:1227`; a aura segue `renderPos` (`TestScene.ts:486-487`). N2 e N6 morrem aqui | PASS |
+
+**Os outros 17 IDs (releitura rápida)**: nenhum teste de `collision`, `stepLerp`, `cameraFollow` nem `bodyRenderPos` mudou (o diff de `tests/` só tem o fixture de `debugApi.test.ts` e o arquivo novo), `collision.ts`, `stepLerp.ts`, `cameraFollow.ts` e `physics.ts` ficaram iguais, e a suíte inteira segue verde. PRB-01 a PRB-04, CAM-01 a CAM-07, ITP-01 a ITP-04, ITP-06, EDG-01: sem regressão. O ITP-06 agora também mede o sprite real (usa `player.view`), o que o deixa mais forte.
+
+**Status**: 23 de 23 com evidência no valor da spec; 0 lacunas de AC.
+
+### Fechamento das lacunas da rodada 1
+
+| Lacuna | Situação |
+| --- | --- |
+| 1. EDG-02 sem teste do player | Fechada: bloco novo em `feel:172-197`; A6b e N1 morrem. A correção também achou um defeito real que a sonda da rodada 1 não pegava: no primeiro quadro da run nova o sprite ficava no ponto da morte (`player.view` a 35 px do corpo, N1); `placeView()` depois de `snap()` o resolve |
+| 2. Sprite desenhado não observado | Fechada: o snapshot lê `spritePos`; A1, A4 e A5 morrem |
+| 3. Margem 1,5 sem contrato com o Phaser | Fechada: `matterRunnerContract.test.ts` (ver abaixo, rodei três deriva) |
+| 4. Aura pelo corpo | Fechada para a aura de conjuração (N2, N6 morrem). A aura da zona do Kokusen, a poeira, as faíscas de golpe e as hitboxes seguem no corpo, por decisão registrada nas Assumptions da spec |
+| 5. Doc órfã em `Enemy.ts` | Fechada: `Enemy.ts:210-217`, o getter novo ficou antes do `hurtRect` e o comentário voltou para ele |
+| 6. `tasks.md` / `spec.md` | Aberta, de forma: `tasks.md` ainda tem `Status: In Progress` e `spec.md` tem `Implementing` nos 23 IDs; o orquestrador atualiza depois do UAT |
+| 7. `armed` intermitente | Passou na rodada completa desta vez |
+
+### Gate (rodado)
+
+- `npm run build`: exit 0 (só o aviso de chunk > 500 kB que já existia).
+- `npm test`: 83 arquivos, **1780 passaram, 0 falharam, 0 pulados**. Contra os 1778 da rodada 1: +2 (os dois testes do contrato). Contra a base da feature (1741): +39.
+- `npm run smoke -- feel`: ok. `npm run smoke -- boss-prop`: ok.
+- `npm run smoke` completo, uma vez e sozinho: **30 cenários, 30 ok**. `heal`, `armed` e `enemy-react` passaram na rodada, então não houve o que repetir.
+- Árvore real: `git status --porcelain` antes e depois idênticos (só `.agents/ .claude/ .cursor/ .windsurf/ skills-lock.json`, não rastreados). `git stash list` vazio. `git worktree list` sem o scratch.
+
+### O `enemy-react` e a câmera nova: a flake pode ser culpa da feature?
+
+Minha opinião: provavelmente não, é o problema de tempo do harness. Dados e raciocínio:
+
+- **Dados**: neste ambiente `enemy-react` passou 5 de 5 (1 na rodada completa, 4 sozinhas em scratch no HEAD; rodado). Não vi nenhuma falha, então não tenho como comparar com a base. Somando o que o orquestrador viu (1 falha em rodada completa, 3 de 3 sozinhas), a taxa é baixa e ainda não atribuível.
+- **O que a feature não mexe**: o `enemy-react` lê `x`, `hp` e `move` do corpo (`land()` em `enemy-react.smoke.mjs:125`: `until(cur, (x) => byId(x, id).hp < hp0, 40, 'socoBaixo deveria acertar')`). Física, hitboxes, golpes e IA ficaram iguais; a interpolação e o `renderPos` só mexem no sprite, nas barras e na câmera.
+- **O único caminho da feature até a lógica** é a câmera: `pickEnemySpawnPoint` escolhe o ponto de nascimento com o `worldView` da câmera (`TestScene.ts:983-989`). O `worldView` agora depende de `renderPos` e, portanto, do alfa, que o harness deixa variar de uma execução para outra (a sobra do acumulador do Matter depende do loop em tempo real antes do primeiro `step`; está nas Assumptions da spec). Isso poderia mudar um ponto de nascimento só se ele estivesse a poucos px da borda da vista mais a margem. Com o player parado no começo, `renderPos` é o corpo qualquer que seja o alfa, então a janela de risco é pequena (só depois de o player andar). É possível, mas improvável, e eu não vi caso.
+- **A explicação mais provável** é a conhecida, o tempo do harness (inferência por leitura de `debugApi.ts:280-292` e `World.js:1198-1215`, não medi): o `step(ms)` entrega quadros de exatamente 1000/60 ms, mas o Matter suaviza o delta com um histórico dos últimos 100 quadros (`frameDeltaHistory`), que no começo ainda guarda os quadros reais de antes do `step`. Enquanto o histórico se renova, alguns quadros do harness têm 0 ou 2 passos de física, e a posição relativa entre o player e o inimigo na hora do golpe muda de uma execução para outra. É o tipo de variação que faz "socoBaixo deveria acertar" errar o alcance por poucos pixels, e vale para qualquer feature.
+- Para fechar a dúvida sem custo na feature, daria para comparar 15 ou 20 execuções na base e no HEAD; com 5 de 5 não há falha para comparar. Não fiz.
+
+### Sensor de discriminação (rodado)
+
+**Isolamento**: `git worktree add` fora do repositório (HEAD `8f4e7f1`), `node_modules` por junction; mutantes de núcleo com a suíte inteira, mutantes de adaptador com `npm run smoke -- <cenário>` dentro do scratch (o runner constrói e serve do diretório onde roda). Uma instância do harness por vez. Junction removida primeiro (`cmd /c rmdir`), depois `git worktree remove --force`; `node_modules` real conferido intacto.
+
+**15 mutantes: 14 mortos, 1 sobrevivente.**
+
+#### A. Os sobreviventes da rodada 1, de novo
+
+| # | Arquivo:linha | Mutação | Resultado |
+| --- | --- | --- | --- |
+| A1 | `Player.ts:213-216` | `placeView` usa o corpo em vez de `renderPos` | MORTO por `feel`: `ITP-05: quadro 6: view 125,67 deveria ser 123,83` |
+| A4 | `Enemy.ts:617-618` | sprite do inimigo comum na posição do corpo | MORTO por `feel`: `ITP-07: inimigo 6: view 1196,34 deveria ser 1197,23` |
+| A5 | `Boss.ts:363-364` | sprite do chefe na posição do corpo | MORTO por `boss-prop`: `ITP-07: chefe: view 1217,60 deveria ser 1220,21` |
+| A6b | `Player.ts:468` | `resetForRun` sem `drawPos.snap()` | MORTO por `feel`: `EDG-02: quadro 0 da run nova: sprite em x 147,3, corpo em 112` |
+| A11 | `Player.ts:385` | objeto na mão segue o corpo | MORTO por `feel`: `ITP-08: cadeira em 218,67, deveria estar em 221,28` |
+| A6a | `Player.ts:438` | `respawn` sem `drawPos.snap()` | SOBREVIVEU, equivalente: ver abaixo |
+
+**A6a é inalcançável.** `Player.ts:148-149` cria o `Health` com `respawnMs: Infinity` ("fora de run não existe mais respawn, só `resetForRun`"), então o evento `respawn` nunca sai e `Player.respawn()` não roda em nenhum fluxo. O método (com o `snap()` e o `placeView()` que ganhou) é código morto; nota de qualidade, não lacuna.
+
+#### B. Mutantes novos
+
+| # | Arquivo:linha | Mutação | Resultado |
+| --- | --- | --- | --- |
+| N1 | `Player.ts:469` | tira o `placeView()` de `resetForRun` (deixa o `snap()`) | MORTO por `feel`: `EDG-02: quadro 0 da run nova: sprite em x 158, corpo em 112` (o sprite fica fora do corpo no quadro 0) |
+| N2 | `TestScene.ts:486-487` | a aura de conjuração segue `player.sprite` (corpo) de novo | MORTO por `feel`: `ITP-10: aura em x 149,33, sprite em 147,11` |
+| N6 | `Aura.ts:48` | `Aura.pos` devolve sempre `null` | MORTO por `feel`: `ITP-10: ... pelo menos 8 quadros ...: 0` |
+| N5 | `Player.ts:209` | `spritePos` sem a conversão `- altura/2` | MORTO por `feel`: `parado, view deveria ser o corpo: view y 480, corpo y 462` |
+| N3 | `stepLerp.ts:7` | `STEP_BUFFER_MARGIN` de 1,5 para 1 | MORTO (suíte inteira, 7 testes: o do `STEP_BUFFER_MARGIN`, ITP-01, `renderAlpha` e o contrato) |
+| N4 | `stepLerp.ts:7` | `STEP_BUFFER_MARGIN` de 1,5 para 2, só o arquivo do contrato | MORTO por ITP-09 (`matterRunnerContract.test.ts:17`) |
+
+#### C. Deriva do Phaser contra o teste de contrato (cópias em scratch, sem tocar o `node_modules`)
+
+O `node_modules` do scratch é uma junction para o real, então não mutei o Phaser instalado. Copiei `Runner.js` e `World.js` para o scratch, gerei uma cópia do teste de contrato apontando para as cópias e rodei quatro variantes:
+
+| Variante | Resultado |
+| --- | --- |
+| controle (cópias idênticas ao instalado) | passa, 2 de 2 |
+| `_timeBufferMargin = 2` | MORTO: `STEP_BUFFER_MARGIN é igual ao _timeBufferMargin do Runner` |
+| laço do `World` sem a margem (`timeBuffer >= engineDelta`) | MORTO: o segundo teste do contrato |
+| `timeBuffer -= engineDelta * 2` | MORTO: o segundo teste do contrato |
+
+**Resultado**: 15 mutantes, 14 mortos, 1 sobrevivente (A6a, inalcançável); mais 1 controle. Nenhum sobrevivente em comportamento fixado por AC.
+
+### Code Quality da rodada 2 (lido, com build rodado)
+
+| Princípio | Status |
+| --- | --- |
+| Nada além do pedido | OK: os getters `spritePos`, o `Aura.pos`, o campo `fx.aura` e o teste de contrato são o que as lacunas pediam; nenhuma física nem tuning mudou |
+| Estilo dos vizinhos | OK: comentários em português com o ID, `?raw` do Vite no teste por falta de tipos de Node, `/// <reference types="vite/client" />` no topo |
+| Código morto | Uma nota: `Player.respawn()` é inalcançável (`respawnMs: Infinity`, `Player.ts:148-149`); a feature acrescentou `snap()` e `placeView()` nele. Remover o método ou dizer que é legado |
+| Testes mapeiam ACs | OK: cada bloco novo cita o ID; os mutantes do ITP-08, ITP-10, EDG-02 e ITP-09 morrem nos testes certos |
+| Contrato com o Phaser | OK, com a ressalva de ser textual: o teste lê o código-fonte instalado por expressão regular, não executa o `Runner`. Falha fechado: se o Phaser reescrever a linha, o primeiro teste diz "não encontrado" em vez de passar |
+| Duplicação | Baixa: `spritePos` repete a conversão `± altura/2` do posicionamento nos três donos (`Player.ts:209`, `Enemy.ts:212`, `Boss.ts:140`); `placeView` é a única fonte no player |
+| Lições L-055 a L-058 | Conferi o texto (`.specs/LESSONS.md`): batem com as lacunas da rodada 1; não afetam o veredito |
+
+### Lacunas restantes (todas informativas, nenhuma bloqueia)
+
+1. `Player.respawn()` é código morto (A6a): remover ou documentar.
+2. ITP-08 só roda com `facing = -1` (`feel:118`); a fórmula é linear no `facing`, risco baixo.
+3. As faíscas da zona do Kokusen, a poeira, a faísca de golpe e as hitboxes seguem no corpo: decisão registrada, sem AC, desvio de até 1 passo.
+4. O ponto de soltura do objeto (`Player.ts:724`) sai do corpo enquanto na mão o objeto era desenhado no ponto interpolado: salto de até 1 passo no arremesso; decisão registrada.
+5. A câmera seguindo o corpo em vez de `renderPos` (A2 da rodada 1): benigno pela medida do ITP-04; sem rede e sem AC.
+6. O harness só dá um passo por quadro, então nada acima de 60 Hz roda no jogo; o ITP-04 continua sendo simulação.
+7. `tasks.md` com `Status: In Progress` e `spec.md` com `Implementing` nos 23 IDs.
+
+### Interactive UAT
+
+Continua fora do escopo do Verifier; o usuário está testando. O que os smokes não provam: se o tremor sumiu a 75, 120 e 144 Hz num monitor de verdade.
+
+### Atualização de rastreabilidade (a aplicar pelo orquestrador; `spec.md` não foi editado)
+
+| Requisito | Status anterior | Novo status |
+| --- | --- | --- |
+| PRB-01 | Implementing | Verified |
+| PRB-02 | Implementing | Verified |
+| PRB-03 | Implementing | Verified |
+| PRB-04 | Implementing | Verified |
+| CAM-01 | Implementing | Verified |
+| CAM-02 | Implementing | Verified |
+| CAM-03 | Implementing | Verified |
+| CAM-04 | Implementing | Verified |
+| CAM-05 | Implementing | Verified |
+| CAM-06 | Implementing | Verified |
+| CAM-07 | Implementing | Verified |
+| ITP-01 | Implementing | Verified |
+| ITP-02 | Implementing | Verified |
+| ITP-03 | Implementing | Verified |
+| ITP-04 | Implementing | Verified |
+| ITP-05 | Implementing | Verified (rodada 2, sprite real) |
+| ITP-06 | Implementing | Verified |
+| ITP-07 | Implementing | Verified (rodada 2, sprite real) |
+| ITP-08 | Implementing | Verified (rodada 2) |
+| ITP-09 | Implementing | Verified (rodada 2) |
+| ITP-10 | Implementing | Verified (rodada 2) |
+| EDG-01 | Implementing | Verified |
+| EDG-02 | Implementing | Verified (rodada 2; era Needs Fix) |
+
+23 de 23 verificados (4 PRB, 7 CAM, 10 ITP, 2 EDG).
+
+### Resumo da rodada 2
+
+**Overall**: Pronto (PASS)
+
+**Spec-anchored check**: 6 de 6 IDs alterados ou novos com evidência no valor da spec; 23 de 23 no total | 0 lacunas de AC (restam 7 notas informativas)
+**Sensor**: 14 de 15 mortos; o sobrevivente (A6a) é código inalcançável
+**Gate**: build ok, 1780 testes passaram, 0 falharam, smoke completo 30 de 30
+**Isolamento**: `git status --porcelain` da árvore real idêntico ao baseline; scratch removido (junction primeiro)
+
+**Próximos passos**: UAT do usuário (arremessar cadeira e garrafa no chefe; correr de um lado para o outro, de preferência num monitor de 120 ou 144 Hz); depois marcar os 23 IDs como Verified em `spec.md`, fechar `tasks.md` e mesclar em `dev` com `--no-ff` (AD-008).
