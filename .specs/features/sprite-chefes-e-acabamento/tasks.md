@@ -215,9 +215,9 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] OBJ-03: `common` da faca com 3×10, pelo menos 7 chaves distintas, entre elas `w` e `z`, e nenhuma `A`.
-- [ ] OBJ-04: `common` do porrete com 5×8, pelo menos 7 chaves distintas, entre elas `l` e `M`, e nenhuma `A`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] OBJ-03: `common` da faca com 3×10, pelo menos 7 chaves distintas, entre elas `w` e `z`, e nenhuma `A`.
+- [x] OBJ-04: `common` do porrete com 5×8, pelo menos 7 chaves distintas, entre elas `l` e `M`, e nenhuma `A`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick

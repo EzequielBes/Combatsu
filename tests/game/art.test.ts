@@ -1000,6 +1000,22 @@ describe('objetos com volume (OBJ-01, OBJ-02)', () => {
   });
 });
 
+describe('ferramentas com volume (OBJ-03, OBJ-04)', () => {
+  it.each([
+    ['cursedKnife', 3, 10, ['w', 'z']],
+    ['cursedClub', 5, 8, ['l', 'M']],
+  ] as const)('%s: o frame common tem %ix%i texels, pelo menos 7 chaves distintas (entre elas %j) e nenhuma A', (key, w, h, required) => {
+    const common = TOOL_FRAMES[key].common;
+    const sheet = parseSheet(key, { common }, PALETTE_KEYS);
+    expect(sheet.width).toBe(w);
+    expect(sheet.height).toBe(h);
+    const keys = artMeasure.keysOf(common);
+    expect(keys.size).toBeGreaterThanOrEqual(7);
+    for (const k of required) expect(keys.has(k), k).toBe(true);
+    expect(keys.has('A')).toBe(false);
+  });
+});
+
 describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
   it('o projétil passa no parseSheet só com cores da paleta', () => {
     const sheet = parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS);
