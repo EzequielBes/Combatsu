@@ -202,13 +202,13 @@ T7
 
 **Done when**:
 
-- [ ] PRB-04: garrafa arremessada no chefe em `rest` tira exatamente 12 de vida e fica `breaking`.
-- [ ] ITP-05: correndo, em quadro de um passo, `player.view.x` é `anterior + (atual − anterior) × physics.alpha` (±0,01).
-- [ ] ITP-06: correndo em regime, a variação na tela é ≤ 1 px.
-- [ ] ITP-07: em quadro de um passo, `enemies[].view.x` andando e `boss.view.x` na investida são `anterior + (atual − anterior) × physics.alpha` (±0,01).
-- [ ] CAM-07: `camera.roundPixels` é `false` e `camera.phaserFollow` é `false`.
-- [ ] EDG-02: depois de renascer, `player.view` é igual à posição do corpo.
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] PRB-04: garrafa arremessada no chefe em `rest` tira exatamente 12 de vida e fica `breaking`.
+- [x] ITP-05: correndo, em quadro de um passo, `player.view.x` é `anterior + (atual − anterior) × physics.alpha` (±0,01).
+- [x] ITP-06: correndo em regime, a variação na tela é ≤ 1 px.
+- [x] ITP-07: em quadro de um passo, `enemies[].view.x` andando e `boss.view.x` na investida são `anterior + (atual − anterior) × physics.alpha` (±0,01).
+- [x] CAM-07: `camera.roundPixels` é `false` e `camera.phaserFollow` é `false`.
+- [x] EDG-02: depois de renascer, `player.view` é igual à posição do corpo.
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full
