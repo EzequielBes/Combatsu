@@ -173,9 +173,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `Structure`
 **Requirement**: PST-14, PST-16, DEF-13, DEF-19
 **Done when**:
-- [ ] `STRUCTURE.enemy.offFocusDecayPerSec = 40` e `STRUCTURE.player.evadeRelief = 10` em `src/data/moves.ts`.
-- [ ] `reduce(10)` leva 25 a 15 e 6 a 0; quebrada, não muda; não reinicia o atraso da queda.
-- [ ] `update(dt, 40)` cai 40/s e `update(dt)` cai a taxa do tuning, os dois só depois do atraso (1499 ms não cai, 1500 ms começa).
+- [x] `STRUCTURE.enemy.offFocusDecayPerSec = 40` e `STRUCTURE.player.evadeRelief = 10` em `src/data/moves.ts`.
+- [x] `reduce(10)` leva 25 a 15 e 6 a 0; quebrada, não muda; não reinicia o atraso da queda.
+- [x] `update(dt, 40)` cai 40/s e `update(dt)` cai a taxa do tuning, os dois só depois do atraso (1499 ms não cai, 1500 ms começa).
 **Tests**: unit
 **Gate**: quick
 

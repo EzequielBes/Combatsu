@@ -180,8 +180,18 @@ export const DODGE = {
 /** Estrutura do jogador e do inimigo comum (STR-01..08, PAR-03, FIN-01). */
 export const STRUCTURE = {
   max: 100,
-  enemy: { decayDelayMs: 1500, decayPerSec: 10, stunMs: 1500, parryGain: 35, guardedLightGain: 8, unbalanceMs: 400 },
-  player: { blockRegular: 15, blockBoss: 25, decayDelayMs: 1000, decayPerSec: 20, stunMs: 800 },
+  enemy: {
+    decayDelayMs: 1500,
+    /** Taxa no foco (PST-16); fora dele vale `offFocusDecayPerSec` (PST-14). */
+    decayPerSec: 10,
+    offFocusDecayPerSec: 40,
+    stunMs: 1500,
+    parryGain: 35,
+    guardedLightGain: 8,
+    unbalanceMs: 400,
+  },
+  /** `evadeRelief`: quanto a postura cai numa esquiva perfeita ou num abaixar que evita golpe (DEF-13, DEF-19). */
+  player: { blockRegular: 15, blockBoss: 25, decayDelayMs: 1000, decayPerSec: 20, stunMs: 800, evadeRelief: 10 },
   finisherDamage: 40,
   finisherRangePx: 40,
 } as const;
