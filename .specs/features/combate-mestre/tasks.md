@@ -189,10 +189,10 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `EnemyGuard.resolveHit`, `STRUCTURE.enemy.guardedLightGain`
 **Requirement**: RDG-04, RDG-06, RDG-07, RDG-08
 **Done when**:
-- [ ] `tryRaise(0, ...)` não chama o sorteio (teste com sorteio falso que conta as chamadas); `tryRaise(1, ...)` levanta.
-- [ ] Guarda de leitura: `heavy` de frente → dano 0, `structureGain` 8, `blocked` e `guardEnded` verdadeiros; `heavy` com `unblockable` passa com dano cheio; `light` é segurado e a guarda continua.
-- [ ] Guarda comum (`read` falso): os resultados de EBL-02..05 não mudam (regressão).
-- [ ] `get read()` é `false` depois que a guarda termina ou de `reset()`.
+- [x] `tryRaise(0, ...)` não chama o sorteio (teste com sorteio falso que conta as chamadas); `tryRaise(1, ...)` levanta.
+- [x] Guarda de leitura: `heavy` de frente → dano 0, `structureGain` 8, `blocked` e `guardEnded` verdadeiros; `heavy` com `unblockable` passa com dano cheio; `light` é segurado e a guarda continua.
+- [x] Guarda comum (`read` falso): os resultados de EBL-02..05 não mudam (regressão).
+- [x] `get read()` é `false` depois que a guarda termina ou de `reset()`.
 **Tests**: unit
 **Gate**: quick
 
