@@ -469,9 +469,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `TargetGate`, `propHit`
 **Requirement**: TGT-07, PST-07, PST-08
 **Done when**:
-- [ ] Teste: no balanço o 3º alvo é recusado; um alvo `refused` não gasta vaga; no arremesso não há teto.
-- [ ] Teste: `propHit` com estado `thrown` tem `knockdown: true`; com `swing`, não.
-- [ ] `src/game/Prop.ts` usa a API nova e o `onConnect` recebe o alvo como 3º argumento.
+- [x] Teste: no balanço o 3º alvo é recusado; um alvo `refused` não gasta vaga; no arremesso não há teto.
+- [x] Teste: `propHit` com estado `thrown` tem `knockdown: true`; com `swing`, não.
+- [x] `src/game/Prop.ts` usa a API nova e o `onConnect` recebe o alvo como 3º argumento.
 **Tests**: unit
 **Gate**: quick
 
