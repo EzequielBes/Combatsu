@@ -124,17 +124,17 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 | PRB-02 | P1: Objetos acertam o chefe | Execute | Implementing |
 | PRB-03 | P1: Objetos acertam o chefe | Execute | Implementing |
 | PRB-04 | P1: Objetos acertam o chefe | Tasks | In Tasks |
-| CAM-01 | P1: Câmera sem tremor | Tasks | In Tasks |
-| CAM-02 | P1: Câmera sem tremor | Tasks | In Tasks |
-| CAM-03 | P1: Câmera sem tremor | Tasks | In Tasks |
-| CAM-04 | P1: Câmera sem tremor | Tasks | In Tasks |
-| CAM-05 | P1: Câmera sem tremor | Tasks | In Tasks |
-| CAM-06 | P1: Câmera sem tremor | Tasks | In Tasks |
+| CAM-01 | P1: Câmera sem tremor | Execute | Implementing |
+| CAM-02 | P1: Câmera sem tremor | Execute | Implementing |
+| CAM-03 | P1: Câmera sem tremor | Execute | Implementing |
+| CAM-04 | P1: Câmera sem tremor | Execute | Implementing |
+| CAM-05 | P1: Câmera sem tremor | Execute | Implementing |
+| CAM-06 | P1: Câmera sem tremor | Execute | Implementing |
 | CAM-07 | P1: Câmera sem tremor | Tasks | In Tasks |
 | ITP-01 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-02 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-03 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-04 | P1: Movimento sem degraus | Tasks | In Tasks |
+| ITP-04 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-05 | P1: Movimento sem degraus | Tasks | In Tasks |
 | ITP-06 | P1: Movimento sem degraus | Tasks | In Tasks |
 | ITP-07 | P1: Movimento sem degraus | Tasks | In Tasks |
