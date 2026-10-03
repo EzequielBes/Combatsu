@@ -98,6 +98,9 @@ export const ENEMY_AI: EnemyAITuning = {
   holdTolerance: 2,
   farRange: 320,
   farSpeedMult: 1.6,
+  commitMs: 200,
+  stringGapMs: 300,
+  hits: 1,
 };
 
 /** Garra do inimigo: a hitbox fica ligada enquanto a IA está em `attack` (activeMs = ENEMY_AI.attackMs). */
