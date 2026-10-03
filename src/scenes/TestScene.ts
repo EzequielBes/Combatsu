@@ -3,6 +3,7 @@ import { armFor, propName, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
 import { bossFinisherDamage } from '../core/bossFinisher';
 import { bossRewardSlot } from '../core/bossReward';
+import { clampCenter, followCenter, scrollFor, type FollowConfig } from '../core/cameraFollow';
 import { Filters } from '../core/collision';
 import { scaleFor } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
@@ -69,7 +70,7 @@ import { GAME_NAME, Hud } from '../game/Hud';
 import type { InputSnapshot } from '../game/input';
 import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
-import { MAX_FRAME_MS } from '../game/physics';
+import { MAX_FRAME_MS, renderAlpha } from '../game/physics';
 import { Pickups } from '../game/Pickups';
 import { Player, type Attacker, type DefenseKind } from '../game/Player';
 import { Prop } from '../game/Prop';
@@ -91,6 +92,8 @@ const SPAWN_LIFT = 2;
 const WORLD_ZOOM = 1.5;
 /** Folga (px de tela) em que o player anda sem a câmera andar junto. */
 const FOLLOW_DEADZONE = { w: 40, h: 24 };
+/** Fração do caminho até o player que a câmera anda num quadro de 60 Hz. */
+const FOLLOW_LERP = 0.15;
 /** Finalizador (FIN-04): zoom da câmera no golpe, tempo até chegar (ms; 80 para fechar em 100 ms reais com o frame de atraso do efeito) e depois de quanto tempo real volta ao normal. */
 const FINISHER_ZOOM = 1.7;
 const FINISHER_ZOOM_IN_MS = 80;
@@ -212,6 +215,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private wasPlayerDead = false;
   /** Relógio de jogo da cena (ms), só para o intervalo entre usos do mesmo ponto de spawn (SPN-08). */
   private clockMs = 0;
+  /** Centro da câmera do mundo em ponto flutuante (CAM-07): o estado do seguidor, nunca arredondado. */
+  private camCenter: Vec2 = { x: 0, y: 0 };
   /** Instante (`clockMs`) do último spawn comum em cada índice de ponto `E` (SPN-08). */
   private spawnLastUsed = new Map<number, number>();
   private readonly hitstop = new Hitstop();
@@ -340,12 +345,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.floatTexts = new FloatTexts(this);
     this.droppedTools = new DroppedTools(DROPPED_TOOLS);
 
-    this.cameras.main
-      .setZoom(WORLD_ZOOM)
-      .setRoundPixels(true)
-      .setBounds(0, 0, this.level.widthPx, this.level.heightPx)
-      .startFollow(this.player.sprite, true, 0.15, 0.15)
-      .setDeadzone(FOLLOW_DEADZONE.w, FOLLOW_DEADZONE.h);
+    // CAM-07: sem o `startFollow` do Phaser (lerp por quadro e floor dentro da realimentação faziam o player tremer
+    // contra a câmera) e sem `roundPixels`: com 2 px por texel e zoom 1,5, todo texel ocupa 3 px de tela.
+    this.cameras.main.setZoom(WORLD_ZOOM).setRoundPixels(false).setBounds(0, 0, this.level.widthPx, this.level.heightPx);
+    const follow = this.followConfig();
+    this.camCenter = clampCenter(this.player.renderPos, follow.view, follow.bounds);
+    this.followCamera(0);
 
     // J também é ataque (PlayerInput): o listener aqui é independente e só começa/recomeça a run (RUN-02/05).
     this.onKey('J', () => this.run.startPressed());
@@ -379,6 +384,25 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.shopPanel = new ShopPanel(this, this.uiLayer);
   }
 
+  /** Zona morta, lerp, vista (com o zoom atual) e limites do mundo para o seguidor da câmera. */
+  private followConfig(): FollowConfig {
+    const cam = this.cameras.main;
+    return {
+      deadzone: FOLLOW_DEADZONE,
+      lerp: FOLLOW_LERP,
+      view: { w: cam.width / cam.zoom, h: cam.height / cam.zoom },
+      bounds: { x: 0, y: 0, w: this.level.widthPx, h: this.level.heightPx },
+    };
+  }
+
+  /** CAM-07: leva o centro da câmera atrás da posição de desenho do player e aplica o scroll na grade de pixel de tela. */
+  private followCamera(dtMs: number): void {
+    const cam = this.cameras.main;
+    this.camCenter = followCenter(this.camCenter, this.player.renderPos, this.followConfig(), dtMs);
+    const scroll = scrollFor(this.camCenter, { w: cam.width, h: cam.height }, cam.zoom);
+    cam.setScroll(scroll.x, scroll.y);
+  }
+
   update(_time: number, delta: number): void {
     // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
@@ -387,6 +411,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // FXL-03: a câmera lenta multiplica o `dt` de jogo/efeitos junto com `time`/`tweens`/física do Matter
     // (aplicados em `fxLab.toggleTimeScale`) - um só fator, tudo anda devagar junto.
     const realDt = Math.min(delta, MAX_FRAME_MS);
+    // A câmera segue no tempo real, inclusive no hitstop e na loja: a posição de desenho do player já é a deste quadro.
+    this.followCamera(realDt);
     // Câmera lenta da esquiva perfeita (DOD-07): conta em tempo real e, enquanto dura, o tempo de jogo (física,
     // tweens, timers e a lógica pelo `dt` abaixo) anda a 30%. O relógio real dos efeitos (`base`) não desacelera.
     this.slowMo.update(realDt);
@@ -1201,7 +1227,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       camera: {
         zoom: this.cameras.main.zoom,
         worldView: { left: this.cameras.main.worldView.left, right: this.cameras.main.worldView.right },
+        // CAM-07: estado do seguidor novo e os dois interruptores do Phaser que ele substitui.
+        center: { x: this.camCenter.x, y: this.camCenter.y },
+        scroll: { x: this.cameras.main.scrollX, y: this.cameras.main.scrollY },
+        roundPixels: this.cameras.main.roundPixels,
+        phaserFollow: (this.cameras.main as unknown as { _follow: unknown })._follow != null,
       },
+      // ITP-05/07: fração entre os dois últimos passos de física que este quadro desenha.
+      physics: { alpha: renderAlpha(this) },
       // T23 (FIN-01/03): distância viva ao inimigo quebrado mais perto, a mesma que o finalizador usa; sem contrato prévio.
       finisher: { distPx: this.nearestFinishable()?.dist ?? null },
       // T28: laboratório de efeitos, sem contrato prévio no snapshot; `null` fora do fxlab.

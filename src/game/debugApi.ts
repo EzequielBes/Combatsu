@@ -212,7 +212,18 @@ export interface GameSnapshot {
    * Desvio da Fase 6 (T29/T30, CAST-15/KOK-24): a spec não tinha um jeito de o smoke ler o zoom da câmera
    * principal; acrescentado aqui só para o smoke observar o zoom durante a conjuração e o Kokusen.
    */
-  camera: { zoom: number; worldView: { left: number; right: number } };
+  camera: {
+    zoom: number;
+    worldView: { left: number; right: number };
+    /** Centro da câmera do mundo em ponto flutuante e o scroll aplicado, na grade de pixel de tela (CAM-07). */
+    center: { x: number; y: number };
+    scroll: { x: number; y: number };
+    /** `roundPixels` da câmera do mundo e se o `startFollow` do Phaser está ligado; os dois ficam desligados (CAM-07). */
+    roundPixels: boolean;
+    phaserFollow: boolean;
+  };
+  /** Fração (0 a 1) entre os dois últimos passos de física que este quadro desenha (ITP-05, ITP-07). */
+  physics: { alpha: number };
   /** Distância (px, centro a centro) ao inimigo comum quebrado mais perto, a do finalizador (FIN-01/03); `null` sem alvo. */
   finisher: { distPx: number | null };
   /**
