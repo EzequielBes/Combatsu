@@ -43,6 +43,11 @@ export class Aura {
     private readonly registry: FxRegistry,
   ) {}
 
+  /** Centro da chama enquanto ela está visível (ITP-10, snapshot de debug); `null` sem aura. */
+  get pos(): { x: number; y: number } | null {
+    return this.sprite ? { x: this.sprite.x, y: this.sprite.y } : null;
+  }
+
   update(dtMs: number, cast: ActiveCastView | null, x: number, y: number): void {
     const showing = cast !== null && (cast.state === 'sign' || cast.state === 'charge');
     if (showing) {

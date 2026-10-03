@@ -32,6 +32,8 @@ export interface GameSnapshot {
     move: string | null;
     /** Frame do sprite do jogador em cena, ex.: `guard` (CTL-09). */
     frame: string;
+    /** Centro do corpo como a tela o mostra: interpolado entre os dois últimos passos de física (ITP-05). */
+    view: { x: number; y: number };
     /** `parry` = janela de parry aberta (GRD-01, PAR-01). */
     guard: 'none' | 'guard' | 'parry';
     /** Estrutura 0..100 arredondada; `broken` = atordoado pela guarda quebrada (STR-01, STR-06). */
@@ -60,6 +62,8 @@ export interface GameSnapshot {
     guarding: boolean;
     /** Aparência sorteada (EVR-04/05). */
     variant: EnemyVariant;
+    /** Centro do corpo como a tela o mostra (ITP-07). */
+    view: { x: number; y: number };
     /** Frame atual do sprite e se ele está visível (HRX-02/05). */
     frame: string;
     spriteVisible: boolean;
@@ -88,6 +92,8 @@ export interface GameSnapshot {
     x: number;
     /** Centro do corpo; fica dentro da sala (0..544) durante toda a luta. */
     y: number;
+    /** Centro do corpo como a tela o mostra (ITP-07). */
+    view: { x: number; y: number };
     /** O finalizador (J+K) ainda pode ser usado neste `stagger` (BFX-06, BFX-07). */
     finisherReady: boolean;
   } | null;
@@ -194,6 +200,8 @@ export interface GameSnapshot {
     live: number;
     degraded: boolean;
     layers: string[];
+    /** Centro da aura de conjuração enquanto visível (ITP-10); `null` sem aura. */
+    aura: { x: number; y: number } | null;
     /** Vermelho (RDA-04/05/06/13, EDG-01): cores do halo e do flash, Glow só com WebGL, centro do orbe na carga. */
     red: {
       glowColor: number | null;
@@ -206,7 +214,18 @@ export interface GameSnapshot {
    * Desvio da Fase 6 (T29/T30, CAST-15/KOK-24): a spec não tinha um jeito de o smoke ler o zoom da câmera
    * principal; acrescentado aqui só para o smoke observar o zoom durante a conjuração e o Kokusen.
    */
-  camera: { zoom: number; worldView: { left: number; right: number } };
+  camera: {
+    zoom: number;
+    worldView: { left: number; right: number };
+    /** Centro da câmera do mundo em ponto flutuante e o scroll aplicado, na grade de pixel de tela (CAM-07). */
+    center: { x: number; y: number };
+    scroll: { x: number; y: number };
+    /** `roundPixels` da câmera do mundo e se o `startFollow` do Phaser está ligado; os dois ficam desligados (CAM-07). */
+    roundPixels: boolean;
+    phaserFollow: boolean;
+  };
+  /** Fração (0 a 1) entre os dois últimos passos de física que este quadro desenha (ITP-05, ITP-07). */
+  physics: { alpha: number };
   /** Distância (px, centro a centro) ao inimigo comum quebrado mais perto, a do finalizador (FIN-01/03); `null` sem alvo. */
   finisher: { distPx: number | null };
   /**
