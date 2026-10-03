@@ -83,6 +83,7 @@ export const ENEMY: EnemyTuning = {
   getUpMs: 350,
   deathRagdollMs: 2200,
   dissolveMs: 700,
+  staggerMs: 380,
 };
 
 /** IA do inimigo (SPN-10..12, LIM-03/05/07, AI-03): distâncias só na horizontal, em px; velocidades em px/s. */

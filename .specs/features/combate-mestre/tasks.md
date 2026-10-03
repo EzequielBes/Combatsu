@@ -152,14 +152,14 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `enter`, estados e eventos atuais
 **Requirement**: PST-01, PST-03, PST-05, PST-10, PST-11, CMT-04, CMT-06, CMT-07, CNT-21, GND-01, GND-02, GND-03, GND-04, GND-05, GND-06, GND-07, DFL-11, RDG-09
 **Done when**:
-- [ ] `ENEMY.staggerMs = 380` em `src/data/tuning.ts`.
-- [ ] `heavy` sem `knockdown` → `stagger`; volta a `idle` em 380 ms e ainda está em `stagger` em 379 ms.
-- [ ] `knockdown: true` → `ragdollStun`, com `light` e com `heavy`.
-- [ ] Em `stagger`: `light` mantém `stagger` com `max(resto, 220)` (casos com resto 100 e resto 300); `heavy` volta a 380.
-- [ ] `ctx.committed`: `light` e `heavy` sem `knockdown` e sem `counter` deixam o estado em `idle` e devolvem um `armored`; com `counter` → `stagger`; com `knockdown` → `ragdollStun`; golpe fatal → `died`.
-- [ ] Chão: 1º golpe sem `tech` em `ragdollStun` tira vida e não muda o tempo que falta; 2º devolve `[]` com o hp igual; `gettingUp` recusa; com `tech` é aceito nos dois estados e `downHits` não muda; `downHits` volta a 0 numa nova queda; o 1º golpe no chão pode matar.
-- [ ] `forceStagger(900)` dura 900 ms e é ignorado em ragdoll e morto; `recover()` leva `hitstun` e `stagger` a `idle` e devolve `false` nos outros estados.
-- [ ] Os casos antigos de "forte = ragdoll" foram reescritos para PST-01 e PST-05 (AC substituído: golpe forte = ragdoll).
+- [x] `ENEMY.staggerMs = 380` em `src/data/tuning.ts`.
+- [x] `heavy` sem `knockdown` → `stagger`; volta a `idle` em 380 ms e ainda está em `stagger` em 379 ms.
+- [x] `knockdown: true` → `ragdollStun`, com `light` e com `heavy`.
+- [x] Em `stagger`: `light` mantém `stagger` com `max(resto, 220)` (casos com resto 100 e resto 300); `heavy` volta a 380.
+- [x] `ctx.committed`: `light` e `heavy` sem `knockdown` e sem `counter` deixam o estado em `idle` e devolvem um `armored`; com `counter` → `stagger`; com `knockdown` → `ragdollStun`; golpe fatal → `died`.
+- [x] Chão: 1º golpe sem `tech` em `ragdollStun` tira vida e não muda o tempo que falta; 2º devolve `[]` com o hp igual; `gettingUp` recusa; com `tech` é aceito nos dois estados e `downHits` não muda; `downHits` volta a 0 numa nova queda; o 1º golpe no chão pode matar.
+- [x] `forceStagger(900)` dura 900 ms e é ignorado em ragdoll e morto; `recover()` leva `hitstun` e `stagger` a `idle` e devolve `false` nos outros estados.
+- [x] Os casos antigos de "forte = ragdoll" foram reescritos para PST-01 e PST-05 (AC substituído: golpe forte = ragdoll).
 **Tests**: unit
 **Gate**: quick
 
