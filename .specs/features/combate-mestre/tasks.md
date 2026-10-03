@@ -583,10 +583,10 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `debugParam`, `spawnFromCommand`, `updateEnemies`, `onConnect`, `tryFinisher`, `debugHit`
 **Requirement**: HGT-13, DFL-14, RDG-01, RDG-10, RDG-11, RDG-12, RDG-23, PST-06, PST-12, PST-13, EDG-01, EDG-02, EDG-03, EDG-04, EDG-08, EDG-09
 **Done when**:
-- [ ] `updateEnemies` passa `focus: e.id === this.focusId`.
-- [ ] `enemyGuard=N` chega como override ao `onPlayerMove`.
-- [ ] Golpe `counter` e o finalizador não chamam `reading.note` nem `onPlayerMove`.
-- [ ] `npm run build` passa.
+- [x] `updateEnemies` passa `focus: e.id === this.focusId`.
+- [x] `enemyGuard=N` chega como override ao `onPlayerMove`.
+- [x] Golpe `counter` e o finalizador não chamam `reading.note` nem `onPlayerMove`.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
