@@ -57,7 +57,7 @@ import { buildBackground } from '../game/art/background';
 import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
 import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
-import { routeContact, tagBody } from '../game/bodyTags';
+import { routeContacts, tagBody } from '../game/bodyTags';
 import { Boss } from '../game/Boss';
 import { Projectile } from '../game/Projectile';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
@@ -1568,7 +1568,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   private listenForContacts(): void {
     const onStart = (event: ContactEvent): void => {
-      for (const pair of event.pairs) routeContact(pair.bodyA, pair.bodyB);
+      routeContacts(event.pairs);
     };
     this.matter.world.on('collisionstart', onStart);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.matter.world?.off('collisionstart', onStart));
