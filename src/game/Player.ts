@@ -400,15 +400,17 @@ export class Player implements Hittable {
     if (onGround) this.moves.land();
     if (input.dodgePressed && !stunned && !casting) this.tryDodge(input, onGround);
     const dodging = this.dodge.active;
-    this.updateStrikes(dtMs, input, onGround, stunned || casting || dodging);
+    // Abaixado (DEF-07..10): travado como na esquiva, sem golpe, guarda, pegar objeto nem andar.
+    const ducking = this.duck.active;
+    this.updateStrikes(dtMs, input, onGround, stunned || casting || dodging || ducking);
     this.onPropSwing(this.propSwing.update(dtMs));
-    // Guarda no chão sem golpe, esquiva nem conjuração (GRD-01); o aperto abre a janela de parry (PAR-01/04).
-    const canGuard = onGround && !this.moves.isMoving && !dodging && !casting && !stunned;
+    // Guarda no chão sem golpe, esquiva, abaixar nem conjuração (GRD-01); o aperto abre a janela de parry (PAR-01/04).
+    const canGuard = onGround && !this.moves.isMoving && !dodging && !ducking && !casting && !stunned;
     if (input.guardPressed) this.guard.press(canGuard);
     this.guard.update(dtMs, input.guardHeld, canGuard);
 
     const attacking = this.moves.isMoving || this.propSwing.isAttacking;
-    if (input.interactPressed && !attacking && !stunned && !casting && !dodging) this.interact(input.down);
+    if (input.interactPressed && !attacking && !stunned && !casting && !dodging && !ducking) this.interact(input.down);
 
     const before = this.move;
     const wPressedAt = input.jumpWPressed ? this.clockMs : this.lastWPressMs;
@@ -419,11 +421,14 @@ export class Player implements Hittable {
     const castAirGravity = this.castLock?.state === 'sign' || this.castLock?.state === 'charge';
     const moveTuning = {
       ...PLAYER_MOVE,
-      // GRD-05: guardando anda a 40% da velocidade de corrida.
+      // DEF-04, DEF-05: com a guarda de pé (`guard` ou `parry`) o jogador vira com a direção (o `stepMovement` já vira o
+      // `facing`) e não anda: o fator é 0 e substitui os 40% do GRD-05.
       runSpeed: this.modifiers.runSpeed * (this.guard.state === 'none' ? 1 : DEFENSE.guardSpeedFactor),
       gravity: castAirGravity ? PLAYER_MOVE.gravity * CAST_FX.airGravity : PLAYER_MOVE.gravity,
     };
-    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting || dodging);
+    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting || dodging || ducking);
+    // DEF-10: abaixado a velocidade horizontal é 0, sem deslizar a corrida que vinha antes do `S`+`Q`.
+    if (ducking) this.move = { ...this.move, vx: 0 };
     this.applyMoveTravel(dtMs);
     this.applyDash(dtMs);
     this.applyBlockPush(dtMs);
@@ -604,7 +609,8 @@ export class Player implements Hittable {
       this.health.staggered ||
       this.structure.broken ||
       this.guard.state !== 'none' ||
-      this.dodge.active
+      this.dodge.active ||
+      this.duck.active
     );
   }
 
@@ -623,9 +629,14 @@ export class Player implements Hittable {
     return { cur: Math.round(this.structure.cur), max: this.structure.max, broken: this.structure.broken };
   }
 
-  /** Esquiva para o snapshot (`player.dodge`). */
+  /** Recarga de `Q`: o maior dos relógios da esquiva e do abaixar, que dividem os 450 ms (DEF-15). */
+  private get evadeCooldownMs(): number {
+    return Math.max(this.dodge.cooldownMs, this.duck.cooldownMs);
+  }
+
+  /** Esquiva para o snapshot (`player.dodge`); `cooldownMs` é a recarga comum com o abaixar (DEF-15). */
   get dodgeView(): { active: boolean; invulnerable: boolean; cooldownMs: number } {
-    return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.dodge.cooldownMs) };
+    return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.evadeCooldownMs) };
   }
 
   /** Abaixar para o snapshot (`player.duck`, DEF-07). */
@@ -712,6 +723,15 @@ export class Player implements Hittable {
       v.anims.stop();
       v.setFrame(`dodge-${DODGE_ELAPSED_HALF(this.dodge.cooldownMs)}`);
       this.fx.afterimage(v);
+      return;
+    }
+    if (this.duck.active && !this.health.staggered && !this.health.dead) {
+      // Abaixar (DEF-09): corpo agachado parado enquanto durar.
+      const v = this.view;
+      this.placeView();
+      v.setScale(this.facing, 1);
+      v.anims.stop();
+      v.setFrame('duck');
       return;
     }
     if (this.guard.state !== 'none' && !this.health.staggered && !this.health.dead && !this.moves.isMoving) {
@@ -897,17 +917,34 @@ export class Player implements Hittable {
   }
 
   /**
+   * `Q`: esquiva ou abaixar, que dividem a recarga (DEF-15). Com `S` segurada vale sempre o abaixar, nunca a esquiva,
+   * mesmo com direção horizontal (DEF-22) e mesmo no ar, onde nada acontece (DEF-16).
    * Esquiva (DOD-01, DOD-04..06, DOD-09, DOD-10): no chão, sem golpe nem objeto em andamento, com a recarga zerada.
    * Um golpe que já acertou pode ser cancelado na recovery pela esquiva, no mesmo frame (DOD-06).
    */
   private tryDodge(input: InputSnapshot, onGround: boolean): void {
-    if (!onGround || this.dodge.cooldownMs > 0 || this.propSwing.isAttacking) return;
+    if (input.down) {
+      this.tryDuck(onGround);
+      return;
+    }
+    if (!onGround || this.evadeCooldownMs > 0 || this.propSwing.isAttacking) return;
     if (this.moves.isMoving && !this.moves.canDodgeCancel) return;
     const held = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     if (this.moves.isMoving) this.onMove(this.moves.cancel());
     this.heavyHoldMs = -1;
     const started = this.dodge.start({ grounded: onGround, busy: false, held: held as -1 | 0 | 1, facing: this.facing });
     if (started) this.onEvent?.('dodge');
+  }
+
+  /**
+   * Abaixar (DEF-07, DEF-08, DEF-15): no chão, sem golpe, objeto balançando nem recarga (a mesma da esquiva). Quem chama
+   * já conferiu atordoamento e conjuração. Sem cancelar golpe: a recovery de um golpe que acertou só a esquiva corta.
+   */
+  private tryDuck(onGround: boolean): void {
+    if (!onGround || this.evadeCooldownMs > 0 || this.moves.isMoving || this.propSwing.isAttacking) return;
+    this.heavyHoldMs = -1;
+    this.duck.start();
+    this.onEvent?.('duck');
   }
 
   /** Dash da esquiva (DOD-01): velocidade dirigida por frame, e zerada no frame seguinte ao fim (sem escorregar). */

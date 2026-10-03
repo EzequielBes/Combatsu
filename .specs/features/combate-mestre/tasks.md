@@ -533,10 +533,10 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `tryDodge`, `stepMovement`, `DEFENSE.guardSpeedFactor`
 **Requirement**: DEF-04, DEF-05, DEF-07, DEF-08, DEF-09, DEF-10, DEF-15, DEF-16, DEF-22, EDG-06
 **Done when**:
-- [ ] Evento `duck` no início; abaixado, o movimento fica travado como na esquiva e a velocidade horizontal é 0.
-- [ ] `dodgeView.cooldownMs` mostra o maior dos dois relógios.
-- [ ] No ar, `S`+`Q` não inicia nada.
-- [ ] `npm run build` passa.
+- [x] Evento `duck` no início; abaixado, o movimento fica travado como na esquiva e a velocidade horizontal é 0.
+- [x] `dodgeView.cooldownMs` mostra o maior dos dois relógios.
+- [x] No ar, `S`+`Q` não inicia nada.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
