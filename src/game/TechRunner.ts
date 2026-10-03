@@ -388,7 +388,10 @@ export class TechRunner {
       const enemy = enemies.find((e) => e.id === r.targetId);
       if (!enemy) continue;
       const hit: Hit = { ownerId: this.player.id, damage: r.damage, strength: r.strength, force: r.force, direction: r.direction };
-      if (enemy.receiveHit(hit)) this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+      if (!enemy.receiveHit(hit)) continue;
+      this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+      // MST-01: a repulsão faz parte da mesma conjuração do orbe (mesmo `castId`, então o alvo conta uma vez só).
+      this.masteryHit(this.currentCast, enemy);
     }
   }
 
