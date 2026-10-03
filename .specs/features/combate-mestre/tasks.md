@@ -515,11 +515,11 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `resolveIncomingHit`, `DeflectTracker`, `CounterWindow`, `Duck`, `Structure.reduce`
 **Requirement**: DEF-01, DEF-02, DEF-03, DEF-11, DEF-12, DEF-13, DEF-14, DEF-17, DEF-18, DEF-19, DEF-20, CNT-01, CNT-02, CNT-03, CNT-04, CNT-13, DFL-10, DFL-12, DFL-16
 **Done when**:
-- [ ] `airborne` = sem chão sob os pés ou subindo, lido na hora do golpe.
-- [ ] Eventos `duckEvade`, `jumpEvade` e `deflect` saem por `onEvent`; `onDefense` ganha `duckEvade`, `jumpEvade` e `deflect`.
-- [ ] `Attacker.parried(info: ParryInfo)`; a cena repassa ao inimigo e o chefe ignora o argumento.
-- [ ] `counterView` (`open`, `kind`, `remainingMs`) e `duckView` para o snapshot; `CounterWindow.update` e `Duck.update` rodam no `update` do jogador; `resetDefense` fecha os dois e zera o `DeflectTracker`.
-- [ ] `npm run build` passa.
+- [x] `airborne` = sem chão sob os pés ou subindo, lido na hora do golpe.
+- [x] Eventos `duckEvade`, `jumpEvade` e `deflect` saem por `onEvent`; `onDefense` ganha `duckEvade`, `jumpEvade` e `deflect`.
+- [x] `Attacker.parried(info: ParryInfo)`; a cena repassa ao inimigo e o chefe ignora o argumento.
+- [x] `counterView` (`open`, `kind`, `remainingMs`) e `duckView` para o snapshot; `CounterWindow.update` e `Duck.update` rodam no `update` do jogador; `resetDefense` fecha os dois e zera o `DeflectTracker`.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 

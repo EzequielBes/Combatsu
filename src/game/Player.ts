@@ -4,8 +4,10 @@ import type { CastState } from '../core/cast';
 import { Filters } from '../core/collision';
 import { ComboTracker, type ComboEvent } from '../core/combo';
 import type { Hit, Vec2 } from '../core/hit';
-import { Guard, resolveIncomingHit } from '../core/defense';
+import { CounterWindow, type CounterKind } from '../core/counter';
+import { DeflectTracker, Guard, resolveIncomingHit, type ParryInfo } from '../core/defense';
 import { Dodge } from '../core/dodge';
+import { Duck } from '../core/duck';
 import { Health } from '../core/health';
 import { MotionInput } from '../core/motionInput';
 import { shouldCancelJumpForUppercut } from '../core/fightInput';
@@ -13,7 +15,7 @@ import { MoveMachine, moveTravelAt, type MoveContext, type MoveEvent } from '../
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
 import { PLAYER_STRUCTURE, Structure } from '../core/structure';
-import { CHARGE_MS, DEFENSE, DODGE, type MoveDef } from '../data/moves';
+import { CHARGE_MS, COUNTER, DEFENSE, DODGE, STRUCTURE, type MoveDef } from '../data/moves';
 import { CAST_FX, type TechId } from '../data/techniques';
 import {
   PLAYER_HEALTH,
@@ -55,15 +57,21 @@ export interface CastPose {
   state: CastState;
 }
 
-/** Quem atacou, para o lado do golpe (GRD-02/03), o tipo (GRD-06) e o efeito do parry no atacante (PAR-03/07/10). */
+/**
+ * Quem atacou, para o lado do golpe (GRD-02/03), o tipo (GRD-06) e o efeito do parry no atacante (PAR-03/07/10,
+ * DFL-07..11): `info` diz se o parry foi o do último golpe da sequência e se foi uma Deflexão; o chefe o ignora.
+ */
 export interface Attacker {
   x: number;
   isBoss: boolean;
-  parried(): void;
+  parried(info: ParryInfo): void;
 }
 
-/** Desfecho de defesa avisado à cena (faíscas, hitstop, câmera lenta) no ponto de contato. */
-export type DefenseKind = 'block' | 'parry' | 'perfectDodge';
+/**
+ * Desfecho de defesa avisado à cena (faíscas, hitstop, câmera lenta, textos) no ponto de contato. Na Deflexão sai só
+ * `deflect` (no lugar de `parry`), para a cena mostrar um aviso só (DFL-13).
+ */
+export type DefenseKind = 'block' | 'parry' | 'perfectDodge' | 'duckEvade' | 'jumpEvade' | 'deflect';
 
 /** Recuo do bloqueio (GRD-09, px) e a velocidade dele (px/s): 8 px em 100 ms. */
 const BLOCK_PUSH_PX = DEFENSE.blockPushPx;
@@ -116,6 +124,12 @@ export class Player implements Hittable {
   onDefense: ((kind: DefenseKind, point: Vec2) => void) | null = null;
   private guard = new Guard();
   private readonly dodge = new Dodge();
+  /** Abaixar (DEF-07): irmão da esquiva, com a recarga dividida com ela (DEF-15). */
+  private readonly duck = new Duck();
+  /** Janela de Contra aberta por parry, esquiva perfeita ou abaixar que evitou golpe (CNT-01..04). */
+  private readonly counter = new CounterWindow();
+  /** Conta os parries por sequência do inimigo, para a Deflexão (DFL-10, DFL-12). */
+  private readonly deflect = new DeflectTracker();
   private readonly structure = new Structure(PLAYER_STRUCTURE);
   /** Recuo do bloqueio em curso (GRD-09). */
   private blockPush: { dir: 1 | -1; remainingPx: number } | null = null;
@@ -253,8 +267,9 @@ export class Player implements Hittable {
   }
 
   /**
-   * Golpe recebido: a única decisão de dano é `resolveIncomingHit` (parry → esquiva → guarda → golpe cheio). Só o
-   * golpe cheio devolve `true` (faísca e hitstop do golpe); parry, esquiva e bloqueio têm feedback próprio.
+   * Golpe recebido: a única decisão de dano é `resolveIncomingHit` (parry → esquiva → Contra → abaixar → pulo → guarda
+   * → golpe cheio, DEF-20). Só o golpe cheio devolve `true` (faísca e hitstop do golpe); as outras defesas têm feedback
+   * próprio. Roda no passo de física (callback de colisão): lê o estado do último `update`.
    */
   receiveHit(hit: Hit): boolean {
     if (this.health.dead) return false;
@@ -268,24 +283,51 @@ export class Player implements Hittable {
       isBoss: attacker?.isBoss ?? false,
       guard: this.guard.state,
       dodgeInvulnerable: this.dodge.invulnerable,
-      // Valores neutros até a T25 ligar o Contra, o abaixar e o pulo.
-      counterInvulnerable: false,
-      ducking: false,
-      airborne: false,
+      counterInvulnerable: this.counterInvulnerable,
+      ducking: this.duck.active,
+      // DEF-17: fora do chão = sem terreno sob os pés ou subindo, o mesmo critério do `onGround` do `update`.
+      airborne: !(this.touchesTerrain('below') && this.move.vy >= 0),
     });
     const awayDir: 1 | -1 = attackerX >= this.sprite.x ? -1 : 1;
     const point: Vec2 = { x: this.sprite.x - awayDir * 14, y: this.sprite.y - 4 };
     switch (res.outcome) {
-      case 'parry':
+      case 'parry': {
+        // DFL-10, DFL-12: o parry do último golpe de uma sequência aparada inteira é a Deflexão (janela de 900 ms).
+        const deflect = this.deflect.onParry(hit.string);
         this.onEvent?.('parry');
-        attacker?.parried();
-        this.onDefense?.('parry', point);
+        if (deflect) this.onEvent?.('deflect');
+        // DFL-08, DFL-09: só o parry do último golpe da sequência (ou do golpe sem sequência) deixa o inimigo parado.
+        attacker?.parried({ final: hit.string ? hit.string.index === hit.string.length : true, deflect });
+        this.counter.open('contra', deflect ? COUNTER.deflectWindowMs : COUNTER.windowMs);
+        this.onDefense?.(deflect ? 'deflect' : 'parry', point);
         return false;
+      }
       case 'dodged':
         if (this.dodge.registerIncomingHit()) {
           this.onEvent?.('perfectDodge');
+          // DEF-19, CNT-02: a esquiva perfeita alivia a postura e abre a janela de Contra.
+          this.structure.reduce(STRUCTURE.player.evadeRelief);
+          this.counter.open('contra', COUNTER.windowMs);
           this.onDefense?.('perfectDodge', point);
         }
+        return false;
+      case 'ducked':
+        // DEF-12: um `duckEvade` por abaixar, mesmo que outros golpes `high` cheguem nele.
+        if (this.duck.registerEvade()) {
+          this.onEvent?.('duckEvade');
+          // DEF-13, CNT-03.
+          this.structure.reduce(STRUCTURE.player.evadeRelief);
+          this.counter.open('contraGancho', COUNTER.windowMs);
+          this.onDefense?.('duckEvade', point);
+        }
+        return false;
+      case 'jumped':
+        // DEF-18: um `jumpEvade` por golpe `low` evitado no ar; sem efeito na postura.
+        this.onEvent?.('jumpEvade');
+        this.onDefense?.('jumpEvade', point);
+        return false;
+      case 'countered':
+        // CNT-11, CNT-12: o Contra em `startup` ou `active` não leva dano nem cancela.
         return false;
       case 'block':
         this.onEvent?.('block');
@@ -294,14 +336,15 @@ export class Player implements Hittable {
         if (this.structure.add(res.playerStructureGain)) this.onGuardBreak();
         if (res.damage > 0 && this.health.chip(res.damage) === 'died') this.die();
         return false;
-      case 'countered':
-      case 'ducked':
-      case 'jumped':
-        // O efeito (eventos, postura, janela de Contra) é da T25; até lá o golpe passa sem efeito.
-        return false;
       default:
         return this.takeHit(hit);
     }
+  }
+
+  /** Contra em `startup` ou `active` (CNT-11): o golpe que chega causa 0 de dano e não cancela o Contra. */
+  private get counterInvulnerable(): boolean {
+    const phase = this.moves.phase;
+    return this.moves.def?.counter === true && (phase === 'startup' || phase === 'active');
   }
 
   /** Estrutura cheia (STR-06, STR-11): atordoa e larga o golpe; um `guardBreak:player`. */
@@ -334,6 +377,9 @@ export class Player implements Hittable {
     this.stepDriven = false;
     for (const ev of this.health.update(dtMs)) if (ev === 'respawn') this.respawn();
     this.structure.update(dtMs);
+    // Relógios de jogo da janela de Contra e do abaixar: o hitstop não chama `update`, então os congela (CNT-20).
+    this.counter.update(dtMs);
+    this.duck.update(dtMs);
     // Atordoado, morto ou com a guarda quebrada (STR-06): sem golpe, sem pegar objeto e sem controle (HP-03).
     const stunned = this.health.staggered || this.health.dead || this.structure.broken;
     // Conjurando (CAST-12/13): trava golpe, interação e movimento por input igual a um golpe em andamento — o
@@ -452,12 +498,15 @@ export class Player implements Hittable {
     this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
   }
 
-  /** Zera guarda, esquiva, estrutura, golpe em curso e recuo (respawn e nova run). */
+  /** Zera guarda, esquiva, abaixar, Contra, estrutura, golpe em curso e recuo (respawn e nova run, EDG-01, EDG-02). */
   private resetDefense(): void {
     this.onMove(this.moves.cancel());
     this.heavyHoldMs = -1;
     this.guard = new Guard();
     this.dodge.reset();
+    this.duck.reset();
+    this.counter.close();
+    this.deflect.reset();
     this.structure.reset();
     this.blockPush = null;
     this.wasDashing = false;
@@ -577,6 +626,16 @@ export class Player implements Hittable {
   /** Esquiva para o snapshot (`player.dodge`). */
   get dodgeView(): { active: boolean; invulnerable: boolean; cooldownMs: number } {
     return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.dodge.cooldownMs) };
+  }
+
+  /** Abaixar para o snapshot (`player.duck`, DEF-07). */
+  get duckView(): { active: boolean } {
+    return { active: this.duck.active };
+  }
+
+  /** Janela de Contra para o snapshot (`player.counter`, CNT-01..04): `remainingMs` é tempo de jogo, arredondado. */
+  get counterView(): { open: boolean; kind: CounterKind | null; remainingMs: number } {
+    return { open: this.counter.isOpen, kind: this.counter.kind, remainingMs: Math.round(this.counter.remainingMs) };
   }
 
   /** Finalizador (FIN-01): vira para o alvo e mostra a pose de golpe por um instante. */
