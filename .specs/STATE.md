@@ -156,15 +156,14 @@
 
 ## Handoff
 
-- **Features prontas, fora de `dev` (aguardando UAT do usuário), empilhadas nesta ordem**:
-  1. `feat/sprite-chefes-e-acabamento` (Verifier PASS, rodada 2; 47 ACs): chefes redesenhados e animados, golpes do player afinados, objetos e pendências dos inimigos.
-  2. `feat/movimento-suave-e-objetos-no-chefe` (Verifier PASS, rodada 2; 23 ACs), criada a partir da 1: objetos acertam o chefe, câmera sem tremor e interpolação entre passos de física (AD-019).
-- **Origem**: o usuário pediu "melhore sprites" (03/10) e, no UAT, relatou "itens jogáveis passando reto pelo inimigo" e "personagem dando umas flicadas". Não foi consultado sobre escopo; as escolhas estão nas Assumptions das duas specs com "Confirmed? n".
-- **Verificado**: build ok, 1780 testes, 30 smokes (2 novos: `boss-prop`, `feel`). Não houve push.
-- **Pendente (nesta ordem)**:
-  1. UAT do usuário com `npm run dev`: `?debug&round=5` (Oni) e `?debug&round=15` (Tecelã); arremessar cadeira e garrafa no chefe; correr, virar, pular e bater sentindo a câmera. Perguntar a taxa de atualização do monitor dele: os smokes só rodam com um passo de física por quadro, então 75/120/144 Hz só foram conferidos por simulação.
-  2. Se aprovado: `git switch dev && git merge --no-ff feat/sprite-chefes-e-acabamento && git merge --no-ff feat/movimento-suave-e-objetos-no-chefe` (AD-008).
-  3. Decisões do usuário em aberto: silhueta própria para a Tecelã (substitui o BTIER-06); alcance do arremesso (a garrafa cai depois de ~260 px, a cadeira depois de ~140 px).
+- **Feature**: nenhuma em andamento. `sprite-chefes-e-acabamento` (47 ACs) e `movimento-suave-e-objetos-no-chefe` (23 ACs) fechadas com Verifier PASS (rodada 2 nas duas), aprovadas pelo usuário no UAT de 03/10 ("Pode dar merge pra dev. tá legal") e mergeadas em `dev` com `--no-ff` (merges `7267f58` e `20a5cb8`). Não houve push.
+- **O que entrou**: chefes redesenhados e animados, golpes do player afinados, objetos e pendências dos inimigos; objetos acertam o chefe, câmera sem tremor e interpolação entre passos de física (AD-018, AD-019).
+- **Origem e escopo**: o usuário pediu "melhore sprites" e depois relatou itens atravessando o inimigo e o personagem "dando flicadas". O escopo foi escolhido sem consulta (Assumptions das duas specs com "Confirmed? n"); o resultado ele aprovou jogando.
+- **Verificado em `dev` depois do merge**: build ok e 1780 testes; a árvore é idêntica à da branch que passou nos 30 smokes.
+- **Pendente**:
+  1. Perguntas que ficaram sem resposta do usuário: a taxa de atualização do monitor dele (75/120/144 Hz só foram conferidos por simulação) e se o alcance do arremesso incomoda (a garrafa cai depois de ~260 px, a cadeira depois de ~140 px).
+  2. Decisão do usuário em aberto: silhueta própria para a Tecelã (substitui o BTIER-06).
+  3. `main` só recebe `dev` quando o usuário pedir (AD-008). As branches `feat/sprite-chefes-e-acabamento` e `feat/movimento-suave-e-objetos-no-chefe` continuam existindo; apagar só se ele quiser.
   4. Pendências antigas: remover a worktree `scratchpad/wt-f10` (`git worktree remove`; o `node_modules` dela é junction, não apague com rm recursivo) e as branches já mergeadas, se o usuário quiser; UAT em `dev` de ritmo e spawn, limitador de 2 atacantes, loja/maestria, chefe vencível no soco e Vermelho carmim. A worktree `surGue-player-refine` é um rascunho de 28/09, 159 commits atrás de `dev`.
 - **Próximo**: F12 `combate-mestre` (Specify), seguindo `docs/superpowers/specs/2026-10-02-combate-mestre-design.md`; depois F13–F16. F6 e F9 ficam para depois da expansão.
 - **Identidade do git**: no perfil `sexta-feira` não há `user.name`/`user.email`. Os commits das duas features usaram `git -c user.name="Claude" -c user.email="ezequieltbeserra00@gmail.com"` (a identidade do histórico), sem gravar configuração; o usuário ainda não confirmou.
@@ -181,5 +180,5 @@
   - Ciclo do inimigo: 450 ms windup + 120 ms ataque + 800 ms descanso; `step(16)` = 1 frame, `step(16.7)` pode virar 2.
 - **Para o UAT da F7**: pé solto nos frames `chuteGiratorio-wind` e `chuteCarregado-wind`; parry anula até golpe imbloqueável e a onda de choque do chefe (leitura literal de PAR-02; decidir se fica); tempos/hitboxes dos golpes em `src/data/moves.ts`.
 - **Para o UAT do sprite**: seguem abertos `land-1` com pernas um pouco longas, braço de trás solto no `jump-0`, `ganchoAscendente-hit` com cabeça torta e `voadora-hit` com o joelho de trás lendo como braço. No chefe, olhar a pose do `dead`, o orbe do preparo da rajada e o novelo creme da Tecelã.
-- **Blockers**: UAT do usuário antes de `dev` e de `main`.
-- **Branch**: `feat/movimento-suave-e-objetos-no-chefe`
+- **Blockers**: nenhum para seguir em `dev`; `main` espera o pedido do usuário.
+- **Branch**: `dev`
