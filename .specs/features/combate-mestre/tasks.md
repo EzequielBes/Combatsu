@@ -567,9 +567,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `scriptedDx`, `onGuardBreak`, `applyBlockPush` como modelo do deslocamento
 **Requirement**: VOA-01, VOA-02, VOA-03, VOA-04, VOA-05, VOA-06, VOA-07, VOA-08, VOA-09, RDG-19, RDG-20, RDG-21, EDG-10
 **Done when**:
-- [ ] O `Hit` de todo golpe do grafo leva o `knockdown` do `MoveDef`.
-- [ ] O recuo do quique e o do empurrão saem inteiros (36 e 48 px), no mesmo padrão de `scriptedDx`.
-- [ ] `npm run build` passa.
+- [x] O `Hit` de todo golpe do grafo leva o `knockdown` do `MoveDef`.
+- [x] O recuo do quique e o do empurrão saem inteiros (36 e 48 px), no mesmo padrão de `scriptedDx`.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 

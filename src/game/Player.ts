@@ -15,7 +15,7 @@ import { MoveMachine, moveTravelAt, type MoveContext, type MoveEvent } from '../
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
 import { PLAYER_STRUCTURE, Structure } from '../core/structure';
-import { CHARGE_MS, COUNTER, DEFENSE, DODGE, STRUCTURE, type MoveDef } from '../data/moves';
+import { CHARGE_MS, COUNTER, DEFENSE, DODGE, READING, STRUCTURE, type MoveDef } from '../data/moves';
 import { CAST_FX, type TechId } from '../data/techniques';
 import {
   PLAYER_HEALTH,
@@ -133,6 +133,17 @@ export class Player implements Hittable {
   private readonly structure = new Structure(PLAYER_STRUCTURE);
   /** Recuo do bloqueio em curso (GRD-09). */
   private blockPush: { dir: 1 | -1; remainingPx: number } | null = null;
+  /** Recuo do quique da voadora (VOA-05) ou empurrão de um inimigo (RDG-19) em curso: sentido, px que faltam, total e duração. */
+  private push: { dir: 1 | -1; remainingPx: number; totalPx: number; ms: number } | null = null;
+  /**
+   * Pedidos feitos de dentro do passo de física (`hitLanded` e `shoved` rodam no callback de colisão) que o `update`
+   * seguinte aplica: o fim do `active` da voadora (evento `hitboxOff` ainda por tratar), o quique e o empurrão.
+   */
+  private pendingMoveEvents: MoveEvent[] = [];
+  private pendingBounce: { dir: 1 | -1; backPx: number; ms: number; vy: number } | null = null;
+  private pendingShove: 1 | -1 | null = null;
+  /** Tempo de jogo (ms) em que o input segue ignorado depois de um empurrão (RDG-21). */
+  private shoveLockMs = 0;
   /** O frame anterior era de dash da esquiva: no seguinte a velocidade zera, sem escorregar além dos 96 px. */
   private wasDashing = false;
   /**
@@ -380,8 +391,10 @@ export class Player implements Hittable {
     // Relógios de jogo da janela de Contra e do abaixar: o hitstop não chama `update`, então os congela (CNT-20).
     this.counter.update(dtMs);
     this.duck.update(dtMs);
-    // Atordoado, morto ou com a guarda quebrada (STR-06): sem golpe, sem pegar objeto e sem controle (HP-03).
-    const stunned = this.health.staggered || this.health.dead || this.structure.broken;
+    this.shoveLockMs = Math.max(0, this.shoveLockMs - dtMs);
+    const bounceVy = this.applyPending();
+    // Atordoado, morto, com a guarda quebrada (STR-06) ou empurrado (RDG-21): sem golpe, sem pegar objeto e sem controle (HP-03).
+    const stunned = this.health.staggered || this.health.dead || this.structure.broken || this.shoveLockMs > 0;
     // Conjurando (CAST-12/13): trava golpe, interação e movimento por input igual a um golpe em andamento — o
     // "Selo" da direção de arte trava o player por inteiro, não só o eixo horizontal citado na letra da AC.
     const casting = this.castLock !== null;
@@ -429,9 +442,12 @@ export class Player implements Hittable {
     this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting || dodging || ducking);
     // DEF-10: abaixado a velocidade horizontal é 0, sem deslizar a corrida que vinha antes do `S`+`Q`.
     if (ducking) this.move = { ...this.move, vx: 0 };
+    // VOA-06: o quique mantém os −240 px/s no primeiro `update` depois do acerto; a gravidade só atua a partir do seguinte.
+    if (bounceVy !== null) this.move = { ...this.move, vy: bounceVy, jumping: false };
     this.applyMoveTravel(dtMs);
     this.applyDash(dtMs);
     this.applyBlockPush(dtMs);
+    this.applyPush(dtMs);
     this.trackWJump(before, groundYBefore, wPressedAt);
     this.kickUpDust(before, sensors.grounded, dtMs);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
@@ -516,6 +532,11 @@ export class Player implements Hittable {
     this.deflect.reset();
     this.structure.reset();
     this.blockPush = null;
+    this.push = null;
+    this.pendingMoveEvents = [];
+    this.pendingBounce = null;
+    this.pendingShove = null;
+    this.shoveLockMs = 0;
     this.wasDashing = false;
   }
 
@@ -599,9 +620,53 @@ export class Player implements Hittable {
     return this.moves.current;
   }
 
-  /** O golpe em andamento acertou um alvo (libera o cancelamento da recovery por esquiva, DOD-06). */
+  /**
+   * O golpe em andamento acertou um alvo (libera o cancelamento da recovery por esquiva, DOD-06). Chamado pela cena
+   * dentro do passo de física: a voadora, que tem `bounce`, termina o `active` agora (VOA-04, VOA-09) e pede o recuo e
+   * a subida; aqui só se grava estado (a fase, a velocidade vertical e o pedido), o `update` seguinte fecha a hitbox e
+   * aplica o recuo. O hitstop do próprio golpe segura o `update`, então a velocidade já fica gravada aqui (VOA-06).
+   */
   hitLanded(): void {
     this.moves.hitLanded();
+    const bounce = this.moves.def?.bounce;
+    if (!bounce || this.moves.phase !== 'active') return;
+    this.pendingMoveEvents.push(...this.moves.endActive());
+    this.move = { ...this.move, vy: bounce.vy, jumping: false };
+    this.pendingBounce = { dir: this.facing === 1 ? -1 : 1, backPx: bounce.backPx, ms: bounce.ms, vy: bounce.vy };
+  }
+
+  /**
+   * Empurrão de um inimigo (RDG-19..21), na direção `dir` do deslocamento (para longe dele). Chamado dentro do passo de
+   * física (o `receiveHit` do inimigo): só grava o pedido, que o `update` seguinte aplica.
+   */
+  shoved(dir: 1 | -1): void {
+    this.pendingShove = dir;
+  }
+
+  /**
+   * Aplica o que o passo de física pediu (`hitLanded`, `shoved`). Devolve a velocidade vertical do quique, a pôr depois
+   * do `stepMovement`, ou `null` sem quique. O empurrão cancela o golpe e o objeto em curso, desloca o jogador 48 px
+   * em 150 ms e trava o input por 300 ms.
+   */
+  private applyPending(): number | null {
+    if (this.pendingMoveEvents.length > 0) this.onMove(this.pendingMoveEvents.splice(0));
+    let bounceVy: number | null = null;
+    const bounce = this.pendingBounce;
+    if (bounce) {
+      this.pendingBounce = null;
+      this.push = { dir: bounce.dir, remainingPx: bounce.backPx, totalPx: bounce.backPx, ms: bounce.ms };
+      bounceVy = bounce.vy;
+    }
+    const shove = this.pendingShove;
+    if (shove !== null) {
+      this.pendingShove = null;
+      this.onMove(this.moves.cancel());
+      this.heavyHoldMs = -1;
+      this.onPropSwing(this.propSwing.cancel());
+      this.push = { dir: shove, remainingPx: READING.shovePx, totalPx: READING.shovePx, ms: READING.shoveMs };
+      this.shoveLockMs = READING.shoveLockMs;
+    }
+    return bounceVy;
   }
 
   /** CAST-09: segurando objeto ou em hitstun (atordoado) impedem conjurar. */
@@ -934,8 +999,11 @@ export class Player implements Hittable {
         // O golpe aéreo assume a vertical: solta o pulo sustentado para a subida não sobrescrever a queda/avanço.
         if (ev.move.slam) this.move = { ...this.move, vy: PLAYER_MOVE.maxFallSpeed, jumping: false };
         else if (ev.move.travel) this.move = { ...this.move, jumping: false };
+        // VOA-01..03: o custo de postura sobe ao começar; se enche a barra, a guarda quebra e o golpe é cancelado.
+        if (ev.move.postureCost !== undefined && this.structure.add(ev.move.postureCost)) this.onGuardBreak();
       } else if (ev.type === 'hitboxOn') this.openHitbox(ev.move);
       else if (ev.type === 'hitboxOff' || ev.type === 'moveEnd') this.hitbox.close();
+      else if (ev.type === 'whiff') this.onEvent?.(`whiff:${ev.move.name}`);
     }
   }
 
@@ -992,6 +1060,17 @@ export class Player implements Hittable {
     this.move = { ...this.move, vx: 0 };
     push.remainingPx -= px;
     if (push.remainingPx <= 0) this.blockPush = null;
+  }
+
+  /** Recuo do quique (VOA-05) e empurrão (RDG-19): mesmo padrão do recuo do bloqueio, o total sai inteiro pelo `scriptedDx`. */
+  private applyPush(dtMs: number): void {
+    const push = this.push;
+    if (!push || dtMs <= 0) return;
+    const px = Math.min(push.remainingPx, (push.totalPx * dtMs) / push.ms);
+    this.scriptedDx += push.dir * px;
+    this.move = { ...this.move, vx: 0 };
+    push.remainingPx -= px;
+    if (push.remainingPx <= 0) this.push = null;
   }
 
   /** Voadora (AIR-02): durante o `active` o corpo anda 120 px à frente e 60 px para baixo, com velocidade dirigida. */
