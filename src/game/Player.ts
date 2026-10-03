@@ -706,6 +706,11 @@ export class Player implements Hittable {
     return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.evadeCooldownMs) };
   }
 
+  /** Invulnerável depois de um golpe cheio (PST-15), para o snapshot (`player.invulnerable`). */
+  get invulnerable(): boolean {
+    return this.health.invulnerable;
+  }
+
   /** Abaixar para o snapshot (`player.duck`, DEF-07). */
   get duckView(): { active: boolean } {
     return { active: this.duck.active };

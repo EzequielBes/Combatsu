@@ -616,9 +616,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: getters criados nas tasks T19 a T28
 **Requirement**: HGT-07, HGT-08, CMT-01, CMT-02, DFL-15, GND-05, PST-13, RDG-01, RDG-13
 **Done when**:
-- [ ] `player.duck`, `player.counter`, `player.invulnerable`; `enemies[].telegraph`, `committed`, `commitFlash`, `attack`, `downHits`, `lightStreak`, `guardRead`; `focusId`; `reading`.
-- [ ] `telegraph` e `commitFlash` são lidos do sprite desenhado (L-055).
-- [ ] `tests/game/debugApi.test.ts` continua passando; `npm run build` passa.
+- [x] `player.duck`, `player.counter`, `player.invulnerable`; `enemies[].telegraph`, `committed`, `commitFlash`, `attack`, `downHits`, `lightStreak`, `guardRead`; `focusId`; `reading`.
+- [x] `telegraph` e `commitFlash` são lidos do sprite desenhado (L-055).
+- [x] `tests/game/debugApi.test.ts` continua passando; `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
