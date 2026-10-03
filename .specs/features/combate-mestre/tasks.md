@@ -600,9 +600,9 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `FloatTexts.spawn`, `realtimeFx.add`, `controlsLines`
 **Requirement**: CNT-14, CNT-15, DFL-13, DEF-21
 **Done when**:
-- [ ] Os textos nascem a menos de 40 px do centro do jogador, com cor da paleta.
-- [ ] Na Deflexão sai só `DEFLEXÃO` (não os dois textos).
-- [ ] `npm run build` passa.
+- [x] Os textos nascem a menos de 40 px do centro do jogador, com cor da paleta.
+- [x] Na Deflexão sai só `DEFLEXÃO` (não os dois textos).
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
