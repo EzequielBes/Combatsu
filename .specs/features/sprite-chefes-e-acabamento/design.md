@@ -13,7 +13,7 @@
 | `src/game/art/sprites/playerMoves.ts` | `armPalm`, `armElbow`, `legDown`, `legRaised` (novo) | Palma derivada do `armStraight`; cotovelo em ponta; pisão com sapato; chute alto em diagonal a partir do quadril |
 | `src/game/art/sprites/props.ts` | grades `CHAIR`, `BOTTLE` | Madeira + aço na cadeira; vidro, brilho e rótulo na garrafa |
 | `src/game/art/sprites/tools.ts` | grades `KNIFE`, `CLUB` | Fio, guarda e cabo na faca; cravos e empunhadura no porrete |
-| `src/game/art/sprites/enemy.ts` | `EnemyKit.rimFrom`, partes do bruto, reação do rastejante | Borda do `impact` só a partir da cabeça; punho arredondado; braço erguido no `hurt-uppercut` |
+| `src/game/art/sprites/enemy.ts` | `EnemyKit.rimFrom`, partes do bruto, pose do `hurt-uppercut` | Borda do `impact` só a partir da cabeça; punho arredondado; corpo fora do chão no `hurt-uppercut` |
 | `tests/game/art.test.ts`, `tests/game/registerAnims.test.ts` | testes novos | Um bloco por story, 1:1 com os ACs |
 
 Nenhum adaptador Phaser muda: `Boss.animate` já chama `anims.play(bossAnimKey(...), true)` e `createArt` já registra `BOSS_ANIMS` nas duas texturas.
@@ -88,7 +88,7 @@ kkkkkk.......kkk.      vazio sob o antebraço; punho com 5 de altura
 
 - `EnemyKit.rimFrom?: number` (padrão 3, o valor atual): primeira linha do tronco que recebe a borda branca do `impact`. No bruto vale 6, o topo da cabeça.
 - Punho do bruto: `B_ARM_REACH`, `B_ARM_HANG` e `B_ARM_FWD` ganham cantos arredondados e a linha dos nós dos dedos. Na ponta do `B_ARM_REACH` só as 3 linhas do meio ficam opacas.
-- `Recoil.raiseNear?: boolean`: usa `armWindup` (braço erguido) no braço da frente. Só o `hurt-uppercut` liga.
+- `hurt-uppercut`: `drop` −3 e `legLift` 3 (eram −2 e 2), `lean` −1 (era −2) e os braços ficam para baixo (`near` [0, −1], `far` [−2, −1]). O corpo sai 3 texels do chão em vez de só inclinar para trás como no `hurt-head-a`. Braço erguido foi descartado: no corcunda e no bruto o `armWindup` tem a cor de alerta do preparo.
 
 ## Code Reuse Analysis
 

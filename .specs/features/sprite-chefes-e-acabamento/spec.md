@@ -60,7 +60,7 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | Tamanho dos objetos | Cadeira 13×13, garrafa 4×10, faca 3×10 e porrete 5×8 não mudam | O corpo físico sai do tamanho da textura | n |
 | Cadeira | Assento e encosto de madeira (`m`/`M`) com estrutura de aço (`s`/`S`) | Cadeira escolar; dois materiais dão leitura em 13×13 | n |
 | Borda do `impact` | Cada kit diz a partir de qual linha do tronco a borda branca vale; no bruto, a partir do topo da cabeça | Os chifres do bruto fazem parte da grade do tronco | n |
-| `hurt-uppercut` do rastejante | O braço da frente sobe esticado; mede-se pelo topo da caixa opaca | A diferença por posição já é alta (0,82) e não mede a semelhança de pose | n |
+| `hurt-uppercut` | O corpo sobe 3 texels e sai do chão (era 2), com menos inclinação para trás e os braços ficando para baixo; vale para as 3 aparências, porque a pose é uma só. Mede-se pelo topo e pela base da caixa opaca | Em `dev` o `hurt-uppercut-0` do rastejante já fica 2 linhas acima do `hurt-head-a-0` e mesmo assim lê igual: a diferença por posição (0,82) não mede a pose. Braço erguido foi descartado: nas outras aparências o braço erguido tem a cor de alerta do preparo | n |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -178,7 +178,8 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 
 1. EPD-01: No `impact` do `bruto`, as linhas 0 a 11 SHALL ter exatamente 1 texel `w`.
 2. EPD-02: No `attack-0` do `bruto`, a coluna da ponta do punho SHALL ter exatamente 3 texels opacos.
-3. EPD-03: No `rastejante`, o topo da caixa opaca do `hurt-uppercut-0` SHALL ficar pelo menos 2 linhas acima do topo da caixa opaca do `hurt-head-a-0`.
+3. EPD-03: No `rastejante`, o topo da caixa opaca do `hurt-uppercut-0` SHALL ficar pelo menos 3 linhas acima do topo da caixa opaca do `hurt-head-a-0`.
+4. EPD-04: No `hurt-uppercut-0` de cada uma das três aparências, a base da caixa opaca SHALL ficar na linha 20 ou acima.
 
 **Independent Test**: `npm test` (bloco das três aparências) e a prancha dos inimigos.
 
@@ -249,10 +250,11 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | EPD-01 | P3: Pendências dos inimigos | Tasks | In Tasks |
 | EPD-02 | P3: Pendências dos inimigos | Tasks | In Tasks |
 | EPD-03 | P3: Pendências dos inimigos | Tasks | In Tasks |
+| EPD-04 | P3: Pendências dos inimigos | Tasks | In Tasks |
 | EDG-01 | Edge cases | Execute | Implementing |
 | EDG-02 | Edge cases | Execute | Implementing |
 
-**Coverage:** 40 total, 40 mapped to tasks, 0 unmapped
+**Coverage:** 41 total, 41 mapped to tasks, 0 unmapped
 
 ---
 
