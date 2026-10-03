@@ -195,9 +195,9 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] OBJ-01: cadeira 13×13 com pelo menos 6 chaves distintas, entre elas `m`, `M`, `s` e `S`.
-- [ ] OBJ-02: garrafa 4×10 com as chaves `G`, `g`, `w`, `l` e `L`.
-- [ ] Gate check passes: `npm run typecheck && npm test`
+- [x] OBJ-01: cadeira 13×13 com pelo menos 6 chaves distintas, entre elas `m`, `M`, `s` e `S`.
+- [x] OBJ-02: garrafa 4×10 com as chaves `G`, `g`, `w`, `l` e `L`.
+- [x] Gate check passes: `npm run typecheck && npm test`
 
 **Tests**: unit
 **Gate**: quick
