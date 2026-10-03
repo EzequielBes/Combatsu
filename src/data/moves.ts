@@ -219,6 +219,23 @@ export const ENEMY_GUARD = {
 } as const;
 
 /**
+ * Leitura de repetição e empurrão do inimigo comum (RDG-01..03, RDG-13..16, RDG-19..21): repetir o mesmo golpe em
+ * `windowMs` soma `perRepeat` à chance de guarda; o 4º leve seguido dá `shoveChance` de o inimigo empurrar.
+ */
+export const READING = {
+  windowMs: 3000,
+  perRepeat: 0.25,
+  /** Alcance da leitura na horizontal, somado ao avanço do golpe (`travel.forwardPx`). */
+  rangePx: 80,
+  streakMin: 4,
+  streakGapMs: 1500,
+  shoveChance: 0.35,
+  shovePx: 48,
+  shoveMs: 150,
+  shoveLockMs: 300,
+} as const;
+
+/**
  * Tolerância do gancho ascendente (AD-011): um `J` até este tempo (ms, inclusive) depois de um pulo que saiu do chão
  * com `W` cancela o pulo e vira `ganchoAscendente`.
  */

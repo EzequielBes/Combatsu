@@ -206,13 +206,13 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `ENEMY_GUARD`, `GuardTrigger`
 **Requirement**: RDG-01, RDG-02, RDG-03, RDG-10, RDG-13, RDG-14, RDG-15, RDG-16
 **Done when**:
-- [ ] `READING` em `src/data/moves.ts` com os valores do design.
-- [ ] `MoveReading.note`: 1º uso devolve 0; usos seguintes do mesmo golpe contam; um uso feito há 3000 ms conta e há 3001 ms não; golpes diferentes não se somam; `reset()` esvazia.
-- [ ] `readingBonus`: 0, 0,25, 0,5, 0,75, 1 e teto 1 com 5 repetições.
-- [ ] `baseConditionsHold` reproduz as condições do EBL-01 (leve, `idle`, de frente, 60 px dentro e 61 px fora).
-- [ ] `guardChance`: sem override soma base e leitura com teto 1; com override devolve o override se as condições base valem e 0 se não valem, sem somar leitura.
-- [ ] `LightStreak`: 1500 ms soma e 1501 ms volta a 1; `onHeavy` zera.
-- [ ] `shoveRoll({ streak, chance, roll })`: não sorteia com `streak` 3; sorteia com 4; devolve o resultado do sorteio.
+- [x] `READING` em `src/data/moves.ts` com os valores do design.
+- [x] `MoveReading.note`: 1º uso devolve 0; usos seguintes do mesmo golpe contam; um uso feito há 3000 ms conta e há 3001 ms não; golpes diferentes não se somam; `reset()` esvazia.
+- [x] `readingBonus`: 0, 0,25, 0,5, 0,75, 1 e teto 1 com 5 repetições.
+- [x] `baseConditionsHold` reproduz as condições do EBL-01 (leve, `idle`, de frente, 60 px dentro e 61 px fora).
+- [x] `guardChance`: sem override soma base e leitura com teto 1; com override devolve o override se as condições base valem e 0 se não valem, sem somar leitura.
+- [x] `LightStreak`: 1500 ms soma e 1501 ms volta a 1; `onHeavy` zera.
+- [x] `shoveRoll({ streak, chance, roll })`: não sorteia com `streak` 3; sorteia com 4; devolve o resultado do sorteio.
 **Tests**: unit
 **Gate**: quick
 
