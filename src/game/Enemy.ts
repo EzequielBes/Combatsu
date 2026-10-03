@@ -19,7 +19,7 @@ import { ENEMY_ORIGIN } from './art/sprites/enemy';
 import { STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_BREAK_COLOR, STRUCTURE_BAR_FILL_COLOR } from './art/combatColors';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
-import { PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
+import { BodyRenderPos, PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { Ragdoll } from './Ragdoll';
 import { SIZE, TEX, enemyTex } from './textures';
 
@@ -72,6 +72,8 @@ export class Enemy implements Hittable {
   private readonly grace: SpawnGrace;
   private readonly attack: AttackHitbox;
   private readonly body: MatterJS.BodyType;
+  /** Posição do corpo como a tela a mostra, entre os dois últimos passos de física (ITP-07). */
+  private readonly drawPos: BodyRenderPos;
   private readonly view: Phaser.GameObjects.Sprite;
   private ragdoll: Ragdoll | null = null;
   /** Reação leve em curso (HRX-02); só vale enquanto o cérebro está em hitstun. */
@@ -166,6 +168,7 @@ export class Enemy implements Hittable {
     });
     scene.matter.body.setInertia(this.body, Infinity); // não tomba
     tagBody(this.body, { kind: 'character', target: this });
+    this.drawPos = new BodyRenderPos(scene, this.body);
     this.ai = new EnemyAI(tuning.ai);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, enemyTex(variant), 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
@@ -202,6 +205,11 @@ export class Enemy implements Hittable {
   /** BLU-04/05: puxão do orbe Azul (px/step, já convertido); `null` limpa (fora do raio ou orbe sumiu). */
   setPull(velocity: Vec2 | null): void {
     this.pull = velocity;
+  }
+
+  /** Onde o sprite visível está de fato, convertido para o centro do corpo (ITP-07), para o snapshot de debug. */
+  get spritePos(): Vec2 {
+    return { x: this.view.x, y: this.view.y - SIZE.enemy.h / 2 };
   }
 
   /** Posição + tamanho do corpo (em ragdoll ele acompanha o tronco), nunca body.bounds. */
@@ -470,7 +478,7 @@ export class Enemy implements Hittable {
     this.barFill.setVisible(show && texels > 0).setSize(texels * ART_SCALE, well.h * ART_SCALE);
     this.updateStructureBar();
     if (!show) return;
-    const { x, y } = this.body.position;
+    const { x, y } = this.drawPos.get();
     const left = Math.round(x - this.barFrame.width / 2);
     const top = Math.round(y - BAR_RISE);
     this.barFrame.setPosition(left, top);
@@ -485,7 +493,7 @@ export class Enemy implements Hittable {
     this.structFill.setVisible(show && s.cur > 0);
     this.breakStar.setVisible(show && s.broken);
     if (!show) return;
-    const { x, y } = this.body.position;
+    const { x, y } = this.drawPos.get();
     const left = Math.round(x - this.barFrame.width / 2);
     const top = Math.round(y - BAR_RISE) + this.barFrame.height + STRUCTURE_BAR_GAP;
     this.structBg.setPosition(left, top);
@@ -559,7 +567,7 @@ export class Enemy implements Hittable {
     }
     this.weaponView.setVisible(true);
     this.weaponView.setFrame(this.weaponFrame());
-    const { x, y } = this.body.position;
+    const { x, y } = this.drawPos.get();
     this.weaponView.setPosition(x + WEAPON_OFFSET.x * this.facing, y + WEAPON_OFFSET.y);
     this.weaponView.setFlipX(this.facing < 0);
     this.weaponView.setDepth(this.view.depth);
@@ -606,7 +614,8 @@ export class Enemy implements Hittable {
       reaction: this.reaction,
     });
     const anim = stunned && picked !== 'getup' ? 'hurt' : picked;
-    this.view.setPosition(this.body.position.x, this.body.position.y + SIZE.enemy.h / 2);
+    const draw = this.drawPos.get();
+    this.view.setPosition(draw.x, draw.y + SIZE.enemy.h / 2);
     // Escala negativa espelha em volta da origem (o pé no centro do corpo), não do centro do frame largo.
     this.view.setScale(this.facing, 1);
     this.view.setDepth(anim === 'attack' ? ATTACK_DEPTH : 0);
@@ -730,6 +739,7 @@ export class Enemy implements Hittable {
   private cleanup(): void {
     this.walkVxStep = null;
     this.scene.matter.world.off('beforeupdate', this.onStep);
+    this.drawPos.stop();
     this.attack.close();
     this.ragdoll?.destroy();
     this.ragdoll = null;

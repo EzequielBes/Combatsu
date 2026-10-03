@@ -9,7 +9,7 @@ import { BOSS } from '../data/tuning';
 import { bossAnimKey, BOSS_ORIGIN } from './art/sprites/boss';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
-import { PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
+import { BodyRenderPos, PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { TEX } from './textures';
 
 /** Corpo físico do chefe (design: 40x56 px). */
@@ -40,6 +40,8 @@ export class Boss implements Hittable {
   private readonly ai: BossAI;
   private readonly attack: AttackHitbox;
   private readonly body: MatterJS.BodyType;
+  /** Posição do corpo como a tela a mostra, entre os dois últimos passos de física (ITP-07). */
+  private readonly drawPos: BodyRenderPos;
   private readonly view: Phaser.GameObjects.Sprite;
   private facing: 1 | -1 = 1;
   private lastPlayerX = 0;
@@ -76,6 +78,7 @@ export class Boss implements Hittable {
     });
     scene.matter.body.setInertia(this.body, Infinity); // não tomba
     tagBody(this.body, { kind: 'character', target: this });
+    this.drawPos = new BodyRenderPos(scene, this.body);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     const textureKey = spec.archetype === 'tecela' ? TEX.bossTecela : TEX.bossOni;
     this.view = scene.add
@@ -130,6 +133,11 @@ export class Boss implements Hittable {
 
   get removed(): boolean {
     return this._removed;
+  }
+
+  /** Onde o sprite visível está de fato, convertido para o centro do corpo (ITP-07), para o snapshot de debug. */
+  get spritePos(): Vec2 {
+    return { x: this.view.x, y: this.view.y - BODY_H / 2 };
   }
 
   /** KOK-16: sprite visual para a silhueta do negativo do Kokusen. */
@@ -352,7 +360,8 @@ export class Boss implements Hittable {
     else if (attack && aiState === 'windup') name = `windup-${attack}`;
     else if (attack) name = attack;
     else name = 'idle';
-    this.view.setPosition(this.body.position.x, this.body.position.y + BODY_H / 2);
+    const draw = this.drawPos.get();
+    this.view.setPosition(draw.x, draw.y + BODY_H / 2);
     this.view.setScale(this.facing, 1);
     this.view.anims.play(bossAnimKey(this.spec.archetype, name), true);
   }
@@ -362,6 +371,7 @@ export class Boss implements Hittable {
     if (this._removed) return;
     this.attack.close();
     this.scene.matter.world.remove(this.body);
+    this.drawPos.stop();
     this.view.destroy();
     this._removed = true;
   }

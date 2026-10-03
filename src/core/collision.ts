@@ -47,8 +47,9 @@ export const Filters = {
   techOrb: filter(C.HITBOX, C.TERRAIN | C.ENEMY | C.BOSS),
   propRest: filter(C.PROP, C.TERRAIN | C.PROP),
   propHeld: filter(C.PROP, C.NONE),
-  propSwing: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL),
-  propThrown: filter(C.HITBOX, C.TERRAIN | C.PLAYER | C.ENEMY | C.RAGDOLL),
+  // PRB-01/02: o objeto na mão e o arremessado também acertam o chefe, como a hitbox do player.
+  propSwing: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
+  propThrown: filter(C.HITBOX, C.TERRAIN | C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
   propBreaking: filter(C.PROP, C.NONE),
 } satisfies Record<string, CollisionFilter>;
 

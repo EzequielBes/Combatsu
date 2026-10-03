@@ -32,9 +32,9 @@ describe('installDebugApi', () => {
 
   it('snapshot devolve o que o probe registrado devolve (FND-09)', () => {
     const snap: GameSnapshot = {
-      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0, move: null, frame: 'idle-0', guard: 'none', structure: { cur: 0, max: 100, broken: false }, dodge: { active: false, invulnerable: false, cooldownMs: 0 } },
+      player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0, move: null, frame: 'idle-0', view: { x: 10, y: 20 }, guard: 'none', structure: { cur: 0, max: 100, broken: false }, dodge: { active: false, invulnerable: false, cooldownMs: 0 } },
       enemies: [
-        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', ai: 'chase', maxHp: 60, damage: 12, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false }, guarding: false, variant: 'corcunda', frame: 'idle-0', spriteVisible: true, ragdollVisible: null, ragdollTextures: null },
+        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', ai: 'chase', maxHp: 60, damage: 12, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false }, guarding: false, variant: 'corcunda', view: { x: 30, y: 40 }, frame: 'idle-0', spriteVisible: true, ragdollVisible: null, ragdollTextures: null },
       ],
       events: ['enemyDied:3'],
       deaths: [{ id: 3, x: 50, y: 60 }],
@@ -75,8 +75,9 @@ describe('installDebugApi', () => {
       tech: { slots: [null, null], cast: null },
       kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
       techObjects: [],
-      fx: { live: 0, degraded: false, layers: [], red: { glowColor: null, glow: { active: false, color: null }, screenFlashColor: null, orb: null } },
-      camera: { zoom: 1.5, worldView: { left: 0, right: 640 } },
+      fx: { live: 0, degraded: false, layers: [], aura: null, red: { glowColor: null, glow: { active: false, color: null }, screenFlashColor: null, orb: null } },
+      camera: { zoom: 1.5, worldView: { left: 0, right: 640 }, center: { x: 320, y: 180 }, scroll: { x: -160, y: -90 }, roundPixels: false, phaserFollow: false },
+      physics: { alpha: 0.5 },
       finisher: { distPx: null },
       fxlab: null,
     };

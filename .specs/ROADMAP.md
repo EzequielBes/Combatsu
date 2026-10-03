@@ -28,6 +28,7 @@ Parte B — Corpo a corpo estilo jogo de luta
 | F10 | `personagem-e-vermelho` | Large | SPF, RDA | Done (Verifier PASS, rodada 2; 25 ACs) |
 | F11 | `ritmo-economia-e-chefe` | Large | PRG, SPN, LIM, ECN, BFX, MST | Done (Verifier PASS, rodada 2; 61 ACs) |
 | — | `sprite-chefes-e-acabamento` | Large | BSP, BAN, LMB, BPW, OBJ, EPD | Done (Verifier PASS, rodada 2; 47 ACs); na branch `feat/sprite-chefes-e-acabamento`, aguarda UAT para ir a `dev` |
+| — | `movimento-suave-e-objetos-no-chefe` | Medium | PRB, CAM, ITP | Done (Verifier PASS, rodada 2; 23 ACs); na branch `feat/movimento-suave-e-objetos-no-chefe`, empilhada na dos sprites, aguarda UAT |
 | F12 | `combate-mestre` | Complex | HGT, TGT, PST, DEF, CNT, RDG | Planejada |
 | F13 | `foco-e-ambiente` | Large | FOC, WAL, TKD | Planejada |
 | F14 | `ia-tatica` | Complex | DIR, RNG, STG, ARC, IND, SFX | Planejada |

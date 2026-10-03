@@ -24,7 +24,7 @@ import {
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import type { Fx } from './fx';
 import type { InputSnapshot } from './input';
-import { PX_PER_S_TO_STEP, bodyOf } from './physics';
+import { bodyOf, BodyRenderPos, PX_PER_S_TO_STEP } from './physics';
 import type { Prop } from './Prop';
 import { playerAnimKey } from './art';
 import { PALETTE } from './art/palette';
@@ -82,6 +82,8 @@ export class Player implements Hittable {
   readonly team = 'player';
   /** Corpo físico (invisível); o tamanho da textura placeholder define o corpo. */
   readonly sprite: Phaser.Physics.Matter.Image;
+  /** Posição do corpo como a tela a mostra, entre os dois últimos passos de física (ITP-05). */
+  private readonly drawPos: BodyRenderPos;
   /** O que aparece na tela: sprite animado com a origem no pé, seguindo o corpo. */
   readonly view: Phaser.GameObjects.Sprite;
   /**
@@ -178,6 +180,7 @@ export class Player implements Hittable {
       collisionFilter: { ...Filters.player },
     });
     this.sprite.setFixedRotation();
+    this.drawPos = new BodyRenderPos(scene, bodyOf(this.sprite));
     scene.matter.world.on('beforeupdate', this.onStep);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
     this.sprite.setIgnoreGravity(true);
@@ -194,6 +197,22 @@ export class Player implements Hittable {
       .setOrigin(PLAYER_ORIGIN.x, PLAYER_ORIGIN.y)
       // Acima dos inimigos e objetos: o membro do golpe aparece por cima do alvo que ele atinge.
       .setDepth(PLAYER_DEPTH);
+  }
+
+  /** Centro do corpo como a tela o mostra neste quadro (ITP-05): a câmera e o objeto na mão seguem isto. */
+  get renderPos(): Vec2 {
+    return this.drawPos.get();
+  }
+
+  /** Onde o sprite visível está de fato, convertido para o centro do corpo: o snapshot lê isto, não o `renderPos`. */
+  get spritePos(): Vec2 {
+    return { x: this.view.x, y: this.view.y - SIZE.player.h / 2 };
+  }
+
+  /** Põe o sprite visível, com a origem no pé, na posição de desenho do corpo. */
+  private placeView(): void {
+    const p = this.renderPos;
+    this.view.setPosition(p.x, p.y + SIZE.player.h / 2);
   }
 
   /** Velocidade vertical do movimento (px/s, + para baixo), lida pelo smoke da gravidade na conjuração (CAST-11). */
@@ -361,7 +380,9 @@ export class Player implements Hittable {
     this.sprite.setVelocity(this.move.vx * PX_PER_S_TO_STEP, this.move.vy * PX_PER_S_TO_STEP);
     this.sprite.setFlipX(this.move.facing < 0);
     this.hitbox.follow(this.sprite.x, this.sprite.y, this.facing);
-    this.held?.follow(this.sprite.x, this.sprite.y, this.facing);
+    // O objeto na mão acompanha o sprite, não o corpo: senão ele treme contra a mão acima de 60 Hz.
+    const draw = this.renderPos;
+    this.held?.follow(draw.x, draw.y, this.facing);
     this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
     this.poseMs = Math.max(0, this.poseMs - dtMs);
     this.animate(sensors.grounded);
@@ -413,6 +434,9 @@ export class Player implements Hittable {
   /** Renasce no spawn do level com a vida cheia (o Health já voltou para o máximo). */
   private respawn(): void {
     this.sprite.setPosition(this.spawn.x, this.spawn.y);
+    // EDG-02: a posição de desenho e o sprite vão junto na hora, sem deslizar nem ficar um quadro para trás.
+    this.drawPos.snap();
+    this.placeView();
     this.sprite.setVelocity(0, 0);
     this.move = initialMoveState();
     this.resetDefense();
@@ -440,6 +464,9 @@ export class Player implements Hittable {
       this.held = null;
     }
     this.sprite.setPosition(this.spawn.x, this.spawn.y);
+    // EDG-02: a posição de desenho e o sprite vão junto na hora, sem deslizar nem ficar um quadro para trás.
+    this.drawPos.snap();
+    this.placeView();
     this.sprite.setVelocity(0, 0);
     this.move = initialMoveState();
     this.resetDefense();
@@ -585,7 +612,7 @@ export class Player implements Hittable {
     // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
     if (this.castLock) {
       const v = this.view;
-      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      this.placeView();
       v.setScale(this.facing, 1);
       v.anims.stop();
       v.setFrame(`${this.castLock.id}-${this.castLock.state}`);
@@ -593,7 +620,7 @@ export class Player implements Hittable {
     }
     if (this.poseMs > 0 && !this.health.dead && !this.health.staggered) {
       const v = this.view;
-      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      this.placeView();
       v.setScale(this.facing, 1);
       v.anims.stop();
       v.setFrame('palmaExplosiva-hit');
@@ -603,7 +630,7 @@ export class Player implements Hittable {
     if (this.structure.broken && !this.health.dead) {
       // Guarda quebrada (STR-06): cambaleia alternando os dois frames de atordoamento.
       const v = this.view;
-      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      this.placeView();
       v.setScale(this.facing, 1);
       v.anims.stop();
       v.setFrame(`stunned-${Math.floor(this.clockMs / STUN_FRAME_MS) % 2}`);
@@ -612,7 +639,7 @@ export class Player implements Hittable {
     if (this.dodge.active) {
       // Esquiva (DOD-01/11): corpo encolhido e rastro de imagens; o segundo frame na metade final do dash.
       const v = this.view;
-      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      this.placeView();
       v.setScale(this.facing, 1);
       v.anims.stop();
       v.setFrame(`dodge-${DODGE_ELAPSED_HALF(this.dodge.cooldownMs)}`);
@@ -622,7 +649,7 @@ export class Player implements Hittable {
     if (this.guard.state !== 'none' && !this.health.staggered && !this.health.dead && !this.moves.isMoving) {
       // CTL-09: guarda ou janela de parry mostram o frame `guard`.
       const v = this.view;
-      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      this.placeView();
       v.setScale(this.facing, 1);
       v.anims.stop();
       v.setFrame('guard');
@@ -632,7 +659,7 @@ export class Player implements Hittable {
     if (mv && !(this.health.staggered || this.health.dead)) {
       // Golpe do grafo: o frame vem da fase (wind/hit/recover), não do relógio da animação (CHR-02).
       const v = this.view;
-      v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+      this.placeView();
       v.setScale(this.facing, 1);
       v.anims.stop();
       const phase = this.moves.phase as AttackPhase;
@@ -653,7 +680,7 @@ export class Player implements Hittable {
     };
     const anim = pickPlayerAnim(input);
     const v = this.view;
-    v.setPosition(this.sprite.x, this.sprite.y + SIZE.player.h / 2);
+    this.placeView();
     // Escala negativa espelha em volta da origem (o pé no centro do corpo); o flipX espelharia em volta do
     // centro do frame, que é mais largo que o corpo.
     v.setScale(this.facing, 1);
