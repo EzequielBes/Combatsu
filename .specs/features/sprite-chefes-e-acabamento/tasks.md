@@ -227,17 +227,18 @@ T6 → T7 → T8
 
 ### T8: Pendências dos inimigos
 
-**What**: `rimFrom` no kit (bruto = 6), punho do bruto arredondado e braço erguido no `hurt-uppercut` (design §4).
+**What**: `rimFrom` no kit (bruto = 6), punho do bruto arredondado e `hurt-uppercut` com o corpo fora do chão (design §4).
 **Where**: `src/game/art/sprites/enemy.ts`, `tests/game/art.test.ts`
 **Depends on**: T7
 **Reuses**: testes de alcance (EVR-03), bbox (EVR-07), sel-out (EVR-10) e reações (HRX-03)
-**Requirement**: EPD-01, EPD-02, EPD-03
+**Requirement**: EPD-01, EPD-02, EPD-03, EPD-04
 
 **Done when**:
 
 - [ ] EPD-01: no `impact` do bruto, as linhas 0 a 11 têm exatamente 1 `w`.
 - [ ] EPD-02: no `attack-0` do bruto, a coluna da ponta do punho tem exatamente 3 texels opacos.
-- [ ] EPD-03: no rastejante, o topo do `hurt-uppercut-0` fica pelo menos 2 linhas acima do topo do `hurt-head-a-0`.
+- [ ] EPD-03: no rastejante, o topo do `hurt-uppercut-0` fica pelo menos 3 linhas acima do topo do `hurt-head-a-0`.
+- [ ] EPD-04: nas três aparências, a base da caixa opaca do `hurt-uppercut-0` fica na linha 20 ou acima.
 - [ ] Gate check passes: `npm run build && npm test && npm run smoke -- boot && npm run smoke -- boss`
 
 **Tests**: unit
