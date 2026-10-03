@@ -415,10 +415,10 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: `BodyRenderPos`, `HIT_FLASH_MS`, `AttackHitbox.open` (portão novo a cada abertura)
 **Requirement**: HGT-04, HGT-05, HGT-06, HGT-07, HGT-08, CMT-01, CMT-02, DFL-05, DFL-15
 **Done when**:
-- [ ] Getters para o snapshot: `telegraph` (frame do marcador se visível, senão `null`), `committed`, `commitFlash` (chave da paleta enquanto o flash dura), `attackView` (`kind`, `index`, `length`).
-- [ ] O marcador segue `drawPos`, some em ragdoll e é destruído no `cleanup`.
-- [ ] O id da sequência muda a cada `windupStart`.
-- [ ] `npm run build` passa.
+- [x] Getters para o snapshot: `telegraph` (frame do marcador se visível, senão `null`), `committed`, `commitFlash` (chave da paleta enquanto o flash dura), `attackView` (`kind`, `index`, `length`).
+- [x] O marcador segue `drawPos`, some em ragdoll e é destruído no `cleanup`.
+- [x] O id da sequência muda a cada `windupStart`.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 

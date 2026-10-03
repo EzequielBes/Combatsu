@@ -4,6 +4,7 @@ import type { EnemyVariant } from '../core/enemyVariant';
 import { pickHitReaction, type HitReaction } from '../core/hitReaction';
 import { Filters } from '../core/collision';
 import { EnemyAI, type AIEvent, type EnemyAIState } from '../core/enemyAI';
+import { KIND_COLOR, hitFieldsFor, type AttackKind } from '../core/attackKind';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
 import { EnemyGuard, type GuardRoll } from '../core/enemyGuard';
 import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structure';
@@ -25,6 +26,8 @@ import { SIZE, TEX, enemyTex } from './textures';
 
 /** Duração (ms) do flash branco do golpe leve. */
 const HIT_FLASH_MS = 70;
+/** Duração (ms) do flash na cor do tipo no ponto de compromisso (CMT-02). */
+const COMMIT_FLASH_MS = 80;
 /** Ferramenta na mão (ARM-09): aura alternando a cada 150 ms; offset à frente do corpo. */
 const WEAPON_AURA_MS = 150;
 const WEAPON_OFFSET = { x: 10, y: 2 };
@@ -33,6 +36,8 @@ const ATTACK_DEPTH = 2;
 /** Barra de vida (HUD-02): altura do topo acima do centro do corpo (px) e profundidade, acima de todos. */
 const BAR_RISE = 44;
 const BAR_DEPTH = 3;
+/** Marcador do tipo do golpe (HGT-07): a base fica esta folga (px) acima do topo da barra de vida, na mesma profundidade. */
+const TELEGRAPH_GAP = 3;
 /** Barra de estrutura (STR-01): fina, logo abaixo da barra de vida (px de mundo). */
 const STRUCTURE_BAR_H = 4;
 const STRUCTURE_BAR_GAP = 1;
@@ -52,6 +57,9 @@ export interface EnemyGateInput {
   windupAllowed: boolean;
   holdRank: number;
 }
+
+/** Id da próxima sequência de golpes (DFL-10): global, para duas sequências de inimigos diferentes não se misturarem. */
+let nextStringId = 1;
 
 /** Sem limitador (inimigo isolado): nunca tem vaga, então só persegue e espera. */
 const NO_GATE: EnemyGateInput = { granted: false, windupAllowed: true, holdRank: 0 };
@@ -91,6 +99,12 @@ export class Enemy implements Hittable {
   /** Barra de vida acima da cabeça, na câmera do mundo: aparece no primeiro dano e some ao morrer (HUD-02). */
   private readonly barFrame: Phaser.GameObjects.Image;
   private readonly barFill: Phaser.GameObjects.Rectangle;
+  /** Marcador do tipo do golpe sobre a cabeça, visível em `windup` e `attack` (HGT-07, HGT-08). */
+  private readonly marker: Phaser.GameObjects.Image;
+  /** Chave da `PALETTE` do flash de compromisso em curso (CMT-02); `null` fora do flash. */
+  private commitFlashKey: string | null = null;
+  /** Id da sequência de golpes em curso; muda a cada `windupStart` (DFL-10). */
+  private stringId = 0;
   private facing: 1 | -1 = 1;
   /**
    * vx da IA em px por step, reaplicado a cada step do Matter (null = a física manda). O Matter roda em passo
@@ -176,6 +190,8 @@ export class Enemy implements Hittable {
       ? scene.add.sprite(spawn.x, spawn.y, weaponInfo.tool === 'cursedKnife' ? TEX.cursedKnife : TEX.cursedClub, 'hold-a')
       : null;
     this.barFrame = scene.add.image(0, 0, TEX.enemyBar).setOrigin(0, 0).setDepth(BAR_DEPTH).setVisible(false);
+    // Mundo, não HUD (AD-003): a câmera de UI ignora tudo o que nasce fora da `uiLayer`.
+    this.marker = scene.add.image(0, 0, TEX.fxTelegraph, tuning.attack.kind).setOrigin(0.5, 1).setDepth(BAR_DEPTH).setVisible(false);
     const well = ENEMY_BAR_WELL;
     scene.matter.world.on('beforeupdate', this.onStep);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
@@ -288,6 +304,31 @@ export class Enemy implements Hittable {
   /** Chaves de textura das partes do ragdoll; `null` fora de ragdoll (debug, EVR-06). */
   get ragdollTextures(): string[] | null {
     return this.ragdoll ? this.ragdoll.textureKeys : null;
+  }
+
+  /** Tipo do golpe deste inimigo (HGT-01..06), resolvido pela cena no spawn. */
+  private get kind(): AttackKind {
+    return this.tuning.attack.kind;
+  }
+
+  /** Frame do marcador de telegrafo se ele está visível, lido do sprite desenhado; senão `null` (HGT-07, HGT-08). */
+  get telegraph(): AttackKind | null {
+    return this.marker.visible ? (String(this.marker.frame.name) as AttackKind) : null;
+  }
+
+  /** Comprometido (CMT-01): o golpe pendente sai mesmo levando golpe comum. */
+  get committed(): boolean {
+    return this.ai.committed;
+  }
+
+  /** Chave da `PALETTE` do flash de compromisso enquanto ele dura, lido do tint do sprite; `null` fora dele (CMT-02). */
+  get commitFlash(): string | null {
+    return this.commitFlashKey !== null && this.view.isTinted ? this.commitFlashKey : null;
+  }
+
+  /** Tipo e posição do golpe na sequência para o snapshot: `index` 0 fora de `windup` e `attack` (DFL-15). */
+  get attackView(): { kind: AttackKind; index: number; length: number } {
+    return { kind: this.kind, index: this.ai.hitIndex, length: this.ai.hits };
   }
 
   /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
@@ -585,11 +626,42 @@ export class Enemy implements Hittable {
       if (ev === 'hitboxOn') this.openAttack();
       else if (ev === 'hitboxOff') this.attack.close();
       else if (ev === 'wantAttack') this.wantAttackNow = true;
-      else if (ev === 'windupStart') this.windupStartNow = true;
+      else if (ev === 'windupStart') {
+        this.windupStartNow = true;
+        this.stringId = nextStringId++;
+      } else if (ev === 'commit') this.flashCommit();
     }
+    // Toda mudança de estado da IA passa por aqui (`update` e `interrupt`): o marcador acompanha na hora.
+    this.updateTelegraph();
   }
 
-  /** Garra: dano da rodada (DIF-04), time 'enemy' (nunca acerta outro inimigo, AI-05). */
+  /** Marcador sobre a cabeça: visível em `windup` e `attack`, fora do ragdoll, na posição de desenho (HGT-07, HGT-08). */
+  private updateTelegraph(): void {
+    if (this._removed) return;
+    const st = this.ai.state;
+    const show = (st === 'windup' || st === 'attack') && !this.ragdoll && !this.brain.isDead;
+    this.marker.setVisible(show);
+    if (!show) return;
+    const { x, y } = this.drawPos.get();
+    this.marker.setPosition(Math.round(x), Math.round(y - BAR_RISE - TELEGRAPH_GAP));
+  }
+
+  /** Ponto de compromisso (CMT-02): o corpo pisca em cor sólida do tipo; o relógio da cena para no hitstop. */
+  private flashCommit(): void {
+    const key = KIND_COLOR[this.kind];
+    this.commitFlashKey = key;
+    this.view.setTintFill(PALETTE[key]);
+    this.scene.time.delayedCall(COMMIT_FLASH_MS, () => {
+      this.commitFlashKey = null;
+      if (this.view.active) this.view.clearTint();
+    });
+  }
+
+  /**
+   * Garra: dano da rodada (DIF-04), time 'enemy' (nunca acerta outro inimigo, AI-05). Altura e `unblockable` saem do
+   * tipo do golpe (HGT-04..06) e `string` diz qual golpe da sequência é este (DFL-10, DFL-15). A hitbox abre com um
+   * portão novo a cada golpe, então o seguinte da sequência acerta de novo quem o anterior já acertou (DFL-05).
+   */
   private openAttack(): void {
     const step = this.tuning.attack;
     const hit: Hit = {
@@ -598,6 +670,8 @@ export class Enemy implements Hittable {
       strength: step.strength,
       force: step.force,
       direction: { x: this.facing, y: -0.3 },
+      ...hitFieldsFor(this.kind),
+      string: { id: this.stringId, index: this.ai.hitIndex, length: this.ai.hits },
     };
     this.lastAttackDamage = hit.damage;
     this.attack.open(step.hitbox!, hit, this.body.position.x, this.body.position.y, this.facing);
@@ -751,6 +825,7 @@ export class Enemy implements Hittable {
     this.structBg.destroy();
     this.structFill.destroy();
     this.breakStar.destroy();
+    this.marker.destroy();
     this.slide = null;
     this._removed = true;
   }
