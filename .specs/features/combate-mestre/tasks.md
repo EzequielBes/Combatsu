@@ -485,8 +485,8 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: os pontos de criação de `Hit` (linhas com `strength:`)
 **Requirement**: PST-09, GND-04, GND-07
 **Done when**:
-- [ ] Um ajudante local monta as marcas, usado em todos os pontos que criam `Hit`.
-- [ ] `npm run build` passa.
+- [x] Um ajudante local monta as marcas, usado em todos os pontos que criam `Hit`.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 

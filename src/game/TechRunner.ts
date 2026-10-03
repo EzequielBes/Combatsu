@@ -5,7 +5,7 @@ import type { CursedEnergy } from '../core/energy';
 import { DivergentState } from '../core/divergent';
 import type { FxRegistry } from '../core/fxRegistry';
 import type { FxTimeline } from '../core/fxTimeline';
-import { canDamage, normalize, type Hit, type Vec2 } from '../core/hit';
+import { canDamage, normalize, type Hit, type Strength, type Vec2 } from '../core/hit';
 import { Kokusen } from '../core/kokusen';
 import type { Loadout } from '../core/loadout';
 import { RedOrbState, redReleaseEffects, repulseTargetsFor, type RedOrbTarget, type RepulseCandidate } from '../core/redOrb';
@@ -50,6 +50,13 @@ const RED_ORB_RADIUS = 6;
 const RED_FORCE = 8;
 /** BLU-02: alcance da consulta de parede à frente do player (folga acima dos 110 px do orbe). */
 const BLUE_WALL_QUERY_PX = 130;
+
+/**
+ * Marcas de todo golpe de técnica (PST-09, GND-04, GND-07): `tech` o deixa fora do limite de 1 golpe no chão; o golpe
+ * forte também derruba quem sobrevive (`knockdown`, AD-021). Todo `Hit` criado neste arquivo as leva.
+ */
+const techMarks = (strength: Strength): Pick<Hit, 'tech' | 'knockdown'> =>
+  strength === 'heavy' ? { tech: true, knockdown: true } : { tech: true };
 
 /** Conjuração que originou um golpe: `id` cresce a cada conjuração iniciada, `slot` é o do loadout (MST-01, MST-02). */
 interface CastRef {
@@ -248,6 +255,7 @@ export class TechRunner {
       strength: 'light',
       force: DIVERGENT_FORCE.first,
       direction: { x: this.player.facing, y: -0.15 },
+      ...techMarks('light'),
     };
     this.hitbox.open(CROSS_HITBOX, hit, this.player.sprite.x, this.player.sprite.y, this.player.facing);
   }
@@ -274,6 +282,7 @@ export class TechRunner {
       strength: 'heavy',
       force: DIVERGENT_FORCE.second,
       direction: { x: this.player.facing, y: -0.3 },
+      ...techMarks('heavy'),
     };
     if (target.receiveHit(hit)) {
       this.onTechHit(hit, point);
@@ -300,7 +309,14 @@ export class TechRunner {
       // KOK-08: postura própria (3× o dano), não a fórmula 2× de um golpe forte comum.
       target.receiveKokusen(KOKUSEN.damage, KOKUSEN.damage * KOKUSEN.poiseMul);
       this.onTechHit(
-        { ownerId: this.player.id, damage: KOKUSEN.damage, strength: 'heavy', force: 0, direction: { x: this.player.facing, y: -0.3 } },
+        {
+          ownerId: this.player.id,
+          damage: KOKUSEN.damage,
+          strength: 'heavy',
+          force: 0,
+          direction: { x: this.player.facing, y: -0.3 },
+          ...techMarks('heavy'),
+        },
         point,
       );
       this.masteryHit(this.divergentCast, target);
@@ -311,6 +327,7 @@ export class TechRunner {
         strength: 'heavy',
         force: DIVERGENT_FORCE.second * KOKUSEN.knockbackMul, // KOK-07: 2× o impulso do 2º impacto comum
         direction: { x: this.player.facing, y: -0.3 },
+        ...techMarks('heavy'),
       };
       if (target.receiveHit(hit)) {
         this.onTechHit(hit, point);
@@ -387,7 +404,14 @@ export class TechRunner {
     for (const r of repulseTargetsFor(origin, this.player.facing, candidates)) {
       const enemy = enemies.find((e) => e.id === r.targetId);
       if (!enemy) continue;
-      const hit: Hit = { ownerId: this.player.id, damage: r.damage, strength: r.strength, force: r.force, direction: r.direction };
+      const hit: Hit = {
+        ownerId: this.player.id,
+        damage: r.damage,
+        strength: r.strength,
+        force: r.force,
+        direction: r.direction,
+        ...techMarks(r.strength),
+      };
       if (!enemy.receiveHit(hit)) continue;
       this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
       // MST-01: a repulsão faz parte da mesma conjuração do orbe (mesmo `castId`, então o alvo conta uma vez só).
@@ -434,6 +458,7 @@ export class TechRunner {
         strength: 'heavy',
         force: RED_FORCE,
         direction,
+        ...techMarks('heavy'),
       };
       if (target.receiveHit(hit)) {
         this.onTechHit(hit, center);
@@ -450,6 +475,7 @@ export class TechRunner {
       strength: 'heavy',
       force: RED_FORCE,
       direction: result.direction,
+      ...techMarks('heavy'),
     };
     if (target.receiveHit(hit)) {
       this.onTechHit(hit, center);
@@ -469,6 +495,7 @@ export class TechRunner {
         strength: 'heavy',
         force: RED_FORCE,
         direction: splash.direction,
+        ...techMarks('heavy'),
       };
       if (enemy.receiveHit(hit)) {
         this.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
@@ -558,6 +585,7 @@ export class TechRunner {
       strength: 'light',
       force: 0,
       direction: { x: 0, y: -1 },
+      ...techMarks('light'),
     };
     const enemy = enemies.find((e) => e.id === dmg.targetId);
     if (enemy) {
@@ -606,6 +634,7 @@ export class TechRunner {
       strength: 'light',
       force: 0,
       direction: { x: 0, y: -1 },
+      ...techMarks('light'),
     };
     const enemy = enemies.find((e) => e.id === hit.targetId);
     if (enemy) {
