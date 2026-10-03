@@ -235,6 +235,25 @@ export default async function ({ page, baseUrl, assert }) {
     if (cur.projectiles.filter((p) => p.kind === 'shockwave').length === 0) wavesCleared = true;
   }
   assert(wavesCleared, 'as ondas de choque nunca sumiram (parede ou 600 px)');
+  // HP-02 -> PST-15 (invulnerabilidade de 700 ms para 300 ms): o player parado até aqui perdeu quase toda a vida para o ciclo do chefe e
+  // já não anda até o fim do cenário. As seções da parede e do pouso rodam em runs novas (100 de vida), no mesmo URL.
+  const freshRun = async () => {
+    await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5`, { waitUntil: 'load' });
+    await page.waitForFunction(
+      () => {
+        try {
+          return typeof window.__game.snapshot === 'function';
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 15_000 },
+    );
+    await stepAndSnap(20);
+    await page.keyboard.press('KeyJ', { delay: 50 });
+    return stepAndSnap(50);
+  };
+  cur = await freshRun();
   // BAT-06 (parede): o salto mira o x do player, então as ondas acima nasceram em cima dele e sumiram no contato.
   // Para exercitar a parede, espera o próximo salto e anda para a direita durante o voo: o pouso fica perto da
   // parede esquerda e a onda que vai para a esquerda bate nela sem passar pelo player, bem antes dos 600 px (BAT-12).
@@ -275,6 +294,7 @@ export default async function ({ page, baseUrl, assert }) {
   // Edge case (pouso): com o player embaixo da plataforma da linha 12 do LEVEL_1 (x 256..416, topo em y = 384),
   // o chefe pousa no piso principal (centro em 480 − 28 = 452), nunca em cima da plataforma.
   {
+    cur = await freshRun(); // PST-15: a vida da run anterior já foi gasta na seção da parede
     const under = (x) => x >= 280 && x <= 392; // dentro da plataforma, com margem para o corpo do player
     // Recalcula a direção a cada passo: o chefe pode empurrar ou atingir o player no caminho.
     for (let i = 0; i < 160 && !under(cur.player.x); i++) {
@@ -304,9 +324,12 @@ export default async function ({ page, baseUrl, assert }) {
     if (cur.projectiles.length > 0) hasFlying = true;
   }
   assert(hasFlying, 'nenhum novo projétil apareceu para testar o edge case de game over em pleno voo');
-  await page.keyboard.press('Digit3', { delay: 50 }); // mata o player (tecla 3)
-  let overSnap = await stepAndSnap(100);
-  for (let i = 0; i < 20 && overSnap.run.state !== 'gameOver'; i++) overSnap = await stepAndSnap(100);
+  // A tecla 3 é ignorada durante a invulnerabilidade de um golpe recém-sofrido (PST-15): repete até o game over.
+  let overSnap = cur;
+  for (let i = 0; i < 20 && overSnap.run.state !== 'gameOver'; i++) {
+    await page.keyboard.press('Digit3', { delay: 50 }); // mata o player (tecla 3)
+    overSnap = await stepAndSnap(100);
+  }
   assert(overSnap.run.state === 'gameOver', `esperava game over depois da morte do player: ${JSON.stringify(overSnap.run)}`);
   assert(overSnap.boss !== null, 'o chefe deveria continuar vivo no game over (para o teste do edge case)');
   // RUN-05/11: a trava de 1000 ms (RUN.gameOverLockMs) precisa passar antes do J valer para começar uma run nova.

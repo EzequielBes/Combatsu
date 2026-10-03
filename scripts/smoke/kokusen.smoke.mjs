@@ -28,7 +28,7 @@ export default async function ({ page, baseUrl, assert }) {
     );
   const countOf = (events, name) => events.filter((e) => e === name).length;
 
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&seed=1&noshop=1&tech=divergente`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&shove=0&seed=1&noshop=1&tech=divergente`, { waitUntil: 'load' });
   await waitReady();
   await stepAndSnap(20);
   await page.keyboard.press('KeyJ', { delay: 50 });
