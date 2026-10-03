@@ -59,6 +59,7 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 | Braço curto | Com `len` < 12 a manga não afina | Não há colunas para antebraço e punho distintos | n |
 | Tamanho dos objetos | Cadeira 13×13, garrafa 4×10, faca 3×10 e porrete 5×8 não mudam | O corpo físico sai do tamanho da textura | n |
 | Cadeira | Assento e encosto de madeira (`m`/`M`) com estrutura de aço (`s`/`S`) | Cadeira escolar; dois materiais dão leitura em 13×13 | n |
+| Faca e porrete | Faca: ponta com brilho `w`, guarda `z` e cabo `M`/`m`. Porrete: cravos de osso `l` e cabo `M`/`m`. O limite é 7 chaves porque as grades antigas já tinham 5 | Um AC de "5 chaves" passava com o desenho antigo e não media nada | n |
 | Borda do `impact` | Cada kit diz a partir de qual linha do tronco a borda branca vale; no bruto, a partir do topo da cabeça | Os chifres do bruto fazem parte da grade do tronco | n |
 | `hurt-uppercut` | O corpo sobe 3 texels e sai do chão (era 2), com menos inclinação para trás e os braços ficando para baixo; vale para as 3 aparências, porque a pose é uma só. Mede-se pelo topo e pela base da caixa opaca | Em `dev` o `hurt-uppercut-0` do rastejante já fica 2 linhas acima do `hurt-head-a-0` e mesmo assim lê igual: a diferença por posição (0,82) não mede a pose. Braço erguido foi descartado: nas outras aparências o braço erguido tem a cor de alerta do preparo | n |
 
@@ -161,8 +162,8 @@ Player e inimigos comuns já passaram por polimento (`sprite-player-polish`, `en
 
 1. OBJ-01: The cadeira SHALL ter 13×13 texels e pelo menos 6 chaves distintas, entre elas `m`, `M`, `s` e `S`.
 2. OBJ-02: The garrafa SHALL ter 4×10 texels e as chaves `G`, `g`, `w`, `l` e `L`.
-3. OBJ-03: The frame `common` da faca SHALL ter 3×10 texels, pelo menos 5 chaves distintas e nenhuma `A`.
-4. OBJ-04: The frame `common` do porrete SHALL ter 5×8 texels, pelo menos 5 chaves distintas e nenhuma `A`.
+3. OBJ-03: The frame `common` da faca SHALL ter 3×10 texels, pelo menos 7 chaves distintas, entre elas `w` e `z`, e nenhuma `A`.
+4. OBJ-04: The frame `common` do porrete SHALL ter 5×8 texels, pelo menos 7 chaves distintas, entre elas `l` e `M`, e nenhuma `A`.
 
 **Independent Test**: `npm test` (blocos de objetos e ferramentas, com os testes de estilhaço e de raridade que já existem).
 
