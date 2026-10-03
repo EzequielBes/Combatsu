@@ -481,8 +481,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.loadout.clearCooldown(1);
       }
       this.fxLab?.update(dt);
-      // CAST-14: aura por técnica em sign/charge, sobre o corpo do player; tecla 1 do fxlab mostra só a aura.
-      this.aura.update(dt, this.techCaster.cast ?? this.fxLab?.auraDemoCast() ?? null, this.player.sprite.x, this.player.sprite.y);
+      // CAST-14: aura por técnica em sign/charge, sobre o player; tecla 1 do fxlab mostra só a aura. Ela fica presa
+      // ao sprite (posição de desenho), não ao corpo: senão anda meio passo à frente dele ao correr (ITP-10).
+      const drawn = this.player.renderPos;
+      this.aura.update(dt, this.techCaster.cast ?? this.fxLab?.auraDemoCast() ?? null, drawn.x, drawn.y);
       // KOK-27: aura preta com faíscas vermelhas no player enquanto a zona do Kokusen está ativa.
       this.kokusenFx.zoneAura(dt, this.techRunner.kokusenSnapshot.zone, this.player.sprite.x, this.player.sprite.y);
       // CAST-16: a chamada aparece exatamente no frame em que a soltura começa (`techCast:<id>`).
@@ -1129,7 +1131,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         vy: this.player.verticalSpeed,
         move: this.player.moveName,
         frame: this.player.frameName,
-        view: this.player.renderPos,
+        view: this.player.spritePos,
         guard: this.player.guardState,
         structure: this.player.structureView,
         dodge: this.player.dodgeView,
@@ -1149,7 +1151,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         structure: e.structureView,
         guarding: e.guarding,
         variant: e.variant,
-        view: e.renderPos,
+        view: e.spritePos,
         frame: e.frame,
         spriteVisible: e.spriteVisible,
         ragdollVisible: e.ragdollVisible,
@@ -1169,7 +1171,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
             name: this.boss.name,
             x: this.boss.x,
             y: this.boss.y,
-            view: this.boss.renderPos,
+            view: this.boss.spritePos,
             finisherReady: this.boss.finisherReady,
           }
         : null,
@@ -1222,7 +1224,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       tech: this.techSnapshot(),
       kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
       techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
-      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState },
+      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState, aura: this.aura.pos },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
       camera: {
         zoom: this.cameras.main.zoom,

@@ -232,12 +232,12 @@ T8
 
 **Done when**:
 
-- [ ] EDG-02: `scripts/smoke/feel.smoke.mjs` mata o player a menos de 48 px do spawn, recomeça com J e confere `player.view` nos 3 primeiros quadros.
-- [ ] ITP-05 e ITP-07: `view` do snapshot vem do sprite desenhado (`spritePos`), não do getter de cálculo.
-- [ ] ITP-08: correndo com a cadeira na mão, o x dela é `player.view.x − 8 × facing` (±0,01).
-- [ ] ITP-09: `tests/game/matterRunnerContract.test.ts` compara `STEP_BUFFER_MARGIN` com o `Runner` do Phaser instalado.
-- [ ] ITP-10: com a aura visível e o player correndo, `fx.aura.x` é `player.view.x` (±0,01).
-- [ ] Gate check passes: `npm run build && npm test && npm run smoke`
+- [x] EDG-02: `scripts/smoke/feel.smoke.mjs` mata o player a menos de 48 px do spawn, recomeça com J e confere `player.view` nos 3 primeiros quadros.
+- [x] ITP-05 e ITP-07: `view` do snapshot vem do sprite desenhado (`spritePos`), não do getter de cálculo.
+- [x] ITP-08: correndo com a cadeira na mão, o x dela é `player.view.x − 8 × facing` (±0,01).
+- [x] ITP-09: `tests/game/matterRunnerContract.test.ts` compara `STEP_BUFFER_MARGIN` com o `Runner` do Phaser instalado.
+- [x] ITP-10: com a aura visível e o player correndo, `fx.aura.x` é `player.view.x` (±0,01).
+- [x] Gate check passes: `npm run build && npm test && npm run smoke`
 
 **Tests**: smoke
 **Gate**: full

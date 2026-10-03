@@ -145,9 +145,9 @@ No UAT de 03/10 o usuário relatou dois problemas: "itens jogáveis estão passa
 | ITP-05 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-06 | P1: Movimento sem degraus | Execute | Implementing |
 | ITP-07 | P1: Movimento sem degraus | Execute | Implementing |
-| ITP-08 | P1: Movimento sem degraus | Tasks | In Tasks |
-| ITP-09 | P1: Movimento sem degraus | Tasks | In Tasks |
-| ITP-10 | P1: Movimento sem degraus | Tasks | In Tasks |
+| ITP-08 | P1: Movimento sem degraus | Execute | Implementing |
+| ITP-09 | P1: Movimento sem degraus | Execute | Implementing |
+| ITP-10 | P1: Movimento sem degraus | Execute | Implementing |
 | EDG-01 | Edge cases | Execute | Implementing |
 | EDG-02 | Edge cases | Execute | Implementing |
 

@@ -204,6 +204,11 @@ export class Player implements Hittable {
     return this.drawPos.get();
   }
 
+  /** Onde o sprite visível está de fato, convertido para o centro do corpo: o snapshot lê isto, não o `renderPos`. */
+  get spritePos(): Vec2 {
+    return { x: this.view.x, y: this.view.y - SIZE.player.h / 2 };
+  }
+
   /** Põe o sprite visível, com a origem no pé, na posição de desenho do corpo. */
   private placeView(): void {
     const p = this.renderPos;
@@ -429,7 +434,9 @@ export class Player implements Hittable {
   /** Renasce no spawn do level com a vida cheia (o Health já voltou para o máximo). */
   private respawn(): void {
     this.sprite.setPosition(this.spawn.x, this.spawn.y);
+    // EDG-02: a posição de desenho e o sprite vão junto na hora, sem deslizar nem ficar um quadro para trás.
     this.drawPos.snap();
+    this.placeView();
     this.sprite.setVelocity(0, 0);
     this.move = initialMoveState();
     this.resetDefense();
@@ -457,7 +464,9 @@ export class Player implements Hittable {
       this.held = null;
     }
     this.sprite.setPosition(this.spawn.x, this.spawn.y);
+    // EDG-02: a posição de desenho e o sprite vão junto na hora, sem deslizar nem ficar um quadro para trás.
     this.drawPos.snap();
+    this.placeView();
     this.sprite.setVelocity(0, 0);
     this.move = initialMoveState();
     this.resetDefense();
