@@ -9,7 +9,7 @@ import { strikeToBody } from '../../src/core/strikePath';
 import { MOVES } from '../../src/data/moves';
 import { SIZE } from '../../src/game/textures';
 import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
-import { rigEnabled, rigStrikePoint, withRigFrames } from '../../src/game/art/rig/flag';
+import { RIG_PHASE_FRAMES, rigEnabled, rigMoveFrame, rigSequenceFrameName, rigStrikePoint, withRigFrames } from '../../src/game/art/rig/flag';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { BONES, REST_ANGLES, aimLimb, makePose, measuredLength, solve, type BoneName, type JointName, type Pose } from '../../src/game/art/rig/skeleton';
 
@@ -259,5 +259,48 @@ describe('chave ?debug&rig=1 (RIG-09, RIG-10)', () => {
     for (const name of Object.keys(base)) {
       if (!RIG_NAMES.includes(name as (typeof RIG_NAMES)[number])) expect(out[name], name).toBe(base[name]);
     }
+  });
+});
+
+// ---------------------------------------------------------------- sequência no jogo (quadros por fase)
+
+describe('quadros da sequência por fase do gancho ascendente (rig=1)', () => {
+  const def = { startupMs: 90, activeMs: 90, recoveryMs: 260 };
+
+  it('as 3 fases repartem os 12 quadros da sequência, em ordem e sem repetir', () => {
+    const all = [...RIG_PHASE_FRAMES.startup, ...RIG_PHASE_FRAMES.active, ...RIG_PHASE_FRAMES.recovery];
+    expect(all).toEqual(Array.from({ length: RIG_GANCHO_SEQUENCE.length }, (_, i) => i));
+  });
+
+  it('o pico (hit) cai no active e o wind e o recover nas pontas das suas fases', () => {
+    expect(RIG_GANCHO_SEQUENCE[RIG_PHASE_FRAMES.active[1]].frame).toEqual(RIG_GANCHO_FRAMES['ganchoAscendente-hit']);
+    expect(RIG_GANCHO_SEQUENCE[RIG_PHASE_FRAMES.startup[2]].frame).toEqual(RIG_GANCHO_FRAMES['ganchoAscendente-wind']);
+    expect(RIG_GANCHO_SEQUENCE[RIG_PHASE_FRAMES.recovery[2]].frame).toEqual(RIG_GANCHO_FRAMES['ganchoAscendente-recover']);
+  });
+
+  it('cada quadro dura uma fatia igual da fase: startup 90 ms em 6 quadros, active em 3 e recovery 260 ms em 3', () => {
+    const at = (phase: 'startup' | 'active' | 'recovery', ms: number): string | undefined => rigMoveFrame('ganchoAscendente', phase, ms, def);
+    expect(at('startup', 0)).toBe('ganchoAscendente-rig-0');
+    expect(at('startup', 14)).toBe('ganchoAscendente-rig-0');
+    expect(at('startup', 15)).toBe('ganchoAscendente-rig-1');
+    expect(at('startup', 89)).toBe('ganchoAscendente-rig-5');
+    expect(at('active', 0)).toBe('ganchoAscendente-rig-6');
+    expect(at('active', 30)).toBe('ganchoAscendente-rig-7');
+    expect(at('active', 60)).toBe('ganchoAscendente-rig-8');
+    expect(at('recovery', 86)).toBe('ganchoAscendente-rig-9');
+    expect(at('recovery', 87)).toBe('ganchoAscendente-rig-10');
+    expect(at('recovery', 174)).toBe('ganchoAscendente-rig-11');
+  });
+
+  it('passando do fim da fase segura o último quadro; outro golpe não usa o boneco', () => {
+    expect(rigMoveFrame('ganchoAscendente', 'recovery', 9999, def)).toBe('ganchoAscendente-rig-11');
+    expect(rigMoveFrame('jab', 'startup', 10, def)).toBeUndefined();
+  });
+
+  it('com rig=1 os 12 quadros são registrados como frames; sem rig=1 nenhum', () => {
+    const on = withRigFrames(PLAYER_MOVE_FRAMES, '?debug&rig=1');
+    for (let i = 0; i < 12; i++) expect(on[rigSequenceFrameName(i)], `quadro ${i}`).toBeDefined();
+    const off = withRigFrames(PLAYER_MOVE_FRAMES, '?debug');
+    expect(Object.keys(off).filter((k) => k.includes('-rig-'))).toEqual([]);
   });
 });

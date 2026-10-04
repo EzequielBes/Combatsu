@@ -32,6 +32,7 @@ import type { Prop } from './Prop';
 import { playerAnimKey } from './art';
 import { PALETTE } from './art/palette';
 import { PLAYER_ORIGIN } from './art/sprites/player';
+import { RIG_ON, rigMoveFrame } from './art/rig/flag';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { SIZE, TEX } from './textures';
 
@@ -184,6 +185,8 @@ export class Player implements Hittable {
   /** Nome e id do golpe em andamento; `null` sem golpe. */
   private strikeName: string | null = null;
   private swingId = 0;
+  private rigPhaseKey = '';
+  private rigPhaseT0 = 0;
   private held: Prop | null = null;
   private throwPoseMs = 0;
   /** `respawnMs: Infinity` (RUN-03): fora de run não existe mais respawn, só `resetForRun`. */
@@ -778,6 +781,16 @@ export class Player implements Hittable {
    * Escolhe a animação pelo animState (CHR-01). Nos golpes o frame sai da fase do combo (CHR-02), não do relógio
    * da animação: na fase ativa, com a hitbox ligada, aparece o frame *-hit com o membro esticado.
    */
+  /** Ms desde que a fase atual do golpe começou (só para os quadros do boneco, `?debug&rig=1`). */
+  private rigPhaseMs(phase: AttackPhase): number {
+    const k = `${this.swingId}:${phase}`;
+    if (this.rigPhaseKey !== k) {
+      this.rigPhaseKey = k;
+      this.rigPhaseT0 = this.clockMs;
+    }
+    return this.clockMs - this.rigPhaseT0;
+  }
+
   private animate(grounded: boolean): void {
     // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
     if (this.castLock) {
@@ -842,7 +855,8 @@ export class Player implements Hittable {
       v.setScale(this.facing, 1);
       v.anims.stop();
       const phase = this.moves.phase as AttackPhase;
-      v.setFrame(`${mv.name}-${attackFrame(phase)}`);
+      const rigFrame = RIG_ON ? rigMoveFrame(mv.name, phase, this.rigPhaseMs(phase), mv) : undefined;
+      v.setFrame(rigFrame ?? `${mv.name}-${attackFrame(phase)}`);
       if (phase === 'active' && mv.strength === 'heavy') this.fx.afterimage(v);
       return;
     }
