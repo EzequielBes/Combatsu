@@ -47,12 +47,22 @@ export function limb(a: Vec2, b: Vec2, prof: Profile): Shape {
     const rx = x - a.x;
     const ry = y - a.y;
     const t = (rx * d.x + ry * d.y) / len;
-    if (t < 0) return cap(x, y, a, 0);
-    if (t > 1) return cap(x, y, b, 1);
+    if (t < 0) return at(cap(x, y, a, 0), 0);
+    if (t > 1) return at(cap(x, y, b, 1), 1);
     const s = rx * p.x + ry * p.y;
     const [rp, rm] = radiusAt(prof, t);
     const o = s / (s >= 0 ? rp : rm);
-    return Math.abs(o) > 1 ? null : { x: p.x * o, y: p.y * o, z: Math.sqrt(1 - o * o) };
+    return Math.abs(o) > 1 ? null : { x: p.x * o, y: p.y * o, z: Math.sqrt(1 - o * o), t };
+  };
+}
+
+const at = (n: Normal | null, t: number): Normal | null => (n ? { ...n, t } : null);
+
+/** Ajusta a luz ao longo de um membro: `fn(t)` devolve o que somar à normal naquele ponto (tom, sem recorte). */
+export function along(shape: Shape, fn: (t: number) => { dt?: number; noRim?: boolean }): Shape {
+  return (x, y) => {
+    const n = shape(x, y);
+    return n ? { ...n, ...fn(n.t ?? 0) } : null;
   };
 }
 
@@ -89,7 +99,7 @@ export function inLocal(l: Local, fn: LocalShape): Shape {
     const ry = y - l.o.y;
     const n = fn(rx * l.fwd.x + ry * l.fwd.y, rx * l.up.x + ry * l.up.y);
     if (!n) return null;
-    return { x: l.fwd.x * n.x + l.up.x * n.y, y: l.fwd.y * n.x + l.up.y * n.y, z: n.z };
+    return { ...n, x: l.fwd.x * n.x + l.up.x * n.y, y: l.fwd.y * n.x + l.up.y * n.y };
   };
 }
 
