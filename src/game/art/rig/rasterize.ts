@@ -135,7 +135,7 @@ const FAR_CLOTH: Ramp = { light: 'N', mid: 'n', dark: 'K' };
 
 function tone(h: Hit, ramp: Ramp): string {
   const s = shadeOf(h);
-  return s > 0.3 ? ramp.light : s < -0.3 ? ramp.dark : ramp.mid;
+  return s > 0.22 ? ramp.light : s < -0.4 ? ramp.dark : ramp.mid;
 }
 
 function toLayer(cells: { x: number; y: number; ch: string }[]): Layer {
@@ -146,14 +146,79 @@ function toLayer(cells: { x: number; y: number; ch: string }[]): Layer {
 
 interface LimbStyle {
   cloth: Ramp;
-  /** Cor da pele da mão: claro/sombra. */
+  /** Cor da pele da mão: claro/sombra/linha. */
   skin: { lit: string; shade: string; line: string };
-}
-const NEAR: LimbStyle = { cloth: NEAR_CLOTH, skin: { lit: 'p', shade: 'P', line: 'x' } };
-const FAR: LimbStyle = { cloth: FAR_CLOTH, skin: { lit: 'P', shade: 'q', line: 'q' } };
+  /** Destaque da luz (ombro) e dobra (cotovelo, joelho por dentro). */
+  spec: string;
+  crease: string;
+  /** Luz fria de borda nas costas (só o corpo de perto). */
 
-const ARM_R = { shoulder: 1.95, elbow: 1.65, wrist: 1.4 };
-const LEG_R = { hip: 2.15, knee: 1.85, ankle: 1.4 };
+}
+const NEAR: LimbStyle = { cloth: NEAR_CLOTH, skin: { lit: 'p', shade: 'P', line: 'x' }, spec: 's', crease: 'o' };
+const FAR: LimbStyle = { cloth: FAR_CLOTH, skin: { lit: 'P', shade: 'q', line: 'q' }, spec: 's', crease: 'K' };
+
+const ARM_R = { shoulder: 2.1, elbow: 1.7, wrist: 1.4 };
+const LEG_R = { hip: 2.2, knee: 1.85, ankle: 1.4 };
+
+const unit = (a: Vec2, b: Vec2): Vec2 => {
+  const l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  return { x: (b.x - a.x) / l, y: (b.y - a.y) / l };
+};
+
+/**
+ * Dobra e luz de uma junta de dois ossos: o texel por dentro da dobra vira a linha de dobra e o por fora pega o
+ * tom claro (cotovelo e joelho). Só marca se a dobra passa de ~25 graus, onde há pixels para mostrar.
+ */
+function bendMarks(layer: Layer, from: Vec2, joint: Vec2, to: Vec2, style: LimbStyle, reach: number): void {
+  const u1 = unit(from, joint);
+  const u2 = unit(joint, to);
+  const dx = u2.x - u1.x;
+  const dy = u2.y - u1.y;
+  const mag = Math.hypot(dx, dy);
+  if (mag < 0.45) return;
+  const inner = { x: dx / mag, y: dy / mag };
+  const at = (k: number, ch: string): void => {
+    const cell = layer.get(key(Math.floor(joint.x + inner.x * k), Math.floor(joint.y + inner.y * k)));
+    if (cell) cell.ch = ch;
+  };
+  at(reach, style.crease);
+
+}
+
+
+/**
+ * Punho de verdade: palma de ~4x3 com os nós dos dedos na ponta (vãos em sombra), o polegar ao lado e a sombra do
+ * lado da frente. Montado no eixo do antebraço, então gira com ele.
+ */
+function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle): { x: number; y: number; ch: string }[] {
+  const f = dir(angleWorld);
+  // Lado "de trás" da mão: a normal que aponta para a esquerda da tela (o polegar fica ali).
+  let n = { x: -f.y, y: f.x };
+  if (n.x > 0) n = { x: -n.x, y: -n.y };
+  const out: { x: number; y: number; ch: string }[] = [];
+  const cx = Math.floor(wrist.x) - 4;
+  const cy = Math.floor(wrist.y) - 4;
+  for (let y = cy; y <= cy + 8; y++) {
+    for (let x = cx; x <= cx + 8; x++) {
+      const px = x + 0.5 - wrist.x;
+      const py = y + 0.5 - wrist.y;
+      const a = px * f.x + py * f.y; // ao longo do antebraço, a partir do pulso
+      const b = px * n.x + py * n.y; // para o lado de trás
+      const inPalm = a >= -0.7 && a <= 3.0 && b >= -1.75 && b <= 1.75;
+      const inThumb = a >= 0.0 && a <= 1.7 && b > 1.75 && b <= 2.7;
+      if (!inPalm && !inThumb) continue;
+      if (inPalm && a > 2.2 && Math.abs(b) > 1.25) continue; // ponta arredondada
+      let ch = style.skin.lit;
+      if (inThumb) ch = style.skin.lit;
+      else if (b >= 1.2 && a >= 0.2 && a <= 1.7) ch = style.skin.line; // linha do polegar
+      else if (a > 1.35 && a <= 2.2 && Math.abs(b) < 0.35) ch = style.skin.shade; // vão entre os dedos
+      else if (b < -0.9) ch = style.skin.shade; // lado da frente, na sombra
+      else if (a < 0.2) ch = style.skin.shade; // sombra do punho de manga
+      out.push({ x, y, ch });
+    }
+  }
+  return out;
+}
 
 function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Near' | 'Far', style: LimbStyle): Layer {
   const sh = joints[`shoulder${side}`];
@@ -163,19 +228,20 @@ function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Ne
     { a: sh, b: el, ra: ARM_R.shoulder, rb: ARM_R.elbow },
     { a: el, b: wr, ra: ARM_R.elbow, rb: ARM_R.wrist },
   ];
+  const foreLen = Math.hypot(wr.x - el.x, wr.y - el.y);
   const cells = sample(segs).map((h) => {
     // Punho de manga claro nos últimos texels do antebraço.
-    const cuff = h.seg === 1 && h.axial > Math.hypot(wr.x - el.x, wr.y - el.y) - 1.1;
+    const cuff = h.seg === 1 && h.axial > foreLen - 1.2;
     return { x: h.x, y: h.y, ch: cuff ? style.cloth.light : tone(h, style.cloth) };
   });
-  // Mão: disco um pouco além do pulso, na direção do antebraço.
-  const d = dir(angleWorld);
-  const center = { x: wr.x + d.x * 0.5, y: wr.y + d.y * 0.5 };
-  const fist = sample([{ a: center, b: center, ra: 1.85, rb: 1.85 }]).map((h) => {
-    const s = shadeOf(h);
-    return { x: h.x, y: h.y, ch: s > -0.2 ? style.skin.lit : s > -0.75 ? style.skin.shade : style.skin.line };
-  });
-  return toLayer([...cells, ...fist]);
+  const layer = toLayer(cells);
+  bendMarks(layer, sh, el, wr, style, 0.9);
+  // Destaque de ombro: um texel claro no alto do braço.
+  const shCell = layer.get(key(Math.floor(sh.x - 0.2), Math.floor(sh.y - 1.0)));
+  if (shCell) shCell.ch = style.spec;
+
+  for (const c of fistCells(wr, angleWorld, style)) layer.set(key(c.x, c.y), c);
+  return layer;
 }
 
 function legLayer(joints: Record<JointName, Vec2>, footAngle: number, side: 'Near' | 'Far', style: LimbStyle): Layer {
@@ -187,19 +253,23 @@ function legLayer(joints: Record<JointName, Vec2>, footAngle: number, side: 'Nea
     { a: hp, b: kn, ra: LEG_R.hip, rb: LEG_R.knee },
     { a: kn, b: an, ra: LEG_R.knee, rb: LEG_R.ankle },
   ];
-  const cells = sample(segs).map((h) => ({ x: h.x, y: h.y, ch: tone(h, style.cloth) }));
+  const layer = toLayer(sample(segs).map((h) => ({ x: h.x, y: h.y, ch: tone(h, style.cloth) })));
+  bendMarks(layer, hp, kn, an, style, 1.0);
+
   // Sapato: do calcanhar (atrás do tornozelo) até a ponta.
   const fd = dir(footAngle);
   const heel = { x: an.x - fd.x * 0.6, y: an.y - fd.y * 0.6 };
-  const shoe = sample([{ a: heel, b: to, ra: 1.15, rb: 0.95 }]).map((h) => ({ x: h.x, y: h.y, ch: shadeOf(h) > 0.45 ? 's' : 'K' }));
-  return toLayer([...cells, ...shoe]);
+  for (const h of sample([{ a: heel, b: to, ra: 1.15, rb: 0.95 }])) {
+    layer.set(key(h.x, h.y), { x: h.x, y: h.y, ch: shadeOf(h) > 0.45 ? 's' : 'K' });
+  }
+  return layer;
 }
 
 function torsoLayer(joints: Record<JointName, Vec2>): Layer {
   const { hip, chest, neck } = joints;
   const segs: Seg[] = [
-    { a: hip, b: chest, ra: 2.9, rb: 3.3 },
-    { a: chest, b: neck, ra: 3.3, rb: 2.35 },
+    { a: hip, b: chest, ra: 3.0, rb: 3.65 },
+    { a: chest, b: neck, ra: 3.65, rb: 2.5 },
   ];
   const spine = dir(Math.atan2(chest.x - hip.x, chest.y - hip.y) * (180 / Math.PI));
   // Corta a ponta redonda de baixo: o cinto fica achatado, como no uniforme desenhado.
@@ -212,26 +282,34 @@ function torsoLayer(joints: Record<JointName, Vec2>): Layer {
     if (axial < 0.35) ch = 'K'; // cinto
     else if (axial > 5.1) ch = 's'; // gola
     else if (v < -0.72) ch = 'y'; // luz fria da lua nas costas
-    else if (v > 0.55) ch = 'n';
-    else if (shadeOf(h) > 0.62) ch = 's';
+    else if (v > 0.6) ch = 'n';
+    else if (shadeOf(h) > 0.42) ch = 's';
     else if (axial < 1.6) ch = 'n';
     else ch = 'N';
     return { x: h.x, y: h.y, ch };
   });
   const layer = toLayer(cells);
+  // Luz fria da lua: o texel mais ao fundo de cada linha do tronco, do cinto para cima.
+  const back = new Map<number, { x: number; y: number; ch: string }>();
+  for (const c of layer.values()) {
+    const q = back.get(c.y);
+    if (!q || c.x < q.x) back.set(c.y, c);
+  }
+  for (const c of back.values()) if (c.ch === 'N' || c.ch === 'n' || c.ch === 'y') c.ch = 'y';
   const up = { x: spine.x, y: spine.y };
   const front = { x: -up.y, y: up.x };
   const mark = (along: number, across: number, ch: string): void => {
     const px = hip.x + up.x * along + front.x * across;
     const py = hip.y + up.y * along + front.y * across;
-    const k = key(Math.floor(px), Math.floor(py));
-    const cell = layer.get(k);
+    const cell = layer.get(key(Math.floor(px), Math.floor(py)));
     if (cell) cell.ch = ch;
   };
-  mark(-0.3, 1.3, 'A'); // fivela
-  mark(-0.3, 0.3, 'z');
-  mark(2.1, 1.7, 'A'); // botões
-  mark(3.9, 1.7, 'A');
+  mark(-0.4, 1.2, 'A'); // fivela
+  mark(-0.4, 0.2, 'z');
+  mark(-1.2, 1.2, 'z');
+  mark(1.3, 1.9, 'A'); // botões
+  mark(2.5, 1.9, 'A');
+  mark(3.7, 1.7, 'A');
   return layer;
 }
 
@@ -250,6 +328,8 @@ export function rasterize(pose: Pose, opts: RasterOptions = {}): RasterResult {
 
   paint(canvas, armLayer(joints, wa.foreArmFar, 'Far', FAR));
   paint(canvas, legLayer(joints, wa.footFar, 'Far', FAR));
+  // As pernas ficam por baixo do tronco (o cinto cobre o quadril), como no uniforme desenhado.
+  paint(canvas, legLayer(joints, wa.footNear, 'Near', NEAR));
   paint(canvas, torsoLayer(joints));
 
   const head = opts.head ?? HEAD_FOCUS;
@@ -261,7 +341,6 @@ export function rasterize(pose: Pose, opts: RasterOptions = {}): RasterResult {
     }),
   );
 
-  paint(canvas, legLayer(joints, wa.footNear, 'Near', NEAR));
   paint(canvas, armLayer(joints, wa.foreArmNear, 'Near', NEAR));
 
   selOut(canvas.cells);
