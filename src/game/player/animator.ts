@@ -1,0 +1,214 @@
+import {
+  RUN_THRESHOLD,
+  attackFrame,
+  pickPlayerAnim,
+  type AttackPhase,
+  type PlayerAnimInput,
+} from '../../core/animState';
+import { CHARGE_MS, DODGE } from '../../data/moves';
+import { playerAnimKey } from '../art';
+import { PALETTE } from '../art/palette';
+import { PLAYER_ORIGIN } from '../art/sprites/player';
+import { RIG_ON, RIG_TALL_ORIGIN, rigMoveFrame } from '../art/rig/flag';
+import { SIZE, TEX } from '../textures';
+import type { Player } from '../Player';
+
+/** Piscar da invulnerabilidade: meio período (ms) e alpha da fase apagada. */
+const BLINK_MS = 70;
+const BLINK_ALPHA = 0.25;
+/** Troca de frame do atordoamento da guarda quebrada (ms). */
+const STUN_FRAME_MS = 120;
+/** Alpha do corpo enquanto a esquiva torna invulnerável. */
+const DODGE_ALPHA = 0.6;
+/** Frame da esquiva pelo tempo que falta de recarga (450 ms desde o início): primeira metade `dodge-0`, depois `dodge-1`. */
+const DODGE_ELAPSED_HALF = (cooldownMs: number): 0 | 1 =>
+  DODGE.cooldownMs - cooldownMs < DODGE.durationMs / 2 ? 0 : 1;
+
+/** Animador do player: escolha de frame e de folha de sprite (inclui o caminho `rig=1`/`player-rig`), piscar e flash. */
+export class PlayerAnimator {
+  private rigPhaseKey = '';
+  private rigPhaseT0 = 0;
+  private chargeTinted = false;
+  /** Flash sólido temporário (HEAL-10, ex.: cura), independente do piscar de invulnerabilidade. */
+  flashMs = 0;
+  flashColor: string | null = null;
+
+  constructor(private readonly p: Player) {}
+
+  /** Troca a folha do sprite visível (e a origem dela) só quando muda: `player-art` ou, no gancho com o boneco, `player-rig` (PRA-08). */
+  setSheet(texture: string, origin: { x: number; y: number }): void {
+    if (this.p.view.texture.key === texture) return;
+    this.p.view.setTexture(texture);
+    this.p.view.setOrigin(origin.x, origin.y);
+  }
+
+  /** Põe o sprite visível, com a origem no pé, na posição de desenho do corpo, na folha pedida (a normal por padrão). */
+  placeView(texture: string = TEX.playerArt, origin: { x: number; y: number } = PLAYER_ORIGIN): void {
+    this.setSheet(texture, origin);
+    const p = this.p.renderPos;
+    this.p.view.setPosition(p.x, p.y + SIZE.player.h / 2);
+  }
+
+  /** Pisca enquanto invulnerável (HP-02). */
+  blink(dtMs: number): void {
+    if (!this.p.health.invulnerable) {
+      this.p.blinkMs = 0;
+      this.p.view.setAlpha(this.p.dodge.invulnerable ? DODGE_ALPHA : 1);
+      return;
+    }
+    this.p.blinkMs += dtMs;
+    this.p.view.setAlpha(Math.floor(this.p.blinkMs / BLINK_MS) % 2 === 0 ? BLINK_ALPHA : 1);
+  }
+
+  /** Flash sólido por `ms` (HEAL-10), na cor da PALETTE indicada; independente do piscar de invulnerabilidade. */
+  flash(colorKey: string, ms: number): void {
+    this.flashMs = ms;
+    this.flashColor = colorKey;
+    this.p.view.setTintFill(PALETTE[colorKey]);
+  }
+
+  tickFlash(dtMs: number): void {
+    if (this.flashMs <= 0) return;
+    this.flashMs -= dtMs;
+    if (this.flashMs <= 0) {
+      this.p.view.clearTint();
+      this.flashColor = null;
+    }
+  }
+
+  /**
+   * Escolhe a animação pelo animState (CHR-01). Nos golpes o frame sai da fase do combo (CHR-02), não do relógio
+   * da animação: na fase ativa, com a hitbox ligada, aparece o frame *-hit com o membro esticado.
+   */
+  /** Ms desde que a fase atual do golpe começou (só para os quadros do boneco, `?debug&rig=1`). */
+  rigPhaseMs(phase: AttackPhase): number {
+    const k = `${this.p.strikes.swingId}:${phase}`;
+    if (this.rigPhaseKey !== k) {
+      this.rigPhaseKey = k;
+      this.rigPhaseT0 = this.p.clockMs;
+    }
+    return this.p.clockMs - this.rigPhaseT0;
+  }
+
+  animate(grounded: boolean): void {
+    // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
+    if (this.p.castLock) {
+      const v = this.p.view;
+      this.placeView();
+      v.setScale(this.p.facing, 1);
+      v.anims.stop();
+      v.setFrame(`${this.p.castLock.id}-${this.p.castLock.state}`);
+      return;
+    }
+    if (this.p.poseMs > 0 && !this.p.health.dead && !this.p.health.staggered) {
+      const v = this.p.view;
+      this.placeView();
+      v.setScale(this.p.facing, 1);
+      v.anims.stop();
+      v.setFrame('palmaExplosiva-hit');
+      this.p.fx.afterimage(v);
+      return;
+    }
+    if (this.p.structure.broken && !this.p.health.dead) {
+      // Guarda quebrada (STR-06): cambaleia alternando os dois frames de atordoamento.
+      const v = this.p.view;
+      this.placeView();
+      v.setScale(this.p.facing, 1);
+      v.anims.stop();
+      v.setFrame(`stunned-${Math.floor(this.p.clockMs / STUN_FRAME_MS) % 2}`);
+      return;
+    }
+    if (this.p.dodge.active) {
+      // Esquiva (DOD-01/11): corpo encolhido e rastro de imagens; o segundo frame na metade final do dash.
+      const v = this.p.view;
+      this.placeView();
+      v.setScale(this.p.facing, 1);
+      v.anims.stop();
+      v.setFrame(`dodge-${DODGE_ELAPSED_HALF(this.p.dodge.cooldownMs)}`);
+      this.p.fx.afterimage(v);
+      return;
+    }
+    if (this.p.duck.active && !this.p.health.staggered && !this.p.health.dead) {
+      // Abaixar (DEF-09): corpo agachado parado enquanto durar.
+      const v = this.p.view;
+      this.placeView();
+      v.setScale(this.p.facing, 1);
+      v.anims.stop();
+      v.setFrame('duck');
+      return;
+    }
+    if (this.p.guard.state !== 'none' && !this.p.health.staggered && !this.p.health.dead && !this.p.moves.isMoving) {
+      // CTL-09: guarda ou janela de parry mostram o frame `guard`.
+      const v = this.p.view;
+      this.placeView();
+      v.setScale(this.p.facing, 1);
+      v.anims.stop();
+      v.setFrame('guard');
+      return;
+    }
+    const mv = this.p.moves.def;
+    if (mv && !(this.p.health.staggered || this.p.health.dead)) {
+      // Golpe do grafo: o frame vem da fase (wind/hit/recover), não do relógio da animação (CHR-02).
+      const v = this.p.view;
+      const phase = this.p.moves.phase as AttackPhase;
+      const rigFrame = RIG_ON ? rigMoveFrame(mv.name, phase, this.rigPhaseMs(phase), mv) : undefined;
+      // PRA-08: os quadros do heroico alto estão na folha `player-rig` (40x40, origem no pé na coluna 12); os outros
+      // ramos do animate voltam à folha normal pelo placeView.
+      if (rigFrame) this.placeView(TEX.playerRig, RIG_TALL_ORIGIN);
+      else this.placeView();
+      v.setScale(this.p.facing, 1);
+      v.anims.stop();
+      v.setFrame(rigFrame ?? `${mv.name}-${attackFrame(phase)}`);
+      if (phase === 'active' && mv.strength === 'heavy') this.p.fx.afterimage(v);
+      return;
+    }
+    this.tickChargeGlow();
+    const input: PlayerAnimInput = {
+      // Atordoado pelo golpe ou morto até o respawn.
+      hurt: this.p.health.staggered || this.p.health.dead,
+      attack: this.currentAttack(grounded),
+      grounded,
+      vx: this.p.move.vx,
+      vy: this.p.move.vy,
+      holding: this.p.held !== null,
+      landMs: this.p.landMs,
+    };
+    const anim = pickPlayerAnim(input);
+    const v = this.p.view;
+    this.placeView();
+    // Escala negativa espelha em volta da origem (o pé no centro do corpo); o flipX espelharia em volta do
+    // centro do frame, que é mais largo que o corpo.
+    v.setScale(this.p.facing, 1);
+    if (input.attack && anim !== 'throw' && anim !== 'hurt') {
+      v.anims.stop();
+      v.setFrame(`${anim}-${attackFrame(input.attack.phase)}`);
+    } else {
+      v.anims.play(playerAnimKey(anim), true);
+    }
+    // Rastro enquanto o chute está na fase ativa ou a pose de arremesso está na tela (FX-05), já com o frame novo.
+    if ((anim === 'kick' && input.attack?.phase === 'active') || anim === 'throw') this.p.fx.afterimage(v);
+  }
+
+  /** Chute carregado pronto (segurando `K` há CHARGE_MS): o corpo pisca branco (direção de arte do grafo). */
+  tickChargeGlow(): void {
+    if (this.flashMs > 0) return;
+    const charged = this.p.heavyHoldMs >= CHARGE_MS;
+    if (charged) {
+      this.chargeTinted = true;
+      if (Math.floor(this.p.clockMs / 80) % 2 === 0) this.p.view.setTintFill(PALETTE.w);
+      else this.p.view.clearTint();
+    } else if (this.chargeTinted) {
+      this.chargeTinted = false;
+      this.p.view.clearTint();
+    }
+  }
+
+  /** Golpe em andamento para a animação. Na janela do combo, só enquanto o player está parado no chão. */
+  currentAttack(grounded: boolean): PlayerAnimInput['attack'] {
+    if (this.p.throwPoseMs > 0) return { name: 'throw', phase: 'active' };
+    const still = grounded && Math.abs(this.p.move.vx) <= RUN_THRESHOLD;
+    const swing = this.p.propSwing.phase;
+    if (swing !== 'idle' && (swing !== 'window' || still)) return { name: 'swing', phase: swing };
+    return null;
+  }
+}
