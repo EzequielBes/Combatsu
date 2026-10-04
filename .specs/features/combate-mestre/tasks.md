@@ -674,24 +674,28 @@ T37 → T38 → T39 → T40 → T41
 
 ### T35: Smoke dos alvos, do cambaleio e do chão
 
+> **Fechada em 03/10/2026** com o rascunho commitado, que passa na suíte inteira (`npm run smoke`).
+
 **What**: Novo smoke cobrindo `maxTargets`, `stagger`, queda, limite do chão e foco.
 **Where**: `scripts/smoke/targets.smoke.mjs`
 **Depends on**: T34
 **Reuses**: `makeKit`, `maxAlive=3`, objetos do mapa
 **Requirement**: TGT-03, TGT-04, TGT-05, TGT-06, TGT-07, PST-01, PST-02, PST-03, PST-05, PST-06, PST-07, PST-08, PST-10, PST-11, PST-13, PST-14, PST-16, GND-01, GND-02, GND-03, GND-05, GND-06, EDG-11
 **Done when**:
-- [ ] 3 inimigos ao alcance: `jab` tira vida de 1 (o mais perto) e `chuteFrontal` de exatamente 2 (os 2 mais perto).
-- [ ] Com `enemyGuard=1`, um `jab` segurado pela guarda não acerta mais ninguém; um alvo levantando não gasta a vaga.
-- [ ] `chuteFrontal`: `stagger` por 380 ms (±1 frame), `ragdollVisible` `null`; `rasteira`: `ragdollStun`.
-- [ ] Objeto balançado: `stagger` e no máximo 2 alvos; objeto arremessado: `ragdollStun`; finalizador num quebrado: `ragdollStun`; `rasteira` num quebrado: continua de pé.
-- [ ] No chão: 1º `socoBaixo` tira 6 e `downHits` vai a 1 sem aumentar o tempo no chão; o 2º não tira nada; levantando, nada entra; nova queda zera `downHits`.
-- [ ] `focusId` segue o último alvo acertado; a postura do alvo fora do foco cai 40/s e a do foco 10/s, medidas em 1 s depois do atraso (±3).
+- [x] 3 inimigos ao alcance: `jab` tira vida de 1 (o mais perto) e `chuteFrontal` de exatamente 2 (os 2 mais perto).
+- [x] Com `enemyGuard=1`, um `jab` segurado pela guarda não acerta mais ninguém; um alvo levantando não gasta a vaga.
+- [x] `chuteFrontal`: `stagger` por 380 ms (±1 frame), `ragdollVisible` `null`; `rasteira`: `ragdollStun`.
+- [x] Objeto balançado: `stagger` e no máximo 2 alvos; objeto arremessado: `ragdollStun`; finalizador num quebrado: `ragdollStun`; `rasteira` num quebrado: continua de pé.
+- [x] No chão: 1º `socoBaixo` tira 6 e `downHits` vai a 1 sem aumentar o tempo no chão; o 2º não tira nada; levantando, nada entra; nova queda zera `downHits`.
+- [x] `focusId` segue o último alvo acertado; a postura do alvo fora do foco cai 40/s e a do foco 10/s, medidas em 1 s depois do atraso (±3).
 **Tests**: smoke
 **Gate**: full
 
 ---
 
 ### T36: Smoke da tabela de defesa
+
+> **Cancelada em 03/10/2026** a pedido do usuário ("não vai precisar de tanto smoke"): ele jogou, aprovou as mecânicas no UAT, e as regras já têm testes unitários em `tests/core/`.
 
 **What**: Novo smoke cobrindo parry só de frente, virar, abaixar, pular, postura e invulnerabilidade.
 **Where**: `scripts/smoke/defense-table.smoke.mjs`
@@ -715,6 +719,8 @@ T37 → T38 → T39 → T40 → T41
 
 ### T37: Smoke do Contra e da Deflexão
 
+> **Cancelada em 03/10/2026** a pedido do usuário ("não vai precisar de tanto smoke"): ele jogou, aprovou as mecânicas no UAT, e as regras já têm testes unitários em `tests/core/`.
+
 **What**: Novo smoke cobrindo a janela de Contra, os dois golpes, a sequência do inimigo e a Deflexão.
 **Where**: `scripts/smoke/counter.smoke.mjs`
 **Depends on**: None
@@ -736,6 +742,8 @@ T37 → T38 → T39 → T40 → T41
 
 ### T38: Smoke da voadora e da leitura
 
+> **Cancelada em 03/10/2026** a pedido do usuário ("não vai precisar de tanto smoke"): ele jogou, aprovou as mecânicas no UAT, e as regras já têm testes unitários em `tests/core/`.
+
 **What**: Novo smoke cobrindo custo, quique e erro da voadora, leitura de repetição, guarda de leitura e empurrão.
 **Where**: `scripts/smoke/voadora-reading.smoke.mjs`
 **Depends on**: T37
@@ -756,6 +764,8 @@ T37 → T38 → T39 → T40 → T41
 
 ### T39: Smoke da altura dos golpes do chefe
 
+> **Cancelada em 03/10/2026** a pedido do usuário ("não vai precisar de tanto smoke"): ele jogou, aprovou as mecânicas no UAT, e as regras já têm testes unitários em `tests/core/`.
+
 **What**: Novo smoke: onda de choque é pulável e não aparável; projétil é abaixável e aparável de frente; investida não é abaixável.
 **Where**: `scripts/smoke/boss-heights.smoke.mjs`
 **Depends on**: T38
@@ -771,6 +781,8 @@ T37 → T38 → T39 → T40 → T41
 ---
 
 ### T40: Smoke dos dois bots
+
+> **Cancelada em 03/10/2026** a pedido do usuário ("não vai precisar de tanto smoke"): ele jogou, aprovou as mecânicas no UAT, e as regras já têm testes unitários em `tests/core/`.
 
 **What**: Novo smoke com seed fixa: um bot que só alterna `J` e `K` e um bot que apara no compromisso e dá o Contra, 30 s cada, contra 2 inimigos `white`.
 **Where**: `scripts/smoke/bots.smoke.mjs`
@@ -793,8 +805,8 @@ T37 → T38 → T39 → T40 → T41
 **Reuses**: texto atual
 **Requirement**: DEF-21
 **Done when**:
-- [ ] Controles e parâmetros batem com o código.
-- [ ] `npm run build && npm test && npm run smoke` passa inteiro.
+- [x] Controles e parâmetros batem com o código.
+- [x] `npm run build && npm test && npm run smoke` passa inteiro.
 **Tests**: none
 **Gate**: full
 

@@ -170,26 +170,17 @@
 - **Date**: 2026-10-03
 - **Status**: active
 
+### AD-022
+- **Decision**: A F12 fecha sem os smokes T36 a T40 e sem o Verifier formal: o gate foi `npm run build`, os 2088 testes unitários e a suíte inteira de smokes (31 ok; `kokusen` falhou 1 vez e passou 3 de 3 isolado), mais o UAT do usuário, que aprovou as mecânicas.
+- **Reason**: Pedido do usuário ("não vai precisar de tanto smoke"); as regras novas já têm testes unitários em Node (AD-001).
+- **Trade-off**: A tabela de defesa, o Contra, a voadora e a leitura não têm smoke de ponta a ponta; uma regressão na cena só aparece jogando ou na suíte antiga.
+- **Scope**: F12; nas próximas features, smoke só para o que os unitários não alcançam.
+- **Date**: 2026-10-03
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: F12 `combate-mestre` (`.specs/features/combate-mestre/`), pausada a pedido do usuário em 03/10/2026.
-- **Phase / Task**: Phase 5, T35 (smoke dos alvos, do cambaleio e do chão). Fases 1 a 4 fechadas: toda a implementação está no branch e o jogo roda com as mecânicas novas.
-- **Completed**: T1 a T34 (34 de 41), um commit por task. Último gate rodado pelo orquestrador (fim da fase 4): `npm run build` ok e 2088 testes unitários. T33 ajustou a suíte antiga de smokes às regras substituídas e T34 criou `telegraph.smoke.mjs`; o worker que fez as duas foi interrompido antes do relatório, então a suíte inteira de smokes ainda não foi conferida pelo orquestrador depois delas.
-- **In-progress** (file:line): `scripts/smoke/targets.smoke.mjs` (536 linhas, commitado como rascunho da T35): passou 1 vez com `npm run smoke -- targets`, mas o agente foi interrompido antes de fechar a task; falta conferir cada item do "Done when" contra os asserts, rodar 3 vezes e marcar a T35 em `tasks.md`.
-- **Next step**: rodar `npm run smoke` inteiro para conhecer o estado real; fechar a T35 (aproveitar ou reescrever o rascunho); depois T36 a T41, um agente por task, e então o Verifier. Com o Verifier em PASS, UAT do usuário antes do merge em `dev` (AD-008).
-- **Blockers**: nenhum técnico. O usuário achou o processo longo (faltavam ~4 h estimadas) e pode preferir encurtar: tirar os smokes do chefe (T39) e dos bots (T40) e rodar o Verifier sem o sensor de mutação. Perguntar antes de retomar.
-- **Uncommitted files**: nenhum. As pastas `.agents/`, `.claude/`, `.cursor/`, `.windsurf/` e `skills-lock.json` seguem fora do git, como antes.
-- **Branch**: `feat/combate-mestre` (36 commits à frente de `dev`; nada enviado ao remoto; `dev` local segue à frente de `origin/dev`).
-
-Decisões da F12 tomadas sem consulta (na spec com "Confirmed? n"; o usuário avalia no UAT): porrete = golpe `red`, `rastejante` = golpe `low` desde a rodada 1; faca com 2 golpes; com a guarda de pé o jogador vira e não anda; Contra sem levar dano durante o golpe; onda de choque do chefe `low` (pula, não apara) e projétil `high`; técnicas fora das regras novas. Com a invulnerabilidade de 300 ms o chefe mata um jogador parado bem mais rápido (o smoke `boss` teve seções movidas para runs novas por isso).
-
-Como trabalhar (mudou em 03/10): **um subagente novo por task**, com brief estreito (a task, o trecho da spec com os ACs dela, o kit e um smoke de modelo). Não reaproveitar agente para outra task. O orquestrador roda a suíte inteira de smokes; o agente roda só o smoke dele. Workers em Sonnet 5.5; `py` roda os scripts do tlc; commits com `git -c user.name="Claude" -c user.email="ezequieltbeserra00@gmail.com"`.
-
-Dicas para os smokes que faltam:
-- Snapshot novo: `player.duck.active`, `player.counter{open,kind,remainingMs}`, `player.invulnerable`; `enemies[].telegraph|committed|commitFlash|attack{kind,index,length}|downHits|lightStreak|guardRead`; raiz `focusId`, `reading{move,repeats}`. Eventos: `duck`, `duckEvade`, `jumpEvade`, `deflect` (logo depois de `parry`), `whiff:voadora`, `armored:<id>`, `stagger:<id>`, `read:<id>`, `shove:<id>`.
-- URL de debug: `enemyAttack=white|red|low`, `enemyString=1..4`, `shove=N`; `enemyGuard=N` fixa a chance total da guarda e desliga a leitura. O kit (`fight-kit.mjs`) já põe `shove=0` e tem `waitFor`, `waitQuiet`, `waitCommit`, `faceEnemy`.
-- Tecla lida por `JustDown` apertada e solta dentro do hitstop se perde: esperar `hitstop.frozen === false`. A janela de Contra não anda no hitstop.
-- Parry pega com `U` apertada 130 a 150 ms antes do impacto (uns 6 frames depois de `committed`). Abaixar dura ~20 frames. Na voadora que acerta, `player.vy` fica em -240 durante o hitstop e o recuo de 36 px começa no primeiro `update` depois dele. No empurrão, o deslocamento e a trava de input entram no primeiro `update` depois do hitstop do 4º leve.
-- Intermitentes conhecidos (repetir isolado antes de tratar como regressão): `heal`, `armed`, `held-item`, `enemy-react`. `tests/core/lightning.test.ts` pode estourar 5 s com a máquina carregada (`--maxWorkers=2`).
+- **Feature**: nenhuma em andamento. F12 `combate-mestre` mergeada em `dev` em 03/10 (AD-022).
+- **Next step**: o usuário pediu melhorias de feel do combate (impacto, rastro do soco, chute e pulo que deixam o personagem torto, gancho perto demais do corpo). Analisar antes de abrir a feature.
 
 Pendências antigas que continuam: silhueta própria para a Tecelã; alcance do arremesso (garrafa ~260 px, cadeira ~140 px); taxa de atualização do monitor do usuário; `main` só recebe `dev` quando ele pedir; worktrees antigas (`scratchpad/wt-f10`, `surGue-player-refine`) e branches já mergeadas para limpar se ele quiser. Depois da F12: F13 `foco-e-ambiente`, F14, F15, F16; F6 e F9 depois da expansão.
