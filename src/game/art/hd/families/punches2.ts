@@ -26,17 +26,18 @@ function palmaExplosiva(k: Kit): HdMoveSpec {
       armNear: { to: k.at(31 + o * 1.5, 38), bend: -1 },
       armFar: { to: k.at(30 + o * 1.5, 31), bend: -1 },
       legNear: nearFoot(k),
-      legFar: farFoot(k, 2.5 + o * 0.5),
+      legFar: farFoot(k, 3 + o * 0.5, 2 + o),
     });
   return {
     strike: 'handNear',
     hands: { near: 'palm', far: 'palm' },
+    expr: 'shout',
     wind: k.pose({
-      hip: { x: k.cx - 3, y: k.hy + 6 },
-      spine: 176,
+      hip: { x: k.cx - 3.5, y: k.hy + 7 },
+      spine: 180,
       neck: 4,
-      armNear: { to: k.at(-4, 26), bend: -1 },
-      armFar: { to: k.at(-1, 23), bend: -1 },
+      armNear: { to: k.at(-1, 31), bend: 1 },
+      armFar: { to: k.at(3, 28), bend: -1 },
       legNear: nearFoot(k),
       legFar: farFoot(k),
     }),
@@ -54,31 +55,33 @@ function palmaExplosiva(k: Kit): HdMoveSpec {
   };
 }
 
-/** Contra: a mão de trás desvia o golpe para cima e o punho da frente entra curto por dentro da guarda. */
+/** Contra: nasce do parry; a mão da frente termina a varredura, aberta, e o punho de trás entra reto pela brecha. */
 function contra(k: Kit): HdMoveSpec {
-  const A = k.arm;
   const hit = (o: number) =>
     k.pose({
-      hip: { x: k.cx + 3.5 + o * 0.6, y: k.hy + 6 },
-      spine: 160 - o,
-      neck: 12,
+      hip: { x: k.cx + 5 + o, y: k.hy + 5 },
+      spine: 156 - o,
+      neck: 16,
       shoulderNear: -90,
-      armNear: { to: k.at(25.5 + o * 1.5, 40), bend: -1 },
-      armFar: { rel: { x: A * 0.5, y: -A * 0.78 }, bend: -1 },
+      armNear: { to: k.at(17 + o, 27), bend: -1 },
+      armFar: { to: k.at(28 + o * 1.5, 40), bend: -1 },
       legNear: nearFoot(k),
-      legFar: farFoot(k, 1.6),
+      legFar: farFoot(k, 2.6 + o * 0.4, 1.5),
     });
   return {
-    strike: 'handNear',
-    hands: { far: 'open' },
+    strike: 'handFar',
+    farFront: { arm: true },
+    hands: { near: 'open' },
+    // A pose do parry: o antebraço da frente em pé desviando o golpe e o punho de trás armado.
     wind: k.pose({
-      hip: { x: k.cx - 0.5, y: k.hy + 6 },
-      spine: 158,
-      neck: 14,
-      armNear: { rel: { x: A * 0.15, y: A * 0.3 }, bend: -1 },
-      armFar: { rel: { x: A * 0.62, y: -A * 0.62 }, bend: -1 },
+      hip: { x: k.cx + 1.2, y: k.hy + 3.8 },
+      spine: 169,
+      neck: 10,
+      shoulderNear: -90,
+      armNear: { to: k.at(16.5, 45), bend: -1 },
+      armFar: { rel: { x: 2.5, y: 5 }, bend: -1 },
       legNear: nearFoot(k),
-      legFar: farFoot(k),
+      legFar: farFoot(k, 1),
     }),
     hit: hit(0),
     over: hit(1),
@@ -91,11 +94,11 @@ function contraGancho(k: Kit): HdMoveSpec {
   const A = k.arm;
   const hit = (o: number) =>
     k.pose({
-      hip: { x: k.cx + 3, y: k.hy + 1.5 - o },
+      hip: { x: k.cx + 4, y: k.hy + 1.5 - o },
       spine: 186 + o * 2,
       neck: 4 + o * 3,
       shoulderNear: -90,
-      armNear: { to: k.at(15 - o, 47 + o * 3), bend: -1 },
+      armNear: { to: k.at(19 - o, 46 + o * 3), bend: -1 },
       armFar: { rel: { x: A * 0.35, y: -A * 0.05 }, bend: -1 },
       legNear: nearFoot(k),
       legFar: farFoot(k, 2 + o * 0.5),
