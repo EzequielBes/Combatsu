@@ -136,7 +136,9 @@ export class KokusenFx {
     uiLayer: Phaser.GameObjects.Layer,
   ) {
     this.degraded = scene.game.renderer.type !== Phaser.WEBGL; // TFX-06/11
-    this.colorMatrix = this.degraded ? null : scene.cameras.main.filters.internal.addColorMatrix();
+    // Desligado fora do cinema: um filtro ativo, mesmo com a matriz identidade, faz a câmera do mundo compor por
+    // framebuffer em todo quadro.
+    this.colorMatrix = this.degraded ? null : scene.cameras.main.filters.internal.addColorMatrix().setActive(false);
 
     const cx = UI_SIZE.w / 2;
     const cy = UI_SIZE.h / 2;
@@ -177,7 +179,7 @@ export class KokusenFx {
     this.phaseElapsedMs = 0;
     this.target = target;
     this.fx.add('kokusen.invert', KOKUSEN.invertMs, 'real'); // KOK-14
-    if (!this.degraded) this.colorMatrix!.colorMatrix.negative();
+    if (!this.degraded) this.colorMatrix!.setActive(true).colorMatrix.negative();
     target.fxSprite?.setTint(PALETTE.b).setTintMode(Phaser.TintModes.FILL); // KOK-16
 
     this.boltsActive = true;
@@ -239,7 +241,7 @@ export class KokusenFx {
     } else if (this.phase === 'duotone' && this.phaseElapsedMs >= KOKUSEN.invertMs + KOKUSEN.duotoneMs) {
       this.phase = 'idle';
       this.target = null;
-      if (!this.degraded) this.colorMatrix!.colorMatrix.reset();
+      if (!this.degraded) this.colorMatrix!.setActive(false).colorMatrix.reset();
     }
   }
 
