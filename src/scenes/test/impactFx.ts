@@ -59,7 +59,7 @@ export class ImpactFx {
       impactFrame:
         framed || (this.s.impactFrame.applied && hit.swingId !== undefined && hit.swingId === this.framedSwingId),
     };
-    this.s.debugEvents.push(`impact:${tier}`);
+    this.s.snapshot.debugEvents.push(`impact:${tier}`);
     // RCT-01, RCT-02: o inimigo comum que fica de pé desliza para longe do jogador.
     if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1);
     if (hit.knockdown && target instanceof Enemy) this.crackWatch.set(target, this.s.clockMs);

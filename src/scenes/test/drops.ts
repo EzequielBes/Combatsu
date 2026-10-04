@@ -29,7 +29,7 @@ export class Drops {
       magnetRange: this.s.modifiers.magnetRange,
     });
     for (const p of collected) this.onPickupCollected(p);
-    for (let i = 0; i < expired.length; i++) this.s.debugEvents.push('pickupExpired');
+    for (let i = 0; i < expired.length; i++) this.s.snapshot.debugEvents.push('pickupExpired');
     this.s.floatTexts.update(dtMs);
     // ECO-16: o contador do HUD acompanha a carteira no mesmo frame da coleta.
     this.s.hud.setFragments(this.s.wallet.fragments);
@@ -39,12 +39,12 @@ export class Drops {
   onPickupCollected(p: { kind: 'fragment' | 'heal'; value: number; x: number; y: number }): void {
     if (p.kind === 'fragment') {
       this.s.wallet.add(p.value);
-      this.s.debugEvents.push(`collect:fragment:${p.value}`);
+      this.s.snapshot.debugEvents.push(`collect:fragment:${p.value}`);
       this.s.floatTexts.spawn(`+${p.value}`, 'U', p.x, p.y);
       return;
     }
     const restored = this.s.player.heal(p.value);
-    this.s.debugEvents.push(`collect:heal:${restored}`);
+    this.s.snapshot.debugEvents.push(`collect:heal:${restored}`);
     this.s.floatTexts.spawn(`+${restored}`, 'G', p.x, p.y);
     this.s.player.flash('G', 80);
   }

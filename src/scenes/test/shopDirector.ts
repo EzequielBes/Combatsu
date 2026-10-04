@@ -51,7 +51,7 @@ export class ShopDirector {
             this.s.mastery.resetSlot(slot); // PRG-04 / reequipar: técnica nova no slot começa sem pontos
           }
         }
-        if (bothEmptyBefore) this.s.debugEvents.push(`techUnlock:${id}`);
+        if (bothEmptyBefore) this.s.snapshot.debugEvents.push(`techUnlock:${id}`);
       },
     };
     if (input.buySlot !== null) this.resolveBuy(shop, input.buySlot, ctx);
@@ -75,7 +75,7 @@ export class ShopDirector {
     // enxerga essa escrita através da chamada e estreitaria a leitura para o `null` de cima sem este cast.
     const equipped = this.pendingTechEquip as { id: TechId; slot: 0 | 1 } | null;
     if (result.ok) {
-      this.s.debugEvents.push(`buy:${result.id}:${result.cost}`);
+      this.s.snapshot.debugEvents.push(`buy:${result.id}:${result.cost}`);
       // T11: carta pisca branco e o custo pago sobe em "−N".
       this.s.shopPanel.flashBuy(slot, result.cost);
       // Direção de feel (T21): 1ª técnica equipada faz o ícone voar da carta ao slot do HUD em 300 ms.
@@ -83,15 +83,15 @@ export class ShopDirector {
         const kanji = TECHNIQUES[equipped.id].kanji;
         this.s.shopPanel.flyToSlot(slot, kanji, this.s.energyHud.slotIconPosition(equipped.slot));
       }
-    } else if (result.reason === 'funds' && offerId) this.s.debugEvents.push(`buyRefused:${offerId}:funds`);
-    else if (result.reason === 'fullHp') this.s.debugEvents.push('buyRefused:cura:fullHp');
+    } else if (result.reason === 'funds' && offerId) this.s.snapshot.debugEvents.push(`buyRefused:${offerId}:funds`);
+    else if (result.reason === 'fullHp') this.s.snapshot.debugEvents.push('buyRefused:cura:fullHp');
   }
 
   /** Reroll (SHOP-16/25/26): paga pelo custo atual antes de sortear, para o "−N" da animação (T11). */
   resolveReroll(shop: Shop): void {
     const cost = shop.rerollCost;
     if (shop.reroll(this.s.wallet)) this.s.shopPanel.flipReroll(cost);
-    else this.s.debugEvents.push('rerollRefused');
+    else this.s.snapshot.debugEvents.push('rerollRefused');
   }
 
   /**
@@ -104,7 +104,7 @@ export class ShopDirector {
     this.s.matter.world.pause();
     this.shop = new Shop(FULL_SHOP_CATALOG, this.s.modifiers, this.s.run.shopRng!, round, this.s.loadout);
     this.s.shopPanel.show(this.shop.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
-    this.s.debugEvents.push(`shopOpen:${round}`);
+    this.s.snapshot.debugEvents.push(`shopOpen:${round}`);
   }
 
   /** Fecha a loja (SHOP-03/35): arma o pedido na `Run`, retoma o Matter e limpa a loja. */
@@ -113,7 +113,7 @@ export class ShopDirector {
     this.s.matter.world.resume();
     this.shop = null;
     this.s.shopPanel.hide();
-    this.s.debugEvents.push('shopClose');
+    this.s.snapshot.debugEvents.push('shopClose');
   }
 
   /**

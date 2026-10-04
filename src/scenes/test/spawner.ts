@@ -83,7 +83,7 @@ export class Spawner {
       armedRoll,
       variant,
     );
-    enemy.onEvent = (ev) => this.s.debugEvents.push(ev);
+    enemy.onEvent = (ev) => this.s.snapshot.debugEvents.push(ev);
     enemy.guardRng = this.s.run.guardRng;
     // RDG-23: `?debug&shove=N` fixa a chance do empurrão; RDG-19: o empurrão chega ao jogador pelo `shoved`.
     enemy.shoveChance = this.debugShoveChance();
@@ -96,7 +96,7 @@ export class Spawner {
       this.s.realtimeFx.add('guard.spark', 100);
     };
     this.s.enemies.push(enemy);
-    this.s.debugEvents.push(`spawnFx:${enemy.id}`);
+    this.s.snapshot.debugEvents.push(`spawnFx:${enemy.id}`);
     this.s.fx.curseSmoke(spawnAt.x, spawnAt.y);
   }
 
@@ -155,7 +155,7 @@ export class Spawner {
     this.s.effects.freeze();
     this.s.fx.shake();
     this.s.fx.curseSmoke(x, y);
-    this.s.debugEvents.push('bossDefeatedFx');
+    this.s.snapshot.debugEvents.push('bossDefeatedFx');
     this.s.hud.hideBossBar();
     // BHUD-03: a faixa entra na hora da morte; "Rodada N concluída" vem depois dela (RHUD-03).
     this.s.hud.banner('Chefe derrotado!', BOSS.defeatBannerMs);

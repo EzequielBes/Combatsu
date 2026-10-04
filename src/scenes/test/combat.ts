@@ -69,8 +69,8 @@ export class CombatLinks {
 
   /** Um abate (FND-08, WAVE-06): conta na onda da rodada, além de ir para o snapshot de debug. */
   onEnemyDied(enemyId: number, x: number, y: number): void {
-    this.s.debugEvents.push(`enemyDied:${enemyId}`);
-    this.s.debugDeaths.push({ id: enemyId, x, y });
+    this.s.snapshot.debugEvents.push(`enemyDied:${enemyId}`);
+    this.s.snapshot.debugDeaths.push({ id: enemyId, x, y });
     this.s.run.enemyDied(enemyId);
   }
 
@@ -200,7 +200,7 @@ export class CombatLinks {
     this.s.player.finisherPose(dir);
     if (!target.receiveHit(hit)) return;
     target.markFinished();
-    this.s.debugEvents.push(`finisher:${target.id}`);
+    this.s.snapshot.debugEvents.push(`finisher:${target.id}`);
     // Faísca, tremida, energia e combo do golpe comum; depois o congelamento maior do finalizador (o maior vence).
     this.onConnect(hit, { x: at.x, y: at.y }, 'heavy', target);
     this.s.effects.hitstop.trigger(FINISHER_HITSTOP_MS);
@@ -228,7 +228,7 @@ export class CombatLinks {
     const dir: 1 | -1 = boss.x >= this.s.player.sprite.x ? 1 : -1;
     this.s.player.finisherPose(dir);
     boss.receiveFinisher();
-    this.s.debugEvents.push('finisher:boss');
+    this.s.snapshot.debugEvents.push('finisher:boss');
     const at = boss.hurtRect();
     this.s.fx.spark(at.x, at.y, 'heavy');
     this.s.fx.shake();
@@ -253,7 +253,7 @@ export class CombatLinks {
     });
     for (const e of this.s.enemies) e.receiveHit(hitToward(e.x));
     // Golpe aceito pelo chefe vai para o snapshot: na intro e no rugido ele recusa (BOSS-08, BAI-12).
-    if (this.s.boss?.receiveHit(hitToward(this.s.boss.x))) this.s.debugEvents.push('bossHitAccepted');
+    if (this.s.boss?.receiveHit(hitToward(this.s.boss.x))) this.s.snapshot.debugEvents.push('bossHitAccepted');
   }
 
   listenForContacts(): void {
