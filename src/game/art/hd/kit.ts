@@ -4,7 +4,7 @@
  * de texel), com o eixo do corpo na coluna 36 e o chão na linha 79. Puro, sem `phaser`.
  */
 import { buildPose, type PoseSpec } from '../rig/poses/build';
-import { aimLimb, solve, type Pose, type Proportions } from '../rig/skeleton';
+import { aimLimb, solve, type Pose, type Proportions, type Vec2 } from '../rig/skeleton';
 import { ANKLE_HEIGHT } from './body';
 
 /** Escala do heroico alto (32 texels) para o corpo HD (60): medidas herdadas dele se multiplicam por isto. */
@@ -78,6 +78,8 @@ export interface Kit {
   legs: number;
   /** Tornozelos da guarda em relação ao eixo: `near` à frente, `far` atrás. */
   stance: { near: number; far: number };
+  /** Ponto do frame a `ahead` texels à frente do eixo do corpo e `up` texels acima do chão (1 texel = 1 px de mundo). */
+  at(ahead: number, up: number): Vec2;
   /** Monta uma pose do corpo HD (cinemática inversa nos braços e nas pernas). */
   pose(spec: Omit<PoseSpec, 'body'>): Pose;
   /**
@@ -101,6 +103,7 @@ export function makeKit(stage: HdStage): Kit {
     arm: ARM,
     legs: LEGS,
     stance: STANCE,
+    at: (ahead, up) => ({ x: cx + ahead, y: stage.h - 1 - up }),
     pose,
     guard: (sink = 0) =>
       pose({
