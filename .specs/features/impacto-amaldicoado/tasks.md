@@ -85,7 +85,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: estilo de `src/data/fx.ts`
 **Requirement**: TRL-04, TRL-05, IMP-07, IMP-08, IMP-09, IMP-15, EDG-03
 **Done when**:
-- [ ] Teste confere cada valor contra a spec.
+- [x] Teste confere cada valor contra a spec.
 **Tests**: unit
 **Gate**: quick
 
