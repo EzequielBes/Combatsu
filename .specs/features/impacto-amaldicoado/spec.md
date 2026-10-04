@@ -34,6 +34,7 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 | Impact frame | 2 quadros renderizados com ColorMatrix (dessaturação + contraste + tom azul) dentro do hitstop; sem WebGL, é pulado | É a assinatura visual de MAPPA; dentro do hitstop não muda a duração do jogo | n |
 | Faísca antiga (`Fx.spark`) | Some nos acertos corpo a corpo do jogador em inimigos; continua em guarda, parry e golpes do inimigo | A faísca é o efeito "simples" que o usuário recusou; a guarda precisa continuar legível | n |
 | Passo à frente | Leve 4 px, forte 10 px, ao longo do `startupMs`; para no contato com o corpo de um inimigo ou parede | Os golpes do Sifu entram com o peso do corpo; valores pequenos não mudam o alcance efetivo do combo | n |
+| Pisca-branco do inimigo | Sai do golpe recebido, do cambaleio, da armadura e do ragdoll (RCT-07/08); a armadura passa a mostrar a faísca de guarda (RCT-09). O pisca colorido do ponto de compromisso (CMT-02) fica | O usuário recusou o pisca branco por ser "coisa de jogo dos anos 2000"; o pisca do compromisso é telegrafo de gameplay da F12 | y |
 | Choque em cadeia | Inimigo deslizando que encosta em outro faz o outro tocar a reação `body` sem dano | Dá a sensação de coreografia em grupo sem mexer na dificuldade | n |
 | Linhas de foco de anime | P3: linhas radiais na câmera de UI por 180 ms no golpe decisivo | Referência direta de JJK; opcional para não atrasar o MVP | n |
 | ACs com `ambiguous` entre 0,6 e 0,72 no Jev (`refinement.md`) | Ficam como estão | Têm valores concretos; os termos que o Jev achou vagos (ponto de golpe, nível do impacto, golpe corpo a corpo) estão no Glossário. POS-05, RCT-03, CAM-03 e CAM-06 foram reescritos | n |
@@ -142,6 +143,9 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 4. RCT-04: WHEN a sliding enemy's body touches another standing common enemy THEN the touched enemy SHALL play the `body` hit reaction without losing HP and without losing posture.
 5. RCT-05: WHEN a sliding enemy's body touches a wall THEN its slide SHALL stop at that contact.
 6. RCT-06: The debug snapshot SHALL expose `enemies[].slide` as `{ remainingPx }` while sliding and `null` otherwise.
+7. RCT-07: WHEN a common enemy accepts a hit, staggers or absorbs a hit with armor THEN its sprite SHALL NOT receive a white tint fill (`PALETTE.w`).
+8. RCT-08: WHEN a downed enemy's ragdoll takes a hit THEN its parts SHALL NOT receive a white tint fill.
+9. RCT-09: WHEN a common enemy absorbs a hit with armor THEN the scene SHALL draw the guard spark (`Fx.spark` with kind `guard`) at the contact point.
 
 **Independent Test**: Com `maxAlive=3` enfileirados, um golpe forte no primeiro o empurra contra o segundo, que dobra sem perder vida.
 
@@ -255,6 +259,9 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 | RCT-04 | P2: Reação coreografada do inimigo | Design | Pending |
 | RCT-05 | P2: Reação coreografada do inimigo | Design | Pending |
 | RCT-06 | P2: Reação coreografada do inimigo | Design | Pending |
+| RCT-07 | P2: Reação coreografada do inimigo | Design | Pending |
+| RCT-08 | P2: Reação coreografada do inimigo | Design | Pending |
+| RCT-09 | P2: Reação coreografada do inimigo | Design | Pending |
 | CAM-01 | P2: Câmera que reage | Design | Pending |
 | CAM-02 | P2: Câmera que reage | Design | Pending |
 | CAM-03 | P2: Câmera que reage | Design | Pending |
@@ -271,7 +278,7 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 | EDG-04 | Edge Cases | Design | Pending |
 | EDG-05 | Edge Cases | Design | Pending |
 
-**Coverage:** 61 total, 0 mapped to tasks, 61 unmapped ⚠️ (tasks ainda não criadas)
+**Coverage:** 64 total, 0 mapped to tasks, 64 unmapped ⚠️ (tasks ainda não criadas)
 
 ---
 
