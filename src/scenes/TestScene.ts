@@ -7,12 +7,12 @@ import { clampCenter, followCenter, scrollFor, type FollowConfig } from '../core
 import { Filters } from '../core/collision';
 import { scaleFor, type EnemyBase } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
-import type { CastState } from '../core/cast';
+import { type CastState } from '../core/cast';
 import { ComboCounter } from '../core/comboCounter';
 import { CursedEnergy } from '../core/energy';
 import { FxRegistry } from '../core/fxRegistry';
 import { FxTimeline } from '../core/fxTimeline';
-import type { Hit, Strength, Vec2 } from '../core/hit';
+import { type Hit, type Strength, type Vec2 } from '../core/hit';
 import { AttackGate } from '../core/attackGate';
 import { Hitstop } from '../core/hitstop';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
@@ -23,9 +23,9 @@ import { attackKindFor, parseAttackKind, parseStringLength } from '../core/attac
 import { parseVariant, pickEnemyVariant } from '../core/enemyVariant';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
-import type { PickupPlayer } from '../core/pickup';
-import type { PropState } from '../core/props';
-import type { Rng } from '../core/rng';
+import { type PickupPlayer } from '../core/pickup';
+import { type PropState } from '../core/props';
+import { type Rng } from '../core/rng';
 import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
 import { Shop, type BuyContext } from '../core/shop';
 import { SlowMo } from '../core/slowMo';
@@ -70,7 +70,6 @@ import { EnergyHud } from '../game/EnergyHud';
 import { Fx, type SparkKind } from '../game/fx';
 import { FxLab } from '../game/FxLab';
 import { GAME_NAME, Hud } from '../game/Hud';
-import type { InputSnapshot } from '../game/input';
 import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS, renderAlpha } from '../game/physics';
@@ -93,13 +92,10 @@ import { STRIKE_POINTS } from '../game/art/sprites/strikePoints';
 import { currentSearch, rigStrike } from '../game/art/rig/flag';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../game/art/sprites/player';
 import { SIZE, TEX } from '../game/textures';
+import { debugParam, debugIntParam, NEUTRAL_INPUT, isDroppedTool, SPAWN_LIFT } from './test/params';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
 
-/** Ferramenta amaldiçoada largada (chave em `TOOL_DEFS`, comum ou rara), nunca um objeto do mapa. */
-const isDroppedTool = (key: string): boolean => key.startsWith('cursed');
-
-const SPAWN_LIFT = 2;
 /** Zoom da câmera do mundo (RES-01): 960x540 de tela mostram 640x360 px de mundo. */
 const WORLD_ZOOM = 1.5;
 /** Folga (px de tela) em que o player anda sem a câmera andar junto. */
@@ -118,161 +114,128 @@ const SLOWMO_TINT_ALPHA = 0.22;
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
 const CONTROLS_MS = 8000;
 
-/** Parâmetro de URL que só vale em `?debug` (SHOP-23, SHOP-47); fora do debug, sempre `null`. */
-function debugParam(name: string): string | null {
-  return isDebug() ? new URLSearchParams(window.location.search).get(name) : null;
-}
-
 /** Duração (ms) do banner do upgrade grátis do chefe: o fim da faixa "Chefe derrotado!", sem atrasar "Rodada N concluída" (BFX-10). */
 const BOSS_UPGRADE_BANNER_MS = 800;
 /** Margem (px) além da borda da câmera em que um ponto ainda conta como visível (SPN-07). */
 const SPAWN_VIEW_MARGIN = 32;
 
-/** Parâmetro de URL inteiro `>= min` só em `?debug` (`maxAlive`, `mastery`); ausente ou inválido vira `undefined`. */
-function debugIntParam(name: string, min: number): number | undefined {
-  const raw = debugParam(name);
-  if (raw === null || raw.trim() === '') return undefined;
-  const n = Number(raw);
-  return Number.isInteger(n) && n >= min ? n : undefined;
-}
-
-/** Input neutro (RUN-08): fora de `roundActive`/`intermission` o player ignora tudo, mas o input continua sendo
- * lido (para não vazar um `JustDown` represado quando a run volta a aceitar). */
-const NEUTRAL_INPUT: InputSnapshot = {
-  left: false,
-  right: false,
-  down: false,
-  jumpPressed: false,
-  jumpHeld: false,
-  jumpWPressed: false,
-  upHeld: false,
-  lightPressed: false,
-  heavyPressed: false,
-  heavyHeld: false,
-  bothPressed: false,
-  guardHeld: false,
-  guardPressed: false,
-  dodgePressed: false,
-  interactPressed: false,
-};
-
 export class TestScene extends Phaser.Scene implements DebugProbe {
-  private level!: LevelData;
-  private terrain: MatterJS.BodyType[] = [];
-  private controls!: PlayerInput;
+  level!: LevelData;
+  terrain: MatterJS.BodyType[] = [];
+  controls!: PlayerInput;
   /** Teclas da loja (SHOP-45, SHOP-28..30, SHOP-16, SHOP-03), lidas só com `run.state === 'shop'`. */
-  private shopInput!: ShopInput;
-  private player!: Player;
-  private enemies: Enemy[] = [];
+  shopInput!: ShopInput;
+  player!: Player;
+  enemies: Enemy[] = [];
   /** Limitador de atacantes (LIM-01..07): 2 vagas, fila FIFO e 350 ms entre windups; zerado a cada `startRun` (EDG-03). */
-  private attackGate = new AttackGate(ATTACK_GATE);
+  attackGate = new AttackGate(ATTACK_GATE);
   /** Só existe numa rodada de chefe (BOSS-01); `null` fora dela ou depois de removido. */
-  private boss: Boss | null = null;
+  boss: Boss | null = null;
   /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
-  private bossDefeatedPending = false;
+  bossDefeatedPending = false;
   /** Na rodada de chefe, "Rodada N concluída" entra depois da faixa "Chefe derrotado!" (BHUD-03 + RHUD-03). */
-  private clearedBanner: { round: number; afterMs: number; upgradeText: string | null } | null = null;
+  clearedBanner: { round: number; afterMs: number; upgradeText: string | null } | null = null;
   /** Projéteis da rajada e ondas de choque do pouso do chefe (BAT-03/04/06/12). */
-  private projectiles: Projectile[] = [];
-  private props: Prop[] = [];
+  projectiles: Projectile[] = [];
+  props: Prop[] = [];
   /** Tudo que a câmera de UI desenha mora aqui; o resto da cena é mundo. */
-  private uiLayer!: Phaser.GameObjects.Layer;
-  private fx!: Fx;
-  private hud!: Hud;
+  uiLayer!: Phaser.GameObjects.Layer;
+  fx!: Fx;
+  hud!: Hud;
   /** Barra de energia e slots de técnica (TEC-07..12), na `uiLayer`. */
-  private energyHud!: EnergyHud;
-  private run!: Run;
+  energyHud!: EnergyHud;
+  run!: Run;
   /** Carteira de fragmentos da run (ECO-12..14) e os sorteios de drop, criados a cada `startRun` com o `lootRng`. */
-  private wallet!: Wallet;
+  wallet!: Wallet;
   /** Níveis de modificador da run (MOD-01..09): lidos na hora por Player/Pickups/Loot; zerados a cada `startRun`. */
-  private modifiers!: Modifiers;
+  modifiers!: Modifiers;
   /** Energia amaldiçoada do player (CE-01..09), zerada a cada `startRun`. */
-  private energy!: CursedEnergy;
+  energy!: CursedEnergy;
   /** Slots de técnica (TEC-01..06), vazios a cada `startRun` (ou `?debug&tech=`, TEC-02). */
-  private loadout!: Loadout;
+  loadout!: Loadout;
   /** Pontos de maestria por slot (MST-01..06): zerados a cada `startRun` e ao equipar técnica nova no slot. */
-  private mastery = new Mastery();
+  mastery = new Mastery();
   /** Conjuração de técnicas (CAST-*), dona da `CastMachine` e dos ganchos do `Player`. */
-  private techCaster!: TechCaster;
+  techCaster!: TechCaster;
   /** Executa a técnica na soltura (T22+: Punho Divergente/Kokusen), dona da hitbox e das camadas próprias dela. */
-  private techRunner!: TechRunner;
+  techRunner!: TechRunner;
   /** T28 (`?debug&fxlab`): laboratório de efeitos, `null` fora dele. */
-  private fxLab: FxLab | null = null;
+  fxLab: FxLab | null = null;
   /**
    * Camadas de efeito de técnica (design "Dois relógios"): `game` para (hoje) `cast.aura`, `real` para as
    * cinemáticas do Kokusen (T24), que a Fase 6 confere continuarem andando durante o hitstop (TFX-05).
    */
-  private realtimeFx!: FxTimeline;
+  realtimeFx!: FxTimeline;
   /** Objetos de efeito de técnica vivos (TFX-03/09); `fx.live` do snapshot é `fxRegistry.size`. */
-  private fxRegistry!: FxRegistry;
-  private aura!: Aura;
-  private callout!: Callout;
+  fxRegistry!: FxRegistry;
+  aura!: Aura;
+  callout!: Callout;
   /** Cinema do Kokusen (T24): negativo/duotom/raios/faíscas/zoom/cartão, tudo em tempo real (TFX-05). */
-  private kokusenFx!: KokusenFx;
-  private cursedFx!: CursedFx;
-  private impactFrame!: ImpactFrame;
+  kokusenFx!: KokusenFx;
+  cursedFx!: CursedFx;
+  impactFrame!: ImpactFrame;
   /** Linhas de foco do golpe decisivo (FOC-01), na `uiLayer`. */
-  private focusLines!: FocusLines;
+  focusLines!: FocusLines;
   /** Último impacto do golpe do jogador, para o snapshot (IMP-16). */
-  private lastImpact: { tier: ImpactTier; impactFrame: boolean } | null = null;
+  lastImpact: { tier: ImpactTier; impactFrame: boolean } | null = null;
   /** `swingId` do último golpe que recebeu o quadro de impacto (IMP-14, IMP-16). */
-  private framedSwingId: number | null = null;
+  framedSwingId: number | null = null;
   /** Quadros sem ponto de golpe já avisados (EDG-01: um aviso por nome). */
-  private warnedStrikeFrames = new Set<string>();
+  warnedStrikeFrames = new Set<string>();
   /** Golpe do jogador em startup com a chama acesa (TRL-07), para a chama seguir o ponto de golpe. */
-  private flameMove: string | null = null;
+  flameMove: string | null = null;
   /** Inimigos derrubados por golpe do jogador esperando tocar o chão para ganhar a rachadura (IMP-15). */
-  private crackWatch = new Map<Enemy, number>();
+  crackWatch = new Map<Enemy, number>();
   /** Inimigos quebrados no começo do frame, para saber qual golpe quebrou a postura (IMP-03). */
-  private brokenAtFrameStart = new Set<number>();
+  brokenAtFrameStart = new Set<number>();
   /** Quadro do jogo em que o último Kokusen disparou (IMP-13). */
-  private kokusenFrame = -1;
+  kokusenFrame = -1;
   /** Último estado de conjuração visto (CAST-15/19): dispara o zoom da câmera só na troca de estado. */
-  private lastCastState: CastState | null = null;
+  lastCastState: CastState | null = null;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
-  private shop: Shop | null = null;
+  shop: Shop | null = null;
   /** 1ª técnica equipada nesta compra (TSH-06), para o ícone voar da carta ao slot (T21); `null` fora disso. */
-  private pendingTechEquip: { id: TechId; slot: 0 | 1 } | null = null;
+  pendingTechEquip: { id: TechId; slot: 0 | 1 } | null = null;
   /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
-  private shopPanel!: ShopPanel;
-  private loot!: Loot;
-  private lootRng!: Rng;
-  private pickups!: Pickups;
-  private floatTexts!: FloatTexts;
+  shopPanel!: ShopPanel;
+  loot!: Loot;
+  lootRng!: Rng;
+  pickups!: Pickups;
+  floatTexts!: FloatTexts;
   /** Tempo de vida e teto das ferramentas largadas (ARM-13/14/18/28); vive a cena toda. */
-  private droppedTools!: DroppedTools;
+  droppedTools!: DroppedTools;
   /** Detecta a transição para morto (RUN-04): só o primeiro frame morto conta como evento. */
-  private wasPlayerDead = false;
+  wasPlayerDead = false;
   /** Relógio de jogo da cena (ms), só para o intervalo entre usos do mesmo ponto de spawn (SPN-08). */
-  private clockMs = 0;
+  clockMs = 0;
   /** Centro da câmera do mundo em ponto flutuante (CAM-07): o estado do seguidor, nunca arredondado. */
-  private camCenter: Vec2 = { x: 0, y: 0 };
+  camCenter: Vec2 = { x: 0, y: 0 };
   /** Instante (`clockMs`) do último spawn comum em cada índice de ponto `E` (SPN-08). */
-  private spawnLastUsed = new Map<number, number>();
-  private readonly hitstop = new Hitstop();
+  spawnLastUsed = new Map<number, number>();
+  readonly hitstop = new Hitstop();
   /** Câmera lenta da esquiva perfeita (DOD-07), em tempo real; a escala vai para o tempo de jogo (`applyTimeScale`). */
-  private slowMo = new SlowMo();
+  slowMo = new SlowMo();
   /** Tranco da câmera no golpe forte (CAM-01) e pulso de zoom no decisivo (CAM-02), os dois em tempo real. */
-  private cameraKick = new CameraKick();
-  private zoomPulse = new ZoomPulse();
+  cameraKick = new CameraKick();
+  zoomPulse = new ZoomPulse();
   /** Tempo real (ms) que falta do pulso de zoom; 0 = sem pulso em curso. */
-  private zoomPulseMs = 0;
+  zoomPulseMs = 0;
   /** Contador de combo e nota de estilo (CMB-01..03). */
-  private comboCounter = new ComboCounter();
-  private lastPlayerHp = 0;
+  comboCounter = new ComboCounter();
+  lastPlayerHp = 0;
   /** Histórico dos golpes do jogador nos últimos 3000 ms, para o inimigo ler a repetição (RDG-01); zerado a cada run. */
-  private reading = new MoveReading();
+  reading = new MoveReading();
   /** Foco da postura (PST-13): id do último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador. */
-  private focusId: number | null = null;
+  focusId: number | null = null;
   /** Tom azulado sobre a tela enquanto a câmera lenta está ativa (DOD-12), na câmera de UI. */
-  private slowTint!: Phaser.GameObjects.Rectangle;
+  slowTint!: Phaser.GameObjects.Rectangle;
   /** Tempo real (ms) até o zoom do finalizador voltar ao normal; 0 = sem finalizador em curso. */
-  private finisherZoomMs = 0;
+  finisherZoomMs = 0;
   /** Se a pausa do hitstop está aplicada (física, animações, tweens e timers). */
-  private frozen = false;
+  frozen = false;
   /** Eventos lidos pelo smoke no snapshot de debug, ex.: `enemyDied:7`. */
-  private debugEvents: string[] = [];
-  private debugDeaths: { id: number; x: number; y: number }[] = [];
+  debugEvents: string[] = [];
+  debugDeaths: { id: number; x: number; y: number }[] = [];
 
   constructor() {
     super('TestScene');
@@ -470,7 +433,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Zona morta, lerp, vista (com o zoom atual) e limites do mundo para o seguidor da câmera. */
-  private followConfig(): FollowConfig {
+  followConfig(): FollowConfig {
     const cam = this.cameras.main;
     return {
       deadzone: FOLLOW_DEADZONE,
@@ -481,7 +444,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** CAM-07: leva o centro da câmera atrás da posição de desenho do player e aplica o scroll na grade de pixel de tela. */
-  private followCamera(dtMs: number): void {
+  followCamera(dtMs: number): void {
     const cam = this.cameras.main;
     // CAM-02: o pulso de zoom anda em tempo real, antes do cálculo do scroll (que depende do zoom atual).
     if (this.zoomPulseMs > 0) {
@@ -649,7 +612,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * carga anima até 1,6 ao longo do `chargeMs` da técnica, e a soltura (ou um cancelamento em `sign`/`charge`,
    * CAST-07) devolve o zoom base em 250 ms.
    */
-  private updateCastZoom(): void {
+  updateCastZoom(): void {
     const state = this.techCaster.cast?.state ?? null;
     if (state === this.lastCastState) return;
     const cam = this.cameras.main;
@@ -667,7 +630,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Loja aberta (SHOP-45, SHOP-28..30, SHOP-16/26, SHOP-03): traduz `ShopInput` em ações do `Shop` e eventos de
    * debug. `run.closeShop()` só arma o pedido; o `run.update` logo depois, no chamador, resolve a troca de rodada.
    */
-  private updateShop(): void {
+  updateShop(): void {
     const shop = this.shop;
     if (!shop) return;
     const input = this.shopInput.read();
@@ -715,7 +678,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Traduz o `BuyResult` tipado do `Shop` num evento de debug (design "Error Handling Strategy"). */
-  private resolveBuy(shop: Shop, slot: number, ctx: BuyContext): void {
+  resolveBuy(shop: Shop, slot: number, ctx: BuyContext): void {
     const offerId = shop.view(ctx.wallet, ctx.hp, ctx.maxHp).offers[slot]?.id ?? null;
     this.pendingTechEquip = null;
     const result = shop.buy(slot, ctx);
@@ -736,7 +699,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Reroll (SHOP-16/25/26): paga pelo custo atual antes de sortear, para o "−N" da animação (T11). */
-  private resolveReroll(shop: Shop): void {
+  resolveReroll(shop: Shop): void {
     const cost = shop.rerollCost;
     if (shop.reroll(this.wallet)) this.shopPanel.flipReroll(cost);
     else this.debugEvents.push('rerollRefused');
@@ -747,7 +710,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * `FULL_SHOP_CATALOG` (F5) inclui as técnicas e `energia`/`fluxo`; o `loadout` decide elegibilidade e a
    * garantia do espaço 0 (TSH-05).
    */
-  private openShop(round: number): void {
+  openShop(round: number): void {
     this.wallet.add(this.pickups.collectFragments());
     this.matter.world.pause();
     this.shop = new Shop(FULL_SHOP_CATALOG, this.modifiers, this.run.shopRng!, round, this.loadout);
@@ -756,7 +719,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Fecha a loja (SHOP-03/35): arma o pedido na `Run`, retoma o Matter e limpa a loja. */
-  private closeShop(): void {
+  closeShop(): void {
     this.run.closeShop();
     this.matter.world.resume();
     this.shop = null;
@@ -768,7 +731,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Campo `shop` do snapshot (SHOP-22): `open` só no estado `shop`; nível vem dos modificadores ou do `loadout`
    * (técnica, F5) conforme o `kind` da entrada.
    */
-  private shopSnapshot(): GameSnapshot['shop'] {
+  shopSnapshot(): GameSnapshot['shop'] {
     const view = this.shop?.view(this.wallet, this.player.hp, this.player.maxHp);
     return {
       open: this.run.state === 'shop',
@@ -791,7 +754,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Seed da run: fixa por `?seed=N` só em `?debug` (design); senão o relógio (runs variadas). */
-  private seedForNewRun = (): number => {
+  seedForNewRun = (): number => {
     if (isDebug()) {
       const raw = new URLSearchParams(window.location.search).get('seed');
       if (raw !== null) {
@@ -803,7 +766,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   };
 
   /** Rodada inicial da run: `?round=N` só em `?debug` (design); sem a opção, a run começa na rodada 1. */
-  private firstRoundForDebug(): number | undefined {
+  firstRoundForDebug(): number | undefined {
     if (!isDebug()) return undefined;
     const raw = new URLSearchParams(window.location.search).get('round');
     if (raw === null) return undefined;
@@ -811,7 +774,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     return Number.isFinite(n) ? n : undefined;
   }
 
-  private applyRunCommand(cmd: RunCommand): void {
+  applyRunCommand(cmd: RunCommand): void {
     switch (cmd.type) {
       case 'startRun':
         this.onStartRun();
@@ -856,7 +819,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Também remove o chefe e os projéteis dele, se algum estiver vivo (edge case: game over em plena luta de
    * chefe, com o chefe e/ou projéteis dele ainda em cena).
    */
-  private onStartRun(): void {
+  onStartRun(): void {
     for (const e of this.enemies) e.destroyNow();
     this.enemies = [];
     this.boss?.destroyNow();
@@ -910,7 +873,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * `?debug&tech=<id>[,<id>]` (TEC-02): equipa em nível 1, na ordem, ignorando ids desconhecidos e o segundo id
    * quando os dois slots já couberam; sem o parâmetro, os dois slots ficam vazios (TEC-01, AD-005).
    */
-  private equipDebugTech(): void {
+  equipDebugTech(): void {
     const raw = debugParam('tech');
     if (raw === null) return;
     const ids = raw.split(',').filter((id): id is TechId => id in TECHNIQUES);
@@ -922,14 +885,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** `?debug&mastery=N` (inteiro >= 0): cada técnica equipada começa a run com N pontos de maestria; inválido é ignorado. */
-  private applyDebugMastery(): void {
+  applyDebugMastery(): void {
     const n = debugIntParam('mastery', 0);
     if (n === undefined) return;
     for (const slot of [0, 1] as const) if (this.loadout.slotsView[slot]) this.mastery.setPoints(slot, n);
   }
 
   /** Nome da técnica como a loja mostra, para os banners de nível (MST-07, BFX-10). */
-  private techName(id: TechId): string {
+  techName(id: TechId): string {
     return FULL_SHOP_CATALOG.find((e) => e.id === id)?.name ?? TECHNIQUES[id].name;
   }
 
@@ -937,7 +900,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Acerto de técnica em alvo real (MST-01..07): soma maestria ao slot e, no limiar, sobe 1 nível com o banner
    * `"{nome} Nv {n}!"`. No laboratório de efeitos (bonecos de treino) não há maestria.
    */
-  private onMasteryHit(slot: MasterySlot, castId: number, targetId: number, isBoss: boolean): void {
+  onMasteryHit(slot: MasterySlot, castId: number, targetId: number, isBoss: boolean): void {
     if (this.fxLab) return;
     const equipped = this.loadout.slotsView[slot];
     if (!equipped) return;
@@ -951,7 +914,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Upgrade grátis da vitória sobre o chefe (BFX-09): sobe 1 nível a técnica equipada de menor nível abaixo do 3
    * (empate: slot 0). Devolve o texto do banner (BFX-10), ou `null` se nada era upável.
    */
-  private bossRewardUpgrade(): string | null {
+  bossRewardUpgrade(): string | null {
     const slot = bossRewardSlot(this.loadout.slotsView);
     const pick = slot === null ? null : this.loadout.slotsView[slot];
     if (!pick || !this.loadout.upgrade(pick.id)) return null;
@@ -959,7 +922,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
-  private lootOverrides(): LootOverrides {
+  lootOverrides(): LootOverrides {
     if (!isDebug()) return {};
     const params = new URLSearchParams(window.location.search);
     const overrides: LootOverrides = {};
@@ -977,7 +940,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Move e coleta os pickups vivos (ECO-06..11, HEAL-03/04) e avança os textos flutuantes da coleta. */
-  private updatePickups(dtMs: number): void {
+  updatePickups(dtMs: number): void {
     const pr = this.player.hurtRect();
     const player: PickupPlayer = {
       x: pr.x - pr.width / 2,
@@ -1000,7 +963,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Fragmento credita a carteira; gota cura (teto em maxHp, HEAL-03) - cada uma com o "+N" e o evento (ECO-29/HEAL-08). */
-  private onPickupCollected(p: { kind: 'fragment' | 'heal'; value: number; x: number; y: number }): void {
+  onPickupCollected(p: { kind: 'fragment' | 'heal'; value: number; x: number; y: number }): void {
     if (p.kind === 'fragment') {
       this.wallet.add(p.value);
       this.debugEvents.push(`collect:fragment:${p.value}`);
@@ -1014,14 +977,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Nome e pips do objeto na mão (ITEM-01/02), `null` de mãos vazias (ITEM-03). */
-  private heldItemInfo(): { name: string; pips: number; maxPips: number } | null {
+  heldItemInfo(): { name: string; pips: number; maxPips: number } | null {
     const prop = this.player.heldProp;
     if (!prop) return null;
     return { name: propName(prop.def), pips: prop.def.durability - prop.machine.impacts, maxPips: prop.def.durability };
   }
 
   /** Sorteia e materializa o drop de um abate (ECO-01/05, ECO-15/28, HEAL-01/02) no ponto da morte. */
-  private applyDrop(result: EnemyDropResult, x: number, y: number): void {
+  applyDrop(result: EnemyDropResult, x: number, y: number): void {
     const cap = capDrop(result.fragments, this.pickups.liveFragments, ECONOMY.maxLiveFragments);
     if (cap.spawn > 0) this.pickups.spawnDrop(this.lootRng, x, y, 'fragment', cap.spawn, result.value, cap.extraOnLast);
     if (result.heal) this.pickups.spawnDrop(this.lootRng, x, y, 'heal', 1, ECONOMY.healAmount, 0);
@@ -1031,7 +994,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Ferramenta largada por um inimigo armado (ARM-08): nasce em `rest`, pronta para pegar (design.md). Se o teto
    * de 6 já estiver cheio, a mais antiga em `rest` some antes (ARM-14).
    */
-  private dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
+  dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
     const def = rare ? rareDef(TOOL_DEFS[tool]) : TOOL_DEFS[tool];
     const prop = new Prop(
       this,
@@ -1051,14 +1014,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Estado atual de cada ferramenta largada registrada (para `DroppedTools.admit`/`update`). */
-  private toolStates(): Map<number, PropState> {
+  toolStates(): Map<number, PropState> {
     const states = new Map<number, PropState>();
     for (const p of this.props) if (isDroppedTool(p.def.key)) states.set(p.id, p.machine.state);
     return states;
   }
 
   /** Sumiço por tempo (ARM-13) e limpeza do registro para ferramentas que já sumiram por outro motivo (quebra, teto). */
-  private updateDroppedTools(dtMs: number): void {
+  updateDroppedTools(dtMs: number): void {
     const expired = this.droppedTools.update(dtMs, this.toolStates());
     for (const id of expired) {
       const p = this.props.find((pr) => pr.id === id);
@@ -1075,7 +1038,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * `wantAttack` → `request`, e libera a vaga (ou a fila) no mesmo frame em que o estado sai de
    * {approach, windup, attack} ou o inimigo morre/some.
    */
-  private updateEnemies(dt: number): void {
+  updateEnemies(dt: number): void {
     const gate = this.attackGate;
     gate.update(dt);
     const px = this.player.sprite.x;
@@ -1104,7 +1067,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Ponto `E` do próximo inimigo comum (SPN-07..09) e registro do uso para o intervalo entre usos (SPN-08). */
-  private pickEnemySpawnPoint(): number {
+  pickEnemySpawnPoint(): number {
     const view = this.cameras.main.worldView;
     const point = pickSpawnPoint({
       points: this.level.enemies,
@@ -1124,7 +1087,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Onda da rodada (WAVE-02): tuning escalado pela rodada (DIF-04) e graça ao nascer (WAVE-09). */
-  private spawnFromCommand(point: number, round: number): void {
+  spawnFromCommand(point: number, round: number): void {
     const at = this.level.enemies[point];
     const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
     const scaled = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
@@ -1179,7 +1142,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Inimigos comuns de pé cujo corpo toca o de `self` (RCT-04): quem desliza esbarra neles. */
-  private enemiesTouching(self: Enemy): Enemy[] {
+  enemiesTouching(self: Enemy): Enemy[] {
     const a = self.hurtRect();
     return this.enemies.filter((o) => {
       if (o === self || o.removed || o.isDead() || o.state !== 'idle') return false;
@@ -1189,7 +1152,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** `?debug&shove=N` (número de 0 a 1): chance do empurrão no 4º leve seguido (RDG-23); ausente ou inválido vale o padrão. */
-  private debugShoveChance(): number {
+  debugShoveChance(): number {
     const raw = debugParam('shove');
     if (raw === null || raw.trim() === '') return READING.shoveChance;
     const n = Number(raw);
@@ -1201,7 +1164,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * escalado pela rodada/tier (T2). Se um chefe anterior ainda estivesse por aqui (não deveria, mas por hygiene),
    * ele é removido antes - só existe um por vez.
    */
-  private spawnBoss(round: number): void {
+  spawnBoss(round: number): void {
     this.boss?.destroyNow();
     const point = farthestPoint(this.level.enemies, this.player.sprite.x);
     const at = this.level.enemies[point];
@@ -1235,7 +1198,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * maior, então o golpe fatal de 90 ms não encurta), tremida e fumaça na posição do chefe. O chefe some no fim
    * do hitstop, fora do próprio `receiveHit` que o matou.
    */
-  private onBossDefeated(dead: Boss, x: number, y: number): void {
+  onBossDefeated(dead: Boss, x: number, y: number): void {
     this.onEnemyDied(dead.id, x, y);
     this.applyDrop(this.loot.bossDrop(this.run.round), x, y);
     this.player.heal(Math.round(BOSS.healFraction * this.player.maxHp));
@@ -1252,7 +1215,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Cria um projétil ou onda de choque do chefe e o adiciona à lista da cena (BAT-03/04/06/12). */
-  private spawnProjectile(
+  spawnProjectile(
     kind: 'projectile' | 'shockwave',
     x: number,
     y: number,
@@ -1424,7 +1387,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** `tech` do snapshot (TEC-08): slots do loadout e a conjuração ativa (CAST-*). */
-  private techSnapshot(): GameSnapshot['tech'] {
+  techSnapshot(): GameSnapshot['tech'] {
     const [s0, s1] = this.loadout.slotsView;
     const slotView = (slot: 0 | 1, s: { id: TechId; level: 1 | 2 | 3 } | null) =>
       s
@@ -1442,7 +1405,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Golpe que conectou: faísca no ponto de contato (FX-03), tremida só no forte e hitstop (FX-01/02). Golpe de
    * objeto é forte (hitstop de 90 ms) e tem a faísca roxa. `target` é quem aceitou o golpe (foco, PST-13).
    */
-  private onConnect(hit: Hit, point: Vec2, kind: SparkKind, target?: Hittable): void {
+  onConnect(hit: Hit, point: Vec2, kind: SparkKind, target?: Hittable): void {
     // IMP-06, CAM-06: o golpe corpo a corpo do jogador troca a faísca e a tremida pelo impacto amaldiçoado.
     if (hit.ownerId === this.player.id && hit.moveName !== undefined) this.onMeleeImpact(hit, point, target);
     else {
@@ -1468,7 +1431,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Impacto do golpe corpo a corpo do jogador (IMP-06..16): nível, camadas do `CursedFx`, quadro de impacto só no
    * decisivo sem Kokusen e uma vez por golpe (IMP-11, IMP-13, IMP-14), e a rachadura na queda da derrubada.
    */
-  private onMeleeImpact(hit: Hit, point: Vec2, target?: Hittable): void {
+  onMeleeImpact(hit: Hit, point: Vec2, target?: Hittable): void {
     const brokePosture = target instanceof Enemy && target.broken && !this.brokenAtFrameStart.has(target.id);
     const tier = impactTier(hit, { brokePosture });
     this.cursedFx.impact(
@@ -1495,7 +1458,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Ponto do mundo na tela da câmera principal (FOC-01), já com zoom e tranco. */
-  private worldToScreen(p: Vec2): Vec2 {
+  worldToScreen(p: Vec2): Vec2 {
     const view = this.cameras.main.worldView;
     const zoom = this.cameras.main.zoom;
     return { x: (p.x - view.x) * zoom, y: (p.y - view.y) * zoom };
@@ -1505,7 +1468,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Câmera que reage ao impacto (CAM-01..05, CAM-07): tranco no forte, micro-zoom no decisivo (nunca durante o zoom
    * do finalizador) e câmera lenta na quebra de postura e no Contra; um novo gatilho reinicia sem empilhar (CAM-04).
    */
-  private reactCamera(tier: ImpactTier, hit: Hit, point: Vec2, brokePosture: boolean): void {
+  reactCamera(tier: ImpactTier, hit: Hit, point: Vec2, brokePosture: boolean): void {
     if (tier === 'decisive') this.focusLines.show(this.worldToScreen(point));
     if (tier === 'heavy') this.cameraKick.kick(hit.direction.x, hit.direction.y);
     const cam = this.cameras.main;
@@ -1523,7 +1486,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Fase do golpe do jogador: rastro no `active` e chama no startup do forte (TRL-03, TRL-07, TRL-08, EDG-01). */
-  private onStrikePhase(name: string, phase: 'startup' | 'active' | 'recovery' | 'end'): void {
+  onStrikePhase(name: string, phase: 'startup' | 'active' | 'recovery' | 'end'): void {
     const strength = MOVES[name]?.strength ?? 'light';
     if (phase === 'startup') {
       if (strength !== 'heavy') return;
@@ -1541,13 +1504,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     }
   }
 
-  private stopFlame(): void {
+  stopFlame(): void {
     this.flameMove = null;
     this.cursedFx.flameStop();
   }
 
   /** Ponto de golpe do quadro em coordenadas de mundo; `null` (com um aviso por nome) sem entrada (EDG-01). */
-  private strikeWorld(frameName: string): Vec2 | null {
+  strikeWorld(frameName: string): Vec2 | null {
     // PRA-08: com o boneco, o wind e o hit do gancho saem do pulso do heroico alto, no frame dele (40x40, eixo na coluna 12).
     const rig = rigStrike(frameName, currentSearch());
     const pt = rig?.pt ?? STRIKE_POINTS[frameName];
@@ -1568,7 +1531,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Por quadro: a chama segue o ponto de golpe, o jogador atingido apaga a chama (EDG-02) e a rachadura espera o chão. */
-  private updateCursedFx(): void {
+  updateCursedFx(): void {
     if (this.flameMove !== null) {
       const at = this.strikeWorld(`${this.flameMove}-wind`);
       if (at && this.player.hp >= this.lastPlayerHp && !this.player.dead) this.cursedFx.flameMove(at);
@@ -1600,7 +1563,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * de frente e perto sorteiam a guarda (RDG-03). Contra não conta nem sorteia (RDG-11, RDG-12); o finalizador não
    * emite `move:`. `?debug&enemyGuard=N` fixa a chance total (N=1: sempre levantam) e ignora a leitura (RDG-10).
    */
-  private onPlayerMoveStart(name: string): void {
+  onPlayerMoveStart(name: string): void {
     const move = MOVES[name];
     if (!move || move.counter) return;
     const repeats = this.reading.note(name, this.clockMs);
@@ -1611,7 +1574,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Quem bateu no jogador, para o lado do golpe, o tipo (chefe) e o efeito do parry (PAR-03/07/10). */
-  private attackerOf(ownerId: number): Attacker | null {
+  attackerOf(ownerId: number): Attacker | null {
     const enemy = this.enemies.find((e) => e.id === ownerId);
     if (enemy) return { x: enemy.x, isBoss: false, parried: (info) => enemy.parried(info) };
     const boss = this.boss;
@@ -1626,7 +1589,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Defesa do jogador (GRD-08, PAR-08, PAR-11): faíscas azuis no bloqueio; no parry flash em estrela, anel dourado
    * e hitstop de 80 ms. As camadas `game` seguem vivas durante o hitstop, como a estrela do golpe.
    */
-  private onDefense(kind: DefenseKind, point: Vec2): void {
+  onDefense(kind: DefenseKind, point: Vec2): void {
     if (kind === 'block') {
       this.fx.spark(point.x, point.y, 'guard');
       this.realtimeFx.add('guard.spark', 100);
@@ -1652,12 +1615,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Texto flutuante sobre a cabeça do jogador, a menos de 40 px do centro do corpo (CNT-15, DFL-13); cor da paleta. */
-  private warnAboveHead(text: string, colorKey: string): void {
+  warnAboveHead(text: string, colorKey: string): void {
     this.floatTexts.spawn(text, colorKey, this.player.sprite.x, this.player.sprite.y - SIZE.player.h / 2);
   }
 
   /** Aplica a escala da câmera lenta (e do laboratório de efeitos) ao tempo de jogo: timers, tweens e física. */
-  private applyTimeScale(): void {
+  applyTimeScale(): void {
     const scale = this.slowMo.timeScale * (this.fxLab?.timeScale ?? 1);
     if (this.time.timeScale !== scale) this.time.timeScale = scale;
     if (this.tweens.timeScale !== scale) this.tweens.timeScale = scale;
@@ -1666,7 +1629,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Inimigo comum quebrado (e ainda não finalizado) mais perto do jogador, com a distância entre os centros do corpo. */
-  private nearestFinishable(): { enemy: Enemy; dist: number } | null {
+  nearestFinishable(): { enemy: Enemy; dist: number } | null {
     const pr = this.player.hurtRect();
     let best: { enemy: Enemy; dist: number } | null = null;
     for (const e of this.enemies) {
@@ -1682,7 +1645,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Finalizador (FIN-01..04): com `J`+`K` a até 40 px de um inimigo comum quebrado (e ainda não finalizado nesta
    * quebra) o golpe causa 40 de dano, congela 150 ms e a câmera dá zoom 1,7 em 100 ms; sem alvo, nada (FIN-03).
    */
-  private tryFinisher(): void {
+  tryFinisher(): void {
     if (this.tryBossFinisher()) return;
     const near = this.nearestFinishable();
     const target = near && near.dist <= STRUCTURE.finisherRangePx ? near.enemy : null;
@@ -1717,7 +1680,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * `BOSS.finisher.rangePx` do player (distância horizontal entre os centros), tira 12% do HP máximo, com o mesmo
    * hitstop e zoom do finalizador comum. Devolve se foi aplicado; fora disso o fluxo do inimigo comum segue.
    */
-  private tryBossFinisher(): boolean {
+  tryBossFinisher(): boolean {
     const boss = this.boss;
     if (!boss) return false;
     const damage = bossFinisherDamage({
@@ -1746,7 +1709,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Golpe de técnica que conectou (T22+): mesma faísca + tremida + hitstop de FX-01..03, mas sem o +3 de CE-06
    * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito).
    */
-  private onTechConnect(hit: Hit, point: Vec2): void {
+  onTechConnect(hit: Hit, point: Vec2): void {
     this.fx.spark(point.x, point.y, hit.strength);
     if (hit.strength === 'heavy') this.fx.shake();
     this.hitstop.trigger(HITSTOP_MS[hit.strength]);
@@ -1757,13 +1720,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Conta o hitstop no PRE_UPDATE, antes do step do Matter (que roda no UPDATE): ao acabar, a física já anda
    * neste mesmo frame. O frame em que o golpe conectou não conta, porque o golpe veio no meio dele.
    */
-  private tickHitstop(_time: number, delta: number): void {
+  tickHitstop(_time: number, delta: number): void {
     if (!this.frozen) return;
     this.hitstop.update(Math.min(delta, MAX_FRAME_MS));
     if (!this.hitstop.frozen) this.unfreeze();
   }
 
-  private freeze(): void {
+  freeze(): void {
     if (this.frozen) return;
     this.frozen = true;
     this.matter.world.pause();
@@ -1773,7 +1736,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Retoma tudo. Seguro de chamar sem congelamento (no create e no SHUTDOWN). */
-  private unfreeze(): void {
+  unfreeze(): void {
     this.frozen = false;
     this.matter.world?.resume();
     this.anims.resumeAll();
@@ -1782,7 +1745,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Aplica em todos os inimigos e no chefe (se houver) o mesmo golpe que o combo do player daria. */
-  private debugHit(strength: Strength): void {
+  debugHit(strength: Strength): void {
     const step = PLAYER_COMBO.find((s) => s.strength === strength)!;
     const hitToward = (targetX: number): Hit => ({
       ownerId: 0,
@@ -1803,7 +1766,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * Todo objeto que entra na cena depois (inimigo que renasce, partículas, hitbox, debug da física) é ignorado
    * pela câmera de UI, a menos que entre na `uiLayer`.
    */
-  private addUiCamera(): void {
+  addUiCamera(): void {
     this.uiLayer = this.add.layer();
     this.cameras.main.ignore(this.uiLayer);
     const ui = this.cameras.add(0, 0, this.scale.width, this.scale.height, false, 'ui');
@@ -1817,7 +1780,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** FXL-04/08: legenda e rótulo de velocidade do laboratório, só linhas extras quando `fxLab` existe. */
-  private controlsLines(): string[] {
+  controlsLines(): string[] {
     return [
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
       'J leve · K forte · U guarda/parry · Q esquiva · E pegar',
@@ -1830,11 +1793,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Reaplica `controlsLines()` no painel (FXL-08: o rótulo de velocidade muda ao apertar 0). */
-  private refreshControlsText(): void {
+  refreshControlsText(): void {
     this.hud.setControlsText(this.controlsLines().join('\n'));
   }
 
-  private addHud(): void {
+  addHud(): void {
     this.hud = new Hud(this, this.uiLayer, this.controlsLines().join('\n'));
     this.energyHud = new EnergyHud(this, this.uiLayer);
     this.callout = new Callout(this, this.uiLayer);
@@ -1862,7 +1825,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
   }
 
-  private toggleDebugDraw(): void {
+  toggleDebugDraw(): void {
     const world = this.matter.world;
     if (!world.debugGraphic) {
       // createDebugGraphic já liga o desenho; sem isso o primeiro H desligava na hora e parecia não funcionar.
@@ -1873,7 +1836,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     world.debugGraphic.clear();
   }
 
-  private onKey(key: string, fn: () => void): void {
+  onKey(key: string, fn: () => void): void {
     const kb = this.input.keyboard!;
     const event = `keydown-${key}`;
     kb.on(event, fn);
@@ -1881,7 +1844,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   /** Desenho tile a tile pela variante (ENV-01); a física continua nos retângulos mesclados do parseLevel. */
-  private buildTerrain(): void {
+  buildTerrain(): void {
     LEVEL_1.forEach((row, ty) => {
       for (let tx = 0; tx < row.length; tx++) {
         const variant = tileVariant(LEVEL_1, tx, ty);
@@ -1902,7 +1865,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     }
   }
 
-  private listenForContacts(): void {
+  listenForContacts(): void {
     const onStart = (event: ContactEvent): void => {
       routeContacts(event.pairs);
     };
