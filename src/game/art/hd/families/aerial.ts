@@ -1,21 +1,24 @@
 /*
  * Golpes aéreos do player HD: soco aéreo, voadora e pisão. No ar a origem do sprite continua sendo a sola do corpo
  * físico (linha 79), então o corpo fica acima dela: as poses ligam entre si por uma pose de ar recolhida e terminam
- * num pouso agachado, de onde o motor interpola para a guarda.
+ * numa pose de ar (o pouso é da locomoção: `land-0`, `land-1`).
  */
 import type { HdFamily, HdMoveSpec } from '../frames';
 import type { Kit } from '../kit';
 
-/** Pouso agachado: os pés na base da guarda, o quadril fundo, o tronco fechado e as mãos baixas. */
-function landing(k: Kit, sink: number, lean = 158) {
+/**
+ * Pose de ar recolhida, o fim da volta dos três golpes: o corpo ainda voa (o jogo mostra `land-0` ao tocar o chão),
+ * então as pernas ficam dobradas acima do chão, perto da queda da locomoção (`fall-0`), com os punhos já em guarda.
+ */
+function airborne(k: Kit, lean: number, drop = 0) {
   return k.pose({
-    hip: { x: k.cx - 1, y: k.hy + sink },
+    hip: k.at(0, 34 - drop),
     spine: lean,
-    neck: 16,
-    armNear: { rel: { x: k.arm * 0.5, y: k.arm * 0.5 }, bend: -1 },
-    armFar: { rel: { x: k.arm * 0.3, y: k.arm * 0.2 }, bend: -1 },
-    legNear: { ankle: { x: k.cx + k.stance.near, y: k.g }, foot: 90 },
-    legFar: { ankle: { x: k.cx + k.stance.far, y: k.g - 1.5 }, foot: 62 },
+    neck: 184 - lean,
+    armNear: { rel: { x: k.arm * 0.66, y: k.arm * 0.12 }, bend: -1 },
+    armFar: { rel: { x: k.arm * 0.36, y: -k.arm * 0.12 }, bend: -1 },
+    legNear: { ankle: { x: k.cx + 7, y: k.g - 9 + drop }, foot: 60 },
+    legFar: { ankle: { x: k.cx - 7, y: k.g - 13 + drop }, foot: 30 },
   });
 }
 
@@ -28,10 +31,10 @@ function socoAereo(k: Kit): HdMoveSpec {
       spine: 150 - over * 6,
       neck: 16,
       shoulderNear: -90,
-      armNear: { to: k.at(25 + over, 33 - over * 5), bend: -1 },
+      armNear: { to: k.at(26 + over, 36 - over * 5), bend: -1 },
       armFar: { rel: { x: -k.arm * 0.2, y: k.arm * 0.4 }, bend: -1 },
       legNear: { ankle: { x: hip.x + 1, y: hip.y + 14 }, foot: 50 },
-      legFar: { ankle: { x: hip.x - 18 - over, y: hip.y + 5 - over }, foot: 10 },
+      legFar: { ankle: { x: hip.x - 18 - over, y: hip.y + 5 - over }, foot: 30 },
     });
   };
   const hipW = k.at(-2, 37);
@@ -48,21 +51,21 @@ function socoAereo(k: Kit): HdMoveSpec {
     }),
     hit: hit(0),
     over: hit(1),
-    recover: landing(k, 9),
+    recover: airborne(k, 164),
   };
 }
 
 /** Voadora: a perna de perto estende na diagonal da queda com a sola no alvo, a outra recolhe sob o corpo. */
 function voadora(k: Kit): HdMoveSpec {
   const hit = (over: number) => {
-    const hip = k.at(-2 + over, 37);
+    const hip = k.at(-2 + over, 40);
     return k.pose({
       hip,
-      spine: 216 + over * 4,
-      neck: -28,
+      spine: 228 + over * 3,
+      neck: -44,
       armNear: { rel: { x: -k.arm * 0.62 - over, y: k.arm * 0.5 }, bend: 1 },
       armFar: { rel: { x: k.arm * 0.55, y: k.arm * 0.02 }, bend: -1 },
-      legNear: { ankle: { x: hip.x + 25.5 + over, y: hip.y + 6 }, foot: 138 },
+      legNear: { ankle: { x: hip.x + 23.5 + over, y: hip.y + 11.5 }, foot: 130 },
       legFar: { ankle: { x: hip.x + 4, y: hip.y + 8 }, foot: 60 },
     });
   };
@@ -85,32 +88,41 @@ function voadora(k: Kit): HdMoveSpec {
     hit: hit(0),
     over: hit(1),
     down: air(-1, 34, 184, [10, 13, 100], 0.4),
-    recover: landing(k, 10, 164),
+    recover: airborne(k, 176),
   };
 }
 
-/** Pisão: os joelhos sobem, o corpo estica para baixo com um pé à frente do outro e trava no impacto. */
+/** Pisão: os joelhos sobem com os braços erguidos e o corpo desaba sobre a perna que pisa, travada para baixo. */
 function pisao(k: Kit): HdMoveSpec {
-  // `ext` (0..1) estica as pernas para baixo e abre os braços para cima; `lock` trava também a perna de trás.
-  const fall = (up: number, ext: number, lock: number) => {
-    const hip = k.at(1, up);
+  const A = k.arm;
+  const hit = (over: number) => {
+    const hip = k.at(0, 31 - over);
     return k.pose({
       hip,
-      spine: 166 + ext * 8,
-      neck: 10 - ext * 20,
-      armNear: { rel: { x: k.arm * (0.3 - ext * 0.85), y: k.arm * (0.5 - ext * 1.05) }, bend: ext > 0.5 ? 1 : -1 },
-      armFar: { rel: { x: k.arm * (0.45 + ext * 0.2), y: k.arm * (0.15 - ext * 0.1) }, bend: -1 },
-      legNear: { ankle: { x: hip.x + 6, y: hip.y + 6 + ext * 22 }, foot: 80 + ext * 30 },
-      legFar: { ankle: { x: hip.x - 4 + lock, y: hip.y + 12 + ext * 2 + lock * 10 }, foot: 50 + lock * 30 },
+      spine: 158 - over * 3,
+      neck: 22,
+      armNear: { rel: { x: -A * 0.4 - over, y: A * 0.55 - over * 2 }, bend: 1 },
+      armFar: { rel: { x: A * 0.5, y: A * 0.45 + over }, bend: -1 },
+      legNear: { ankle: { x: hip.x + 7, y: hip.y + 27 }, foot: 115 },
+      legFar: { ankle: { x: hip.x - 9 - over, y: hip.y + 9 - over }, foot: 30 },
     });
   };
+  const hipW = k.at(-1, 39);
   return {
     strike: 'footNear',
-    wind: fall(40, 0, 0),
-    mid: fall(36, 0.55, 0),
-    hit: fall(31, 1, 0),
-    over: fall(30, 1, 1),
-    recover: landing(k, 13, 152),
+    expr: 'shout',
+    wind: k.pose({
+      hip: hipW,
+      spine: 170,
+      neck: 12,
+      armNear: { rel: { x: -A * 0.35, y: -A * 0.8 }, bend: 1 },
+      armFar: { rel: { x: A * 0.5, y: -A * 0.75 }, bend: -1 },
+      legNear: { ankle: { x: hipW.x + 7, y: hipW.y + 4 }, foot: 70 },
+      legFar: { ankle: { x: hipW.x - 3, y: hipW.y + 10 }, foot: 40 },
+    }),
+    hit: hit(0),
+    over: hit(1),
+    recover: airborne(k, 166, 3),
   };
 }
 
