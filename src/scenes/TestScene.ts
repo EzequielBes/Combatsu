@@ -83,6 +83,8 @@ import { Aura } from '../game/techFx/Aura';
 import { Callout } from '../game/techFx/Callout';
 import { KokusenFx } from '../game/techFx/KokusenFx';
 import { CursedFx } from '../game/CursedFx';
+import { ImpactFrame } from '../game/ImpactFrame';
+import { impactTier, type ImpactTier } from '../core/impactTier';
 import { strikeToWorld } from '../core/strikePath';
 import { STRIKE_POINTS } from '../game/art/sprites/strikePoints';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../game/art/sprites/player';
@@ -204,10 +206,19 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Cinema do Kokusen (T24): negativo/duotom/raios/faíscas/zoom/cartão, tudo em tempo real (TFX-05). */
   private kokusenFx!: KokusenFx;
   private cursedFx!: CursedFx;
+  private impactFrame!: ImpactFrame;
+  /** Último impacto do golpe do jogador, para o snapshot (IMP-16). */
+  private lastImpact: { tier: ImpactTier; impactFrame: boolean } | null = null;
   /** Quadros sem ponto de golpe já avisados (EDG-01: um aviso por nome). */
   private warnedStrikeFrames = new Set<string>();
   /** Golpe do jogador em startup com a chama acesa (TRL-07), para a chama seguir o ponto de golpe. */
   private flameMove: string | null = null;
+  /** Inimigos derrubados por golpe do jogador esperando tocar o chão para ganhar a rachadura (IMP-15). */
+  private crackWatch = new Map<Enemy, number>();
+  /** Inimigos quebrados no começo do frame, para saber qual golpe quebrou a postura (IMP-03). */
+  private brokenAtFrameStart = new Set<number>();
+  /** Quadro do jogo em que o último Kokusen disparou (IMP-13). */
+  private kokusenFrame = -1;
   /** Último estado de conjuração visto (CAST-15/19): dispara o zoom da câmera só na troca de estado. */
   private lastCastState: CastState | null = null;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
@@ -330,8 +341,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.kokusenFx = new KokusenFx(this, this.realtimeFx, this.fxRegistry, this.uiLayer);
     // Impacto amaldiçoado: rastro, chama, estilhaços, anel, rachadura e o quadro de impacto (EDG-05: não com loja ou título).
     this.cursedFx = new CursedFx(this);
+    this.impactFrame = new ImpactFrame(this, () => this.run.state !== 'shop' && this.run.state !== 'title');
+    this.lastImpact = null;
     this.warnedStrikeFrames = new Set();
     this.flameMove = null;
+    this.crackWatch = new Map();
+    this.brokenAtFrameStart = new Set();
+    this.kokusenFrame = -1;
     // EDG-04: reinício da cena destrói todo efeito vivo.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cursedFx.destroyAll());
     // T22+: dono da hitbox do Punho Divergente/Kokusen e das camadas de fx próprias delas (eco, anel, estouro...).
@@ -349,7 +365,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.hitstop.trigger(ms);
         this.freeze();
       },
-      (target, point, facing, streak) => this.kokusenFx.trigger(target, point, facing, streak),
+      (target, point, facing, streak) => {
+        this.kokusenFrame = this.game.getFrame();
+        this.kokusenFx.trigger(target, point, facing, streak);
+      },
       // MST-01/02: acerto de técnica em alvo real vira ponto de maestria.
       (slot, castId, targetId, isBoss) => this.onMasteryHit(slot, castId, targetId, isBoss),
     );
@@ -471,6 +490,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
       const raw = this.controls.read();
       const input = acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT;
+      this.brokenAtFrameStart = new Set(this.enemies.filter((e) => e.broken).map((e) => e.id));
       this.player.update(dt, input);
       this.updateCursedFx();
       // FIN-01/03: `J`+`K` juntos perto de um inimigo quebrado é o finalizador; sem alvo, nada acontece.
@@ -1285,7 +1305,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       tech: this.techSnapshot(),
       kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
       techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
-      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState, aura: this.aura.pos, trails: this.cursedFx.trails },
+      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState, aura: this.aura.pos, trails: this.cursedFx.trails, lastImpact: this.lastImpact },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
       camera: {
         zoom: this.cameras.main.zoom,
@@ -1325,8 +1345,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * objeto é forte (hitstop de 90 ms) e tem a faísca roxa. `target` é quem aceitou o golpe (foco, PST-13).
    */
   private onConnect(hit: Hit, point: Vec2, kind: SparkKind, target?: Hittable): void {
-    this.fx.spark(point.x, point.y, kind);
-    if (hit.strength === 'heavy') this.fx.shake();
+    // IMP-06, CAM-06: o golpe corpo a corpo do jogador troca a faísca e a tremida pelo impacto amaldiçoado.
+    if (hit.ownerId === this.player.id && hit.moveName !== undefined) this.onMeleeImpact(hit, point, target);
+    else {
+      this.fx.spark(point.x, point.y, kind);
+      if (hit.strength === 'heavy') this.fx.shake();
+    }
     this.hitstop.trigger(HITSTOP_MS[hit.strength]);
     this.freeze();
     // CE-06/CE-08: só o golpe corpo a corpo do próprio player (soco do combo ou objeto na mão, `ownerId` é o
@@ -1340,6 +1364,21 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // PST-13: o foco é o último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (não o chefe).
       if (target instanceof Enemy) this.focusId = target.id;
     }
+  }
+
+  /**
+   * Impacto do golpe corpo a corpo do jogador (IMP-06..16): nível, camadas do `CursedFx`, quadro de impacto só no
+   * decisivo sem Kokusen e uma vez por golpe (IMP-11, IMP-13, IMP-14), e a rachadura na queda da derrubada.
+   */
+  private onMeleeImpact(hit: Hit, point: Vec2, target?: Hittable): void {
+    const brokePosture = target instanceof Enemy && target.broken && !this.brokenAtFrameStart.has(target.id);
+    const tier = impactTier(hit, { brokePosture });
+    this.cursedFx.impact(tier, point, { x: hit.direction.x, y: hit.direction.y }, hit.swingId ?? Math.floor(this.clockMs));
+    const kokusen = this.kokusenFrame === this.game.getFrame();
+    const framed = tier === 'decisive' && !kokusen && hit.swingId !== undefined ? this.impactFrame.trigger(hit.swingId) : false;
+    this.lastImpact = { tier, impactFrame: framed || (this.lastImpact?.tier === 'decisive' && this.impactFrame.applied) };
+    this.debugEvents.push(`impact:${tier}`);
+    if (hit.knockdown && target instanceof Enemy) this.crackWatch.set(target, this.clockMs);
   }
 
   /** Fase do golpe do jogador: rastro no `active` e chama no startup do forte (TRL-03, TRL-07, TRL-08, EDG-01). */
@@ -1383,12 +1422,27 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     });
   }
 
-  /** Por quadro: a chama segue o ponto de golpe e o jogador atingido apaga a chama (EDG-02). */
+  /** Por quadro: a chama segue o ponto de golpe, o jogador atingido apaga a chama (EDG-02) e a rachadura espera o chão. */
   private updateCursedFx(): void {
     if (this.flameMove !== null) {
       const at = this.strikeWorld(`${this.flameMove}-wind`);
       if (at && this.player.hp >= this.lastPlayerHp && !this.player.dead) this.cursedFx.flameMove(at);
       else this.stopFlame();
+    }
+    for (const [enemy, since] of this.crackWatch) {
+      const bodies = enemy.ragdollBodies;
+      if (enemy.removed || this.clockMs - since > 3000 || (bodies === null && this.clockMs - since > 400)) {
+        this.crackWatch.delete(enemy);
+        continue;
+      }
+      if (bodies === null) continue;
+      const touching = bodies.find(
+        (b) => this.matter.query.region(this.terrain, { min: { x: b.bounds.min.x, y: b.bounds.max.y - 1 }, max: { x: b.bounds.max.x, y: b.bounds.max.y + 2 } }).length > 0,
+      );
+      if (touching) {
+        this.cursedFx.crack({ x: touching.position.x, y: touching.bounds.max.y });
+        this.crackWatch.delete(enemy);
+      }
     }
   }
 

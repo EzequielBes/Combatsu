@@ -315,6 +315,11 @@ export class Enemy implements Hittable {
     return this.ragdoll ? this.ragdoll.parts[0].visible : null;
   }
 
+  /** Corpos das partes do ragdoll; `null` fora de ragdoll (rachadura da queda, IMP-15). */
+  get ragdollBodies(): MatterJS.BodyType[] | null {
+    return this.ragdoll ? this.ragdoll.bodies : null;
+  }
+
   /** Chaves de textura das partes do ragdoll; `null` fora de ragdoll (debug, EVR-06). */
   get ragdollTextures(): string[] | null {
     return this.ragdoll ? this.ragdoll.textureKeys : null;
