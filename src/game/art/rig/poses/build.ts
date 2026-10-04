@@ -11,6 +11,8 @@ export interface PoseSpec {
   neck?: number;
   /** Encurtamento de perspectiva dos braços (padrão 1: comprimento cheio). */
   armScale?: number;
+  /** Ângulo local do ombro de perto: 90 (padrão) o deixa atrás do eixo; -90 o leva para a frente (soco). */
+  shoulderNear?: number;
   armNear: { to: Vec2; bend: 1 | -1 };
   armFar: { to: Vec2; bend: 1 | -1 };
   legNear: { ankle: Vec2; foot: number; bend?: 1 | -1 };
@@ -18,7 +20,7 @@ export interface PoseSpec {
 }
 
 export function buildPose(s: PoseSpec): Pose {
-  let p = makePose(s.hip, { spine: s.spine, neckBone: s.neck ?? 0, footNear: s.legNear.foot, footFar: s.legFar.foot });
+  let p = makePose(s.hip, { spine: s.spine, neckBone: s.neck ?? 0, footNear: s.legNear.foot, footFar: s.legFar.foot, ...(s.shoulderNear === undefined ? {} : { shoulderNear: s.shoulderNear }) });
   if (s.armScale !== undefined) p.armScale = s.armScale;
   p = aimLimb(p, 'legNear', s.legNear.ankle, s.legNear.bend ?? 1);
   p = aimLimb(p, 'legFar', s.legFar.ankle, s.legFar.bend ?? 1);
