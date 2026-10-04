@@ -1,0 +1,9 @@
+node_modules/
+dist/
+docs/art/
+.fable-out/
+.claude/
+package-lock.json
+.specs/
+*.md
+tests/game/fixtures/
