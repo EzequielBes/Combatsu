@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { armFor, propName, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
-import { bossFinisherDamage } from '../core/bossFinisher';
 import { bossRewardSlot } from '../core/bossReward';
 import { clampCenter } from '../core/cameraFollow';
 import { Filters } from '../core/collision';
@@ -11,7 +10,7 @@ import { ComboCounter } from '../core/comboCounter';
 import { CursedEnergy } from '../core/energy';
 import { FxRegistry } from '../core/fxRegistry';
 import { FxTimeline } from '../core/fxTimeline';
-import { type Hit, type Strength, type Vec2 } from '../core/hit';
+import { type Hit, type Vec2 } from '../core/hit';
 import { AttackGate } from '../core/attackGate';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
@@ -31,12 +30,12 @@ import { CameraKick, ZoomPulse } from '../core/cameraKick';
 import { Wallet } from '../core/wallet';
 import { pickSpawnPoint } from '../core/spawnPoint';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
-import { BOSS_DEFEAT_HITSTOP_MS, HITSTOP_MS } from '../data/fx';
-import { DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE } from '../data/moves';
+import { BOSS_DEFEAT_HITSTOP_MS } from '../data/fx';
+import { READING } from '../data/moves';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
-import { CE, TECHNIQUES, type TechId } from '../data/techniques';
+import { TECHNIQUES, type TechId } from '../data/techniques';
 import {
   ARMED,
   BOSS,
@@ -48,7 +47,6 @@ import {
   ATTACK_GATE,
   ENEMY_ATTACK,
   PICKUP,
-  PLAYER_COMBO,
   RUN,
   SHOP,
   WAVE,
@@ -58,21 +56,21 @@ import { buildBackground } from '../game/art/background';
 import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
 import { createArt } from '../game/art';
 import { tileFrameFor } from '../game/art/tiles';
-import { routeContacts, tagBody, type Hittable } from '../game/bodyTags';
+import { tagBody, type Hittable } from '../game/bodyTags';
 import { Boss } from '../game/Boss';
 import { Projectile } from '../game/Projectile';
 import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
 import { registerDebugProbe, type DebugProbe, type GameSnapshot } from '../game/debugApi';
 import { Enemy } from '../game/Enemy';
 import { EnergyHud } from '../game/EnergyHud';
-import { Fx, type SparkKind } from '../game/fx';
+import { Fx } from '../game/fx';
 import { FxLab } from '../game/FxLab';
 import { GAME_NAME, Hud } from '../game/Hud';
 import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS, renderAlpha } from '../game/physics';
 import { Pickups } from '../game/Pickups';
-import { Player, type Attacker, type DefenseKind } from '../game/Player';
+import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
 import { ShopPanel } from '../game/ShopPanel';
 import { TechCaster } from '../game/TechCaster';
@@ -84,23 +82,13 @@ import { CursedFx } from '../game/CursedFx';
 import { ImpactFrame } from '../game/ImpactFrame';
 import { FocusLines } from '../game/FocusLines';
 import { CAMERA_FEEL } from '../data/feel';
-import { SIZE, TEX } from '../game/textures';
+import { TEX } from '../game/textures';
 import { debugParam, debugIntParam, NEUTRAL_INPUT, isDroppedTool, SPAWN_LIFT } from './test/params';
-import {
-  WORLD_ZOOM,
-  FINISHER_ZOOM,
-  FINISHER_ZOOM_IN_MS,
-  FINISHER_ZOOM_HOLD_MS,
-  FINISHER_ZOOM_OUT_MS,
-  CameraRig,
-} from './test/camera';
+import { WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, CameraRig } from './test/camera';
 import { EffectsDirector } from './test/effects';
 import { ImpactFx } from './test/impactFx';
+import { CombatLinks } from './test/combat';
 
-type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
-
-/** Hitstop do finalizador (FIN-02, ms). */
-const FINISHER_HITSTOP_MS = 150;
 /** Alpha do tom azulado da câmera lenta (DOD-12). */
 const SLOWMO_TINT_ALPHA = 0.22;
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
@@ -112,6 +100,7 @@ const BOSS_UPGRADE_BANNER_MS = 800;
 const SPAWN_VIEW_MARGIN = 32;
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
+  readonly combat = new CombatLinks(this);
   readonly impactFx = new ImpactFx(this);
   readonly effects = new EffectsDirector(this);
   readonly camera = new CameraRig(this);
@@ -243,7 +232,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.attackGate = new AttackGate(ATTACK_GATE);
     this.projectiles = [];
     this.buildTerrain();
-    this.listenForContacts();
+    this.combat.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
     this.run = new Run(RUN, WAVE, {
@@ -265,14 +254,17 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       const def = PROP_DEFS[s.key];
       if (!def) throw new Error(`Objeto sem definição: ${s.key}`);
       this.props.push(
-        new Prop(this, s.x, s.y, def, this.modifiers, (hit, at, target) => this.onConnect(hit, at, 'prop', target)),
+        new Prop(this, s.x, s.y, def, this.modifiers, (hit, at, target) =>
+          this.combat.onConnect(hit, at, 'prop', target),
+        ),
       );
     }
 
     this.controls = new PlayerInput(this);
     this.shopInput = new ShopInput(this);
     const p = this.level.player;
-    const strike = (hit: Hit, at: Vec2, target?: Hittable): void => this.onConnect(hit, at, hit.strength, target);
+    const strike = (hit: Hit, at: Vec2, target?: Hittable): void =>
+      this.combat.onConnect(hit, at, hit.strength, target);
     this.player = new Player(
       this,
       p.x,
@@ -286,10 +278,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     );
     this.player.onEvent = (ev) => {
       this.debugEvents.push(ev);
-      if (ev.startsWith('move:')) this.onPlayerMoveStart(ev.slice(5));
+      if (ev.startsWith('move:')) this.combat.onPlayerMoveStart(ev.slice(5));
     };
-    this.player.attackerOf = (ownerId) => this.attackerOf(ownerId);
-    this.player.onDefense = (kind, point) => this.onDefense(kind, point);
+    this.player.attackerOf = (ownerId) => this.combat.attackerOf(ownerId);
+    this.player.onDefense = (kind, point) => this.combat.onDefense(kind, point);
     this.lastPlayerHp = this.player.hp;
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
     this.techCaster = new TechCaster(this, this.player, this.energy, this.loadout);
@@ -367,10 +359,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // T28: no fxlab as teclas 1-4 (e as novas 5/6/0) são só do laboratório - nunca golpe leve/forte, matar ou
     // machucar o player (essas continuam fora do fxlab, como sempre foram).
     this.onKey('ONE', () =>
-      this.fxLab ? debugKeys() && this.fxLab.pressKey(1) : debugKeys() && this.debugHit('light'),
+      this.fxLab ? debugKeys() && this.fxLab.pressKey(1) : debugKeys() && this.combat.debugHit('light'),
     );
     this.onKey('TWO', () =>
-      this.fxLab ? debugKeys() && this.fxLab.pressKey(2) : debugKeys() && this.debugHit('heavy'),
+      this.fxLab ? debugKeys() && this.fxLab.pressKey(2) : debugKeys() && this.combat.debugHit('heavy'),
     );
     this.onKey('THREE', () =>
       this.fxLab ? debugKeys() && this.fxLab.pressKey(3) : debugKeys() && this.player.debugKill(),
@@ -448,7 +440,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.player.update(dt, input);
       this.impactFx.updateCursedFx();
       // FIN-01/03: `J`+`K` juntos perto de um inimigo quebrado é o finalizador; sem alvo, nada acontece.
-      if (input.bothPressed && !this.player.dead) this.tryFinisher();
+      if (input.bothPressed && !this.player.dead) this.combat.tryFinisher();
       this.comboCounter.update(dt);
       // CMB-02: o jogador levar dano zera o combo (a vida caiu neste frame, seja golpe cheio ou o que passa pela guarda).
       if (this.player.hp < this.lastPlayerHp) this.comboCounter.playerDamaged();
@@ -507,7 +499,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
       this.wasPlayerDead = this.player.dead;
-      this.updateEnemies(dt);
+      this.combat.updateEnemies(dt);
       this.boss?.update(dt, this.player.sprite.x);
       if (this.bossDefeatedPending) {
         this.boss?.destroyNow();
@@ -922,7 +914,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       y,
       def,
       this.modifiers,
-      (hit, at, target) => this.onConnect(hit, at, 'prop', target),
+      (hit, at, target) => this.combat.onConnect(hit, at, 'prop', target),
       rare,
     );
     const evictId = this.droppedTools.admit(prop.id, this.toolStates());
@@ -950,40 +942,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       p.destroyNow();
     }
     for (const p of this.props) if (isDroppedTool(p.def.key) && p.isGone) this.droppedTools.forget(p.id);
-  }
-
-  /**
-   * Inimigos comuns + limitador de atacantes (LIM-01..07, EDG-03). Por inimigo, a cena entrega `granted`,
-   * `windupAllowed` e `holdRank`; depois do `update` lê o que a IA emitiu: `windupStart` → `noteWindup`,
-   * `wantAttack` → `request`, e libera a vaga (ou a fila) no mesmo frame em que o estado sai de
-   * {approach, windup, attack} ou o inimigo morre/some.
-   */
-  updateEnemies(dt: number): void {
-    const gate = this.attackGate;
-    gate.update(dt);
-    const px = this.player.sprite.x;
-    const sideOf = (x: number): 1 | -1 => (x - px >= 0 ? 1 : -1);
-    for (const e of [...this.enemies]) {
-      // Posição na fila de espera entre os que esperam do mesmo lado do player (LIM-05, LIM-07).
-      const side = sideOf(e.x);
-      const sameSide = gate.queueOrder().filter((id) => {
-        const other = this.enemies.find((o) => o.id === id);
-        return other !== undefined && other.aiState === 'hold' && sideOf(other.x) === side;
-      });
-      const at = sameSide.indexOf(e.id);
-      e.update(dt, px, {
-        granted: gate.isGranted(e.id),
-        windupAllowed: gate.windupAllowed(),
-        holdRank: at >= 0 ? at : sameSide.length,
-        // PST-14, PST-16: só o foco da postura cai devagar.
-        focus: e.id === this.focusId,
-      });
-      if (e.windupStarted) gate.noteWindup(e.id);
-      const s = e.aiState;
-      if (e.removed || e.isDead()) gate.release(e.id);
-      else if (e.wantsAttack) gate.request(e.id);
-      else if (s !== 'approach' && s !== 'windup' && s !== 'attack') gate.release(e.id);
-    }
   }
 
   /** Ponto `E` do próximo inimigo comum (SPN-07..09) e registro do uso para o intervalo entre usos (SPN-08). */
@@ -1034,10 +992,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.attackGate.release(dead.id);
       },
       // A garra que acerta o player também é um golpe que conecta.
-      (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength),
+      (hit, hitPoint) => this.combat.onConnect(hit, hitPoint, hit.strength),
       // Drop do inimigo comum (design.md): sai daqui, não do onEnemyDied (que o chefe também chama).
       (dead, x, y) => {
-        this.onEnemyDied(dead.id, x, y);
+        this.combat.onEnemyDied(dead.id, x, y);
         this.applyDrop(this.loot.enemyDrop(this.run.round, dead.weapon !== null), x, y);
         if (dead.weapon) this.dropTool(dead.weapon, dead.weaponRare, x, y);
       },
@@ -1051,7 +1009,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     enemy.onShove = (dir) => this.player.shoved(dir);
     enemy.isWall = (box) => this.matter.query.region(this.terrain, box).length > 0;
     enemy.onSlideResidue = (at) => this.cursedFx.residue(at);
-    enemy.slideTouch = (self) => this.enemiesTouching(self);
+    enemy.slideTouch = (self) => this.combat.enemiesTouching(self);
     enemy.onBlock = (at) => {
       this.fx.spark(at.x, at.y, 'guard');
       this.realtimeFx.add('guard.spark', 100);
@@ -1059,16 +1017,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.enemies.push(enemy);
     this.debugEvents.push(`spawnFx:${enemy.id}`);
     this.fx.curseSmoke(spawnAt.x, spawnAt.y);
-  }
-
-  /** Inimigos comuns de pé cujo corpo toca o de `self` (RCT-04): quem desliza esbarra neles. */
-  enemiesTouching(self: Enemy): Enemy[] {
-    const a = self.hurtRect();
-    return this.enemies.filter((o) => {
-      if (o === self || o.removed || o.isDead() || o.state !== 'idle') return false;
-      const b = o.hurtRect();
-      return Math.abs(a.x - b.x) < (a.width + b.width) / 2 && Math.abs(a.y - b.y) < (a.height + b.height) / 2;
-    });
   }
 
   /** `?debug&shove=N` (número de 0 a 1): chance do empurrão no 4º leve seguido (RDG-23); ausente ou inválido vale o padrão. */
@@ -1096,7 +1044,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       spec,
       this.terrain,
       // O golpe que conecta (do player ou do teste de debug) também é um golpe que conecta (faísca + hitstop).
-      (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength),
+      (hit, hitPoint) => this.combat.onConnect(hit, hitPoint, hit.strength),
       // Rugido (BAI-13): empurra o player para longe do chefe.
       (dir) => this.player.pushHorizontal(dir, BOSS.roarImpulse),
       // Pouso do salto (BAT-03): duas ondas de choque, uma para cada lado, rente ao chão.
@@ -1119,7 +1067,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    * do hitstop, fora do próprio `receiveHit` que o matou.
    */
   onBossDefeated(dead: Boss, x: number, y: number): void {
-    this.onEnemyDied(dead.id, x, y);
+    this.combat.onEnemyDied(dead.id, x, y);
     this.applyDrop(this.loot.bossDrop(this.run.round), x, y);
     this.player.heal(Math.round(BOSS.healFraction * this.player.maxHp));
     this.effects.hitstop.trigger(BOSS_DEFEAT_HITSTOP_MS);
@@ -1146,16 +1094,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   ): void {
     this.projectiles.push(
       new Projectile(this, kind, x, y, dir, speed, maxDist, damage, (hit, hitPoint) =>
-        this.onConnect(hit, hitPoint, hit.strength),
+        this.combat.onConnect(hit, hitPoint, hit.strength),
       ),
     );
-  }
-
-  /** Um abate (FND-08, WAVE-06): conta na onda da rodada, além de ir para o snapshot de debug. */
-  onEnemyDied(enemyId: number, x: number, y: number): void {
-    this.debugEvents.push(`enemyDied:${enemyId}`);
-    this.debugDeaths.push({ id: enemyId, x, y });
-    this.run.enemyDied(enemyId);
   }
 
   debugSnapshot(): GameSnapshot {
@@ -1300,7 +1241,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // ITP-05/07: fração entre os dois últimos passos de física que este quadro desenha.
       physics: { alpha: renderAlpha(this) },
       // T23 (FIN-01/03): distância viva ao inimigo quebrado mais perto, a mesma que o finalizador usa; sem contrato prévio.
-      finisher: { distPx: this.nearestFinishable()?.dist ?? null },
+      finisher: { distPx: this.combat.nearestFinishable()?.dist ?? null },
       // T28: laboratório de efeitos, sem contrato prévio no snapshot; `null` fora do fxlab.
       fxlab: this.fxLab?.debug() ?? null,
     };
@@ -1319,187 +1260,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
           }
         : null;
     return { slots: [slotView(0, s0), slotView(1, s1)], cast: this.techCaster.cast };
-  }
-
-  /**
-   * Golpe que conectou: faísca no ponto de contato (FX-03), tremida só no forte e hitstop (FX-01/02). Golpe de
-   * objeto é forte (hitstop de 90 ms) e tem a faísca roxa. `target` é quem aceitou o golpe (foco, PST-13).
-   */
-  onConnect(hit: Hit, point: Vec2, kind: SparkKind, target?: Hittable): void {
-    // IMP-06, CAM-06: o golpe corpo a corpo do jogador troca a faísca e a tremida pelo impacto amaldiçoado.
-    if (hit.ownerId === this.player.id && hit.moveName !== undefined) this.impactFx.onMeleeImpact(hit, point, target);
-    else {
-      this.fx.spark(point.x, point.y, kind);
-      if (hit.strength === 'heavy') this.fx.shake();
-    }
-    this.effects.hitstop.trigger(HITSTOP_MS[hit.strength]);
-    this.effects.freeze();
-    // CE-06/CE-08: só o golpe corpo a corpo do próprio player (soco do combo ou objeto na mão, `ownerId` é o
-    // dele) aplicado a um alvo ganha energia; golpes que o player recebe têm outro dono, e dano de técnica (T22+)
-    // não passa por este caminho.
-    if (hit.ownerId === this.player.id) {
-      this.energy.gain(CE.meleeGain);
-      if (hit.moveName) this.player.hitLanded();
-      // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
-      this.comboCounter.hit(hit.moveName ?? 'objeto');
-      // PST-13: o foco é o último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (não o chefe).
-      if (target instanceof Enemy) this.focusId = target.id;
-    }
-  }
-
-  /**
-   * O jogador começou um golpe do grafo (`move:<nome>`): entra no histórico de leitura (RDG-01) e os inimigos comuns
-   * de frente e perto sorteiam a guarda (RDG-03). Contra não conta nem sorteia (RDG-11, RDG-12); o finalizador não
-   * emite `move:`. `?debug&enemyGuard=N` fixa a chance total (N=1: sempre levantam) e ignora a leitura (RDG-10).
-   */
-  onPlayerMoveStart(name: string): void {
-    const move = MOVES[name];
-    if (!move || move.counter) return;
-    const repeats = this.reading.note(name, this.clockMs);
-    const raw = debugParam('enemyGuard');
-    const override = raw !== null && Number.isFinite(Number(raw)) ? Number(raw) : undefined;
-    const me = { x: this.player.sprite.x, facing: this.player.facing };
-    for (const e of this.enemies) e.onPlayerMove(me, move, this.run.round, { repeats, override });
-  }
-
-  /** Quem bateu no jogador, para o lado do golpe, o tipo (chefe) e o efeito do parry (PAR-03/07/10). */
-  attackerOf(ownerId: number): Attacker | null {
-    const enemy = this.enemies.find((e) => e.id === ownerId);
-    if (enemy) return { x: enemy.x, isBoss: false, parried: (info) => enemy.parried(info) };
-    const boss = this.boss;
-    if (boss && boss.id === ownerId) return { x: boss.x, isBoss: true, parried: () => boss.parried() };
-    // Projéteis e ondas de choque só existem pelo chefe.
-    const proj = this.projectiles.find((p) => p.id === ownerId);
-    if (proj) return { x: proj.x, isBoss: true, parried: () => undefined };
-    return null;
-  }
-
-  /**
-   * Defesa do jogador (GRD-08, PAR-08, PAR-11): faíscas azuis no bloqueio; no parry flash em estrela, anel dourado
-   * e hitstop de 80 ms. As camadas `game` seguem vivas durante o hitstop, como a estrela do golpe.
-   */
-  onDefense(kind: DefenseKind, point: Vec2): void {
-    if (kind === 'block') {
-      this.fx.spark(point.x, point.y, 'guard');
-      this.realtimeFx.add('guard.spark', 100);
-    } else if (kind === 'parry' || kind === 'deflect') {
-      this.fx.spark(point.x, point.y, 'parry');
-      this.fx.parryRing(point.x, point.y);
-      this.realtimeFx.add('parry.flash', 100);
-      this.realtimeFx.add('parry.ring', 200);
-      this.effects.hitstop.trigger(DEFENSE.parryHitstopMs);
-      this.effects.freeze();
-      // CNT-15, DFL-13: a Deflexão avisa só `DEFLEXÃO`; o parry comum avisa `CONTRA`.
-      if (kind === 'deflect') this.warnAboveHead('DEFLEXÃO', 'w');
-      else this.warnAboveHead('CONTRA', 'A');
-    } else if (kind === 'perfectDodge') {
-      // Esquiva perfeita (DOD-07): câmera lenta com tom azulado e o "tique" branco no jogador.
-      this.effects.slowMo.trigger();
-      this.player.flash('w', 60);
-      this.warnAboveHead('CONTRA', 'A');
-    } else if (kind === 'duckEvade') {
-      this.warnAboveHead('CONTRA', 'A');
-    }
-    // `jumpEvade` não abre janela de Contra: sem aviso (DEF-18).
-  }
-
-  /** Texto flutuante sobre a cabeça do jogador, a menos de 40 px do centro do corpo (CNT-15, DFL-13); cor da paleta. */
-  warnAboveHead(text: string, colorKey: string): void {
-    this.floatTexts.spawn(text, colorKey, this.player.sprite.x, this.player.sprite.y - SIZE.player.h / 2);
-  }
-
-  /** Inimigo comum quebrado (e ainda não finalizado) mais perto do jogador, com a distância entre os centros do corpo. */
-  nearestFinishable(): { enemy: Enemy; dist: number } | null {
-    const pr = this.player.hurtRect();
-    let best: { enemy: Enemy; dist: number } | null = null;
-    for (const e of this.enemies) {
-      if (!e.finishable) continue;
-      const r = e.hurtRect();
-      const dist = Math.hypot(r.x - pr.x, r.y - pr.y);
-      if (!best || dist < best.dist) best = { enemy: e, dist };
-    }
-    return best;
-  }
-
-  /**
-   * Finalizador (FIN-01..04): com `J`+`K` a até 40 px de um inimigo comum quebrado (e ainda não finalizado nesta
-   * quebra) o golpe causa 40 de dano, congela 150 ms e a câmera dá zoom 1,7 em 100 ms; sem alvo, nada (FIN-03).
-   */
-  tryFinisher(): void {
-    if (this.tryBossFinisher()) return;
-    const near = this.nearestFinishable();
-    const target = near && near.dist <= STRUCTURE.finisherRangePx ? near.enemy : null;
-    if (!target) return;
-    const pr = this.player.hurtRect();
-    const at = target.hurtRect();
-    const dir: 1 | -1 = at.x >= pr.x ? 1 : -1;
-    const hit: Hit = {
-      ownerId: this.player.id,
-      damage: STRUCTURE.finisherDamage,
-      strength: 'heavy',
-      force: 12,
-      direction: { x: dir, y: -0.6 },
-      moveName: FINISHER_MOVE,
-      // PST-06: o finalizador derruba o inimigo quebrado que sobrevive.
-      knockdown: true,
-    };
-    this.player.finisherPose(dir);
-    if (!target.receiveHit(hit)) return;
-    target.markFinished();
-    this.debugEvents.push(`finisher:${target.id}`);
-    // Faísca, tremida, energia e combo do golpe comum; depois o congelamento maior do finalizador (o maior vence).
-    this.onConnect(hit, { x: at.x, y: at.y }, 'heavy', target);
-    this.effects.hitstop.trigger(FINISHER_HITSTOP_MS);
-    this.effects.freeze();
-    this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
-    this.camera.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
-  }
-
-  /**
-   * Finalizador do chefe (BFX-06..08): com ele vivo, em `stagger`, com o finalizador pronto e a até
-   * `BOSS.finisher.rangePx` do player (distância horizontal entre os centros), tira 12% do HP máximo, com o mesmo
-   * hitstop e zoom do finalizador comum. Devolve se foi aplicado; fora disso o fluxo do inimigo comum segue.
-   */
-  tryBossFinisher(): boolean {
-    const boss = this.boss;
-    if (!boss) return false;
-    const damage = bossFinisherDamage({
-      dist: Math.abs(boss.x - this.player.sprite.x),
-      state: boss.state,
-      finisherReady: boss.finisherReady,
-      maxHp: boss.maxHp,
-      t: BOSS.finisher,
-    });
-    if (damage <= 0) return false;
-    const dir: 1 | -1 = boss.x >= this.player.sprite.x ? 1 : -1;
-    this.player.finisherPose(dir);
-    boss.receiveFinisher();
-    this.debugEvents.push('finisher:boss');
-    const at = boss.hurtRect();
-    this.fx.spark(at.x, at.y, 'heavy');
-    this.fx.shake();
-    this.effects.hitstop.trigger(FINISHER_HITSTOP_MS);
-    this.effects.freeze();
-    this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
-    this.camera.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
-    return true;
-  }
-
-  /** Aplica em todos os inimigos e no chefe (se houver) o mesmo golpe que o combo do player daria. */
-  debugHit(strength: Strength): void {
-    const step = PLAYER_COMBO.find((s) => s.strength === strength)!;
-    const hitToward = (targetX: number): Hit => ({
-      ownerId: 0,
-      damage: step.damage,
-      strength,
-      force: step.force,
-      direction: { x: targetX >= this.player.sprite.x ? 1 : -1, y: -0.6 },
-      // PST-12: o golpe forte de teste (tecla 2) derruba, como antes de o forte passar a cambalear.
-      ...(strength === 'heavy' ? { knockdown: true } : {}),
-    });
-    for (const e of this.enemies) e.receiveHit(hitToward(e.x));
-    // Golpe aceito pelo chefe vai para o snapshot: na intro e no rugido ele recusa (BOSS-08, BAI-12).
-    if (this.boss?.receiveHit(hitToward(this.boss.x))) this.debugEvents.push('bossHitAccepted');
   }
 
   /**
@@ -1604,13 +1364,5 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       tagBody(body, { kind: 'terrain' });
       this.terrain.push(body);
     }
-  }
-
-  listenForContacts(): void {
-    const onStart = (event: ContactEvent): void => {
-      routeContacts(event.pairs);
-    };
-    this.matter.world.on('collisionstart', onStart);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.matter.world?.off('collisionstart', onStart));
   }
 }
