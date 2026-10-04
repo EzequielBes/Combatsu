@@ -1,4 +1,4 @@
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 import { RUN_THRESHOLD, pickEnemyAnim, type LightReaction } from '../../core/animState';
 import { KIND_COLOR, type AttackKind } from '../../core/attackKind';
 import type { HitReaction } from '../../core/hitReaction';
@@ -116,7 +116,7 @@ export class EnemyAnimator {
     this.view.setDepth(anim === 'attack' ? ATTACK_DEPTH : 0);
     // Guarda (EBL-01): sem quadro próprio na arte, o corpo fica azulado enquanto a guarda está de pé.
     if (guard.guarding) {
-      this.view.setTint(PALETTE.c);
+      this.view.setTint(PALETTE.c).setTintMode(Phaser.TintModes.MULTIPLY);
       this.guardTinted = true;
     } else if (this.guardTinted) {
       this.view.clearTint();
@@ -199,7 +199,7 @@ export class EnemyAnimator {
   flashCommit(): void {
     const key = KIND_COLOR[this.c.tuning.attack.kind];
     this.commitFlashKey = key;
-    this.view.setTintFill(PALETTE[key]);
+    this.view.setTint(PALETTE[key]).setTintMode(Phaser.TintModes.FILL);
     this.c.scene.time.delayedCall(COMMIT_FLASH_MS, () => {
       this.commitFlashKey = null;
       if (this.view.active) this.view.clearTint();

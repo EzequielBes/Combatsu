@@ -16,7 +16,7 @@ export const IMPACT_FRAME_RENDERS = 2;
 export class ImpactFrame {
   /** `true` sem WebGL (IMP-12): o postFX não é criado. */
   readonly degraded: boolean;
-  private effect: Phaser.FX.ColorMatrix | null = null;
+  private effect: Phaser.Filters.ColorMatrix | null = null;
   private rendersLeft = 0;
   private lastSwingId: number | null = null;
 
@@ -46,9 +46,9 @@ export class ImpactFrame {
     if (this.degraded || !this.canApply()) return false;
     this.lastSwingId = swingId;
     this.clear();
-    const cm = this.scene.cameras.main.postFX.addColorMatrix();
-    cm.set(duotoneMatrix(PALETTE.k, PALETTE.C));
-    cm.contrast(0.4, true);
+    const cm = this.scene.cameras.main.filters.internal.addColorMatrix();
+    cm.colorMatrix.set(duotoneMatrix(PALETTE.k, PALETTE.C));
+    cm.colorMatrix.contrast(0.4, true);
     this.effect = cm;
     this.rendersLeft = IMPACT_FRAME_RENDERS;
     return true;
@@ -67,7 +67,7 @@ export class ImpactFrame {
   }
 
   private clear(): void {
-    if (this.effect) this.scene.cameras.main?.postFX?.remove(this.effect as unknown as Phaser.FX.Controller);
+    if (this.effect) this.scene.cameras.main?.filters?.internal.remove(this.effect);
     this.effect = null;
     this.rendersLeft = 0;
   }

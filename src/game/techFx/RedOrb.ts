@@ -87,7 +87,7 @@ export class RedOrbFx {
   private readonly screenFlash: Phaser.GameObjects.Rectangle;
   /** RDA-06 / EDG-01 / AD-009: sem WebGL, nenhum postFX (Glow) é criado e o resto do efeito toca igual. */
   private readonly degraded: boolean;
-  private glowFx: Phaser.FX.Glow | null = null;
+  private glowFx: Phaser.Filters.Glow | null = null;
   private distortRing: Phaser.GameObjects.Graphics | null = null;
   private distortMs = 0;
   private screenFlashColor: number | null = null;
@@ -156,7 +156,9 @@ export class RedOrbFx {
     }
     this.chargeSprite.setPosition(x, y);
     if (!this.degraded && !this.glowFx) {
-      this.glowFx = this.chargeSprite.postFX.addGlow(C.glow, 4, 0, false, 0.1, 12); // RDA-06
+      // Phaser 4: o objeto liga os filtros antes de usar; a ordem dos parâmetros do Glow ganhou `scale`.
+      this.chargeSprite.enableFilters();
+      this.glowFx = this.chargeSprite.filters!.internal.addGlow(C.glow, 4, 0, 1, false, 10, 12); // RDA-06
     }
 
     if (!this.sparksOut) {
@@ -305,7 +307,8 @@ export class RedOrbFx {
       // não só cópias redondas do orbe - `scaleX` maior estica a mesma textura num risco horizontal.
       const ghost = this.scene.add
         .sprite(x, y, TEX.techOrbRed12, 'orb')
-        .setTintFill(C.glow)
+        .setTint(C.glow)
+        .setTintMode(Phaser.TintModes.FILL)
         .setAlpha(0.55)
         .setScale(1.6, 0.8)
         .setDepth(2);
@@ -346,7 +349,8 @@ export class RedOrbFx {
 
     const flash = this.scene.add
       .sprite(point.x, point.y, TEX.techOrbRed12, 'orb')
-      .setTintFill(C.core)
+      .setTint(C.core)
+      .setTintMode(Phaser.TintModes.FILL)
       .setScale(1.6)
       .setDepth(6);
     this.registry.add(flash);

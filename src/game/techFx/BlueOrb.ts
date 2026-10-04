@@ -130,7 +130,8 @@ export class BlueOrbFx {
     const flash = this.scene.add
       .sprite(x, y, TEX.techOrbBlue, 'orb')
       .setDisplaySize(CORE_DISPLAY_PX, CORE_DISPLAY_PX)
-      .setTintFill(PALETTE.W)
+      .setTint(PALETTE.W)
+      .setTintMode(Phaser.TintModes.FILL)
       .setDepth(3);
     this.registry.add(flash);
     this.registry.scheduleDestroy(flash, IMPLODE_MS);
