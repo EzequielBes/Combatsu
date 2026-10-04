@@ -167,7 +167,7 @@ const BODY: Grid = [
 /** Caído ao lado do corpo. */
 const ARM_DOWN: Grid = ['ksNk', 'kNNk', 'kNnk', 'ksnk', 'kppk', 'kPPk', '.kk.'];
 /** Balançando para trás (corrida). */
-const ARM_BACK: Grid = ['...ksNk', '..kNNk.', '.kNnk..', 'ksnk...', 'kpPk...', '.kk....'];
+export const ARM_BACK: Grid = ['...ksNk', '..kNNk.', '.kNnk..', 'ksnk...', 'kpPk...', '.kk....'];
 /** Balançando para a frente (corrida). */
 const ARM_FWD: Grid = ['ksNk...', '.kNNk..', '..kNnk.', '...kspk', '...kpPk', '....kk.'];
 /** Guarda: cotovelo embaixo, punho na altura do queixo. */
@@ -276,6 +276,48 @@ export function legStraight(len: number): string[] {
     'k'.repeat(thigh + 1) + '.'.repeat(shin + 1) + 'kkkk',
   ];
 }
+/**
+ * Perna do chute: sai do quadril, embaixo à esquerda, e termina no pé, `rise` linhas acima (0 = horizontal), com a
+ * coxa grossa (4 linhas de cor), a canela fina (2 linhas, no meio da coxa) e o sapato de sola clara (`s`) na ponta.
+ * `len` = colunas do quadril até o contorno da ponta do pé, inclusive; a ponta do pé fica nas 5 primeiras linhas da
+ * parte, que tem `rise + 6` linhas. Contorno `k` só nos vizinhos, sem as linhas `S` soltas do rastro antigo.
+ */
+export function legKick(len: number, rise = 0): string[] {
+  const leg = len - 6;
+  const thigh = Math.ceil(leg / 2);
+  const cells = Array.from({ length: rise + 6 }, () => Array<string>(len).fill('.'));
+  for (let x = 1; x <= leg; x++) {
+    const top = 1 + Math.round(rise * (1 - (x - 1) / (leg - 1)));
+    if (x <= thigh) {
+      cells[top][x] = 's';
+      cells[top + 1][x] = 'N';
+      cells[top + 2][x] = x === thigh ? 'o' : 'N';
+      cells[top + 3][x] = 'n';
+    } else {
+      cells[top + 1][x] = 'N';
+      cells[top + 2][x] = 'n';
+    }
+  }
+  for (let y = 1; y <= 3; y++) cells[y].splice(leg + 2, 3, 'K', 'K', 's');
+  const filled = cells.map((row) => row.map((c) => c !== '.'));
+  const near = (x: number, y: number): boolean => filled[y]?.[x] === true;
+  return cells.map((row, y) =>
+    row.map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c)).join(''),
+  );
+}
+
+/**
+ * Tronco inclinado para trás: cada linha desliza para a esquerda, 0 na de baixo (o cinto) e `cols` na de cima (a gola).
+ * A parte devolvida tem `cols` colunas a mais; quem a posiciona recua o `x` em `cols`.
+ */
+export function leanBack(grid: Grid, cols: number): string[] {
+  const last = grid.length - 1;
+  return grid.map((row, y) => {
+    const shift = Math.round((cols * (last - y)) / last);
+    return '.'.repeat(cols - shift) + row + '.'.repeat(shift);
+  });
+}
+
 /** Joelho da frente dobrado para cima (preparo e volta do chute). Também usado por `playerMoves`. */
 export const LEG_CHAMBER: Grid = ['kkkkkk.', 'ksNNNNk', 'knnnnNk', '.kkkkNk', '....ksKk', '....kkkk'];
 /** Só a perna de trás, de apoio (usada também por `playerTech` no release: perna da frente plantada e curta,
@@ -293,6 +335,8 @@ export interface Pose {
   lean?: number;
   /** Deslocamento vertical de cabeça + tronco (respiração, agachar). */
   drop?: number;
+  /** Colunas de inclinação para trás da gola e da cabeça em relação ao cinto (chutes: tronco para trás). */
+  tilt?: number;
   near?: Placed;
   far?: Placed;
   legs?: Placed[];
@@ -304,8 +348,9 @@ export function pose(p: Pose): string[] {
   const parts: Placed[] = [];
   if (p.far) parts.push(p.far);
   parts.push(...(p.legs ?? [[LEGS_STAND, 0, Y_LEGS] as const]));
-  parts.push([BODY, 4 + lean, Y_BODY + drop]);
-  parts.push([p.head ?? HEAD, 3 + lean, Y_HEAD + drop]);
+  const tilt = p.tilt ?? 0;
+  parts.push(tilt > 0 ? [leanBack(BODY, tilt), 4 + lean - tilt, Y_BODY + drop] : [BODY, 4 + lean, Y_BODY + drop]);
+  parts.push([p.head ?? HEAD, 3 + lean - tilt, Y_HEAD + drop]);
   if (p.near) parts.push(p.near);
   return compose(...parts);
 }
@@ -373,9 +418,11 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
 
   // Chute: no hit, a ponta do pé chega à coluna 28 = 21 texels (42 px) à frente do centro,
   // a borda da hitbox do chute (offsetX 26 + largura/2 16 = 42 px).
-  'kick-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 7, 11], far: [far(ARM_GUARD), 3, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 15]] }),
-  'kick-hit': smear(pose({ lean: -2, head: HEAD_FOCUS, near: [ARM_GUARD, 5, 11], far: [far(ARM_BACK), 0, 11], legs: [[LEG_SUPPORT, 3, 17], [legStraight(20), 9, 14]] }), 28, 14, 5, [6, 4]),
-  'kick-recover': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 7, 11], far: [far(ARM_GUARD), 3, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 16]] }),
+  // Tronco inclinado para trás (`tilt`), perna de apoio plantada sob o corpo e perna do chute subindo 3 linhas até a
+  // ponta, com coxa grossa e canela fina (`legKick`). Sem as linhas `S` do rastro antigo: o rastro agora é procedural.
+  'kick-wind': pose({ lean: -1, tilt: 1, head: HEAD_FOCUS, near: [ARM_GUARD, 6, 11], far: [far(ARM_GUARD), 2, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 15]] }),
+  'kick-hit': pose({ lean: -1, tilt: 2, head: HEAD_FOCUS, near: [ARM_GUARD, 4, 11], far: [far(ARM_BACK), 0, 11], legs: [[LEG_SUPPORT, 5, 17], [legKick(20, 3), 9, 12]] }),
+  'kick-recover': pose({ lean: -1, tilt: 1, head: HEAD_FOCUS, near: [ARM_GUARD, 6, 11], far: [far(ARM_GUARD), 2, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 16]] }),
 
   // Carregando objeto: braços para cima segurando.
   'carry-idle-0': pose({ near: [ARM_GUARD, 8, 10], far: [far(ARM_UP), 1, 3] }),

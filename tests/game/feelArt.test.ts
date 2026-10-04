@@ -1,6 +1,6 @@
 // Invariantes da arte do feel (impacto-amaldiçoado, fase de poses): POS-01..06 e POS-10 sobre os frames do player.
 import { describe, expect, it } from 'vitest';
-import { isOpaque, topRowOf } from '../../src/core/frameInvariants';
+import { isOpaque, isSingleComponent, thighShinHeights, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
 import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
@@ -98,5 +98,55 @@ describe('gancho ascendente: o punho passa da cabeça e vai à frente (POS-05, P
     const fistTop = rows.findIndex((r) => 'pP'.includes(r[col]));
     expect(fistTop, name).toBeGreaterThanOrEqual(0);
     expect(fistTop, name).toBeLessThan(ownHairTop - 1);
+  });
+});
+
+// ---------------------------------------------------------------- chutes (POS-02, POS-03, POS-06)
+
+const KICKS = ['kick', 'chuteFrontal', 'chuteEmpurrao', 'chuteAlto', 'chuteCarregado'] as const;
+const PHASES = ['wind', 'hit', 'recover'] as const;
+
+describe('chutes: corpo inteiro e uma peça só (POS-02, POS-03)', () => {
+  const frames = KICKS.flatMap((k) => PHASES.map((ph) => `${k}-${ph}`));
+
+  it.each(frames)('%s: os texels opacos formam um componente só, 8-conexo (POS-02)', (name) => {
+    expect(isSingleComponent(ALL[name]), name).toBe(true);
+  });
+
+  it.each(KICKS)('%s-hit: há texel opaco na última linha, o corpo toca o chão (POS-03)', (kick) => {
+    expect(touchesBottom(ALL[`${kick}-hit`]), kick).toBe(true);
+  });
+
+  it.each(KICKS)('%s-hit: a perna de apoio está plantada, com o pé na última linha, e não há linhas S soltas', (kick) => {
+    const rows = ALL[`${kick}-hit`];
+    expect(rows.join(''), kick).not.toContain('S');
+  });
+
+  it.each(['kick', 'chuteFrontal', 'chuteEmpurrao'])('%s-wind e -recover também não têm linhas S soltas', (kick) => {
+    expect(ALL[`${kick}-wind`].join('')).not.toContain('S');
+    expect(ALL[`${kick}-recover`].join('')).not.toContain('S');
+  });
+});
+
+describe('chutes: coxa mais grossa que a canela (POS-06)', () => {
+  // Colunas de leitura, dentro da perna que bate e longe do quadril e do pé: uma na coxa e outra na canela.
+  const LEG_BAND = { top: 14, bottom: 29 };
+  const READ: Record<string, { thighCol: number; shinCol: number }> = {
+    'kick-hit': { thighCol: 15, shinCol: 22 },
+    'chuteFrontal-hit': { thighCol: 15, shinCol: 22 },
+    'chuteEmpurrao-hit': { thighCol: 14, shinCol: 22 },
+  };
+
+  it('o limiar vale nos dois lados: 1 texel a mais passa, igual falha', () => {
+    const thicker = (h: { thigh: number; shin: number }): boolean => h.thigh - h.shin >= 1;
+    expect(thicker({ thigh: 6, shin: 5 })).toBe(true);
+    expect(thicker({ thigh: 5, shin: 5 })).toBe(false);
+  });
+
+  it.each(Object.keys(READ))('%s: a coxa é pelo menos 1 texel mais alta que a canela e as duas existem', (name) => {
+    const { thighCol, shinCol } = READ[name];
+    const h = thighShinHeights(ALL[name], LEG_BAND, thighCol, shinCol);
+    expect(h.shin, name).toBeGreaterThan(0);
+    expect(h.thigh - h.shin, name).toBeGreaterThanOrEqual(1);
   });
 });

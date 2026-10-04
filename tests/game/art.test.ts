@@ -1509,7 +1509,9 @@ describe('rastros de movimento nos golpes (SPR-14)', () => {
   const count = (rows: readonly string[], ch: string): number => rows.join('').split(ch).length - 1;
   const tipCol = (rows: readonly string[]): number => Math.max(...rows.map((r) => [...r].reduce((m, c, x) => (c === TRANSPARENT ? m : x), -1)));
 
-  it.each(['jab', 'cross', 'kick'])('$0-hit tem pelo menos 3 S a mais que o próprio wind e todos ficam antes da ponta', (name) => {
+  // O kick saiu desta lista (impacto-amaldicoado, POS-06): o chute redesenhado não tem linhas S soltas; o rastro do golpe
+  // passa a ser o procedural da feature. Ver tests/game/feelArt.test.ts.
+  it.each(['jab', 'cross'])('$0-hit tem pelo menos 3 S a mais que o próprio wind e todos ficam antes da ponta', (name) => {
     const hit = PLAYER_FRAMES[`${name}-hit`];
     const wind = PLAYER_FRAMES[`${name}-wind`];
     expect(count(hit, 'S') - count(wind, 'S')).toBeGreaterThanOrEqual(3);
