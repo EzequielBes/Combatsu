@@ -377,7 +377,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `CameraKick`, `ZoomPulse`, `SlowMo.trigger`
 **Requirement**: CAM-01, CAM-02, CAM-03, CAM-04, CAM-05, CAM-07, CAM-08
 **Done when**:
-- [ ] `npm run build && npm test` passam.
+- [x] `npm run build && npm test` passam.
 **Tests**: none
 **Gate**: build
 
