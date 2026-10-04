@@ -27,6 +27,8 @@ import { PlayerMovement } from './player/movement';
 import { PlayerStrikes } from './player/strikes';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { SIZE, TEX } from './textures';
+import { HD_ON } from './art/hd/flag';
+import { hdAnchors } from './art/hd/sheet';
 
 export type { Attacker, CastPose, DefenseKind, OnStrikePhase, StrikePhase } from './player/types';
 
@@ -275,12 +277,20 @@ export class Player implements Hittable {
     this.hitbox.follow(this.sprite.x, this.sprite.y, this.facing);
     // O objeto na mão acompanha o sprite, não o corpo: senão ele treme contra a mão acima de 60 Hz.
     const draw = this.renderPos;
-    this.held?.follow(draw.x, draw.y, this.facing);
+    this.held?.follow(draw.x, draw.y, this.facing, this.hdHands());
     this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
     this.poseMs = Math.max(0, this.poseMs - dtMs);
     this.anim.animate(sensors.grounded);
     this.anim.blink(dtMs);
     this.anim.tickFlash(dtMs);
+  }
+
+  /** `?hd=1`: as mãos do quadro HD na tela, em px a partir do centro do corpo, para o objeto ficar na mão. */
+  private hdHands(): { front: Vec2; back: Vec2 } | undefined {
+    const a = HD_ON ? hdAnchors(this.frameName) : undefined;
+    if (!a) return undefined;
+    const foot = SIZE.player.h / 2;
+    return { front: { x: a.near.x, y: a.near.y + foot }, back: { x: a.far.x, y: a.far.y + foot } };
   }
 
   /** hp 0 (HP-04): larga o objeto (ele cai em repouso), e a tela escurece até o respawn. */

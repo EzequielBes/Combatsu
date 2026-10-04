@@ -7,7 +7,7 @@
  */
 import { PLAYER_ANIMS, type AnimDef } from '../sprites/player';
 import { MOVE_PHASE_FRAMES, moveFrameName, type MovePhase } from './frames';
-import { renderHdPlayer } from './player';
+import { renderHdPlayer, type HdAnchors } from './player';
 
 /** Frame do player HD: 96x80, eixo do corpo na coluna 36 e o pé na última linha. */
 export const HD_FRAME = { w: 96, h: 80, originCol: 36 } as const;
@@ -72,6 +72,12 @@ export function hdAnims(): Record<string, AnimDef> {
 
 /** A animação `name` existe inteira na folha HD? */
 export const hdHasAnim = (name: string): boolean => name in hdAnims();
+
+/**
+ * Mãos do quadro em px a partir do pé do corpo (x para a frente do player, y negativo para cima): é onde o jogo
+ * prende o objeto na mão e faz nascer o efeito das técnicas. Quadro fora da folha HD: `undefined`.
+ */
+export const hdAnchors = (frameName: string): HdAnchors | undefined => rendered().anchors[frameName];
 
 /**
  * Ponto de golpe HD (a parte do corpo que acerta) para o frame lógico do golpe (`<golpe>-wind` ou `<golpe>-hit`),

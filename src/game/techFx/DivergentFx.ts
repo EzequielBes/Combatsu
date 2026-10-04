@@ -2,6 +2,8 @@ import type Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
 import { PALETTE } from '../art/palette';
+import { HD_ON } from '../art/hd/flag';
+import { HD_ORIGIN, hdHasFrame } from '../art/hd/sheet';
 import { TEX } from '../textures';
 
 /** Offset do punho (Direção de arte, spec P1 Punho Divergente): mesmo offset da hitbox do `direto` (DIV-02). */
@@ -116,11 +118,15 @@ export class DivergentFx {
     this.registry.add(ring);
     this.registry.scheduleDestroy(ring, BURST_MS);
     this.scene.tweens.add({ targets: ring, alpha: 0, scaleX: 2.4, scaleY: 2.4, duration: BURST_MS });
+    // `?hd=1`: o punho fantasma é o quadro do corpo HD (folha própria, origem no pé).
+    const hd = HD_ON && hdHasFrame('divergente-release');
     const ghost = this.scene.add
-      .sprite(x + GHOST_OFFSET * facing, y, TEX.playerArt, 'divergente-release')
+      .sprite(x + GHOST_OFFSET * facing, y, hd ? TEX.playerHd : TEX.playerArt, 'divergente-release')
       .setAlpha(0.55)
       .setScale(facing, 1)
       .setDepth(4);
+    // O ponto é o centro do alvo: o quadro HD (origem no pé) fica centrado nele pela altura do peito.
+    if (hd) ghost.setOrigin(HD_ORIGIN.x, 0.62);
     this.registry.add(ghost);
     this.registry.scheduleDestroy(ghost, GHOST_MS);
     this.scene.tweens.add({ targets: ghost, alpha: 0, duration: GHOST_MS });

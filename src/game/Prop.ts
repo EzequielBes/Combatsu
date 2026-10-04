@@ -104,12 +104,17 @@ export class Prop {
     this.sync();
   }
 
-  /** Chamado todo frame por quem segura. Sem colisão, só posição visual no socket. */
-  follow(holderX: number, holderY: number, facing: 1 | -1): void {
+  /**
+   * Chamado todo frame por quem segura. Sem colisão, só posição visual no socket. Com `hands` (as mãos do quadro
+   * do corpo HD, em px a partir do centro de quem segura, já viradas para a frente dele), o objeto fica na mão: a da
+   * frente para o socket `front` e no golpe, a de trás para o `back`.
+   */
+  follow(holderX: number, holderY: number, facing: 1 | -1, hands?: { front: Vec2; back: Vec2 }): void {
     const st = this.machine.state;
     if (st !== 'held' && st !== 'swing') return;
     this.facing = facing;
-    const socket = st === 'swing' ? SOCKET.swing : SOCKET[this.def.socket];
+    const fixed = st === 'swing' ? SOCKET.swing : SOCKET[this.def.socket];
+    const socket = hands ? (st === 'swing' ? hands.front : hands[this.def.socket]) : fixed;
     this.sprite.setPosition(holderX + socket.x * facing, holderY + socket.y);
     this.sprite.setAngle(st === 'swing' ? 90 * facing : 0);
     this.sprite.setFlipX(facing < 0);
