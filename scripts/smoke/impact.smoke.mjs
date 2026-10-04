@@ -56,11 +56,27 @@ export default async function (ctx) {
       if (s.fx.trails.length > 0) startupEnd = s.player.x;
     }
     assert(startupEnd !== null, 'o golpe forte deveria gerar um rastro');
-    const dx = startupEnd - x0;
-    assert(Math.abs(dx - 10) <= 1, `POS-07: o passo do forte deveria ser 10 px (±1), foi ${dx.toFixed(2)}`);
+    // O rastro nasce no quadro em que o startup acaba; o último pedaço do passo entra nesse mesmo quadro ou no seguinte.
+    s = await frame();
+    const dx = s.player.x - x0;
+    assert(Math.abs(dx - 10) <= 0.25, `POS-07: o passo do forte deveria ser 10 px (±0,25), foi ${dx.toFixed(2)}`);
     assert(s.player.move !== null, 'o golpe forte deveria estar em curso');
     assert(trails.length >= 1 && trails.every((t) => t.tier === 'heavy' && t.widthPx === 8), `TRL-05/10: o rastro do forte deveria ser heavy de 8 px: ${JSON.stringify(trails)}`);
     assert(trails.every((t) => typeof t.ageMs === 'number' && t.ageMs >= 0 && t.ageMs <= 220), `TRL-10/05: ageMs fora de 0..220: ${JSON.stringify(trails)}`);
+  }
+
+  // --- POS-08: jab de chão sem inimigo à frente ---------------------------------------------------------------------------------
+  {
+    let s = await boot(QUERY);
+    s = await snap(60);
+    assert(nearest(s).x - s.player.x > 300, `o inimigo deveria estar longe: ${nearest(s).x - s.player.x} px`);
+    const x0 = s.player.x;
+    s = await press('KeyJ');
+    for (let i = 0; i < 30 && s.fx.trails.length === 0; i++) s = await frame();
+    assert(s.fx.trails.length > 0, 'o jab deveria gerar um rastro');
+    s = await frame();
+    const dx = s.player.x - x0;
+    assert(Math.abs(dx - 4) <= 0.25, `POS-08: o passo do jab deveria ser 4 px (±0,25), foi ${dx.toFixed(2)}`);
   }
 
   // --- TRL-04, IMP-02/04 (nível light), IMP-16: jab ----------------------------------------------------------------------------
