@@ -76,6 +76,7 @@ Parâmetros da URL, todos junto de `?debug`:
 | `noshop=1` | pular a loja entre as rodadas |
 | `heal=N`, `armed=knife\|club`, `rare=1` | forçar a chance de cura, a ferramenta do inimigo armado e a raridade |
 | `fxlab` | laboratório de efeitos: sem ondas, bonecos de treino, teclas 1 a 6 disparam cada efeito e 0 liga a câmera lenta |
+| `hd=1` | spike de sprites HD: canvas 1280x720, zoom 2 e folha `player-hd` (1 texel = 1 px) no idle e no gancho ascendente; funciona com ou sem `debug` |
 
 Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapshot()` devolve o estado vivo,
 `step(ms)` avança o jogo em passos fixos e `render()` desenha o quadro atual.

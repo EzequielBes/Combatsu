@@ -1,3 +1,4 @@
+import { UI_SIZE, zoom } from '../art/hd/screen';
 import Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
@@ -136,8 +137,8 @@ export class KokusenFx {
     this.degraded = scene.game.renderer.type !== Phaser.WEBGL; // TFX-06/11
     this.colorMatrix = this.degraded ? null : scene.cameras.main.postFX.addColorMatrix();
 
-    const cx = scene.scale.width / 2;
-    const cy = scene.scale.height / 2;
+    const cx = UI_SIZE.w / 2;
+    const cy = UI_SIZE.h / 2;
     const cardW = KANJI_SIZE * 2 + CARD_GAP;
     const left = cx - cardW / 2;
     this.cardKuro = scene.add
@@ -203,7 +204,7 @@ export class KokusenFx {
     // próprio `update` (`zoomBackMs`), não pelo callback do `zoomTo` - `Zoom.update()` chama esse callback e, na
     // MESMA passada, roda `effectComplete()` por `progress` já ter chegado a 1: um `zoomTo` novo armado dentro do
     // callback (mesmo efeito, reaproveitado) era cancelado ali mesmo, e a câmera ficava presa em 1,68.
-    cam.zoomTo(KOKUSEN.zoomPeak, KOKUSEN.zoomInMs, 'Linear', true);
+    cam.zoomTo(zoom(KOKUSEN.zoomPeak), KOKUSEN.zoomInMs, 'Linear', true);
     this.zoomBackMs = KOKUSEN.zoomInMs;
     cam.shake(KOKUSEN.hitstopMs, 0.012); // "tremida forte" (Direção de arte, beat 6)
   }
@@ -223,7 +224,7 @@ export class KokusenFx {
     this.zoomBackMs -= realDtMs;
     if (this.zoomBackMs > 0) return;
     this.zoomBackMs = null;
-    this.scene.cameras.main.zoomTo(1.5, KOKUSEN.zoomOutMs, 'Linear', true);
+    this.scene.cameras.main.zoomTo(zoom(1.5), KOKUSEN.zoomOutMs, 'Linear', true);
   }
 
   private updateInvertDuotone(realDtMs: number): void {

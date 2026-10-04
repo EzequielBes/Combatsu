@@ -1,3 +1,4 @@
+import { UI_SIZE } from './art/hd/screen';
 import type Phaser from 'phaser';
 import type { OfferView, ShopView } from '../core/shop';
 import { TECHNIQUES, type TechId } from '../data/techniques';
@@ -93,8 +94,8 @@ export class ShopPanel {
     private readonly scene: Phaser.Scene,
     private readonly layer: Phaser.GameObjects.Layer,
   ) {
-    const w = scene.scale.width;
-    const h = scene.scale.height;
+    const w = UI_SIZE.w;
+    const h = UI_SIZE.h;
     this.bg = scene.add.rectangle(0, 0, w, h, PALETTE[SHOP_PANEL_COLORS.bg], 0.7).setOrigin(0, 0).setVisible(false);
 
     const totalW = CARD_W * CARD_COUNT + CARD_GAP * (CARD_COUNT - 1);

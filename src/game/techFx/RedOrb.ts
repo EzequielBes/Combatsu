@@ -1,3 +1,4 @@
+import { UI_SIZE } from '../art/hd/screen';
 import Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
@@ -97,7 +98,7 @@ export class RedOrbFx {
   ) {
     this.degraded = scene.game.renderer.type !== Phaser.WEBGL;
     this.screenFlash = scene.add
-      .rectangle(0, 0, scene.scale.width, scene.scale.height, C.flash, 0)
+      .rectangle(0, 0, UI_SIZE.w, UI_SIZE.h, C.flash, 0)
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(200)

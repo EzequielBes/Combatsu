@@ -12,10 +12,12 @@ export interface StrikeTexel {
 export interface FrameOrigin {
   originCol: number;
   rows: number;
+  /** Px de mundo por texel do frame; padrão `ART_SCALE` (a folha HD usa 1). */
+  texelPx?: number;
 }
 
 /**
- * Ponto de golpe em coordenadas de mundo (TRL-03). O texel vale `ART_SCALE` px; facing -1 espelha o deslocamento
+ * Ponto de golpe em coordenadas de mundo (TRL-03). O texel vale `frame.texelPx` px (padrão `ART_SCALE`); facing -1 espelha o deslocamento
  * horizontal em volta da coluna de origem. O ponto é o centro do texel.
  */
 export function strikeToWorld(
@@ -24,9 +26,10 @@ export function strikeToWorld(
   facing: 1 | -1,
   frame: FrameOrigin,
 ): Vec2 {
+  const texel = frame.texelPx ?? ART_SCALE;
   return {
-    x: at.x + facing * (pt.col - frame.originCol) * ART_SCALE,
-    y: at.footY - (frame.rows - pt.row - 0.5) * ART_SCALE,
+    x: at.x + facing * (pt.col - frame.originCol) * texel,
+    y: at.footY - (frame.rows - pt.row - 0.5) * texel,
   };
 }
 

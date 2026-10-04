@@ -1,3 +1,4 @@
+import { SCREEN, UI_SCALE, UI_SIZE } from '../../game/art/hd/screen';
 import Phaser from 'phaser';
 import { SLOWMO_TINT_COLOR } from '../../game/art/combatColors';
 import { isDebug, onDebugChange } from '../../game/debug';
@@ -28,7 +29,10 @@ export class UiSetup {
   addUiCamera(): void {
     this.s.uiLayer = this.s.add.layer();
     this.s.cameras.main.ignore(this.s.uiLayer);
-    const ui = this.s.cameras.add(0, 0, this.s.scale.width, this.s.scale.height, false, 'ui');
+    const ui = this.s.cameras.add(0, 0, SCREEN.w, SCREEN.h, false, 'ui');
+    // Com `?hd=1` (canvas 1280x720) a UI continua desenhada em 960x540: origem no canto e zoom 4/3 (os objetos da UI têm
+    // scrollFactor 0, então o scroll não serve para o ajuste). Sem a chave: zoom 1, e a origem não muda nada.
+    ui.setOrigin(0, 0).setZoom(UI_SCALE);
     const route = (obj: Phaser.GameObjects.GameObject): void => {
       // Um objeto nasce na lista da cena e só depois é movido para a camada: aí ele volta a ser da UI.
       if (obj.displayList === this.s.uiLayer) obj.cameraFilter &= ~ui.id;
@@ -64,7 +68,7 @@ export class UiSetup {
     this.s.callout = new Callout(this.s, this.s.uiLayer);
     // DOD-12: tom azulado por cima do mundo na câmera lenta, na `uiLayer` (a câmera de UI é a que o desenha).
     this.slowTint = this.s.add
-      .rectangle(0, 0, this.s.scale.width, this.s.scale.height, SLOWMO_TINT_COLOR, SLOWMO_TINT_ALPHA)
+      .rectangle(0, 0, UI_SIZE.w, UI_SIZE.h, SLOWMO_TINT_COLOR, SLOWMO_TINT_ALPHA)
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(90)

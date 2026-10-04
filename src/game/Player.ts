@@ -392,6 +392,11 @@ export class Player implements Hittable {
     return String(this.view.frame.name);
   }
 
+  /** Chave da textura do sprite em cena, para o snapshot (`player.sheet`, ex.: `player-hd`). */
+  get sheetKey(): string {
+    return this.view.texture.key;
+  }
+
   /** Guarda para o snapshot (`player.guard`): `parry` = janela aberta. */
   get guardState(): 'none' | 'guard' | 'parry' {
     return this.guard.state;

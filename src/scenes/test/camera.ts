@@ -2,11 +2,12 @@ import { followCenter, scrollFor, type FollowConfig } from '../../core/cameraFol
 import { type CastState } from '../../core/cast';
 import { type Vec2 } from '../../core/hit';
 import { CameraKick, ZoomPulse } from '../../core/cameraKick';
+import { UI_SCALE, zoom } from '../../game/art/hd/screen';
 import { CAST_FX, TECHNIQUES } from '../../data/techniques';
 import type { TestScene } from '../TestScene';
 
 /** Zoom da câmera do mundo (RES-01): 960x540 de tela mostram 640x360 px de mundo. */
-export const WORLD_ZOOM = 1.5;
+export const WORLD_ZOOM = zoom(1.5);
 
 /** Folga (px de tela) em que o player anda sem a câmera andar junto. */
 export const FOLLOW_DEADZONE = { w: 40, h: 24 };
@@ -15,7 +16,7 @@ export const FOLLOW_DEADZONE = { w: 40, h: 24 };
 export const FOLLOW_LERP = 0.15;
 
 /** Finalizador (FIN-04): zoom da câmera no golpe, tempo até chegar (ms; 80 para fechar em 100 ms reais com o frame de atraso do efeito) e depois de quanto tempo real volta ao normal. */
-export const FINISHER_ZOOM = 1.7;
+export const FINISHER_ZOOM = zoom(1.7);
 
 export const FINISHER_ZOOM_IN_MS = 80;
 
@@ -80,11 +81,11 @@ export class CameraRig {
     if (state === this.lastCastState) return;
     const cam = this.s.cameras.main;
     if (state === 'charge' && this.s.techCaster.cast) {
-      cam.zoomTo(CAST_FX.zoomCharge, Math.max(1, TECHNIQUES[this.s.techCaster.cast.id].chargeMs), 'Linear', true);
+      cam.zoomTo(zoom(CAST_FX.zoomCharge), Math.max(1, TECHNIQUES[this.s.techCaster.cast.id].chargeMs), 'Linear', true);
     } else if (state === 'release') {
-      cam.zoomTo(CAST_FX.zoomBase, CAST_FX.zoomBackMs, 'Linear', true);
+      cam.zoomTo(zoom(CAST_FX.zoomBase), CAST_FX.zoomBackMs, 'Linear', true);
     } else if (state === null && (this.lastCastState === 'sign' || this.lastCastState === 'charge')) {
-      cam.zoomTo(CAST_FX.zoomBase, CAST_FX.zoomBackMs, 'Linear', true);
+      cam.zoomTo(zoom(CAST_FX.zoomBase), CAST_FX.zoomBackMs, 'Linear', true);
     }
     this.lastCastState = state;
   }
@@ -92,7 +93,7 @@ export class CameraRig {
   /** Ponto do mundo na tela da câmera principal (FOC-01), já com zoom e tranco. */
   worldToScreen(p: Vec2): Vec2 {
     const view = this.s.cameras.main.worldView;
-    const zoom = this.s.cameras.main.zoom;
-    return { x: (p.x - view.x) * zoom, y: (p.y - view.y) * zoom };
+    const z = this.s.cameras.main.zoom;
+    return { x: ((p.x - view.x) * z) / UI_SCALE, y: ((p.y - view.y) * z) / UI_SCALE };
   }
 }

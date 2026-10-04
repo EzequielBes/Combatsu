@@ -6,6 +6,8 @@ import { impactTier, type ImpactTier } from '../../core/impactTier';
 import { CAMERA_FEEL } from '../../data/feel';
 import { strikeToWorld } from '../../core/strikePath';
 import { STRIKE_POINTS } from '../../game/art/sprites/strikePoints';
+import { HD_ON } from '../../game/art/hd/flag';
+import { hdStrike } from '../../game/art/hd/sheet';
 import { currentSearch, rigStrike } from '../../game/art/rig/flag';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../game/art/sprites/player';
 import { SIZE } from '../../game/textures';
@@ -114,7 +116,9 @@ export class ImpactFx {
   /** Ponto de golpe do quadro em coordenadas de mundo; `null` (com um aviso por nome) sem entrada (EDG-01). */
   strikeWorld(frameName: string): Vec2 | null {
     // PRA-08: com o boneco, o wind e o hit do gancho saem do pulso do heroico alto, no frame dele (40x40, eixo na coluna 12).
-    const rig = rigStrike(frameName, currentSearch());
+    // `?hd=1`: o corpo HD tem ponto de golpe próprio (1 px por texel); vence o boneco.
+    const hd = HD_ON ? hdStrike(frameName) : undefined;
+    const rig = hd ? { pt: hd.pt, frame: { ...hd.frame, texelPx: hd.texelPx } } : rigStrike(frameName, currentSearch());
     const pt = rig?.pt ?? STRIKE_POINTS[frameName];
     if (!pt) {
       if (!this.warnedStrikeFrames.has(frameName)) {

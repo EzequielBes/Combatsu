@@ -26,6 +26,7 @@ export class DebugSnapshot {
         vy: this.s.player.verticalSpeed,
         move: this.s.player.moveName,
         frame: this.s.player.frameName,
+        sheet: this.s.player.sheetKey,
         view: this.s.player.spritePos,
         guard: this.s.player.guardState,
         structure: this.s.player.structureView,

@@ -2,13 +2,14 @@ import Phaser from 'phaser';
 import { PALETTE } from './game/art/palette';
 import { installDebugApi } from './game/debugApi';
 import { isDebug } from './game/debug';
+import { SCREEN } from './game/art/hd/screen';
 import { TestScene } from './scenes/TestScene';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: document.body,
-  width: 960,
-  height: 540,
+  width: SCREEN.w,
+  height: SCREEN.h,
   pixelArt: true,
   roundPixels: true,
   // Cor de limpeza do canvas vem da paleta (céu profundo), para nenhum furo mostrar cor fora dela (ART-01).

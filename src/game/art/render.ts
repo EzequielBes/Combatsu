@@ -28,3 +28,46 @@ export function registerSheet(scene: Phaser.Scene, textureKey: string, sheet: Pa
   });
   texture.refresh();
 }
+
+/** Folha indexada: quadros de `frameW x frameH` com índices numa tabela de cores (0 = transparente). */
+export interface IndexedSheet {
+  frameW: number;
+  frameH: number;
+  colors: readonly number[];
+  frames: Readonly<Record<string, Uint8Array>>;
+}
+
+/** Largura máxima da textura de uma folha indexada (px); passou disso, os quadros quebram em linhas. */
+const MAX_SHEET_W = 4096;
+
+/**
+ * Pinta uma folha indexada numa textura de canvas a 1 px por texel (sem `ART_SCALE`), um frame nomeado por quadro.
+ * Os quadros ficam lado a lado e quebram em nova linha antes de passar de 4096 px de largura.
+ */
+export function registerIndexedSheet(scene: Phaser.Scene, textureKey: string, sheet: IndexedSheet): void {
+  const names = Object.keys(sheet.frames);
+  const { frameW: fw, frameH: fh } = sheet;
+  const perRow = Math.max(1, Math.min(names.length, Math.floor(MAX_SHEET_W / fw)));
+  const rows = Math.max(1, Math.ceil(names.length / perRow));
+  if (scene.textures.exists(textureKey)) scene.textures.remove(textureKey);
+  const texture = scene.textures.createCanvas(textureKey, perRow * fw, rows * fh);
+  if (!texture) throw new Error(`Não foi possível criar a textura '${textureKey}'`);
+
+  const ctx = texture.getContext();
+  const css = sheet.colors.map((c) => `#${c.toString(16).padStart(6, '0')}`);
+  names.forEach((name, i) => {
+    const x0 = (i % perRow) * fw;
+    const y0 = Math.floor(i / perRow) * fh;
+    const px = sheet.frames[name];
+    for (let y = 0; y < fh; y++) {
+      for (let x = 0; x < fw; x++) {
+        const idx = px[y * fw + x];
+        if (idx === 0) continue;
+        ctx.fillStyle = css[idx];
+        ctx.fillRect(x0 + x, y0 + y, 1, 1);
+      }
+    }
+    texture.add(name, 0, x0, y0, fw, fh);
+  });
+  texture.refresh();
+}

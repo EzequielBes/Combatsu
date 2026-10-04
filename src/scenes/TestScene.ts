@@ -1,3 +1,4 @@
+import { UI_SIZE } from '../game/art/hd/screen';
 import Phaser from 'phaser';
 import { clampCenter } from '../core/cameraFollow';
 import { DroppedTools } from '../core/droppedTools';
@@ -348,7 +349,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     });
     this.ui.addHud();
     this.shopPanel = new ShopPanel(this, this.uiLayer);
-    this.focusLines = new FocusLines(this, this.uiLayer, this.scale.width, this.scale.height);
+    this.focusLines = new FocusLines(this, this.uiLayer, UI_SIZE.w, UI_SIZE.h);
   }
 
   update(_time: number, delta: number): void {

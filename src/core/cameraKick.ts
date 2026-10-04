@@ -1,3 +1,4 @@
+import { zoom } from '../game/art/hd/screen';
 import { CAMERA_FEEL } from '../data/feel';
 import type { Vec2 } from './hit';
 
@@ -37,7 +38,9 @@ export class ZoomPulse {
 
   /** Avança o tempo real e devolve o zoom atual. */
   update(realDtMs: number): number {
-    const { zoomBase: base, zoomPeak: peak, zoomInMs: inMs, zoomHoldMs: holdMs, zoomOutMs: outMs } = CAMERA_FEEL;
+    const { zoomInMs: inMs, zoomHoldMs: holdMs, zoomOutMs: outMs } = CAMERA_FEEL;
+    const base = zoom(CAMERA_FEEL.zoomBase);
+    const peak = zoom(CAMERA_FEEL.zoomPeak);
     const total = inMs + holdMs + outMs;
     if (this.elapsed < total) this.elapsed += realDtMs;
     const t = this.elapsed;
