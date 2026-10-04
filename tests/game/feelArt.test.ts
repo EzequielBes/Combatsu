@@ -1,7 +1,11 @@
 // Invariantes da arte do feel (impacto-amaldiçoado, fase de poses): POS-01..06 e POS-10 sobre os frames do player.
 import { describe, expect, it } from 'vitest';
+import { strikeToBody } from '../../src/core/strikePath';
+import { MOVES } from '../../src/data/moves';
+import { SIZE } from '../../src/game/textures';
 import { headLeftCol, isOpaque, isSingleComponent, thighShinHeights, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
 import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { STRIKE_POINTS } from '../../src/game/art/sprites/strikePoints';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
 
@@ -53,11 +57,10 @@ describe('folga de 6 linhas no topo do frame do player (POS-05, POS-10)', () => 
   });
 });
 
-// Ponto de golpe provisório (coluna e linha do frame) do punho nos frames `-hit` do gancho. A T13 cria `STRIKE_POINTS`
-// com o valor definitivo; até lá estes valores marcam o centro do punho.
+// Ponto de golpe oficial (T13) do punho nos frames `-hit` do gancho.
 const UPPERCUT_POINT: Record<string, { col: number; row: number }> = {
-  'ganchoAscendente-hit': { col: 21, row: 5 },
-  'contraGancho-hit': { col: 21, row: 5 },
+  'ganchoAscendente-hit': STRIKE_POINTS['ganchoAscendente-hit'],
+  'contraGancho-hit': STRIKE_POINTS['contraGancho-hit'],
 };
 const HAIR_TOP_IDLE = topRowOf(ALL['idle-0'], HAIR)!;
 /** POS-05: o ponto fica acima do topo do cabelo de idle-0. */
@@ -172,5 +175,47 @@ describe('pulo: a cabeça não salta de coluna e o corpo é uma peça só (POS-0
 
   it.each(JUMP_SEQ)('%s: os texels opacos formam um componente só, 8-conexo (POS-02)', (name) => {
     expect(isSingleComponent(ALL[name]), name).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------- pontos de golpe (TRL-01, TRL-02, POS-01)
+
+/** Hitbox de `kick`, que não está em `MOVES`: a mesma do chute frontal. */
+const KICK_BOX = { offsetX: 26, offsetY: 6, width: 32, height: 20 };
+const STRIKE_MOVES = [...Object.keys(MOVES), ...('kick' in MOVES ? [] : ['kick'])];
+const STRIKE_FRAMES = STRIKE_MOVES.flatMap((m) => [`${m}-wind`, `${m}-hit`]);
+const FRAME_ORIGIN = { originCol: ORIGIN_COL, rows: PLAYER_FRAME_H };
+
+/** O ponto (px relativos ao centro do corpo) cai dentro do retângulo da hitbox expandido em `pad` px de cada lado. */
+const insideBox = (p: { x: number; y: number }, box: { offsetX: number; offsetY: number; width: number; height: number }, pad: number): boolean =>
+  Math.abs(p.x - box.offsetX) <= box.width / 2 + pad && Math.abs(p.y - box.offsetY) <= box.height / 2 + pad;
+
+describe('STRIKE_POINTS (TRL-01, TRL-02, POS-01)', () => {
+  it('a folga de 4 px vale nos dois lados da borda', () => {
+    const box = { offsetX: 20, offsetY: 0, width: 20, height: 20 };
+    expect(insideBox({ x: 34, y: 0 }, box, 4)).toBe(true);
+    expect(insideBox({ x: 35, y: 0 }, box, 4)).toBe(false);
+  });
+
+  it('todo frame -wind e -hit dos golpes de MOVES, jab e kick tem ponto de golpe (TRL-01)', () => {
+    for (const name of STRIKE_FRAMES) {
+      expect(ALL[name], `frame ${name}`).toBeDefined();
+      expect(STRIKE_POINTS[name], name).toBeDefined();
+    }
+  });
+
+  it('não sobra ponto de golpe sem frame correspondente', () => {
+    for (const name of Object.keys(STRIKE_POINTS)) expect(STRIKE_FRAMES, name).toContain(name);
+  });
+
+  it.each(STRIKE_FRAMES)('%s: o ponto de golpe é um texel opaco do frame (TRL-02)', (name) => {
+    const { col, row } = STRIKE_POINTS[name];
+    expect(isOpaque(ALL[name], col, row), name).toBe(true);
+  });
+
+  it.each(STRIKE_MOVES)('%s-hit: o ponto de golpe fica dentro da hitbox + 4 px (POS-01)', (move) => {
+    const box = MOVES[move]?.hitbox ?? KICK_BOX;
+    const p = strikeToBody(STRIKE_POINTS[`${move}-hit`], SIZE.player.h, FRAME_ORIGIN);
+    expect(insideBox(p, box, 4), `${move}-hit em (${p.x}, ${p.y})`).toBe(true);
   });
 });
