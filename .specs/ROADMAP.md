@@ -6,7 +6,7 @@ Mapa das features do jogo. Cada item é uma pasta tlc em `.specs/features/<nome>
 
 - **Em `dev`**: F0 a F5, F7, F10, F11 e as quatro features de arte e sensação de jogo (`sprite-player-polish`, `enemy-sprite-variety`, `sprite-chefes-e-acabamento`, `movimento-suave-e-objetos-no-chefe`). 1780 testes unitários e 30 smokes.
 - **Fora do remoto**: `dev` local está à frente de `origin/dev`; nada foi enviado nesta leva.
-- **Feature em andamento**: nenhuma. F12 `combate-mestre` foi mergeada em `dev` em 03/10 (smokes T36 a T40 cancelados, UAT aprovado pelo usuário).
+- **Feature em andamento**: F17 `impacto-amaldicoado` (feel JJK + Sifu, antes da F13), no branch `feat/impacto-amaldicoado`, em Specify. F12 `combate-mestre` foi mergeada em `dev` em 03/10 (smokes T36 a T40 cancelados, UAT aprovado pelo usuário).
 - **Decisões do usuário em aberto**: silhueta própria para a Tecelã (hoje é o Oni com outro mapa de cores, BTIER-06); alcance do arremesso (a garrafa cai depois de ~260 px, a cadeira depois de ~140 px); taxa de atualização do monitor dele, para conferir o movimento acima de 60 Hz fora da simulação.
 
 ```
