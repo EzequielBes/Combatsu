@@ -79,7 +79,7 @@ function guardPose(s: HdStage, sink: number): Pose {
     spine: 168,
     neck: 9,
     armNear: { rel: { x: ARM * 0.64, y: ARM * 0.32 + sink * 0.5 }, bend: -1 },
-    armFar: { rel: { x: ARM * 0.44, y: ARM * 0.04 + sink * 0.5 }, bend: -1 },
+    armFar: { rel: { x: ARM * 0.36, y: -ARM * 0.08 + sink * 0.5 }, bend: -1 },
     legNear: { ankle: { x: cx + STANCE.near, y: g }, foot: 90 },
     legFar: { ankle: { x: cx + STANCE.far, y: g }, foot: 90 },
   });
@@ -137,7 +137,7 @@ function hitPose(s: HdStage, over: number): Pose {
     armNear: { to: { x: cx + 9.8 * K + over * 2, y: g - 26.6 * K - over * 3 }, bend: -1 },
     armFar: { rel: { x: ARM * 0.5, y: -ARM * 0.22 }, bend: -1 },
     legNear: { ankle: { x: hip + 3.6 * K, y: g - 1.2 * K - over * 0.6 }, foot: 60 },
-    legFar: { ankle: { x: hip - 5.6 * K, y: g - 1.6 * K - over }, foot: over ? 25 : 35 },
+    legFar: { ankle: { x: hip - 5.6 * K, y: g - 1.2 * K - over * 0.6 }, foot: over ? 40 : 50 },
   });
 }
 

@@ -11,57 +11,74 @@ import { domeShade, inLocal, localEllipse, localRect, localTri, type Local, type
 /** Expressão: `focus` (idle, concentrado) ou `effort` (golpe: sobrancelha baixa e boca aberta). */
 export type Expression = 'focus' | 'effort';
 
+type Pt = readonly [number, number];
+
 /** Volume do cabelo: a cúpula que sombreia a massa e os espetos. */
 const HAIR_SHADE = domeShade(-0.6, 9.4, 8.5, 9);
 
-type Pt = readonly [number, number];
+/** Mecha: os dois pontos da base (o da frente primeiro) e a ponta, no sistema local da cabeça. */
+type Spike = readonly [front: Pt, back: Pt, tip: Pt];
 
-/** Espetos de trás e da nuca (pintados antes do rosto). */
-const BACK_SPIKES: readonly (readonly [Pt, Pt, Pt])[] = [
+/** Mechas de trás e da nuca, varridas para trás (pintadas antes do rosto). */
+const BACK_SPIKES: readonly Spike[] = [
   [
-    [-5.2, 12.6],
-    [-2.2, 14.2],
-    [-8.6, 16.2],
+    [-5, 12.6],
+    [-6.6, 9.6],
+    [-10.4, 12.6],
   ],
   [
-    [-6.4, 8.4],
-    [-5.2, 12.2],
-    [-10.2, 11.6],
+    [-4.2, 13.6],
+    [-6.6, 10.2],
+    [-9.2, 15.2],
   ],
   [
-    [-5.6, 4.6],
-    [-6.6, 8.6],
-    [-9.4, 6.2],
+    [-6.2, 10.8],
+    [-6.8, 6.8],
+    [-9.8, 9.2],
+  ],
+  [
+    [-6.4, 7.2],
+    [-5.2, 3.6],
+    [-8.2, 4.6],
   ],
 ];
 
-/** Espetos de cima e a franja (pintados depois do rosto). */
-const TOP_SPIKES: readonly (readonly [Pt, Pt, Pt])[] = [
+/** Mechas de cima, longas e afiadas, da testa à coroa (pintadas depois do rosto). */
+const TOP_SPIKES: readonly Spike[] = [
   [
-    [-3.4, 14],
-    [0.4, 14.8],
-    [-3.2, 19.4],
+    [-1.4, 14.8],
+    [-5, 13.2],
+    [-7, 18.6],
   ],
   [
-    [-0.6, 14.6],
-    [3.4, 14],
-    [1.6, 19.8],
+    [1.8, 14.6],
+    [-2.2, 14.6],
+    [-1.8, 20],
   ],
   [
-    [2.2, 14.2],
-    [5.4, 12.4],
-    [6.4, 17.6],
+    [4.8, 13.4],
+    [1, 14.4],
+    [4.4, 18.4],
   ],
-  // Franja: duas mechas que descem sobre a testa.
+  // Topete: a mecha da frente sai da testa para a frente e para cima.
   [
-    [3.2, 13.4],
-    [6.3, 12.2],
-    [6.7, 10.6],
+    [6.5, 11.8],
+    [3.6, 13.6],
+    [8.4, 14.6],
+  ],
+];
+
+/** Franja: duas mechas curtas que descem sobre a testa. */
+const FRINGE: readonly Spike[] = [
+  [
+    [6.6, 12.2],
+    [4.2, 13.2],
+    [6.9, 10.4],
   ],
   [
-    [0.6, 13.2],
-    [3.8, 13],
-    [3.6, 11.2],
+    [4.2, 13.2],
+    [1.4, 13.2],
+    [3.8, 11.2],
   ],
 ];
 
@@ -100,18 +117,26 @@ const nose: LocalShape = (f, u) => {
 const scalp: LocalShape = (f, u) => {
   if (u < hairline(f)) return null;
   // A luz de recorte só acende no alto da calota: mais embaixo ela vira texel solto na nuca.
-  return localEllipse(-0.2, 9.2, 7, 6.9)(f, u) ? { ...HAIR_SHADE(f, u), noRim: u < 11 } : null;
+  return localEllipse(-0.8, 9.2, 7.4, 6.9)(f, u) ? { ...HAIR_SHADE(f, u), noRim: u < 11 || f < -3.5 } : null;
 };
 
-function paintHair(c: HdCanvas, l: Local, part: number, spikes: typeof TOP_SPIKES, bias = 0): void {
-  for (const [a, b, d] of spikes) c.paint(inLocal(l, localTri(a, b, d, HAIR_SHADE)), MAT.hair, part, { bias });
+/**
+ * Pinta as mechas: cada uma inteira num tom abaixo do volume e, por cima, a metade da frente (do ponto da frente da
+ * base até a ponta) no tom do volume. A face clara de cada mecha dá o corte facetado do cabelo.
+ */
+function paintHair(c: HdCanvas, l: Local, part: number, spikes: readonly Spike[], bias: number): void {
+  for (const [front, back, tip] of spikes) {
+    const mid: Pt = [(front[0] + back[0]) / 2, (front[1] + back[1]) / 2];
+    c.paint(inLocal(l, localTri(front, back, tip, HAIR_SHADE)), MAT.hair, part, { bias: bias - 1 });
+    c.paint(inLocal(l, localTri(front, mid, tip, HAIR_SHADE)), MAT.hair, part, { bias });
+  }
 }
 
 function paintFeatures(c: HdCanvas, l: Local, part: number, expr: Expression): void {
   const effort = expr === 'effort';
   const on = { onlyOn: part };
   // Orelha: atrás do rosto, com a sombra de dentro.
-  c.paint(inLocal(l, localEllipse(-2, 7.3, 1.5, 2.1)), MAT.skin, part, { ...on, flat: 2 });
+  c.paint(inLocal(l, localEllipse(-2, 7.3, 1.5, 2.1)), MAT.skin, part, { ...on, flat: 3 });
   c.paint(inLocal(l, localEllipse(-1.9, 7.3, 0.7, 1.2)), MAT.skin, part, { ...on, flat: 1 });
   // Olho: branco atrás e íris escura na frente (o olhar vai para o alvo). No foco a íris tem 2x2 com um brilho; no
   // esforço o olho estreita para uma linha, a íris fica num texel e a sobrancelha pesa por cima.
@@ -141,11 +166,12 @@ function paintFeatures(c: HdCanvas, l: Local, part: number, expr: Expression): v
 
 /** Pinta a cabeça inteira na parte `part`, no sistema local `l` (origem na junta do pescoço). */
 export function paintHead(c: HdCanvas, l: Local, part: number, expr: Expression): void {
-  c.paint(inLocal(l, localEllipse(-1.6, 9, 6.6, 6.6)), MAT.hair, part, { bias: -1 });
+  c.paint(inLocal(l, localEllipse(-1.8, 9, 6.6, 6.2)), MAT.hair, part, { bias: -2 });
   paintHair(c, l, part, BACK_SPIKES, -1);
   c.paint(inLocal(l, face), MAT.skin, part);
   c.paint(inLocal(l, nose), MAT.skin, part);
   paintFeatures(c, l, part, expr);
-  c.paint(inLocal(l, scalp), MAT.hair, part, { rim: true });
-  paintHair(c, l, part, TOP_SPIKES);
+  c.paint(inLocal(l, scalp), MAT.hair, part, { rim: true, bias: -1 });
+  paintHair(c, l, part, TOP_SPIKES, 1);
+  paintHair(c, l, part, FRINGE, -1);
 }

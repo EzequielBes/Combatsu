@@ -4,7 +4,7 @@
  * acende a borda (recorte). No fim, `finish` desenha a linha entre partes na cor do material e o contorno externo.
  * Puro, sem `phaser`.
  */
-import { OUTLINE_INDEX, RIM, colorIndex } from './palette';
+import { MAT, OUTLINE_INDEX, RIM, colorIndex } from './palette';
 
 export interface Normal {
   x: number;
@@ -12,6 +12,8 @@ export interface Normal {
   z: number;
   /** Posição ao longo do membro (0 na raiz, 1 na ponta), quando a forma é um membro. */
   t?: number;
+  /** Lado do membro neste ponto, de -1 a 1 (positivo = lado +, o de trás num membro pendurado). */
+  s?: number;
   /** Soma ao tom neste ponto (sombra do joelho, punho da manga). */
   dt?: number;
   /** Este ponto não recebe a luz de recorte. */
@@ -53,6 +55,8 @@ export interface PaintOpts {
   flat?: number;
   /** Só pinta por cima de texels desta parte (detalhes que não mudam a silhueta). */
   onlyOn?: number;
+  /** Sombra projetada: em vez de pintar, escurece em tantos tons o que já está lá (material e parte ficam). */
+  darken?: number;
 }
 
 function toneFor(n: Normal, o: PaintOpts): number {
@@ -84,6 +88,10 @@ export class HdCanvas {
         if (o.onlyOn !== undefined && this.part[i] !== o.onlyOn) continue;
         const n = shape(x + 0.5, y + 0.5);
         if (!n) continue;
+        if (o.darken !== undefined) {
+          if (this.tone[i] !== RIM) this.tone[i] = Math.max(0, this.tone[i] - o.darken);
+          continue;
+        }
         this.mat[i] = mat;
         this.part[i] = part;
         this.tone[i] = toneFor(n, o);
@@ -130,7 +138,8 @@ function outlineAt(c: HdCanvas, x: number, y: number): number {
   };
   // Vizinho de baixo ou da esquerda: este texel está em cima ou na frente do corpo, do lado da luz.
   const lit = at(0, 1) || at(-1, 0);
-  if (lit) return colorIndex(lit, 0);
+  // Na pele a linha do lado da luz é um tom mais clara, para o rosto e as mãos não ficarem com borda suja.
+  if (lit) return colorIndex(lit, lit === MAT.skin ? 1 : 0);
   return at(0, -1) || at(1, 0) ? OUTLINE_INDEX : 0;
 }
 

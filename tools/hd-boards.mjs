@@ -2,6 +2,7 @@
 //   hd-prancha.png   os 12 quadros (idle em cima, gancho embaixo) a 4x sobre o céu noturno;
 //   hd-rosto.png     a cabeça do idle e a do pico do gancho a 12x;
 //   hd-silhueta.png  os mesmos 12 quadros só com o contorno preenchido (teste nº 1: ler a pose pela silhueta);
+//   hd-detalhe.png   a guarda, a antecipação e o pico a 8x, para conferir anatomia, mãos, pés e cabelo;
 //   hd-tela.png      idle e pico do gancho a 2x, como aparecem na tela (1 texel = 2 px), sobre claro e escuro.
 // Uso, a partir da raiz do repo:  node tools/hd-boards.mjs [outDir]
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -136,4 +137,14 @@ sheet('hd-silhueta.png', 2, 0x0b0d1a);
     blit(img, frames[key], i * FW * scale, FH * scale, scale);
   });
   savePng('hd-tela.png', img);
+}
+
+// Detalhe a 8x: a guarda, a antecipação e o pico, para conferir anatomia, mãos, pés e cabelo.
+{
+  const scale = 8;
+  const crop = { x: 14, y: 6, w: 52, h: 74 };
+  const keys = ['hd-idle-0', 'hd-gancho-0', 'hd-gancho-2'];
+  const img = image(keys.length * (crop.w * scale + 8) + 8, crop.h * scale + 16, DEEP);
+  keys.forEach((key, i) => blit(img, frames[key], 8 + i * (crop.w * scale + 8), 8, scale, crop));
+  savePng('hd-detalhe.png', img);
 }
