@@ -22,6 +22,8 @@ export interface PoseSpec {
   handScale?: number;
   /** Ângulo local do ombro de perto: 90 (padrão) o deixa atrás do eixo; -90 o leva para a frente (soco). */
   shoulderNear?: number;
+  /** Ângulo local do ombro de longe: -90 (padrão) o deixa à frente do eixo; valores menores o avançam mais, 90 o recua. */
+  shoulderFar?: number;
   /** Proporções do corpo (padrão: o chibi `atual`). */
   body?: Proportions;
   armNear: ArmTarget;
@@ -39,6 +41,7 @@ export function buildPose(s: PoseSpec): Pose {
       footNear: s.legNear.foot,
       footFar: s.legFar.foot,
       ...(s.shoulderNear === undefined ? {} : { shoulderNear: s.shoulderNear }),
+      ...(s.shoulderFar === undefined ? {} : { shoulderFar: s.shoulderFar }),
     },
     s.body,
   );
