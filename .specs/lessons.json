@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 59,
+  "next_id": 64,
   "lessons": [
     {
       "id": "L-001",
@@ -1056,6 +1056,96 @@
       ],
       "created": "2026-10-03T19:12:38Z",
       "last_seen": "2026-10-03T19:12:38Z"
+    },
+    {
+      "id": "L-059",
+      "key": "ac_gap::when an adapter drives a timed helper only while a phase is active run the helper on the frame the phase ends too or the final slice of the total is lost",
+      "text": "When an adapter drives a timed helper only while a phase is active, run the helper on the frame the phase ends too, or the final slice of the total is lost",
+      "signal": "ac_gap",
+      "scope": "adapters",
+      "status": "candidate",
+      "features": [
+        "impacto-amaldicoado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/game/Player.ts:1130 POS-07 (adapters)"
+      ],
+      "created": "2026-10-04T03:05:10Z",
+      "last_seen": "2026-10-04T03:05:10Z"
+    },
+    {
+      "id": "L-060",
+      "key": "ac_gap::set a live smoke tolerance tighter than the shortfall of the defect it guards against since a loose tolerance accepts the bug",
+      "text": "Set a live smoke tolerance tighter than the shortfall of the defect it guards against, since a loose tolerance accepts the bug",
+      "signal": "ac_gap",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "impacto-amaldicoado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "scripts/smoke/impact.smoke.mjs:60 POS-07 (smoke)"
+      ],
+      "created": "2026-10-04T03:05:10Z",
+      "last_seen": "2026-10-04T03:05:10Z"
+    },
+    {
+      "id": "L-061",
+      "key": "spec_precision_gap::state the exact boundary of a count cap in the spec at the limit allowed or skipped not just more than n or below n",
+      "text": "State the exact boundary of a count cap in the spec (at the limit, allowed or skipped), not just more than N or below N",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "impacto-amaldicoado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md EDG-03 (spec)"
+      ],
+      "created": "2026-10-04T03:05:10Z",
+      "last_seen": "2026-10-04T03:05:10Z"
+    },
+    {
+      "id": "L-062",
+      "key": "surviving_mutant::when a fix changes a snapshot flag computed from earlier state add a smoke case for the exact sequence that exposed it since the fix alone leaves the old rule alive",
+      "text": "When a fix changes a snapshot flag computed from earlier state, add a smoke case for the exact sequence that exposed it, since the fix alone leaves the old rule alive.",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "impacto-amaldicoado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M4/M5/M6 TestScene.ts:1422 (smoke)"
+      ],
+      "created": "2026-10-04T03:16:29Z",
+      "last_seen": "2026-10-04T03:16:29Z"
+    },
+    {
+      "id": "L-063",
+      "key": "surviving_mutant::test the cancel branch of a phase guard in the live smoke since removing the guard keeps the happy path smoke green",
+      "text": "Test the cancel branch of a phase guard in the live smoke, since removing the guard keeps the happy-path smoke green.",
+      "signal": "surviving_mutant",
+      "scope": "adapters",
+      "status": "candidate",
+      "features": [
+        "impacto-amaldicoado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M2 Player.ts:1133 (adapters)"
+      ],
+      "created": "2026-10-04T03:16:30Z",
+      "last_seen": "2026-10-04T03:16:30Z"
     }
   ]
 }

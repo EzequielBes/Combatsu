@@ -180,7 +180,10 @@
 
 ## Handoff
 
-- **Feature**: nenhuma em andamento. F12 `combate-mestre` mergeada em `dev` em 03/10 (AD-022).
-- **Next step**: o usuário pediu melhorias de feel do combate (impacto, rastro do soco, chute e pulo que deixam o personagem torto, gancho perto demais do corpo). Analisar antes de abrir a feature.
+- **Feature**: nenhuma em andamento. F17 `impacto-amaldicoado` mergeada em `dev` em 04/10 (24 tasks, Verifier PASS na iteração 2: 55 PASS e 5 PARTIAL de adaptador sem teste; UAT: "tá ficando legal, alguns pontos pra melhorar depois").
+- **Next step**: (1) spike do boneco articulado 2D: esqueleto com comprimentos fixos + rasterizador em pixel art + quadros intermediários, testado no gancho ascendente, antes/depois para o usuário; (2) spike de migração para o Phaser 4.2 numa worktree (filters, iluminação; postFX do Kokusen, técnicas e `ImpactFrame` mudam); (3) colher com o usuário os "pontos a melhorar" do feel. Depois F13.
+- **Decisões abertas com o usuário**: trocar o pisca colorido do ponto de compromisso (CMT-02) por aura de energia; o pisca branco do parry do inimigo saiu junto com os outros.
+- **Lacunas Minor da F17** (em `validation.md`): flag `impactFrame` do adaptador sem teste; guarda de fase do passo em golpe cancelado sem teste; RCT-04 sem teste de HP/postura. O "pulo torto" não se reproduziu nas grades (POS-04 passa); se o usuário ainda vir, investigar animação/origem em jogo.
+- **Restrição nova**: toda arte é feita pelo Claude em código e ferramentas grátis; nada manual nem pago.
 
 Pendências antigas que continuam: silhueta própria para a Tecelã; alcance do arremesso (garrafa ~260 px, cadeira ~140 px); taxa de atualização do monitor do usuário; `main` só recebe `dev` quando ele pedir; worktrees antigas (`scratchpad/wt-f10`, `surGue-player-refine`) e branches já mergeadas para limpar se ele quiser. Depois da F12: F13 `foco-e-ambiente`, F14, F15, F16; F6 e F9 depois da expansão.

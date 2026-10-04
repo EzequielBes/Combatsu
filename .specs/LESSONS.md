@@ -360,6 +360,36 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: tasks.md T7 EDG-02 marcado sem checagem (validation.md rodada 1, lacuna 6) (tasks smoke)
 - last seen: 2026-10-03T19:12:38Z
 
+### L-059 - When an adapter drives a timed helper only while a phase is active, run the helper on the frame the phase ends too, or the final slice of the total is lost
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `adapters` · harmful: 0
+- features: impacto-amaldicoado
+- evidence: src/game/Player.ts:1130 POS-07 (adapters)
+- last seen: 2026-10-04T03:05:10Z
+
+### L-060 - Set a live smoke tolerance tighter than the shortfall of the defect it guards against, since a loose tolerance accepts the bug
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: impacto-amaldicoado
+- evidence: scripts/smoke/impact.smoke.mjs:60 POS-07 (smoke)
+- last seen: 2026-10-04T03:05:10Z
+
+### L-061 - State the exact boundary of a count cap in the spec (at the limit, allowed or skipped), not just more than N or below N
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: impacto-amaldicoado
+- evidence: spec.md EDG-03 (spec)
+- last seen: 2026-10-04T03:05:10Z
+
+### L-062 - When a fix changes a snapshot flag computed from earlier state, add a smoke case for the exact sequence that exposed it, since the fix alone leaves the old rule alive.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: impacto-amaldicoado
+- evidence: M4/M5/M6 TestScene.ts:1422 (smoke)
+- last seen: 2026-10-04T03:16:29Z
+
+### L-063 - Test the cancel branch of a phase guard in the live smoke, since removing the guard keeps the happy-path smoke green.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `adapters` · harmful: 0
+- features: impacto-amaldicoado
+- evidence: M2 Player.ts:1133 (adapters)
+- last seen: 2026-10-04T03:16:30Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
