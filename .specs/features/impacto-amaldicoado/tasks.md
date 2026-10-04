@@ -85,7 +85,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: estilo de `src/data/fx.ts`
 **Requirement**: TRL-04, TRL-05, IMP-07, IMP-08, IMP-09, IMP-15, EDG-03
 **Done when**:
-- [ ] Teste confere cada valor contra a spec.
+- [x] Teste confere cada valor contra a spec.
 **Tests**: unit
 **Gate**: quick
 
@@ -99,9 +99,9 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `src/core/rng.ts`, `Hit`
 **Requirement**: IMP-01, IMP-02, IMP-03, IMP-04, IMP-05, IMP-09, IMP-10
 **Done when**:
-- [ ] Um caso por AC; `counter` + `light` dá `decisive`; `heavy` sem nada decisivo dá `heavy`.
-- [ ] `impactSpikes`: mesma seed dá a mesma saída; seeds diferentes dão saídas diferentes; todo comprimento em [18, 30] em 200 seeds; `count` respeitado.
-- [ ] `Hit` ganha `swingId?: number`.
+- [x] Um caso por AC; `counter` + `light` dá `decisive`; `heavy` sem nada decisivo dá `heavy`.
+- [x] `impactSpikes`: mesma seed dá a mesma saída; seeds diferentes dão saídas diferentes; todo comprimento em [18, 30] em 200 seeds; `count` respeitado.
+- [x] `Hit` ganha `swingId?: number`.
 **Tests**: unit
 **Gate**: quick
 
@@ -115,8 +115,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `ART_SCALE`, e a origem do frame passada como parâmetro (sem importar a arte)
 **Requirement**: TRL-03, TRL-04, TRL-05, POS-01
 **Done when**:
-- [ ] Facing −1 espelha em volta da coluna de origem; teste com os dois lados.
-- [ ] `trailStyle('light')` = 4 px/140 ms; `trailStyle('heavy')` = 8 px/220 ms.
+- [x] Facing −1 espelha em volta da coluna de origem; teste com os dois lados.
+- [x] `trailStyle('light')` = 4 px/140 ms; `trailStyle('heavy')` = 8 px/220 ms.
 **Tests**: unit
 **Gate**: quick
 
@@ -130,8 +130,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: padrão de relógio de `src/core/dodge.ts`
 **Requirement**: POS-07, POS-08, POS-09
 **Done when**:
-- [ ] Soma dos passos = 10 px (forte) e 4 px (leve), terminando exatamente em `startupMs`; nada depois.
-- [ ] `blocked` no meio para o resto; um novo `start` reinicia.
+- [x] Soma dos passos = 10 px (forte) e 4 px (leve), terminando exatamente em `startupMs`; nada depois.
+- [x] `blocked` no meio para o resto; um novo `start` reinicia.
 **Tests**: unit
 **Gate**: quick
 
@@ -145,8 +145,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `StepIn` como modelo
 **Requirement**: RCT-01, RCT-02, RCT-05, RCT-06
 **Done when**:
-- [ ] `heavy` = 24 px em 180 ms; `decisive` = 48 px em 240 ms; `light` não desliza.
-- [ ] `remainingPx` vira `null` no fim e no `blocked`.
+- [x] `heavy` = 24 px em 180 ms; `decisive` = 48 px em 240 ms; `light` não desliza.
+- [x] `remainingPx` vira `null` no fim e no `blocked`.
 **Tests**: unit
 **Gate**: quick
 
@@ -160,8 +160,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `src/core/cameraFollow.ts` (convenções)
 **Requirement**: CAM-01, CAM-02
 **Done when**:
-- [ ] Tranco: 4 px na direção normalizada no início; 0 em 120 ms e depois.
-- [ ] Zoom: 1.6 em 60 ms, ainda 1.6 em 260 ms, 1.5 em 380 ms; valores antes e depois de cada borda.
+- [x] Tranco: 4 px na direção normalizada no início; 0 em 120 ms e depois.
+- [x] Zoom: 1.6 em 60 ms, ainda 1.6 em 260 ms, 1.5 em 380 ms; valores antes e depois de cada borda.
 **Tests**: unit
 **Gate**: quick
 
@@ -175,8 +175,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `SlowMo`
 **Requirement**: CAM-03, CAM-04, CAM-07, CAM-08
 **Done when**:
-- [ ] `trigger(0.4, 350)`: escala 0.4 até 350 ms reais, 1 depois; um segundo trigger aos 200 ms vai até 550 ms com escala 0.4.
-- [ ] Os testes antigos de `SlowMo` continuam passando sem mudança.
+- [x] `trigger(0.4, 350)`: escala 0.4 até 350 ms reais, 1 depois; um segundo trigger aos 200 ms vai até 550 ms com escala 0.4.
+- [x] Os testes antigos de `SlowMo` continuam passando sem mudança.
 **Tests**: unit
 **Gate**: quick
 
