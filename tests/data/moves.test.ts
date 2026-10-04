@@ -104,8 +104,13 @@ describe('golpes aéreos e palma (AIR-01..03, SPC-01)', () => {
 describe('Hit ganha campos opcionais (T1)', () => {
   it('aceita unblockable e moveName', () => {
     const hit: Hit = {
-      ownerId: 1, damage: 1, strength: 'light', direction: { x: 1, y: 0 }, force: 1,
-      unblockable: true, moveName: 'jab',
+      ownerId: 1,
+      damage: 1,
+      strength: 'light',
+      direction: { x: 1, y: 0 },
+      force: 1,
+      unblockable: true,
+      moveName: 'jab',
     };
     expect(hit.unblockable).toBe(true);
     expect(hit.moveName).toBe('jab');
@@ -142,15 +147,27 @@ describe('golpes que derrubam (PST-04)', () => {
 describe('Contras (CNT-09, CNT-10)', () => {
   it('contra: 10 de dano, heavy, 50/80/160 ms, +30 de estrutura, unblockable e counter', () => {
     expect(MOVES.contra).toMatchObject({
-      damage: 10, strength: 'heavy', startupMs: 50, activeMs: 80, recoveryMs: 160,
-      structureGain: 30, unblockable: true, counter: true,
+      damage: 10,
+      strength: 'heavy',
+      startupMs: 50,
+      activeMs: 80,
+      recoveryMs: 160,
+      structureGain: 30,
+      unblockable: true,
+      counter: true,
     });
   });
 
   it('contraGancho: 12 de dano, heavy, 50/90/200 ms, +30 de estrutura, unblockable e counter', () => {
     expect(MOVES.contraGancho).toMatchObject({
-      damage: 12, strength: 'heavy', startupMs: 50, activeMs: 90, recoveryMs: 200,
-      structureGain: 30, unblockable: true, counter: true,
+      damage: 12,
+      strength: 'heavy',
+      startupMs: 50,
+      activeMs: 90,
+      recoveryMs: 200,
+      structureGain: 30,
+      unblockable: true,
+      counter: true,
     });
   });
 
@@ -159,7 +176,9 @@ describe('Contras (CNT-09, CNT-10)', () => {
     expect(MOVES.contraGancho.input).toEqual({ via: 'counter' });
     expect(MOVES.contra.followUps).toEqual({});
     expect(MOVES.contraGancho.followUps).toEqual({});
-    const withCounter = Object.values(MOVES).filter((m) => m.counter).map((m) => m.name);
+    const withCounter = Object.values(MOVES)
+      .filter((m) => m.counter)
+      .map((m) => m.name);
     expect(withCounter.sort()).toEqual(['contra', 'contraGancho']);
   });
 
@@ -170,7 +189,8 @@ describe('Contras (CNT-09, CNT-10)', () => {
 
   it('nenhum golpe tem um Contra em followUps (CNT-08: só a janela inicia o Contra)', () => {
     for (const m of Object.values(MOVES)) {
-      for (const target of Object.values(m.followUps)) expect(MOVES[target as string].counter, `${m.name} -> ${target}`).toBeUndefined();
+      for (const target of Object.values(m.followUps))
+        expect(MOVES[target as string].counter, `${m.name} -> ${target}`).toBeUndefined();
     }
   });
 

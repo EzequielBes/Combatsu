@@ -3,7 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { strikeToBody } from '../../src/core/strikePath';
 import { MOVES } from '../../src/data/moves';
 import { SIZE } from '../../src/game/textures';
-import { headLeftCol, isOpaque, isSingleComponent, thighShinHeights, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
+import {
+  headLeftCol,
+  isOpaque,
+  isSingleComponent,
+  thighShinHeights,
+  topRowOf,
+  touchesBottom,
+} from '../../src/core/frameInvariants';
 import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { STRIKE_POINTS } from '../../src/game/art/sprites/strikePoints';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
@@ -84,24 +91,33 @@ describe('gancho ascendente: o punho passa da cabeça e vai à frente (POS-05, P
     expect('pP').toContain(ALL[name][row][col]);
   });
 
-  it.each(Object.keys(UPPERCUT_POINT))('%s: o ponto de golpe fica acima do topo do cabelo de idle-0 (POS-05)', (name) => {
-    expect(aboveHead(UPPERCUT_POINT[name]), name).toBe(true);
-  });
+  it.each(Object.keys(UPPERCUT_POINT))(
+    '%s: o ponto de golpe fica acima do topo do cabelo de idle-0 (POS-05)',
+    (name) => {
+      expect(aboveHead(UPPERCUT_POINT[name]), name).toBe(true);
+    },
+  );
 
-  it.each(Object.keys(UPPERCUT_POINT))('%s: o ponto de golpe fica 6 texels ou mais à frente da origem (POS-10)', (name) => {
-    expect(inFront(UPPERCUT_POINT[name]), name).toBe(true);
-  });
+  it.each(Object.keys(UPPERCUT_POINT))(
+    '%s: o ponto de golpe fica 6 texels ou mais à frente da origem (POS-10)',
+    (name) => {
+      expect(inFront(UPPERCUT_POINT[name]), name).toBe(true);
+    },
+  );
 
-  it.each(Object.keys(UPPERCUT_POINT))('%s: o punho está acima do cabelo do próprio frame, não colado ao rosto', (name) => {
-    const rows = ALL[name];
-    const { col, row } = UPPERCUT_POINT[name];
-    const ownHairTop = topRowOf(rows, HAIR)!;
-    expect(row, name).toBeLessThan(ownHairTop);
-    // O punho (pele) começa pelo menos 1 linha acima do cabelo, na coluna do ponto.
-    const fistTop = rows.findIndex((r) => 'pP'.includes(r[col]));
-    expect(fistTop, name).toBeGreaterThanOrEqual(0);
-    expect(fistTop, name).toBeLessThan(ownHairTop - 1);
-  });
+  it.each(Object.keys(UPPERCUT_POINT))(
+    '%s: o punho está acima do cabelo do próprio frame, não colado ao rosto',
+    (name) => {
+      const rows = ALL[name];
+      const { col, row } = UPPERCUT_POINT[name];
+      const ownHairTop = topRowOf(rows, HAIR)!;
+      expect(row, name).toBeLessThan(ownHairTop);
+      // O punho (pele) começa pelo menos 1 linha acima do cabelo, na coluna do ponto.
+      const fistTop = rows.findIndex((r) => 'pP'.includes(r[col]));
+      expect(fistTop, name).toBeGreaterThanOrEqual(0);
+      expect(fistTop, name).toBeLessThan(ownHairTop - 1);
+    },
+  );
 });
 
 // ---------------------------------------------------------------- chutes (POS-02, POS-03, POS-06)
@@ -120,10 +136,13 @@ describe('chutes: corpo inteiro e uma peça só (POS-02, POS-03)', () => {
     expect(touchesBottom(ALL[`${kick}-hit`]), kick).toBe(true);
   });
 
-  it.each(KICKS)('%s-hit: a perna de apoio está plantada, com o pé na última linha, e não há linhas S soltas', (kick) => {
-    const rows = ALL[`${kick}-hit`];
-    expect(rows.join(''), kick).not.toContain('S');
-  });
+  it.each(KICKS)(
+    '%s-hit: a perna de apoio está plantada, com o pé na última linha, e não há linhas S soltas',
+    (kick) => {
+      const rows = ALL[`${kick}-hit`];
+      expect(rows.join(''), kick).not.toContain('S');
+    },
+  );
 
   it.each(['kick', 'chuteFrontal', 'chuteEmpurrao'])('%s-wind e -recover também não têm linhas S soltas', (kick) => {
     expect(ALL[`${kick}-wind`].join('')).not.toContain('S');
@@ -187,8 +206,11 @@ const STRIKE_FRAMES = STRIKE_MOVES.flatMap((m) => [`${m}-wind`, `${m}-hit`]);
 const FRAME_ORIGIN = { originCol: ORIGIN_COL, rows: PLAYER_FRAME_H };
 
 /** O ponto (px relativos ao centro do corpo) cai dentro do retângulo da hitbox expandido em `pad` px de cada lado. */
-const insideBox = (p: { x: number; y: number }, box: { offsetX: number; offsetY: number; width: number; height: number }, pad: number): boolean =>
-  Math.abs(p.x - box.offsetX) <= box.width / 2 + pad && Math.abs(p.y - box.offsetY) <= box.height / 2 + pad;
+const insideBox = (
+  p: { x: number; y: number },
+  box: { offsetX: number; offsetY: number; width: number; height: number },
+  pad: number,
+): boolean => Math.abs(p.x - box.offsetX) <= box.width / 2 + pad && Math.abs(p.y - box.offsetY) <= box.height / 2 + pad;
 
 describe('STRIKE_POINTS (TRL-01, TRL-02, POS-01)', () => {
   it('a folga de 4 px vale nos dois lados da borda', () => {
@@ -247,6 +269,9 @@ describe('varredura: todo golpe de MOVES, jab e kick (POS-02, POS-03)', () => {
 describe('pisão: o corpo tem pernas visíveis abaixo do cinto em toda a sequência', () => {
   it.each(['wind', 'hit', 'recover'])('pisao-%s tem texels opacos nas linhas 24 em diante (as pernas)', (phase) => {
     const legs = ALL[`pisao-${phase}`].slice(24).join('');
-    expect([...legs].some((c) => c !== '.'), phase).toBe(true);
+    expect(
+      [...legs].some((c) => c !== '.'),
+      phase,
+    ).toBe(true);
   });
 });

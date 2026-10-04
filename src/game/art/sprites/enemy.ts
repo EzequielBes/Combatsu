@@ -308,15 +308,52 @@ export function buildEnemyFrames(kit: EnemyKit): Record<string, readonly string[
     });
   };
   // Cabeça-a: cabeça jogada para trás e para cima, queixo à mostra, braço de trás esticado atrás.
-  react('hurt-head-a', { lean: -3, drop: 0, eyeAdj: [-1, -1], mouthAdj: [-1, -1], near: [-3, -3], far: [-4, -3], fwdFar: true, legBack: 2 });
+  react('hurt-head-a', {
+    lean: -3,
+    drop: 0,
+    eyeAdj: [-1, -1],
+    mouthAdj: [-1, -1],
+    near: [-3, -3],
+    far: [-4, -3],
+    fwdFar: true,
+    legBack: 2,
+  });
   // Cabeça-b: cabeça torcida para baixo, ombros afundam e o braço da frente fica solto.
-  react('hurt-head-b', { lean: -2, drop: 2, eyeAdj: [0, 2], mouthAdj: [0, 1], near: [-1, 3], far: [-3, 0], legBack: 1 });
+  react('hurt-head-b', {
+    lean: -2,
+    drop: 2,
+    eyeAdj: [0, 2],
+    mouthAdj: [0, 1],
+    near: [-1, 3],
+    far: [-3, 0],
+    legBack: 1,
+  });
   // Gancho: queixo para cima e o corpo inteiro sai do chão, quase sem inclinar, com os braços soltos ao lado.
-  react('hurt-uppercut', { lean: -1, drop: -3, eyeAdj: [-1, -1], mouthAdj: [-1, -1], near: [0, -3], far: [-1, -3], legBack: 1, legLift: 3 });
+  react('hurt-uppercut', {
+    lean: -1,
+    drop: -3,
+    eyeAdj: [-1, -1],
+    mouthAdj: [-1, -1],
+    near: [0, -3],
+    far: [-1, -3],
+    legBack: 1,
+    legLift: 3,
+  });
   // Corpo: dobrado para a frente (cai o tronco), braços na barriga.
   react('hurt-body', { lean: 1, drop: 4, eyeAdj: [0, 1], mouthAdj: [0, 1], near: [-4, 2], far: [-1, 3], legBack: 0 });
   // Impacto: o mais dramático; arqueado, jogado para trás, braços soltos e a borda branca do golpe à direita.
-  react('impact', { lean: -4, drop: 2, eyeAdj: [-1, 0], mouthAdj: [-1, 0], near: [-5, -3], far: [-6, -2], fwdFar: true, legBack: 3, legLift: 1, rim: true });
+  react('impact', {
+    lean: -4,
+    drop: 2,
+    eyeAdj: [-1, 0],
+    mouthAdj: [-1, 0],
+    near: [-5, -3],
+    far: [-6, -2],
+    fwdFar: true,
+    legBack: 3,
+    legLift: 1,
+    rim: true,
+  });
   frames.impact = frames['impact-0'];
   delete frames['impact-0'];
   delete frames['impact-1'];
@@ -677,10 +714,30 @@ export const ENEMY_ANIMS: Record<string, AnimDef> = {
   windup: { frames: ['windup-0', 'windup-1'], frameRate: 4, repeat: 0, durations: [120, 330] },
   attack: { frames: ['attack-0', 'attack-1'], frameRate: 16, repeat: 0, durations: [60, 60] },
   hurt: { frames: ['hurt'], frameRate: 1, repeat: 0 },
-  'hurt-head-a': { frames: ['hurt-head-a-0', 'hurt-head-a-1', 'hurt-head-a-2'], frameRate: 12, repeat: 0, durations: [60, 90, 70] },
-  'hurt-head-b': { frames: ['hurt-head-b-0', 'hurt-head-b-1', 'hurt-head-b-2'], frameRate: 12, repeat: 0, durations: [60, 90, 70] },
-  'hurt-uppercut': { frames: ['hurt-uppercut-0', 'hurt-uppercut-1', 'hurt-uppercut-2'], frameRate: 12, repeat: 0, durations: [60, 90, 70] },
-  'hurt-body': { frames: ['hurt-body-0', 'hurt-body-1', 'hurt-body-2'], frameRate: 12, repeat: 0, durations: [60, 90, 70] },
+  'hurt-head-a': {
+    frames: ['hurt-head-a-0', 'hurt-head-a-1', 'hurt-head-a-2'],
+    frameRate: 12,
+    repeat: 0,
+    durations: [60, 90, 70],
+  },
+  'hurt-head-b': {
+    frames: ['hurt-head-b-0', 'hurt-head-b-1', 'hurt-head-b-2'],
+    frameRate: 12,
+    repeat: 0,
+    durations: [60, 90, 70],
+  },
+  'hurt-uppercut': {
+    frames: ['hurt-uppercut-0', 'hurt-uppercut-1', 'hurt-uppercut-2'],
+    frameRate: 12,
+    repeat: 0,
+    durations: [60, 90, 70],
+  },
+  'hurt-body': {
+    frames: ['hurt-body-0', 'hurt-body-1', 'hurt-body-2'],
+    frameRate: 12,
+    repeat: 0,
+    durations: [60, 90, 70],
+  },
   impact: { frames: ['impact'], frameRate: 1, repeat: 0 },
   getup: { frames: ['getup-0', 'getup-1', 'getup-2'], frameRate: 8, repeat: 0, durations: [120, 120, 120] },
 };
@@ -696,25 +753,67 @@ const sel = (k: EnemyKit) => k.sel;
 
 export const ENEMY_RAG_VARIANTS: Record<EnemyVariantId, EnemyRagParts> = {
   corcunda: {
-    head: finishPart(['..kkk.k.', '.kIIIkIk', 'kIIkkkkk', 'kIkwAkAk', 'kikAAkAk', 'kikaAkak', '.kkkkkk.'], sel(CORCUNDA_KIT)),
+    head: finishPart(
+      ['..kkk.k.', '.kIIIkIk', 'kIIkkkkk', 'kIkwAkAk', 'kikAAkAk', 'kikaAkak', '.kkkkkk.'],
+      sel(CORCUNDA_KIT),
+    ),
     torso: finishPart(
-      ['.kkkkkk.', 'kIIIIvIk', 'kiivIiik', 'kiiiiivk', 'kkkkkkkk', 'kwkwwkkk', 'kiiiivik', 'kHiiiiHk', 'kHHHHHHk', '.kkkkkk.'],
+      [
+        '.kkkkkk.',
+        'kIIIIvIk',
+        'kiivIiik',
+        'kiiiiivk',
+        'kkkkkkkk',
+        'kwkwwkkk',
+        'kiiiivik',
+        'kHiiiiHk',
+        'kHHHHHHk',
+        '.kkkkkk.',
+      ],
       sel(CORCUNDA_KIT),
     ),
     limb: finishPart(['kIk', 'kik', 'kvk', 'kik', 'kik', 'kHk', 'kik', 'wkw'], sel(CORCUNDA_KIT)),
   },
   rastejante: {
-    head: finishPart(['.kkkkk..', 'kGGgggk.', 'kgggggk.', 'kRkRkRk.', 'krkrkrk.', 'kwkkwkk.', '.kkkkk..'], sel(RASTEJANTE_KIT)),
+    head: finishPart(
+      ['.kkkkk..', 'kGGgggk.', 'kgggggk.', 'kRkRkRk.', 'krkrkrk.', 'kwkkwkk.', '.kkkkk..'],
+      sel(RASTEJANTE_KIT),
+    ),
     torso: finishPart(
-      ['.kkkkkk.', 'kGGggggk', 'kgnnnnnk', 'kGGGGGgk', 'kgnnnnnk', 'kGGGGGgk', 'kgnnnnnk', 'kgggggnk', 'kGgggnnk', '.kkkkkk.'],
+      [
+        '.kkkkkk.',
+        'kGGggggk',
+        'kgnnnnnk',
+        'kGGGGGgk',
+        'kgnnnnnk',
+        'kGGGGGgk',
+        'kgnnnnnk',
+        'kgggggnk',
+        'kGgggnnk',
+        '.kkkkkk.',
+      ],
       sel(RASTEJANTE_KIT),
     ),
     limb: finishPart(['kGk', 'kgk', 'kgk', 'kgk', 'kgk', 'kgk', 'kgk', 'wkw'], sel(RASTEJANTE_KIT)),
   },
   bruto: {
-    head: finishPart(['wk...kw.', 'kSkkkSk.', 'kuUuUuk.', 'kuuuuuk.', 'kAwAwAk.', 'kaAAAak.', '.kkkkk..'], sel(BRUTO_KIT)),
+    head: finishPart(
+      ['wk...kw.', 'kSkkkSk.', 'kuUuUuk.', 'kuuuuuk.', 'kAwAwAk.', 'kaAAAak.', '.kkkkk..'],
+      sel(BRUTO_KIT),
+    ),
     torso: finishPart(
-      ['kkkkkkkk', 'kUUUUUUk', 'kuuvuuuk', 'kuuuuvbk', 'kuvuuubk', 'kuuuuubk', 'kuuvuubk', 'kvuuuvbk', 'kvvvvvbk', 'kkkkkkkk'],
+      [
+        'kkkkkkkk',
+        'kUUUUUUk',
+        'kuuvuuuk',
+        'kuuuuvbk',
+        'kuvuuubk',
+        'kuuuuubk',
+        'kuuvuubk',
+        'kvuuuvbk',
+        'kvvvvvbk',
+        'kkkkkkkk',
+      ],
       sel(BRUTO_KIT),
     ),
     limb: finishPart(['kUk', 'kuk', 'kuk', 'kvk', 'kuk', 'kuk', 'kUk', 'kUk'].slice(0, 8), sel(BRUTO_KIT)),

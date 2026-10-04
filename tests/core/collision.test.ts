@@ -45,11 +45,14 @@ describe('filtros de colisão', () => {
   it.each([
     ['propThrown', Filters.propThrown],
     ['propSwing', Filters.propSwing],
-  ] as const)('%s acerta o chefe no chão e no salto, e continua ignorando objeto em repouso (PRB-01, PRB-02, PRB-03)', (_name, f) => {
-    expect(collides(f, Filters.boss)).toBe(true);
-    expect(collides(f, Filters.bossAirborne)).toBe(true);
-    expect(collides(f, Filters.propRest)).toBe(false);
-  });
+  ] as const)(
+    '%s acerta o chefe no chão e no salto, e continua ignorando objeto em repouso (PRB-01, PRB-02, PRB-03)',
+    (_name, f) => {
+      expect(collides(f, Filters.boss)).toBe(true);
+      expect(collides(f, Filters.bossAirborne)).toBe(true);
+      expect(collides(f, Filters.propRest)).toBe(false);
+    },
+  );
 
   it('player e inimigo atravessam um ao outro e pisam no terreno', () => {
     expect(collides(Filters.player, Filters.enemy)).toBe(false);

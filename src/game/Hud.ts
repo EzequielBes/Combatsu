@@ -1,5 +1,11 @@
 import type Phaser from 'phaser';
-import { COMBO_GRADE_COLORS, COMBO_TEXT_COLOR, STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_BREAK_COLOR, STRUCTURE_BAR_FILL_COLOR } from './art/combatColors';
+import {
+  COMBO_GRADE_COLORS,
+  COMBO_TEXT_COLOR,
+  STRUCTURE_BAR_BG_COLOR,
+  STRUCTURE_BAR_BREAK_COLOR,
+  STRUCTURE_BAR_FILL_COLOR,
+} from './art/combatColors';
 import { HUD_BAR_WELL } from './art/hud';
 import { ART_SCALE, PALETTE } from './art/palette';
 import { TEX } from './textures';
@@ -12,7 +18,13 @@ const LABEL_W = 26;
 const PANEL_Y = 36;
 /** Cor da paleta em CSS (`#rrggbb` ou `#rrggbbaa`), para o texto do Phaser, que não aceita número (ART-01). */
 const css = (color: number, alpha = 1): string =>
-  `#${color.toString(16).padStart(6, '0')}${alpha < 1 ? Math.round(alpha * 255).toString(16).padStart(2, '0') : ''}`;
+  `#${color.toString(16).padStart(6, '0')}${
+    alpha < 1
+      ? Math.round(alpha * 255)
+          .toString(16)
+          .padStart(2, '0')
+      : ''
+  }`;
 const TEXT_STYLE = { fontFamily: 'monospace', fontSize: '12px', color: css(PALETTE.w) };
 
 /** Cores dos elementos novos do HUD da run (RHUD-04): rodada/restantes, faixa e telas de título/game over. */
@@ -23,7 +35,12 @@ const RUN_PANEL_STYLE = { ...RUN_TEXT_STYLE, backgroundColor: css(RUN_BG_COLOR, 
 /** Contador de combo (CMB-04/05): à direita, abaixo de "Inimigos"; a nota fica embaixo do texto de hits. */
 const COMBO_Y = MARGIN + 48;
 const COMBO_HITS_STYLE = { fontFamily: 'monospace', fontSize: '22px', fontStyle: 'bold', color: css(COMBO_TEXT_COLOR) };
-const COMBO_GRADE_STYLE = { fontFamily: 'monospace', fontSize: '34px', fontStyle: 'bold', color: css(COMBO_GRADE_COLORS.D) };
+const COMBO_GRADE_STYLE = {
+  fontFamily: 'monospace',
+  fontSize: '34px',
+  fontStyle: 'bold',
+  color: css(COMBO_GRADE_COLORS.D),
+};
 /** Nome do jogo, mostrado na tela de título (RHUD-05). */
 export const GAME_NAME = 'Combatsu';
 
@@ -114,8 +131,14 @@ export class Hud {
     });
     const w2 = scene.scale.width;
     const h2 = scene.scale.height;
-    this.roundText = scene.add.text(w2 - MARGIN, MARGIN, '', RUN_TEXT_STYLE).setOrigin(1, 0).setVisible(false);
-    this.remainingText = scene.add.text(w2 - MARGIN, MARGIN + 16, '', RUN_TEXT_STYLE).setOrigin(1, 0).setVisible(false);
+    this.roundText = scene.add
+      .text(w2 - MARGIN, MARGIN, '', RUN_TEXT_STYLE)
+      .setOrigin(1, 0)
+      .setVisible(false);
+    this.remainingText = scene.add
+      .text(w2 - MARGIN, MARGIN + 16, '', RUN_TEXT_STYLE)
+      .setOrigin(1, 0)
+      .setVisible(false);
     this.bannerText = scene.add
       .text(w2 / 2, h2 * 0.25, '', { ...RUN_PANEL_STYLE, padding: { x: 10, y: 6 } })
       .setOrigin(0.5, 0.5)
@@ -164,9 +187,22 @@ export class Hud {
     // Item na mão (ITEM-01..03), logo abaixo do contador de fragmentos; escondido de mãos vazias.
     this.heldItemText = scene.add.text(MARGIN, fragY + 16, '', TEXT_STYLE).setVisible(false);
 
-    this.comboHitsText = scene.add.text(w2 - MARGIN, COMBO_Y, '', COMBO_HITS_STYLE).setOrigin(1, 0).setVisible(false);
-    this.comboGradeText = scene.add.text(w2 - MARGIN, COMBO_Y + 26, '', COMBO_GRADE_STYLE).setOrigin(1, 0).setVisible(false);
-    const runObjs = [this.roundText, this.remainingText, this.bannerText, this.centerText, this.comboHitsText, this.comboGradeText];
+    this.comboHitsText = scene.add
+      .text(w2 - MARGIN, COMBO_Y, '', COMBO_HITS_STYLE)
+      .setOrigin(1, 0)
+      .setVisible(false);
+    this.comboGradeText = scene.add
+      .text(w2 - MARGIN, COMBO_Y + 26, '', COMBO_GRADE_STYLE)
+      .setOrigin(1, 0)
+      .setVisible(false);
+    const runObjs = [
+      this.roundText,
+      this.remainingText,
+      this.bannerText,
+      this.centerText,
+      this.comboHitsText,
+      this.comboGradeText,
+    ];
     const bossBarObjs = [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName];
     const fragmentObjs = [this.fragmentIcon, this.fragmentText, this.heldItemText, this.structBg, this.structFill];
     for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]) {
@@ -334,7 +370,9 @@ export class Hud {
       // BHUD-07: cada peça da barra está na `uiLayer`, e a camada é ignorada pela câmera principal.
       bossBarIgnoredByMain:
         (this.layer.cameraFilter & mainId) === mainId &&
-        [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName].every((o) => o.displayList === this.layer),
+        [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName].every(
+          (o) => o.displayList === this.layer,
+        ),
     };
   }
 

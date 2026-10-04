@@ -7,7 +7,12 @@ export type HitReaction = 'head-a' | 'head-b' | 'uppercut' | 'body' | 'impact';
 export const REACTION_DURATIONS: readonly number[] = [60, 90, 70];
 
 const BODY_MOVES: ReadonlySet<string> = new Set([
-  'socoBaixo', 'rasteira', 'cotovelada', 'joelhada', 'chuteFrontal', 'chuteEmpurrao',
+  'socoBaixo',
+  'rasteira',
+  'cotovelada',
+  'joelhada',
+  'chuteFrontal',
+  'chuteEmpurrao',
 ]);
 const UPPERCUT_MOVES: ReadonlySet<string> = new Set(['gancho', 'ganchoAscendente', 'chuteAlto']);
 
@@ -15,10 +20,7 @@ const UPPERCUT_MOVES: ReadonlySet<string> = new Set(['gancho', 'ganchoAscendente
  * Reação visual ao golpe (HRX-01): forte → `impact`; golpes de corpo → `body`; golpes ascendentes → `uppercut`;
  * o resto alterna cabeça-a/cabeça-b (`last` é a última reação de cabeça, para a alternância).
  */
-export function pickHitReaction(
-  hit: { strength: Strength; moveName?: string },
-  last: HitReaction | null,
-): HitReaction {
+export function pickHitReaction(hit: { strength: Strength; moveName?: string }, last: HitReaction | null): HitReaction {
   if (hit.strength === 'heavy') return 'impact';
   const name = hit.moveName;
   if (name !== undefined && BODY_MOVES.has(name)) return 'body';

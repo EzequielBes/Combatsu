@@ -1,7 +1,16 @@
 import type Phaser from 'phaser';
 import { Filters } from '../core/collision';
 import type { HitboxShape } from '../core/combo';
-import { TargetGate, canDamage, makeHitGate, orderTargets, type Hit, type HitReport, type Team, type Vec2 } from '../core/hit';
+import {
+  TargetGate,
+  canDamage,
+  makeHitGate,
+  orderTargets,
+  type Hit,
+  type HitReport,
+  type Team,
+  type Vec2,
+} from '../core/hit';
 import { PALETTE } from './art/palette';
 import { deferContact, tagBody, type Hittable, type Rect } from './bodyTags';
 import { isDebug } from './debug';

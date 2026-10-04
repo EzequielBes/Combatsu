@@ -3,7 +3,15 @@
  * (cabem no frame de 32x30 com a origem no pé); o `heroicoAlto` mede 32 e usa o frame de 40x40. Todos têm braço e
  * perna de perto e de longe do mesmo comprimento. Altura = cabeça + pescoço + tronco + coxa + canela + `SOLE`.
  */
-import { HEAD_LARGE, HEAD_MEDIUM, HEAD_SMALL, HEAD_CHIBI, HEAD_TALL_FIGHT, HEAD_TALL_IDLE, type HeadSprite } from './heads';
+import {
+  HEAD_LARGE,
+  HEAD_MEDIUM,
+  HEAD_SMALL,
+  HEAD_CHIBI,
+  HEAD_TALL_FIGHT,
+  HEAD_TALL_IDLE,
+  type HeadSprite,
+} from './heads';
 import { CHIBI, type Proportions } from './skeleton';
 
 /** A `heroico` (estilo Sifu): cabeça pequena, pernas pela metade da altura, ombros largos e cintura fina. */
@@ -80,7 +88,15 @@ export const INTER: Proportions = {
     leg: { hip: 1.7, knee: 1.4, ankle: 1.15 },
     hand: 0.95,
     shoe: 0.7,
-    torso: { hip: 2.8, waist: 2.6, shoulder: 3.6, collar: 2.2, shoulderFrom: 3.8, taper: true, buttons: [1.9, 3.3, 4.7] },
+    torso: {
+      hip: 2.8,
+      waist: 2.6,
+      shoulder: 3.6,
+      collar: 2.2,
+      shoulderFrom: 3.8,
+      taper: true,
+      buttons: [1.9, 3.3, 4.7],
+    },
   },
 };
 
@@ -110,7 +126,15 @@ export const HEROICO_ALTO: Proportions = {
     leg: { hip: 1.8, knee: 1.45, ankle: 1.15 },
     hand: 1,
     shoe: 0.72,
-    torso: { hip: 2.7, waist: 2.4, shoulder: 4.3, collar: 1.7, shoulderFrom: 5.4, taper: true, buttons: [2.2, 3.8, 5.4] },
+    torso: {
+      hip: 2.7,
+      waist: 2.4,
+      shoulder: 4.3,
+      collar: 1.7,
+      shoulderFrom: 5.4,
+      taper: true,
+      buttons: [2.2, 3.8, 5.4],
+    },
   },
 };
 

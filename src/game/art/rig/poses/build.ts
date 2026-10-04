@@ -33,7 +33,13 @@ export interface PoseSpec {
 export function buildPose(s: PoseSpec): Pose {
   let p = makePose(
     s.hip,
-    { spine: s.spine, neckBone: s.neck ?? 0, footNear: s.legNear.foot, footFar: s.legFar.foot, ...(s.shoulderNear === undefined ? {} : { shoulderNear: s.shoulderNear }) },
+    {
+      spine: s.spine,
+      neckBone: s.neck ?? 0,
+      footNear: s.legNear.foot,
+      footFar: s.legFar.foot,
+      ...(s.shoulderNear === undefined ? {} : { shoulderNear: s.shoulderNear }),
+    },
     s.body,
   );
   if (s.armScale !== undefined) p.armScale = s.armScale;

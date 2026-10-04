@@ -71,11 +71,17 @@ export default async function ({ page, baseUrl, assert }) {
   const seenIds = new Set(snap.enemies.map((e) => e.id));
   const checkAliveAndScale = (s) => {
     const aliveCount = s.enemies.filter((e) => ALIVE_STATES.has(e.state)).length;
-    assert(aliveCount === s.run.alive, `vivos (${aliveCount}) != run.alive (${s.run.alive}): ${JSON.stringify(s.enemies)}`);
+    assert(
+      aliveCount === s.run.alive,
+      `vivos (${aliveCount}) != run.alive (${s.run.alive}): ${JSON.stringify(s.enemies)}`,
+    );
     for (const e of s.enemies) {
       if (seenIds.has(e.id)) continue;
       seenIds.add(e.id);
-      assert(e.maxHp === 60, `inimigo novo ${e.id} nasceu com maxHp errado (HP fixo por rodada, SPN-13): ${JSON.stringify(e)}`);
+      assert(
+        e.maxHp === 60,
+        `inimigo novo ${e.id} nasceu com maxHp errado (HP fixo por rodada, SPN-13): ${JSON.stringify(e)}`,
+      );
       // DIF-04/06: a velocidade ainda escala 3% por rodada (70 × 1,03); a patrulha não existe mais (SPN-10).
       assert(
         Math.abs(e.chaseSpeed - 72.1) < 0.01 && e.patrolSpeed === undefined,
@@ -178,7 +184,10 @@ export default async function ({ page, baseUrl, assert }) {
   assert(attacked !== null, `nenhum inimigo da rodada 2 chegou a atacar o player: player.hp=${chase.player.hp}`);
   assert(attacked.player.hp === 88, `player deveria perder 12 de hp no golpe da rodada 2: ${attacked.player.hp}`);
   const attacker = attacked.enemies.find((e) => e.hp > 0 && Math.abs(e.x - attacked.player.x) < 60);
-  assert(attacker !== undefined, `nenhum inimigo perto do player logo após o golpe: ${JSON.stringify(attacked.enemies)}`);
+  assert(
+    attacker !== undefined,
+    `nenhum inimigo perto do player logo após o golpe: ${JSON.stringify(attacked.enemies)}`,
+  );
   assert(
     attacker.hp === 60 && attacker.maxHp === 60 && attacker.damage === 12,
     `escala da rodada 2 errada no inimigo que atacou: ${JSON.stringify(attacker)}`,

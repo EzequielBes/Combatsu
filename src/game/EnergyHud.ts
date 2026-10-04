@@ -72,7 +72,12 @@ export class EnergyHud {
       const x = BAR_X + i * (ICON_SIZE + ICON_GAP);
       // Borda do ícone quadrado (polimento): moldura simples, não a pixel art da barra de HP.
       const border = scene.add
-        .rectangle(x - ICON_BORDER_W, ICON_Y - ICON_BORDER_W, ICON_SIZE + ICON_BORDER_W * 2, ICON_SIZE + ICON_BORDER_W * 2)
+        .rectangle(
+          x - ICON_BORDER_W,
+          ICON_Y - ICON_BORDER_W,
+          ICON_SIZE + ICON_BORDER_W * 2,
+          ICON_SIZE + ICON_BORDER_W * 2,
+        )
         .setOrigin(0, 0)
         .setStrokeStyle(ICON_BORDER_W, PALETTE.w, 1)
         .setVisible(false);
@@ -82,7 +87,10 @@ export class EnergyHud {
         .setDisplaySize(ICON_SIZE, ICON_SIZE)
         .setVisible(false);
       // Overlay escuro do topo para baixo (TEC-09): encolhe conforme a recarga esvazia.
-      const overlay = scene.add.rectangle(x, ICON_Y, ICON_SIZE, 0, TECH_ICON_OVERLAY_COLOR, 0.75).setOrigin(0, 0).setVisible(false);
+      const overlay = scene.add
+        .rectangle(x, ICON_Y, ICON_SIZE, 0, TECH_ICON_OVERLAY_COLOR, 0.75)
+        .setOrigin(0, 0)
+        .setVisible(false);
       // Rótulo da tecla do slot (polimento): `L` (slot 1, teclas L/C) ou `I` (slot 2, teclas I/V).
       const label = scene.add
         .text(x + ICON_SIZE - 2, ICON_Y + ICON_SIZE - 2, SLOT_LABEL[i], {
@@ -190,12 +198,16 @@ export class EnergyHud {
     ];
     return {
       // TEC-11: checagem real (a `uiLayer` está de fato ignorada pela câmera principal e todo objeto está nela).
-      techIgnoredByMain: (this.layer.cameraFilter & mainId) === mainId && allObjs.every((o) => o.displayList === this.layer),
+      techIgnoredByMain:
+        (this.layer.cameraFilter & mainId) === mainId && allObjs.every((o) => o.displayList === this.layer),
       energy: {
         width: BAR_W,
         fillWidth: this.fill.width,
         marks: this.marks.map((m) => (m.visible ? m.x - BAR_X : null)),
-        icons: this.slots.map((s) => ({ cooldownOverlayHeight: s.overlay.visible ? s.overlay.height : 0, iconHeight: ICON_SIZE })),
+        icons: this.slots.map((s) => ({
+          cooldownOverlayHeight: s.overlay.visible ? s.overlay.height : 0,
+          iconHeight: ICON_SIZE,
+        })),
         masteryBars: this.masteryBars.map((b) => (b.visible ? b.width : null)),
         flashing: this.flashMs > 0,
       },

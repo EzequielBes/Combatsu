@@ -241,7 +241,14 @@ describe('propHit e validação', () => {
 
   it('o arremesso mantém dano, força e golpe forte do objeto', () => {
     const hit = propHit(def(3), PLAYER, { x: 1, y: 0 }, 'thrown');
-    expect(hit).toEqual({ ownerId: PLAYER, damage: 10, strength: 'heavy', direction: { x: 1, y: 0 }, force: 8, knockdown: true });
+    expect(hit).toEqual({
+      ownerId: PLAYER,
+      damage: 10,
+      strength: 'heavy',
+      direction: { x: 1, y: 0 },
+      force: 8,
+      knockdown: true,
+    });
   });
 
   it('recusa definições inválidas', () => {

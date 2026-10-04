@@ -17,7 +17,13 @@ describe('CursedFx (parte pura)', () => {
   });
 
   it('TRL-03: o polígono do rastro cai na grade de 2 px e é mais fino nas pontas que no meio', () => {
-    const poly = trailPolygon([{ x: 100, y: 200 }, { x: 160, y: 180 }], 8);
+    const poly = trailPolygon(
+      [
+        { x: 100, y: 200 },
+        { x: 160, y: 180 },
+      ],
+      8,
+    );
     expect(poly.length).toBeGreaterThanOrEqual(6);
     for (const p of poly) {
       expect(p.x % 2).toBe(0);

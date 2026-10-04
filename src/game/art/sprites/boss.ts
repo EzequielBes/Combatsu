@@ -74,22 +74,26 @@ function paint(canvas: Canvas, shade: Shade, ramp: Ramp): void {
 }
 
 /** Oval de centro (cx, cy) e raios rx, ry. */
-const oval = (cx: number, cy: number, rx: number, ry: number): Shade => (x, y) => {
-  const nx = (x - cx) / rx;
-  const ny = (y - cy) / ry;
-  return nx * nx + ny * ny <= 1 ? nx * LIGHT[0] + ny * LIGHT[1] : null;
-};
+const oval =
+  (cx: number, cy: number, rx: number, ry: number): Shade =>
+  (x, y) => {
+    const nx = (x - cx) / rx;
+    const ny = (y - cy) / ry;
+    return nx * nx + ny * ny <= 1 ? nx * LIGHT[0] + ny * LIGHT[1] : null;
+  };
 
 /** Membro afilado de `a` até `b`, com raio `ra` em `a` e `rb` em `b`. */
-const limb = (a: Vec, b: Vec, ra: number, rb: number): Shade => (x, y) => {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const t = Math.min(1, Math.max(0, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)));
-  const r = ra + (rb - ra) * t;
-  const ox = x - (a[0] + dx * t);
-  const oy = y - (a[1] + dy * t);
-  return ox * ox + oy * oy <= r * r ? (ox * LIGHT[0] + oy * LIGHT[1]) / r : null;
-};
+const limb =
+  (a: Vec, b: Vec, ra: number, rb: number): Shade =>
+  (x, y) => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const t = Math.min(1, Math.max(0, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)));
+    const r = ra + (rb - ra) * t;
+    const ox = x - (a[0] + dx * t);
+    const oy = y - (a[1] + dy * t);
+    return ox * ox + oy * oy <= r * r ? (ox * LIGHT[0] + oy * LIGHT[1]) / r : null;
+  };
 
 /** Sobrepõe uma grade desenhada à mão; '.' não pinta. */
 function stamp(canvas: Canvas, grid: Grid, x0: number, y0: number): void {

@@ -30,7 +30,10 @@ export default async function (ctx) {
     // SPR-11: no ápice (|vy| < 60) o frame é apex-0.
     const apex = trail.filter((t) => t.frame === 'apex-0');
     assert(apex.length > 0, `SPR-11: nenhum apex-0 no topo. ${where}`);
-    assert(apex.every((t) => Math.abs(t.vy) < 60), `SPR-11: apex-0 com |vy| >= 60: ${JSON.stringify(apex)}`);
+    assert(
+      apex.every((t) => Math.abs(t.vy) < 60),
+      `SPR-11: apex-0 com |vy| >= 60: ${JSON.stringify(apex)}`,
+    );
 
     // SPR-13: o pouso mostra land-* por até 120 ms e só então idle-*.
     const firstLand = names.findIndex((n) => n.startsWith('land-'));
@@ -38,8 +41,17 @@ export default async function (ctx) {
     let lastLand = firstLand;
     while (names[lastLand + 1]?.startsWith('land-')) lastLand++;
     const landSteps = lastLand - firstLand + 1;
-    assert(landSteps * STEP <= LAND_MS + 2 * STEP, `SPR-13: land-* durou ${landSteps} passos (> ${LAND_MS} ms). ${where}`);
-    assert(names[lastLand + 1]?.startsWith('idle-'), `SPR-13: depois do land veio ${names[lastLand + 1]} em vez de idle-*. ${where}`);
-    assert(names.slice(0, firstLand).some((n) => n.startsWith('fall-')), `queda sem fall-* antes do pouso. ${where}`);
+    assert(
+      landSteps * STEP <= LAND_MS + 2 * STEP,
+      `SPR-13: land-* durou ${landSteps} passos (> ${LAND_MS} ms). ${where}`,
+    );
+    assert(
+      names[lastLand + 1]?.startsWith('idle-'),
+      `SPR-13: depois do land veio ${names[lastLand + 1]} em vez de idle-*. ${where}`,
+    );
+    assert(
+      names.slice(0, firstLand).some((n) => n.startsWith('fall-')),
+      `queda sem fall-* antes do pouso. ${where}`,
+    );
   }
 }

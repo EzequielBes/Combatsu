@@ -17,7 +17,10 @@ export default async function ({ page, baseUrl, assert }) {
   // Avança `ms` e devolve o snapshot resultante (padrão dos outros cenários de smoke).
   // O chefe nunca sai da sala (544 px de altura): guarda contra o corpo afundar no chão depois de um pouso.
   const stepAndSnap = async (ms) => {
-    const sn = await page.evaluate((n) => { window.__game.step(n); return window.__game.snapshot(); }, ms);
+    const sn = await page.evaluate((n) => {
+      window.__game.step(n);
+      return window.__game.snapshot();
+    }, ms);
     if (sn.boss) assert(sn.boss.y < 544, `o chefe saiu da sala: ${JSON.stringify(sn.boss)}`);
     return sn;
   };
@@ -183,8 +186,14 @@ export default async function ({ page, baseUrl, assert }) {
       volleyHit = { before: volleyHpBefore, after: cur.player.hp };
     }
   }
-  assert(boltOrder.length >= 3, `a rajada da fase 2 nunca disparou os 3 projéteis esperados (BAT-04): ${boltOrder.length}`);
-  assert(waveOrder.length >= 2, `o chefe nunca pousou de um salto na fase 2 com as duas ondas de choque (BAT-03): ${waveOrder.length}`);
+  assert(
+    boltOrder.length >= 3,
+    `a rajada da fase 2 nunca disparou os 3 projéteis esperados (BAT-04): ${boltOrder.length}`,
+  );
+  assert(
+    waveOrder.length >= 2,
+    `o chefe nunca pousou de um salto na fase 2 com as duas ondas de choque (BAT-03): ${waveOrder.length}`,
+  );
 
   // BAT-04: os 3 primeiros projéteis da rajada, a 260 px/s (tier 1, Oni), ~150 ms entre disparos (±1 frame no
   // relógio do `BossAI`, que é puro - ver tests/core/bossAI.test.ts). Do lado de fora (smoke), um projétil que
@@ -278,7 +287,8 @@ export default async function ({ page, baseUrl, assert }) {
   await page.keyboard.up(nearLeft ? 'KeyD' : 'KeyA');
   const wallWaves = new Map();
   const noteWall = (snap) => {
-    for (const p of snap.projectiles) if (p.kind === 'shockwave') wallWaves.set(p.id, { x: p.x, dir: p.dir, traveled: p.traveled });
+    for (const p of snap.projectiles)
+      if (p.kind === 'shockwave') wallWaves.set(p.id, { x: p.x, dir: p.dir, traveled: p.traveled });
   };
   noteWall(cur);
   for (let i = 0; i < 200 && cur.projectiles.some((p) => p.kind === 'shockwave'); i++) {
@@ -330,7 +340,10 @@ export default async function ({ page, baseUrl, assert }) {
     await page.keyboard.press('Digit3', { delay: 50 }); // mata o player (tecla 3)
     overSnap = await stepAndSnap(100);
   }
-  assert(overSnap.run.state === 'gameOver', `esperava game over depois da morte do player: ${JSON.stringify(overSnap.run)}`);
+  assert(
+    overSnap.run.state === 'gameOver',
+    `esperava game over depois da morte do player: ${JSON.stringify(overSnap.run)}`,
+  );
   assert(overSnap.boss !== null, 'o chefe deveria continuar vivo no game over (para o teste do edge case)');
   // RUN-05/11: a trava de 1000 ms (RUN.gameOverLockMs) precisa passar antes do J valer para começar uma run nova.
   await stepAndSnap(1100);
@@ -339,7 +352,10 @@ export default async function ({ page, baseUrl, assert }) {
   // `?round=5` (debug) faz a run nova recomeçar direto numa rodada de chefe: um chefe novo nasce no mesmo
   // comando que reinicia (startRun + spawn), então o teste do `startRun` (design.md: "remove o chefe e os
   // projéteis") é o chefe estar zerado (não o antigo, com hp=384/fase 2 ainda em rajada) e nenhum projétil velho.
-  assert(newRun.projectiles.length === 0, `nova run não deveria ter projéteis do chefe anterior: ${JSON.stringify(newRun.projectiles)}`);
+  assert(
+    newRun.projectiles.length === 0,
+    `nova run não deveria ter projéteis do chefe anterior: ${JSON.stringify(newRun.projectiles)}`,
+  );
   assert(
     newRun.boss !== null && newRun.boss.hp === newRun.boss.maxHp && newRun.boss.state === 'intro',
     `nova run deveria ter um chefe novo (não o antigo em pleno combate): ${JSON.stringify(newRun.boss)}`,
@@ -391,7 +407,10 @@ export default async function ({ page, baseUrl, assert }) {
       }
     }
   }
-  assert(bolt15Order.length >= 5, `a rajada da Tecelã (rodada 15) nunca disparou os 5 projéteis esperados (BTIER-05): ${bolt15Order.length}`);
+  assert(
+    bolt15Order.length >= 5,
+    `a rajada da Tecelã (rodada 15) nunca disparou os 5 projéteis esperados (BTIER-05): ${bolt15Order.length}`,
+  );
   const volley15 = bolt15Order.slice(0, 5).map((id) => bolt15First.get(id));
   assert(
     volley15.every((p) => Math.abs(p.speed - 325) < 0.01),

@@ -193,7 +193,15 @@ export interface GameSnapshot {
   /** Carteira de fragmentos da run (ECO-19). */
   wallet: { fragments: number };
   /** Um item por pickup vivo (fragmento ou gota de cura), lido do objeto vivo (ECO-19). */
-  pickups: { id: number; kind: 'fragment' | 'heal'; value: number; x: number; y: number; ageMs: number; magnet: boolean }[];
+  pickups: {
+    id: number;
+    kind: 'fragment' | 'heal';
+    value: number;
+    x: number;
+    y: number;
+    ageMs: number;
+    magnet: boolean;
+  }[];
   /** Loja entre rodadas (SHOP-22): `open` só no estado `shop`; ofertas sem os espaços vazios. */
   shop: {
     open: boolean;
@@ -208,7 +216,16 @@ export interface GameSnapshot {
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
-  worldProps: { id: number; key: string; state: PropState; x: number; y: number; durabilityLeft: number; rare: boolean; vx: number }[];
+  worldProps: {
+    id: number;
+    key: string;
+    state: PropState;
+    x: number;
+    y: number;
+    durabilityLeft: number;
+    rare: boolean;
+    vx: number;
+  }[];
   /** Energia amaldiçoada do player (CE-01..09, TEC-08), lida do estado vivo. */
   ce: { cur: number; max: number; regen: number };
   /** Loadout de técnicas e a conjuração ativa (TEC-01..06/08, CAST-*), contrato exato da spec. */

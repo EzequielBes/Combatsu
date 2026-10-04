@@ -164,7 +164,8 @@ export class EnemyAI {
 
     const target = this.holdDistance(s.holdRank);
     // Quem já espera fica em `hold` até a própria distância de espera (+ folga), que pode passar de `holdRange`.
-    const holdLimit = this._state === 'hold' ? Math.max(this.t.holdRange, target + this.t.holdTolerance) : this.t.holdRange;
+    const holdLimit =
+      this._state === 'hold' ? Math.max(this.t.holdRange, target + this.t.holdTolerance) : this.t.holdRange;
     if (dist <= holdLimit) {
       this._state = 'hold';
       if (dist < target - this.t.holdTolerance) return this.out(-this.facing * this.t.chaseSpeed, ['wantAttack']);

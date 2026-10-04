@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createPickup, lifetimeMs, stepPickup, visible, type PickupContext, type PickupPlayer, type PickupState } from '../../src/core/pickup';
+import {
+  createPickup,
+  lifetimeMs,
+  stepPickup,
+  visible,
+  type PickupContext,
+  type PickupPlayer,
+  type PickupState,
+} from '../../src/core/pickup';
 import { PICKUP } from '../../src/data/tuning';
 import type { Rect } from '../../src/core/level';
 

@@ -195,19 +195,22 @@ describe('EnemyBrain: golpe leve ou forte durante o cambaleio (PST-10, PST-11)',
   it.each([
     [280, 100, 220], // resto 100: leve vira max(100, 220) = 220
     [80, 300, 300], // resto 300: leve mantém 300
-  ])('leve em stagger com resto %i ms: continua stagger com max(%i, 220) = %i ms pela frente', (spent, _rest, expected) => {
-    const b = new EnemyBrain(REAL);
-    b.receiveHit(heavy());
-    b.update(spent);
-    expect(b.state).toBe('stagger');
-    const evs = b.receiveHit(light());
-    expect(types(evs)).toEqual(['hitReaction']);
-    expect(b.state).toBe('stagger');
-    b.update(expected - 1);
-    expect(b.state).toBe('stagger');
-    b.update(1);
-    expect(b.state).toBe('idle');
-  });
+  ])(
+    'leve em stagger com resto %i ms: continua stagger com max(%i, 220) = %i ms pela frente',
+    (spent, _rest, expected) => {
+      const b = new EnemyBrain(REAL);
+      b.receiveHit(heavy());
+      b.update(spent);
+      expect(b.state).toBe('stagger');
+      const evs = b.receiveHit(light());
+      expect(types(evs)).toEqual(['hitReaction']);
+      expect(b.state).toBe('stagger');
+      b.update(expected - 1);
+      expect(b.state).toBe('stagger');
+      b.update(1);
+      expect(b.state).toBe('idle');
+    },
+  );
 
   it('forte em stagger volta a ter 380 ms pela frente', () => {
     const b = new EnemyBrain(REAL);

@@ -28,7 +28,9 @@ export default async function ({ page, baseUrl, assert }) {
     );
   const countOf = (events, name) => events.filter((e) => e === name).length;
 
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&shove=0&seed=1&noshop=1&tech=divergente`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&shove=0&seed=1&noshop=1&tech=divergente`, {
+    waitUntil: 'load',
+  });
   await waitReady();
   await stepAndSnap(20);
   await page.keyboard.press('KeyJ', { delay: 50 });
@@ -65,7 +67,10 @@ export default async function ({ page, baseUrl, assert }) {
         snap = await stepAndSnap(300);
       }
     }
-    assert(target, `nenhum inimigo intacto disponível mesmo depois de forçar a próxima rodada: ${JSON.stringify(snap.enemies)}`);
+    assert(
+      target,
+      `nenhum inimigo intacto disponível mesmo depois de forçar a próxima rodada: ${JSON.stringify(snap.enemies)}`,
+    );
     const targetId = target.id;
     usedIds.add(targetId);
     // Para dentro de [11, 59] px (offsetX 22 + largura 26 da hitbox `direto`, ±11 da metade da largura do
@@ -95,8 +100,12 @@ export default async function ({ page, baseUrl, assert }) {
 
   /** Espera o slot 1 ficar livre (sem cast e sem recarga) antes da próxima conjuração. */
   const waitSlotReady = async () => {
-    for (let i = 0; i < 40 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++) snap = await stepAndSnap(100);
-    assert(snap.tech.cast === null && snap.tech.slots[0].cooldownMs === 0, `slot 1 deveria estar livre: ${JSON.stringify(snap.tech)}`);
+    for (let i = 0; i < 40 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++)
+      snap = await stepAndSnap(100);
+    assert(
+      snap.tech.cast === null && snap.tech.slots[0].cooldownMs === 0,
+      `slot 1 deveria estar livre: ${JSON.stringify(snap.tech)}`,
+    );
   };
 
   /**
@@ -107,7 +116,8 @@ export default async function ({ page, baseUrl, assert }) {
    */
   const castAndWaitFirstImpact = async (targetId) => {
     for (let attempt = 0; attempt < 3; attempt++) {
-      for (let i = 0; i < 40 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++) snap = await stepAndSnap(100);
+      for (let i = 0; i < 40 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++)
+        snap = await stepAndSnap(100);
       let t = snap.enemies.find((e) => e.id === targetId);
       for (let i = 0; i < 100 && t && Math.abs(t.x - snap.player.x) > 40; i++) {
         const dir = t.x >= snap.player.x ? 'KeyD' : 'KeyA';
@@ -136,7 +146,10 @@ export default async function ({ page, baseUrl, assert }) {
           impact = now.hp;
           // CE-08: dano de técnica não dá os +3 do golpe corpo a corpo; já em `release`, sem regen (CE-05) nem custo.
           if (prev.tech.cast && prev.tech.cast.state === 'release') {
-            assert(snap.ce.cur === prev.ce.cur, `CE-08: o 1º impacto não deveria mexer na energia: ${prev.ce.cur} -> ${snap.ce.cur}`);
+            assert(
+              snap.ce.cur === prev.ce.cur,
+              `CE-08: o 1º impacto não deveria mexer na energia: ${prev.ce.cur} -> ${snap.ce.cur}`,
+            );
             ce08Checked = true;
           }
         }
@@ -163,10 +176,16 @@ export default async function ({ page, baseUrl, assert }) {
     if (snap.fx.layers.includes('divergente.echo') && snap.fx.layers.includes('divergente.ring')) sawWaitingFx = true; // DIV-07
     if (countOf(snap.events, 'divergent2') > divergent2Before) secondImpact = snap;
   }
-  assert(sawWaitingFx, `DIV-07: nunca vi divergente.echo/ring esperando o 2º impacto: ${JSON.stringify(snap.fx.layers)}`);
+  assert(
+    sawWaitingFx,
+    `DIV-07: nunca vi divergente.echo/ring esperando o 2º impacto: ${JSON.stringify(snap.fx.layers)}`,
+  );
   assert(secondImpact, `DIV-04: o 2º impacto normal nunca aconteceu: ${JSON.stringify(snap.tech.cast)}`);
   const enemyAfter2 = secondImpact.enemies.find((e) => e.id === target1);
-  assert(enemyAfter2.hp === before1 - 12 - 18, `DIV-04: 2º impacto deveria tirar 18 a mais: ${JSON.stringify(enemyAfter2)}`);
+  assert(
+    enemyAfter2.hp === before1 - 12 - 18,
+    `DIV-04: 2º impacto deveria tirar 18 a mais: ${JSON.stringify(enemyAfter2)}`,
+  );
   assert(
     secondImpact.fx.layers.includes('divergente.burst') && secondImpact.fx.layers.includes('divergente.fistGhost'),
     `DIV-09: sem Kokusen, fx.layers deveria ter burst + fistGhost: ${JSON.stringify(secondImpact.fx.layers)}`,
@@ -179,7 +198,10 @@ export default async function ({ page, baseUrl, assert }) {
   // TFX-09: 300 ms depois do fim do efeito (estouro 220 ms + punho fantasma 180 ms), `fx.live` volta ao valor de
   // antes da conjuração — dá bastante folga (700 ms reais) para tudo (aura, eco/anel, estouro, fantasma) sumir.
   snap = await stepAndSnap(700);
-  assert(snap.fx.live === fxBaseline, `TFX-09: fx.live deveria voltar a ${fxBaseline}, veio ${snap.fx.live}: ${JSON.stringify(snap.fx.layers)}`);
+  assert(
+    snap.fx.live === fxBaseline,
+    `TFX-09: fx.live deveria voltar a ${fxBaseline}, veio ${snap.fx.live}: ${JSON.stringify(snap.fx.layers)}`,
+  );
   assert(ce08Checked, 'CE-08: nenhum 1º impacto caiu num frame já em release para conferir a energia');
 
   // CE-06: um jab aplicado num inimigo soma exatamente 3 de energia (a energia está abaixo do teto depois do
@@ -196,7 +218,10 @@ export default async function ({ page, baseUrl, assert }) {
       t = snap.enemies.find((e) => e.id === target1) || t;
     }
     const hpBefore = t.hp;
-    assert(snap.ce.cur <= snap.ce.max - 3, `CE-06: pré-condição, energia deveria estar abaixo do teto: ${snap.ce.cur}/${snap.ce.max}`);
+    assert(
+      snap.ce.cur <= snap.ce.max - 3,
+      `CE-06: pré-condição, energia deveria estar abaixo do teto: ${snap.ce.cur}/${snap.ce.max}`,
+    );
     let prev = snap;
     snap = await press1('KeyJ');
     for (let i = 0; i < 12 && ce06 === null; i++) {
@@ -230,17 +255,35 @@ export default async function ({ page, baseUrl, assert }) {
     if (countOf(snap.events, 'kokusen') > kokusenBefore) landed = snap;
   }
   assert(landed, 'KOK-28: o Kokusen nunca resolveu depois da tecla dentro da janela');
-  assert(countOf(landed.events, 'kokusen') === kokusenBefore + 1, `KOK-28: esperava exatamente um kokusen a mais: ${JSON.stringify(landed.events)}`);
+  assert(
+    countOf(landed.events, 'kokusen') === kokusenBefore + 1,
+    `KOK-28: esperava exatamente um kokusen a mais: ${JSON.stringify(landed.events)}`,
+  );
   const enemyAfterKokusen = landed.enemies.find((e) => e.id === target2);
-  assert(enemyAfterKokusen.hp === before2 - 12 - 45, `KOK-06: Kokusen deveria tirar 45 (2,5×18): ${JSON.stringify(enemyAfterKokusen)}`);
+  assert(
+    enemyAfterKokusen.hp === before2 - 12 - 45,
+    `KOK-06: Kokusen deveria tirar 45 (2,5×18): ${JSON.stringify(enemyAfterKokusen)}`,
+  );
   assert(
     Math.min(100, ceBeforeKokusen + 30) === landed.ce.cur,
     `KOK-09: energia deveria subir 30 com teto: ${ceBeforeKokusen} -> ${landed.ce.cur}`,
   );
-  assert(landed.hitstop.frozen === true && landed.hitstop.remainingMs > 200, `KOK-13: hitstop de 220 ms esperado: ${JSON.stringify(landed.hitstop)}`);
-  assert(landed.fx.layers.includes('kokusen.invert'), `KOK-14: fx.layers deveria ter kokusen.invert: ${JSON.stringify(landed.fx.layers)}`);
-  assert(landed.hud.kokusenCard && landed.hud.kokusenCard.streak === 1, `KOK-25: hud.kokusenCard deveria ter streak 1: ${JSON.stringify(landed.hud.kokusenCard)}`);
-  assert(landed.kokusen.zone === true && landed.kokusen.streak === 1, `KOK-10/30: zona/streak deveriam estar ativos: ${JSON.stringify(landed.kokusen)}`);
+  assert(
+    landed.hitstop.frozen === true && landed.hitstop.remainingMs > 200,
+    `KOK-13: hitstop de 220 ms esperado: ${JSON.stringify(landed.hitstop)}`,
+  );
+  assert(
+    landed.fx.layers.includes('kokusen.invert'),
+    `KOK-14: fx.layers deveria ter kokusen.invert: ${JSON.stringify(landed.fx.layers)}`,
+  );
+  assert(
+    landed.hud.kokusenCard && landed.hud.kokusenCard.streak === 1,
+    `KOK-25: hud.kokusenCard deveria ter streak 1: ${JSON.stringify(landed.hud.kokusenCard)}`,
+  );
+  assert(
+    landed.kokusen.zone === true && landed.kokusen.streak === 1,
+    `KOK-10/30: zona/streak deveriam estar ativos: ${JSON.stringify(landed.kokusen)}`,
+  );
 
   // KOK-24: zoom sobe perto de 1,68 logo depois (até 60 ms reais); 4 passos internos (~66,7 ms) cobrem a subida
   // sem já alcançar os ~100 ms (6 frames de 60 fps, TFX-05/timeline) em que o duotom (KOK-15) termina. `kokusen.bolts`
@@ -252,11 +295,20 @@ export default async function ({ page, baseUrl, assert }) {
     peakZoom = Math.max(peakZoom, snap.camera.zoom);
   }
   assert(peakZoom >= 1.6, `KOK-24: zoom deveria ter subido perto de 1,68: ${peakZoom}`);
-  assert(snap.fx.layers.includes('kokusen.bolts'), `KOK-17: fx.layers deveria ter kokusen.bolts: ${JSON.stringify(snap.fx.layers)}`);
+  assert(
+    snap.fx.layers.includes('kokusen.bolts'),
+    `KOK-17: fx.layers deveria ter kokusen.bolts: ${JSON.stringify(snap.fx.layers)}`,
+  );
   // KOK-15: neste ponto (4 frames ≈ 66,7 ms depois do Kokusen) o invert (2 frames, 33,3 ms) já acabou e o duotom
   // (mais 4 frames, 66,7 ms) ainda está no meio - os dois nunca coexistem.
-  assert(snap.fx.layers.includes('kokusen.duotone'), `KOK-15: fx.layers deveria ter kokusen.duotone: ${JSON.stringify(snap.fx.layers)}`);
-  assert(!snap.fx.layers.includes('kokusen.invert'), `KOK-15: invert e duotone não deveriam coexistir: ${JSON.stringify(snap.fx.layers)}`);
+  assert(
+    snap.fx.layers.includes('kokusen.duotone'),
+    `KOK-15: fx.layers deveria ter kokusen.duotone: ${JSON.stringify(snap.fx.layers)}`,
+  );
+  assert(
+    !snap.fx.layers.includes('kokusen.invert'),
+    `KOK-15: invert e duotone não deveriam coexistir: ${JSON.stringify(snap.fx.layers)}`,
+  );
   snap = await stepAndSnap(500);
   assert(Math.abs(snap.camera.zoom - 1.5) < 0.02, `KOK-24: zoom deveria ter voltado a 1,5: ${snap.camera.zoom}`);
 
@@ -278,7 +330,10 @@ export default async function ({ page, baseUrl, assert }) {
     const kokusenBeforeX = countOf(snap.events, 'kokusen');
     snap = await press1('KeyL');
     if (countOf(snap.events, 'kokusen') > kokusenBeforeX) {
-      assert(false, `KOK-04: a tecla deveria ter sido cedo demais (miss), mas virou Kokusen: ${JSON.stringify(snap.events)}`);
+      assert(
+        false,
+        `KOK-04: a tecla deveria ter sido cedo demais (miss), mas virou Kokusen: ${JSON.stringify(snap.events)}`,
+      );
     }
     if (countOf(snap.events, 'kokusenMiss') > missBefore) missLanded = true;
   }
@@ -290,7 +345,13 @@ export default async function ({ page, baseUrl, assert }) {
     if (countOf(snap.events, 'divergent2') > divergent2Before3) secondImpact3 = snap;
   }
   assert(secondImpact3, 'o 2º impacto do cenário 3 (sem Kokusen) nunca aconteceu');
-  assert(countOf(secondImpact3.events, 'kokusen') === kokusenBefore3, `KOK-04: não deveria ter virado Kokusen: ${JSON.stringify(secondImpact3.events)}`);
+  assert(
+    countOf(secondImpact3.events, 'kokusen') === kokusenBefore3,
+    `KOK-04: não deveria ter virado Kokusen: ${JSON.stringify(secondImpact3.events)}`,
+  );
   const enemyAfter3 = secondImpact3.enemies.find((e) => e.id === target3);
-  assert(enemyAfter3.hp === before3 - 12 - 18, `2º impacto comum deveria tirar 18 a mais: ${JSON.stringify(enemyAfter3)}`);
+  assert(
+    enemyAfter3.hp === before3 - 12 - 18,
+    `2º impacto comum deveria tirar 18 a mais: ${JSON.stringify(enemyAfter3)}`,
+  );
 }

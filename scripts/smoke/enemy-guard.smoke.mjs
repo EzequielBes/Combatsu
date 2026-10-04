@@ -16,7 +16,10 @@ export default async function (ctx) {
   const until = async (s0, pred, max, what) => {
     let s = s0;
     for (let i = 0; i < max && !pred(s); i++) s = await frame();
-    assert(pred(s), `${what}: não aconteceu em ${max} frames (${JSON.stringify({ hp: s.player.hp, move: s.player.move, combo: s.combo, px: s.player.x, f: s.player.facing, en: s.enemies.map((x) => [x.x, x.y, x.state, x.hp]) })})`);
+    assert(
+      pred(s),
+      `${what}: não aconteceu em ${max} frames (${JSON.stringify({ hp: s.player.hp, move: s.player.move, combo: s.combo, px: s.player.x, f: s.player.facing, en: s.enemies.map((x) => [x.x, x.y, x.state, x.hp]) })})`,
+    );
     return s;
   };
 
@@ -62,7 +65,10 @@ export default async function (ctx) {
   assert(s.player.move === 'chuteFrontal', `K deveria começar o chuteFrontal: ${s.player.move}`);
   s = await until(s, (st) => st.player.move === null, 60, 'fim do chuteFrontal');
   assert(dist(s) < 60, `o inimigo deveria estar a menos de 60 px para levantar a guarda: dist=${dist(s)}`);
-  assert(s.enemies.find((x) => x.id === cid).hp === s.enemies.find((x) => x.id === cid).maxHp, 'o chuteFrontal inicial não deveria ter acertado');
+  assert(
+    s.enemies.find((x) => x.id === cid).hp === s.enemies.find((x) => x.id === cid).maxHp,
+    'o chuteFrontal inicial não deveria ter acertado',
+  );
   await down('KeyJ'); // jab: levanta a guarda
   s = await frame();
   await up('KeyJ');
@@ -78,11 +84,26 @@ export default async function (ctx) {
   assert(hit, `EBL-04: o chuteCarregado deveria acertar o inimigo (move=${s.player.move})`);
   const before = last.enemies.find((x) => x.id === cid);
   const after = s.enemies.find((x) => x.id === cid);
-  assert(s.player.move === 'chuteCarregado', `EBL-04: o golpe que acertou deveria ser o chuteCarregado: ${s.player.move}`);
-  assert(before.guarding, `EBL-04: o inimigo deveria estar guardando quando o carregado acertou: ${JSON.stringify(before)}`);
-  assert(before.hp - after.hp === 24, `EBL-04: o carregado deveria causar o dano cheio (24), causou ${before.hp - after.hp}`);
-  assert(after.structure.cur - before.structure.cur === 40, `EBL-04: o carregado deveria somar 40 de estrutura: ${before.structure.cur} -> ${after.structure.cur}`);
-  assert(count(s, `enemyBlock:${cid}`) === count(last, `enemyBlock:${cid}`), 'EBL-04: o carregado não deveria virar enemyBlock (o jab antes dele pode ter sido bloqueado, o carregado não)');
+  assert(
+    s.player.move === 'chuteCarregado',
+    `EBL-04: o golpe que acertou deveria ser o chuteCarregado: ${s.player.move}`,
+  );
+  assert(
+    before.guarding,
+    `EBL-04: o inimigo deveria estar guardando quando o carregado acertou: ${JSON.stringify(before)}`,
+  );
+  assert(
+    before.hp - after.hp === 24,
+    `EBL-04: o carregado deveria causar o dano cheio (24), causou ${before.hp - after.hp}`,
+  );
+  assert(
+    after.structure.cur - before.structure.cur === 40,
+    `EBL-04: o carregado deveria somar 40 de estrutura: ${before.structure.cur} -> ${after.structure.cur}`,
+  );
+  assert(
+    count(s, `enemyBlock:${cid}`) === count(last, `enemyBlock:${cid}`),
+    'EBL-04: o carregado não deveria virar enemyBlock (o jab antes dele pode ter sido bloqueado, o carregado não)',
+  );
 
   // --- Combo e nota de estilo (CMB-03, CMB-04, CMB-05) -----------------------------------------------------------------------------
   await boot('enemyGuard=0');
@@ -94,7 +115,12 @@ export default async function (ctx) {
   {
     const swings0 = count(s, 'block') + count(s, 'parry');
     await down('KeyU');
-    s = await until(s, (st) => count(st, 'block') + count(st, 'parry') > swings0, 80, 'o primeiro golpe do inimigo deveria ser bloqueado ou aparado');
+    s = await until(
+      s,
+      (st) => count(st, 'block') + count(st, 'parry') > swings0,
+      80,
+      'o primeiro golpe do inimigo deveria ser bloqueado ou aparado',
+    );
     await up('KeyU');
     s = await until(s, (st) => st.player.guard === 'none' && !st.hitstop.frozen, 60, 'guarda baixa');
     assert(s.player.hp === 100, `o bloqueio não deveria custar vida: ${s.player.hp}`);
@@ -151,14 +177,29 @@ export default async function (ctx) {
   };
   const expectGrade = (st, hits, grade, distinct, req) => {
     assert(st.combo.hits === hits, `${req}: combo.hits esperado ${hits}, veio ${st.combo.hits}`);
-    assert(st.combo.grade === grade, `CMB-03: com ${distinct} golpes distintos a nota deveria ser ${grade}, veio ${st.combo.grade}`);
+    assert(
+      st.combo.grade === grade,
+      `CMB-03: com ${distinct} golpes distintos a nota deveria ser ${grade}, veio ${st.combo.grade}`,
+    );
     if (hits >= 2) {
       // CMB-04/05: o HUD mostra `<hits> hits` à direita e a letra da nota embaixo.
-      assert(st.hud.combo.text === `${hits} hits`, `CMB-04: texto do HUD esperado "${hits} hits", veio ${JSON.stringify(st.hud.combo.text)}`);
-      assert(st.hud.combo.x > 480, `CMB-04: o HUD do combo deveria ficar do lado direito da tela (x=${st.hud.combo.x})`);
-      assert(st.hud.combo.grade === grade, `CMB-05: a letra no HUD esperada ${grade}, veio ${JSON.stringify(st.hud.combo.grade)}`);
+      assert(
+        st.hud.combo.text === `${hits} hits`,
+        `CMB-04: texto do HUD esperado "${hits} hits", veio ${JSON.stringify(st.hud.combo.text)}`,
+      );
+      assert(
+        st.hud.combo.x > 480,
+        `CMB-04: o HUD do combo deveria ficar do lado direito da tela (x=${st.hud.combo.x})`,
+      );
+      assert(
+        st.hud.combo.grade === grade,
+        `CMB-05: a letra no HUD esperada ${grade}, veio ${JSON.stringify(st.hud.combo.grade)}`,
+      );
     } else {
-      assert(st.hud.combo.text === null && st.hud.combo.grade === null, `com ${hits} acerto o HUD do combo deveria estar escondido: ${JSON.stringify(st.hud.combo)}`);
+      assert(
+        st.hud.combo.text === null && st.hud.combo.grade === null,
+        `com ${hits} acerto o HUD do combo deveria estar escondido: ${JSON.stringify(st.hud.combo)}`,
+      );
     }
   };
 
@@ -179,5 +220,8 @@ export default async function (ctx) {
   s = await settleFresh(s);
   s = await land(s, ['KeyS', 'KeyK'], 'rasteira');
   expectGrade(s, 6, 'S', 6, 'CMB-03');
-  assert(s.enemies.some((x) => x.id === cmbId && x.hp > 0), 'o alvo do combo deveria seguir vivo');
+  assert(
+    s.enemies.some((x) => x.id === cmbId && x.hp > 0),
+    'o alvo do combo deveria seguir vivo',
+  );
 }

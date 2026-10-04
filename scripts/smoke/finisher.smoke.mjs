@@ -24,7 +24,10 @@ export default async function (ctx) {
     for (let i = 0; i < 20 && d.dist() > 30; i++) await d.step();
     await up('KeyD');
     for (let i = 0; i < 6; i++) await d.step();
-    assert(nearest(d.s).x > d.s.player.x && d.dist() < 30, `o inimigo deveria ficar à frente, colado: ${JSON.stringify({ p: d.s.player.x, e: nearest(d.s).x })}`);
+    assert(
+      nearest(d.s).x > d.s.player.x && d.dist() < 30,
+      `o inimigo deveria ficar à frente, colado: ${JSON.stringify({ p: d.s.player.x, e: nearest(d.s).x })}`,
+    );
     return d;
   };
   const tapFrame = async (d, code) => {
@@ -34,11 +37,14 @@ export default async function (ctx) {
   };
   const until = async (d, pred, max, what) => {
     for (let i = 0; i < max && !pred(d.s); i++) await d.step();
-    assert(pred(d.s), `${what}: não aconteceu em ${max} frames (hp=${d.s.player.hp}, events=${JSON.stringify(d.s.events.slice(-4))})`);
+    assert(
+      pred(d.s),
+      `${what}: não aconteceu em ${max} frames (hp=${d.s.player.hp}, events=${JSON.stringify(d.s.events.slice(-4))})`,
+    );
     return d.s;
   };
   const gameFrames = async (d, n) => {
-    for (let i = 0; i < n; ) {
+    for (let i = 0; i < n;) {
       await d.step();
       if (!d.s.hitstop.frozen) i++;
     }
@@ -80,12 +86,18 @@ export default async function (ctx) {
   {
     await boot('enemyGuard=0');
     const s0 = await approach();
-    assert(!nearest(s0).structure.broken && s0.finisher.distPx === null, `o inimigo não deveria estar quebrado: ${JSON.stringify(nearest(s0).structure)}`);
+    assert(
+      !nearest(s0).structure.broken && s0.finisher.distPx === null,
+      `o inimigo não deveria estar quebrado: ${JSON.stringify(nearest(s0).structure)}`,
+    );
     const d0 = { s: s0, step: async () => (d0.s = await frame()) };
     const hpE = nearest(s0).hp;
     const s1 = await both(d0);
     for (let i = 0; i < 12; i++) await d0.step();
-    assert(finishers(d0.s) === 0 && nearest(d0.s).hp === hpE, `FIN-03: sem inimigo quebrado nada deveria acontecer: ${JSON.stringify(d0.s.events.slice(-3))} hp ${hpE} -> ${nearest(d0.s).hp}`);
+    assert(
+      finishers(d0.s) === 0 && nearest(d0.s).hp === hpE,
+      `FIN-03: sem inimigo quebrado nada deveria acontecer: ${JSON.stringify(d0.s.events.slice(-3))} hp ${hpE} -> ${nearest(d0.s).hp}`,
+    );
     assert(s1.camera.zoom === d0.s.camera.zoom, 'FIN-03: sem finalizador o zoom não muda');
   }
 
@@ -108,7 +120,10 @@ export default async function (ctx) {
   const hpEdge = nearest(d.s).hp;
   await both(d);
   for (let i = 0; i < 6; i++) await d.step();
-  assert(finishers(d.s) === 0 && nearest(d.s).hp === hpEdge, `FIN-01: a ${edge.toFixed(2)} px (> 40) não deveria finalizar: ${JSON.stringify(d.s.events.slice(-3))}`);
+  assert(
+    finishers(d.s) === 0 && nearest(d.s).hp === hpEdge,
+    `FIN-01: a ${edge.toFixed(2)} px (> 40) não deveria finalizar: ${JSON.stringify(d.s.events.slice(-3))}`,
+  );
   // Aproxima até <= 40 px.
   tries = 0;
   while (!(d.s.finisher.distPx <= 40 && d.s.finisher.distPx > 36) && tries++ < 30) {
@@ -122,7 +137,10 @@ export default async function (ctx) {
   const victim = nearest(d.s);
   const zoom0 = d.s.camera.zoom;
   await both(d);
-  assert(finishers(d.s) === 1 && count(d.s, `finisher:${victim.id}`) === 1, `FIN-01: a ${inside.toFixed(2)} px deveria finalizar: ${JSON.stringify(d.s.events.slice(-3))}`);
+  assert(
+    finishers(d.s) === 1 && count(d.s, `finisher:${victim.id}`) === 1,
+    `FIN-01: a ${inside.toFixed(2)} px deveria finalizar: ${JSON.stringify(d.s.events.slice(-3))}`,
+  );
   assert(victim.hp - d.s.enemies.find((e) => e.id === victim.id).hp === 40, 'FIN-01: 40 de dano');
   // FIN-04: o zoom da câmera principal chega a 1,7 em até 100 ms reais (6 frames de 16,7 ms) e não passa disso.
   assert(zoom0 < 1.7, `FIN-04: o zoom antes do finalizador deveria ser menor que 1,7: ${zoom0}`);
@@ -131,7 +149,10 @@ export default async function (ctx) {
     await d.step();
     zoomFrames++;
   }
-  assert(zoomFrames * FRAME_MS <= 100, `FIN-04: o zoom levou ${(zoomFrames * FRAME_MS).toFixed(0)} ms para chegar a 1,7, esperava <= 100`);
+  assert(
+    zoomFrames * FRAME_MS <= 100,
+    `FIN-04: o zoom levou ${(zoomFrames * FRAME_MS).toFixed(0)} ms para chegar a 1,7, esperava <= 100`,
+  );
   assert(Math.abs(d.s.camera.zoom - 1.7) <= 1e-6, `FIN-04: o zoom deveria parar em 1,7: ${d.s.camera.zoom}`);
 
   // --- AIR-03: heavy no ar com `S` segurado começa o `pisao` e a velocidade vertical vai à queda máxima (900 px/s) ----------------
@@ -165,5 +186,8 @@ export default async function (ctx) {
   const stomp = await airFrames(true);
   assert(stomp.air.y < 440, `AIR-03: o jogador deveria estar no ar: y=${stomp.air.y}`);
   assert(stomp.s.player.move === 'pisao', `AIR-03: heavy no ar com S deveria começar o pisao: ${stomp.s.player.move}`);
-  assert(stomp.s.player.vy === 900, `AIR-03: o pisao deveria levar a velocidade vertical a 900 px/s, veio ${stomp.s.player.vy}`);
+  assert(
+    stomp.s.player.vy === 900,
+    `AIR-03: o pisao deveria levar a velocidade vertical a 900 px/s, veio ${stomp.s.player.vy}`,
+  );
 }

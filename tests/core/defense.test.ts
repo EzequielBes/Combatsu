@@ -304,7 +304,9 @@ describe('resolveIncomingHit: ordem da decisão, um teste por par vizinho (DEF-2
   });
 
   it('parry que não vale (de costas) deixa a esquiva decidir: `dodged`', () => {
-    expect(resolve({ guard: 'parry', attackerInFront: false, dodgeInvulnerable: true, hit: HIGH }).outcome).toBe('dodged');
+    expect(resolve({ guard: 'parry', attackerInFront: false, dodgeInvulnerable: true, hit: HIGH }).outcome).toBe(
+      'dodged',
+    );
   });
 
   it('esquiva antes do Contra: esquiva invencível + Contra em startup dá `dodged`', () => {

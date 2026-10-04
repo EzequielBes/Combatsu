@@ -50,7 +50,7 @@ export class Dodge {
   start(ctx: DodgeStart): boolean {
     if (!ctx.grounded || ctx.busy || this.cooldownMs > 0) return false;
     this.startedAt = this.now;
-    this.dir = ctx.held !== 0 ? ctx.held : ((-ctx.facing) as -1 | 1);
+    this.dir = ctx.held !== 0 ? ctx.held : (-ctx.facing as -1 | 1);
     this.perfectDone = false;
     return true;
   }

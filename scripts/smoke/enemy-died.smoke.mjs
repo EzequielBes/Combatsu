@@ -40,7 +40,11 @@ export default async function ({ page, baseUrl, assert }) {
     const newly = diedEvents(snap.events)
       .filter((ev) => !diedEvents(prev.events).includes(ev))
       .map((ev) => Number(ev.split(':')[1]));
-    for (const id of newly) beforeFatal.set(id, prev.enemies.find((e) => e.id === id));
+    for (const id of newly)
+      beforeFatal.set(
+        id,
+        prev.enemies.find((e) => e.id === id),
+      );
     if (newly.length) diedInStep.push(newly);
   }
   assert(allDead(snap), `nem todos morreram: events=${JSON.stringify(snap.events)}`);
@@ -69,7 +73,8 @@ export default async function ({ page, baseUrl, assert }) {
     return c;
   };
   for (const [ev, n] of count(snap.events)) assert(n === 1, `${ev} apareceu ${n} vezes`);
-  for (const id of initial) assert(count(snap.events).get(`enemyDied:${id}`) === 1, `enemyDied:${id} não apareceu uma vez`);
+  for (const id of initial)
+    assert(count(snap.events).get(`enemyDied:${id}`) === 1, `enemyDied:${id} não apareceu uma vez`);
 
   const later = await page.evaluate(() => {
     window.__game.step(3000);

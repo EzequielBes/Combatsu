@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { EnemyAI, type AIEvent, type AIInput, type AIOutput, type EnemyAIState, type EnemyAITuning } from '../../src/core/enemyAI';
+import {
+  EnemyAI,
+  type AIEvent,
+  type AIInput,
+  type AIOutput,
+  type EnemyAIState,
+  type EnemyAITuning,
+} from '../../src/core/enemyAI';
 import { ENEMY_AI, ENEMY_ATTACK } from '../../src/data/tuning';
 
 /** Números do spec (SPN-12, LIM-03, LIM-07, AI-03). */
@@ -478,7 +485,14 @@ describe('LIM-05 com o tuning real: vizinhos parados em hold ficam a pelo menos 
     let x = startDist;
     let still = 0;
     for (let i = 0; i < 2000 && still < 10; i++) {
-      const out = ai.update(1000 / 60, { selfX: x, playerX, canAct: true, granted: false, windupAllowed: false, holdRank: rank });
+      const out = ai.update(1000 / 60, {
+        selfX: x,
+        playerX,
+        canAct: true,
+        granted: false,
+        windupAllowed: false,
+        holdRank: rank,
+      });
       x += (out.vx * 1000) / 60 / 1000;
       still = out.vx === 0 ? still + 1 : 0;
     }
@@ -508,7 +522,12 @@ describe('LIM-05 com o tuning real: vizinhos parados em hold ficam a pelo menos 
 });
 
 /** Roda a IA em passos de `dt` e devolve cada evento com o tempo acumulado ao fim do passo em que saiu. */
-function timeline(ai: EnemyAI, s: AIInput, dt: number, totalMs: number): { ev: AIEvent; t: number; state: EnemyAIState }[] {
+function timeline(
+  ai: EnemyAI,
+  s: AIInput,
+  dt: number,
+  totalMs: number,
+): { ev: AIEvent; t: number; state: EnemyAIState }[] {
   const seen: { ev: AIEvent; t: number; state: EnemyAIState }[] = [];
   for (let t = dt; t <= totalMs; t += dt) {
     for (const ev of ai.update(dt, s).events) seen.push({ ev, t, state: ai.state });
@@ -520,7 +539,8 @@ function timeline(ai: EnemyAI, s: AIInput, dt: number, totalMs: number): { ev: A
 const frameOf = (ms: number, dt: number): number => Math.ceil(ms / dt) * dt;
 
 /** Tempos dos eventos de `kind`, na ordem em que saíram. */
-const timesOf = (seen: { ev: AIEvent; t: number }[], kind: AIEvent): number[] => seen.filter((e) => e.ev === kind).map((e) => e.t);
+const timesOf = (seen: { ev: AIEvent; t: number }[], kind: AIEvent): number[] =>
+  seen.filter((e) => e.ev === kind).map((e) => e.t);
 
 describe('EnemyAI: ponto de compromisso (CMT-01)', () => {
   it('fora do ciclo (chase, hold, approach) não está comprometido', () => {
@@ -634,15 +654,18 @@ describe('EnemyAI: sequência de golpes (DFL-02, DFL-03, DFL-04, DFL-06, DFL-15)
     expect(new EnemyAI(TWO).hits).toBe(2);
   });
 
-  it.each([16, 7, 33])('hits 2 com dt de %i ms: a 2ª hitboxOn sai 300 ms depois da 1ª hitboxOff, sem perder a sobra do frame', (dt) => {
-    const ai = new EnemyAI(TWO);
-    ai.update(FRAME, at(20, { granted: true }));
-    const seen = timeline(ai, at(20, { granted: true }), dt, 1000);
-    // Tempos exatos desde o fim do frame do windupStart: 450 preparo, 120 golpe, 300 intervalo, 120 golpe.
-    expect(timesOf(seen, 'commit')).toEqual([frameOf(250, dt)]);
-    expect(timesOf(seen, 'hitboxOn')).toEqual([frameOf(450, dt), frameOf(870, dt)]);
-    expect(timesOf(seen, 'hitboxOff')).toEqual([frameOf(570, dt), frameOf(990, dt)]);
-  });
+  it.each([16, 7, 33])(
+    'hits 2 com dt de %i ms: a 2ª hitboxOn sai 300 ms depois da 1ª hitboxOff, sem perder a sobra do frame',
+    (dt) => {
+      const ai = new EnemyAI(TWO);
+      ai.update(FRAME, at(20, { granted: true }));
+      const seen = timeline(ai, at(20, { granted: true }), dt, 1000);
+      // Tempos exatos desde o fim do frame do windupStart: 450 preparo, 120 golpe, 300 intervalo, 120 golpe.
+      expect(timesOf(seen, 'commit')).toEqual([frameOf(250, dt)]);
+      expect(timesOf(seen, 'hitboxOn')).toEqual([frameOf(450, dt), frameOf(870, dt)]);
+      expect(timesOf(seen, 'hitboxOff')).toEqual([frameOf(570, dt), frameOf(990, dt)]);
+    },
+  );
 
   it('o estado entre os dois golpes é windup e rest só vem depois do último', () => {
     const ai = new EnemyAI(TWO);

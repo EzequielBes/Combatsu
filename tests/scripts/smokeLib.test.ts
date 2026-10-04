@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_EDGE_PATHS, exitCodeFor, failedNames, findEdge } from '../../scripts/smoke/lib';
 
-const existsIn = (paths: string[]) => (p: string): boolean => paths.includes(p);
+const existsIn =
+  (paths: string[]) =>
+  (p: string): boolean =>
+    paths.includes(p);
 
 describe('findEdge: onde procurar o Edge (FND-12)', () => {
   const candidates = ['C:/a/msedge.exe', 'C:/b/msedge.exe'];

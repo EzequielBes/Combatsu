@@ -14,7 +14,10 @@ export default async function (ctx) {
   const until = async (s0, pred, max, what) => {
     let s = s0;
     for (let i = 0; i < max && !pred(s); i++) s = await frame();
-    assert(pred(s), `${what}: não aconteceu em ${max} frames (${JSON.stringify({ hp: s.player.hp, move: s.player.move, px: s.player.x, fc: s.player.facing, en: s.enemies.map((x) => [x.id, x.state, x.hp, x.frame, x.x]) })})`);
+    assert(
+      pred(s),
+      `${what}: não aconteceu em ${max} frames (${JSON.stringify({ hp: s.player.hp, move: s.player.move, px: s.player.x, fc: s.player.facing, en: s.enemies.map((x) => [x.id, x.state, x.hp, x.frame, x.x]) })})`,
+    );
     return s;
   };
 
@@ -48,13 +51,22 @@ export default async function (ctx) {
   await boot('enemyGuard=0&maxAlive=5&enemyVariant=bruto');
   const forced = await spawnSeq();
   assert(forced.length >= 2, `EVR-05: esperava ao menos 2 inimigos: ${JSON.stringify(forced)}`);
-  assert(forced.every(([, v]) => v === 'bruto'), `EVR-05: todo inimigo deveria ser bruto: ${JSON.stringify(forced)}`);
+  assert(
+    forced.every(([, v]) => v === 'bruto'),
+    `EVR-05: todo inimigo deveria ser bruto: ${JSON.stringify(forced)}`,
+  );
   await boot('enemyGuard=0&maxAlive=5');
   const plain = await spawnSeq();
   await boot('enemyGuard=0&maxAlive=5&enemyVariant=zzz');
   const invalid = await spawnSeq();
-  assert(invalid.every(([, v]) => VARIANTS.includes(v)), `EVR-05: id inválido deveria cair no sorteio: ${JSON.stringify(invalid)}`);
-  assert(JSON.stringify(invalid) === JSON.stringify(plain), `EVR-05: id inválido deveria dar o mesmo sorteio da run normal: ${JSON.stringify({ invalid, plain })}`);
+  assert(
+    invalid.every(([, v]) => VARIANTS.includes(v)),
+    `EVR-05: id inválido deveria cair no sorteio: ${JSON.stringify(invalid)}`,
+  );
+  assert(
+    JSON.stringify(invalid) === JSON.stringify(plain),
+    `EVR-05: id inválido deveria dar o mesmo sorteio da run normal: ${JSON.stringify({ invalid, plain })}`,
+  );
 
   // --- EVR-04: mesma seed, mesma sequência nas 2 primeiras ondas -----------------------------------------------------------------
   /** Aparências por id das rodadas 1 e 2: mata a rodada 1 com o golpe de teste (tecla 2) e deixa a 2 nascer. */
@@ -80,11 +92,17 @@ export default async function (ctx) {
   const a1 = await twoRounds(7);
   const a2 = await twoRounds(7);
   assert(a1.length >= 3, `EVR-04: esperava aparências de várias ondas: ${JSON.stringify(a1)}`);
-  assert(JSON.stringify(a1.map(([, v]) => v)) === JSON.stringify(a2.map(([, v]) => v)), `EVR-04: mesma seed, sequência diferente: ${JSON.stringify({ a1, a2 })}`);
+  assert(
+    JSON.stringify(a1.map(([, v]) => v)) === JSON.stringify(a2.map(([, v]) => v)),
+    `EVR-04: mesma seed, sequência diferente: ${JSON.stringify({ a1, a2 })}`,
+  );
   // O adaptador usa o stream próprio (`seed ^ 0x6a09e667`), não outro: a sequência por ordem de spawn (ids crescentes; outros objetos também consomem ids) bate com ele.
   const rng = new Rng(7 ^ 0x6a09e667);
   const expected = a1.map(() => pickEnemyVariant(rng));
-  assert(JSON.stringify(a1.map(([, v]) => v)) === JSON.stringify(expected), `EVR-04: a sequência deveria vir do stream da aparência: ${JSON.stringify({ a1, expected })}`);
+  assert(
+    JSON.stringify(a1.map(([, v]) => v)) === JSON.stringify(expected),
+    `EVR-04: a sequência deveria vir do stream da aparência: ${JSON.stringify({ a1, expected })}`,
+  );
   const all = new Set();
   for (const seed of [1, 2, 3]) for (const [, v] of await twoRounds(seed)) all.add(v);
   assert(all.size >= 2, `EVR-04: o sorteio deveria variar a aparência: ${JSON.stringify([...all])}`);
@@ -141,13 +159,19 @@ export default async function (ctx) {
   const expectFrame = (st, want, req) => {
     const e = byId(st, id);
     assert(e.frame === want, `${req}: esperava o frame ${want} logo após o golpe, veio ${e.frame}`);
-    assert(e.spriteVisible && e.ragdollVisible === null, `${req}: o sprite deveria estar visível e sem ragdoll: ${JSON.stringify({ v: e.spriteVisible, r: e.ragdollVisible })}`);
+    assert(
+      e.spriteVisible && e.ragdollVisible === null,
+      `${req}: o sprite deveria estar visível e sem ragdoll: ${JSON.stringify({ v: e.spriteVisible, r: e.ragdollVisible })}`,
+    );
   };
   s = await land(s, ['KeyS', 'KeyJ'], 'socoBaixo');
   expectFrame(s, 'hurt-body-0', 'HRX-02 socoBaixo');
   // O mesmo golpe de novo, com o inimigo ainda na mesma reação: ela recomeça do frame 0 (L-046).
   s = await settleChain(s);
-  assert(byId(s, id).frame.startsWith('hurt-body-') && byId(s, id).frame !== 'hurt-body-0', `HRX-02: a 1ª reação deveria ter avançado: ${byId(s, id).frame}`);
+  assert(
+    byId(s, id).frame.startsWith('hurt-body-') && byId(s, id).frame !== 'hurt-body-0',
+    `HRX-02: a 1ª reação deveria ter avançado: ${byId(s, id).frame}`,
+  );
   s = await land(s, ['KeyS', 'KeyJ'], 'socoBaixo');
   expectFrame(s, 'hurt-body-0', 'HRX-02 socoBaixo de novo (reinicia a mesma reação)');
   s = await settleFresh(s);
@@ -181,7 +205,7 @@ export default async function (ctx) {
     for (let i = 0; i < 6; i++) await step();
     while (f < 24) await step();
     const gameFrames = async (n) => {
-      for (let i = 0; i < n; ) {
+      for (let i = 0; i < n;) {
         await step();
         if (!d.hitstop.frozen) i++;
       }
@@ -224,20 +248,33 @@ export default async function (ctx) {
       const e = byId(s, vid);
       assert(e.frame === 'impact', `HRX-05 (${variant}): no hitstop o frame deveria ser impact, veio ${e.frame}`);
       assert(e.spriteVisible === true, `HRX-05 (${variant}): o sprite deveria estar visível no hitstop`);
-      assert(e.ragdollVisible === false, `HRX-05 (${variant}): o ragdoll deveria estar escondido no hitstop: ${e.ragdollVisible}`);
+      assert(
+        e.ragdollVisible === false,
+        `HRX-05 (${variant}): o ragdoll deveria estar escondido no hitstop: ${e.ragdollVisible}`,
+      );
       frozenFrames++;
       s = await frame();
     }
-    assert(frozenFrames > 0 && !s.hitstop.frozen, `HRX-05 (${variant}): o hitstop deveria acabar (${frozenFrames} frames)`);
+    assert(
+      frozenFrames > 0 && !s.hitstop.frozen,
+      `HRX-05 (${variant}): o hitstop deveria acabar (${frozenFrames} frames)`,
+    );
     const after = byId(s, vid);
-    assert(after.spriteVisible === false && after.ragdollVisible === true, `HRX-05 (${variant}): no primeiro update depois do hitstop o ragdoll deveria aparecer: ${JSON.stringify({ sp: after.spriteVisible, rd: after.ragdollVisible, st: after.state })}`);
+    assert(
+      after.spriteVisible === false && after.ragdollVisible === true,
+      `HRX-05 (${variant}): no primeiro update depois do hitstop o ragdoll deveria aparecer: ${JSON.stringify({ sp: after.spriteVisible, rd: after.ragdollVisible, st: after.state })}`,
+    );
     assert(after.variant === variant, `a aparência deveria ser ${variant}: ${after.variant}`);
-    assert(Array.isArray(after.ragdollTextures) && after.ragdollTextures.length === 6, `EVR-06 (${variant}): esperava 6 partes: ${JSON.stringify(after.ragdollTextures)}`);
+    assert(
+      Array.isArray(after.ragdollTextures) && after.ragdollTextures.length === 6,
+      `EVR-06 (${variant}): esperava 6 partes: ${JSON.stringify(after.ragdollTextures)}`,
+    );
     assert(
       after.ragdollTextures.every((k) => new RegExp(`^rag-(head|torso|limb)-${variant}$`).test(k)),
       `EVR-06 (${variant}): partes deveriam ser rag-<parte>-${variant}: ${JSON.stringify(after.ragdollTextures)}`,
     );
-    for (const part of ['head', 'torso', 'limb']) assert(after.ragdollTextures.includes(`rag-${part}-${variant}`), `EVR-06 (${variant}): faltou ${part}`);
+    for (const part of ['head', 'torso', 'limb'])
+      assert(after.ragdollTextures.includes(`rag-${part}-${variant}`), `EVR-06 (${variant}): faltou ${part}`);
   }
 
   // --- HRX-06: golpe forte sem hitstop (golpe de teste, tecla 2, não passa por onConnect): troca no próximo update ---------------------
@@ -251,12 +288,18 @@ export default async function (ctx) {
     await up('Digit2');
     assert(!s.hitstop.frozen, `HRX-06: o golpe de teste não deveria ter hitstop: ${JSON.stringify(s.hitstop)}`);
     const ragdolled = ids.filter((i) => byId(s, i) && byId(s, i).ragdollVisible !== null);
-    assert(ragdolled.length >= 1, `HRX-06: o golpe forte deveria derrubar alguém: ${JSON.stringify(s.enemies.map((e) => [e.id, e.state]))}`);
+    assert(
+      ragdolled.length >= 1,
+      `HRX-06: o golpe forte deveria derrubar alguém: ${JSON.stringify(s.enemies.map((e) => [e.id, e.state]))}`,
+    );
     const next = await frame();
     assert(!next.hitstop.frozen, 'HRX-06: sem hitstop no frame seguinte');
     for (const i of ragdolled) {
       const e = byId(next, i);
-      assert(e.ragdollVisible === true && e.spriteVisible === false, `HRX-06: no próximo update o ragdoll deveria aparecer: ${JSON.stringify({ id: i, sp: e.spriteVisible, rd: e.ragdollVisible })}`);
+      assert(
+        e.ragdollVisible === true && e.spriteVisible === false,
+        `HRX-06: no próximo update o ragdoll deveria aparecer: ${JSON.stringify({ id: i, sp: e.spriteVisible, rd: e.ragdollVisible })}`,
+      );
     }
   }
 }

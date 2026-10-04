@@ -179,7 +179,10 @@ export class RedOrbFx {
     }
     this.glowMs += dtMs;
     const pulse = 1 + 0.18 * Math.sin(this.glowMs / 90);
-    this.glowRing.clear().lineStyle(2, C.glow, 0.7).strokeCircle(x, y, (size / 2 + 5) * pulse);
+    this.glowRing
+      .clear()
+      .lineStyle(2, C.glow, 0.7)
+      .strokeCircle(x, y, (size / 2 + 5) * pulse);
 
     // RDA-07: dois arcos `T` opostos girando em volta do orbe (2π a cada 400 ms).
     if (!this.distortRing) {
@@ -294,7 +297,12 @@ export class RedOrbFx {
       this.trailMs -= TRAIL_EVERY_MS;
       // Polimento (feat(fx)): riscos esticados no eixo do voo (Direção de arte "rastro de riscos vermelhos"),
       // não só cópias redondas do orbe - `scaleX` maior estica a mesma textura num risco horizontal.
-      const ghost = this.scene.add.sprite(x, y, TEX.techOrbRed12, 'orb').setTintFill(C.glow).setAlpha(0.55).setScale(1.6, 0.8).setDepth(2);
+      const ghost = this.scene.add
+        .sprite(x, y, TEX.techOrbRed12, 'orb')
+        .setTintFill(C.glow)
+        .setAlpha(0.55)
+        .setScale(1.6, 0.8)
+        .setDepth(2);
       this.registry.add(ghost);
       this.registry.scheduleDestroy(ghost, TRAIL_FADE_MS);
       this.scene.tweens.add({ targets: ghost, alpha: 0, scaleX: 0.6, duration: TRAIL_FADE_MS });
@@ -330,7 +338,11 @@ export class RedOrbFx {
     this.fx.add('red.debris', DEBRIS_MS, 'game');
     this.fx.add('red.screenFlash', SCREEN_FLASH_MS, 'game'); // RED-12
 
-    const flash = this.scene.add.sprite(point.x, point.y, TEX.techOrbRed12, 'orb').setTintFill(C.core).setScale(1.6).setDepth(6);
+    const flash = this.scene.add
+      .sprite(point.x, point.y, TEX.techOrbRed12, 'orb')
+      .setTintFill(C.core)
+      .setScale(1.6)
+      .setDepth(6);
     this.registry.add(flash);
     this.registry.scheduleDestroy(flash, FLASH_CORE_MS);
     this.scene.tweens.add({ targets: flash, alpha: 0, scale: 0.8, duration: FLASH_CORE_MS });
@@ -401,7 +413,7 @@ export class RedOrbFx {
     // Detritos do chão (pedaços `k`/`s`, Direção de arte): sem particle system (só 2 cores fixas por peça, cada
     // uma com seu próprio tamanho) - um único Graphics simula a queda de cada pedaço à mão (sem body Matter).
     const chunks: ChunkDebris[] = Array.from({ length: CHUNK_DEBRIS_COUNT }, (_, i) => {
-      const angle = (Math.PI * (i / CHUNK_DEBRIS_COUNT) * 2) + Math.random() * 0.6 - 0.9; // espalhado, tendendo para cima
+      const angle = Math.PI * (i / CHUNK_DEBRIS_COUNT) * 2 + Math.random() * 0.6 - 0.9; // espalhado, tendendo para cima
       const speed = 70 + Math.random() * 110;
       return {
         vx: Math.cos(angle) * speed,

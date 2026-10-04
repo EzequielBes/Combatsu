@@ -18,12 +18,7 @@ import type { Modifiers } from '../core/modifiers';
 import { PLAYER_STRUCTURE, Structure } from '../core/structure';
 import { CHARGE_MS, COUNTER, DEFENSE, DODGE, READING, STRUCTURE, type MoveDef } from '../data/moves';
 import { CAST_FX, type TechId } from '../data/techniques';
-import {
-  PLAYER_HEALTH,
-  PLAYER_KNOCKBACK,
-  PLAYER_MOVE,
-  PROP_SWING,
-} from '../data/tuning';
+import { PLAYER_HEALTH, PLAYER_KNOCKBACK, PLAYER_MOVE, PROP_SWING } from '../data/tuning';
 import { newEntityId, tagBody, tagOf, type Hittable, type Rect } from './bodyTags';
 import type { Fx } from './fx';
 import type { InputSnapshot } from './input';
@@ -95,7 +90,8 @@ const STUN_FRAME_MS = 120;
 /** Alpha do corpo enquanto a esquiva torna invulnerável. */
 const DODGE_ALPHA = 0.6;
 /** Frame da esquiva pelo tempo que falta de recarga (450 ms desde o início): primeira metade `dodge-0`, depois `dodge-1`. */
-const DODGE_ELAPSED_HALF = (cooldownMs: number): 0 | 1 => (DODGE.cooldownMs - cooldownMs < DODGE.durationMs / 2 ? 0 : 1);
+const DODGE_ELAPSED_HALF = (cooldownMs: number): 0 | 1 =>
+  DODGE.cooldownMs - cooldownMs < DODGE.durationMs / 2 ? 0 : 1;
 
 export class Player implements Hittable {
   readonly id = newEntityId();
@@ -468,7 +464,14 @@ export class Player implements Hittable {
       runSpeed: this.modifiers.runSpeed * (this.guard.state === 'none' ? 1 : DEFENSE.guardSpeedFactor),
       gravity: castAirGravity ? PLAYER_MOVE.gravity * CAST_FX.airGravity : PLAYER_MOVE.gravity,
     };
-    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting || dodging || ducking);
+    this.move = stepMovement(
+      this.move,
+      input,
+      sensors,
+      dtMs,
+      moveTuning,
+      attacking || stunned || casting || dodging || ducking,
+    );
     // DEF-10: abaixado a velocidade horizontal é 0, sem deslizar a corrida que vinha antes do `S`+`Q`.
     if (ducking) this.move = { ...this.move, vx: 0 };
     // VOA-06: o quique mantém os −240 px/s no primeiro `update` depois do acerto; a gravidade só atua a partir do seguinte.
@@ -733,7 +736,11 @@ export class Player implements Hittable {
 
   /** Esquiva para o snapshot (`player.dodge`); `cooldownMs` é a recarga comum com o abaixar (DEF-15). */
   get dodgeView(): { active: boolean; invulnerable: boolean; cooldownMs: number } {
-    return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.evadeCooldownMs) };
+    return {
+      active: this.dodge.active,
+      invulnerable: this.dodge.invulnerable,
+      cooldownMs: Math.round(this.evadeCooldownMs),
+    };
   }
 
   /** Invulnerável depois de um golpe cheio (PST-15), para o snapshot (`player.invulnerable`). */
@@ -982,7 +989,13 @@ export class Player implements Hittable {
    * atordoado ou conjurando; `evading` = esquiva ou abaixar ativos, que também travam o golpe mas deixam o aperto do
    * Contra guardado (CNT-07).
    */
-  private updateStrikes(dtMs: number, input: InputSnapshot, onGround: boolean, lockedByState: boolean, evading: boolean): void {
+  private updateStrikes(
+    dtMs: number,
+    input: InputSnapshot,
+    onGround: boolean,
+    lockedByState: boolean,
+    evading: boolean,
+  ): void {
     const forward = this.facing === 1 ? input.right : input.left;
     this.motion.sample(this.clockMs, { down: input.down, forward });
     const ctx: MoveContext = { grounded: onGround, down: input.down, up: input.upHeld, forward };
@@ -996,7 +1009,8 @@ export class Player implements Hittable {
       if (input.lightPressed && !onGround && this.tryUppercutCancel()) {
         // AD-011: o pulo com `W` some e o gancho ascendente sai do chão, como se `W`+`J` fossem no mesmo frame.
         this.onMove(this.moves.press('light', { grounded: true, down: false, up: true, forward }));
-      } else if (input.lightPressed) this.onMove(this.moves.press('light', { ...ctx, motion: this.motion.matches(this.clockMs) }));
+      } else if (input.lightPressed)
+        this.onMove(this.moves.press('light', { ...ctx, motion: this.motion.matches(this.clockMs) }));
       if (input.heavyPressed) {
         this.onMove(this.moves.press('heavy', ctx));
         // Só um aperto no chão abre o carregado: a voadora/pisão apertadas no ar não carregam ao pousar.
@@ -1087,7 +1101,12 @@ export class Player implements Hittable {
     const held = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     if (this.moves.isMoving) this.onMove(this.moves.cancel());
     this.heavyHoldMs = -1;
-    const started = this.dodge.start({ grounded: onGround, busy: false, held: held as -1 | 0 | 1, facing: this.facing });
+    const started = this.dodge.start({
+      grounded: onGround,
+      busy: false,
+      held: held as -1 | 0 | 1,
+      facing: this.facing,
+    });
     if (started) this.onEvent?.('dodge');
   }
 
@@ -1174,13 +1193,23 @@ export class Player implements Hittable {
       max: { x: Math.max(near, far), y: this.sprite.y + halfH - 4 },
     };
     if (this.scene.matter.query.region(this.terrain, wall).length > 0) return true;
-    const ahead: Rect = { x: this.sprite.x + (this.facing * probe) / 2, y: this.sprite.y, width: SIZE.player.w + probe, height: SIZE.player.h };
+    const ahead: Rect = {
+      x: this.sprite.x + (this.facing * probe) / 2,
+      y: this.sprite.y,
+      width: SIZE.player.w + probe,
+      height: SIZE.player.h,
+    };
     for (const body of this.scene.matter.world.getAllBodies()) {
       const tag = tagOf(body);
-      if (tag?.kind !== 'character' || tag.target === this || tag.target.team === this.team || tag.target.isDead?.()) continue;
+      if (tag?.kind !== 'character' || tag.target === this || tag.target.team === this.team || tag.target.isDead?.())
+        continue;
       const r = tag.target.hurtRect?.();
       if (!r) continue;
-      if (Math.abs(r.x - ahead.x) < (r.width + ahead.width) / 2 && Math.abs(r.y - ahead.y) < (r.height + ahead.height) / 2) return true;
+      if (
+        Math.abs(r.x - ahead.x) < (r.width + ahead.width) / 2 &&
+        Math.abs(r.y - ahead.y) < (r.height + ahead.height) / 2
+      )
+        return true;
     }
     return false;
   }

@@ -13,7 +13,13 @@ const C = { x: 600, y: 250 };
 
 describe('followCenter: zona morta e amortecimento por tempo (CAM-01, CAM-02, CAM-03)', () => {
   it('CAM-01: com o alvo dentro da zona morta (inclusive na borda), o centro não muda', () => {
-    for (const t of [{ x: 600, y: 250 }, { x: 620, y: 250 }, { x: 580, y: 250 }, { x: 600, y: 262 }, { x: 600, y: 238 }]) {
+    for (const t of [
+      { x: 600, y: 250 },
+      { x: 620, y: 250 },
+      { x: 580, y: 250 },
+      { x: 600, y: 262 },
+      { x: 600, y: 238 },
+    ]) {
       expect(followCenter(C, t, CFG, FRAME)).toEqual(C);
     }
   });
@@ -65,7 +71,10 @@ describe('clampCenter: a vista fica dentro do mundo (CAM-04, CAM-05)', () => {
   it('CAM-05: com a vista maior que os limites num eixo, o centro fica em bounds.x + view.w/2 nesse eixo', () => {
     const view = { w: 2000, h: 360 };
     expect(clampCenter({ x: 900, y: 300 }, view, CFG.bounds)).toEqual({ x: 1000, y: 300 });
-    expect(clampCenter({ x: -50, y: 9000 }, { w: 640, h: 800 }, { x: 10, y: 20, w: 1280, h: 544 })).toEqual({ x: 330, y: 420 });
+    expect(clampCenter({ x: -50, y: 9000 }, { w: 640, h: 800 }, { x: 10, y: 20, w: 1280, h: 544 })).toEqual({
+      x: 330,
+      y: 420,
+    });
   });
 });
 
@@ -133,7 +142,10 @@ describe('correr a 220 px/s com física a 60 Hz: variação na tela por taxa de 
     expect(maxScreenJitter(hz, 'novo')).toBeLessThanOrEqual(1);
   });
 
-  it.each([60, 75, 120, 144])('a %i Hz, o método antigo (floor na realimentação, sem interpolar) passava de 1 px', (hz) => {
-    expect(maxScreenJitter(hz, 'antigo')).toBeGreaterThan(1);
-  });
+  it.each([60, 75, 120, 144])(
+    'a %i Hz, o método antigo (floor na realimentação, sem interpolar) passava de 1 px',
+    (hz) => {
+      expect(maxScreenJitter(hz, 'antigo')).toBeGreaterThan(1);
+    },
+  );
 });

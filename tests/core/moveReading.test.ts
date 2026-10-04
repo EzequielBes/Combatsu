@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { EnemyGuard, type GuardTrigger } from '../../src/core/enemyGuard';
-import { LightStreak, MoveReading, baseConditionsHold, guardChance, readingBonus, shoveRoll } from '../../src/core/moveReading';
+import {
+  LightStreak,
+  MoveReading,
+  baseConditionsHold,
+  guardChance,
+  readingBonus,
+  shoveRoll,
+} from '../../src/core/moveReading';
 import { Rng } from '../../src/core/rng';
 import { READING } from '../../src/data/moves';
 

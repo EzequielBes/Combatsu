@@ -73,34 +73,49 @@ if (!edge) {
 }
 
 const pageFn = (data) => {
-  const S = data.scale, BG = '#2a3863';
+  const S = data.scale,
+    BG = '#2a3863';
   const hex = (n) => '#' + n.toString(16).padStart(6, '0');
   const sprite = (ctx, rows, x, y) => {
-    rows.forEach((row, ry) => [...row].forEach((c, rx) => {
-      if (c === '.') return;
-      ctx.fillStyle = hex(data.palette[c]);
-      ctx.fillRect(x + rx * S, y + ry * S, S, S);
-    }));
+    rows.forEach((row, ry) =>
+      [...row].forEach((c, rx) => {
+        if (c === '.') return;
+        ctx.fillStyle = hex(data.palette[c]);
+        ctx.fillRect(x + rx * S, y + ry * S, S, S);
+      }),
+    );
   };
   const make = (w, h) => {
     const cv = document.createElement('canvas');
-    cv.width = w; cv.height = h; cv.className = 'shot';
+    cv.width = w;
+    cv.height = h;
+    cv.className = 'shot';
     document.body.appendChild(cv);
     const ctx = cv.getContext('2d');
-    ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
-    ctx.font = '12px monospace'; ctx.textBaseline = 'top';
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, w, h);
+    ctx.font = '12px monospace';
+    ctx.textBaseline = 'top';
     return [cv, ctx];
   };
   const fh = Object.values(data.frames)[0].length; // altura do frame em texels (24 do inimigo, 30 do player)
-  const cw = 32 * S + 8, ch = fh * S + 22;
-  const label = (ctx, t, x, y) => { ctx.fillStyle = '#fff'; ctx.fillText(t, x, y); };
+  const cw = 32 * S + 8,
+    ch = fh * S + 22;
+  const label = (ctx, t, x, y) => {
+    ctx.fillStyle = '#fff';
+    ctx.fillText(t, x, y);
+  };
   // prancha
-  const names = Object.keys(data.frames), cols = 6, rows = Math.ceil(names.length / cols);
+  const names = Object.keys(data.frames),
+    cols = 6,
+    rows = Math.ceil(names.length / cols);
   const [sheet, sctx] = make(cols * cw, rows * ch);
   sheet.id = 'sheet';
   names.forEach((n, i) => {
-    const x = (i % cols) * cw + 4, y = Math.floor(i / cols) * ch + 2;
-    sctx.strokeStyle = '#4a5780'; sctx.strokeRect(x - 3.5, y - 1.5, cw - 1, ch - 1);
+    const x = (i % cols) * cw + 4,
+      y = Math.floor(i / cols) * ch + 2;
+    sctx.strokeStyle = '#4a5780';
+    sctx.strokeRect(x - 3.5, y - 1.5, cw - 1, ch - 1);
     sprite(sctx, data.frames[n], x, y);
     label(sctx, n, x, y + fh * S + 3);
   });

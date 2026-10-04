@@ -4,20 +4,56 @@ import { easeInCubic, easeInOutCubic, easeOutBack, inbetween, shortestArc } from
 import { PALETTE_KEYS } from '../../src/game/art/palette';
 import { rasterize } from '../../src/game/art/rig/rasterize';
 import { isSingleComponent, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
-import { RIG_GANCHO_FRAMES, RIG_GANCHO_POSES, RIG_GANCHO_SEQUENCE, RIG_GANCHO_SEQUENCE_POSES, RIG_GANCHO_STRIKE } from '../../src/game/art/rig/poses/ganchoAscendente';
+import {
+  RIG_GANCHO_FRAMES,
+  RIG_GANCHO_POSES,
+  RIG_GANCHO_SEQUENCE,
+  RIG_GANCHO_SEQUENCE_POSES,
+  RIG_GANCHO_STRIKE,
+} from '../../src/game/art/rig/poses/ganchoAscendente';
 import { strikeToBody } from '../../src/core/strikePath';
 import { MOVES } from '../../src/data/moves';
 import { SIZE } from '../../src/game/textures';
 import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { POSE_IDLE } from '../../src/game/art/rig/poses/idle';
-import { RIG_PHASE_FRAMES, rigEnabled, rigMoveFrame, rigSequenceFrameName, rigStrikePoint, withRigFrames } from '../../src/game/art/rig/flag';
+import {
+  RIG_PHASE_FRAMES,
+  rigEnabled,
+  rigMoveFrame,
+  rigSequenceFrameName,
+  rigStrikePoint,
+  withRigFrames,
+} from '../../src/game/art/rig/flag';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
-import { BONES, REST_ANGLES, aimLimb, boneLength, makePose, measuredLength, solve, type BoneName, type JointName, type Pose } from '../../src/game/art/rig/skeleton';
+import {
+  BONES,
+  REST_ANGLES,
+  aimLimb,
+  boneLength,
+  makePose,
+  measuredLength,
+  solve,
+  type BoneName,
+  type JointName,
+  type Pose,
+} from '../../src/game/art/rig/skeleton';
 
 const JOINTS_REQUIRED: JointName[] = [
-  'hip', 'chest', 'neck',
-  'shoulderNear', 'shoulderFar', 'elbowNear', 'elbowFar', 'wristNear', 'wristFar',
-  'hipNear', 'hipFar', 'kneeNear', 'kneeFar', 'ankleNear', 'ankleFar',
+  'hip',
+  'chest',
+  'neck',
+  'shoulderNear',
+  'shoulderFar',
+  'elbowNear',
+  'elbowFar',
+  'wristNear',
+  'wristFar',
+  'hipNear',
+  'hipFar',
+  'kneeNear',
+  'kneeFar',
+  'ankleNear',
+  'ankleFar',
 ];
 
 /** Poses de teste: repouso e uma sequência de ângulos arbitrários (ossos de qualquer direção). */
@@ -56,13 +92,21 @@ describe('esqueleto (RIG-01)', () => {
 });
 
 describe('comprimento dos ossos (RIG-02)', () => {
-  it.each([0, 1, 2, 3, 4, 5, 6, 7])('pose %i: cada osso mede o comprimento definido, com 0,5 texel de tolerância', (seed) => {
-    const joints = solve(scatteredPose(seed));
-    for (const b of BONES) expect(Math.abs(measuredLength(joints, b) - b.length), `${b.name} na pose ${seed}`).toBeLessThanOrEqual(0.5);
-  });
+  it.each([0, 1, 2, 3, 4, 5, 6, 7])(
+    'pose %i: cada osso mede o comprimento definido, com 0,5 texel de tolerância',
+    (seed) => {
+      const joints = solve(scatteredPose(seed));
+      for (const b of BONES)
+        expect(Math.abs(measuredLength(joints, b) - b.length), `${b.name} na pose ${seed}`).toBeLessThanOrEqual(0.5);
+    },
+  );
 
   it('a cinemática inversa mantém os comprimentos, mesmo com o alvo fora de alcance', () => {
-    for (const target of [{ x: 14, y: 8 }, { x: 40, y: -30 }, { x: 10.5, y: 20 }]) {
+    for (const target of [
+      { x: 14, y: 8 },
+      { x: 40, y: -30 },
+      { x: 10.5, y: 20 },
+    ]) {
       const joints = solve(aimLimb(makePose({ x: 10, y: 22 }), 'armNear', target, 1));
       for (const b of BONES) expect(Math.abs(measuredLength(joints, b) - b.length), b.name).toBeLessThanOrEqual(0.5);
     }
@@ -145,7 +189,8 @@ describe('rasterize (RIG-03)', () => {
 });
 
 describe('recorte (EDG-01)', () => {
-  const opaqueCols = (frame: readonly string[], col: number): number[] => frame.map((r, y) => (r[col] !== '.' ? y : -1)).filter((y) => y >= 0);
+  const opaqueCols = (frame: readonly string[], col: number): number[] =>
+    frame.map((r, y) => (r[col] !== '.' ? y : -1)).filter((y) => y >= 0);
 
   it('uma pose inteira dentro da grade não recorta nada', () => {
     expect(rasterize(RASTER_POSES[0][1]).clipped).toBe(0);
@@ -160,7 +205,8 @@ describe('recorte (EDG-01)', () => {
     expect(a.clipped).toBe(0);
     expect(b.clipped).toBeGreaterThan(0);
     expect(b.frame).toHaveLength(30);
-    for (let x = 0; x < 32 - shift; x++) expect(opaqueCols(b.frame, x), `coluna ${x}`).toEqual(opaqueCols(a.frame, x + shift));
+    for (let x = 0; x < 32 - shift; x++)
+      expect(opaqueCols(b.frame, x), `coluna ${x}`).toEqual(opaqueCols(a.frame, x + shift));
   });
 
   it('o que cai fora da borda de baixo também é contado', () => {
@@ -191,7 +237,11 @@ describe('frames do gancho ascendente pelo boneco', () => {
   it.each(RIG_NAMES)('%s: nenhum texel recortado e todo osso mede o comprimento definido (RIG-02)', (name) => {
     const r = rasterize(RIG_GANCHO_POSES[name]);
     expect(r.clipped, name).toBe(0);
-    for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(RIG_GANCHO_POSES[name], b)), `${name} ${b.name}`).toBeLessThanOrEqual(0.5);
+    for (const b of BONES)
+      expect(
+        Math.abs(measuredLength(r.joints, b) - boneLength(RIG_GANCHO_POSES[name], b)),
+        `${name} ${b.name}`,
+      ).toBeLessThanOrEqual(0.5);
   });
 
   it.each(RIG_NAMES)('%s: os texels opacos formam um componente só, 8-conexo (RIG-04, POS-02)', (name) => {
@@ -242,18 +292,24 @@ describe('sequência do gancho ascendente (RIG-08)', () => {
 describe('chave ?debug&rig=1 (RIG-09, RIG-10)', () => {
   const base = { ...PLAYER_MOVE_FRAMES };
 
-  it.each(['?debug&rig=1', '?rig=1&debug', '?debug=1&rig=1'])('%s troca os 3 frames do gancho ascendente pelos do boneco (RIG-09)', (search) => {
-    const out = withRigFrames(base, search);
-    for (const name of RIG_NAMES) expect(out[name], name).toBe(RIG_GANCHO_FRAMES[name]);
-    expect(out['ganchoAscendente-hit']).not.toBe(base['ganchoAscendente-hit']);
-    expect(rigStrikePoint('ganchoAscendente-hit', search)).toEqual(RIG_GANCHO_STRIKE);
-  });
+  it.each(['?debug&rig=1', '?rig=1&debug', '?debug=1&rig=1'])(
+    '%s troca os 3 frames do gancho ascendente pelos do boneco (RIG-09)',
+    (search) => {
+      const out = withRigFrames(base, search);
+      for (const name of RIG_NAMES) expect(out[name], name).toBe(RIG_GANCHO_FRAMES[name]);
+      expect(out['ganchoAscendente-hit']).not.toBe(base['ganchoAscendente-hit']);
+      expect(rigStrikePoint('ganchoAscendente-hit', search)).toEqual(RIG_GANCHO_STRIKE);
+    },
+  );
 
-  it.each(['', '?debug', '?rig=1', '?debug&rig=0', '?debug&rig=true', '?rig=1&nodebug'])('"%s" mantém os frames atuais (RIG-10)', (search) => {
-    expect(withRigFrames(base, search)).toBe(base);
-    expect(rigEnabled(search)).toBe(false);
-    expect(rigStrikePoint('ganchoAscendente-hit', search)).toBeUndefined();
-  });
+  it.each(['', '?debug', '?rig=1', '?debug&rig=0', '?debug&rig=true', '?rig=1&nodebug'])(
+    '"%s" mantém os frames atuais (RIG-10)',
+    (search) => {
+      expect(withRigFrames(base, search)).toBe(base);
+      expect(rigEnabled(search)).toBe(false);
+      expect(rigStrikePoint('ganchoAscendente-hit', search)).toBeUndefined();
+    },
+  );
 
   it('com rig=1 só os 3 frames do gancho ascendente mudam; os outros golpes seguem os mesmos', () => {
     const out = withRigFrames(base, '?debug&rig=1');
@@ -276,11 +332,14 @@ describe('quadros da sequência por fase do gancho ascendente (rig=1)', () => {
   it('o pico (hit) cai no active e o wind e o recover nas pontas das suas fases', () => {
     expect(RIG_GANCHO_SEQUENCE[RIG_PHASE_FRAMES.active[1]].frame).toEqual(RIG_GANCHO_FRAMES['ganchoAscendente-hit']);
     expect(RIG_GANCHO_SEQUENCE[RIG_PHASE_FRAMES.startup[2]].frame).toEqual(RIG_GANCHO_FRAMES['ganchoAscendente-wind']);
-    expect(RIG_GANCHO_SEQUENCE[RIG_PHASE_FRAMES.recovery[2]].frame).toEqual(RIG_GANCHO_FRAMES['ganchoAscendente-recover']);
+    expect(RIG_GANCHO_SEQUENCE[RIG_PHASE_FRAMES.recovery[2]].frame).toEqual(
+      RIG_GANCHO_FRAMES['ganchoAscendente-recover'],
+    );
   });
 
   it('cada quadro dura uma fatia igual da fase: startup 90 ms em 6 quadros, active em 3 e recovery 260 ms em 3', () => {
-    const at = (phase: 'startup' | 'active' | 'recovery', ms: number): string | undefined => rigMoveFrame('ganchoAscendente', phase, ms, def);
+    const at = (phase: 'startup' | 'active' | 'recovery', ms: number): string | undefined =>
+      rigMoveFrame('ganchoAscendente', phase, ms, def);
     expect(at('startup', 0)).toBe('ganchoAscendente-rig-0');
     expect(at('startup', 14)).toBe('ganchoAscendente-rig-0');
     expect(at('startup', 15)).toBe('ganchoAscendente-rig-1');

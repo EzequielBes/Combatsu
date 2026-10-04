@@ -12,7 +12,8 @@ const CYCLES: Record<1 | 2 | 3, BossAttack[]> = {
 };
 
 function windupMs(attack: BossAttack, phase: 1 | 2 | 3): number {
-  const base = attack === 'charge' ? BOSS.charge.windupMs : attack === 'leap' ? BOSS.leap.windupMs : BOSS.volley.windupMs;
+  const base =
+    attack === 'charge' ? BOSS.charge.windupMs : attack === 'leap' ? BOSS.leap.windupMs : BOSS.volley.windupMs;
   return base * BOSS.phases[phase - 1].windupMult;
 }
 

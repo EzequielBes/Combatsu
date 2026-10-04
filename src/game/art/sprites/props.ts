@@ -29,18 +29,7 @@ const CHAIR: Grid = [
 ];
 
 /** Garrafa verde em pé: gargalo, ombro com um brilho branco, rótulo creme (`l`/`L`) e fundo na sombra. */
-const BOTTLE: Grid = [
-  '.kk.',
-  '.Gg.',
-  '.Gg.',
-  'kGgk',
-  'kwGk',
-  'kllk',
-  'kLlk',
-  'kGgk',
-  'kggk',
-  'kkkk',
-];
+const BOTTLE: Grid = ['.kk.', '.Gg.', '.Gg.', 'kGgk', 'kwGk', 'kllk', 'kLlk', 'kGgk', 'kggk', 'kkkk'];
 
 /** Sprite de cada objeto, pela chave do PropDef. */
 export const PROP_SPRITES = { chair: CHAIR, bottle: BOTTLE } as const;

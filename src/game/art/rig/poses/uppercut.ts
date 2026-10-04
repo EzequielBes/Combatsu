@@ -21,7 +21,10 @@ export interface Reach {
 }
 
 /** Converte um `Reach` para o ponto do frame. */
-export const toFrame = (frame: RigFrame, r: Reach): Vec2 => ({ x: frame.originCol + r.ahead, y: groundOf(frame) - r.up });
+export const toFrame = (frame: RigFrame, r: Reach): Vec2 => ({
+  x: frame.originCol + r.ahead,
+  y: groundOf(frame) - r.up,
+});
 
 /** Ajustes finos por corpo; o que não vier daqui sai das proporções. */
 export interface Tuning {
@@ -98,7 +101,11 @@ export function idleFor(body: Proportions, frame: RigFrame = RIG_FRAME_32, stanc
   });
 }
 
-export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}, frame: RigFrame = RIG_FRAME_32): UppercutSet {
+export function uppercutFor(
+  body: Proportions,
+  tune: Partial<Tuning> = {},
+  frame: RigFrame = RIG_FRAME_32,
+): UppercutSet {
   const t = { ...DEFAULT_TUNING, ...tune };
   const L = body.thigh + body.shin;
   const a = body.upperArm + body.foreArm;
@@ -179,12 +186,17 @@ export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}, frame
   const grounded = (p: Pose): Pose => {
     const j = solve(p);
     let out = p;
-    for (const [limb, ankle] of [['legNear', j.ankleNear], ['legFar', j.ankleFar]] as const) {
+    for (const [limb, ankle] of [
+      ['legNear', j.ankleNear],
+      ['legFar', j.ankleFar],
+    ] as const) {
       if (ankle.y > g) out = aimLimb(out, limb, { x: ankle.x, y: g }, 1);
     }
     return out;
   };
-  const sequencePoses = steps.map(([from, to, tt, ease]) => grounded(inbetween(from, to, ease && tt > 0 && tt < 1 ? ease(tt) : tt)));
+  const sequencePoses = steps.map(([from, to, tt, ease]) =>
+    grounded(inbetween(from, to, ease && tt > 0 && tt < 1 ? ease(tt) : tt)),
+  );
   // Nos golpes a cabeça é a de luta (esforço); os corpos sem ela caem na de idle.
   const head = headOf(body, 'fight');
   const raster = (p: Pose): RasterResult => rasterize(p, { frame, head, headOverNearArm: t.headOverNearArm });

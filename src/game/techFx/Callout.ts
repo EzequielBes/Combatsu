@@ -63,8 +63,13 @@ export class Callout {
   ) {
     this.band = scene.add.rectangle(0, BAND_TOP, BAND_W, BAND_H, PALETTE.b, 0.72).setOrigin(0, 0);
     this.borderTop = scene.add.rectangle(0, BAND_TOP, BAND_W, BORDER_H, PALETTE.w).setOrigin(0, 0);
-    this.borderBottom = scene.add.rectangle(0, BAND_TOP + BAND_H - BORDER_H, BAND_W, BORDER_H, PALETTE.w).setOrigin(0, 0);
-    this.icon = scene.add.sprite(BASE_X.icon, Y, TEX.kanji, 'kuro').setOrigin(0, 0.5).setDisplaySize(ICON_SIZE, ICON_SIZE);
+    this.borderBottom = scene.add
+      .rectangle(0, BAND_TOP + BAND_H - BORDER_H, BAND_W, BORDER_H, PALETTE.w)
+      .setOrigin(0, 0);
+    this.icon = scene.add
+      .sprite(BASE_X.icon, Y, TEX.kanji, 'kuro')
+      .setOrigin(0, 0.5)
+      .setDisplaySize(ICON_SIZE, ICON_SIZE);
     this.text = scene.add
       .text(BASE_X.text, Y, '', { fontFamily: 'monospace', fontSize: '30px', fontStyle: 'bold', color: css(PALETTE.w) })
       .setOrigin(0, 0.5);

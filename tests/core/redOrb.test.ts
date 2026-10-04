@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { RED_ORB_SPEED, RedOrbState, redReleaseEffects, repulseTargets, repulseTargetsFor } from '../../src/core/redOrb';
+import {
+  RED_ORB_SPEED,
+  RedOrbState,
+  redReleaseEffects,
+  repulseTargets,
+  repulseTargetsFor,
+} from '../../src/core/redOrb';
 import { TECHNIQUES } from '../../src/data/techniques';
 
 describe('RED-02: o frame do núcleo do orbe segue o terço da carga', () => {
@@ -205,7 +211,11 @@ describe('RDA-08, RDA-09, EDG-03: repulseTargets na soltura', () => {
 
 describe('EDG-03: repulseTargetsFor exclui o chefe', () => {
   const origin = { x: 100, y: 200 };
-  const cand = (id: number, kind: 'enemy' | 'boss', dx: number) => ({ id, kind, center: { x: origin.x + dx, y: origin.y } });
+  const cand = (id: number, kind: 'enemy' | 'boss', dx: number) => ({
+    id,
+    kind,
+    center: { x: origin.x + dx, y: origin.y },
+  });
 
   it('o chefe colado à frente não entra; o inimigo comum ao lado dele entra', () => {
     const hits = repulseTargetsFor(origin, 1, [cand(1, 'boss', 10), cand(2, 'enemy', 40)]);
@@ -217,7 +227,11 @@ describe('EDG-03: repulseTargetsFor exclui o chefe', () => {
   });
 
   it('inimigos comuns seguem as regras de alcance e lado de repulseTargets', () => {
-    expect(repulseTargetsFor(origin, 1, [cand(1, 'enemy', 80), cand(2, 'enemy', 81), cand(3, 'enemy', -30)]).map((h) => h.targetId)).toEqual([1]);
+    expect(
+      repulseTargetsFor(origin, 1, [cand(1, 'enemy', 80), cand(2, 'enemy', 81), cand(3, 'enemy', -30)]).map(
+        (h) => h.targetId,
+      ),
+    ).toEqual([1]);
   });
 });
 

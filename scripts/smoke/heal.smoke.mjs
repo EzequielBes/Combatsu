@@ -57,17 +57,26 @@ export default async function ({ page, baseUrl, assert }) {
   const afterFlash = await stepAndSnap(120);
   // Outra gota coletada nesse meio tempo reacende o flash; só vale checar o apagar sem nova coleta.
   const healsAfter = afterFlash.events.filter((e) => e.startsWith('collect:heal:')).length;
-  assert(healsAfter > healsBefore || afterFlash.player.flash === null,`HEAL-10: o flash deveria apagar depois de 80 ms: ${afterFlash.player.flash}`);
+  assert(
+    healsAfter > healsBefore || afterFlash.player.flash === null,
+    `HEAL-10: o flash deveria apagar depois de 80 ms: ${afterFlash.player.flash}`,
+  );
   snap = afterFlash;
   assert(!snap.pickups.some((p) => p.id === heal.id), 'a gota deveria ter sido coletada');
   const newHealCollects = snap.events.slice(eventsBefore).filter((e) => e.startsWith('collect:heal:'));
-  assert(newHealCollects.length > 0, `HEAL-08: esperava ao menos um collect:heal: nos eventos: ${JSON.stringify(snap.events)}`);
+  assert(
+    newHealCollects.length > 0,
+    `HEAL-08: esperava ao menos um collect:heal: nos eventos: ${JSON.stringify(snap.events)}`,
+  );
   assert(
     newHealCollects.every((e) => e === 'collect:heal:8'),
     `HEAL-03: cada gota coletada com vida faltando deveria restaurar 8: ${JSON.stringify(newHealCollects)}`,
   );
   const restored = snap.player.hp - hpAfterHurt;
-  assert(restored === 8 * newHealCollects.length, `HEAL-03: hp restaurado não bate com as coletas: ${hpAfterHurt} -> ${snap.player.hp}, coletas=${newHealCollects.length}`);
+  assert(
+    restored === 8 * newHealCollects.length,
+    `HEAL-03: hp restaurado não bate com as coletas: ${hpAfterHurt} -> ${snap.player.hp}, coletas=${newHealCollects.length}`,
+  );
 
   // Cura vida cheia (bate até full ou fica perto do teto): sobe até maxHp com mais golpes de teste + gotas.
   for (let i = 0; i < 20 && snap.player.hp < 100; i++) {
@@ -107,7 +116,10 @@ export default async function ({ page, baseUrl, assert }) {
       for (let i = 0; i < 20 && snap.run.state !== 'roundActive'; i++) snap = await stepAndSnap(300);
     }
   }
-  assert(fullHpHeal, `HEAL-04: esperava uma gota no chão com a vida cheia no intervalo: ${JSON.stringify(snap.pickups)}`);
+  assert(
+    fullHpHeal,
+    `HEAL-04: esperava uma gota no chão com a vida cheia no intervalo: ${JSON.stringify(snap.pickups)}`,
+  );
   {
     // Capturado já aqui: os passeios abaixo podem, sozinhos, consumir boa parte (ou tudo) dos 10000 ms de vida.
     const eventsBeforeExpiry = snap.events.length;
@@ -137,7 +149,13 @@ export default async function ({ page, baseUrl, assert }) {
       `HEAL-05: a gota deveria ter expirado sozinha: ${JSON.stringify(cur.pickups)}`,
     );
     const newEvents = cur.events.slice(eventsBeforeExpiry);
-    assert(!newEvents.some((e) => e.startsWith('collect:heal:')), `ECO-11: morto não coleta: ${JSON.stringify(newEvents)}`);
-    assert(newEvents.includes('pickupExpired'), `esperava o evento pickupExpired (HEAL-05): ${JSON.stringify(newEvents)}`);
+    assert(
+      !newEvents.some((e) => e.startsWith('collect:heal:')),
+      `ECO-11: morto não coleta: ${JSON.stringify(newEvents)}`,
+    );
+    assert(
+      newEvents.includes('pickupExpired'),
+      `esperava o evento pickupExpired (HEAL-05): ${JSON.stringify(newEvents)}`,
+    );
   }
 }

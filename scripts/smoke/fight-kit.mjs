@@ -48,7 +48,9 @@ export function makeKit({ page, baseUrl, assert }) {
   };
 
   const nearest = (s) =>
-    s.enemies.filter((e) => e.state !== 'deadRagdoll' && e.state !== 'dissolving').sort((a, b) => Math.abs(a.x - s.player.x) - Math.abs(b.x - s.player.x))[0];
+    s.enemies
+      .filter((e) => e.state !== 'deadRagdoll' && e.state !== 'dissolving')
+      .sort((a, b) => Math.abs(a.x - s.player.x) - Math.abs(b.x - s.player.x))[0];
 
   /**
    * Anda rumo ao inimigo mais próximo até `|dx| < gap` (passos de um frame quando perto, para não passar dele), solta e
@@ -103,7 +105,12 @@ export function makeKit({ page, baseUrl, assert }) {
    */
   const settle = async () => {
     let s = await snap(20);
-    for (let i = 0; i < 100 && (s.player.move !== null || s.player.guard !== 'none' || s.player.frame.startsWith('hurt')); i++) s = await frame();
+    for (
+      let i = 0;
+      i < 100 && (s.player.move !== null || s.player.guard !== 'none' || s.player.frame.startsWith('hurt'));
+      i++
+    )
+      s = await frame();
     return snap(60);
   };
 
@@ -114,7 +121,10 @@ export function makeKit({ page, baseUrl, assert }) {
   const waitFor = async (pred, maxFrames = 120, what = 'a condição esperada') => {
     let s = await snap(0);
     for (let i = 0; i < maxFrames && !pred(s); i++) s = await frame();
-    assert(pred(s), `${what}: não aconteceu em ${maxFrames} frames (${JSON.stringify({ hp: s.player.hp, move: s.player.move, ev: s.events.slice(-3), en: s.enemies.map((e) => [e.id, e.state, e.ai, e.committed]) })})`);
+    assert(
+      pred(s),
+      `${what}: não aconteceu em ${maxFrames} frames (${JSON.stringify({ hp: s.player.hp, move: s.player.move, ev: s.events.slice(-3), en: s.enemies.map((e) => [e.id, e.state, e.ai, e.committed]) })})`,
+    );
     return s;
   };
 
@@ -125,7 +135,10 @@ export function makeKit({ page, baseUrl, assert }) {
    */
   const waitQuiet = (maxFrames = 200) =>
     waitFor(
-      (s) => !s.hitstop.frozen && !s.player.frame.startsWith('hurt') && s.enemies.every((e) => e.ai !== 'windup' && e.ai !== 'attack'),
+      (s) =>
+        !s.hitstop.frozen &&
+        !s.player.frame.startsWith('hurt') &&
+        s.enemies.every((e) => e.ai !== 'windup' && e.ai !== 'attack'),
       maxFrames,
       'o inimigo deveria sair do ataque',
     );
@@ -145,9 +158,29 @@ export function makeKit({ page, baseUrl, assert }) {
     await frame();
     await up(dir);
     s = await snap(20);
-    assert(s.player.facing === want, `o jogador deveria olhar para o inimigo: facing=${s.player.facing}, esperava ${want}`);
+    assert(
+      s.player.facing === want,
+      `o jogador deveria olhar para o inimigo: facing=${s.player.facing}, esperava ${want}`,
+    );
     return s;
   };
 
-  return { snap, frame, down, up, tap, count, boot, nearest, approach, settle, startDuel, waitFor, waitQuiet, waitCommit, faceEnemy, assert };
+  return {
+    snap,
+    frame,
+    down,
+    up,
+    tap,
+    count,
+    boot,
+    nearest,
+    approach,
+    settle,
+    startDuel,
+    waitFor,
+    waitQuiet,
+    waitCommit,
+    faceEnemy,
+    assert,
+  };
 }

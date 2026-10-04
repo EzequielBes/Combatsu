@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { DISTORT_PERIOD_MS, FRAME_MS, REPULSE_MS, TRAIL_EVERY_MS, TRAIL_FADE_MS } from '../../src/game/techFx/redTiming';
+import {
+  DISTORT_PERIOD_MS,
+  FRAME_MS,
+  REPULSE_MS,
+  TRAIL_EVERY_MS,
+  TRAIL_FADE_MS,
+} from '../../src/game/techFx/redTiming';
 
 describe('tempos do efeito do Vermelho (RDA-07, RDA-10, RDA-12)', () => {
   it('RDA-10: o cone da repulsão dura 120 ms', () => {

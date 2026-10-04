@@ -242,7 +242,13 @@ export class CursedFx {
       gfx.lineStyle(1, PALETTE[i % 2 === 0 ? 'c' : 'u']!, 1).strokePoints(pts, false);
     }
     gfx.fillStyle(PALETTE.C!, 1).fillRect(snap(at.x) - 1, snap(at.y) - 1, GRID, GRID);
-    this.scene.tweens.add({ targets: gfx, alpha: 0, duration: IMPACT_FEEL.crackMs, ease: 'Quad.easeIn', onComplete: () => gfx.destroy() });
+    this.scene.tweens.add({
+      targets: gfx,
+      alpha: 0,
+      duration: IMPACT_FEEL.crackMs,
+      ease: 'Quad.easeIn',
+      onComplete: () => gfx.destroy(),
+    });
   }
 
   /** Resíduo `c` nos pés do inimigo que desliza (RCT-03); pulado com o teto cheio (EDG-03). */

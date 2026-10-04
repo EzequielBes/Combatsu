@@ -69,7 +69,9 @@ describe('SPC-01: palmaExplosiva no lugar do golpe que o leve iniciaria', () => 
   it('parado: leve com meia-lua inicia palmaExplosiva (20 heavy) em vez de jab', () => {
     const machine = new MoveMachine();
     const evs = machine.press('light', { ...GROUND, motion: true });
-    expect(evs).toEqual([{ type: 'moveStart', move: expect.objectContaining({ name: 'palmaExplosiva', damage: 20, strength: 'heavy' }) }]);
+    expect(evs).toEqual([
+      { type: 'moveStart', move: expect.objectContaining({ name: 'palmaExplosiva', damage: 20, strength: 'heavy' }) },
+    ]);
     expect(machine.current).toBe('palmaExplosiva');
   });
 

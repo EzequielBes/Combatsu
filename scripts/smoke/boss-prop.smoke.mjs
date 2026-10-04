@@ -55,7 +55,10 @@ export default async function ({ page, baseUrl, assert }) {
     // Dois quadros seguidos com o mesmo dx: exatamente um passo de física neste quadro.
     if (Math.abs(c - b) > 1 && Math.abs(c - b - (b - a)) < 1e-3) {
       const expected = b + (c - b) * sn.physics.alpha;
-      assert(Math.abs(sn.boss.view.x - expected) <= 0.01, `ITP-07: chefe: view ${sn.boss.view.x} deveria ser ${expected} (alfa ${sn.physics.alpha})`);
+      assert(
+        Math.abs(sn.boss.view.x - expected) <= 0.01,
+        `ITP-07: chefe: view ${sn.boss.view.x} deveria ser ${expected} (alfa ${sn.physics.alpha})`,
+      );
       bossFrames++;
     }
   };
@@ -74,9 +77,15 @@ export default async function ({ page, baseUrl, assert }) {
     s = await frame();
     watchBoss(s);
   }
-  assert(ready, `o chefe deveria parar em rest à frente do player: ${JSON.stringify({ boss: s.boss, player: s.player.x })}`);
+  assert(
+    ready,
+    `o chefe deveria parar em rest à frente do player: ${JSON.stringify({ boss: s.boss, player: s.player.x })}`,
+  );
   assert(bossFrames >= 10, `ITP-07: a investida deveria dar pelo menos 10 quadros medidos: ${bossFrames}`);
-  assert(s.player.facing === 1 && s.player.hp === s.player.maxHp, `o player deveria estar inteiro e virado para o chefe: ${JSON.stringify(s.player)}`);
+  assert(
+    s.player.facing === 1 && s.player.hp === s.player.maxHp,
+    `o player deveria estar inteiro e virado para o chefe: ${JSON.stringify(s.player)}`,
+  );
   assert(s.boss.hp === maxHp, `pré-condição: chefe com a vida cheia: ${s.boss.hp}`);
 
   // PRB-04: arremessa; a garrafa toca o chefe, tira exatamente 12 e quebra.

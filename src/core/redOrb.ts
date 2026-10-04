@@ -136,7 +136,11 @@ export class RedOrbState {
       const dy = target.center.y - point.y;
       if (Math.hypot(dx, dy) > DETONATION_RADIUS) continue;
       this.hitIds.add(target.id);
-      hits.push({ targetId: target.id, damage: TECHNIQUES.vermelho.damage.detonation, direction: normalize({ x: dx, y: dy }) });
+      hits.push({
+        targetId: target.id,
+        damage: TECHNIQUES.vermelho.damage.detonation,
+        direction: normalize({ x: dx, y: dy }),
+      });
     }
     return hits;
   }

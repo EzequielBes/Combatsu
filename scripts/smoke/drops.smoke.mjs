@@ -31,10 +31,16 @@ export default async function ({ page, baseUrl, assert }) {
     snap = await stepAndSnap(300);
   }
   const dropped = snap.pickups.filter((p) => p.kind === 'fragment');
-  assert(dropped.length >= 2, `ECO-01/02: esperava ao menos 2 fragmentos soltos, veio ${dropped.length}: ${JSON.stringify(dropped)}`);
+  assert(
+    dropped.length >= 2,
+    `ECO-01/02: esperava ao menos 2 fragmentos soltos, veio ${dropped.length}: ${JSON.stringify(dropped)}`,
+  );
   // ECO-06: velocidade inicial do estouro dentro da faixa (vx nasce e é imediatamente movido pelo passo do pickup;
   // a checagem de fundo mora em pickup.test.ts - aqui só confirmamos que o pickup existe com um id e um valor > 0).
-  assert(dropped.every((p) => p.value > 0 && typeof p.id === 'number'), `pickup sem id/valor válido: ${JSON.stringify(dropped)}`);
+  assert(
+    dropped.every((p) => p.value > 0 && typeof p.id === 'number'),
+    `pickup sem id/valor válido: ${JSON.stringify(dropped)}`,
+  );
 
   // ECO-09: um fragmento nunca tocado expira aos 15000 ms - isola um pickup específico e confere id sumindo.
   const trackedId = dropped[0].id;

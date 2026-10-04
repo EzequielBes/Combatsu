@@ -25,7 +25,9 @@ register('data:text/javascript,' + encodeURIComponent(hookSrc));
 const src = (p) => import(pathToFileURL(join(root, 'src', p)).href);
 const { PALETTE } = await src('game/art/palette.ts');
 const { PLAYER_MOVE_FRAMES } = await src('game/art/sprites/playerMoves.ts');
-const { RIG_GANCHO_FRAMES, RIG_GANCHO_SEQUENCE, RIG_GANCHO_STRIKE } = await src('game/art/rig/poses/ganchoAscendente.ts');
+const { RIG_GANCHO_FRAMES, RIG_GANCHO_SEQUENCE, RIG_GANCHO_STRIKE } = await src(
+  'game/art/rig/poses/ganchoAscendente.ts',
+);
 const { PLAYER_FRAMES } = await src('game/art/sprites/player.ts');
 const { rasterize } = await src('game/art/rig/rasterize.ts');
 const { POSE_IDLE } = await src('game/art/rig/poses/idle.ts');
@@ -49,26 +51,45 @@ if (!edge) {
 }
 
 const pageFn = (data) => {
-  const S = data.scale, BG = '#2a3863', cw = 32 * S + 8, ch = 30 * S + 22;
+  const S = data.scale,
+    BG = '#2a3863',
+    cw = 32 * S + 8,
+    ch = 30 * S + 22;
   const hex = (n) => '#' + n.toString(16).padStart(6, '0');
   const board = (id, lines) => {
     const cols = Math.max(...lines.map((r) => r.length));
     const cv = document.createElement('canvas');
-    cv.id = id; cv.width = cols * cw; cv.height = lines.length * ch;
+    cv.id = id;
+    cv.width = cols * cw;
+    cv.height = lines.length * ch;
     document.body.appendChild(cv);
     const ctx = cv.getContext('2d');
-    ctx.fillStyle = BG; ctx.fillRect(0, 0, cv.width, cv.height);
-    ctx.font = '12px monospace'; ctx.textBaseline = 'top';
-    lines.forEach((frames, ry) => frames.forEach((f, cx) => {
-      const x = cx * cw + 4, y = ry * ch + 2;
-      ctx.strokeStyle = '#4a5780'; ctx.strokeRect(x - 3.5, y - 1.5, cw - 1, ch - 1);
-      f.rows.forEach((row, j) => [...row].forEach((c, i) => {
-        if (c === '.') return;
-        ctx.fillStyle = hex(data.palette[c]); ctx.fillRect(x + i * S, y + j * S, S, S);
-      }));
-      ctx.fillStyle = '#fff'; ctx.fillText(f.name, x, y + 30 * S + 3);
-      if (f.mark) { ctx.strokeStyle = '#ff3344'; ctx.lineWidth = 1; ctx.strokeRect(x + f.mark.col * S + 0.5, y + f.mark.row * S + 0.5, S - 1, S - 1); }
-    }));
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.font = '12px monospace';
+    ctx.textBaseline = 'top';
+    lines.forEach((frames, ry) =>
+      frames.forEach((f, cx) => {
+        const x = cx * cw + 4,
+          y = ry * ch + 2;
+        ctx.strokeStyle = '#4a5780';
+        ctx.strokeRect(x - 3.5, y - 1.5, cw - 1, ch - 1);
+        f.rows.forEach((row, j) =>
+          [...row].forEach((c, i) => {
+            if (c === '.') return;
+            ctx.fillStyle = hex(data.palette[c]);
+            ctx.fillRect(x + i * S, y + j * S, S, S);
+          }),
+        );
+        ctx.fillStyle = '#fff';
+        ctx.fillText(f.name, x, y + 30 * S + 3);
+        if (f.mark) {
+          ctx.strokeStyle = '#ff3344';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + f.mark.col * S + 0.5, y + f.mark.row * S + 0.5, S - 1, S - 1);
+        }
+      }),
+    );
   };
   board('compare', [data.current, data.rig]);
   board('strip', [data.strip]);
@@ -79,7 +100,14 @@ const browser = await puppeteer.launch({ executablePath: edge, headless: true })
 try {
   const page = await browser.newPage();
   await page.setContent('<body style="margin:0;background:#000"></body>');
-  await page.evaluate(pageFn, { palette: PALETTE, current, rig, strip, idleCompare, scale: Number(process.env.SPRITE_SCALE) || 4 });
+  await page.evaluate(pageFn, {
+    palette: PALETTE,
+    current,
+    rig,
+    strip,
+    idleCompare,
+    scale: Number(process.env.SPRITE_SCALE) || 4,
+  });
   for (const id of ['compare', 'strip', 'idle-compare']) {
     await (await page.$('#' + id)).screenshot({ path: join(outDir, id + '.png') });
     console.log('  ' + join(outDir, id + '.png'));

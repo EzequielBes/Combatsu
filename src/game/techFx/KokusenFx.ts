@@ -317,7 +317,10 @@ export class KokusenFx {
       return;
     }
     const radius = 4 + t * 36;
-    this.shockGfx.clear().lineStyle(3, PALETTE.W, 1 - t).strokeCircle(this.shockOrigin.x, this.shockOrigin.y, radius);
+    this.shockGfx
+      .clear()
+      .lineStyle(3, PALETTE.W, 1 - t)
+      .strokeCircle(this.shockOrigin.x, this.shockOrigin.y, radius);
   }
 
   private teardownShock(): void {

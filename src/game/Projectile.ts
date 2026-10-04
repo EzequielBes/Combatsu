@@ -110,7 +110,10 @@ export class Projectile {
     if (other.kind === 'character' && canDamage('enemy', other.target.team)) {
       if (other.target.receiveHit(this.hit)) {
         const { x, y } = this.body.position;
-        this.onConnect?.(this.hit, contactWith({ x, y, width: this.size.width, height: this.size.height }, other.target));
+        this.onConnect?.(
+          this.hit,
+          contactWith({ x, y, width: this.size.width, height: this.size.height }, other.target),
+        );
       }
       this.destroyNow();
     }

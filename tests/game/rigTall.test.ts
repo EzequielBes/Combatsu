@@ -6,7 +6,14 @@ import { HEROICO, HEROICO_ALTO, headOf } from '../../src/game/art/rig/presets';
 import { RIG_FRAME_40, rasterize, styleOf, wristTexel } from '../../src/game/art/rig/rasterize';
 import { idleFor, uppercutFor } from '../../src/game/art/rig/poses/uppercut';
 import { TUNINGS } from '../../src/game/art/rig/poses/tunings';
-import { RIG_TALL, RIG_TALL_ORIGIN, RIG_UPPERCUT_HITBOX, rigHitbox, rigStrike, rigTallSheet } from '../../src/game/art/rig/flag';
+import {
+  RIG_TALL,
+  RIG_TALL_ORIGIN,
+  RIG_UPPERCUT_HITBOX,
+  rigHitbox,
+  rigStrike,
+  rigTallSheet,
+} from '../../src/game/art/rig/flag';
 import { BONES, SOLE, boneLength, lengthsOf, measuredLength, solve } from '../../src/game/art/rig/skeleton';
 import { isSingleComponent, isOpaque, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
 import { parseSheet } from '../../src/core/pixelGrid';
@@ -47,7 +54,11 @@ describe('preset heroicoAlto (PRA-01, PRA-02)', () => {
     expect(40 - top).toBeLessThanOrEqual(body.height + 1);
     expect(isSingleComponent(r.frame)).toBe(true);
     expect(r.clipped).toBe(0);
-    for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(idleFor(body, RIG_FRAME_40), b)), b.name).toBeLessThanOrEqual(0.5);
+    for (const b of BONES)
+      expect(
+        Math.abs(measuredLength(r.joints, b) - boneLength(idleFor(body, RIG_FRAME_40), b)),
+        b.name,
+      ).toBeLessThanOrEqual(0.5);
   });
 
   it('PRA-02: braço, perna, pé, ombro e quadril de perto e de longe têm o mesmo comprimento', () => {
@@ -75,15 +86,18 @@ describe('cabeças do heroico alto (PRA-03)', () => {
   it.each([
     ['idle', HEAD_TALL_IDLE],
     ['luta', HEAD_TALL_FIGHT],
-  ])('%s: cabelo espetado (h, H, j), olho com íris e brilho (b, w), linha de pele (x) e contorno k, só com teclas da PALETTE', (_name, head) => {
-    const text = head.grid.join('');
-    for (const ch of ['h', 'H', 'j', 'b', 'w', 'x', 'p', 'P', 'k']) expect(text, ch).toContain(ch);
-    for (const ch of text) expect(ch === '.' || PALETTE_KEYS.has(ch), `tecla '${ch}'`).toBe(true);
-    expect(head.grid[0]).toMatch(/k\.+k/); // espetos no topo
-    for (const row of head.grid) expect(row.length).toBe(head.grid[0].length);
-    expect(head.neckCol).toBeGreaterThan(0);
-    expect(head.neckCol).toBeLessThan(head.grid[0].length);
-  });
+  ])(
+    '%s: cabelo espetado (h, H, j), olho com íris e brilho (b, w), linha de pele (x) e contorno k, só com teclas da PALETTE',
+    (_name, head) => {
+      const text = head.grid.join('');
+      for (const ch of ['h', 'H', 'j', 'b', 'w', 'x', 'p', 'P', 'k']) expect(text, ch).toContain(ch);
+      for (const ch of text) expect(ch === '.' || PALETTE_KEYS.has(ch), `tecla '${ch}'`).toBe(true);
+      expect(head.grid[0]).toMatch(/k\.+k/); // espetos no topo
+      for (const row of head.grid) expect(row.length).toBe(head.grid[0].length);
+      expect(head.neckCol).toBeGreaterThan(0);
+      expect(head.neckCol).toBeLessThan(head.grid[0].length);
+    },
+  );
 
   it('a cabeça de luta tem o mesmo tamanho da de idle e é diferente dela', () => {
     expect(HEAD_TALL_FIGHT.grid).toHaveLength(HEAD_TALL_IDLE.grid.length);
@@ -102,7 +116,12 @@ describe('cabeças do heroico alto (PRA-03)', () => {
 });
 
 describe('gancho ascendente do heroicoAlto no frame de 40x40 (PRA-04)', () => {
-  const frames = { idle: rasterize(set.idle, { frame: RIG_FRAME_40 }), wind: set.frames.wind, hit: set.frames.hit, recover: set.frames.recover };
+  const frames = {
+    idle: rasterize(set.idle, { frame: RIG_FRAME_40 }),
+    wind: set.frames.wind,
+    hit: set.frames.hit,
+    recover: set.frames.recover,
+  };
 
   for (const name of ['idle', 'wind', 'hit', 'recover'] as const) {
     it(`${name}: 40x40 só com teclas da PALETTE, uma peça só, sem recorte e ossos com o comprimento definido`, () => {
@@ -115,7 +134,8 @@ describe('gancho ascendente do heroicoAlto no frame de 40x40 (PRA-04)', () => {
       expect(isSingleComponent(r.frame), 'POS-02').toBe(true);
       expect(r.clipped).toBe(0);
       const pose = { idle: set.idle, wind: set.wind, hit: set.hit, recover: set.recover }[name];
-      for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(pose, b)), b.name).toBeLessThanOrEqual(0.5);
+      for (const b of BONES)
+        expect(Math.abs(measuredLength(r.joints, b) - boneLength(pose, b)), b.name).toBeLessThanOrEqual(0.5);
     });
   }
 
@@ -125,7 +145,11 @@ describe('gancho ascendente do heroicoAlto no frame de 40x40 (PRA-04)', () => {
       expect(r.frame, `quadro ${i}`).toHaveLength(40);
       expect(isSingleComponent(r.frame), `quadro ${i}`).toBe(true);
       expect(r.clipped, `quadro ${i}`).toBe(0);
-      for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(set.sequencePoses[i], b)), `quadro ${i} ${b.name}`).toBeLessThanOrEqual(0.5);
+      for (const b of BONES)
+        expect(
+          Math.abs(measuredLength(r.joints, b) - boneLength(set.sequencePoses[i], b)),
+          `quadro ${i} ${b.name}`,
+        ).toBeLessThanOrEqual(0.5);
     }
     expect(set.sequence[7].frame).toEqual(set.frames.hit.frame);
   });
@@ -142,7 +166,11 @@ describe('gancho ascendente do heroicoAlto no frame de 40x40 (PRA-04)', () => {
     // linha no sel-out, por isso não entra na conta): nada passou por cima dela.
     expect(set.frames.hit.frame[hy + eyeRow][hx + eyeCol]).toBe('b');
     const visible = (frame: readonly string[]): number =>
-      head.grid.reduce((n, row, dy) => n + [...row].filter((ch, dx) => ch !== '.' && ch !== 'k' && frame[hy + dy]?.[hx + dx] === ch).length, 0);
+      head.grid.reduce(
+        (n, row, dy) =>
+          n + [...row].filter((ch, dx) => ch !== '.' && ch !== 'k' && frame[hy + dy]?.[hx + dx] === ch).length,
+        0,
+      );
     const total = head.grid.join('').replace(/[.k]/g, '').length;
     expect(visible(set.frames.hit.frame)).toBe(total);
     // Com o braço por cima da cabeça, a manga e o punho cobrem parte do rosto.
@@ -152,9 +180,19 @@ describe('gancho ascendente do heroicoAlto no frame de 40x40 (PRA-04)', () => {
 
   it('o hit toca o chão (POS-03) e os golpes usam a cabeça de luta', () => {
     expect(touchesBottom(set.frames.hit.frame)).toBe(true);
-    const fight = rasterize(set.hit, { frame: RIG_FRAME_40, head: headOf(body, 'fight'), headOverNearArm: TUNINGS[body.name]!.headOverNearArm }).frame;
+    const fight = rasterize(set.hit, {
+      frame: RIG_FRAME_40,
+      head: headOf(body, 'fight'),
+      headOverNearArm: TUNINGS[body.name]!.headOverNearArm,
+    }).frame;
     expect(set.frames.hit.frame).toEqual(fight);
-    expect(set.frames.hit.frame).not.toEqual(rasterize(set.hit, { frame: RIG_FRAME_40, head: headOf(body, 'idle'), headOverNearArm: TUNINGS[body.name]!.headOverNearArm }).frame);
+    expect(set.frames.hit.frame).not.toEqual(
+      rasterize(set.hit, {
+        frame: RIG_FRAME_40,
+        head: headOf(body, 'idle'),
+        headOverNearArm: TUNINGS[body.name]!.headOverNearArm,
+      }).frame,
+    );
   });
 });
 
@@ -172,9 +210,12 @@ describe('ponto de golpe do heroicoAlto (PRA-05)', () => {
     expect(rigHitbox('jab', search)).toBeUndefined();
   });
 
-  it.each(['', '?debug', '?rig=1', '?debug&rig=0'])('"%s": sem rig=1 rigHitbox é undefined (a hitbox do MOVES vale)', (search) => {
-    expect(rigHitbox('ganchoAscendente', search)).toBeUndefined();
-  });
+  it.each(['', '?debug', '?rig=1', '?debug&rig=0'])(
+    '"%s": sem rig=1 rigHitbox é undefined (a hitbox do MOVES vale)',
+    (search) => {
+      expect(rigHitbox('ganchoAscendente', search)).toBeUndefined();
+    },
+  );
 
   it('o pulso do hit é pele, cai na hitbox do rig + 4 px (POS-01), acima do cabelo do idle-0 e 6 texels ou mais à frente da origem (POS-05, POS-10)', () => {
     const { col, row } = set.strike;
@@ -185,7 +226,9 @@ describe('ponto de golpe do heroicoAlto (PRA-05)', () => {
     expect(row).toBeLessThan(HAIR_TOP_IDLE_40);
     expect(col - FRAME_ORIGIN.originCol).toBeGreaterThanOrEqual(6);
     const j = solve(set.hit);
-    expect(Math.hypot(j.wristNear.x - j.shoulderNear.x, j.wristNear.y - j.shoulderNear.y)).toBeLessThanOrEqual(body.upperArm + body.foreArm + 0.01);
+    expect(Math.hypot(j.wristNear.x - j.shoulderNear.x, j.wristNear.y - j.shoulderNear.y)).toBeLessThanOrEqual(
+      body.upperArm + body.foreArm + 0.01,
+    );
   });
 });
 
@@ -250,7 +293,11 @@ describe('acabamento do corpo do heroicoAlto (PRA-07)', () => {
     expect(idle[neckRow + 1]).toMatch(/s/); // gola logo abaixo
     // Nas linhas do peito nenhuma coluna interna é só contorno (o em todas): o tronco é pano, não bloco riscado.
     const chest = idle.slice(neckRow + 2, neckRow + 6);
-    for (let col = 9; col <= 15; col++) expect(chest.every((row) => row[col] === 'o'), `coluna ${col}`).toBe(false);
+    for (let col = 9; col <= 15; col++)
+      expect(
+        chest.every((row) => row[col] === 'o'),
+        `coluna ${col}`,
+      ).toBe(false);
   });
 });
 
@@ -263,23 +310,26 @@ describe('heroicoAlto no jogo (PRA-08)', () => {
     expect(TEX.playerRig).toBe('player-rig');
   });
 
-  it.each(RIG_ON_SEARCHES)('%s: rigTallSheet dá os 12 quadros ganchoAscendente-rig-0..11 de 40x40, iguais aos da sequência, e a folha passa no parseSheet', (search) => {
-    const sheet = rigTallSheet(search);
-    expect(sheet).toBeDefined();
-    expect(Object.keys(sheet!)).toEqual(RIG_NAMES);
-    for (const [i, name] of RIG_NAMES.entries()) {
-      const grid = sheet![name];
-      expect(grid, name).toHaveLength(40);
-      for (const row of grid) expect(row, name).toHaveLength(40);
-      const foreign = [...grid.join('')].filter((ch) => ch !== '.' && !PALETTE_KEYS.has(ch));
-      expect(foreign, `${name}: teclas fora da PALETTE`).toEqual([]);
-      expect(grid, name).toEqual(RIG_TALL.sequence[i].frame);
-    }
-    const parsed = parseSheet('player-rig', sheet!, PALETTE_KEYS);
-    expect(parsed.width).toBe(40);
-    expect(parsed.height).toBe(40);
-    expect(parsed.frames).toHaveLength(12);
-  });
+  it.each(RIG_ON_SEARCHES)(
+    '%s: rigTallSheet dá os 12 quadros ganchoAscendente-rig-0..11 de 40x40, iguais aos da sequência, e a folha passa no parseSheet',
+    (search) => {
+      const sheet = rigTallSheet(search);
+      expect(sheet).toBeDefined();
+      expect(Object.keys(sheet!)).toEqual(RIG_NAMES);
+      for (const [i, name] of RIG_NAMES.entries()) {
+        const grid = sheet![name];
+        expect(grid, name).toHaveLength(40);
+        for (const row of grid) expect(row, name).toHaveLength(40);
+        const foreign = [...grid.join('')].filter((ch) => ch !== '.' && !PALETTE_KEYS.has(ch));
+        expect(foreign, `${name}: teclas fora da PALETTE`).toEqual([]);
+        expect(grid, name).toEqual(RIG_TALL.sequence[i].frame);
+      }
+      const parsed = parseSheet('player-rig', sheet!, PALETTE_KEYS);
+      expect(parsed.width).toBe(40);
+      expect(parsed.height).toBe(40);
+      expect(parsed.frames).toHaveLength(12);
+    },
+  );
 
   it.each(RIG_OFF_SEARCHES)('"%s": sem rig=1 não há folha player-rig nem ponto de golpe do heroico alto', (search) => {
     expect(rigTallSheet(search)).toBeUndefined();
@@ -290,13 +340,16 @@ describe('heroicoAlto no jogo (PRA-08)', () => {
   it.each([
     ['ganchoAscendente-wind', 'wind', wristTexel(RIG_TALL.frames.wind.joints)],
     ['ganchoAscendente-hit', 'hit', RIG_TALL.strike],
-  ] as const)('%s: o ponto de golpe é o pulso de perto do %s do heroico alto, num texel de pele, no frame de 40 com o eixo na coluna 12', (frameName, phase, wrist) => {
-    const rig = rigStrike(frameName, '?debug&rig=1');
-    expect(rig).toBeDefined();
-    expect(rig!.pt).toEqual(wrist);
-    expect(rig!.frame).toEqual({ originCol: 12, rows: 40 });
-    expect('pPqx').toContain(RIG_TALL.frames[phase].frame[rig!.pt.row][rig!.pt.col]);
-  });
+  ] as const)(
+    '%s: o ponto de golpe é o pulso de perto do %s do heroico alto, num texel de pele, no frame de 40 com o eixo na coluna 12',
+    (frameName, phase, wrist) => {
+      const rig = rigStrike(frameName, '?debug&rig=1');
+      expect(rig).toBeDefined();
+      expect(rig!.pt).toEqual(wrist);
+      expect(rig!.frame).toEqual({ originCol: 12, rows: 40 });
+      expect('pPqx').toContain(RIG_TALL.frames[phase].frame[rig!.pt.row][rig!.pt.col]);
+    },
+  );
 
   it('rigStrike só vale para o wind e o hit do gancho ascendente', () => {
     expect(rigStrike('jab-hit', '?debug&rig=1')).toBeUndefined();

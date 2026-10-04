@@ -45,7 +45,10 @@ export default async function (ctx) {
     const rows = [];
     const note = (st) => {
       const e = checkMarker(st, kind, label, `frame ${rows.length}`);
-      assert(e.attack.kind === kind && e.attack.length === 1, `${label}: attack.kind/length no frame ${rows.length}: ${JSON.stringify(e.attack)}`);
+      assert(
+        e.attack.kind === kind && e.attack.length === 1,
+        `${label}: attack.kind/length no frame ${rows.length}: ${JSON.stringify(e.attack)}`,
+      );
       rows.push({ ai: e.ai, committed: e.committed, flash: e.commitFlash, tele: e.telegraph, index: e.attack.index });
     };
     note(s);
@@ -57,23 +60,56 @@ export default async function (ctx) {
     const attackIdx = rows.findIndex((r) => r.ai === 'attack');
     const commitIdx = rows.findIndex((r) => r.committed);
     const lastAttack = rows.map((r) => r.ai).lastIndexOf('attack');
-    assert(attackIdx > 0 && commitIdx > 0, `${label}: o ciclo não chegou ao golpe: ${JSON.stringify(rows.map((r) => r.ai).slice(0, 60))}`);
+    assert(
+      attackIdx > 0 && commitIdx > 0,
+      `${label}: o ciclo não chegou ao golpe: ${JSON.stringify(rows.map((r) => r.ai).slice(0, 60))}`,
+    );
     // O preparo do inimigo comum dura `windupMs` (27 frames de 450 ms; o porrete 36 de 600 ms).
-    assert(Math.abs(attackIdx * FRAME_MS - windupMs) <= FRAME_MS, `${label}: preparo de ${(attackIdx * FRAME_MS).toFixed(0)} ms, esperava ${windupMs}`);
+    assert(
+      Math.abs(attackIdx * FRAME_MS - windupMs) <= FRAME_MS,
+      `${label}: preparo de ${(attackIdx * FRAME_MS).toFixed(0)} ms, esperava ${windupMs}`,
+    );
     // CMT-01: `committed` vira `true` com 200 ms de preparo pela frente (12 frames antes do golpe) e não antes.
-    assert(attackIdx - commitIdx === COMMIT_MS / FRAME_MS, `${label}: CMT-01 o compromisso deveria vir 12 frames (200 ms) antes do golpe: compromisso ${commitIdx}, golpe ${attackIdx}`);
-    assert(rows.slice(0, commitIdx).every((r) => !r.committed), `${label}: CMT-01 committed antes do ponto de compromisso`);
-    assert(rows.slice(commitIdx, lastAttack + 1).every((r) => r.committed), `${label}: CMT-01 committed deveria seguir até o fim do golpe`);
-    assert(rows[lastAttack + 1].ai === 'rest' && !rows[lastAttack + 1].committed, `${label}: CMT-01 depois do golpe vem o descanso, sem compromisso: ${JSON.stringify(rows[lastAttack + 1])}`);
+    assert(
+      attackIdx - commitIdx === COMMIT_MS / FRAME_MS,
+      `${label}: CMT-01 o compromisso deveria vir 12 frames (200 ms) antes do golpe: compromisso ${commitIdx}, golpe ${attackIdx}`,
+    );
+    assert(
+      rows.slice(0, commitIdx).every((r) => !r.committed),
+      `${label}: CMT-01 committed antes do ponto de compromisso`,
+    );
+    assert(
+      rows.slice(commitIdx, lastAttack + 1).every((r) => r.committed),
+      `${label}: CMT-01 committed deveria seguir até o fim do golpe`,
+    );
+    assert(
+      rows[lastAttack + 1].ai === 'rest' && !rows[lastAttack + 1].committed,
+      `${label}: CMT-01 depois do golpe vem o descanso, sem compromisso: ${JSON.stringify(rows[lastAttack + 1])}`,
+    );
     // CMT-02: o flash começa no frame do compromisso, tem a cor do tipo e dura 80 ms (5 frames, ±1 frame).
     const flashIdx = rows.map((r, i) => (r.flash !== null ? i : -1)).filter((i) => i >= 0);
-    assert(flashIdx.length > 0 && flashIdx[0] === commitIdx, `${label}: CMT-02 o flash deveria começar no frame do compromisso (${commitIdx}): ${JSON.stringify(flashIdx)}`);
-    assert(flashIdx.every((i) => rows[i].flash === FLASH[kind]), `${label}: CMT-02 o flash deveria ser ${FLASH[kind]}: ${JSON.stringify(rows.filter((r) => r.flash !== null).map((r) => r.flash))}`);
-    assert(flashIdx.every((v, k) => v === commitIdx + k), `${label}: CMT-02 o flash deveria ser contínuo: ${JSON.stringify(flashIdx)}`);
-    assert(Math.abs(flashIdx.length * FRAME_MS - 80) <= FRAME_MS && flashIdx.length === 5, `${label}: CMT-02 o flash durou ${flashIdx.length} frames (${(flashIdx.length * FRAME_MS).toFixed(0)} ms), esperava 80 ms (5 frames)`);
+    assert(
+      flashIdx.length > 0 && flashIdx[0] === commitIdx,
+      `${label}: CMT-02 o flash deveria começar no frame do compromisso (${commitIdx}): ${JSON.stringify(flashIdx)}`,
+    );
+    assert(
+      flashIdx.every((i) => rows[i].flash === FLASH[kind]),
+      `${label}: CMT-02 o flash deveria ser ${FLASH[kind]}: ${JSON.stringify(rows.filter((r) => r.flash !== null).map((r) => r.flash))}`,
+    );
+    assert(
+      flashIdx.every((v, k) => v === commitIdx + k),
+      `${label}: CMT-02 o flash deveria ser contínuo: ${JSON.stringify(flashIdx)}`,
+    );
+    assert(
+      Math.abs(flashIdx.length * FRAME_MS - 80) <= FRAME_MS && flashIdx.length === 5,
+      `${label}: CMT-02 o flash durou ${flashIdx.length} frames (${(flashIdx.length * FRAME_MS).toFixed(0)} ms), esperava 80 ms (5 frames)`,
+    );
     // HGT-07/HGT-08: o ciclo passou por todos os estados que contam.
     assert(rows.filter((r) => r.ai === 'windup').length >= windupMs / FRAME_MS - 1, `${label}: preparo curto demais`);
-    assert(rows.filter((r) => r.ai === 'rest').length >= 40, `${label}: o descanso (800 ms) deveria aparecer: ${rows.filter((r) => r.ai === 'rest').length} frames`);
+    assert(
+      rows.filter((r) => r.ai === 'rest').length >= 40,
+      `${label}: o descanso (800 ms) deveria aparecer: ${rows.filter((r) => r.ai === 'rest').length} frames`,
+    );
     return { attackIdx, commitIdx };
   };
 
@@ -81,12 +117,30 @@ export default async function (ctx) {
   const natural = await cycle('enemyGuard=0&enemyVariant=corcunda', 'white', 'corcunda (HGT-03)', WINDUP_MS);
   await cycle('enemyGuard=0&enemyVariant=rastejante', 'low', 'rastejante (HGT-02)', WINDUP_MS);
   await cycle('enemyGuard=0&enemyVariant=bruto', 'white', 'bruto (HGT-03)', WINDUP_MS);
-  await cycle('enemyGuard=0&enemyVariant=rastejante&armed=club&round=3', 'red', 'porrete em rastejante (HGT-01)', WINDUP_MS + CLUB_EXTRA_MS);
+  await cycle(
+    'enemyGuard=0&enemyVariant=rastejante&armed=club&round=3',
+    'red',
+    'porrete em rastejante (HGT-01)',
+    WINDUP_MS + CLUB_EXTRA_MS,
+  );
   await cycle('enemyGuard=0&enemyVariant=corcunda&enemyAttack=red', 'red', 'enemyAttack=red (HGT-13)', WINDUP_MS);
   await cycle('enemyGuard=0&enemyVariant=corcunda&enemyAttack=low', 'low', 'enemyAttack=low (HGT-13)', WINDUP_MS);
-  await cycle('enemyGuard=0&enemyVariant=rastejante&enemyAttack=white', 'white', 'enemyAttack=white em rastejante (HGT-13)', WINDUP_MS);
-  await cycle('enemyGuard=0&enemyVariant=rastejante&enemyAttack=RED', 'low', 'enemyAttack=RED inválido (EDG-08)', WINDUP_MS);
-  assert(natural.attackIdx === 27 && natural.commitIdx === 15, `o ciclo base deveria ter o golpe no frame 27 e o compromisso no 15: ${JSON.stringify(natural)}`);
+  await cycle(
+    'enemyGuard=0&enemyVariant=rastejante&enemyAttack=white',
+    'white',
+    'enemyAttack=white em rastejante (HGT-13)',
+    WINDUP_MS,
+  );
+  await cycle(
+    'enemyGuard=0&enemyVariant=rastejante&enemyAttack=RED',
+    'low',
+    'enemyAttack=RED inválido (EDG-08)',
+    WINDUP_MS,
+  );
+  assert(
+    natural.attackIdx === 27 && natural.commitIdx === 15,
+    `o ciclo base deveria ter o golpe no frame 27 e o compromisso no 15: ${JSON.stringify(natural)}`,
+  );
 
   /** Duelo com um passo que conta só os frames de jogo (fora do hitstop) desde `f0`. */
   const duel = async (query) => {
@@ -111,7 +165,10 @@ export default async function (ctx) {
   {
     const d = await duel('enemyGuard=0&enemyVariant=corcunda');
     for (let i = 0; i < 3; i++) await d.step();
-    assert(d.enemy().ai === 'windup' && !d.enemy().committed, `CMT-03: o inimigo deveria estar em preparo, antes do compromisso: ${JSON.stringify(d.enemy())}`);
+    assert(
+      d.enemy().ai === 'windup' && !d.enemy().committed,
+      `CMT-03: o inimigo deveria estar em preparo, antes do compromisso: ${JSON.stringify(d.enemy())}`,
+    );
     const hp0 = d.s.player.hp;
     const ehp0 = d.enemy().hp;
     await d.tap('KeyJ');
@@ -123,12 +180,18 @@ export default async function (ctx) {
       await d.step();
       const e = d.enemy();
       assert(e.ai !== 'attack', `CMT-03: a garra não deveria sair, ai=attack no frame de jogo ${d.gf}`);
-      assert(d.s.player.hp === hp0, `CMT-03: o jogador não deveria levar o golpe pendente, hp ${hp0} -> ${d.s.player.hp} no frame de jogo ${d.gf}`);
+      assert(
+        d.s.player.hp === hp0,
+        `CMT-03: o jogador não deveria levar o golpe pendente, hp ${hp0} -> ${d.s.player.hp} no frame de jogo ${d.gf}`,
+      );
       assert(count(d.s, `armored:${d.id}`) === 0, 'CMT-03: antes do compromisso o golpe cancela, não há armored');
       if (e.state === 'hitstun') hitstun = true;
     }
     assert(hitstun, 'CMT-03: o jab antes do compromisso deveria deixar o inimigo em hitstun');
-    assert(ehp0 - d.enemy().hp === JAB_DAMAGE, `CMT-03: o jab deveria tirar ${JAB_DAMAGE} de vida: ${ehp0} -> ${d.enemy().hp}`);
+    assert(
+      ehp0 - d.enemy().hp === JAB_DAMAGE,
+      `CMT-03: o jab deveria tirar ${JAB_DAMAGE} de vida: ${ehp0} -> ${d.enemy().hp}`,
+    );
   }
 
   // --- CMT-04/05/06: golpe leve depois do compromisso é absorvido (armored) e a garra sai no frame previsto ------------------------
@@ -146,15 +209,33 @@ export default async function (ctx) {
     for (let i = 0; i < 80 && hitGf < 0; i++) {
       await d.step();
       const e = d.enemy();
-      assert(e.state === 'idle', `CMT-04: o cérebro deveria continuar em idle depois do golpe absorvido: ${e.state} no frame de jogo ${d.gf}`);
+      assert(
+        e.state === 'idle',
+        `CMT-04: o cérebro deveria continuar em idle depois do golpe absorvido: ${e.state} no frame de jogo ${d.gf}`,
+      );
       if (attackGf < 0 && e.ai === 'attack') attackGf = d.gf;
       if (d.s.player.hp < hp0) hitGf = d.gf;
     }
-    assert(attackGf === natural.attackIdx, `CMT-05: a hitbox deveria abrir no frame de jogo ${natural.attackIdx}, abriu no ${attackGf}`);
-    assert(hitGf > 0 && hitGf - attackGf <= 2, `CMT-05: o jogador deveria levar o golpe logo depois de a hitbox abrir: golpe ${attackGf}, dano ${hitGf}`);
-    assert(hp0 - d.s.player.hp === d.enemy().damage, `CMT-05: o jogador deveria perder ${d.enemy().damage} de vida: ${hp0} -> ${d.s.player.hp}`);
-    assert(ehp0 - d.enemy().hp === JAB_DAMAGE, `CMT-04: o jab deveria tirar ${JAB_DAMAGE} de vida: ${ehp0} -> ${d.enemy().hp}`);
-    assert(count(d.s, `armored:${d.id}`) === armored0 + 1, `CMT-06: exatamente um armored:${d.id}: ${JSON.stringify(d.s.events.filter((x) => x.startsWith('armored')))}`);
+    assert(
+      attackGf === natural.attackIdx,
+      `CMT-05: a hitbox deveria abrir no frame de jogo ${natural.attackIdx}, abriu no ${attackGf}`,
+    );
+    assert(
+      hitGf > 0 && hitGf - attackGf <= 2,
+      `CMT-05: o jogador deveria levar o golpe logo depois de a hitbox abrir: golpe ${attackGf}, dano ${hitGf}`,
+    );
+    assert(
+      hp0 - d.s.player.hp === d.enemy().damage,
+      `CMT-05: o jogador deveria perder ${d.enemy().damage} de vida: ${hp0} -> ${d.s.player.hp}`,
+    );
+    assert(
+      ehp0 - d.enemy().hp === JAB_DAMAGE,
+      `CMT-04: o jab deveria tirar ${JAB_DAMAGE} de vida: ${ehp0} -> ${d.enemy().hp}`,
+    );
+    assert(
+      count(d.s, `armored:${d.id}`) === armored0 + 1,
+      `CMT-06: exatamente um armored:${d.id}: ${JSON.stringify(d.s.events.filter((x) => x.startsWith('armored')))}`,
+    );
   }
 
   // --- CMT-07: golpe que derruba depois do compromisso: ragdollStun e a garra não sai ---------------------------------------------
@@ -174,7 +255,10 @@ export default async function (ctx) {
       await d.step();
       const e = d.enemy();
       assert(e.ai !== 'attack', `CMT-07: a garra não deveria sair, ai=attack ${i} frames depois da rasteira`);
-      assert(d.s.player.hp === hp0, `CMT-07: o jogador não deveria levar o golpe pendente: hp ${hp0} -> ${d.s.player.hp}`);
+      assert(
+        d.s.player.hp === hp0,
+        `CMT-07: o jogador não deveria levar o golpe pendente: hp ${hp0} -> ${d.s.player.hp}`,
+      );
       if (e.state === 'ragdollStun') knocked = true;
     }
     assert(knocked, 'CMT-07: a rasteira depois do compromisso deveria deixar o inimigo em ragdollStun');
@@ -201,26 +285,49 @@ export default async function (ctx) {
     await gameFrames(48);
     await parry();
     while (d.s.hitstop.frozen) await d.step();
-    assert(d.enemy().structure.cur === 70, `CMT-08: dois parries deveriam dar 70 de postura: ${JSON.stringify(d.enemy().structure)}`);
+    assert(
+      d.enemy().structure.cur === 70,
+      `CMT-08: dois parries deveriam dar 70 de postura: ${JSON.stringify(d.enemy().structure)}`,
+    );
     /** Chute frontal quando o jogador está livre; devolve a postura do inimigo depois do golpe. */
     const kick = async (want) => {
       // A janela de Contra do parry (450 ms) ainda estaria aberta: com ela, K daria o `contra` e não o chute frontal.
-      await waitFor((st) => st.player.move === null && !st.player.frame.startsWith('hurt') && !st.hitstop.frozen && !st.player.counter.open, 120, 'o jogador deveria ficar livre para o chute');
+      await waitFor(
+        (st) =>
+          st.player.move === null &&
+          !st.player.frame.startsWith('hurt') &&
+          !st.hitstop.frozen &&
+          !st.player.counter.open,
+        120,
+        'o jogador deveria ficar livre para o chute',
+      );
       d.s = await snap(0);
       const before = d.enemy().structure.cur;
       await d.tap('KeyK');
       // O segundo K cai na janela de encadeamento do primeiro e vira o `chuteAlto`, também forte (+10 de postura).
-      assert(['chuteFrontal', 'chuteAlto'].includes(d.s.player.move), `CMT-08: K deveria começar um chute forte: ${d.s.player.move}`);
+      assert(
+        ['chuteFrontal', 'chuteAlto'].includes(d.s.player.move),
+        `CMT-08: K deveria começar um chute forte: ${d.s.player.move}`,
+      );
       for (let i = 0; i < 30 && d.enemy().structure.cur === before; i++) await d.step();
-      assert(d.enemy().structure.cur === want, `CMT-08: o chute deveria levar a postura a ${want}: ${before} -> ${d.enemy().structure.cur}`);
+      assert(
+        d.enemy().structure.cur === want,
+        `CMT-08: o chute deveria levar a postura a ${want}: ${before} -> ${d.enemy().structure.cur}`,
+      );
     };
     await kick(80);
     await kick(90);
     // Espera o começo do próximo compromisso (a postura só cai depois de 1500 ms sem ganho, bem mais que o que falta).
     d.s = await waitFor((st) => !nearest(st).committed, 120, 'o inimigo deveria sair do compromisso');
     d.s = await waitCommit();
-    assert(d.enemy().ai === 'windup' && d.enemy().structure.cur === 90, `CMT-08: o compromisso deveria começar com 90 de postura: ${JSON.stringify(d.enemy())}`);
-    assert(d.s.player.move === null && !d.s.player.frame.startsWith('hurt'), `CMT-08: o jogador deveria estar livre para o golpe final: ${d.s.player.move}/${d.s.player.frame}`);
+    assert(
+      d.enemy().ai === 'windup' && d.enemy().structure.cur === 90,
+      `CMT-08: o compromisso deveria começar com 90 de postura: ${JSON.stringify(d.enemy())}`,
+    );
+    assert(
+      d.s.player.move === null && !d.s.player.frame.startsWith('hurt'),
+      `CMT-08: o jogador deveria estar livre para o golpe final: ${d.s.player.move}/${d.s.player.frame}`,
+    );
     const hp0 = d.s.player.hp;
     await d.tap('KeyK');
     assert(d.s.player.move === 'chuteFrontal', `CMT-08: K deveria começar o chuteFrontal: ${d.s.player.move}`);
@@ -228,9 +335,15 @@ export default async function (ctx) {
     for (let i = 0; i < 45; i++) {
       await d.step();
       assert(d.enemy().ai !== 'attack', `CMT-08: a garra não deveria sair, ai=attack ${i} frames depois do chute`);
-      assert(d.s.player.hp === hp0, `CMT-08: o jogador não deveria levar o golpe pendente: hp ${hp0} -> ${d.s.player.hp}`);
+      assert(
+        d.s.player.hp === hp0,
+        `CMT-08: o jogador não deveria levar o golpe pendente: hp ${hp0} -> ${d.s.player.hp}`,
+      );
     }
-    assert(d.enemy().structure.broken && d.enemy().structure.cur === 100, `CMT-08: a postura deveria chegar a 100 e quebrar: ${JSON.stringify(d.enemy().structure)}`);
+    assert(
+      d.enemy().structure.broken && d.enemy().structure.cur === 100,
+      `CMT-08: a postura deveria chegar a 100 e quebrar: ${JSON.stringify(d.enemy().structure)}`,
+    );
   }
 
   // --- CMT-10: comprometido não levanta a guarda (enemyGuard=1) ---------------------------------------------------------------------
@@ -238,12 +351,21 @@ export default async function (ctx) {
   {
     const d = await duel('enemyGuard=1&enemyVariant=corcunda');
     for (let i = 0; i < 3; i++) await d.step();
-    assert(d.enemy().ai === 'windup' && !d.enemy().committed, `CMT-10: o inimigo deveria estar em preparo, antes do compromisso: ${JSON.stringify(d.enemy())}`);
+    assert(
+      d.enemy().ai === 'windup' && !d.enemy().committed,
+      `CMT-10: o inimigo deveria estar em preparo, antes do compromisso: ${JSON.stringify(d.enemy())}`,
+    );
     const ehp0 = d.enemy().hp;
     await d.tap('KeyJ');
     for (let i = 0; i < 12 && count(d.s, `enemyBlock:${d.id}`) === 0; i++) await d.step();
-    assert(count(d.s, `enemyBlock:${d.id}`) === 1 && d.enemy().guarding, `CMT-10: antes do compromisso o leve deveria ser segurado pela guarda: ${JSON.stringify(d.enemy())}`);
-    assert(d.enemy().hp === ehp0 && d.enemy().structure.cur === 8, `CMT-10: o leve segurado não tira vida e soma 8 de postura: ${JSON.stringify(d.enemy())}`);
+    assert(
+      count(d.s, `enemyBlock:${d.id}`) === 1 && d.enemy().guarding,
+      `CMT-10: antes do compromisso o leve deveria ser segurado pela guarda: ${JSON.stringify(d.enemy())}`,
+    );
+    assert(
+      d.enemy().hp === ehp0 && d.enemy().structure.cur === 8,
+      `CMT-10: o leve segurado não tira vida e soma 8 de postura: ${JSON.stringify(d.enemy())}`,
+    );
   }
   {
     const d = await duel('enemyGuard=1&enemyVariant=corcunda');
@@ -253,15 +375,27 @@ export default async function (ctx) {
     const armored0 = count(d.s, `armored:${d.id}`);
     assert(!d.enemy().guarding, 'CMT-10: o inimigo não deveria estar guardando antes do golpe');
     await d.tap('KeyJ');
-    assert(d.s.player.move === 'jab' && !d.enemy().guarding, `CMT-10: o jab deveria começar sem a guarda subir: ${d.s.player.move}/${d.enemy().guarding}`);
+    assert(
+      d.s.player.move === 'jab' && !d.enemy().guarding,
+      `CMT-10: o jab deveria começar sem a guarda subir: ${d.s.player.move}/${d.enemy().guarding}`,
+    );
     // A janela inteira em que a guarda poderia subir: do aperto até o fim do golpe do inimigo.
     for (let i = 0; i < 60 && d.enemy().ai !== 'rest'; i++) {
       await d.step();
-      assert(!d.enemy().guarding, `CMT-10: o inimigo comprometido não deveria levantar a guarda (ai=${d.enemy().ai}, frame de jogo ${d.gf})`);
+      assert(
+        !d.enemy().guarding,
+        `CMT-10: o inimigo comprometido não deveria levantar a guarda (ai=${d.enemy().ai}, frame de jogo ${d.gf})`,
+      );
     }
     assert(d.enemy().ai === 'rest', 'CMT-10: o ciclo deveria terminar no descanso');
-    assert(count(d.s, `enemyBlock:${d.id}`) === blocks0, `CMT-10: o jab no comprometido não deveria ser bloqueado: ${count(d.s, `enemyBlock:${d.id}`)} bloqueios`);
-    assert(ehp0 - d.enemy().hp === JAB_DAMAGE, `CMT-10: o jab deveria tirar ${JAB_DAMAGE} de vida: ${ehp0} -> ${d.enemy().hp}`);
+    assert(
+      count(d.s, `enemyBlock:${d.id}`) === blocks0,
+      `CMT-10: o jab no comprometido não deveria ser bloqueado: ${count(d.s, `enemyBlock:${d.id}`)} bloqueios`,
+    );
+    assert(
+      ehp0 - d.enemy().hp === JAB_DAMAGE,
+      `CMT-10: o jab deveria tirar ${JAB_DAMAGE} de vida: ${ehp0} -> ${d.enemy().hp}`,
+    );
     assert(count(d.s, `armored:${d.id}`) === armored0 + 1, 'CMT-10: o jab deveria ser absorvido (armored)');
   }
 }

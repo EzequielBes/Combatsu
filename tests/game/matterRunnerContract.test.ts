@@ -18,7 +18,9 @@ describe('acumulador do Matter no Phaser instalado (ITP-09)', () => {
   });
 
   it('o World dá um passo enquanto o acumulador tem a margem e tira um passo dele a cada volta', () => {
-    expect(worldSource).toMatch(/while\s*\(\s*engineDelta > 0 && runner\.timeBuffer >= engineDelta \* MatterRunner\._timeBufferMargin\s*\)/);
+    expect(worldSource).toMatch(
+      /while\s*\(\s*engineDelta > 0 && runner\.timeBuffer >= engineDelta \* MatterRunner\._timeBufferMargin\s*\)/,
+    );
     expect(worldSource).toMatch(/runner\.timeBuffer -= engineDelta;/);
   });
 });

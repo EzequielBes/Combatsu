@@ -32,11 +32,17 @@ export default async function ({ page, baseUrl, assert }) {
     window.__game.step(50);
     return window.__game.snapshot();
   });
-  assert(snap.run.state === 'roundActive' && snap.run.round === 1, `run deveria estar na rodada 1: ${JSON.stringify(snap.run)}`);
+  assert(
+    snap.run.state === 'roundActive' && snap.run.round === 1,
+    `run deveria estar na rodada 1: ${JSON.stringify(snap.run)}`,
+  );
   assert(snap.hud.banner === 'Rodada 1', `banner deveria mostrar a rodada 1: ${JSON.stringify(snap.hud.banner)}`);
   assert(snap.hud.round === 'Rodada 1', `hud.round errado: ${JSON.stringify(snap.hud.round)}`);
   const expectedRemaining = `Inimigos: ${snap.run.alive + snap.run.queued}`;
-  assert(snap.hud.remaining === expectedRemaining, `hud.remaining errado: ${snap.hud.remaining} != ${expectedRemaining}`);
+  assert(
+    snap.hud.remaining === expectedRemaining,
+    `hud.remaining errado: ${snap.hud.remaining} != ${expectedRemaining}`,
+  );
 
   // A faixa fica centralizada em x = 480, y = 135 na tela de 960x540 (RHUD-02).
   assert(
@@ -95,7 +101,10 @@ export default async function ({ page, baseUrl, assert }) {
   });
   assert(snap.run.state === 'gameOver', `run deveria estar em gameOver: ${JSON.stringify(snap.run)}`);
   const center = snap.hud.center ?? [];
-  assert(center.includes(`Rodada alcançada: ${snap.run.round}`), `game over sem a rodada alcançada: ${JSON.stringify(center)}`);
+  assert(
+    center.includes(`Rodada alcançada: ${snap.run.round}`),
+    `game over sem a rodada alcançada: ${JSON.stringify(center)}`,
+  );
   assert(center.includes(`Abates: ${snap.run.kills}`), `game over sem os abates: ${JSON.stringify(center)}`);
   assert(
     center.includes('J / Enter para tentar de novo'),

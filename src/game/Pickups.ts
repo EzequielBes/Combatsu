@@ -77,7 +77,10 @@ export class Pickups {
    * Avança todos os pickups vivos; devolve os coletados e os expirados neste frame (removidos da lista).
    * `magnetRange` vem de `Modifiers.magnetRange` lido na hora pela cena (MOD-07): sem cache aqui.
    */
-  update(dtMs: number, ctx: { solids: readonly Rect[]; player: PickupPlayer; magnetRange: number }): PickupUpdateResult {
+  update(
+    dtMs: number,
+    ctx: { solids: readonly Rect[]; player: PickupPlayer; magnetRange: number },
+  ): PickupUpdateResult {
     const collected: PickupState[] = [];
     const expired: PickupState[] = [];
     const remaining: PickupEntry[] = [];

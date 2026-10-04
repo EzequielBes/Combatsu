@@ -180,4 +180,8 @@ export const ENERGY_SHOP_ENTRIES: readonly ShopEntry[] = [
  * as técnicas ali quebraria essa asserção sem necessidade, já que `eligible`/`Shop` aceitam qualquer catálogo.
  * `FULL_SHOP_CATALOG` é o catálogo que a loja usa a partir da F5.
  */
-export const FULL_SHOP_CATALOG: readonly ShopEntry[] = [...SHOP_CATALOG, ...TECHNIQUE_SHOP_ENTRIES, ...ENERGY_SHOP_ENTRIES];
+export const FULL_SHOP_CATALOG: readonly ShopEntry[] = [
+  ...SHOP_CATALOG,
+  ...TECHNIQUE_SHOP_ENTRIES,
+  ...ENERGY_SHOP_ENTRIES,
+];

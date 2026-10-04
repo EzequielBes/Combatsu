@@ -65,7 +65,9 @@ function armElbow(len: number): string[] {
 /** Palma aberta à frente (palmaExplosiva): o `armStraight` com o brilho quente de golpe forte (`A`) no centro da
  * mão, em vez do punho fechado. */
 function armPalm(len: number): string[] {
-  return armStraight(len).map((row, y) => (y === 1 || y === 2 ? row.slice(0, len - 3) + 'A' + row.slice(len - 2) : row));
+  return armStraight(len).map((row, y) =>
+    y === 1 || y === 2 ? row.slice(0, len - 3) + 'A' + row.slice(len - 2) : row,
+  );
 }
 
 /* Joelho dobrado subindo e avançando (joelhada, chambers de chute e preparo do pisão): `LEG_CHAMBER` de `player.ts`. */
@@ -91,11 +93,7 @@ function armDiagonal(rise: number, run: number): string[] {
   const w = run + 4;
   const h = rise + 3;
   const cells = Array.from({ length: h }, () => Array<string>(w).fill('.'));
-  const fist = [
-    'ppp',
-    'ppP',
-    'pPP',
-  ];
+  const fist = ['ppp', 'ppP', 'pPP'];
   fist.forEach((row, dy) => [...row].forEach((c, dx) => (cells[1 + dy][run + dx] = c)));
   const last = h - 2; // linha do ombro
   for (let y = 4; y <= last; y++) {
@@ -111,7 +109,9 @@ function armDiagonal(rise: number, run: number): string[] {
   const filled = cells.map((row) => row.map((c) => c !== '.'));
   const near = (x: number, y: number): boolean => filled[y]?.[x] === true;
   return cells.map((row, y) =>
-    row.map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c)).join(''),
+    row
+      .map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c))
+      .join(''),
   );
 }
 
@@ -370,10 +370,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 7, 13],
     far: [far(ARM_GUARD), 3, 13],
-    legs: [
-      cropPart([LEG_SUPPORT, 5, 18], { bottom: 1 }),
-      [LEG_KNEE_UP, 8, 17],
-    ],
+    legs: [cropPart([LEG_SUPPORT, 5, 18], { bottom: 1 }), [LEG_KNEE_UP, 8, 17]],
   }),
   'rasteira-hit': pose({
     lean: 1,
@@ -381,10 +378,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 6, 15],
     far: [far(ARM_GUARD), 2, 15],
-    legs: [
-      cropPart([LEG_SUPPORT, 3, 19], { bottom: 2 }),
-      [legStraight(21), 9, 17],
-    ],
+    legs: [cropPart([LEG_SUPPORT, 3, 19], { bottom: 2 }), [legStraight(21), 9, 17]],
   }),
   'rasteira-recover': pose({
     lean: -1,
@@ -392,10 +386,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 7, 13],
     far: [far(ARM_GUARD), 3, 13],
-    legs: [
-      cropPart([LEG_SUPPORT, 5, 18], { bottom: 1 }),
-      [LEG_KNEE_UP, 8, 18],
-    ],
+    legs: [cropPart([LEG_SUPPORT, 5, 18], { bottom: 1 }), [LEG_KNEE_UP, 8, 18]],
   }),
 
   // Gancho ascendente (braço da frente): punho subindo pela frente do rosto. O tronco não sobe (`drop` >= 0):

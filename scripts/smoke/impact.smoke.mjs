@@ -33,7 +33,10 @@ export default async function (ctx) {
       s = await frame();
       seen.push(...s.fx.trails);
     }
-    assert(s.fx.lastImpact !== null, `${label}: nenhum impacto em ${maxFrames} frames (${JSON.stringify(s.events.slice(-4))})`);
+    assert(
+      s.fx.lastImpact !== null,
+      `${label}: nenhum impacto em ${maxFrames} frames (${JSON.stringify(s.events.slice(-4))})`,
+    );
     seen.push(...s.fx.trails);
     return { s, trails: seen };
   };
@@ -61,8 +64,14 @@ export default async function (ctx) {
     const dx = s.player.x - x0;
     assert(Math.abs(dx - 10) <= 0.25, `POS-07: o passo do forte deveria ser 10 px (±0,25), foi ${dx.toFixed(2)}`);
     assert(s.player.move !== null, 'o golpe forte deveria estar em curso');
-    assert(trails.length >= 1 && trails.every((t) => t.tier === 'heavy' && t.widthPx === 8), `TRL-05/10: o rastro do forte deveria ser heavy de 8 px: ${JSON.stringify(trails)}`);
-    assert(trails.every((t) => typeof t.ageMs === 'number' && t.ageMs >= 0 && t.ageMs <= 220), `TRL-10/05: ageMs fora de 0..220: ${JSON.stringify(trails)}`);
+    assert(
+      trails.length >= 1 && trails.every((t) => t.tier === 'heavy' && t.widthPx === 8),
+      `TRL-05/10: o rastro do forte deveria ser heavy de 8 px: ${JSON.stringify(trails)}`,
+    );
+    assert(
+      trails.every((t) => typeof t.ageMs === 'number' && t.ageMs >= 0 && t.ageMs <= 220),
+      `TRL-10/05: ageMs fora de 0..220: ${JSON.stringify(trails)}`,
+    );
   }
 
   // --- POS-08: jab de chão sem inimigo à frente ---------------------------------------------------------------------------------
@@ -85,9 +94,18 @@ export default async function (ctx) {
     await approach(36);
     await press('KeyJ');
     const { s, trails } = await untilImpact('jab');
-    assert(trails.length >= 1 && trails.every((t) => t.tier === 'light' && t.widthPx === 4), `TRL-04: o rastro do jab deveria ser light de 4 px: ${JSON.stringify(trails)}`);
-    assert(s.fx.lastImpact.tier === 'light', `IMP-16: o jab deveria dar impacto light: ${JSON.stringify(s.fx.lastImpact)}`);
-    assert(s.fx.lastImpact.impactFrame === false, `IMP-16: sem quadro de impacto no leve: ${JSON.stringify(s.fx.lastImpact)}`);
+    assert(
+      trails.length >= 1 && trails.every((t) => t.tier === 'light' && t.widthPx === 4),
+      `TRL-04: o rastro do jab deveria ser light de 4 px: ${JSON.stringify(trails)}`,
+    );
+    assert(
+      s.fx.lastImpact.tier === 'light',
+      `IMP-16: o jab deveria dar impacto light: ${JSON.stringify(s.fx.lastImpact)}`,
+    );
+    assert(
+      s.fx.lastImpact.impactFrame === false,
+      `IMP-16: sem quadro de impacto no leve: ${JSON.stringify(s.fx.lastImpact)}`,
+    );
     assert(count(s, 'impact:light') === 1, `o jab deveria emitir impact:light: ${JSON.stringify(s.events)}`);
     assert(nearest(s).slide === null, `RCT-01: o leve não desliza o inimigo: ${JSON.stringify(nearest(s).slide)}`);
   }
@@ -99,9 +117,18 @@ export default async function (ctx) {
     const id = nearest(s0).id;
     await press('KeyK');
     const { s, trails } = await untilImpact('forte');
-    assert(trails.length >= 1 && trails.every((t) => t.tier === 'heavy' && t.widthPx === 8), `TRL-05: o rastro do forte deveria ser heavy de 8 px: ${JSON.stringify(trails)}`);
-    assert(s.fx.lastImpact.tier === 'heavy', `IMP-04: o forte sem derrubada deveria dar impacto heavy: ${JSON.stringify(s.fx.lastImpact)}`);
-    assert(s.fx.lastImpact.impactFrame === false, `IMP-16: sem quadro de impacto no heavy: ${JSON.stringify(s.fx.lastImpact)}`);
+    assert(
+      trails.length >= 1 && trails.every((t) => t.tier === 'heavy' && t.widthPx === 8),
+      `TRL-05: o rastro do forte deveria ser heavy de 8 px: ${JSON.stringify(trails)}`,
+    );
+    assert(
+      s.fx.lastImpact.tier === 'heavy',
+      `IMP-04: o forte sem derrubada deveria dar impacto heavy: ${JSON.stringify(s.fx.lastImpact)}`,
+    );
+    assert(
+      s.fx.lastImpact.impactFrame === false,
+      `IMP-16: sem quadro de impacto no heavy: ${JSON.stringify(s.fx.lastImpact)}`,
+    );
     assert(count(s, 'impact:heavy') === 1, `o forte deveria emitir impact:heavy: ${JSON.stringify(s.events)}`);
     // RCT-06/RCT-01: logo depois do contato o inimigo (de pé) tem `slide` com o que falta, até 24 px.
     let e = s.enemies.find((x) => x.id === id);
@@ -111,13 +138,19 @@ export default async function (ctx) {
       sl = await frame();
       e = sl.enemies.find((x) => x.id === id);
     }
-    assert(e.slide !== null && e.slide.remainingPx > 0 && e.slide.remainingPx <= 24, `RCT-01/06: o inimigo deveria deslizar até 24 px: ${JSON.stringify(e.slide)}`);
+    assert(
+      e.slide !== null && e.slide.remainingPx > 0 && e.slide.remainingPx <= 24,
+      `RCT-01/06: o inimigo deveria deslizar até 24 px: ${JSON.stringify(e.slide)}`,
+    );
     const x0 = e.x;
     // O hitstop e a câmera lenta não contam: espera o slide acabar (180 ms de jogo = 11 frames fora do hitstop; folga de 60 frames).
     sl = await waitFor((st) => st.enemies.find((x) => x.id === id).slide === null, 60, 'o slide deveria acabar');
     e = sl.enemies.find((x) => x.id === id);
     assert(e.slide === null, `RCT-06: depois de 180 ms o slide deveria ser null: ${JSON.stringify(e.slide)}`);
-    assert(Math.abs(e.x - x0) > 5 && Math.sign(e.x - x0) === sl.player.facing, `RCT-01: o inimigo deveria ter se afastado do jogador: ${x0} -> ${e.x}`);
+    assert(
+      Math.abs(e.x - x0) > 5 && Math.sign(e.x - x0) === sl.player.facing,
+      `RCT-01: o inimigo deveria ter se afastado do jogador: ${x0} -> ${e.x}`,
+    );
   }
 
   // --- IMP-02, IMP-12, IMP-16: golpe com derrubada é decisivo ------------------------------------------------------------------
@@ -126,7 +159,10 @@ export default async function (ctx) {
     await approach(36);
     await press('KeyS', 'KeyK');
     const { s } = await untilImpact('rasteira');
-    assert(s.fx.lastImpact.tier === 'decisive', `IMP-02: a rasteira (derruba) deveria dar impacto decisive: ${JSON.stringify(s.fx.lastImpact)}`);
+    assert(
+      s.fx.lastImpact.tier === 'decisive',
+      `IMP-02: a rasteira (derruba) deveria dar impacto decisive: ${JSON.stringify(s.fx.lastImpact)}`,
+    );
     assert(count(s, 'impact:decisive') === 1, `a rasteira deveria emitir impact:decisive: ${JSON.stringify(s.events)}`);
     // IMP-12/IMP-16: o quadro de impacto só entra com WebGL (`fx.degraded` é a leitura do tipo do renderer).
     assert(
