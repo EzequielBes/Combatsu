@@ -42,7 +42,7 @@ import { FxLab } from '../game/FxLab';
 import { GAME_NAME, Hud } from '../game/Hud';
 import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
-import { MAX_FRAME_MS, renderAlpha } from '../game/physics';
+import { MAX_FRAME_MS } from '../game/physics';
 import { Pickups } from '../game/Pickups';
 import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
@@ -65,6 +65,7 @@ import { CombatLinks } from './test/combat';
 import { Spawner } from './test/spawner';
 import { Drops } from './test/drops';
 import { ShopDirector } from './test/shopDirector';
+import { DebugSnapshot } from './test/snapshot';
 
 /** Alpha do tom azulado da câmera lenta (DOD-12). */
 const SLOWMO_TINT_ALPHA = 0.22;
@@ -75,6 +76,7 @@ const CONTROLS_MS = 8000;
 const BOSS_UPGRADE_BANNER_MS = 800;
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
+  readonly snapshot = new DebugSnapshot(this);
   readonly shopDirector = new ShopDirector(this);
   readonly drops = new Drops(this);
   readonly spawner = new Spawner(this);
@@ -159,12 +161,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   focusId: number | null = null;
   /** Tom azulado sobre a tela enquanto a câmera lenta está ativa (DOD-12), na câmera de UI. */
   slowTint!: Phaser.GameObjects.Rectangle;
-  /** Eventos lidos pelo smoke no snapshot de debug, ex.: `enemyDied:7`. */
-  debugEvents: string[] = [];
-  debugDeaths: { id: number; x: number; y: number }[] = [];
 
   constructor() {
     super('TestScene');
+  }
+
+  debugSnapshot(): GameSnapshot {
+    return this.snapshot.debugSnapshot();
   }
 
   create(): void {
@@ -191,8 +194,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.time.timeScale = 1;
       this.tweens.timeScale = 1;
     });
-    this.debugEvents = [];
-    this.debugDeaths = [];
+    this.snapshot.debugEvents = [];
+    this.snapshot.debugDeaths = [];
     registerDebugProbe(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => registerDebugProbe(null));
     this.fx = new Fx(this);
@@ -249,7 +252,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       (name, phase) => this.impactFx.onStrikePhase(name, phase),
     );
     this.player.onEvent = (ev) => {
-      this.debugEvents.push(ev);
+      this.snapshot.debugEvents.push(ev);
       if (ev.startsWith('move:')) this.combat.onPlayerMoveStart(ev.slice(5));
     };
     this.player.attackerOf = (ownerId) => this.combat.attackerOf(ownerId);
@@ -427,7 +430,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // frame em que a janela abre (o `windowOpen` já reflete o começo deste frame, antes do `techRunner.update`).
       if (this.fxLab?.consumeKokusenAutoPress(this.techRunner.kokusenSnapshot.windowOpen))
         this.techCaster.forcePress(0);
-      this.debugEvents.push(...this.techCaster.events);
+      this.snapshot.debugEvents.push(...this.techCaster.events);
       // T28: no laboratório, o Vermelho/Azul/Desmantelar também miram os bonecos de treino, não só os inimigos.
       const techTargets: readonly TechTarget[] = this.fxLab ? [...this.enemies, ...this.fxLab.dummies] : this.enemies;
       // T22+: executa a técnica a partir do estado de conjuração, dos eventos deste frame e do slot apertado (Kokusen).
@@ -439,7 +442,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         techTargets,
         this.boss,
       );
-      this.debugEvents.push(...this.techRunner.events);
+      this.snapshot.debugEvents.push(...this.techRunner.events);
       // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
       if (this.techCaster.events.includes('techDenied:energy')) this.energyHud.flashDenied();
       // TSH-10/11: níveis de `energia`/`fluxo` lidos na hora, sem cache (mesmo padrão de `modifiers.runSpeed`).
@@ -694,169 +697,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const rare = params.get('rare');
     if (rare !== null) overrides.rare = rare === '1' || rare === 'true';
     return overrides;
-  }
-
-  debugSnapshot(): GameSnapshot {
-    return {
-      player: {
-        x: this.player.sprite.x,
-        y: this.player.sprite.y,
-        hp: this.player.hp,
-        dead: this.player.dead,
-        facing: this.player.facing,
-        flash: this.player.activeFlash,
-        maxHp: this.player.maxHp,
-        vy: this.player.verticalSpeed,
-        move: this.player.moveName,
-        frame: this.player.frameName,
-        view: this.player.spritePos,
-        guard: this.player.guardState,
-        structure: this.player.structureView,
-        dodge: this.player.dodgeView,
-        duck: this.player.duckView,
-        counter: this.player.counterView,
-        invulnerable: this.player.invulnerable,
-      },
-      enemies: this.enemies.map((e) => ({
-        id: e.id,
-        x: e.x,
-        y: e.hurtRect().y,
-        hp: e.hp,
-        state: e.state,
-        ai: e.aiState,
-        maxHp: e.maxHp,
-        damage: e.damage,
-        chaseSpeed: e.chaseSpeed,
-        weapon: e.weapon,
-        weaponVisible: e.weaponVisible,
-        structure: e.structureView,
-        guarding: e.guarding,
-        variant: e.variant,
-        view: e.spritePos,
-        frame: e.frame,
-        spriteVisible: e.spriteVisible,
-        ragdollVisible: e.ragdollVisible,
-        ragdollTextures: e.ragdollTextures,
-        slide: e.slideView,
-        telegraph: e.telegraph,
-        committed: e.committed,
-        commitFlash: e.commitFlash,
-        attack: e.attackView,
-        downHits: e.downHits,
-        lightStreak: e.lightStreak,
-        guardRead: e.guardRead,
-      })),
-      focusId: this.focusId,
-      reading: { ...this.reading.last },
-      events: [...this.debugEvents],
-      deaths: this.debugDeaths.map((d) => ({ ...d })),
-      boss: this.boss
-        ? {
-            hp: this.boss.hp,
-            maxHp: this.boss.maxHp,
-            phase: this.boss.phase,
-            state: this.boss.state,
-            attack: this.boss.attackName,
-            poise: this.boss.poise,
-            archetype: this.boss.archetype,
-            name: this.boss.name,
-            x: this.boss.x,
-            y: this.boss.y,
-            view: this.boss.spritePos,
-            finisherReady: this.boss.finisherReady,
-          }
-        : null,
-      projectiles: this.projectiles.map((p) => ({
-        id: p.id,
-        x: p.x,
-        y: p.y,
-        dir: p.dir,
-        speed: p.speed,
-        kind: p.kind,
-        height: p.height,
-        traveled: p.traveled,
-      })),
-      run: {
-        state: this.run.state,
-        round: this.run.round,
-        kills: this.run.kills,
-        alive: this.run.alive,
-        queued: this.run.queued,
-        maxAlive: this.run.maxAlive,
-      },
-      attackers: this.enemies.filter((e) => e.aiState === 'windup' || e.aiState === 'attack').length,
-      gate: { active: this.attackGate.activeCount(), queue: [...this.attackGate.queueOrder()] },
-      hud: {
-        ...this.hud.debugState(),
-        ...this.energyHud.debugState(),
-        callout: this.callout.debug(),
-        kokusenCard: this.kokusenFx.cardDebug(),
-      },
-      combo: { hits: this.comboCounter.hits, grade: this.comboCounter.grade },
-      timeScale: this.effects.slowMo.timeScale,
-      hitstop: { frozen: this.effects.hitstop.frozen, remainingMs: this.effects.hitstop.remaining },
-      level: { playerSpawn: { x: this.level.player.x, y: this.level.player.y - SPAWN_LIFT } },
-      wallet: { fragments: this.wallet.fragments },
-      shop: this.shopDirector.shopSnapshot(),
-      modifiers: this.modifiers.levels,
-      pickups: this.pickups.debug(),
-      floatTexts: this.floatTexts.debug(),
-      worldProps: this.props.map((p) => ({
-        id: p.id,
-        key: p.def.key,
-        state: p.machine.state,
-        x: p.sprite.x,
-        y: p.sprite.y,
-        durabilityLeft: p.def.durability - p.machine.impacts,
-        rare: p.rare,
-        vx: p.vx,
-      })),
-      ce: { cur: this.energy.cur, max: this.energy.max, regen: this.energy.regen },
-      tech: this.techSnapshot(),
-      kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
-      techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
-      fx: {
-        live: this.fxRegistry.size,
-        degraded: this.kokusenFx.degraded,
-        layers: this.realtimeFx.layers(),
-        red: this.techRunner.redDebugState,
-        aura: this.aura.pos,
-        trails: this.cursedFx.trails,
-        focus: this.focusLines.view,
-        lastImpact: this.impactFx.lastImpact,
-      },
-      // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
-      camera: {
-        zoom: this.cameras.main.zoom,
-        worldView: { left: this.cameras.main.worldView.left, right: this.cameras.main.worldView.right },
-        // CAM-07: estado do seguidor novo e os dois interruptores do Phaser que ele substitui.
-        center: { x: this.camera.camCenter.x, y: this.camera.camCenter.y },
-        scroll: { x: this.cameras.main.scrollX, y: this.cameras.main.scrollY },
-        roundPixels: this.cameras.main.roundPixels,
-        phaserFollow: (this.cameras.main as unknown as { _follow: unknown })._follow != null,
-      },
-      // ITP-05/07: fração entre os dois últimos passos de física que este quadro desenha.
-      physics: { alpha: renderAlpha(this) },
-      // T23 (FIN-01/03): distância viva ao inimigo quebrado mais perto, a mesma que o finalizador usa; sem contrato prévio.
-      finisher: { distPx: this.combat.nearestFinishable()?.dist ?? null },
-      // T28: laboratório de efeitos, sem contrato prévio no snapshot; `null` fora do fxlab.
-      fxlab: this.fxLab?.debug() ?? null,
-    };
-  }
-
-  /** `tech` do snapshot (TEC-08): slots do loadout e a conjuração ativa (CAST-*). */
-  techSnapshot(): GameSnapshot['tech'] {
-    const [s0, s1] = this.loadout.slotsView;
-    const slotView = (slot: 0 | 1, s: { id: TechId; level: 1 | 2 | 3 } | null) =>
-      s
-        ? {
-            id: s.id,
-            level: s.level,
-            cooldownMs: this.loadout.cooldownOf(slot),
-            mastery: { points: this.mastery.points(slot), threshold: this.mastery.threshold(s.level) },
-          }
-        : null;
-    return { slots: [slotView(0, s0), slotView(1, s1)], cast: this.techCaster.cast };
   }
 
   /**
