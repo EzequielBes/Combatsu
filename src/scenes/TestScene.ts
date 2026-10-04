@@ -90,6 +90,7 @@ import { impactTier, type ImpactTier } from '../core/impactTier';
 import { CAMERA_FEEL } from '../data/feel';
 import { strikeToWorld } from '../core/strikePath';
 import { STRIKE_POINTS } from '../game/art/sprites/strikePoints';
+import { currentSearch, rigStrikePoint } from '../game/art/rig/flag';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../game/art/sprites/player';
 import { SIZE, TEX } from '../game/textures';
 
@@ -1476,7 +1477,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   /** Ponto de golpe do quadro em coordenadas de mundo; `null` (com um aviso por nome) sem entrada (EDG-01). */
   private strikeWorld(frameName: string): Vec2 | null {
-    const pt = STRIKE_POINTS[frameName];
+    const pt = rigStrikePoint(frameName, currentSearch()) ?? STRIKE_POINTS[frameName];
     if (!pt) {
       if (!this.warnedStrikeFrames.has(frameName)) {
         this.warnedStrikeFrames.add(frameName);
