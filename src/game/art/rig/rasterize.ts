@@ -51,7 +51,7 @@ class Canvas {
 /** Texels de uma parte: tecla de cada um, indexada pela posição. */
 type Layer = Map<number, { x: number; y: number; ch: string }>;
 
-function paint(canvas: Canvas, layer: Layer): void {
+function paint(canvas: Canvas, layer: Layer, skipOutline?: (x: number, y: number) => boolean): void {
   for (const c of layer.values()) canvas.set(c.x, c.y, c.ch);
   // Contorno só nos vizinhos de 4 direções que não são da própria parte; cobre o que está atrás.
   const outline = new Set<number>();
@@ -60,7 +60,7 @@ function paint(canvas: Canvas, layer: Layer): void {
       const nx = c.x + dx;
       const ny = c.y + dy;
       const k = key(nx, ny);
-      if (layer.has(k) || outline.has(k)) continue;
+      if (layer.has(k) || outline.has(k) || skipOutline?.(nx, ny)) continue;
       outline.add(k);
       canvas.set(nx, ny, 'k');
     }
@@ -187,7 +187,7 @@ function bendMarks(layer: Layer, from: Vec2, joint: Vec2, to: Vec2, style: LimbS
  * Punho de verdade: palma de ~4x3 com os nós dos dedos na ponta (vãos em sombra), o polegar ao lado e a sombra do
  * lado da frente. Montado no eixo do antebraço, então gira com ele.
  */
-function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle): { x: number; y: number; ch: string }[] {
+function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle, k = 1): { x: number; y: number; ch: string }[] {
   const f = dir(angleWorld);
   // Lado "de trás" da mão: a normal que aponta para a esquerda da tela (o polegar fica ali).
   let n = { x: -f.y, y: f.x };
@@ -199,8 +199,9 @@ function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle): { x: numb
     for (let x = cx; x <= cx + 8; x++) {
       const px = x + 0.5 - wrist.x;
       const py = y + 0.5 - wrist.y;
-      const a = px * f.x + py * f.y; // ao longo do antebraço, a partir do pulso
-      const b = px * n.x + py * n.y; // para o lado de trás
+      // `k` encolhe a mão junto com o braço encurtado por perspectiva (a mão do `idle-0` tem 2x2).
+      const a = (px * f.x + py * f.y) / k; // ao longo do antebraço, a partir do pulso
+      const b = (px * n.x + py * n.y) / k; // para o lado de trás
       const inPalm = a >= -0.7 && a <= 3.0 && b >= -1.75 && b <= 1.75;
       const inThumb = a >= 0.0 && a <= 1.7 && b > 1.75 && b <= 2.7;
       if (!inPalm && !inThumb) continue;
@@ -218,7 +219,7 @@ function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle): { x: numb
 }
 
 /** Braço: manga (braço e antebraço), punho de manga claro e a mão fechada, numa camada só com o contorno `k`. */
-function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Near' | 'Far', style: LimbStyle): Layer {
+function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Near' | 'Far', style: LimbStyle, handScale = 1): Layer {
   const sh = joints[`shoulder${side}`];
   const el = joints[`elbow${side}`];
   const wr = joints[`wrist${side}`];
@@ -238,7 +239,7 @@ function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Ne
   const shCell = layer.get(key(Math.floor(sh.x - 0.2), Math.floor(sh.y - 1.0)));
   if (shCell) shCell.ch = style.spec;
 
-  for (const c of fistCells(wr, angleWorld, style)) layer.set(key(c.x, c.y), c);
+  for (const c of fistCells(wr, angleWorld, style, handScale)) layer.set(key(c.x, c.y), c);
   return layer;
 }
 
@@ -260,15 +261,23 @@ function legLayer(joints: Record<JointName, Vec2>, footAngle: number, side: 'Nea
 
   // Sapato: do calcanhar (atrás do tornozelo) até a ponta.
   const fd = dir(footAngle);
-  const heel = { x: an.x - fd.x * 0.8, y: an.y - fd.y * 0.8 };
-  for (const h of sample([{ a: heel, b: to, ra: 0.8, rb: 0.7 }])) {
+  const back = side === 'Far' ? 1.5 : 0.8; // o pé de longe tem o calcanhar mais atrás, para caber o vão entre os pés
+  const heel = { x: an.x - fd.x * back, y: an.y - fd.y * back };
+  for (const h of sample([{ a: heel, b: to, ra: 0.62, rb: 0.55 }])) {
     layer.set(key(h.x, h.y), { x: h.x, y: h.y, ch: shadeOf(h) > 0.45 ? 's' : 'K' });
   }
   return layer;
 }
 
-/** Deslocamento do centro do tronco em relação à vertical do quadril (o tronco do `idle-0` fica um pouco atrás). */
-const TORSO_V = -0.5;
+/** Sem contorno no topo da perna: ali ela se funde ao bloco do quadril do tronco, como no uniforme desenhado. */
+function legTop(joints: Record<JointName, Vec2>, side: 'Near' | 'Far'): (x: number, y: number) => boolean {
+  const hp = joints[`hip${side}`];
+  const d = unit(hp, joints[`knee${side}`]);
+  return (x, y) => (x + 0.5 - hp.x) * d.x + (y + 0.5 - hp.y) * d.y < 0.3;
+}
+
+/** Deslocamento do centro do tronco em relação à vertical do quadril (zero: o tronco do `idle-0` é centrado no quadril). */
+const TORSO_V = 0;
 
 /**
  * Tronco do paletó, no sistema local da coluna (u para cima a partir do quadril, v para a frente): ombro um pouco mais
@@ -325,15 +334,16 @@ export interface RasterOptions {
 
 /** Rasteriza a pose num frame de 30 linhas x 32 colunas. */
 export function rasterize(pose: Pose, opts: RasterOptions = {}): RasterResult {
+  const hand = Math.min(1, Math.max(0.6, pose.armScale ?? 1));
   const joints = solve(pose);
   const wa = worldAngles(pose);
   const canvas = new Canvas();
 
   // Profundidade: braço e perna de longe, tronco, perna de perto, cabeça no pescoço e o braço de perto por cima.
-  paint(canvas, armLayer(joints, wa.foreArmFar, 'Far', FAR));
-  paint(canvas, legLayer(joints, wa.footFar, 'Far', FAR));
+  paint(canvas, armLayer(joints, wa.foreArmFar, 'Far', FAR, hand));
+  paint(canvas, legLayer(joints, wa.footFar, 'Far', FAR), legTop(joints, 'Far'));
   paint(canvas, torsoLayer(joints));
-  paint(canvas, legLayer(joints, wa.footNear, 'Near', NEAR));
+  paint(canvas, legLayer(joints, wa.footNear, 'Near', NEAR), legTop(joints, 'Near'));
 
   const head = opts.head ?? HEAD_FOCUS;
   const hx = Math.round(joints.neck.x + HEAD_DX);
@@ -345,7 +355,7 @@ export function rasterize(pose: Pose, opts: RasterOptions = {}): RasterResult {
   );
 
   // O braço de perto passa por cima da cabeça (o gancho sobe rente ao rosto).
-  paint(canvas, armLayer(joints, wa.foreArmNear, 'Near', NEAR));
+  paint(canvas, armLayer(joints, wa.foreArmNear, 'Near', NEAR, hand));
 
   selOut(canvas.cells);
   return { frame: canvas.cells.map((r) => r.join('')), clipped: canvas.clipped, joints };

@@ -5,76 +5,67 @@
  */
 import { easeInOutCubic, inbetween } from '../interpolate';
 import { rasterize, wristTexel, type RasterResult } from '../rasterize';
-import { aimLimb, makePose, type Pose, type Vec2 } from '../skeleton';
+import type { Pose } from '../skeleton';
+import { buildPose as build } from './build';
 
-interface Spec {
-  hip: Vec2;
-  /** Ângulo do tronco: 180 em pé, acima de 180 inclina para trás. */
-  spine: number;
-  neck?: number;
-  armNear: { to: Vec2; bend: 1 | -1 };
-  armFar: { to: Vec2; bend: 1 | -1 };
-  legNear: { ankle: Vec2; foot: number };
-  legFar: { ankle: Vec2; foot: number };
-}
-
-function build(s: Spec): Pose {
-  let p = makePose(s.hip, { spine: s.spine, neckBone: s.neck ?? 0, footNear: s.legNear.foot, footFar: s.legFar.foot });
-  p = aimLimb(p, 'legNear', s.legNear.ankle, 1);
-  p = aimLimb(p, 'legFar', s.legFar.ankle, 1);
-  p = aimLimb(p, 'armNear', s.armNear.to, s.armNear.bend);
-  p = aimLimb(p, 'armFar', s.armFar.to, s.armFar.bend);
-  return p;
-}
+/*
+ * O corpo tem pernas de 4,2 como o `idle-0`, então o quadril fica perto do chão em todas as poses (24 em pé) e o golpe
+ * vem do braço de 13 texels esticado, sem esticar a perna. O braço encurta por perspectiva (`armScale`) quando fica
+ * dobrado junto ao corpo e chega ao comprimento cheio só no hit.
+ */
 
 /** Guarda de partida (não é um dos 3 frames do jogo). */
 export const POSE_GUARD: Pose = build({
-  hip: { x: 10, y: 22.6 },
+  hip: { x: 10, y: 24.2 },
   spine: 178,
-  armNear: { to: { x: 13.5, y: 17.5 }, bend: -1 },
-  armFar: { to: { x: 13, y: 15.5 }, bend: -1 },
-  legNear: { ankle: { x: 13, y: 28 }, foot: 90 },
-  legFar: { ankle: { x: 6.5, y: 28 }, foot: 90 },
+  armScale: 0.55,
+  armNear: { to: { x: 13.5, y: 18.5 }, bend: -1 },
+  armFar: { to: { x: 13, y: 16.5 }, bend: -1 },
+  legNear: { ankle: { x: 13.5, y: 28.2 }, foot: 90 },
+  legFar: { ankle: { x: 6.8, y: 28.2 }, foot: 90 },
 });
 
 /** Wind: agacha, joelhos dobrados, punho baixo perto do quadril. */
 export const POSE_WIND: Pose = build({
-  hip: { x: 9.4, y: 23.6 },
+  hip: { x: 9.4, y: 25 },
   spine: 172,
-  armNear: { to: { x: 12.4, y: 22.3 }, bend: -1 },
-  armFar: { to: { x: 13, y: 16.5 }, bend: -1 },
-  legNear: { ankle: { x: 13.2, y: 28 }, foot: 90 },
-  legFar: { ankle: { x: 5.6, y: 28 }, foot: 90 },
+  armScale: 0.55,
+  armNear: { to: { x: 12.4, y: 23.4 }, bend: -1 },
+  armFar: { to: { x: 13, y: 17.5 }, bend: -1 },
+  legNear: { ankle: { x: 14, y: 28.2 }, foot: 90 },
+  legFar: { ankle: { x: 5.4, y: 28.2 }, foot: 90 },
 });
 
 /** Meio da subida: o punho passa pela frente do corpo, cotovelo baixo, já sobre a ponta dos pés. */
 export const POSE_MID: Pose = build({
-  hip: { x: 10.2, y: 21.6 },
-  spine: 184,
-  armNear: { to: { x: 15.8, y: 14.6 }, bend: -1 },
-  armFar: { to: { x: 13, y: 15.2 }, bend: -1 },
-  legNear: { ankle: { x: 13.2, y: 27.3 }, foot: 70 },
-  legFar: { ankle: { x: 6.8, y: 27.2 }, foot: 80 },
+  hip: { x: 10.2, y: 23.6 },
+  spine: 176,
+  armScale: 0.8,
+  armNear: { to: { x: 15.2, y: 14.6 }, bend: -1 },
+  armFar: { to: { x: 13, y: 15.6 }, bend: -1 },
+  legNear: { ankle: { x: 13.6, y: 27.6 }, foot: 70 },
+  legFar: { ankle: { x: 6.6, y: 27.6 }, foot: 80 },
 });
 
-/** Hit: pernas esticadas na ponta do pé, braço da frente na diagonal para cima, tronco para trás. */
+/** Hit: pernas esticadas na ponta do pé, braço da frente esticado na diagonal para cima, tronco um pouco à frente. */
 export const POSE_HIT: Pose = build({
-  hip: { x: 9.8, y: 19.8 },
-  spine: 193,
-  armNear: { to: { x: 19.4, y: 5.8 }, bend: -1 },
-  armFar: { to: { x: 12.6, y: 13.2 }, bend: -1 },
-  legNear: { ankle: { x: 12.6, y: 27 }, foot: 55 },
-  legFar: { ankle: { x: 6.6, y: 26 }, foot: 35 },
+  hip: { x: 9.6, y: 23 },
+  spine: 172,
+  armNear: { to: { x: 17, y: 6.8 }, bend: -1 },
+  armFar: { to: { x: 12.8, y: 13.6 }, bend: -1 },
+  legNear: { ankle: { x: 13, y: 26.9 }, foot: 55 },
+  legFar: { ankle: { x: 6.2, y: 26.2 }, foot: 35 },
 });
 
 /** Recover: desce, braço volta. */
 export const POSE_RECOVER: Pose = build({
-  hip: { x: 10.2, y: 22.4 },
+  hip: { x: 10.2, y: 24 },
   spine: 180,
-  armNear: { to: { x: 16.8, y: 9.6 }, bend: -1 },
-  armFar: { to: { x: 13, y: 15.8 }, bend: -1 },
-  legNear: { ankle: { x: 13.4, y: 28 }, foot: 90 },
-  legFar: { ankle: { x: 6, y: 28 }, foot: 90 },
+  armScale: 0.85,
+  armNear: { to: { x: 16.2, y: 10.4 }, bend: -1 },
+  armFar: { to: { x: 13, y: 16.8 }, bend: -1 },
+  legNear: { ankle: { x: 13.6, y: 28.2 }, foot: 90 },
+  legFar: { ankle: { x: 6.4, y: 28.2 }, foot: 90 },
 });
 
 export const RIG_GANCHO_POSES = {

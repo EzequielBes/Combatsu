@@ -63,29 +63,30 @@ export interface Bone {
 }
 
 /*
- * Medidas tiradas do `idle-0`: cabeça de 11 linhas (6..16), tronco de 6 de comprimento do quadril ao pescoço (linhas
- * 17..24 com cinto e gola), ombros a ~3 texels do pescoço. As pernas (coxa + canela = 6,4 texels) ficam dobradas na postura de
- * guarda para caber nas 5 linhas do `idle-0`, e esticam na ponta do pé no golpe. O braço (6,5 + 6,5) é mais longo que o do
- * idle (7 desenhado de lado, em perspectiva achatada): o golpe esticado precisa de ~13 texels do ombro ao punho
- * (SPEC_DEVIATION de proporção, ver spec RIG-06).
+ * Medidas tiradas do `idle-0` (grade 32x30): cabeça de 11 linhas (6..16), tronco de 7 linhas do cinto (quadril, linha 24)
+ * ao pescoço (linha 17) com o peito a 5,4 do quadril, onde ficam os ombros; ombro de perto 0,8 atrás da vertical do
+ * pescoço (o braço do idle cai por aí, com miolo de 2 texels), quadris a 3 à frente e 2 atrás do eixo (pernas de 4 texels com 1
+ * de vão), coxa + canela de 4,2 (do quadril, linha 24, ao tornozelo, linha 28,2) e sapato de 3 texels (o de longe é mais curto, para o vão entre os pés). O braço (6,5 + 6,5) é mais longo que o do idle
+ * (5,5 do ombro à mão, de lado): o gancho esticado precisa de ~13 texels do ombro ao punho; o idle usa `armScale` para
+ * encurtar o braço por perspectiva (SPEC_DEVIATION de proporção, ver spec RIG-06).
  */
 export const BONES: readonly Bone[] = [
-  { name: 'spine', from: 'hip', to: 'chest', length: 3, parent: null },
-  { name: 'neckBone', from: 'chest', to: 'neck', length: 3, parent: 'spine' },
-  { name: 'shoulderNear', from: 'chest', to: 'shoulderNear', length: 2.2, parent: 'spine' },
+  { name: 'spine', from: 'hip', to: 'chest', length: 5.4, parent: null },
+  { name: 'neckBone', from: 'chest', to: 'neck', length: 1.6, parent: 'spine' },
+  { name: 'shoulderNear', from: 'chest', to: 'shoulderNear', length: 0.8, parent: 'spine' },
   { name: 'upperArmNear', from: 'shoulderNear', to: 'elbowNear', length: 6.5, parent: null },
   { name: 'foreArmNear', from: 'elbowNear', to: 'wristNear', length: 6.5, parent: 'upperArmNear' },
-  { name: 'shoulderFar', from: 'chest', to: 'shoulderFar', length: 1.4, parent: 'spine' },
+  { name: 'shoulderFar', from: 'chest', to: 'shoulderFar', length: 0.4, parent: 'spine' },
   { name: 'upperArmFar', from: 'shoulderFar', to: 'elbowFar', length: 6.5, parent: null },
   { name: 'foreArmFar', from: 'elbowFar', to: 'wristFar', length: 6.5, parent: 'upperArmFar' },
-  { name: 'pelvisNear', from: 'hip', to: 'hipNear', length: 1.6, parent: null },
-  { name: 'thighNear', from: 'hipNear', to: 'kneeNear', length: 3.2, parent: null },
-  { name: 'shinNear', from: 'kneeNear', to: 'ankleNear', length: 3.2, parent: 'thighNear' },
-  { name: 'footNear', from: 'ankleNear', to: 'toeNear', length: 3, parent: null },
-  { name: 'pelvisFar', from: 'hip', to: 'hipFar', length: 1.6, parent: null },
-  { name: 'thighFar', from: 'hipFar', to: 'kneeFar', length: 3.2, parent: null },
-  { name: 'shinFar', from: 'kneeFar', to: 'ankleFar', length: 3.2, parent: 'thighFar' },
-  { name: 'footFar', from: 'ankleFar', to: 'toeFar', length: 3, parent: null },
+  { name: 'pelvisNear', from: 'hip', to: 'hipNear', length: 3, parent: null },
+  { name: 'thighNear', from: 'hipNear', to: 'kneeNear', length: 2.1, parent: null },
+  { name: 'shinNear', from: 'kneeNear', to: 'ankleNear', length: 2.1, parent: 'thighNear' },
+  { name: 'footNear', from: 'ankleNear', to: 'toeNear', length: 2.4, parent: null },
+  { name: 'pelvisFar', from: 'hip', to: 'hipFar', length: 2, parent: null },
+  { name: 'thighFar', from: 'hipFar', to: 'kneeFar', length: 2.1, parent: null },
+  { name: 'shinFar', from: 'kneeFar', to: 'ankleFar', length: 2.1, parent: 'thighFar' },
+  { name: 'footFar', from: 'ankleFar', to: 'toeFar', length: 0.8, parent: null },
 ];
 
 export const BONE_BY_NAME: Readonly<Record<BoneName, Bone>> = Object.fromEntries(BONES.map((b) => [b.name, b])) as Record<BoneName, Bone>;
@@ -94,16 +95,29 @@ export const BONE_BY_NAME: Readonly<Record<BoneName, Bone>> = Object.fromEntries
 export interface Pose {
   root: Vec2;
   angles: Record<BoneName, number>;
+  /**
+   * Encurtamento de perspectiva dos braços (1 = comprimento cheio, o padrão). O braço que cai ou dobra junto ao corpo
+   * aparece mais curto do que o esticado em direção ao golpe, como no `idle-0` desenhado (5,5 do ombro à mão contra
+   * 13 no soco). Vale para braço e antebraço dos dois lados.
+   */
+  armScale?: number;
+}
+
+const ARM_BONES: ReadonlySet<BoneName> = new Set(['upperArmNear', 'foreArmNear', 'upperArmFar', 'foreArmFar']);
+
+/** Comprimento de um osso nesta pose: o definido, vezes o encurtamento dos braços quando for osso de braço. */
+export function boneLength(pose: Pose, bone: Bone): number {
+  return bone.length * (ARM_BONES.has(bone.name) ? (pose.armScale ?? 1) : 1);
 }
 
 /** Ângulos de repouso: tronco em pé, ombros e quadris abertos para os lados, braços e pernas pendurados. */
 export const REST_ANGLES: Readonly<Record<BoneName, number>> = {
   spine: 180,
   neckBone: 0,
-  shoulderNear: -90,
+  shoulderNear: 90,
   upperArmNear: 0,
   foreArmNear: 0,
-  shoulderFar: 90,
+  shoulderFar: -90,
   upperArmFar: 0,
   foreArmFar: 0,
   pelvisNear: 90,
@@ -124,7 +138,7 @@ export function makePose(root: Vec2, angles: Partial<Record<BoneName, number>> =
 }
 
 export function clonePose(p: Pose): Pose {
-  return { root: { ...p.root }, angles: { ...p.angles } };
+  return p.armScale === undefined ? { root: { ...p.root }, angles: { ...p.angles } } : { root: { ...p.root }, angles: { ...p.angles }, armScale: p.armScale };
 }
 
 /** Ângulo absoluto (mundo) de cada osso: o local somado ao do osso pai. Os ossos estão em ordem pai-antes-do-filho. */
@@ -141,7 +155,8 @@ export function solve(pose: Pose): Record<JointName, Vec2> {
   for (const b of BONES) {
     const d = dir(wa[b.name]);
     const f = joints[b.from];
-    joints[b.to] = { x: f.x + d.x * b.length, y: f.y + d.y * b.length };
+    const len = boneLength(pose, b);
+    joints[b.to] = { x: f.x + d.x * len, y: f.y + d.y * len };
   }
   return joints;
 }
@@ -176,7 +191,7 @@ const LIMB_ROOT: Record<Limb, JointName> = { armNear: 'shoulderNear', armFar: 's
 export function aimLimb(pose: Pose, limb: Limb, target: Vec2, bend: 1 | -1): Pose {
   const [b1, b2] = LIMB_BONES[limb];
   const root = solve(pose)[LIMB_ROOT[limb]];
-  const [a1, a2] = twoBone(root, target, BONE_BY_NAME[b1].length, BONE_BY_NAME[b2].length, bend);
+  const [a1, a2] = twoBone(root, target, boneLength(pose, BONE_BY_NAME[b1]), boneLength(pose, BONE_BY_NAME[b2]), bend);
   const next = clonePose(pose);
   next.angles[b1] = a1;
   next.angles[b2] = a2 - a1;
@@ -191,7 +206,7 @@ export function setWorldAngle(pose: Pose, bone: BoneName, worldDeg: number): Pos
   return next;
 }
 
-/** Comprimento medido de um osso entre as juntas de uma pose resolvida (RIG-02). */
+/** Comprimento medido de um osso entre as juntas de uma pose resolvida (RIG-02); compare com `boneLength(pose, bone)`. */
 export function measuredLength(joints: Record<JointName, Vec2>, bone: Bone): number {
   const a = joints[bone.from];
   const b = joints[bone.to];

@@ -1,7 +1,7 @@
 /*
  * Quadros intermediários do boneco: interpola duas poses pelo menor arco de cada ângulo. Puro, sem `phaser`.
  */
-import { BONES, type Pose } from './skeleton';
+import { BONES, clonePose, type Pose } from './skeleton';
 
 /** Diferença de `from` até `to` pelo menor arco, em (-180, 180]. */
 export function shortestArc(from: number, to: number): number {
@@ -14,9 +14,12 @@ export function shortestArc(from: number, to: number): number {
  * overshoot do golpe passa de 1). A raiz interpola em linha reta e cada ângulo pelo menor arco.
  */
 export function inbetween(a: Pose, b: Pose, t: number): Pose {
-  if (t === 0) return { root: { ...a.root }, angles: { ...a.angles } };
-  if (t === 1) return { root: { ...b.root }, angles: { ...b.angles } };
+  if (t === 0) return clonePose(a);
+  if (t === 1) return clonePose(b);
   const out: Pose = { root: { x: a.root.x + (b.root.x - a.root.x) * t, y: a.root.y + (b.root.y - a.root.y) * t }, angles: { ...a.angles } };
+  const sa = a.armScale ?? 1;
+  const sb = b.armScale ?? 1;
+  if (a.armScale !== undefined || b.armScale !== undefined) out.armScale = sa + (sb - sa) * t;
   for (const { name } of BONES) out.angles[name] = a.angles[name] + shortestArc(a.angles[name], b.angles[name]) * t;
   return out;
 }
