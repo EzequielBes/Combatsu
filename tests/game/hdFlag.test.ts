@@ -2,13 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { strikeToWorld } from '../../src/core/strikePath';
 import { hdEnabled } from '../../src/game/art/hd/flag';
 import { screenFor, zoom } from '../../src/game/art/hd/screen';
-import {
-  HD_IDLE_FRAMES,
-  HD_IDLE_FRAME_MS,
-  HD_UPPERCUT_PHASES,
-  hdIdleFrame,
-  hdMoveFrame,
-} from '../../src/game/art/hd/sheet';
+import { MOVE_PHASE_FRAMES, moveFrameName, type MovePhase } from '../../src/game/art/hd/frames';
+import { HD_MIN_FRAME_MS, hdMoveFrame } from '../../src/game/art/hd/sheet';
 import { ART_SCALE } from '../../src/game/art/palette';
 
 const DEF = { startupMs: 90, activeMs: 90, recoveryMs: 260 };
@@ -24,38 +19,34 @@ describe('hdEnabled', () => {
   });
 });
 
-describe('hdIdleFrame', () => {
-  it('troca de quadro a cada HD_IDLE_FRAME_MS e dá a volta', () => {
-    expect(hdIdleFrame(0)).toBe(HD_IDLE_FRAMES[0]);
-    expect(hdIdleFrame(HD_IDLE_FRAME_MS - 1)).toBe(HD_IDLE_FRAMES[0]);
-    expect(hdIdleFrame(HD_IDLE_FRAME_MS)).toBe(HD_IDLE_FRAMES[1]);
-    expect(hdIdleFrame(HD_IDLE_FRAME_MS * HD_IDLE_FRAMES.length)).toBe(HD_IDLE_FRAMES[0]);
-  });
-
-  it('relógio negativo cai no primeiro quadro', () => {
-    expect(hdIdleFrame(-50)).toBe(HD_IDLE_FRAMES[0]);
-  });
-});
-
 describe('hdMoveFrame', () => {
   it('reparte cada fase em fatias iguais do tempo da fase', () => {
-    const { startup, active, recovery } = HD_UPPERCUT_PHASES;
-    expect(hdMoveFrame('ganchoAscendente', 'startup', 0, DEF)).toBe(startup[0]);
-    expect(hdMoveFrame('ganchoAscendente', 'startup', 44, DEF)).toBe(startup[0]);
-    expect(hdMoveFrame('ganchoAscendente', 'startup', 45, DEF)).toBe(startup[1]);
-    expect(hdMoveFrame('ganchoAscendente', 'active', 0, DEF)).toBe(active[0]);
-    expect(hdMoveFrame('ganchoAscendente', 'active', 89, DEF)).toBe(active[1]);
-    expect(hdMoveFrame('ganchoAscendente', 'recovery', 0, DEF)).toBe(recovery[0]);
-    expect(hdMoveFrame('ganchoAscendente', 'recovery', 130, DEF)).toBe(recovery[2]);
+    const f = (phase: MovePhase, i: number): string => moveFrameName('ganchoAscendente', phase, i);
+    expect(hdMoveFrame('ganchoAscendente', 'startup', 0, DEF)).toBe(f('startup', 0));
+    expect(hdMoveFrame('ganchoAscendente', 'startup', 44, DEF)).toBe(f('startup', 0));
+    expect(hdMoveFrame('ganchoAscendente', 'startup', 45, DEF)).toBe(f('startup', 1));
+    expect(hdMoveFrame('ganchoAscendente', 'active', 0, DEF)).toBe(f('active', 0));
+    expect(hdMoveFrame('ganchoAscendente', 'active', 89, DEF)).toBe(f('active', 1));
+    expect(hdMoveFrame('ganchoAscendente', 'recovery', 0, DEF)).toBe(f('recovery', 0));
+    expect(hdMoveFrame('ganchoAscendente', 'recovery', 180, DEF)).toBe(f('recovery', 2));
   });
 
   it('não passa do último quadro nem do primeiro', () => {
-    expect(hdMoveFrame('ganchoAscendente', 'recovery', 9999, DEF)).toBe(HD_UPPERCUT_PHASES.recovery[3]);
-    expect(hdMoveFrame('ganchoAscendente', 'startup', -10, DEF)).toBe(HD_UPPERCUT_PHASES.startup[0]);
+    expect(hdMoveFrame('ganchoAscendente', 'recovery', 9999, DEF)).toBe(
+      moveFrameName('ganchoAscendente', 'recovery', MOVE_PHASE_FRAMES.recovery - 1),
+    );
+    expect(hdMoveFrame('ganchoAscendente', 'startup', -10, DEF)).toBe(moveFrameName('ganchoAscendente', 'startup', 0));
+  });
+
+  it('fase curta demais para dois quadros de 33 ms mostra só o primeiro', () => {
+    const quick = { startupMs: 60, activeMs: 80, recoveryMs: 120 };
+    expect(hdMoveFrame('ganchoAscendente', 'startup', 59, quick)).toBe(moveFrameName('ganchoAscendente', 'startup', 0));
+    expect(hdMoveFrame('ganchoAscendente', 'active', 79, quick)).toBe(moveFrameName('ganchoAscendente', 'active', 1));
+    expect(Math.floor(quick.startupMs / HD_MIN_FRAME_MS)).toBe(1);
   });
 
   it('golpe sem arte HD ou fase desconhecida: undefined', () => {
-    expect(hdMoveFrame('socoLeve', 'startup', 0, DEF)).toBeUndefined();
+    expect(hdMoveFrame('golpeQueNaoExiste', 'startup', 0, DEF)).toBeUndefined();
     expect(hdMoveFrame('ganchoAscendente', 'idle', 0, DEF)).toBeUndefined();
     expect(hdMoveFrame('ganchoAscendente', 'window', 0, DEF)).toBeUndefined();
   });

@@ -1,0 +1,91 @@
+/*
+ * Quadros do player HD como dados: cada família de poses (`families/`) devolve quadros soltos e golpes; aqui o golpe
+ * vira a sua sequência de quadros por fase. Os nomes são os da folha antiga (`idle-0`, `guard`, `jab-hit`), para o
+ * jogo trocar de folha quadro a quadro. Puro, sem `phaser`.
+ */
+import { inbetween } from '../rig/interpolate';
+import type { Pose } from '../rig/skeleton';
+import type { Expression } from './head';
+import type { Kit } from './kit';
+
+/** Forma da mão: punho fechado, mão aberta (palma, guarda aberta) ou o selo de dois dedos das técnicas. */
+export type HandShape = 'fist' | 'open' | 'sign';
+
+export interface Hands {
+  near?: HandShape;
+  far?: HandShape;
+}
+
+/** Parte do corpo que acerta: de onde sai o ponto de golpe (rastro e faísca). */
+export type StrikeLimb = 'handNear' | 'handFar' | 'footNear' | 'footFar' | 'kneeNear' | 'elbowNear';
+
+/** Um quadro: a pose e o que muda na pintura. */
+export interface HdFrameSpec {
+  pose: Pose;
+  /** Expressão do rosto (padrão `focus`). */
+  expr?: Expression;
+  hands?: Hands;
+  /** A cabeça por cima do braço de perto (o braço passa por trás do rosto). */
+  headOverNearArm?: boolean;
+}
+
+/**
+ * Um golpe: as poses-chave. `wind` é a antecipação, `hit` o pico (pose-chave, nunca um intermediário) e `recover` o
+ * fim da recuperação, de onde o corpo volta à guarda. `mid` (meio da subida), `over` (overshoot depois do pico) e
+ * `down` (primeiro quadro da volta) são opcionais: sem eles, saem da interpolação das chaves.
+ */
+export interface HdMoveSpec {
+  wind: Pose;
+  mid?: Pose;
+  hit: Pose;
+  over?: Pose;
+  down?: Pose;
+  recover: Pose;
+  /** Parte do corpo que acerta. */
+  strike: StrikeLimb;
+  /** Mãos no pico (e no overshoot); na antecipação e na volta as mãos são punhos. */
+  hands?: Hands;
+  /** Expressão dos quadros do golpe (padrão `effort`). */
+  expr?: Expression;
+  headOverNearArm?: boolean;
+}
+
+/** O que uma família de poses devolve. */
+export interface HdFamily {
+  frames?: Record<string, HdFrameSpec>;
+  moves?: Record<string, HdMoveSpec>;
+}
+
+export type MovePhase = 'startup' | 'active' | 'recovery';
+
+/** Quadros por fase de todo golpe: 2 na antecipação, 2 no pico (pico e overshoot) e 3 na volta. */
+export const MOVE_PHASE_FRAMES: Readonly<Record<MovePhase, number>> = { startup: 2, active: 2, recovery: 3 };
+
+/** Nome do quadro `i` da fase de um golpe (`jab@startup-0`). */
+export const moveFrameName = (move: string, phase: MovePhase, i: number): string => `${move}@${phase}-${i}`;
+
+/**
+ * Os quadros de um golpe: a sequência por fase e os três nomes da folha antiga (`-wind`, `-hit`, `-recover`), que
+ * apontam para a antecipação, o pico e o fim da volta.
+ */
+export function expandMove(k: Kit, name: string, m: HdMoveSpec): Record<string, HdFrameSpec> {
+  const expr = m.expr ?? 'effort';
+  const opts = { expr, headOverNearArm: m.headOverNearArm };
+  const at = (from: Pose, to: Pose, t: number): Pose => k.grounded(inbetween(from, to, t));
+  const over = m.over ?? at(m.wind, m.hit, 1.06);
+  const wind: HdFrameSpec = { pose: m.wind, ...opts };
+  const hit: HdFrameSpec = { pose: m.hit, hands: m.hands, ...opts };
+  const recover: HdFrameSpec = { pose: m.recover, ...opts };
+  return {
+    [moveFrameName(name, 'startup', 0)]: wind,
+    [moveFrameName(name, 'startup', 1)]: { pose: m.mid ?? at(m.wind, m.hit, 0.55), hands: m.hands, ...opts },
+    [moveFrameName(name, 'active', 0)]: hit,
+    [moveFrameName(name, 'active', 1)]: { pose: over, hands: m.hands, ...opts },
+    [moveFrameName(name, 'recovery', 0)]: { pose: m.down ?? at(over, m.recover, 0.5), ...opts },
+    [moveFrameName(name, 'recovery', 1)]: recover,
+    [moveFrameName(name, 'recovery', 2)]: { pose: at(m.recover, k.guard(), 0.6), ...opts },
+    [`${name}-wind`]: wind,
+    [`${name}-hit`]: hit,
+    [`${name}-recover`]: recover,
+  };
+}

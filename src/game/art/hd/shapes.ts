@@ -3,7 +3,7 @@
  * bíceps, panturrilha e coxa), elipse, triângulo e formas num sistema local (frente, cima). Puro, sem `phaser`.
  */
 import type { Vec2 } from '../rig/skeleton';
-import type { Normal, Shape } from './raster';
+import type { Bounds, Normal, Shape } from './raster';
 
 /** Perfil de um membro: pontos `[t, raio do lado +, raio do lado -]` com `t` de 0 (raiz) a 1 (ponta). */
 export type Profile = readonly (readonly [number, number, number])[];
@@ -43,7 +43,7 @@ export function limb(a: Vec2, b: Vec2, prof: Profile): Shape {
     const shift = (rp - rm) / 2;
     return dome((x - end.x - p.x * shift) / r, (y - end.y - p.y * shift) / r);
   };
-  return (x, y) => {
+  const shape: Shape = (x, y) => {
     const rx = x - a.x;
     const ry = y - a.y;
     const t = (rx * d.x + ry * d.y) / len;
@@ -54,21 +54,33 @@ export function limb(a: Vec2, b: Vec2, prof: Profile): Shape {
     const o = s / (s >= 0 ? rp : rm);
     return Math.abs(o) > 1 ? null : { x: p.x * o, y: p.y * o, z: Math.sqrt(1 - o * o), t, s: o };
   };
+  const r = Math.max(...prof.map((q) => Math.max(q[1], q[2]))) + 1;
+  shape.bounds = {
+    x0: Math.min(a.x, b.x) - r,
+    y0: Math.min(a.y, b.y) - r,
+    x1: Math.max(a.x, b.x) + r,
+    y1: Math.max(a.y, b.y) + r,
+  };
+  return shape;
 }
 
 const at = (n: Normal | null, t: number): Normal | null => (n ? { ...n, t } : null);
 
 /** Ajusta a luz ao longo de um membro: `fn(t, s)` (posição no osso e lado) devolve o que somar à normal naquele ponto (tom, sem recorte). */
 export function along(shape: Shape, fn: (t: number, s: number) => { dt?: number; noRim?: boolean }): Shape {
-  return (x, y) => {
+  const out: Shape = (x, y) => {
     const n = shape(x, y);
     return n ? { ...n, ...fn(n.t ?? 0, n.s ?? 0) } : null;
   };
+  out.bounds = shape.bounds;
+  return out;
 }
 
 /** Elipse de centro `c` e raios `rx`, `ry`. */
 export function ellipse(c: Vec2, rx: number, ry: number): Shape {
-  return (x, y) => dome((x - c.x) / rx, (y - c.y) / ry);
+  const shape: Shape = (x, y) => dome((x - c.x) / rx, (y - c.y) / ry);
+  shape.bounds = { x0: c.x - rx, y0: c.y - ry, x1: c.x + rx, y1: c.y + ry };
+  return shape;
 }
 
 /** Sistema local: origem, vetor "cima" e vetor "frente" (unitários, em coordenadas de tela). */
@@ -89,25 +101,45 @@ export const toScreen = (l: Local, f: number, u: number): Vec2 => ({
   y: l.o.y + l.fwd.y * f + l.up.y * u,
 });
 
+/** Caixa local `[f0, f1, u0, u1]` que contém a forma. */
+export type LocalBox = readonly [number, number, number, number];
+
 /** Forma no sistema local: normal local (x = frente, y = cima, z = para a câmera) ou `null`. */
-export type LocalShape = (f: number, u: number) => Normal | null;
+export type LocalShape = ((f: number, u: number) => Normal | null) & { box?: LocalBox };
+
+/** Marca a caixa local de uma forma escrita à mão, para a pintura não percorrer o frame inteiro. */
+export function boxed(fn: (f: number, u: number) => Normal | null, box: LocalBox): LocalShape {
+  const out: LocalShape = fn;
+  out.box = box;
+  return out;
+}
+
+function screenBounds(l: Local, [f0, f1, u0, u1]: LocalBox): Bounds {
+  const pts = [toScreen(l, f0, u0), toScreen(l, f0, u1), toScreen(l, f1, u0), toScreen(l, f1, u1)];
+  return {
+    x0: Math.min(...pts.map((p) => p.x)),
+    y0: Math.min(...pts.map((p) => p.y)),
+    x1: Math.max(...pts.map((p) => p.x)),
+    y1: Math.max(...pts.map((p) => p.y)),
+  };
+}
 
 /** Leva uma forma local para a tela; a normal gira junto com o sistema. */
 export function inLocal(l: Local, fn: LocalShape): Shape {
-  return (x, y) => {
+  const shape: Shape = (x, y) => {
     const rx = x - l.o.x;
     const ry = y - l.o.y;
     const n = fn(rx * l.fwd.x + ry * l.fwd.y, rx * l.up.x + ry * l.up.y);
     if (!n) return null;
     return { ...n, x: l.fwd.x * n.x + l.up.x * n.y, y: l.fwd.y * n.x + l.up.y * n.y };
   };
+  if (fn.box) shape.bounds = screenBounds(l, fn.box);
+  return shape;
 }
 
 /** Elipse no sistema local, com centro (cf, cu). */
-export const localEllipse =
-  (cf: number, cu: number, rf: number, ru: number): LocalShape =>
-  (f, u) =>
-    dome((f - cf) / rf, (u - cu) / ru);
+export const localEllipse = (cf: number, cu: number, rf: number, ru: number): LocalShape =>
+  boxed((f, u) => dome((f - cf) / rf, (u - cu) / ru), [cf - rf, cf + rf, cu - ru, cu + ru]);
 
 type Pt = readonly [number, number];
 
@@ -115,20 +147,23 @@ const edge = (p: Pt, q: Pt, f: number, u: number): number => (q[0] - p[0]) * (u 
 
 /** Triângulo no sistema local; a normal vem de `shade` (em geral a cúpula do volume a que ele pertence). */
 export function localTri(a: Pt, b: Pt, c: Pt, shade: (f: number, u: number) => Normal): LocalShape {
-  return (f, u) => {
-    const e1 = edge(a, b, f, u);
-    const e2 = edge(b, c, f, u);
-    const e3 = edge(c, a, f, u);
-    const inside = (e1 >= 0 && e2 >= 0 && e3 >= 0) || (e1 <= 0 && e2 <= 0 && e3 <= 0);
-    return inside ? shade(f, u) : null;
-  };
+  const fs = [a[0], b[0], c[0]];
+  const us = [a[1], b[1], c[1]];
+  return boxed(
+    (f, u) => {
+      const e1 = edge(a, b, f, u);
+      const e2 = edge(b, c, f, u);
+      const e3 = edge(c, a, f, u);
+      const inside = (e1 >= 0 && e2 >= 0 && e3 >= 0) || (e1 <= 0 && e2 <= 0 && e3 <= 0);
+      return inside ? shade(f, u) : null;
+    },
+    [Math.min(...fs), Math.max(...fs), Math.min(...us), Math.max(...us)],
+  );
 }
 
 /** Retângulo no sistema local, de face para a câmera. */
-export const localRect =
-  (f0: number, f1: number, u0: number, u1: number): LocalShape =>
-  (f, u) =>
-    f >= f0 && f <= f1 && u >= u0 && u <= u1 ? { x: 0, y: 0, z: 1 } : null;
+export const localRect = (f0: number, f1: number, u0: number, u1: number): LocalShape =>
+  boxed((f, u) => (f >= f0 && f <= f1 && u >= u0 && u <= u1 ? { x: 0, y: 0, z: 1 } : null), [f0, f1, u0, u1]);
 
 /** Normal de uma cúpula larga centrada em (cf, cu), limitada à borda: sombreia formas que saem do volume. */
 export const domeShade =

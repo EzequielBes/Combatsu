@@ -11,7 +11,7 @@ import { PALETTE } from '../art/palette';
 import { PLAYER_ORIGIN } from '../art/sprites/player';
 import { RIG_ON, RIG_TALL_ORIGIN, rigMoveFrame } from '../art/rig/flag';
 import { HD_ON } from '../art/hd/flag';
-import { HD_ORIGIN, hdIdleFrame, hdMoveFrame } from '../art/hd/sheet';
+import { HD_ORIGIN, hdHasAnim, hdHasFrame, hdMoveFrame, playerHdAnimKey } from '../art/hd/sheet';
 import { SIZE, TEX } from '../textures';
 import type { Player } from '../Player';
 
@@ -92,101 +92,91 @@ export class PlayerAnimator {
     return this.p.clockMs - this.rigPhaseT0;
   }
 
-  /** Quadro alternativo do golpe em curso (folha, origem e nome), ou `undefined` para seguir com a folha normal. HD vence o rig. */
-  private altMoveFrame(
+  /** Quadro do golpe em curso pelo boneco (`?debug&rig=1`, sem `?hd=1`), ou `undefined`. */
+  private rigFrame(
     mv: { name: string; startupMs: number; activeMs: number; recoveryMs: number },
     phase: AttackPhase,
-  ): { texture: string; origin: { x: number; y: number }; frame: string } | undefined {
-    const ms = this.rigPhaseMs(phase);
-    const hd = HD_ON ? hdMoveFrame(mv.name, phase, ms, mv) : undefined;
-    if (hd) return { texture: TEX.playerHd, origin: HD_ORIGIN, frame: hd };
-    const rig = RIG_ON ? rigMoveFrame(mv.name, phase, ms, mv) : undefined;
+    ms: number,
+  ): string | undefined {
     // PRA-08: os quadros do heroico alto estão na folha `player-rig` (40x40, origem no pé na coluna 12).
-    return rig ? { texture: TEX.playerRig, origin: RIG_TALL_ORIGIN, frame: rig } : undefined;
+    return RIG_ON && !HD_ON ? rigMoveFrame(mv.name, phase, ms, mv) : undefined;
   }
 
-  /** `?hd=1`: o idle parado no chão, sem objeto na mão, usa a folha HD (1 texel = 1 px). Devolve se aplicou. */
-  private hdIdle(anim: string): boolean {
-    if (!HD_ON || anim !== 'idle') return false;
+  /**
+   * Mostra um quadro parado. Com `?hd=1`, na folha HD (1 texel = 1 px) se ela já tem o quadro; senão na folha normal.
+   * Escala negativa espelha em volta da origem (o pé no centro do corpo); o flipX espelharia em volta do centro do
+   * frame, que é mais largo que o corpo.
+   */
+  private show(frame: string): Phaser.GameObjects.Sprite {
     const v = this.p.view;
-    this.placeView(TEX.playerHd, HD_ORIGIN);
+    if (HD_ON && hdHasFrame(frame)) this.placeView(TEX.playerHd, HD_ORIGIN);
+    else this.placeView();
     v.setScale(this.p.facing, 1);
     v.anims.stop();
-    v.setFrame(hdIdleFrame(this.p.clockMs));
+    v.setFrame(frame);
+    return v;
+  }
+
+  /** Toca uma animação, na folha HD quando ela tem todos os quadros dela (`?hd=1`). */
+  private play(anim: string): Phaser.GameObjects.Sprite {
+    const v = this.p.view;
+    const hd = HD_ON && hdHasAnim(anim);
+    if (hd) this.placeView(TEX.playerHd, HD_ORIGIN);
+    else this.placeView();
+    v.setScale(this.p.facing, 1);
+    v.anims.play(hd ? playerHdAnimKey(anim) : playerAnimKey(anim), true);
+    return v;
+  }
+
+  /** Estados que travam o frame antes do golpe e da locomoção; devolve o nome do frame, ou `undefined`. */
+  private lockedFrame(): { frame: string; trail?: boolean } | undefined {
+    const p = this.p;
+    const down = p.health.staggered || p.health.dead;
+    // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
+    if (p.castLock) return { frame: `${p.castLock.id}-${p.castLock.state}` };
+    if (p.poseMs > 0 && !down) return { frame: 'palmaExplosiva-hit', trail: true };
+    // Guarda quebrada (STR-06): cambaleia alternando os dois frames de atordoamento.
+    if (p.structure.broken && !p.health.dead) return { frame: `stunned-${Math.floor(p.clockMs / STUN_FRAME_MS) % 2}` };
+    // Esquiva (DOD-01/11): corpo encolhido e rastro de imagens; o segundo frame na metade final do dash.
+    if (p.dodge.active) return { frame: `dodge-${DODGE_ELAPSED_HALF(p.dodge.cooldownMs)}`, trail: true };
+    // Abaixar (DEF-09): corpo agachado parado enquanto durar.
+    if (p.duck.active && !down) return { frame: 'duck' };
+    // CTL-09: guarda ou janela de parry mostram o frame `guard`.
+    if (p.guard.state !== 'none' && !down && !p.moves.isMoving) return { frame: 'guard' };
+    return undefined;
+  }
+
+  /** Golpe do grafo: o frame vem da fase, não do relógio da animação (CHR-02). Devolve se havia golpe. */
+  private animateMove(): boolean {
+    const mv = this.p.moves.def;
+    if (!mv || this.p.health.staggered || this.p.health.dead) return false;
+    const phase = this.p.moves.phase as AttackPhase;
+    const ms = this.rigPhaseMs(phase);
+    // Com `?hd=1` o golpe com sequência HD toca os quadros dela; os outros caem no `-wind/-hit/-recover`.
+    const hd = HD_ON ? hdMoveFrame(mv.name, phase, ms, mv) : undefined;
+    const rig = this.rigFrame(mv, phase, ms);
+    let v: Phaser.GameObjects.Sprite;
+    if (rig) {
+      v = this.p.view;
+      this.placeView(TEX.playerRig, RIG_TALL_ORIGIN);
+      v.setScale(this.p.facing, 1);
+      v.anims.stop();
+      v.setFrame(rig);
+    } else {
+      v = this.show(hd ?? `${mv.name}-${attackFrame(phase)}`);
+    }
+    if (phase === 'active' && mv.strength === 'heavy') this.p.fx.afterimage(v);
     return true;
   }
 
   animate(grounded: boolean): void {
-    // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
-    if (this.p.castLock) {
-      const v = this.p.view;
-      this.placeView();
-      v.setScale(this.p.facing, 1);
-      v.anims.stop();
-      v.setFrame(`${this.p.castLock.id}-${this.p.castLock.state}`);
+    const locked = this.lockedFrame();
+    if (locked) {
+      const v = this.show(locked.frame);
+      if (locked.trail) this.p.fx.afterimage(v);
       return;
     }
-    if (this.p.poseMs > 0 && !this.p.health.dead && !this.p.health.staggered) {
-      const v = this.p.view;
-      this.placeView();
-      v.setScale(this.p.facing, 1);
-      v.anims.stop();
-      v.setFrame('palmaExplosiva-hit');
-      this.p.fx.afterimage(v);
-      return;
-    }
-    if (this.p.structure.broken && !this.p.health.dead) {
-      // Guarda quebrada (STR-06): cambaleia alternando os dois frames de atordoamento.
-      const v = this.p.view;
-      this.placeView();
-      v.setScale(this.p.facing, 1);
-      v.anims.stop();
-      v.setFrame(`stunned-${Math.floor(this.p.clockMs / STUN_FRAME_MS) % 2}`);
-      return;
-    }
-    if (this.p.dodge.active) {
-      // Esquiva (DOD-01/11): corpo encolhido e rastro de imagens; o segundo frame na metade final do dash.
-      const v = this.p.view;
-      this.placeView();
-      v.setScale(this.p.facing, 1);
-      v.anims.stop();
-      v.setFrame(`dodge-${DODGE_ELAPSED_HALF(this.p.dodge.cooldownMs)}`);
-      this.p.fx.afterimage(v);
-      return;
-    }
-    if (this.p.duck.active && !this.p.health.staggered && !this.p.health.dead) {
-      // Abaixar (DEF-09): corpo agachado parado enquanto durar.
-      const v = this.p.view;
-      this.placeView();
-      v.setScale(this.p.facing, 1);
-      v.anims.stop();
-      v.setFrame('duck');
-      return;
-    }
-    if (this.p.guard.state !== 'none' && !this.p.health.staggered && !this.p.health.dead && !this.p.moves.isMoving) {
-      // CTL-09: guarda ou janela de parry mostram o frame `guard`.
-      const v = this.p.view;
-      this.placeView();
-      v.setScale(this.p.facing, 1);
-      v.anims.stop();
-      v.setFrame('guard');
-      return;
-    }
-    const mv = this.p.moves.def;
-    if (mv && !(this.p.health.staggered || this.p.health.dead)) {
-      // Golpe do grafo: o frame vem da fase (wind/hit/recover), não do relógio da animação (CHR-02).
-      const v = this.p.view;
-      const phase = this.p.moves.phase as AttackPhase;
-      // Quadros alternativos do golpe: folha HD (`?hd=1`) ou, sem ela, o boneco (`?debug&rig=1`); senão a folha normal.
-      const alt = this.altMoveFrame(mv, phase);
-      if (alt) this.placeView(alt.texture, alt.origin);
-      else this.placeView();
-      v.setScale(this.p.facing, 1);
-      v.anims.stop();
-      v.setFrame(alt?.frame ?? `${mv.name}-${attackFrame(phase)}`);
-      if (phase === 'active' && mv.strength === 'heavy') this.p.fx.afterimage(v);
-      return;
-    }
+    if (this.animateMove()) return;
     this.tickChargeGlow();
     const input: PlayerAnimInput = {
       // Atordoado pelo golpe ou morto até o respawn.
@@ -199,18 +189,8 @@ export class PlayerAnimator {
       landMs: this.p.landMs,
     };
     const anim = pickPlayerAnim(input);
-    const v = this.p.view;
-    // Escala negativa espelha em volta da origem (o pé no centro do corpo); o flipX espelharia em volta do
-    // centro do frame, que é mais largo que o corpo.
-    if (this.hdIdle(anim)) return;
-    this.placeView();
-    v.setScale(this.p.facing, 1);
-    if (input.attack && anim !== 'throw' && anim !== 'hurt') {
-      v.anims.stop();
-      v.setFrame(`${anim}-${attackFrame(input.attack.phase)}`);
-    } else {
-      v.anims.play(playerAnimKey(anim), true);
-    }
+    const still = input.attack && anim !== 'throw' && anim !== 'hurt';
+    const v = still ? this.show(`${anim}-${attackFrame(input.attack!.phase)}`) : this.play(anim);
     // Rastro enquanto o chute está na fase ativa ou a pose de arremesso está na tela (FX-05), já com o frame novo.
     if ((anim === 'kick' && input.attack?.phase === 'active') || anim === 'throw') this.p.fx.afterimage(v);
   }

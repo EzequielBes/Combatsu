@@ -37,15 +37,15 @@ export default async function (ctx) {
   const viewW = s.camera.worldView.right - s.camera.worldView.left;
   assert(Math.abs(viewW - 640) < 1, `vista de mundo deveria ter ~640 px de largura: ${viewW}`);
 
-  // Idle parado: textura player-hd e quadro hd-idle-*.
+  // Idle parado: textura player-hd e quadro idle-*.
   for (let i = 0; i < 30; i++) s = await frame();
   assert(
-    s.player.sheet === 'player-hd' && s.player.frame.startsWith('hd-idle-'),
-    `idle deveria usar player-hd/hd-idle-*: ${s.player.sheet}/${s.player.frame}`,
+    s.player.sheet === 'player-hd' && s.player.frame.startsWith('idle-'),
+    `idle deveria usar player-hd/idle-*: ${s.player.sheet}/${s.player.frame}`,
   );
   await shoot('hd-idle.png');
 
-  // Gancho: W + J no mesmo frame, no chão. Passa por hd-gancho-* na folha HD e volta ao idle HD.
+  // Gancho: W + J no mesmo frame, no chão. Passa pela sequência ganchoAscendente@* na folha HD e volta ao idle HD.
   await down('KeyW');
   await down('KeyJ');
   s = await frame();
@@ -56,11 +56,11 @@ export default async function (ctx) {
   for (let i = 0; i < 80; i++) {
     if (s.player.move === 'ganchoAscendente') {
       assert(
-        s.player.sheet === 'player-hd' && s.player.frame.startsWith('hd-gancho-'),
-        `gancho deveria usar player-hd/hd-gancho-*: ${s.player.sheet}/${s.player.frame}`,
+        s.player.sheet === 'player-hd' && s.player.frame.startsWith('ganchoAscendente@'),
+        `gancho deveria usar player-hd/ganchoAscendente@*: ${s.player.sheet}/${s.player.frame}`,
       );
       if (!seen.includes(s.player.frame)) seen.push(s.player.frame);
-      if (!shot && s.player.frame === 'hd-gancho-2') {
+      if (!shot && s.player.frame === 'ganchoAscendente@active-0') {
         shot = true;
         await shoot('hd-jogo.png');
       }
@@ -68,11 +68,11 @@ export default async function (ctx) {
     s = await frame();
   }
   assert(seen.length >= 4, `o gancho deveria passar por vários quadros HD: ${seen.join(',')}`);
-  assert(shot, `o pico do gancho (hd-gancho-2) não apareceu: ${seen.join(',')}`);
+  assert(shot, `o pico do gancho (ganchoAscendente@active-0) não apareceu: ${seen.join(',')}`);
   s = await settle();
   for (let i = 0; i < 10; i++) s = await frame();
   assert(
-    s.player.sheet === 'player-hd' && s.player.frame.startsWith('hd-idle-'),
+    s.player.sheet === 'player-hd' && s.player.frame.startsWith('idle-'),
     `depois do gancho deveria voltar ao idle HD: ${s.player.sheet}/${s.player.frame}`,
   );
 

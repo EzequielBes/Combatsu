@@ -3,7 +3,9 @@ import { strikeToBody } from '../../src/core/strikePath';
 import { RIG_UPPERCUT_HITBOX } from '../../src/game/art/rig/flag';
 import { HD_COLORS } from '../../src/game/art/hd/palette';
 import { HD_STAGE, renderHdPlayer } from '../../src/game/art/hd/player';
-import { HD_FRAME, HD_IDLE_FRAMES, HD_UPPERCUT_PHASES, hdPlayerSheet, hdStrike } from '../../src/game/art/hd/sheet';
+import { moveFrameName } from '../../src/game/art/hd/frames';
+import { PLAYER_ANIMS } from '../../src/game/art/sprites/player';
+import { HD_FRAME, hdAnims, hdHasFrame, hdPlayerSheet, hdStrike } from '../../src/game/art/hd/sheet';
 import { SIZE } from '../../src/game/textures';
 
 const render = renderHdPlayer();
@@ -24,17 +26,26 @@ function bbox(px: Uint8Array): { top: number; bottom: number; left: number; righ
   return box;
 }
 
-const ALL_FRAMES = [...HD_IDLE_FRAMES, ...Object.values(HD_UPPERCUT_PHASES).flat()];
+const HD_IDLE_FRAMES = PLAYER_ANIMS.idle.frames;
+const ALL_FRAMES = Object.keys(render.frames);
 
 describe('HD-01: a folha player-hd tem os quadros do contrato', () => {
   it('o stage do rasterizador e o frame da folha são o mesmo 96x80 com o eixo na coluna 36', () => {
     expect(HD_STAGE).toEqual({ w: HD_FRAME.w, h: HD_FRAME.h, originCol: HD_FRAME.originCol });
   });
 
-  it('todo quadro citado pelo idle e pelo gancho existe, com 96x80 índices', () => {
+  it('todo quadro tem 96x80 índices, e o idle e os golpes HD têm todos os seus quadros', () => {
     const sheet = hdPlayerSheet();
     for (const key of ALL_FRAMES) expect(sheet.frames[key]?.length, key).toBe(W * H);
-    expect(Object.keys(sheet.frames).sort()).toEqual([...ALL_FRAMES].sort());
+    for (const key of HD_IDLE_FRAMES) expect(hdHasFrame(key), key).toBe(true);
+    for (const move of render.moves) {
+      for (const key of [`${move}-wind`, `${move}-hit`, `${move}-recover`, moveFrameName(move, 'recovery', 2)])
+        expect(hdHasFrame(key), key).toBe(true);
+    }
+  });
+
+  it('a animação idle existe inteira na folha HD', () => {
+    expect(Object.keys(hdAnims())).toContain('idle');
   });
 
   it('todo índice de cor existe na tabela e a paleta fica em até 64 cores', () => {
@@ -81,7 +92,7 @@ describe('HD-03: o gancho bate acima e à frente da cabeça, dentro da hitbox', 
   });
 
   it('o punho do pico é opaco no quadro do pico', () => {
-    const px = render.frames[HD_UPPERCUT_PHASES.active[0]];
+    const px = render.frames[moveFrameName('ganchoAscendente', 'active', 0)];
     expect(px[hit.pt.row * W + hit.pt.col]).not.toBe(0);
   });
 
