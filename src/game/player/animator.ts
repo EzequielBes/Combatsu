@@ -141,8 +141,10 @@ export class PlayerAnimator {
     if (p.dodge.active) return { frame: `dodge-${DODGE_ELAPSED_HALF(p.dodge.cooldownMs)}`, trail: true };
     // Abaixar (DEF-09): corpo agachado parado enquanto durar.
     if (p.duck.active && !down) return { frame: 'duck' };
-    // CTL-09: guarda ou janela de parry mostram o frame `guard`.
-    if (p.guard.state !== 'none' && !down && !p.moves.isMoving) return { frame: 'guard' };
+    // CTL-09: guarda ou janela de parry mostram o frame `guard`. Com `?hd=1` a janela de parry mostra a deflexão
+    // (`parry`), que na folha antiga existe mas nunca foi usada.
+    if (p.guard.state !== 'none' && !down && !p.moves.isMoving)
+      return { frame: HD_ON && p.guard.state === 'parry' ? 'parry' : 'guard' };
     return undefined;
   }
 
