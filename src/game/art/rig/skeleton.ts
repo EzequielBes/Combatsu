@@ -62,32 +62,151 @@ export interface Bone {
   parent: BoneName | null;
 }
 
-/*
- * Medidas tiradas do `idle-0` (grade 32x30): cabeça de 11 linhas (6..16), tronco de 7 linhas do cinto (quadril, linha 24)
- * ao pescoço (linha 17) com o peito a 5,4 do quadril, onde ficam os ombros; ombro de perto 0,8 atrás da vertical do
- * pescoço (o braço do idle cai por aí, com miolo de 2 texels), quadris a 3 à frente e 2 atrás do eixo (pernas de 4 texels com 1
- * de vão), coxa + canela de 4,2 (do quadril, linha 24, ao tornozelo, linha 28,2) e sapato de 3 texels (o de longe é mais curto, para o vão entre os pés). O braço (6,5 + 6,5) é mais longo que o do idle
- * (5,5 do ombro à mão, de lado): o gancho esticado precisa de ~13 texels do ombro ao punho; o idle usa `armScale` para
- * encurtar o braço por perspectiva (SPEC_DEVIATION de proporção, ver spec RIG-06).
+/** Do tornozelo à base do frame: o sapato e o contorno de baixo (o tornozelo fica a 1,8 texel do chão). */
+export const SOLE = 1.8;
+
+/** Perfil do tronco: meia largura (em texels) em cada faixa, do quadril ao pescoço. */
+export interface TorsoShape {
+  /** Meia largura do bloco do quadril, abaixo do cinto (u < 1). */
+  hip: number;
+  /** Meia largura da cintura (de u = 1,2 até o começo do ombro). */
+  waist: number;
+  /** Meia largura na linha dos ombros. */
+  shoulder: number;
+  /** Meia largura da gola (último texel antes do pescoço). */
+  collar: number;
+  /** Altura (a partir do quadril) onde começa a faixa do ombro. */
+  shoulderFrom: number;
+  /** Afunila de forma contínua da cintura ao ombro (V), em vez de degraus. */
+  taper: boolean;
+  /** Alturas (a partir do quadril) dos botões do paletó. */
+  buttons: readonly number[];
+}
+
+/** Espessuras (raios de dentro do contorno) de braço e perna e a escala da mão. */
+export interface Thickness {
+  arm: { shoulder: number; elbow: number; wrist: number };
+  leg: { hip: number; knee: number; ankle: number };
+  /** Escala da mão fechada (1 = a do `idle-0`, de 2x2 em repouso e ~4x3 no soco). */
+  hand: number;
+  /** Raio do sapato. */
+  shoe: number;
+  torso: TorsoShape;
+}
+
+/**
+ * Proporções do boneco, em texels do frame de 32x30. Toda medida do esqueleto sai daqui (`bonesOf`); a altura em pé é
+ * cabeça + pescoço + tronco + coxa + canela + `SOLE` (o rasterizador carimba a cabeça de `head` linhas no pescoço).
  */
-export const BONES: readonly Bone[] = [
-  { name: 'spine', from: 'hip', to: 'chest', length: 5.4, parent: null },
-  { name: 'neckBone', from: 'chest', to: 'neck', length: 1.6, parent: 'spine' },
-  { name: 'shoulderNear', from: 'chest', to: 'shoulderNear', length: 0.8, parent: 'spine' },
-  { name: 'upperArmNear', from: 'shoulderNear', to: 'elbowNear', length: 6.5, parent: null },
-  { name: 'foreArmNear', from: 'elbowNear', to: 'wristNear', length: 6.5, parent: 'upperArmNear' },
-  { name: 'shoulderFar', from: 'chest', to: 'shoulderFar', length: 0.4, parent: 'spine' },
-  { name: 'upperArmFar', from: 'shoulderFar', to: 'elbowFar', length: 6.5, parent: null },
-  { name: 'foreArmFar', from: 'elbowFar', to: 'wristFar', length: 6.5, parent: 'upperArmFar' },
-  { name: 'pelvisNear', from: 'hip', to: 'hipNear', length: 3, parent: null },
-  { name: 'thighNear', from: 'hipNear', to: 'kneeNear', length: 2.1, parent: null },
-  { name: 'shinNear', from: 'kneeNear', to: 'ankleNear', length: 2.1, parent: 'thighNear' },
-  { name: 'footNear', from: 'ankleNear', to: 'toeNear', length: 2.4, parent: null },
-  { name: 'pelvisFar', from: 'hip', to: 'hipFar', length: 2, parent: null },
-  { name: 'thighFar', from: 'hipFar', to: 'kneeFar', length: 2.1, parent: null },
-  { name: 'shinFar', from: 'kneeFar', to: 'ankleFar', length: 2.1, parent: 'thighFar' },
-  { name: 'footFar', from: 'ankleFar', to: 'toeFar', length: 0.8, parent: null },
-];
+export interface Proportions {
+  name: string;
+  /** Altura total em pé (silhueta, do chão ao topo do contorno do cabelo). */
+  height: number;
+  /** Linhas da grade da cabeça (com o contorno e os espetos do cabelo). */
+  head: number;
+  /** Osso do pescoço: do peito (linha dos ombros) à base da cabeça. */
+  neck: number;
+  /** Tronco: do quadril (cinto) ao peito (linha dos ombros). */
+  torso: number;
+  /** Deslocamento do ombro de perto, para trás do eixo do peito, e do de longe, para a frente (corpo de 3/4). */
+  shoulderNear: number;
+  shoulderFar: number;
+  upperArm: number;
+  foreArm: number;
+  thigh: number;
+  shin: number;
+  /** Pé de perto e de longe, do tornozelo à ponta. */
+  foot: number;
+  footFar: number;
+  /** Largura do quadril: o de perto sai à frente e o de longe atrás do eixo. */
+  pelvisNear: number;
+  pelvisFar: number;
+  thick: Thickness;
+}
+
+/*
+ * O boneco chibi atual (`atual`), tirado do `idle-0` (grade 32x30): cabeça de 11 linhas (6..16), tronco de 7 linhas do
+ * cinto (quadril, linha 24) ao pescoço (linha 17) com o peito a 5,4 do quadril, onde ficam os ombros; ombro de perto 0,8
+ * atrás da vertical do pescoço, quadris a 3 à frente e 2 atrás do eixo, coxa + canela de 4,2 e sapato de 3 texels (o de
+ * longe é mais curto, para o vão entre os pés). O braço (6,5 + 6,5) é mais longo que o do idle (5,5 do ombro à mão, de
+ * lado): o gancho esticado precisa de ~13 texels do ombro ao punho; o idle usa `armScale` para encurtar o braço por
+ * perspectiva (SPEC_DEVIATION de proporção, ver spec RIG-06). É a causa do "anão bombado": cabeça de 11/24 e pernas de
+ * 6,4/24.
+ */
+export const CHIBI: Proportions = {
+  name: 'atual',
+  height: 24,
+  head: 11,
+  neck: 1.6,
+  torso: 5.4,
+  shoulderNear: 0.8,
+  shoulderFar: 0.4,
+  upperArm: 6.5,
+  foreArm: 6.5,
+  thigh: 2.1,
+  shin: 2.1,
+  foot: 2.4,
+  footFar: 0.8,
+  pelvisNear: 3,
+  pelvisFar: 2,
+  thick: {
+    arm: { shoulder: 1.55, elbow: 1.3, wrist: 1.15 },
+    leg: { hip: 1.5, knee: 1.25, ankle: 1.05 },
+    hand: 1,
+    shoe: 0.62,
+    torso: { hip: 2.9, waist: 2.7, shoulder: 3.1, collar: 2.7, shoulderFrom: 3.4, taper: false, buttons: [1.9, 3.4, 4.9] },
+  },
+};
+
+/** Comprimento de cada osso de um corpo. */
+export function lengthsOf(p: Proportions): Record<BoneName, number> {
+  return {
+    spine: p.torso,
+    neckBone: p.neck,
+    shoulderNear: p.shoulderNear,
+    upperArmNear: p.upperArm,
+    foreArmNear: p.foreArm,
+    shoulderFar: p.shoulderFar,
+    upperArmFar: p.upperArm,
+    foreArmFar: p.foreArm,
+    pelvisNear: p.pelvisNear,
+    thighNear: p.thigh,
+    shinNear: p.shin,
+    footNear: p.foot,
+    pelvisFar: p.pelvisFar,
+    thighFar: p.thigh,
+    shinFar: p.shin,
+    footFar: p.footFar,
+  };
+}
+
+const LINKS: Record<BoneName, [JointName, JointName, BoneName | null]> = {
+  spine: ['hip', 'chest', null],
+  neckBone: ['chest', 'neck', 'spine'],
+  shoulderNear: ['chest', 'shoulderNear', 'spine'],
+  upperArmNear: ['shoulderNear', 'elbowNear', null],
+  foreArmNear: ['elbowNear', 'wristNear', 'upperArmNear'],
+  shoulderFar: ['chest', 'shoulderFar', 'spine'],
+  upperArmFar: ['shoulderFar', 'elbowFar', null],
+  foreArmFar: ['elbowFar', 'wristFar', 'upperArmFar'],
+  pelvisNear: ['hip', 'hipNear', null],
+  thighNear: ['hipNear', 'kneeNear', null],
+  shinNear: ['kneeNear', 'ankleNear', 'thighNear'],
+  footNear: ['ankleNear', 'toeNear', null],
+  pelvisFar: ['hip', 'hipFar', null],
+  thighFar: ['hipFar', 'kneeFar', null],
+  shinFar: ['kneeFar', 'ankleFar', 'thighFar'],
+  footFar: ['ankleFar', 'toeFar', null],
+};
+
+/** A tabela de ossos (pai antes do filho) de um corpo. */
+export function bonesOf(p: Proportions): readonly Bone[] {
+  const len = lengthsOf(p);
+  return (Object.keys(LINKS) as BoneName[]).map((name) => ({ name, from: LINKS[name][0], to: LINKS[name][1], length: len[name], parent: LINKS[name][2] }));
+}
+
+/** Ossos do corpo atual (`CHIBI`); as poses sem `body` usam estes. */
+export const BONES: readonly Bone[] = bonesOf(CHIBI);
 
 export const BONE_BY_NAME: Readonly<Record<BoneName, Bone>> = Object.fromEntries(BONES.map((b) => [b.name, b])) as Record<BoneName, Bone>;
 
@@ -101,13 +220,16 @@ export interface Pose {
    * 13 no soco). Vale para braço e antebraço dos dois lados.
    */
   armScale?: number;
+  /** Proporções do corpo; sem este campo, `CHIBI`. */
+  body?: Proportions;
 }
 
 const ARM_BONES: ReadonlySet<BoneName> = new Set(['upperArmNear', 'foreArmNear', 'upperArmFar', 'foreArmFar']);
 
 /** Comprimento de um osso nesta pose: o definido, vezes o encurtamento dos braços quando for osso de braço. */
 export function boneLength(pose: Pose, bone: Bone): number {
-  return bone.length * (ARM_BONES.has(bone.name) ? (pose.armScale ?? 1) : 1);
+  const base = pose.body ? lengthsOf(pose.body)[bone.name] : bone.length;
+  return base * (ARM_BONES.has(bone.name) ? (pose.armScale ?? 1) : 1);
 }
 
 /** Ângulos de repouso: tronco em pé, ombros e quadris abertos para os lados, braços e pernas pendurados. */
@@ -133,12 +255,17 @@ export const REST_ANGLES: Readonly<Record<BoneName, number>> = {
 export const dir = (deg: number): Vec2 => ({ x: Math.sin((deg * Math.PI) / 180), y: Math.cos((deg * Math.PI) / 180) });
 export const angleOf = (from: Vec2, to: Vec2): number => (Math.atan2(to.x - from.x, to.y - from.y) * 180) / Math.PI;
 
-export function makePose(root: Vec2, angles: Partial<Record<BoneName, number>> = {}): Pose {
-  return { root: { ...root }, angles: { ...REST_ANGLES, ...angles } };
+export function makePose(root: Vec2, angles: Partial<Record<BoneName, number>> = {}, body?: Proportions): Pose {
+  const pose: Pose = { root: { ...root }, angles: { ...REST_ANGLES, ...angles } };
+  if (body) pose.body = body;
+  return pose;
 }
 
 export function clonePose(p: Pose): Pose {
-  return p.armScale === undefined ? { root: { ...p.root }, angles: { ...p.angles } } : { root: { ...p.root }, angles: { ...p.angles }, armScale: p.armScale };
+  const out: Pose = { root: { ...p.root }, angles: { ...p.angles } };
+  if (p.armScale !== undefined) out.armScale = p.armScale;
+  if (p.body) out.body = p.body;
+  return out;
 }
 
 /** Ângulo absoluto (mundo) de cada osso: o local somado ao do osso pai. Os ossos estão em ordem pai-antes-do-filho. */

@@ -9,17 +9,15 @@
  * tons; o tronco segue a forma do paletó. No fim roda o `selOut` do player, como na montagem manual.
  */
 import { selOut } from '../selOut';
-import { HEAD_FOCUS, PLAYER_FRAME_H, PLAYER_FRAME_W, type Grid } from '../sprites/player';
-import { solve, worldAngles, dir, type JointName, type Pose, type Vec2 } from './skeleton';
+import { PLAYER_FRAME_H, PLAYER_FRAME_W, type Grid } from '../sprites/player';
+import { headOf } from './heads';
+import { CHIBI, solve, worldAngles, dir, type JointName, type Pose, type Proportions, type Thickness, type Vec2 } from './skeleton';
 
 export const RIG_W = PLAYER_FRAME_W;
 export const RIG_H = PLAYER_FRAME_H;
 
 /** Luz (de cima, um pouco de trás): o lado do texel voltado para cá pega o tom claro. */
 const LIGHT: Vec2 = { x: -0.45, y: -0.89 };
-/** A cabeça (grade 13x11) fica com o canto superior esquerdo a este deslocamento do pescoço. */
-const HEAD_DX = -5;
-const HEAD_DY = -11;
 
 export interface RasterResult {
   /** 30 linhas de 32 colunas. */
@@ -158,9 +156,6 @@ interface LimbStyle {
 const NEAR: LimbStyle = { cloth: NEAR_CLOTH, skin: { lit: 'p', shade: 'P', line: 'x' }, spec: 's', crease: 'o' };
 const FAR: LimbStyle = { cloth: FAR_CLOTH, skin: { lit: 'P', shade: 'q', line: 'q' }, spec: 's', crease: 'K' };
 
-/** Raios (de dentro do contorno) de cada parte: braço e perna do `idle-0` têm 2 texels de miolo. */
-const ARM_R = { shoulder: 1.55, elbow: 1.3, wrist: 1.15 };
-const LEG_R = { hip: 1.5, knee: 1.25, ankle: 1.05 };
 
 const unit = (a: Vec2, b: Vec2): Vec2 => {
   const l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
@@ -219,7 +214,8 @@ function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle, k = 1): { 
 }
 
 /** Braço: manga (braço e antebraço), punho de manga claro e a mão fechada, numa camada só com o contorno `k`. */
-function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Near' | 'Far', style: LimbStyle, handScale = 1): Layer {
+function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Near' | 'Far', style: LimbStyle, th: Thickness, handScale = 1): Layer {
+  const ARM_R = th.arm;
   const sh = joints[`shoulder${side}`];
   const el = joints[`elbow${side}`];
   const wr = joints[`wrist${side}`];
@@ -244,7 +240,8 @@ function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Ne
 }
 
 /** Perna: coxa e canela (cápsulas com dobra de joelho) e o sapato, tudo na camada da própria perna. */
-function legLayer(joints: Record<JointName, Vec2>, footAngle: number, side: 'Near' | 'Far', style: LimbStyle): Layer {
+function legLayer(joints: Record<JointName, Vec2>, footAngle: number, side: 'Near' | 'Far', style: LimbStyle, body: Proportions): Layer {
+  const LEG_R = body.thick.leg;
   const hp = joints[`hip${side}`];
   const kn = joints[`knee${side}`];
   const an = joints[`ankle${side}`];
@@ -261,9 +258,9 @@ function legLayer(joints: Record<JointName, Vec2>, footAngle: number, side: 'Nea
 
   // Sapato: do calcanhar (atrás do tornozelo) até a ponta.
   const fd = dir(footAngle);
-  const back = side === 'Far' ? 1.5 : 0.8; // o pé de longe tem o calcanhar mais atrás, para caber o vão entre os pés
+  const back = side === 'Far' ? 0.8 + 0.4375 * (body.foot - body.footFar) : 0.8; // o pé de longe curto tem o calcanhar mais atrás, para caber o vão entre os pés
   const heel = { x: an.x - fd.x * back, y: an.y - fd.y * back };
-  for (const h of sample([{ a: heel, b: to, ra: 0.62, rb: 0.55 }])) {
+  for (const h of sample([{ a: heel, b: to, ra: body.thick.shoe, rb: body.thick.shoe - 0.07 }])) {
     layer.set(key(h.x, h.y), { x: h.x, y: h.y, ch: shadeOf(h) > 0.45 ? 's' : 'K' });
   }
   return layer;
@@ -284,13 +281,18 @@ const TORSO_V = 0;
  * largo, cintura mais estreita, bloco do quadril abaixo do cinto, gola no alto, fileira de botões na frente, luz fria
  * nas costas e cinto com fivela.
  */
-function torsoLayer(joints: Record<JointName, Vec2>): Layer {
+function torsoLayer(joints: Record<JointName, Vec2>, shape: Thickness['torso']): Layer {
   const { hip, neck } = joints;
   const len = Math.hypot(neck.x - hip.x, neck.y - hip.y);
   const up = unit(hip, neck);
   const front = { x: -up.y, y: up.x };
   const cells: { x: number; y: number; ch: string }[] = [];
-  const halfAt = (u: number): number => (u > len - 1 ? 2.7 : u > 3.4 ? 3.1 : u > 1.2 ? 2.7 : 2.9);
+  const halfAt = (u: number): number => {
+    if (u > len - 1) return shape.collar;
+    if (u >= shape.shoulderFrom) return shape.shoulder;
+    if (u > 1.2) return shape.taper ? shape.waist + ((shape.shoulder - shape.waist) * (u - 1.2)) / (shape.shoulderFrom - 1.2) : shape.waist;
+    return shape.hip;
+  };
   const span = Math.ceil(len + 6);
   for (let y = Math.floor(hip.y) - span; y <= Math.ceil(hip.y) + 3; y++) {
     for (let x = Math.floor(hip.x) - span; x <= Math.ceil(hip.x) + span; x++) {
@@ -321,41 +323,42 @@ function torsoLayer(joints: Record<JointName, Vec2>): Layer {
   };
   mark(0.5, 0.5, 'A'); // fivela
   mark(0.5, -0.5, 'z');
-  for (const u of [1.9, 3.4, 4.9]) mark(u, 1.45, 'A'); // botões
+  for (const u of shape.buttons) mark(u, shape.waist * 0.537, 'A'); // botões
   return layer;
 }
 
 // ---------------------------------------------------------------- frame
 
 export interface RasterOptions {
-  /** Grade da cabeça carimbada no pescoço (padrão: `HEAD_FOCUS`, a do golpe). */
-  head?: Grid;
+  /** Grade da cabeça carimbada no pescoço (padrão: a do corpo da pose, `headOf`). */
+  head?: { grid: Grid; neckCol: number };
 }
 
 /** Rasteriza a pose num frame de 30 linhas x 32 colunas. */
 export function rasterize(pose: Pose, opts: RasterOptions = {}): RasterResult {
-  const hand = Math.min(1, Math.max(0.6, pose.armScale ?? 1));
+  const body = pose.body ?? CHIBI;
+  const hand = Math.min(1, Math.max(0.6, pose.armScale ?? 1)) * body.thick.hand;
   const joints = solve(pose);
   const wa = worldAngles(pose);
   const canvas = new Canvas();
 
   // Profundidade: braço e perna de longe, tronco, perna de perto, cabeça no pescoço e o braço de perto por cima.
-  paint(canvas, armLayer(joints, wa.foreArmFar, 'Far', FAR, hand));
-  paint(canvas, legLayer(joints, wa.footFar, 'Far', FAR), legTop(joints, 'Far'));
-  paint(canvas, torsoLayer(joints));
-  paint(canvas, legLayer(joints, wa.footNear, 'Near', NEAR), legTop(joints, 'Near'));
+  paint(canvas, armLayer(joints, wa.foreArmFar, 'Far', FAR, body.thick, hand));
+  paint(canvas, legLayer(joints, wa.footFar, 'Far', FAR, body), legTop(joints, 'Far'));
+  paint(canvas, torsoLayer(joints, body.thick.torso));
+  paint(canvas, legLayer(joints, wa.footNear, 'Near', NEAR, body), legTop(joints, 'Near'));
 
-  const head = opts.head ?? HEAD_FOCUS;
-  const hx = Math.round(joints.neck.x + HEAD_DX);
-  const hy = Math.round(joints.neck.y + HEAD_DY);
-  head.forEach((row, dy) =>
+  const head = opts.head ?? headOf(body);
+  const hx = Math.round(joints.neck.x - head.neckCol);
+  const hy = Math.round(joints.neck.y - head.grid.length);
+  head.grid.forEach((row, dy) =>
     [...row].forEach((ch, dx) => {
       if (ch !== '.') canvas.set(hx + dx, hy + dy, ch);
     }),
   );
 
   // O braço de perto passa por cima da cabeça (o gancho sobe rente ao rosto).
-  paint(canvas, armLayer(joints, wa.foreArmNear, 'Near', NEAR, hand));
+  paint(canvas, armLayer(joints, wa.foreArmNear, 'Near', NEAR, body.thick, hand));
 
   selOut(canvas.cells);
   return { frame: canvas.cells.map((r) => r.join('')), clipped: canvas.clipped, joints };

@@ -17,6 +17,7 @@ export function inbetween(a: Pose, b: Pose, t: number): Pose {
   if (t === 0) return clonePose(a);
   if (t === 1) return clonePose(b);
   const out: Pose = { root: { x: a.root.x + (b.root.x - a.root.x) * t, y: a.root.y + (b.root.y - a.root.y) * t }, angles: { ...a.angles } };
+  if (a.body) out.body = a.body;
   const sa = a.armScale ?? 1;
   const sb = b.armScale ?? 1;
   if (a.armScale !== undefined || b.armScale !== undefined) out.armScale = sa + (sb - sa) * t;
