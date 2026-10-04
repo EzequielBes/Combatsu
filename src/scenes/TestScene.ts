@@ -214,6 +214,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private focusLines!: FocusLines;
   /** Último impacto do golpe do jogador, para o snapshot (IMP-16). */
   private lastImpact: { tier: ImpactTier; impactFrame: boolean } | null = null;
+  /** `swingId` do último golpe que recebeu o quadro de impacto (IMP-14, IMP-16). */
+  private framedSwingId: number | null = null;
   /** Quadros sem ponto de golpe já avisados (EDG-01: um aviso por nome). */
   private warnedStrikeFrames = new Set<string>();
   /** Golpe do jogador em startup com a chama acesa (TRL-07), para a chama seguir o ponto de golpe. */
@@ -1415,7 +1417,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.cursedFx.impact(tier, point, { x: hit.direction.x, y: hit.direction.y }, hit.swingId ?? Math.floor(this.clockMs));
     const kokusen = this.kokusenFrame === this.game.getFrame();
     const framed = tier === 'decisive' && !kokusen && hit.swingId !== undefined ? this.impactFrame.trigger(hit.swingId) : false;
-    this.lastImpact = { tier, impactFrame: framed || (this.lastImpact?.tier === 'decisive' && this.impactFrame.applied) };
+    if (framed) this.framedSwingId = hit.swingId ?? null;
+    // IMP-16: só o golpe que ganhou o postFX (ou outro alvo do mesmo golpe, IMP-14) reporta `impactFrame`.
+    this.lastImpact = { tier, impactFrame: framed || (this.impactFrame.applied && hit.swingId !== undefined && hit.swingId === this.framedSwingId) };
     this.debugEvents.push(`impact:${tier}`);
     // RCT-01, RCT-02: o inimigo comum que fica de pé desliza para longe do jogador.
     if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1);
