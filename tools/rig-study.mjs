@@ -27,7 +27,7 @@ const { PLAYER_FRAMES } = await src('game/art/sprites/player.ts');
 const { PLAYER_MOVE_FRAMES } = await src('game/art/sprites/playerMoves.ts');
 const { ENEMY_VARIANT_FRAMES } = await src('game/art/sprites/enemy.ts');
 const { PRESETS } = await src('game/art/rig/presets.ts');
-const { uppercutFor, reachShortfall } = await src('game/art/rig/poses/uppercut.ts');
+const { DEFAULT_TUNING, uppercutFor, reachShortfall } = await src('game/art/rig/poses/uppercut.ts');
 const { TUNINGS, MIN_STRIKE } = await src('game/art/rig/poses/tunings.ts');
 const { rasterize } = await src('game/art/rig/rasterize.ts');
 const { headOf } = await src('game/art/rig/presets.ts');
@@ -56,7 +56,7 @@ for (const [i, s] of sets.entries()) {
   const body = s.body;
   const j = rasterize(s.idle).frame;
   const top = j.findIndex((r) => /[^.]/.test(r));
-  const target = TUNINGS[body.name]?.strike ?? { x: 17.2, y: 6.2 };
+  const target = TUNINGS[body.name]?.strike ?? DEFAULT_TUNING.strike;
   console.log(
     `${label(i)}: topo ${top} (altura ${30 - top}), cabeça ${body.head}, perna (quadril ao chão) ${(body.thigh + body.shin + 1.8).toFixed(1)}, braço ${(body.upperArm + body.foreArm).toFixed(1)}, ` +
       `golpe col ${s.strike.col} row ${s.strike.row}, falta p/ alvo ${reachShortfall(s, target).toFixed(2)}, p/ mínimo ${reachShortfall(s, MIN_STRIKE).toFixed(2)}`,

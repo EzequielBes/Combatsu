@@ -2,22 +2,32 @@
  * Gancho ascendente e idle para qualquer proporção do boneco (estudo de proporções). As poses-chave são montadas a partir
  * das medidas do corpo (altura das pernas, comprimento do braço), mantendo o arco e o timing do soco aprovado: guarda,
  * antecipação (agacha além do wind), wind, subida, hit com overshoot e recover, na mesma sequência de 12 quadros.
- * Os alvos são pontos do frame de 32x30 (bordas de texel); o tornozelo no chão fica na linha 28,2.
+ * Os alvos ficam em coordenadas do `RigFrame` (bordas de texel): o eixo do corpo na coluna `originCol` e o tornozelo
+ * no chão na linha `groundOf(frame)` (28,2 no frame de 32x30).
  */
 import { easeInOutCubic, inbetween } from '../interpolate';
-import { rasterize, wristTexel, type RasterResult } from '../rasterize';
+import { RIG_FRAME_32, groundOf, rasterize, wristTexel, type RasterResult, type RigFrame } from '../rasterize';
 import { solve, type Pose, type Proportions, type Vec2 } from '../skeleton';
 import { buildPose as build } from './build';
 
-/** Linha do tornozelo com o pé no chão. */
-export const GROUND = 28.2;
+/** Linha do tornozelo com o pé no chão, no frame de 32x30. */
+export const GROUND = groundOf(RIG_FRAME_32);
+
+/** Ponto relativo ao corpo: texels à frente do eixo e acima do chão (vale em qualquer frame). */
+export interface Reach {
+  ahead: number;
+  up: number;
+}
+
+/** Converte um `Reach` para o ponto do frame. */
+export const toFrame = (frame: RigFrame, r: Reach): Vec2 => ({ x: frame.originCol + r.ahead, y: groundOf(frame) - r.up });
 
 /** Ajustes finos por corpo; o que não vier daqui sai das proporções. */
 export interface Tuning {
-  /** Ponto do frame que o punho do hit mira (o texel dele vira o ponto de golpe). */
-  strike: Vec2;
-  /** Posição x do quadril no hit. */
-  hitHipX: number;
+  /** Ponto que o punho do hit mira (o texel dele vira o ponto de golpe). */
+  strike: Reach;
+  /** Quanto o quadril avança no hit, à frente do eixo. */
+  hitHipAhead: number;
   /** Subida do quadril no hit, acima da altura em pé. */
   hitRise: number;
   /** Inclinação do tronco no hit (graus; acima de 180 inclina para trás). */
@@ -32,10 +42,11 @@ export interface Tuning {
   hitStride: number;
 }
 
-export const DEFAULT_TUNING: Tuning = { strike: { x: 17.2, y: 6.2 }, hitHipX: 11.2, hitRise: 1.1, hitSpine: 188, hitNeck: 20, tiptoe: 1.4, crouch: 0.23, hitStride: 3.4 };
+export const DEFAULT_TUNING: Tuning = { strike: { ahead: 7.2, up: 22 }, hitHipAhead: 1.2, hitRise: 1.1, hitSpine: 188, hitNeck: 20, tiptoe: 1.4, crouch: 0.23, hitStride: 3.4 };
 
 export interface UppercutSet {
   body: Proportions;
+  frame: RigFrame;
   idle: Pose;
   guard: Pose;
   wind: Pose;
@@ -51,78 +62,83 @@ export interface UppercutSet {
 }
 
 /** Idle: em pé, braços soltos junto ao corpo, pés a meio passo. */
-export function idleFor(body: Proportions): Pose {
+export function idleFor(body: Proportions, frame: RigFrame = RIG_FRAME_32): Pose {
   const L = body.thigh + body.shin;
   const a = body.upperArm + body.foreArm;
+  const cx = frame.originCol;
+  const g = groundOf(frame);
   return build({
     body,
-    hip: { x: 10, y: GROUND - L },
+    hip: { x: cx, y: g - L },
     spine: 180,
     handScale: 0.6,
     armNear: { rel: { x: -0.1, y: a * 0.94 }, bend: -1 },
     armFar: { rel: { x: 0.5, y: a * 0.95 }, bend: -1 },
-    legNear: { ankle: { x: 12.8, y: GROUND }, foot: 90 },
-    legFar: { ankle: { x: 7.4, y: GROUND }, foot: 90 },
+    legNear: { ankle: { x: cx + 2.8, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx - 2.6, y: g }, foot: 90 },
   });
 }
 
-export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}): UppercutSet {
+export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}, frame: RigFrame = RIG_FRAME_32): UppercutSet {
   const t = { ...DEFAULT_TUNING, ...tune };
   const L = body.thigh + body.shin;
   const a = body.upperArm + body.foreArm;
-  const hy = GROUND - L;
+  const cx = frame.originCol;
+  const g = groundOf(frame);
+  const hy = g - L;
   const c = t.crouch * L;
+  const hitHipX = cx + t.hitHipAhead;
 
   const guard = build({
     body,
-    hip: { x: 10, y: hy + 0.2 },
+    hip: { x: cx, y: hy + 0.2 },
     spine: 178,
     handScale: 0.8,
     armNear: { rel: { x: a * 0.5, y: a * 0.2 }, bend: -1 },
     armFar: { rel: { x: a * 0.36, y: a * 0.12 }, bend: -1 },
-    legNear: { ankle: { x: 13.4, y: GROUND }, foot: 90 },
-    legFar: { ankle: { x: 6.6, y: GROUND }, foot: 90 },
+    legNear: { ankle: { x: cx + 3.4, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx - 3.4, y: g }, foot: 90 },
   });
   const wind = build({
     body,
-    hip: { x: 9.4, y: hy + c },
+    hip: { x: cx - 0.6, y: hy + c },
     spine: 172,
     handScale: 0.8,
     armNear: { rel: { x: a * 0.42, y: a * 0.35 }, bend: -1 },
     armFar: { rel: { x: a * 0.4, y: -a * 0.1 }, bend: -1 },
-    legNear: { ankle: { x: 14.2, y: GROUND }, foot: 90 },
-    legFar: { ankle: { x: 5.2, y: GROUND }, foot: 90 },
+    legNear: { ankle: { x: cx + 4.2, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx - 4.8, y: g }, foot: 90 },
   });
   const mid = build({
     body,
-    hip: { x: 10.2, y: hy - 0.45 },
+    hip: { x: cx + 0.2, y: hy - 0.45 },
     spine: 176,
     handScale: 0.9,
     armNear: { rel: { x: a * 0.62, y: -a * 0.5 }, bend: -1 },
     armFar: { rel: { x: a * 0.36, y: -a * 0.1 }, bend: -1 },
-    legNear: { ankle: { x: 13.8, y: GROUND - 0.6 }, foot: 70 },
-    legFar: { ankle: { x: 6.2, y: GROUND - 0.6 }, foot: 80 },
+    legNear: { ankle: { x: cx + 3.8, y: g - 0.6 }, foot: 70 },
+    legFar: { ankle: { x: cx - 3.8, y: g - 0.6 }, foot: 80 },
   });
   const hit = build({
     body,
-    hip: { x: t.hitHipX, y: hy - t.hitRise },
+    hip: { x: hitHipX, y: hy - t.hitRise },
     spine: t.hitSpine,
     neck: t.hitNeck,
     shoulderNear: -90,
-    armNear: { to: t.strike, bend: -1 },
+    armNear: { to: toFrame(frame, t.strike), bend: -1 },
     armFar: { rel: { x: a * 0.22, y: -a * 0.42 }, bend: -1 },
-    legNear: { ankle: { x: t.hitHipX + t.hitStride, y: GROUND - t.tiptoe }, foot: 55 },
-    legFar: { ankle: { x: t.hitHipX - t.hitStride, y: GROUND - t.tiptoe - 0.6 }, foot: 35 },
+    legNear: { ankle: { x: hitHipX + t.hitStride, y: g - t.tiptoe }, foot: 55 },
+    legFar: { ankle: { x: hitHipX - t.hitStride, y: g - t.tiptoe - 0.6 }, foot: 35 },
   });
   const recover = build({
     body,
-    hip: { x: 10.2, y: hy },
+    hip: { x: cx + 0.2, y: hy },
     spine: 180,
     handScale: 0.8,
     armNear: { rel: { x: a * 0.5, y: a * 0.1 }, bend: -1 },
     armFar: { rel: { x: a * 0.36, y: a * 0.14 }, bend: -1 },
-    legNear: { ankle: { x: 13.6, y: GROUND }, foot: 90 },
-    legFar: { ankle: { x: 6.4, y: GROUND }, foot: 90 },
+    legNear: { ankle: { x: cx + 3.6, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx - 3.6, y: g }, foot: 90 },
   });
 
   // Os mesmos 12 quadros do gancho aprovado: antecipação, wind, subida acelerando, hit, overshoot e a volta.
@@ -141,17 +157,19 @@ export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}): Uppe
     [hit, recover, 1],
   ];
   const sequencePoses = steps.map(([from, to, tt, ease]) => inbetween(from, to, ease && tt > 0 && tt < 1 ? ease(tt) : tt));
-  const sequence = sequencePoses.map((p) => rasterize(p));
-  const hitR = rasterize(hit);
+  const raster = (p: Pose): RasterResult => rasterize(p, { frame });
+  const sequence = sequencePoses.map(raster);
+  const hitR = raster(hit);
   return {
     body,
-    idle: idleFor(body),
+    frame,
+    idle: idleFor(body, frame),
     guard,
     wind,
     mid,
     hit,
     recover,
-    frames: { wind: rasterize(wind), hit: hitR, recover: rasterize(recover) },
+    frames: { wind: raster(wind), hit: hitR, recover: raster(recover) },
     strike: wristTexel(hitR.joints),
     sequencePoses,
     sequence,
@@ -159,8 +177,9 @@ export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}): Uppe
 }
 
 /** Quanto falta ao braço de perto, no hit, para o punho chegar ao alvo (distância do ombro ao alvo menos o braço; 0 = alcança). */
-export function reachShortfall(set: UppercutSet, target: Vec2): number {
+export function reachShortfall(set: UppercutSet, target: Reach): number {
   const j = solve(set.hit);
   const a = set.body.upperArm + set.body.foreArm;
-  return Math.max(0, Math.hypot(target.x - j.shoulderNear.x, target.y - j.shoulderNear.y) - a);
+  const p = toFrame(set.frame, target);
+  return Math.max(0, Math.hypot(p.x - j.shoulderNear.x, p.y - j.shoulderNear.y) - a);
 }

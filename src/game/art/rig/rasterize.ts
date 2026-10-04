@@ -1,6 +1,6 @@
 /*
- * Rasterizador do boneco articulado: transforma uma `Pose` numa grade de texto 32x30 com as teclas da `PALETTE`
- * (mesmo formato dos frames do player, AD-002). Puro, sem `phaser`.
+ * Rasterizador do boneco articulado: transforma uma `Pose` numa grade de texto com as teclas da `PALETTE` (mesmo
+ * formato dos frames do player, AD-002), no tamanho de um `RigFrame` (32x30 por padrão). Puro, sem `phaser`.
  *
  * Cada parte (braço e perna de cada lado, tronco) é uma camada própria com o seu contorno `k`, composta por profundidade:
  * braço e perna de longe (um tom mais escuro), tronco, perna de perto, cabeça, braço de perto. O contorno de uma parte
@@ -9,18 +9,30 @@
  * tons; o tronco segue a forma do paletó. No fim roda o `selOut` do player, como na montagem manual.
  */
 import { selOut } from '../selOut';
-import { PLAYER_FRAME_H, PLAYER_FRAME_W, type Grid } from '../sprites/player';
+import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN, type Grid } from '../sprites/player';
 import { headOf } from './presets';
-import { CHIBI, solve, worldAngles, dir, type JointName, type Pose, type Proportions, type Thickness, type Vec2 } from './skeleton';
+import { CHIBI, SOLE, solve, worldAngles, dir, type JointName, type Pose, type Proportions, type Thickness, type Vec2 } from './skeleton';
 
-export const RIG_W = PLAYER_FRAME_W;
-export const RIG_H = PLAYER_FRAME_H;
+/** Grade do frame do rig: largura, altura e a coluna do eixo do corpo; a origem fica no pé, na última linha. */
+export interface RigFrame {
+  w: number;
+  h: number;
+  originCol: number;
+}
+
+/** O frame do player (32x30, eixo na coluna 10): o dos presets do estudo e do boneco chibi. */
+export const RIG_FRAME_32: RigFrame = { w: PLAYER_FRAME_W, h: PLAYER_FRAME_H, originCol: PLAYER_ORIGIN.x * PLAYER_FRAME_W };
+/** Frame do heroico alto (40x40, eixo na coluna 12): folga para o corpo de 32 texels e o punho acima da cabeça. */
+export const RIG_FRAME_40: RigFrame = { w: 40, h: 40, originCol: 12 };
+
+/** Linha do tornozelo com o pé no chão neste frame (o sapato e o contorno de baixo ocupam `SOLE`). */
+export const groundOf = (frame: RigFrame): number => frame.h - SOLE;
 
 /** Luz (de cima, um pouco de trás): o lado do texel voltado para cá pega o tom claro. */
 const LIGHT: Vec2 = { x: -0.45, y: -0.89 };
 
 export interface RasterResult {
-  /** 30 linhas de 32 colunas. */
+  /** `h` linhas de `w` colunas do `RigFrame` (30 x 32 por padrão). */
   frame: string[];
   /** Texels opacos que caíram fora da grade e foram descartados (EDG-01), como `composeWithStats`. */
   clipped: number;
@@ -35,10 +47,18 @@ const STRIDE = 160;
 const key = (x: number, y: number): number => (y + OFF) * STRIDE + (x + OFF);
 
 class Canvas {
-  readonly cells: string[][] = Array.from({ length: RIG_H }, () => Array<string>(RIG_W).fill('.'));
+  readonly cells: string[][];
   clipped = 0;
+  private readonly w: number;
+  private readonly h: number;
+  /** Sem parameter properties: as ferramentas importam este .ts direto no Node (strip-only). */
+  constructor(w: number, h: number) {
+    this.w = w;
+    this.h = h;
+    this.cells = Array.from({ length: h }, () => Array<string>(w).fill('.'));
+  }
   set(x: number, y: number, ch: string): void {
-    if (x < 0 || x >= RIG_W || y < 0 || y >= RIG_H) {
+    if (x < 0 || x >= this.w || y < 0 || y >= this.h) {
       this.clipped++;
       return;
     }
@@ -332,15 +352,18 @@ function torsoLayer(joints: Record<JointName, Vec2>, shape: Thickness['torso']):
 export interface RasterOptions {
   /** Grade da cabeça carimbada no pescoço (padrão: a do corpo da pose, `headOf`). */
   head?: { grid: Grid; neckCol: number };
+  /** Tamanho do frame (padrão `RIG_FRAME_32`); a pose já vem em coordenadas deste frame. */
+  frame?: RigFrame;
 }
 
-/** Rasteriza a pose num frame de 30 linhas x 32 colunas. */
+/** Rasteriza a pose num frame de `frame.h` linhas x `frame.w` colunas (30 x 32 por padrão). */
 export function rasterize(pose: Pose, opts: RasterOptions = {}): RasterResult {
   const body = pose.body ?? CHIBI;
   const hand = Math.min(1, Math.max(0.55, pose.handScale ?? pose.armScale ?? 1)) * body.thick.hand;
   const joints = solve(pose);
   const wa = worldAngles(pose);
-  const canvas = new Canvas();
+  const frame = opts.frame ?? RIG_FRAME_32;
+  const canvas = new Canvas(frame.w, frame.h);
 
   // Profundidade: braço e perna de longe, tronco, perna de perto, cabeça no pescoço e o braço de perto por cima.
   paint(canvas, armLayer(joints, wa.foreArmFar, 'Far', FAR, body.thick, hand));
