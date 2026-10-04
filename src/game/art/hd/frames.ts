@@ -55,6 +55,11 @@ export interface HdMoveSpec {
   over?: Pose;
   down?: Pose;
   recover: Pose;
+  /**
+   * Para onde o último quadro da volta caminha (padrão: a guarda do chão). Um golpe aéreo aponta para uma pose de ar
+   * e o golpe com objeto para a pose de carregar.
+   */
+  back?: Pose;
   /** Parte do corpo que acerta. */
   strike: StrikeLimb;
   /** Mãos no pico (e no overshoot); na antecipação e na volta as mãos são punhos. */
@@ -100,7 +105,7 @@ export function expandMove(k: Kit, name: string, m: HdMoveSpec): Record<string, 
     [moveFrameName(name, 'active', 1)]: { pose: over, ...peak },
     [moveFrameName(name, 'recovery', 0)]: { pose: m.down ?? at(over, m.recover, 0.5), ...opts },
     [moveFrameName(name, 'recovery', 1)]: recover,
-    [moveFrameName(name, 'recovery', 2)]: { pose: at(m.recover, k.guard(), 0.6), ...opts },
+    [moveFrameName(name, 'recovery', 2)]: { pose: at(m.recover, m.back ?? k.guard(), 0.6), ...opts },
     [`${name}-wind`]: wind,
     [`${name}-hit`]: hit,
     [`${name}-recover`]: recover,
