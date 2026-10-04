@@ -29,6 +29,7 @@ import type { Rng } from '../core/rng';
 import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
 import { Shop, type BuyContext } from '../core/shop';
 import { SlowMo } from '../core/slowMo';
+import { CameraKick, ZoomPulse } from '../core/cameraKick';
 import { Wallet } from '../core/wallet';
 import { pickSpawnPoint } from '../core/spawnPoint';
 import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
@@ -85,6 +86,7 @@ import { KokusenFx } from '../game/techFx/KokusenFx';
 import { CursedFx } from '../game/CursedFx';
 import { ImpactFrame } from '../game/ImpactFrame';
 import { impactTier, type ImpactTier } from '../core/impactTier';
+import { CAMERA_FEEL } from '../data/feel';
 import { strikeToWorld } from '../core/strikePath';
 import { STRIKE_POINTS } from '../game/art/sprites/strikePoints';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../game/art/sprites/player';
@@ -244,6 +246,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private readonly hitstop = new Hitstop();
   /** Câmera lenta da esquiva perfeita (DOD-07), em tempo real; a escala vai para o tempo de jogo (`applyTimeScale`). */
   private slowMo = new SlowMo();
+  /** Tranco da câmera no golpe forte (CAM-01) e pulso de zoom no decisivo (CAM-02), os dois em tempo real. */
+  private cameraKick = new CameraKick();
+  private zoomPulse = new ZoomPulse();
+  /** Tempo real (ms) que falta do pulso de zoom; 0 = sem pulso em curso. */
+  private zoomPulseMs = 0;
   /** Contador de combo e nota de estilo (CMB-01..03). */
   private comboCounter = new ComboCounter();
   private lastPlayerHp = 0;
@@ -273,6 +280,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hitstop.reset();
     this.unfreeze();
     this.slowMo = new SlowMo();
+    this.cameraKick = new CameraKick();
+    this.zoomPulse = new ZoomPulse();
+    this.zoomPulseMs = 0;
     this.comboCounter = new ComboCounter();
     this.reading = new MoveReading();
     this.focusId = null;
@@ -440,9 +450,16 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** CAM-07: leva o centro da câmera atrás da posição de desenho do player e aplica o scroll na grade de pixel de tela. */
   private followCamera(dtMs: number): void {
     const cam = this.cameras.main;
+    // CAM-02: o pulso de zoom anda em tempo real, antes do cálculo do scroll (que depende do zoom atual).
+    if (this.zoomPulseMs > 0) {
+      this.zoomPulseMs = Math.max(0, this.zoomPulseMs - dtMs);
+      cam.setZoom(this.zoomPulseMs > 0 ? this.zoomPulse.update(dtMs) : WORLD_ZOOM);
+    }
     this.camCenter = followCenter(this.camCenter, this.player.renderPos, this.followConfig(), dtMs);
     const scroll = scrollFor(this.camCenter, { w: cam.width, h: cam.height }, cam.zoom);
-    cam.setScroll(scroll.x, scroll.y);
+    // CAM-01: o tranco desloca só o scroll desenhado; o centro de seguir (`camCenter`) segue limpo.
+    const kick = this.cameraKick.update(dtMs);
+    cam.setScroll(scroll.x + kick.x, scroll.y + kick.y);
   }
 
   update(_time: number, delta: number): void {
@@ -768,6 +785,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         // Fica até o próximo `roundStart` (RHUD-03). Na rodada de chefe, ela entra depois de "Chefe derrotado!",
         // que o `onBossDefeated` já mostrou (BHUD-03).
         if (!isBossRound(cmd.round)) this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
+        // CAM-08: o último inimigo da onda morreu, câmera lenta curta.
+        this.slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.slowMs);
         break;
       case 'shopOpen':
         // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
@@ -1395,6 +1414,21 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // RCT-01, RCT-02: o inimigo comum que fica de pé desliza para longe do jogador.
     if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1);
     if (hit.knockdown && target instanceof Enemy) this.crackWatch.set(target, this.clockMs);
+    this.reactCamera(tier, hit, brokePosture);
+  }
+
+  /**
+   * Câmera que reage ao impacto (CAM-01..05, CAM-07): tranco no forte, micro-zoom no decisivo (nunca durante o zoom
+   * do finalizador) e câmera lenta na quebra de postura e no Contra; um novo gatilho reinicia sem empilhar (CAM-04).
+   */
+  private reactCamera(tier: ImpactTier, hit: Hit, brokePosture: boolean): void {
+    if (tier === 'heavy') this.cameraKick.kick(hit.direction.x, hit.direction.y);
+    const cam = this.cameras.main;
+    if (tier === 'decisive' && this.finisherZoomMs <= 0 && !cam.zoomEffect.isRunning) {
+      this.zoomPulse.start();
+      this.zoomPulseMs = CAMERA_FEEL.zoomInMs + CAMERA_FEEL.zoomHoldMs + CAMERA_FEEL.zoomOutMs;
+    }
+    if (brokePosture || hit.counter) this.slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.slowMs);
   }
 
   /** Fase do golpe do jogador: rastro no `active` e chama no startup do forte (TRL-03, TRL-07, TRL-08, EDG-01). */
