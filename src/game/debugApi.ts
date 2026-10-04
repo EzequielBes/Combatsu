@@ -79,6 +79,8 @@ export interface GameSnapshot {
     ragdollVisible: boolean | null;
     /** Chaves de textura das 6 partes do ragdoll; `null` fora de ragdoll (EVR-06). */
     ragdollTextures: string[] | null;
+    /** Deslizamento do golpe forte em curso (RCT-06); `null` fora dele. */
+    slide: { remainingPx: number } | null;
     /** Frame do marcador de telegrafo visível, lido do sprite desenhado; `null` com ele escondido (HGT-07, HGT-08). */
     telegraph: AttackKind | null;
     /** Comprometido: o golpe pendente sai mesmo levando golpe comum (CMT-01). */

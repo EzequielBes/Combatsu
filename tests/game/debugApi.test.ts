@@ -34,7 +34,7 @@ describe('installDebugApi', () => {
     const snap: GameSnapshot = {
       player: { x: 10, y: 20, hp: 100, dead: false, facing: 1, flash: null, maxHp: 100, vy: 0, move: null, frame: 'idle-0', view: { x: 10, y: 20 }, guard: 'none', structure: { cur: 0, max: 100, broken: false }, dodge: { active: false, invulnerable: false, cooldownMs: 0 }, duck: { active: false }, counter: { open: false, kind: null, remainingMs: 0 }, invulnerable: false },
       enemies: [
-        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', ai: 'chase', maxHp: 60, damage: 12, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false }, guarding: false, variant: 'corcunda', view: { x: 30, y: 40 }, frame: 'idle-0', spriteVisible: true, ragdollVisible: null, ragdollTextures: null, telegraph: null, committed: false, commitFlash: null, attack: { kind: 'white', index: 0, length: 1 }, downHits: 0, lightStreak: 0, guardRead: false },
+        { id: 7, x: 30, y: 40, hp: 60, state: 'idle', ai: 'chase', maxHp: 60, damage: 12, chaseSpeed: 70, weapon: null, weaponVisible: null, structure: { cur: 0, max: 100, broken: false }, guarding: false, variant: 'corcunda', view: { x: 30, y: 40 }, frame: 'idle-0', spriteVisible: true, ragdollVisible: null, ragdollTextures: null, slide: null, telegraph: null, committed: false, commitFlash: null, attack: { kind: 'white', index: 0, length: 1 }, downHits: 0, lightStreak: 0, guardRead: false },
       ],
       focusId: null,
       reading: { move: null, repeats: 0 },

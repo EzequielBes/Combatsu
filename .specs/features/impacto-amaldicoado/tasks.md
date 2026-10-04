@@ -363,7 +363,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `Slide`, `pickHitReaction`
 **Requirement**: RCT-01, RCT-02, RCT-03, RCT-04, RCT-05, RCT-06, RCT-07, RCT-08, RCT-09
 **Done when**:
-- [ ] `npm run build && npm test` passam.
+- [x] `npm run build && npm test` passam.
 **Tests**: none
 **Gate**: build
 
