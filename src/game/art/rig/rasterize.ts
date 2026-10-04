@@ -253,7 +253,7 @@ function legLayer(joints: Record<JointName, Vec2>, footAngle: number, side: 'Nea
     { a: hp, b: kn, ra: LEG_R.hip, rb: LEG_R.knee },
     { a: kn, b: an, ra: LEG_R.knee, rb: LEG_R.ankle },
   ];
-  const layer = toLayer(sample(segs).map((h) => ({ x: h.x, y: h.y, ch: tone(h, style.cloth) })));
+  const layer = toLayer(sample(segs).map((h) => ({ x: h.x, y: h.y, ch: shadeOf(h) < -0.72 && style === NEAR ? style.cloth.mid : tone(h, style.cloth) })));
   bendMarks(layer, hp, kn, an, style, 1.0);
 
   // Sapato: do calcanhar (atrás do tornozelo) até a ponta.
