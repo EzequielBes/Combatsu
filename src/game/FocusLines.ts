@@ -38,8 +38,8 @@ export function focusLinePolygons(center: Vec2, w: number, h: number): Vec2[][] 
   for (let i = 0; i < n; i++) {
     const angle = ((i + noise(i, 1) * 0.6) / n) * Math.PI * 2;
     const tip = FOCUS_FEEL.clearRadiusPx + noise(i, 2) * TIP_JITTER;
-    const outer = edgeDistance(center, angle, w, h) + 4;
-    if (outer <= tip + 8) continue; // o ponto está colado na borda: sem espaço para esta linha
+    // Ponto colado na borda: a linha vira um toco curto (parte dela cai fora da tela), mas as 24 sempre existem.
+    const outer = Math.max(edgeDistance(center, angle, w, h) + 4, tip + 20);
     const half = (BASE_MIN + noise(i, 3) * (BASE_MAX - BASE_MIN)) / 2;
     const dx = Math.cos(angle);
     const dy = Math.sin(angle);

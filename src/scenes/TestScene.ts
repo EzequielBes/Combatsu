@@ -1438,7 +1438,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (tier === 'decisive') this.focusLines.show(this.worldToScreen(point));
     if (tier === 'heavy') this.cameraKick.kick(hit.direction.x, hit.direction.y);
     const cam = this.cameras.main;
-    if (tier === 'decisive' && this.finisherZoomMs <= 0 && !cam.zoomEffect.isRunning) {
+    // O finalizador é decisivo, mas o zoom dele manda (CAM-05); `finisherZoomMs` só liga depois do `onConnect`.
+    if (tier === 'decisive' && hit.moveName !== FINISHER_MOVE && this.finisherZoomMs <= 0 && !cam.zoomEffect.isRunning) {
       this.zoomPulse.start();
       this.zoomPulseMs = CAMERA_FEEL.zoomInMs + CAMERA_FEEL.zoomHoldMs + CAMERA_FEEL.zoomOutMs;
     }
