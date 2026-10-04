@@ -54,6 +54,7 @@ export function spinKick(k: Kit, t: KickKit): HdMoveSpec {
     });
   return {
     strike: 'footFar',
+    farFront: { leg: true },
     wind: k.pose({
       hip: t.hip(2, 6),
       spine: 150,

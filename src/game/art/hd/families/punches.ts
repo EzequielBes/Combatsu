@@ -60,6 +60,7 @@ function direto(k: Kit): HdMoveSpec {
     });
   return {
     strike: 'handFar',
+    farFront: { arm: true },
     wind: k.pose({
       hip: { x: k.cx - 1.5, y: k.hy + 3.8 },
       spine: 172,

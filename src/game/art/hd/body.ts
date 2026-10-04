@@ -5,7 +5,7 @@
  * Puro, sem `phaser`.
  */
 import { dir, solve, worldAngles, type JointName, type Pose, type Vec2 } from '../rig/skeleton';
-import type { HandShape, Hands } from './frames';
+import type { FarFront, HandShape, Hands } from './frames';
 import { paintHand } from './hand';
 import { paintHead, type Expression } from './head';
 import { MAT } from './palette';
@@ -77,6 +77,8 @@ export interface BodyOpts {
   hands?: Hands;
   /** A cabeça por cima do braço de perto (golpes em que o braço sobe rente ao rosto). */
   headOverNearArm?: boolean;
+  /** Membro de longe pintado na frente do corpo, nos tons do lado de perto. */
+  farFront?: FarFront;
 }
 
 type Joints = Record<JointName, Vec2>;
@@ -95,8 +97,9 @@ const torsoShape: LocalShape = boxed(
   [-8, 8, -4, 14.5],
 );
 
-function paintArm(c: HdCanvas, j: Joints, side: 'Near' | 'Far', part: number, hand: HandShape): void {
-  const far = side === 'Far';
+/** `dim`: o braço fica um tom abaixo e sem luz de recorte (o lado de longe, quando está atrás do corpo). */
+function paintArm(c: HdCanvas, j: Joints, side: 'Near' | 'Far', part: number, hand: HandShape, dim: boolean): void {
+  const far = dim;
   const o = { bias: far ? -1 : 0, rim: !far };
   const sh = j[`shoulder${side}`];
   const el = j[`elbow${side}`];
@@ -113,8 +116,8 @@ function paintArm(c: HdCanvas, j: Joints, side: 'Near' | 'Far', part: number, ha
   paintHand(c, wr, el, part, far, hand);
 }
 
-function paintLeg(c: HdCanvas, j: Joints, footAngle: number, side: 'Near' | 'Far', part: number): void {
-  const far = side === 'Far';
+function paintLeg(c: HdCanvas, j: Joints, footAngle: number, side: 'Near' | 'Far', part: number, dim: boolean): void {
+  const far = dim;
   const o = { bias: far ? -1 : 0 };
   const hip = j[`hip${side}`];
   const knee = j[`knee${side}`];
@@ -187,23 +190,29 @@ export function paintBody(c: HdCanvas, pose: Pose, opts: BodyOpts): Joints {
   const spine = localOf(j.hip, dir(wa.spine));
   const len = Math.hypot(j.chest.x - j.hip.x, j.chest.y - j.hip.y);
   const neckUp = dir(wa.neckBone);
-  const headPart = opts.headOverNearArm ? 7 : 6;
-  const armPart = opts.headOverNearArm ? 6 : 7;
+  const front = opts.farFront ?? {};
+  // A parte de cada camada é a sua posição na ordem de pintura: a linha interna cai sempre na camada de trás.
+  let part = 0;
+  const farArm = (dim: boolean): void => paintArm(c, j, 'Far', ++part, opts.hands?.far ?? 'fist', dim);
+  const farLeg = (dim: boolean): void => paintLeg(c, j, wa.footFar, 'Far', ++part, dim);
 
-  paintArm(c, j, 'Far', 1, opts.hands?.far ?? 'fist');
-  paintLeg(c, j, wa.footFar, 'Far', 2);
-  paintLeg(c, j, wa.footNear, 'Near', 3);
-  c.paint(limb(toScreen(spine, 0, len), toScreen(localOf(j.neck, neckUp), 0.4, 3), NECK), MAT.skin, 4, { bias: -1 });
-  paintTorso(c, spine, 5, len);
+  if (!front.arm) farArm(true);
+  if (!front.leg) farLeg(true);
+  paintLeg(c, j, wa.footNear, 'Near', ++part, false);
+  if (front.leg) farLeg(false);
+  const neck = limb(toScreen(spine, 0, len), toScreen(localOf(j.neck, neckUp), 0.4, 3), NECK);
+  c.paint(neck, MAT.skin, ++part, { bias: -1 });
+  const torso = ++part;
+  paintTorso(c, spine, torso, len);
   // Sombra projetada do braço de perto no paletó: o braço deslocado para trás e para baixo, só sobre o tronco.
   const cast = (p: Vec2): Vec2 => ({ x: p.x - 1, y: p.y + 1 });
   for (const [a, b, prof] of [
     [j.shoulderNear, j.elbowNear, UPPER_ARM],
     [j.elbowNear, j.wristNear, FOREARM],
   ] as const)
-    c.paint(limb(cast(a), cast(b), prof), MAT.jacket, 5, { onlyOn: 5, darken: 1 });
-  const head = (): void => paintHead(c, localOf(j.neck, neckUp), headPart, opts.expr);
-  const arm = (): void => paintArm(c, j, 'Near', armPart, opts.hands?.near ?? 'fist');
+    c.paint(limb(cast(a), cast(b), prof), MAT.jacket, torso, { onlyOn: torso, darken: 1 });
+  const head = (): void => paintHead(c, localOf(j.neck, neckUp), ++part, opts.expr);
+  const arm = (): void => paintArm(c, j, 'Near', ++part, opts.hands?.near ?? 'fist', false);
   if (opts.headOverNearArm) {
     arm();
     head();
@@ -211,5 +220,6 @@ export function paintBody(c: HdCanvas, pose: Pose, opts: BodyOpts): Joints {
     head();
     arm();
   }
+  if (front.arm) farArm(false);
   return j;
 }

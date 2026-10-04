@@ -9,14 +9,24 @@ import type { Expression } from './head';
 import type { Kit } from './kit';
 
 /**
- * Forma da mão: punho fechado, mão aberta (palma, guarda aberta), o selo de dois dedos das técnicas ou a mão solta,
- * com os dedos caídos (atordoado, levando golpe).
+ * Forma da mão: punho fechado, mão aberta no eixo do antebraço (faca de mão, guarda aberta), o selo de dois dedos das
+ * técnicas, a mão solta com os dedos caídos (atordoado, levando golpe) ou a palma dobrada no pulso, com os dedos para
+ * cima (o golpe de palma que empurra).
  */
-export type HandShape = 'fist' | 'open' | 'sign' | 'relaxed';
+export type HandShape = 'fist' | 'open' | 'sign' | 'relaxed' | 'palm';
 
 export interface Hands {
   near?: HandShape;
   far?: HandShape;
+}
+
+/**
+ * Membro de longe que passa para a frente do corpo: pintado por cima e nos tons do lado de perto. É o braço de trás
+ * que atravessa no direto e a perna de trás que varre no chute giratório.
+ */
+export interface FarFront {
+  arm?: boolean;
+  leg?: boolean;
 }
 
 /** Parte do corpo que acerta: de onde sai o ponto de golpe (rastro e faísca). */
@@ -30,6 +40,7 @@ export interface HdFrameSpec {
   hands?: Hands;
   /** A cabeça por cima do braço de perto (o braço passa por trás do rosto). */
   headOverNearArm?: boolean;
+  farFront?: FarFront;
 }
 
 /**
@@ -48,6 +59,8 @@ export interface HdMoveSpec {
   strike: StrikeLimb;
   /** Mãos no pico (e no overshoot); na antecipação e na volta as mãos são punhos. */
   hands?: Hands;
+  /** Membro de longe na frente do corpo, do meio da subida ao overshoot. */
+  farFront?: FarFront;
   /** Expressão dos quadros do golpe (padrão `effort`). */
   expr?: Expression;
   headOverNearArm?: boolean;
@@ -77,13 +90,14 @@ export function expandMove(k: Kit, name: string, m: HdMoveSpec): Record<string, 
   const at = (from: Pose, to: Pose, t: number): Pose => k.grounded(inbetween(from, to, t));
   const over = m.over ?? at(m.wind, m.hit, 1.06);
   const wind: HdFrameSpec = { pose: m.wind, ...opts };
-  const hit: HdFrameSpec = { pose: m.hit, hands: m.hands, ...opts };
+  const peak = { hands: m.hands, farFront: m.farFront, ...opts };
+  const hit: HdFrameSpec = { pose: m.hit, ...peak };
   const recover: HdFrameSpec = { pose: m.recover, ...opts };
   return {
     [moveFrameName(name, 'startup', 0)]: wind,
-    [moveFrameName(name, 'startup', 1)]: { pose: m.mid ?? at(m.wind, m.hit, 0.55), hands: m.hands, ...opts },
+    [moveFrameName(name, 'startup', 1)]: { pose: m.mid ?? at(m.wind, m.hit, 0.55), ...peak },
     [moveFrameName(name, 'active', 0)]: hit,
-    [moveFrameName(name, 'active', 1)]: { pose: over, hands: m.hands, ...opts },
+    [moveFrameName(name, 'active', 1)]: { pose: over, ...peak },
     [moveFrameName(name, 'recovery', 0)]: { pose: m.down ?? at(over, m.recover, 0.5), ...opts },
     [moveFrameName(name, 'recovery', 1)]: recover,
     [moveFrameName(name, 'recovery', 2)]: { pose: at(m.recover, k.guard(), 0.6), ...opts },
