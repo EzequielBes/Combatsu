@@ -204,8 +204,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `composeWithStats`
 **Requirement**: POS-05, POS-10
 **Done when**:
-- [ ] Todo frame do player (incluindo `playerMoves` e `playerTech`) tem 30 linhas; a linha do pé não muda de lugar no mundo (teste compara a última linha opaca de `idle-0` antes e depois).
-- [ ] `npm test` e `npm run build` passam; ajustes só em linhas literais de altura.
+- [x] Todo frame do player (incluindo `playerMoves` e `playerTech`) tem 30 linhas; a linha do pé não muda de lugar no mundo (teste compara a última linha opaca de `idle-0` antes e depois).
+- [x] `npm test` e `npm run build` passam; ajustes só em linhas literais de altura.
 **Tests**: unit
 **Gate**: build
 

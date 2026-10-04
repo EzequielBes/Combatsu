@@ -19,6 +19,7 @@ import {
   legStraight,
   selOut,
   PLAYER_FRAME_H,
+  PLAYER_TOP_PAD,
   PLAYER_FRAME_W,
   PLAYER_ORIGIN,
 } from '../../src/game/art/sprites/player';
@@ -214,8 +215,8 @@ describe('folha do player (CHR-01, ART-01, ART-03)', () => {
   it('passa no parseSheet só com cores da paleta, todos os frames do mesmo tamanho', () => {
     expect(sheet.width).toBe(PLAYER_FRAME_W);
     expect(sheet.height).toBe(PLAYER_FRAME_H);
-    // 24 texels de altura = 48 px com ART_SCALE 2, como no spec.
-    expect(sheet.height * ART_SCALE).toBe(48);
+    // 30 texels de altura = 60 px com ART_SCALE 2: os 24 do spec original mais 6 de folga no topo (impacto-amaldicoado, POS-05).
+    expect(sheet.height * ART_SCALE).toBe(60);
   });
 
   it('toda animação do CHR-01 existe e tem pelo menos um frame, e todo frame citado existe na folha', () => {
@@ -977,13 +978,13 @@ describe('chute alto saindo do quadril (LMB-07, LMB-08)', () => {
     }
   });
 
-  it('LMB-08: a ponta do pé continua na coluna 31, numa linha de 2 a 6', () => {
+  it('LMB-08: a ponta do pé continua na coluna 31, numa linha de 2 a 6 (mais a folga do topo)', () => {
     expect(artMeasure.box(rows)[2]).toBe(31);
     const tipRows = rows.map((row, y) => (row[31] !== TRANSPARENT ? y : -1)).filter((y) => y >= 0);
     expect(tipRows.length).toBeGreaterThan(0);
     for (const y of tipRows) {
-      expect(y).toBeGreaterThanOrEqual(2);
-      expect(y).toBeLessThanOrEqual(6);
+      expect(y).toBeGreaterThanOrEqual(2 + PLAYER_TOP_PAD);
+      expect(y).toBeLessThanOrEqual(6 + PLAYER_TOP_PAD);
     }
   });
 });
@@ -1001,8 +1002,8 @@ describe('golpes derivados no formato novo (LMB-09, LMB-10, LMB-11)', () => {
     expect(rows.filter((row) => row[tip] !== TRANSPARENT)).toHaveLength(1);
   });
 
-  it('LMB-11: o pisao-hit tem a sola do sapato: pelo menos 3 texels s na linha 22', () => {
-    expect(artMeasure.countOf([PLAYER_MOVE_FRAMES['pisao-hit'][22]], 's')).toBeGreaterThanOrEqual(3);
+  it('LMB-11: o pisao-hit tem a sola do sapato: pelo menos 3 texels s na linha 22 (mais a folga do topo)', () => {
+    expect(artMeasure.countOf([PLAYER_MOVE_FRAMES['pisao-hit'][22 + PLAYER_TOP_PAD]], 's')).toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -1399,7 +1400,10 @@ describe('alinhamento dos frames do player contra a linha de base congelada (SPR
   it('cada borda da bbox fica a até 2 texels da linha de base', () => {
     for (const [name, base] of entries) {
       expect(all[name], `frame ${name} existe`).toBeDefined();
+      // A fixture é de antes da folga de 6 linhas no topo: compara a bbox sem a folga.
       const now = bboxOf(all[name]);
+      now[1] -= PLAYER_TOP_PAD;
+      now[3] -= PLAYER_TOP_PAD;
       for (let i = 0; i < 4; i++) {
         expect(Math.abs(now[i] - base[i]), `${name} borda ${i}: ${now[i]} vs ${base[i]}`).toBeLessThanOrEqual(2);
       }
@@ -1488,15 +1492,15 @@ describe('passe de sel-out e acabamento do idle-0 (SPR-03, SPR-04, SPR-05)', () 
     expect(n).toBeLessThanOrEqual(8);
   });
 
-  it('a cabeça (linhas 0-10) tem o branco do olho w ao lado de uma pupila escura e os 3 tons de cabelo', () => {
-    const head = PLAYER_FRAMES['idle-0'].slice(0, 11);
+  it('a cabeça (linhas 0-10 do desenho, mais a folga do topo) tem o branco do olho w ao lado de uma pupila escura e os 3 tons de cabelo', () => {
+    const head = PLAYER_FRAMES['idle-0'].slice(PLAYER_TOP_PAD, 11 + PLAYER_TOP_PAD);
     expect(head.some((r) => /w[bk]|[bk]w/.test(r))).toBe(true);
     const joined = head.join('');
     for (const tone of ['h', 'j', 'H']) expect(joined, tone).toContain(tone);
   });
 
-  it('o tronco (linhas 11-17) tem o botão dourado A, a luz de borda y e a linha interna o', () => {
-    const joined = PLAYER_FRAMES['idle-0'].slice(11, 18).join('');
+  it('o tronco (linhas 11-17 do desenho, mais a folga do topo) tem o botão dourado A, a luz de borda y e a linha interna o', () => {
+    const joined = PLAYER_FRAMES['idle-0'].slice(11 + PLAYER_TOP_PAD, 18 + PLAYER_TOP_PAD).join('');
     for (const c of ['A', 'y', 'o']) expect(joined, c).toContain(c);
   });
 });
