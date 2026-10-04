@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { bossRewardSlot } from '../core/bossReward';
 import { clampCenter } from '../core/cameraFollow';
 import { Filters } from '../core/collision';
 import { DroppedTools } from '../core/droppedTools';
@@ -12,20 +11,20 @@ import { AttackGate } from '../core/attackGate';
 import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
 import { MoveReading } from '../core/moveReading';
-import { Mastery, type MasterySlot } from '../core/mastery';
-import { Loot, type LootOverrides } from '../core/loot';
+import { Mastery } from '../core/mastery';
+import { Loot } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
 import { type Rng } from '../core/rng';
-import { acceptsPlayerInput, Run, type RunCommand } from '../core/run';
+import { acceptsPlayerInput, Run } from '../core/run';
 import { SlowMo } from '../core/slowMo';
 import { CameraKick, ZoomPulse } from '../core/cameraKick';
 import { Wallet } from '../core/wallet';
-import { isBossRound, requireSpawnPoints } from '../core/waves';
+import { requireSpawnPoints } from '../core/waves';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG } from '../data/shop';
-import { TECHNIQUES, type TechId } from '../data/techniques';
-import { DROPPED_TOOLS, ECONOMY, ATTACK_GATE, PICKUP, RUN, WAVE } from '../data/tuning';
+import { type TechId } from '../data/techniques';
+import { DROPPED_TOOLS, ATTACK_GATE, PICKUP, RUN, WAVE } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
 import { createArt } from '../game/art';
@@ -55,9 +54,8 @@ import { KokusenFx } from '../game/techFx/KokusenFx';
 import { CursedFx } from '../game/CursedFx';
 import { ImpactFrame } from '../game/ImpactFrame';
 import { FocusLines } from '../game/FocusLines';
-import { CAMERA_FEEL } from '../data/feel';
 import { TEX } from '../game/textures';
-import { debugParam, debugIntParam, NEUTRAL_INPUT, isDroppedTool, SPAWN_LIFT } from './test/params';
+import { debugParam, debugIntParam, NEUTRAL_INPUT, SPAWN_LIFT } from './test/params';
 import { WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, CameraRig } from './test/camera';
 import { EffectsDirector } from './test/effects';
 import { ImpactFx } from './test/impactFx';
@@ -66,16 +64,15 @@ import { Spawner } from './test/spawner';
 import { Drops } from './test/drops';
 import { ShopDirector } from './test/shopDirector';
 import { DebugSnapshot } from './test/snapshot';
+import { BOSS_UPGRADE_BANNER_MS, RunDirector } from './test/runDirector';
 
 /** Alpha do tom azulado da câmera lenta (DOD-12). */
 const SLOWMO_TINT_ALPHA = 0.22;
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
 const CONTROLS_MS = 8000;
 
-/** Duração (ms) do banner do upgrade grátis do chefe: o fim da faixa "Chefe derrotado!", sem atrasar "Rodada N concluída" (BFX-10). */
-const BOSS_UPGRADE_BANNER_MS = 800;
-
 export class TestScene extends Phaser.Scene implements DebugProbe {
+  readonly runDirector = new RunDirector(this);
   readonly snapshot = new DebugSnapshot(this);
   readonly shopDirector = new ShopDirector(this);
   readonly drops = new Drops(this);
@@ -95,10 +92,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   attackGate = new AttackGate(ATTACK_GATE);
   /** Só existe numa rodada de chefe (BOSS-01); `null` fora dela ou depois de removido. */
   boss: Boss | null = null;
-  /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
-  bossDefeatedPending = false;
-  /** Na rodada de chefe, "Rodada N concluída" entra depois da faixa "Chefe derrotado!" (BHUD-03 + RHUD-03). */
-  clearedBanner: { round: number; afterMs: number; upgradeText: string | null } | null = null;
   /** Projéteis da rajada e ondas de choque do pouso do chefe (BAT-03/04/06/12). */
   projectiles: Projectile[] = [];
   props: Prop[] = [];
@@ -211,7 +204,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
     this.run = new Run(RUN, WAVE, {
-      firstRound: this.firstRoundForDebug(),
+      firstRound: this.runDirector.firstRoundForDebug(),
       maxAliveOverride: debugIntParam('maxAlive', 1),
     });
     this.clockMs = 0;
@@ -296,7 +289,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.kokusenFx.trigger(target, point, facing, streak);
       },
       // MST-01/02: acerto de técnica em alvo real vira ponto de maestria.
-      (slot, castId, targetId, isBoss) => this.onMasteryHit(slot, castId, targetId, isBoss),
+      (slot, castId, targetId, isBoss) => this.runDirector.onMasteryHit(slot, castId, targetId, isBoss),
     );
 
     // T28: laboratório de efeitos (`?debug&fxlab`) - bonecos de treino + teclas 1-6/0, sem ondas (FXL-01).
@@ -476,23 +469,26 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.wasPlayerDead = this.player.dead;
       this.combat.updateEnemies(dt);
       this.boss?.update(dt, this.player.sprite.x);
-      if (this.bossDefeatedPending) {
+      if (this.runDirector.bossDefeatedPending) {
         this.boss?.destroyNow();
         this.boss = null;
-        this.bossDefeatedPending = false;
+        this.runDirector.bossDefeatedPending = false;
       }
       if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
-      if (this.clearedBanner) {
-        this.clearedBanner.afterMs -= dt;
+      if (this.runDirector.clearedBanner) {
+        this.runDirector.clearedBanner.afterMs -= dt;
         // BFX-10: o banner do upgrade grátis ocupa o fim da faixa "Chefe derrotado!", antes de "Rodada N concluída".
-        if (this.clearedBanner.upgradeText && this.clearedBanner.afterMs <= BOSS_UPGRADE_BANNER_MS) {
-          this.hud.banner(this.clearedBanner.upgradeText, BOSS_UPGRADE_BANNER_MS);
-          this.clearedBanner.upgradeText = null;
+        if (
+          this.runDirector.clearedBanner.upgradeText &&
+          this.runDirector.clearedBanner.afterMs <= BOSS_UPGRADE_BANNER_MS
+        ) {
+          this.hud.banner(this.runDirector.clearedBanner.upgradeText, BOSS_UPGRADE_BANNER_MS);
+          this.runDirector.clearedBanner.upgradeText = null;
         }
-        if (this.clearedBanner.afterMs <= 0) {
+        if (this.runDirector.clearedBanner.afterMs <= 0) {
           if (this.run.state === 'intermission')
-            this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
-          this.clearedBanner = null;
+            this.hud.banner(`Rodada ${this.runDirector.clearedBanner.round} concluída`, Infinity);
+          this.runDirector.clearedBanner = null;
         }
       }
       for (const proj of this.projectiles) proj.update(dt);
@@ -501,7 +497,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.drops.updateDroppedTools(dt);
       this.props = this.props.filter((prop) => !prop.isGone);
     }
-    for (const cmd of this.run.update(dt, this.seedForNewRun)) this.applyRunCommand(cmd);
+    for (const cmd of this.run.update(dt, this.runDirector.seedForNewRun)) this.runDirector.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
     // T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner interno da `Run` segue contando como se
     // tivesse nascido - sem isso "Inimigos: N" mentiria na tela do laboratório.
@@ -511,192 +507,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setHeldItem(this.drops.heldItemInfo());
     this.hud.update(dt);
     this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
-  }
-
-  /** Seed da run: fixa por `?seed=N` só em `?debug` (design); senão o relógio (runs variadas). */
-  seedForNewRun = (): number => {
-    if (isDebug()) {
-      const raw = new URLSearchParams(window.location.search).get('seed');
-      if (raw !== null) {
-        const n = Number(raw);
-        if (Number.isFinite(n)) return n;
-      }
-    }
-    return Date.now();
-  };
-
-  /** Rodada inicial da run: `?round=N` só em `?debug` (design); sem a opção, a run começa na rodada 1. */
-  firstRoundForDebug(): number | undefined {
-    if (!isDebug()) return undefined;
-    const raw = new URLSearchParams(window.location.search).get('round');
-    if (raw === null) return undefined;
-    const n = Number(raw);
-    return Number.isFinite(n) ? n : undefined;
-  }
-
-  applyRunCommand(cmd: RunCommand): void {
-    switch (cmd.type) {
-      case 'startRun':
-        this.onStartRun();
-        break;
-      case 'spawn':
-        // FXL-01: nenhuma onda nasce no laboratório de efeitos - só os bonecos de treino (FXL-05).
-        if (this.fxLab) break;
-        if (cmd.kind === 'boss') this.spawner.spawnBoss(cmd.round);
-        // SPN-07..09: comum nasce fora da câmera (worldView real, facing do player); o chefe segue no mais distante.
-        else this.spawner.spawnFromCommand(this.spawner.pickEnemySpawnPoint(), cmd.round);
-        break;
-      case 'roundStart':
-        // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
-        this.hud.setCenter(null);
-        this.hud.banner(`Rodada ${cmd.round}`, RUN.bannerMs);
-        break;
-      case 'roundCleared':
-        // Fica até o próximo `roundStart` (RHUD-03). Na rodada de chefe, ela entra depois de "Chefe derrotado!",
-        // que o `onBossDefeated` já mostrou (BHUD-03).
-        if (!isBossRound(cmd.round)) this.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
-        // CAM-08: o último inimigo da onda morreu, câmera lenta curta.
-        this.effects.slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.slowMs);
-        break;
-      case 'shopOpen':
-        // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
-        if (debugParam('noshop') === '1') this.run.closeShop();
-        else this.shopDirector.openShop(cmd.round);
-        break;
-      case 'gameOver':
-        this.hud.setCenter([
-          `Rodada alcançada: ${cmd.round}`,
-          `Abates: ${cmd.kills}`,
-          `Fragmentos: ${this.wallet.fragments}`,
-          'J / Enter para tentar de novo',
-        ]);
-        break;
-    }
-  }
-
-  /**
-   * Nova run (RUN-01/05): remove os inimigos restantes na hora e devolve o player ao spawn com a vida cheia.
-   * Também remove o chefe e os projéteis dele, se algum estiver vivo (edge case: game over em plena luta de
-   * chefe, com o chefe e/ou projéteis dele ainda em cena).
-   */
-  onStartRun(): void {
-    for (const e of this.enemies) e.destroyNow();
-    this.enemies = [];
-    this.boss?.destroyNow();
-    this.boss = null;
-    this.bossDefeatedPending = false;
-    this.clearedBanner = null;
-    this.spawner.spawnLastUsed.clear();
-    this.attackGate.reset();
-    // Higiene: uma loja não deveria sobreviver a um game over (gameOver só sai de roundActive/intermission), mas
-    // uma run nova nunca deve carregar a loja da anterior.
-    if (this.shopDirector.shop) this.matter.world.resume();
-    this.shopDirector.shop = null;
-    this.shopPanel.hide();
-    this.hud.hideBossBar();
-    for (const proj of this.projectiles) proj.destroyNow();
-    this.projectiles = [];
-    this.player.resetForRun();
-    // Edge case: nova run zera o combo e a câmera lenta (estruturas zeram no reset do player e dos inimigos).
-    this.comboCounter.reset();
-    this.effects.slowMo.reset();
-    // EDG-03, EDG-04: a leitura e o foco não sobrevivem à run anterior (a janela de Contra e o abaixar zeram no
-    // `player.resetForRun`, EDG-01 e EDG-02).
-    this.reading.reset();
-    this.focusId = null;
-    this.lastPlayerHp = this.player.hp;
-    // ECO-14/27: carteira zerada e nenhum pickup/texto flutuante sobrevive à run anterior.
-    this.wallet.reset();
-    // SHOP-23: `?debug&fragments=N` (inteiro >= 0) começa a run com N fragmentos; inválido é ignorado.
-    const startFragments = Number(debugParam('fragments'));
-    if (debugParam('fragments') !== null && Number.isInteger(startFragments)) this.wallet.add(startFragments);
-    this.pickups.clear();
-    this.floatTexts.clear();
-    // ARM-18: nenhuma ferramenta largada sobrevive à run anterior (a cadeira/garrafa do mapa não são drops).
-    for (const prop of this.props) if (isDroppedTool(prop.def.key)) prop.destroyNow();
-    this.props = this.props.filter((prop) => !prop.isGone);
-    this.droppedTools.clear();
-    // MOD-01/MOD-10: upgrades da run anterior não sobrevivem (AD-004).
-    this.modifiers.reset();
-    // CE-01/TEC-01: energia e slots voltam ao início da run; `?debug&tech=` equipa por cima (TEC-02).
-    this.energy.reset();
-    this.loadout.reset();
-    this.mastery.reset();
-    this.equipDebugTech();
-    this.applyDebugMastery();
-    // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
-    this.lootRng = this.run.lootRng!;
-    this.loot = new Loot(this.lootRng, ECONOMY, this.lootOverrides(), this.modifiers);
-  }
-
-  /**
-   * `?debug&tech=<id>[,<id>]` (TEC-02): equipa em nível 1, na ordem, ignorando ids desconhecidos e o segundo id
-   * quando os dois slots já couberam; sem o parâmetro, os dois slots ficam vazios (TEC-01, AD-005).
-   */
-  equipDebugTech(): void {
-    const raw = debugParam('tech');
-    if (raw === null) return;
-    const ids = raw.split(',').filter((id): id is TechId => id in TECHNIQUES);
-    let slot = 0;
-    for (const id of ids) {
-      if (slot > 1) break;
-      if (this.loadout.equip(slot as 0 | 1, id, 1)) slot++;
-    }
-  }
-
-  /** `?debug&mastery=N` (inteiro >= 0): cada técnica equipada começa a run com N pontos de maestria; inválido é ignorado. */
-  applyDebugMastery(): void {
-    const n = debugIntParam('mastery', 0);
-    if (n === undefined) return;
-    for (const slot of [0, 1] as const) if (this.loadout.slotsView[slot]) this.mastery.setPoints(slot, n);
-  }
-
-  /** Nome da técnica como a loja mostra, para os banners de nível (MST-07, BFX-10). */
-  techName(id: TechId): string {
-    return FULL_SHOP_CATALOG.find((e) => e.id === id)?.name ?? TECHNIQUES[id].name;
-  }
-
-  /**
-   * Acerto de técnica em alvo real (MST-01..07): soma maestria ao slot e, no limiar, sobe 1 nível com o banner
-   * `"{nome} Nv {n}!"`. No laboratório de efeitos (bonecos de treino) não há maestria.
-   */
-  onMasteryHit(slot: MasterySlot, castId: number, targetId: number, isBoss: boolean): void {
-    if (this.fxLab) return;
-    const equipped = this.loadout.slotsView[slot];
-    if (!equipped) return;
-    const { levelUp } = this.mastery.registerHit(slot, equipped.level, castId, targetId, isBoss);
-    if (levelUp && this.loadout.upgrade(equipped.id)) {
-      this.hud.banner(`${this.techName(equipped.id)} Nv ${this.loadout.levelOf(equipped.id)}!`, RUN.bannerMs);
-    }
-  }
-
-  /**
-   * Upgrade grátis da vitória sobre o chefe (BFX-09): sobe 1 nível a técnica equipada de menor nível abaixo do 3
-   * (empate: slot 0). Devolve o texto do banner (BFX-10), ou `null` se nada era upável.
-   */
-  bossRewardUpgrade(): string | null {
-    const slot = bossRewardSlot(this.loadout.slotsView);
-    const pick = slot === null ? null : this.loadout.slotsView[slot];
-    if (!pick || !this.loadout.upgrade(pick.id)) return null;
-    return `${this.techName(pick.id)} Nv ${this.loadout.levelOf(pick.id)}!`;
-  }
-
-  /** Overrides de debug dos sorteios (HEAL-06, ARM-15, RAR-05): `heal=N`, `armed=knife|club` e `rare=1`. */
-  lootOverrides(): LootOverrides {
-    if (!isDebug()) return {};
-    const params = new URLSearchParams(window.location.search);
-    const overrides: LootOverrides = {};
-    const heal = params.get('heal');
-    if (heal !== null) {
-      const n = Number(heal);
-      if (Number.isFinite(n)) overrides.healChance = n;
-    }
-    const armed = params.get('armed');
-    if (armed === 'knife') overrides.armed = 'cursedKnife';
-    else if (armed === 'club') overrides.armed = 'cursedClub';
-    const rare = params.get('rare');
-    if (rare !== null) overrides.rare = rare === '1' || rare === 'true';
-    return overrides;
   }
 
   /**
