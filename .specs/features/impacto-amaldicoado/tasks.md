@@ -357,11 +357,11 @@ T20 → T21 → T22 → T23 → T24
 
 ### T20: Inimigo desliza e esbarra
 
-**What**: `Enemy.slide`, `slideView`, resíduo a cada 40 ms, parada na parede; a cena faz o inimigo tocado tocar `body` sem dano e sem postura; `enemies[].slide` no snapshot.
+**What**: `Enemy.slide`, `slideView`, resíduo a cada 40 ms, parada na parede; a cena faz o inimigo tocado tocar `body` sem dano e sem postura; `enemies[].slide` no snapshot. Tira o pisca branco (`setTintFill(PALETTE.w)`) do golpe recebido, do cambaleio, da armadura (`Enemy.ts`) e do ragdoll (`Ragdoll.flash`); a armadura passa a pedir a faísca de guarda à cena.
 **Where**: `src/game/Enemy.ts`
 **Depends on**: None
 **Reuses**: `Slide`, `pickHitReaction`
-**Requirement**: RCT-01, RCT-02, RCT-03, RCT-04, RCT-05, RCT-06
+**Requirement**: RCT-01, RCT-02, RCT-03, RCT-04, RCT-05, RCT-06, RCT-07, RCT-08, RCT-09
 **Done when**:
 - [ ] `npm run build && npm test` passam.
 **Tests**: none
