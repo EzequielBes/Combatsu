@@ -290,7 +290,11 @@ export class Player implements Hittable {
     const a = HD_ON ? hdAnchors(this.frameName) : undefined;
     if (!a) return undefined;
     const foot = SIZE.player.h / 2;
-    return { front: { x: a.near.x, y: a.near.y + foot }, back: { x: a.far.x, y: a.far.y + foot } };
+    const front = { x: a.near.x, y: a.near.y + foot };
+    // Durante o golpe com objeto inteiro (não só com a hitbox aberta) o objeto fica na mão que bate, a de perto:
+    // senão o objeto pesado, carregado na mão de longe, salta de uma mão para a outra na volta.
+    const swinging = this.propSwing.phase !== 'idle';
+    return { front, back: swinging ? front : { x: a.far.x, y: a.far.y + foot } };
   }
 
   /** hp 0 (HP-04): larga o objeto (ele cai em repouso), e a tela escurece até o respawn. */

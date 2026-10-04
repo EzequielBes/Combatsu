@@ -116,6 +116,8 @@ function swing(k: Kit): HdMoveSpec {
       ...feet,
     }),
     recover: hold(k, 2.6),
+    // A volta caminha para a pose de carregar, não para a guarda sem objeto.
+    back: hold(k, 0),
   };
 }
 
