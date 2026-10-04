@@ -10,7 +10,7 @@ import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites
 import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, type AnimDef } from './sprites/player';
 import { PLAYER_MOVE_FRAMES } from './sprites/playerMoves';
-import { currentSearch, withRigFrames } from './rig/flag';
+import { currentSearch, rigTallSheet, withRigFrames } from './rig/flag';
 import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
 import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from './sprites/techFx';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
@@ -51,6 +51,10 @@ export function createArt(scene: Phaser.Scene): void {
     parseSheet('player', { ...PLAYER_FRAMES, ...PLAYER_TECH_FRAMES, ...withRigFrames(PLAYER_MOVE_FRAMES, currentSearch()) }, PALETTE_KEYS),
   );
   registerAnims(scene, TEX.playerArt, PLAYER_ANIMS, playerAnimKey);
+  // Heroico alto do boneco articulado (PRA-08): folha própria de 40x40 (o parseSheet exige frames do mesmo tamanho),
+  // só com `?debug&rig=1`.
+  const tall = rigTallSheet(currentSearch());
+  if (tall) registerSheet(scene, TEX.playerRig, parseSheet('player-rig', tall, PALETTE_KEYS));
   // Uma folha, as animações e as 3 partes do ragdoll por aparência (EVR-06), nas cores da folha (CHR-04).
   for (const v of ENEMY_VARIANTS) {
     const tex = enemyTex(v);
