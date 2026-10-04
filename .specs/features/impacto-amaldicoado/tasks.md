@@ -175,8 +175,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `SlowMo`
 **Requirement**: CAM-03, CAM-04, CAM-07, CAM-08
 **Done when**:
-- [ ] `trigger(0.4, 350)`: escala 0.4 até 350 ms reais, 1 depois; um segundo trigger aos 200 ms vai até 550 ms com escala 0.4.
-- [ ] Os testes antigos de `SlowMo` continuam passando sem mudança.
+- [x] `trigger(0.4, 350)`: escala 0.4 até 350 ms reais, 1 depois; um segundo trigger aos 200 ms vai até 550 ms com escala 0.4.
+- [x] Os testes antigos de `SlowMo` continuam passando sem mudança.
 **Tests**: unit
 **Gate**: quick
 
