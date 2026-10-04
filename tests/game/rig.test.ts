@@ -152,7 +152,7 @@ describe('recorte (EDG-01)', () => {
 
   it('empurrada para fora da borda esquerda, recorta e conta os texels; o que fica é igual ao da pose original', () => {
     const base = stanceAt(14);
-    const shift = 9;
+    const shift = 12;
     const moved = { root: { x: base.root.x - shift, y: base.root.y }, angles: base.angles };
     const a = rasterize(base);
     const b = rasterize(moved);
