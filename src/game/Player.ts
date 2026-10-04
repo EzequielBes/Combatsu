@@ -7,6 +7,7 @@ import type { Hit, Vec2 } from '../core/hit';
 import { CounterWindow, type CounterKind } from '../core/counter';
 import { DeflectTracker, Guard, resolveIncomingHit, type ParryInfo } from '../core/defense';
 import { Dodge } from '../core/dodge';
+import { StepIn } from '../core/stepIn';
 import { Duck } from '../core/duck';
 import { Health } from '../core/health';
 import { MotionInput } from '../core/motionInput';
@@ -23,7 +24,7 @@ import {
   PLAYER_MOVE,
   PROP_SWING,
 } from '../data/tuning';
-import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
+import { newEntityId, tagBody, tagOf, type Hittable, type Rect } from './bodyTags';
 import type { Fx } from './fx';
 import type { InputSnapshot } from './input';
 import { bodyOf, BodyRenderPos, PX_PER_S_TO_STEP } from './physics';
@@ -50,6 +51,16 @@ const BLINK_ALPHA = 0.25;
 /** Fade da câmera ao morrer e ao renascer (ms); o respawn em si sai do PLAYER_HEALTH.respawnMs. */
 const DEATH_FADE_MS = 600;
 const RESPAWN_FADE_MS = 300;
+
+/** Fase do golpe corpo a corpo avisada à cena: `end` vale para o fim normal, o cancelamento e o golpe recebido. */
+export type StrikePhase = 'startup' | 'active' | 'recovery' | 'end';
+/** Avisa a troca de fase do golpe em andamento (a cena liga rastro e chamas nisto). */
+export type OnStrikePhase = (name: string, phase: StrikePhase) => void;
+
+/** Folga (px) à frente do corpo em que o passo à frente enxerga parede ou inimigo (POS-09). */
+const STEP_PROBE_PX = 2;
+/** Id do golpe iniciado; cada golpe novo ganha o seguinte e o `Hit` leva o mesmo (IMP-14). */
+let nextSwingId = 1;
 
 /** Conjuração ativa que trava o player (CAST-11/12/13): id da técnica e estado atual, escrito pelo `TechCaster`. */
 export interface CastPose {
@@ -168,6 +179,11 @@ export class Player implements Hittable {
   private poseMs = 0;
   private readonly propSwing = new ComboTracker([PROP_SWING], 0);
   private readonly hitbox: AttackHitbox;
+  /** Passo à frente do golpe de chão (POS-07..09). */
+  private readonly stepIn = new StepIn();
+  /** Nome e id do golpe em andamento; `null` sem golpe. */
+  private strikeName: string | null = null;
+  private swingId = 0;
   private held: Prop | null = null;
   private throwPoseMs = 0;
   /** `respawnMs: Infinity` (RUN-03): fora de run não existe mais respawn, só `resetForRun`. */
@@ -196,6 +212,8 @@ export class Player implements Hittable {
     private readonly modifiers: Modifiers,
     /** Golpe que conectou (faísca + hitstop), injetado pela cena. */
     onConnect?: OnConnect,
+    /** Troca de fase do golpe (startup, active, recovery, end); a cena liga rastro e chamas (TRL-03, TRL-07, TRL-08). */
+    private readonly onStrikePhase?: OnStrikePhase,
   ) {
     this.sprite = scene.matter.add.image(x, y, TEX.player, undefined, {
       friction: 0,
@@ -445,6 +463,7 @@ export class Player implements Hittable {
     // VOA-06: o quique mantém os −240 px/s no primeiro `update` depois do acerto; a gravidade só atua a partir do seguinte.
     if (bounceVy !== null) this.move = { ...this.move, vy: bounceVy, jumping: false };
     this.applyMoveTravel(dtMs);
+    this.applyStepIn(dtMs);
     this.applyDash(dtMs);
     this.applyBlockPush(dtMs);
     this.applyPush(dtMs);
@@ -1000,15 +1019,30 @@ export class Player implements Hittable {
         this.onEvent?.(`move:${ev.move.name}`);
         this.activeElapsedMs = 0;
         this.travelDone = { forward: 0, down: 0 };
+        this.swingId = nextSwingId++;
+        this.strikeName = ev.move.name;
+        // POS-07/08: só o golpe de chão dá o passo (o aéreo tem o próprio avanço ou nenhum).
+        const groundMove = this.touchesTerrain('below') && this.move.vy >= 0 && !ev.move.travel && !ev.move.slam;
+        if (groundMove) this.stepIn.start(ev.move.strength, ev.move.startupMs);
+        else this.stepIn.start(ev.move.strength, 0);
+        this.onStrikePhase?.(ev.move.name, 'startup');
         // Pisão (AIR-03): a velocidade vertical vai direto para a queda máxima.
         // O golpe aéreo assume a vertical: solta o pulo sustentado para a subida não sobrescrever a queda/avanço.
         if (ev.move.slam) this.move = { ...this.move, vy: PLAYER_MOVE.maxFallSpeed, jumping: false };
         else if (ev.move.travel) this.move = { ...this.move, jumping: false };
         // VOA-01..03: o custo de postura sobe ao começar; se enche a barra, a guarda quebra e o golpe é cancelado.
         if (ev.move.postureCost !== undefined && this.structure.add(ev.move.postureCost)) this.onGuardBreak();
-      } else if (ev.type === 'hitboxOn') this.openHitbox(ev.move);
-      else if (ev.type === 'hitboxOff' || ev.type === 'moveEnd') this.hitbox.close();
-      else if (ev.type === 'whiff') this.onEvent?.(`whiff:${ev.move.name}`);
+      } else if (ev.type === 'hitboxOn') {
+        this.openHitbox(ev.move);
+        this.onStrikePhase?.(ev.move.name, 'active');
+      } else if (ev.type === 'hitboxOff') {
+        this.hitbox.close();
+        this.onStrikePhase?.(ev.move.name, 'recovery');
+      } else if (ev.type === 'moveEnd') {
+        this.hitbox.close();
+        if (this.strikeName !== null) this.onStrikePhase?.(this.strikeName, 'end');
+        this.strikeName = null;
+      } else if (ev.type === 'whiff') this.onEvent?.(`whiff:${ev.move.name}`);
     }
   }
 
@@ -1088,6 +1122,41 @@ export class Player implements Hittable {
     this.travelDone = target;
   }
 
+  /**
+   * Passo à frente do golpe de chão (POS-07..09): 4 ou 10 px distribuídos pelo startup, pela velocidade dirigida
+   * (`scriptedDx`, como a esquiva). Para no contato com corpo de inimigo ou parede.
+   */
+  private applyStepIn(dtMs: number): void {
+    if (this.moves.phase !== 'startup' || dtMs <= 0) return;
+    const px = this.stepIn.update(dtMs, this.stepBlocked());
+    if (px <= 0) return;
+    this.scriptedDx += this.facing * px;
+    this.move = { ...this.move, vx: 0 };
+  }
+
+  /** `true` se logo à frente do corpo há parede (terreno na altura do tronco) ou o corpo de um inimigo vivo. */
+  private stepBlocked(): boolean {
+    const probe = STEP_PROBE_PX;
+    const halfW = SIZE.player.w / 2;
+    const halfH = SIZE.player.h / 2;
+    const near = this.sprite.x + this.facing * halfW;
+    const far = near + this.facing * probe;
+    const wall = {
+      min: { x: Math.min(near, far), y: this.sprite.y - halfH + 2 },
+      max: { x: Math.max(near, far), y: this.sprite.y + halfH - 4 },
+    };
+    if (this.scene.matter.query.region(this.terrain, wall).length > 0) return true;
+    const ahead: Rect = { x: this.sprite.x + (this.facing * probe) / 2, y: this.sprite.y, width: SIZE.player.w + probe, height: SIZE.player.h };
+    for (const body of this.scene.matter.world.getAllBodies()) {
+      const tag = tagOf(body);
+      if (tag?.kind !== 'character' || tag.target === this || tag.target.team === this.team || tag.target.isDead?.()) continue;
+      const r = tag.target.hurtRect?.();
+      if (!r) continue;
+      if (Math.abs(r.x - ahead.x) < (r.width + ahead.width) / 2 && Math.abs(r.y - ahead.y) < (r.height + ahead.height) / 2) return true;
+    }
+    return false;
+  }
+
   private openHitbox(move: MoveDef): void {
     const shape = move.hitbox;
     if (!shape) return;
@@ -1103,6 +1172,7 @@ export class Player implements Hittable {
       // Contra (CNT-09, CNT-21): cambaleia até o inimigo comprometido; `knockdown` só nos golpes que derrubam (PST-04).
       counter: move.counter,
       knockdown: move.knockdown,
+      swingId: this.swingId,
     };
     this.hitbox.open(shape, hit, this.sprite.x, this.sprite.y, this.facing, move.maxTargets);
   }
