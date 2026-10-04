@@ -10,6 +10,7 @@ import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites
 import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, type AnimDef } from './sprites/player';
 import { PLAYER_MOVE_FRAMES } from './sprites/playerMoves';
+import { currentSearch, withRigFrames } from './rig/flag';
 import { PLAYER_TECH_FRAMES } from './sprites/playerTech';
 import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from './sprites/techFx';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
@@ -47,7 +48,7 @@ export function createArt(scene: Phaser.Scene): void {
   registerSheet(
     scene,
     TEX.playerArt,
-    parseSheet('player', { ...PLAYER_FRAMES, ...PLAYER_TECH_FRAMES, ...PLAYER_MOVE_FRAMES }, PALETTE_KEYS),
+    parseSheet('player', { ...PLAYER_FRAMES, ...PLAYER_TECH_FRAMES, ...withRigFrames(PLAYER_MOVE_FRAMES, currentSearch()) }, PALETTE_KEYS),
   );
   registerAnims(scene, TEX.playerArt, PLAYER_ANIMS, playerAnimKey);
   // Uma folha, as animações e as 3 partes do ragdoll por aparência (EVR-06), nas cores da folha (CHR-04).

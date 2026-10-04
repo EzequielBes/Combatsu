@@ -9,6 +9,8 @@ import { strikeToBody } from '../../src/core/strikePath';
 import { MOVES } from '../../src/data/moves';
 import { SIZE } from '../../src/game/textures';
 import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { rigEnabled, rigStrikePoint, withRigFrames } from '../../src/game/art/rig/flag';
+import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { BONES, REST_ANGLES, aimLimb, makePose, measuredLength, solve, type BoneName, type JointName, type Pose } from '../../src/game/art/rig/skeleton';
 
 const JOINTS_REQUIRED: JointName[] = [
@@ -231,5 +233,31 @@ describe('sequência do gancho ascendente (RIG-08)', () => {
     const wind = solve(RIG_GANCHO_POSES['ganchoAscendente-wind']).wristNear.y;
     expect(Math.max(...y)).toBeGreaterThan(wind - 0.01);
     expect(Math.min(...y)).toBeLessThan(hit + 0.01);
+  });
+});
+
+// ---------------------------------------------------------------- chave de debug (RIG-09, RIG-10)
+
+describe('chave ?debug&rig=1 (RIG-09, RIG-10)', () => {
+  const base = { ...PLAYER_MOVE_FRAMES };
+
+  it.each(['?debug&rig=1', '?rig=1&debug', '?debug=1&rig=1'])('%s troca os 3 frames do gancho ascendente pelos do boneco (RIG-09)', (search) => {
+    const out = withRigFrames(base, search);
+    for (const name of RIG_NAMES) expect(out[name], name).toBe(RIG_GANCHO_FRAMES[name]);
+    expect(out['ganchoAscendente-hit']).not.toBe(base['ganchoAscendente-hit']);
+    expect(rigStrikePoint('ganchoAscendente-hit', search)).toEqual(RIG_GANCHO_STRIKE);
+  });
+
+  it.each(['', '?debug', '?rig=1', '?debug&rig=0', '?debug&rig=true', '?rig=1&nodebug'])('"%s" mantém os frames atuais (RIG-10)', (search) => {
+    expect(withRigFrames(base, search)).toBe(base);
+    expect(rigEnabled(search)).toBe(false);
+    expect(rigStrikePoint('ganchoAscendente-hit', search)).toBeUndefined();
+  });
+
+  it('com rig=1 só os 3 frames do gancho ascendente mudam; os outros golpes seguem os mesmos', () => {
+    const out = withRigFrames(base, '?debug&rig=1');
+    for (const name of Object.keys(base)) {
+      if (!RIG_NAMES.includes(name as (typeof RIG_NAMES)[number])) expect(out[name], name).toBe(base[name]);
+    }
   });
 });
