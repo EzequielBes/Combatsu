@@ -47,19 +47,15 @@
     {
       "files": [
         "scripts/smoke/targets.smoke.mjs",
-        "src/game/Enemy.ts",
-        "src/game/Player.ts",
         "src/game/TechRunner.ts",
         "src/game/art/rig/rasterize.ts",
         "src/game/art/sprites/enemy.ts",
         "src/game/art/sprites/player.ts",
         "src/game/art/sprites/playerMoves.ts",
-        "src/scenes/TestScene.ts",
         "tests/core/bossBrain.test.ts",
         "tests/core/enemyAI.test.ts",
         "tests/core/enemyBrain.test.ts",
-        "tests/core/run.test.ts",
-        "tests/game/art.test.ts"
+        "tests/core/run.test.ts"
       ],
       "rules": {
         "max-lines": [
@@ -75,11 +71,12 @@
     {
       "files": [
         "src/game/Hud.ts",
-        "src/game/Player.ts",
         "src/game/art/rig/poses/uppercut.ts",
         "src/game/art/sprites/enemy.ts",
+        "src/game/player/animator.ts",
         "src/game/techFx/RedOrb.ts",
         "src/scenes/TestScene.ts",
+        "src/scenes/test/snapshot.ts",
         "tools/rig-heroico.mjs"
       ],
       "rules": {
@@ -100,12 +97,17 @@
         "src/core/level.ts",
         "src/core/movement.ts",
         "src/core/run.ts",
-        "src/game/Enemy.ts",
         "src/game/Player.ts",
         "src/game/ShopPanel.ts",
         "src/game/TechRunner.ts",
         "src/game/art/rig/rasterize.ts",
-        "src/scenes/TestScene.ts"
+        "src/game/enemy/EnemyAnimator.ts",
+        "src/game/enemy/EnemyDefense.ts",
+        "src/game/player/animator.ts",
+        "src/game/player/defense.ts",
+        "src/game/player/strikes.ts",
+        "src/scenes/TestScene.ts",
+        "src/scenes/test/impactFx.ts"
       ],
       "rules": {
         "complexity": [
