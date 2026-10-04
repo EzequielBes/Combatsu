@@ -54,14 +54,14 @@ const STRIDE: readonly Stride[] = [
     armFwd: { x: 0.58, y: 0.22 },
   },
   {
-    lead: { ahead: -9, up: 1.6, foot: 58 },
-    trail: { ahead: 12, up: 14, foot: 72 },
+    lead: { ahead: -11, up: 1.6, foot: 56 },
+    trail: { ahead: 14, up: 13, foot: 84 },
     hipX: 4.4,
     sink: 3.8,
     spine: 145,
     neck: 25,
-    armBack: { x: -0.36, y: 0.46 },
-    armFwd: { x: 0.4, y: 0.44 },
+    armBack: { x: -0.52, y: 0.4 },
+    armFwd: { x: 0.56, y: 0.3 },
   },
 ];
 
@@ -69,11 +69,15 @@ function leg(k: Kit, hipX: number, l: Leg) {
   return { ankle: { x: k.cx + hipX + l.ahead, y: k.g - l.up }, foot: l.foot, bend: l.bend ?? 1 };
 }
 
+/** O ombro de longe fica à frente do eixo: o braço de longe recua mais para o punho de trás sair da silhueta. */
+const FAR_BACK = 0.3;
+
 /** Quadro `i` (0..5) da corrida: nos três primeiros lidera a perna de perto, nos três últimos a de longe. */
 function runFrame(k: Kit, i: number): HdFrameSpec {
   const s = STRIDE[i % 3]!;
   const nearLeads = i < 3;
-  const back: ArmTarget = { rel: { x: k.arm * s.armBack.x, y: k.arm * s.armBack.y }, bend: 1 };
+  const farBack = nearLeads ? 0 : FAR_BACK;
+  const back: ArmTarget = { rel: { x: k.arm * (s.armBack.x - farBack), y: k.arm * s.armBack.y }, bend: 1 };
   const fwd: ArmTarget = { rel: { x: k.arm * s.armFwd.x, y: k.arm * s.armFwd.y }, bend: -1 };
   return {
     pose: k.pose({
@@ -112,7 +116,7 @@ function jumpFrames(k: Kit): Record<string, HdFrameSpec> {
         armNear: { rel: { x: -k.arm * 0.35, y: k.arm * 0.6 }, bend: 1 },
         armFar: { rel: { x: k.arm * 0.7, y: -k.arm * 0.5 }, bend: -1 },
         legNear: { ankle: { x: k.cx + 7, y: k.g - 16 }, foot: 50 },
-        legFar: { ankle: { x: k.cx - 4, y: k.g - 3 }, foot: 28 },
+        legFar: { ankle: { x: k.cx - 6, y: k.g - 6.5 }, foot: 34 },
       }),
       expr: 'effort',
     },
@@ -127,24 +131,22 @@ function jumpFrames(k: Kit): Record<string, HdFrameSpec> {
         legNear: { ankle: { x: k.cx + 6, y: k.g - 18 }, foot: 60 },
         legFar: { ankle: { x: k.cx - 9, y: k.g - 14 }, foot: 30 },
       }),
-      hands: { near: 'open', far: 'open' },
     },
   };
 }
 
-/** Queda: pernas buscando o chão e braços para cima pelo ar; `sway` (0 ou 1) alterna de leve. */
+/** Queda de lutador: um punho à frente, o outro atrás, pernas buscando o chão; `sway` (0 ou 1) alterna o conjunto. */
 function fallFrame(k: Kit, sway: number): HdFrameSpec {
   return {
     pose: k.pose({
       hip: { x: k.cx, y: k.hy - 2 },
       spine: 176 + sway * 2,
       neck: 8,
-      armNear: { rel: { x: k.arm * 0.84, y: -k.arm * (0.4 + sway * 0.12) }, bend: -1 },
-      armFar: { rel: { x: -k.arm * 0.74, y: -k.arm * (0.52 - sway * 0.12) }, bend: 1 },
-      legNear: { ankle: { x: k.cx + 7 - sway, y: k.g - 5 - sway }, foot: 60 },
-      legFar: { ankle: { x: k.cx - 6 + sway, y: k.g - 9 + sway * 2 }, foot: 30 },
+      armNear: { rel: { x: k.arm * (0.7 + sway * 0.12), y: -k.arm * (0.25 + sway * 0.1) }, bend: -1 },
+      armFar: { rel: { x: -k.arm * (0.5 + sway * 0.12), y: k.arm * (0.3 - sway * 0.16) }, bend: 1 },
+      legNear: { ankle: { x: k.cx + 7 - sway * 2, y: k.g - 5 - sway * 3 }, foot: 60 },
+      legFar: { ankle: { x: k.cx - 6 + sway, y: k.g - 10 + sway * 3 }, foot: 30 },
     }),
-    hands: { near: 'open', far: 'open' },
   };
 }
 
