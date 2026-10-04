@@ -156,9 +156,11 @@ export class RedOrbFx {
     }
     this.chargeSprite.setPosition(x, y);
     if (!this.degraded && !this.glowFx) {
-      // Phaser 4: o objeto liga os filtros antes de usar; a ordem dos parâmetros do Glow ganhou `scale`.
+      // Phaser 4: o objeto liga os filtros antes de usar. O Glow vai na lista `external` (espaço de tela, como o postFX do
+      // Phaser 3): na `internal` o halo é cortado na borda do sprite e medido em texels, ampliado pelo zoom do mundo.
+      // Parâmetros: força 4, sem brilho interno, escala 1, qualidade 20 (acertada a olho contra o Phaser 3), 12 px.
       this.chargeSprite.enableFilters();
-      this.glowFx = this.chargeSprite.filters!.internal.addGlow(C.glow, 4, 0, 1, false, 10, 12); // RDA-06
+      this.glowFx = this.chargeSprite.filters!.external.addGlow(C.glow, 4, 0, 1, false, 20, 12); // RDA-06
     }
 
     if (!this.sparksOut) {
