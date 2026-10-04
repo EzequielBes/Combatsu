@@ -1,0 +1,185 @@
+/*
+ * Chutes do player HD, segunda parte: os atalhos de pose usados pelos chutes e os três golpes de corpo inteiro (o
+ * giratório, a rasteira e o chute carregado). A primeira parte fica em `kicks.ts`.
+ */
+import type { PoseSpec } from '../../rig/poses/build';
+import type { Vec2 } from '../../rig/skeleton';
+import type { HdMoveSpec } from '../frames';
+import type { Kit } from '../kit';
+
+type Leg = PoseSpec['legNear'];
+type Arm = PoseSpec['armNear'];
+
+/** Atalhos dos chutes: tudo em texels à frente do eixo (`ahead`) e acima do chão (`up`). */
+export interface KickKit {
+  /** Quadril a `dx` do eixo e `dy` abaixo da linha do quadril em pé. */
+  hip(dx: number, dy: number): Vec2;
+  /** Perna com o tornozelo em `k.at(ahead, up)`. */
+  leg(ahead: number, up: number, foot: number, bend?: 1 | -1): Leg;
+  /** Pé de apoio no chão a `dx` do lugar da guarda; `lift` sobe o calcanhar (ponta do pé). */
+  plantNear(dx?: number, lift?: number): Leg;
+  plantFar(dx?: number, lift?: number): Leg;
+  /** Braço com a mão a (`x`, `y`) braços do ombro (x para a frente, y para baixo). */
+  arm(x: number, y: number, bend?: 1 | -1): Arm;
+  /** Braço com a mão em `k.at(ahead, up)`. */
+  armTo(ahead: number, up: number, bend?: 1 | -1): Arm;
+}
+
+export function kickKit(k: Kit): KickKit {
+  const plant = (x: number, lift: number): Leg => ({ ankle: { x, y: k.g - lift }, foot: 90 - lift * 14 });
+  return {
+    hip: (dx, dy) => ({ x: k.cx + dx, y: k.hy + dy }),
+    leg: (ahead, up, foot, bend = 1) => ({ ankle: k.at(ahead, up), foot, bend }),
+    plantNear: (dx = 0, lift = 0) => plant(k.cx + k.stance.near + dx, lift),
+    plantFar: (dx = 0, lift = 0) => plant(k.cx + k.stance.far + dx, lift),
+    arm: (x, y, bend = -1) => ({ rel: { x: k.arm * x, y: k.arm * y }, bend }),
+    armTo: (ahead, up, bend = -1) => ({ to: k.at(ahead, up), bend }),
+  };
+}
+
+/**
+ * Chute giratório (perna de trás): o tronco fecha e a cabeça olha por cima do ombro, a perna de trás vem varrendo em
+ * extensão total com o tronco deitado para trás e os braços abertos, e passa do alvo antes de recolher.
+ */
+export function spinKick(k: Kit, t: KickKit): HdMoveSpec {
+  const hit = (over: number) =>
+    k.pose({
+      hip: t.hip(4 + over, 0.5),
+      spine: 232 + over * 6,
+      neck: -34,
+      armNear: t.arm(-0.75, 0.55 - over * 0.2, 1),
+      armFar: t.arm(0.5, 0.75),
+      legNear: t.plantNear(0, 1.5 + over),
+      legFar: t.leg(29 + over * 2, 33 - over * 8, 105),
+    });
+  return {
+    strike: 'footFar',
+    wind: k.pose({
+      hip: t.hip(2, 6),
+      spine: 150,
+      neck: 30,
+      armNear: t.arm(-0.3, 0.5, 1),
+      armFar: t.arm(-0.1, 0.6, 1),
+      legNear: t.plantNear(),
+      legFar: t.plantFar(8, 1.5),
+    }),
+    mid: k.pose({
+      hip: t.hip(3, 2),
+      spine: 200,
+      neck: -10,
+      armNear: t.arm(-0.3, 0.75, 1),
+      armFar: t.arm(0.55, 0.3),
+      legNear: t.plantNear(0, 1),
+      legFar: t.leg(12, 20, 70),
+    }),
+    hit: hit(0),
+    over: hit(1),
+    down: k.pose({
+      hip: t.hip(3, 3),
+      spine: 196,
+      neck: -8,
+      armNear: t.arm(-0.2, 0.8, 1),
+      armFar: t.arm(0.6, 0.2),
+      legNear: t.plantNear(),
+      legFar: t.leg(16, 12, 60),
+    }),
+    recover: k.guard(3.4),
+  };
+}
+
+/** Rasteira: o corpo cai sobre a perna de trás dobrada, apoia a mão no chão e a perna da frente varre rente ao chão. */
+export function sweep(k: Kit, t: KickKit): HdMoveSpec {
+  const hit = (over: number) =>
+    k.pose({
+      hip: t.hip(-2 + over, 18.5),
+      spine: 230 + over * 4,
+      neck: -40,
+      armNear: t.armTo(-17, 2.5, 1),
+      armFar: t.arm(0.45, 0.1),
+      legNear: t.leg(27 + over * 2.5, 4.4, 100),
+      legFar: t.plantFar(7, 0.5),
+    });
+  return {
+    strike: 'footNear',
+    wind: k.pose({
+      hip: t.hip(-3, 12),
+      spine: 162,
+      neck: 16,
+      armNear: t.arm(0.3, 0.75),
+      armFar: t.arm(0.4, 0.2),
+      legNear: t.plantNear(-3),
+      legFar: t.plantFar(3),
+    }),
+    mid: k.pose({
+      hip: t.hip(-4, 17),
+      spine: 198,
+      neck: -14,
+      armNear: t.arm(-0.4, 0.8, 1),
+      armFar: t.arm(0.45, 0.1),
+      legNear: t.leg(15, 5.5, 80),
+      legFar: t.plantFar(6, 0.5),
+    }),
+    hit: hit(0),
+    over: hit(1),
+    down: k.pose({
+      hip: t.hip(-3, 15),
+      spine: 190,
+      neck: -6,
+      armNear: t.arm(-0.2, 0.85, 1),
+      armFar: t.arm(0.45, 0.1),
+      legNear: t.leg(13, 4.5, 85),
+      legFar: t.plantFar(5),
+    }),
+    recover: k.guard(6),
+  };
+}
+
+/**
+ * Chute carregado: carga longa e funda sobre a perna de trás, joelho no peito, e o corpo inteiro se lança numa linha
+ * só da ponta do pé de trás ao calcanhar que bate.
+ */
+export function chargedKick(k: Kit, t: KickKit): HdMoveSpec {
+  const hit = (over: number) =>
+    k.pose({
+      hip: t.hip(7 + over * 2, 1),
+      spine: 238 + over * 4,
+      neck: -44,
+      armNear: t.arm(-0.8, 0.35, 1),
+      armFar: t.arm(0.3, 0.3),
+      legNear: t.leg(36 + over * 2, 31, 168),
+      legFar: t.plantFar(5 + over * 2, 3),
+    });
+  return {
+    strike: 'footNear',
+    wind: k.pose({
+      hip: t.hip(-7, 10),
+      spine: 146,
+      neck: 26,
+      armNear: t.arm(0.6, 0.3),
+      armFar: t.arm(0.5, 0.1),
+      legNear: t.leg(4, 22, 70),
+      legFar: t.plantFar(),
+    }),
+    mid: k.pose({
+      hip: t.hip(-1, 3),
+      spine: 186,
+      neck: 0,
+      armNear: t.arm(0.2, 0.7),
+      armFar: t.arm(0.4, 0.05),
+      legNear: t.leg(13, 27, 110),
+      legFar: t.plantFar(1, 1),
+    }),
+    hit: hit(0),
+    over: hit(1),
+    down: k.pose({
+      hip: t.hip(4, 4),
+      spine: 188,
+      neck: 0,
+      armNear: t.arm(0.1, 0.8),
+      armFar: t.arm(0.4, 0.05),
+      legNear: t.leg(15, 14, 70),
+      legFar: t.plantFar(4),
+    }),
+    recover: k.guard(4.5),
+  };
+}
