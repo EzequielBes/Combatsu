@@ -100,6 +100,10 @@ Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapsh
 - Câmera (zoom, zona morta e amortecimento): `WORLD_ZOOM`, `FOLLOW_DEADZONE` e `FOLLOW_LERP` em `src/scenes/TestScene.ts`
 - Ragdoll (juntas, impulso máximo): `src/game/Ragdoll.ts`
 - Efeitos (faísca, poeira, rastro, tremida): `src/game/fx.ts`
+- Feel amaldiçoado (rastro, impacto, deslizamento, câmera, linhas de foco): números em `src/data/feel.ts`; desenho em
+  `src/game/CursedFx.ts`, `src/game/ImpactFrame.ts` e `src/game/FocusLines.ts`; ligação em `onMeleeImpact` da
+  `TestScene`
+- De onde sai o rastro de cada golpe (ponta do punho ou do pé, por frame): `src/game/art/sprites/strikePoints.ts`
 
 A física roda em passo fixo de 60 Hz. O que a tela mostra (player, inimigos e chefe) é a posição entre os dois
 últimos passos, para o movimento ficar contínuo em qualquer monitor; a lógica e as hitboxes leem sempre o corpo.
@@ -112,6 +116,9 @@ canvas na inicialização com 1 texel = 2 px de mundo.
 
 - Paleta única (42 cores): `src/game/art/palette.ts`
 - Sprites do player, do inimigo e dos objetos: `src/game/art/sprites/`
+- Frames do player: 32x30 texels, com 6 linhas de folga acima da cabeça (`PLAYER_TOP_PAD`) para golpes que sobem;
+  a origem fica no pé. `tests/game/feelArt.test.ts` confere que o membro do frame de impacto chega à hitbox do golpe,
+  que o boneco é uma peça só e que golpes no chão têm o pé de apoio no chão
 - Chefes: `src/game/art/sprites/boss.ts` monta cada frame por pose (volumes pintados por código, rosto, chifres e pés desenhados à mão por cima); o resultado é a mesma grade de texto
 - Tiles do cenário: `src/game/art/tiles.ts`
 - Fundo com parallax: `src/game/art/background.ts`

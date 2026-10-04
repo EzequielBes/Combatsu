@@ -419,7 +419,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: texto atual
 **Requirement**: TRL-01
 **Done when**:
-- [ ] Texto bate com o código.
+- [x] Texto bate com o código.
 **Tests**: none
 **Gate**: build
 
