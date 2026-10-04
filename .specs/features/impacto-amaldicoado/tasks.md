@@ -391,7 +391,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: camada de UI (AD-003), `data/feel`
 **Requirement**: FOC-01, FOC-02
 **Done when**:
-- [ ] `npm run build` passa.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 

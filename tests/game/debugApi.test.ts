@@ -77,7 +77,7 @@ describe('installDebugApi', () => {
       tech: { slots: [null, null], cast: null },
       kokusen: { zone: false, zoneMs: 0, streak: 0, windowOpen: false },
       techObjects: [],
-      fx: { live: 0, degraded: false, layers: [], aura: null, trails: [], lastImpact: null, red: { glowColor: null, glow: { active: false, color: null }, screenFlashColor: null, orb: null } },
+      fx: { live: 0, degraded: false, layers: [], aura: null, trails: [], focus: null, lastImpact: null, red: { glowColor: null, glow: { active: false, color: null }, screenFlashColor: null, orb: null } },
       camera: { zoom: 1.5, worldView: { left: 0, right: 640 }, center: { x: 320, y: 180 }, scroll: { x: -160, y: -90 }, roundPixels: false, phaserFollow: false },
       physics: { alpha: 0.5 },
       finisher: { distPx: null },
