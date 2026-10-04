@@ -293,7 +293,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `Fx.burst`, `PALETTE`, `data/feel`, `impactSpikes`
 **Requirement**: TRL-03, TRL-04, TRL-05, TRL-06, TRL-07, TRL-08, TRL-09, IMP-07, IMP-08, IMP-09, IMP-15, RCT-03, EDG-03, EDG-04
 **Done when**:
-- [ ] `npm run build` passa; cores só `d`, `c`, `C`, `u`, `U` (teste unitário sobre a constante de cores exportada).
+- [x] `npm run build` passa; cores só `d`, `c`, `C`, `u`, `U` (teste unitário sobre a constante de cores exportada).
 **Tests**: unit
 **Gate**: build
 
