@@ -1,35 +1,28 @@
 import Phaser from 'phaser';
 import type { EnemyVariant } from '../core/enemyVariant';
-import { pickHitReaction, type HitReaction } from '../core/hitReaction';
 import { Filters } from '../core/collision';
 import { EnemyAI, type EnemyAIState } from '../core/enemyAI';
 import type { AttackKind } from '../core/attackKind';
-import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
+import { EnemyBrain, type EnemyState } from '../core/enemyBrain';
 import { EnemyGuard, type GuardRoll } from '../core/enemyGuard';
-import { LightStreak, baseConditionsHold, guardChance, readingBonus, shoveRoll } from '../core/moveReading';
-import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structure';
+import { ENEMY_STRUCTURE, Structure } from '../core/structure';
 import type { EnemyBase } from '../core/difficulty';
 import type { ToolKey } from '../core/loot';
 import { SpawnGrace } from '../core/spawnGrace';
 import type { ImpactTier } from '../core/impactTier';
-import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE, type MoveDef } from '../data/moves';
+import { READING, type MoveDef } from '../data/moves';
 import type { ParryInfo } from '../core/defense';
-import { normalize, type Hit, type HitReport, type Vec2 } from '../core/hit';
+import type { Hit, HitReport, Vec2 } from '../core/hit';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import type { OnConnect } from './hitbox';
-import { BodyRenderPos, applyFilter, setIgnoreGravity } from './physics';
-import { Ragdoll } from './Ragdoll';
+import { BodyRenderPos } from './physics';
 import { SIZE } from './textures';
 import type { EnemyCtx } from './enemy/context';
+import { EnemyDefense } from './enemy/EnemyDefense';
 import { EnemyAttack } from './enemy/EnemyAttack';
 import { EnemyAnimator } from './enemy/EnemyAnimator';
 import { EnemyMovement } from './enemy/EnemyMovement';
 import { EnemyHud } from './enemy/EnemyHud';
-
-/** Gancho ascendente (MOV-11): velocidade vertical inicial (px/step) que leva o centro além dos 64 px do golpe. */
-const LAUNCH_VY = -10;
-/** Componente vertical (normalizado com o horizontal) do impulso de um empurrão: quase rente ao chão. */
-const PUSH_LIFT = -0.15;
 
 /**
  * O que a cena entrega ao inimigo a cada frame: o limitador de atacantes (LIM-01..03, LIM-07) e `focus`, se este é o
@@ -60,24 +53,14 @@ export class Enemy implements Hittable {
   private readonly body: MatterJS.BodyType;
   /** Posição do corpo como a tela a mostra, entre os dois últimos passos de física (ITP-07). */
   private readonly drawPos: BodyRenderPos;
-  /** Reação escolhida no `receiveHit`, consumida pelo evento `hitReaction` do cérebro. */
-  private pickedReaction: HitReaction | null = null;
-  /** O ragdoll nasceu escondido atrás da pose de impacto; o próximo `update` troca sprite por ragdoll (HRX-05/06). */
-  private pendingRagdollReveal = false;
   /** Estrutura do inimigo (STR-01..05, PAR-03): quebra atordoa; `update` avança o relógio de jogo. */
   private readonly structure = new Structure(ENEMY_STRUCTURE);
-  /** O finalizador já bateu nesta quebra (um por quebra, FIN-03). */
-  private finished = false;
   /** Sorteio da guarda (EBL-01): o stream da run, entregue pela cena; sem ele nunca levanta a guarda. */
   guardRng: GuardRoll | null = null;
   /** Guarda do inimigo comum (EBL-01..05): 600 ms, bloqueia leve de frente; forte e carregado passam. */
   private readonly guard = new EnemyGuard({ chance: (p) => this.guardRng?.chance(p) ?? false });
   /** Faísca azul do bloqueio (EBL-02), no ponto de contato; a cena liga ao `Fx`. */
   onBlock: ((point: Vec2) => void) | null = null;
-  /** Relógio de jogo do inimigo (ms): soma o `dt` do `update`, que não anda no hitstop; mede o intervalo dos leves (RDG-13). */
-  private clockMs = 0;
-  /** Leves seguidos aceitos por este inimigo (RDG-13..15). */
-  private readonly streak = new LightStreak();
   /** Chance do empurrão no 4º leve seguido (RDG-16, `?debug&shove=`), entregue pela cena. */
   shoveChance: number = READING.shoveChance;
   /** O inimigo empurrou o jogador (RDG-17); `dir` é o sentido do deslocamento do jogador, para longe do inimigo. */
@@ -96,12 +79,13 @@ export class Enemy implements Hittable {
   private readonly anim: EnemyAnimator;
   private readonly move: EnemyMovement;
   private readonly atk: EnemyAttack;
+  private readonly def: EnemyDefense;
 
   constructor(
     private readonly scene: Phaser.Scene,
     readonly spawn: Vec2,
     /** Tuning escalado da rodada (DIF-04): hp, dano e velocidades já com o multiplicador aplicado. */
-    private readonly tuning: EnemyBase,
+    tuning: EnemyBase,
     graceMs: number,
     private readonly onRemoved: (enemy: Enemy) => void,
     /** Garra que conectou no player (faísca + hitstop), injetado pela cena. */
@@ -152,6 +136,18 @@ export class Enemy implements Hittable {
     this.anim = new EnemyAnimator(this.c, spawn, weaponInfo);
     this.atk = new EnemyAttack(this.c, this.anim, onConnect);
     this.hud = new EnemyHud(this.c);
+    this.def = new EnemyDefense(
+      this.c,
+      {
+        target: this,
+        guardRng: () => this.guardRng,
+        shoveChance: () => this.shoveChance,
+        shove: (dir) => this.onShove?.(dir),
+        died: (x, y) => this.onDied?.(this, x, y),
+        remove: () => this.remove(),
+      },
+      { anim: this.anim, atk: this.atk, move: this.move, hud: this.hud },
+    );
   }
 
   get x(): number {
@@ -296,116 +292,22 @@ export class Enemy implements Hittable {
    * que bateu num inimigo comprometido e foi absorvido (`armored`, CMT-04): ele perde vida e postura, mas o ataque sai.
    */
   receiveHit(hit: Hit, report?: HitReport): boolean {
-    if (this.brain.isDead) return false;
-    const wasBroken = this.structure.broken;
-    // EBL-02..05: a guarda segura o leve que vem de frente; forte e carregado passam com dano cheio e encerram a guarda.
-    const fromFront = hit.direction.x * this.c.s.facing < 0;
-    const res = this.guard.resolveHit({
-      damage: hit.damage,
-      strength: hit.strength,
-      unblockable: hit.unblockable,
-      fromFront,
-      structureGain: enemyStructureGain(hit),
-    });
-    if (res.blocked) {
-      if (report) report.blocked = true;
-      return this.onBlocked(res.structureGain);
-    }
-    const isFinisher = hit.moveName === FINISHER_MOVE;
-    const effect = !wasBroken && hit.moveName ? MOVES[hit.moveName]?.effect : undefined;
-    // Quebrado e atordoado: o golpe tira vida mas não derruba nem empurra, para o finalizador ainda alcançar (FIN-01, EDG-11).
-    let reaction: Hit = hit;
-    if (wasBroken && !isFinisher) reaction = { ...hit, strength: 'light', force: 0, knockdown: false };
-    // Empurrão (SPC-02): sai rente ao chão, para o deslocamento horizontal não esbarrar em plataformas.
-    else if (effect?.type === 'push') reaction = { ...hit, direction: { x: hit.direction.x, y: PUSH_LIFT } };
-    this.pickedReaction = pickHitReaction(
-      { strength: reaction.strength, moveName: hit.moveName },
-      this.anim.lastReaction,
-    );
-    const events = this.brain.receiveHit(reaction, {
-      committed: this.ai.committed,
-      ...(effect?.type === 'knockdown' ? { ragdollStunMs: effect.ms } : {}),
-    });
-    if (events.length === 0) return false; // já morto, levantando ou no limite do chão (GND-02, GND-03)
-    // Comprometido e sem que o golpe derrube, mate ou seja Contra: a IA segue e o golpe pendente sai (CMT-05).
-    const armored = events.some((ev) => ev.type === 'armored');
-    if (!armored) {
-      this.c.s.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
-      // Levar golpe cancela o preparo ou o golpe em andamento antes do compromisso (AI-04, CMT-03).
-      this.atk.onAI(this.ai.interrupt());
-    }
-    this.handle(events);
-    this.pickedReaction = null;
-    const survived = !this.brain.isDead;
-    if (survived && this.structure.add(enemyStructureGain(hit))) this.onBreak();
-    if (survived && effect && !armored) this.applyEffect(effect, hit);
-    if (survived) this.trackStreak(hit);
-    this.hud.updateBar();
-    return true;
+    return this.def.receiveHit(hit, report);
   }
 
-  /**
-   * Leves seguidos e empurrão (RDG-13..18), com o golpe do jogador já aceito: o golpe forte zera a contagem; o leve
-   * corpo a corpo soma, e do 4º em diante o inimigo livre sorteia o empurrão no stream de guarda da run. Objeto e
-   * técnica não entram na sequência de leves.
-   */
-  private trackStreak(hit: Hit): void {
-    if (hit.strength === 'heavy') {
-      this.streak.onHeavy();
-      return;
-    }
-    if (hit.tech || hit.moveName === undefined) return;
-    const count = this.streak.onLight(this.clockMs);
-    const free = !this.ai.committed && !this.structure.broken && !this.c.s.ragdoll && !this.brain.isDead;
-    if (!free || !this.guardRng || !shoveRoll({ streak: count, chance: this.shoveChance, roll: this.guardRng })) return;
-    this.streak.reset();
-    this.brain.recover();
-    this.onEvent?.(`shove:${this.id}`);
-    // O jogador bateu de frente: sai para o lado oposto ao do golpe.
-    this.onShove?.(hit.direction.x >= 0 ? -1 : 1);
+  /** Golpe do inimigo aparado pelo jogador (PAR-03, DFL-07..11); ver `EnemyDefense.parried`. */
+  parried(info?: ParryInfo): void {
+    this.def.parried(info);
   }
 
-  /** Golpe leve segurado pela guarda (EBL-02): sem dano nem reação, soma estrutura e avisa a cena. */
-  private onBlocked(structureGain: number): boolean {
-    this.onEvent?.(`enemyBlock:${this.id}`);
-    this.onBlock?.({ x: this.body.position.x + this.c.s.facing * 10, y: this.body.position.y - 4 });
-    if (this.structure.add(structureGain)) this.onBreak();
-    this.hud.updateBar();
-    // `false`: o golpe não conectou de fato (sem faísca vermelha, hitstop nem combo); o feedback é o azul do bloqueio.
-    return false;
-  }
-
-  /** Reação de golpe que sobrevive (MOV-11, MOV-10 pelo `ragdollStunMs`, SPC-02): lançar e empurrar. */
-  private applyEffect(effect: NonNullable<(typeof MOVES)[string]['effect']>, hit: Hit): void {
-    if (effect.type === 'launch') this.c.s.ragdoll?.launch(LAUNCH_VY);
-    else if (effect.type === 'push') this.move.startSlide(hit.direction.x >= 0 ? 1 : -1, effect.px);
-  }
-
-  /** Estrutura cheia (STR-05, STR-10): quebrou, atordoa e para no lugar; um `guardBreak:<id>`. */
-  private onBreak(): void {
-    this.guard.reset();
-    this.atk.onAI(this.ai.interrupt());
-    this.c.s.walkVxStep = null;
-    if (!this.c.s.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
-    this.onEvent?.(`guardBreak:${this.id}`);
-  }
-
-  /**
-   * Golpe do inimigo aparado pelo jogador (PAR-03, DFL-07..11): +35 de estrutura sempre. Golpe do meio da sequência
-   * não faz mais nada e a sequência segue (DFL-07, DFL-08); o último deixa o inimigo 400 ms parado (DFL-09), e a
-   * Deflexão o põe em `stagger` por `COUNTER.deflectStaggerMs` (DFL-11).
-   */
-  parried(info: ParryInfo = { final: true, deflect: false }): void {
-    if (this.brain.isDead) return;
-    if (info.final) {
-      this.atk.onAI(this.ai.interrupt());
-      this.c.s.walkVxStep = null;
-      this.c.s.suppressedMs = DEFENSE.parrySuppressMs;
-      if (!this.c.s.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
-      if (info.deflect) this.brain.forceStagger(COUNTER.deflectStaggerMs);
-    }
-    if (this.structure.add(STRUCTURE.enemy.parryGain)) this.onBreak();
-    this.hud.updateBar();
+  /** O jogador iniciou um golpe do grafo (RDG-03, RDG-10): a guarda pode subir; ver `EnemyDefense.onPlayerMove`. */
+  onPlayerMove(
+    player: { x: number; facing: 1 | -1 },
+    move: Pick<MoveDef, 'strength' | 'travel'>,
+    round: number,
+    reading: { repeats: number; override?: number },
+  ): boolean {
+    return this.def.onPlayerMove(player, move, round, reading);
   }
 
   /** Estrutura viva para o snapshot (STR-01). */
@@ -420,12 +322,12 @@ export class Enemy implements Hittable {
 
   /** Quebrado e ainda sem finalizador nesta quebra (FIN-01, um por quebra). */
   get finishable(): boolean {
-    return this.structure.broken && !this.finished && !this.brain.isDead;
+    return this.def.finishable;
   }
 
   /** O finalizador acertou: não vale de novo até uma nova quebra. */
   markFinished(): void {
-    this.finished = true;
+    this.def.markFinished();
   }
 
   /** Guardando (EBL-01), para o snapshot. */
@@ -440,52 +342,7 @@ export class Enemy implements Hittable {
 
   /** Leves seguidos aceitos, para o snapshot (RDG-13). */
   get lightStreak(): number {
-    return this.streak.count;
-  }
-
-  /**
-   * O jogador iniciou um golpe do grafo (RDG-03, RDG-10). Se este inimigo é elegível, está de frente para o jogador e a
-   * até `READING.rangePx + travel.forwardPx` dele, sorteia a guarda com `guardChance`: a base do EBL-01 (golpe leve,
-   * `idle`, a 60 px) mais o bônus de leitura das `repeats`; `override` fixa a chance (`?debug&enemyGuard=`). Ao subir,
-   * cancela o preparo e vira para o jogador (a guarda só segura o que vem de frente). A guarda de leitura (bônus acima
-   * de 0, sem `override`) tira o inimigo do `hitstun` ou do `stagger` (RDG-09) e emite `read:<id>` (RDG-05); com
-   * `override` a leitura não conta e a guarda é sempre a comum (RDG-10).
-   */
-  onPlayerMove(
-    player: { x: number; facing: 1 | -1 },
-    move: Pick<MoveDef, 'strength' | 'travel'>,
-    round: number,
-    reading: { repeats: number; override?: number },
-  ): boolean {
-    if (this.c.s.removed || this.c.s.ragdoll || this.brain.isDead || this.structure.broken) return false;
-    // Comprometido (inclui `attack`, CMT-10) e levantando não levantam a guarda.
-    if (this.ai.committed || this.brain.state === 'gettingUp') return false;
-    const ex = this.body.position.x;
-    const distancePx = Math.abs(ex - player.x);
-    const playerFacingEnemy = player.facing === 1 ? ex >= player.x : ex <= player.x;
-    if (!playerFacingEnemy || distancePx > READING.rangePx + (move.travel?.forwardPx ?? 0)) return false;
-    const bonus = readingBonus(reading.repeats);
-    const chance = guardChance({
-      base: EnemyGuard.chanceFor(round),
-      reading: bonus,
-      override: reading.override,
-      baseConditions: baseConditionsHold(
-        { round, idle: this.brain.state === 'idle', playerFacingEnemy, distancePx },
-        move.strength,
-      ),
-    });
-    // RDG-10: com `enemyGuard=N` a leitura é ignorada; a guarda que sobe é a comum, sem `read:<id>`.
-    const read = bonus > 0 && reading.override === undefined;
-    if (!this.guard.tryRaise(chance, read)) return false;
-    if (read) {
-      this.brain.recover();
-      this.onEvent?.(`read:${this.id}`);
-    }
-    this.atk.onAI(this.ai.interrupt());
-    this.c.s.walkVxStep = null;
-    this.c.s.facing = player.x >= ex ? 1 : -1;
-    this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
-    return true;
+    return this.def.lightStreak;
   }
 
   /**
@@ -495,15 +352,9 @@ export class Enemy implements Hittable {
   update(dtMs: number, playerX: number, gate: EnemyFrameInput = NO_GATE): void {
     if (this.c.s.removed) return;
     this.atk.beginFrame();
-    this.clockMs += dtMs;
     this.grace.update(dtMs);
-    this.c.s.suppressedMs = Math.max(0, this.c.s.suppressedMs - dtMs);
-    // PST-14, PST-16: no foco a postura cai devagar; fora dele, rápido. O atraso de 1500 ms vale nos dois.
-    this.structure.update(dtMs, gate.focus ? STRUCTURE.enemy.decayPerSec : STRUCTURE.enemy.offFocusDecayPerSec);
-    if (!this.structure.broken) this.finished = false;
-    this.guard.update(dtMs);
-    if (this.pendingRagdollReveal) this.revealRagdoll();
-    this.handle(this.brain.update(dtMs));
+    this.def.tick(dtMs, gate.focus);
+    this.def.handle(this.brain.update(dtMs));
     if (this.c.s.removed) return;
     this.move.stepHitSlide(dtMs);
     this.anim.tick(dtMs);
@@ -554,82 +405,6 @@ export class Enemy implements Hittable {
     if (this.c.s.removed || this.c.s.ragdoll || this.brain.isDead || this.brain.state !== 'idle') return;
     this.anim.touch();
     this.onEvent?.(`slideTouch:${this.id}`);
-  }
-
-  private handle(events: EnemyEvent[]): void {
-    for (const ev of events) {
-      if (ev.type === 'hitReaction') this.playHitReaction(ev.hit);
-      else if (ev.type === 'armored') this.onArmored();
-      else if (ev.type === 'stagger') this.playStagger(ev.hit);
-      else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
-      else if (ev.type === 'ragdoll') this.enterRagdoll(ev.hit);
-      else if (ev.type === 'getUp') this.getUp();
-      else if (ev.type === 'dissolve') this.c.s.ragdoll?.dissolve(this.tuning.brain.dissolveMs);
-      else if (ev.type === 'removed') this.remove();
-    }
-  }
-
-  /** Golpe leve: a animação sai do animador (HRX-02); aqui o corpo recebe o impulso do golpe. */
-  private playHitReaction(hit: Hit): void {
-    this.anim.hitReaction(this.pickedReaction);
-    const d = normalize(hit.direction);
-    this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
-  }
-
-  /** Golpe absorvido por quem está comprometido (CMT-04, CMT-06, RCT-09): faísca de guarda e o evento; a IA segue. */
-  private onArmored(): void {
-    this.onBlock?.({ x: this.body.position.x + this.c.s.facing * 10, y: this.body.position.y - 4 });
-    this.onEvent?.(`armored:${this.id}`);
-  }
-
-  /**
-   * Golpe forte que não derruba (PST-01): cambaleia sem ragdoll, no frame `impact`, com o impulso horizontal do golpe
-   * como na reação leve.
-   */
-  private playStagger(hit: Hit): void {
-    this.anim.staggerPose();
-    const d = normalize(hit.direction);
-    this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
-    this.onEvent?.(`stagger:${this.id}`);
-  }
-
-  private enterRagdoll(hit: Hit): void {
-    this.anim.clearTint();
-    if (!this.c.s.ragdoll) {
-      this.c.s.ragdoll = new Ragdoll(this.scene, this.body.position.x, this.body.position.y - 3, this.variant);
-      for (const b of this.c.s.ragdoll.bodies) tagBody(b, { kind: 'character', target: this });
-      // Pose de impacto (HRX-05/06): a cena não atualiza o inimigo durante o hitstop, então o ragdoll nasce
-      // escondido e o sprite fica no frame `impact` até o próximo `update`, que faz a troca.
-      this.c.s.ragdoll.setVisible(false);
-      this.anim.impactPose();
-      this.pendingRagdollReveal = true;
-      applyFilter(this.body, Filters.hidden);
-      setIgnoreGravity(this.body, true);
-    }
-    this.c.s.ragdoll.impulse(hit.direction, hit.force);
-  }
-
-  /** Primeiro update depois da pose de impacto: o ragdoll aparece e o sprite some (HRX-05/06). */
-  private revealRagdoll(): void {
-    this.pendingRagdollReveal = false;
-    if (!this.c.s.ragdoll) return;
-    this.c.s.ragdoll.setVisible(true);
-    this.anim.hide();
-  }
-
-  /** Levantar: o ragdoll some e o sprite volta tocando a animação `getup` (o cérebro fica em gettingUp). */
-  private getUp(): void {
-    if (!this.c.s.ragdoll) return;
-    const c = this.c.s.ragdoll.center;
-    this.c.s.ragdoll.destroy();
-    this.c.s.ragdoll = null;
-    const y = c.y - 12;
-    this.scene.matter.body.setPosition(this.body, { x: c.x, y });
-    this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
-    applyFilter(this.body, Filters.enemy);
-    setIgnoreGravity(this.body, false);
-    this.pendingRagdollReveal = false;
-    this.anim.showAfterGetUp();
   }
 
   private remove(): void {
