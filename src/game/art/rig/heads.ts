@@ -32,7 +32,7 @@ export const HEAD_LARGE: HeadSprite = {
   neckCol: 5,
 };
 
-/** Cabeça do heroico alto, idle (concentrado): 7 linhas com o cabelo, olho com íris e brilho, sobrancelha, nariz, orelha e queixo. */
+/** Cabeça do heroico alto, idle (concentrado): 8 linhas com o cabelo, olho com íris e brilho, sobrancelha, nariz, orelha e queixo. */
 export const HEAD_TALL_IDLE: HeadSprite = {
   grid: [
     '..k..k.k....',
