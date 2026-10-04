@@ -6,7 +6,7 @@
  * Punho Divergente e o Kokusen são de Itadori: base baixa, corpo torcido e o soco atravessando o alvo.
  *
  * Os efeitos são desenhados pelo jogo por cima do sprite, em pontos fixos em relação ao pé (1 px = 1 texel): a mão
- * que conjura fica nesses pontos (ver `RED_TIP`, `FIST_AURA` e `CUT_LINE_UP`).
+ * que conjura fica nesses pontos (ver `RED_TIP` e `FIST_AURA`).
  */
 import type { ArmTarget, PoseSpec } from '../../rig/poses/build';
 import { solve, type Pose, type Vec2 } from '../../rig/skeleton';
@@ -18,14 +18,15 @@ type Leg = PoseSpec['legNear'];
 type Tip = readonly [ahead: number, up: number, len: number];
 
 /** Do pulso à ponta de cada forma de mão, ao longo do antebraço (as medidas de `hand.ts`). */
-const TIP = { fist: 4.3, open: 6.4, sign: 8.2 };
+const TIP = { fist: 4.3, open: 6.4, sign: 8.2, palm: 1.6 };
 
-/** Ponta dos dedos do Vermelho em cada fase, na altura do ombro do corpo HD: [à frente, acima do chão]. O orbe nasce aqui (`hdAnchors`). */
-const RED_TIP = { sign: [22, 39], charge: [26, 40], release: [32, 37] } as const;
+/**
+ * Ponta dos dedos do Vermelho em cada fase, na altura do ombro do corpo HD: [à frente, acima do chão]. O orbe nasce
+ * aqui (`hdAnchors`). No disparo o corpo recua, então o dedo não avança tanto quanto o braço esticado sugere.
+ */
+const RED_TIP = { sign: [24, 39], charge: [25, 40], release: [25, 38] } as const;
 /** Centro da aura do punho do Divergente no selo e na carga (`FIST_OFFSET` de `DivergentFx`, a partir do pé). */
 const FIST_AURA = [22, 22] as const;
-/** Altura da linha do Desmantelar ao sair do corpo (o centro do corpo de colisão). */
-const CUT_LINE_UP = 18;
 
 /**
  * Alvo de braço para a PONTA da mão: o pulso recua `len` ao longo do antebraço. Ponto fixo amortecido, porque o
@@ -108,12 +109,13 @@ function divergente(k: Kit): Record<string, HdFrameSpec> {
     },
     'divergente-charge': {
       pose: build(k, {
-        hip: [-3.5, 7.5],
-        spine: 178,
-        neck: 4,
-        near: { to: k.at(-11, 25), bend: 1 },
+        hip: [-5, 10],
+        spine: 162,
+        neck: 14,
+        near: { to: k.at(-13, 28), bend: 1 },
         far: byTip(),
         farTip: aim,
+        legFar: { ankle: { x: k.cx + k.stance.far, y: k.g - 2 }, foot: 62 },
       }),
       expr: 'effort',
     },
@@ -128,7 +130,7 @@ function divergente(k: Kit): Record<string, HdFrameSpec> {
         far: { rel: { x: k.arm * 0.2, y: k.arm * 0.1 }, bend: -1 },
         ...lunge(k, 15, -10, 2),
       }),
-      expr: 'effort',
+      expr: 'shout',
     },
     'divergente-recover': {
       pose: build(k, {
@@ -156,11 +158,11 @@ function kokusen(k: Kit): Record<string, HdFrameSpec> {
         neck: 22,
         shoulderNear: -90,
         near: byTip(),
-        nearTip: [38, 27, TIP.fist],
-        far: { to: k.at(-12, 36), bend: 1 },
+        nearTip: [38, 33, TIP.fist],
+        far: { to: k.at(-12, 38), bend: 1 },
         ...lunge(k, 18, -13, 3),
       }),
-      expr: 'effort',
+      expr: 'shout',
     },
   };
 }
@@ -170,36 +172,36 @@ function corte(k: Kit): Record<string, HdFrameSpec> {
   return {
     'corte-sign': {
       pose: build(k, {
-        hip: [-1, 2],
-        spine: 183,
-        neck: -2,
+        hip: [-0.5, 3.2],
+        spine: 176,
+        neck: 3,
         near: byTip(),
-        nearTip: [13, 52, TIP.open],
+        nearTip: [8, 41.5, TIP.open],
         far: loose(k),
       }),
-      hands: { near: 'open', far: 'open' },
+      hands: { near: 'open', far: 'relaxed' },
     },
     'corte-charge': {
       pose: build(k, {
-        hip: [-3, 7],
-        spine: 171,
-        neck: 8,
-        near: byTip(1),
-        nearTip: [-10, 25, TIP.open],
-        far: tucked(k),
+        hip: [-2.5, 6],
+        spine: 173,
+        neck: 6,
+        near: byTip(-1),
+        nearTip: [-6, 44, TIP.open],
+        far: { rel: { x: k.arm * 0.7, y: k.arm * 0.1 }, bend: -1 },
       }),
       hands: { near: 'open', far: 'open' },
     },
     'corte-release': {
       pose: build(k, {
-        hip: [4, 5.5],
-        spine: 160,
-        neck: 15,
+        hip: [5, 7],
+        spine: 156,
+        neck: 18,
         shoulderNear: -90,
         near: byTip(),
-        nearTip: [28, CUT_LINE_UP + 1, TIP.open],
-        far: { to: k.at(-11, 34), bend: 1 },
-        ...lunge(k, 13, -10, 1.6),
+        nearTip: [30, 15, TIP.open],
+        far: { to: k.at(-9, 46), bend: 1 },
+        ...lunge(k, 14, -10, 1.6),
       }),
       hands: { near: 'open', far: 'open' },
       expr: 'effort',
@@ -226,38 +228,40 @@ function vermelho(k: Kit): Record<string, HdFrameSpec> {
   return {
     'vermelho-sign': {
       pose: build(k, {
-        hip: [0.5, 2],
-        spine: 181,
-        neck: -1,
-        near: byTip(1),
+        hip: [-0.5, 3.2],
+        spine: 176,
+        neck: 3,
+        near: byTip(),
         nearTip: tip(RED_TIP.sign),
         far: loose(k),
       }),
-      hands: { near: 'sign', far: 'open' },
+      hands: { near: 'sign', far: 'relaxed' },
     },
     'vermelho-charge': {
       pose: build(k, {
-        hip: [0, 5.5],
-        spine: 171,
-        neck: 8,
+        hip: [-1.5, 5.5],
+        spine: 179,
+        neck: 1,
+        shoulderNear: -90,
         near: byTip(),
         nearTip: tip(RED_TIP.charge),
-        far: { to: k.at(RED_TIP.charge[0] - 15, RED_TIP.charge[1] - 1), bend: -1 },
+        far: { to: k.at(RED_TIP.charge[0] - 13, RED_TIP.charge[1] - 2.5), bend: -1 },
       }),
       hands: { near: 'sign', far: 'open' },
     },
     'vermelho-release': {
       pose: build(k, {
-        hip: [3, 7.5],
-        spine: 161,
-        neck: 15,
+        hip: [-3, 6],
+        spine: 190,
+        neck: -6,
         shoulderNear: -90,
         near: byTip(),
         nearTip: tip(RED_TIP.release),
-        far: { to: k.at(-9, 30), bend: 1 },
-        ...lunge(k, 13, -11, 1.5),
+        far: { to: k.at(-10, 21), bend: 1 },
+        legNear: { ankle: { x: k.cx + 14, y: k.g }, foot: 90 },
+        legFar: { ankle: { x: k.cx - 9, y: k.g }, foot: 90 },
       }),
-      hands: { near: 'sign' },
+      hands: { near: 'sign', far: 'open' },
       expr: 'effort',
     },
     'vermelho-recover': {
@@ -280,14 +284,14 @@ function azul(k: Kit): Record<string, HdFrameSpec> {
   return {
     'azul-sign': {
       pose: build(k, {
-        hip: [-1, 1.5],
-        spine: 185,
-        neck: -3,
+        hip: [-0.5, 3.2],
+        spine: 176,
+        neck: 3,
         near: byTip(),
-        nearTip: [17, 47, TIP.open],
+        nearTip: [15, 42, TIP.palm],
         far: loose(k),
       }),
-      hands: { near: 'open', far: 'open' },
+      hands: { near: 'palm', far: 'open' },
     },
     'azul-charge': {
       pose: build(k, {
@@ -303,16 +307,18 @@ function azul(k: Kit): Record<string, HdFrameSpec> {
     },
     'azul-release': {
       pose: build(k, {
-        hip: [4, 6],
-        spine: 162,
-        neck: 14,
+        hip: [3, 5.5],
+        spine: 165,
+        neck: 12,
         shoulderNear: -90,
         near: byTip(),
-        nearTip: [30, 30, TIP.open],
-        far: { to: k.at(-9, 31), bend: 1 },
-        ...lunge(k, 13, -10, 1.5),
+        nearTip: [27, 37, TIP.palm],
+        far: byTip(),
+        farTip: [26, 28, TIP.palm],
+        ...lunge(k, 11, -9.5, 0.8),
       }),
-      hands: { near: 'open' },
+      hands: { near: 'palm', far: 'palm' },
+      farFront: { arm: true },
       expr: 'effort',
     },
     'azul-recover': {
