@@ -59,7 +59,7 @@ const LUM_B = 0.072;
  * também é linear e cabe inteira numa única matriz (sem shader novo, decisão do design.md). As colunas de viés (a
  * 5ª de cada linha) ficam em 0–255 porque é assim que `ColorMatrix.getData` as lê (divide por 255 internamente).
  */
-function duotoneMatrix(base: number, target: number): number[] {
+export function duotoneMatrix(base: number, target: number): number[] {
   // m0..m2 multiplicam R/G/B já normalizados (0-1): por isso dividem por 255 também (só o viés m4 fica em 0-255,
   // que é como `ColorMatrix.getData` o lê).
   const row = (b: number, t: number): number[] => [

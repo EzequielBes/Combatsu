@@ -1,11 +1,14 @@
 import Phaser from 'phaser';
+import { PALETTE } from './art/palette';
+import { duotoneMatrix } from './techFx/KokusenFx';
 
 /** Quantos quadros renderizados o quadro de impacto fica na câmera (IMP-11): a linguagem de 2 quadros do anime. */
 export const IMPACT_FRAME_RENDERS = 2;
 
 /**
  * Quadro de impacto do golpe decisivo: por exatamente 2 quadros renderizados a câmera do mundo ganha o postFX
- * `impactFrame` (negativo de contraste duro, no estilo dos quadros de corte do anime) e depois ele é removido
+ * `impactFrame` (duotone de energia amaldiçoada: sombras no marinho quase preto `k`, luzes no ciano `C`, como os
+ * quadros de corte do anime; o negativo preto e vermelho fica só para o Kokusen) e depois ele é removido
  * (IMP-11). A contagem é em `POST_RENDER` do jogo, que também roda durante o hitstop, então o efeito dura 2
  * quadros na tela mesmo com a simulação congelada. Um mesmo `swingId` só dispara uma vez (IMP-14). Sem WebGL o
  * postFX não existe: `degraded` fica `true` e `trigger` não faz nada (IMP-12); anel e espinhos seguem no `CursedFx`.
@@ -44,8 +47,8 @@ export class ImpactFrame {
     this.lastSwingId = swingId;
     this.clear();
     const cm = this.scene.cameras.main.postFX.addColorMatrix();
-    cm.negative();
-    cm.contrast(1.4, true);
+    cm.set(duotoneMatrix(PALETTE.k, PALETTE.C));
+    cm.contrast(0.4, true);
     this.effect = cm;
     this.rendersLeft = IMPACT_FRAME_RENDERS;
     return true;
