@@ -6,10 +6,10 @@ import { PALETTE } from './art/palette';
 /** Acima do tom da câmera lenta (profundidade 90) e abaixo das faixas do HUD. */
 const DEPTH = 95;
 /** Largura (px) da base de cada linha, na borda da tela: varia entre as duas por linha. */
-const BASE_MIN = 5;
-const BASE_MAX = 10;
+const BASE_MIN = 14;
+const BASE_MAX = 34;
 /** Quanto a ponta interna de cada linha varia além do círculo livre (px), para o leque não ficar uniforme. */
-const TIP_JITTER = 46;
+const TIP_JITTER = 90;
 const LINE_ALPHA = 0.85;
 
 /** Valor determinístico em 0..1 por índice e canal: o leque de uma tela é sempre o mesmo para o mesmo ponto. */
@@ -32,7 +32,7 @@ function edgeDistance(center: Vec2, angle: number, w: number, h: number): number
  * afinadas até uma ponta que para fora do círculo livre de `clearRadiusPx` ao redor de `center` (coordenadas de tela).
  * Pura, para o desenho e o teste dividirem a conta.
  */
-export function focusLinePolygons(center: Vec2, w: number, h: number): Vec2[][] {
+export function focusLinePolygons(center: Vec2, w: number, h: number, widthScale = 1): Vec2[][] {
   const polys: Vec2[][] = [];
   const n = FOCUS_FEEL.lines;
   for (let i = 0; i < n; i++) {
@@ -40,7 +40,7 @@ export function focusLinePolygons(center: Vec2, w: number, h: number): Vec2[][] 
     const tip = FOCUS_FEEL.clearRadiusPx + noise(i, 2) * TIP_JITTER;
     // Ponto colado na borda: a linha vira um toco curto (parte dela cai fora da tela), mas as 24 sempre existem.
     const outer = Math.max(edgeDistance(center, angle, w, h) + 4, tip + 20);
-    const half = (BASE_MIN + noise(i, 3) * (BASE_MAX - BASE_MIN)) / 2;
+    const half = ((BASE_MIN + noise(i, 3) * (BASE_MAX - BASE_MIN)) / 2) * widthScale;
     const dx = Math.cos(angle);
     const dy = Math.sin(angle);
     const nx = -dy;
@@ -104,9 +104,14 @@ export class FocusLines {
       this.gfx.setVisible(false);
       return;
     }
-    const polys = focusLinePolygons(this.center, this.screenW, this.screenH);
-    this.lines = polys.length;
-    this.gfx.setVisible(true).fillStyle(PALETTE.w!, LINE_ALPHA * (1 - this.ageMs / FOCUS_FEEL.ms));
-    for (const p of polys) this.gfx.fillTriangle(p[0]!.x, p[0]!.y, p[1]!.x, p[1]!.y, p[2]!.x, p[2]!.y);
+    const fade = 1 - this.ageMs / FOCUS_FEEL.ms;
+    // Duas camadas, como nos quadros de JJK: a cunha larga em ciano de energia e o miolo branco por cima.
+    const glow = focusLinePolygons(this.center, this.screenW, this.screenH);
+    const core = focusLinePolygons(this.center, this.screenW, this.screenH, 0.45);
+    this.lines = glow.length;
+    this.gfx.setVisible(true).fillStyle(PALETTE.C!, LINE_ALPHA * 0.55 * fade);
+    for (const p of glow) this.gfx.fillTriangle(p[0]!.x, p[0]!.y, p[1]!.x, p[1]!.y, p[2]!.x, p[2]!.y);
+    this.gfx.fillStyle(PALETTE.w!, LINE_ALPHA * fade);
+    for (const p of core) this.gfx.fillTriangle(p[0]!.x, p[0]!.y, p[1]!.x, p[1]!.y, p[2]!.x, p[2]!.y);
   }
 }
