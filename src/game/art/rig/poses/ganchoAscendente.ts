@@ -52,16 +52,16 @@ export const POSE_HIT: Pose = build({
   hip: { x: 10.6, y: 19.8 },
   spine: 188,
   armNear: { to: { x: 18.6, y: 5.8 }, bend: -1 },
-  armFar: { to: { x: 11.6, y: 12.4 }, bend: -1 },
+  armFar: { to: { x: 12.6, y: 13.2 }, bend: -1 },
   legNear: { ankle: { x: 12.6, y: 26.2 }, foot: 55 },
-  legFar: { ankle: { x: 8.4, y: 25.4 }, foot: 70 },
+  legFar: { ankle: { x: 6.6, y: 25 }, foot: 35 },
 });
 
 /** Recover: desce, braço volta. */
 export const POSE_RECOVER: Pose = build({
   hip: { x: 10.2, y: 22.4 },
   spine: 180,
-  armNear: { to: { x: 16.2, y: 10 }, bend: -1 },
+  armNear: { to: { x: 17, y: 8.5 }, bend: -1 },
   armFar: { to: { x: 13, y: 15.8 }, bend: -1 },
   legNear: { ankle: { x: 13.4, y: 28 }, foot: 90 },
   legFar: { ankle: { x: 6, y: 28 }, foot: 90 },
