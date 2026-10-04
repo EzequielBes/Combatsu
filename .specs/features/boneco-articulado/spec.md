@@ -127,9 +127,9 @@ A arte do player é montada à mão, peça por peça, em grades de texto (AD-002
 | PRA-04 | P3: Heroico alto no jogo | Execute | Done |
 | PRA-05 | P3: Heroico alto no jogo | Execute | Done |
 | PRA-06 | P3: Heroico alto no jogo | Execute | Done |
-| PRA-07 | P3: Heroico alto no jogo | Execute | Pending |
+| PRA-07 | P3: Heroico alto no jogo | Execute | Done |
 | PRA-08 | P3: Heroico alto no jogo | Execute | Pending |
-| PRA-09 | P3: Heroico alto no jogo | Execute | Pending |
+| PRA-09 | P3: Heroico alto no jogo | Execute | Done |
 | EDG-01 | Edge Cases | Execute | Done |
 
 **Coverage:** 25 total, 25 mapped to implicit Execute steps (spike Medium), tests in `tests/game/rig.test.ts`, `tests/game/rigProportions.test.ts` and `tests/game/rigTall.test.ts`.
