@@ -1,10 +1,8 @@
 import Phaser from 'phaser';
-import { armFor, propName, rareDef } from '../core/armed';
-import { bossSpecFor } from '../core/bossTier';
+import { propName, rareDef } from '../core/armed';
 import { bossRewardSlot } from '../core/bossReward';
 import { clampCenter } from '../core/cameraFollow';
 import { Filters } from '../core/collision';
-import { scaleFor, type EnemyBase } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
 import { ComboCounter } from '../core/comboCounter';
 import { CursedEnergy } from '../core/energy';
@@ -16,8 +14,6 @@ import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
 import { MoveReading } from '../core/moveReading';
 import { Mastery, type MasterySlot } from '../core/mastery';
-import { attackKindFor, parseAttackKind, parseStringLength } from '../core/attackKind';
-import { parseVariant, pickEnemyVariant } from '../core/enemyVariant';
 import { capDrop, Loot, type EnemyDropResult, type LootOverrides, type ToolKey } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
 import { type PickupPlayer } from '../core/pickup';
@@ -28,30 +24,12 @@ import { Shop, type BuyContext } from '../core/shop';
 import { SlowMo } from '../core/slowMo';
 import { CameraKick, ZoomPulse } from '../core/cameraKick';
 import { Wallet } from '../core/wallet';
-import { pickSpawnPoint } from '../core/spawnPoint';
-import { farthestPoint, isBossRound, requireSpawnPoints } from '../core/waves';
-import { BOSS_DEFEAT_HITSTOP_MS } from '../data/fx';
-import { READING } from '../data/moves';
+import { isBossRound, requireSpawnPoints } from '../core/waves';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
 import { TECHNIQUES, type TechId } from '../data/techniques';
-import {
-  ARMED,
-  BOSS,
-  DIFFICULTY,
-  DROPPED_TOOLS,
-  ECONOMY,
-  ENEMY,
-  ENEMY_AI,
-  ATTACK_GATE,
-  ENEMY_ATTACK,
-  PICKUP,
-  RUN,
-  SHOP,
-  WAVE,
-  SPAWN,
-} from '../data/tuning';
+import { DROPPED_TOOLS, ECONOMY, ATTACK_GATE, PICKUP, RUN, SHOP, WAVE } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
 import { createArt } from '../game/art';
@@ -88,6 +66,7 @@ import { WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, CameraRig } from './test/camera';
 import { EffectsDirector } from './test/effects';
 import { ImpactFx } from './test/impactFx';
 import { CombatLinks } from './test/combat';
+import { Spawner } from './test/spawner';
 
 /** Alpha do tom azulado da câmera lenta (DOD-12). */
 const SLOWMO_TINT_ALPHA = 0.22;
@@ -96,10 +75,9 @@ const CONTROLS_MS = 8000;
 
 /** Duração (ms) do banner do upgrade grátis do chefe: o fim da faixa "Chefe derrotado!", sem atrasar "Rodada N concluída" (BFX-10). */
 const BOSS_UPGRADE_BANNER_MS = 800;
-/** Margem (px) além da borda da câmera em que um ponto ainda conta como visível (SPN-07). */
-const SPAWN_VIEW_MARGIN = 32;
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
+  readonly spawner = new Spawner(this);
   readonly combat = new CombatLinks(this);
   readonly impactFx = new ImpactFx(this);
   readonly effects = new EffectsDirector(this);
@@ -176,8 +154,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   wasPlayerDead = false;
   /** Relógio de jogo da cena (ms), só para o intervalo entre usos do mesmo ponto de spawn (SPN-08). */
   clockMs = 0;
-  /** Instante (`clockMs`) do último spawn comum em cada índice de ponto `E` (SPN-08). */
-  spawnLastUsed = new Map<number, number>();
   /** Contador de combo e nota de estilo (CMB-01..03). */
   comboCounter = new ComboCounter();
   lastPlayerHp = 0;
@@ -240,7 +216,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       maxAliveOverride: debugIntParam('maxAlive', 1),
     });
     this.clockMs = 0;
-    this.spawnLastUsed = new Map();
+    this.spawner.spawnLastUsed = new Map();
     this.wasPlayerDead = false;
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
     this.modifiers = new Modifiers(FULL_SHOP_CATALOG);
@@ -694,9 +670,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       case 'spawn':
         // FXL-01: nenhuma onda nasce no laboratório de efeitos - só os bonecos de treino (FXL-05).
         if (this.fxLab) break;
-        if (cmd.kind === 'boss') this.spawnBoss(cmd.round);
+        if (cmd.kind === 'boss') this.spawner.spawnBoss(cmd.round);
         // SPN-07..09: comum nasce fora da câmera (worldView real, facing do player); o chefe segue no mais distante.
-        else this.spawnFromCommand(this.pickEnemySpawnPoint(), cmd.round);
+        else this.spawner.spawnFromCommand(this.spawner.pickEnemySpawnPoint(), cmd.round);
         break;
       case 'roundStart':
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
@@ -738,7 +714,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.boss = null;
     this.bossDefeatedPending = false;
     this.clearedBanner = null;
-    this.spawnLastUsed.clear();
+    this.spawner.spawnLastUsed.clear();
     this.attackGate.reset();
     // Higiene: uma loja não deveria sobreviver a um game over (gameOver só sai de roundActive/intermission), mas
     // uma run nova nunca deve carregar a loja da anterior.
@@ -942,161 +918,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       p.destroyNow();
     }
     for (const p of this.props) if (isDroppedTool(p.def.key) && p.isGone) this.droppedTools.forget(p.id);
-  }
-
-  /** Ponto `E` do próximo inimigo comum (SPN-07..09) e registro do uso para o intervalo entre usos (SPN-08). */
-  pickEnemySpawnPoint(): number {
-    const view = this.cameras.main.worldView;
-    const point = pickSpawnPoint({
-      points: this.level.enemies,
-      viewLeft: view.left,
-      viewRight: view.right,
-      margin: SPAWN_VIEW_MARGIN,
-      playerX: this.player.sprite.x,
-      playerFacing: this.player.facing,
-      lastUsedAt: this.spawnLastUsed,
-      nowMs: this.clockMs,
-      gapMs: WAVE.pointGapMs,
-      rng: this.run.spawnRng!,
-      preferBackChance: SPAWN.preferBackChance,
-    });
-    this.spawnLastUsed.set(point, this.clockMs);
-    return point;
-  }
-
-  /** Onda da rodada (WAVE-02): tuning escalado pela rodada (DIF-04) e graça ao nascer (WAVE-09). */
-  spawnFromCommand(point: number, round: number): void {
-    const at = this.level.enemies[point];
-    const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
-    const scaled = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
-    // ARM-01..03: sorteado depois da escala da rodada (armFor multiplica o dano já escalado).
-    const armedRoll = this.loot.rollArmed(round);
-    const armed = armedRoll ? armFor(armedRoll.tool, scaled, ARMED) : scaled;
-    // EVR-04/05: o sorteio sempre consome o stream próprio (a sequência não muda com o override); `?debug&enemyVariant=`
-    // com um id válido manda no resultado, um inválido cai no sorteio normal.
-    const drawn = this.run.variantRng ? pickEnemyVariant(this.run.variantRng) : 'corcunda';
-    const variant = parseVariant(debugParam('enemyVariant')) ?? drawn;
-    // HGT-13, EDG-08: `?debug&enemyAttack=white|red|low` manda no tipo do golpe; inválido cai no `attackKindFor`.
-    // DFL-14, EDG-09: `?debug&enemyString=1..4` manda no tamanho da sequência; inválido vale a sequência da arma (DFL-01).
-    const kind =
-      parseAttackKind(debugParam('enemyAttack')) ?? attackKindFor({ variant, weapon: armedRoll?.tool ?? null });
-    const hits = parseStringLength(debugParam('enemyString')) ?? armed.ai.hits;
-    const tuning: EnemyBase = { ...armed, attack: { ...armed.attack, kind }, ai: { ...armed.ai, hits } };
-    const enemy = new Enemy(
-      this,
-      spawnAt,
-      tuning,
-      RUN.spawnGraceMs,
-      (dead) => {
-        this.enemies = this.enemies.filter((e) => e !== dead);
-        this.attackGate.release(dead.id);
-      },
-      // A garra que acerta o player também é um golpe que conecta.
-      (hit, hitPoint) => this.combat.onConnect(hit, hitPoint, hit.strength),
-      // Drop do inimigo comum (design.md): sai daqui, não do onEnemyDied (que o chefe também chama).
-      (dead, x, y) => {
-        this.combat.onEnemyDied(dead.id, x, y);
-        this.applyDrop(this.loot.enemyDrop(this.run.round, dead.weapon !== null), x, y);
-        if (dead.weapon) this.dropTool(dead.weapon, dead.weaponRare, x, y);
-      },
-      armedRoll,
-      variant,
-    );
-    enemy.onEvent = (ev) => this.debugEvents.push(ev);
-    enemy.guardRng = this.run.guardRng;
-    // RDG-23: `?debug&shove=N` fixa a chance do empurrão; RDG-19: o empurrão chega ao jogador pelo `shoved`.
-    enemy.shoveChance = this.debugShoveChance();
-    enemy.onShove = (dir) => this.player.shoved(dir);
-    enemy.isWall = (box) => this.matter.query.region(this.terrain, box).length > 0;
-    enemy.onSlideResidue = (at) => this.cursedFx.residue(at);
-    enemy.slideTouch = (self) => this.combat.enemiesTouching(self);
-    enemy.onBlock = (at) => {
-      this.fx.spark(at.x, at.y, 'guard');
-      this.realtimeFx.add('guard.spark', 100);
-    };
-    this.enemies.push(enemy);
-    this.debugEvents.push(`spawnFx:${enemy.id}`);
-    this.fx.curseSmoke(spawnAt.x, spawnAt.y);
-  }
-
-  /** `?debug&shove=N` (número de 0 a 1): chance do empurrão no 4º leve seguido (RDG-23); ausente ou inválido vale o padrão. */
-  debugShoveChance(): number {
-    const raw = debugParam('shove');
-    if (raw === null || raw.trim() === '') return READING.shoveChance;
-    const n = Number(raw);
-    return Number.isFinite(n) && n >= 0 && n <= 1 ? n : READING.shoveChance;
-  }
-
-  /**
-   * Onda de chefe (BOSS-01/03): nasce no ponto `E` mais distante do player no momento do spawn, com o `BossSpec`
-   * escalado pela rodada/tier (T2). Se um chefe anterior ainda estivesse por aqui (não deveria, mas por hygiene),
-   * ele é removido antes - só existe um por vez.
-   */
-  spawnBoss(round: number): void {
-    this.boss?.destroyNow();
-    const point = farthestPoint(this.level.enemies, this.player.sprite.x);
-    const at = this.level.enemies[point];
-    const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
-    const spec = bossSpecFor(round);
-    this.boss = new Boss(
-      this,
-      spawnAt,
-      spec,
-      this.terrain,
-      // O golpe que conecta (do player ou do teste de debug) também é um golpe que conecta (faísca + hitstop).
-      (hit, hitPoint) => this.combat.onConnect(hit, hitPoint, hit.strength),
-      // Rugido (BAI-13): empurra o player para longe do chefe.
-      (dir) => this.player.pushHorizontal(dir, BOSS.roarImpulse),
-      // Pouso do salto (BAT-03): duas ondas de choque, uma para cada lado, rente ao chão.
-      (x, y, damage) => {
-        this.spawnProjectile('shockwave', x, y, 1, BOSS.shockwave.speed, BOSS.shockwave.maxDist, damage);
-        this.spawnProjectile('shockwave', x, y, -1, BOSS.shockwave.speed, BOSS.shockwave.maxDist, damage);
-      },
-      // Disparo da rajada (BAT-04, BTIER-05/07): um projétil por evento `fire`, já com o `speed` do arquétipo.
-      (x, y, dir, speed, damage) => this.spawnProjectile('projectile', x, y, dir, speed, BOSS.volley.maxDist, damage),
-      (dead, x, y) => this.onBossDefeated(dead, x, y),
-    );
-    // Entrada (BHUD-01/05): barra cheia com o nome e a faixa do chefe durante a intro.
-    this.hud.showBossBar(spec.name);
-    this.hud.banner(`Chefe: ${spec.name}`, BOSS.introMs);
-  }
-
-  /**
-   * Vitória (BWIN-01..03, BHUD-03): conta o abate, cura 30% do maxHp, hitstop de 250 ms (o `trigger` fica com o
-   * maior, então o golpe fatal de 90 ms não encurta), tremida e fumaça na posição do chefe. O chefe some no fim
-   * do hitstop, fora do próprio `receiveHit` que o matou.
-   */
-  onBossDefeated(dead: Boss, x: number, y: number): void {
-    this.combat.onEnemyDied(dead.id, x, y);
-    this.applyDrop(this.loot.bossDrop(this.run.round), x, y);
-    this.player.heal(Math.round(BOSS.healFraction * this.player.maxHp));
-    this.effects.hitstop.trigger(BOSS_DEFEAT_HITSTOP_MS);
-    this.effects.freeze();
-    this.fx.shake();
-    this.fx.curseSmoke(x, y);
-    this.debugEvents.push('bossDefeatedFx');
-    this.hud.hideBossBar();
-    // BHUD-03: a faixa entra na hora da morte; "Rodada N concluída" vem depois dela (RHUD-03).
-    this.hud.banner('Chefe derrotado!', BOSS.defeatBannerMs);
-    this.clearedBanner = { round: this.run.round, afterMs: BOSS.defeatBannerMs, upgradeText: this.bossRewardUpgrade() };
-    this.bossDefeatedPending = true;
-  }
-
-  /** Cria um projétil ou onda de choque do chefe e o adiciona à lista da cena (BAT-03/04/06/12). */
-  spawnProjectile(
-    kind: 'projectile' | 'shockwave',
-    x: number,
-    y: number,
-    dir: 1 | -1,
-    speed: number,
-    maxDist: number,
-    damage: number,
-  ): void {
-    this.projectiles.push(
-      new Projectile(this, kind, x, y, dir, speed, maxDist, damage, (hit, hitPoint) =>
-        this.combat.onConnect(hit, hitPoint, hit.strength),
-      ),
-    );
   }
 
   debugSnapshot(): GameSnapshot {
