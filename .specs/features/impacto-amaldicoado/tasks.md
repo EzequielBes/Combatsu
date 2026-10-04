@@ -160,8 +160,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `src/core/cameraFollow.ts` (convenções)
 **Requirement**: CAM-01, CAM-02
 **Done when**:
-- [ ] Tranco: 4 px na direção normalizada no início; 0 em 120 ms e depois.
-- [ ] Zoom: 1.6 em 60 ms, ainda 1.6 em 260 ms, 1.5 em 380 ms; valores antes e depois de cada borda.
+- [x] Tranco: 4 px na direção normalizada no início; 0 em 120 ms e depois.
+- [x] Zoom: 1.6 em 60 ms, ainda 1.6 em 260 ms, 1.5 em 380 ms; valores antes e depois de cada borda.
 **Tests**: unit
 **Gate**: quick
 
