@@ -1093,6 +1093,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // RDG-23: `?debug&shove=N` fixa a chance do empurrão; RDG-19: o empurrão chega ao jogador pelo `shoved`.
     enemy.shoveChance = this.debugShoveChance();
     enemy.onShove = (dir) => this.player.shoved(dir);
+    enemy.isWall = (box) => this.matter.query.region(this.terrain, box).length > 0;
+    enemy.onSlideResidue = (at) => this.cursedFx.residue(at);
+    enemy.slideTouch = (self) => this.enemiesTouching(self);
     enemy.onBlock = (at) => {
       this.fx.spark(at.x, at.y, 'guard');
       this.realtimeFx.add('guard.spark', 100);
@@ -1100,6 +1103,16 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.enemies.push(enemy);
     this.debugEvents.push(`spawnFx:${enemy.id}`);
     this.fx.curseSmoke(spawnAt.x, spawnAt.y);
+  }
+
+  /** Inimigos comuns de pé cujo corpo toca o de `self` (RCT-04): quem desliza esbarra neles. */
+  private enemiesTouching(self: Enemy): Enemy[] {
+    const a = self.hurtRect();
+    return this.enemies.filter((o) => {
+      if (o === self || o.removed || o.isDead() || o.state !== 'idle') return false;
+      const b = o.hurtRect();
+      return Math.abs(a.x - b.x) < (a.width + b.width) / 2 && Math.abs(a.y - b.y) < (a.height + b.height) / 2;
+    });
   }
 
   /** `?debug&shove=N` (número de 0 a 1): chance do empurrão no 4º leve seguido (RDG-23); ausente ou inválido vale o padrão. */
@@ -1228,6 +1241,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         spriteVisible: e.spriteVisible,
         ragdollVisible: e.ragdollVisible,
         ragdollTextures: e.ragdollTextures,
+        slide: e.slideView,
         telegraph: e.telegraph,
         committed: e.committed,
         commitFlash: e.commitFlash,
@@ -1378,6 +1392,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const framed = tier === 'decisive' && !kokusen && hit.swingId !== undefined ? this.impactFrame.trigger(hit.swingId) : false;
     this.lastImpact = { tier, impactFrame: framed || (this.lastImpact?.tier === 'decisive' && this.impactFrame.applied) };
     this.debugEvents.push(`impact:${tier}`);
+    // RCT-01, RCT-02: o inimigo comum que fica de pé desliza para longe do jogador.
+    if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1);
     if (hit.knockdown && target instanceof Enemy) this.crackWatch.set(target, this.clockMs);
   }
 
