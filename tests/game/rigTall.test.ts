@@ -189,3 +189,43 @@ describe('o punho e o rosto (PRA-06)', () => {
     expect(set.frames.hit.frame[top + 1]).toMatch(/[pPqx]/); // a linha de cima é o contorno k; logo abaixo vem a pele do punho
   });
 });
+
+describe('acabamento do corpo do heroicoAlto (PRA-07)', () => {
+  const idle = rasterize(set.idle, { frame: RIG_FRAME_40 }).frame;
+  const hipRow = Math.floor(solve(set.idle).hip.y);
+  const below = idle.slice(hipRow + 2, 39).join('');
+  const torso = idle.slice(solve(set.idle).neck.y | 0, hipRow).join('');
+
+  it('a calça abaixo do cinto usa K e n e o cinto tem a fivela A e z', () => {
+    expect(below).toContain('K');
+    expect(below).toContain('n');
+    expect(idle[hipRow - 1] + idle[hipRow] + idle[hipRow + 1]).toMatch(/zA/);
+    expect(idle.join('')).toContain('z');
+    expect(idle.join('')).toContain('A');
+  });
+
+  it('o paletó tem a luz s/S no ombro e no peito e a borda fria y nas costas', () => {
+    expect(torso).toMatch(/[sS]/);
+    expect(torso).toContain('S');
+    expect(torso).toContain('y');
+  });
+
+  it('cada sapato tem a sola s na fileira de baixo e o brilho S em cima', () => {
+    const sole = idle[38];
+    const shine = idle[37];
+    const spans = [...sole.matchAll(/[^.k]+/g)];
+    expect(spans.length).toBeGreaterThanOrEqual(2);
+    for (const m of spans) expect(m[0], `sapato em ${m.index}`).toContain('s');
+    expect(shine).toContain('S');
+    expect(idle[39].replace(/\./g, '')).toMatch(/^k+$/);
+  });
+
+  it('o pescoço de pele aparece entre o queixo e a gola e a coluna escura do tronco some', () => {
+    const neckRow = idle.findIndex((row, i) => i > 8 && /^\.*k[xP]+k\.*$/.test(row));
+    expect(neckRow).toBeGreaterThan(8);
+    expect(idle[neckRow + 1]).toMatch(/s/); // gola logo abaixo
+    // Nas linhas do peito nenhuma coluna interna é só contorno (o em todas): o tronco é pano, não bloco riscado.
+    const chest = idle.slice(neckRow + 2, neckRow + 6);
+    for (let col = 9; col <= 15; col++) expect(chest.every((row) => row[col] === 'o'), `coluna ${col}`).toBe(false);
+  });
+});
