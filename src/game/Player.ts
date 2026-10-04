@@ -1127,7 +1127,10 @@ export class Player implements Hittable {
    * (`scriptedDx`, como a esquiva). Para no contato com corpo de inimigo ou parede.
    */
   private applyStepIn(dtMs: number): void {
-    if (this.moves.phase !== 'startup' || dtMs <= 0) return;
+    // O startup pode acabar no `updateStrikes` deste mesmo quadro: o passo continua enquanto o `StepIn` não fechou o
+    // total, desde que o golpe siga em curso (startup ou active); golpe cancelado não anda.
+    const phase = this.moves.phase;
+    if (dtMs <= 0 || !this.stepIn.running || (phase !== 'startup' && phase !== 'active')) return;
     const px = this.stepIn.update(dtMs, this.stepBlocked());
     if (px <= 0) return;
     this.scriptedDx += this.facing * px;

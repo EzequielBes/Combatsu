@@ -58,3 +58,25 @@ describe('POS-09: contato para o avanço', () => {
     expect(new StepIn().update(10, false)).toBe(0);
   });
 });
+
+describe('StepIn.running: o adaptador sabe quando ainda falta passo (L-059)', () => {
+  it('fica true até o último pedaço e false depois, inclusive com dt que não divide o startup', () => {
+    const s = new StepIn();
+    s.start('heavy', 110);
+    let sum = 0;
+    for (let i = 0; i < 6; i++) sum += s.update(1000 / 60, false);
+    expect(s.running).toBe(true);
+    expect(sum).toBeLessThan(10);
+    sum += s.update(1000 / 60, false);
+    expect(s.running).toBe(false);
+    expect(sum).toBeCloseTo(10, 10);
+  });
+  it('fica false no contato e antes do primeiro start', () => {
+    const s = new StepIn();
+    expect(s.running).toBe(false);
+    s.start('light', 60);
+    expect(s.running).toBe(true);
+    s.update(10, true);
+    expect(s.running).toBe(false);
+  });
+});
