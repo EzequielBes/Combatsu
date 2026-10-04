@@ -293,7 +293,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `Fx.burst`, `PALETTE`, `data/feel`, `impactSpikes`
 **Requirement**: TRL-03, TRL-04, TRL-05, TRL-06, TRL-07, TRL-08, TRL-09, IMP-07, IMP-08, IMP-09, IMP-15, RCT-03, EDG-03, EDG-04
 **Done when**:
-- [ ] `npm run build` passa; cores só `d`, `c`, `C`, `u`, `U` (teste unitário sobre a constante de cores exportada).
+- [x] `npm run build` passa; cores só `d`, `c`, `C`, `u`, `U` (teste unitário sobre a constante de cores exportada).
 **Tests**: unit
 **Gate**: build
 
@@ -307,7 +307,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: criação do ColorMatrix de `KokusenFx.ts:136`
 **Requirement**: IMP-11, IMP-12, IMP-14, EDG-05
 **Done when**:
-- [ ] `npm run build` passa.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
@@ -321,7 +321,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `StepIn`, `onMove`
 **Requirement**: POS-07, POS-08, POS-09, IMP-14, TRL-07, TRL-08, EDG-02
 **Done when**:
-- [ ] `npm run build && npm test` passam.
+- [x] `npm run build && npm test` passam.
 **Tests**: none
 **Gate**: build
 
