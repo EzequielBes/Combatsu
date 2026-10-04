@@ -1,6 +1,6 @@
 // Invariantes da arte do feel (impacto-amaldiçoado, fase de poses): POS-01..06 e POS-10 sobre os frames do player.
 import { describe, expect, it } from 'vitest';
-import { isOpaque, isSingleComponent, thighShinHeights, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
+import { headLeftCol, isOpaque, isSingleComponent, thighShinHeights, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
 import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES } from '../../src/game/art/sprites/playerTech';
@@ -148,5 +148,29 @@ describe('chutes: coxa mais grossa que a canela (POS-06)', () => {
     const h = thighShinHeights(ALL[name], LEG_BAND, thighCol, shinCol);
     expect(h.shin, name).toBeGreaterThan(0);
     expect(h.thigh - h.shin, name).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ---------------------------------------------------------------- pulo (POS-02, POS-04)
+
+const JUMP_SEQ = ['idle-0', 'jump-0', 'jump-1', 'apex-0', 'fall-0', 'fall-1', 'land-0', 'land-1'] as const;
+
+describe('pulo: a cabeça não salta de coluna e o corpo é uma peça só (POS-02, POS-04)', () => {
+  it('o limiar vale nos dois lados: diferença de 1 coluna passa, de 2 falha', () => {
+    const ok = (a: number, b: number): boolean => Math.abs(a - b) <= 1;
+    expect(ok(6, 7)).toBe(true);
+    expect(ok(6, 8)).toBe(false);
+  });
+
+  it('a coluna mais à esquerda do cabelo difere no máximo 1 entre frames consecutivos da sequência', () => {
+    const cols = JUMP_SEQ.map((n) => headLeftCol(ALL[n], HAIR));
+    cols.forEach((c, i) => expect(c, JUMP_SEQ[i]).not.toBeNull());
+    for (let i = 1; i < cols.length; i++) {
+      expect(Math.abs(cols[i]! - cols[i - 1]!), `${JUMP_SEQ[i - 1]} -> ${JUMP_SEQ[i]}`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it.each(JUMP_SEQ)('%s: os texels opacos formam um componente só, 8-conexo (POS-02)', (name) => {
+    expect(isSingleComponent(ALL[name]), name).toBe(true);
   });
 });
