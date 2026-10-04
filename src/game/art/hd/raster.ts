@@ -20,8 +20,16 @@ export interface Normal {
   noRim?: boolean;
 }
 
-/** Forma: a normal no ponto (x, y) da tela, ou `null` fora dela. */
-export type Shape = (x: number, y: number) => Normal | null;
+/** Caixa em coordenadas de tela que contém a forma inteira. */
+export interface Bounds {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+/** Forma: a normal no ponto (x, y) da tela, ou `null` fora dela. Com `bounds`, a pintura só percorre a caixa. */
+export type Shape = ((x: number, y: number) => Normal | null) & { bounds?: Bounds };
 
 const unit3 = (x: number, y: number, z: number): Normal => {
   const l = Math.hypot(x, y, z);
@@ -82,8 +90,13 @@ export class HdCanvas {
 
   /** Pinta a forma com o material; a parte decide onde entram as linhas internas. */
   paint(shape: Shape, mat: number, part: number, o: PaintOpts = {}): void {
-    for (let y = 0; y < this.h; y++) {
-      for (let x = 0; x < this.w; x++) {
+    const b = shape.bounds;
+    const x0 = b ? Math.max(0, Math.floor(b.x0) - 1) : 0;
+    const x1 = b ? Math.min(this.w, Math.ceil(b.x1) + 1) : this.w;
+    const y0 = b ? Math.max(0, Math.floor(b.y0) - 1) : 0;
+    const y1 = b ? Math.min(this.h, Math.ceil(b.y1) + 1) : this.h;
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
         const i = y * this.w + x;
         if (o.onlyOn !== undefined && this.part[i] !== o.onlyOn) continue;
         const n = shape(x + 0.5, y + 0.5);

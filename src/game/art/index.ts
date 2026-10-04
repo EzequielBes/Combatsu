@@ -7,7 +7,7 @@ import { ENEMY_BAR, HUD_BAR } from './hud';
 import { PALETTE_KEYS } from './palette';
 import { registerIndexedSheet, registerSheet } from './render';
 import { HD_ON } from './hd/flag';
-import { hdPlayerSheet } from './hd/sheet';
+import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
 import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites/enemy';
 import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, type AnimDef } from './sprites/player';
@@ -55,7 +55,10 @@ export function createArt(scene: Phaser.Scene): void {
   const tall = rigTallSheet(currentSearch());
   if (tall) registerSheet(scene, TEX.playerRig, parseSheet('player-rig', tall, PALETTE_KEYS));
   // Folha HD do player (1 texel = 1 px), só com `?hd=1`.
-  if (HD_ON) registerIndexedSheet(scene, TEX.playerHd, hdPlayerSheet());
+  if (HD_ON) {
+    registerIndexedSheet(scene, TEX.playerHd, hdPlayerSheet());
+    registerAnims(scene, TEX.playerHd, hdAnims(), playerHdAnimKey);
+  }
   // Uma folha, as animações e as 3 partes do ragdoll por aparência (EVR-06), nas cores da folha (CHR-04).
   for (const v of ENEMY_VARIANTS) {
     const tex = enemyTex(v);

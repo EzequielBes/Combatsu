@@ -6,7 +6,7 @@
  */
 import { MAT } from './palette';
 import type { HdCanvas, Normal } from './raster';
-import { domeShade, inLocal, localEllipse, localRect, localTri, type Local, type LocalShape } from './shapes';
+import { boxed, domeShade, inLocal, localEllipse, localRect, localTri, type Local, type LocalShape } from './shapes';
 
 /** Expressão: `focus` (idle, concentrado) ou `effort` (golpe: sobrancelha baixa e boca aberta). */
 export type Expression = 'focus' | 'effort';
@@ -97,28 +97,37 @@ const faceShade = (f: number, u: number): Normal => {
 };
 
 /** Rosto: o crânio (elipse) e a mandíbula, que afina até o queixo. */
-const face: LocalShape = (f, u) => {
-  if (localEllipse(0.7, 8.4, 5.9, 6.3)(f, u)) return faceShade(f, u);
-  if (u < 1 || u > 7.2 || f < -3.2) return null;
-  // Linha da frente da mandíbula: do malar ao queixo.
-  const front = 3.6 + ((u - 1) * 2.6) / 6.2;
-  const back = -3.2 + (7.2 - u) * 0.35;
-  return f > front || f < back ? null : faceShade(f, u);
-};
+const face: LocalShape = boxed(
+  (f, u) => {
+    if (localEllipse(0.7, 8.4, 5.9, 6.3)(f, u)) return faceShade(f, u);
+    if (u < 1 || u > 7.2 || f < -3.2) return null;
+    // Linha da frente da mandíbula: do malar ao queixo.
+    const front = 3.6 + ((u - 1) * 2.6) / 6.2;
+    const back = -3.2 + (7.2 - u) * 0.35;
+    return f > front || f < back ? null : faceShade(f, u);
+  },
+  [-4, 7, 0.5, 15],
+);
 
 /** Nariz: uma cunha que sai da linha do rosto. */
-const nose: LocalShape = (f, u) => {
-  const k = 1 - Math.abs(u - 6.7) / 1.5;
-  if (k <= 0 || f < 5 || f > 6.1 + 1.5 * k) return null;
-  return { x: 0.5, y: u > 6.7 ? 0.35 : -0.4, z: 0.75 };
-};
+const nose: LocalShape = boxed(
+  (f, u) => {
+    const k = 1 - Math.abs(u - 6.7) / 1.5;
+    if (k <= 0 || f < 5 || f > 6.1 + 1.5 * k) return null;
+    return { x: 0.5, y: u > 6.7 ? 0.35 : -0.4, z: 0.75 };
+  },
+  [4.5, 8, 5, 8.5],
+);
 
 /** Cabelo sobre o crânio: a casca de cima, acima da linha do cabelo. */
-const scalp: LocalShape = (f, u) => {
-  if (u < hairline(f)) return null;
-  // A luz de recorte só acende no alto da calota: mais embaixo ela vira texel solto na nuca.
-  return localEllipse(-0.8, 9.2, 7.4, 6.9)(f, u) ? { ...HAIR_SHADE(f, u), noRim: u < 11 || f < -3.5 } : null;
-};
+const scalp: LocalShape = boxed(
+  (f, u) => {
+    if (u < hairline(f)) return null;
+    // A luz de recorte só acende no alto da calota: mais embaixo ela vira texel solto na nuca.
+    return localEllipse(-0.8, 9.2, 7.4, 6.9)(f, u) ? { ...HAIR_SHADE(f, u), noRim: u < 11 || f < -3.5 } : null;
+  },
+  [-8.5, 7.5, 2, 16.5],
+);
 
 /**
  * Pinta as mechas: cada uma inteira num tom abaixo do volume e, por cima, a metade da frente (do ponto da frente da
@@ -147,10 +156,16 @@ function paintFeatures(c: HdCanvas, l: Local, part: number, expr: Expression): v
   if (!effort) c.paint(inLocal(l, localRect(4.75, 5.5, 8.4, top)), MAT.white, part, { ...on, flat: 4 });
   const brow = top + (effort ? 0 : 1);
   c.paint(
-    inLocal(l, (f, u) => {
-      const base = brow + (5.8 - f) * (effort ? 0.4 : 0.12);
-      return f >= 2 && f <= 6 && u >= base && u <= base + 1 ? { x: 0, y: 0, z: 1 } : null;
-    }),
+    inLocal(
+      l,
+      boxed(
+        (f, u) => {
+          const base = brow + (5.8 - f) * (effort ? 0.4 : 0.12);
+          return f >= 2 && f <= 6 && u >= base && u <= base + 1 ? { x: 0, y: 0, z: 1 } : null;
+        },
+        [1.5, 6.5, 7, 13.5],
+      ),
+    ),
     MAT.hair,
     part,
     { ...on, flat: effort ? 0 : 1 },
