@@ -69,19 +69,19 @@ A arte do player é montada à mão, peça por peça, em grades de texto (AD-002
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| RIG-01 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-02 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-03 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-04 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-05 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-06 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-07 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-08 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-09 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| RIG-10 | P1: Gancho ascendente pelo boneco | Execute | Pending |
-| EDG-01 | Edge Cases | Execute | Pending |
+| RIG-01 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-02 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-03 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-04 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-05 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-06 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-07 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-08 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-09 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| RIG-10 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| EDG-01 | Edge Cases | Execute | Done |
 
-**Coverage:** 11 total, 0 mapped to tasks, 11 unmapped ⚠️ (spike Medium: tasks implícitas no Execute)
+**Coverage:** 11 total, 11 mapped to implicit Execute steps (spike Medium), tests in `tests/game/rig.test.ts`.
 
 ---
 
