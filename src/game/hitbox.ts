@@ -1,9 +1,9 @@
 import type Phaser from 'phaser';
 import { Filters } from '../core/collision';
 import type { HitboxShape } from '../core/combo';
-import { canDamage, makeHitGate, type Hit, type Team, type Vec2 } from '../core/hit';
+import { TargetGate, canDamage, makeHitGate, orderTargets, type Hit, type HitReport, type Team, type Vec2 } from '../core/hit';
 import { PALETTE } from './art/palette';
-import { tagBody, type Hittable, type Rect } from './bodyTags';
+import { deferContact, tagBody, type Hittable, type Rect } from './bodyTags';
 import { isDebug } from './debug';
 
 /**
@@ -33,12 +33,15 @@ interface OpenHitbox {
   body: MatterJS.BodyType;
   view: Phaser.GameObjects.Rectangle;
   shape: HitboxShape;
+  /** x de quem ataca neste frame: a referência da distância que ordena os alvos (TGT-04). */
+  ownerX: number;
 }
 
 /**
  * Hitbox de um golpe corpo a corpo: um sensor Matter à frente de quem ataca, aberto na fase ativa do golpe.
- * Cada alvo leva o golpe uma vez só por abertura (makeHitGate), e o dono nunca se acerta. O retângulo só aparece
- * no modo debug (FIX-02/04); o golpe em si é mostrado pela animação.
+ * Cada alvo leva o golpe uma vez só por abertura (makeHitGate), e o dono nunca se acerta. Com `maxTargets` o portão
+ * é o `TargetGate`: os toques do passo são juntados e a decisão sai na fila adiada, do alvo mais perto para o mais
+ * longe (TGT-03..06). O retângulo só aparece no modo debug (FIX-02/04); o golpe em si é mostrado pela animação.
  */
 export class AttackHitbox {
   private current: OpenHitbox | null = null;
@@ -58,29 +61,59 @@ export class AttackHitbox {
     return this.current !== null;
   }
 
-  /** Abre a hitbox (fechando a anterior, se houver) na posição de quem ataca. */
-  open(shape: HitboxShape, hit: Hit, x: number, y: number, facing: 1 | -1): void {
+  /**
+   * Abre a hitbox (fechando a anterior, se houver) na posição de quem ataca. Sem `maxTargets` (inimigo, chefe) cada
+   * alvo é entregue no toque; com ele, vale o limite de alvos do golpe.
+   */
+  open(shape: HitboxShape, hit: Hit, x: number, y: number, facing: 1 | -1, maxTargets?: number): void {
     this.close();
     const gate = makeHitGate(this.ownerId);
+    const targetGate = maxTargets === undefined ? null : new TargetGate(this.ownerId, maxTargets);
+    /** Alvos tocados no passo que ainda esperam a fila adiada (só com `maxTargets`). */
+    const touched: Hittable[] = [];
     const body = this.scene.matter.add.rectangle(0, 0, shape.width, shape.height, {
       isSensor: true,
       isStatic: true,
       collisionFilter: { ...Filters.hitbox },
     });
+    /** Entrega o golpe ao alvo e devolve o desfecho para o portão. Faísca e hitstop só no golpe aceito (FX-06). */
+    const deliver = (target: Hittable): 'accepted' | 'blocked' | 'refused' => {
+      const delivered = this.prepareHit ? this.prepareHit(hit) : hit;
+      const report: HitReport = {};
+      if (!target.receiveHit(delivered, report)) return report.blocked ? 'blocked' : 'refused';
+      // Posição + tamanho da hitbox (a posição do corpo sensor), nunca body.bounds.
+      const { x, y } = body.position;
+      this.onConnect?.(delivered, contactWith({ x, y, width: shape.width, height: shape.height }, target), target);
+      return 'accepted';
+    };
+    /** Decide os alvos do passo: os mais perto primeiro, até acabarem as vagas (TGT-03, TGT-04). */
+    const decide = (): void => {
+      const ownerX = this.current?.ownerX ?? x;
+      const candidates = touched.splice(0).map((target) => ({
+        id: target.id,
+        target,
+        dist: Math.abs((target.hurtRect?.().x ?? body.position.x) - ownerX),
+      }));
+      for (const { id, target } of orderTargets(candidates)) {
+        if (targetGate?.wants(id)) targetGate.note(id, deliver(target));
+      }
+    };
     tagBody(body, {
       kind: 'active',
       onTouch: (other) => {
-        if (other.kind !== 'character' || !canDamage(this.team, other.target.team) || !gate(other.target.id)) return;
-        const delivered = this.prepareHit ? this.prepareHit(hit) : hit;
-        if (!other.target.receiveHit(delivered)) return; // ignorado: sem faísca nem hitstop (FX-06)
-        // Posição + tamanho da hitbox (a posição do corpo sensor), nunca body.bounds.
-        const { x, y } = body.position;
-        this.onConnect?.(delivered, contactWith({ x, y, width: shape.width, height: shape.height }, other.target), other.target);
+        if (other.kind !== 'character' || !canDamage(this.team, other.target.team)) return;
+        if (!targetGate) {
+          if (gate(other.target.id)) deliver(other.target);
+          return;
+        }
+        if (!targetGate.wants(other.target.id) || touched.includes(other.target)) return;
+        touched.push(other.target);
+        if (touched.length === 1) deferContact(decide);
       },
     });
     const color = hit.strength === 'heavy' ? PALETTE.A : PALETTE.w;
     const view = this.scene.add.rectangle(0, 0, shape.width, shape.height, color, 0.35).setVisible(isDebug());
-    this.current = { body, view, shape };
+    this.current = { body, view, shape, ownerX: x };
     this.follow(x, y, facing);
   }
 
@@ -88,6 +121,7 @@ export class AttackHitbox {
   follow(x: number, y: number, facing: 1 | -1): void {
     if (!this.current) return;
     const { body, view, shape } = this.current;
+    this.current.ownerX = x;
     const hx = x + shape.offsetX * facing;
     const hy = y + shape.offsetY;
     this.scene.matter.body.setPosition(body, { x: hx, y: hy });

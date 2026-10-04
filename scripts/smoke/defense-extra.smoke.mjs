@@ -21,7 +21,7 @@ export default async function (ctx) {
     return s;
   };
 
-  // --- GRD-05: guardando, a velocidade de corrida cai a 40% (88 de 220 px/s) --------------------------------------------
+  // --- DEF-04/DEF-05 (substituem GRD-05, andar a 40% com a guarda): com a guarda de pé o jogador vira e não anda -----------------
   await boot('enemyGuard=0');
   let s = await snap(20);
   // O harness às vezes roda um tick extra de física num frame (+3,7 px a 220 px/s): a velocidade é a mediana do deslocamento
@@ -41,12 +41,32 @@ export default async function (ctx) {
     return { speed: steps[Math.floor(steps.length / 2)] * 60, guard: cur.player.guard };
   };
   const normal = await speedOver(['KeyD'], 20, 30);
-  assert(Math.abs(normal.speed - 220) <= 4, `GRD-05: velocidade normal deveria ser 220 px/s, mediu ${normal.speed.toFixed(1)}`);
+  assert(Math.abs(normal.speed - 220) <= 4, `DEF-05 (linha de base): velocidade normal deveria ser 220 px/s, mediu ${normal.speed.toFixed(1)}`);
   await walk([], 30);
-  const guarded = await speedOver(['KeyU', 'KeyA'], 20, 30);
-  assert(guarded.guard === 'guard', `GRD-05: deveria estar em guarda: ${guarded.guard}`);
-  assert(Math.abs(guarded.speed - 88) <= 4, `GRD-05: guardando deveria andar a 40% (88 px/s), mediu ${guarded.speed.toFixed(1)}`);
-  assert(Math.abs(guarded.speed / normal.speed - 0.4) <= 0.02, `GRD-05: razão guarda/normal ${(guarded.speed / normal.speed).toFixed(3)}, esperava 0,4`);
+  /** Parte do repouso e segura `U` + a direção por 500 ms (30 frames): devolve o deslocamento, o `facing` final e as guardas vistas. */
+  const guardHold = async (dirKey) => {
+    const x0 = (await snap(0)).player.x;
+    await down('KeyU');
+    await down(dirKey);
+    const guards = [];
+    let cur = null;
+    for (let i = 0; i < 30; i++) {
+      cur = await frame();
+      guards.push(cur.player.guard);
+    }
+    await up(dirKey);
+    await up('KeyU');
+    return { dx: cur.player.x - x0, facing: cur.player.facing, guards };
+  };
+  const guardLeft = await guardHold('KeyA');
+  assert(guardLeft.guards.every((g) => g === 'guard' || g === 'parry'), `DEF-05: deveria estar em guarda nos 500 ms: ${JSON.stringify(guardLeft.guards)}`);
+  assert(guardLeft.facing === -1, `DEF-04: U + esquerda deveria virar o jogador para a esquerda (facing -1): ${guardLeft.facing}`);
+  assert(Math.abs(guardLeft.dx) < 4, `DEF-05: guardando por 500 ms o jogador deveria andar menos de 4 px, andou ${guardLeft.dx.toFixed(1)}`);
+  await walk([], 30);
+  const guardRight = await guardHold('KeyD');
+  assert(guardRight.guards.every((g) => g === 'guard' || g === 'parry'), `DEF-05: deveria estar em guarda nos 500 ms: ${JSON.stringify(guardRight.guards)}`);
+  assert(guardRight.facing === 1, `DEF-04: U + direita deveria virar o jogador para a direita (facing 1): ${guardRight.facing}`);
+  assert(Math.abs(guardRight.dx) < 4, `DEF-05: guardando por 500 ms o jogador deveria andar menos de 4 px, andou ${guardRight.dx.toFixed(1)}`);
 
   // --- DOD-06: a esquiva cancela a recovery de um golpe que já acertou, no mesmo frame ----------------------------------------
   await boot('enemyGuard=0');
@@ -140,7 +160,11 @@ export default async function (ctx) {
   await up('KeyU');
   assert(parried, 'PAR-07: o golpe do chefe deveria ser aparado');
   assert(parried.prev.boss.poise === 100, `PAR-07: postura inicial do chefe 100: ${parried.prev.boss.poise}`);
-  assert(parried.s.player.hp === parried.prev.player.hp, `PAR-07: parry não custa vida: ${parried.prev.player.hp} -> ${parried.s.player.hp}`);
+  // DEF-01/DEF-02 (substituem PAR-02, parry contra qualquer golpe): o parry anula o pouso (dano 20), mas a onda de choque que nasce com
+  // ele é imbloqueável (`low`) e leva o dano cheio (12), uma vez (a invulnerabilidade de 300 ms cobre a segunda onda).
+  let afterLanding = parried.s;
+  for (let i = 0; i < 20; i++) afterLanding = await frame();
+  assert(parried.prev.player.hp - afterLanding.player.hp === 12, `DEF-02: o parry anula o pouso e a onda imbloqueável custa 12: ${parried.prev.player.hp} -> ${afterLanding.player.hp}`);
   assert(parried.s.boss.poise === 70, `PAR-07: o parry deveria tirar 30 de postura do chefe (100 -> 70), ficou ${parried.s.boss.poise}`);
   assert(parried.s.boss.hp === parried.prev.boss.hp, `PAR-07: o parry não tira vida do chefe: ${parried.prev.boss.hp} -> ${parried.s.boss.hp}`);
 
@@ -150,7 +174,6 @@ export default async function (ctx) {
   // `block`); com um parry no momento do contato ela é anulada (PAR-02: 0 de dano, um `parry`).
   const roar = async (mode) => {
     let cur = await bossFight();
-    if (mode === 'guard') await down('KeyU');
     while (cur.boss.state === 'intro') cur = await frame();
     const heavy = async () => {
       await down('Digit2');
@@ -178,6 +201,9 @@ export default async function (ctx) {
     assert(cur.boss.state === 'rest', `o chefe deveria ter pousado: ${cur.boss.state}`);
     const waves = cur.projectiles.filter((p) => p.kind === 'shockwave');
     assert(waves.length === 2, `o pouso deveria soltar duas ondas: ${JSON.stringify(cur.projectiles)}`);
+    // GRD-05 -> DEF-05: com a guarda de pé o jogador não anda mais (antes andava a 40%), então foge sem guarda e só levanta a guarda
+    // depois do pouso, para a onda não encontrar o jogador debaixo do chefe e cair na invulnerabilidade do golpe do pouso.
+    if (mode === 'guard') await down('KeyU');
     cur = await heavy();
     assert(cur.boss.state === 'roar' && cur.boss.phase === 2, `o golpe de teste deveria levar o chefe ao rugido da fase 2: ${JSON.stringify(cur.boss)}`);
     const hpBefore = cur.player.hp;
@@ -197,7 +223,8 @@ export default async function (ctx) {
   const guardRoar = await roar('guard');
   assert(guardRoar.hpBefore - guardRoar.cur.player.hp === 12, `rugido: a onda imbloqueável deveria causar 12 apesar da guarda, causou ${guardRoar.hpBefore - guardRoar.cur.player.hp}`);
   assert(count(guardRoar.cur, 'block') === guardRoar.base.block && count(guardRoar.cur, 'parry') === guardRoar.base.parry, 'rugido: a guarda não bloqueia a onda imbloqueável');
+  // DEF-02 (substitui PAR-02): o parry não anula a onda imbloqueável: sem `parry`, o jogador perde o dano cheio (12).
   const parryRoar = await roar('parry');
-  assert(count(parryRoar.cur, 'parry') === parryRoar.base.parry + 1, `rugido: o parry deveria anular a onda: ${JSON.stringify(parryRoar.cur.events.slice(-3))}`);
-  assert(parryRoar.cur.player.hp === parryRoar.hpBefore, `rugido: parry custa 0 de vida: ${parryRoar.hpBefore} -> ${parryRoar.cur.player.hp}`);
+  assert(count(parryRoar.cur, 'parry') === parryRoar.base.parry, `rugido: o parry não deveria valer contra a onda imbloqueável: ${JSON.stringify(parryRoar.cur.events.slice(-3))}`);
+  assert(parryRoar.hpBefore - parryRoar.cur.player.hp === 12, `rugido: o parry não protege da onda imbloqueável, deveria custar 12: ${parryRoar.hpBefore} -> ${parryRoar.cur.player.hp}`);
 }

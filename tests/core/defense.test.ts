@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Guard, resolveIncomingHit, type IncomingHit } from '../../src/core/defense';
+import { DeflectTracker, Guard, resolveIncomingHit, type IncomingHit } from '../../src/core/defense';
 
 const REGULAR: IncomingHit = {
   hit: { damage: 12 },
@@ -7,6 +7,9 @@ const REGULAR: IncomingHit = {
   isBoss: false,
   guard: 'none',
   dodgeInvulnerable: false,
+  counterInvulnerable: false,
+  ducking: false,
+  airborne: false,
 };
 const resolve = (over: Partial<IncomingHit>) => resolveIncomingHit({ ...REGULAR, ...over });
 
@@ -186,5 +189,202 @@ describe('resolveIncomingHit: esquiva e ordem (DOD-02, edge case parry × esquiv
     const r = resolve({ guard: 'parry', dodgeInvulnerable: true });
     expect(r.outcome).toBe('parry');
     expect(r.damage).toBe(0);
+  });
+});
+
+describe('resolveIncomingHit: parry só de frente e contra golpe bloqueável (DEF-01, DEF-02, substitui PAR-02)', () => {
+  it('DEF-01: janela de parry com o atacante de costas: o jogador perde o dano inteiro', () => {
+    const r = resolve({ guard: 'parry', attackerInFront: false });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(12);
+  });
+
+  it('DEF-01: de costas também no golpe do chefe: dano inteiro, sem estrutura', () => {
+    const r = resolve({ guard: 'parry', attackerInFront: false, isBoss: true, hit: { damage: 20 } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(20);
+    expect(r.playerStructureGain).toBe(0);
+  });
+
+  it('DEF-02: golpe `red` (alto e imbloqueável) de frente na janela de parry: dano inteiro', () => {
+    const r = resolve({ guard: 'parry', hit: { damage: 12, height: 'high', unblockable: true } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(12);
+  });
+
+  it('DEF-02: golpe `low` (baixo e imbloqueável) de frente na janela de parry: dano inteiro', () => {
+    const r = resolve({ guard: 'parry', hit: { damage: 12, height: 'low', unblockable: true } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(12);
+  });
+
+  it('o golpe `white` (alto, bloqueável) de frente na janela de parry continua aparado', () => {
+    const r = resolve({ guard: 'parry', hit: { damage: 12, height: 'high' } });
+    expect(r.outcome).toBe('parry');
+    expect(r.damage).toBe(0);
+  });
+});
+
+describe('resolveIncomingHit: abaixar evita golpe alto (DEF-11, DEF-14, EDG-06)', () => {
+  it('DEF-11: abaixado com golpe `high` bloqueável: 0 de dano e outcome `ducked`', () => {
+    const r = resolve({ ducking: true, hit: { damage: 12, height: 'high' } });
+    expect(r.outcome).toBe('ducked');
+    expect(r.damage).toBe(0);
+    expect(r.playerStructureGain).toBe(0);
+  });
+
+  it('DEF-11: abaixado com golpe `high` imbloqueável (`red`): 0 de dano e outcome `ducked`', () => {
+    const r = resolve({ ducking: true, hit: { damage: 12, height: 'high', unblockable: true } });
+    expect(r.outcome).toBe('ducked');
+    expect(r.damage).toBe(0);
+  });
+
+  it('DEF-14: abaixado com golpe `low`: dano inteiro', () => {
+    const r = resolve({ ducking: true, hit: { damage: 12, height: 'low', unblockable: true } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(12);
+  });
+
+  it('DEF-14: abaixado com golpe sem `height` (investida do chefe): dano inteiro', () => {
+    const r = resolve({ ducking: true, isBoss: true, hit: { damage: 18 } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(18);
+  });
+
+  it('EDG-06: sem `ducking` (o abaixar já acabou) o golpe `high` leva o dano inteiro', () => {
+    const r = resolve({ ducking: false, hit: { damage: 12, height: 'high' } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(12);
+  });
+});
+
+describe('resolveIncomingHit: pular evita golpe baixo (DEF-03, DEF-17)', () => {
+  it('DEF-17: fora do chão com golpe `low`: 0 de dano e outcome `jumped`', () => {
+    const r = resolve({ airborne: true, hit: { damage: 12, height: 'low', unblockable: true } });
+    expect(r.outcome).toBe('jumped');
+    expect(r.damage).toBe(0);
+    expect(r.playerStructureGain).toBe(0);
+  });
+
+  it('DEF-03: no chão com a guarda de pé e o atacante à frente, o golpe `low` leva o dano inteiro', () => {
+    const r = resolve({ guard: 'guard', airborne: false, hit: { damage: 12, height: 'low', unblockable: true } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(12);
+    expect(r.playerStructureGain).toBe(0);
+  });
+
+  it('fora do chão com golpe `high`: dano inteiro (pular não evita golpe alto)', () => {
+    const r = resolve({ airborne: true, hit: { damage: 12, height: 'high' } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(12);
+  });
+
+  it('fora do chão com golpe sem `height`: dano inteiro', () => {
+    const r = resolve({ airborne: true, hit: { damage: 12 } });
+    expect(r.outcome).toBe('hit');
+    expect(r.damage).toBe(12);
+  });
+});
+
+describe('resolveIncomingHit: Contra em startup ou active (CNT-11)', () => {
+  it('counterInvulnerable: 0 de dano e outcome `countered`, mesmo contra golpe imbloqueável do chefe', () => {
+    const r = resolve({ counterInvulnerable: true, isBoss: true, hit: { damage: 20, unblockable: true } });
+    expect(r.outcome).toBe('countered');
+    expect(r.damage).toBe(0);
+    expect(r.playerStructureGain).toBe(0);
+  });
+});
+
+describe('resolveIncomingHit: ordem da decisão, um teste por par vizinho (DEF-20)', () => {
+  const HIGH = { damage: 12, height: 'high' } as const;
+  const LOW = { damage: 12, height: 'low' } as const;
+
+  it('parry antes da esquiva: parry válido + esquiva invencível dá `parry`', () => {
+    expect(resolve({ guard: 'parry', dodgeInvulnerable: true, hit: HIGH }).outcome).toBe('parry');
+  });
+
+  it('parry que não vale (de costas) deixa a esquiva decidir: `dodged`', () => {
+    expect(resolve({ guard: 'parry', attackerInFront: false, dodgeInvulnerable: true, hit: HIGH }).outcome).toBe('dodged');
+  });
+
+  it('esquiva antes do Contra: esquiva invencível + Contra em startup dá `dodged`', () => {
+    expect(resolve({ dodgeInvulnerable: true, counterInvulnerable: true, hit: HIGH }).outcome).toBe('dodged');
+  });
+
+  it('Contra antes do abaixar: Contra em startup + abaixado com golpe `high` dá `countered`', () => {
+    expect(resolve({ counterInvulnerable: true, ducking: true, hit: HIGH }).outcome).toBe('countered');
+  });
+
+  it('abaixar antes do pulo: abaixado e no ar, o `high` dá `ducked` e o `low` dá `jumped`, cada um pela sua defesa', () => {
+    expect(resolve({ ducking: true, airborne: true, hit: HIGH }).outcome).toBe('ducked');
+    expect(resolve({ ducking: true, airborne: true, hit: LOW }).outcome).toBe('jumped');
+  });
+
+  it('pulo antes da guarda: no ar com a guarda de pé e o atacante à frente, o `low` bloqueável dá `jumped`', () => {
+    expect(resolve({ airborne: true, guard: 'guard', hit: LOW }).outcome).toBe('jumped');
+  });
+
+  it('abaixar antes da guarda: abaixado com a guarda de pé e o atacante à frente, o `high` bloqueável dá `ducked`', () => {
+    expect(resolve({ ducking: true, guard: 'guard', hit: HIGH }).outcome).toBe('ducked');
+  });
+
+  it('guarda antes do golpe cheio: guarda de pé, à frente e golpe bloqueável dá `block`; sem a guarda dá `hit`', () => {
+    expect(resolve({ guard: 'guard', hit: HIGH }).outcome).toBe('block');
+    expect(resolve({ guard: 'none', hit: HIGH }).outcome).toBe('hit');
+  });
+});
+
+describe('DeflectTracker: Deflexão por sequência aparada (DFL-10, DFL-12, DFL-16)', () => {
+  const s = (id: number, index: number, length: number) => ({ id, index, length });
+
+  it('2 de 2 aparados: só o parry do último golpe dá `true`', () => {
+    const t = new DeflectTracker();
+    expect(t.onParry(s(1, 1, 2))).toBe(false);
+    expect(t.onParry(s(1, 2, 2))).toBe(true);
+  });
+
+  it('3 de 3 aparados: só o parry do último golpe dá `true`', () => {
+    const t = new DeflectTracker();
+    expect(t.onParry(s(1, 1, 3))).toBe(false);
+    expect(t.onParry(s(1, 2, 3))).toBe(false);
+    expect(t.onParry(s(1, 3, 3))).toBe(true);
+  });
+
+  it('DFL-12: falta o parry do 1º golpe de 2: o parry do último dá `false`', () => {
+    const t = new DeflectTracker();
+    expect(t.onParry(s(1, 2, 2))).toBe(false);
+  });
+
+  it('DFL-12: falta o parry do golpe do meio de 3: o parry do último dá `false`', () => {
+    const t = new DeflectTracker();
+    expect(t.onParry(s(1, 1, 3))).toBe(false);
+    expect(t.onParry(s(1, 3, 3))).toBe(false);
+  });
+
+  it('DFL-16: sequência de 1 golpe nunca dá `true`', () => {
+    const t = new DeflectTracker();
+    expect(t.onParry(s(1, 1, 1))).toBe(false);
+  });
+
+  it('golpe sem sequência (`undefined`, como o do chefe) dá `false`', () => {
+    const t = new DeflectTracker();
+    expect(t.onParry(undefined)).toBe(false);
+  });
+
+  it('duas sequências intercaladas não se misturam: o parry de uma não completa a outra', () => {
+    const t = new DeflectTracker();
+    expect(t.onParry(s(1, 1, 2))).toBe(false);
+    expect(t.onParry(s(2, 2, 2))).toBe(false);
+    expect(t.onParry(s(1, 2, 2))).toBe(true);
+  });
+
+  it('a sequência que deu `true` não dá de novo no mesmo id, e `reset` esquece os parries anteriores', () => {
+    const t = new DeflectTracker();
+    t.onParry(s(1, 1, 2));
+    expect(t.onParry(s(1, 2, 2))).toBe(true);
+    expect(t.onParry(s(1, 2, 2))).toBe(false);
+    t.onParry(s(2, 1, 2));
+    t.reset();
+    expect(t.onParry(s(2, 2, 2))).toBe(false);
   });
 });

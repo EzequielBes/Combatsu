@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EnemyAI, type AIInput, type AIOutput, type EnemyAITuning } from '../../src/core/enemyAI';
+import { EnemyAI, type AIEvent, type AIInput, type AIOutput, type EnemyAIState, type EnemyAITuning } from '../../src/core/enemyAI';
 import { ENEMY_AI, ENEMY_ATTACK } from '../../src/data/tuning';
 
 /** Números do spec (SPN-12, LIM-03, LIM-07, AI-03). */
@@ -15,6 +15,9 @@ const SPEC: EnemyAITuning = {
   holdTolerance: 2,
   farRange: 320,
   farSpeedMult: 1.6,
+  commitMs: 200,
+  stringGapMs: 300,
+  hits: 1,
 };
 /** Tuning diferente do padrão em todos os campos: pega constante fixa no código (fecha o item do backlog). */
 const ALT: EnemyAITuning = {
@@ -29,6 +32,9 @@ const ALT: EnemyAITuning = {
   holdTolerance: 4,
   farRange: 500,
   farSpeedMult: 2,
+  commitMs: 80,
+  stringGapMs: 150,
+  hits: 1,
 };
 const SELF = 500;
 const FRAME = 16;
@@ -311,7 +317,7 @@ describe('EnemyAI: preparo, golpe e descanso (AI-03)', () => {
     const s = at(20, { granted: true });
     let out = ai.update(449, s);
     expect(ai.state).toBe('windup');
-    expect(out.events).toEqual([]);
+    expect(out.events).toEqual(['commit']); // 1 ms pela frente: já passou o ponto de compromisso (CMT-01)
     expect(out.vx).toBe(0);
     out = ai.update(1, s);
     expect(ai.state).toBe('attack');
@@ -337,7 +343,7 @@ describe('EnemyAI: preparo, golpe e descanso (AI-03)', () => {
   it('usa windupMs, attackMs e restMs do tuning (200, 60 e 300)', () => {
     const ai = inWindup(ALT);
     const s = at(20, { granted: true });
-    expect(ai.update(199, s).events).toEqual([]);
+    expect(ai.update(199, s).events).toEqual(['commit']); // 1 ms pela frente: já passou o compromisso (CMT-01)
     expect(ai.update(1, s).events).toEqual(['hitboxOn']);
     expect(ai.update(59, s).events).toEqual([]);
     expect(ai.update(1, s).events).toEqual(['hitboxOff']);
@@ -351,7 +357,7 @@ describe('EnemyAI: preparo, golpe e descanso (AI-03)', () => {
   it('eventos de um ciclo inteiro, na ordem: windupStart, hitboxOn, hitboxOff', () => {
     const ai = new EnemyAI(SPEC);
     const out = run(ai, FRAME + 450 + 120, at(20, { granted: true }));
-    expect(out.events).toEqual(['windupStart', 'hitboxOn', 'hitboxOff']);
+    expect(out.events).toEqual(['windupStart', 'commit', 'hitboxOn', 'hitboxOff']);
   });
 
   it('o player muda de lado no preparo: o inimigo vira para ele', () => {
@@ -397,7 +403,7 @@ describe('EnemyAI: interrupção (AI-04, LIM-06)', () => {
   it('canAct = false no golpe fecha a hitbox (hitboxOff) e não abre de novo', () => {
     const ai = inWindup();
     const s = at(20, { granted: true });
-    expect(ai.update(450, s).events).toEqual(['hitboxOn']);
+    expect(ai.update(450, s).events).toEqual(['commit', 'hitboxOn']);
     const first = ai.update(FRAME, { ...s, canAct: false });
     expect(first.events).toEqual(['hitboxOff']);
     expect(first.vx).toBe(0);
@@ -423,7 +429,7 @@ describe('EnemyAI: interrupção (AI-04, LIM-06)', () => {
     expect(ai.state).toBe('chase');
     const again = ai.update(FRAME, s);
     expect(again.events).toEqual(['windupStart']);
-    expect(ai.update(449, s).events).toEqual([]);
+    expect(ai.update(449, s).events).toEqual(['commit']);
     expect(ai.update(1, s).events).toEqual(['hitboxOn']);
   });
 
@@ -498,5 +504,328 @@ describe('LIM-05 com o tuning real: vizinhos parados em hold ficam a pelo menos 
         expect(Math.abs(b - a)).toBeGreaterThanOrEqual(20);
       }
     }
+  });
+});
+
+/** Roda a IA em passos de `dt` e devolve cada evento com o tempo acumulado ao fim do passo em que saiu. */
+function timeline(ai: EnemyAI, s: AIInput, dt: number, totalMs: number): { ev: AIEvent; t: number; state: EnemyAIState }[] {
+  const seen: { ev: AIEvent; t: number; state: EnemyAIState }[] = [];
+  for (let t = dt; t <= totalMs; t += dt) {
+    for (const ev of ai.update(dt, s).events) seen.push({ ev, t, state: ai.state });
+  }
+  return seen;
+}
+
+/** Primeiro fim de passo em que o instante exato `ms` já passou: a sobra do frame faz o tempo ser exato. */
+const frameOf = (ms: number, dt: number): number => Math.ceil(ms / dt) * dt;
+
+/** Tempos dos eventos de `kind`, na ordem em que saíram. */
+const timesOf = (seen: { ev: AIEvent; t: number }[], kind: AIEvent): number[] => seen.filter((e) => e.ev === kind).map((e) => e.t);
+
+describe('EnemyAI: ponto de compromisso (CMT-01)', () => {
+  it('fora do ciclo (chase, hold, approach) não está comprometido', () => {
+    const ai = new EnemyAI(SPEC);
+    ai.update(FRAME, at(300));
+    expect(ai.state).toBe('chase');
+    expect(ai.committed).toBe(false);
+    ai.update(FRAME, at(80));
+    expect(ai.state).toBe('hold');
+    expect(ai.committed).toBe(false);
+    ai.update(FRAME, at(80, { granted: true }));
+    expect(ai.state).toBe('approach');
+    expect(ai.committed).toBe(false);
+  });
+
+  it('com 201 ms de preparo pela frente não está comprometido; com 200 ms está, e o commit sai nesse passo', () => {
+    const ai = inWindup();
+    const s = at(20, { granted: true });
+    expect(ai.committed).toBe(false); // 450 ms pela frente
+    const before = ai.update(249, s); // 201 ms pela frente
+    expect(before.events).toEqual([]);
+    expect(ai.committed).toBe(false);
+    const at200 = ai.update(1, s); // 200 ms pela frente
+    expect(at200.events).toEqual(['commit']);
+    expect(ai.committed).toBe(true);
+    expect(ai.state).toBe('windup');
+  });
+
+  it('usa commitMs do tuning (80, preparo de 200): 81 ms pela frente não, 80 ms sim', () => {
+    const ai = inWindup(ALT);
+    const s = at(20, { granted: true });
+    expect(ai.update(119, s).events).toEqual([]); // 81 ms pela frente
+    expect(ai.committed).toBe(false);
+    expect(ai.update(1, s).events).toEqual(['commit']); // 80 ms pela frente
+    expect(ai.committed).toBe(true);
+  });
+
+  it('continua comprometido em attack e volta a false em rest', () => {
+    const ai = inWindup();
+    const s = at(20, { granted: true });
+    ai.update(450, s);
+    expect(ai.state).toBe('attack');
+    expect(ai.committed).toBe(true);
+    ai.update(120, s);
+    expect(ai.state).toBe('rest');
+    expect(ai.committed).toBe(false);
+  });
+
+  it('interrupt() no preparo comprometido volta a false, e o ataque seguinte emite commit de novo', () => {
+    const ai = inWindup();
+    const s = at(20, { granted: true });
+    ai.update(300, s);
+    expect(ai.committed).toBe(true);
+    ai.interrupt();
+    expect(ai.state).toBe('chase');
+    expect(ai.committed).toBe(false);
+    expect(ai.update(FRAME, s).events).toEqual(['windupStart']);
+    expect(ai.committed).toBe(false);
+    expect(ai.update(250, s).events).toEqual(['commit']);
+  });
+
+  it('interrupt() no golpe volta a false', () => {
+    const ai = inWindup();
+    ai.update(450, at(20, { granted: true }));
+    expect(ai.committed).toBe(true);
+    ai.interrupt();
+    expect(ai.committed).toBe(false);
+  });
+
+  it('canAct = false no preparo comprometido: committed volta a false', () => {
+    const ai = inWindup();
+    const s = at(20, { granted: true });
+    ai.update(300, s);
+    expect(ai.committed).toBe(true);
+    ai.update(FRAME, { ...s, canAct: false });
+    expect(ai.committed).toBe(false);
+  });
+
+  it('um passo grande que cruza o compromisso e o fim do preparo emite commit uma vez, antes da hitboxOn', () => {
+    const ai = inWindup();
+    expect(ai.update(450, at(20, { granted: true })).events).toEqual(['commit', 'hitboxOn']);
+  });
+
+  it('com commitMs maior que o preparo o commit sai junto com o windupStart, uma vez só', () => {
+    const quick: EnemyAITuning = { ...SPEC, windupMs: 100, commitMs: 150 };
+    const ai = new EnemyAI(quick);
+    const first = ai.update(FRAME, at(20, { granted: true }));
+    expect(first.events).toEqual(['windupStart', 'commit']);
+    expect(ai.committed).toBe(true);
+    expect(timesOf(timeline(ai, at(20, { granted: true }), FRAME, 300), 'commit')).toEqual([]);
+  });
+
+  it('commit sai exatamente uma vez por ataque e windupStart só no primeiro preparo, com hits 3', () => {
+    const ai = new EnemyAI({ ...SPEC, hits: 3 });
+    const first = ai.update(FRAME, at(20, { granted: true }));
+    expect(first.events).toEqual(['windupStart']);
+    const seen = timeline(ai, at(20, { granted: true }), FRAME, 1600);
+    const count = (k: AIEvent): number => seen.filter((e) => e.ev === k).length;
+    expect(count('windupStart')).toBe(0);
+    expect(count('commit')).toBe(1);
+    expect(count('hitboxOn')).toBe(3);
+    expect(count('hitboxOff')).toBe(3);
+  });
+});
+
+describe('EnemyAI: sequência de golpes (DFL-02, DFL-03, DFL-04, DFL-06, DFL-15)', () => {
+  const TWO: EnemyAITuning = { ...SPEC, hits: 2 };
+
+  it('hits devolve o tamanho da sequência do tuning', () => {
+    expect(new EnemyAI(SPEC).hits).toBe(1);
+    expect(new EnemyAI(TWO).hits).toBe(2);
+  });
+
+  it.each([16, 7, 33])('hits 2 com dt de %i ms: a 2ª hitboxOn sai 300 ms depois da 1ª hitboxOff, sem perder a sobra do frame', (dt) => {
+    const ai = new EnemyAI(TWO);
+    ai.update(FRAME, at(20, { granted: true }));
+    const seen = timeline(ai, at(20, { granted: true }), dt, 1000);
+    // Tempos exatos desde o fim do frame do windupStart: 450 preparo, 120 golpe, 300 intervalo, 120 golpe.
+    expect(timesOf(seen, 'commit')).toEqual([frameOf(250, dt)]);
+    expect(timesOf(seen, 'hitboxOn')).toEqual([frameOf(450, dt), frameOf(870, dt)]);
+    expect(timesOf(seen, 'hitboxOff')).toEqual([frameOf(570, dt), frameOf(990, dt)]);
+  });
+
+  it('o estado entre os dois golpes é windup e rest só vem depois do último', () => {
+    const ai = new EnemyAI(TWO);
+    const s = at(20, { granted: true });
+    ai.update(FRAME, s);
+    const states: EnemyAIState[] = [];
+    const offStates: EnemyAIState[] = [];
+    for (let t = 0; t < 1000; t += FRAME) {
+      const out = ai.update(FRAME, s);
+      states.push(ai.state);
+      if (out.events.includes('hitboxOff')) offStates.push(ai.state);
+    }
+    expect(offStates).toEqual(['windup', 'rest']); // fim do 1º golpe volta ao preparo; o do último descansa
+    const firstAttack = states.indexOf('attack');
+    const secondAttack = states.indexOf('attack', states.indexOf('windup', firstAttack));
+    const gap = states.slice(states.indexOf('windup', firstAttack), secondAttack);
+    expect(gap.length).toBeGreaterThan(0);
+    expect(gap.every((st) => st === 'windup')).toBe(true); // entre os golpes só existe windup
+    expect(states.indexOf('rest')).toBeGreaterThan(secondAttack); // rest só depois do 2º golpe começar
+  });
+
+  it('hitIndex vale 1 no primeiro golpe, 2 no segundo e 0 fora de golpe', () => {
+    const ai = new EnemyAI(TWO);
+    const s = at(20, { granted: true });
+    expect(ai.hitIndex).toBe(0); // chase
+    ai.update(FRAME, s);
+    expect(ai.state).toBe('windup');
+    expect(ai.hitIndex).toBe(1); // preparo do 1º
+    ai.update(450, s);
+    expect(ai.state).toBe('attack');
+    expect(ai.hitIndex).toBe(1); // 1º golpe
+    ai.update(120, s);
+    expect(ai.state).toBe('windup');
+    expect(ai.hitIndex).toBe(2); // preparo do 2º
+    expect(ai.committed).toBe(true); // 300 ms pela frente e já comprometido (CMT-01)
+    ai.update(300, s);
+    expect(ai.state).toBe('attack');
+    expect(ai.hitIndex).toBe(2); // 2º golpe
+    ai.update(120, s);
+    expect(ai.state).toBe('rest');
+    expect(ai.hitIndex).toBe(0); // descanso
+    ai.update(800, at(150));
+    ai.update(FRAME, at(150));
+    expect(ai.state).toBe('chase');
+    expect(ai.hitIndex).toBe(0);
+  });
+
+  it('hitIndex é 0 em hold e approach', () => {
+    const ai = new EnemyAI(TWO);
+    ai.update(FRAME, at(80));
+    expect(ai.state).toBe('hold');
+    expect(ai.hitIndex).toBe(0);
+    ai.update(FRAME, at(80, { granted: true }));
+    expect(ai.state).toBe('approach');
+    expect(ai.hitIndex).toBe(0);
+  });
+
+  it('com hits 3, windupStart sai só no primeiro preparo e o intervalo é windup nas duas vezes', () => {
+    const ai = new EnemyAI({ ...SPEC, hits: 3 });
+    const s = at(20, { granted: true });
+    expect(ai.update(FRAME, s).events).toEqual(['windupStart']);
+    ai.update(450, s);
+    expect(ai.update(120, s).events).toEqual(['hitboxOff']);
+    expect(ai.state).toBe('windup');
+    expect(ai.hitIndex).toBe(2);
+    expect(ai.update(300, s).events).toEqual(['hitboxOn']);
+    expect(ai.update(120, s).events).toEqual(['hitboxOff']);
+    expect(ai.state).toBe('windup');
+    expect(ai.hitIndex).toBe(3);
+    expect(ai.update(300, s).events).toEqual(['hitboxOn']);
+    expect(ai.update(120, s).events).toEqual(['hitboxOff']);
+    expect(ai.state).toBe('rest');
+  });
+
+  it('o intervalo respeita 299 e 300 ms (limiar dos dois lados)', () => {
+    const ai = new EnemyAI(TWO);
+    const s = at(20, { granted: true });
+    ai.update(FRAME, s);
+    ai.update(450, s);
+    ai.update(120, s); // fim do 1º golpe, entra no intervalo
+    expect(ai.update(299, s).events).toEqual([]);
+    expect(ai.state).toBe('windup');
+    expect(ai.update(1, s).events).toEqual(['hitboxOn']);
+  });
+
+  it('usa stringGapMs e hits do tuning (150 ms, 3 golpes; preparo 200, golpe 60, compromisso 80)', () => {
+    const seq: EnemyAITuning = { ...ALT, hits: 3 };
+    const ai = new EnemyAI(seq);
+    ai.update(FRAME, at(20, { granted: true }));
+    const seen = timeline(ai, at(20, { granted: true }), 7, 700);
+    expect(timesOf(seen, 'commit')).toEqual([frameOf(120, 7)]);
+    expect(timesOf(seen, 'hitboxOn')).toEqual([frameOf(200, 7), frameOf(410, 7), frameOf(620, 7)]);
+    expect(timesOf(seen, 'hitboxOff')).toEqual([frameOf(260, 7), frameOf(470, 7), frameOf(680, 7)]);
+  });
+
+  it('com hits 1 o ciclo continua 450 + 120 + 800 ms: hitboxOn, hitboxOff e volta a chase', () => {
+    const ai = new EnemyAI(SPEC);
+    ai.update(FRAME, at(20, { granted: true }));
+    const seen = timeline(ai, at(20, { granted: true }), 1, 570);
+    expect(timesOf(seen, 'hitboxOn')).toEqual([450]);
+    expect(timesOf(seen, 'hitboxOff')).toEqual([570]);
+    expect(ai.state).toBe('rest');
+    // O descanso dura 800 ms: 799 ms depois ainda é rest, 800 ms depois volta a chase.
+    ai.update(799, at(150));
+    expect(ai.state).toBe('rest');
+    ai.update(1, at(150));
+    expect(ai.state).toBe('chase');
+  });
+
+  it('com hits 1 o hitIndex fica em 1 no preparo e no golpe, e rest vem logo depois do golpe', () => {
+    const ai = new EnemyAI(SPEC);
+    const s = at(20, { granted: true });
+    ai.update(FRAME, s);
+    expect(ai.hitIndex).toBe(1);
+    ai.update(450, s);
+    expect(ai.hitIndex).toBe(1);
+    expect(ai.update(120, s).events).toEqual(['hitboxOff']);
+    expect(ai.state).toBe('rest');
+  });
+});
+
+describe('EnemyAI: sequência interrompida (EDG-05)', () => {
+  const TWO: EnemyAITuning = { ...SPEC, hits: 2 };
+
+  /** IA com 2 golpes, já no intervalo entre o 1º e o 2º. */
+  function inGap(): EnemyAI {
+    const ai = new EnemyAI(TWO);
+    const s = at(20, { granted: true });
+    ai.update(FRAME, s);
+    ai.update(450, s);
+    ai.update(120, s);
+    expect(ai.state).toBe('windup');
+    expect(ai.hitIndex).toBe(2);
+    return ai;
+  }
+
+  it('interrupt() no intervalo volta a chase sem evento e nenhuma hitboxOn sai depois', () => {
+    const ai = inGap();
+    expect(ai.interrupt()).toEqual([]);
+    expect(ai.state).toBe('chase');
+    expect(ai.hitIndex).toBe(0);
+    expect(ai.committed).toBe(false);
+    const rest = timeline(ai, at(150), FRAME, 3000);
+    expect(rest.map((e) => e.ev)).not.toContain('hitboxOn');
+  });
+
+  it('interrupt() no 1º golpe fecha a hitbox e o 2º golpe nunca abre', () => {
+    const ai = new EnemyAI(TWO);
+    const s = at(20, { granted: true });
+    ai.update(FRAME, s);
+    expect(ai.update(450, s).events).toEqual(['commit', 'hitboxOn']);
+    expect(ai.interrupt()).toEqual(['hitboxOff']);
+    expect(ai.state).toBe('chase');
+    const rest = timeline(ai, at(150), FRAME, 3000);
+    expect(rest.map((e) => e.ev)).not.toContain('hitboxOn');
+  });
+
+  it('canAct = false no intervalo: nenhuma hitboxOn depois, nem com a permissão de volta', () => {
+    const ai = inGap();
+    const s = at(20, { granted: true });
+    const down = timeline(ai, { ...s, canAct: false }, FRAME, 2000);
+    expect(down.map((e) => e.ev)).not.toContain('hitboxOn');
+    expect(ai.state).toBe('chase');
+  });
+
+  it('canAct = false no meio do 1º golpe fecha a hitbox uma vez e o 2º golpe nunca abre', () => {
+    const ai = new EnemyAI(TWO);
+    const s = at(20, { granted: true });
+    ai.update(FRAME, s);
+    ai.update(450, s);
+    expect(ai.update(FRAME, { ...s, canAct: false }).events).toEqual(['hitboxOff']);
+    const rest = timeline(ai, { ...s, canAct: false }, FRAME, 3000);
+    expect(rest).toEqual([]);
+  });
+
+  it('depois de interrompida, a próxima investida recomeça a sequência do golpe 1', () => {
+    const ai = inGap();
+    ai.interrupt();
+    const s = at(20, { granted: true });
+    expect(ai.update(FRAME, s).events).toEqual(['windupStart']);
+    expect(ai.hitIndex).toBe(1);
+    expect(ai.committed).toBe(false);
+    const seen = timeline(ai, s, FRAME, 900);
+    expect(timesOf(seen, 'hitboxOn')).toHaveLength(2);
   });
 });

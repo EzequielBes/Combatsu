@@ -28,6 +28,7 @@ export function armFor(tool: ToolKey, base: EnemyBase, t: ArmedTuning): EnemyBas
     const { knife } = t;
     return {
       ...base,
+      ai: { ...base.ai, hits: knife.hits },
       attack: {
         ...base.attack,
         damage: Math.round(base.attack.damage * knife.dmg),

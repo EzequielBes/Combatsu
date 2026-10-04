@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { Health } from '../../src/core/health';
 import { PLAYER_HEALTH } from '../../src/data/tuning';
 
-/** Números do spec ("Números de vida e IA"): hp 100, invulnerável 700 ms, atordoado 200 ms, respawn 1000 ms. */
-const SPEC = { maxHp: 100, invulnMs: 700, staggerMs: 200, respawnMs: 1000 };
+/** Números do spec: hp 100, invulnerável 300 ms (PST-15, substitui os 700 ms do HP-02), atordoado 200 ms, respawn 1000 ms. */
+const SPEC = { maxHp: 100, invulnMs: 300, staggerMs: 200, respawnMs: 1000 };
 /** Dano do golpe do inimigo no spec. */
 const ENEMY_HIT = 12;
 
 describe('tuning real da vida do player (números do spec)', () => {
-  it('PLAYER_HEALTH = 100 / 700 / 200 / 1000', () => {
+  it('PLAYER_HEALTH = 100 / 300 / 200 / 1000', () => {
     expect(PLAYER_HEALTH).toEqual(SPEC);
   });
 });
@@ -30,16 +30,25 @@ describe('Health: dano e invulnerabilidade (HP-01, HP-02)', () => {
     expect(h.invulnerable).toBe(true);
   });
 
-  it('invulnerável por 700 ms: golpes nesse tempo são ignorados, depois voltam a valer', () => {
+  it('PST-15: invulnerável por 300 ms: golpe em 299 ms é ignorado, em 300 ms é aceito', () => {
     const h = new Health(PLAYER_HEALTH);
     h.receive(ENEMY_HIT);
-    expect(h.update(699)).not.toContain('invulnEnd');
+    expect(h.update(299)).not.toContain('invulnEnd');
     expect(h.receive(ENEMY_HIT)).toBe('ignored');
     expect(h.hp).toBe(88);
     expect(h.update(1)).toContain('invulnEnd');
     expect(h.invulnerable).toBe(false);
     expect(h.receive(ENEMY_HIT)).toBe('hurt');
     expect(h.hp).toBe(76);
+  });
+
+  it('PST-15 com um tuning diferente do padrão (invulnMs 100): 99 ms ignora e 100 ms aceita', () => {
+    const h = new Health({ ...PLAYER_HEALTH, invulnMs: 100 });
+    h.receive(ENEMY_HIT);
+    h.update(99);
+    expect(h.receive(ENEMY_HIT)).toBe('ignored');
+    h.update(1);
+    expect(h.receive(ENEMY_HIT)).toBe('hurt');
   });
 
   it('borda: dois golpes no mesmo frame tiram vida uma vez só', () => {
@@ -76,7 +85,7 @@ describe('Health: morte e respawn (HP-04)', () => {
     const h = new Health(PLAYER_HEALTH);
     for (let i = 0; i < 8; i++) {
       expect(h.receive(ENEMY_HIT)).toBe('hurt');
-      h.update(700);
+      h.update(PLAYER_HEALTH.invulnMs);
     }
     expect(h.hp).toBe(4);
     expect(h.receive(ENEMY_HIT)).toBe('died');

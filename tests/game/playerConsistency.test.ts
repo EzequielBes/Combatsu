@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAYER_ANIMS, PLAYER_FRAMES, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
+import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES, WRIST_GRIP, WRIST_GRIP_AT } from '../../src/game/art/sprites/playerTech';
 
@@ -131,6 +131,41 @@ describe('mão do pulso no tom do braço de trás (SPF-06)', () => {
     // A região tem a mão de verdade (não está vazia): pelo menos um pixel de pele da mão de trás (P).
     expect(region.join('')).toContain('P');
   });
+});
+
+describe('frames do abaixar e dos Contras: tronco alinhado e pés no chão (CNT-17, SPF-04)', () => {
+  const NEW_FRAMES = [
+    'duck',
+    'contra-wind',
+    'contra-hit',
+    'contra-recover',
+    'contraGancho-wind',
+    'contraGancho-hit',
+    'contraGancho-recover',
+  ];
+  /** Coluna do tronco: a fivela do cinto (`z`) só existe no `BODY`, então marca onde o tronco foi posto. */
+  const torsoCol = (rows: readonly string[]): number => {
+    const cols = rows.flatMap((row) => [...row].flatMap((c, x) => (c === 'z' ? [x] : [])));
+    expect(cols.length, 'a fivela do cinto está visível').toBeGreaterThan(0);
+    return cols.reduce((a, b) => a + b, 0) / cols.length;
+  };
+  /** Última linha com pixel opaco (S, rastro de movimento, não conta). */
+  const lastOpaqueRow = (rows: readonly string[]): number => {
+    let last = -1;
+    rows.forEach((row, y) => {
+      if ([...row].some((c) => c !== '.' && c !== 'S')) last = y;
+    });
+    return last;
+  };
+
+  it.each(NEW_FRAMES)('%s: o tronco fica a até 4 texels da coluna 10, a origem (SPF-04)', (name) => {
+    expect(Math.abs(torsoCol(frame(name)) - 10), name).toBeLessThanOrEqual(4);
+  });
+
+  it.each(NEW_FRAMES)('%s: os pés tocam o chão (a última linha opaca é a última da grade)', (name) => {
+    expect(lastOpaqueRow(frame(name)), name).toBe(PLAYER_FRAME_H - 1);
+  });
+
 });
 
 describe('invariantes em todas as folhas do player (SPF-01, SPF-02, SPF-03)', () => {

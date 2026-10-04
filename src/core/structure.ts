@@ -77,8 +77,20 @@ export class Structure {
     return false;
   }
 
-  /** Avança o tempo de jogo. `true` no passo em que o atordoamento acaba e a barra volta a 0. */
-  update(dtMs: number): boolean {
+  /**
+   * Tira estrutura, parando em 0 (DEF-13, DEF-19). Quebrada, não muda; não conta como ganho, então o atraso da
+   * queda segue de onde estava.
+   */
+  reduce(amount: number): void {
+    if (this._broken) return;
+    this._cur = Math.max(0, this._cur - amount);
+  }
+
+  /**
+   * Avança o tempo de jogo. `decayPerSec` troca a taxa de queda do tuning neste passo (PST-14: fora do foco).
+   * `true` no passo em que o atordoamento acaba e a barra volta a 0.
+   */
+  update(dtMs: number, decayPerSec: number = this.tuning.decayPerSec): boolean {
     if (this._broken) {
       this.stunLeftMs -= dtMs;
       if (this.stunLeftMs > 0) return false;
@@ -95,7 +107,7 @@ export class Structure {
     const before = Math.max(0, this.sinceGainMs - this.tuning.decayDelayMs);
     this.sinceGainMs += dtMs;
     const after = Math.max(0, this.sinceGainMs - this.tuning.decayDelayMs);
-    this._cur = Math.max(0, this._cur - (this.tuning.decayPerSec * (after - before)) / 1000);
+    this._cur = Math.max(0, this._cur - (decayPerSec * (after - before)) / 1000);
     return false;
   }
 

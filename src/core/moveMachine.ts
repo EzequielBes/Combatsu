@@ -14,6 +14,8 @@ export type MoveEvent =
   | { type: 'moveStart'; move: MoveDef }
   | { type: 'hitboxOn'; move: MoveDef }
   | { type: 'hitboxOff'; move: MoveDef }
+  /** O `active` acabou sem nenhum alvo aceitar o golpe e o golpe tem `whiffRecoveryMs` (VOA-08). */
+  | { type: 'whiff'; move: MoveDef }
   | { type: 'moveEnd' };
 
 /** `window` = já sem golpe em andamento, mas ainda aceitando o follow-up (MOV-03). */
@@ -27,7 +29,8 @@ interface Buffered {
 /**
  * Máquina do grafo de golpes (MOV-01..09, MOV-16..18, AIR-01..04): escolhe o golpe por botão + direção + ar,
  * encadeia follow-ups na janela, guarda UM aperto no buffer e dispara o chute carregado no fim do golpe atual.
- * Pura: o tempo entra por `update(dt)`.
+ * O Contra (CNT-05) não sai de `press`: só `startCounter`, chamado quando a janela de Contra deixa. Quem erra um
+ * golpe com `whiffRecoveryMs` paga a recovery longa (VOA-07). Pura: o tempo entra por `update(dt)`.
  */
 export class MoveMachine {
   private _phase: MovePhase = 'idle';
@@ -100,6 +103,32 @@ export class MoveMachine {
     return events;
   }
 
+  /**
+   * Começa o Contra `name` (CNT-05), que `press` nunca escolhe (CNT-08). Com golpe em curso não faz nada; na janela
+   * de follow-up ainda vale, porque não há golpe em curso.
+   */
+  startCounter(name: string): MoveEvent[] {
+    const events: MoveEvent[] = [];
+    const move = this.moves[name];
+    if (this.isMoving || !move) return events;
+    this.startMove(move, events);
+    return events;
+  }
+
+  /**
+   * Termina a fase `active` agora (a voadora que acertou, VOA-04): desliga a hitbox e a `recovery` dura `recoveryMs`,
+   * sem `whiff` (VOA-09). Fora de `active` não faz nada.
+   */
+  endActive(): MoveEvent[] {
+    const events: MoveEvent[] = [];
+    if (this._phase !== 'active') return events;
+    const move = this.move as MoveDef;
+    this._phase = 'recovery';
+    this.timer = move.recoveryMs;
+    events.push({ type: 'hitboxOff', move });
+    return events;
+  }
+
   /** Soltou `K` depois de `heldMs` desde o aperto: com ≥ 400 ms o carregado sai no fim do golpe atual (MOV-09, MOV-16). */
   release(button: MoveButton, heldMs: number, ctx: MoveContext): MoveEvent[] {
     const events: MoveEvent[] = [];
@@ -128,8 +157,13 @@ export class MoveMachine {
         break;
       case 'active':
         this._phase = 'recovery';
-        this.timer = move.recoveryMs;
         events.push({ type: 'hitboxOff', move });
+        if (!this._hasHit && move.whiffRecoveryMs !== undefined) {
+          this.timer = move.whiffRecoveryMs;
+          events.push({ type: 'whiff', move });
+        } else {
+          this.timer = move.recoveryMs;
+        }
         break;
       case 'recovery':
         this.finishRecovery(move, events);

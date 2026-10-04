@@ -23,6 +23,10 @@
  * para baixo, corpo inclinado à frente), `pisao` (joelho alto, depois perna esticada para baixo), `guard`
  * (braços cruzados à frente do rosto, base firme), `parry` (braço desviando para fora), `dodge-0/1` (corpo
  * abaixado e inclinado no sentido do dash) e `stunned-0/1` (cambaleando, peso alternado).
+ *
+ * Abaixar e Contras (combate-mestre, T9): `duck` (agachado fundo, braços na frente do rosto, parado), `contra-*`
+ * (soco reto curto com o braço de trás, tronco à frente) e `contraGancho-*` (sobe do agachado com o braço erguido do
+ * `ganchoAscendente`).
  */
 import {
   ARM_COCK,
@@ -112,6 +116,12 @@ function armRaised(len: number): string[] {
 /** Pernas dobradas no ar (golpes aéreos): réplica local do `LEGS_TUCK` de `player.ts` (não exportado ali),
  * para manter o mesmo desenho enquanto o personagem está no ar. */
 const LEGS_AIR: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.ksNNk', '....kkk.kKsKk'];
+
+/** Agachado fundo (abaixar e preparo do contragancho): réplica local do `LEGS_CROUCH` de `player.ts` (não exportado ali),
+ * joelhos para fora e pés afastados, 4 linhas. */
+const LEGS_SQUAT: Grid = ['...knNNNNNk', '.kKnskkknNk', 'kKKKk...kKsKk', 'kkkkk...kkkkk'];
+/** Linha onde o `LEGS_SQUAT` fica para os pés tocarem a última linha da grade (24). */
+const Y_SQUAT = 20;
 
 // ---------------------------------------------------------------- golpes do chão (T8)
 
@@ -593,6 +603,72 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     near: [ARM_GUARD, 11, 14],
     far: [far(ARM_GUARD), 6, 14],
     legs: [[LEGS_WIDE, 3, Y_LEGS]],
+  }),
+
+  // ---------------------------------------------------------------- abaixar e Contras (combate-mestre, T9)
+
+  // Abaixar (DEF-09): agachado fundo (`drop` 4, o topo da cabeça 4 texels abaixo do idle), braços recolhidos na frente
+  // do rosto como na guarda, parado. A base é a do `socoBaixo`, só que mais baixa.
+  duck: pose({
+    lean: 1,
+    drop: 4,
+    head: HEAD_FOCUS,
+    near: [mirror(ARM_GUARD), 12, 8],
+    far: [far(ARM_GUARD), 7, 9],
+    legs: [[LEGS_SQUAT, 0, Y_SQUAT]],
+  }),
+
+  // Contra (CNT-09): soco reto curto com o braço de trás, tronco à frente e um pouco mais baixo que o direto.
+  'contra-wind': pose({
+    lean: -1,
+    drop: 1,
+    head: HEAD_FOCUS,
+    near: [ARM_GUARD, 7, 12],
+    far: [far(ARM_COCK), 1, 13],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  'contra-hit': pose({
+    lean: 3,
+    drop: 1,
+    head: HEAD_FOCUS,
+    near: [ARM_GUARD, 9, 12],
+    far: [far(armStraight(15)), 10, 12],
+    legs: [[LEGS_WIDE, 2, Y_LEGS]],
+  }),
+  'contra-recover': pose({
+    lean: 1,
+    drop: 1,
+    head: HEAD_FOCUS,
+    near: [ARM_GUARD, 8, 12],
+    far: [far(armStraight(9)), 9, 12],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+
+  // Contra gancho (CNT-10): sai do agachado do abaixar e sobe com o punho pela frente do rosto, o mesmo braço erguido
+  // do gancho ascendente. O tronco sobe, mas nunca acima da grade (`drop` >= 0).
+  'contraGancho-wind': pose({
+    lean: -1,
+    drop: 4,
+    head: HEAD_FOCUS,
+    near: [ARM_COCK, 4, 16],
+    far: [far(ARM_GUARD), 8, 14],
+    legs: [[LEGS_SQUAT, 0, Y_SQUAT]],
+  }),
+  'contraGancho-hit': pose({
+    lean: 2,
+    drop: 1,
+    head: HEAD_FOCUS,
+    near: [armRaised(11), 13, 1],
+    far: [far(ARM_GUARD), 8, 12],
+    legs: [[LEGS_WIDE, 1, Y_LEGS]],
+  }),
+  'contraGancho-recover': pose({
+    lean: 1,
+    drop: 1,
+    head: HEAD_FOCUS,
+    near: [armRaised(8), 12, 4],
+    far: [far(ARM_GUARD), 8, 12],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
   }),
 
   // Atordoado (guarda quebrada): cambaleando, peso alternado de um frame para o outro.

@@ -4,8 +4,10 @@ import type { CastState } from '../core/cast';
 import { Filters } from '../core/collision';
 import { ComboTracker, type ComboEvent } from '../core/combo';
 import type { Hit, Vec2 } from '../core/hit';
-import { Guard, resolveIncomingHit } from '../core/defense';
+import { CounterWindow, type CounterKind } from '../core/counter';
+import { DeflectTracker, Guard, resolveIncomingHit, type ParryInfo } from '../core/defense';
 import { Dodge } from '../core/dodge';
+import { Duck } from '../core/duck';
 import { Health } from '../core/health';
 import { MotionInput } from '../core/motionInput';
 import { shouldCancelJumpForUppercut } from '../core/fightInput';
@@ -13,7 +15,7 @@ import { MoveMachine, moveTravelAt, type MoveContext, type MoveEvent } from '../
 import { initialMoveState, stepMovement, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
 import { PLAYER_STRUCTURE, Structure } from '../core/structure';
-import { CHARGE_MS, DEFENSE, DODGE, type MoveDef } from '../data/moves';
+import { CHARGE_MS, COUNTER, DEFENSE, DODGE, READING, STRUCTURE, type MoveDef } from '../data/moves';
 import { CAST_FX, type TechId } from '../data/techniques';
 import {
   PLAYER_HEALTH,
@@ -55,15 +57,21 @@ export interface CastPose {
   state: CastState;
 }
 
-/** Quem atacou, para o lado do golpe (GRD-02/03), o tipo (GRD-06) e o efeito do parry no atacante (PAR-03/07/10). */
+/**
+ * Quem atacou, para o lado do golpe (GRD-02/03), o tipo (GRD-06) e o efeito do parry no atacante (PAR-03/07/10,
+ * DFL-07..11): `info` diz se o parry foi o do último golpe da sequência e se foi uma Deflexão; o chefe o ignora.
+ */
 export interface Attacker {
   x: number;
   isBoss: boolean;
-  parried(): void;
+  parried(info: ParryInfo): void;
 }
 
-/** Desfecho de defesa avisado à cena (faíscas, hitstop, câmera lenta) no ponto de contato. */
-export type DefenseKind = 'block' | 'parry' | 'perfectDodge';
+/**
+ * Desfecho de defesa avisado à cena (faíscas, hitstop, câmera lenta, textos) no ponto de contato. Na Deflexão sai só
+ * `deflect` (no lugar de `parry`), para a cena mostrar um aviso só (DFL-13).
+ */
+export type DefenseKind = 'block' | 'parry' | 'perfectDodge' | 'duckEvade' | 'jumpEvade' | 'deflect';
 
 /** Recuo do bloqueio (GRD-09, px) e a velocidade dele (px/s): 8 px em 100 ms. */
 const BLOCK_PUSH_PX = DEFENSE.blockPushPx;
@@ -116,9 +124,26 @@ export class Player implements Hittable {
   onDefense: ((kind: DefenseKind, point: Vec2) => void) | null = null;
   private guard = new Guard();
   private readonly dodge = new Dodge();
+  /** Abaixar (DEF-07): irmão da esquiva, com a recarga dividida com ela (DEF-15). */
+  private readonly duck = new Duck();
+  /** Janela de Contra aberta por parry, esquiva perfeita ou abaixar que evitou golpe (CNT-01..04). */
+  private readonly counter = new CounterWindow();
+  /** Conta os parries por sequência do inimigo, para a Deflexão (DFL-10, DFL-12). */
+  private readonly deflect = new DeflectTracker();
   private readonly structure = new Structure(PLAYER_STRUCTURE);
   /** Recuo do bloqueio em curso (GRD-09). */
   private blockPush: { dir: 1 | -1; remainingPx: number } | null = null;
+  /** Recuo do quique da voadora (VOA-05) ou empurrão de um inimigo (RDG-19) em curso: sentido, px que faltam, total e duração. */
+  private push: { dir: 1 | -1; remainingPx: number; totalPx: number; ms: number } | null = null;
+  /**
+   * Pedidos feitos de dentro do passo de física (`hitLanded` e `shoved` rodam no callback de colisão) que o `update`
+   * seguinte aplica: o fim do `active` da voadora (evento `hitboxOff` ainda por tratar), o quique e o empurrão.
+   */
+  private pendingMoveEvents: MoveEvent[] = [];
+  private pendingBounce: { dir: 1 | -1; backPx: number; ms: number; vy: number } | null = null;
+  private pendingShove: 1 | -1 | null = null;
+  /** Tempo de jogo (ms) em que o input segue ignorado depois de um empurrão (RDG-21). */
+  private shoveLockMs = 0;
   /** O frame anterior era de dash da esquiva: no seguinte a velocidade zera, sem escorregar além dos 96 px. */
   private wasDashing = false;
   /**
@@ -253,8 +278,9 @@ export class Player implements Hittable {
   }
 
   /**
-   * Golpe recebido: a única decisão de dano é `resolveIncomingHit` (parry → esquiva → guarda → golpe cheio). Só o
-   * golpe cheio devolve `true` (faísca e hitstop do golpe); parry, esquiva e bloqueio têm feedback próprio.
+   * Golpe recebido: a única decisão de dano é `resolveIncomingHit` (parry → esquiva → Contra → abaixar → pulo → guarda
+   * → golpe cheio, DEF-20). Só o golpe cheio devolve `true` (faísca e hitstop do golpe); as outras defesas têm feedback
+   * próprio. Roda no passo de física (callback de colisão): lê o estado do último `update`.
    */
   receiveHit(hit: Hit): boolean {
     if (this.health.dead) return false;
@@ -268,20 +294,51 @@ export class Player implements Hittable {
       isBoss: attacker?.isBoss ?? false,
       guard: this.guard.state,
       dodgeInvulnerable: this.dodge.invulnerable,
+      counterInvulnerable: this.counterInvulnerable,
+      ducking: this.duck.active,
+      // DEF-17: fora do chão = sem terreno sob os pés ou subindo, o mesmo critério do `onGround` do `update`.
+      airborne: !(this.touchesTerrain('below') && this.move.vy >= 0),
     });
     const awayDir: 1 | -1 = attackerX >= this.sprite.x ? -1 : 1;
     const point: Vec2 = { x: this.sprite.x - awayDir * 14, y: this.sprite.y - 4 };
     switch (res.outcome) {
-      case 'parry':
+      case 'parry': {
+        // DFL-10, DFL-12: o parry do último golpe de uma sequência aparada inteira é a Deflexão (janela de 900 ms).
+        const deflect = this.deflect.onParry(hit.string);
         this.onEvent?.('parry');
-        attacker?.parried();
-        this.onDefense?.('parry', point);
+        if (deflect) this.onEvent?.('deflect');
+        // DFL-08, DFL-09: só o parry do último golpe da sequência (ou do golpe sem sequência) deixa o inimigo parado.
+        attacker?.parried({ final: hit.string ? hit.string.index === hit.string.length : true, deflect });
+        this.counter.open('contra', deflect ? COUNTER.deflectWindowMs : COUNTER.windowMs);
+        this.onDefense?.(deflect ? 'deflect' : 'parry', point);
         return false;
+      }
       case 'dodged':
         if (this.dodge.registerIncomingHit()) {
           this.onEvent?.('perfectDodge');
+          // DEF-19, CNT-02: a esquiva perfeita alivia a postura e abre a janela de Contra.
+          this.structure.reduce(STRUCTURE.player.evadeRelief);
+          this.counter.open('contra', COUNTER.windowMs);
           this.onDefense?.('perfectDodge', point);
         }
+        return false;
+      case 'ducked':
+        // DEF-12: um `duckEvade` por abaixar, mesmo que outros golpes `high` cheguem nele.
+        if (this.duck.registerEvade()) {
+          this.onEvent?.('duckEvade');
+          // DEF-13, CNT-03.
+          this.structure.reduce(STRUCTURE.player.evadeRelief);
+          this.counter.open('contraGancho', COUNTER.windowMs);
+          this.onDefense?.('duckEvade', point);
+        }
+        return false;
+      case 'jumped':
+        // DEF-18: um `jumpEvade` por golpe `low` evitado no ar; sem efeito na postura.
+        this.onEvent?.('jumpEvade');
+        this.onDefense?.('jumpEvade', point);
+        return false;
+      case 'countered':
+        // CNT-11, CNT-12: o Contra em `startup` ou `active` não leva dano nem cancela.
         return false;
       case 'block':
         this.onEvent?.('block');
@@ -293,6 +350,12 @@ export class Player implements Hittable {
       default:
         return this.takeHit(hit);
     }
+  }
+
+  /** Contra em `startup` ou `active` (CNT-11): o golpe que chega causa 0 de dano e não cancela o Contra. */
+  private get counterInvulnerable(): boolean {
+    const phase = this.moves.phase;
+    return this.moves.def?.counter === true && (phase === 'startup' || phase === 'active');
   }
 
   /** Estrutura cheia (STR-06, STR-11): atordoa e larga o golpe; um `guardBreak:player`. */
@@ -325,8 +388,13 @@ export class Player implements Hittable {
     this.stepDriven = false;
     for (const ev of this.health.update(dtMs)) if (ev === 'respawn') this.respawn();
     this.structure.update(dtMs);
-    // Atordoado, morto ou com a guarda quebrada (STR-06): sem golpe, sem pegar objeto e sem controle (HP-03).
-    const stunned = this.health.staggered || this.health.dead || this.structure.broken;
+    // Relógios de jogo da janela de Contra e do abaixar: o hitstop não chama `update`, então os congela (CNT-20).
+    this.counter.update(dtMs);
+    this.duck.update(dtMs);
+    this.shoveLockMs = Math.max(0, this.shoveLockMs - dtMs);
+    const bounceVy = this.applyPending();
+    // Atordoado, morto, com a guarda quebrada (STR-06) ou empurrado (RDG-21): sem golpe, sem pegar objeto e sem controle (HP-03).
+    const stunned = this.health.staggered || this.health.dead || this.structure.broken || this.shoveLockMs > 0;
     // Conjurando (CAST-12/13): trava golpe, interação e movimento por input igual a um golpe em andamento — o
     // "Selo" da direção de arte trava o player por inteiro, não só o eixo horizontal citado na letra da AC.
     const casting = this.castLock !== null;
@@ -345,15 +413,17 @@ export class Player implements Hittable {
     if (onGround) this.moves.land();
     if (input.dodgePressed && !stunned && !casting) this.tryDodge(input, onGround);
     const dodging = this.dodge.active;
-    this.updateStrikes(dtMs, input, onGround, stunned || casting || dodging);
+    // Abaixado (DEF-07..10): travado como na esquiva, sem golpe, guarda, pegar objeto nem andar.
+    const ducking = this.duck.active;
+    this.updateStrikes(dtMs, input, onGround, stunned || casting, dodging || ducking);
     this.onPropSwing(this.propSwing.update(dtMs));
-    // Guarda no chão sem golpe, esquiva nem conjuração (GRD-01); o aperto abre a janela de parry (PAR-01/04).
-    const canGuard = onGround && !this.moves.isMoving && !dodging && !casting && !stunned;
+    // Guarda no chão sem golpe, esquiva, abaixar nem conjuração (GRD-01); o aperto abre a janela de parry (PAR-01/04).
+    const canGuard = onGround && !this.moves.isMoving && !dodging && !ducking && !casting && !stunned;
     if (input.guardPressed) this.guard.press(canGuard);
     this.guard.update(dtMs, input.guardHeld, canGuard);
 
     const attacking = this.moves.isMoving || this.propSwing.isAttacking;
-    if (input.interactPressed && !attacking && !stunned && !casting && !dodging) this.interact(input.down);
+    if (input.interactPressed && !attacking && !stunned && !casting && !dodging && !ducking) this.interact(input.down);
 
     const before = this.move;
     const wPressedAt = input.jumpWPressed ? this.clockMs : this.lastWPressMs;
@@ -364,14 +434,20 @@ export class Player implements Hittable {
     const castAirGravity = this.castLock?.state === 'sign' || this.castLock?.state === 'charge';
     const moveTuning = {
       ...PLAYER_MOVE,
-      // GRD-05: guardando anda a 40% da velocidade de corrida.
+      // DEF-04, DEF-05: com a guarda de pé (`guard` ou `parry`) o jogador vira com a direção (o `stepMovement` já vira o
+      // `facing`) e não anda: o fator é 0 e substitui os 40% do GRD-05.
       runSpeed: this.modifiers.runSpeed * (this.guard.state === 'none' ? 1 : DEFENSE.guardSpeedFactor),
       gravity: castAirGravity ? PLAYER_MOVE.gravity * CAST_FX.airGravity : PLAYER_MOVE.gravity,
     };
-    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting || dodging);
+    this.move = stepMovement(this.move, input, sensors, dtMs, moveTuning, attacking || stunned || casting || dodging || ducking);
+    // DEF-10: abaixado a velocidade horizontal é 0, sem deslizar a corrida que vinha antes do `S`+`Q`.
+    if (ducking) this.move = { ...this.move, vx: 0 };
+    // VOA-06: o quique mantém os −240 px/s no primeiro `update` depois do acerto; a gravidade só atua a partir do seguinte.
+    if (bounceVy !== null) this.move = { ...this.move, vy: bounceVy, jumping: false };
     this.applyMoveTravel(dtMs);
     this.applyDash(dtMs);
     this.applyBlockPush(dtMs);
+    this.applyPush(dtMs);
     this.trackWJump(before, groundYBefore, wPressedAt);
     this.kickUpDust(before, sensors.grounded, dtMs);
     // Recuo: enquanto atordoado, empurrado na direção do golpe; morto, fica parado no lugar.
@@ -424,6 +500,8 @@ export class Player implements Hittable {
 
   /** hp 0 (HP-04): larga o objeto (ele cai em repouso), e a tela escurece até o respawn. */
   private die(): void {
+    // EDG-07: morrer fecha a janela de Contra (e descarta o aperto guardado).
+    this.counter.close();
     if (this.held) {
       this.held.holderGone(this.sprite.x, this.sprite.y);
       this.held = null;
@@ -443,14 +521,22 @@ export class Player implements Hittable {
     this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
   }
 
-  /** Zera guarda, esquiva, estrutura, golpe em curso e recuo (respawn e nova run). */
+  /** Zera guarda, esquiva, abaixar, Contra, estrutura, golpe em curso e recuo (respawn e nova run, EDG-01, EDG-02). */
   private resetDefense(): void {
     this.onMove(this.moves.cancel());
     this.heavyHoldMs = -1;
     this.guard = new Guard();
     this.dodge.reset();
+    this.duck.reset();
+    this.counter.close();
+    this.deflect.reset();
     this.structure.reset();
     this.blockPush = null;
+    this.push = null;
+    this.pendingMoveEvents = [];
+    this.pendingBounce = null;
+    this.pendingShove = null;
+    this.shoveLockMs = 0;
     this.wasDashing = false;
   }
 
@@ -534,9 +620,53 @@ export class Player implements Hittable {
     return this.moves.current;
   }
 
-  /** O golpe em andamento acertou um alvo (libera o cancelamento da recovery por esquiva, DOD-06). */
+  /**
+   * O golpe em andamento acertou um alvo (libera o cancelamento da recovery por esquiva, DOD-06). Chamado pela cena
+   * dentro do passo de física: a voadora, que tem `bounce`, termina o `active` agora (VOA-04, VOA-09) e pede o recuo e
+   * a subida; aqui só se grava estado (a fase, a velocidade vertical e o pedido), o `update` seguinte fecha a hitbox e
+   * aplica o recuo. O hitstop do próprio golpe segura o `update`, então a velocidade já fica gravada aqui (VOA-06).
+   */
   hitLanded(): void {
     this.moves.hitLanded();
+    const bounce = this.moves.def?.bounce;
+    if (!bounce || this.moves.phase !== 'active') return;
+    this.pendingMoveEvents.push(...this.moves.endActive());
+    this.move = { ...this.move, vy: bounce.vy, jumping: false };
+    this.pendingBounce = { dir: this.facing === 1 ? -1 : 1, backPx: bounce.backPx, ms: bounce.ms, vy: bounce.vy };
+  }
+
+  /**
+   * Empurrão de um inimigo (RDG-19..21), na direção `dir` do deslocamento (para longe dele). Chamado dentro do passo de
+   * física (o `receiveHit` do inimigo): só grava o pedido, que o `update` seguinte aplica.
+   */
+  shoved(dir: 1 | -1): void {
+    this.pendingShove = dir;
+  }
+
+  /**
+   * Aplica o que o passo de física pediu (`hitLanded`, `shoved`). Devolve a velocidade vertical do quique, a pôr depois
+   * do `stepMovement`, ou `null` sem quique. O empurrão cancela o golpe e o objeto em curso, desloca o jogador 48 px
+   * em 150 ms e trava o input por 300 ms.
+   */
+  private applyPending(): number | null {
+    if (this.pendingMoveEvents.length > 0) this.onMove(this.pendingMoveEvents.splice(0));
+    let bounceVy: number | null = null;
+    const bounce = this.pendingBounce;
+    if (bounce) {
+      this.pendingBounce = null;
+      this.push = { dir: bounce.dir, remainingPx: bounce.backPx, totalPx: bounce.backPx, ms: bounce.ms };
+      bounceVy = bounce.vy;
+    }
+    const shove = this.pendingShove;
+    if (shove !== null) {
+      this.pendingShove = null;
+      this.onMove(this.moves.cancel());
+      this.heavyHoldMs = -1;
+      this.onPropSwing(this.propSwing.cancel());
+      this.push = { dir: shove, remainingPx: READING.shovePx, totalPx: READING.shovePx, ms: READING.shoveMs };
+      this.shoveLockMs = READING.shoveLockMs;
+    }
+    return bounceVy;
   }
 
   /** CAST-09: segurando objeto ou em hitstun (atordoado) impedem conjurar. */
@@ -546,7 +676,8 @@ export class Player implements Hittable {
       this.health.staggered ||
       this.structure.broken ||
       this.guard.state !== 'none' ||
-      this.dodge.active
+      this.dodge.active ||
+      this.duck.active
     );
   }
 
@@ -565,9 +696,29 @@ export class Player implements Hittable {
     return { cur: Math.round(this.structure.cur), max: this.structure.max, broken: this.structure.broken };
   }
 
-  /** Esquiva para o snapshot (`player.dodge`). */
+  /** Recarga de `Q`: o maior dos relógios da esquiva e do abaixar, que dividem os 450 ms (DEF-15). */
+  private get evadeCooldownMs(): number {
+    return Math.max(this.dodge.cooldownMs, this.duck.cooldownMs);
+  }
+
+  /** Esquiva para o snapshot (`player.dodge`); `cooldownMs` é a recarga comum com o abaixar (DEF-15). */
   get dodgeView(): { active: boolean; invulnerable: boolean; cooldownMs: number } {
-    return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.dodge.cooldownMs) };
+    return { active: this.dodge.active, invulnerable: this.dodge.invulnerable, cooldownMs: Math.round(this.evadeCooldownMs) };
+  }
+
+  /** Invulnerável depois de um golpe cheio (PST-15), para o snapshot (`player.invulnerable`). */
+  get invulnerable(): boolean {
+    return this.health.invulnerable;
+  }
+
+  /** Abaixar para o snapshot (`player.duck`, DEF-07). */
+  get duckView(): { active: boolean } {
+    return { active: this.duck.active };
+  }
+
+  /** Janela de Contra para o snapshot (`player.counter`, CNT-01..04): `remainingMs` é tempo de jogo, arredondado. */
+  get counterView(): { open: boolean; kind: CounterKind | null; remainingMs: number } {
+    return { open: this.counter.isOpen, kind: this.counter.kind, remainingMs: Math.round(this.counter.remainingMs) };
   }
 
   /** Finalizador (FIN-01): vira para o alvo e mostra a pose de golpe por um instante. */
@@ -644,6 +795,15 @@ export class Player implements Hittable {
       v.anims.stop();
       v.setFrame(`dodge-${DODGE_ELAPSED_HALF(this.dodge.cooldownMs)}`);
       this.fx.afterimage(v);
+      return;
+    }
+    if (this.duck.active && !this.health.staggered && !this.health.dead) {
+      // Abaixar (DEF-09): corpo agachado parado enquanto durar.
+      const v = this.view;
+      this.placeView();
+      v.setScale(this.facing, 1);
+      v.anims.stop();
+      v.setFrame('duck');
       return;
     }
     if (this.guard.state !== 'none' && !this.health.staggered && !this.health.dead && !this.moves.isMoving) {
@@ -773,13 +933,22 @@ export class Player implements Hittable {
     }
   }
 
-  /** Aperto de golpe, soltura do carregado e relógio do grafo (MOV-02..09, MOV-13, MOV-16..18, SPC-01). */
-  private updateStrikes(dtMs: number, input: InputSnapshot, onGround: boolean, locked: boolean): void {
+  /**
+   * Aperto de golpe, soltura do carregado e relógio do grafo (MOV-02..09, MOV-13, MOV-16..18, SPC-01). `locked` =
+   * atordoado ou conjurando; `evading` = esquiva ou abaixar ativos, que também travam o golpe mas deixam o aperto do
+   * Contra guardado (CNT-07).
+   */
+  private updateStrikes(dtMs: number, input: InputSnapshot, onGround: boolean, lockedByState: boolean, evading: boolean): void {
     const forward = this.facing === 1 ? input.right : input.left;
     this.motion.sample(this.clockMs, { down: input.down, forward });
     const ctx: MoveContext = { grounded: onGround, down: input.down, up: input.upHeld, forward };
+    const locked = lockedByState || evading;
     if (locked) this.heavyHoldMs = -1;
-    if (!locked && this.held === null) {
+    const counter = this.takeCounter(input, onGround, lockedByState, evading);
+    if (counter) {
+      this.heavyHoldMs = -1;
+      this.onMove(this.moves.startCounter(counter));
+    } else if (!locked && this.held === null) {
       if (input.lightPressed && !onGround && this.tryUppercutCancel()) {
         // AD-011: o pulo com `W` some e o gancho ascendente sai do chão, como se `W`+`J` fossem no mesmo frame.
         this.onMove(this.moves.press('light', { grounded: true, down: false, up: true, forward }));
@@ -803,6 +972,18 @@ export class Player implements Hittable {
     if (this.moves.phase === 'active') this.activeElapsedMs += dtMs;
   }
 
+  /**
+   * Contra (CNT-05..07, CNT-16, CNT-18, CNT-19): com a janela aberta, no chão, sem golpe em curso e de mãos vazias, `J`
+   * ou `K` inicia o Contra da janela, seja qual for a direção segurada (CNT-18). Durante a esquiva ou o abaixar o aperto
+   * fica guardado e sai no primeiro frame livre, se a janela ainda estiver aberta (CNT-07). No ar ou com objeto na mão
+   * o aperto segue o caminho normal (golpe aéreo, balanço do objeto).
+   */
+  private takeCounter(input: InputSnapshot, onGround: boolean, locked: boolean, evading: boolean): CounterKind | null {
+    if (locked || !onGround || this.held !== null || this.moves.isMoving) return null;
+    if (input.lightPressed || input.heavyPressed) this.counter.buffer();
+    return this.counter.take(!evading);
+  }
+
   /** `J` logo depois de um pulo com `W` (AD-011): volta ao chão e zera o pulo; `false` fora da janela. */
   private tryUppercutCancel(): boolean {
     const jump = this.wJump;
@@ -823,23 +1004,43 @@ export class Player implements Hittable {
         // O golpe aéreo assume a vertical: solta o pulo sustentado para a subida não sobrescrever a queda/avanço.
         if (ev.move.slam) this.move = { ...this.move, vy: PLAYER_MOVE.maxFallSpeed, jumping: false };
         else if (ev.move.travel) this.move = { ...this.move, jumping: false };
+        // VOA-01..03: o custo de postura sobe ao começar; se enche a barra, a guarda quebra e o golpe é cancelado.
+        if (ev.move.postureCost !== undefined && this.structure.add(ev.move.postureCost)) this.onGuardBreak();
       } else if (ev.type === 'hitboxOn') this.openHitbox(ev.move);
       else if (ev.type === 'hitboxOff' || ev.type === 'moveEnd') this.hitbox.close();
+      else if (ev.type === 'whiff') this.onEvent?.(`whiff:${ev.move.name}`);
     }
   }
 
   /**
+   * `Q`: esquiva ou abaixar, que dividem a recarga (DEF-15). Com `S` segurada vale sempre o abaixar, nunca a esquiva,
+   * mesmo com direção horizontal (DEF-22) e mesmo no ar, onde nada acontece (DEF-16).
    * Esquiva (DOD-01, DOD-04..06, DOD-09, DOD-10): no chão, sem golpe nem objeto em andamento, com a recarga zerada.
    * Um golpe que já acertou pode ser cancelado na recovery pela esquiva, no mesmo frame (DOD-06).
    */
   private tryDodge(input: InputSnapshot, onGround: boolean): void {
-    if (!onGround || this.dodge.cooldownMs > 0 || this.propSwing.isAttacking) return;
+    if (input.down) {
+      this.tryDuck(onGround);
+      return;
+    }
+    if (!onGround || this.evadeCooldownMs > 0 || this.propSwing.isAttacking) return;
     if (this.moves.isMoving && !this.moves.canDodgeCancel) return;
     const held = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     if (this.moves.isMoving) this.onMove(this.moves.cancel());
     this.heavyHoldMs = -1;
     const started = this.dodge.start({ grounded: onGround, busy: false, held: held as -1 | 0 | 1, facing: this.facing });
     if (started) this.onEvent?.('dodge');
+  }
+
+  /**
+   * Abaixar (DEF-07, DEF-08, DEF-15): no chão, sem golpe, objeto balançando nem recarga (a mesma da esquiva). Quem chama
+   * já conferiu atordoamento e conjuração. Sem cancelar golpe: a recovery de um golpe que acertou só a esquiva corta.
+   */
+  private tryDuck(onGround: boolean): void {
+    if (!onGround || this.evadeCooldownMs > 0 || this.moves.isMoving || this.propSwing.isAttacking) return;
+    this.heavyHoldMs = -1;
+    this.duck.start();
+    this.onEvent?.('duck');
   }
 
   /** Dash da esquiva (DOD-01): velocidade dirigida por frame, e zerada no frame seguinte ao fim (sem escorregar). */
@@ -866,6 +1067,17 @@ export class Player implements Hittable {
     if (push.remainingPx <= 0) this.blockPush = null;
   }
 
+  /** Recuo do quique (VOA-05) e empurrão (RDG-19): mesmo padrão do recuo do bloqueio, o total sai inteiro pelo `scriptedDx`. */
+  private applyPush(dtMs: number): void {
+    const push = this.push;
+    if (!push || dtMs <= 0) return;
+    const px = Math.min(push.remainingPx, (push.totalPx * dtMs) / push.ms);
+    this.scriptedDx += push.dir * px;
+    this.move = { ...this.move, vx: 0 };
+    push.remainingPx -= px;
+    if (push.remainingPx <= 0) this.push = null;
+  }
+
   /** Voadora (AIR-02): durante o `active` o corpo anda 120 px à frente e 60 px para baixo, com velocidade dirigida. */
   private applyMoveTravel(dtMs: number): void {
     const def = this.moves.def;
@@ -888,8 +1100,11 @@ export class Player implements Hittable {
       direction: { x: this.facing, y: move.strength === 'heavy' ? -0.6 : -0.15 },
       moveName: move.name,
       unblockable: move.unblockable,
+      // Contra (CNT-09, CNT-21): cambaleia até o inimigo comprometido; `knockdown` só nos golpes que derrubam (PST-04).
+      counter: move.counter,
+      knockdown: move.knockdown,
     };
-    this.hitbox.open(shape, hit, this.sprite.x, this.sprite.y, this.facing);
+    this.hitbox.open(shape, hit, this.sprite.x, this.sprite.y, this.facing, move.maxTargets);
   }
 
   /**

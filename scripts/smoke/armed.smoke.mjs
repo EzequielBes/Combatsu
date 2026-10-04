@@ -1,7 +1,7 @@
 // Inimigos armados e a ferramenta largada (ARM-02, ARM-08, ARM-12/13/17, ARM-18) com `?debug&armed=knife&round=3`.
 export default async function ({ page, baseUrl, assert }) {
   // ARM-02: sem override, a rodada 1 nunca tem inimigo armado (chance 0 antes da rodada 3).
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&seed=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&shove=0&seed=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -27,7 +27,7 @@ export default async function ({ page, baseUrl, assert }) {
   );
 
   // Da rodada 3 em diante, com `?debug&armed=knife`, todo inimigo comum nasce armado com a faca.
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&armed=knife&round=3`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&shove=0&armed=knife&round=3`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -182,6 +182,9 @@ export default async function ({ page, baseUrl, assert }) {
   const stillHeld = knifeNow();
   assert(stillHeld && stillHeld.state === 'held', `a faca deveria seguir na mão depois do golpe: ${JSON.stringify(stillHeld)}`);
   {
+    // AI-04 -> CMT-03/04: o armado comprometido não é cancelado pelo golpe da faca e bate de volta (agora em 2 golpes, DFL-01);
+    // o `K` só vale depois que o jogador sai do atordoamento e o ataque do inimigo acaba.
+    for (let i = 0; i < 100 && (snap.player.frame.startsWith('hurt') || snap.enemies.some((e) => e.ai === 'windup' || e.ai === 'attack')); i++) snap = await stepAndSnap(20);
     await page.keyboard.down('KeyK');
     snap = await stepAndSnap(20);
     await page.keyboard.up('KeyK');
@@ -196,7 +199,7 @@ export default async function ({ page, baseUrl, assert }) {
   }
 
   // RAR-03/05: com `?debug&armed=knife&rare=1`, toda ferramenta nasce rara e o nome no HUD termina em " Rara".
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&armed=knife&rare=1`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&maxAlive=1&shove=0&armed=knife&rare=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {

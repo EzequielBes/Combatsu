@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { normalize, type Vec2 } from '../core/hit';
+import { normalize, type HitReport, type Vec2 } from '../core/hit';
 import type { Modifiers } from '../core/modifiers';
 import { PropMachine, propHit, type PropDef, type PropImpact, type PropState } from '../core/props';
 import { shardsKey } from './art';
@@ -155,15 +155,18 @@ export class Prop {
     }
     if (other.kind !== 'character') return;
     const ownerId = this.machine.ownerId;
-    if (ownerId === null || !this.machine.tryHit(other.target.id)) return;
-    const hit = propHit(this.def, ownerId, this.hitDirection(st));
+    if (ownerId === null || !this.machine.wants(other.target.id)) return;
+    const hit = propHit(this.def, ownerId, this.hitDirection(st), st);
     // MOD-05: dano do objeto segurado/arremessado escalado por `forca`, lido na hora.
     hit.damage = this.modifiers.meleeDamage(hit.damage);
     // O objeto bate de verdade mesmo se o alvo ignorar o golpe (conta impacto), mas só golpe aceito tem feedback (FX-06).
-    if (other.target.receiveHit(hit)) {
+    const report: HitReport = {};
+    const accepted = other.target.receiveHit(hit, report);
+    this.machine.note(other.target.id, accepted ? 'accepted' : report.blocked ? 'blocked' : 'refused');
+    if (accepted) {
       // Posição + tamanho do sprite (girado 90° no golpe com o objeto na mão), nunca body.bounds.
       const [w, h] = st === 'swing' ? [this.sprite.height, this.sprite.width] : [this.sprite.width, this.sprite.height];
-      this.onConnect?.(hit, contactWith({ x: this.sprite.x, y: this.sprite.y, width: w, height: h }, other.target));
+      this.onConnect?.(hit, contactWith({ x: this.sprite.x, y: this.sprite.y, width: w, height: h }, other.target), other.target);
     }
     this.afterImpact(this.machine.registerImpact());
   }
