@@ -264,7 +264,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `strikeToBody` (fase 1) se já estiver em `dev`; senão a mesma conta no teste
 **Requirement**: TRL-01, TRL-02, POS-01
 **Done when**:
-- [ ] Teste: todo frame exigido tem ponto; ponto opaco (TRL-02); ponto do `-hit` dentro da hitbox +4 px (POS-01).
+- [x] Teste: todo frame exigido tem ponto; ponto opaco (TRL-02); ponto do `-hit` dentro da hitbox +4 px (POS-01).
 **Tests**: unit
 **Gate**: quick
 
