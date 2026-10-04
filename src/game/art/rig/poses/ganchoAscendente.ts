@@ -41,17 +41,27 @@ export const POSE_GUARD: Pose = build({
 export const POSE_WIND: Pose = build({
   hip: { x: 9.4, y: 23.6 },
   spine: 172,
-  armNear: { to: { x: 11.5, y: 22.5 }, bend: 1 },
+  armNear: { to: { x: 12.4, y: 22.3 }, bend: -1 },
   armFar: { to: { x: 13, y: 16.5 }, bend: -1 },
   legNear: { ankle: { x: 13.2, y: 28 }, foot: 90 },
   legFar: { ankle: { x: 5.6, y: 28 }, foot: 90 },
 });
 
+/** Meio da subida: o punho passa pela frente do corpo, cotovelo baixo, já sobre a ponta dos pés. */
+export const POSE_MID: Pose = build({
+  hip: { x: 10.2, y: 21.6 },
+  spine: 184,
+  armNear: { to: { x: 15.8, y: 14.6 }, bend: -1 },
+  armFar: { to: { x: 13, y: 15.2 }, bend: -1 },
+  legNear: { ankle: { x: 13.2, y: 27.3 }, foot: 70 },
+  legFar: { ankle: { x: 6.8, y: 27.2 }, foot: 80 },
+});
+
 /** Hit: pernas esticadas na ponta do pé, braço da frente na diagonal para cima, tronco para trás. */
 export const POSE_HIT: Pose = build({
-  hip: { x: 10.6, y: 19.8 },
-  spine: 188,
-  armNear: { to: { x: 18.6, y: 5.8 }, bend: -1 },
+  hip: { x: 9.8, y: 19.8 },
+  spine: 193,
+  armNear: { to: { x: 19.4, y: 5.8 }, bend: -1 },
   armFar: { to: { x: 12.6, y: 13.2 }, bend: -1 },
   legNear: { ankle: { x: 12.6, y: 26.2 }, foot: 55 },
   legFar: { ankle: { x: 6.6, y: 25 }, foot: 35 },
@@ -95,12 +105,12 @@ const STEPS: readonly Step[] = [
   { from: POSE_GUARD, to: POSE_WIND, t: 0 },
   { from: POSE_GUARD, to: POSE_WIND, t: 1.3 },
   { from: POSE_GUARD, to: POSE_WIND, t: 1 },
-  { from: POSE_WIND, to: POSE_HIT, t: 0.25, ease: easeInOutCubic },
-  { from: POSE_WIND, to: POSE_HIT, t: 0.45 },
-  { from: POSE_WIND, to: POSE_HIT, t: 0.65 },
-  { from: POSE_WIND, to: POSE_HIT, t: 0.82 },
-  { from: POSE_WIND, to: POSE_HIT, t: 1 },
-  { from: POSE_WIND, to: POSE_HIT, t: 1.08 },
+  { from: POSE_WIND, to: POSE_MID, t: 0.5 },
+  { from: POSE_WIND, to: POSE_MID, t: 1 },
+  { from: POSE_MID, to: POSE_HIT, t: 0.4 },
+  { from: POSE_MID, to: POSE_HIT, t: 0.75 },
+  { from: POSE_MID, to: POSE_HIT, t: 1 },
+  { from: POSE_MID, to: POSE_HIT, t: 1.07 },
   { from: POSE_HIT, to: POSE_RECOVER, t: 0.35, ease: easeInOutCubic },
   { from: POSE_HIT, to: POSE_RECOVER, t: 0.75, ease: easeInOutCubic },
   { from: POSE_HIT, to: POSE_RECOVER, t: 1 },
