@@ -71,11 +71,23 @@ function paintRelaxed({ c, hand, part, base }: Ctx): void {
   c.paint(inLocal(hand, localRect(-2, 2, 3.6, 5.2)), MAT.skin, part, { onlyOn: part, flat: base - 1 });
 }
 
+/**
+ * Palma dobrada no pulso: a mão aberta gira 90 graus em relação ao antebraço, com os dedos para o lado que aponta
+ * mais para cima na tela, e a base da palma na ponta do antebraço.
+ */
+function paintPalm(ctx: Ctx): void {
+  const { hand } = ctx;
+  const side = hand.fwd.y < 0 ? hand.fwd : { x: -hand.fwd.x, y: -hand.fwd.y };
+  const base = { x: hand.o.x + hand.up.x * 1.6 - side.x * 2.4, y: hand.o.y + hand.up.y * 1.6 - side.y * 2.4 };
+  paintOpen({ ...ctx, hand: localOf(base, side) });
+}
+
 const PAINTERS: Record<HandShape, (ctx: Ctx) => void> = {
   fist: paintFist,
   open: paintOpen,
   sign: paintSign,
   relaxed: paintRelaxed,
+  palm: paintPalm,
 };
 
 /** Pinta a mão na ponta do antebraço (do cotovelo ao pulso), na forma pedida. */

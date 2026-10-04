@@ -58,7 +58,7 @@ export interface HdAnchors {
 }
 
 /** Do pulso à ponta de cada forma de mão, ao longo do antebraço (as medidas de `hand.ts`). */
-const TIP_LENGTH: Record<HandShape, number> = { fist: 4.3, open: 6.4, sign: 8.2, relaxed: 5.1 };
+const TIP_LENGTH: Record<HandShape, number> = { fist: 4.3, open: 6.4, sign: 8.2, relaxed: 5.1, palm: 3 };
 
 /** Ponto a `len` texels além do pulso, na direção do antebraço, relativo ao pé do corpo. */
 function beyondWrist(elbow: Vec2, wrist: Vec2, len: number): Vec2 {
@@ -112,6 +112,7 @@ function draw(spec: HdFrameSpec): Drawn {
     expr: spec.expr ?? 'focus',
     hands: spec.hands,
     headOverNearArm: spec.headOverNearArm,
+    farFront: spec.farFront,
   });
   return { pixels: finish(c), joints };
 }

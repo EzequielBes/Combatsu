@@ -30,7 +30,7 @@ function palmaExplosiva(k: Kit): HdMoveSpec {
     });
   return {
     strike: 'handNear',
-    hands: { near: 'open', far: 'open' },
+    hands: { near: 'palm', far: 'palm' },
     wind: k.pose({
       hip: { x: k.cx - 3, y: k.hy + 6 },
       spine: 176,
