@@ -378,6 +378,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: spec.md EDG-03 (spec)
 - last seen: 2026-10-04T03:05:10Z
 
+### L-062 - When a fix changes a snapshot flag computed from earlier state, add a smoke case for the exact sequence that exposed it, since the fix alone leaves the old rule alive.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: impacto-amaldicoado
+- evidence: M4/M5/M6 TestScene.ts:1422 (smoke)
+- last seen: 2026-10-04T03:16:29Z
+
+### L-063 - Test the cancel branch of a phase guard in the live smoke, since removing the guard keeps the happy-path smoke green.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `adapters` · harmful: 0
+- features: impacto-amaldicoado
+- evidence: M2 Player.ts:1133 (adapters)
+- last seen: 2026-10-04T03:16:30Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
