@@ -7,7 +7,8 @@ import { READING, type MoveDef } from '../../data/moves';
 import { PLAYER_MOVE } from '../../data/tuning';
 import { tagOf, type Rect } from '../bodyTags';
 import type { InputSnapshot } from '../input';
-import { RIG_ON, currentSearch, rigHitbox } from '../art/rig/flag';
+import { HD_ON } from '../art/hd/flag';
+import { RIG_ON, RIG_UPPERCUT_HITBOX, currentSearch, rigHitbox } from '../art/rig/flag';
 import { SIZE } from '../textures';
 import type { Player } from '../Player';
 
@@ -260,7 +261,9 @@ export class PlayerStrikes {
 
   openHitbox(move: MoveDef): void {
     // Com o boneco (`?debug&rig=1`), o gancho do heroico alto bate 20 px mais alto (PRA-05); os outros golpes seguem o MOVES.
-    const shape = (RIG_ON ? rigHitbox(move.name, currentSearch()) : undefined) ?? move.hitbox;
+    // Com o corpo HD (`?hd=1`, ~60 px, a altura do heroico alto) o gancho usa a mesma hitbox mais alta do rig.
+    const hdShape = HD_ON && move.name === 'ganchoAscendente' ? RIG_UPPERCUT_HITBOX : undefined;
+    const shape = hdShape ?? (RIG_ON ? rigHitbox(move.name, currentSearch()) : undefined) ?? move.hitbox;
     if (!shape) return;
     const hit: Hit = {
       ownerId: this.p.id,

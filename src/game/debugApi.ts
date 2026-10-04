@@ -34,6 +34,8 @@ export interface GameSnapshot {
     move: string | null;
     /** Frame do sprite do jogador em cena, ex.: `guard` (CTL-09). */
     frame: string;
+    /** Textura do sprite do jogador em cena (`player-art`, `player-rig` ou `player-hd`). */
+    sheet?: string;
     /** Centro do corpo como a tela o mostra: interpolado entre os dois últimos passos de física (ITP-05). */
     view: { x: number; y: number };
     /** `parry` = janela de parry aberta (GRD-01, PAR-01). */

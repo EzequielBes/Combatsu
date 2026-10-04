@@ -9,6 +9,8 @@ export const TEX = {
   playerArt: 'player-art',
   /** Folha do heroico alto do boneco articulado (12 quadros de 40x40 do gancho ascendente), só com `?debug&rig=1` (PRA-08). */
   playerRig: 'player-rig',
+  /** Folha HD do player (1 texel = 1 px de mundo, quadros de 96x80), só com `?hd=1` (fase 1 do plano de sprites HD). */
+  playerHd: 'player-hd',
   /** Folha animada do inimigo `corcunda` (o corpo físico é um retângulo Matter, sem textura); veja `enemyTex`. */
   enemy: 'enemy',
   chair: 'chair',

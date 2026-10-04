@@ -10,6 +10,8 @@ import { playerAnimKey } from '../art';
 import { PALETTE } from '../art/palette';
 import { PLAYER_ORIGIN } from '../art/sprites/player';
 import { RIG_ON, RIG_TALL_ORIGIN, rigMoveFrame } from '../art/rig/flag';
+import { HD_ON } from '../art/hd/flag';
+import { HD_ORIGIN, hdIdleFrame, hdMoveFrame } from '../art/hd/sheet';
 import { SIZE, TEX } from '../textures';
 import type { Player } from '../Player';
 
@@ -90,6 +92,30 @@ export class PlayerAnimator {
     return this.p.clockMs - this.rigPhaseT0;
   }
 
+  /** Quadro alternativo do golpe em curso (folha, origem e nome), ou `undefined` para seguir com a folha normal. HD vence o rig. */
+  private altMoveFrame(
+    mv: { name: string; startupMs: number; activeMs: number; recoveryMs: number },
+    phase: AttackPhase,
+  ): { texture: string; origin: { x: number; y: number }; frame: string } | undefined {
+    const ms = this.rigPhaseMs(phase);
+    const hd = HD_ON ? hdMoveFrame(mv.name, phase, ms, mv) : undefined;
+    if (hd) return { texture: TEX.playerHd, origin: HD_ORIGIN, frame: hd };
+    const rig = RIG_ON ? rigMoveFrame(mv.name, phase, ms, mv) : undefined;
+    // PRA-08: os quadros do heroico alto estão na folha `player-rig` (40x40, origem no pé na coluna 12).
+    return rig ? { texture: TEX.playerRig, origin: RIG_TALL_ORIGIN, frame: rig } : undefined;
+  }
+
+  /** `?hd=1`: o idle parado no chão, sem objeto na mão, usa a folha HD (1 texel = 1 px). Devolve se aplicou. */
+  private hdIdle(anim: string): boolean {
+    if (!HD_ON || anim !== 'idle') return false;
+    const v = this.p.view;
+    this.placeView(TEX.playerHd, HD_ORIGIN);
+    v.setScale(this.p.facing, 1);
+    v.anims.stop();
+    v.setFrame(hdIdleFrame(this.p.clockMs));
+    return true;
+  }
+
   animate(grounded: boolean): void {
     // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
     if (this.p.castLock) {
@@ -151,14 +177,13 @@ export class PlayerAnimator {
       // Golpe do grafo: o frame vem da fase (wind/hit/recover), não do relógio da animação (CHR-02).
       const v = this.p.view;
       const phase = this.p.moves.phase as AttackPhase;
-      const rigFrame = RIG_ON ? rigMoveFrame(mv.name, phase, this.rigPhaseMs(phase), mv) : undefined;
-      // PRA-08: os quadros do heroico alto estão na folha `player-rig` (40x40, origem no pé na coluna 12); os outros
-      // ramos do animate voltam à folha normal pelo placeView.
-      if (rigFrame) this.placeView(TEX.playerRig, RIG_TALL_ORIGIN);
+      // Quadros alternativos do golpe: folha HD (`?hd=1`) ou, sem ela, o boneco (`?debug&rig=1`); senão a folha normal.
+      const alt = this.altMoveFrame(mv, phase);
+      if (alt) this.placeView(alt.texture, alt.origin);
       else this.placeView();
       v.setScale(this.p.facing, 1);
       v.anims.stop();
-      v.setFrame(rigFrame ?? `${mv.name}-${attackFrame(phase)}`);
+      v.setFrame(alt?.frame ?? `${mv.name}-${attackFrame(phase)}`);
       if (phase === 'active' && mv.strength === 'heavy') this.p.fx.afterimage(v);
       return;
     }
@@ -175,9 +200,10 @@ export class PlayerAnimator {
     };
     const anim = pickPlayerAnim(input);
     const v = this.p.view;
-    this.placeView();
     // Escala negativa espelha em volta da origem (o pé no centro do corpo); o flipX espelharia em volta do
     // centro do frame, que é mais largo que o corpo.
+    if (this.hdIdle(anim)) return;
+    this.placeView();
     v.setScale(this.p.facing, 1);
     if (input.attack && anim !== 'throw' && anim !== 'hurt') {
       v.anims.stop();

@@ -1,3 +1,4 @@
+import { UI_SIZE } from './art/hd/screen';
 import type Phaser from 'phaser';
 import {
   COMBO_GRADE_COLORS,
@@ -129,8 +130,8 @@ export class Hud {
       backgroundColor: css(PALETTE.k, 0.8),
       padding: { x: 6, y: 4 },
     });
-    const w2 = scene.scale.width;
-    const h2 = scene.scale.height;
+    const w2 = UI_SIZE.w;
+    const h2 = UI_SIZE.h;
     this.roundText = scene.add
       .text(w2 - MARGIN, MARGIN, '', RUN_TEXT_STYLE)
       .setOrigin(1, 0)
