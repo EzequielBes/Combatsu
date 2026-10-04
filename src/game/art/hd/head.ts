@@ -9,10 +9,11 @@ import type { HdCanvas, Normal } from './raster';
 import { boxed, domeShade, inLocal, localEllipse, localRect, localTri, type Local, type LocalShape } from './shapes';
 
 /**
- * Expressão: `focus` (idle, concentrado), `effort` (golpe: sobrancelha baixa e boca aberta) ou `pain` (levando golpe:
- * olho fechado numa linha, sobrancelha caída para fora e os dentes cerrados).
+ * Expressão: `focus` (idle, concentrado), `effort` (golpe: sobrancelha baixa e boca aberta), `pain` (levando golpe:
+ * olho fechado numa linha, sobrancelha caída para fora e os dentes cerrados) ou `shout` (o grito dos golpes mais
+ * fortes: sobrancelha pesada e a boca escancarada).
  */
-export type Expression = 'focus' | 'effort' | 'pain';
+export type Expression = 'focus' | 'effort' | 'pain' | 'shout';
 
 type Pt = readonly [number, number];
 
@@ -163,6 +164,7 @@ const FACES: Record<Expression, Face> = {
   focus: { low: 7.4, top: 9.4, shine: true, browGap: 1, browSlope: 0.12, browTone: 1 },
   effort: { low: 7.6, top: 8.6, browGap: 0, browSlope: 0.4, browTone: 0 },
   pain: { low: 7.6, top: 8.6, closed: true, browGap: 0.6, browSlope: -0.3, browTone: 0 },
+  shout: { low: 7.6, top: 8.6, browGap: 0, browSlope: 0.5, browTone: 0 },
 };
 
 /** Olho: branco atrás e íris escura na frente (o olhar vai para o alvo); fechado, só a linha da pálpebra. */
@@ -184,7 +186,9 @@ function paintMouth(c: HdCanvas, l: Local, part: number, expr: Expression): void
     c.paint(inLocal(l, localRect(2.6, 4.6, 3.4, 4.4)), MAT.skin, part, { ...on, flat: 1 });
     return;
   }
-  c.paint(inLocal(l, localRect(2.2, 3.9, 2.8, 4.8)), MAT.skin, part, { ...on, flat: 0 });
+  // No grito a boca escancara: mais alta e mais larga, com os dentes só em cima.
+  const open = expr === 'shout' ? localRect(1.8, 4.2, 1.6, 4.8) : localRect(2.2, 3.9, 2.8, 4.8);
+  c.paint(inLocal(l, open), MAT.skin, part, { ...on, flat: 0 });
   const teeth = expr === 'pain' ? localRect(2.2, 3.9, 2.8, 3.8) : localRect(2.6, 3.9, 3.8, 4.8);
   c.paint(inLocal(l, teeth), MAT.white, part, { ...on, flat: 3 });
 }
