@@ -99,7 +99,8 @@ const nose: LocalShape = (f, u) => {
 /** Cabelo sobre o crânio: a casca de cima, acima da linha do cabelo. */
 const scalp: LocalShape = (f, u) => {
   if (u < hairline(f)) return null;
-  return localEllipse(-0.2, 9.2, 7, 6.9)(f, u) ? HAIR_SHADE(f, u) : null;
+  // A luz de recorte só acende no alto da calota: mais embaixo ela vira texel solto na nuca.
+  return localEllipse(-0.2, 9.2, 7, 6.9)(f, u) ? { ...HAIR_SHADE(f, u), noRim: u < 11 } : null;
 };
 
 function paintHair(c: HdCanvas, l: Local, part: number, spikes: typeof TOP_SPIKES, bias = 0): void {
@@ -131,8 +132,8 @@ function paintFeatures(c: HdCanvas, l: Local, part: number, expr: Expression): v
   );
   // Boca: linha fechada no foco; aberta, com a fileira de dentes em cima, no esforço.
   if (effort) {
-    c.paint(inLocal(l, localRect(2.4, 4.6, 2.2, 5)), MAT.skin, part, { ...on, flat: 0 });
-    c.paint(inLocal(l, localRect(2.9, 4.6, 4, 5)), MAT.white, part, { ...on, flat: 3 });
+    c.paint(inLocal(l, localRect(2.2, 3.9, 2.8, 4.8)), MAT.skin, part, { ...on, flat: 0 });
+    c.paint(inLocal(l, localRect(2.6, 3.9, 3.8, 4.8)), MAT.white, part, { ...on, flat: 3 });
   } else {
     c.paint(inLocal(l, localRect(2.6, 4.6, 3.4, 4.4)), MAT.skin, part, { ...on, flat: 1 });
   }

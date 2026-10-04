@@ -127,15 +127,15 @@ function midPose(s: HdStage): Pose {
 function hitPose(s: HdStage, over: number): Pose {
   const cx = s.originCol;
   const g = groundOf(s);
-  const hip = cx + 2 * K;
+  const hip = cx + 2 * K + 1;
   return buildPose({
     body: BODY_HD,
     hip: { x: hip, y: g - LEGS - 1.1 * K - over },
     spine: 190,
-    neck: 8 + over * 6,
+    neck: 6 + over * 5,
     shoulderNear: -90,
-    armNear: { to: { x: cx + 7.4 * K + over, y: g - 28.6 * K - over * 3 }, bend: -1 },
-    armFar: { rel: { x: ARM * 0.3, y: -ARM * 0.2 }, bend: -1 },
+    armNear: { to: { x: cx + 9.8 * K + over * 2, y: g - 26.6 * K - over * 3 }, bend: -1 },
+    armFar: { rel: { x: ARM * 0.5, y: -ARM * 0.22 }, bend: -1 },
     legNear: { ankle: { x: hip + 3.6 * K, y: g - 1.2 * K - over * 0.6 }, foot: 60 },
     legFar: { ankle: { x: hip - 5.6 * K, y: g - 1.6 * K - over }, foot: over ? 25 : 35 },
   });
@@ -150,8 +150,8 @@ function downPose(s: HdStage): Pose {
     hip: { x: cx + 1.2 * K, y: g - LEGS + 1 },
     spine: 180,
     neck: 6,
-    armNear: { rel: { x: ARM * 0.6, y: -ARM * 0.12 }, bend: -1 },
-    armFar: { rel: { x: ARM * 0.4, y: -ARM * 0.02 }, bend: -1 },
+    armNear: { rel: { x: ARM * 0.68, y: ARM * 0.02 }, bend: -1 },
+    armFar: { rel: { x: ARM * 0.46, y: -ARM * 0.1 }, bend: -1 },
     legNear: { ankle: { x: cx + STANCE.near, y: g }, foot: 90 },
     legFar: { ankle: { x: cx + STANCE.far, y: g }, foot: 90 },
   });

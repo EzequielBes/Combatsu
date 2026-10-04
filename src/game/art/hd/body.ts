@@ -90,11 +90,11 @@ function paintHand(c: HdCanvas, wrist: Vec2, elbow: Vec2, part: number, far: boo
   const hand = localOf(wrist, { x: (wrist.x - elbow.x) / len, y: (wrist.y - elbow.y) / len });
   // Punho em tom chapado (sem sombra de almofada), com o polegar, a linha dos nós dos dedos e um realce em cima.
   const tone = far ? 2 : 3;
-  c.paint(inLocal(hand, localEllipse(0, 2.2, 2.6, 2.8)), MAT.skin, part, { flat: tone });
+  c.paint(inLocal(hand, localEllipse(0, 1.9, 2.7, 2.3)), MAT.skin, part, { flat: tone });
   if (far) return;
-  c.paint(inLocal(hand, localEllipse(1.9, 1.5, 1, 1.6)), MAT.skin, part, { flat: 3 });
-  c.paint(inLocal(hand, localRect(-2.6, 2.6, 3, 4)), MAT.skin, part, { onlyOn: part, flat: 2 });
-  const mid = toScreen(hand, 0, 2.2);
+  c.paint(inLocal(hand, localEllipse(2.2, 1.3, 1, 1.2)), MAT.skin, part, { flat: 3 });
+  c.paint(inLocal(hand, localRect(-2.4, 2.4, 2.5, 3.5)), MAT.skin, part, { onlyOn: part, flat: 2 });
+  const mid = toScreen(hand, 0, 1.9);
   c.paint(ellipse({ x: mid.x + 0.6, y: mid.y - 1.2 }, 1.3, 0.8), MAT.skin, part, { onlyOn: part, flat: 4 });
 }
 
@@ -174,6 +174,13 @@ export function paintBody(c: HdCanvas, pose: Pose, opts: BodyOpts): Joints {
   paintLeg(c, j, wa.footNear, 'Near', 3);
   c.paint(limb(toScreen(spine, 0, len), toScreen(localOf(j.neck, neckUp), 0.4, 3), NECK), MAT.skin, 4, { bias: -1 });
   paintTorso(c, spine, 5, len);
+  // Sombra projetada do braço de perto no paletó: o braço deslocado para trás e para baixo, só sobre o tronco.
+  const cast = (p: Vec2): Vec2 => ({ x: p.x - 1.6, y: p.y + 1.2 });
+  for (const [a, b, prof] of [
+    [j.shoulderNear, j.elbowNear, UPPER_ARM],
+    [j.elbowNear, j.wristNear, FOREARM],
+  ] as const)
+    c.paint(limb(cast(a), cast(b), prof), MAT.jacket, 5, { onlyOn: 5, flat: 1 });
   const head = (): void => paintHead(c, localOf(j.neck, neckUp), headPart, opts.expr);
   const arm = (): void => paintArm(c, j, 'Near', armPart);
   if (opts.headOverNearArm) {
