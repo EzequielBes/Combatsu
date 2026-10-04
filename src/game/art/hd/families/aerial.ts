@@ -52,6 +52,7 @@ function socoAereo(k: Kit): HdMoveSpec {
     hit: hit(0),
     over: hit(1),
     recover: airborne(k, 164),
+    back: airborne(k, 164),
   };
 }
 
@@ -89,6 +90,7 @@ function voadora(k: Kit): HdMoveSpec {
     over: hit(1),
     down: air(-1, 34, 184, [10, 13, 100], 0.4),
     recover: airborne(k, 176),
+    back: airborne(k, 176),
   };
 }
 
@@ -123,6 +125,7 @@ function pisao(k: Kit): HdMoveSpec {
     hit: hit(0),
     over: hit(1),
     recover: airborne(k, 166, 3),
+    back: airborne(k, 166, 3),
   };
 }
 
