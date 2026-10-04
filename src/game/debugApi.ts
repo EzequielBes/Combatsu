@@ -79,6 +79,8 @@ export interface GameSnapshot {
     ragdollVisible: boolean | null;
     /** Chaves de textura das 6 partes do ragdoll; `null` fora de ragdoll (EVR-06). */
     ragdollTextures: string[] | null;
+    /** Deslizamento do golpe forte em curso (RCT-06); `null` fora dele. */
+    slide: { remainingPx: number } | null;
     /** Frame do marcador de telegrafo visível, lido do sprite desenhado; `null` com ele escondido (HGT-07, HGT-08). */
     telegraph: AttackKind | null;
     /** Comprometido: o golpe pendente sai mesmo levando golpe comum (CMT-01). */
@@ -228,6 +230,12 @@ export interface GameSnapshot {
     layers: string[];
     /** Centro da aura de conjuração enquanto visível (ITP-10); `null` sem aura. */
     aura: { x: number; y: number } | null;
+    /** Rastros de energia vivos (TRL-10). */
+    trails: { tier: 'light' | 'heavy'; widthPx: number; ageMs: number }[];
+    /** Linhas de foco do golpe decisivo (FOC-01); `null` fora dos 180 ms reais. */
+    focus: { lines: number; ageMs: number } | null;
+    /** Último impacto do golpe do jogador (IMP-16); `null` antes do primeiro. */
+    lastImpact: { tier: 'light' | 'heavy' | 'decisive'; impactFrame: boolean } | null;
     /** Vermelho (RDA-04/05/06/13, EDG-01): cores do halo e do flash, Glow só com WebGL, centro do orbe na carga. */
     red: {
       glowColor: number | null;

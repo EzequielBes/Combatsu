@@ -15,7 +15,7 @@
  * - `chuteGiratorio`: chute normal, mas os braços do impacto são espelhados (o golpe chega de costas); o tronco fica na origem.
  * - `socoBaixo`: corpo agachado (`drop` grande), punho na altura do tronco/pernas do oponente.
  * - `rasteira`: corpo quase no chão (`drop` máximo), perna varrendo bem baixo.
- * - `ganchoAscendente`: punho subindo pela frente do rosto (`armRaised`), sem `drop` negativo (cabeça fica na grade).
+ * - `ganchoAscendente`: corpo subindo na ponta do pé (`drop` -1, pernas esticadas) e braço na diagonal (`armDiagonal`), com o punho acima e à frente da cabeça, na folga do topo do frame.
  * - `chuteEmpurrao`: perna esticada ao máximo, corpo inclinado para trás (empurra, não avança).
  * - `chuteCarregado`: corpo torcido para trás no wind (`lean` bem negativo), extensão máxima no hit.
  *
@@ -29,9 +29,9 @@
  * `ganchoAscendente`).
  */
 import {
+  ARM_BACK,
   ARM_COCK,
   ARM_GUARD,
-  ARM_UP,
   HEAD_FOCUS,
   LEGS_WIDE,
   LEG_SUPPORT,
@@ -39,6 +39,7 @@ import {
   armStraight,
   cropPart,
   far,
+  legKick,
   legStraight,
   mirror,
   pose,
@@ -67,34 +68,6 @@ function armPalm(len: number): string[] {
   return armStraight(len).map((row, y) => (y === 1 || y === 2 ? row.slice(0, len - 3) + 'A' + row.slice(len - 2) : row));
 }
 
-/**
- * Perna esticada subindo na diagonal (chute alto): sai do quadril, embaixo à esquerda, e termina no pé, `rise`
- * linhas acima, com a mesma coxa grossa, canela fina e sapato do `legStraight`. `len` = colunas do quadril até o
- * contorno da ponta do pé, inclusive; a ponta fica nas 5 primeiras linhas da parte.
- */
-function legRaised(len: number, rise: number): string[] {
-  const leg = len - 6;
-  const thigh = Math.ceil(leg / 2);
-  const cells = Array.from({ length: rise + 5 }, () => Array<string>(len).fill('.'));
-  for (let x = 1; x <= leg; x++) {
-    const top = 1 + Math.round(rise * (1 - (x - 1) / (leg - 1)));
-    if (x <= thigh) {
-      cells[top][x] = 's';
-      cells[top + 1][x] = x === thigh ? 'o' : 'N';
-      cells[top + 2][x] = 'n';
-    } else {
-      cells[top][x] = 'N';
-      cells[top + 1][x] = 'n';
-    }
-  }
-  for (let y = 1; y <= 3; y++) cells[y].splice(leg + 2, 3, 'K', 'K', 's');
-  const filled = cells.map((row) => row.map((c) => c !== '.'));
-  const near = (x: number, y: number): boolean => filled[y]?.[x] === true;
-  return cells.map((row, y) =>
-    row.map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c)).join(''),
-  );
-}
-
 /* Joelho dobrado subindo e avançando (joelhada, chambers de chute e preparo do pisão): `LEG_CHAMBER` de `player.ts`. */
 const LEG_KNEE_UP: Grid = LEG_CHAMBER;
 
@@ -108,9 +81,46 @@ function legDown(len: number): string[] {
   return rows;
 }
 
-/** Braço erguido na vertical (gancho ascendente): o `ARM_UP` esticado até `len` linhas, com a manga no meio. */
-function armRaised(len: number): string[] {
-  return [...ARM_UP.slice(0, 3), ...Array<string>(len - 6).fill('kNnk'), ...ARM_UP.slice(3)];
+/**
+ * Braço esticado na diagonal para cima e à frente (gancho ascendente e contra-gancho): sai do ombro, embaixo à
+ * esquerda, e termina no punho 3x3, `rise` linhas acima e `run` colunas à direita. Manga com luz à esquerda
+ * (`s`, `N`, `n`), punho de manga claro (`s`) antes da mão e contorno `k` em volta.
+ * A parte tem `run + 4` colunas e `rise + 3` linhas; o centro do punho fica na coluna `run + 1`, linha 2.
+ */
+function armDiagonal(rise: number, run: number): string[] {
+  const w = run + 4;
+  const h = rise + 3;
+  const cells = Array.from({ length: h }, () => Array<string>(w).fill('.'));
+  const fist = [
+    'ppp',
+    'ppP',
+    'pPP',
+  ];
+  fist.forEach((row, dy) => [...row].forEach((c, dx) => (cells[1 + dy][run + dx] = c)));
+  const last = h - 2; // linha do ombro
+  for (let y = 4; y <= last; y++) {
+    const cx = run + 1 - Math.round((run * (y - 4)) / (last - 4));
+    if (y === 4) {
+      for (let x = cx - 1; x <= cx + 1; x++) cells[y][x] = 's';
+      continue;
+    }
+    cells[y][cx - 1] = y % 4 === 0 ? 'o' : 's';
+    cells[y][cx] = 'N';
+    cells[y][cx + 1] = 'n';
+  }
+  const filled = cells.map((row) => row.map((c) => c !== '.'));
+  const near = (x: number, y: number): boolean => filled[y]?.[x] === true;
+  return cells.map((row, y) =>
+    row.map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c)).join(''),
+  );
+}
+
+/** Braço do gancho ascendente no hit: punho a 8 colunas e 13 linhas do ombro, acima e à frente da cabeça. */
+const UPPERCUT_ARM = armDiagonal(13, 8);
+
+/** Estica as pernas na vertical (corpo na ponta do pé): repete `extra` vezes a linha 1 da parte, a do quadril. */
+function stretchLegs(legs: Grid, extra: number): string[] {
+  return [legs[0], ...Array<string>(extra).fill(legs[1]), ...legs.slice(1)];
 }
 
 /** Pernas dobradas no ar (golpes aéreos): réplica local do `LEGS_TUCK` de `player.ts` (não exportado ali),
@@ -120,7 +130,7 @@ const LEGS_AIR: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.ksNNk', '....kk
 /** Agachado fundo (abaixar e preparo do contragancho): réplica local do `LEGS_CROUCH` de `player.ts` (não exportado ali),
  * joelhos para fora e pés afastados, 4 linhas. */
 const LEGS_SQUAT: Grid = ['...knNNNNNk', '.kKnskkknNk', 'kKKKk...kKsKk', 'kkkkk...kkkkk'];
-/** Linha onde o `LEGS_SQUAT` fica para os pés tocarem a última linha da grade (24). */
+/** Linha onde o `LEGS_SQUAT` fica para os pés tocarem a última linha do desenho (24; o frame final tem 6 linhas de folga em cima). */
 const Y_SQUAT = 20;
 
 // ---------------------------------------------------------------- golpes do chão (T8)
@@ -198,6 +208,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   // Chute frontal (perna da frente), igual ao `kick` anterior: mesmo chute do grafo novo.
   'chuteFrontal-wind': pose({
     lean: -1,
+    tilt: 1,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 7, 11],
     far: [far(ARM_GUARD), 3, 11],
@@ -207,17 +218,19 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     ],
   }),
   'chuteFrontal-hit': pose({
-    lean: -2,
+    lean: -1,
+    tilt: 2,
     head: HEAD_FOCUS,
-    near: [ARM_GUARD, 5, 11],
+    near: [ARM_GUARD, 4, 11],
     far: [far(ARM_GUARD), 0, 11],
     legs: [
-      [LEG_SUPPORT, 3, 17],
-      [legStraight(20), 9, 14],
+      [LEG_SUPPORT, 5, 17],
+      [legKick(20, 3), 9, 12],
     ],
   }),
   'chuteFrontal-recover': pose({
     lean: -1,
+    tilt: 1,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 7, 11],
     far: [far(ARM_GUARD), 3, 11],
@@ -230,6 +243,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   // Chute alto (perna da frente): a mesma mecânica do chute frontal, mas a perna sobe até a cabeça.
   'chuteAlto-wind': pose({
     lean: -1,
+    tilt: 1,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 7, 10],
     far: [far(ARM_GUARD), 3, 10],
@@ -240,16 +254,18 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   }),
   'chuteAlto-hit': pose({
     lean: -1,
+    tilt: 2,
     head: HEAD_FOCUS,
-    near: [ARM_GUARD, 5, 10],
+    near: [ARM_GUARD, 4, 10],
     far: [far(ARM_GUARD), 0, 10],
     legs: [
-      [LEG_SUPPORT, 3, 17],
-      [legRaised(21, 12), 9, 2],
+      [LEG_SUPPORT, 4, 17],
+      [legKick(21, 12), 9, 2],
     ],
   }),
   'chuteAlto-recover': pose({
     lean: -1,
+    tilt: 1,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 7, 10],
     far: [far(ARM_GUARD), 3, 10],
@@ -394,15 +410,16 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   }),
   'ganchoAscendente-hit': pose({
     lean: 1,
+    drop: -1,
     head: HEAD_FOCUS,
-    near: [armRaised(11), 13, 1],
-    far: [far(ARM_GUARD), 8, 11],
-    legs: [[LEGS_WIDE, 1, Y_LEGS]],
+    near: [UPPERCUT_ARM, 10, -3],
+    far: [far(ARM_GUARD), 8, 10],
+    legs: [[stretchLegs(LEGS_WIDE, 1), 1, Y_LEGS - 1]],
   }),
   'ganchoAscendente-recover': pose({
     lean: 0,
     head: HEAD_FOCUS,
-    near: [armRaised(8), 12, 4],
+    near: [armDiagonal(8, 5), 10, 1],
     far: [far(ARM_GUARD), 8, 11],
     legs: [[LEGS_WIDE, 0, Y_LEGS]],
   }),
@@ -410,6 +427,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   // Chute empurrão (perna da frente): perna esticada ao máximo, corpo inclinado para trás (empurra).
   'chuteEmpurrao-wind': pose({
     lean: -2,
+    tilt: 1,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 7, 11],
     far: [far(ARM_GUARD), 3, 11],
@@ -419,17 +437,19 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     ],
   }),
   'chuteEmpurrao-hit': pose({
-    lean: -3,
+    lean: 0,
+    tilt: 3,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 4, 11],
-    far: [far(ARM_GUARD), 0, 11],
+    far: [far(ARM_BACK), 0, 11],
     legs: [
-      [LEG_SUPPORT, 2, 17],
-      [legStraight(22), 8, 15],
+      [LEG_SUPPORT, 4, 17],
+      [legKick(22, 2), 8, 13],
     ],
   }),
   'chuteEmpurrao-recover': pose({
     lean: -2,
+    tilt: 1,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 7, 11],
     far: [far(ARM_GUARD), 3, 11],
@@ -453,13 +473,14 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     ],
   }),
   'chuteCarregado-hit': pose({
-    lean: 3,
+    lean: 0,
+    tilt: 3,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 3, 11],
-    far: [far(ARM_GUARD), 0, 11],
+    far: [far(ARM_BACK), 0, 11],
     legs: [
-      [LEG_SUPPORT, 0, 17],
-      [legStraight(22), 8, 13],
+      [LEG_SUPPORT, 4, 17],
+      [legKick(22, 3), 8, 11],
     ],
   }),
   'chuteCarregado-recover': pose({
@@ -527,21 +548,30 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 8, 9],
     far: [far(ARM_GUARD), 3, 9],
-    legs: [[LEG_KNEE_UP, 8, 2]],
+    legs: [
+      [LEGS_AIR, 0, Y_LEGS - 2],
+      [LEG_KNEE_UP, 8, 2],
+    ],
   }),
   'pisao-hit': pose({
     lean: 1,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 8, 9],
     far: [far(ARM_GUARD), 3, 9],
-    legs: [[legDown(11), 9, 12]],
+    legs: [
+      [LEGS_AIR, 0, Y_LEGS - 3],
+      [legDown(11), 9, 12],
+    ],
   }),
   'pisao-recover': pose({
     lean: 0,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 8, 9],
     far: [far(ARM_GUARD), 3, 9],
-    legs: [[LEG_KNEE_UP, 8, 8]],
+    legs: [
+      [LEGS_AIR, 0, Y_LEGS - 2],
+      [LEG_KNEE_UP, 8, 8],
+    ],
   }),
 
   // Palma explosiva (meia-lua, braço da frente): palma aberta à frente com o brilho de golpe forte.
@@ -645,7 +675,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   }),
 
   // Contra gancho (CNT-10): sai do agachado do abaixar e sobe com o punho pela frente do rosto, o mesmo braço erguido
-  // do gancho ascendente. O tronco sobe, mas nunca acima da grade (`drop` >= 0).
+  // do gancho ascendente (`armDiagonal`), com o corpo na ponta do pé no hit.
   'contraGancho-wind': pose({
     lean: -1,
     drop: 4,
@@ -656,17 +686,17 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   }),
   'contraGancho-hit': pose({
     lean: 2,
-    drop: 1,
+    drop: -1,
     head: HEAD_FOCUS,
-    near: [armRaised(11), 13, 1],
-    far: [far(ARM_GUARD), 8, 12],
-    legs: [[LEGS_WIDE, 1, Y_LEGS]],
+    near: [UPPERCUT_ARM, 11, -3],
+    far: [far(ARM_GUARD), 9, 10],
+    legs: [[stretchLegs(LEGS_WIDE, 1), 1, Y_LEGS - 1]],
   }),
   'contraGancho-recover': pose({
     lean: 1,
     drop: 1,
     head: HEAD_FOCUS,
-    near: [armRaised(8), 12, 4],
+    near: [armDiagonal(7, 4), 11, 3],
     far: [far(ARM_GUARD), 8, 12],
     legs: [[LEGS_WIDE, 0, Y_LEGS]],
   }),

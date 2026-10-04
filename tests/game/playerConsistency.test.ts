@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
+import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_TOP_PAD, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES, WRIST_GRIP, WRIST_GRIP_AT } from '../../src/game/art/sprites/playerTech';
 
@@ -73,8 +73,8 @@ describe('compose conta pixels opacos cortados (SPF-02)', () => {
 
   it('pixels transparentes fora da grade não contam, e os opacos fora de cima, de baixo e da direita contam', () => {
     expect(composeWithStats([['.k'], -1, 0]).clipped).toBe(0);
-    expect(composeWithStats([['k'], 0, -1]).clipped).toBe(1);
-    expect(composeWithStats([['k'], 0, 24]).clipped).toBe(1);
+    expect(composeWithStats([['k'], 0, -1 - PLAYER_TOP_PAD]).clipped).toBe(1);
+    expect(composeWithStats([['k'], 0, PLAYER_FRAME_H - PLAYER_TOP_PAD]).clipped).toBe(1);
     expect(composeWithStats([['k'], 30, 0]).clipped).toBe(1);
     expect(composeWithStats([['k'], 29, 0]).clipped).toBe(0);
   });
@@ -125,7 +125,7 @@ describe('mão do pulso no tom do braço de trás (SPF-06)', () => {
   it('nenhum pixel da região WRIST_GRIP no vermelho-charge usa a pele clara p', () => {
     const rows = frame('vermelho-charge');
     const region = WRIST_GRIP.map((_, dy) =>
-      rows[WRIST_GRIP_AT.y + dy].slice(FRAME_PAD + WRIST_GRIP_AT.x, FRAME_PAD + WRIST_GRIP_AT.x + WRIST_GRIP[0].length),
+      rows[PLAYER_TOP_PAD + WRIST_GRIP_AT.y + dy].slice(FRAME_PAD + WRIST_GRIP_AT.x, FRAME_PAD + WRIST_GRIP_AT.x + WRIST_GRIP[0].length),
     );
     expect(region.join('')).not.toContain('p');
     // A região tem a mão de verdade (não está vazia): pelo menos um pixel de pele da mão de trás (P).

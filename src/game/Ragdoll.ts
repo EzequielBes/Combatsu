@@ -103,13 +103,6 @@ export class Ragdoll {
     return this.parts.map((p) => p.texture.key);
   }
 
-  flash(): void {
-    for (const p of this.parts) p.setTintFill(PALETTE.w);
-    this.scene.time.delayedCall(60, () => {
-      for (const p of this.parts) if (p.active) p.clearTint();
-    });
-  }
-
   /** Fumaça/energia amaldiçoada + fade. */
   dissolve(durationMs: number): void {
     // Preenchimento (não multiplicação): o corpo vira silhueta roxa da paleta enquanto some (ART-01).

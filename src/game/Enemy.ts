@@ -12,6 +12,9 @@ import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structur
 import type { EnemyBase } from '../core/difficulty';
 import type { ToolKey } from '../core/loot';
 import { SpawnGrace } from '../core/spawnGrace';
+import { Slide } from '../core/slide';
+import type { ImpactTier } from '../core/impactTier';
+import { SLIDE_FEEL } from '../data/feel';
 import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE, type MoveDef } from '../data/moves';
 import type { ParryInfo } from '../core/defense';
 import { normalize, type Hit, type HitReport, type Vec2 } from '../core/hit';
@@ -26,8 +29,8 @@ import { BodyRenderPos, PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from '
 import { Ragdoll } from './Ragdoll';
 import { SIZE, TEX, enemyTex } from './textures';
 
-/** Duração (ms) do flash branco do golpe leve. */
-const HIT_FLASH_MS = 70;
+/** Duração (ms) da reação `body` de quem foi esbarrado por um inimigo deslizando (RCT-04): soma dos 3 frames. */
+const TOUCH_REACTION_MS = 220;
 /** Duração (ms) do flash na cor do tipo no ponto de compromisso (CMT-02). */
 const COMMIT_FLASH_MS = 80;
 /** Ferramenta na mão (ARM-09): aura alternando a cada 150 ms; offset à frente do corpo. */
@@ -143,6 +146,20 @@ export class Enemy implements Hittable {
   /** O inimigo empurrou o jogador (RDG-17); `dir` é o sentido do deslocamento do jogador, para longe do inimigo. */
   onShove: ((dir: 1 | -1) => void) | null = null;
   private guardTinted = false;
+  /** Deslizamento do golpe forte/decisivo (RCT-01, RCT-02); distinto do empurrão scriptado `slide` (SPC-02). */
+  private readonly hitSlide = new Slide();
+  private hitSlideDir: 1 | -1 = 1;
+  private slideResidueMs = 0;
+  /** Quem já foi esbarrado neste deslizamento (RCT-04: uma vez por inimigo). */
+  private readonly slideTouched = new Set<Enemy>();
+  /** Tempo (ms de jogo) que falta da reação `body` por esbarrão (RCT-04). */
+  private touchMs = 0;
+  /** A cena responde se a caixa toca o terreno (RCT-05: o deslizamento para na parede). */
+  isWall: ((box: { min: Vec2; max: Vec2 }) => boolean) | null = null;
+  /** A cena devolve os inimigos comuns de pé tocados por este corpo (RCT-04). */
+  slideTouch: ((self: Enemy) => Enemy[]) | null = null;
+  /** Resíduo nos pés a cada 40 ms de jogo (RCT-03); a cena liga ao `CursedFx.residue`. */
+  onSlideResidue: ((at: Vec2) => void) | null = null;
   /** Empurrão scriptado em curso (SPC-02, MOV-*): velocidade x por step e steps que faltam. */
   private slide: { vxStep: number; stepsLeft: number; friction: Map<MatterJS.BodyType, { f: number; fs: number }> } | null =
     null;
@@ -313,6 +330,11 @@ export class Enemy implements Hittable {
   /** Ragdoll existe e está visível; `null` fora de ragdoll (debug, HRX-05). */
   get ragdollVisible(): boolean | null {
     return this.ragdoll ? this.ragdoll.parts[0].visible : null;
+  }
+
+  /** Corpos das partes do ragdoll; `null` fora de ragdoll (rachadura da queda, IMP-15). */
+  get ragdollBodies(): MatterJS.BodyType[] | null {
+    return this.ragdoll ? this.ragdoll.bodies : null;
   }
 
   /** Chaves de textura das partes do ragdoll; `null` fora de ragdoll (debug, EVR-06). */
@@ -515,7 +537,6 @@ export class Enemy implements Hittable {
       if (info.deflect) this.brain.forceStagger(COUNTER.deflectStaggerMs);
     }
     if (this.structure.add(STRUCTURE.enemy.parryGain)) this.onBreak();
-    this.flashWhite();
     this.updateBar();
   }
 
@@ -650,6 +671,8 @@ export class Enemy implements Hittable {
     if (this.pendingRagdollReveal) this.revealRagdoll();
     this.handle(this.brain.update(dtMs));
     if (this._removed) return;
+    this.stepHitSlide(dtMs);
+    this.touchMs = Math.max(0, this.touchMs - dtMs);
     // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto,
     // recém-nascido, aparado (PAR-10) ou quebrado (STR-05) deixam a IA parada (AI-04, WAVE-09).
     const canAct =
@@ -765,6 +788,62 @@ export class Enemy implements Hittable {
     this.attack.open(step.hitbox!, hit, this.body.position.x, this.body.position.y, this.facing);
   }
 
+  /**
+   * Começa o deslizamento do inimigo que ficou de pé depois de um golpe `heavy` ou `decisive` (RCT-01, RCT-02).
+   * Derrubado, morto ou comprometido (o golpe foi absorvido) não desliza; `dir` é o lado para onde ele vai.
+   */
+  slideBy(tier: ImpactTier, dir: 1 | -1): void {
+    if (tier === 'light' || this.ragdoll || this.brain.isDead || this.ai.committed) return;
+    this.hitSlide.start(tier, dir);
+    this.hitSlideDir = dir;
+    this.slideResidueMs = 0;
+    this.slideTouched.clear();
+  }
+
+  /** Deslizamento em curso para o snapshot (RCT-06); `null` fora dele. */
+  get slideView(): { remainingPx: number } | null {
+    const remaining = this.hitSlide.remainingPx;
+    return remaining === null ? null : { remainingPx: Math.round(remaining * 10) / 10 };
+  }
+
+  /** Esbarrão de outro inimigo deslizando (RCT-04): toca `body` sem perder vida nem postura. */
+  touched(): void {
+    if (this._removed || this.ragdoll || this.brain.isDead || this.brain.state !== 'idle') return;
+    this.touchMs = TOUCH_REACTION_MS;
+    this.reactionKey = null;
+    this.onEvent?.(`slideTouch:${this.id}`);
+  }
+
+  /** Um passo do deslizamento (tempo de jogo): anda, deixa resíduo, esbarra e para na parede (RCT-03..05). */
+  private stepHitSlide(dtMs: number): void {
+    if (this.hitSlide.remainingPx === null) return;
+    if (this.ragdoll || this.brain.isDead) {
+      this.hitSlide.start('light', 1);
+      return;
+    }
+    const dir = this.hitSlideDir;
+    const b = this.body.bounds;
+    const blocked =
+      this.isWall?.({
+        min: { x: dir > 0 ? b.max.x : b.min.x - 2, y: b.min.y + 2 },
+        max: { x: dir > 0 ? b.max.x + 2 : b.min.x, y: b.max.y - 2 },
+      }) ?? false;
+    const dx = this.hitSlide.update(dtMs, blocked);
+    // O deslizamento manda no x: anula o impulso da reação para o deslocamento ser exatamente o pedido.
+    this.scene.matter.body.setPosition(this.body, { x: this.body.position.x + dx, y: this.body.position.y });
+    this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
+    this.slideResidueMs += dtMs;
+    while (this.slideResidueMs >= SLIDE_FEEL.residueEveryMs) {
+      this.slideResidueMs -= SLIDE_FEEL.residueEveryMs;
+      this.onSlideResidue?.({ x: this.body.position.x, y: this.body.position.y + SIZE.enemy.h / 2 });
+    }
+    for (const other of this.slideTouch?.(this) ?? []) {
+      if (this.slideTouched.has(other)) continue;
+      this.slideTouched.add(other);
+      other.touched();
+    }
+  }
+
   private animate(): void {
     const vxPerS = this.body.velocity.x / PX_PER_S_TO_STEP;
     const stunned = this.suppressedMs > 0 || this.structure.broken;
@@ -775,7 +854,8 @@ export class Enemy implements Hittable {
       moving: Math.abs(vxPerS) > RUN_THRESHOLD,
       reaction: this.reaction,
     });
-    const anim = stunned && picked !== 'getup' ? 'hurt' : picked;
+    const touching = this.touchMs > 0 && this.brain.state === 'idle' && !stunned && (picked === 'idle' || picked === 'walk');
+    const anim = touching ? 'hurt-body' : stunned && picked !== 'getup' ? 'hurt' : picked;
     const draw = this.drawPos.get();
     this.view.setPosition(draw.x, draw.y + SIZE.enemy.h / 2);
     // Escala negativa espelha em volta da origem (o pé no centro do corpo), não do centro do frame largo.
@@ -814,7 +894,6 @@ export class Enemy implements Hittable {
       if (ev.type === 'hitReaction') this.playHitReaction(ev.hit);
       else if (ev.type === 'armored') this.onArmored();
       else if (ev.type === 'stagger') this.playStagger(ev.hit);
-      else if (ev.type === 'hurtWhileDown') this.ragdoll?.flash();
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
       else if (ev.type === 'ragdoll') this.enterRagdoll(ev.hit);
       else if (ev.type === 'getUp') this.getUp();
@@ -824,7 +903,7 @@ export class Enemy implements Hittable {
   }
 
   /**
-   * Golpe leve: animação `hurt-<reaction>` do frame 0, mesmo se já estava em outra reação (HRX-02), + flash branco,
+   * Golpe leve: animação `hurt-<reaction>` do frame 0, mesmo se já estava em outra reação (HRX-02), (sem pisca branco, RCT-07),
    * sem ragdoll. Quebrado ou aparado continua mostrando `hurt` (HRX-04, decidido no `animate`).
    */
   private playHitReaction(hit: Hit): void {
@@ -844,15 +923,11 @@ export class Enemy implements Hittable {
     }
     const d = normalize(hit.direction);
     this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
-    this.view.setTintFill(PALETTE.w);
-    this.scene.time.delayedCall(HIT_FLASH_MS, () => {
-      if (this.view.active) this.view.clearTint();
-    });
   }
 
-  /** Golpe absorvido por quem está comprometido (CMT-04, CMT-06): só o flash branco e o evento; a IA segue. */
+  /** Golpe absorvido por quem está comprometido (CMT-04, CMT-06, RCT-09): faísca de guarda e o evento; a IA segue. */
   private onArmored(): void {
-    this.flashWhite();
+    this.onBlock?.({ x: this.body.position.x + this.facing * 10, y: this.body.position.y - 4 });
     this.onEvent?.(`armored:${this.id}`);
   }
 
@@ -867,16 +942,7 @@ export class Enemy implements Hittable {
     this.view.setFrame('impact');
     const d = normalize(hit.direction);
     this.scene.matter.body.setVelocity(this.body, { x: d.x * hit.force, y: -1 });
-    this.flashWhite();
     this.onEvent?.(`stagger:${this.id}`);
-  }
-
-  /** Flash branco curto do corpo (golpe recebido ou aparado); o relógio da cena para no hitstop. */
-  private flashWhite(): void {
-    this.view.setTintFill(PALETTE.w);
-    this.scene.time.delayedCall(HIT_FLASH_MS, () => {
-      if (this.view.active) this.view.clearTint();
-    });
   }
 
   private enterRagdoll(hit: Hit): void {
