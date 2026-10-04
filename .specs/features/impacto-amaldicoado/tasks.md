@@ -145,8 +145,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `StepIn` como modelo
 **Requirement**: RCT-01, RCT-02, RCT-05, RCT-06
 **Done when**:
-- [ ] `heavy` = 24 px em 180 ms; `decisive` = 48 px em 240 ms; `light` não desliza.
-- [ ] `remainingPx` vira `null` no fim e no `blocked`.
+- [x] `heavy` = 24 px em 180 ms; `decisive` = 48 px em 240 ms; `light` não desliza.
+- [x] `remainingPx` vira `null` no fim e no `blocked`.
 **Tests**: unit
 **Gate**: quick
 
