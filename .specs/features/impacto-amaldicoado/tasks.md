@@ -234,8 +234,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `legStraight`, `legRaised`, `LEG_SUPPORT`
 **Requirement**: POS-02, POS-03, POS-06
 **Done when**:
-- [ ] Testes POS-06 nos três frames citados e POS-02/POS-03 nos cinco golpes.
-- [ ] Prancha conferida.
+- [x] Testes POS-06 nos três frames citados e POS-02/POS-03 nos cinco golpes.
+- [x] Prancha conferida.
 **Tests**: unit
 **Gate**: quick
 
