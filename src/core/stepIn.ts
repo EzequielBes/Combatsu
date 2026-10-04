@@ -20,6 +20,12 @@ export class StepIn {
     this.done = startupMs <= 0;
   }
 
+  /** `true` enquanto falta passo a dar: o adaptador roda `update` até aqui virar `false`, mesmo no quadro em que o
+   * golpe já saiu do startup (senão o último pedaço se perde, L-059). */
+  get running(): boolean {
+    return !this.done;
+  }
+
   /** Avança o tempo e devolve os px (a favor do facing) deste passo; 0 depois do startup ou do contato. */
   update(dtMs: number, blocked: boolean): number {
     if (this.done) return 0;
