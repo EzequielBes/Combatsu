@@ -262,8 +262,9 @@ export class Player implements Hittable {
     this.view.setOrigin(origin.x, origin.y);
   }
 
-  /** Põe o sprite visível, com a origem no pé, na posição de desenho do corpo. */
-  private placeView(): void {
+  /** Põe o sprite visível, com a origem no pé, na posição de desenho do corpo, na folha pedida (a normal por padrão). */
+  private placeView(texture: string = TEX.playerArt, origin: { x: number; y: number } = PLAYER_ORIGIN): void {
+    this.setSheet(texture, origin);
     const p = this.renderPos;
     this.view.setPosition(p.x, p.y + SIZE.player.h / 2);
   }
@@ -799,8 +800,6 @@ export class Player implements Hittable {
   }
 
   private animate(grounded: boolean): void {
-    // Todo ramo desenha da folha normal; só o gancho com o boneco (`?debug&rig=1`) troca para a do heroico alto.
-    this.setSheet(TEX.playerArt, PLAYER_ORIGIN);
     // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
     if (this.castLock) {
       const v = this.view;
@@ -860,13 +859,14 @@ export class Player implements Hittable {
     if (mv && !(this.health.staggered || this.health.dead)) {
       // Golpe do grafo: o frame vem da fase (wind/hit/recover), não do relógio da animação (CHR-02).
       const v = this.view;
-      this.placeView();
-      v.setScale(this.facing, 1);
-      v.anims.stop();
       const phase = this.moves.phase as AttackPhase;
       const rigFrame = RIG_ON ? rigMoveFrame(mv.name, phase, this.rigPhaseMs(phase), mv) : undefined;
-      // PRA-08: os quadros do heroico alto estão na folha `player-rig` (40x40, origem no pé na coluna 12).
-      if (rigFrame) this.setSheet(TEX.playerRig, RIG_TALL_ORIGIN);
+      // PRA-08: os quadros do heroico alto estão na folha `player-rig` (40x40, origem no pé na coluna 12); os outros
+      // ramos do animate voltam à folha normal pelo placeView.
+      if (rigFrame) this.placeView(TEX.playerRig, RIG_TALL_ORIGIN);
+      else this.placeView();
+      v.setScale(this.facing, 1);
+      v.anims.stop();
       v.setFrame(rigFrame ?? `${mv.name}-${attackFrame(phase)}`);
       if (phase === 'active' && mv.strength === 'heavy') this.fx.afterimage(v);
       return;

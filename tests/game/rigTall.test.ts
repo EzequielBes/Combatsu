@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ART_SCALE, PALETTE_KEYS } from '../../src/game/art/palette';
 import { HEAD_TALL_FIGHT, HEAD_TALL_IDLE } from '../../src/game/art/rig/heads';
 import { HEROICO, HEROICO_ALTO, headOf } from '../../src/game/art/rig/presets';
-import { RIG_FRAME_40, rasterize, wristTexel } from '../../src/game/art/rig/rasterize';
+import { RIG_FRAME_40, rasterize, styleOf, wristTexel } from '../../src/game/art/rig/rasterize';
 import { idleFor, uppercutFor } from '../../src/game/art/rig/poses/uppercut';
 import { TUNINGS } from '../../src/game/art/rig/poses/tunings';
 import { RIG_TALL, RIG_TALL_ORIGIN, RIG_UPPERCUT_HITBOX, rigHitbox, rigStrike, rigTallSheet } from '../../src/game/art/rig/flag';
@@ -119,14 +119,35 @@ describe('gancho ascendente do heroicoAlto no frame de 40x40 (PRA-04)', () => {
     });
   }
 
-  it('os 12 quadros da sequência são de uma peça só, sem recorte, e o pico é o hit', () => {
+  it('os 12 quadros da sequência são de uma peça só, sem recorte, com os ossos no comprimento definido, e o pico é o hit', () => {
     expect(set.sequence).toHaveLength(12);
     for (const [i, r] of set.sequence.entries()) {
       expect(r.frame, `quadro ${i}`).toHaveLength(40);
       expect(isSingleComponent(r.frame), `quadro ${i}`).toBe(true);
       expect(r.clipped, `quadro ${i}`).toBe(0);
+      for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(set.sequencePoses[i], b)), `quadro ${i} ${b.name}`).toBeLessThanOrEqual(0.5);
     }
     expect(set.sequence[7].frame).toEqual(set.frames.hit.frame);
+  });
+
+  it('nos quadros do gancho a cabeça cobre o braço de perto (decisão da spec): o olho cerrado da cabeça de luta aparece no hit', () => {
+    expect(TUNINGS[body.name]!.headOverNearArm).toBe(true);
+    const j = solve(set.hit);
+    const head = headOf(body, 'fight');
+    const hx = Math.round(j.neck.x - head.neckCol);
+    const hy = Math.round(j.neck.y - head.grid.length - (styleOf(body).neck ? 1 : 0));
+    const eyeRow = head.grid.findIndex((r) => r.includes('b'));
+    const eyeCol = head.grid[eyeRow].indexOf('b');
+    // A íris continua na cabeça carimbada e todo texel de cor da cabeça aparece inteiro (o contorno `k` interno vira
+    // linha no sel-out, por isso não entra na conta): nada passou por cima dela.
+    expect(set.frames.hit.frame[hy + eyeRow][hx + eyeCol]).toBe('b');
+    const visible = (frame: readonly string[]): number =>
+      head.grid.reduce((n, row, dy) => n + [...row].filter((ch, dx) => ch !== '.' && ch !== 'k' && frame[hy + dy]?.[hx + dx] === ch).length, 0);
+    const total = head.grid.join('').replace(/[.k]/g, '').length;
+    expect(visible(set.frames.hit.frame)).toBe(total);
+    // Com o braço por cima da cabeça, a manga e o punho cobrem parte do rosto.
+    const over = rasterize(set.hit, { frame: RIG_FRAME_40, head, headOverNearArm: false }).frame;
+    expect(visible(over)).toBeLessThan(total);
   });
 
   it('o hit toca o chão (POS-03) e os golpes usam a cabeça de luta', () => {
@@ -170,11 +191,13 @@ describe('ponto de golpe do heroicoAlto (PRA-05)', () => {
 
 describe('o punho e o rosto (PRA-06)', () => {
   const head = headOf(body, 'fight');
+  /** A cabeça sobe um texel quando o corpo tem pescoço (ver `rasterize`). */
+  const lift = styleOf(body).neck ? 1 : 0;
   /** O texel do pulso de perto cai num texel opaco da grade da cabeça carimbada nesta pose. */
   const wristOnHead = (pose: typeof set.hit): boolean => {
     const j = solve(pose);
     const hx = Math.round(j.neck.x - head.neckCol);
-    const hy = Math.round(j.neck.y - head.grid.length);
+    const hy = Math.round(j.neck.y - head.grid.length - lift);
     return isOpaque(head.grid, Math.floor(j.wristNear.x) - hx, Math.floor(j.wristNear.y) - hy);
   };
 
@@ -184,7 +207,7 @@ describe('o punho e o rosto (PRA-06)', () => {
 
   it('no hit, a linha opaca mais alta do frame é o punho (pele), acima da grade da cabeça', () => {
     const j = solve(set.hit);
-    const headTop = Math.round(j.neck.y - head.grid.length);
+    const headTop = Math.round(j.neck.y - head.grid.length - lift);
     const top = set.frames.hit.frame.findIndex((row) => /[^.]/.test(row));
     expect(top).toBeLessThan(headTop);
     expect(set.frames.hit.frame[top + 1]).toMatch(/[pPqx]/); // a linha de cima é o contorno k; logo abaixo vem a pele do punho
