@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { clampCenter } from '../core/cameraFollow';
-import { Filters } from '../core/collision';
 import { DroppedTools } from '../core/droppedTools';
 import { ComboCounter } from '../core/comboCounter';
 import { CursedEnergy } from '../core/energy';
@@ -8,7 +7,7 @@ import { FxRegistry } from '../core/fxRegistry';
 import { FxTimeline } from '../core/fxTimeline';
 import { type Hit, type Vec2 } from '../core/hit';
 import { AttackGate } from '../core/attackGate';
-import { TILE, parseLevel, tileVariant, type LevelData } from '../core/level';
+import { parseLevel, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
 import { MoveReading } from '../core/moveReading';
 import { Mastery } from '../core/mastery';
@@ -26,19 +25,17 @@ import { FULL_SHOP_CATALOG } from '../data/shop';
 import { type TechId } from '../data/techniques';
 import { DROPPED_TOOLS, ATTACK_GATE, PICKUP, RUN, WAVE } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
-import { SLOWMO_TINT_COLOR } from '../game/art/combatColors';
 import { createArt } from '../game/art';
-import { tileFrameFor } from '../game/art/tiles';
-import { tagBody, type Hittable } from '../game/bodyTags';
+import { type Hittable } from '../game/bodyTags';
 import { Boss } from '../game/Boss';
 import { Projectile } from '../game/Projectile';
-import { bindDebugToggle, isDebug, onDebugChange } from '../game/debug';
+import { bindDebugToggle, isDebug } from '../game/debug';
 import { registerDebugProbe, type DebugProbe, type GameSnapshot } from '../game/debugApi';
 import { Enemy } from '../game/Enemy';
 import { EnergyHud } from '../game/EnergyHud';
 import { Fx } from '../game/fx';
 import { FxLab } from '../game/FxLab';
-import { GAME_NAME, Hud } from '../game/Hud';
+import { Hud } from '../game/Hud';
 import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS } from '../game/physics';
@@ -54,7 +51,6 @@ import { KokusenFx } from '../game/techFx/KokusenFx';
 import { CursedFx } from '../game/CursedFx';
 import { ImpactFrame } from '../game/ImpactFrame';
 import { FocusLines } from '../game/FocusLines';
-import { TEX } from '../game/textures';
 import { debugParam, debugIntParam, NEUTRAL_INPUT, SPAWN_LIFT } from './test/params';
 import { WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, CameraRig } from './test/camera';
 import { EffectsDirector } from './test/effects';
@@ -65,13 +61,12 @@ import { Drops } from './test/drops';
 import { ShopDirector } from './test/shopDirector';
 import { DebugSnapshot } from './test/snapshot';
 import { BOSS_UPGRADE_BANNER_MS, RunDirector } from './test/runDirector';
-
-/** Alpha do tom azulado da câmera lenta (DOD-12). */
-const SLOWMO_TINT_ALPHA = 0.22;
-/** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
-const CONTROLS_MS = 8000;
+import { UiSetup } from './test/uiSetup';
+import { TerrainBuilder } from './test/terrain';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
+  readonly terrainBuilder = new TerrainBuilder(this);
+  readonly ui = new UiSetup(this);
   readonly runDirector = new RunDirector(this);
   readonly snapshot = new DebugSnapshot(this);
   readonly shopDirector = new ShopDirector(this);
@@ -152,8 +147,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   reading = new MoveReading();
   /** Foco da postura (PST-13): id do último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador. */
   focusId: number | null = null;
-  /** Tom azulado sobre a tela enquanto a câmera lenta está ativa (DOD-12), na câmera de UI. */
-  slowTint!: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super('TestScene');
@@ -165,7 +158,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   create(): void {
     // Antes de criar qualquer objeto, para a câmera de UI ignorar tudo que for mundo.
-    this.addUiCamera();
+    this.ui.addUiCamera();
     createArt(this);
     // Reinício no meio de um hitstop (R): a cena nova começa descongelada. As animações são do jogo, não da cena.
     this.effects.hitstop.reset();
@@ -199,7 +192,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.enemies = [];
     this.attackGate = new AttackGate(ATTACK_GATE);
     this.projectiles = [];
-    this.buildTerrain();
+    this.terrainBuilder.buildTerrain();
     this.combat.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
@@ -345,14 +338,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.onKey('ZERO', () => {
       if (!debugKeys() || !this.fxLab) return;
       this.fxLab.toggleTimeScale();
-      this.refreshControlsText();
+      this.ui.refreshControlsText();
     });
-    this.onKey('H', () => isDebug() && this.toggleDebugDraw());
+    this.onKey('H', () => isDebug() && this.ui.toggleDebugDraw());
     // Fora da loja, R reinicia a cena; dentro dela é reroll (SHOP-16), lido por `ShopInput` no `update`.
     this.onKey('R', () => {
       if (this.run.state !== 'shop') this.scene.restart();
     });
-    this.addHud();
+    this.ui.addHud();
     this.shopPanel = new ShopPanel(this, this.uiLayer);
     this.focusLines = new FocusLines(this, this.uiLayer, this.scale.width, this.scale.height);
   }
@@ -375,7 +368,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.effects.applyTimeScale();
     const base = realDt * (this.fxLab?.timeScale ?? 1);
     const clamped = base * this.effects.slowMo.timeScale;
-    this.slowTint.setVisible(this.effects.slowMo.active);
+    this.ui.slowTint.setVisible(this.effects.slowMo.active);
     if (this.camera.finisherZoomMs > 0) {
       this.camera.finisherZoomMs -= realDt;
       if (this.camera.finisherZoomMs <= 0) this.cameras.main.zoomTo(WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, 'Linear', true);
@@ -509,107 +502,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
   }
 
-  /**
-   * Duas câmeras (AD-003): a principal desenha o mundo com zoom e a de UI (zoom 1, sem scroll) só a `uiLayer`.
-   * Todo objeto que entra na cena depois (inimigo que renasce, partículas, hitbox, debug da física) é ignorado
-   * pela câmera de UI, a menos que entre na `uiLayer`.
-   */
-  addUiCamera(): void {
-    this.uiLayer = this.add.layer();
-    this.cameras.main.ignore(this.uiLayer);
-    const ui = this.cameras.add(0, 0, this.scale.width, this.scale.height, false, 'ui');
-    const route = (obj: Phaser.GameObjects.GameObject): void => {
-      // Um objeto nasce na lista da cena e só depois é movido para a camada: aí ele volta a ser da UI.
-      if (obj.displayList === this.uiLayer) obj.cameraFilter &= ~ui.id;
-      else ui.ignore(obj);
-    };
-    this.events.on(Phaser.Scenes.Events.ADDED_TO_SCENE, route);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.ADDED_TO_SCENE, route));
-  }
-
-  /** FXL-04/08: legenda e rótulo de velocidade do laboratório, só linhas extras quando `fxLab` existe. */
-  controlsLines(): string[] {
-    return [
-      'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
-      'J leve · K forte · U guarda/parry · Q esquiva · E pegar',
-      'E: pegar / arremessar   S+E: largar   J/X leve   K/Z forte',
-      'S+Q: abaixar   U+direção: virar na guarda   defesa certa + J: Contra',
-      'R: reiniciar   Tab: mostrar/esconder controles',
-      ...(isDebug() ? ['F1: sair do debug   H: debug da física   1/2: golpe leve/forte de teste'] : []),
-      ...(this.fxLab ? [FxLab.LEGEND, this.fxLab.speedLabel] : []),
-    ];
-  }
-
-  /** Reaplica `controlsLines()` no painel (FXL-08: o rótulo de velocidade muda ao apertar 0). */
-  refreshControlsText(): void {
-    this.hud.setControlsText(this.controlsLines().join('\n'));
-  }
-
-  addHud(): void {
-    this.hud = new Hud(this, this.uiLayer, this.controlsLines().join('\n'));
-    this.energyHud = new EnergyHud(this, this.uiLayer);
-    this.callout = new Callout(this, this.uiLayer);
-    // DOD-12: tom azulado por cima do mundo na câmera lenta, na `uiLayer` (a câmera de UI é a que o desenha).
-    this.slowTint = this.add
-      .rectangle(0, 0, this.scale.width, this.scale.height, SLOWMO_TINT_COLOR, SLOWMO_TINT_ALPHA)
-      .setOrigin(0, 0)
-      .setScrollFactor(0)
-      .setDepth(90)
-      .setVisible(false);
-    this.uiLayer.add(this.slowTint);
-    this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
-    // FXL-04: no laboratório a legenda fica sempre visível, não só os primeiros `CONTROLS_MS`.
-    this.hud.showControls(this.fxLab ? Number.MAX_SAFE_INTEGER : CONTROLS_MS);
-    // Boot em `title` (RUN-01/RHUD-05): tela com o nome do jogo até o primeiro J/Enter.
-    this.hud.setCenter([GAME_NAME, 'J / Enter para começar']);
-    // Tab alterna o painel; a captura impede o navegador de tirar o foco do jogo (HUD-03).
-    this.input.keyboard!.addCapture('TAB');
-    this.onKey('TAB', () => this.hud.toggleControls());
-    const off = onDebugChange((on) => {
-      this.refreshControlsText();
-      // Saindo do debug, o desenho da física não pode continuar ligado.
-      if (!on && this.matter.world.drawDebug) this.toggleDebugDraw();
-    });
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
-  }
-
-  toggleDebugDraw(): void {
-    const world = this.matter.world;
-    if (!world.debugGraphic) {
-      // createDebugGraphic já liga o desenho; sem isso o primeiro H desligava na hora e parecia não funcionar.
-      world.createDebugGraphic();
-      world.drawDebug = false;
-    }
-    world.drawDebug = !world.drawDebug;
-    world.debugGraphic.clear();
-  }
-
   onKey(key: string, fn: () => void): void {
     const kb = this.input.keyboard!;
     const event = `keydown-${key}`;
     kb.on(event, fn);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => kb.off(event, fn));
-  }
-
-  /** Desenho tile a tile pela variante (ENV-01); a física continua nos retângulos mesclados do parseLevel. */
-  buildTerrain(): void {
-    LEVEL_1.forEach((row, ty) => {
-      for (let tx = 0; tx < row.length; tx++) {
-        const variant = tileVariant(LEVEL_1, tx, ty);
-        if (!variant) continue;
-        this.add.image(tx * TILE + TILE / 2, ty * TILE + TILE / 2, TEX.terrain, tileFrameFor(variant, tx, ty));
-      }
-    });
-    for (const r of this.level.solids) {
-      const cx = r.x + r.width / 2;
-      const cy = r.y + r.height / 2;
-      const body = this.matter.add.rectangle(cx, cy, r.width, r.height, {
-        isStatic: true,
-        label: 'terrain',
-        collisionFilter: { ...Filters.terrain },
-      });
-      tagBody(body, { kind: 'terrain' });
-      this.terrain.push(body);
-    }
   }
 }
