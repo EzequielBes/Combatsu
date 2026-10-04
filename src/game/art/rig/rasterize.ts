@@ -134,7 +134,7 @@ type Ramp = { light: string; mid: string; dark: string };
 const NEAR_CLOTH: Ramp = { light: 's', mid: 'N', dark: 'n' };
 const FAR_CLOTH: Ramp = { light: 'N', mid: 'n', dark: 'K' };
 const LEG_NEAR: Ramp = { light: 's', mid: 'N', dark: 'n' };
-const LEG_FAR: Ramp = { light: 'n', mid: 'K', dark: 'K' };
+const LEG_FAR: Ramp = { light: 'N', mid: 'n', dark: 'K' };
 
 function tone(h: Hit, ramp: Ramp): string {
   const s = shadeOf(h);

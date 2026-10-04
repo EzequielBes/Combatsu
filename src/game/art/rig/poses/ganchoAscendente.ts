@@ -49,12 +49,14 @@ export const POSE_MID: Pose = build({
 
 /** Hit: pernas esticadas na ponta do pé, braço da frente esticado na diagonal para cima, tronco um pouco à frente. */
 export const POSE_HIT: Pose = build({
-  hip: { x: 9.6, y: 23 },
-  spine: 172,
-  armNear: { to: { x: 17, y: 6.8 }, bend: -1 },
-  armFar: { to: { x: 12.8, y: 13.6 }, bend: -1 },
-  legNear: { ankle: { x: 13, y: 26.9 }, foot: 55 },
-  legFar: { ankle: { x: 6.2, y: 26.2 }, foot: 35 },
+  hip: { x: 11, y: 23 },
+  spine: 190,
+  neck: 70,
+  shoulderNear: -90,
+  armNear: { to: { x: 17.4, y: 6.7 }, bend: -1 },
+  armFar: { to: { x: 14.2, y: 11 }, bend: -1 },
+  legNear: { ankle: { x: 14.4, y: 26.9 }, foot: 55 },
+  legFar: { ankle: { x: 7.6, y: 26.2 }, foot: 35 },
 });
 
 /** Recover: desce, braço volta. */
