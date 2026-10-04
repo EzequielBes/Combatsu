@@ -11,22 +11,22 @@ function jab(k: Kit): HdMoveSpec {
   const A = k.arm;
   const hit = (o: number) =>
     k.pose({
-      hip: { x: k.cx + 1.4 + o * 0.6, y: k.hy + 3.4 },
-      spine: 164 - o,
+      hip: { x: k.cx + 2.4 + o * 0.6, y: k.hy + 3.4 },
+      spine: 163 - o,
       neck: 12,
       shoulderNear: -90,
-      armNear: { to: k.at(27 + o * 1.5, 41), bend: -1 },
-      armFar: { rel: { x: A * 0.42, y: -A * 0.02 }, bend: -1 },
+      armNear: { to: k.at(28 + o * 1.5, 42.5), bend: -1 },
+      armFar: { rel: { x: A * 0.34, y: -A * 0.2 }, bend: -1 },
       legNear: nearFoot(k),
       legFar: farFoot(k, 1 + o * 0.5),
     });
   return {
     strike: 'handNear',
     wind: k.pose({
-      hip: { x: k.cx - 1.2, y: k.hy + 3.6 },
-      spine: 171,
+      hip: { x: k.cx - 2, y: k.hy + 3.6 },
+      spine: 172,
       neck: 8,
-      armNear: { rel: { x: A * 0.42, y: A * 0.1 }, bend: -1 },
+      armNear: { rel: { x: A * 0.36, y: A * 0.08 }, bend: -1 },
       armFar: { rel: { x: A * 0.34, y: -A * 0.1 }, bend: -1 },
       legNear: nearFoot(k),
       legFar: farFoot(k),
@@ -50,13 +50,14 @@ function direto(k: Kit): HdMoveSpec {
   const A = k.arm;
   const hit = (o: number) =>
     k.pose({
-      hip: { x: k.cx + 4.5 + o, y: k.hy + 4.2 },
-      spine: 154 - o * 2,
-      neck: 20,
-      armNear: { rel: { x: A * 0.05, y: A * 0.25 }, bend: -1 },
-      armFar: { to: k.at(32 + o * 1.5, 39), bend: -1 },
+      hip: { x: k.cx + 6.5 + o, y: k.hy + 4.6 },
+      spine: 150 - o * 2,
+      neck: 22,
+      shoulderFar: -110,
+      armNear: { rel: { x: A * 0.25, y: -A * 0.1 }, bend: -1 },
+      armFar: { to: k.at(33 + o * 1.5, 37), bend: -1 },
       legNear: nearFoot(k),
-      legFar: farFoot(k, 2.4 + o * 0.4),
+      legFar: farFoot(k, 3 + o * 0.4, 2.5),
     });
   return {
     strike: 'handFar',
@@ -90,15 +91,15 @@ function gancho(k: Kit): HdMoveSpec {
   // O braço dobrado no plano horizontal aparece encurtado de perfil (`armScale`); `o` é o overshoot: o punho cruza.
   const hit = (o: number) =>
     k.pose({
-      hip: { x: k.cx + 4.5 + o * 0.8, y: k.hy + 2.8 },
-      spine: 181 + o * 4,
-      neck: 4 - o * 2,
+      hip: { x: k.cx + 7 + o, y: k.hy + 3 },
+      spine: 178 + o * 3,
+      neck: 6,
       shoulderNear: -90,
-      armScale: 0.82 - o * 0.08,
-      armNear: { rel: { x: 12.8 - o * 4, y: -1.6 - o * 1.4 }, bend: 1 },
-      armFar: { rel: { x: A * 0.3, y: -A * 0.12 }, bend: -1 },
+      armScale: 0.78 - o * 0.06,
+      armNear: { rel: { x: 13.2 - o * 3, y: -0.6 - o * 1.5 }, bend: 1 },
+      armFar: { rel: { x: A * 0.3, y: -A * 0.16 }, bend: -1 },
       legNear: nearFoot(k),
-      legFar: farFoot(k, 2.6 + o * 0.4, 1.5),
+      legFar: farFoot(k, 2.8 + o * 0.4, 2.5),
     });
   return {
     strike: 'handNear',
@@ -123,6 +124,17 @@ function gancho(k: Kit): HdMoveSpec {
     }),
     hit: hit(0),
     over: hit(1),
+    // A volta: o braço recolhe dobrado pela frente do peito, sem passar pelo braço reto da interpolação.
+    down: k.pose({
+      hip: { x: k.cx + 2.5, y: k.hy + 4 },
+      spine: 174,
+      neck: 7,
+      shoulderNear: -40,
+      armNear: { rel: { x: A * 0.55, y: A * 0.16 }, bend: -1 },
+      armFar: { rel: { x: A * 0.32, y: -A * 0.14 }, bend: -1 },
+      legNear: nearFoot(k),
+      legFar: farFoot(k, 1.2, 1),
+    }),
     recover: k.guard(2),
   };
 }
@@ -132,14 +144,14 @@ function cotovelada(k: Kit): HdMoveSpec {
   const A = k.arm;
   const hit = (o: number) =>
     k.pose({
-      hip: { x: k.cx + 9.5 + o * 1.2, y: k.hy + 5.4 },
-      spine: 174 - o * 2,
-      neck: 4,
+      hip: { x: k.cx + 11 + o, y: k.hy + 6 },
+      spine: 160 - o * 2,
+      neck: 14,
       shoulderNear: -90,
-      armNear: { rel: { x: 0.4, y: -1.4 }, bend: -1 },
-      armFar: { rel: { x: 3.6, y: -0.6 }, bend: -1 },
+      armNear: { rel: { x: -0.5, y: -3.2 }, bend: -1 },
+      armFar: { rel: { x: 4.5, y: 1.2 }, bend: -1 },
       legNear: nearFoot(k),
-      legFar: farFoot(k, 2.5),
+      legFar: farFoot(k, 3, 4 + o),
     });
   return {
     strike: 'elbowNear',
@@ -152,8 +164,28 @@ function cotovelada(k: Kit): HdMoveSpec {
       legNear: nearFoot(k),
       legFar: farFoot(k),
     }),
+    mid: k.pose({
+      hip: { x: k.cx + 5, y: k.hy + 5 },
+      spine: 168,
+      neck: 9,
+      shoulderNear: -45,
+      armNear: { rel: { x: A * 0.2, y: 0 }, bend: -1 },
+      armFar: { rel: { x: A * 0.36, y: -A * 0.1 }, bend: -1 },
+      legNear: nearFoot(k),
+      legFar: farFoot(k, 1.5, 2),
+    }),
     hit: hit(0),
     over: hit(1),
+    down: k.pose({
+      hip: { x: k.cx + 7, y: k.hy + 6.4 },
+      spine: 163,
+      neck: 12,
+      shoulderNear: -30,
+      armNear: { rel: { x: A * 0.42, y: A * 0.26 }, bend: -1 },
+      armFar: { rel: { x: A * 0.38, y: A * 0.02 }, bend: -1 },
+      legNear: nearFoot(k),
+      legFar: farFoot(k, 2, 3),
+    }),
     recover: k.pose({
       hip: { x: k.cx + 3, y: k.hy + 6 },
       spine: 164,
@@ -186,7 +218,7 @@ function socoBaixo(k: Kit): HdMoveSpec {
       hip: { x: k.cx - 1.5, y: k.hy + 7 },
       spine: 162,
       neck: 12,
-      armNear: { rel: { x: A * 0.1, y: A * 0.35 }, bend: -1 },
+      armNear: { rel: { x: -A * 0.05, y: A * 0.4 }, bend: -1 },
       armFar: { rel: { x: A * 0.36, y: -A * 0.1 }, bend: -1 },
       legNear: nearFoot(k),
       legFar: farFoot(k),
