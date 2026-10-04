@@ -1,7 +1,7 @@
 /*
  * Corpo do player HD: braços e pernas com perfil, tronco do paletó, pescoço, mãos e sapatos, pintados a partir das
  * juntas de uma pose resolvida. A ordem de pintura é a profundidade: braço e perna de longe, perna de perto, pescoço,
- * tronco, cabeça e braço de perto (no golpe a cabeça fica por cima do braço, para o rosto continuar visível).
+ * tronco, cabeça e braço de perto (com `headOverNearArm` a cabeça fica por cima do braço).
  * Puro, sem `phaser`.
  */
 import { dir, solve, worldAngles, type JointName, type Pose, type Vec2 } from '../rig/skeleton';
@@ -9,6 +9,8 @@ import { paintHead, type Expression } from './head';
 import { MAT } from './palette';
 import type { HdCanvas } from './raster';
 import {
+  along,
+  ellipse,
   inLocal,
   limb,
   localEllipse,
@@ -23,38 +25,41 @@ import {
 
 /** Perfis dos membros (lado + = trás num membro pendurado): deltoide e tríceps, antebraço, coxa e panturrilha. */
 const UPPER_ARM: Profile = [
-  [0, 3.1, 3],
-  [0.4, 3.1, 3.2],
-  [1, 2.5, 2.4],
+  [0, 3.3, 3.1],
+  [0.4, 3, 3.1],
+  [1, 2.4, 2.3],
 ];
 const FOREARM: Profile = [
-  [0, 2.5, 2.4],
-  [0.3, 2.7, 2.7],
+  [0, 2.4, 2.3],
+  [0.3, 2.7, 2.6],
   [1, 2, 1.9],
 ];
+/** Coxa com o volume atrás (glúteo e posterior) e joelho estreito. */
 const THIGH: Profile = [
-  [0, 3.8, 3.7],
-  [0.35, 3.9, 3.7],
-  [1, 3, 2.8],
+  [0, 4.1, 3.5],
+  [0.35, 3.9, 3.6],
+  [1, 2.7, 2.9],
 ];
+/** Canela: a patela na frente logo abaixo do joelho e a panturrilha atrás. */
 const SHIN: Profile = [
-  [0, 3, 2.8],
-  [0.32, 3.4, 2.7],
-  [1, 2.3, 2.2],
+  [0, 2.6, 3.1],
+  [0.12, 2.9, 2.8],
+  [0.34, 3.4, 2.6],
+  [1, 2.2, 2.1],
 ];
 const NECK: Profile = [
-  [0, 2.4, 2.3],
-  [1, 2.2, 2.1],
+  [0, 2.1, 2],
+  [1, 2, 1.9],
 ];
 
 /** Tronco: `[altura a partir do quadril, meia largura da frente, meia largura das costas]`, da barra à gola. */
 const TORSO: Profile = [
-  [-4.4, 4.8, 5],
+  [-6.4, 4.9, 5.1],
   [0, 4.9, 5.1],
-  [4.4, 4.3, 4.4],
-  [8.8, 5.8, 5.6],
-  [11.4, 6.1, 6.8],
-  [12.8, 5.2, 5.9],
+  [4.4, 3.9, 4.1],
+  [8.4, 6, 5.8],
+  [10.8, 7.2, 7.5],
+  [12.8, 5.6, 6.2],
   [14.2, 2.8, 3],
 ];
 
@@ -74,11 +79,24 @@ const torsoShape: LocalShape = (f, u) => {
   const [front, back] = radiusAt(TORSO, u);
   const o = f / (f >= 0 ? front : back);
   if (Math.abs(o) > 1) return null;
-  // O alto dos ombros vira para cima e pega a luz.
+  // O alto dos ombros vira para cima e pega a luz; a luz de recorte só acende do peito para cima.
   const ny = Math.min(0.6, Math.max(0, (u - 9.5) / 6));
   const k = Math.sqrt(1 - ny * ny);
-  return { x: o * k, y: ny, z: Math.sqrt(1 - o * o) * k };
+  return { x: o * k, y: ny, z: Math.sqrt(1 - o * o) * k, noRim: u < 7.4, dt: u < -5.4 ? -2 : 0 };
 };
+
+function paintHand(c: HdCanvas, wrist: Vec2, elbow: Vec2, part: number, far: boolean): void {
+  const len = Math.hypot(wrist.x - elbow.x, wrist.y - elbow.y) || 1;
+  const hand = localOf(wrist, { x: (wrist.x - elbow.x) / len, y: (wrist.y - elbow.y) / len });
+  // Punho em tom chapado (sem sombra de almofada), com o polegar, a linha dos nós dos dedos e um realce em cima.
+  const tone = far ? 2 : 3;
+  c.paint(inLocal(hand, localEllipse(0, 2.2, 2.6, 2.8)), MAT.skin, part, { flat: tone });
+  if (far) return;
+  c.paint(inLocal(hand, localEllipse(1.9, 1.5, 1, 1.6)), MAT.skin, part, { flat: 3 });
+  c.paint(inLocal(hand, localRect(-2.6, 2.6, 3, 4)), MAT.skin, part, { onlyOn: part, flat: 2 });
+  const mid = toScreen(hand, 0, 2.2);
+  c.paint(ellipse({ x: mid.x + 0.6, y: mid.y - 1.2 }, 1.3, 0.8), MAT.skin, part, { onlyOn: part, flat: 4 });
+}
 
 function paintArm(c: HdCanvas, j: Joints, side: 'Near' | 'Far', part: number): void {
   const far = side === 'Far';
@@ -86,15 +104,16 @@ function paintArm(c: HdCanvas, j: Joints, side: 'Near' | 'Far', part: number): v
   const sh = j[`shoulder${side}`];
   const el = j[`elbow${side}`];
   const wr = j[`wrist${side}`];
-  c.paint(limb(sh, el, UPPER_ARM), MAT.jacket, part, o);
-  c.paint(limb(el, wr, FOREARM), MAT.jacket, part, o);
-  // Mão fechada: o punho sai do pulso na direção do antebraço, com a linha dos nós dos dedos e o polegar.
-  const len = Math.hypot(wr.x - el.x, wr.y - el.y) || 1;
-  const hand = localOf(wr, { x: (wr.x - el.x) / len, y: (wr.y - el.y) / len });
-  c.paint(inLocal(hand, localEllipse(0, 2.2, 2.7, 2.9)), MAT.skin, part, { bias: far ? -1 : 0 });
-  if (far) return;
-  c.paint(inLocal(hand, localRect(-2.6, 2.6, 3.1, 3.9)), MAT.skin, part, { onlyOn: part, flat: 1 });
-  c.paint(inLocal(hand, localEllipse(1.9, 1.5, 1, 1.6)), MAT.skin, part, { flat: 3 });
+  // A luz de recorte fica só no ombro; o antebraço escurece sob o cotovelo e fecha no punho da manga.
+  c.paint(
+    along(limb(sh, el, UPPER_ARM), (t) => ({ noRim: t > 0.5 })),
+    MAT.jacket,
+    part,
+    o,
+  );
+  const sleeve = along(limb(el, wr, FOREARM), (t) => ({ noRim: true, dt: t < 0.3 ? -1 : t > 0.86 ? -2 : 0 }));
+  c.paint(sleeve, MAT.jacket, part, o);
+  paintHand(c, wr, el, part, far);
 }
 
 function paintLeg(c: HdCanvas, j: Joints, footAngle: number, side: 'Near' | 'Far', part: number): void {
@@ -103,31 +122,48 @@ function paintLeg(c: HdCanvas, j: Joints, footAngle: number, side: 'Near' | 'Far
   const hip = j[`hip${side}`];
   const knee = j[`knee${side}`];
   const ankle = j[`ankle${side}`];
-  c.paint(limb(hip, knee, THIGH), MAT.pants, part, o);
-  c.paint(limb(knee, ankle, SHIN), MAT.pants, part, o);
+  // A coxa escurece no terço de baixo (sombra do joelho) e a canela na barra da calça.
+  c.paint(
+    along(limb(hip, knee, THIGH), (t) => ({ dt: t > 0.7 ? -1 : 0 })),
+    MAT.pants,
+    part,
+    o,
+  );
+  c.paint(
+    along(limb(knee, ankle, SHIN), (t) => ({ dt: t > 0.9 ? -1 : 0 })),
+    MAT.pants,
+    part,
+    o,
+  );
   // Sapato: sola reta em `ANKLE_HEIGHT` abaixo do tornozelo, bico arredondado; gira com o ângulo do pé.
   const fd = dir(footAngle);
   const foot = localOf(ankle, { x: fd.y, y: -fd.x });
   const shoe: LocalShape = (f, u) => (u < -ANKLE_HEIGHT ? null : localEllipse(1.7, -1.3, 4.4, 2.7)(f, u));
-  c.paint(inLocal(foot, shoe), MAT.shoe, part, { bias: far ? -1 : 0 });
+  c.paint(inLocal(foot, shoe), MAT.shoe, part, { bias: far ? 0 : 1 });
   c.paint(inLocal(foot, localRect(-3, 6.2, -ANKLE_HEIGHT, -2.4)), MAT.white, part, { onlyOn: part, flat: far ? 0 : 1 });
 }
 
 function paintTorso(c: HdCanvas, spine: Local, part: number, len: number): void {
   c.paint(inLocal(spine, torsoShape), MAT.jacket, part, { rim: true });
-  // Gola alta do uniforme, costura da frente e o botão dourado.
-  c.paint(inLocal(spine, localEllipse(0.3, len + 1.9, 3.4, 1.7)), MAT.jacket, part, { bias: 1 });
-  c.paint(inLocal(spine, localRect(2.3, 3.1, -4.4, len - 0.5)), MAT.jacket, part, { onlyOn: part, flat: 1 });
-  c.paint(inLocal(spine, localRect(3.4, 5.2, len - 3.4, len - 1.6)), MAT.gold, part, { onlyOn: part, flat: 3 });
-  c.paint(inLocal(spine, localRect(4.3, 5.2, len - 3.4, len - 2.5)), MAT.gold, part, { onlyOn: part, flat: 1 });
+  const on = { onlyOn: part };
+  // Costura da frente, interrompida em dois pontos, e o botão dourado.
+  const seam: LocalShape = (f, u) => {
+    const gap = (u > 1.6 && u < 2.8) || (u > 6.2 && u < 7.2);
+    return gap ? null : localRect(2.6, 3.6, -5.4, len - 2)(f, u);
+  };
+  c.paint(inLocal(spine, seam), MAT.jacket, part, { ...on, flat: 1 });
+  c.paint(inLocal(spine, localRect(4, 6, len - 3.6, len - 1.6)), MAT.gold, part, { ...on, flat: 3 });
+  c.paint(inLocal(spine, localRect(5, 6, len - 3.6, len - 2.6)), MAT.gold, part, { ...on, flat: 1 });
+  // Gola alta: uma faixa clara com a linha de sombra por baixo.
+  c.paint(inLocal(spine, localRect(-2.6, 3.4, len - 1.2, len - 0.2)), MAT.jacket, part, { ...on, flat: 0 });
+  c.paint(inLocal(spine, localRect(-2.4, 3.2, len - 0.2, len + 2)), MAT.jacket, part, { flat: 3 });
 }
 
 /** Pinta o corpo inteiro da pose na tela. Devolve as juntas resolvidas. */
 export function paintBody(c: HdCanvas, pose: Pose, opts: BodyOpts): Joints {
   const j = solve(pose);
   const wa = worldAngles(pose);
-  const spineUp = dir(wa.spine);
-  const spine = localOf(j.hip, spineUp);
+  const spine = localOf(j.hip, dir(wa.spine));
   const len = Math.hypot(j.chest.x - j.hip.x, j.chest.y - j.hip.y);
   const neckUp = dir(wa.neckBone);
   const headPart = opts.headOverNearArm ? 7 : 6;
@@ -136,7 +172,7 @@ export function paintBody(c: HdCanvas, pose: Pose, opts: BodyOpts): Joints {
   paintArm(c, j, 'Far', 1);
   paintLeg(c, j, wa.footFar, 'Far', 2);
   paintLeg(c, j, wa.footNear, 'Near', 3);
-  c.paint(limb(toScreen(spine, 0, len), toScreen(localOf(j.neck, neckUp), 0.4, 2), NECK), MAT.skin, 4, { bias: -1 });
+  c.paint(limb(toScreen(spine, 0, len), toScreen(localOf(j.neck, neckUp), 0.4, 3), NECK), MAT.skin, 4, { bias: -1 });
   paintTorso(c, spine, 5, len);
   const head = (): void => paintHead(c, localOf(j.neck, neckUp), headPart, opts.expr);
   const arm = (): void => paintArm(c, j, 'Near', armPart);

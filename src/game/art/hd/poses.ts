@@ -3,7 +3,7 @@
  * gancho ascendente de 8. Os alvos ficam em coordenadas do frame de 96x80 (bordas de texel), com o eixo do corpo na
  * coluna 36 e o chão na linha 79. Puro, sem `phaser`.
  */
-import { easeInOutCubic, inbetween } from '../rig/interpolate';
+import { inbetween } from '../rig/interpolate';
 import { buildPose } from '../rig/poses/build';
 import { aimLimb, solve, type Pose, type Proportions } from '../rig/skeleton';
 import { ANKLE_HEIGHT } from './body';
@@ -46,6 +46,9 @@ export interface HdStage {
 const LEGS = BODY_HD.thigh + BODY_HD.shin;
 const ARM = BODY_HD.upperArm + BODY_HD.foreArm;
 
+/** Tornozelos da guarda, à frente (perna de perto) e atrás (de longe) do eixo. */
+const STANCE = { near: 9, far: -8.4 };
+
 /** Linha do tornozelo com o pé no chão (a última linha do frame fica para o contorno). */
 const groundOf = (s: HdStage): number => s.h - 1 - ANKLE_HEIGHT;
 
@@ -63,89 +66,119 @@ function grounded(p: Pose, g: number): Pose {
 }
 
 /**
- * Idle: guarda de luta. Joelhos dobrados, tronco um pouco à frente, a mão da frente (de perto) adiantada na altura do
- * peito e a de trás junto ao queixo. `breath` (0..1) abaixa o quadril e as mãos acompanham.
+ * Guarda de luta: joelhos dobrados, tronco inclinado para o alvo e queixo recolhido, a mão da frente (de perto)
+ * adiantada na altura do esterno e a de trás junto ao queixo. `sink` abaixa o quadril (a respiração do idle e o
+ * assentamento depois do golpe) e as mãos acompanham.
  */
-export function idlePose(s: HdStage, breath: number): Pose {
+function guardPose(s: HdStage, sink: number): Pose {
   const cx = s.originCol;
   const g = groundOf(s);
   return buildPose({
     body: BODY_HD,
-    hip: { x: cx - 0.6, y: g - LEGS + 3.2 + breath },
-    spine: 175,
-    neck: 5,
-    armNear: { rel: { x: ARM * 0.68, y: ARM * 0.36 + breath * 0.5 }, bend: -1 },
-    armFar: { rel: { x: ARM * 0.3, y: -ARM * 0.12 + breath * 0.5 }, bend: -1 },
-    legNear: { ankle: { x: cx + 9, y: g }, foot: 90 },
-    legFar: { ankle: { x: cx - 8.4, y: g }, foot: 90 },
+    hip: { x: cx - 0.6, y: g - LEGS + 3.2 + sink },
+    spine: 168,
+    neck: 9,
+    armNear: { rel: { x: ARM * 0.64, y: ARM * 0.32 + sink * 0.5 }, bend: -1 },
+    armFar: { rel: { x: ARM * 0.44, y: ARM * 0.04 + sink * 0.5 }, bend: -1 },
+    legNear: { ankle: { x: cx + STANCE.near, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx + STANCE.far, y: g }, foot: 90 },
   });
 }
 
-/** Poses-chave do gancho ascendente (o arco e o timing aprovados no heroico alto, na escala HD). */
-function uppercutKeys(s: HdStage): { wind: Pose; mid: Pose; hit: Pose; recover: Pose } {
+/** Idle: a guarda respirando; `breath` vai de 0 a 1. */
+export const idlePose = (s: HdStage, breath: number): Pose => guardPose(s, breath);
+
+/** Antecipação: agacha fundo, o punho desce para perto do quadril e o tronco fecha sobre ele. */
+function windPose(s: HdStage): Pose {
   const cx = s.originCol;
   const g = groundOf(s);
-  const hy = g - LEGS;
-  const hitHip = cx + 2 * K;
-  const wind = buildPose({
+  return buildPose({
     body: BODY_HD,
-    hip: { x: cx - 0.6 * K, y: hy + 0.23 * LEGS },
-    spine: 170,
-    neck: 8,
-    armNear: { rel: { x: ARM * 0.42, y: ARM * 0.4 }, bend: -1 },
-    armFar: { rel: { x: ARM * 0.44, y: -ARM * 0.08 }, bend: -1 },
-    legNear: { ankle: { x: cx + 4.2 * K, y: g }, foot: 90 },
-    legFar: { ankle: { x: cx - 4.8 * K, y: g }, foot: 90 },
-  });
-  const mid = buildPose({
-    body: BODY_HD,
-    hip: { x: cx + 0.2 * K, y: hy - 0.45 * K },
-    spine: 176,
-    armNear: { rel: { x: ARM * 0.65, y: ARM * 0.25 }, bend: -1 },
-    armFar: { rel: { x: ARM * 0.36, y: -ARM * 0.1 }, bend: -1 },
-    legNear: { ankle: { x: cx + 3.8 * K, y: g - 0.6 * K }, foot: 70 },
-    legFar: { ankle: { x: cx - 3.8 * K, y: g - 0.6 * K }, foot: 80 },
-  });
-  const hit = buildPose({
-    body: BODY_HD,
-    hip: { x: hitHip, y: hy - 1.1 * K },
-    spine: 194,
+    hip: { x: cx - 0.6 * K, y: g - LEGS + 0.23 * LEGS },
+    spine: 166,
     neck: 10,
-    shoulderNear: -90,
-    armNear: { to: { x: cx + 7 * K, y: g - 31.5 * K }, bend: -1 },
-    armFar: { rel: { x: ARM * 0.3, y: -ARM * 0.2 }, bend: -1 },
-    legNear: { ankle: { x: hitHip + 3.6 * K, y: g - 1.2 * K }, foot: 60 },
-    legFar: { ankle: { x: hitHip - 5.6 * K, y: g - 1.6 * K }, foot: 35 },
+    armNear: { rel: { x: ARM * 0.42, y: ARM * 0.44 }, bend: -1 },
+    armFar: { rel: { x: ARM * 0.4, y: -ARM * 0.08 }, bend: -1 },
+    legNear: { ankle: { x: cx + STANCE.near, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx + STANCE.far, y: g }, foot: 90 },
   });
-  const recover = buildPose({
+}
+
+/** Meio da subida: o corpo ainda meio agachado e o punho já passando pela frente do peito. */
+function midPose(s: HdStage): Pose {
+  const cx = s.originCol;
+  const g = groundOf(s);
+  return buildPose({
     body: BODY_HD,
-    hip: { x: cx + 0.2 * K, y: hy + 0.4 },
-    spine: 180,
-    armNear: { rel: { x: ARM * 0.5, y: ARM * 0.1 }, bend: -1 },
-    armFar: { rel: { x: ARM * 0.36, y: ARM * 0.14 }, bend: -1 },
-    legNear: { ankle: { x: cx + 3.6 * K, y: g }, foot: 90 },
-    legFar: { ankle: { x: cx - 3.6 * K, y: g }, foot: 90 },
+    hip: { x: cx + 0.6 * K, y: g - LEGS + 0.1 * LEGS },
+    spine: 174,
+    neck: 6,
+    armNear: { rel: { x: ARM * 0.72, y: ARM * 0.2 }, bend: -1 },
+    armFar: { rel: { x: ARM * 0.34, y: -ARM * 0.1 }, bend: -1 },
+    legNear: { ankle: { x: cx + STANCE.near, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx + STANCE.far, y: g - 0.4 * K }, foot: 75 },
   });
-  return { wind, mid, hit, recover };
+}
+
+/**
+ * Pico: pernas esticadas na ponta dos pés, quadril à frente, tronco aberto para trás e o punho na altura da testa,
+ * à frente do rosto, com o cotovelo dobrado embaixo dele. `over` (0 ou 1) é o overshoot: tudo sobe mais um pouco.
+ */
+function hitPose(s: HdStage, over: number): Pose {
+  const cx = s.originCol;
+  const g = groundOf(s);
+  const hip = cx + 2 * K;
+  return buildPose({
+    body: BODY_HD,
+    hip: { x: hip, y: g - LEGS - 1.1 * K - over },
+    spine: 190,
+    neck: 8 + over * 6,
+    shoulderNear: -90,
+    armNear: { to: { x: cx + 7.4 * K + over, y: g - 28.6 * K - over * 3 }, bend: -1 },
+    armFar: { rel: { x: ARM * 0.3, y: -ARM * 0.2 }, bend: -1 },
+    legNear: { ankle: { x: hip + 3.6 * K, y: g - 1.2 * K - over * 0.6 }, foot: 60 },
+    legFar: { ankle: { x: hip - 5.6 * K, y: g - 1.6 * K - over }, foot: over ? 25 : 35 },
+  });
+}
+
+/** Descida: o corpo volta ao chão e o braço do golpe recolhe dobrado, com o punho na altura do ombro. */
+function downPose(s: HdStage): Pose {
+  const cx = s.originCol;
+  const g = groundOf(s);
+  return buildPose({
+    body: BODY_HD,
+    hip: { x: cx + 1.2 * K, y: g - LEGS + 1 },
+    spine: 180,
+    neck: 6,
+    armNear: { rel: { x: ARM * 0.6, y: -ARM * 0.12 }, bend: -1 },
+    armFar: { rel: { x: ARM * 0.4, y: -ARM * 0.02 }, bend: -1 },
+    legNear: { ankle: { x: cx + STANCE.near, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx + STANCE.far, y: g }, foot: 90 },
+  });
 }
 
 /**
  * Os 8 quadros do gancho: antecipação agachada e a subida (startup), pico e overshoot (active), e a volta em 4
- * quadros até a postura do idle (recovery). O pico é uma pose-chave, não um intermediário.
+ * quadros (recovery): desce do overshoot, assenta o peso abaixo da guarda e sobe para ela.
  */
 export function uppercutPoses(s: HdStage): Pose[] {
-  const k = uppercutKeys(s);
-  const idle = idlePose(s, 0);
   const g = groundOf(s);
+  const wind = windPose(s);
+  const mid = midPose(s);
+  const hit = hitPose(s, 0);
+  const over = hitPose(s, 1);
+  const land = guardPose(s, 2.4);
+  const down = downPose(s);
+  const idle = guardPose(s, 0);
   const steps: readonly (readonly [Pose, Pose, number])[] = [
-    [k.wind, k.mid, 0],
-    [k.mid, k.hit, 0.35],
-    [k.mid, k.hit, 1],
-    [k.mid, k.hit, 1.06],
-    [k.hit, k.recover, easeInOutCubic(0.4)],
-    [k.hit, k.recover, easeInOutCubic(0.8)],
-    [k.recover, idle, 0.35],
-    [k.recover, idle, 0.8],
+    [wind, mid, 0],
+    [mid, hit, 0.45],
+    [mid, hit, 1],
+    [hit, over, 1],
+    [over, down, 1],
+    [down, land, 0.6],
+    [land, idle, 0],
+    [land, idle, 0.6],
   ];
   return steps.map(([from, to, t]) => grounded(inbetween(from, to, t), g));
 }

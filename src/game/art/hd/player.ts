@@ -38,7 +38,7 @@ export function renderHdPlayer(): HdRender {
   BREATH.forEach((b, i) => {
     frames[`hd-idle-${i}`] = draw(idlePose(HD_STAGE, b), 'focus', false).pixels;
   });
-  const gancho = uppercutPoses(HD_STAGE).map((p) => draw(p, 'effort', true));
+  const gancho = uppercutPoses(HD_STAGE).map((p) => draw(p, 'effort', false));
   gancho.forEach((d, i) => {
     frames[`hd-gancho-${i}`] = d.pixels;
   });

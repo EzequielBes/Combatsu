@@ -112,34 +112,35 @@ function paintFeatures(c: HdCanvas, l: Local, part: number, expr: Expression): v
   // Orelha: atrás do rosto, com a sombra de dentro.
   c.paint(inLocal(l, localEllipse(-2, 7.3, 1.5, 2.1)), MAT.skin, part, { ...on, flat: 2 });
   c.paint(inLocal(l, localEllipse(-1.9, 7.3, 0.7, 1.2)), MAT.skin, part, { ...on, flat: 1 });
-  // Olho: branco atrás, íris escura na frente com um brilho. No esforço o olho cerra numa linha.
-  const top = effort ? 8.4 : 9.4;
-  c.paint(inLocal(l, localRect(effort ? 1.6 : 2.5, 5.5, 7.4, top)), MAT.white, part, { ...on, flat: 3 });
-  c.paint(inLocal(l, localRect(3.5, 5.5, 7.4, top)), MAT.hair, part, { ...on, flat: 0 });
-  if (!effort) c.paint(inLocal(l, localRect(4.5, 5.5, 8.4, top)), MAT.white, part, { ...on, flat: 4 });
-  // Sobrancelha: uma linha de pele acima do olho no foco; no esforço desce e encosta nele, inclinada para o nariz.
+  // Olho: branco atrás e íris escura na frente (o olhar vai para o alvo). No foco a íris tem 2x2 com um brilho; no
+  // esforço o olho estreita para uma linha, a íris fica num texel e a sobrancelha pesa por cima.
+  const top = effort ? 8.6 : 9.4;
+  const low = effort ? 7.6 : 7.4;
+  c.paint(inLocal(l, localRect(2.5, 5.5, low, top)), MAT.white, part, { ...on, flat: 3 });
+  c.paint(inLocal(l, localRect(4, 5.5, low, top)), MAT.hair, part, { ...on, flat: 0 });
+  if (!effort) c.paint(inLocal(l, localRect(4.75, 5.5, 8.4, top)), MAT.white, part, { ...on, flat: 4 });
   const brow = top + (effort ? 0 : 1);
   c.paint(
     inLocal(l, (f, u) => {
-      const base = brow + (5.8 - f) * (effort ? 0.35 : 0.12);
+      const base = brow + (5.8 - f) * (effort ? 0.4 : 0.12);
       return f >= 2 && f <= 6 && u >= base && u <= base + 1 ? { x: 0, y: 0, z: 1 } : null;
     }),
     MAT.hair,
     part,
-    { ...on, flat: 1 },
+    { ...on, flat: effort ? 0 : 1 },
   );
-  // Boca: linha curta fechada no foco; aberta, com os dentes, no esforço.
+  // Boca: linha fechada no foco; aberta, com a fileira de dentes em cima, no esforço.
   if (effort) {
-    c.paint(inLocal(l, localRect(2.4, 4.5, 2.6, 4.6)), MAT.skin, part, { ...on, flat: 0 });
-    c.paint(inLocal(l, localRect(2.9, 4.5, 3.6, 4.6)), MAT.white, part, { ...on, flat: 3 });
+    c.paint(inLocal(l, localRect(2.4, 4.6, 2.2, 5)), MAT.skin, part, { ...on, flat: 0 });
+    c.paint(inLocal(l, localRect(2.9, 4.6, 4, 5)), MAT.white, part, { ...on, flat: 3 });
   } else {
-    c.paint(inLocal(l, localRect(2.6, 4.5, 3.4, 4.4)), MAT.skin, part, { ...on, flat: 1 });
+    c.paint(inLocal(l, localRect(2.6, 4.6, 3.4, 4.4)), MAT.skin, part, { ...on, flat: 1 });
   }
 }
 
 /** Pinta a cabeça inteira na parte `part`, no sistema local `l` (origem na junta do pescoço). */
 export function paintHead(c: HdCanvas, l: Local, part: number, expr: Expression): void {
-  c.paint(inLocal(l, localEllipse(-1.6, 9, 6.6, 6.6)), MAT.hair, part, { rim: true, bias: -1 });
+  c.paint(inLocal(l, localEllipse(-1.6, 9, 6.6, 6.6)), MAT.hair, part, { bias: -1 });
   paintHair(c, l, part, BACK_SPIKES, -1);
   c.paint(inLocal(l, face), MAT.skin, part);
   c.paint(inLocal(l, nose), MAT.skin, part);

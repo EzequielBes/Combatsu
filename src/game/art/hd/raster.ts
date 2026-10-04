@@ -10,6 +10,12 @@ export interface Normal {
   x: number;
   y: number;
   z: number;
+  /** Posição ao longo do membro (0 na raiz, 1 na ponta), quando a forma é um membro. */
+  t?: number;
+  /** Soma ao tom neste ponto (sombra do joelho, punho da manga). */
+  dt?: number;
+  /** Este ponto não recebe a luz de recorte. */
+  noRim?: boolean;
 }
 
 /** Forma: a normal no ponto (x, y) da tela, ou `null` fora dela. */
@@ -25,7 +31,7 @@ const KEY = unit3(0.55, -0.65, 0.52);
 /** Luz de recorte: fria, de trás (a lua). */
 const BACK = unit3(-0.92, -0.3, 0.1);
 /** Limiares da luz principal que separam os 5 tons. */
-const STEPS = [-0.28, 0.12, 0.58, 0.86];
+const STEPS = [-0.45, -0.05, 0.5, 0.82];
 const RIM_FROM = 0.8;
 
 const dot = (a: Normal, b: Normal): number => a.x * b.x + a.y * b.y + a.z * b.z;
@@ -51,8 +57,8 @@ export interface PaintOpts {
 
 function toneFor(n: Normal, o: PaintOpts): number {
   if (o.flat !== undefined) return o.flat;
-  if (o.rim && dot(n, BACK) > RIM_FROM) return RIM;
-  return Math.min(4, Math.max(0, keyTone(n) + (o.bias ?? 0)));
+  if (o.rim && !n.noRim && dot(n, BACK) > RIM_FROM) return RIM;
+  return Math.min(4, Math.max(0, keyTone(n) + (o.bias ?? 0) + (n.dt ?? 0)));
 }
 
 export class HdCanvas {
