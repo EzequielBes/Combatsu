@@ -2,6 +2,73 @@
 import { describe, expect, it } from 'vitest';
 import { PALETTE_KEYS } from '../../src/game/art/palette';
 import { HEAD_TALL_FIGHT, HEAD_TALL_IDLE } from '../../src/game/art/rig/heads';
+import { HEROICO, HEROICO_ALTO, headOf } from '../../src/game/art/rig/presets';
+import { RIG_FRAME_40, rasterize } from '../../src/game/art/rig/rasterize';
+import { idleFor, uppercutFor } from '../../src/game/art/rig/poses/uppercut';
+import { TUNINGS } from '../../src/game/art/rig/poses/tunings';
+import { RIG_UPPERCUT_HITBOX, rigHitbox } from '../../src/game/art/rig/flag';
+import { BONES, SOLE, boneLength, lengthsOf, measuredLength, solve } from '../../src/game/art/rig/skeleton';
+import { isSingleComponent, isOpaque, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
+import { strikeToBody } from '../../src/core/strikePath';
+import { MOVES } from '../../src/data/moves';
+import { SIZE } from '../../src/game/textures';
+import { PLAYER_FRAMES, PLAYER_FRAME_H } from '../../src/game/art/sprites/player';
+
+const body = HEROICO_ALTO;
+const set = uppercutFor(body, TUNINGS[body.name], RIG_FRAME_40);
+const FRAME_ORIGIN = { originCol: RIG_FRAME_40.originCol, rows: RIG_FRAME_40.h };
+/** Linha do topo do cabelo do idle-0 (frame de 30) convertida para o frame de 40 (mesma altura acima do pé). */
+const HAIR_TOP_IDLE_40 = topRowOf(PLAYER_FRAMES['idle-0'], ['h', 'H', 'j'])! + (RIG_FRAME_40.h - PLAYER_FRAME_H);
+
+describe('preset heroicoAlto (PRA-01, PRA-02)', () => {
+  it('PRA-01: mede de 31 a 33 texels em pé e a soma das partes bate com a altura declarada', () => {
+    expect(body.height).toBeGreaterThanOrEqual(31);
+    expect(body.height).toBeLessThanOrEqual(33);
+    expect(body.head + body.neck + body.torso + body.thigh + body.shin + SOLE).toBeCloseTo(body.height, 1);
+  });
+
+  it('PRA-01: a cabeça (com o cabelo) fica entre 0,19 e 0,25 da altura e as pernas em pelo menos 0,49', () => {
+    expect(body.head / body.height).toBeGreaterThanOrEqual(0.19);
+    expect(body.head / body.height).toBeLessThanOrEqual(0.25);
+    expect((body.thigh + body.shin + SOLE) / body.height).toBeGreaterThanOrEqual(0.49);
+    expect(body.thick.torso.shoulder).toBeGreaterThan(body.thick.torso.waist); // ombros em V sobre a cintura fina
+  });
+
+  it('PRA-01: o idle no frame de 40x40 tem a silhueta da altura declarada (±1), é uma peça só e não recorta', () => {
+    const r = rasterize(idleFor(body, RIG_FRAME_40), { frame: RIG_FRAME_40 });
+    expect(r.frame).toHaveLength(40);
+    for (const row of r.frame) {
+      expect(row).toHaveLength(40);
+      for (const ch of row) expect(ch === '.' || PALETTE_KEYS.has(ch), `tecla '${ch}'`).toBe(true);
+    }
+    const top = r.frame.findIndex((row) => /[^.]/.test(row));
+    expect(40 - top).toBeGreaterThanOrEqual(body.height - 1);
+    expect(40 - top).toBeLessThanOrEqual(body.height + 1);
+    expect(isSingleComponent(r.frame)).toBe(true);
+    expect(r.clipped).toBe(0);
+    for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(idleFor(body, RIG_FRAME_40), b)), b.name).toBeLessThanOrEqual(0.5);
+  });
+
+  it('PRA-02: braço, perna, pé, ombro e quadril de perto e de longe têm o mesmo comprimento', () => {
+    const len = lengthsOf(body);
+    expect(len.upperArmNear).toBe(len.upperArmFar);
+    expect(len.foreArmNear).toBe(len.foreArmFar);
+    expect(len.thighNear).toBe(len.thighFar);
+    expect(len.shinNear).toBe(len.shinFar);
+    expect(len.footNear).toBe(len.footFar);
+    expect(body.shoulderNear).toBe(body.shoulderFar);
+    expect(body.pelvisNear).toBe(body.pelvisFar);
+  });
+
+  it('PRA-03: o corpo tem a cabeça de idle e a de luta, cada uma com `head` linhas; o heroico do estudo segue com uma só', () => {
+    expect(headOf(body)).toBe(HEAD_TALL_IDLE);
+    expect(headOf(body, 'idle')).toBe(HEAD_TALL_IDLE);
+    expect(headOf(body, 'fight')).toBe(HEAD_TALL_FIGHT);
+    expect(HEAD_TALL_IDLE.grid).toHaveLength(body.head);
+    expect(HEAD_TALL_FIGHT.grid).toHaveLength(body.head);
+    expect(headOf(HEROICO, 'fight')).toBe(headOf(HEROICO, 'idle'));
+  });
+});
 
 describe('cabeças do heroico alto (PRA-03)', () => {
   it.each([
@@ -30,5 +97,95 @@ describe('cabeças do heroico alto (PRA-03)', () => {
     expect(eyeRow(HEAD_TALL_FIGHT.grid)).not.toContain('w');
     const mouthRow = HEAD_TALL_FIGHT.grid[HEAD_TALL_FIGHT.grid.length - 2];
     expect(mouthRow).toContain('bw');
+  });
+});
+
+describe('gancho ascendente do heroicoAlto no frame de 40x40 (PRA-04)', () => {
+  const frames = { idle: rasterize(set.idle, { frame: RIG_FRAME_40 }), wind: set.frames.wind, hit: set.frames.hit, recover: set.frames.recover };
+
+  for (const name of ['idle', 'wind', 'hit', 'recover'] as const) {
+    it(`${name}: 40x40 só com teclas da PALETTE, uma peça só, sem recorte e ossos com o comprimento definido`, () => {
+      const r = frames[name];
+      expect(r.frame).toHaveLength(40);
+      for (const row of r.frame) {
+        expect(row).toHaveLength(40);
+        for (const ch of row) expect(ch === '.' || PALETTE_KEYS.has(ch), `tecla '${ch}'`).toBe(true);
+      }
+      expect(isSingleComponent(r.frame), 'POS-02').toBe(true);
+      expect(r.clipped).toBe(0);
+      const pose = { idle: set.idle, wind: set.wind, hit: set.hit, recover: set.recover }[name];
+      for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(pose, b)), b.name).toBeLessThanOrEqual(0.5);
+    });
+  }
+
+  it('os 12 quadros da sequência são de uma peça só, sem recorte, e o pico é o hit', () => {
+    expect(set.sequence).toHaveLength(12);
+    for (const [i, r] of set.sequence.entries()) {
+      expect(r.frame, `quadro ${i}`).toHaveLength(40);
+      expect(isSingleComponent(r.frame), `quadro ${i}`).toBe(true);
+      expect(r.clipped, `quadro ${i}`).toBe(0);
+    }
+    expect(set.sequence[7].frame).toEqual(set.frames.hit.frame);
+  });
+
+  it('o hit toca o chão (POS-03) e os golpes usam a cabeça de luta', () => {
+    expect(touchesBottom(set.frames.hit.frame)).toBe(true);
+    const fight = rasterize(set.hit, { frame: RIG_FRAME_40, head: headOf(body, 'fight'), headOverNearArm: TUNINGS[body.name]!.headOverNearArm }).frame;
+    expect(set.frames.hit.frame).toEqual(fight);
+    expect(set.frames.hit.frame).not.toEqual(rasterize(set.hit, { frame: RIG_FRAME_40, head: headOf(body, 'idle'), headOverNearArm: TUNINGS[body.name]!.headOverNearArm }).frame);
+  });
+});
+
+describe('ponto de golpe do heroicoAlto (PRA-05)', () => {
+  it('a hitbox do rig é a do ganchoAscendente com a borda de cima 20 px mais alta e a de baixo no mesmo lugar', () => {
+    const box = MOVES.ganchoAscendente.hitbox!;
+    expect(RIG_UPPERCUT_HITBOX.offsetX).toBe(box.offsetX);
+    expect(RIG_UPPERCUT_HITBOX.width).toBe(box.width);
+    expect(RIG_UPPERCUT_HITBOX.offsetY + RIG_UPPERCUT_HITBOX.height / 2).toBe(box.offsetY + box.height / 2); // borda de baixo
+    expect(RIG_UPPERCUT_HITBOX.offsetY - RIG_UPPERCUT_HITBOX.height / 2).toBe(box.offsetY - box.height / 2 - 20); // borda de cima
+  });
+
+  it.each(['?debug&rig=1', '?rig=1&debug'])('%s: rigHitbox dá a caixa do rig só para o gancho ascendente', (search) => {
+    expect(rigHitbox('ganchoAscendente', search)).toBe(RIG_UPPERCUT_HITBOX);
+    expect(rigHitbox('jab', search)).toBeUndefined();
+  });
+
+  it.each(['', '?debug', '?rig=1', '?debug&rig=0'])('"%s": sem rig=1 rigHitbox é undefined (a hitbox do MOVES vale)', (search) => {
+    expect(rigHitbox('ganchoAscendente', search)).toBeUndefined();
+  });
+
+  it('o pulso do hit é pele, cai na hitbox do rig + 4 px (POS-01), acima do cabelo do idle-0 e 6 texels ou mais à frente da origem (POS-05, POS-10)', () => {
+    const { col, row } = set.strike;
+    expect('pPqx').toContain(set.frames.hit.frame[row][col]);
+    const p = strikeToBody({ col, row }, SIZE.player.h, FRAME_ORIGIN);
+    expect(Math.abs(p.x - RIG_UPPERCUT_HITBOX.offsetX)).toBeLessThanOrEqual(RIG_UPPERCUT_HITBOX.width / 2 + 4);
+    expect(Math.abs(p.y - RIG_UPPERCUT_HITBOX.offsetY)).toBeLessThanOrEqual(RIG_UPPERCUT_HITBOX.height / 2 + 4);
+    expect(row).toBeLessThan(HAIR_TOP_IDLE_40);
+    expect(col - FRAME_ORIGIN.originCol).toBeGreaterThanOrEqual(6);
+    const j = solve(set.hit);
+    expect(Math.hypot(j.wristNear.x - j.shoulderNear.x, j.wristNear.y - j.shoulderNear.y)).toBeLessThanOrEqual(body.upperArm + body.foreArm + 0.01);
+  });
+});
+
+describe('o punho e o rosto (PRA-06)', () => {
+  const head = headOf(body, 'fight');
+  /** O texel do pulso de perto cai num texel opaco da grade da cabeça carimbada nesta pose. */
+  const wristOnHead = (pose: typeof set.hit): boolean => {
+    const j = solve(pose);
+    const hx = Math.round(j.neck.x - head.neckCol);
+    const hy = Math.round(j.neck.y - head.grid.length);
+    return isOpaque(head.grid, Math.floor(j.wristNear.x) - hx, Math.floor(j.wristNear.y) - hy);
+  };
+
+  it('em nenhum quadro da sequência o pulso de perto cai sobre a cabeça: o braço sobe pela frente do peito', () => {
+    for (const [i, pose] of set.sequencePoses.entries()) expect(wristOnHead(pose), `quadro ${i}`).toBe(false);
+  });
+
+  it('no hit, a linha opaca mais alta do frame é o punho (pele), acima da grade da cabeça', () => {
+    const j = solve(set.hit);
+    const headTop = Math.round(j.neck.y - head.grid.length);
+    const top = set.frames.hit.frame.findIndex((row) => /[^.]/.test(row));
+    expect(top).toBeLessThan(headTop);
+    expect(set.frames.hit.frame[top + 1]).toMatch(/[pPqx]/); // a linha de cima é o contorno k; logo abaixo vem a pele do punho
   });
 });

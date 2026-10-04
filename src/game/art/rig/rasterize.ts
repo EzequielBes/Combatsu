@@ -354,6 +354,8 @@ export interface RasterOptions {
   head?: { grid: Grid; neckCol: number };
   /** Tamanho do frame (padrão `RIG_FRAME_32`); a pose já vem em coordenadas deste frame. */
   frame?: RigFrame;
+  /** A cabeça cobre o braço de perto (o braço do gancho sobe por trás do queixo, como num corpo de 3/4). */
+  headOverNearArm?: boolean;
 }
 
 /** Rasteriza a pose num frame de `frame.h` linhas x `frame.w` colunas (30 x 32 por padrão). */
@@ -374,14 +376,22 @@ export function rasterize(pose: Pose, opts: RasterOptions = {}): RasterResult {
   const head = opts.head ?? headOf(body);
   const hx = Math.round(joints.neck.x - head.neckCol);
   const hy = Math.round(joints.neck.y - head.grid.length);
-  head.grid.forEach((row, dy) =>
-    [...row].forEach((ch, dx) => {
-      if (ch !== '.') canvas.set(hx + dx, hy + dy, ch);
-    }),
-  );
-
-  // O braço de perto passa por cima da cabeça (o gancho sobe rente ao rosto).
-  paint(canvas, armLayer(joints, wa.foreArmNear, 'Near', NEAR, body.thick, hand));
+  const stampHead = (): void =>
+    head.grid.forEach((row, dy) =>
+      [...row].forEach((ch, dx) => {
+        if (ch !== '.') canvas.set(hx + dx, hy + dy, ch);
+      }),
+    );
+  const nearArm = armLayer(joints, wa.foreArmNear, 'Near', NEAR, body.thick, hand);
+  if (opts.headOverNearArm) {
+    // O braço de perto sobe por trás do queixo e só o punho aparece acima do cabelo.
+    paint(canvas, nearArm);
+    stampHead();
+  } else {
+    // O braço de perto passa por cima da cabeça (o gancho sobe rente ao rosto).
+    stampHead();
+    paint(canvas, nearArm);
+  }
 
   selOut(canvas.cells);
   return { frame: canvas.cells.map((r) => r.join('')), clipped: canvas.clipped, joints };

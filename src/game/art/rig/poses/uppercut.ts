@@ -7,7 +7,8 @@
  */
 import { easeInOutCubic, inbetween } from '../interpolate';
 import { RIG_FRAME_32, groundOf, rasterize, wristTexel, type RasterResult, type RigFrame } from '../rasterize';
-import { solve, type Pose, type Proportions, type Vec2 } from '../skeleton';
+import { headOf } from '../presets';
+import { aimLimb, solve, type Pose, type Proportions, type Vec2 } from '../skeleton';
 import { buildPose as build } from './build';
 
 /** Linha do tornozelo com o pé no chão, no frame de 32x30. */
@@ -40,9 +41,24 @@ export interface Tuning {
   crouch: number;
   /** Afastamento do tornozelo de perto e de longe em relação ao quadril no hit. */
   hitStride: number;
+  /** Punho de perto no meio da subida, como fração do braço à frente e acima do ombro (sobe pela frente do peito). */
+  midFist: { ahead: number; up: number };
+  /** A cabeça cobre o braço de perto nos quadros do golpe (ver `RasterOptions.headOverNearArm`). */
+  headOverNearArm: boolean;
 }
 
-export const DEFAULT_TUNING: Tuning = { strike: { ahead: 7.2, up: 22 }, hitHipAhead: 1.2, hitRise: 1.1, hitSpine: 188, hitNeck: 20, tiptoe: 1.4, crouch: 0.23, hitStride: 3.4 };
+export const DEFAULT_TUNING: Tuning = {
+  strike: { ahead: 7.2, up: 22 },
+  hitHipAhead: 1.2,
+  hitRise: 1.1,
+  hitSpine: 188,
+  hitNeck: 20,
+  tiptoe: 1.4,
+  crouch: 0.23,
+  hitStride: 3.4,
+  midFist: { ahead: 0.62, up: 0.5 },
+  headOverNearArm: false,
+};
 
 export interface UppercutSet {
   body: Proportions;
@@ -114,7 +130,7 @@ export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}, frame
     hip: { x: cx + 0.2, y: hy - 0.45 },
     spine: 176,
     handScale: 0.9,
-    armNear: { rel: { x: a * 0.62, y: -a * 0.5 }, bend: -1 },
+    armNear: { rel: { x: a * t.midFist.ahead, y: -a * t.midFist.up }, bend: -1 },
     armFar: { rel: { x: a * 0.36, y: -a * 0.1 }, bend: -1 },
     legNear: { ankle: { x: cx + 3.8, y: g - 0.6 }, foot: 70 },
     legFar: { ankle: { x: cx - 3.8, y: g - 0.6 }, foot: 80 },
@@ -156,8 +172,19 @@ export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}, frame
     [hit, recover, 0.75, easeInOutCubic],
     [hit, recover, 1],
   ];
-  const sequencePoses = steps.map(([from, to, tt, ease]) => inbetween(from, to, ease && tt > 0 && tt < 1 ? ease(tt) : tt));
-  const raster = (p: Pose): RasterResult => rasterize(p, { frame });
+  // Interpolar ângulos não mantém o pé no chão: o tornozelo que afunda num intermediário volta à linha do chão.
+  const grounded = (p: Pose): Pose => {
+    const j = solve(p);
+    let out = p;
+    for (const [limb, ankle] of [['legNear', j.ankleNear], ['legFar', j.ankleFar]] as const) {
+      if (ankle.y > g) out = aimLimb(out, limb, { x: ankle.x, y: g }, 1);
+    }
+    return out;
+  };
+  const sequencePoses = steps.map(([from, to, tt, ease]) => grounded(inbetween(from, to, ease && tt > 0 && tt < 1 ? ease(tt) : tt)));
+  // Nos golpes a cabeça é a de luta (esforço); os corpos sem ela caem na de idle.
+  const head = headOf(body, 'fight');
+  const raster = (p: Pose): RasterResult => rasterize(p, { frame, head, headOverNearArm: t.headOverNearArm });
   const sequence = sequencePoses.map(raster);
   const hitR = raster(hit);
   return {
