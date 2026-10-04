@@ -22,7 +22,6 @@ import { requireSpawnPoints } from '../core/waves';
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG } from '../data/shop';
-import { type TechId } from '../data/techniques';
 import { DROPPED_TOOLS, ATTACK_GATE, PICKUP, RUN, WAVE } from '../data/tuning';
 import { buildBackground } from '../game/art/background';
 import { createArt } from '../game/art';
@@ -44,7 +43,7 @@ import { Player } from '../game/Player';
 import { Prop } from '../game/Prop';
 import { ShopPanel } from '../game/ShopPanel';
 import { TechCaster } from '../game/TechCaster';
-import { TechRunner, type TechTarget } from '../game/TechRunner';
+import { TechRunner } from '../game/TechRunner';
 import { Aura } from '../game/techFx/Aura';
 import { Callout } from '../game/techFx/Callout';
 import { KokusenFx } from '../game/techFx/KokusenFx';
@@ -60,11 +59,13 @@ import { Spawner } from './test/spawner';
 import { Drops } from './test/drops';
 import { ShopDirector } from './test/shopDirector';
 import { DebugSnapshot } from './test/snapshot';
-import { BOSS_UPGRADE_BANNER_MS, RunDirector } from './test/runDirector';
+import { RunDirector } from './test/runDirector';
 import { UiSetup } from './test/uiSetup';
 import { TerrainBuilder } from './test/terrain';
+import { TechDirector } from './test/techDirector';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
+  readonly techDirector = new TechDirector(this);
   readonly terrainBuilder = new TerrainBuilder(this);
   readonly ui = new UiSetup(this);
   readonly runDirector = new RunDirector(this);
@@ -411,79 +412,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // AIR-05: enquanto a voadora está ativa a camada `air.kickTrail` fica viva (o rastro em si sai do Player).
       if (this.player.moveName === 'voadora' && this.player.movePhase === 'active')
         this.realtimeFx.add('air.kickTrail', 100);
-      this.techCaster.update(dt);
-      // FXL-02/KOK-03: a tecla 3 arma o Kokusen sem timing manual - injeta a "tecla apertada de novo" no exato
-      // frame em que a janela abre (o `windowOpen` já reflete o começo deste frame, antes do `techRunner.update`).
-      if (this.fxLab?.consumeKokusenAutoPress(this.techRunner.kokusenSnapshot.windowOpen))
-        this.techCaster.forcePress(0);
-      this.snapshot.debugEvents.push(...this.techCaster.events);
-      // T28: no laboratório, o Vermelho/Azul/Desmantelar também miram os bonecos de treino, não só os inimigos.
-      const techTargets: readonly TechTarget[] = this.fxLab ? [...this.enemies, ...this.fxLab.dummies] : this.enemies;
-      // T22+: executa a técnica a partir do estado de conjuração, dos eventos deste frame e do slot apertado (Kokusen).
-      this.techRunner.update(
-        dt,
-        this.techCaster.cast,
-        this.techCaster.events,
-        this.techCaster.slotPressed,
-        techTargets,
-        this.boss,
-      );
-      this.snapshot.debugEvents.push(...this.techRunner.events);
-      // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
-      if (this.techCaster.events.includes('techDenied:energy')) this.energyHud.flashDenied();
-      // TSH-10/11: níveis de `energia`/`fluxo` lidos na hora, sem cache (mesmo padrão de `modifiers.runSpeed`).
-      this.energy.setLevels(this.modifiers.level('energia'), this.modifiers.level('fluxo'));
-      this.loadout.tick(dt);
-      // CE-04/05: sem regen enquanto há uma conjuração em andamento.
-      this.energy.update(dt, this.techCaster.cast !== null);
-      // FXL-07/09: no laboratório a energia fica sempre no teto e a recarga do slot 0 sempre zerada - nenhuma
-      // técnica de teste gasta ou deixa recarga pendente, mesmo enquanto uma conjuração está no meio do caminho.
-      if (this.fxLab) {
-        this.energy.gain(this.energy.max);
-        this.loadout.clearCooldown(0);
-        this.loadout.clearCooldown(1);
-      }
-      this.fxLab?.update(dt);
-      // CAST-14: aura por técnica em sign/charge, sobre o player; tecla 1 do fxlab mostra só a aura. Ela fica presa
-      // ao sprite (posição de desenho), não ao corpo: senão anda meio passo à frente dele ao correr (ITP-10).
-      const drawn = this.player.renderPos;
-      this.aura.update(dt, this.techCaster.cast ?? this.fxLab?.auraDemoCast() ?? null, drawn.x, drawn.y);
-      // KOK-27: aura preta com faíscas vermelhas no player enquanto a zona do Kokusen está ativa.
-      this.kokusenFx.zoneAura(dt, this.techRunner.kokusenSnapshot.zone, this.player.sprite.x, this.player.sprite.y);
-      // CAST-16: a chamada aparece exatamente no frame em que a soltura começa (`techCast:<id>`).
-      for (const ev of this.techCaster.events) {
-        if (ev.startsWith('techCast:')) this.callout.show(ev.slice('techCast:'.length) as TechId);
-      }
-      this.callout.update(dt);
-      this.camera.updateCastZoom();
+      this.techDirector.update(dt);
       this.drops.updatePickups(dt);
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
       this.wasPlayerDead = this.player.dead;
       this.combat.updateEnemies(dt);
-      this.boss?.update(dt, this.player.sprite.x);
-      if (this.runDirector.bossDefeatedPending) {
-        this.boss?.destroyNow();
-        this.boss = null;
-        this.runDirector.bossDefeatedPending = false;
-      }
-      if (this.boss) this.hud.setBossHp(this.boss.hp, this.boss.maxHp);
-      if (this.runDirector.clearedBanner) {
-        this.runDirector.clearedBanner.afterMs -= dt;
-        // BFX-10: o banner do upgrade grátis ocupa o fim da faixa "Chefe derrotado!", antes de "Rodada N concluída".
-        if (
-          this.runDirector.clearedBanner.upgradeText &&
-          this.runDirector.clearedBanner.afterMs <= BOSS_UPGRADE_BANNER_MS
-        ) {
-          this.hud.banner(this.runDirector.clearedBanner.upgradeText, BOSS_UPGRADE_BANNER_MS);
-          this.runDirector.clearedBanner.upgradeText = null;
-        }
-        if (this.runDirector.clearedBanner.afterMs <= 0) {
-          if (this.run.state === 'intermission')
-            this.hud.banner(`Rodada ${this.runDirector.clearedBanner.round} concluída`, Infinity);
-          this.runDirector.clearedBanner = null;
-        }
-      }
+      this.runDirector.updateBoss(dt);
       for (const proj of this.projectiles) proj.update(dt);
       this.projectiles = this.projectiles.filter((proj) => !proj.removed);
       for (const prop of this.props) prop.update(dt);

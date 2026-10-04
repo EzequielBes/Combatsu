@@ -209,4 +209,28 @@ export class RunDirector {
     if (rare !== null) overrides.rare = rare === '1' || rare === 'true';
     return overrides;
   }
+
+  /** Chefe por quadro (vitória pendente, barra de vida) e a faixa "Rodada N concluída" depois dele. */
+  updateBoss(dt: number): void {
+    this.s.boss?.update(dt, this.s.player.sprite.x);
+    if (this.bossDefeatedPending) {
+      this.s.boss?.destroyNow();
+      this.s.boss = null;
+      this.bossDefeatedPending = false;
+    }
+    if (this.s.boss) this.s.hud.setBossHp(this.s.boss.hp, this.s.boss.maxHp);
+    if (this.clearedBanner) {
+      this.clearedBanner.afterMs -= dt;
+      // BFX-10: o banner do upgrade grátis ocupa o fim da faixa "Chefe derrotado!", antes de "Rodada N concluída".
+      if (this.clearedBanner.upgradeText && this.clearedBanner.afterMs <= BOSS_UPGRADE_BANNER_MS) {
+        this.s.hud.banner(this.clearedBanner.upgradeText, BOSS_UPGRADE_BANNER_MS);
+        this.clearedBanner.upgradeText = null;
+      }
+      if (this.clearedBanner.afterMs <= 0) {
+        if (this.s.run.state === 'intermission')
+          this.s.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
+        this.clearedBanner = null;
+      }
+    }
+  }
 }
