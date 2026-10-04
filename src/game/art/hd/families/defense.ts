@@ -19,30 +19,34 @@ function feet(k: Kit) {
 /** Guarda levantada e parry: o bloqueio fechado e a deflexão de mão aberta. */
 function blockFrames(k: Kit): Frames {
   return {
-    // Bloqueio: peso na perna de trás, tronco quase em pé, os dois antebraços em pé na frente do rosto e do peito.
+    // Bloqueio: peso atrás, ombro de perto adiantado, o antebraço de perto em pé na frente do rosto e o de longe
+    // empilhado embaixo, cobrindo o tronco; mãos abertas.
     guard: {
       pose: k.pose({
-        hip: { x: k.cx - 3.4, y: k.hy + 5.5 },
-        spine: 177,
-        neck: 3,
-        armNear: { rel: { x: 15, y: -8.5 }, bend: -1 },
-        armFar: { rel: { x: 12.5, y: -1.5 }, bend: -1 },
+        hip: { x: k.cx - 4.5, y: k.hy + 7 },
+        spine: 179,
+        neck: 2,
+        shoulderNear: -60,
+        armNear: { to: k.at(8, 44.5), bend: -1 },
+        armFar: { to: k.at(9.5, 34), bend: -1 },
         ...feet(k),
       }),
+      hands: { near: 'open', far: 'open' },
     },
-    // Parry: o corpo gira para dentro do golpe e a mão da frente, aberta, varre-o para fora; a de trás arma o Contra.
+    // Parry: um tapa curto e seco na altura do rosto, com a palma varrendo o golpe para fora; o punho de trás fica
+    // no queixo, armado para o Contra (que parte desta pose).
     parry: {
       pose: k.pose({
-        hip: { x: k.cx + 1.2, y: k.hy + 3.6 },
-        spine: 169,
-        neck: 10,
-        shoulderNear: -90,
-        armNear: { to: k.at(17, 48.5), bend: -1 },
-        armFar: { rel: { x: 2.5, y: 7 }, bend: -1 },
+        hip: { x: k.cx + 2, y: k.hy + 3.6 },
+        spine: 172,
+        neck: 8,
+        shoulderNear: -60,
+        armNear: { to: k.at(18.5, 44), bend: -1 },
+        armFar: { rel: { x: k.arm * 0.4, y: -k.arm * 0.02 }, bend: -1 },
         legNear: feet(k).legNear,
         legFar: { ankle: { x: k.cx + k.stance.far, y: k.g - 1 }, foot: 68 },
       }),
-      hands: { near: 'open' },
+      hands: { near: 'palm' },
     },
   };
 }
@@ -74,16 +78,16 @@ function evadeFrames(k: Kit): Frames {
         legFar: { ankle: { x: k.cx - 9, y: k.g }, foot: 90 },
       }),
     },
-    // Abaixar: agachamento fundo, cabeça afundada entre os antebraços, calcanhar de trás alto para subir batendo.
+    // Abaixar: agachamento fundo sobre a ponta do pé de trás (o joelho não toca o chão), antebraços à frente da cabeça.
     duck: {
       pose: k.pose({
-        hip: { x: k.cx - 1.5, y: k.hy + 15 },
+        hip: { x: k.cx - 2.5, y: k.hy + 12 },
         spine: 156,
         neck: 16,
         armNear: { rel: { x: 15.5, y: -5 }, bend: -1 },
         armFar: { rel: { x: 13.5, y: 0.5 }, bend: -1 },
-        legNear: feet(k).legNear,
-        legFar: { ankle: { x: k.cx + k.stance.far, y: k.g - 2 }, foot: 55 },
+        legNear: { ankle: { x: k.cx + k.stance.near + 2, y: k.g }, foot: 90 },
+        legFar: { ankle: { x: k.cx + k.stance.far + 3.5, y: k.g - 2.5 }, foot: 50 },
       }),
     },
   };
@@ -94,7 +98,7 @@ function hurtFrames(k: Kit): Frames {
   return {
     hurt: {
       pose: k.pose({
-        hip: { x: k.cx - 3, y: k.hy + 3 },
+        hip: { x: k.cx - 4.5, y: k.hy + 3 },
         spine: 202,
         neck: 14,
         armNear: { rel: { x: 12, y: 5 }, bend: -1 },
@@ -121,31 +125,31 @@ function hurtFrames(k: Kit): Frames {
   };
 }
 
-/** Guarda quebrada: o corpo balança para a frente e para trás com os braços caídos, sem defesa nenhuma. */
+/** Guarda quebrada: joelhos cedendo, braços caídos e a cabeça balançando para trás e para a frente. */
 function stunnedFrames(k: Kit): Frames {
   return {
     'stunned-0': {
       pose: k.pose({
-        hip: { x: k.cx - 1, y: k.hy + 5 },
-        spine: 160,
-        neck: -10,
-        armNear: { rel: { x: 3, y: 16.5 }, bend: -1 },
-        armFar: { rel: { x: 5, y: 16 }, bend: -1 },
-        legNear: { ankle: { x: k.cx + k.stance.near - 2, y: k.g }, foot: 90 },
-        legFar: { ankle: { x: k.cx + k.stance.far + 1, y: k.g }, foot: 90 },
+        hip: { x: k.cx - 2.5, y: k.hy + 8 },
+        spine: 186,
+        neck: 14,
+        armNear: { rel: { x: 2, y: 17 }, bend: -1 },
+        armFar: { rel: { x: -4, y: 16.5 }, bend: -1 },
+        legNear: { ankle: { x: k.cx + k.stance.near + 2, y: k.g }, foot: 90 },
+        legFar: { ankle: { x: k.cx + k.stance.far - 1, y: k.g }, foot: 90 },
       }),
       expr: 'pain',
       hands: { near: 'relaxed', far: 'relaxed' },
     },
     'stunned-1': {
       pose: k.pose({
-        hip: { x: k.cx - 3, y: k.hy + 3.5 },
-        spine: 190,
-        neck: 12,
-        armNear: { rel: { x: 3, y: 17 }, bend: -1 },
-        armFar: { rel: { x: -4, y: 16.5 }, bend: -1 },
-        legNear: { ankle: { x: k.cx + k.stance.near - 3, y: k.g - 0.5 }, foot: 100 },
-        legFar: { ankle: { x: k.cx + k.stance.far, y: k.g }, foot: 90 },
+        hip: { x: k.cx - 0.5, y: k.hy + 9 },
+        spine: 172,
+        neck: -16,
+        armNear: { rel: { x: 4, y: 17 }, bend: -1 },
+        armFar: { rel: { x: 7, y: 16 }, bend: -1 },
+        legNear: { ankle: { x: k.cx + k.stance.near + 2, y: k.g }, foot: 90 },
+        legFar: { ankle: { x: k.cx + k.stance.far - 1, y: k.g }, foot: 90 },
       }),
       expr: 'pain',
       hands: { near: 'relaxed', far: 'relaxed' },
