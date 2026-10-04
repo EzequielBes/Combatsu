@@ -4,7 +4,14 @@
  */
 import type { JointName, Vec2 } from '../rig/skeleton';
 import { paintBody } from './body';
+import { aerialFamily } from './families/aerial';
 import { coreFamily } from './families/core';
+import { carryFamily } from './families/carry';
+import { defenseFamily } from './families/defense';
+import { kicksFamily } from './families/kicks';
+import { locomotionFamily } from './families/locomotion';
+import { punchesFamily } from './families/punches';
+import { techFamily } from './families/tech';
 import { expandMove, type HdFamily, type HdFrameSpec, type HdMoveSpec, type StrikeLimb } from './frames';
 import { makeKit, type HdStage, type Kit } from './kit';
 import { HD_COLORS } from './palette';
@@ -14,7 +21,16 @@ import { HdCanvas, finish } from './raster';
 export const HD_STAGE: HdStage = { w: 96, h: 80, originCol: 36 };
 
 /** As famílias de poses, na ordem em que entram na folha. */
-const FAMILIES: readonly ((k: Kit) => HdFamily)[] = [coreFamily];
+const FAMILIES: readonly ((k: Kit) => HdFamily)[] = [
+  coreFamily,
+  locomotionFamily,
+  carryFamily,
+  defenseFamily,
+  punchesFamily,
+  kicksFamily,
+  aerialFamily,
+  techFamily,
+];
 
 export interface HdRender {
   colors: readonly number[];
