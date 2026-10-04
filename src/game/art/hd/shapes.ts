@@ -52,17 +52,17 @@ export function limb(a: Vec2, b: Vec2, prof: Profile): Shape {
     const s = rx * p.x + ry * p.y;
     const [rp, rm] = radiusAt(prof, t);
     const o = s / (s >= 0 ? rp : rm);
-    return Math.abs(o) > 1 ? null : { x: p.x * o, y: p.y * o, z: Math.sqrt(1 - o * o), t };
+    return Math.abs(o) > 1 ? null : { x: p.x * o, y: p.y * o, z: Math.sqrt(1 - o * o), t, s: o };
   };
 }
 
 const at = (n: Normal | null, t: number): Normal | null => (n ? { ...n, t } : null);
 
-/** Ajusta a luz ao longo de um membro: `fn(t)` devolve o que somar à normal naquele ponto (tom, sem recorte). */
-export function along(shape: Shape, fn: (t: number) => { dt?: number; noRim?: boolean }): Shape {
+/** Ajusta a luz ao longo de um membro: `fn(t, s)` (posição no osso e lado) devolve o que somar à normal naquele ponto (tom, sem recorte). */
+export function along(shape: Shape, fn: (t: number, s: number) => { dt?: number; noRim?: boolean }): Shape {
   return (x, y) => {
     const n = shape(x, y);
-    return n ? { ...n, ...fn(n.t ?? 0) } : null;
+    return n ? { ...n, ...fn(n.t ?? 0, n.s ?? 0) } : null;
   };
 }
 
