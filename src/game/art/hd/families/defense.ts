@@ -102,7 +102,8 @@ function hurtFrames(k: Kit): Frames {
         legNear: { ankle: { x: k.cx + k.stance.near, y: k.g - 1.5 }, foot: 110 },
         legFar: { ankle: { x: k.cx + k.stance.far - 3, y: k.g }, foot: 90 },
       }),
-      expr: 'effort',
+      expr: 'pain',
+      hands: { near: 'relaxed', far: 'relaxed' },
     },
     'hurt-1': {
       pose: k.pose({
@@ -114,7 +115,8 @@ function hurtFrames(k: Kit): Frames {
         legNear: { ankle: { x: k.cx + k.stance.near - 2, y: k.g }, foot: 90 },
         legFar: { ankle: { x: k.cx + k.stance.far - 7, y: k.g - 1.5 }, foot: 62 },
       }),
-      expr: 'effort',
+      expr: 'pain',
+      hands: { near: 'relaxed', far: 'relaxed' },
     },
   };
 }
@@ -132,7 +134,8 @@ function stunnedFrames(k: Kit): Frames {
         legNear: { ankle: { x: k.cx + k.stance.near - 2, y: k.g }, foot: 90 },
         legFar: { ankle: { x: k.cx + k.stance.far + 1, y: k.g }, foot: 90 },
       }),
-      expr: 'effort',
+      expr: 'pain',
+      hands: { near: 'relaxed', far: 'relaxed' },
     },
     'stunned-1': {
       pose: k.pose({
@@ -144,7 +147,8 @@ function stunnedFrames(k: Kit): Frames {
         legNear: { ankle: { x: k.cx + k.stance.near - 3, y: k.g - 0.5 }, foot: 100 },
         legFar: { ankle: { x: k.cx + k.stance.far, y: k.g }, foot: 90 },
       }),
-      expr: 'effort',
+      expr: 'pain',
+      hands: { near: 'relaxed', far: 'relaxed' },
     },
   };
 }
