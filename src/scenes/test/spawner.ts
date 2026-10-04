@@ -159,12 +159,12 @@ export class Spawner {
     this.s.hud.hideBossBar();
     // BHUD-03: a faixa entra na hora da morte; "Rodada N concluída" vem depois dela (RHUD-03).
     this.s.hud.banner('Chefe derrotado!', BOSS.defeatBannerMs);
-    this.s.clearedBanner = {
+    this.s.runDirector.clearedBanner = {
       round: this.s.run.round,
       afterMs: BOSS.defeatBannerMs,
-      upgradeText: this.s.bossRewardUpgrade(),
+      upgradeText: this.s.runDirector.bossRewardUpgrade(),
     };
-    this.s.bossDefeatedPending = true;
+    this.s.runDirector.bossDefeatedPending = true;
   }
 
   /** Cria um projétil ou onda de choque do chefe e o adiciona à lista da cena (BAT-03/04/06/12). */
