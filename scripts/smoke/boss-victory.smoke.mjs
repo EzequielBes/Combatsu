@@ -79,7 +79,8 @@ export default async function ({ page, baseUrl, assert }) {
   assert(s.hud.banner === 'Chefe derrotado!', `faixa da vitória: ${s.hud.banner}`);
   s = await step(1850);
   assert(s.hud.banner === 'Chefe derrotado!', `faixa da vitória deveria seguir em ~1900 ms: ${s.hud.banner}`);
-  s = await step(150);
+  // A câmera lenta do último inimigo (CAM-08) gasta ~210 ms de tempo de jogo na faixa; a folga cobre isso.
+  s = await step(400);
   assert(s.hud.banner === 'Rodada 5 concluída', `depois da vitória: ${s.hud.banner}`);
   // BWIN-03: um único efeito de derrota.
   assert(s.events.filter((e) => e === 'bossDefeatedFx').length === 1, `bossDefeatedFx: ${JSON.stringify(s.events)}`);
