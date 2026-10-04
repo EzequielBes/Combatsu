@@ -3,11 +3,10 @@ import { armFor, propName, rareDef } from '../core/armed';
 import { bossSpecFor } from '../core/bossTier';
 import { bossFinisherDamage } from '../core/bossFinisher';
 import { bossRewardSlot } from '../core/bossReward';
-import { clampCenter, followCenter, scrollFor, type FollowConfig } from '../core/cameraFollow';
+import { clampCenter } from '../core/cameraFollow';
 import { Filters } from '../core/collision';
 import { scaleFor, type EnemyBase } from '../core/difficulty';
 import { DroppedTools } from '../core/droppedTools';
-import { type CastState } from '../core/cast';
 import { ComboCounter } from '../core/comboCounter';
 import { CursedEnergy } from '../core/energy';
 import { FxRegistry } from '../core/fxRegistry';
@@ -38,7 +37,7 @@ import { DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE } from '../data/moves
 import { LEVEL_1 } from '../data/level1';
 import { PROP_DEFS, TOOL_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG, type ModifierId } from '../data/shop';
-import { CAST_FX, CE, TECHNIQUES, type TechId } from '../data/techniques';
+import { CE, TECHNIQUES, type TechId } from '../data/techniques';
 import {
   ARMED,
   BOSS,
@@ -93,22 +92,19 @@ import { currentSearch, rigStrike } from '../game/art/rig/flag';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../game/art/sprites/player';
 import { SIZE, TEX } from '../game/textures';
 import { debugParam, debugIntParam, NEUTRAL_INPUT, isDroppedTool, SPAWN_LIFT } from './test/params';
+import {
+  WORLD_ZOOM,
+  FINISHER_ZOOM,
+  FINISHER_ZOOM_IN_MS,
+  FINISHER_ZOOM_HOLD_MS,
+  FINISHER_ZOOM_OUT_MS,
+  CameraRig,
+} from './test/camera';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
 
-/** Zoom da câmera do mundo (RES-01): 960x540 de tela mostram 640x360 px de mundo. */
-const WORLD_ZOOM = 1.5;
-/** Folga (px de tela) em que o player anda sem a câmera andar junto. */
-const FOLLOW_DEADZONE = { w: 40, h: 24 };
-/** Fração do caminho até o player que a câmera anda num quadro de 60 Hz. */
-const FOLLOW_LERP = 0.15;
-/** Finalizador (FIN-04): zoom da câmera no golpe, tempo até chegar (ms; 80 para fechar em 100 ms reais com o frame de atraso do efeito) e depois de quanto tempo real volta ao normal. */
-const FINISHER_ZOOM = 1.7;
-const FINISHER_ZOOM_IN_MS = 80;
 /** Hitstop do finalizador (FIN-02, ms). */
 const FINISHER_HITSTOP_MS = 150;
-const FINISHER_ZOOM_HOLD_MS = 450;
-const FINISHER_ZOOM_OUT_MS = 250;
 /** Alpha do tom azulado da câmera lenta (DOD-12). */
 const SLOWMO_TINT_ALPHA = 0.22;
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
@@ -120,6 +116,7 @@ const BOSS_UPGRADE_BANNER_MS = 800;
 const SPAWN_VIEW_MARGIN = 32;
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
+  readonly camera = new CameraRig(this);
   level!: LevelData;
   terrain: MatterJS.BodyType[] = [];
   controls!: PlayerInput;
@@ -190,8 +187,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   brokenAtFrameStart = new Set<number>();
   /** Quadro do jogo em que o último Kokusen disparou (IMP-13). */
   kokusenFrame = -1;
-  /** Último estado de conjuração visto (CAST-15/19): dispara o zoom da câmera só na troca de estado. */
-  lastCastState: CastState | null = null;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
   shop: Shop | null = null;
   /** 1ª técnica equipada nesta compra (TSH-06), para o ícone voar da carta ao slot (T21); `null` fora disso. */
@@ -208,18 +203,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   wasPlayerDead = false;
   /** Relógio de jogo da cena (ms), só para o intervalo entre usos do mesmo ponto de spawn (SPN-08). */
   clockMs = 0;
-  /** Centro da câmera do mundo em ponto flutuante (CAM-07): o estado do seguidor, nunca arredondado. */
-  camCenter: Vec2 = { x: 0, y: 0 };
   /** Instante (`clockMs`) do último spawn comum em cada índice de ponto `E` (SPN-08). */
   spawnLastUsed = new Map<number, number>();
   readonly hitstop = new Hitstop();
   /** Câmera lenta da esquiva perfeita (DOD-07), em tempo real; a escala vai para o tempo de jogo (`applyTimeScale`). */
   slowMo = new SlowMo();
-  /** Tranco da câmera no golpe forte (CAM-01) e pulso de zoom no decisivo (CAM-02), os dois em tempo real. */
-  cameraKick = new CameraKick();
-  zoomPulse = new ZoomPulse();
-  /** Tempo real (ms) que falta do pulso de zoom; 0 = sem pulso em curso. */
-  zoomPulseMs = 0;
   /** Contador de combo e nota de estilo (CMB-01..03). */
   comboCounter = new ComboCounter();
   lastPlayerHp = 0;
@@ -229,8 +217,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   focusId: number | null = null;
   /** Tom azulado sobre a tela enquanto a câmera lenta está ativa (DOD-12), na câmera de UI. */
   slowTint!: Phaser.GameObjects.Rectangle;
-  /** Tempo real (ms) até o zoom do finalizador voltar ao normal; 0 = sem finalizador em curso. */
-  finisherZoomMs = 0;
   /** Se a pausa do hitstop está aplicada (física, animações, tweens e timers). */
   frozen = false;
   /** Eventos lidos pelo smoke no snapshot de debug, ex.: `enemyDied:7`. */
@@ -249,13 +235,13 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hitstop.reset();
     this.unfreeze();
     this.slowMo = new SlowMo();
-    this.cameraKick = new CameraKick();
-    this.zoomPulse = new ZoomPulse();
-    this.zoomPulseMs = 0;
+    this.camera.cameraKick = new CameraKick();
+    this.camera.zoomPulse = new ZoomPulse();
+    this.camera.zoomPulseMs = 0;
     this.comboCounter = new ComboCounter();
     this.reading = new MoveReading();
     this.focusId = null;
-    this.finisherZoomMs = 0;
+    this.camera.finisherZoomMs = 0;
     this.events.on(Phaser.Scenes.Events.PRE_UPDATE, this.tickHitstop, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off(Phaser.Scenes.Events.PRE_UPDATE, this.tickHitstop, this);
@@ -387,9 +373,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       .setZoom(WORLD_ZOOM)
       .setRoundPixels(false)
       .setBounds(0, 0, this.level.widthPx, this.level.heightPx);
-    const follow = this.followConfig();
-    this.camCenter = clampCenter(this.player.renderPos, follow.view, follow.bounds);
-    this.followCamera(0);
+    const follow = this.camera.followConfig();
+    this.camera.camCenter = clampCenter(this.player.renderPos, follow.view, follow.bounds);
+    this.camera.followCamera(0);
 
     // J também é ataque (PlayerInput): o listener aqui é independente e só começa/recomeça a run (RUN-02/05).
     this.onKey('J', () => this.run.startPressed());
@@ -432,32 +418,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.focusLines = new FocusLines(this, this.uiLayer, this.scale.width, this.scale.height);
   }
 
-  /** Zona morta, lerp, vista (com o zoom atual) e limites do mundo para o seguidor da câmera. */
-  followConfig(): FollowConfig {
-    const cam = this.cameras.main;
-    return {
-      deadzone: FOLLOW_DEADZONE,
-      lerp: FOLLOW_LERP,
-      view: { w: cam.width / cam.zoom, h: cam.height / cam.zoom },
-      bounds: { x: 0, y: 0, w: this.level.widthPx, h: this.level.heightPx },
-    };
-  }
-
-  /** CAM-07: leva o centro da câmera atrás da posição de desenho do player e aplica o scroll na grade de pixel de tela. */
-  followCamera(dtMs: number): void {
-    const cam = this.cameras.main;
-    // CAM-02: o pulso de zoom anda em tempo real, antes do cálculo do scroll (que depende do zoom atual).
-    if (this.zoomPulseMs > 0) {
-      this.zoomPulseMs = Math.max(0, this.zoomPulseMs - dtMs);
-      cam.setZoom(this.zoomPulseMs > 0 ? this.zoomPulse.update(dtMs) : WORLD_ZOOM);
-    }
-    this.camCenter = followCenter(this.camCenter, this.player.renderPos, this.followConfig(), dtMs);
-    const scroll = scrollFor(this.camCenter, { w: cam.width, h: cam.height }, cam.zoom);
-    // CAM-01: o tranco desloca só o scroll desenhado; o centro de seguir (`camCenter`) segue limpo.
-    const kick = this.cameraKick.update(dtMs);
-    cam.setScroll(scroll.x + kick.x, scroll.y + kick.y);
-  }
-
   update(_time: number, delta: number): void {
     // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
@@ -467,7 +427,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // (aplicados em `fxLab.toggleTimeScale`) - um só fator, tudo anda devagar junto.
     const realDt = Math.min(delta, MAX_FRAME_MS);
     // A câmera segue no tempo real, inclusive no hitstop e na loja: a posição de desenho do player já é a deste quadro.
-    this.followCamera(realDt);
+    this.camera.followCamera(realDt);
     // Câmera lenta da esquiva perfeita (DOD-07): conta em tempo real e, enquanto dura, o tempo de jogo (física,
     // tweens, timers e a lógica pelo `dt` abaixo) anda a 30%. O relógio real dos efeitos (`base`) não desacelera.
     this.slowMo.update(realDt);
@@ -477,9 +437,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const base = realDt * (this.fxLab?.timeScale ?? 1);
     const clamped = base * this.slowMo.timeScale;
     this.slowTint.setVisible(this.slowMo.active);
-    if (this.finisherZoomMs > 0) {
-      this.finisherZoomMs -= realDt;
-      if (this.finisherZoomMs <= 0) this.cameras.main.zoomTo(WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, 'Linear', true);
+    if (this.camera.finisherZoomMs > 0) {
+      this.camera.finisherZoomMs -= realDt;
+      if (this.camera.finisherZoomMs <= 0) this.cameras.main.zoomTo(WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, 'Linear', true);
     }
     // Dois relógios (design): a parte `real` das camadas de efeito (as cinemáticas do Kokusen, T24) anda mesmo
     // congelada; a parte `game` (hoje só `cast.aura`) para no hitstop (TFX-05) — por isso este `update` roda
@@ -563,7 +523,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         if (ev.startsWith('techCast:')) this.callout.show(ev.slice('techCast:'.length) as TechId);
       }
       this.callout.update(dt);
-      this.updateCastZoom();
+      this.camera.updateCastZoom();
       this.updatePickups(dt);
       // Morte do player (RUN-04): só a transição para morto conta, uma vez.
       if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
@@ -605,25 +565,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
     this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
-  }
-
-  /**
-   * Zoom da câmera principal na conjuração (CAST-15/19): dispara só na troca de estado, nunca a cada frame — a
-   * carga anima até 1,6 ao longo do `chargeMs` da técnica, e a soltura (ou um cancelamento em `sign`/`charge`,
-   * CAST-07) devolve o zoom base em 250 ms.
-   */
-  updateCastZoom(): void {
-    const state = this.techCaster.cast?.state ?? null;
-    if (state === this.lastCastState) return;
-    const cam = this.cameras.main;
-    if (state === 'charge' && this.techCaster.cast) {
-      cam.zoomTo(CAST_FX.zoomCharge, Math.max(1, TECHNIQUES[this.techCaster.cast.id].chargeMs), 'Linear', true);
-    } else if (state === 'release') {
-      cam.zoomTo(CAST_FX.zoomBase, CAST_FX.zoomBackMs, 'Linear', true);
-    } else if (state === null && (this.lastCastState === 'sign' || this.lastCastState === 'charge')) {
-      cam.zoomTo(CAST_FX.zoomBase, CAST_FX.zoomBackMs, 'Linear', true);
-    }
-    this.lastCastState = state;
   }
 
   /**
@@ -1372,7 +1313,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         zoom: this.cameras.main.zoom,
         worldView: { left: this.cameras.main.worldView.left, right: this.cameras.main.worldView.right },
         // CAM-07: estado do seguidor novo e os dois interruptores do Phaser que ele substitui.
-        center: { x: this.camCenter.x, y: this.camCenter.y },
+        center: { x: this.camera.camCenter.x, y: this.camera.camCenter.y },
         scroll: { x: this.cameras.main.scrollX, y: this.cameras.main.scrollY },
         roundPixels: this.cameras.main.roundPixels,
         phaserFollow: (this.cameras.main as unknown as { _follow: unknown })._follow != null,
@@ -1457,30 +1398,23 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.reactCamera(tier, hit, point, brokePosture);
   }
 
-  /** Ponto do mundo na tela da câmera principal (FOC-01), já com zoom e tranco. */
-  worldToScreen(p: Vec2): Vec2 {
-    const view = this.cameras.main.worldView;
-    const zoom = this.cameras.main.zoom;
-    return { x: (p.x - view.x) * zoom, y: (p.y - view.y) * zoom };
-  }
-
   /**
    * Câmera que reage ao impacto (CAM-01..05, CAM-07): tranco no forte, micro-zoom no decisivo (nunca durante o zoom
    * do finalizador) e câmera lenta na quebra de postura e no Contra; um novo gatilho reinicia sem empilhar (CAM-04).
    */
   reactCamera(tier: ImpactTier, hit: Hit, point: Vec2, brokePosture: boolean): void {
-    if (tier === 'decisive') this.focusLines.show(this.worldToScreen(point));
-    if (tier === 'heavy') this.cameraKick.kick(hit.direction.x, hit.direction.y);
+    if (tier === 'decisive') this.focusLines.show(this.camera.worldToScreen(point));
+    if (tier === 'heavy') this.camera.cameraKick.kick(hit.direction.x, hit.direction.y);
     const cam = this.cameras.main;
     // O finalizador é decisivo, mas o zoom dele manda (CAM-05); `finisherZoomMs` só liga depois do `onConnect`.
     if (
       tier === 'decisive' &&
       hit.moveName !== FINISHER_MOVE &&
-      this.finisherZoomMs <= 0 &&
+      this.camera.finisherZoomMs <= 0 &&
       !cam.zoomEffect.isRunning
     ) {
-      this.zoomPulse.start();
-      this.zoomPulseMs = CAMERA_FEEL.zoomInMs + CAMERA_FEEL.zoomHoldMs + CAMERA_FEEL.zoomOutMs;
+      this.camera.zoomPulse.start();
+      this.camera.zoomPulseMs = CAMERA_FEEL.zoomInMs + CAMERA_FEEL.zoomHoldMs + CAMERA_FEEL.zoomOutMs;
     }
     if (brokePosture || hit.counter) this.slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.slowMs);
   }
@@ -1672,7 +1606,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hitstop.trigger(FINISHER_HITSTOP_MS);
     this.freeze();
     this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
-    this.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
+    this.camera.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
   }
 
   /**
@@ -1701,7 +1635,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hitstop.trigger(FINISHER_HITSTOP_MS);
     this.freeze();
     this.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
-    this.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
+    this.camera.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
     return true;
   }
 
