@@ -2,8 +2,8 @@ import Phaser from 'phaser';
 import type { EnemyVariant } from '../core/enemyVariant';
 import { pickHitReaction, type HitReaction } from '../core/hitReaction';
 import { Filters } from '../core/collision';
-import { EnemyAI, type AIEvent, type EnemyAIState } from '../core/enemyAI';
-import { hitFieldsFor, type AttackKind } from '../core/attackKind';
+import { EnemyAI, type EnemyAIState } from '../core/enemyAI';
+import type { AttackKind } from '../core/attackKind';
 import { EnemyBrain, type EnemyEvent, type EnemyState } from '../core/enemyBrain';
 import { EnemyGuard, type GuardRoll } from '../core/enemyGuard';
 import { LightStreak, baseConditionsHold, guardChance, readingBonus, shoveRoll } from '../core/moveReading';
@@ -16,11 +16,12 @@ import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE, type MoveDe
 import type { ParryInfo } from '../core/defense';
 import { normalize, type Hit, type HitReport, type Vec2 } from '../core/hit';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
-import { AttackHitbox, type OnConnect } from './hitbox';
+import type { OnConnect } from './hitbox';
 import { BodyRenderPos, applyFilter, setIgnoreGravity } from './physics';
 import { Ragdoll } from './Ragdoll';
 import { SIZE } from './textures';
 import type { EnemyCtx } from './enemy/context';
+import { EnemyAttack } from './enemy/EnemyAttack';
 import { EnemyAnimator } from './enemy/EnemyAnimator';
 import { EnemyMovement } from './enemy/EnemyMovement';
 import { EnemyHud } from './enemy/EnemyHud';
@@ -41,9 +42,6 @@ export interface EnemyFrameInput {
   focus: boolean;
 }
 
-/** Id da próxima sequência de golpes (DFL-10): global, para duas sequências de inimigos diferentes não se misturarem. */
-let nextStringId = 1;
-
 /** Sem limitador (inimigo isolado): nunca tem vaga, então só persegue e espera. */
 const NO_GATE: EnemyFrameInput = { granted: false, windupAllowed: true, holdRank: 0, focus: false };
 
@@ -57,11 +55,8 @@ export class Enemy implements Hittable {
   readonly team = 'enemy';
   private readonly brain: EnemyBrain;
   private readonly ai: EnemyAI;
-  private wantAttackNow = false;
-  private windupStartNow = false;
   /** Graça ao nascer (WAVE-09): segura `canAct` pelos primeiros `graceMs`. */
   private readonly grace: SpawnGrace;
-  private readonly attack: AttackHitbox;
   private readonly body: MatterJS.BodyType;
   /** Posição do corpo como a tela a mostra, entre os dois últimos passos de física (ITP-07). */
   private readonly drawPos: BodyRenderPos;
@@ -69,10 +64,6 @@ export class Enemy implements Hittable {
   private pickedReaction: HitReaction | null = null;
   /** O ragdoll nasceu escondido atrás da pose de impacto; o próximo `update` troca sprite por ragdoll (HRX-05/06). */
   private pendingRagdollReveal = false;
-  /** Id da sequência de golpes em curso; muda a cada `windupStart` (DFL-10). */
-  private stringId = 0;
-  /** Dano da última garra realmente aberta (DIF-04); antes do primeiro golpe, o dano com que o inimigo nasceu. */
-  private lastAttackDamage: number;
   /** Estrutura do inimigo (STR-01..05, PAR-03): quebra atordoa; `update` avança o relógio de jogo. */
   private readonly structure = new Structure(ENEMY_STRUCTURE);
   /** O finalizador já bateu nesta quebra (um por quebra, FIN-03). */
@@ -104,6 +95,7 @@ export class Enemy implements Hittable {
   private readonly hud: EnemyHud;
   private readonly anim: EnemyAnimator;
   private readonly move: EnemyMovement;
+  private readonly atk: EnemyAttack;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -123,7 +115,6 @@ export class Enemy implements Hittable {
   ) {
     const { w, h } = SIZE.enemy;
     this.brain = new EnemyBrain(tuning.brain);
-    this.lastAttackDamage = tuning.attack.damage;
     this.grace = new SpawnGrace(graceMs);
     this.body = scene.matter.add.rectangle(spawn.x, spawn.y, w, h, {
       friction: 0.8,
@@ -155,11 +146,11 @@ export class Enemy implements Hittable {
       },
       s: { facing: 1, ragdoll: null, walkVxStep: null, suppressedMs: 0, removed: false },
     };
-    this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     scene.matter.world.on('beforeupdate', this.onStep);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
     this.move = new EnemyMovement(this.c);
     this.anim = new EnemyAnimator(this.c, spawn, weaponInfo);
+    this.atk = new EnemyAttack(this.c, this.anim, onConnect);
     this.hud = new EnemyHud(this.c);
   }
 
@@ -212,7 +203,7 @@ export class Enemy implements Hittable {
 
   /** Dano do golpe realmente usado da última garra aberta (DIF-04), para o snapshot de debug. */
   get damage(): number {
-    return this.lastAttackDamage;
+    return this.atk.lastDamage;
   }
 
   /** Estado atual da IA (`chase|hold|approach|windup|attack|rest`), lido pela cena para o limitador e pelo debug. */
@@ -222,12 +213,12 @@ export class Enemy implements Hittable {
 
   /** `true` no frame em que a IA emitiu `wantAttack` (espera em `hold`, LIM-03): a cena pede vaga ao limitador. */
   get wantsAttack(): boolean {
-    return this.wantAttackNow;
+    return this.atk.wantsAttack;
   }
 
   /** `true` no frame em que a IA emitiu `windupStart`: a cena avisa o limitador (`noteWindup`, LIM-02). */
   get windupStarted(): boolean {
-    return this.windupStartNow;
+    return this.atk.windupStarted;
   }
 
   /** Velocidade de perseguição da IA em uso, já escalada pela rodada (DIF-04/06), para o snapshot de debug. */
@@ -265,11 +256,6 @@ export class Enemy implements Hittable {
     return this.brain.downHits;
   }
 
-  /** Tipo do golpe deste inimigo (HGT-01..06), resolvido pela cena no spawn. */
-  private get kind(): AttackKind {
-    return this.tuning.attack.kind;
-  }
-
   /** Frame do marcador de telegrafo se ele está visível, lido do sprite desenhado; senão `null` (HGT-07, HGT-08). */
   get telegraph(): AttackKind | null {
     return this.anim.telegraph;
@@ -287,7 +273,7 @@ export class Enemy implements Hittable {
 
   /** Tipo e posição do golpe na sequência para o snapshot: `index` 0 fora de `windup` e `attack` (DFL-15). */
   get attackView(): { kind: AttackKind; index: number; length: number } {
-    return { kind: this.kind, index: this.ai.hitIndex, length: this.ai.hits };
+    return { kind: this.atk.kind, index: this.ai.hitIndex, length: this.ai.hits };
   }
 
   /** Ferramenta amaldiçoada na mão (ARM-16), `null` se desarmado. */
@@ -346,7 +332,7 @@ export class Enemy implements Hittable {
     if (!armored) {
       this.c.s.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
       // Levar golpe cancela o preparo ou o golpe em andamento antes do compromisso (AI-04, CMT-03).
-      this.onAI(this.ai.interrupt());
+      this.atk.onAI(this.ai.interrupt());
     }
     this.handle(events);
     this.pickedReaction = null;
@@ -398,7 +384,7 @@ export class Enemy implements Hittable {
   /** Estrutura cheia (STR-05, STR-10): quebrou, atordoa e para no lugar; um `guardBreak:<id>`. */
   private onBreak(): void {
     this.guard.reset();
-    this.onAI(this.ai.interrupt());
+    this.atk.onAI(this.ai.interrupt());
     this.c.s.walkVxStep = null;
     if (!this.c.s.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
     this.onEvent?.(`guardBreak:${this.id}`);
@@ -412,7 +398,7 @@ export class Enemy implements Hittable {
   parried(info: ParryInfo = { final: true, deflect: false }): void {
     if (this.brain.isDead) return;
     if (info.final) {
-      this.onAI(this.ai.interrupt());
+      this.atk.onAI(this.ai.interrupt());
       this.c.s.walkVxStep = null;
       this.c.s.suppressedMs = DEFENSE.parrySuppressMs;
       if (!this.c.s.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
@@ -495,7 +481,7 @@ export class Enemy implements Hittable {
       this.brain.recover();
       this.onEvent?.(`read:${this.id}`);
     }
-    this.onAI(this.ai.interrupt());
+    this.atk.onAI(this.ai.interrupt());
     this.c.s.walkVxStep = null;
     this.c.s.facing = player.x >= ex ? 1 : -1;
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
@@ -508,8 +494,7 @@ export class Enemy implements Hittable {
    */
   update(dtMs: number, playerX: number, gate: EnemyFrameInput = NO_GATE): void {
     if (this.c.s.removed) return;
-    this.wantAttackNow = false;
-    this.windupStartNow = false;
+    this.atk.beginFrame();
     this.clockMs += dtMs;
     this.grace.update(dtMs);
     this.c.s.suppressedMs = Math.max(0, this.c.s.suppressedMs - dtMs);
@@ -539,7 +524,7 @@ export class Enemy implements Hittable {
       windupAllowed: gate.windupAllowed,
       holdRank: gate.holdRank,
     });
-    this.onAI(out.events);
+    this.atk.onAI(out.events);
     this.move.setWalk(out, canAct);
     if (this.c.s.ragdoll) {
       this.move.followRagdoll();
@@ -548,44 +533,10 @@ export class Enemy implements Hittable {
       return;
     }
     this.move.drive(out, canAct, this.grace.active);
-    this.attack.follow(this.body.position.x, this.body.position.y, this.c.s.facing);
+    this.atk.follow();
     this.anim.animate();
     this.hud.updateBar();
     this.anim.updateWeaponView();
-  }
-
-  private onAI(events: AIEvent[]): void {
-    for (const ev of events) {
-      if (ev === 'hitboxOn') this.openAttack();
-      else if (ev === 'hitboxOff') this.attack.close();
-      else if (ev === 'wantAttack') this.wantAttackNow = true;
-      else if (ev === 'windupStart') {
-        this.windupStartNow = true;
-        this.stringId = nextStringId++;
-      } else if (ev === 'commit') this.anim.flashCommit();
-    }
-    // Toda mudança de estado da IA passa por aqui (`update` e `interrupt`): o marcador acompanha na hora.
-    this.anim.updateTelegraph();
-  }
-
-  /**
-   * Garra: dano da rodada (DIF-04), time 'enemy' (nunca acerta outro inimigo, AI-05). Altura e `unblockable` saem do
-   * tipo do golpe (HGT-04..06) e `string` diz qual golpe da sequência é este (DFL-10, DFL-15). A hitbox abre com um
-   * portão novo a cada golpe, então o seguinte da sequência acerta de novo quem o anterior já acertou (DFL-05).
-   */
-  private openAttack(): void {
-    const step = this.tuning.attack;
-    const hit: Hit = {
-      ownerId: this.id,
-      damage: step.damage,
-      strength: step.strength,
-      force: step.force,
-      direction: { x: this.c.s.facing, y: -0.3 },
-      ...hitFieldsFor(this.kind),
-      string: { id: this.stringId, index: this.ai.hitIndex, length: this.ai.hits },
-    };
-    this.lastAttackDamage = hit.damage;
-    this.attack.open(step.hitbox!, hit, this.body.position.x, this.body.position.y, this.c.s.facing);
   }
 
   /** Começa o deslizamento depois de um golpe `heavy` ou `decisive` (RCT-01, RCT-02); ver `EnemyMovement.slideBy`. */
@@ -699,7 +650,7 @@ export class Enemy implements Hittable {
     this.c.s.walkVxStep = null;
     this.scene.matter.world.off('beforeupdate', this.onStep);
     this.drawPos.stop();
-    this.attack.close();
+    this.atk.close();
     this.c.s.ragdoll?.destroy();
     this.c.s.ragdoll = null;
     this.scene.matter.world.remove(this.body);
