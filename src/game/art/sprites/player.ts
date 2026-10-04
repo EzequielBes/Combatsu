@@ -3,7 +3,8 @@
  * olhando para a direita. Luz de cima: 1 tom mais claro no topo das formas, 1 mais escuro embaixo; contorno `k`.
  * Dados puros (sem `phaser` como valor): rodam no Vitest.
  *
- * SPEC_DEVIATION: o spec fixa o player em 16x24 texels; aqui todos os frames têm 32x24 texels (64x48 px).
+ * SPEC_DEVIATION: o spec fixa o player em 16x24 texels; aqui todos os frames têm 32x30 texels (64x60 px): 32x24 de desenho
+ * mais 6 linhas de folga no topo (`PLAYER_TOP_PAD`) para o punho do gancho ascendente subir acima da cabeça.
  * Reason: o golpe esticado precisa alcançar a borda da hitbox (soco ~35 px e chute 42 px à frente do centro);
  * 16 texels só dão 16 px para cada lado. O personagem continua ocupando ~16 texels de largura nos frames sem
  * golpe, e a origem (PLAYER_ORIGIN) fica no pé, no centro do corpo, não no centro do frame.
@@ -17,7 +18,10 @@ import { selOut } from '../selOut';
 
 /** Tamanho final de todo frame da folha, em texels. */
 export const PLAYER_FRAME_W = 32;
-export const PLAYER_FRAME_H = 24;
+export const PLAYER_FRAME_H = 30;
+/** Linhas vazias no topo do frame (folga para o punho do gancho subir acima da cabeça); as partes são montadas como se
+ * o frame ainda tivesse 24 linhas e descem esta folga, então a origem (no pé) não muda no mundo. */
+export const PLAYER_TOP_PAD = 6;
 /** Colunas vazias à esquerda da área de desenho. */
 const FRAME_PAD = 2;
 /** Coluna (no frame final) da linha de centro do corpo. */
@@ -40,7 +44,7 @@ export function clippedOf(frame: readonly string[]): number | undefined {
 }
 
 /**
- * Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. Além do frame,
+ * Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x30 (as partes descem `PLAYER_TOP_PAD` linhas); '.' não pinta. Além do frame,
  * devolve `clipped`: quantos pixels opacos caíram fora da grade e foram descartados (SPF-02).
  */
 export function composeWithStats(...parts: Placed[]): { frame: string[]; clipped: number } {
@@ -52,7 +56,7 @@ export function composeWithStats(...parts: Placed[]): { frame: string[]; clipped
       [...row].forEach((ch, dx) => {
         if (ch === '.') return;
         const x = x0 + dx;
-        const y = y0 + dy;
+        const y = y0 + dy + PLAYER_TOP_PAD;
         if (y < 0 || y >= PLAYER_FRAME_H || x < 0 || x >= w) {
           clipped++;
           return;
@@ -67,7 +71,7 @@ export function composeWithStats(...parts: Placed[]): { frame: string[]; clipped
   return { frame, clipped };
 }
 
-/** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x24; '.' não pinta. */
+/** Sobrepõe as partes na ordem dada (a última fica por cima) num frame de 32x30; '.' não pinta. */
 export function compose(...parts: Placed[]): string[] {
   return composeWithStats(...parts).frame;
 }

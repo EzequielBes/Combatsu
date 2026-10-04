@@ -120,7 +120,7 @@ const LEGS_AIR: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.ksNNk', '....kk
 /** Agachado fundo (abaixar e preparo do contragancho): réplica local do `LEGS_CROUCH` de `player.ts` (não exportado ali),
  * joelhos para fora e pés afastados, 4 linhas. */
 const LEGS_SQUAT: Grid = ['...knNNNNNk', '.kKnskkknNk', 'kKKKk...kKsKk', 'kkkkk...kkkkk'];
-/** Linha onde o `LEGS_SQUAT` fica para os pés tocarem a última linha da grade (24). */
+/** Linha onde o `LEGS_SQUAT` fica para os pés tocarem a última linha do desenho (24; o frame final tem 6 linhas de folga em cima). */
 const Y_SQUAT = 20;
 
 // ---------------------------------------------------------------- golpes do chão (T8)
