@@ -77,8 +77,8 @@ export class Spawner {
       // Drop do inimigo comum (design.md): sai daqui, não do onEnemyDied (que o chefe também chama).
       (dead, x, y) => {
         this.s.combat.onEnemyDied(dead.id, x, y);
-        this.s.applyDrop(this.s.loot.enemyDrop(this.s.run.round, dead.weapon !== null), x, y);
-        if (dead.weapon) this.s.dropTool(dead.weapon, dead.weaponRare, x, y);
+        this.s.drops.applyDrop(this.s.loot.enemyDrop(this.s.run.round, dead.weapon !== null), x, y);
+        if (dead.weapon) this.s.drops.dropTool(dead.weapon, dead.weaponRare, x, y);
       },
       armedRoll,
       variant,
@@ -149,7 +149,7 @@ export class Spawner {
    */
   onBossDefeated(dead: Boss, x: number, y: number): void {
     this.s.combat.onEnemyDied(dead.id, x, y);
-    this.s.applyDrop(this.s.loot.bossDrop(this.s.run.round), x, y);
+    this.s.drops.applyDrop(this.s.loot.bossDrop(this.s.run.round), x, y);
     this.s.player.heal(Math.round(BOSS.healFraction * this.s.player.maxHp));
     this.s.effects.hitstop.trigger(BOSS_DEFEAT_HITSTOP_MS);
     this.s.effects.freeze();
