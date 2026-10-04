@@ -4,6 +4,10 @@
  */
 import { MOVES, type MoveDef } from '../../../data/moves';
 import { RIG_GANCHO_FRAMES, RIG_GANCHO_SEQUENCE, RIG_GANCHO_STRIKE } from './poses/ganchoAscendente';
+import { TUNINGS } from './poses/tunings';
+import { uppercutFor } from './poses/uppercut';
+import { HEROICO_ALTO } from './presets';
+import { RIG_FRAME_40, wristTexel } from './rasterize';
 
 /** `?debug&rig=1` na URL. */
 export function rigEnabled(search: string): boolean {
@@ -51,6 +55,39 @@ export function withRigFrames(
 /** Ponto de golpe do boneco para o frame, ou `undefined` (fora do `rig=1` ou de outro frame). */
 export function rigStrikePoint(frameName: string, search: string): { col: number; row: number } | undefined {
   return rigEnabled(search) && frameName === 'ganchoAscendente-hit' ? RIG_GANCHO_STRIKE : undefined;
+}
+
+/** Gancho ascendente do heroico alto no frame de 40x40 (PRA-08), calculado uma vez, na carga. */
+export const RIG_TALL = uppercutFor(HEROICO_ALTO, TUNINGS.heroicoAlto, RIG_FRAME_40);
+
+/** Frame da folha do heroico alto: 40x40, com o eixo do corpo na coluna 12 e o pé na última linha. */
+export const RIG_TALL_FRAME = RIG_FRAME_40;
+
+/** Origem do sprite na folha do heroico alto: a coluna do eixo (12/40) no x e o pé (base do frame) no y. */
+export const RIG_TALL_ORIGIN = { x: RIG_FRAME_40.originCol / RIG_FRAME_40.w, y: 1 } as const;
+
+/**
+ * Folha `player-rig` (PRA-08): os 12 quadros do gancho do heroico alto, com os nomes da sequência do boneco, só com
+ * `?debug&rig=1`; senão `undefined` (a textura não é registrada).
+ */
+export function rigTallSheet(search: string): Record<string, readonly string[]> | undefined {
+  if (!rigEnabled(search)) return undefined;
+  return Object.fromEntries(RIG_TALL.sequence.map((r, i) => [rigSequenceFrameName(i), r.frame]));
+}
+
+/**
+ * Ponto de golpe do heroico alto e a origem do frame dele (PRA-08): o pulso de perto no wind e no hit do gancho
+ * ascendente, no frame de 40x40 com o eixo na coluna 12. Fora do `?debug&rig=1` ou de outro frame, `undefined`.
+ */
+export function rigStrike(
+  frameName: string,
+  search: string,
+): { pt: { col: number; row: number }; frame: { originCol: number; rows: number } } | undefined {
+  if (!rigEnabled(search)) return undefined;
+  const frame = { originCol: RIG_TALL_FRAME.originCol, rows: RIG_TALL_FRAME.h };
+  if (frameName === 'ganchoAscendente-wind') return { pt: wristTexel(RIG_TALL.frames.wind.joints), frame };
+  if (frameName === 'ganchoAscendente-hit') return { pt: RIG_TALL.strike, frame };
+  return undefined;
 }
 
 /** Quanto a hitbox do gancho ascendente cresce para cima com o heroico alto (px): o punho dele sobe 10 texels a mais. */

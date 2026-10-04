@@ -32,7 +32,7 @@ import type { Prop } from './Prop';
 import { playerAnimKey } from './art';
 import { PALETTE } from './art/palette';
 import { PLAYER_ORIGIN } from './art/sprites/player';
-import { RIG_ON, rigMoveFrame } from './art/rig/flag';
+import { RIG_ON, RIG_TALL_ORIGIN, currentSearch, rigHitbox, rigMoveFrame } from './art/rig/flag';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { SIZE, TEX } from './textures';
 
@@ -253,6 +253,13 @@ export class Player implements Hittable {
   /** Onde o sprite visível está de fato, convertido para o centro do corpo: o snapshot lê isto, não o `renderPos`. */
   get spritePos(): Vec2 {
     return { x: this.view.x, y: this.view.y - SIZE.player.h / 2 };
+  }
+
+  /** Troca a folha do sprite visível (e a origem dela) só quando muda: `player-art` ou, no gancho com o boneco, `player-rig` (PRA-08). */
+  private setSheet(texture: string, origin: { x: number; y: number }): void {
+    if (this.view.texture.key === texture) return;
+    this.view.setTexture(texture);
+    this.view.setOrigin(origin.x, origin.y);
   }
 
   /** Põe o sprite visível, com a origem no pé, na posição de desenho do corpo. */
@@ -792,6 +799,8 @@ export class Player implements Hittable {
   }
 
   private animate(grounded: boolean): void {
+    // Todo ramo desenha da folha normal; só o gancho com o boneco (`?debug&rig=1`) troca para a do heroico alto.
+    this.setSheet(TEX.playerArt, PLAYER_ORIGIN);
     // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
     if (this.castLock) {
       const v = this.view;
@@ -856,6 +865,8 @@ export class Player implements Hittable {
       v.anims.stop();
       const phase = this.moves.phase as AttackPhase;
       const rigFrame = RIG_ON ? rigMoveFrame(mv.name, phase, this.rigPhaseMs(phase), mv) : undefined;
+      // PRA-08: os quadros do heroico alto estão na folha `player-rig` (40x40, origem no pé na coluna 12).
+      if (rigFrame) this.setSheet(TEX.playerRig, RIG_TALL_ORIGIN);
       v.setFrame(rigFrame ?? `${mv.name}-${attackFrame(phase)}`);
       if (phase === 'active' && mv.strength === 'heavy') this.fx.afterimage(v);
       return;
@@ -1175,7 +1186,8 @@ export class Player implements Hittable {
   }
 
   private openHitbox(move: MoveDef): void {
-    const shape = move.hitbox;
+    // Com o boneco (`?debug&rig=1`), o gancho do heroico alto bate 20 px mais alto (PRA-05); os outros golpes seguem o MOVES.
+    const shape = (RIG_ON ? rigHitbox(move.name, currentSearch()) : undefined) ?? move.hitbox;
     if (!shape) return;
     const hit: Hit = {
       ownerId: this.id,

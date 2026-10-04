@@ -1,17 +1,18 @@
 // Heroico alto (spike boneco-articulado, P3): PRA-01..09, derivados da spec em .specs/features/boneco-articulado/spec.md.
 import { describe, expect, it } from 'vitest';
-import { PALETTE_KEYS } from '../../src/game/art/palette';
+import { ART_SCALE, PALETTE_KEYS } from '../../src/game/art/palette';
 import { HEAD_TALL_FIGHT, HEAD_TALL_IDLE } from '../../src/game/art/rig/heads';
 import { HEROICO, HEROICO_ALTO, headOf } from '../../src/game/art/rig/presets';
-import { RIG_FRAME_40, rasterize } from '../../src/game/art/rig/rasterize';
+import { RIG_FRAME_40, rasterize, wristTexel } from '../../src/game/art/rig/rasterize';
 import { idleFor, uppercutFor } from '../../src/game/art/rig/poses/uppercut';
 import { TUNINGS } from '../../src/game/art/rig/poses/tunings';
-import { RIG_UPPERCUT_HITBOX, rigHitbox } from '../../src/game/art/rig/flag';
+import { RIG_TALL, RIG_TALL_ORIGIN, RIG_UPPERCUT_HITBOX, rigHitbox, rigStrike, rigTallSheet } from '../../src/game/art/rig/flag';
 import { BONES, SOLE, boneLength, lengthsOf, measuredLength, solve } from '../../src/game/art/rig/skeleton';
 import { isSingleComponent, isOpaque, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
-import { strikeToBody } from '../../src/core/strikePath';
+import { parseSheet } from '../../src/core/pixelGrid';
+import { strikeToBody, strikeToWorld } from '../../src/core/strikePath';
 import { MOVES } from '../../src/data/moves';
-import { SIZE } from '../../src/game/textures';
+import { SIZE, TEX } from '../../src/game/textures';
 import { PLAYER_FRAMES, PLAYER_FRAME_H } from '../../src/game/art/sprites/player';
 
 const body = HEROICO_ALTO;
@@ -227,5 +228,71 @@ describe('acabamento do corpo do heroicoAlto (PRA-07)', () => {
     // Nas linhas do peito nenhuma coluna interna é só contorno (o em todas): o tronco é pano, não bloco riscado.
     const chest = idle.slice(neckRow + 2, neckRow + 6);
     for (let col = 9; col <= 15; col++) expect(chest.every((row) => row[col] === 'o'), `coluna ${col}`).toBe(false);
+  });
+});
+
+describe('heroicoAlto no jogo (PRA-08)', () => {
+  const RIG_NAMES = Array.from({ length: 12 }, (_, i) => `ganchoAscendente-rig-${i}`);
+  const RIG_ON_SEARCHES = ['?debug&rig=1', '?rig=1&debug'];
+  const RIG_OFF_SEARCHES = ['', '?debug', '?rig=1', '?debug&rig=0'];
+
+  it('a textura do heroico alto é `player-rig`', () => {
+    expect(TEX.playerRig).toBe('player-rig');
+  });
+
+  it.each(RIG_ON_SEARCHES)('%s: rigTallSheet dá os 12 quadros ganchoAscendente-rig-0..11 de 40x40, iguais aos da sequência, e a folha passa no parseSheet', (search) => {
+    const sheet = rigTallSheet(search);
+    expect(sheet).toBeDefined();
+    expect(Object.keys(sheet!)).toEqual(RIG_NAMES);
+    for (const [i, name] of RIG_NAMES.entries()) {
+      const grid = sheet![name];
+      expect(grid, name).toHaveLength(40);
+      for (const row of grid) expect(row, name).toHaveLength(40);
+      const foreign = [...grid.join('')].filter((ch) => ch !== '.' && !PALETTE_KEYS.has(ch));
+      expect(foreign, `${name}: teclas fora da PALETTE`).toEqual([]);
+      expect(grid, name).toEqual(RIG_TALL.sequence[i].frame);
+    }
+    const parsed = parseSheet('player-rig', sheet!, PALETTE_KEYS);
+    expect(parsed.width).toBe(40);
+    expect(parsed.height).toBe(40);
+    expect(parsed.frames).toHaveLength(12);
+  });
+
+  it.each(RIG_OFF_SEARCHES)('"%s": sem rig=1 não há folha player-rig nem ponto de golpe do heroico alto', (search) => {
+    expect(rigTallSheet(search)).toBeUndefined();
+    expect(rigStrike('ganchoAscendente-hit', search)).toBeUndefined();
+    expect(rigStrike('ganchoAscendente-wind', search)).toBeUndefined();
+  });
+
+  it.each([
+    ['ganchoAscendente-wind', 'wind', wristTexel(RIG_TALL.frames.wind.joints)],
+    ['ganchoAscendente-hit', 'hit', RIG_TALL.strike],
+  ] as const)('%s: o ponto de golpe é o pulso de perto do %s do heroico alto, num texel de pele, no frame de 40 com o eixo na coluna 12', (frameName, phase, wrist) => {
+    const rig = rigStrike(frameName, '?debug&rig=1');
+    expect(rig).toBeDefined();
+    expect(rig!.pt).toEqual(wrist);
+    expect(rig!.frame).toEqual({ originCol: 12, rows: 40 });
+    expect('pPqx').toContain(RIG_TALL.frames[phase].frame[rig!.pt.row][rig!.pt.col]);
+  });
+
+  it('rigStrike só vale para o wind e o hit do gancho ascendente', () => {
+    expect(rigStrike('jab-hit', '?debug&rig=1')).toBeUndefined();
+    expect(rigStrike('ganchoAscendente-recover', '?debug&rig=1')).toBeUndefined();
+  });
+
+  it('a origem do sprite é a coluna 12 de 40 no x e o pé no y, e cai num px inteiro', () => {
+    expect(RIG_TALL_ORIGIN).toEqual({ x: 0.3, y: 1 });
+    expect(Number.isInteger(RIG_TALL_ORIGIN.x * 40 * ART_SCALE)).toBe(true);
+  });
+
+  it('no mundo, o punho do hit fica acima da altura do frame antigo (30 texels) e à frente do corpo; virado, fica atrás', () => {
+    const rig = rigStrike('ganchoAscendente-hit', '?debug&rig=1')!;
+    const at = { x: 100, footY: 480 };
+    const p = strikeToWorld(rig.pt, at, 1, rig.frame);
+    expect(p.y).toBeLessThan(at.footY - ART_SCALE * PLAYER_FRAME_H);
+    expect(p.x).toBeGreaterThan(at.x);
+    const mirrored = strikeToWorld(rig.pt, at, -1, rig.frame);
+    expect(mirrored.x).toBeLessThan(at.x);
+    expect(mirrored.y).toBe(p.y);
   });
 });

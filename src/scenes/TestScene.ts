@@ -90,7 +90,7 @@ import { impactTier, type ImpactTier } from '../core/impactTier';
 import { CAMERA_FEEL } from '../data/feel';
 import { strikeToWorld } from '../core/strikePath';
 import { STRIKE_POINTS } from '../game/art/sprites/strikePoints';
-import { currentSearch, rigStrikePoint } from '../game/art/rig/flag';
+import { currentSearch, rigStrike } from '../game/art/rig/flag';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../game/art/sprites/player';
 import { SIZE, TEX } from '../game/textures';
 
@@ -1477,7 +1477,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   /** Ponto de golpe do quadro em coordenadas de mundo; `null` (com um aviso por nome) sem entrada (EDG-01). */
   private strikeWorld(frameName: string): Vec2 | null {
-    const pt = rigStrikePoint(frameName, currentSearch()) ?? STRIKE_POINTS[frameName];
+    // PRA-08: com o boneco, o wind e o hit do gancho saem do pulso do heroico alto, no frame dele (40x40, eixo na coluna 12).
+    const rig = rigStrike(frameName, currentSearch());
+    const pt = rig?.pt ?? STRIKE_POINTS[frameName];
     if (!pt) {
       if (!this.warnedStrikeFrames.has(frameName)) {
         this.warnedStrikeFrames.add(frameName);
@@ -1486,10 +1488,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       return null;
     }
     const drawn = this.player.renderPos;
-    return strikeToWorld(pt, { x: drawn.x, footY: drawn.y + SIZE.player.h / 2 }, this.player.facing, {
-      originCol: PLAYER_ORIGIN.x * PLAYER_FRAME_W,
-      rows: PLAYER_FRAME_H,
-    });
+    return strikeToWorld(
+      pt,
+      { x: drawn.x, footY: drawn.y + SIZE.player.h / 2 },
+      this.player.facing,
+      rig?.frame ?? { originCol: PLAYER_ORIGIN.x * PLAYER_FRAME_W, rows: PLAYER_FRAME_H },
+    );
   }
 
   /** Por quadro: a chama segue o ponto de golpe, o jogador atingido apaga a chama (EDG-02) e a rachadura espera o chão. */
