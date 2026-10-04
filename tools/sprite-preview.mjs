@@ -91,7 +91,8 @@ const pageFn = (data) => {
     ctx.font = '12px monospace'; ctx.textBaseline = 'top';
     return [cv, ctx];
   };
-  const cw = 32 * S + 8, ch = 24 * S + 22;
+  const fh = Object.values(data.frames)[0].length; // altura do frame em texels (24 do inimigo, 30 do player)
+  const cw = 32 * S + 8, ch = fh * S + 22;
   const label = (ctx, t, x, y) => { ctx.fillStyle = '#fff'; ctx.fillText(t, x, y); };
   // prancha
   const names = Object.keys(data.frames), cols = 6, rows = Math.ceil(names.length / cols);
@@ -101,7 +102,7 @@ const pageFn = (data) => {
     const x = (i % cols) * cw + 4, y = Math.floor(i / cols) * ch + 2;
     sctx.strokeStyle = '#4a5780'; sctx.strokeRect(x - 3.5, y - 1.5, cw - 1, ch - 1);
     sprite(sctx, data.frames[n], x, y);
-    label(sctx, n, x, y + 24 * S + 3);
+    label(sctx, n, x, y + fh * S + 3);
   });
   // tiras
   data.anims.forEach((a, i) => {
@@ -110,8 +111,8 @@ const pageFn = (data) => {
     a.frames.forEach((f, j) => {
       const x = j * cw + 4;
       sprite(ctx, data.frames[f.name], x, 2);
-      label(ctx, f.name, x, 24 * S + 3);
-      label(ctx, f.ms + 'ms', x, 24 * S + 17);
+      label(ctx, f.name, x, fh * S + 3);
+      label(ctx, f.ms + 'ms', x, fh * S + 17);
     });
   });
 };
