@@ -337,7 +337,7 @@ export interface RasterOptions {
 /** Rasteriza a pose num frame de 30 linhas x 32 colunas. */
 export function rasterize(pose: Pose, opts: RasterOptions = {}): RasterResult {
   const body = pose.body ?? CHIBI;
-  const hand = Math.min(1, Math.max(0.6, pose.armScale ?? 1)) * body.thick.hand;
+  const hand = Math.min(1, Math.max(0.55, pose.handScale ?? pose.armScale ?? 1)) * body.thick.hand;
   const joints = solve(pose);
   const wa = worldAngles(pose);
   const canvas = new Canvas();

@@ -25,10 +25,10 @@ export const HEROICO: Proportions = {
   pelvisFar: 1.3,
   thick: {
     arm: { shoulder: 1.4, elbow: 1.1, wrist: 0.95 },
-    leg: { hip: 1.5, knee: 1.15, ankle: 0.95 },
+    leg: { hip: 1.7, knee: 1.35, ankle: 1.1 },
     hand: 0.85,
-    shoe: 0.6,
-    torso: { hip: 2.6, waist: 2.3, shoulder: 3.5, collar: 1.7, shoulderFrom: 4.8, taper: true, buttons: [2.2, 3.8, 5.4] },
+    shoe: 0.68,
+    torso: { hip: 2.6, waist: 2.3, shoulder: 4, collar: 1.8, shoulderFrom: 4.8, taper: true, buttons: [2.2, 3.8, 5.4] },
   },
 };
 
@@ -51,10 +51,10 @@ export const SEMI: Proportions = {
   pelvisFar: 1.5,
   thick: {
     arm: { shoulder: 1.45, elbow: 1.15, wrist: 1 },
-    leg: { hip: 1.55, knee: 1.2, ankle: 1 },
+    leg: { hip: 1.7, knee: 1.35, ankle: 1.1 },
     hand: 0.9,
-    shoe: 0.62,
-    torso: { hip: 2.7, waist: 2.5, shoulder: 3.3, collar: 1.9, shoulderFrom: 4.2, taper: true, buttons: [2, 3.5, 5] },
+    shoe: 0.68,
+    torso: { hip: 2.7, waist: 2.5, shoulder: 3.7, collar: 2, shoulderFrom: 4.2, taper: true, buttons: [2, 3.5, 5] },
   },
 };
 
@@ -67,8 +67,8 @@ export const INTER: Proportions = {
   torso: 5.8,
   shoulderNear: 0.7,
   shoulderFar: 0.7,
-  upperArm: 3.1,
-  foreArm: 3.1,
+  upperArm: 3.4,
+  foreArm: 3.4,
   thigh: 4.4,
   shin: 4.2,
   foot: 2.5,
@@ -77,10 +77,10 @@ export const INTER: Proportions = {
   pelvisFar: 1.6,
   thick: {
     arm: { shoulder: 1.5, elbow: 1.2, wrist: 1.05 },
-    leg: { hip: 1.55, knee: 1.25, ankle: 1.05 },
+    leg: { hip: 1.7, knee: 1.4, ankle: 1.15 },
     hand: 0.95,
-    shoe: 0.62,
-    torso: { hip: 2.8, waist: 2.6, shoulder: 3.2, collar: 2.2, shoulderFrom: 3.8, taper: true, buttons: [1.9, 3.3, 4.7] },
+    shoe: 0.7,
+    torso: { hip: 2.8, waist: 2.6, shoulder: 3.6, collar: 2.2, shoulderFrom: 3.8, taper: true, buttons: [1.9, 3.3, 4.7] },
   },
 };
 
