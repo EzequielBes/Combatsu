@@ -11,23 +11,20 @@ import { ENEMY_STRUCTURE, Structure, enemyStructureGain } from '../core/structur
 import type { EnemyBase } from '../core/difficulty';
 import type { ToolKey } from '../core/loot';
 import { SpawnGrace } from '../core/spawnGrace';
-import { Slide } from '../core/slide';
 import type { ImpactTier } from '../core/impactTier';
-import { SLIDE_FEEL } from '../data/feel';
 import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE, type MoveDef } from '../data/moves';
 import type { ParryInfo } from '../core/defense';
 import { normalize, type Hit, type HitReport, type Vec2 } from '../core/hit';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
-import { BodyRenderPos, PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
+import { BodyRenderPos, applyFilter, setIgnoreGravity } from './physics';
 import { Ragdoll } from './Ragdoll';
 import { SIZE } from './textures';
 import type { EnemyCtx } from './enemy/context';
 import { EnemyAnimator } from './enemy/EnemyAnimator';
+import { EnemyMovement } from './enemy/EnemyMovement';
 import { EnemyHud } from './enemy/EnemyHud';
 
-/** Empurrão scriptado (SPC-02): número de steps do Matter em que o corpo anda os px do golpe. */
-const SLIDE_STEPS = 25;
 /** Gancho ascendente (MOV-11): velocidade vertical inicial (px/step) que leva o centro além dos 64 px do golpe. */
 const LAUNCH_VY = -10;
 /** Componente vertical (normalizado com o horizontal) do impulso de um empurrão: quase rente ao chão. */
@@ -76,8 +73,6 @@ export class Enemy implements Hittable {
   private stringId = 0;
   /** Dano da última garra realmente aberta (DIF-04); antes do primeiro golpe, o dano com que o inimigo nasceu. */
   private lastAttackDamage: number;
-  /** BLU-04: velocidade (px/step) do puxão do orbe Azul, reaplicada a cada step (L-001); `null` fora do raio. */
-  private pull: Vec2 | null = null;
   /** Estrutura do inimigo (STR-01..05, PAR-03): quebra atordoa; `update` avança o relógio de jogo. */
   private readonly structure = new Structure(ENEMY_STRUCTURE);
   /** O finalizador já bateu nesta quebra (um por quebra, FIN-03). */
@@ -96,44 +91,19 @@ export class Enemy implements Hittable {
   shoveChance: number = READING.shoveChance;
   /** O inimigo empurrou o jogador (RDG-17); `dir` é o sentido do deslocamento do jogador, para longe do inimigo. */
   onShove: ((dir: 1 | -1) => void) | null = null;
-  /** Deslizamento do golpe forte/decisivo (RCT-01, RCT-02); distinto do empurrão scriptado `slide` (SPC-02). */
-  private readonly hitSlide = new Slide();
-  private hitSlideDir: 1 | -1 = 1;
-  private slideResidueMs = 0;
-  /** Quem já foi esbarrado neste deslizamento (RCT-04: uma vez por inimigo). */
-  private readonly slideTouched = new Set<Enemy>();
   /** A cena responde se a caixa toca o terreno (RCT-05: o deslizamento para na parede). */
   isWall: ((box: { min: Vec2; max: Vec2 }) => boolean) | null = null;
   /** A cena devolve os inimigos comuns de pé tocados por este corpo (RCT-04). */
   slideTouch: ((self: Enemy) => Enemy[]) | null = null;
   /** Resíduo nos pés a cada 40 ms de jogo (RCT-03); a cena liga ao `CursedFx.residue`. */
   onSlideResidue: ((at: Vec2) => void) | null = null;
-  /** Empurrão scriptado em curso (SPC-02, MOV-*): velocidade x por step e steps que faltam. */
-  private slide: {
-    vxStep: number;
-    stepsLeft: number;
-    friction: Map<MatterJS.BodyType, { f: number; fs: number }>;
-  } | null = null;
   /** Evento de debug do inimigo (`guardBreak:<id>`, ...), entregue à cena. */
   onEvent: ((name: string) => void) | null = null;
-  private readonly onStep = (): void => {
-    if (this.slide) {
-      this.stepSlide();
-      return;
-    }
-    // Os steps do Matter rodam antes do update da cena: sem este teste, o vx de andar do frame anterior passava
-    // por cima do empurrão de um golpe recebido neste frame.
-    if (this.brain.state !== 'idle' || this.c.s.ragdoll) return;
-    if (this.pull) {
-      this.scene.matter.body.setVelocity(this.body, { x: this.pull.x, y: this.pull.y });
-      return;
-    }
-    if (this.c.s.walkVxStep === null) return;
-    this.scene.matter.body.setVelocity(this.body, { x: this.c.s.walkVxStep, y: this.body.velocity.y });
-  };
+  private readonly onStep = (): void => this.move.onStep();
   private readonly c: EnemyCtx;
   private readonly hud: EnemyHud;
   private readonly anim: EnemyAnimator;
+  private readonly move: EnemyMovement;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -176,12 +146,19 @@ export class Enemy implements Hittable {
       structure: this.structure,
       guard: this.guard,
       drawPos: this.drawPos,
-      hooks: { event: (name) => this.onEvent?.(name), block: (point) => this.onBlock?.(point) },
+      hooks: {
+        event: (name) => this.onEvent?.(name),
+        block: (point) => this.onBlock?.(point),
+        isWall: (box) => this.isWall?.(box) ?? false,
+        slideTouch: () => this.slideTouch?.(this) ?? [],
+        slideResidue: (at) => this.onSlideResidue?.(at),
+      },
       s: { facing: 1, ragdoll: null, walkVxStep: null, suppressedMs: 0, removed: false },
     };
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     scene.matter.world.on('beforeupdate', this.onStep);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
+    this.move = new EnemyMovement(this.c);
     this.anim = new EnemyAnimator(this.c, spawn, weaponInfo);
     this.hud = new EnemyHud(this.c);
   }
@@ -192,7 +169,7 @@ export class Enemy implements Hittable {
 
   /** BLU-04/05: puxão do orbe Azul (px/step, já convertido); `null` limpa (fora do raio ou orbe sumiu). */
   setPull(velocity: Vec2 | null): void {
-    this.pull = velocity;
+    this.move.setPull(velocity);
   }
 
   /** Onde o sprite visível está de fato, convertido para o centro do corpo (ITP-07), para o snapshot de debug. */
@@ -415,46 +392,7 @@ export class Enemy implements Hittable {
   /** Reação de golpe que sobrevive (MOV-11, MOV-10 pelo `ragdollStunMs`, SPC-02): lançar e empurrar. */
   private applyEffect(effect: NonNullable<(typeof MOVES)[string]['effect']>, hit: Hit): void {
     if (effect.type === 'launch') this.c.s.ragdoll?.launch(LAUNCH_VY);
-    else if (effect.type === 'push') this.startSlide(hit.direction.x >= 0 ? 1 : -1, effect.px);
-  }
-
-  private startSlide(dir: 1 | -1, px: number): void {
-    this.slide = { vxStep: (dir * px) / SLIDE_STEPS, stepsLeft: SLIDE_STEPS, friction: new Map() };
-    // Sem atrito durante o empurrão: o chão não come o deslocamento, que fica exato (SPC-02); volta ao fim.
-    for (const b of this.c.s.ragdoll ? this.c.s.ragdoll.bodies : [this.body]) {
-      this.slide.friction.set(b, { f: b.friction, fs: b.frictionStatic });
-      b.friction = 0;
-      b.frictionStatic = 0;
-    }
-  }
-
-  /**
-   * Um step do empurrão: velocidade x fixa (L-001) em todas as partes por `SLIDE_STEPS` steps; o step seguinte
-   * zera o x e devolve o atrito (deslocamento exato).
-   */
-  private stepSlide(): void {
-    const slide = this.slide;
-    if (!slide) return;
-    const done = slide.stepsLeft === 0;
-    const bodies = this.c.s.ragdoll ? this.c.s.ragdoll.bodies : [this.body];
-    for (const b of bodies) {
-      // Matter descontou `frictionAir` da velocidade a cada step: compensa para o corpo andar os px pedidos.
-      const vx = done ? 0 : slide.vxStep / (1 - b.frictionAir);
-      this.scene.matter.body.setVelocity(b, { x: vx, y: b.velocity.y });
-    }
-    if (done) this.endSlide();
-    else slide.stepsLeft -= 1;
-  }
-
-  /** Devolve o atrito original às partes (as que já foram destruídas pelo getUp/remoção são ignoradas). */
-  private endSlide(): void {
-    const slide = this.slide;
-    this.slide = null;
-    if (!slide) return;
-    for (const [b, { f, fs }] of slide.friction) {
-      b.friction = f;
-      b.frictionStatic = fs;
-    }
+    else if (effect.type === 'push') this.move.startSlide(hit.direction.x >= 0 ? 1 : -1, effect.px);
   }
 
   /** Estrutura cheia (STR-05, STR-10): quebrou, atordoa e para no lugar; um `guardBreak:<id>`. */
@@ -582,7 +520,7 @@ export class Enemy implements Hittable {
     if (this.pendingRagdollReveal) this.revealRagdoll();
     this.handle(this.brain.update(dtMs));
     if (this.c.s.removed) return;
-    this.stepHitSlide(dtMs);
+    this.move.stepHitSlide(dtMs);
     this.anim.tick(dtMs);
     // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto,
     // recém-nascido, aparado (PAR-10) ou quebrado (STR-05) deixam a IA parada (AI-04, WAVE-09).
@@ -602,24 +540,14 @@ export class Enemy implements Hittable {
       holdRank: gate.holdRank,
     });
     this.onAI(out.events);
-    this.c.s.walkVxStep = canAct && !this.c.s.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
+    this.move.setWalk(out, canAct);
     if (this.c.s.ragdoll) {
-      // Corpo escondido acompanha o tronco para o "levantar" nascer no lugar certo.
-      this.scene.matter.body.setPosition(this.body, this.c.s.ragdoll.center);
-      this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
+      this.move.followRagdoll();
       this.hud.updateBar();
       this.anim.updateWeaponView(); // some junto com o sprite em ragdoll (ARM-10)
       return;
     }
-    // Aparado ou quebrado com o cérebro livre: fica no lugar, sem andar (PAR-10, STR-05).
-    if (!canAct && this.brain.state === 'idle' && !this.grace.active && !this.slide) {
-      this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
-    }
-    if (canAct) {
-      this.c.s.facing = out.facing;
-      // A IA só mexe no x; o y fica com a física (gravidade). Sem canAct o empurrão do golpe segue livre.
-      this.scene.matter.body.setVelocity(this.body, { x: out.vx * PX_PER_S_TO_STEP, y: this.body.velocity.y });
-    }
+    this.move.drive(out, canAct, this.grace.active);
     this.attack.follow(this.body.position.x, this.body.position.y, this.c.s.facing);
     this.anim.animate();
     this.hud.updateBar();
@@ -660,22 +588,14 @@ export class Enemy implements Hittable {
     this.attack.open(step.hitbox!, hit, this.body.position.x, this.body.position.y, this.c.s.facing);
   }
 
-  /**
-   * Começa o deslizamento do inimigo que ficou de pé depois de um golpe `heavy` ou `decisive` (RCT-01, RCT-02).
-   * Derrubado, morto ou comprometido (o golpe foi absorvido) não desliza; `dir` é o lado para onde ele vai.
-   */
+  /** Começa o deslizamento depois de um golpe `heavy` ou `decisive` (RCT-01, RCT-02); ver `EnemyMovement.slideBy`. */
   slideBy(tier: ImpactTier, dir: 1 | -1): void {
-    if (tier === 'light' || this.c.s.ragdoll || this.brain.isDead || this.ai.committed) return;
-    this.hitSlide.start(tier, dir);
-    this.hitSlideDir = dir;
-    this.slideResidueMs = 0;
-    this.slideTouched.clear();
+    this.move.slideBy(tier, dir);
   }
 
   /** Deslizamento em curso para o snapshot (RCT-06); `null` fora dele. */
   get slideView(): { remainingPx: number } | null {
-    const remaining = this.hitSlide.remainingPx;
-    return remaining === null ? null : { remainingPx: Math.round(remaining * 10) / 10 };
+    return this.move.slideView;
   }
 
   /** Esbarrão de outro inimigo deslizando (RCT-04): toca `body` sem perder vida nem postura. */
@@ -683,36 +603,6 @@ export class Enemy implements Hittable {
     if (this.c.s.removed || this.c.s.ragdoll || this.brain.isDead || this.brain.state !== 'idle') return;
     this.anim.touch();
     this.onEvent?.(`slideTouch:${this.id}`);
-  }
-
-  /** Um passo do deslizamento (tempo de jogo): anda, deixa resíduo, esbarra e para na parede (RCT-03..05). */
-  private stepHitSlide(dtMs: number): void {
-    if (this.hitSlide.remainingPx === null) return;
-    if (this.c.s.ragdoll || this.brain.isDead) {
-      this.hitSlide.start('light', 1);
-      return;
-    }
-    const dir = this.hitSlideDir;
-    const b = this.body.bounds;
-    const blocked =
-      this.isWall?.({
-        min: { x: dir > 0 ? b.max.x : b.min.x - 2, y: b.min.y + 2 },
-        max: { x: dir > 0 ? b.max.x + 2 : b.min.x, y: b.max.y - 2 },
-      }) ?? false;
-    const dx = this.hitSlide.update(dtMs, blocked);
-    // O deslizamento manda no x: anula o impulso da reação para o deslocamento ser exatamente o pedido.
-    this.scene.matter.body.setPosition(this.body, { x: this.body.position.x + dx, y: this.body.position.y });
-    this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
-    this.slideResidueMs += dtMs;
-    while (this.slideResidueMs >= SLIDE_FEEL.residueEveryMs) {
-      this.slideResidueMs -= SLIDE_FEEL.residueEveryMs;
-      this.onSlideResidue?.({ x: this.body.position.x, y: this.body.position.y + SIZE.enemy.h / 2 });
-    }
-    for (const other of this.slideTouch?.(this) ?? []) {
-      if (this.slideTouched.has(other)) continue;
-      this.slideTouched.add(other);
-      other.touched();
-    }
   }
 
   private handle(events: EnemyEvent[]): void {
@@ -815,7 +705,7 @@ export class Enemy implements Hittable {
     this.scene.matter.world.remove(this.body);
     this.anim.destroy();
     this.hud.destroy();
-    this.slide = null;
+    this.move.dropSlide();
     this.c.s.removed = true;
   }
 }

@@ -30,6 +30,12 @@ export interface EnemyHooks {
   event(name: string): void;
   /** Faísca azul do bloqueio, no ponto de contato. */
   block(point: Vec2): void;
+  /** A cena responde se a caixa toca o terreno (RCT-05: o deslizamento para na parede). */
+  isWall(box: { min: Vec2; max: Vec2 }): boolean;
+  /** Os inimigos comuns de pé tocados por este corpo (RCT-04). */
+  slideTouch(): Array<{ touched(): void }>;
+  /** Resíduo nos pés a cada 40 ms de jogo (RCT-03). */
+  slideResidue(at: Vec2): void;
 }
 
 /** O que as partes do inimigo compartilham: os objetos do núcleo (corpo, cérebro, IA, postura, guarda) e o estado comum. */
