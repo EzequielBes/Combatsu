@@ -249,8 +249,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: partes de `player.ts`
 **Requirement**: POS-02, POS-04
 **Done when**:
-- [ ] Teste POS-04 na sequência inteira; POS-02 em cada frame.
-- [ ] Prancha conferida.
+- [x] Teste POS-04 na sequência inteira; POS-02 em cada frame.
+- [x] Prancha conferida.
 **Tests**: unit
 **Gate**: quick
 
