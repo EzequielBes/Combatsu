@@ -69,23 +69,38 @@ function leg(k: Kit, hipX: number, l: Leg) {
   return { ankle: { x: k.cx + hipX + l.ahead, y: k.g - l.up }, foot: l.foot, bend: l.bend ?? 1 };
 }
 
-/** O ombro de longe fica à frente do eixo: o braço de longe recua mais para o punho de trás sair da silhueta. */
-const FAR_BACK = 0.3;
+/**
+ * Balanço do braço de perto em cada quadro, de -1 (todo para trás) a 1 (todo para a frente). O braço anda em oposição
+ * à perna do mesmo lado e de forma contínua: enquanto a perna de perto vai da frente para trás (quadros 0 a 3), o braço
+ * de perto vem de trás para a frente, e volta nos quadros seguintes. O braço de longe faz o contrário.
+ */
+const NEAR_ARM_SWING = [-1, -0.45, 0.55, 1, 0.45, -0.55];
+
+/**
+ * Braço da corrida para um balanço `swing`: o punho à frente sobe até o peito, atrás desce até o quadril, e no meio do
+ * caminho passa baixo, rente ao corpo. O cotovelo dobra sempre para o mesmo lado (para trás), como num braço de
+ * verdade: é o que impede o braço de "virar ao contrário" de um passo para o outro.
+ */
+function runArm(k: Kit, swing: number, far: boolean): ArmTarget {
+  // O ombro de longe fica à frente do eixo: o braço de longe recua mais para o punho de trás sair da silhueta.
+  const back = far && swing < 0 ? 0.3 * -swing : 0;
+  const x = 0.1 + 0.56 * swing - back;
+  const y = 0.24 - 0.16 * swing + 0.14 * (1 - Math.abs(swing));
+  return { rel: { x: k.arm * x, y: k.arm * y }, bend: -1 };
+}
 
 /** Quadro `i` (0..5) da corrida: nos três primeiros lidera a perna de perto, nos três últimos a de longe. */
 function runFrame(k: Kit, i: number): HdFrameSpec {
   const s = STRIDE[i % 3]!;
   const nearLeads = i < 3;
-  const farBack = nearLeads ? 0 : FAR_BACK;
-  const back: ArmTarget = { rel: { x: k.arm * (s.armBack.x - farBack), y: k.arm * s.armBack.y }, bend: 1 };
-  const fwd: ArmTarget = { rel: { x: k.arm * s.armFwd.x, y: k.arm * s.armFwd.y }, bend: -1 };
+  const swing = NEAR_ARM_SWING[i]!;
   return {
     pose: k.pose({
       hip: { x: k.cx + s.hipX, y: k.hy + s.sink },
       spine: s.spine,
       neck: s.neck,
-      armNear: nearLeads ? back : fwd,
-      armFar: nearLeads ? fwd : back,
+      armNear: runArm(k, swing, false),
+      armFar: runArm(k, -swing, true),
       legNear: leg(k, s.hipX, nearLeads ? s.lead : s.trail),
       legFar: leg(k, s.hipX, nearLeads ? s.trail : s.lead),
     }),
