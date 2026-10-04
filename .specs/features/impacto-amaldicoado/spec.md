@@ -120,10 +120,10 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 4. POS-04: In the frame sequence `idle-0`, `jump-0`, `jump-1`, `apex-0`, `fall-0`, `fall-1`, `land-0`, `land-1`, the leftmost column of the head SHALL differ by at most 1 texel between consecutive frames, measured with the hair color keys `h`, `H` and `j`.
 5. POS-05: The ponto de golpe of `ganchoAscendente-hit` SHALL lie above the topmost hair texel (`h`, `H`, `j`) of `idle-0`.
 6. POS-10: The ponto de golpe of `ganchoAscendente-hit` SHALL lie at least 6 texels in front of the frame's origin column.
-6. POS-06: The leg of `chuteFrontal-hit`, `chuteEmpurrao-hit` and `kick-hit` SHALL show a thigh at least 1 texel taller than the shin.
-7. POS-07: WHEN a ground move with `strength: 'heavy'` starts THEN the player SHALL advance 10 px in the facing direction spread over its `startupMs`.
-8. POS-08: WHEN a ground move with `strength: 'light'` starts THEN the player SHALL advance 4 px in the facing direction spread over its `startupMs`.
-9. POS-09: IF the player's body touches an enemy body or a wall during the advance THEN the advance SHALL stop at that contact.
+7. POS-06: The leg of `chuteFrontal-hit`, `chuteEmpurrao-hit` and `kick-hit` SHALL show a thigh at least 1 texel taller than the shin.
+8. POS-07: WHEN a ground move with `strength: 'heavy'` starts THEN the player SHALL advance 10 px (±0.25) in the facing direction spread over its `startupMs`.
+9. POS-08: WHEN a ground move with `strength: 'light'` starts THEN the player SHALL advance 4 px (±0.25) in the facing direction spread over its `startupMs`.
+10. POS-09: IF the player's body touches an enemy body or a wall during the advance THEN the advance SHALL stop at that contact.
 
 **Independent Test**: `npm test` roda os invariantes nas grades; no jogo, o gancho ascendente mostra o punho acima da cabeça à frente e os chutes têm a perna de apoio plantada.
 
@@ -137,7 +137,7 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 
 **Acceptance Criteria**:
 
-1. RCT-01: WHEN a common enemy that stays standing accepts a hit of tier `heavy` THEN it SHALL slide 24 px away from the player over 180 ms of game time.
+1. RCT-01: WHEN a common enemy that stays standing (not knocked down, not dead and not committed to an attack) accepts a hit of tier `heavy` THEN it SHALL slide 24 px away from the player over 180 ms of game time.
 2. RCT-02: WHEN a common enemy that stays standing accepts a hit of tier `decisive` THEN it SHALL slide 48 px away from the player over 240 ms of game time.
 3. RCT-03: WHILE an enemy slides the scene SHALL create one residue particle with palette frame `c` at the enemy's feet every 40 ms of game time, each fading to alpha 0 in 300 ms.
 4. RCT-04: WHEN a sliding enemy's body touches another standing common enemy THEN the touched enemy SHALL play the `body` hit reaction without losing HP and without losing posture.
@@ -164,9 +164,9 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 3. CAM-03: WHEN a hit breaks an enemy's posture THEN the scene SHALL trigger slow motion at time scale 0.4 for 350 ms of real time.
 4. CAM-07: WHEN a Contra is accepted THEN the scene SHALL trigger slow motion at time scale 0.4 for 350 ms of real time.
 5. CAM-08: WHEN the last enemy of a wave dies THEN the scene SHALL trigger slow motion at time scale 0.4 for 350 ms of real time.
-4. CAM-04: IF slow motion is already active THEN a new trigger SHALL restart its 350 ms without stacking the scale.
-5. CAM-05: WHILE the finisher zoom (FIN-04) is active the scene SHALL NOT apply the CAM-02 zoom.
-6. CAM-06: WHEN a golpe corpo a corpo do jogador of tier `heavy` or `decisive` is accepted THEN the scene SHALL NOT call `Fx.shake`.
+6. CAM-04: IF slow motion is already active THEN a new trigger SHALL restart its 350 ms without stacking the scale.
+7. CAM-05: WHILE the finisher zoom (`finisherZoomMs > 0` in `TestScene`, from the finisher feature) is active the scene SHALL NOT apply the CAM-02 zoom.
+8. CAM-06: WHEN a golpe corpo a corpo do jogador of tier `heavy` or `decisive` is accepted THEN the scene SHALL NOT call `Fx.shake`.
 
 **Independent Test**: Golpe forte dá o tranco; um Contra fecha o zoom e desacelera o jogo por um instante.
 
@@ -191,7 +191,7 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 
 - EDG-01: IF a move frame has no entry in `STRIKE_POINTS` THEN the scene SHALL create no trail for that move and SHALL log one warning per frame name.
 - EDG-02: WHEN the player is hit or staggered during a move's startup THEN the cursed-flame emitter SHALL stop emitting in that frame.
-- EDG-03: WHILE more than 40 fx objects from this feature are alive the scene SHALL skip creating new shards and residues until the count falls below 40.
+- EDG-03: WHILE 40 or more fx objects from this feature are alive the scene SHALL skip creating new shards and residues until the count falls below 40.
 - EDG-04: WHEN the scene restarts (R) THEN every trail, ring, spike, decal, residue and flame emitter SHALL be destroyed.
 - EDG-05: WHEN the impact frame would start while the game is paused by the shop or the title THEN the scene SHALL NOT apply it.
 
