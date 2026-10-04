@@ -8,7 +8,6 @@ import { pickEnemyVariant } from '../../src/core/enemyVariant.ts';
 export default async function (ctx) {
   const { page, baseUrl, assert } = ctx;
   const { snap, frame, down, up, tap, count, boot, nearest, approach, waitQuiet } = makeKit(ctx);
-  const dist = (s) => Math.abs(nearest(s).x - s.player.x);
   const byId = (s, id) => s.enemies.find((e) => e.id === id);
   const VARIANTS = ['corcunda', 'rastejante', 'bruto'];
   const until = async (s0, pred, max, what) => {

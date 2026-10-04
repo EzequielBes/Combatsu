@@ -67,7 +67,6 @@ export default async function ({ page, baseUrl, assert }) {
   // não chega a tocá-la (nada de stagger). Por isso o player espera em cima da plataforma da linha 12 (x 256..416, topo em
   // y = 384; o chefe, com 56 px de altura, passa por baixo), à esquerda de onde o chefe pousou, e só desce quando a
   // investida já passou dele.
-  const PLATFORM = { left: 256, right: 416 };
   const onPlatform = (s) => s.player.y < 390;
 
   /**

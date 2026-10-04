@@ -4,7 +4,6 @@
 export default async function ({ page, baseUrl, assert }) {
   // Um passo interno do jogo (`step()` arredonda para cima em múltiplos de 1000/60 ms, FND-22): usado para
   // capturar a borda exata de `JustDown` sem passar do estado seguinte da conjuração.
-  const STEP_MS = 1000 / 60;
   const stepAndSnap = async (ms) =>
     page.evaluate((n) => {
       window.__game.step(n);

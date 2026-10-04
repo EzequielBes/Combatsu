@@ -9,7 +9,6 @@
 import { makeKit } from './fight-kit.mjs';
 
 const QUERY = 'enemyGuard=0&noshop=1';
-const FRAME_MS = 1000 / 60;
 
 export default async function (ctx) {
   const { assert, snap, frame, down, up, count, boot, nearest, approach, waitFor } = makeKit(ctx);
