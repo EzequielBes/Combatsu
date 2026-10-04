@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { easeInCubic, easeInOutCubic, easeOutBack, inbetween, shortestArc } from '../../src/game/art/rig/interpolate';
 import { PALETTE_KEYS } from '../../src/game/art/palette';
 import { rasterize } from '../../src/game/art/rig/rasterize';
-import { topRowOf } from '../../src/core/frameInvariants';
+import { isSingleComponent, topRowOf, touchesBottom } from '../../src/core/frameInvariants';
+import { RIG_GANCHO_FRAMES, RIG_GANCHO_POSES, RIG_GANCHO_SEQUENCE, RIG_GANCHO_SEQUENCE_POSES, RIG_GANCHO_STRIKE } from '../../src/game/art/rig/poses/ganchoAscendente';
+import { strikeToBody } from '../../src/core/strikePath';
+import { MOVES } from '../../src/data/moves';
+import { SIZE } from '../../src/game/textures';
+import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
 import { BONES, REST_ANGLES, aimLimb, makePose, measuredLength, solve, type BoneName, type JointName, type Pose } from '../../src/game/art/rig/skeleton';
 
 const JOINTS_REQUIRED: JointName[] = [
@@ -159,5 +164,72 @@ describe('recorte (EDG-01)', () => {
     const r = rasterize({ ...stanceAt(10), root: { x: 10, y: 28 } });
     expect(r.frame).toHaveLength(30);
     expect(r.clipped).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------- gancho ascendente pelo boneco (RIG-02, RIG-04..06)
+
+const RIG_NAMES = ['ganchoAscendente-wind', 'ganchoAscendente-hit', 'ganchoAscendente-recover'] as const;
+const ORIGIN_COL = PLAYER_ORIGIN.x * PLAYER_FRAME_W;
+const HAIR_TOP_IDLE = topRowOf(PLAYER_FRAMES['idle-0'], ['h', 'H', 'j'])!;
+const FRAME_ORIGIN = { originCol: ORIGIN_COL, rows: PLAYER_FRAME_H };
+const UPPERCUT_BOX = MOVES.ganchoAscendente.hitbox!;
+
+describe('frames do gancho ascendente pelo boneco', () => {
+  it.each(RIG_NAMES)('%s: 30 linhas x 32 colunas só com teclas da PALETTE (RIG-03)', (name) => {
+    const frame = RIG_GANCHO_FRAMES[name];
+    expect(frame).toHaveLength(30);
+    for (const row of frame) {
+      expect(row).toHaveLength(32);
+      for (const ch of row) expect(ch === '.' || PALETTE_KEYS.has(ch), `${name} tecla '${ch}'`).toBe(true);
+    }
+  });
+
+  it.each(RIG_NAMES)('%s: nenhum texel recortado e todo osso mede o comprimento definido (RIG-02)', (name) => {
+    const r = rasterize(RIG_GANCHO_POSES[name]);
+    expect(r.clipped, name).toBe(0);
+    for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - b.length), `${name} ${b.name}`).toBeLessThanOrEqual(0.5);
+  });
+
+  it.each(RIG_NAMES)('%s: os texels opacos formam um componente só, 8-conexo (RIG-04, POS-02)', (name) => {
+    expect(isSingleComponent(RIG_GANCHO_FRAMES[name]), name).toBe(true);
+  });
+
+  it('o hit tem texel opaco na última linha: o corpo toca o chão (RIG-05, POS-03)', () => {
+    expect(touchesBottom(RIG_GANCHO_FRAMES['ganchoAscendente-hit'])).toBe(true);
+  });
+
+  it('o pulso do hit é o ponto de golpe: texel de pele, dentro da hitbox + 4 px (RIG-06, POS-01)', () => {
+    const { col, row } = RIG_GANCHO_STRIKE;
+    expect('pPqx').toContain(RIG_GANCHO_FRAMES['ganchoAscendente-hit'][row][col]);
+    const p = strikeToBody({ col, row }, SIZE.player.h, FRAME_ORIGIN);
+    expect(Math.abs(p.x - UPPERCUT_BOX.offsetX), `x ${p.x}`).toBeLessThanOrEqual(UPPERCUT_BOX.width / 2 + 4);
+    expect(Math.abs(p.y - UPPERCUT_BOX.offsetY), `y ${p.y}`).toBeLessThanOrEqual(UPPERCUT_BOX.height / 2 + 4);
+  });
+
+  it('o ponto de golpe fica acima do topo do cabelo de idle-0 e 6 texels ou mais à frente da origem (RIG-06, POS-05, POS-10)', () => {
+    expect(HAIR_TOP_IDLE).toBe(7);
+    expect(ORIGIN_COL).toBe(10);
+    expect(RIG_GANCHO_STRIKE.row).toBeLessThan(HAIR_TOP_IDLE);
+    expect(RIG_GANCHO_STRIKE.col - ORIGIN_COL).toBeGreaterThanOrEqual(6);
+  });
+});
+
+describe('sequência do gancho ascendente (RIG-08)', () => {
+  it('tem pelo menos 8 quadros, todos de 30x32, sem recorte e de uma peça só', () => {
+    expect(RIG_GANCHO_SEQUENCE.length).toBeGreaterThanOrEqual(8);
+    for (const [i, r] of RIG_GANCHO_SEQUENCE.entries()) {
+      expect(r.frame, `quadro ${i}`).toHaveLength(30);
+      expect(r.clipped, `quadro ${i}`).toBe(0);
+      expect(isSingleComponent(r.frame), `quadro ${i}`).toBe(true);
+    }
+  });
+
+  it('o punho sobe do wind ao hit passando pelos quadros intermediários, com overshoot depois do hit', () => {
+    const y = RIG_GANCHO_SEQUENCE_POSES.map((p) => solve(p).wristNear.y);
+    const hit = solve(RIG_GANCHO_POSES['ganchoAscendente-hit']).wristNear.y;
+    const wind = solve(RIG_GANCHO_POSES['ganchoAscendente-wind']).wristNear.y;
+    expect(Math.max(...y)).toBeGreaterThan(wind - 0.01);
+    expect(Math.min(...y)).toBeLessThan(hit + 0.01);
   });
 });
