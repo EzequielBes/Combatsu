@@ -12,7 +12,14 @@ import { kicksFamily } from './families/kicks';
 import { locomotionFamily } from './families/locomotion';
 import { punchesFamily } from './families/punches';
 import { techFamily } from './families/tech';
-import { expandMove, type HdFamily, type HdFrameSpec, type HdMoveSpec, type StrikeLimb } from './frames';
+import {
+  expandMove,
+  type HandShape,
+  type HdFamily,
+  type HdFrameSpec,
+  type HdMoveSpec,
+  type StrikeLimb,
+} from './frames';
 import { makeKit, type HdStage, type Kit } from './kit';
 import { HD_COLORS } from './palette';
 import { HdCanvas, finish } from './raster';
@@ -39,6 +46,35 @@ export interface HdRender {
   strikes: Record<string, { col: number; row: number }>;
   /** Golpes com sequência HD. */
   moves: readonly string[];
+  /** Mãos de cada quadro, em px a partir do pé do corpo (x para a frente, y negativo para cima). */
+  anchors: Record<string, HdAnchors>;
+}
+
+/** Onde ficam as mãos num quadro: o centro de cada mão e a ponta dos dedos da mão de perto. */
+export interface HdAnchors {
+  near: Vec2;
+  far: Vec2;
+  tip: Vec2;
+}
+
+/** Do pulso à ponta de cada forma de mão, ao longo do antebraço (as medidas de `hand.ts`). */
+const TIP_LENGTH: Record<HandShape, number> = { fist: 4.3, open: 6.4, sign: 8.2, relaxed: 5.1 };
+
+/** Ponto a `len` texels além do pulso, na direção do antebraço, relativo ao pé do corpo. */
+function beyondWrist(elbow: Vec2, wrist: Vec2, len: number): Vec2 {
+  const d = Math.hypot(wrist.x - elbow.x, wrist.y - elbow.y) || 1;
+  return {
+    x: wrist.x + ((wrist.x - elbow.x) / d) * len - HD_STAGE.originCol,
+    y: wrist.y + ((wrist.y - elbow.y) / d) * len - HD_STAGE.h,
+  };
+}
+
+function anchorsOf(j: Joints, spec: HdFrameSpec): HdAnchors {
+  return {
+    near: beyondWrist(j.elbowNear, j.wristNear, 2),
+    far: beyondWrist(j.elbowFar, j.wristFar, 2),
+    tip: beyondWrist(j.elbowNear, j.wristNear, TIP_LENGTH[spec.hands?.near ?? 'fist']),
+  };
 }
 
 type Joints = Record<JointName, Vec2>;
@@ -106,11 +142,15 @@ export function renderHdPlayer(): HdRender {
     return d;
   };
   const frames: Record<string, Uint8Array> = {};
-  for (const [name, spec] of Object.entries(specs)) frames[name] = drawn(spec).pixels;
+  const anchors: HdRender['anchors'] = {};
+  for (const [name, spec] of Object.entries(specs)) {
+    frames[name] = drawn(spec).pixels;
+    anchors[name] = anchorsOf(drawn(spec).joints, spec);
+  }
   const strikes: HdRender['strikes'] = {};
   for (const [name, move] of Object.entries(moves)) {
     for (const key of [`${name}-wind`, `${name}-hit`])
       strikes[key] = strikeTexel(drawn(specs[key]).joints, move.strike);
   }
-  return { colors: HD_COLORS, frames, strikes, moves: Object.keys(moves) };
+  return { colors: HD_COLORS, frames, strikes, moves: Object.keys(moves), anchors };
 }

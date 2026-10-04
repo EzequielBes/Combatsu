@@ -76,6 +76,26 @@ export default async function (ctx) {
     `depois do gancho deveria voltar ao idle HD: ${s.player.sheet}/${s.player.frame}`,
   );
 
+  // O resto do conjunto: corrida, pulo, guarda e jab também saem da folha HD.
+  const hdWhile = async (label, keys, frames, prefix) => {
+    for (const k of keys) await down(k);
+    const seenHere = [];
+    for (let i = 0; i < frames; i++) {
+      s = await frame();
+      if (s.player.sheet === 'player-hd' && s.player.frame.startsWith(prefix)) seenHere.push(s.player.frame);
+    }
+    for (const k of keys) await up(k);
+    assert(
+      seenHere.length > 0,
+      `${label}: nenhum quadro ${prefix}* da folha HD (último ${s.player.sheet}/${s.player.frame})`,
+    );
+    s = await settle();
+  };
+  await hdWhile('corrida', ['KeyD'], 20, 'run-');
+  await hdWhile('guarda', ['KeyU'], 20, 'guard');
+  await hdWhile('jab', ['KeyJ'], 4, 'jab@');
+  await hdWhile('pulo', ['Space'], 12, 'jump-');
+
   assert(errors.length === 0, `erros na página: ${errors.join(' | ')}`);
   void snap;
 }

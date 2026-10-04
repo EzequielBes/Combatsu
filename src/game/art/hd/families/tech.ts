@@ -20,8 +20,8 @@ type Tip = readonly [ahead: number, up: number, len: number];
 /** Do pulso à ponta de cada forma de mão, ao longo do antebraço (as medidas de `hand.ts`). */
 const TIP = { fist: 4.3, open: 6.4, sign: 8.2 };
 
-/** Ponta dos dedos do Vermelho em cada fase (`fingertipOffsetPx` da arte antiga): [à frente, acima do chão]. */
-const RED_TIP = { sign: [18, 24], charge: [24, 28], release: [30, 24] } as const;
+/** Ponta dos dedos do Vermelho em cada fase, na altura do ombro do corpo HD: [à frente, acima do chão]. O orbe nasce aqui (`hdAnchors`). */
+const RED_TIP = { sign: [22, 39], charge: [26, 40], release: [32, 37] } as const;
 /** Centro da aura do punho do Divergente no selo e na carga (`FIST_OFFSET` de `DivergentFx`, a partir do pé). */
 const FIST_AURA = [22, 22] as const;
 /** Altura da linha do Desmantelar ao sair do corpo (o centro do corpo de colisão). */

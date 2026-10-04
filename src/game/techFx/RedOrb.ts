@@ -6,6 +6,8 @@ import { RedOrbState } from '../../core/redOrb';
 import type { Vec2 } from '../../core/hit';
 import { PALETTE } from '../art/palette';
 import { fingertipOffsetPx } from '../art/sprites/playerTech';
+import { HD_ON } from '../art/hd/flag';
+import { hdAnchors } from '../art/hd/sheet';
 import { RED_FX_COLORS } from './redPalette';
 import { DISTORT_PERIOD_MS, FRAME_MS, REPULSE_MS, TRAIL_EVERY_MS, TRAIL_FADE_MS } from './redTiming';
 import { TEX } from '../textures';
@@ -111,6 +113,9 @@ export class RedOrbFx {
    * um frame sign/charge/release do Vermelho (transição), usa o do `vermelho-charge`.
    */
   fingertip(playerX: number, playerY: number, facing: 1 | -1, frameName: string = FALLBACK_FINGERTIP_FRAME): Vec2 {
+    // `?hd=1`: a ponta dos dedos sai do quadro HD (o braço do corpo novo fica mais alto que o da arte antiga).
+    const hd = HD_ON ? (hdAnchors(frameName) ?? hdAnchors(FALLBACK_FINGERTIP_FRAME)) : undefined;
+    if (hd) return { x: playerX + hd.tip.x * facing, y: playerY + hd.tip.y };
     let offset: { x: number; y: number };
     try {
       offset = fingertipOffsetPx(frameName, facing);

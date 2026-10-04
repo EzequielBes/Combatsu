@@ -51,7 +51,7 @@ describe('HD-01: a folha player-hd tem os quadros do contrato', () => {
   it('todo índice de cor existe na tabela e a paleta fica em até 64 cores', () => {
     expect(HD_COLORS.length - 1).toBeLessThanOrEqual(64);
     for (const key of ALL_FRAMES) {
-      for (const idx of render.frames[key]) expect(idx).toBeLessThan(HD_COLORS.length);
+      expect(Math.max(...render.frames[key]), key).toBeLessThan(HD_COLORS.length);
     }
   });
 });
@@ -106,6 +106,6 @@ describe('HD-03: o gancho bate acima e à frente da cabeça, dentro da hitbox', 
   });
 
   it('frame sem ponto de golpe devolve undefined', () => {
-    expect(hdStrike('jab-hit')).toBeUndefined();
+    expect(hdStrike('idle-0')).toBeUndefined();
   });
 });
