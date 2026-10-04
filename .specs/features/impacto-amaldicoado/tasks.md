@@ -115,8 +115,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `ART_SCALE`, e a origem do frame passada como parâmetro (sem importar a arte)
 **Requirement**: TRL-03, TRL-04, TRL-05, POS-01
 **Done when**:
-- [ ] Facing −1 espelha em volta da coluna de origem; teste com os dois lados.
-- [ ] `trailStyle('light')` = 4 px/140 ms; `trailStyle('heavy')` = 8 px/220 ms.
+- [x] Facing −1 espelha em volta da coluna de origem; teste com os dois lados.
+- [x] `trailStyle('light')` = 4 px/140 ms; `trailStyle('heavy')` = 8 px/220 ms.
 **Tests**: unit
 **Gate**: quick
 
