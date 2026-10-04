@@ -45,6 +45,8 @@ export interface Tuning {
   midFist: { ahead: number; up: number };
   /** A cabeça cobre o braço de perto nos quadros do golpe (ver `RasterOptions.headOverNearArm`). */
   headOverNearArm: boolean;
+  /** Tornozelos do idle, à frente (perto) e atrás (longe) do eixo. */
+  idleStance: { near: number; far: number };
 }
 
 export const DEFAULT_TUNING: Tuning = {
@@ -58,6 +60,7 @@ export const DEFAULT_TUNING: Tuning = {
   hitStride: 3.4,
   midFist: { ahead: 0.62, up: 0.5 },
   headOverNearArm: false,
+  idleStance: { near: 2.8, far: -2.6 },
 };
 
 export interface UppercutSet {
@@ -78,7 +81,7 @@ export interface UppercutSet {
 }
 
 /** Idle: em pé, braços soltos junto ao corpo, pés a meio passo. */
-export function idleFor(body: Proportions, frame: RigFrame = RIG_FRAME_32): Pose {
+export function idleFor(body: Proportions, frame: RigFrame = RIG_FRAME_32, stance = DEFAULT_TUNING.idleStance): Pose {
   const L = body.thigh + body.shin;
   const a = body.upperArm + body.foreArm;
   const cx = frame.originCol;
@@ -90,8 +93,8 @@ export function idleFor(body: Proportions, frame: RigFrame = RIG_FRAME_32): Pose
     handScale: 0.6,
     armNear: { rel: { x: -0.1, y: a * 0.94 }, bend: -1 },
     armFar: { rel: { x: 0.5, y: a * 0.95 }, bend: -1 },
-    legNear: { ankle: { x: cx + 2.8, y: g }, foot: 90 },
-    legFar: { ankle: { x: cx - 2.6, y: g }, foot: 90 },
+    legNear: { ankle: { x: cx + stance.near, y: g }, foot: 90 },
+    legFar: { ankle: { x: cx + stance.far, y: g }, foot: 90 },
   });
 }
 
@@ -190,7 +193,7 @@ export function uppercutFor(body: Proportions, tune: Partial<Tuning> = {}, frame
   return {
     body,
     frame,
-    idle: idleFor(body, frame),
+    idle: idleFor(body, frame, t.idleStance),
     guard,
     wind,
     mid,
