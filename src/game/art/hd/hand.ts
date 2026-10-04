@@ -1,6 +1,6 @@
 /*
- * Mãos do player HD, no sistema local da mão: origem no pulso, `u` segue o antebraço e `f` atravessa a mão. Três
- * formas: punho fechado, mão aberta (palma, guarda aberta, faca de mão) e o selo de dois dedos das técnicas.
+ * Mãos do player HD, no sistema local da mão: origem no pulso, `u` segue o antebraço e `f` atravessa a mão. Quatro
+ * formas: punho fechado, mão aberta (palma, guarda aberta, faca de mão), o selo de dois dedos das técnicas e a mão solta.
  * Poucos tons, para ler limpo a 2 px por texel. Puro, sem `phaser`.
  */
 import type { Vec2 } from '../rig/skeleton';
@@ -65,7 +65,18 @@ function paintSign(ctx: Ctx): void {
   c.paint(inLocal(hand, localRect(-1.8, 0.4, 3.6, 4.6)), MAT.skin, part, { onlyOn: part, flat: base - 1 });
 }
 
-const PAINTERS: Record<HandShape, (ctx: Ctx) => void> = { fist: paintFist, open: paintOpen, sign: paintSign };
+/** Mão solta: menor que a aberta, os dedos meio dobrados e sem tensão, a ponta em sombra. */
+function paintRelaxed({ c, hand, part, base }: Ctx): void {
+  c.paint(inLocal(hand, localEllipse(0, 2.2, 2, 2.9)), MAT.skin, part, { flat: base });
+  c.paint(inLocal(hand, localRect(-2, 2, 3.6, 5.2)), MAT.skin, part, { onlyOn: part, flat: base - 1 });
+}
+
+const PAINTERS: Record<HandShape, (ctx: Ctx) => void> = {
+  fist: paintFist,
+  open: paintOpen,
+  sign: paintSign,
+  relaxed: paintRelaxed,
+};
 
 /** Pinta a mão na ponta do antebraço (do cotovelo ao pulso), na forma pedida. */
 export function paintHand(c: HdCanvas, wrist: Vec2, elbow: Vec2, part: number, far: boolean, shape: HandShape): void {

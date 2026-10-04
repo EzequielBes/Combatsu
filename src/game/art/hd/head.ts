@@ -8,8 +8,11 @@ import { MAT } from './palette';
 import type { HdCanvas, Normal } from './raster';
 import { boxed, domeShade, inLocal, localEllipse, localRect, localTri, type Local, type LocalShape } from './shapes';
 
-/** Expressão: `focus` (idle, concentrado) ou `effort` (golpe: sobrancelha baixa e boca aberta). */
-export type Expression = 'focus' | 'effort';
+/**
+ * Expressão: `focus` (idle, concentrado), `effort` (golpe: sobrancelha baixa e boca aberta) ou `pain` (levando golpe:
+ * olho fechado numa linha, sobrancelha caída para fora e os dentes cerrados).
+ */
+export type Expression = 'focus' | 'effort' | 'pain';
 
 type Pt = readonly [number, number];
 
@@ -141,42 +144,70 @@ function paintHair(c: HdCanvas, l: Local, part: number, spikes: readonly Spike[]
   }
 }
 
+/** O que muda no rosto em cada expressão: a abertura do olho, a sobrancelha e a boca. */
+interface Face {
+  /** Linha de baixo e de cima do olho. */
+  low: number;
+  top: number;
+  /** Olho fechado: só a linha da pálpebra, sem branco. */
+  closed?: boolean;
+  /** Brilho na íris (só com o olho bem aberto). */
+  shine?: boolean;
+  /** Texels de pele entre o olho e a sobrancelha, inclinação dela (positiva desce para o nariz) e o tom. */
+  browGap: number;
+  browSlope: number;
+  browTone: number;
+}
+
+const FACES: Record<Expression, Face> = {
+  focus: { low: 7.4, top: 9.4, shine: true, browGap: 1, browSlope: 0.12, browTone: 1 },
+  effort: { low: 7.6, top: 8.6, browGap: 0, browSlope: 0.4, browTone: 0 },
+  pain: { low: 7.6, top: 8.6, closed: true, browGap: 0.6, browSlope: -0.3, browTone: 0 },
+};
+
+/** Olho: branco atrás e íris escura na frente (o olhar vai para o alvo); fechado, só a linha da pálpebra. */
+function paintEye(c: HdCanvas, l: Local, part: number, face: Face): void {
+  const on = { onlyOn: part };
+  if (face.closed) {
+    c.paint(inLocal(l, localRect(2.5, 5.5, face.low, face.top)), MAT.hair, part, { ...on, flat: 0 });
+    return;
+  }
+  c.paint(inLocal(l, localRect(2.5, 5.5, face.low, face.top)), MAT.white, part, { ...on, flat: 3 });
+  c.paint(inLocal(l, localRect(4, 5.5, face.low, face.top)), MAT.hair, part, { ...on, flat: 0 });
+  if (face.shine) c.paint(inLocal(l, localRect(4.75, 5.5, 8.4, face.top)), MAT.white, part, { ...on, flat: 4 });
+}
+
+/** Boca: linha fechada no foco; aberta com os dentes em cima no esforço; dentes cerrados na dor. */
+function paintMouth(c: HdCanvas, l: Local, part: number, expr: Expression): void {
+  const on = { onlyOn: part };
+  if (expr === 'focus') {
+    c.paint(inLocal(l, localRect(2.6, 4.6, 3.4, 4.4)), MAT.skin, part, { ...on, flat: 1 });
+    return;
+  }
+  c.paint(inLocal(l, localRect(2.2, 3.9, 2.8, 4.8)), MAT.skin, part, { ...on, flat: 0 });
+  const teeth = expr === 'pain' ? localRect(2.2, 3.9, 2.8, 3.8) : localRect(2.6, 3.9, 3.8, 4.8);
+  c.paint(inLocal(l, teeth), MAT.white, part, { ...on, flat: 3 });
+}
+
 function paintFeatures(c: HdCanvas, l: Local, part: number, expr: Expression): void {
-  const effort = expr === 'effort';
+  const face = FACES[expr];
   const on = { onlyOn: part };
   // Orelha: atrás do rosto, com a sombra de dentro.
   c.paint(inLocal(l, localEllipse(-2, 7.3, 1.5, 2.1)), MAT.skin, part, { ...on, flat: 3 });
   c.paint(inLocal(l, localEllipse(-1.9, 7.3, 0.7, 1.2)), MAT.skin, part, { ...on, flat: 1 });
-  // Olho: branco atrás e íris escura na frente (o olhar vai para o alvo). No foco a íris tem 2x2 com um brilho; no
-  // esforço o olho estreita para uma linha, a íris fica num texel e a sobrancelha pesa por cima.
-  const top = effort ? 8.6 : 9.4;
-  const low = effort ? 7.6 : 7.4;
-  c.paint(inLocal(l, localRect(2.5, 5.5, low, top)), MAT.white, part, { ...on, flat: 3 });
-  c.paint(inLocal(l, localRect(4, 5.5, low, top)), MAT.hair, part, { ...on, flat: 0 });
-  if (!effort) c.paint(inLocal(l, localRect(4.75, 5.5, 8.4, top)), MAT.white, part, { ...on, flat: 4 });
-  const brow = top + (effort ? 0 : 1);
-  c.paint(
-    inLocal(
-      l,
-      boxed(
-        (f, u) => {
-          const base = brow + (5.8 - f) * (effort ? 0.4 : 0.12);
-          return f >= 2 && f <= 6 && u >= base && u <= base + 1 ? { x: 0, y: 0, z: 1 } : null;
-        },
-        [1.5, 6.5, 7, 13.5],
-      ),
-    ),
-    MAT.hair,
-    part,
-    { ...on, flat: effort ? 0 : 1 },
+  paintEye(c, l, part, face);
+  // Sobrancelha: no foco deixa uma linha de pele acima do olho; no esforço desce sobre ele, pesada; na dor levanta
+  // do lado do nariz.
+  const brow = face.top + face.browGap;
+  const line = boxed(
+    (f, u) => {
+      const base = brow + (5.8 - f) * face.browSlope;
+      return f >= 2 && f <= 6 && u >= base && u <= base + 1 ? { x: 0, y: 0, z: 1 } : null;
+    },
+    [1.5, 6.5, 7, 13.5],
   );
-  // Boca: linha fechada no foco; aberta, com a fileira de dentes em cima, no esforço.
-  if (effort) {
-    c.paint(inLocal(l, localRect(2.2, 3.9, 2.8, 4.8)), MAT.skin, part, { ...on, flat: 0 });
-    c.paint(inLocal(l, localRect(2.6, 3.9, 3.8, 4.8)), MAT.white, part, { ...on, flat: 3 });
-  } else {
-    c.paint(inLocal(l, localRect(2.6, 4.6, 3.4, 4.4)), MAT.skin, part, { ...on, flat: 1 });
-  }
+  c.paint(inLocal(l, line), MAT.hair, part, { ...on, flat: face.browTone });
+  paintMouth(c, l, part, expr);
 }
 
 /** Pinta a cabeça inteira na parte `part`, no sistema local `l` (origem na junta do pescoço). */

@@ -8,8 +8,11 @@ import type { Pose } from '../rig/skeleton';
 import type { Expression } from './head';
 import type { Kit } from './kit';
 
-/** Forma da mão: punho fechado, mão aberta (palma, guarda aberta) ou o selo de dois dedos das técnicas. */
-export type HandShape = 'fist' | 'open' | 'sign';
+/**
+ * Forma da mão: punho fechado, mão aberta (palma, guarda aberta), o selo de dois dedos das técnicas ou a mão solta,
+ * com os dedos caídos (atordoado, levando golpe).
+ */
+export type HandShape = 'fist' | 'open' | 'sign' | 'relaxed';
 
 export interface Hands {
   near?: HandShape;
