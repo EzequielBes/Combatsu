@@ -45,24 +45,25 @@ export function spinKick(k: Kit, t: KickKit): HdMoveSpec {
   const hit = (over: number) =>
     k.pose({
       hip: t.hip(4 + over, 0.5),
-      spine: 232 + over * 6,
-      neck: -34,
-      armNear: t.arm(-0.75, 0.55 - over * 0.2, 1),
-      armFar: t.arm(0.5, 0.75),
+      spine: 224 + over * 4,
+      neck: -30,
+      armNear: t.arm(-0.7, -0.1, 1),
+      armFar: t.arm(0.45, 0.6),
       legNear: t.plantNear(0, 1.5 + over),
-      legFar: t.leg(29 + over * 2, 33 - over * 8, 105),
+      legFar: t.leg(30 + over * 2, 34 - over * 6, 105),
     });
   return {
     strike: 'footFar',
     farFront: { leg: true },
+    expr: 'shout',
     wind: k.pose({
-      hip: t.hip(2, 6),
-      spine: 150,
-      neck: 30,
-      armNear: t.arm(-0.3, 0.5, 1),
-      armFar: t.arm(-0.1, 0.6, 1),
+      hip: t.hip(0, 7),
+      spine: 168,
+      neck: 8,
+      armNear: t.arm(0.35, 0.1, -1),
+      armFar: t.arm(0.4, 0.2),
       legNear: t.plantNear(),
-      legFar: t.plantFar(8, 1.5),
+      legFar: t.plantFar(6, 2),
     }),
     mid: k.pose({
       hip: t.hip(3, 2),
@@ -94,7 +95,7 @@ export function sweep(k: Kit, t: KickKit): HdMoveSpec {
     k.pose({
       hip: t.hip(-2 + over, 18.5),
       spine: 230 + over * 4,
-      neck: -40,
+      neck: -55,
       armNear: t.armTo(-17, 2.5, 1),
       armFar: t.arm(0.45, 0.1),
       legNear: t.leg(27 + over * 2.5, 4.4, 100),
@@ -142,21 +143,22 @@ export function sweep(k: Kit, t: KickKit): HdMoveSpec {
 export function chargedKick(k: Kit, t: KickKit): HdMoveSpec {
   const hit = (over: number) =>
     k.pose({
-      hip: t.hip(7 + over * 2, 1),
-      spine: 238 + over * 4,
-      neck: -44,
+      hip: t.hip(9 + over * 2, 0),
+      spine: 220 + over * 4,
+      neck: -36,
       armNear: t.arm(-0.8, 0.35, 1),
       armFar: t.arm(0.3, 0.3),
-      legNear: t.leg(36 + over * 2, 31, 168),
-      legFar: t.plantFar(5 + over * 2, 3),
+      legNear: t.leg(37 + over * 2, 30, 168),
+      legFar: t.plantFar(6 + over * 2, 3.5),
     });
   return {
     strike: 'footNear',
+    expr: 'shout',
     wind: k.pose({
       hip: t.hip(-7, 10),
-      spine: 146,
-      neck: 26,
-      armNear: t.arm(0.6, 0.3),
+      spine: 150,
+      neck: 24,
+      armNear: t.arm(-0.3, 0.5, 1),
       armFar: t.arm(0.5, 0.1),
       legNear: t.leg(4, 22, 70),
       legFar: t.plantFar(),

@@ -11,13 +11,13 @@ import { chargedKick, kickKit, spinKick, sweep, type KickKit } from './kicks2';
 function frontKick(k: Kit, t: KickKit): HdMoveSpec {
   const hit = (over: number) =>
     k.pose({
-      hip: t.hip(-2.5 + over * 1.5, 3),
-      spine: 202 + over * 3,
-      neck: -16,
+      hip: t.hip(2 + over, 2),
+      spine: 194 + over * 2,
+      neck: -10,
       armNear: t.arm(-0.5, 0.7, 1),
       armFar: t.arm(0.4, -0.05),
-      legNear: t.leg(26 + over * 2, 29 + over, 125),
-      legFar: t.plantFar(0, over),
+      legNear: t.leg(28 + over * 2, 36 + over, 120),
+      legFar: t.plantFar(2 + over, 1 + over),
     });
   return {
     strike: 'footNear',
@@ -59,11 +59,11 @@ function highKick(k: Kit, t: KickKit): HdMoveSpec {
   const hit = (over: number) =>
     k.pose({
       hip: t.hip(-2 + over, -1.5),
-      spine: 214 + over * 4,
-      neck: -26,
+      spine: 208 + over * 4,
+      neck: -20,
       armNear: t.arm(-0.7, 0.6, 1),
       armFar: t.arm(0.45, 0.25),
-      legNear: t.leg(23 + over, 42 + over * 2, 130),
+      legNear: t.leg(22 + over, 44 + over * 2, 130),
       legFar: t.plantFar(1, 2),
     });
   return {
@@ -105,12 +105,12 @@ function highKick(k: Kit, t: KickKit): HdMoveSpec {
 function kneeStrike(k: Kit, t: KickKit): HdMoveSpec {
   const hit = (over: number) =>
     k.pose({
-      hip: t.hip(5 + over, 0.5 - over),
-      spine: 198 + over * 3,
-      neck: -8,
-      armNear: t.armTo(11, 44 - over * 2),
-      armFar: t.armTo(14, 46 - over * 2),
-      legNear: t.leg(18, 21 + over * 2, 30),
+      hip: t.hip(6 + over, 0.5),
+      spine: 192 + over * 2,
+      neck: -6,
+      armNear: t.armTo(17, 31 - over * 2),
+      armFar: t.armTo(20, 33 - over * 2),
+      legNear: t.leg(18, 24 + over * 2, 30),
       legFar: t.plantFar(4, 2 + over * 0.5),
     });
   return {
@@ -129,8 +129,8 @@ function kneeStrike(k: Kit, t: KickKit): HdMoveSpec {
       hip: t.hip(2.5, 2),
       spine: 180,
       neck: 4,
-      armNear: t.armTo(17, 45),
-      armFar: t.armTo(20, 46),
+      armNear: t.armTo(18, 40),
+      armFar: t.armTo(21, 42),
       legNear: t.leg(9, 13, 30),
       legFar: t.plantFar(2, 1),
     }),
@@ -153,13 +153,13 @@ function kneeStrike(k: Kit, t: KickKit): HdMoveSpec {
 function pushKick(k: Kit, t: KickKit): HdMoveSpec {
   const hit = (over: number) =>
     k.pose({
-      hip: t.hip(0 + over * 2, 2.5),
-      spine: 212 + over * 3,
-      neck: -24,
-      armNear: t.arm(-0.6, 0.65, 1),
-      armFar: t.arm(0.35, 0.1),
-      legNear: t.leg(27 + over * 2.5, 23, 178),
-      legFar: t.plantFar(over * 2, 1 + over),
+      hip: t.hip(3 + over * 2, 2),
+      spine: 200 + over * 2,
+      neck: -14,
+      armNear: t.arm(-0.6, 0.5, 1),
+      armFar: t.arm(0.3, 0.2),
+      legNear: t.leg(33 + over * 2.5, 23, 178),
+      legFar: t.plantFar(3 + over * 2, 1 + over),
     });
   return {
     strike: 'footNear',
