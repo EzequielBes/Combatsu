@@ -71,7 +71,7 @@ export const POSE_HIT: Pose = build({
 export const POSE_RECOVER: Pose = build({
   hip: { x: 10.2, y: 22.4 },
   spine: 180,
-  armNear: { to: { x: 17, y: 8.5 }, bend: -1 },
+  armNear: { to: { x: 16.8, y: 9.6 }, bend: -1 },
   armFar: { to: { x: 13, y: 15.8 }, bend: -1 },
   legNear: { ankle: { x: 13.4, y: 28 }, foot: 90 },
   legFar: { ankle: { x: 6, y: 28 }, foot: 90 },
