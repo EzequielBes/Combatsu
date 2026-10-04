@@ -217,68 +217,68 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| TRL-01 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-02 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-03 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-04 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-05 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-06 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-07 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-08 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-09 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| TRL-10 | P1: Rastro de energia amaldiçoada | Design | Pending |
-| IMP-01 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-02 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-03 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-04 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-05 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-06 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-07 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-08 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-09 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-10 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-11 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-12 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-13 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-14 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-15 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| IMP-16 | P1: Impacto amaldiçoado em camadas | Design | Pending |
-| POS-01 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-02 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-03 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-04 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-05 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-06 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-07 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-08 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-09 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| POS-10 | P1: Poses com corpo inteiro e alcance real | Design | Pending |
-| RCT-01 | P2: Reação coreografada do inimigo | Design | Pending |
-| RCT-02 | P2: Reação coreografada do inimigo | Design | Pending |
-| RCT-03 | P2: Reação coreografada do inimigo | Design | Pending |
-| RCT-04 | P2: Reação coreografada do inimigo | Design | Pending |
-| RCT-05 | P2: Reação coreografada do inimigo | Design | Pending |
-| RCT-06 | P2: Reação coreografada do inimigo | Design | Pending |
-| RCT-07 | P2: Reação coreografada do inimigo | Design | Pending |
-| RCT-08 | P2: Reação coreografada do inimigo | Design | Pending |
-| RCT-09 | P2: Reação coreografada do inimigo | Design | Pending |
-| CAM-01 | P2: Câmera que reage | Design | Pending |
-| CAM-02 | P2: Câmera que reage | Design | Pending |
-| CAM-03 | P2: Câmera que reage | Design | Pending |
-| CAM-04 | P2: Câmera que reage | Design | Pending |
-| CAM-05 | P2: Câmera que reage | Design | Pending |
-| CAM-06 | P2: Câmera que reage | Design | Pending |
-| CAM-07 | P2: Câmera que reage | Design | Pending |
-| CAM-08 | P2: Câmera que reage | Design | Pending |
-| FOC-01 | P3: Linhas de foco de anime | Design | Pending |
-| FOC-02 | P3: Linhas de foco de anime | Design | Pending |
-| EDG-01 | Edge Cases | Design | Pending |
-| EDG-02 | Edge Cases | Design | Pending |
-| EDG-03 | Edge Cases | Design | Pending |
-| EDG-04 | Edge Cases | Design | Pending |
-| EDG-05 | Edge Cases | Design | Pending |
+| TRL-01 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-02 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-03 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-04 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-05 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-06 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-07 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-08 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-09 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| TRL-10 | P1: Rastro de energia amaldiçoada | Design | Verified |
+| IMP-01 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-02 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-03 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-04 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-05 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-06 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-07 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-08 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-09 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-10 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-11 | P1: Impacto amaldiçoado em camadas | Design | Partial |
+| IMP-12 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-13 | P1: Impacto amaldiçoado em camadas | Design | Partial |
+| IMP-14 | P1: Impacto amaldiçoado em camadas | Design | Partial |
+| IMP-15 | P1: Impacto amaldiçoado em camadas | Design | Verified |
+| IMP-16 | P1: Impacto amaldiçoado em camadas | Design | Partial |
+| POS-01 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-02 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-03 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-04 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-05 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-06 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-07 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-08 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-09 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| POS-10 | P1: Poses com corpo inteiro e alcance real | Design | Verified |
+| RCT-01 | P2: Reação coreografada do inimigo | Design | Verified |
+| RCT-02 | P2: Reação coreografada do inimigo | Design | Verified |
+| RCT-03 | P2: Reação coreografada do inimigo | Design | Verified |
+| RCT-04 | P2: Reação coreografada do inimigo | Design | Partial |
+| RCT-05 | P2: Reação coreografada do inimigo | Design | Verified |
+| RCT-06 | P2: Reação coreografada do inimigo | Design | Verified |
+| RCT-07 | P2: Reação coreografada do inimigo | Design | Verified |
+| RCT-08 | P2: Reação coreografada do inimigo | Design | Verified |
+| RCT-09 | P2: Reação coreografada do inimigo | Design | Verified |
+| CAM-01 | P2: Câmera que reage | Design | Verified |
+| CAM-02 | P2: Câmera que reage | Design | Verified |
+| CAM-03 | P2: Câmera que reage | Design | Verified |
+| CAM-04 | P2: Câmera que reage | Design | Verified |
+| CAM-05 | P2: Câmera que reage | Design | Verified |
+| CAM-06 | P2: Câmera que reage | Design | Verified |
+| CAM-07 | P2: Câmera que reage | Design | Verified |
+| CAM-08 | P2: Câmera que reage | Design | Verified |
+| FOC-01 | P3: Linhas de foco de anime | Design | Verified |
+| FOC-02 | P3: Linhas de foco de anime | Design | Verified |
+| EDG-01 | Edge Cases | Design | Verified |
+| EDG-02 | Edge Cases | Design | Verified |
+| EDG-03 | Edge Cases | Design | Verified |
+| EDG-04 | Edge Cases | Design | Verified |
+| EDG-05 | Edge Cases | Design | Verified |
 
-**Coverage:** 64 total, 0 mapped to tasks, 64 unmapped ⚠️ (tasks ainda não criadas)
+**Coverage:** 60 total, 55 verified, 5 partial (IMP-11, IMP-13, IMP-14, IMP-16, RCT-04: adaptador sem teste que discrimine, só código; ver `validation.md`)
 
 ---
 

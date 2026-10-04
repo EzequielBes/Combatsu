@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 62,
+  "next_id": 64,
   "lessons": [
     {
       "id": "L-001",
@@ -1110,6 +1110,42 @@
       ],
       "created": "2026-10-04T03:05:10Z",
       "last_seen": "2026-10-04T03:05:10Z"
+    },
+    {
+      "id": "L-062",
+      "key": "surviving_mutant::when a fix changes a snapshot flag computed from earlier state add a smoke case for the exact sequence that exposed it since the fix alone leaves the old rule alive",
+      "text": "When a fix changes a snapshot flag computed from earlier state, add a smoke case for the exact sequence that exposed it, since the fix alone leaves the old rule alive.",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "impacto-amaldicoado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M4/M5/M6 TestScene.ts:1422 (smoke)"
+      ],
+      "created": "2026-10-04T03:16:29Z",
+      "last_seen": "2026-10-04T03:16:29Z"
+    },
+    {
+      "id": "L-063",
+      "key": "surviving_mutant::test the cancel branch of a phase guard in the live smoke since removing the guard keeps the happy path smoke green",
+      "text": "Test the cancel branch of a phase guard in the live smoke, since removing the guard keeps the happy-path smoke green.",
+      "signal": "surviving_mutant",
+      "scope": "adapters",
+      "status": "candidate",
+      "features": [
+        "impacto-amaldicoado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M2 Player.ts:1133 (adapters)"
+      ],
+      "created": "2026-10-04T03:16:30Z",
+      "last_seen": "2026-10-04T03:16:30Z"
     }
   ]
 }
