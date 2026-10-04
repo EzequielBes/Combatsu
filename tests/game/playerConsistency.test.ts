@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { PLAYER_ANIMS, PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_TOP_PAD, clippedOf, composeWithStats, type Grid } from '../../src/game/art/sprites/player';
+import {
+  PLAYER_ANIMS,
+  PLAYER_FRAMES,
+  PLAYER_FRAME_H,
+  PLAYER_TOP_PAD,
+  clippedOf,
+  composeWithStats,
+  type Grid,
+} from '../../src/game/art/sprites/player';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
 import { PLAYER_TECH_FRAMES, WRIST_GRIP, WRIST_GRIP_AT } from '../../src/game/art/sprites/playerTech';
 
@@ -49,7 +57,14 @@ function componentSizes(rows: readonly string[]): number[] {
 function uniformCenter(rows: readonly string[]): number {
   let sum = 0;
   let count = 0;
-  rows.forEach((row) => [...row].forEach((c, x) => { if (c === 'n' || c === 'N' || c === 'o') { sum += x; count++; } }));
+  rows.forEach((row) =>
+    [...row].forEach((c, x) => {
+      if (c === 'n' || c === 'N' || c === 'o') {
+        sum += x;
+        count++;
+      }
+    }),
+  );
   return sum / count;
 }
 
@@ -101,10 +116,14 @@ describe('golpes sem salto, perna solta ou corte (SPF-01..04)', () => {
     expect(Math.abs(uniformCenter(frame('chuteGiratorio-hit')) - 10)).toBeLessThanOrEqual(4);
   });
 
-  it.each(['chuteGiratorio', 'chuteCarregado'])('%s: o centro do uniforme muda até 8 texels entre fases (SPF-03)', (move) => {
-    const seq = ['wind', 'hit', 'recover'].map((p) => uniformCenter(frame(`${move}-${p}`)));
-    for (let i = 1; i < seq.length; i++) expect(Math.abs(seq[i] - seq[i - 1]), `${move} fase ${i}`).toBeLessThanOrEqual(SPF03_MAX);
-  });
+  it.each(['chuteGiratorio', 'chuteCarregado'])(
+    '%s: o centro do uniforme muda até 8 texels entre fases (SPF-03)',
+    (move) => {
+      const seq = ['wind', 'hit', 'recover'].map((p) => uniformCenter(frame(`${move}-${p}`)));
+      for (let i = 1; i < seq.length; i++)
+        expect(Math.abs(seq[i] - seq[i - 1]), `${move} fase ${i}`).toBeLessThanOrEqual(SPF03_MAX);
+    },
+  );
 });
 
 describe('pouso e pulo (SPF-01, SPF-02, SPF-05)', () => {
@@ -125,7 +144,10 @@ describe('mão do pulso no tom do braço de trás (SPF-06)', () => {
   it('nenhum pixel da região WRIST_GRIP no vermelho-charge usa a pele clara p', () => {
     const rows = frame('vermelho-charge');
     const region = WRIST_GRIP.map((_, dy) =>
-      rows[PLAYER_TOP_PAD + WRIST_GRIP_AT.y + dy].slice(FRAME_PAD + WRIST_GRIP_AT.x, FRAME_PAD + WRIST_GRIP_AT.x + WRIST_GRIP[0].length),
+      rows[PLAYER_TOP_PAD + WRIST_GRIP_AT.y + dy].slice(
+        FRAME_PAD + WRIST_GRIP_AT.x,
+        FRAME_PAD + WRIST_GRIP_AT.x + WRIST_GRIP[0].length,
+      ),
     );
     expect(region.join('')).not.toContain('p');
     // A região tem a mão de verdade (não está vazia): pelo menos um pixel de pele da mão de trás (P).
@@ -165,7 +187,6 @@ describe('frames do abaixar e dos Contras: tronco alinhado e pés no chão (CNT-
   it.each(NEW_FRAMES)('%s: os pés tocam o chão (a última linha opaca é a última da grade)', (name) => {
     expect(lastOpaqueRow(frame(name)), name).toBe(PLAYER_FRAME_H - 1);
   });
-
 });
 
 describe('invariantes em todas as folhas do player (SPF-01, SPF-02, SPF-03)', () => {
@@ -186,15 +207,23 @@ describe('invariantes em todas as folhas do player (SPF-01, SPF-02, SPF-03)', ()
   /** Sequências comparadas: as animações, wind -> hit -> recover de cada golpe e sign -> charge -> release -> recover de cada técnica. */
   const sequences: Record<string, string[]> = {};
   for (const [anim, def] of Object.entries(PLAYER_ANIMS)) sequences[`anim ${anim}`] = [...def.frames];
-  for (const phases of [['wind', 'hit', 'recover'], ['sign', 'charge', 'release', 'recover']]) {
-    const groups = new Set(names.filter((n) => n.endsWith(`-${phases[0]}`)).map((n) => n.slice(0, -phases[0].length - 1)));
+  for (const phases of [
+    ['wind', 'hit', 'recover'],
+    ['sign', 'charge', 'release', 'recover'],
+  ]) {
+    const groups = new Set(
+      names.filter((n) => n.endsWith(`-${phases[0]}`)).map((n) => n.slice(0, -phases[0].length - 1)),
+    );
     for (const g of groups) sequences[`${phases[0]} ${g}`] = phases.map((p) => `${g}-${p}`).filter((n) => n in ALL);
   }
 
-  it.each(Object.entries(sequences))('%s: o centro do uniforme muda até 8 texels entre frames seguidos (SPF-03)', (_label, seq) => {
-    for (let i = 1; i < seq.length; i++) {
-      const delta = Math.abs(uniformCenter(frame(seq[i])) - uniformCenter(frame(seq[i - 1])));
-      expect(delta, `${seq[i - 1]} -> ${seq[i]}`).toBeLessThanOrEqual(SPF03_MAX);
-    }
-  });
+  it.each(Object.entries(sequences))(
+    '%s: o centro do uniforme muda até 8 texels entre frames seguidos (SPF-03)',
+    (_label, seq) => {
+      for (let i = 1; i < seq.length; i++) {
+        const delta = Math.abs(uniformCenter(frame(seq[i])) - uniformCenter(frame(seq[i - 1])));
+        expect(delta, `${seq[i - 1]} -> ${seq[i]}`).toBeLessThanOrEqual(SPF03_MAX);
+      }
+    },
+  );
 });

@@ -28,7 +28,16 @@ export const HEAD_MEDIUM: HeadSprite = {
 
 /** Cabeça de 8 linhas (inter): a do golpe com as mechas e o rosto comprimidos. */
 export const HEAD_LARGE: HeadSprite = {
-  grid: ['...k..k..k..', '..kHk.kHkjk.', '.kjHjkjHjHjk', 'kjhhHjhhhppk', 'khhhxPpwbppk', 'khhhxPppppk.', '.khhxPpbbpk.', '.knnNkxPPxk.'],
+  grid: [
+    '...k..k..k..',
+    '..kHk.kHkjk.',
+    '.kjHjkjHjHjk',
+    'kjhhHjhhhppk',
+    'khhhxPpwbppk',
+    'khhhxPppppk.',
+    '.khhxPpbbpk.',
+    '.knnNkxPPxk.',
+  ],
   neckCol: 5,
 };
 

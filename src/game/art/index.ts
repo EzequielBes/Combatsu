@@ -17,14 +17,7 @@ import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from './sprites/props';
 import { FRAGMENT_FRAMES, FRAGMENT_ICON, HEAL_FRAMES } from './sprites/economy';
 import { TELEGRAPH_FRAMES } from './sprites/telegraph';
 import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
-import {
-  BOSS_ANIMS,
-  BOSS_FRAMES,
-  PROJECTILE_FRAME,
-  SHOCKWAVE_FRAME,
-  TECELA_FRAMES,
-  bossAnimKey,
-} from './sprites/boss';
+import { BOSS_ANIMS, BOSS_FRAMES, PROJECTILE_FRAME, SHOCKWAVE_FRAME, TECELA_FRAMES, bossAnimKey } from './sprites/boss';
 import { registerTiles } from './tiles';
 
 /** Chave da animação do player no AnimationManager (global do jogo). */
@@ -48,7 +41,11 @@ export function createArt(scene: Phaser.Scene): void {
   registerSheet(
     scene,
     TEX.playerArt,
-    parseSheet('player', { ...PLAYER_FRAMES, ...PLAYER_TECH_FRAMES, ...withRigFrames(PLAYER_MOVE_FRAMES, currentSearch()) }, PALETTE_KEYS),
+    parseSheet(
+      'player',
+      { ...PLAYER_FRAMES, ...PLAYER_TECH_FRAMES, ...withRigFrames(PLAYER_MOVE_FRAMES, currentSearch()) },
+      PALETTE_KEYS,
+    ),
   );
   registerAnims(scene, TEX.playerArt, PLAYER_ANIMS, playerAnimKey);
   // Heroico alto do boneco articulado (PRA-08): folha própria de 40x40 (o parseSheet exige frames do mesmo tamanho),
@@ -108,7 +105,11 @@ export function createArt(scene: Phaser.Scene): void {
   registerAnims(scene, TEX.bossOni, BOSS_ANIMS, (name) => bossAnimKey('oni', name));
   registerSheet(scene, TEX.bossTecela, parseSheet('boss-tecela', TECELA_FRAMES, PALETTE_KEYS));
   registerAnims(scene, TEX.bossTecela, BOSS_ANIMS, (name) => bossAnimKey('tecela', name));
-  registerSheet(scene, TEX.bossProjectile, parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS));
+  registerSheet(
+    scene,
+    TEX.bossProjectile,
+    parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS),
+  );
   registerSheet(scene, TEX.bossShockwave, parseSheet('boss-shockwave', { shockwave: SHOCKWAVE_FRAME }, PALETTE_KEYS));
 }
 
@@ -134,7 +135,9 @@ export function registerAnims(
     if (scene.anims.exists(key)) scene.anims.remove(key);
     scene.anims.create({
       key,
-      frames: configs.map(({ frame, duration }) => (duration ? { key: textureKey, frame, duration } : { key: textureKey, frame })),
+      frames: configs.map(({ frame, duration }) =>
+        duration ? { key: textureKey, frame, duration } : { key: textureKey, frame },
+      ),
       frameRate: def.frameRate,
       repeat: def.repeat,
     });

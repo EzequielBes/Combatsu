@@ -70,7 +70,16 @@ describe('LEVEL_FACTOR: fatores de dano por nível (TEC-06)', () => {
 
 describe('CE, KOKUSEN, CAST_FX: presentes com os campos usados pelas ACs', () => {
   it('CE tem max 100, regen 8, meleeGain 3, kokusenGain 30, tetos de upgrade (CE-01, CE-07, CE-09, KOK-09)', () => {
-    expect(CE).toMatchObject({ max: 100, regen: 8, meleeGain: 3, kokusenGain: 30, maxPerLevel: 20, maxCap: 200, regenPerLevel: 2, regenCap: 16 });
+    expect(CE).toMatchObject({
+      max: 100,
+      regen: 8,
+      meleeGain: 3,
+      kokusenGain: 30,
+      maxPerLevel: 20,
+      maxCap: 200,
+      regenPerLevel: 2,
+      regenCap: 16,
+    });
   });
 
   it('KOKUSEN tem janela 120–200, zona 60–8000, dano 45 (KOK-01, KOK-02, KOK-06, KOK-10)', () => {

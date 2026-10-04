@@ -166,7 +166,11 @@ export class Prop {
     if (accepted) {
       // Posição + tamanho do sprite (girado 90° no golpe com o objeto na mão), nunca body.bounds.
       const [w, h] = st === 'swing' ? [this.sprite.height, this.sprite.width] : [this.sprite.width, this.sprite.height];
-      this.onConnect?.(hit, contactWith({ x: this.sprite.x, y: this.sprite.y, width: w, height: h }, other.target), other.target);
+      this.onConnect?.(
+        hit,
+        contactWith({ x: this.sprite.x, y: this.sprite.y, width: w, height: h }, other.target),
+        other.target,
+      );
     }
     this.afterImpact(this.machine.registerImpact());
   }

@@ -207,7 +207,12 @@ export class FxLab {
   }
 
   /** Contrato de debug do laboratório (T28, sem contrato prévio na spec): estado dos bonecos e da câmera lenta. */
-  debug(): { legend: string; speedLabel: string; timeScale: number; dummies: { id: number; x: number; y: number; hp: number; maxHp: number }[] } {
+  debug(): {
+    legend: string;
+    speedLabel: string;
+    timeScale: number;
+    dummies: { id: number; x: number; y: number; hp: number; maxHp: number }[];
+  } {
     return {
       legend: FxLab.LEGEND,
       speedLabel: this.speedLabel,

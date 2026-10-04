@@ -64,11 +64,17 @@ export default async function ({ page, baseUrl, assert }) {
     // Fica a ~150 px (bem dentro dos 420 px de alcance, longe de qualquer parede) para o orbe acertar de frente.
     snap = await approachTo(snap, target.id, 150, 20);
     const t0 = snap.enemies.find((e) => e.id === target.id);
-    assert(t0 && Math.abs(t0.x - snap.player.x - 150) <= 30, `não cheguei perto o bastante do alvo: ${JSON.stringify(t0)}`);
+    assert(
+      t0 && Math.abs(t0.x - snap.player.x - 150) <= 30,
+      `não cheguei perto o bastante do alvo: ${JSON.stringify(t0)}`,
+    );
     const hpBefore = t0.hp;
     const detonateBefore = countOf(snap.events, 'redDetonate');
     snap = await tap('KeyL');
-    assert(snap.tech.cast && snap.tech.cast.id === 'vermelho', `Vermelho deveria ter começado: ${JSON.stringify(snap.tech.cast)}`);
+    assert(
+      snap.tech.cast && snap.tech.cast.id === 'vermelho',
+      `Vermelho deveria ter começado: ${JSON.stringify(snap.tech.cast)}`,
+    );
     // sign 250 + charge 350 = 600 ms até a soltura; espera a soltura e o toque no alvo.
     let hit = null;
     for (let i = 0; i < 60 && hit === null; i++) {
@@ -86,12 +92,20 @@ export default async function ({ page, baseUrl, assert }) {
       if (countOf(snap.events, 'redDetonate') > detonateBefore) detonated = snap;
     }
     assert(detonated, 'RED-16: o orbe nunca detonou depois do toque direto');
-    assert(countOf(detonated.events, 'redDetonate') === detonateBefore + 1, `RED-16: esperava exatamente um redDetonate: ${JSON.stringify(detonated.events)}`);
     assert(
-      ['red.flashCore', 'red.sphere', 'red.shockRing', 'red.debris', 'red.screenFlash'].every((l) => detonated.fx.layers.includes(l)),
+      countOf(detonated.events, 'redDetonate') === detonateBefore + 1,
+      `RED-16: esperava exatamente um redDetonate: ${JSON.stringify(detonated.events)}`,
+    );
+    assert(
+      ['red.flashCore', 'red.sphere', 'red.shockRing', 'red.debris', 'red.screenFlash'].every((l) =>
+        detonated.fx.layers.includes(l),
+      ),
       `RED-11: fx.layers incompleto na detonação: ${JSON.stringify(detonated.fx.layers)}`,
     );
-    assert(detonated.techObjects.every((o) => o.kind !== 'red'), `RED-13: o orbe deveria ter sumido de techObjects: ${JSON.stringify(detonated.techObjects)}`);
+    assert(
+      detonated.techObjects.every((o) => o.kind !== 'red'),
+      `RED-13: o orbe deveria ter sumido de techObjects: ${JSON.stringify(detonated.techObjects)}`,
+    );
   }
 
   // --- Vermelho (RED-10): alvo bem além dos 420 px de alcance, dentro dos 96 px de detonação, nunca tocado -------
@@ -112,7 +126,8 @@ export default async function ({ page, baseUrl, assert }) {
     let splashHp = null;
     for (let attempt = 0; attempt < 6 && splashHp === null; attempt++) {
       // Espera o slot ficar livre (recarga de 3000 ms entre tentativas).
-      for (let i = 0; i < 40 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++) snap = await stepAndSnap(100);
+      for (let i = 0; i < 40 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++)
+        snap = await stepAndSnap(100);
       // Os inimigos agora perseguem em vez de patrulhar (SPN-10): o único jeito de ter um alvo na janela de detonação
       // (fora do alcance do orbe) é pegá-lo recém-nascido num ponto E (1200 ou 1232), ainda
       // parado na graça de 600 ms. Quem nasce em outro ponto é derrubado pelo golpe de teste (tecla 2) para a vaga abrir de novo.
@@ -137,11 +152,15 @@ export default async function ({ page, baseUrl, assert }) {
       snap = await tap('KeyL');
       if (!(snap.tech.cast && snap.tech.cast.id === 'vermelho')) continue; // recusado - tenta de novo.
       // sign 250 + charge 350 + voo dos 420 px a 560 px/s (~750 ms) ~= 1350 ms até detonar sem tocar ninguém antes.
-      for (let i = 0; i < 40 && countOf(snap.events, 'redDetonate') <= detonateBefore; i++) snap = await stepAndSnap(50);
+      for (let i = 0; i < 40 && countOf(snap.events, 'redDetonate') <= detonateBefore; i++)
+        snap = await stepAndSnap(50);
       const after = snap.enemies.find((e) => e.id === targetId);
       if (after && after.hp === hpBefore - 25) splashHp = after.hp; // RED-10: só o estouro (25), nunca o toque direto.
     }
-    assert(splashHp !== null, `RED-10: o estouro nunca acertou um alvo fora do toque direto em 6 tentativas: ${JSON.stringify(snap.enemies)}`);
+    assert(
+      splashHp !== null,
+      `RED-10: o estouro nunca acertou um alvo fora do toque direto em 6 tentativas: ${JSON.stringify(snap.enemies)}`,
+    );
   }
 
   // --- Azul (BLU-04/07/11): inimigo perto é puxado, leva o dano da implosão e o orbe some com o evento -----------
@@ -158,7 +177,10 @@ export default async function ({ page, baseUrl, assert }) {
     const t0 = snap.enemies.find((e) => e.id === target.id);
     const xBefore = t0.x;
     snap = await tap('KeyL');
-    assert(snap.tech.cast && snap.tech.cast.id === 'azul', `Azul deveria ter começado: ${JSON.stringify(snap.tech.cast)}`);
+    assert(
+      snap.tech.cast && snap.tech.cast.id === 'azul',
+      `Azul deveria ter começado: ${JSON.stringify(snap.tech.cast)}`,
+    );
     // sign 200 + charge 250 = 450 ms até a soltura (a esfera nasce e passa a existir em techObjects).
     let orbSeen = false;
     for (let i = 0; i < 60 && !orbSeen; i++) {
@@ -175,7 +197,9 @@ export default async function ({ page, baseUrl, assert }) {
     }
     assert(pulled, `BLU-04: o inimigo nunca se mexeu em direção à esfera: ${xBefore} parado`);
     assert(
-      snap.fx.layers.includes('blue.core') && snap.fx.layers.includes('blue.spiralIn') && snap.fx.layers.includes('blue.distortRing'),
+      snap.fx.layers.includes('blue.core') &&
+        snap.fx.layers.includes('blue.spiralIn') &&
+        snap.fx.layers.includes('blue.distortRing'),
       `BLU-08: fx.layers da esfera incompleto: ${JSON.stringify(snap.fx.layers)}`,
     );
     // Espera os 1400 ms (BLU-03/11): a esfera implode, some de techObjects e dá o dano final de uma vez (BLU-07).
@@ -193,11 +217,20 @@ export default async function ({ page, baseUrl, assert }) {
       }
     }
     assert(imploded, 'BLU-11: a esfera nunca implodiu depois de 1400 ms');
-    assert(countOf(imploded.events, 'blueImplode') === implodeBefore + 1, `BLU-11: esperava exatamente um blueImplode: ${JSON.stringify(imploded.events)}`);
-    assert(imploded.techObjects.every((o) => o.kind !== 'blue'), `BLU-11: a esfera deveria ter sumido de techObjects: ${JSON.stringify(imploded.techObjects)}`);
+    assert(
+      countOf(imploded.events, 'blueImplode') === implodeBefore + 1,
+      `BLU-11: esperava exatamente um blueImplode: ${JSON.stringify(imploded.events)}`,
+    );
+    assert(
+      imploded.techObjects.every((o) => o.kind !== 'blue'),
+      `BLU-11: a esfera deveria ter sumido de techObjects: ${JSON.stringify(imploded.techObjects)}`,
+    );
     const afterImplode = imploded.enemies.find((e) => e.id === target.id);
     if (afterImplode && hpBeforeImplode !== undefined) {
-      assert(hpBeforeImplode - afterImplode.hp === 10, `BLU-07: a implosão deveria tirar 10 de uma vez: ${hpBeforeImplode} -> ${afterImplode.hp}`);
+      assert(
+        hpBeforeImplode - afterImplode.hp === 10,
+        `BLU-07: a implosão deveria tirar 10 de uma vez: ${hpBeforeImplode} -> ${afterImplode.hp}`,
+      );
     }
   }
 
@@ -216,7 +249,10 @@ export default async function ({ page, baseUrl, assert }) {
     const hpBefore = t0.hp;
     const cutBefore = countOf(snap.events, 'cut');
     snap = await tap('KeyL');
-    assert(snap.tech.cast && snap.tech.cast.id === 'corte', `Desmantelar deveria ter começado: ${JSON.stringify(snap.tech.cast)}`);
+    assert(
+      snap.tech.cast && snap.tech.cast.id === 'corte',
+      `Desmantelar deveria ter começado: ${JSON.stringify(snap.tech.cast)}`,
+    );
     let sawLine = false;
     let sawSplit = false;
     for (let i = 0; i < 60 && countOf(snap.events, 'cut') < cutBefore + 3; i++) {
@@ -224,7 +260,10 @@ export default async function ({ page, baseUrl, assert }) {
       if (snap.fx.layers.includes('cut.line')) sawLine = true;
       if (snap.fx.layers.includes('cut.split')) sawSplit = true;
     }
-    assert(countOf(snap.events, 'cut') === cutBefore + 3, `CUT-08: esperava exatamente 3 eventos cut: ${JSON.stringify(snap.events)}`);
+    assert(
+      countOf(snap.events, 'cut') === cutBefore + 3,
+      `CUT-08: esperava exatamente 3 eventos cut: ${JSON.stringify(snap.events)}`,
+    );
     assert(sawLine, `CUT-04: fx.layers nunca teve cut.line: ${JSON.stringify(snap.fx.layers)}`);
     assert(sawSplit, `CUT-06: fx.layers nunca teve cut.split: ${JSON.stringify(snap.fx.layers)}`);
     const after = snap.enemies.find((e) => e.id === target.id);

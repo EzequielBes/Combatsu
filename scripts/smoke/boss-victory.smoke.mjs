@@ -1,17 +1,21 @@
 // Barra do chefe, faixas e vitória (BHUD-01..07, BWIN-01..03, BOSS-04/07), com `?debug&seed=1&round=5`.
 export default async function ({ page, baseUrl, assert }) {
   await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5`, { waitUntil: 'load' });
-  await page.waitForFunction(() => {
-    try {
-      return !!window.__game.snapshot();
-    } catch {
-      return false;
-    }
-  }, { timeout: 15_000 });
-  const step = (ms) => page.evaluate((m) => {
-    window.__game.step(m);
-    return window.__game.snapshot();
-  }, ms);
+  await page.waitForFunction(
+    () => {
+      try {
+        return !!window.__game.snapshot();
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 15_000 },
+  );
+  const step = (ms) =>
+    page.evaluate((m) => {
+      window.__game.step(m);
+      return window.__game.snapshot();
+    }, ms);
   const press = async (key, ms = 17) => {
     await page.keyboard.press(key, { delay: 50 });
     return step(ms);
@@ -60,8 +64,10 @@ export default async function ({ page, baseUrl, assert }) {
   assert(!s.player.dead, 'o player morreu antes do chefe');
 
   // BWIN-02: logo após o golpe fatal, congelado com ~250 ms restantes (o golpe de 90 ms não encurta).
-  assert(s.hitstop.frozen && s.hitstop.remainingMs > 200 && s.hitstop.remainingMs <= 250,
-    `hitstop da vitória: ${JSON.stringify(s.hitstop)}`);
+  assert(
+    s.hitstop.frozen && s.hitstop.remainingMs > 200 && s.hitstop.remainingMs <= 250,
+    `hitstop da vitória: ${JSON.stringify(s.hitstop)}`,
+  );
   // BWIN-01: cura de round(0,3 × 100) = 30, com teto em 100.
   assert(hpBefore <= 70, `o player deveria estar ferido antes do golpe fatal: ${hpBefore}`);
   assert(s.player.hp === Math.min(100, hpBefore + 30), `cura: antes ${hpBefore}, depois ${s.player.hp}`);

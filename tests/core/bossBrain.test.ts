@@ -58,10 +58,7 @@ describe('BossBrain: fase por fração de vida, maxHp 600 (BAI-01)', () => {
     const events = brain.receiveHit(hit(204));
     expect(brain.hp).toBe(396);
     expect(brain.phase).toBe(2);
-    expect(events).toEqual([
-      { type: 'phaseChanged', phase: 2 },
-      { type: 'roarStart' },
-    ]);
+    expect(events).toEqual([{ type: 'phaseChanged', phase: 2 }, { type: 'roarStart' }]);
     expect(brain.state).toBe('roar');
   });
 
@@ -82,10 +79,7 @@ describe('BossBrain: fase por fração de vida, maxHp 600 (BAI-01)', () => {
     const events = brain.receiveHit(hit(198));
     expect(brain.hp).toBe(198);
     expect(brain.phase).toBe(3);
-    expect(events).toEqual([
-      { type: 'phaseChanged', phase: 3 },
-      { type: 'roarStart' },
-    ]);
+    expect(events).toEqual([{ type: 'phaseChanged', phase: 3 }, { type: 'roarStart' }]);
   });
 });
 
@@ -127,10 +121,7 @@ describe('BossBrain: cada limiar dispara uma vez só (BAI-06)', () => {
     const events = brain.receiveHit(hit(450)); // hp 150, abaixo dos 33% (198)
     expect(brain.hp).toBe(150);
     expect(brain.phase).toBe(3);
-    expect(events).toEqual([
-      { type: 'phaseChanged', phase: 3 },
-      { type: 'roarStart' },
-    ]);
+    expect(events).toEqual([{ type: 'phaseChanged', phase: 3 }, { type: 'roarStart' }]);
   });
 });
 
@@ -250,10 +241,7 @@ describe('BossBrain: edge cases de prioridade entre fase, postura e morte', () =
     expect(brain.hp).toBe(246);
     expect(brain.phase).toBe(2);
     expect(brain.state).toBe('roar');
-    expect(events).toEqual([
-      { type: 'phaseChanged', phase: 2 },
-      { type: 'roarStart' },
-    ]);
+    expect(events).toEqual([{ type: 'phaseChanged', phase: 2 }, { type: 'roarStart' }]);
   });
 
   it('morrer em stagger emite died único, sem staggerEnd nem phaseChanged', () => {
@@ -310,10 +298,7 @@ describe('BossBrain: Kokusen (KOK-06, KOK-08, KOK-12, KOK-32)', () => {
     expect(brain.hp).toBe(55);
     expect(brain.phase).toBe(2);
     expect(brain.state).toBe('roar');
-    expect(events).toEqual([
-      { type: 'phaseChanged', phase: 2 },
-      { type: 'roarStart' },
-    ]);
+    expect(events).toEqual([{ type: 'phaseChanged', phase: 2 }, { type: 'roarStart' }]);
   });
 
   it('na intro, no rugido ou morto: ignorado por completo, sem mudar hp nem postura', () => {

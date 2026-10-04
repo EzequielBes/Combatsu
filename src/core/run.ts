@@ -205,7 +205,8 @@ export class Run {
 
     // 5. Start: só em `title` sempre, ou em `gameOver` depois da trava (RUN-05, RUN-11).
     if (this.pendingStart) {
-      const canStart = this._state === 'title' || (this._state === 'gameOver' && this.gameOverTimer >= this.t.gameOverLockMs);
+      const canStart =
+        this._state === 'title' || (this._state === 'gameOver' && this.gameOverTimer >= this.t.gameOverLockMs);
       if (canStart) {
         const seed = seedForNewRun();
         this.lootRngValue = new Rng(seed ^ 0x9e3779b9);

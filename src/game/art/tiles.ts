@@ -70,7 +70,17 @@ function edge(rows: readonly string[], side: 'left' | 'right', round: { top: boo
 }
 
 /** Variação da parede: um tijolo trincado na fiada B. */
-const WALL_CRACK = [A1, A2, A3, MORTAR, 'NNNKsNNkNNNKsNNN', 'NNNKNNkNNNNKNNNN', 'nnnKnnknnnnKnnnn', MORTAR, ...WALL.slice(8)];
+const WALL_CRACK = [
+  A1,
+  A2,
+  A3,
+  MORTAR,
+  'NNNKsNNkNNNKsNNN',
+  'NNNKNNkNNNNKNNNN',
+  'nnnKnnknnnnKnnnn',
+  MORTAR,
+  ...WALL.slice(8),
+];
 
 /** Variação da parede: musgo na argamassa e um tijolo mais escuro. */
 const WALL_MOSS = [

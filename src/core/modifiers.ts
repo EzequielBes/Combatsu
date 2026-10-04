@@ -1,5 +1,11 @@
 import { ECONOMY, PICKUP, PLAYER_HEALTH, PLAYER_MOVE, SHOP } from '../data/tuning';
-import { SHOP_CATALOG, type CoreModifierId, type EnergyModifierId, type ModifierId, type ShopEntry } from '../data/shop';
+import {
+  SHOP_CATALOG,
+  type CoreModifierId,
+  type EnergyModifierId,
+  type ModifierId,
+  type ShopEntry,
+} from '../data/shop';
 
 export type ModifierLevels = Record<CoreModifierId, number>;
 

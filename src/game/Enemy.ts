@@ -161,8 +161,11 @@ export class Enemy implements Hittable {
   /** Resíduo nos pés a cada 40 ms de jogo (RCT-03); a cena liga ao `CursedFx.residue`. */
   onSlideResidue: ((at: Vec2) => void) | null = null;
   /** Empurrão scriptado em curso (SPC-02, MOV-*): velocidade x por step e steps que faltam. */
-  private slide: { vxStep: number; stepsLeft: number; friction: Map<MatterJS.BodyType, { f: number; fs: number }> } | null =
-    null;
+  private slide: {
+    vxStep: number;
+    stepsLeft: number;
+    friction: Map<MatterJS.BodyType, { f: number; fs: number }>;
+  } | null = null;
   private readonly structBg: Phaser.GameObjects.Rectangle;
   private readonly structFill: Phaser.GameObjects.Rectangle;
   private readonly breakStar: Phaser.GameObjects.Image;
@@ -216,13 +219,24 @@ export class Enemy implements Hittable {
     this.drawPos = new BodyRenderPos(scene, this.body);
     this.ai = new EnemyAI(tuning.ai);
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
-    this.view = scene.add.sprite(spawn.x, spawn.y + h / 2, enemyTex(variant), 'idle-0').setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
+    this.view = scene.add
+      .sprite(spawn.x, spawn.y + h / 2, enemyTex(variant), 'idle-0')
+      .setOrigin(ENEMY_ORIGIN.x, ENEMY_ORIGIN.y);
     this.weaponView = weaponInfo
-      ? scene.add.sprite(spawn.x, spawn.y, weaponInfo.tool === 'cursedKnife' ? TEX.cursedKnife : TEX.cursedClub, 'hold-a')
+      ? scene.add.sprite(
+          spawn.x,
+          spawn.y,
+          weaponInfo.tool === 'cursedKnife' ? TEX.cursedKnife : TEX.cursedClub,
+          'hold-a',
+        )
       : null;
     this.barFrame = scene.add.image(0, 0, TEX.enemyBar).setOrigin(0, 0).setDepth(BAR_DEPTH).setVisible(false);
     // Mundo, não HUD (AD-003): a câmera de UI ignora tudo o que nasce fora da `uiLayer`.
-    this.marker = scene.add.image(0, 0, TEX.fxTelegraph, tuning.attack.kind).setOrigin(0.5, 1).setDepth(BAR_DEPTH).setVisible(false);
+    this.marker = scene.add
+      .image(0, 0, TEX.fxTelegraph, tuning.attack.kind)
+      .setOrigin(0.5, 1)
+      .setDepth(BAR_DEPTH)
+      .setVisible(false);
     const well = ENEMY_BAR_WELL;
     scene.matter.world.on('beforeupdate', this.onStep);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
@@ -601,7 +615,10 @@ export class Enemy implements Hittable {
       base: EnemyGuard.chanceFor(round),
       reading: bonus,
       override: reading.override,
-      baseConditions: baseConditionsHold({ round, idle: this.brain.state === 'idle', playerFacingEnemy, distancePx }, move.strength),
+      baseConditions: baseConditionsHold(
+        { round, idle: this.brain.state === 'idle', playerFacingEnemy, distancePx },
+        move.strength,
+      ),
     });
     // RDG-10: com `enemyGuard=N` a leitura é ignorada; a guarda que sobe é a comum, sem `read:<id>`.
     const read = bonus > 0 && reading.override === undefined;
@@ -676,7 +693,12 @@ export class Enemy implements Hittable {
     // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto,
     // recém-nascido, aparado (PAR-10) ou quebrado (STR-05) deixam a IA parada (AI-04, WAVE-09).
     const canAct =
-      this.brain.state === 'idle' && !this.brain.isDead && !this.grace.active && this.suppressedMs <= 0 && !this.structure.broken && !this.guard.guarding;
+      this.brain.state === 'idle' &&
+      !this.brain.isDead &&
+      !this.grace.active &&
+      this.suppressedMs <= 0 &&
+      !this.structure.broken &&
+      !this.guard.guarding;
     const out = this.ai.update(dtMs, {
       selfX: this.body.position.x,
       playerX,
@@ -854,7 +876,8 @@ export class Enemy implements Hittable {
       moving: Math.abs(vxPerS) > RUN_THRESHOLD,
       reaction: this.reaction,
     });
-    const touching = this.touchMs > 0 && this.brain.state === 'idle' && !stunned && (picked === 'idle' || picked === 'walk');
+    const touching =
+      this.touchMs > 0 && this.brain.state === 'idle' && !stunned && (picked === 'idle' || picked === 'walk');
     const anim = touching ? 'hurt-body' : stunned && picked !== 'getup' ? 'hurt' : picked;
     const draw = this.drawPos.get();
     this.view.setPosition(draw.x, draw.y + SIZE.enemy.h / 2);

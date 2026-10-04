@@ -76,15 +76,7 @@ export function parseLevel(rows: readonly string[]): LevelData {
 }
 
 export type TileVariant =
-  | 'top'
-  | 'middle'
-  | 'left'
-  | 'right'
-  | 'top-left'
-  | 'top-right'
-  | 'thin'
-  | 'thin-left'
-  | 'thin-right';
+  'top' | 'middle' | 'left' | 'right' | 'top-left' | 'top-right' | 'thin' | 'thin-left' | 'thin-right';
 
 /**
  * Variante visual de um tile sólido pelos quatro vizinhos (ENV-01); `null` se o tile não é sólido.

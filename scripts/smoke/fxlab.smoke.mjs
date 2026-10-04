@@ -4,7 +4,8 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SHOT_DIR = 'C:/Users/Usuario/AppData/Local/Temp/claude/C--Users-Usuario-documents-surgue/fc11ceb2-8480-4cb5-a593-ee9b3e9fd301/scratchpad/fxlab';
+const SHOT_DIR =
+  'C:/Users/Usuario/AppData/Local/Temp/claude/C--Users-Usuario-documents-surgue/fc11ceb2-8480-4cb5-a593-ee9b3e9fd301/scratchpad/fxlab';
 const LEGEND = '1 aura · 2 divergente · 3 kokusen · 4 vermelho · 5 azul · 6 corte · 0 lento';
 
 export default async function ({ page, baseUrl, assert }) {
@@ -38,15 +39,24 @@ export default async function ({ page, baseUrl, assert }) {
   // FXL-01: nenhuma onda nasce no fxlab.
   assert(snap.enemies.length === 0, `FXL-01: não deveria haver inimigos: ${JSON.stringify(snap.enemies)}`);
   snap = await stepAndSnap(2000);
-  assert(snap.enemies.length === 0, `FXL-01: nenhuma onda deveria nascer depois de 2s: ${JSON.stringify(snap.enemies)}`);
+  assert(
+    snap.enemies.length === 0,
+    `FXL-01: nenhuma onda deveria nascer depois de 2s: ${JSON.stringify(snap.enemies)}`,
+  );
 
   // FXL-05/06: 3 bonecos no chão principal, nos offsets certos, com hp cheio.
   assert(snap.fxlab, 'snapshot.fxlab deveria existir em ?fxlab');
   assert(snap.fxlab.dummies.length === 3, `FXL-05: esperava 3 bonecos: ${JSON.stringify(snap.fxlab.dummies)}`);
   const spawnX = snap.level.playerSpawn.x;
   const offsets = snap.fxlab.dummies.map((d) => Math.round(d.x - spawnX)).sort((a, b) => a - b);
-  assert(JSON.stringify(offsets) === JSON.stringify([120, 200, 280]), `FXL-05: offsets errados: ${JSON.stringify(offsets)}`);
-  assert(snap.fxlab.dummies.every((d) => d.hp === d.maxHp), `pré-condição: bonecos deveriam começar cheios: ${JSON.stringify(snap.fxlab.dummies)}`);
+  assert(
+    JSON.stringify(offsets) === JSON.stringify([120, 200, 280]),
+    `FXL-05: offsets errados: ${JSON.stringify(offsets)}`,
+  );
+  assert(
+    snap.fxlab.dummies.every((d) => d.hp === d.maxHp),
+    `pré-condição: bonecos deveriam começar cheios: ${JSON.stringify(snap.fxlab.dummies)}`,
+  );
 
   // FXL-04/08: legenda exata e rótulo de velocidade em 1x.
   assert(snap.fxlab.legend === LEGEND, `FXL-04: legenda errada: ${snap.fxlab.legend}`);
@@ -55,7 +65,10 @@ export default async function ({ page, baseUrl, assert }) {
   const assertEnergyAndCooldownIntact = (s) => {
     assert(s.ce.cur === s.ce.max, `FXL-07: energia deveria continuar no teto: ${JSON.stringify(s.ce)}`);
     const slot0 = s.tech.slots[0];
-    assert(!slot0 || slot0.cooldownMs === 0, `FXL-09: recarga do slot 0 deveria continuar zerada: ${JSON.stringify(slot0)}`);
+    assert(
+      !slot0 || slot0.cooldownMs === 0,
+      `FXL-09: recarga do slot 0 deveria continuar zerada: ${JSON.stringify(slot0)}`,
+    );
   };
 
   // `step`/`headlessStep` nunca desenham (FND-22); `render()` (T31) desenha o quadro atual sem andar o relógio.
@@ -88,9 +101,18 @@ export default async function ({ page, baseUrl, assert }) {
   // Tecla 2: Punho Divergente completo (selo, 1º e 2º impacto) no boneco mais próximo.
   {
     const layers = await shoot(2, 700);
-    assert(layers.has('divergente.fistAura'), `FXL-02 (tecla 2): esperava divergente.fistAura: ${JSON.stringify([...layers])}`);
-    assert(layers.has('divergente.echo') && layers.has('divergente.ring'), `FXL-02 (tecla 2): esperava echo/ring: ${JSON.stringify([...layers])}`);
-    assert(layers.has('divergente.burst') || snap.events.includes('divergent2'), `FXL-02 (tecla 2): o 2º impacto nunca aconteceu: ${JSON.stringify(snap.events)}`);
+    assert(
+      layers.has('divergente.fistAura'),
+      `FXL-02 (tecla 2): esperava divergente.fistAura: ${JSON.stringify([...layers])}`,
+    );
+    assert(
+      layers.has('divergente.echo') && layers.has('divergente.ring'),
+      `FXL-02 (tecla 2): esperava echo/ring: ${JSON.stringify([...layers])}`,
+    );
+    assert(
+      layers.has('divergente.burst') || snap.events.includes('divergent2'),
+      `FXL-02 (tecla 2): o 2º impacto nunca aconteceu: ${JSON.stringify(snap.events)}`,
+    );
     await renderAndShoot('2-divergente.png');
   }
   for (let i = 0; i < 30 && snap.tech.cast !== null; i++) snap = await stepAndSnap(100);
@@ -99,7 +121,10 @@ export default async function ({ page, baseUrl, assert }) {
   {
     const kokusenBefore = snap.events.filter((e) => e === 'kokusen').length;
     const layers = await shoot(3, 900);
-    assert(layers.has('kokusen.invert') || layers.has('kokusen.bolts'), `FXL-02 (tecla 3): esperava camadas do Kokusen: ${JSON.stringify([...layers])}`);
+    assert(
+      layers.has('kokusen.invert') || layers.has('kokusen.bolts'),
+      `FXL-02 (tecla 3): esperava camadas do Kokusen: ${JSON.stringify([...layers])}`,
+    );
     let landed = snap.events.filter((e) => e === 'kokusen').length > kokusenBefore;
     for (let i = 0; i < 30 && !landed; i++) {
       snap = await frame();
@@ -114,7 +139,10 @@ export default async function ({ page, baseUrl, assert }) {
   {
     const layers = await shoot(4, 900);
     assert(layers.has('red.orb'), `FXL-02 (tecla 4): esperava red.orb na carga: ${JSON.stringify([...layers])}`);
-    assert(layers.has('red.trail') || layers.has('red.flashCore'), `FXL-02 (tecla 4): esperava voo ou detonação do orbe: ${JSON.stringify([...layers])}`);
+    assert(
+      layers.has('red.trail') || layers.has('red.flashCore'),
+      `FXL-02 (tecla 4): esperava voo ou detonação do orbe: ${JSON.stringify([...layers])}`,
+    );
     await renderAndShoot('4-vermelho.png');
   }
   for (let i = 0; i < 40 && snap.tech.cast !== null; i++) snap = await stepAndSnap(100);
@@ -143,9 +171,15 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.fxlab.speedLabel === 'velocidade: 0.25x', `FXL-08: rótulo deveria mudar: ${snap.fxlab.speedLabel}`);
   await page.keyboard.press('Digit2', { delay: 30 });
   snap = await stepAndSnap(60); // 60 ms reais == 15 ms de jogo a 0.25x - bem menos que os 60 ms do selo.
-  assert(snap.tech.cast && snap.tech.cast.state === 'sign', `FXL-03: a 0.25x, 60 ms reais não deveriam terminar o selo (60 ms): ${JSON.stringify(snap.tech.cast)}`);
+  assert(
+    snap.tech.cast && snap.tech.cast.state === 'sign',
+    `FXL-03: a 0.25x, 60 ms reais não deveriam terminar o selo (60 ms): ${JSON.stringify(snap.tech.cast)}`,
+  );
   // Volta a 1x e limpa a conjuração em curso antes de terminar (higiene, não é parte do AC).
   await page.keyboard.press('Digit0', { delay: 30 });
   snap = await frame();
-  assert(snap.fxlab.timeScale === 1 && snap.fxlab.speedLabel === 'velocidade: 1x', `FXL-03: deveria voltar a 1x: ${JSON.stringify(snap.fxlab)}`);
+  assert(
+    snap.fxlab.timeScale === 1 && snap.fxlab.speedLabel === 'velocidade: 1x',
+    `FXL-03: deveria voltar a 1x: ${JSON.stringify(snap.fxlab)}`,
+  );
 }

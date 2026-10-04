@@ -8,7 +8,13 @@ import type { FxTimeline } from '../core/fxTimeline';
 import { canDamage, normalize, type Hit, type Strength, type Vec2 } from '../core/hit';
 import { Kokusen } from '../core/kokusen';
 import type { Loadout } from '../core/loadout';
-import { RedOrbState, redReleaseEffects, repulseTargetsFor, type RedOrbTarget, type RepulseCandidate } from '../core/redOrb';
+import {
+  RedOrbState,
+  redReleaseEffects,
+  repulseTargetsFor,
+  type RedOrbTarget,
+  type RepulseCandidate,
+} from '../core/redOrb';
 import { BlueOrbState, blueOrbSpawn, type BlueOrbDamage, type BlueOrbTarget } from '../core/blueOrb';
 import { CutSchedule, cutAngles, type CutHit, type CutTarget } from '../core/cut';
 import { KOKUSEN, TECHNIQUES } from '../data/techniques';
@@ -132,7 +138,9 @@ export class TechRunner {
     /** MST-01/02: o alvo aceitou um golpe da técnica do `slot` na conjuração `castId` (a cena aplica a maestria). */
     private readonly onMasteryHit: (slot: 0 | 1, castId: number, targetId: number, isBoss: boolean) => void,
   ) {
-    this.hitbox = new AttackHitbox(scene, player.id, player.team, (hit, point, target) => this.onFirstImpact(hit, point, target!));
+    this.hitbox = new AttackHitbox(scene, player.id, player.team, (hit, point, target) =>
+      this.onFirstImpact(hit, point, target!),
+    );
     this.divergentFx = new DivergentFx(scene, fx, registry);
     this.redFx = new RedOrbFx(scene, fx, registry, uiLayer);
     this.blueFx = new BlueOrbFx(scene, fx, registry);
@@ -163,8 +171,22 @@ export class TechRunner {
   /** `techObjects` do snapshot (RED-14, BLU-10): os orbes vivos agora. */
   get techObjectsSnapshot(): { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[] {
     const out: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[] = [];
-    if (this.redOrb) out.push({ id: this.redOrb.id, kind: 'red', x: this.redOrb.state.x, y: this.redOrb.body.position.y, traveled: this.redOrb.state.traveled });
-    if (this.blueOrb) out.push({ id: this.blueOrb.id, kind: 'blue', x: this.blueOrb.state.position.x, y: this.blueOrb.state.position.y, traveled: 0 });
+    if (this.redOrb)
+      out.push({
+        id: this.redOrb.id,
+        kind: 'red',
+        x: this.redOrb.state.x,
+        y: this.redOrb.body.position.y,
+        traveled: this.redOrb.state.traveled,
+      });
+    if (this.blueOrb)
+      out.push({
+        id: this.blueOrb.id,
+        kind: 'blue',
+        x: this.blueOrb.state.position.x,
+        y: this.blueOrb.state.position.y,
+        traveled: 0,
+      });
     return out;
   }
 
@@ -357,13 +379,26 @@ export class TechRunner {
 
   // --- Vermelho (T25) --------------------------------------------------------------------------------------
 
-  private updateRed(dtMs: number, cast: ActiveCastView | null, castEvents: readonly string[], enemies: readonly TechTarget[]): void {
+  private updateRed(
+    dtMs: number,
+    cast: ActiveCastView | null,
+    castEvents: readonly string[],
+    enemies: readonly TechTarget[],
+  ): void {
     const charging = cast?.id === 'vermelho' && (cast.state === 'sign' || cast.state === 'charge');
     if (charging) {
       // RED-02/03/04: orbe crescendo + faíscas + anel + poeira, na ponta dos dedos.
       // RDA-04: a âncora é a ponta dos dedos do frame atual; o offset sai da origem do sprite (o pé), não do corpo.
       const { view } = this.player;
-      this.redFx.chargeUpdate(dtMs, view.x, view.y, this.player.facing, cast!.elapsedMs, TECHNIQUES.vermelho.chargeMs, this.player.frameName);
+      this.redFx.chargeUpdate(
+        dtMs,
+        view.x,
+        view.y,
+        this.player.facing,
+        cast!.elapsedMs,
+        TECHNIQUES.vermelho.chargeMs,
+        this.player.frameName,
+      );
     } else {
       this.redFx.hideCharge();
     }
@@ -511,7 +546,12 @@ export class TechRunner {
 
   // --- Azul (T26) -------------------------------------------------------------------------------------------
 
-  private updateBlue(dtMs: number, castEvents: readonly string[], enemies: readonly TechTarget[], boss: Boss | null): void {
+  private updateBlue(
+    dtMs: number,
+    castEvents: readonly string[],
+    enemies: readonly TechTarget[],
+    boss: Boss | null,
+  ): void {
     if (castEvents.includes('techCast:azul')) this.spawnBlueOrb(this.player.facing);
 
     const orb = this.blueOrb;
@@ -519,7 +559,11 @@ export class TechRunner {
     const point = orb.state.position;
     this.blueFx.update(dtMs, point.x, point.y); // BLU-08/09
 
-    const enemyTargets: BlueOrbTarget[] = enemies.map((e) => ({ id: e.id, center: { x: e.x, y: e.hurtRect().y }, kind: 'enemy' }));
+    const enemyTargets: BlueOrbTarget[] = enemies.map((e) => ({
+      id: e.id,
+      center: { x: e.x, y: e.hurtRect().y },
+      kind: 'enemy',
+    }));
     const allTargets: BlueOrbTarget[] = boss
       ? [...enemyTargets, { id: boss.id, center: { x: boss.x, y: boss.hurtRect().y }, kind: 'boss' }] // BLU-05: chefe nunca puxado, só listado para o tick/implosão.
       : enemyTargets;
@@ -578,7 +622,12 @@ export class TechRunner {
     return Math.max(0, closest);
   }
 
-  private applyBlueDamage(dmg: BlueOrbDamage, enemies: readonly TechTarget[], boss: Boss | null, cast: CastRef | null): void {
+  private applyBlueDamage(
+    dmg: BlueOrbDamage,
+    enemies: readonly TechTarget[],
+    boss: Boss | null,
+    cast: CastRef | null,
+  ): void {
     const hit: Hit = {
       ownerId: this.player.id,
       damage: this.loadout.damage('azul', dmg.damage), // BLU-06/07, TEC-06
@@ -603,7 +652,12 @@ export class TechRunner {
 
   // --- Desmantelar (T27) ------------------------------------------------------------------------------------
 
-  private updateCut(dtMs: number, castEvents: readonly string[], enemies: readonly TechTarget[], boss: Boss | null): void {
+  private updateCut(
+    dtMs: number,
+    castEvents: readonly string[],
+    enemies: readonly TechTarget[],
+    boss: Boss | null,
+  ): void {
     if (castEvents.includes('techCast:corte')) {
       this.cutSchedule = new CutSchedule();
       this.cutCast = this.currentCast;

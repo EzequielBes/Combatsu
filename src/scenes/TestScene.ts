@@ -318,7 +318,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
-    this.run = new Run(RUN, WAVE, { firstRound: this.firstRoundForDebug(), maxAliveOverride: debugIntParam('maxAlive', 1) });
+    this.run = new Run(RUN, WAVE, {
+      firstRound: this.firstRoundForDebug(),
+      maxAliveOverride: debugIntParam('maxAlive', 1),
+    });
     this.clockMs = 0;
     this.spawnLastUsed = new Map();
     this.wasPlayerDead = false;
@@ -333,14 +336,26 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const s of this.level.props) {
       const def = PROP_DEFS[s.key];
       if (!def) throw new Error(`Objeto sem definição: ${s.key}`);
-      this.props.push(new Prop(this, s.x, s.y, def, this.modifiers, (hit, at, target) => this.onConnect(hit, at, 'prop', target)));
+      this.props.push(
+        new Prop(this, s.x, s.y, def, this.modifiers, (hit, at, target) => this.onConnect(hit, at, 'prop', target)),
+      );
     }
 
     this.controls = new PlayerInput(this);
     this.shopInput = new ShopInput(this);
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2, target?: Hittable): void => this.onConnect(hit, at, hit.strength, target);
-    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike, (name, phase) => this.onStrikePhase(name, phase));
+    this.player = new Player(
+      this,
+      p.x,
+      p.y - SPAWN_LIFT,
+      this.terrain,
+      () => this.props,
+      this.fx,
+      this.modifiers,
+      strike,
+      (name, phase) => this.onStrikePhase(name, phase),
+    );
     this.player.onEvent = (ev) => {
       this.debugEvents.push(ev);
       if (ev.startsWith('move:')) this.onPlayerMoveStart(ev.slice(5));
@@ -405,7 +420,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
     // CAM-07: sem o `startFollow` do Phaser (lerp por quadro e floor dentro da realimentação faziam o player tremer
     // contra a câmera) e sem `roundPixels`: com 2 px por texel e zoom 1,5, todo texel ocupa 3 px de tela.
-    this.cameras.main.setZoom(WORLD_ZOOM).setRoundPixels(false).setBounds(0, 0, this.level.widthPx, this.level.heightPx);
+    this.cameras.main
+      .setZoom(WORLD_ZOOM)
+      .setRoundPixels(false)
+      .setBounds(0, 0, this.level.widthPx, this.level.heightPx);
     const follow = this.followConfig();
     this.camCenter = clampCenter(this.player.renderPos, follow.view, follow.bounds);
     this.followCamera(0);
@@ -420,11 +438,19 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const debugKeys = (): boolean => isDebug() && this.run.state !== 'shop';
     // T28: no fxlab as teclas 1-4 (e as novas 5/6/0) são só do laboratório - nunca golpe leve/forte, matar ou
     // machucar o player (essas continuam fora do fxlab, como sempre foram).
-    this.onKey('ONE', () => (this.fxLab ? debugKeys() && this.fxLab.pressKey(1) : debugKeys() && this.debugHit('light')));
-    this.onKey('TWO', () => (this.fxLab ? debugKeys() && this.fxLab.pressKey(2) : debugKeys() && this.debugHit('heavy')));
-    this.onKey('THREE', () => (this.fxLab ? debugKeys() && this.fxLab.pressKey(3) : debugKeys() && this.player.debugKill()));
+    this.onKey('ONE', () =>
+      this.fxLab ? debugKeys() && this.fxLab.pressKey(1) : debugKeys() && this.debugHit('light'),
+    );
+    this.onKey('TWO', () =>
+      this.fxLab ? debugKeys() && this.fxLab.pressKey(2) : debugKeys() && this.debugHit('heavy'),
+    );
+    this.onKey('THREE', () =>
+      this.fxLab ? debugKeys() && this.fxLab.pressKey(3) : debugKeys() && this.player.debugKill(),
+    );
     // Tecla 4 (só debug): 50 de dano no player, para o smoke medir a cura da vitória abaixo do teto (BWIN-01).
-    this.onKey('FOUR', () => (this.fxLab ? debugKeys() && this.fxLab.pressKey(4) : debugKeys() && this.player.debugHurt(50)));
+    this.onKey('FOUR', () =>
+      this.fxLab ? debugKeys() && this.fxLab.pressKey(4) : debugKeys() && this.player.debugHurt(50),
+    );
     this.onKey('FIVE', () => debugKeys() && this.fxLab?.pressKey(5));
     this.onKey('SIX', () => debugKeys() && this.fxLab?.pressKey(6));
     // FXL-03: tecla 0 alterna a câmera lenta; refaz o texto do painel para o rótulo de velocidade (FXL-08).
@@ -528,16 +554,25 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // DOD-11: enquanto a esquiva está ativa a camada `dodge.trail` fica viva (o rastro em si sai do Player).
       if (this.player.dodgeView.active) this.realtimeFx.add('dodge.trail', 100);
       // AIR-05: enquanto a voadora está ativa a camada `air.kickTrail` fica viva (o rastro em si sai do Player).
-      if (this.player.moveName === 'voadora' && this.player.movePhase === 'active') this.realtimeFx.add('air.kickTrail', 100);
+      if (this.player.moveName === 'voadora' && this.player.movePhase === 'active')
+        this.realtimeFx.add('air.kickTrail', 100);
       this.techCaster.update(dt);
       // FXL-02/KOK-03: a tecla 3 arma o Kokusen sem timing manual - injeta a "tecla apertada de novo" no exato
       // frame em que a janela abre (o `windowOpen` já reflete o começo deste frame, antes do `techRunner.update`).
-      if (this.fxLab?.consumeKokusenAutoPress(this.techRunner.kokusenSnapshot.windowOpen)) this.techCaster.forcePress(0);
+      if (this.fxLab?.consumeKokusenAutoPress(this.techRunner.kokusenSnapshot.windowOpen))
+        this.techCaster.forcePress(0);
       this.debugEvents.push(...this.techCaster.events);
       // T28: no laboratório, o Vermelho/Azul/Desmantelar também miram os bonecos de treino, não só os inimigos.
       const techTargets: readonly TechTarget[] = this.fxLab ? [...this.enemies, ...this.fxLab.dummies] : this.enemies;
       // T22+: executa a técnica a partir do estado de conjuração, dos eventos deste frame e do slot apertado (Kokusen).
-      this.techRunner.update(dt, this.techCaster.cast, this.techCaster.events, this.techCaster.slotPressed, techTargets, this.boss);
+      this.techRunner.update(
+        dt,
+        this.techCaster.cast,
+        this.techCaster.events,
+        this.techCaster.slotPressed,
+        techTargets,
+        this.boss,
+      );
       this.debugEvents.push(...this.techRunner.events);
       // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
       if (this.techCaster.events.includes('techDenied:energy')) this.energyHud.flashDenied();
@@ -586,7 +621,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
           this.clearedBanner.upgradeText = null;
         }
         if (this.clearedBanner.afterMs <= 0) {
-          if (this.run.state === 'intermission') this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
+          if (this.run.state === 'intermission')
+            this.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
           this.clearedBanner = null;
         }
       }
@@ -600,7 +636,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
     // T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner interno da `Run` segue contando como se
     // tivesse nascido - sem isso "Inimigos: N" mentiria na tela do laboratório.
-    this.hud.setRun(this.run.round > 0 && !this.fxLab ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null);
+    this.hud.setRun(
+      this.run.round > 0 && !this.fxLab ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null,
+    );
     this.hud.setHeldItem(this.heldItemInfo());
     this.hud.update(dt);
     this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
@@ -995,7 +1033,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    */
   private dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
     const def = rare ? rareDef(TOOL_DEFS[tool]) : TOOL_DEFS[tool];
-    const prop = new Prop(this, x, y, def, this.modifiers, (hit, at, target) => this.onConnect(hit, at, 'prop', target), rare);
+    const prop = new Prop(
+      this,
+      x,
+      y,
+      def,
+      this.modifiers,
+      (hit, at, target) => this.onConnect(hit, at, 'prop', target),
+      rare,
+    );
     const evictId = this.droppedTools.admit(prop.id, this.toolStates());
     if (evictId !== null) {
       this.props.find((p) => p.id === evictId)?.destroyNow();
@@ -1037,12 +1083,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const e of [...this.enemies]) {
       // Posição na fila de espera entre os que esperam do mesmo lado do player (LIM-05, LIM-07).
       const side = sideOf(e.x);
-      const sameSide = gate
-        .queueOrder()
-        .filter((id) => {
-          const other = this.enemies.find((o) => o.id === id);
-          return other !== undefined && other.aiState === 'hold' && sideOf(other.x) === side;
-        });
+      const sameSide = gate.queueOrder().filter((id) => {
+        const other = this.enemies.find((o) => o.id === id);
+        return other !== undefined && other.aiState === 'hold' && sideOf(other.x) === side;
+      });
       const at = sameSide.indexOf(e.id);
       e.update(dt, px, {
         granted: gate.isGranted(e.id),
@@ -1093,7 +1137,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const variant = parseVariant(debugParam('enemyVariant')) ?? drawn;
     // HGT-13, EDG-08: `?debug&enemyAttack=white|red|low` manda no tipo do golpe; inválido cai no `attackKindFor`.
     // DFL-14, EDG-09: `?debug&enemyString=1..4` manda no tamanho da sequência; inválido vale a sequência da arma (DFL-01).
-    const kind = parseAttackKind(debugParam('enemyAttack')) ?? attackKindFor({ variant, weapon: armedRoll?.tool ?? null });
+    const kind =
+      parseAttackKind(debugParam('enemyAttack')) ?? attackKindFor({ variant, weapon: armedRoll?.tool ?? null });
     const hits = parseStringLength(debugParam('enemyString')) ?? armed.ai.hits;
     const tuning: EnemyBase = { ...armed, attack: { ...armed.attack, kind }, ai: { ...armed.ai, hits } };
     const enemy = new Enemy(
@@ -1217,7 +1262,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     damage: number,
   ): void {
     this.projectiles.push(
-      new Projectile(this, kind, x, y, dir, speed, maxDist, damage, (hit, hitPoint) => this.onConnect(hit, hitPoint, hit.strength)),
+      new Projectile(this, kind, x, y, dir, speed, maxDist, damage, (hit, hitPoint) =>
+        this.onConnect(hit, hitPoint, hit.strength),
+      ),
     );
   }
 
@@ -1347,7 +1394,16 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       tech: this.techSnapshot(),
       kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
       techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
-      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState, aura: this.aura.pos, trails: this.cursedFx.trails, focus: this.focusLines.view, lastImpact: this.lastImpact },
+      fx: {
+        live: this.fxRegistry.size,
+        degraded: this.kokusenFx.degraded,
+        layers: this.realtimeFx.layers(),
+        red: this.techRunner.redDebugState,
+        aura: this.aura.pos,
+        trails: this.cursedFx.trails,
+        focus: this.focusLines.view,
+        lastImpact: this.lastImpact,
+      },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
       camera: {
         zoom: this.cameras.main.zoom,
@@ -1415,12 +1471,22 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private onMeleeImpact(hit: Hit, point: Vec2, target?: Hittable): void {
     const brokePosture = target instanceof Enemy && target.broken && !this.brokenAtFrameStart.has(target.id);
     const tier = impactTier(hit, { brokePosture });
-    this.cursedFx.impact(tier, point, { x: hit.direction.x, y: hit.direction.y }, hit.swingId ?? Math.floor(this.clockMs));
+    this.cursedFx.impact(
+      tier,
+      point,
+      { x: hit.direction.x, y: hit.direction.y },
+      hit.swingId ?? Math.floor(this.clockMs),
+    );
     const kokusen = this.kokusenFrame === this.game.getFrame();
-    const framed = tier === 'decisive' && !kokusen && hit.swingId !== undefined ? this.impactFrame.trigger(hit.swingId) : false;
+    const framed =
+      tier === 'decisive' && !kokusen && hit.swingId !== undefined ? this.impactFrame.trigger(hit.swingId) : false;
     if (framed) this.framedSwingId = hit.swingId ?? null;
     // IMP-16: só o golpe que ganhou o postFX (ou outro alvo do mesmo golpe, IMP-14) reporta `impactFrame`.
-    this.lastImpact = { tier, impactFrame: framed || (this.impactFrame.applied && hit.swingId !== undefined && hit.swingId === this.framedSwingId) };
+    this.lastImpact = {
+      tier,
+      impactFrame:
+        framed || (this.impactFrame.applied && hit.swingId !== undefined && hit.swingId === this.framedSwingId),
+    };
     this.debugEvents.push(`impact:${tier}`);
     // RCT-01, RCT-02: o inimigo comum que fica de pé desliza para longe do jogador.
     if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1);
@@ -1444,7 +1510,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     if (tier === 'heavy') this.cameraKick.kick(hit.direction.x, hit.direction.y);
     const cam = this.cameras.main;
     // O finalizador é decisivo, mas o zoom dele manda (CAM-05); `finisherZoomMs` só liga depois do `onConnect`.
-    if (tier === 'decisive' && hit.moveName !== FINISHER_MOVE && this.finisherZoomMs <= 0 && !cam.zoomEffect.isRunning) {
+    if (
+      tier === 'decisive' &&
+      hit.moveName !== FINISHER_MOVE &&
+      this.finisherZoomMs <= 0 &&
+      !cam.zoomEffect.isRunning
+    ) {
       this.zoomPulse.start();
       this.zoomPulseMs = CAMERA_FEEL.zoomInMs + CAMERA_FEEL.zoomHoldMs + CAMERA_FEEL.zoomOutMs;
     }
@@ -1511,7 +1582,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       }
       if (bodies === null) continue;
       const touching = bodies.find(
-        (b) => this.matter.query.region(this.terrain, { min: { x: b.bounds.min.x, y: b.bounds.max.y - 1 }, max: { x: b.bounds.max.x, y: b.bounds.max.y + 2 } }).length > 0,
+        (b) =>
+          this.matter.query.region(this.terrain, {
+            min: { x: b.bounds.min.x, y: b.bounds.max.y - 1 },
+            max: { x: b.bounds.max.x, y: b.bounds.max.y + 2 },
+          }).length > 0,
       );
       if (touching) {
         this.cursedFx.crack({ x: touching.position.x, y: touching.bounds.max.y });

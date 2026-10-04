@@ -82,7 +82,13 @@ const factorText = (k: number): string => (Number.isInteger(k) ? `${k},0` : Stri
  * porcentagem inteira para `sorte`, hp atual → curado (recortado no teto) para `cura`; técnica não equipada
  * mostra o slot de destino, equipada mostra os fatores de dano do nível atual e do seguinte.
  */
-export function previewText(entry: ShopEntry, modifiers: Modifiers, hp: number, maxHp: number, loadout?: Loadout): string {
+export function previewText(
+  entry: ShopEntry,
+  modifiers: Modifiers,
+  hp: number,
+  maxHp: number,
+  loadout?: Loadout,
+): string {
   if (entry.id === 'cura') {
     const after = Math.min(hp + SHOP.curaHp, maxHp);
     return `Vida ${hp} → ${after}`;
@@ -144,8 +150,7 @@ export interface ShopView {
 }
 
 export type BuyResult =
-  | { ok: true; id: ShopEntryId; cost: number }
-  | { ok: false; reason: 'empty' | 'sold' | 'funds' | 'fullHp' };
+  { ok: true; id: ShopEntryId; cost: number } | { ok: false; reason: 'empty' | 'sold' | 'funds' | 'fullHp' };
 
 /** A loja não conhece o `Player`: aplica modificador, técnica e cura por callback (design "Error Handling Strategy"). */
 export interface BuyContext {

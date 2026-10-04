@@ -35,7 +35,8 @@ export function rigMoveFrame(
   elapsedMs: number,
   def: { startupMs: number; activeMs: number; recoveryMs: number },
 ): string | undefined {
-  if (moveName !== 'ganchoAscendente' || (phase !== 'startup' && phase !== 'active' && phase !== 'recovery')) return undefined;
+  if (moveName !== 'ganchoAscendente' || (phase !== 'startup' && phase !== 'active' && phase !== 'recovery'))
+    return undefined;
   const frames = RIG_PHASE_FRAMES[phase];
   const total = phase === 'startup' ? def.startupMs : phase === 'active' ? def.activeMs : def.recoveryMs;
   const slice = Math.floor((Math.max(0, elapsedMs) / Math.max(1, total)) * frames.length);

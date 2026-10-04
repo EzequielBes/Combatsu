@@ -39,7 +39,13 @@ export function parseTasks(tasks: string, acs: Map<string, string>): TaskRow[] {
     const doneAt = block.indexOf('**Done when**');
     const done = doneAt >= 0 ? block.slice(doneAt, block.indexOf('**Tests**', doneAt)).trim() : '';
     const ids = req.match(/[A-Z]+-\d+/g) ?? [];
-    rows.push({ id: head[1], title: head[2].trim(), what, done, acs: ids.map((id) => ({ id, criterion: acs.get(id) ?? '(AC não encontrado na spec)' })) });
+    rows.push({
+      id: head[1],
+      title: head[2].trim(),
+      what,
+      done,
+      acs: ids.map((id) => ({ id, criterion: acs.get(id) ?? '(AC não encontrado na spec)' })),
+    });
   }
   return rows;
 }
@@ -48,7 +54,10 @@ export function parseTasks(tasks: string, acs: Map<string, string>): TaskRow[] {
 export function parseStories(spec: string): StoryRow[] {
   const rows: StoryRow[] = [];
   for (const block of spec.split(/^### /m).slice(1)) {
-    const title = block.match(/^(P\d:.*)/)?.[1]?.replace('⭐ MVP', '').trim();
+    const title = block
+      .match(/^(P\d:.*)/)?.[1]
+      ?.replace('⭐ MVP', '')
+      .trim();
     const story = block.match(/\*\*User Story\*\*:\s*(.*)/)?.[1];
     if (!title || !story) continue;
     const criteria = block.split(/\r?\n/).flatMap((l) => l.match(AC_LINE)?.[2] ?? []);
@@ -62,13 +71,19 @@ const TASK_QUESTIONS = {
     type: 'noul',
     instructions:
       'Would implementing exactly what `what` and `done` describe satisfy every acceptance criterion in `acs`? Answer no if any criterion in `acs` is not addressed by the task description or its done list.',
-    criteria: { true: 'Yes: every listed criterion is addressed.', false: 'No: at least one listed criterion is not addressed.' },
+    criteria: {
+      true: 'Yes: every listed criterion is addressed.',
+      false: 'No: at least one listed criterion is not addressed.',
+    },
   },
   atomic: {
     type: 'noul',
     instructions:
       'Is this task one cohesive unit of work that a developer can finish, test and commit on its own, without mixing unrelated concerns?',
-    criteria: { true: 'Yes: one cohesive, committable unit.', false: 'No: it mixes unrelated work and should be split.' },
+    criteria: {
+      true: 'Yes: one cohesive, committable unit.',
+      false: 'No: it mixes unrelated work and should be split.',
+    },
   },
 };
 
@@ -77,7 +92,10 @@ const STORY_QUESTIONS = {
     type: 'noul',
     instructions:
       'In this action roguelite game, does the story in `story`, as detailed by `criteria`, give the player a meaningful decision or a noticeable change in how the game feels to play?',
-    criteria: { true: 'Yes: the player makes a real choice or feels a clear difference.', false: 'No: it is invisible or has no decision for the player.' },
+    criteria: {
+      true: 'Yes: the player makes a real choice or feels a clear difference.',
+      false: 'No: it is invisible or has no decision for the player.',
+    },
   },
   feedback: {
     type: 'score',
@@ -115,7 +133,9 @@ export async function alignReport(name: string, tasks: TaskRow[], stories: Story
     }
     const flags = [a.covers.noul! < 0.6 && 'covers', a.atomic.noul! < 0.6 && 'atomic'].filter(Boolean);
     if (flags.length) taskFlags++;
-    taskLines.push(`| ${t.id} | ${f(a.covers.noul)} | ${f(a.atomic.noul)} | ${flags.length ? `⚠️ ${flags.join(', ')}` : 'ok'} |`);
+    taskLines.push(
+      `| ${t.id} | ${f(a.covers.noul)} | ${f(a.atomic.noul)} | ${flags.length ? `⚠️ ${flags.join(', ')}` : 'ok'} |`,
+    );
   }
   const storyLines: string[] = [];
   let storyFlags = 0;
@@ -127,7 +147,9 @@ export async function alignReport(name: string, tasks: TaskRow[], stories: Story
     }
     const flags = [a.choice.noul! < 0.6 && 'choice', a.feedback.score! < 2 && 'feedback'].filter(Boolean);
     if (flags.length) storyFlags++;
-    storyLines.push(`| ${s.title} | ${f(a.choice.noul)} | ${f(a.feedback.score)} | ${flags.length ? `⚠️ ${flags.join(', ')}` : 'ok'} |`);
+    storyLines.push(
+      `| ${s.title} | ${f(a.choice.noul)} | ${f(a.feedback.score)} | ${flags.length ? `⚠️ ${flags.join(', ')}` : 'ok'} |`,
+    );
   }
   return `# Alinhamento Jev — ${name}
 

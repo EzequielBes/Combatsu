@@ -62,10 +62,17 @@ export default async function (ctx) {
     /** Passa frames até `pred(d.s)` valer (no máximo `max`); falha com `what`. */
     d.until = async (pred, max, what) => {
       for (let i = 0; i < max && !pred(d.s); i++) await d.step();
-      assert(pred(d.s), `${typeof what === 'function' ? what() : what}: não aconteceu em ${max} frames (${JSON.stringify({ p: d.s.player.move, f: d.s.player.frame, en: d.s.enemies.map((e) => [e.id, e.state, e.hp, e.downHits]) })})`);
+      assert(
+        pred(d.s),
+        `${typeof what === 'function' ? what() : what}: não aconteceu em ${max} frames (${JSON.stringify({ p: d.s.player.move, f: d.s.player.frame, en: d.s.enemies.map((e) => [e.id, e.state, e.hp, e.downHits]) })})`,
+      );
       return d.s;
     };
-    d.free = () => d.s.player.move === null && !d.s.player.frame.startsWith('hurt') && !d.s.hitstop.frozen && !d.s.player.dodge.active;
+    d.free = () =>
+      d.s.player.move === null &&
+      !d.s.player.frame.startsWith('hurt') &&
+      !d.s.hitstop.frozen &&
+      !d.s.player.dodge.active;
     d.enemy = () => nearest(d.s);
     return d;
   };
@@ -79,7 +86,10 @@ export default async function (ctx) {
     await snap(30);
     await press('KeyE');
     s = await snap(20);
-    assert(s.hud.heldItem !== null && s.hud.heldItem.name === 'Cadeira' && s.hud.heldItem.pips === 4, `o jogador deveria segurar a cadeira: ${JSON.stringify(s.hud.heldItem)}`);
+    assert(
+      s.hud.heldItem !== null && s.hud.heldItem.name === 'Cadeira' && s.hud.heldItem.pips === 4,
+      `o jogador deveria segurar a cadeira: ${JSON.stringify(s.hud.heldItem)}`,
+    );
     return s;
   };
   /** Duelo com um inimigo isolado (`startDuel`: `f0` é o primeiro frame do preparo dele), com ou sem a cadeira na mão. */
@@ -112,7 +122,10 @@ export default async function (ctx) {
       s = await frame();
       if (s.player.x === before) break;
     }
-    assert(s.enemies.length === 3 && s.player.facing === 1, `três inimigos à frente: ${JSON.stringify(s.enemies.map((e) => e.x - s.player.x))}`);
+    assert(
+      s.enemies.length === 3 && s.player.facing === 1,
+      `três inimigos à frente: ${JSON.stringify(s.enemies.map((e) => e.x - s.player.x))}`,
+    );
     return s;
   };
   /** Os três do grupo: o par empilhado (mais perto, mesmo x, ordenado por id) e o terceiro (mais longe). */
@@ -120,7 +133,10 @@ export default async function (ctx) {
     const sorted = s.enemies.slice().sort((a, b) => Math.abs(a.x - s.player.x) - Math.abs(b.x - s.player.x));
     const [a, b, third] = sorted;
     assert(Math.abs(a.x - b.x) < 0.5, `o par deveria estar empilhado (mesmo x): ${a.x} e ${b.x}`);
-    assert(Math.abs(third.x - s.player.x) - Math.abs(a.x - s.player.x) >= 20, `o terceiro deveria estar bem mais longe que o par: ${third.x - s.player.x} contra ${a.x - s.player.x}`);
+    assert(
+      Math.abs(third.x - s.player.x) - Math.abs(a.x - s.player.x) >= 20,
+      `o terceiro deveria estar bem mais longe que o par: ${third.x - s.player.x} contra ${a.x - s.player.x}`,
+    );
     return { pair: [a, b].sort((p, q) => p.id - q.id), third };
   };
   /** Aperta as teclas por um frame e devolve, por id, a vida perdida nos 14 frames seguintes (o golpe conecta em ~5 frames). */
@@ -141,20 +157,38 @@ export default async function (ctx) {
     const hit = [...lost].filter(([, v]) => v > 0);
     assert(hit.length === 1, `TGT-03: o jab (maxTargets 1) deveria tirar vida de 1 alvo: ${JSON.stringify([...lost])}`);
     // Empate entre o par empilhado: vai para o de menor id (TGT-04); o terceiro, mais longe, não é atingido.
-    assert(hit[0][0] === pair[0].id && hit[0][1] === JAB, `TGT-04: o jab deveria tirar ${JAB} do id ${pair[0].id} (menor id do par empatado): ${JSON.stringify([...lost])}`);
-    assert(lost.get(pair[1].id) === 0 && lost.get(third.id) === 0, `TGT-03: o par e o terceiro não deveriam apanhar: ${JSON.stringify([...lost])}`);
+    assert(
+      hit[0][0] === pair[0].id && hit[0][1] === JAB,
+      `TGT-04: o jab deveria tirar ${JAB} do id ${pair[0].id} (menor id do par empatado): ${JSON.stringify([...lost])}`,
+    );
+    assert(
+      lost.get(pair[1].id) === 0 && lost.get(third.id) === 0,
+      `TGT-03: o par e o terceiro não deveriam apanhar: ${JSON.stringify([...lost])}`,
+    );
     assert(s.focusId === pair[0].id, `PST-13: o foco deveria ser o alvo do jab (${pair[0].id}): ${s.focusId}`);
   }
   {
     const s0 = await gather('enemyGuard=0&maxAlive=3');
     const { pair, third } = group(s0);
-    assert(pair[0].id < third.id && third.id < pair[1].id, `o terceiro deveria ter o id do meio, para a ordem por id dar outro resultado: ${pair.map((p) => p.id)} e ${third.id}`);
+    assert(
+      pair[0].id < third.id && third.id < pair[1].id,
+      `o terceiro deveria ter o id do meio, para a ordem por id dar outro resultado: ${pair.map((p) => p.id)} e ${third.id}`,
+    );
     const { s, lost } = await strike(s0, ['KeyK'], 'chuteFrontal');
     const hit = [...lost].filter(([, v]) => v > 0);
-    assert(hit.length === 2, `TGT-03: o chute frontal (maxTargets 2) deveria tirar vida de exatamente 2 alvos: ${JSON.stringify([...lost])}`);
+    assert(
+      hit.length === 2,
+      `TGT-03: o chute frontal (maxTargets 2) deveria tirar vida de exatamente 2 alvos: ${JSON.stringify([...lost])}`,
+    );
     // O terceiro tem o id do meio e é o mais longe: a ordem é pela distância, não pelo id (TGT-04).
-    assert(lost.get(pair[0].id) === KICK && lost.get(pair[1].id) === KICK && lost.get(third.id) === 0, `TGT-04: o chute deveria tirar ${KICK} dos dois mais perto (${pair.map((p) => p.id)}) e nada do terceiro (${third.id}): ${JSON.stringify([...lost])}`);
-    assert(pair.some((p) => p.id === s.focusId), `PST-13: o foco deveria ser um dos dois atingidos (${pair.map((p) => p.id)}): ${s.focusId}`);
+    assert(
+      lost.get(pair[0].id) === KICK && lost.get(pair[1].id) === KICK && lost.get(third.id) === 0,
+      `TGT-04: o chute deveria tirar ${KICK} dos dois mais perto (${pair.map((p) => p.id)}) e nada do terceiro (${third.id}): ${JSON.stringify([...lost])}`,
+    );
+    assert(
+      pair.some((p) => p.id === s.focusId),
+      `PST-13: o foco deveria ser um dos dois atingidos (${pair.map((p) => p.id)}): ${s.focusId}`,
+    );
   }
 
   // --- TGT-06: o leve segurado pela guarda gasta a vaga (nenhum outro alvo o recebe) ----------------------------------------------
@@ -163,21 +197,36 @@ export default async function (ctx) {
     let s = await snap(0);
     // O par nasce a ~1100 px do jogador e anda uns 70 px/s: leva uns 700 frames para chegar.
     for (let i = 0; i < 1500 && !s.enemies.some((e) => e.ai === 'windup'); i++) s = await frame();
-    assert(s.enemies.some((e) => e.ai === 'windup'), 'o par deveria chegar ao jogador');
+    assert(
+      s.enemies.some((e) => e.ai === 'windup'),
+      'o par deveria chegar ao jogador',
+    );
     const before = new Map(s.enemies.map((e) => [e.id, { hp: e.hp, str: e.structure.cur }]));
     const blocks0 = new Map(s.enemies.map((e) => [e.id, count(s, `enemyBlock:${e.id}`)]));
     // O leve começa no frame seguinte ao do preparo, antes do compromisso (15 frames), e o par empilhado está ao alcance do jab.
     const near = s.enemies.filter((e) => e.x - s.player.x < 46 && e.x - s.player.x > 0);
-    assert(near.length >= 2, `os dois do par deveriam estar ao alcance do jab: ${JSON.stringify(s.enemies.map((e) => e.x - s.player.x))}`);
+    assert(
+      near.length >= 2,
+      `os dois do par deveriam estar ao alcance do jab: ${JSON.stringify(s.enemies.map((e) => e.x - s.player.x))}`,
+    );
     assert(!near.some((e) => e.committed), `o inimigo ao alcance não pode estar comprometido: ${JSON.stringify(near)}`);
     await press('KeyJ');
     for (let i = 0; i < 14; i++) s = await frame();
     const blocked = s.enemies.filter((e) => count(s, `enemyBlock:${e.id}`) > blocks0.get(e.id));
-    assert(blocked.length === 1 && count(s, `enemyBlock:${blocked[0].id}`) === blocks0.get(blocked[0].id) + 1, `TGT-06: o jab segurado pela guarda deveria dar um único enemyBlock: ${JSON.stringify(s.events.filter((x) => x.startsWith('enemyBlock')))}`);
+    assert(
+      blocked.length === 1 && count(s, `enemyBlock:${blocked[0].id}`) === blocks0.get(blocked[0].id) + 1,
+      `TGT-06: o jab segurado pela guarda deveria dar um único enemyBlock: ${JSON.stringify(s.events.filter((x) => x.startsWith('enemyBlock')))}`,
+    );
     for (const e of s.enemies) {
-      assert(e.hp === before.get(e.id).hp, `TGT-06: ninguém deveria perder vida com o jab segurado: ${e.id} ${before.get(e.id).hp} -> ${e.hp}`);
+      assert(
+        e.hp === before.get(e.id).hp,
+        `TGT-06: ninguém deveria perder vida com o jab segurado: ${e.id} ${before.get(e.id).hp} -> ${e.hp}`,
+      );
       const gain = e.structure.cur - before.get(e.id).str;
-      assert(e.id === blocked[0].id ? gain === 8 : gain === 0, `TGT-06: só quem bloqueou soma 8 de postura (${e.id}): +${gain}`);
+      assert(
+        e.id === blocked[0].id ? gain === 8 : gain === 0,
+        `TGT-06: só quem bloqueou soma 8 de postura (${e.id}): +${gain}`,
+      );
     }
     assert(s.focusId === null, `PST-13: golpe segurado pela guarda não é aceito, o foco não muda: ${s.focusId}`);
   }
@@ -207,7 +256,10 @@ export default async function (ctx) {
     const g0 = await kickToStagger(d);
     assert(d.enemy().ragdollVisible === null, `PST-02: sem ragdoll no cambaleio: ${d.enemy().ragdollVisible}`);
     const g1 = await untilIdle(d);
-    assert(Math.abs((g1 - g0) * FRAME_MS - STAGGER_MS) <= FRAME_MS, `PST-01/03: cambaleou por ${((g1 - g0) * FRAME_MS).toFixed(0)} ms, esperava ${STAGGER_MS} (±1 frame)`);
+    assert(
+      Math.abs((g1 - g0) * FRAME_MS - STAGGER_MS) <= FRAME_MS,
+      `PST-01/03: cambaleou por ${((g1 - g0) * FRAME_MS).toFixed(0)} ms, esperava ${STAGGER_MS} (±1 frame)`,
+    );
   }
 
   // --- PST-10: leve no cambaleio: continua em stagger com max(resto, 220) -----------------------------------------------------------
@@ -217,9 +269,15 @@ export default async function (ctx) {
     const g0 = await kickToStagger(d);
     while (d.gf < g0 + 4) await d.step();
     await d.press('Digit1');
-    assert(d.enemy().state === 'stagger', `PST-10: o leve no cambaleio deveria mantê-lo em stagger: ${d.enemy().state}`);
+    assert(
+      d.enemy().state === 'stagger',
+      `PST-10: o leve no cambaleio deveria mantê-lo em stagger: ${d.enemy().state}`,
+    );
     const g1 = await untilIdle(d);
-    assert(Math.abs((g1 - g0) * FRAME_MS - STAGGER_MS) <= FRAME_MS, `PST-10: com mais de 220 ms por vir o leve não muda o tempo: ${((g1 - g0) * FRAME_MS).toFixed(0)} ms, esperava ${STAGGER_MS}`);
+    assert(
+      Math.abs((g1 - g0) * FRAME_MS - STAGGER_MS) <= FRAME_MS,
+      `PST-10: com mais de 220 ms por vir o leve não muda o tempo: ${((g1 - g0) * FRAME_MS).toFixed(0)} ms, esperava ${STAGGER_MS}`,
+    );
   }
   {
     // Com ~80 ms por vir (menos que 220) o resto vira 220 ms contados do leve.
@@ -228,10 +286,19 @@ export default async function (ctx) {
     while (d.gf < g0 + 14) await d.step();
     await d.press('Digit1');
     const gLight = d.gf;
-    assert(d.enemy().state === 'stagger', `PST-10: o leve no cambaleio deveria mantê-lo em stagger: ${d.enemy().state}`);
+    assert(
+      d.enemy().state === 'stagger',
+      `PST-10: o leve no cambaleio deveria mantê-lo em stagger: ${d.enemy().state}`,
+    );
     const g1 = await untilIdle(d);
-    assert(Math.abs((g1 - gLight) * FRAME_MS - LIGHT_STAGGER_MS) <= FRAME_MS * 1.5, `PST-10: depois do leve o cambaleio deveria durar ${LIGHT_STAGGER_MS} ms: ${((g1 - gLight) * FRAME_MS).toFixed(0)} ms`);
-    assert((g1 - g0) * FRAME_MS > STAGGER_MS + FRAME_MS, `PST-10: o cambaleio deveria passar dos ${STAGGER_MS} ms originais: ${((g1 - g0) * FRAME_MS).toFixed(0)} ms`);
+    assert(
+      Math.abs((g1 - gLight) * FRAME_MS - LIGHT_STAGGER_MS) <= FRAME_MS * 1.5,
+      `PST-10: depois do leve o cambaleio deveria durar ${LIGHT_STAGGER_MS} ms: ${((g1 - gLight) * FRAME_MS).toFixed(0)} ms`,
+    );
+    assert(
+      (g1 - g0) * FRAME_MS > STAGGER_MS + FRAME_MS,
+      `PST-10: o cambaleio deveria passar dos ${STAGGER_MS} ms originais: ${((g1 - g0) * FRAME_MS).toFixed(0)} ms`,
+    );
   }
 
   /**
@@ -241,7 +308,10 @@ export default async function (ctx) {
   const decayAfterDelay = async (d, gfGain, label) => {
     const cur0 = d.enemy().structure.cur;
     while (d.gf < gfGain + DECAY_DELAY_FRAMES - 6) await d.step();
-    assert(d.enemy().structure.cur === cur0, `${label}: a postura não deveria cair nos 1500 ms do atraso: ${cur0} -> ${d.enemy().structure.cur} em ${d.gf - gfGain} frames`);
+    assert(
+      d.enemy().structure.cur === cur0,
+      `${label}: a postura não deveria cair nos 1500 ms do atraso: ${cur0} -> ${d.enemy().structure.cur} em ${d.gf - gfGain} frames`,
+    );
     while (d.gf < gfGain + DECAY_DELAY_FRAMES) await d.step();
     const start = d.enemy().structure.cur;
     const g = d.gf;
@@ -264,12 +334,21 @@ export default async function (ctx) {
         await up('KeyD');
       } else await d.step();
     }
-    assert(d.free() && d.enemy().ai === 'windup' && d.enemy().x - d.s.player.x < 40, 'o inimigo deveria voltar ao alcance e preparar o golpe');
+    assert(
+      d.free() && d.enemy().ai === 'windup' && d.enemy().x - d.s.player.x < 40,
+      'o inimigo deveria voltar ao alcance e preparar o golpe',
+    );
     await d.press('KeyK');
-    assert(['chuteFrontal', 'chuteAlto'].includes(d.s.player.move), `K deveria começar um chute forte: ${d.s.player.move}`);
+    assert(
+      ['chuteFrontal', 'chuteAlto'].includes(d.s.player.move),
+      `K deveria começar um chute forte: ${d.s.player.move}`,
+    );
     await d.until(() => d.enemy().hp < hp1, 30, 'o segundo chute deveria ser aceito');
     const g2 = d.gf;
-    assert(d.enemy().structure.cur >= 18 && d.enemy().structure.cur <= 20, `dois chutes dão 20 de postura: ${JSON.stringify(d.enemy().structure)}`);
+    assert(
+      d.enemy().structure.cur >= 18 && d.enemy().structure.cur <= 20,
+      `dois chutes dão 20 de postura: ${JSON.stringify(d.enemy().structure)}`,
+    );
     // PST-16: o inimigo é o foco (aceitou o último golpe) e a postura dele só começa a cair 1500 ms depois do último ganho.
     assert(d.s.focusId === d.id, `PST-16: o inimigo deveria seguir como foco: ${d.s.focusId}`);
     const drop = await decayAfterDelay(d, g2, 'PST-16');
@@ -294,15 +373,25 @@ export default async function (ctx) {
     await d.steps(3);
     const gDown = await sweep(d);
     assert(d.enemy().downHits === 0, `GND-05: ao cair o downHits deveria ser 0: ${d.enemy().downHits}`);
-    assert(d.enemy().hp === 60 - RASTEIRA && d.enemy().ragdollVisible !== null, `PST-05: a rasteira tira ${RASTEIRA} e o inimigo vai ao chão: ${JSON.stringify([d.enemy().hp, d.enemy().ragdollVisible])}`);
+    assert(
+      d.enemy().hp === 60 - RASTEIRA && d.enemy().ragdollVisible !== null,
+      `PST-05: a rasteira tira ${RASTEIRA} e o inimigo vai ao chão: ${JSON.stringify([d.enemy().hp, d.enemy().ragdollVisible])}`,
+    );
     await d.until(() => d.enemy().state === 'gettingUp', 90, 'o inimigo deveria começar a levantar');
     groundBaseline = d.groundFrames(d.id);
     assert(d.entered[`${d.id}:ragdollStun`] === gDown, 'a queda deveria estar anotada no frame em que o estado mudou');
-    assert(Math.abs(groundBaseline * FRAME_MS - GROUND_MS) <= FRAME_MS * 1.5, `a rasteira deveria deixar ${GROUND_MS} ms no chão (±1,5 frame): ${(groundBaseline * FRAME_MS).toFixed(0)} ms`);
+    assert(
+      Math.abs(groundBaseline * FRAME_MS - GROUND_MS) <= FRAME_MS * 1.5,
+      `a rasteira deveria deixar ${GROUND_MS} ms no chão (±1,5 frame): ${(groundBaseline * FRAME_MS).toFixed(0)} ms`,
+    );
   }
   /** Esquiva para a frente no fim da rasteira: fecha a distância do inimigo que escorregou (ver o cabeçalho). */
   const dashForward = async (d) => {
-    await d.until(() => d.s.player.frame === 'rasteira-recover' && !d.s.hitstop.frozen, 30, 'a rasteira deveria chegar ao fim');
+    await d.until(
+      () => d.s.player.frame === 'rasteira-recover' && !d.s.hitstop.frozen,
+      30,
+      'a rasteira deveria chegar ao fim',
+    );
     await down('KeyD');
     await d.press('KeyQ');
     for (let i = 0; i < 14 && d.s.player.dodge.active; i++) await d.step();
@@ -324,7 +413,10 @@ export default async function (ctx) {
       await d.step();
       await up('KeyD');
     }
-    assert(d.free() && d.enemy().x - d.s.player.x <= 40, `o jogador deveria alcançar o inimigo: ${JSON.stringify([d.s.player.move, d.enemy().x - d.s.player.x])}`);
+    assert(
+      d.free() && d.enemy().x - d.s.player.x <= 40,
+      `o jogador deveria alcançar o inimigo: ${JSON.stringify([d.s.player.move, d.enemy().x - d.s.player.x])}`,
+    );
     const e0 = d.enemy();
     const before = { hp: e0.hp, state: e0.state, downHits: e0.downHits, str: e0.structure.cur };
     await down('KeyS');
@@ -347,23 +439,50 @@ export default async function (ctx) {
     await dashForward(d);
     // GND-01: o primeiro golpe no chão tira o dano do golpe (socoBaixo, 6) e conta um.
     const first = await groundPunch(d);
-    assert(first.before.state === 'ragdollStun' && first.before.downHits === 0, `GND-01: o primeiro golpe deveria pegar o inimigo no chão, sem golpe antes: ${JSON.stringify(first.before)}`);
-    assert(first.lost === JAB && first.downHits === 1, `GND-01: o primeiro socoBaixo no chão deveria tirar ${JAB} e dar downHits 1: tirou ${first.lost}, downHits ${first.downHits}`);
+    assert(
+      first.before.state === 'ragdollStun' && first.before.downHits === 0,
+      `GND-01: o primeiro golpe deveria pegar o inimigo no chão, sem golpe antes: ${JSON.stringify(first.before)}`,
+    );
+    assert(
+      first.lost === JAB && first.downHits === 1,
+      `GND-01: o primeiro socoBaixo no chão deveria tirar ${JAB} e dar downHits 1: tirou ${first.lost}, downHits ${first.downHits}`,
+    );
     assert(d.s.focusId === d.id, `PST-13: o golpe no chão aceito deveria dar o foco: ${d.s.focusId}`);
     // GND-02: o segundo golpe no mesmo `ragdollStun` é recusado.
     const second = await groundPunch(d);
-    assert(second.before.state === 'ragdollStun' && second.before.downHits === 1, `GND-02: o segundo golpe deveria pegar o inimigo ainda no chão: ${JSON.stringify(second.before)}`);
-    assert(second.lost === 0 && second.downHits === 1 && second.str === second.before.str, `GND-02: o segundo socoBaixo no chão não deveria tirar nada: tirou ${second.lost}, downHits ${second.downHits}`);
-    assert(second.states.slice(0, 6).every((st) => st === 'ragdollStun'), `GND-02: o inimigo deveria seguir caído até o contato (a recusa é do limite, não do levantar): ${JSON.stringify(second.states)}`);
+    assert(
+      second.before.state === 'ragdollStun' && second.before.downHits === 1,
+      `GND-02: o segundo golpe deveria pegar o inimigo ainda no chão: ${JSON.stringify(second.before)}`,
+    );
+    assert(
+      second.lost === 0 && second.downHits === 1 && second.str === second.before.str,
+      `GND-02: o segundo socoBaixo no chão não deveria tirar nada: tirou ${second.lost}, downHits ${second.downHits}`,
+    );
+    assert(
+      second.states.slice(0, 6).every((st) => st === 'ragdollStun'),
+      `GND-02: o inimigo deveria seguir caído até o contato (a recusa é do limite, não do levantar): ${JSON.stringify(second.states)}`,
+    );
     // GND-03: levantando, nada entra.
     await d.until(() => d.enemy().state === 'gettingUp', 60, 'o inimigo deveria começar a levantar');
     const third = await groundPunch(d);
-    assert(third.before.state === 'gettingUp', `GND-03: o terceiro golpe deveria pegar o inimigo levantando: ${third.before.state}`);
-    assert(third.states.slice(0, 6).every((st) => st === 'gettingUp'), `GND-03: o inimigo deveria seguir levantando até o contato: ${JSON.stringify(third.states)}`);
-    assert(third.lost === 0 && third.downHits === 1 && third.str === third.before.str, `GND-03: levantando nada entra: tirou ${third.lost}, downHits ${third.downHits}`);
+    assert(
+      third.before.state === 'gettingUp',
+      `GND-03: o terceiro golpe deveria pegar o inimigo levantando: ${third.before.state}`,
+    );
+    assert(
+      third.states.slice(0, 6).every((st) => st === 'gettingUp'),
+      `GND-03: o inimigo deveria seguir levantando até o contato: ${JSON.stringify(third.states)}`,
+    );
+    assert(
+      third.lost === 0 && third.downHits === 1 && third.str === third.before.str,
+      `GND-03: levantando nada entra: tirou ${third.lost}, downHits ${third.downHits}`,
+    );
     // GND-06: os golpes no chão não alongam o ragdollStun (a mesma duração da rasteira sozinha, ±1 frame).
     const groundFrames = d.groundFrames(d.id);
-    assert(Math.abs(groundFrames - groundBaseline) <= 1, `GND-06: o tempo no chão deveria ficar em ${groundBaseline} frames de jogo: ficou ${groundFrames}`);
+    assert(
+      Math.abs(groundFrames - groundBaseline) <= 1,
+      `GND-06: o tempo no chão deveria ficar em ${groundBaseline} frames de jogo: ficou ${groundFrames}`,
+    );
     // GND-05: uma nova queda zera o `downHits`.
     await d.until(() => d.enemy().state === 'idle', 60, 'o inimigo deveria voltar a idle');
     assert(d.enemy().downHits === 1, `o downHits só zera numa nova queda: ${d.enemy().downHits}`);
@@ -397,9 +516,16 @@ export default async function (ctx) {
     await d.press('KeyA'); // vira para a esquerda: o caído e o terceiro ficam à frente
     const dxOf = (id) => byId(d.s, id).x - d.s.player.x;
     await d.until(
-      () => byId(d.s, a).state === 'gettingUp' && d.free() && d.s.player.facing === -1 && dxOf(a) <= 0 && dxOf(a) >= -40 && dxOf(c) >= -43,
+      () =>
+        byId(d.s, a).state === 'gettingUp' &&
+        d.free() &&
+        d.s.player.facing === -1 &&
+        dxOf(a) <= 0 &&
+        dxOf(a) >= -40 &&
+        dxOf(c) >= -43,
       120,
-      () => `o caído (${a}) deveria estar levantando, ao alcance e com o terceiro (${c}) ao alcance também (dx ${dxOf(a)} e ${dxOf(c)}, vira ${d.s.player.facing}, livre ${d.free()}, x ${d.s.player.x})`,
+      () =>
+        `o caído (${a}) deveria estar levantando, ao alcance e com o terceiro (${c}) ao alcance também (dx ${dxOf(a)} e ${dxOf(c)}, vira ${d.s.player.facing}, livre ${d.free()}, x ${d.s.player.x})`,
     );
     assert(dxOf(a) > dxOf(c), `o caído deveria ser o mais perto: ${dxOf(a)} contra ${dxOf(c)}`);
     assert(d.s.focusId === a, `PST-13: o foco deveria ser o alvo da rasteira (${a}): ${d.s.focusId}`);
@@ -412,26 +538,47 @@ export default async function (ctx) {
       states.push(byId(d.s, a).state);
     }
     // O jab conecta uns 5 frames depois do aperto, com o caído ainda levantando (são 350 ms).
-    assert(states.slice(0, 7).every((st) => st === 'gettingUp'), `o caído deveria seguir levantando até o contato: ${JSON.stringify(states)}`);
-    assert(byId(d.s, a).hp === before.get(a).hp && byId(d.s, a).downHits === before.get(a).downHits, `TGT-05/GND-03: o alvo levantando recusa o jab: ${JSON.stringify(byId(d.s, a))}`);
-    assert(byId(d.s, c).hp === before.get(c).hp - JAB, `TGT-05: o jab recusado pelo alvo que levanta deveria ficar com o terceiro (${c}): ${before.get(c).hp} -> ${byId(d.s, c).hp}`);
-    assert(byId(d.s, b).hp === before.get(b).hp, `TGT-03: o outro do par, longe, não deveria apanhar: ${byId(d.s, b).hp}`);
+    assert(
+      states.slice(0, 7).every((st) => st === 'gettingUp'),
+      `o caído deveria seguir levantando até o contato: ${JSON.stringify(states)}`,
+    );
+    assert(
+      byId(d.s, a).hp === before.get(a).hp && byId(d.s, a).downHits === before.get(a).downHits,
+      `TGT-05/GND-03: o alvo levantando recusa o jab: ${JSON.stringify(byId(d.s, a))}`,
+    );
+    assert(
+      byId(d.s, c).hp === before.get(c).hp - JAB,
+      `TGT-05: o jab recusado pelo alvo que levanta deveria ficar com o terceiro (${c}): ${before.get(c).hp} -> ${byId(d.s, c).hp}`,
+    );
+    assert(
+      byId(d.s, b).hp === before.get(b).hp,
+      `TGT-03: o outro do par, longe, não deveria apanhar: ${byId(d.s, b).hp}`,
+    );
     assert(d.s.focusId === c, `PST-13: o foco deveria ir para o terceiro, o que aceitou o jab: ${d.s.focusId}`);
   }
 
   // --- PST-08: objeto balançado cambaleia; TGT-07: no máximo 2 alvos por balanço -------------------------------------------------------
   {
     const d = await duel('enemyGuard=0&enemyVariant=corcunda', { chair: true });
-    assert(d.s.hud.heldItem !== null && !d.enemy().committed, `PST-08: o inimigo deveria estar em preparo, antes do compromisso, com a cadeira na mão: ${JSON.stringify(d.enemy())}`);
+    assert(
+      d.s.hud.heldItem !== null && !d.enemy().committed,
+      `PST-08: o inimigo deveria estar em preparo, antes do compromisso, com a cadeira na mão: ${JSON.stringify(d.enemy())}`,
+    );
     const hp0 = d.enemy().hp;
     await d.press('KeyJ');
     await d.until(() => d.enemy().hp < hp0, 30, 'PST-08: a cadeirada deveria ser aceita');
-    assert(d.enemy().state === 'stagger' && d.enemy().ragdollVisible === null, `PST-08: o objeto balançado deveria cambalear sem ragdoll: ${JSON.stringify([d.enemy().state, d.enemy().ragdollVisible])}`);
+    assert(
+      d.enemy().state === 'stagger' && d.enemy().ragdollVisible === null,
+      `PST-08: o objeto balançado deveria cambalear sem ragdoll: ${JSON.stringify([d.enemy().state, d.enemy().ragdollVisible])}`,
+    );
     assert(hp0 - d.enemy().hp === CHAIR, `PST-08: a cadeira tira ${CHAIR}: ${hp0} -> ${d.enemy().hp}`);
     assert(d.s.focusId === d.id, `PST-13: o foco deveria ser o alvo da cadeirada: ${d.s.focusId}`);
     const g0 = d.gf;
     const g1 = await untilIdle(d);
-    assert(Math.abs((g1 - g0) * FRAME_MS - STAGGER_MS) <= FRAME_MS, `PST-08: a cadeirada deveria cambalear por ${STAGGER_MS} ms: ${((g1 - g0) * FRAME_MS).toFixed(0)} ms`);
+    assert(
+      Math.abs((g1 - g0) * FRAME_MS - STAGGER_MS) <= FRAME_MS,
+      `PST-08: a cadeirada deveria cambalear por ${STAGGER_MS} ms: ${((g1 - g0) * FRAME_MS).toFixed(0)} ms`,
+    );
   }
   {
     // O par ataca (o jogador segura a guarda, sem se machucar) e, no descanso dele, o terceiro ocupa a vaga e vem se colar: os três
@@ -440,19 +587,35 @@ export default async function (ctx) {
     const { pair, third } = group(s0);
     const d = track(s0);
     const dxOf = (id) => byId(d.s, id).x - d.s.player.x;
-    const ready = () => pair.every((p) => byId(d.s, p.id).ai === 'rest' && dxOf(p.id) >= 0 && dxOf(p.id) <= 36) && dxOf(third.id) <= 42 && dxOf(third.id) > dxOf(pair[0].id);
+    const ready = () =>
+      pair.every((p) => byId(d.s, p.id).ai === 'rest' && dxOf(p.id) >= 0 && dxOf(p.id) <= 36) &&
+      dxOf(third.id) <= 42 &&
+      dxOf(third.id) > dxOf(pair[0].id);
     await down('KeyU');
     await d.until(ready, 600, 'TGT-07: o par deveria descansar e o terceiro chegar ao alcance');
     await up('KeyU');
-    await d.until(() => d.s.player.guard === 'none' && d.free() && ready(), 30, 'TGT-07: o jogador deveria baixar a guarda com os três ao alcance');
+    await d.until(
+      () => d.s.player.guard === 'none' && d.free() && ready(),
+      30,
+      'TGT-07: o jogador deveria baixar a guarda com os três ao alcance',
+    );
     const hp0 = new Map(d.s.enemies.map((e) => [e.id, e.hp]));
     const hpPlayer = d.s.player.hp;
     await d.press('KeyJ');
     for (let i = 0; i < 24; i++) await d.step();
     const lost = d.s.enemies.map((e) => [e.id, hp0.get(e.id) - e.hp]);
-    assert(lost.filter(([, v]) => v > 0).length === 2, `TGT-07: o balanço deveria tirar vida de exatamente 2 alvos: ${JSON.stringify(lost)}`);
-    assert(lost.every(([id, v]) => (id === third.id ? v === 0 : v === CHAIR)), `TGT-07: a cadeira deveria tirar ${CHAIR} dos dois mais perto e nada do terceiro (${third.id}): ${JSON.stringify(lost)}`);
-    assert(d.s.hud.heldItem !== null && d.s.hud.heldItem.pips === 2, `TGT-07: dois impactos na cadeira (4 -> 2): ${JSON.stringify(d.s.hud.heldItem)}`);
+    assert(
+      lost.filter(([, v]) => v > 0).length === 2,
+      `TGT-07: o balanço deveria tirar vida de exatamente 2 alvos: ${JSON.stringify(lost)}`,
+    );
+    assert(
+      lost.every(([id, v]) => (id === third.id ? v === 0 : v === CHAIR)),
+      `TGT-07: a cadeira deveria tirar ${CHAIR} dos dois mais perto e nada do terceiro (${third.id}): ${JSON.stringify(lost)}`,
+    );
+    assert(
+      d.s.hud.heldItem !== null && d.s.hud.heldItem.pips === 2,
+      `TGT-07: dois impactos na cadeira (4 -> 2): ${JSON.stringify(d.s.hud.heldItem)}`,
+    );
     assert(d.s.player.hp === hpPlayer, `o jogador não deveria ter apanhado: ${hpPlayer} -> ${d.s.player.hp}`);
   }
 
@@ -463,7 +626,10 @@ export default async function (ctx) {
     await d.press('KeyE');
     await d.until(() => d.enemy().hp < hp0, 40, 'PST-07: a cadeira arremessada deveria acertar');
     assert(d.enemy().state === 'ragdollStun', `PST-07: o objeto arremessado deveria derrubar: ${d.enemy().state}`);
-    assert(hp0 - d.enemy().hp === CHAIR && d.s.focusId === d.id, `PST-07: a cadeira tira ${CHAIR} e dá o foco: ${hp0} -> ${d.enemy().hp}, foco ${d.s.focusId}`);
+    assert(
+      hp0 - d.enemy().hp === CHAIR && d.s.focusId === d.id,
+      `PST-07: a cadeira tira ${CHAIR} e dá o foco: ${hp0} -> ${d.enemy().hp}, foco ${d.s.focusId}`,
+    );
   }
 
   // --- Postura quebrada (três parries, 35 cada): PST-06 (finalizador) e EDG-11 (rasteira) ----------------------------------------------
@@ -487,9 +653,16 @@ export default async function (ctx) {
     const d = await duel(query);
     for (let i = 0; i < 3; i++) {
       await parry(d);
-      if (i < 2) assert(d.enemy().structure.cur === 35 * (i + 1) && !d.enemy().structure.broken, `cada parry soma 35 de postura: ${JSON.stringify(d.enemy().structure)}`);
+      if (i < 2)
+        assert(
+          d.enemy().structure.cur === 35 * (i + 1) && !d.enemy().structure.broken,
+          `cada parry soma 35 de postura: ${JSON.stringify(d.enemy().structure)}`,
+        );
     }
-    assert(d.enemy().structure.broken && d.enemy().structure.cur === 100 && d.enemy().hp === 60, `três parries deveriam quebrar a postura, sem tirar vida: ${JSON.stringify(d.enemy())}`);
+    assert(
+      d.enemy().structure.broken && d.enemy().structure.cur === 100 && d.enemy().hp === 60,
+      `três parries deveriam quebrar a postura, sem tirar vida: ${JSON.stringify(d.enemy())}`,
+    );
     await d.until(() => d.free() && !d.s.player.counter.open, 120, 'o jogador deveria ficar livre depois do parry');
     return d;
   };
@@ -498,9 +671,18 @@ export default async function (ctx) {
     assert(d.s.focusId === null, `os parries não dão foco: ${d.s.focusId}`);
     const hp0 = d.enemy().hp;
     await d.press('KeyJ', 'KeyK');
-    assert(count(d.s, `finisher:${d.id}`) === 1, `o finalizador (J+K) deveria ser aceito: ${JSON.stringify(d.s.events.slice(-4))}`);
-    assert(d.enemy().state === 'ragdollStun', `PST-06: o finalizador num quebrado que sobrevive deveria derrubar: ${d.enemy().state}`);
-    assert(hp0 - d.enemy().hp === FINISHER && d.enemy().hp > 0, `PST-06: o finalizador tira ${FINISHER} e o inimigo sobrevive: ${hp0} -> ${d.enemy().hp}`);
+    assert(
+      count(d.s, `finisher:${d.id}`) === 1,
+      `o finalizador (J+K) deveria ser aceito: ${JSON.stringify(d.s.events.slice(-4))}`,
+    );
+    assert(
+      d.enemy().state === 'ragdollStun',
+      `PST-06: o finalizador num quebrado que sobrevive deveria derrubar: ${d.enemy().state}`,
+    );
+    assert(
+      hp0 - d.enemy().hp === FINISHER && d.enemy().hp > 0,
+      `PST-06: o finalizador tira ${FINISHER} e o inimigo sobrevive: ${hp0} -> ${d.enemy().hp}`,
+    );
     assert(d.s.focusId === d.id, `PST-13: o finalizador aceito dá o foco: ${d.s.focusId}`);
   }
   {
@@ -514,11 +696,17 @@ export default async function (ctx) {
     let accepted = false;
     for (let i = 0; i < 120 && d.enemy().structure.broken; i++) {
       await d.step();
-      assert(d.enemy().state !== 'ragdollStun', `EDG-11: a rasteira num quebrado não deveria derrubar (frame ${i}): ${d.enemy().state}`);
+      assert(
+        d.enemy().state !== 'ragdollStun',
+        `EDG-11: a rasteira num quebrado não deveria derrubar (frame ${i}): ${d.enemy().state}`,
+      );
       assert(d.enemy().ragdollVisible === null, `EDG-11: o quebrado não deveria virar ragdoll (frame ${i})`);
       if (d.enemy().hp < hp0) accepted = true;
     }
-    assert(accepted && hp0 - d.enemy().hp === RASTEIRA, `EDG-11: a rasteira deveria ser aceita (tira ${RASTEIRA}): ${hp0} -> ${d.enemy().hp}`);
+    assert(
+      accepted && hp0 - d.enemy().hp === RASTEIRA,
+      `EDG-11: a rasteira deveria ser aceita (tira ${RASTEIRA}): ${hp0} -> ${d.enemy().hp}`,
+    );
     assert(!d.enemy().structure.broken, 'a janela deveria cobrir a quebra inteira');
   }
 
@@ -528,7 +716,10 @@ export default async function (ctx) {
     await parry(d);
     await parry(d);
     const gGain = d.gf;
-    assert(d.enemy().structure.cur === 70 && d.s.focusId !== d.id, `dois parries dão 70 de postura e nenhum foco: ${JSON.stringify(d.enemy().structure)}, foco ${d.s.focusId}`);
+    assert(
+      d.enemy().structure.cur === 70 && d.s.focusId !== d.id,
+      `dois parries dão 70 de postura e nenhum foco: ${JSON.stringify(d.enemy().structure)}, foco ${d.s.focusId}`,
+    );
     const drop = await decayAfterDelay(d, gGain, 'PST-14');
     assert(d.s.focusId !== d.id, `PST-14: o inimigo não deveria virar foco durante a medição: ${d.s.focusId}`);
     assert(Math.abs(drop - 40) <= 3, `PST-14: a postura de quem não é o foco deveria cair 40 em 1 s: caiu ${drop}`);

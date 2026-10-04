@@ -4,7 +4,10 @@ import { impactSpikes, impactTier } from '../../src/core/impactTier';
 import { IMPACT_FEEL } from '../../src/data/feel';
 
 const NONE = { brokePosture: false };
-const hit = (over: Partial<Hit> = {}): Pick<Hit, 'strength' | 'counter' | 'knockdown'> => ({ strength: 'light', ...over });
+const hit = (over: Partial<Hit> = {}): Pick<Hit, 'strength' | 'counter' | 'knockdown'> => ({
+  strength: 'light',
+  ...over,
+});
 
 describe('impactTier', () => {
   it('IMP-01: counter dá decisive', () => {

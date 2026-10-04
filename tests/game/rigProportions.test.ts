@@ -18,14 +18,21 @@ const HAIR_TOP_IDLE = topRowOf(PLAYER_FRAMES['idle-0'], ['h', 'H', 'j'])!;
 
 describe.each(PRESETS)('preset $name', (body) => {
   const set = uppercutFor(body, TUNINGS[body.name]);
-  const frames = { wind: set.frames.wind, hit: set.frames.hit, recover: set.frames.recover, idle: rasterize(idleFor(body)) };
+  const frames = {
+    wind: set.frames.wind,
+    hit: set.frames.hit,
+    recover: set.frames.recover,
+    idle: rasterize(idleFor(body)),
+  };
 
   it('PRP-01: mede de 24 a 26 texels em pé e a soma das partes bate com a altura declarada', () => {
     expect(body.height).toBeGreaterThanOrEqual(24);
     expect(body.height).toBeLessThanOrEqual(26);
     expect(body.head + body.neck + body.torso + body.thigh + body.shin + SOLE).toBeCloseTo(body.height, 1);
     const idle = frames.idle.frame;
-    expect(30 - idle.findIndex((r) => /[^.]/.test(r)), 'altura da silhueta no idle').toBeGreaterThanOrEqual(body.height - 1);
+    expect(30 - idle.findIndex((r) => /[^.]/.test(r)), 'altura da silhueta no idle').toBeGreaterThanOrEqual(
+      body.height - 1,
+    );
     expect(30 - idle.findIndex((r) => /[^.]/.test(r))).toBeLessThanOrEqual(body.height + 1);
   });
 
@@ -60,7 +67,8 @@ describe.each(PRESETS)('preset $name', (body) => {
       expect(isSingleComponent(r.frame), 'POS-02').toBe(true);
       expect(r.clipped).toBe(0);
       const pose = { idle: set.idle, wind: set.wind, hit: set.hit, recover: set.recover }[name];
-      for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(pose, b)), b.name).toBeLessThanOrEqual(0.5);
+      for (const b of BONES)
+        expect(Math.abs(measuredLength(r.joints, b) - boneLength(pose, b)), b.name).toBeLessThanOrEqual(0.5);
     });
   }
 
@@ -88,7 +96,9 @@ describe.each(PRESETS)('preset $name', (body) => {
     // O punho é o do braço esticado: nunca mais longe do ombro que o comprimento do braço (mais a tolerância da grade).
     const j = solve(set.hit);
     const arm = body.upperArm + body.foreArm;
-    expect(Math.hypot(j.wristNear.x - j.shoulderNear.x, j.wristNear.y - j.shoulderNear.y)).toBeLessThanOrEqual(arm + 0.01);
+    expect(Math.hypot(j.wristNear.x - j.shoulderNear.x, j.wristNear.y - j.shoulderNear.y)).toBeLessThanOrEqual(
+      arm + 0.01,
+    );
   });
 });
 

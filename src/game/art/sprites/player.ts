@@ -144,23 +144,11 @@ export const HEAD_FOCUS: Grid = [
   '.knnNkxPPxk..',
 ];
 /** Igual à cabeça base, com as pontas das mechas das linhas 0-1 1 texel para trás (overlap do idle e da queda). */
-export const HEAD_SWAY: Grid = [
-  '..k..k..k....',
-  '.kHk.kHkjk...',
-  ...HEAD.slice(2),
-];
+export const HEAD_SWAY: Grid = ['..k..k..k....', '.kHk.kHkjk...', ...HEAD.slice(2)];
 
 // ---------------------------------------------------------------- tronco (8x7), gakuran
 // Gola alta com luz `s`, botões `A`/`z` na coluna 5, luz de borda `y` nas costas, sombra `n` e cinto `K` com fivela.
-const BODY: Grid = [
-  'koyNNsNk',
-  'kysNNANk',
-  'kyNNNNnk',
-  'kyNsNANk',
-  'kyNNNNnk',
-  'konnnnnk',
-  'kKKzAKKk',
-];
+const BODY: Grid = ['koyNNsNk', 'kysNNANk', 'kyNNNNnk', 'kyNsNANk', 'kyNNNNnk', 'konnnnnk', 'kKKzAKKk'];
 
 // ---------------------------------------------------------------- braços (o da frente; o de trás via recolor)
 // Manga com punho claro (`s`) antes da mão; mão com sombra `P`.
@@ -245,9 +233,23 @@ const RUN_LEGS: Grid[] = [
 /** Pulo: joelhos recolhidos. */
 const LEGS_TUCK: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKKk.ksNNk', '....kkk.kKsKk', '.........kkkk', ''];
 /** Queda: pernas soltas, uma à frente. */
-const LEGS_DANGLE: Grid = ['....knNNNNNk', '....kKnk.knNk', '...kKnk..ksNk', '...kKKk...knNk', '...kkk....kKsKk', '...........kkkk'];
+const LEGS_DANGLE: Grid = [
+  '....knNNNNNk',
+  '....kKnk.knNk',
+  '...kKnk..ksNk',
+  '...kKKk...knNk',
+  '...kkk....kKsKk',
+  '...........kkkk',
+];
 /** Queda, segundo tempo: a outra perna vai à frente (alterna com LEGS_DANGLE). */
-const LEGS_DANGLE_B: Grid = ['....knNNNNNk', '...kKnkknNNk', '...kKnk.ksNk', '..kKKk...knNk', '..kkk....kKsKk', '..........kkkk'];
+const LEGS_DANGLE_B: Grid = [
+  '....knNNNNNk',
+  '...kKnkknNNk',
+  '...kKnk.ksNk',
+  '..kKKk...knNk',
+  '..kkk....kKsKk',
+  '..........kkkk',
+];
 /** Agachado do pouso (4 linhas): joelhos para fora, pés afastados. */
 const LEGS_CROUCH: Grid = ['...knNNNNNk', '.kKnskkknNk', 'kKKKk...kKsKk', 'kkkkk...kkkkk'];
 /**
@@ -302,7 +304,9 @@ export function legKick(len: number, rise = 0): string[] {
   const filled = cells.map((row) => row.map((c) => c !== '.'));
   const near = (x: number, y: number): boolean => filled[y]?.[x] === true;
   return cells.map((row, y) =>
-    row.map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c)).join(''),
+    row
+      .map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c))
+      .join(''),
   );
 }
 
@@ -360,7 +364,13 @@ export function pose(p: Pose): string[] {
  * (que ocupa `limbRows` linhas a partir de `limbY`), começando atrás do punho (5 texels antes da ponta) (`tipCol`, coluna da área de
  * desenho) e indo para trás. Só pinta texels vazios e nunca chega à ponta, então o alcance medido não muda.
  */
-export function smear(frame: readonly string[], tipCol: number, limbY: number, limbRows: number, lengths: readonly [number, number]): string[] {
+export function smear(
+  frame: readonly string[],
+  tipCol: number,
+  limbY: number,
+  limbRows: number,
+  lengths: readonly [number, number],
+): string[] {
   const rows = frame.map((r) => [...r]);
   const lines: Array<[number, number]> = [
     [limbY - 1, lengths[0]],
@@ -387,10 +397,22 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   'idle-3': pose({ head: HEAD_SWAY, near: [ARM_DOWN, 5, 12] }),
 
   'run-0': pose({ lean: 1, near: [ARM_BACK, 2, 12], far: [far(ARM_FWD), 8, 12], legs: [[RUN_LEGS[0], 0, Y_LEGS]] }),
-  'run-1': pose({ lean: 1, drop: 1, near: [ARM_DOWN, 6, 13], far: [far(ARM_DOWN), 8, 13], legs: [[RUN_LEGS[1], 0, Y_LEGS]] }),
+  'run-1': pose({
+    lean: 1,
+    drop: 1,
+    near: [ARM_DOWN, 6, 13],
+    far: [far(ARM_DOWN), 8, 13],
+    legs: [[RUN_LEGS[1], 0, Y_LEGS]],
+  }),
   'run-2': pose({ lean: 1, near: [ARM_FWD, 6, 12], far: [far(ARM_BACK), 2, 12], legs: [[RUN_LEGS[2], 0, Y_LEGS]] }),
   'run-3': pose({ lean: 1, near: [ARM_FWD, 6, 12], far: [far(ARM_BACK), 2, 12], legs: [[RUN_LEGS[3], 0, Y_LEGS]] }),
-  'run-4': pose({ lean: 1, drop: 1, near: [ARM_DOWN, 6, 13], far: [far(ARM_DOWN), 8, 13], legs: [[RUN_LEGS[4], 0, Y_LEGS]] }),
+  'run-4': pose({
+    lean: 1,
+    drop: 1,
+    near: [ARM_DOWN, 6, 13],
+    far: [far(ARM_DOWN), 8, 13],
+    legs: [[RUN_LEGS[4], 0, Y_LEGS]],
+  }),
   'run-5': pose({ lean: 1, near: [ARM_BACK, 2, 12], far: [far(ARM_FWD), 8, 12], legs: [[RUN_LEGS[5], 0, Y_LEGS]] }),
 
   // Decolagem: pernas esticadas, braços para cima; depois a subida (pose antiga do jump-0).
@@ -400,50 +422,187 @@ export const PLAYER_FRAMES: Record<string, readonly string[]> = {
   // Ápice: joelhos bem recolhidos, braços abertos.
   'apex-0': pose({ near: [ARM_FWD, 8, 10], far: [far(ARM_BACK), 0, 10], legs: [[LEGS_TUCK, 0, Y_LEGS - 2]] }),
   'fall-0': pose({ near: [mirror(ARM_BACK), 8, 10], far: [far(ARM_BACK), 1, 10], legs: [[LEGS_DANGLE, 0, Y_LEGS]] }),
-  'fall-1': pose({ head: HEAD_SWAY, near: [mirror(ARM_BACK), 8, 9], far: [far(ARM_BACK), 1, 9], legs: [[LEGS_DANGLE_B, 0, Y_LEGS]] }),
+  'fall-1': pose({
+    head: HEAD_SWAY,
+    near: [mirror(ARM_BACK), 8, 9],
+    far: [far(ARM_BACK), 1, 9],
+    legs: [[LEGS_DANGLE_B, 0, Y_LEGS]],
+  }),
   // Pouso: agacha fundo (squash) e levanta.
-  'land-0': pose({ drop: 2, near: [ARM_FWD, 8, 13], far: [far(ARM_BACK), 1, 13], legs: [[LEGS_CROUCH, 0, Y_LEGS + 2]] }),
+  'land-0': pose({
+    drop: 2,
+    near: [ARM_FWD, 8, 13],
+    far: [far(ARM_BACK), 1, 13],
+    legs: [[LEGS_CROUCH, 0, Y_LEGS + 2]],
+  }),
   'land-1': pose({ drop: 1, near: [ARM_DOWN, 5, 13] }),
 
   // Jab (braço da frente). No hit, o punho chega à coluna 25 = 18 texels (36 px) à frente do centro,
   // a borda da hitbox do jab (offsetX 22 + largura/2 13 = 35 px).
-  'jab-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_COCK, 3, 12], far: [far(ARM_GUARD), 8, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  'jab-hit': smear(pose({ lean: 2, head: HEAD_FOCUS, near: [armStraight(17), 9, 11], far: [far(ARM_GUARD), 9, 11], legs: [[LEGS_WIDE, 1, Y_LEGS]] }), 25, 11, 5, [5, 3]),
-  'jab-recover': pose({ lean: 1, head: HEAD_FOCUS, near: [armStraight(10), 9, 11], far: [far(ARM_GUARD), 8, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
+  'jab-wind': pose({
+    lean: -1,
+    head: HEAD_FOCUS,
+    near: [ARM_COCK, 3, 12],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  'jab-hit': smear(
+    pose({
+      lean: 2,
+      head: HEAD_FOCUS,
+      near: [armStraight(17), 9, 11],
+      far: [far(ARM_GUARD), 9, 11],
+      legs: [[LEGS_WIDE, 1, Y_LEGS]],
+    }),
+    25,
+    11,
+    5,
+    [5, 3],
+  ),
+  'jab-recover': pose({
+    lean: 1,
+    head: HEAD_FOCUS,
+    near: [armStraight(10), 9, 11],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
 
   // Direto (braço de trás, mais escuro), com o tronco girado para a frente.
-  'cross-wind': pose({ lean: -1, head: HEAD_FOCUS, near: [ARM_GUARD, 8, 11], far: [far(ARM_COCK), 1, 12], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  'cross-hit': smear(pose({ lean: 3, head: HEAD_FOCUS, near: [ARM_GUARD, 9, 12], far: [far(armStraight(16)), 10, 11], legs: [[LEGS_WIDE, 2, Y_LEGS]] }), 25, 11, 5, [5, 3]),
-  'cross-recover': pose({ lean: 1, head: HEAD_FOCUS, near: [ARM_GUARD, 8, 11], far: [far(armStraight(10)), 9, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
+  'cross-wind': pose({
+    lean: -1,
+    head: HEAD_FOCUS,
+    near: [ARM_GUARD, 8, 11],
+    far: [far(ARM_COCK), 1, 12],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  'cross-hit': smear(
+    pose({
+      lean: 3,
+      head: HEAD_FOCUS,
+      near: [ARM_GUARD, 9, 12],
+      far: [far(armStraight(16)), 10, 11],
+      legs: [[LEGS_WIDE, 2, Y_LEGS]],
+    }),
+    25,
+    11,
+    5,
+    [5, 3],
+  ),
+  'cross-recover': pose({
+    lean: 1,
+    head: HEAD_FOCUS,
+    near: [ARM_GUARD, 8, 11],
+    far: [far(armStraight(10)), 9, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
 
   // Chute: no hit, a ponta do pé chega à coluna 28 = 21 texels (42 px) à frente do centro,
   // a borda da hitbox do chute (offsetX 26 + largura/2 16 = 42 px).
   // Tronco inclinado para trás (`tilt`), perna de apoio plantada sob o corpo e perna do chute subindo 3 linhas até a
   // ponta, com coxa grossa e canela fina (`legKick`). Sem as linhas `S` do rastro antigo: o rastro agora é procedural.
-  'kick-wind': pose({ lean: -1, tilt: 1, head: HEAD_FOCUS, near: [ARM_GUARD, 6, 11], far: [far(ARM_GUARD), 2, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 15]] }),
-  'kick-hit': pose({ lean: -1, tilt: 2, head: HEAD_FOCUS, near: [ARM_GUARD, 4, 11], far: [far(ARM_BACK), 0, 11], legs: [[LEG_SUPPORT, 5, 17], [legKick(20, 3), 9, 12]] }),
-  'kick-recover': pose({ lean: -1, tilt: 1, head: HEAD_FOCUS, near: [ARM_GUARD, 6, 11], far: [far(ARM_GUARD), 2, 11], legs: [[LEG_SUPPORT, 4, 17], [LEG_CHAMBER, 7, 16]] }),
+  'kick-wind': pose({
+    lean: -1,
+    tilt: 1,
+    head: HEAD_FOCUS,
+    near: [ARM_GUARD, 6, 11],
+    far: [far(ARM_GUARD), 2, 11],
+    legs: [
+      [LEG_SUPPORT, 4, 17],
+      [LEG_CHAMBER, 7, 15],
+    ],
+  }),
+  'kick-hit': pose({
+    lean: -1,
+    tilt: 2,
+    head: HEAD_FOCUS,
+    near: [ARM_GUARD, 4, 11],
+    far: [far(ARM_BACK), 0, 11],
+    legs: [
+      [LEG_SUPPORT, 5, 17],
+      [legKick(20, 3), 9, 12],
+    ],
+  }),
+  'kick-recover': pose({
+    lean: -1,
+    tilt: 1,
+    head: HEAD_FOCUS,
+    near: [ARM_GUARD, 6, 11],
+    far: [far(ARM_GUARD), 2, 11],
+    legs: [
+      [LEG_SUPPORT, 4, 17],
+      [LEG_CHAMBER, 7, 16],
+    ],
+  }),
 
   // Carregando objeto: braços para cima segurando.
   'carry-idle-0': pose({ near: [ARM_GUARD, 8, 10], far: [far(ARM_UP), 1, 3] }),
   'carry-idle-1': pose({ drop: 1, near: [ARM_GUARD, 8, 11], far: [far(ARM_UP), 1, 4] }),
-  'carry-run-0': pose({ lean: 1, near: [ARM_GUARD, 9, 10], far: [far(ARM_UP), 2, 3], legs: [[RUN_LEGS[0], 0, Y_LEGS]] }),
-  'carry-run-1': pose({ lean: 1, drop: 1, near: [ARM_GUARD, 9, 11], far: [far(ARM_UP), 2, 4], legs: [[RUN_LEGS[1], 0, Y_LEGS]] }),
-  'carry-run-2': pose({ lean: 1, near: [ARM_GUARD, 9, 10], far: [far(ARM_UP), 2, 3], legs: [[RUN_LEGS[3], 0, Y_LEGS]] }),
-  'carry-run-3': pose({ lean: 1, drop: 1, near: [ARM_GUARD, 9, 11], far: [far(ARM_UP), 2, 4], legs: [[RUN_LEGS[4], 0, Y_LEGS]] }),
+  'carry-run-0': pose({
+    lean: 1,
+    near: [ARM_GUARD, 9, 10],
+    far: [far(ARM_UP), 2, 3],
+    legs: [[RUN_LEGS[0], 0, Y_LEGS]],
+  }),
+  'carry-run-1': pose({
+    lean: 1,
+    drop: 1,
+    near: [ARM_GUARD, 9, 11],
+    far: [far(ARM_UP), 2, 4],
+    legs: [[RUN_LEGS[1], 0, Y_LEGS]],
+  }),
+  'carry-run-2': pose({
+    lean: 1,
+    near: [ARM_GUARD, 9, 10],
+    far: [far(ARM_UP), 2, 3],
+    legs: [[RUN_LEGS[3], 0, Y_LEGS]],
+  }),
+  'carry-run-3': pose({
+    lean: 1,
+    drop: 1,
+    near: [ARM_GUARD, 9, 11],
+    far: [far(ARM_UP), 2, 4],
+    legs: [[RUN_LEGS[4], 0, Y_LEGS]],
+  }),
 
   // Golpe com objeto: ergue, desce à frente, volta.
   'swing-wind': pose({ lean: -1, near: [ARM_COCK, 3, 12], far: [far(ARM_UP), 1, 3], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  'swing-hit': pose({ lean: 2, near: [armStraight(12), 9, 12], far: [far(armStraight(11)), 9, 10], legs: [[LEGS_WIDE, 1, Y_LEGS]] }),
-  'swing-recover': pose({ lean: 1, near: [armStraight(9), 9, 12], far: [far(ARM_GUARD), 8, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
+  'swing-hit': pose({
+    lean: 2,
+    near: [armStraight(12), 9, 12],
+    far: [far(armStraight(11)), 9, 10],
+    legs: [[LEGS_WIDE, 1, Y_LEGS]],
+  }),
+  'swing-recover': pose({
+    lean: 1,
+    near: [armStraight(9), 9, 12],
+    far: [far(ARM_GUARD), 8, 11],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
 
   // Arremesso: braço para trás e para cima, depois solta à frente.
   'throw-0': pose({ lean: -1, near: [ARM_UP, 0, 3], far: [far(ARM_GUARD), 8, 11], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  'throw-1': pose({ lean: 2, near: [armStraight(13), 9, 11], far: [far(ARM_BACK), 1, 12], legs: [[LEGS_WIDE, 1, Y_LEGS]] }),
+  'throw-1': pose({
+    lean: 2,
+    near: [armStraight(13), 9, 11],
+    far: [far(ARM_BACK), 1, 12],
+    legs: [[LEGS_WIDE, 1, Y_LEGS]],
+  }),
 
   // Levando golpe: tronco para trás, braços soltos.
-  'hurt-1': pose({ lean: -3, head: HEAD_HURT, near: [ARM_DOWN, 3, 13], far: [far(ARM_DOWN), 7, 13], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
-  hurt: pose({ lean: -2, head: HEAD_HURT, near: [mirror(ARM_FWD), 0, 12], far: [far(ARM_BACK), 5, 12], legs: [[LEGS_WIDE, 0, Y_LEGS]] }),
+  'hurt-1': pose({
+    lean: -3,
+    head: HEAD_HURT,
+    near: [ARM_DOWN, 3, 13],
+    far: [far(ARM_DOWN), 7, 13],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
+  hurt: pose({
+    lean: -2,
+    head: HEAD_HURT,
+    near: [mirror(ARM_FWD), 0, 12],
+    far: [far(ARM_BACK), 5, 12],
+    legs: [[LEGS_WIDE, 0, Y_LEGS]],
+  }),
 };
 
 export interface AnimDef {
@@ -470,7 +629,8 @@ export function animFrameConfigs(name: string, def: AnimDef): AnimFrameConfig[] 
   }
   return def.frames.map((frame, i) => {
     const duration = durations[i];
-    if (!(duration > 0)) throw new Error(`Animação '${name}' tem a duration ${duration} no frame '${frame}'; precisa ser > 0`);
+    if (!(duration > 0))
+      throw new Error(`Animação '${name}' tem a duration ${duration} no frame '${frame}'; precisa ser > 0`);
     return { frame, duration };
   });
 }
@@ -481,7 +641,12 @@ export function animFrameConfigs(name: string, def: AnimDef): AnimFrameConfig[] 
  */
 export const PLAYER_ANIMS: Record<string, AnimDef> = {
   idle: { frames: ['idle-0', 'idle-1', 'idle-2', 'idle-3'], frameRate: 2, repeat: -1, durations: [520, 160, 520, 160] },
-  run: { frames: ['run-0', 'run-1', 'run-2', 'run-3', 'run-4', 'run-5'], frameRate: 12, repeat: -1, durations: [70, 90, 80, 70, 90, 80] },
+  run: {
+    frames: ['run-0', 'run-1', 'run-2', 'run-3', 'run-4', 'run-5'],
+    frameRate: 12,
+    repeat: -1,
+    durations: [70, 90, 80, 70, 90, 80],
+  },
   jump: { frames: ['jump-0', 'jump-1'], frameRate: 1, repeat: 0, durations: [70, 1000] },
   apex: { frames: ['apex-0'], frameRate: 1, repeat: 0 },
   fall: { frames: ['fall-0', 'fall-1'], frameRate: 7, repeat: -1, durations: [140, 140] },

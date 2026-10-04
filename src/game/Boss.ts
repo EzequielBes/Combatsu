@@ -259,7 +259,8 @@ export class Boss implements Hittable {
       if (ev.type === 'hitboxOn') this.openChargeHitbox();
       else if (ev.type === 'hitboxOff') this.attack.close();
       else if (ev.type === 'landed') this.onLand();
-      else if (ev.type === 'wallStun') this.brain.stun(BOSS.wallStunMs); // BFX-02: bateu na parede, fica atordoado
+      else if (ev.type === 'wallStun')
+        this.brain.stun(BOSS.wallStunMs); // BFX-02: bateu na parede, fica atordoado
       else if (ev.type === 'fire') {
         const { x, y } = this.body.position;
         // Altura de tronco a partir do chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).

@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { APEX_VY, LAND_MS, attackFrame, pickEnemyAnim, pickPlayerAnim, type EnemyAnim, type EnemyAnimInput, type PlayerAnimInput } from '../../src/core/animState';
+import {
+  APEX_VY,
+  LAND_MS,
+  attackFrame,
+  pickEnemyAnim,
+  pickPlayerAnim,
+  type EnemyAnim,
+  type EnemyAnimInput,
+  type PlayerAnimInput,
+} from '../../src/core/animState';
 
 /** Parado no chão, sem golpe, sem objeto. */
-const base: PlayerAnimInput = { hurt: false, attack: null, grounded: true, vx: 0, vy: 0, holding: false, landMs: Infinity };
+const base: PlayerAnimInput = {
+  hurt: false,
+  attack: null,
+  grounded: true,
+  vx: 0,
+  vy: 0,
+  holding: false,
+  landMs: Infinity,
+};
 const pick = (over: Partial<PlayerAnimInput>) => pickPlayerAnim({ ...base, ...over });
 
 describe('pickPlayerAnim (CHR-01)', () => {
@@ -36,7 +53,14 @@ describe('pickPlayerAnim (CHR-01)', () => {
 
   it('hurt vence tudo', () => {
     expect(
-      pick({ hurt: true, attack: { name: 'kick', phase: 'active' }, grounded: false, vy: -100, vx: 200, holding: true }),
+      pick({
+        hurt: true,
+        attack: { name: 'kick', phase: 'active' },
+        grounded: false,
+        vy: -100,
+        vx: 200,
+        holding: true,
+      }),
     ).toBe('hurt');
   });
 

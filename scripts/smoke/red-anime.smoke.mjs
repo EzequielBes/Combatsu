@@ -45,7 +45,10 @@ export default async function ({ page, baseUrl, assert }) {
 
   const startCast = async () => {
     const s = await tap('KeyL');
-    assert(s.tech.cast && s.tech.cast.id === 'vermelho', `Vermelho deveria ter começado: ${JSON.stringify(s.tech.cast)}`);
+    assert(
+      s.tech.cast && s.tech.cast.id === 'vermelho',
+      `Vermelho deveria ter começado: ${JSON.stringify(s.tech.cast)}`,
+    );
     return s;
   };
 
@@ -73,7 +76,10 @@ export default async function ({ page, baseUrl, assert }) {
           const tipX = s.player.x + off.x * s.player.facing;
           const tipY = s.player.y + FEET_OFFSET + off.y;
           const dist = Math.hypot(s.fx.red.orb.x - tipX, s.fx.red.orb.y - tipY);
-          assert(dist <= 2, `RDA-04: orbe a ${dist.toFixed(2)} px da ponta dos dedos (${s.player.frame}): ${JSON.stringify({ orb: s.fx.red.orb, tipX, tipY })}`);
+          assert(
+            dist <= 2,
+            `RDA-04: orbe a ${dist.toFixed(2)} px da ponta dos dedos (${s.player.frame}): ${JSON.stringify({ orb: s.fx.red.orb, tipX, tipY })}`,
+          );
           anchored++;
         }
         assert(s.fx.red.glowColor === CRIMSON, `RDA-05: glowColor deveria ser PALETTE.t: ${JSON.stringify(s.fx.red)}`);
@@ -81,7 +87,10 @@ export default async function ({ page, baseUrl, assert }) {
           degraded = s.fx.degraded;
           if (s.fx.red.glow.active) {
             glowSeen = true;
-            assert(s.fx.red.glow.color === CRIMSON, `RDA-06: glow.color deveria ser PALETTE.t: ${JSON.stringify(s.fx.red.glow)}`);
+            assert(
+              s.fx.red.glow.color === CRIMSON,
+              `RDA-06: glow.color deveria ser PALETTE.t: ${JSON.stringify(s.fx.red.glow)}`,
+            );
           }
           // RDA-07 / EDG-01: arcos, halo e orbe aparecem também sem WebGL.
           assert(
@@ -116,7 +125,10 @@ export default async function ({ page, baseUrl, assert }) {
       const tipX = repulse.player.x + off.x * repulse.player.facing;
       const tipY = repulse.player.y + FEET_OFFSET + off.y;
       const dist = Math.hypot(launchX - tipX, orb.y - tipY);
-      assert(dist <= 2, `RDA-04: orbe lançado a ${dist.toFixed(2)} px da ponta dos dedos (${repulse.player.frame}): ${JSON.stringify({ orb, launchX, tipX, tipY })}`);
+      assert(
+        dist <= 2,
+        `RDA-04: orbe lançado a ${dist.toFixed(2)} px da ponta dos dedos (${repulse.player.frame}): ${JSON.stringify({ orb, launchX, tipX, tipY })}`,
+      );
     }
 
     // RDA-08: no frame da soltura o inimigo da frente perdeu exatamente 4 de HP e foi empurrado/cambaleou.
@@ -143,19 +155,31 @@ export default async function ({ page, baseUrl, assert }) {
     }
     assert(steps.length >= 8, `RDA-11: poucos frames de voo medidos (${steps.length})`);
     const bad = steps.filter((d) => Math.abs(d - perFrame) > 1);
-    assert(bad.length === 0, `RDA-11: o orbe deveria andar ${perFrame.toFixed(2)} px por frame (760 px/s): ${JSON.stringify(steps.map((d) => +d.toFixed(2)))}`);
+    assert(
+      bad.length === 0,
+      `RDA-11: o orbe deveria andar ${perFrame.toFixed(2)} px por frame (760 px/s): ${JSON.stringify(steps.map((d) => +d.toFixed(2)))}`,
+    );
 
     // RDA-13 / RDA-15: flash de tela carmim por ~80 ms (5 frames, ±1) na detonação.
     assert(detonated, 'o orbe nunca detonou');
-    assert(detonated.fx.red.screenFlashColor === CRIMSON, `RDA-13: screenFlashColor deveria ser PALETTE.t: ${JSON.stringify(detonated.fx.red)}`);
+    assert(
+      detonated.fx.red.screenFlashColor === CRIMSON,
+      `RDA-13: screenFlashColor deveria ser PALETTE.t: ${JSON.stringify(detonated.fx.red)}`,
+    );
     let flashFrames = has(detonated, 'red.screenFlash') ? 1 : 0;
-    assert(flashFrames === 1, `RDA-15: red.screenFlash deveria estar na camada da detonação: ${JSON.stringify(detonated.fx.layers)}`);
+    assert(
+      flashFrames === 1,
+      `RDA-15: red.screenFlash deveria estar na camada da detonação: ${JSON.stringify(detonated.fx.layers)}`,
+    );
     for (let i = 0; i < 12; i++) {
       s = await frame();
       if (has(s, 'red.screenFlash')) flashFrames++;
     }
     const expectedFrames = 80 / FRAME_MS;
-    assert(Math.abs(flashFrames - expectedFrames) <= 1, `RDA-15: red.screenFlash deveria durar ~${expectedFrames.toFixed(1)} frames: ${flashFrames}`);
+    assert(
+      Math.abs(flashFrames - expectedFrames) <= 1,
+      `RDA-15: red.screenFlash deveria durar ~${expectedFrames.toFixed(1)} frames: ${flashFrames}`,
+    );
   }
 
   // --- B: inimigo atrás do player não é repelido (RDA-09) ------------------------------------------------------
@@ -187,11 +211,20 @@ export default async function ({ page, baseUrl, assert }) {
       if (!has(s, 'red.repulse')) break;
       repulseFrames++;
     }
-    assert(repulseFrames >= 7 && repulseFrames <= 8, `RDA-10: red.repulse deveria durar ~120 ms (7-8 frames): ${repulseFrames}`);
+    assert(
+      repulseFrames >= 7 && repulseFrames <= 8,
+      `RDA-10: red.repulse deveria durar ~120 ms (7-8 frames): ${repulseFrames}`,
+    );
     const after = repulse.enemies.find((e) => e.id === enemyId);
     const stillBehind = after && (after.x - repulse.player.x) * repulse.player.facing < 0;
-    assert(after && stillBehind, `inimigo deveria continuar às costas: ${JSON.stringify({ p: repulse.player.x, e: after && after.x })}`);
-    assert(after.hp === behind.hp, `RDA-09: o HP de quem está atrás não deveria mudar pela repulsão: ${behind.hp} -> ${after.hp}`);
+    assert(
+      after && stillBehind,
+      `inimigo deveria continuar às costas: ${JSON.stringify({ p: repulse.player.x, e: after && after.x })}`,
+    );
+    assert(
+      after.hp === behind.hp,
+      `RDA-09: o HP de quem está atrás não deveria mudar pela repulsão: ${behind.hp} -> ${after.hp}`,
+    );
   }
 
   // --- C: solta no ar (EDG-02): a repulsão é igual e o recuo de 12 px do chão não acontece -----------------------
@@ -227,7 +260,10 @@ export default async function ({ page, baseUrl, assert }) {
     s = await snap(50);
     await kit.up('KeyL');
     await kit.up('KeyW');
-    assert(s.tech.cast && s.tech.cast.id === 'vermelho', `Vermelho deveria ter começado no ar: ${JSON.stringify(s.tech.cast)}`);
+    assert(
+      s.tech.cast && s.tech.cast.id === 'vermelho',
+      `Vermelho deveria ter começado no ar: ${JSON.stringify(s.tech.cast)}`,
+    );
     let before = s;
     let release = null;
     for (let i = 0; i < 80 && release === null; i++) {
@@ -238,9 +274,15 @@ export default async function ({ page, baseUrl, assert }) {
     assert(release, 'EDG-02: a soltura no ar nunca mostrou red.repulse');
     assert(release.player.y < 462 - 20, `EDG-02: a soltura deveria ser no ar: y=${release.player.y}`);
     const hit = release.enemies.find((e) => e.id === frontId);
-    assert(hit && hit.hp === hpBefore - 4, `EDG-02: a repulsão no ar deveria tirar 4 de HP: ${hpBefore} -> ${hit && hit.hp}`);
+    assert(
+      hit && hit.hp === hpBefore - 4,
+      `EDG-02: a repulsão no ar deveria tirar 4 de HP: ${hpBefore} -> ${hit && hit.hp}`,
+    );
     s = await snap(100);
     const airRecoil = Math.abs(s.player.x - before.player.x);
-    assert(airRecoil < 2, `EDG-02/RED-15: no ar a soltura não deveria recuar o player (no chão recua 12 px): ${airRecoil.toFixed(2)}`);
+    assert(
+      airRecoil < 2,
+      `EDG-02/RED-15: no ar a soltura não deveria recuar o player (no chão recua 12 px): ${airRecoil.toFixed(2)}`,
+    );
   }
 }

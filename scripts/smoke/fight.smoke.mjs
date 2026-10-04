@@ -28,8 +28,14 @@ export default async function (ctx) {
     const before = await snap(16);
     const s = await press(keys);
     assert(s.player.move === name, `${req}: esperava player.move=${name}, veio ${s.player.move}`);
-    assert(count(s, `move:${name}`) === count(before, `move:${name}`) + 1, `MOV-13: esperava exatamente um move:${name}: ${JSON.stringify(moveEvents(s))}`);
-    assert(moveEvents(s).length === moveEvents(before).length + 1, `MOV-13: só um move:* novo esperado: ${JSON.stringify(moveEvents(s))}`);
+    assert(
+      count(s, `move:${name}`) === count(before, `move:${name}`) + 1,
+      `MOV-13: esperava exatamente um move:${name}: ${JSON.stringify(moveEvents(s))}`,
+    );
+    assert(
+      moveEvents(s).length === moveEvents(before).length + 1,
+      `MOV-13: só um move:* novo esperado: ${JSON.stringify(moveEvents(s))}`,
+    );
     return s;
   };
 
@@ -57,7 +63,10 @@ export default async function (ctx) {
   s = await snap(60);
   assert(Math.abs(s.player.x - chair.x) <= 36, `CTL-03: jogador longe da cadeira (${s.player.x} vs ${chair.x})`);
   s = await tap('KeyE');
-  assert(s.hud.heldItem !== null && s.hud.heldItem.name.length > 0, `CTL-03: E deveria segurar a cadeira: ${JSON.stringify(s.hud.heldItem)}`);
+  assert(
+    s.hud.heldItem !== null && s.hud.heldItem.name.length > 0,
+    `CTL-03: E deveria segurar a cadeira: ${JSON.stringify(s.hud.heldItem)}`,
+  );
   s = await tap('KeyE'); // CTL-07: arremessa e devolve as mãos livres
   assert(s.hud.heldItem === null, `E de novo deveria soltar o objeto: ${JSON.stringify(s.hud.heldItem)}`);
 
@@ -77,7 +86,10 @@ export default async function (ctx) {
   assert(s.player.move === 'direto', `MOV-03: o follow-up deveria ser direto, sequência ${JSON.stringify(seen)}`);
   assert(!seen.includes(null), `MOV-03: não deveria haver pausa entre jab e direto: ${JSON.stringify(seen)}`);
   assert(seen[0] === 'jab', `MOV-03: o direto só entra no fim da recovery do jab: ${JSON.stringify(seen)}`);
-  assert(count(s, 'move:direto') === count(beforeDireto, 'move:direto') + 1, `MOV-13: um move:direto esperado: ${JSON.stringify(moveEvents(s))}`);
+  assert(
+    count(s, 'move:direto') === count(beforeDireto, 'move:direto') + 1,
+    `MOV-13: um move:direto esperado: ${JSON.stringify(moveEvents(s))}`,
+  );
 
   // --- Grupo 2: chute frontal e soco baixo ------------------------------------------------------------------------
   await boot('enemyGuard=0');
@@ -139,15 +151,24 @@ export default async function (ctx) {
     await up('KeyJ');
     await up('KeyW');
     const via = viaJumpCancel ? 'AD-011' : 'mesmo frame';
-    assert(st.player.move === 'ganchoAscendente', `MOV-07: W+J deveria começar ganchoAscendente (${via}): ${st.player.move}`);
-    assert(count(st, 'move:ganchoAscendente') === count(before, 'move:ganchoAscendente') + 1, 'MOV-13: um move:ganchoAscendente esperado');
+    assert(
+      st.player.move === 'ganchoAscendente',
+      `MOV-07: W+J deveria começar ganchoAscendente (${via}): ${st.player.move}`,
+    );
+    assert(
+      count(st, 'move:ganchoAscendente') === count(before, 'move:ganchoAscendente') + 1,
+      'MOV-13: um move:ganchoAscendente esperado',
+    );
     let minY = baseY;
     for (let i = 0; i < 90; i++) {
       st = await frame();
       minY = Math.min(minY, st.enemies.find((x) => x.id === v.id).y);
     }
     assert(st.enemies.find((x) => x.id === v.id).hp > 0, 'MOV-11: o alvo precisa sobreviver');
-    assert(baseY - minY >= 64, `MOV-11 (${via}): o centro do inimigo subiu só ${(baseY - minY).toFixed(1)} px (mínimo 64)`);
+    assert(
+      baseY - minY >= 64,
+      `MOV-11 (${via}): o centro do inimigo subiu só ${(baseY - minY).toFixed(1)} px (mínimo 64)`,
+    );
   };
   await launch(false);
   await launch(true);
@@ -176,7 +197,10 @@ export default async function (ctx) {
     started = s.player.move === 'chuteCarregado';
   }
   assert(started, `MOV-09: o chuteCarregado deveria sair na soltura, move=${s.player.move}`);
-  assert(count(s, 'move:chuteCarregado') === count(beforeCharge, 'move:chuteCarregado') + 1, `MOV-13: um move:chuteCarregado esperado: ${JSON.stringify(moveEvents(s))}`);
+  assert(
+    count(s, 'move:chuteCarregado') === count(beforeCharge, 'move:chuteCarregado') + 1,
+    `MOV-13: um move:chuteCarregado esperado: ${JSON.stringify(moveEvents(s))}`,
+  );
 
   // --- Grupo 6: palma explosiva (SPC-01, SPC-02) -----------------------------------------------------------------------
   await boot('enemyGuard=0');
@@ -195,7 +219,10 @@ export default async function (ctx) {
   s = await frame();
   await up('KeyJ');
   assert(s.player.move === 'palmaExplosiva', `SPC-01: S, frente, J deveria começar palmaExplosiva: ${s.player.move}`);
-  assert(count(s, 'move:palmaExplosiva') === count(beforePalm, 'move:palmaExplosiva') + 1, 'MOV-13: um move:palmaExplosiva esperado');
+  assert(
+    count(s, 'move:palmaExplosiva') === count(beforePalm, 'move:palmaExplosiva') + 1,
+    'MOV-13: um move:palmaExplosiva esperado',
+  );
   s = await snap(900);
   const pushed = s.enemies.find((e) => e.id === tgt.id);
   assert(pushed.hp > 0, 'SPC-02: o alvo precisa sobreviver');

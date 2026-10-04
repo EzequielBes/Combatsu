@@ -77,7 +77,12 @@ function canInteract(p: PickupState, ctx: PickupContext): boolean {
 
 function overlapsPlayer(p: PickupState, t: PickupTuning, player: PickupPlayer): boolean {
   const half = t.size / 2;
-  return overlapsRect(p.x - half, p.y - half, t.size, t.size, { x: player.x, y: player.y, width: player.w, height: player.h });
+  return overlapsRect(p.x - half, p.y - half, t.size, t.size, {
+    x: player.x,
+    y: player.y,
+    width: player.w,
+    height: player.h,
+  });
 }
 
 /** Empurra o pickup para fora do sólido em X, se estiver sobreposto, e reflete a velocidade (ECO-07, ECO-24). */

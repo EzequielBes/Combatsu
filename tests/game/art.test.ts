@@ -36,7 +36,13 @@ import {
   STRUCTURE_BAR_FILL_COLOR,
 } from '../../src/game/art/combatColors';
 import { KANJI_FRAMES } from '../../src/game/art/sprites/kanji';
-import { AURA_FRAMES, BLUE_ORB_FRAME, RED_ORB_FRAMES, RED_ORB_SIZES, TECH_SPARK_FRAMES } from '../../src/game/art/sprites/techFx';
+import {
+  AURA_FRAMES,
+  BLUE_ORB_FRAME,
+  RED_ORB_FRAMES,
+  RED_ORB_SIZES,
+  TECH_SPARK_FRAMES,
+} from '../../src/game/art/sprites/techFx';
 import { RED_FX_COLORS } from '../../src/game/techFx/redPalette';
 import { TILE_FRAMES, tileFrameFor } from '../../src/game/art/tiles';
 import { PROP_SHARDS, PROP_SPRITES, SMOKE, SMOKE_CURSE } from '../../src/game/art/sprites/props';
@@ -386,7 +392,9 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
 
   it('nenhum frame do orbe Vermelho contém a nem A (RDA-03)', () => {
     for (const size of RED_ORB_SIZES) {
-      const colors = new Set(parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells.flat());
+      const colors = new Set(
+        parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells.flat(),
+      );
       expect(colors.has('a'), `${size}`).toBe(false);
       expect(colors.has('A'), `${size}`).toBe(false);
     }
@@ -448,7 +456,9 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
   });
 
   it('a faísca redOut do Vermelho não usa a nem A, só t, T e R (RDA-03, RDA-14)', () => {
-    const cells = parseSheet('tech-sparks', TECH_SPARK_FRAMES, PALETTE_KEYS).frames.find((f) => f.key === 'redOut')!.cells;
+    const cells = parseSheet('tech-sparks', TECH_SPARK_FRAMES, PALETTE_KEYS).frames.find(
+      (f) => f.key === 'redOut',
+    )!.cells;
     const colors = new Set(cells.flat().filter((c): c is string => c !== null));
     expect(colors.has('a')).toBe(false);
     expect(colors.has('A')).toBe(false);
@@ -678,12 +688,17 @@ describe('folha do chefe (BTIER-06, BAT-05, ART-01)', () => {
 const artMeasure = {
   /** Menor retângulo com todos os texels opacos: [esquerda, topo, direita, base]. */
   box(rows: readonly string[]): [number, number, number, number] {
-    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    let x0 = Infinity,
+      y0 = Infinity,
+      x1 = -1,
+      y1 = -1;
     rows.forEach((row, y) =>
       [...row].forEach((c, x) => {
         if (c === TRANSPARENT) return;
-        x0 = Math.min(x0, x); x1 = Math.max(x1, x);
-        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y);
       }),
     );
     return [x0, y0, x1, y1];
@@ -791,7 +806,10 @@ describe('chefes desenhados por pose articulada (BSP-01..13)', () => {
   const WINDUPS = ['windup-charge', 'windup-leap', 'windup-volley'];
 
   it('BSP-01: as folhas do Oni e da Tecelã passam no parseSheet com 40x32 texels e só chaves da paleta', () => {
-    for (const [name, frames] of [['boss-oni', BOSS_FRAMES], ['boss-tecela', TECELA_FRAMES]] as const) {
+    for (const [name, frames] of [
+      ['boss-oni', BOSS_FRAMES],
+      ['boss-tecela', TECELA_FRAMES],
+    ] as const) {
       const sheet = parseSheet(name, frames, PALETTE_KEYS);
       expect(sheet.width, name).toBe(40);
       expect(sheet.height, name).toBe(32);
@@ -862,7 +880,19 @@ describe('chefes desenhados por pose articulada (BSP-01..13)', () => {
   });
 
   it('BSP-13: o mapa da Tecelã tem exatamente as 11 trocas da spec (pele, juba, pano e brilho do olho)', () => {
-    expect(TECELA_COLOR_MAP).toEqual({ A: 'U', a: 'u', z: 'v', m: 'K', H: 'w', j: 'I', h: 'i', U: 'l', u: 'L', v: 'q', R: 'C' });
+    expect(TECELA_COLOR_MAP).toEqual({
+      A: 'U',
+      a: 'u',
+      z: 'v',
+      m: 'K',
+      H: 'w',
+      j: 'I',
+      h: 'i',
+      U: 'l',
+      u: 'L',
+      v: 'q',
+      R: 'C',
+    });
   });
 
   it('BSP-14: o leap tem os pés recolhidos: a base da caixa opaca fica na linha 28 ou acima', () => {
@@ -892,10 +922,13 @@ describe('animações dos chefes em laço (BAN-01..06)', () => {
     });
   });
 
-  it.each(['windup-charge', 'windup-leap', 'windup-volley'])('BAN-02: %s tem 2 frames distintos em laço, com 90 ms por frame', (name) => {
-    expectLoopOfTwo(name);
-    expect(BOSS_ANIMS[name].durations).toEqual([90, 90]);
-  });
+  it.each(['windup-charge', 'windup-leap', 'windup-volley'])(
+    'BAN-02: %s tem 2 frames distintos em laço, com 90 ms por frame',
+    (name) => {
+      expectLoopOfTwo(name);
+      expect(BOSS_ANIMS[name].durations).toEqual([90, 90]);
+    },
+  );
 
   it.each([
     ['charge', 80],
@@ -943,25 +976,37 @@ describe('braço e perna esticados do player com antebraço e canela finos (LMB-
     return best;
   };
 
-  it.each(lens(9, 22))('LMB-01: com len %i, braço e perna têm 5 linhas, len colunas e texel opaco na última coluna', (len) => {
-    for (const [name, part] of [['armStraight', armStraight(len)], ['legStraight', legStraight(len)]] as const) {
-      expect(part, name).toHaveLength(5);
-      expect(Math.max(...part.map((row) => row.length)), name).toBe(len);
-      expect(artMeasure.profile(part)[len - 1], name).toBeGreaterThanOrEqual(1);
-    }
-  });
+  it.each(lens(9, 22))(
+    'LMB-01: com len %i, braço e perna têm 5 linhas, len colunas e texel opaco na última coluna',
+    (len) => {
+      for (const [name, part] of [
+        ['armStraight', armStraight(len)],
+        ['legStraight', legStraight(len)],
+      ] as const) {
+        expect(part, name).toHaveLength(5);
+        expect(Math.max(...part.map((row) => row.length)), name).toBe(len);
+        expect(artMeasure.profile(part)[len - 1], name).toBeGreaterThanOrEqual(1);
+      }
+    },
+  );
 
-  it.each(lens(12, 22))('LMB-02: armStraight(%i) tem 3+ colunas seguidas de perfil até 4 antes do punho e 1+ coluna de perfil 5 entre as 5 últimas', (len) => {
-    const profile = artMeasure.profile(armStraight(len));
-    expect(thinRunBeforeTip(profile, 4)).toBeGreaterThanOrEqual(3);
-    expect(profile.slice(len - 5).filter((p) => p === 5).length).toBeGreaterThanOrEqual(1);
-  });
+  it.each(lens(12, 22))(
+    'LMB-02: armStraight(%i) tem 3+ colunas seguidas de perfil até 4 antes do punho e 1+ coluna de perfil 5 entre as 5 últimas',
+    (len) => {
+      const profile = artMeasure.profile(armStraight(len));
+      expect(thinRunBeforeTip(profile, 4)).toBeGreaterThanOrEqual(3);
+      expect(profile.slice(len - 5).filter((p) => p === 5).length).toBeGreaterThanOrEqual(1);
+    },
+  );
 
-  it.each(lens(12, 22))('LMB-03: legStraight(%i) tem 3+ colunas seguidas de perfil até 4 antes do pé e 2+ colunas de perfil 5 entre as 6 últimas', (len) => {
-    const profile = artMeasure.profile(legStraight(len));
-    expect(thinRunBeforeTip(profile, 4)).toBeGreaterThanOrEqual(3);
-    expect(profile.slice(len - 6).filter((p) => p === 5).length).toBeGreaterThanOrEqual(2);
-  });
+  it.each(lens(12, 22))(
+    'LMB-03: legStraight(%i) tem 3+ colunas seguidas de perfil até 4 antes do pé e 2+ colunas de perfil 5 entre as 6 últimas',
+    (len) => {
+      const profile = artMeasure.profile(legStraight(len));
+      expect(thinRunBeforeTip(profile, 4)).toBeGreaterThanOrEqual(3);
+      expect(profile.slice(len - 6).filter((p) => p === 5).length).toBeGreaterThanOrEqual(2);
+    },
+  );
 
   it.each(lens(9, 11))('EDG-01: armStraight(%i) não afina: toda coluna antes do punho tem perfil 5', (len) => {
     const profile = artMeasure.profile(armStraight(len));
@@ -1030,16 +1075,19 @@ describe('ferramentas com volume (OBJ-03, OBJ-04)', () => {
   it.each([
     ['cursedKnife', 3, 10, ['w', 'z']],
     ['cursedClub', 5, 8, ['l', 'M']],
-  ] as const)('%s: o frame common tem %ix%i texels, pelo menos 7 chaves distintas (entre elas %j) e nenhuma A', (key, w, h, required) => {
-    const common = TOOL_FRAMES[key].common;
-    const sheet = parseSheet(key, { common }, PALETTE_KEYS);
-    expect(sheet.width).toBe(w);
-    expect(sheet.height).toBe(h);
-    const keys = artMeasure.keysOf(common);
-    expect(keys.size).toBeGreaterThanOrEqual(7);
-    for (const k of required) expect(keys.has(k), k).toBe(true);
-    expect(keys.has('A')).toBe(false);
-  });
+  ] as const)(
+    '%s: o frame common tem %ix%i texels, pelo menos 7 chaves distintas (entre elas %j) e nenhuma A',
+    (key, w, h, required) => {
+      const common = TOOL_FRAMES[key].common;
+      const sheet = parseSheet(key, { common }, PALETTE_KEYS);
+      expect(sheet.width).toBe(w);
+      expect(sheet.height).toBe(h);
+      const keys = artMeasure.keysOf(common);
+      expect(keys.size).toBeGreaterThanOrEqual(7);
+      for (const k of required) expect(keys.has(k), k).toBe(true);
+      expect(keys.has('A')).toBe(false);
+    },
+  );
 });
 
 describe('pendências dos inimigos (EPD-01..04)', () => {
@@ -1075,9 +1123,12 @@ describe('pendências dos inimigos (EPD-01..04)', () => {
     expect(ENEMY_VARIANT_FRAMES.bruto['walk-0'][20][21]).toBe(TRANSPARENT);
   });
 
-  it.each(['corcunda', 'rastejante', 'bruto'] as const)('EPD-04: no hurt-uppercut-0 do %s, a base da caixa opaca fica na linha 20 ou acima', (id) => {
-    expect(artMeasure.box(ENEMY_VARIANT_FRAMES[id]['hurt-uppercut-0'])[3]).toBeLessThanOrEqual(20);
-  });
+  it.each(['corcunda', 'rastejante', 'bruto'] as const)(
+    'EPD-04: no hurt-uppercut-0 do %s, a base da caixa opaca fica na linha 20 ou acima',
+    (id) => {
+      expect(artMeasure.box(ENEMY_VARIANT_FRAMES[id]['hurt-uppercut-0'])[3]).toBeLessThanOrEqual(20);
+    },
+  );
 });
 
 describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
@@ -1097,7 +1148,13 @@ describe('projétil e onda de choque do chefe (BAT-03/04/07)', () => {
     expect(sheet.width).toBe(8);
     expect(sheet.height).toBe(8);
     const cells = sheet.frames[0].cells;
-    for (const [x, y] of [[0, 0], [7, 0], [0, 7], [7, 7]]) expect(cells[y][x], `(${x}, ${y})`).toBeNull();
+    for (const [x, y] of [
+      [0, 0],
+      [7, 0],
+      [0, 7],
+      [7, 7],
+    ])
+      expect(cells[y][x], `(${x}, ${y})`).toBeNull();
     const keys = artMeasure.keysOf(PROJECTILE_FRAME);
     for (const tone of ['w', 'U', 'u', 'v']) expect(keys.has(tone), tone).toBe(true);
   });
@@ -1340,7 +1397,8 @@ describe('frames do abaixar e dos Contras (CNT-17, T9 da combate-mestre)', () =>
     const all = { ...PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES };
     expect(MOVE_NAMES).toEqual(expect.arrayContaining(['contra', 'contraGancho']));
     for (const move of MOVE_NAMES) {
-      for (const part of ['wind', 'hit', 'recover']) expect(Object.hasOwn(all, `${move}-${part}`), `${move}-${part}`).toBe(true);
+      for (const part of ['wind', 'hit', 'recover'])
+        expect(Object.hasOwn(all, `${move}-${part}`), `${move}-${part}`).toBe(true);
     }
   });
 
@@ -1358,7 +1416,6 @@ describe('frames do abaixar e dos Contras (CNT-17, T9 da combate-mestre)', () =>
   it('o topo opaco do duck fica pelo menos 3 texels abaixo do topo do idle-0', () => {
     expect(topRow(PLAYER_MOVE_FRAMES.duck) - topRow(PLAYER_FRAMES['idle-0'])).toBeGreaterThanOrEqual(3);
   });
-
 });
 
 describe('cores da barra de estrutura e do combo (STR-09)', () => {
@@ -1380,12 +1437,17 @@ describe('cores da barra de estrutura e do combo (STR-09)', () => {
 
 describe('alinhamento dos frames do player contra a linha de base congelada (SPR-06)', () => {
   const bboxOf = (rows: readonly string[]): [number, number, number, number] => {
-    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    let x0 = Infinity,
+      y0 = Infinity,
+      x1 = -1,
+      y1 = -1;
     rows.forEach((row, y) => {
       [...row].forEach((c, x) => {
         if (c === TRANSPARENT) return;
-        x0 = Math.min(x0, x); x1 = Math.max(x1, x);
-        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y);
       });
     });
     return [x0, y0, x1, y1];
@@ -1507,21 +1569,25 @@ describe('passe de sel-out e acabamento do idle-0 (SPR-03, SPR-04, SPR-05)', () 
 
 describe('rastros de movimento nos golpes (SPR-14)', () => {
   const count = (rows: readonly string[], ch: string): number => rows.join('').split(ch).length - 1;
-  const tipCol = (rows: readonly string[]): number => Math.max(...rows.map((r) => [...r].reduce((m, c, x) => (c === TRANSPARENT ? m : x), -1)));
+  const tipCol = (rows: readonly string[]): number =>
+    Math.max(...rows.map((r) => [...r].reduce((m, c, x) => (c === TRANSPARENT ? m : x), -1)));
 
   // O kick saiu desta lista (impacto-amaldicoado, POS-06): o chute redesenhado não tem linhas S soltas; o rastro do golpe
   // passa a ser o procedural da feature. Ver tests/game/feelArt.test.ts.
-  it.each(['jab', 'cross'])('$0-hit tem pelo menos 3 S a mais que o próprio wind e todos ficam antes da ponta', (name) => {
-    const hit = PLAYER_FRAMES[`${name}-hit`];
-    const wind = PLAYER_FRAMES[`${name}-wind`];
-    expect(count(hit, 'S') - count(wind, 'S')).toBeGreaterThanOrEqual(3);
-    const tip = tipCol(hit);
-    hit.forEach((row, y) =>
-      [...row].forEach((c, x) => {
-        if (c === 'S') expect(x, `${name}-hit S em (${x},${y})`).toBeLessThan(tip);
-      }),
-    );
-  });
+  it.each(['jab', 'cross'])(
+    '$0-hit tem pelo menos 3 S a mais que o próprio wind e todos ficam antes da ponta',
+    (name) => {
+      const hit = PLAYER_FRAMES[`${name}-hit`];
+      const wind = PLAYER_FRAMES[`${name}-wind`];
+      expect(count(hit, 'S') - count(wind, 'S')).toBeGreaterThanOrEqual(3);
+      const tip = tipCol(hit);
+      hit.forEach((row, y) =>
+        [...row].forEach((c, x) => {
+          if (c === 'S') expect(x, `${name}-hit S em (${x},${y})`).toBeLessThan(tip);
+        }),
+      );
+    },
+  );
 
   it('o rastro não muda o alcance: a ponta do membro continua na mesma coluna de antes', () => {
     expect(tipCol(PLAYER_FRAMES['jab-hit'])).toBe(27);
@@ -1617,12 +1683,17 @@ describe('selOut compartilhado e configurável (EVR-10)', () => {
 
 describe('alinhamento dos frames do inimigo contra a linha de base congelada (EVR-07)', () => {
   const bboxOf = (rows: readonly string[]): [number, number, number, number] => {
-    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    let x0 = Infinity,
+      y0 = Infinity,
+      x1 = -1,
+      y1 = -1;
     rows.forEach((row, y) => {
       [...row].forEach((c, x) => {
         if (c === TRANSPARENT) return;
-        x0 = Math.min(x0, x); x1 = Math.max(x1, x);
-        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y);
       });
     });
     return [x0, y0, x1, y1];
@@ -1662,7 +1733,8 @@ describe('alinhamento dos frames do inimigo contra a linha de base congelada (EV
 
 describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => {
   const IDS: EnemyVariantId[] = ['corcunda', 'rastejante', 'bruto'];
-  const nonEmpty = (rows: readonly string[]) => rows.flatMap((r, y) => [...r].map((c, x) => ({ c, x, y }))).filter((t) => t.c !== TRANSPARENT);
+  const nonEmpty = (rows: readonly string[]) =>
+    rows.flatMap((r, y) => [...r].map((c, x) => ({ c, x, y }))).filter((t) => t.c !== TRANSPARENT);
   const dominant = (rows: readonly string[]): string => {
     const count = new Map<string, number>();
     for (const { c } of nonEmpty(rows)) count.set(c, (count.get(c) ?? 0) + 1);
@@ -1753,12 +1825,15 @@ describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => 
       expect(anim.durations, name).toBeDefined();
       expect(anim.durations!.length, name).toBe(anim.frames.length);
       for (const d of anim.durations!) expect(d, name).toBeGreaterThan(0);
-      for (const id of IDS) for (const f of anim.frames) expect(Object.hasOwn(ENEMY_VARIANT_FRAMES[id], f), `${id} ${name}: ${f}`).toBe(true);
+      for (const id of IDS)
+        for (const f of anim.frames)
+          expect(Object.hasOwn(ENEMY_VARIANT_FRAMES[id], f), `${id} ${name}: ${f}`).toBe(true);
     }
   });
 
   it('EVR-09: o windup segura windup-1 nos últimos 200 ms do preparo (soma antes dele <= 250 ms; 250 passa, 251 falha)', () => {
-    const holdsFinal200 = (durations: readonly number[]) => durations.slice(0, -1).reduce((a, b) => a + b, 0) <= ENEMY_AI.windupMs - 200;
+    const holdsFinal200 = (durations: readonly number[]) =>
+      durations.slice(0, -1).reduce((a, b) => a + b, 0) <= ENEMY_AI.windupMs - 200;
     expect(ENEMY_AI.windupMs).toBe(450);
     expect(ENEMY_ANIMS.windup.frames.at(-1)).toBe('windup-1');
     expect(holdsFinal200(ENEMY_ANIMS.windup.durations!)).toBe(true);
@@ -1775,7 +1850,12 @@ describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => 
   it('HRX-03: as 4 reações leves têm 3 frames (60, 90, 70 ms, uma vez), o frame 0 difere >= 2 texels de bbox do idle-0 e head-a difere de head-b; impact existe', () => {
     const bbox = (rows: readonly string[]): number[] => {
       const cells = nonEmpty(rows);
-      return [Math.min(...cells.map((c) => c.x)), Math.min(...cells.map((c) => c.y)), Math.max(...cells.map((c) => c.x)), Math.max(...cells.map((c) => c.y))];
+      return [
+        Math.min(...cells.map((c) => c.x)),
+        Math.min(...cells.map((c) => c.y)),
+        Math.max(...cells.map((c) => c.x)),
+        Math.max(...cells.map((c) => c.y)),
+      ];
     };
     const names = ['hurt-head-a', 'hurt-head-b', 'hurt-uppercut', 'hurt-body'];
     for (const id of IDS) {
@@ -1802,7 +1882,8 @@ describe('três aparências do inimigo (EVR-01, EVR-02, EVR-03, EVR-10)', () => 
       expect(size(head), id).toEqual([8, 7]);
       expect(size(torso), id).toEqual([8, 10]);
       expect(size(limb), id).toEqual([3, 8]);
-      for (const [n, g] of Object.entries({ head, torso, limb })) parseSheet(`rag-${n}-${id}`, { [n]: g }, PALETTE_KEYS);
+      for (const [n, g] of Object.entries({ head, torso, limb }))
+        parseSheet(`rag-${n}-${id}`, { [n]: g }, PALETTE_KEYS);
     }
     expect(ENEMY_RAG_PARTS).toBe(ENEMY_RAG_VARIANTS.corcunda);
   });
@@ -1817,7 +1898,11 @@ describe('ponta dos dedos do Vermelho por frame (RDA-04)', () => {
     const { col, row } = redFingertip(name);
     expect(rows[row][col]).toBe('R');
     let maxCol = -1;
-    rows.forEach((line) => [...line].forEach((ch, c) => { if (ch === 'R') maxCol = Math.max(maxCol, c); }));
+    rows.forEach((line) =>
+      [...line].forEach((ch, c) => {
+        if (ch === 'R') maxCol = Math.max(maxCol, c);
+      }),
+    );
     expect(col).toBe(maxCol);
   });
 
@@ -1855,7 +1940,11 @@ describe('marcador de telegrafo (HGT-09, T16 da combate-mestre)', () => {
   });
 
   it('o conjunto de texels opacos difere em cada par de frames', () => {
-    for (const [a, b] of [['white', 'red'], ['white', 'low'], ['red', 'low']] as const) {
+    for (const [a, b] of [
+      ['white', 'red'],
+      ['white', 'low'],
+      ['red', 'low'],
+    ] as const) {
       expect(opaque(a), `${a} vs ${b}`).not.toEqual(opaque(b));
     }
   });

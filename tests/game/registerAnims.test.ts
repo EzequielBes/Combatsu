@@ -6,7 +6,11 @@ import type { AnimDef } from '../../src/game/art/sprites/player';
 
 /** Cena falsa: só o que `registerAnims` usa, capturando a config passada ao `anims.create`. */
 function fakeScene(frames: string[]) {
-  const created: Array<{ key: string; repeat: number; frames: Array<{ key: string; frame: string; duration?: number }> }> = [];
+  const created: Array<{
+    key: string;
+    repeat: number;
+    frames: Array<{ key: string; frame: string; duration?: number }>;
+  }> = [];
   const scene = {
     textures: { get: () => ({ has: (f: string) => frames.includes(f) }) },
     anims: { exists: () => false, remove: () => undefined, create: (c: (typeof created)[number]) => created.push(c) },
@@ -17,7 +21,9 @@ function fakeScene(frames: string[]) {
 describe('registerAnims repassa a duração por frame ao Phaser (SPR-08)', () => {
   it('cada frame recebe a duration declarada em durations', () => {
     const { scene, created } = fakeScene(['a', 'b']);
-    const anims: Record<string, AnimDef> = { idle: { frames: ['a', 'b'], frameRate: 2, repeat: -1, durations: [520, 160] } };
+    const anims: Record<string, AnimDef> = {
+      idle: { frames: ['a', 'b'], frameRate: 2, repeat: -1, durations: [520, 160] },
+    };
     registerAnims(scene, 'tex', anims, (n) => `p-${n}`);
     expect(created[0].key).toBe('p-idle');
     expect(created[0].frames.map((f) => f.duration)).toEqual([520, 160]);
@@ -49,8 +55,14 @@ describe('registerAnims com as animações do chefe (BAN-07, EDG-02)', () => {
     for (const [name, def] of multi) {
       const config = byKey.get(keyOf(name));
       expect(config, name).toBeDefined();
-      expect(config!.frames.map((f) => f.frame), name).toEqual(def.frames);
-      expect(config!.frames.map((f) => f.duration), name).toEqual(def.durations);
+      expect(
+        config!.frames.map((f) => f.frame),
+        name,
+      ).toEqual(def.frames);
+      expect(
+        config!.frames.map((f) => f.duration),
+        name,
+      ).toEqual(def.durations);
       expect(config!.repeat, name).toBe(def.repeat);
     }
     // Os valores da spec num caso concreto, lidos do que chegou ao Phaser.

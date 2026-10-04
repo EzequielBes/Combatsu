@@ -116,7 +116,13 @@ describe('TSH-04: técnica equipada entra no pool se nível < 3 e a rodada míni
 describe('TSH-05: com os dois slots vazios, o slot 0 é sempre uma técnica (também após reroll)', () => {
   it('fakeRng([0,0,0]) escolhe divergente (peso 3, primeira do catálogo) e completa com vida/forca', () => {
     const loadout = new Loadout();
-    const shop = new Shop(FULL_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), fakeRng([0, 0, 0, 0, 0, 0]), 10, loadout);
+    const shop = new Shop(
+      FULL_SHOP_CATALOG,
+      new Modifiers(FULL_SHOP_CATALOG),
+      fakeRng([0, 0, 0, 0, 0, 0]),
+      10,
+      loadout,
+    );
     const ids = shop.view(new Wallet(), 100, 100).offers.map((o) => o.id);
     expect(ids[0]).toBe('divergente');
     expect(ids).toEqual(['divergente', 'vida', 'forca']);
@@ -124,7 +130,13 @@ describe('TSH-05: com os dois slots vazios, o slot 0 é sempre uma técnica (tam
 
   it('depois do reroll, o slot 0 continua sendo uma técnica', () => {
     const loadout = new Loadout();
-    const shop = new Shop(FULL_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), fakeRng([0, 0, 0, 0, 0, 0]), 10, loadout);
+    const shop = new Shop(
+      FULL_SHOP_CATALOG,
+      new Modifiers(FULL_SHOP_CATALOG),
+      fakeRng([0, 0, 0, 0, 0, 0]),
+      10,
+      loadout,
+    );
     const wallet = new Wallet();
     wallet.add(100);
     expect(shop.reroll(wallet)).toBe(true);
@@ -176,11 +188,21 @@ describe('TSH-07: comprar técnica já equipada sobe exatamente 1 nível', () =>
 
 describe('TSH-08, TSH-15: catálogo tem `energia` (max 5, custo 10+6n) e `fluxo` (max 4, custo 12+6n)', () => {
   it('energia: comum, maxLevel 5, cost 10+6n', () => {
-    expect(technique('energia')).toMatchObject({ kind: 'modifier', rarity: 'common', maxLevel: 5, cost: { base: 10, step: 6 } });
+    expect(technique('energia')).toMatchObject({
+      kind: 'modifier',
+      rarity: 'common',
+      maxLevel: 5,
+      cost: { base: 10, step: 6 },
+    });
   });
 
   it('fluxo: comum, maxLevel 4, cost 12+6n', () => {
-    expect(technique('fluxo')).toMatchObject({ kind: 'modifier', rarity: 'common', maxLevel: 4, cost: { base: 12, step: 6 } });
+    expect(technique('fluxo')).toMatchObject({
+      kind: 'modifier',
+      rarity: 'common',
+      maxLevel: 4,
+      cost: { base: 12, step: 6 },
+    });
   });
 });
 

@@ -7,7 +7,13 @@ import { TEX } from './textures';
 
 /** Cor da paleta em CSS (`#rrggbb` ou `#rrggbbaa`), para o texto do Phaser, que não aceita número (ART-01). */
 const css = (color: number, alpha = 1): string =>
-  `#${color.toString(16).padStart(6, '0')}${alpha < 1 ? Math.round(alpha * 255).toString(16).padStart(2, '0') : ''}`;
+  `#${color.toString(16).padStart(6, '0')}${
+    alpha < 1
+      ? Math.round(alpha * 255)
+          .toString(16)
+          .padStart(2, '0')
+      : ''
+  }`;
 
 /** Mesma fonte/estilo do `Hud` (design "Components"). */
 const FONT_FAMILY = 'monospace';
@@ -95,7 +101,10 @@ export class ShopPanel {
     const startX = (w - totalW) / 2;
     this.cards = Array.from({ length: CARD_COUNT }, (_, i) => this.buildCard(startX + i * (CARD_W + CARD_GAP)));
 
-    this.hint = scene.add.text(w / 2, HINT_Y, '', textStyle('12px', SHOP_PANEL_COLORS.text)).setOrigin(0.5, 0).setVisible(false);
+    this.hint = scene.add
+      .text(w / 2, HINT_Y, '', textStyle('12px', SHOP_PANEL_COLORS.text))
+      .setOrigin(0.5, 0)
+      .setVisible(false);
     this.rerollFloat = scene.add
       .text(w / 2, HINT_Y, '', textStyle('12px', SHOP_PANEL_COLORS.textDanger))
       .setOrigin(0.5, 1)
@@ -106,7 +115,8 @@ export class ShopPanel {
       this.hint,
       this.rerollFloat,
     ];
-    for (const c of this.cards) objs.push(c.border, c.name, c.level, c.preview, c.cost, c.status, c.flash, c.costFloat, c.kanji);
+    for (const c of this.cards)
+      objs.push(c.border, c.name, c.level, c.preview, c.cost, c.status, c.flash, c.costFloat, c.kanji);
     for (const o of objs) o.setScrollFactor(0).setDepth(DEPTH);
     this.layer.add(objs);
   }
@@ -118,14 +128,23 @@ export class ShopPanel {
       .setOrigin(0, 0)
       .setStrokeStyle(BORDER_W, PALETTE[SHOP_PANEL_COLORS.borderCommon])
       .setVisible(false);
-    const name = this.scene.add.text(cx, ROW_Y.name, '', textStyle('13px', SHOP_PANEL_COLORS.text)).setOrigin(0.5, 0).setVisible(false);
-    const level = this.scene.add.text(cx, ROW_Y.level, '', textStyle('11px', SHOP_PANEL_COLORS.text)).setOrigin(0.5, 0).setVisible(false);
+    const name = this.scene.add
+      .text(cx, ROW_Y.name, '', textStyle('13px', SHOP_PANEL_COLORS.text))
+      .setOrigin(0.5, 0)
+      .setVisible(false);
+    const level = this.scene.add
+      .text(cx, ROW_Y.level, '', textStyle('11px', SHOP_PANEL_COLORS.text))
+      .setOrigin(0.5, 0)
+      .setVisible(false);
     const preview = this.scene.add
       .text(cx, ROW_Y.preview, '', textStyle('11px', SHOP_PANEL_COLORS.text))
       .setOrigin(0.5, 0)
       .setWordWrapWidth(CARD_W - 16)
       .setVisible(false);
-    const cost = this.scene.add.text(cx, ROW_Y.cost, '', textStyle('13px', SHOP_PANEL_COLORS.text)).setOrigin(0.5, 0).setVisible(false);
+    const cost = this.scene.add
+      .text(cx, ROW_Y.cost, '', textStyle('13px', SHOP_PANEL_COLORS.text))
+      .setOrigin(0.5, 0)
+      .setVisible(false);
     const status = this.scene.add
       .text(cx, ROW_Y.status, '', textStyle('14px', SHOP_PANEL_COLORS.text))
       .setOrigin(0.5, 0.5)

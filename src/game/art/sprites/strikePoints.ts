@@ -49,4 +49,5 @@ export const STRIKE_POINTS: Readonly<Record<string, StrikePoint>> = {
   'contraGancho-wind': { col: 15, row: 18 },
   'contraGancho-hit': { col: 21, row: 5 },
   'kick-wind': { col: 15, row: 25 },
-  'kick-hit': { col: 29, row: 19 },};
+  'kick-hit': { col: 29, row: 19 },
+};

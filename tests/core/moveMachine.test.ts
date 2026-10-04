@@ -4,8 +4,7 @@ import { MOVES } from '../../src/data/moves';
 
 const GROUND: MoveContext = { grounded: true, down: false, up: false, forward: false };
 const AIR: MoveContext = { ...GROUND, grounded: false };
-const starts = (evs: MoveEvent[]): string[] =>
-  evs.flatMap((e) => (e.type === 'moveStart' ? [e.move.name] : []));
+const starts = (evs: MoveEvent[]): string[] => evs.flatMap((e) => (e.type === 'moveStart' ? [e.move.name] : []));
 
 /** Avança startup → active → recovery do golpe atual (cada `update` cruza uma fase). */
 function finishPhases(m: MoveMachine): MoveEvent[] {

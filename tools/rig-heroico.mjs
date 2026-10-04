@@ -52,7 +52,9 @@ const heroico = [
   ],
 ];
 const tira = [0, 6].map((o) =>
-  setAlto.sequence.slice(o, o + 6).map((r, k) => ({ name: String(o + k + 1), rows: r.frame, mark: o + k === 7 ? setAlto.strike : undefined })),
+  setAlto.sequence
+    .slice(o, o + 6)
+    .map((r, k) => ({ name: String(o + k + 1), rows: r.frame, mark: o + k === 7 ? setAlto.strike : undefined })),
 );
 const heads = [
   { name: 'atual', rows: HEAD_FOCUS },
@@ -80,20 +82,31 @@ if (!edge) {
 }
 
 const pageFn = (data) => {
-  const S = data.scale, BG = '#2a3863', PAD = 6, LBL = 22, MINW = 110;
+  const S = data.scale,
+    BG = '#2a3863',
+    PAD = 6,
+    LBL = 22,
+    MINW = 110;
   const hex = (n) => '#' + n.toString(16).padStart(6, '0');
   const drawRows = (ctx, rows, x, y, k = S) =>
-    rows.forEach((row, j) => [...row].forEach((c, i) => {
-      if (c === '.') return;
-      ctx.fillStyle = hex(data.palette[c]); ctx.fillRect(x + i * k, y + j * k, k, k);
-    }));
+    rows.forEach((row, j) =>
+      [...row].forEach((c, i) => {
+        if (c === '.') return;
+        ctx.fillStyle = hex(data.palette[c]);
+        ctx.fillRect(x + i * k, y + j * k, k, k);
+      }),
+    );
   const canvasOf = (id, w, h) => {
     const cv = document.createElement('canvas');
-    cv.id = id; cv.width = w; cv.height = h;
+    cv.id = id;
+    cv.width = w;
+    cv.height = h;
     document.body.appendChild(cv);
     const ctx = cv.getContext('2d');
-    ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
-    ctx.font = '13px monospace'; ctx.textBaseline = 'top';
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, w, h);
+    ctx.font = '13px monospace';
+    ctx.textBaseline = 'top';
     return ctx;
   };
   const gw = (f) => Math.max(...f.rows.map((r) => r.length));
@@ -108,14 +121,22 @@ const pageFn = (data) => {
     lines.forEach((frames, ry) => {
       let x0 = 0;
       frames.forEach((f) => {
-        const w = cellW(f), h = f.rows.length * S;
-        const x = x0 + PAD, yb = y0 + PAD + lineH[ry]; // yb = linha de base
+        const w = cellW(f),
+          h = f.rows.length * S;
+        const x = x0 + PAD,
+          yb = y0 + PAD + lineH[ry]; // yb = linha de base
         const y = yb - h;
-        ctx.strokeStyle = '#4a5780'; ctx.strokeRect(x0 + 0.5, y0 + 0.5, w + PAD * 2 - 1, lineH[ry] + LBL + PAD * 2 - 1);
-        ctx.fillStyle = '#35446f'; ctx.fillRect(x, yb, gw(f) * S, 1); // chão
+        ctx.strokeStyle = '#4a5780';
+        ctx.strokeRect(x0 + 0.5, y0 + 0.5, w + PAD * 2 - 1, lineH[ry] + LBL + PAD * 2 - 1);
+        ctx.fillStyle = '#35446f';
+        ctx.fillRect(x, yb, gw(f) * S, 1); // chão
         drawRows(ctx, f.rows, x, y);
-        ctx.fillStyle = '#fff'; ctx.fillText(f.name, x, yb + 4);
-        if (f.mark) { ctx.fillStyle = '#ff3344'; ctx.fillRect(x + f.mark.col * S, y + f.mark.row * S, S, S); }
+        ctx.fillStyle = '#fff';
+        ctx.fillText(f.name, x, yb + 4);
+        if (f.mark) {
+          ctx.fillStyle = '#ff3344';
+          ctx.fillRect(x + f.mark.col * S, y + f.mark.row * S, S, S);
+        }
         x0 += w + PAD * 2;
       });
       y0 += lineH[ry] + LBL + PAD * 2;
@@ -123,27 +144,34 @@ const pageFn = (data) => {
   };
   board('heroico', data.heroico);
   board('tira', data.tira);
-  { // Cabeças em escala grande (rosto.png)
+  {
+    // Cabeças em escala grande (rosto.png)
     const K = S * 2;
     const cw = Math.max(...data.heads.map((h) => gw(h))) * K + 2 * K;
     const hh = Math.max(...data.heads.map((h) => h.rows.length)) * K;
     const ctx = canvasOf('rosto', data.heads.length * cw, hh + 2 * K + 20);
     data.heads.forEach((h, k) => {
       drawRows(ctx, h.rows, k * cw + K, K, K);
-      ctx.fillStyle = '#fff'; ctx.fillText(h.name, k * cw + K, K + hh + 4);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(h.name, k * cw + K, K + hh + 4);
     });
   }
-  { // Escala: player e heroico alto (origem na própria coluna) e inimigo (centro 12,5) pé a pé, o inimigo 12 texels à frente.
-    const e = data.escala, cw = 48 * S;
+  {
+    // Escala: player e heroico alto (origem na própria coluna) e inimigo (centro 12,5) pé a pé, o inimigo 12 texels à frente.
+    const e = data.escala,
+      cw = 48 * S;
     const maxH = Math.max(e.player.rows.length, e.alto.rows.length, e.enemy.length);
     const gy = (maxH + 1) * S;
     const ctx = canvasOf('escala', 2 * cw, gy + 30);
     [e.player, e.alto].forEach((p, k) => {
-      const x0 = k * cw, px = x0 + 2 * S;
-      ctx.fillStyle = '#35446f'; ctx.fillRect(x0, gy, cw, 2);
+      const x0 = k * cw,
+        px = x0 + 2 * S;
+      ctx.fillStyle = '#35446f';
+      ctx.fillRect(x0, gy, cw, 2);
       drawRows(ctx, p.rows, px, gy - p.rows.length * S);
       drawRows(ctx, e.enemy, px + (p.originCol + 12 - 12.5) * S, gy - e.enemy.length * S);
-      ctx.fillStyle = '#fff'; ctx.fillText(p.name, x0 + 6, gy + 6);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(p.name, x0 + 6, gy + 6);
     });
   }
 };
@@ -152,7 +180,14 @@ const browser = await puppeteer.launch({ executablePath: edge, headless: true })
 try {
   const page = await browser.newPage();
   await page.setContent('<body style="margin:0;background:#000"></body>');
-  await page.evaluate(pageFn, { palette: PALETTE, heroico, tira, heads, escala, scale: Number(process.env.SPRITE_SCALE) || 6 });
+  await page.evaluate(pageFn, {
+    palette: PALETTE,
+    heroico,
+    tira,
+    heads,
+    escala,
+    scale: Number(process.env.SPRITE_SCALE) || 6,
+  });
   for (const id of ['heroico', 'tira', 'rosto', 'escala']) {
     await (await page.$('#' + id)).screenshot({ path: join(outDir, id + '.png') });
     console.log('  ' + join(outDir, id + '.png'));

@@ -47,7 +47,10 @@ export class BlueOrbFx {
     this.fx.add('blue.debrisIn', Math.max(dtMs, 1), 'game');
 
     if (!this.core) {
-      this.core = this.scene.add.sprite(x, y, TEX.techOrbBlue, 'orb').setDisplaySize(CORE_DISPLAY_PX, CORE_DISPLAY_PX).setDepth(2);
+      this.core = this.scene.add
+        .sprite(x, y, TEX.techOrbBlue, 'orb')
+        .setDisplaySize(CORE_DISPLAY_PX, CORE_DISPLAY_PX)
+        .setDepth(2);
       this.registry.add(this.core);
     }
 
@@ -58,7 +61,10 @@ export class BlueOrbFx {
     }
     this.corePulseMs += dtMs;
     const pulse = 1 + 0.14 * Math.sin(this.corePulseMs / (CORE_PULSE_CYCLE_MS / (Math.PI * 2)));
-    this.corePulse.clear().lineStyle(3, PALETTE.C, 0.85).strokeCircle(x, y, (CORE_DISPLAY_PX / 2 - 2) * pulse);
+    this.corePulse
+      .clear()
+      .lineStyle(3, PALETTE.C, 0.85)
+      .strokeCircle(x, y, (CORE_DISPLAY_PX / 2 - 2) * pulse);
 
     if (!this.spiral) {
       // BLU-09: nascem na borda de um círculo em volta do orbe e são mandadas para o próprio centro (moveTo).
@@ -121,7 +127,11 @@ export class BlueOrbFx {
 
   /** BLU-11: implosão num ponto branco com um flash curto (Direção de arte, "Implosão") - some com o orbe todo. */
   implode(x: number, y: number): void {
-    const flash = this.scene.add.sprite(x, y, TEX.techOrbBlue, 'orb').setDisplaySize(CORE_DISPLAY_PX, CORE_DISPLAY_PX).setTintFill(PALETTE.W).setDepth(3);
+    const flash = this.scene.add
+      .sprite(x, y, TEX.techOrbBlue, 'orb')
+      .setDisplaySize(CORE_DISPLAY_PX, CORE_DISPLAY_PX)
+      .setTintFill(PALETTE.W)
+      .setDepth(3);
     this.registry.add(flash);
     this.registry.scheduleDestroy(flash, IMPLODE_MS);
     this.scene.tweens.add({ targets: flash, scale: 0.1, alpha: 0, duration: IMPLODE_MS });
@@ -137,7 +147,10 @@ export class BlueOrbFx {
       duration: IMPLODE_FLASH_MS,
       onUpdate: (tw) => {
         const t = tw.getValue() ?? 0;
-        burst.clear().lineStyle(4, PALETTE.W, 1 - t).strokeCircle(x, y, 4 + t * (CORE_DISPLAY_PX / 2 + 14));
+        burst
+          .clear()
+          .lineStyle(4, PALETTE.W, 1 - t)
+          .strokeCircle(x, y, 4 + t * (CORE_DISPLAY_PX / 2 + 14));
       },
     });
 

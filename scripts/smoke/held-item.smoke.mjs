@@ -41,7 +41,10 @@ export default async function ({ page, baseUrl, assert }) {
 
   // ITEM-01/02: nome "Cadeira" e 4/4 pips ao pegar.
   assert(
-    snap.hud.heldItem && snap.hud.heldItem.name === 'Cadeira' && snap.hud.heldItem.pips === 4 && snap.hud.heldItem.maxPips === 4,
+    snap.hud.heldItem &&
+      snap.hud.heldItem.name === 'Cadeira' &&
+      snap.hud.heldItem.pips === 4 &&
+      snap.hud.heldItem.maxPips === 4,
     `esperava { Cadeira, 4, 4 } ao pegar: ${JSON.stringify(snap.hud.heldItem)}`,
   );
 

@@ -12,7 +12,16 @@ describe('SHOP_PANEL_COLORS (SHOP-24)', () => {
 
   it('cobre fundo, bordas por raridade, borda realçada e textos', () => {
     expect(Object.keys(SHOP_PANEL_COLORS)).toEqual(
-      expect.arrayContaining(['bg', 'cardBg', 'borderCommon', 'borderRare', 'borderSelected', 'text', 'textDanger', 'flash']),
+      expect.arrayContaining([
+        'bg',
+        'cardBg',
+        'borderCommon',
+        'borderRare',
+        'borderSelected',
+        'text',
+        'textDanger',
+        'flash',
+      ]),
     );
   });
 });

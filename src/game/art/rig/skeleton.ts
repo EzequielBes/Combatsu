@@ -154,7 +154,15 @@ export const CHIBI: Proportions = {
     leg: { hip: 1.5, knee: 1.25, ankle: 1.05 },
     hand: 1,
     shoe: 0.62,
-    torso: { hip: 2.9, waist: 2.7, shoulder: 3.1, collar: 2.7, shoulderFrom: 3.4, taper: false, buttons: [1.9, 3.4, 4.9] },
+    torso: {
+      hip: 2.9,
+      waist: 2.7,
+      shoulder: 3.1,
+      collar: 2.7,
+      shoulderFrom: 3.4,
+      taper: false,
+      buttons: [1.9, 3.4, 4.9],
+    },
   },
 };
 
@@ -202,13 +210,21 @@ const LINKS: Record<BoneName, [JointName, JointName, BoneName | null]> = {
 /** A tabela de ossos (pai antes do filho) de um corpo. */
 export function bonesOf(p: Proportions): readonly Bone[] {
   const len = lengthsOf(p);
-  return (Object.keys(LINKS) as BoneName[]).map((name) => ({ name, from: LINKS[name][0], to: LINKS[name][1], length: len[name], parent: LINKS[name][2] }));
+  return (Object.keys(LINKS) as BoneName[]).map((name) => ({
+    name,
+    from: LINKS[name][0],
+    to: LINKS[name][1],
+    length: len[name],
+    parent: LINKS[name][2],
+  }));
 }
 
 /** Ossos do corpo atual (`CHIBI`); as poses sem `body` usam estes. */
 export const BONES: readonly Bone[] = bonesOf(CHIBI);
 
-export const BONE_BY_NAME: Readonly<Record<BoneName, Bone>> = Object.fromEntries(BONES.map((b) => [b.name, b])) as Record<BoneName, Bone>;
+export const BONE_BY_NAME: Readonly<Record<BoneName, Bone>> = Object.fromEntries(
+  BONES.map((b) => [b.name, b]),
+) as Record<BoneName, Bone>;
 
 /** Pose: posição da raiz (quadril) e o ângulo local de cada osso, em graus. */
 export interface Pose {
@@ -315,7 +331,12 @@ const LIMB_BONES: Record<Limb, [BoneName, BoneName]> = {
   legNear: ['thighNear', 'shinNear'],
   legFar: ['thighFar', 'shinFar'],
 };
-const LIMB_ROOT: Record<Limb, JointName> = { armNear: 'shoulderNear', armFar: 'shoulderFar', legNear: 'hipNear', legFar: 'hipFar' };
+const LIMB_ROOT: Record<Limb, JointName> = {
+  armNear: 'shoulderNear',
+  armFar: 'shoulderFar',
+  legNear: 'hipNear',
+  legFar: 'hipFar',
+};
 
 /** Aponta um membro para `target` por cinemática inversa (a raiz do membro vem da pose atual); devolve uma pose nova. */
 export function aimLimb(pose: Pose, limb: Limb, target: Vec2, bend: 1 | -1): Pose {

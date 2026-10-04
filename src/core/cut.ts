@@ -67,6 +67,8 @@ export class CutSchedule {
   /** CUT-03: alvos cujo corpo sobrepõe o retângulo do corte, à frente do player. */
   targetsHit(playerCenter: { x: number; y: number }, facing: 1 | -1, targets: readonly CutTarget[]): CutHit[] {
     const rect = cutRect(playerCenter, facing);
-    return targets.filter((t) => overlaps(rect, t.body)).map((t) => ({ targetId: t.id, damage: TECHNIQUES.corte.damage.cut }));
+    return targets
+      .filter((t) => overlaps(rect, t.body))
+      .map((t) => ({ targetId: t.id, damage: TECHNIQUES.corte.damage.cut }));
   }
 }

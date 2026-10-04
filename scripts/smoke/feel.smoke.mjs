@@ -48,10 +48,20 @@ export default async function ({ page, baseUrl, assert }) {
   const rows = [];
   for (let i = 0; i < 220; i++) {
     s = await frame();
-    rows.push({ x: s.player.x, view: s.player.view.x, alpha: s.physics.alpha, scroll: s.camera.scroll.x, zoom: s.camera.zoom, frozen: s.hitstop.frozen });
+    rows.push({
+      x: s.player.x,
+      view: s.player.view.x,
+      alpha: s.physics.alpha,
+      scroll: s.camera.scroll.x,
+      zoom: s.camera.zoom,
+      frozen: s.hitstop.frozen,
+    });
   }
   await page.keyboard.up('KeyD');
-  assert(rows.every((r) => !r.frozen), 'pré-condição: nenhum hitstop durante a corrida no laboratório');
+  assert(
+    rows.every((r) => !r.frozen),
+    'pré-condição: nenhum hitstop durante a corrida no laboratório',
+  );
   const cruise = rows[rows.length - 1].x - rows[rows.length - 2].x;
   assert(Math.abs(cruise - 220 / 60) < 0.01, `pré-condição: velocidade de cruzeiro de 220 px/s: dx ${cruise}`);
 
@@ -61,14 +71,23 @@ export default async function ({ page, baseUrl, assert }) {
     const dx = rows[i].x - rows[i - 1].x;
     if (Math.abs(dx - 220 / 60) > 1e-3) continue;
     const expected = rows[i - 1].x + dx * rows[i].alpha;
-    assert(Math.abs(rows[i].view - expected) <= 0.01, `ITP-05: quadro ${i}: view ${rows[i].view} deveria ser ${expected} (alfa ${rows[i].alpha})`);
+    assert(
+      Math.abs(rows[i].view - expected) <= 0.01,
+      `ITP-05: quadro ${i}: view ${rows[i].view} deveria ser ${expected} (alfa ${rows[i].alpha})`,
+    );
     oneStep++;
   }
   assert(oneStep >= 150, `ITP-05: esperava pelo menos 150 quadros de um passo em cruzeiro: ${oneStep}`);
   // A interpolação está ligada de verdade: o alfa fica dentro de 0..1 e, abaixo de 1, o sprite fica atrás do corpo.
-  assert(rows.every((r) => r.alpha >= 0 && r.alpha <= 1), 'o alfa deveria ficar entre 0 e 1');
+  assert(
+    rows.every((r) => r.alpha >= 0 && r.alpha <= 1),
+    'o alfa deveria ficar entre 0 e 1',
+  );
   const behind = rows.filter((r, i) => i > 60 && r.alpha < 0.99 && r.x - r.view > 0.03).length;
-  assert(behind >= 100 || rows.slice(60).every((r) => r.alpha >= 0.99), `correndo, o sprite deveria ficar atrás do corpo: ${behind}`);
+  assert(
+    behind >= 100 || rows.slice(60).every((r) => r.alpha >= 0.99),
+    `correndo, o sprite deveria ficar atrás do corpo: ${behind}`,
+  );
 
   // A câmera saiu do limite esquerdo e passou a andar junto: só então vale o regime.
   const moving = rows.findIndex((r, i) => i > 0 && r.scroll !== rows[i - 1].scroll);
@@ -111,11 +130,17 @@ export default async function ({ page, baseUrl, assert }) {
     assert(held, `ITP-08: a cadeira deveria continuar na mão: ${JSON.stringify(s.worldProps)}`);
     if (i < 10) continue; // já em velocidade de cruzeiro
     const expected = s.player.view.x - 8 * s.player.facing;
-    assert(Math.abs(held.x - expected) <= 0.01, `ITP-08: cadeira em ${held.x}, deveria estar em ${expected} (view ${s.player.view.x})`);
+    assert(
+      Math.abs(held.x - expected) <= 0.01,
+      `ITP-08: cadeira em ${held.x}, deveria estar em ${expected} (view ${s.player.view.x})`,
+    );
     heldFrames++;
   }
   await page.keyboard.up('KeyA');
-  assert(heldFrames >= 20 && s.player.facing === -1, `ITP-08: esperava 20+ quadros correndo para a esquerda: ${heldFrames}`);
+  assert(
+    heldFrames >= 20 && s.player.facing === -1,
+    `ITP-08: esperava 20+ quadros correndo para a esquerda: ${heldFrames}`,
+  );
   // Larga a cadeira (S + E) para ficar de mãos livres.
   await page.keyboard.down('KeyS');
   await page.keyboard.down('KeyE');
@@ -142,7 +167,10 @@ export default async function ({ page, baseUrl, assert }) {
     auraFrames++;
   }
   await page.keyboard.up('KeyD');
-  assert(auraFrames >= 8, `ITP-10: a aura deveria aparecer por pelo menos 8 quadros com o player correndo: ${auraFrames}`);
+  assert(
+    auraFrames >= 8,
+    `ITP-10: a aura deveria aparecer por pelo menos 8 quadros com o player correndo: ${auraFrames}`,
+  );
 
   // --- Inimigo comum andando (ITP-07) --------------------------------------------------------------------------
   const kit = makeKit({ page, baseUrl, assert });
@@ -164,7 +192,10 @@ export default async function ({ page, baseUrl, assert }) {
     // Dois quadros seguidos com o mesmo dx: velocidade constante e exatamente um passo de física neste quadro.
     if (Math.abs(d2) > 0.3 && Math.abs(d2 - d1) < 1e-3) {
       const expected = b.x + d2 * s.physics.alpha;
-      assert(Math.abs(e.view.x - expected) <= 0.01, `ITP-07: inimigo ${e.id}: view ${e.view.x} deveria ser ${expected} (alfa ${s.physics.alpha})`);
+      assert(
+        Math.abs(e.view.x - expected) <= 0.01,
+        `ITP-07: inimigo ${e.id}: view ${e.view.x} deveria ser ${expected} (alfa ${s.physics.alpha})`,
+      );
       checked++;
     }
   }

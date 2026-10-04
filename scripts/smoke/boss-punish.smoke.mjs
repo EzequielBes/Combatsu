@@ -30,7 +30,10 @@ export default async function ({ page, baseUrl, assert }) {
     await snap(20);
     await page.keyboard.press('KeyJ', { delay: 50 });
     const s = await snap(50);
-    assert(s.run.state === 'roundActive' && s.run.round === 5 && s.boss !== null, `rodada do chefe esperada: ${JSON.stringify(s.run)}`);
+    assert(
+      s.run.state === 'roundActive' && s.run.round === 5 && s.boss !== null,
+      `rodada do chefe esperada: ${JSON.stringify(s.run)}`,
+    );
     return s;
   };
 
@@ -120,7 +123,10 @@ export default async function ({ page, baseUrl, assert }) {
   assert(s.boss.maxHp === 400, `BFX-01: o chefe do tier 1 deveria ter 400 de HP: ${JSON.stringify(s.boss)}`);
   s = await lureToWall(s);
   assert(s.boss.attack === null || s.boss.state === 'stagger', 'o chefe deveria estar parado em stagger');
-  assert(s.boss.finisherReady === true, `BFX-06: o stagger da parede deveria liberar o finalizador: ${JSON.stringify(s.boss)}`);
+  assert(
+    s.boss.finisherReady === true,
+    `BFX-06: o stagger da parede deveria liberar o finalizador: ${JSON.stringify(s.boss)}`,
+  );
   assert(s.boss.poise === 100, `BFX-02: bater na parede não mexe na postura: ${s.boss.poise}`);
   assert(s.boss.x < 120, `o chefe deveria estar encostado na parede da esquerda: x=${s.boss.x}`);
 
@@ -137,7 +143,10 @@ export default async function ({ page, baseUrl, assert }) {
   assert(cur.boss.state !== 'stagger', 'o stagger da parede nunca terminou');
   await setKeys([]);
   const staggerMs = (gameFrames + 1) * FRAME_MS;
-  assert(Math.abs(staggerMs - 1500) <= FRAME_MS * 1.5, `BFX-02: o stagger deveria durar ~1500 ms, mediu ${staggerMs.toFixed(0)} ms`);
+  assert(
+    Math.abs(staggerMs - 1500) <= FRAME_MS * 1.5,
+    `BFX-02: o stagger deveria durar ~1500 ms, mediu ${staggerMs.toFixed(0)} ms`,
+  );
 
   // BFX-08: no frame em que o stagger acaba o chefe está em descanso; J+K a <= 48 px não tira nada pelo finalizador.
   const dxOut = Math.abs(cur.boss.x - cur.player.x);
@@ -146,8 +155,14 @@ export default async function ({ page, baseUrl, assert }) {
   const evOut = finishers(cur);
   cur = await both();
   for (let i = 0; i < 6; i++) cur = await frame();
-  assert(cur.boss.state !== 'stagger', `pré-condição do BFX-08: o chefe já deveria estar fora do stagger: ${cur.boss.state}`);
-  assert(cur.boss.hp === hpOut && finishers(cur) === evOut, `BFX-08: J+K fora do stagger não deveria tirar HP: ${hpOut} -> ${cur.boss.hp} ${JSON.stringify(cur.events.slice(-3))}`);
+  assert(
+    cur.boss.state !== 'stagger',
+    `pré-condição do BFX-08: o chefe já deveria estar fora do stagger: ${cur.boss.state}`,
+  );
+  assert(
+    cur.boss.hp === hpOut && finishers(cur) === evOut,
+    `BFX-08: J+K fora do stagger não deveria tirar HP: ${hpOut} -> ${cur.boss.hp} ${JSON.stringify(cur.events.slice(-3))}`,
+  );
 
   // Contraste (BFX-05): um golpe forte de teste fora do stagger tira o dano cheio, 18.
   cur = await frame();
@@ -156,12 +171,18 @@ export default async function ({ page, baseUrl, assert }) {
   cur = await frame();
   await page.keyboard.up('Digit2');
   for (let i = 0; i < 3; i++) cur = await frame();
-  assert(hpPlain - cur.boss.hp === 18, `BFX-05: o golpe forte fora do stagger deveria tirar 18: ${hpPlain} -> ${cur.boss.hp}`);
+  assert(
+    hpPlain - cur.boss.hp === 18,
+    `BFX-05: o golpe forte fora do stagger deveria tirar 18: ${hpPlain} -> ${cur.boss.hp}`,
+  );
 
   // --- 2) Segundo stagger: golpe x1,5, finalizador de 48 e segundo J+K sem efeito -------------------------------------------
   cur = await unfreeze(cur);
   cur = await lureToWall(cur);
-  assert(cur.boss.finisherReady === true, `BFX-06: o segundo stagger deveria liberar o finalizador de novo: ${JSON.stringify(cur.boss)}`);
+  assert(
+    cur.boss.finisherReady === true,
+    `BFX-06: o segundo stagger deveria liberar o finalizador de novo: ${JSON.stringify(cur.boss)}`,
+  );
   // Chega a <= 40 px do chefe (o player ainda está descendo da plataforma e correndo até ele).
   for (let i = 0; i < 120 && Math.abs(cur.boss.x - cur.player.x) > 40 && cur.boss.state === 'stagger'; i++) {
     const k = goTo(cur, cur.boss.x + 30, 4);
@@ -171,7 +192,10 @@ export default async function ({ page, baseUrl, assert }) {
   await setKeys([]);
   cur = await frame();
   assert(cur.boss.state === 'stagger', `o stagger acabou antes das ações: ${JSON.stringify(cur.boss)}`);
-  assert(Math.abs(cur.boss.x - cur.player.x) <= 48, `o player deveria estar a <= 48 px do chefe: ${Math.abs(cur.boss.x - cur.player.x).toFixed(1)}`);
+  assert(
+    Math.abs(cur.boss.x - cur.player.x) <= 48,
+    `o player deveria estar a <= 48 px do chefe: ${Math.abs(cur.boss.x - cur.player.x).toFixed(1)}`,
+  );
 
   // BFX-05: o golpe forte de teste (18) em stagger tira round(18 x 1,5) = 27.
   const hpBeforeHit = cur.boss.hp;
@@ -179,7 +203,10 @@ export default async function ({ page, baseUrl, assert }) {
   cur = await frame();
   await page.keyboard.up('Digit2');
   for (let i = 0; i < 3; i++) cur = await frame();
-  assert(hpBeforeHit - cur.boss.hp === Math.round(18 * 1.5), `BFX-05: em stagger o golpe deveria tirar round(18 x 1,5) = 27: ${hpBeforeHit} -> ${cur.boss.hp}`);
+  assert(
+    hpBeforeHit - cur.boss.hp === Math.round(18 * 1.5),
+    `BFX-05: em stagger o golpe deveria tirar round(18 x 1,5) = 27: ${hpBeforeHit} -> ${cur.boss.hp}`,
+  );
   cur = await unfreeze(cur);
   assert(cur.boss.state === 'stagger', `o stagger acabou antes do finalizador: ${JSON.stringify(cur.boss)}`);
   assert(cur.boss.finisherReady === true, 'um golpe comum não deveria gastar o finalizador');
@@ -199,11 +226,17 @@ export default async function ({ page, baseUrl, assert }) {
   const finAfter = finishers(cur);
   cur = await both();
   for (let i = 0; i < 6; i++) cur = await frame();
-  assert(cur.boss.hp === hpAfterFin && finishers(cur) === finAfter, `BFX-07: o segundo J+K não deveria tirar HP: ${hpAfterFin} -> ${cur.boss.hp}`);
+  assert(
+    cur.boss.hp === hpAfterFin && finishers(cur) === finAfter,
+    `BFX-07: o segundo J+K não deveria tirar HP: ${hpAfterFin} -> ${cur.boss.hp}`,
+  );
 
   // --- 3) Vitória com o Vermelho: upgrade grátis e banner (BFX-09/10) ---------------------------------------------------
   s = await boot('tech=vermelho');
-  assert(s.tech.slots[0] && s.tech.slots[0].id === 'vermelho' && s.tech.slots[0].level === 1, `o Vermelho deveria começar no Nv1: ${JSON.stringify(s.tech.slots)}`);
+  assert(
+    s.tech.slots[0] && s.tech.slots[0].id === 'vermelho' && s.tech.slots[0].level === 1,
+    `o Vermelho deveria começar no Nv1: ${JSON.stringify(s.tech.slots)}`,
+  );
   const press = async (key, ms = 17) => {
     await page.keyboard.press(key, { delay: 50 });
     return snap(ms);
@@ -214,12 +247,18 @@ export default async function ({ page, baseUrl, assert }) {
     s = await snap(80);
   }
   assert(s.events.includes('bossDefeatedFx'), `o chefe não morreu: ${JSON.stringify(s.boss)}`);
-  assert(s.tech.slots[0].level === 2, `BFX-09: o Vermelho deveria subir para o Nv2: ${JSON.stringify(s.tech.slots[0])}`);
+  assert(
+    s.tech.slots[0].level === 2,
+    `BFX-09: o Vermelho deveria subir para o Nv2: ${JSON.stringify(s.tech.slots[0])}`,
+  );
   // BFX-10: o banner do upgrade ocupa os últimos 800 ms dos 2000 ms de "Chefe derrotado!".
   let banner = null;
   for (let i = 0; i < 200 && banner === null; i++) {
     s = await snap(50);
     if (s.hud.banner && /Nv 2!$/.test(s.hud.banner)) banner = s.hud.banner;
   }
-  assert(banner !== null && /Vermelho Nv 2!$/.test(banner), `BFX-10: o banner do upgrade não apareceu: ${s.hud.banner}`);
+  assert(
+    banner !== null && /Vermelho Nv 2!$/.test(banner),
+    `BFX-10: o banner do upgrade não apareceu: ${s.hud.banner}`,
+  );
 }

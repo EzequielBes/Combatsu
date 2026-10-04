@@ -37,17 +37,18 @@ describe('KOK-33: para 1000 seeds, a soma dos segmentos de cada raio fica entre 
 
 describe('KOK-19, TFX-02: para 1000 seeds, todo vértice fica em deslocamento inteiro par da origem', () => {
   it('seeds 0..999', () => {
-    for (const seed of SEEDS) for (const bolt of lightningBolts(seed, ORIGIN, DIR)) {
-      for (const v of bolt.vertices) {
-        const dx = v.x - ORIGIN.x;
-        const dy = v.y - ORIGIN.y;
-        expect(Number.isInteger(dx)).toBe(true);
-        expect(Number.isInteger(dy)).toBe(true);
-        // `%` pode devolver -0 para um par negativo (ex.: -6 % 2 === -0); -0 também é par, então compara com `===`.
-        expect(dx % 2 === 0).toBe(true);
-        expect(dy % 2 === 0).toBe(true);
+    for (const seed of SEEDS)
+      for (const bolt of lightningBolts(seed, ORIGIN, DIR)) {
+        for (const v of bolt.vertices) {
+          const dx = v.x - ORIGIN.x;
+          const dy = v.y - ORIGIN.y;
+          expect(Number.isInteger(dx)).toBe(true);
+          expect(Number.isInteger(dy)).toBe(true);
+          // `%` pode devolver -0 para um par negativo (ex.: -6 % 2 === -0); -0 também é par, então compara com `===`.
+          expect(dx % 2 === 0).toBe(true);
+          expect(dy % 2 === 0).toBe(true);
+        }
       }
-    }
   });
 });
 

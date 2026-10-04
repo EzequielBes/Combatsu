@@ -31,9 +31,7 @@ export interface Hittable {
 }
 
 export type BodyTag =
-  | { kind: 'terrain' }
-  | { kind: 'character'; target: Hittable }
-  | { kind: 'active'; onTouch(other: BodyTag): void };
+  { kind: 'terrain' } | { kind: 'character'; target: Hittable } | { kind: 'active'; onTouch(other: BodyTag): void };
 
 interface BodyLike {
   parent?: BodyLike;

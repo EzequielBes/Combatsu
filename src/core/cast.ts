@@ -12,10 +12,7 @@ export interface CastContext {
 }
 
 export type CastEvent =
-  | { type: 'enter'; state: CastState }
-  | { type: 'end' }
-  | { type: 'denied'; reason: DenyReason }
-  | { type: 'cancel' };
+  { type: 'enter'; state: CastState } | { type: 'end' } | { type: 'denied'; reason: DenyReason } | { type: 'cancel' };
 
 export interface ActiveCastView {
   slot: 0 | 1;

@@ -487,8 +487,12 @@ describe('Run: stream da aparência dos inimigos e streams anteriores intactos (
   it('com seed 7, lootRng e guardRng dão os mesmos números de antes da feature (valores fixados)', () => {
     const run = started();
     const take = (r: Rng) => Array.from({ length: 4 }, () => r.next());
-    expect(take(run.lootRng!)).toEqual([0.9823943767696619, 0.3341257639694959, 0.6892532545607537, 0.12651141709648073]);
-    expect(take(run.guardRng!)).toEqual([0.5889583916869015, 0.13402440771460533, 0.4920719088986516, 0.7194477405864745]);
+    expect(take(run.lootRng!)).toEqual([
+      0.9823943767696619, 0.3341257639694959, 0.6892532545607537, 0.12651141709648073,
+    ]);
+    expect(take(run.guardRng!)).toEqual([
+      0.5889583916869015, 0.13402440771460533, 0.4920719088986516, 0.7194477405864745,
+    ]);
   });
 
   it('consumir o variantRng não muda lootRng nem guardRng', () => {

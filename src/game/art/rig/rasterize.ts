@@ -11,7 +11,18 @@
 import { selOut } from '../selOut';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN, type Grid } from '../sprites/player';
 import { headOf } from './presets';
-import { CHIBI, SOLE, solve, worldAngles, dir, type JointName, type Pose, type Proportions, type Thickness, type Vec2 } from './skeleton';
+import {
+  CHIBI,
+  SOLE,
+  solve,
+  worldAngles,
+  dir,
+  type JointName,
+  type Pose,
+  type Proportions,
+  type Thickness,
+  type Vec2,
+} from './skeleton';
 
 /** Grade do frame do rig: largura, altura e a coluna do eixo do corpo; a origem fica no pé, na última linha. */
 export interface RigFrame {
@@ -21,7 +32,11 @@ export interface RigFrame {
 }
 
 /** O frame do player (32x30, eixo na coluna 10): o dos presets do estudo e do boneco chibi. */
-export const RIG_FRAME_32: RigFrame = { w: PLAYER_FRAME_W, h: PLAYER_FRAME_H, originCol: PLAYER_ORIGIN.x * PLAYER_FRAME_W };
+export const RIG_FRAME_32: RigFrame = {
+  w: PLAYER_FRAME_W,
+  h: PLAYER_FRAME_H,
+  originCol: PLAYER_ORIGIN.x * PLAYER_FRAME_W,
+};
 /** Frame do heroico alto (40x40, eixo na coluna 12): folga para o corpo de 32 texels e o punho acima da cabeça. */
 export const RIG_FRAME_40: RigFrame = { w: 40, h: 40, originCol: 12 };
 
@@ -69,12 +84,21 @@ class Canvas {
 /** Texels de uma parte: tecla de cada um, indexada pela posição. */
 type Layer = Map<number, { x: number; y: number; ch: string }>;
 
-function paint(canvas: Canvas, layer: Layer, skipOutline?: (x: number, y: number, dx: number, dy: number) => boolean): void {
+function paint(
+  canvas: Canvas,
+  layer: Layer,
+  skipOutline?: (x: number, y: number, dx: number, dy: number) => boolean,
+): void {
   for (const c of layer.values()) canvas.set(c.x, c.y, c.ch);
   // Contorno só nos vizinhos de 4 direções que não são da própria parte; cobre o que está atrás.
   const outline = new Set<number>();
   for (const c of layer.values()) {
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
       const nx = c.x + dx;
       const ny = c.y + dy;
       const k = key(nx, ny);
@@ -175,7 +199,17 @@ export interface BodyStyle {
   sleeveRim: boolean;
 }
 
-export const CLASSIC_STYLE: BodyStyle = { legNear: LEG_NEAR, legFar: LEG_FAR, hem: 0, litChest: false, neck: false, knuckles: false, sole: false, openSleeve: false, sleeveRim: false };
+export const CLASSIC_STYLE: BodyStyle = {
+  legNear: LEG_NEAR,
+  legFar: LEG_FAR,
+  hem: 0,
+  litChest: false,
+  neck: false,
+  knuckles: false,
+  sole: false,
+  openSleeve: false,
+  sleeveRim: false,
+};
 /** O acabamento do heroico alto: calça `K`/`n` separada do paletó, barra, luz no ombro, pescoço, dedos e sola. */
 export const TAILORED_STYLE: BodyStyle = {
   legNear: { light: 'N', mid: 'n', dark: 'K' },
@@ -216,7 +250,6 @@ interface LimbStyle {
 const NEAR: LimbStyle = { cloth: NEAR_CLOTH, skin: { lit: 'p', shade: 'P', line: 'x' }, spec: 's', crease: 'o' };
 const FAR: LimbStyle = { cloth: FAR_CLOTH, skin: { lit: 'P', shade: 'q', line: 'q' }, spec: 's', crease: 'K' };
 
-
 const unit = (a: Vec2, b: Vec2): Vec2 => {
   const l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
   return { x: (b.x - a.x) / l, y: (b.y - a.y) / l };
@@ -242,7 +275,13 @@ function bendMarks(layer: Layer, from: Vec2, joint: Vec2, to: Vec2, style: LimbS
  * Punho de verdade: palma de ~4x3 com os nós dos dedos na ponta (vãos em sombra), o polegar ao lado e a sombra do
  * lado da frente. Montado no eixo do antebraço, então gira com ele.
  */
-function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle, k = 1, knuckles = false): { x: number; y: number; ch: string }[] {
+function fistCells(
+  wrist: Vec2,
+  angleWorld: number,
+  style: LimbStyle,
+  k = 1,
+  knuckles = false,
+): { x: number; y: number; ch: string }[] {
   const f = dir(angleWorld);
   // Lado "de trás" da mão: a normal que aponta para a esquerda da tela (o polegar fica ali).
   let n = { x: -f.y, y: f.x };
@@ -263,10 +302,14 @@ function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle, k = 1, knu
       if (inPalm && a > 2.2 && Math.abs(b) > 1.25) continue; // ponta arredondada
       let ch = style.skin.lit;
       if (inThumb) ch = style.skin.lit;
-      else if (b >= 1.2 && a >= 0.2 && a <= 1.7) ch = style.skin.line; // linha do polegar
-      else if (knuckles && a > 1.9 && Math.floor(b + 1.75) % 2 === 1) ch = style.skin.shade; // nós dos dedos alternados na ponta
-      else if (!knuckles && a > 1.35 && a <= 2.2 && Math.abs(b) < 0.35) ch = style.skin.shade; // vão entre os dedos
-      else if (b < -0.9) ch = style.skin.shade; // lado da frente, na sombra
+      else if (b >= 1.2 && a >= 0.2 && a <= 1.7)
+        ch = style.skin.line; // linha do polegar
+      else if (knuckles && a > 1.9 && Math.floor(b + 1.75) % 2 === 1)
+        ch = style.skin.shade; // nós dos dedos alternados na ponta
+      else if (!knuckles && a > 1.35 && a <= 2.2 && Math.abs(b) < 0.35)
+        ch = style.skin.shade; // vão entre os dedos
+      else if (b < -0.9)
+        ch = style.skin.shade; // lado da frente, na sombra
       else if (a < 0.2) ch = style.skin.shade; // sombra do punho de manga
       out.push({ x, y, ch });
     }
@@ -275,7 +318,16 @@ function fistCells(wrist: Vec2, angleWorld: number, style: LimbStyle, k = 1, knu
 }
 
 /** Braço: manga (braço e antebraço), punho de manga claro e a mão fechada, numa camada só com o contorno `k`. */
-function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Near' | 'Far', style: LimbStyle, th: Thickness, handScale = 1, knuckles = false, rim = false): Layer {
+function armLayer(
+  joints: Record<JointName, Vec2>,
+  angleWorld: number,
+  side: 'Near' | 'Far',
+  style: LimbStyle,
+  th: Thickness,
+  handScale = 1,
+  knuckles = false,
+  rim = false,
+): Layer {
   const ARM_R = th.arm;
   const sh = joints[`shoulder${side}`];
   const el = joints[`elbow${side}`];
@@ -302,7 +354,14 @@ function armLayer(joints: Record<JointName, Vec2>, angleWorld: number, side: 'Ne
 }
 
 /** Perna: coxa e canela (cápsulas com dobra de joelho) e o sapato, tudo na camada da própria perna. */
-function legLayer(joints: Record<JointName, Vec2>, footAngle: number, side: 'Near' | 'Far', style: LimbStyle, body: Proportions, look: BodyStyle): Layer {
+function legLayer(
+  joints: Record<JointName, Vec2>,
+  footAngle: number,
+  side: 'Near' | 'Far',
+  style: LimbStyle,
+  body: Proportions,
+  look: BodyStyle,
+): Layer {
   const LEG_R = body.thick.leg;
   const hp = joints[`hip${side}`];
   const kn = joints[`knee${side}`];
@@ -336,7 +395,9 @@ function neckLayer(joints: Record<JointName, Vec2>): Layer {
   const { chest, neck } = joints;
   const d = unit(chest, neck);
   const from = { x: chest.x + d.x * 0.6, y: chest.y + d.y * 0.6 };
-  return toLayer(sample([{ a: from, b: neck, ra: 0.8, rb: 0.8 }]).map((h) => ({ x: h.x, y: h.y, ch: shadeOf(h) > 0.3 ? 'p' : 'P' })));
+  return toLayer(
+    sample([{ a: from, b: neck, ra: 0.8, rb: 0.8 }]).map((h) => ({ x: h.x, y: h.y, ch: shadeOf(h) > 0.3 ? 'p' : 'P' })),
+  );
 }
 
 /** Sem contorno no topo da perna: ali ela se funde ao bloco do quadril do tronco, como no uniforme desenhado. */
@@ -363,7 +424,10 @@ function torsoLayer(joints: Record<JointName, Vec2>, shape: Thickness['torso'], 
   const halfAt = (u: number): number => {
     if (u > len - 1) return shape.collar;
     if (u >= shape.shoulderFrom) return shape.shoulder;
-    if (u > 1.2) return shape.taper ? shape.waist + ((shape.shoulder - shape.waist) * (u - 1.2)) / (shape.shoulderFrom - 1.2) : shape.waist;
+    if (u > 1.2)
+      return shape.taper
+        ? shape.waist + ((shape.shoulder - shape.waist) * (u - 1.2)) / (shape.shoulderFrom - 1.2)
+        : shape.waist;
     return shape.hip;
   };
   const span = Math.ceil(len + 6);
@@ -377,13 +441,20 @@ function torsoLayer(joints: Record<JointName, Vec2>, shape: Thickness['torso'], 
       const w = halfAt(u);
       if (Math.abs(v) > w) continue;
       let ch: string;
-      if (u < -1.0) ch = v < -w + 1 ? 'o' : 'n'; // barra do paletó sobre a calça, linha escura atrás
-      else if (u < 1.0) ch = 'K'; // bloco do quadril e cinto
-      else if (u > len - 1) ch = 's'; // gola
-      else if (v < -w + 1) ch = 'y'; // luz fria da lua nas costas
-      else if (look.litChest && u > len - 2.3) ch = v > w - 0.95 ? 's' : 'S'; // ombro e peito alto na luz
-      else if (v > w - 0.95) ch = look.litChest && u > len - 4.2 ? 's' : 'n'; // lado da frente: claro no peito, sombra embaixo
-      else if (u > len - 2.2 && v > 0) ch = 's'; // luz do ombro
+      if (u < -1.0)
+        ch = v < -w + 1 ? 'o' : 'n'; // barra do paletó sobre a calça, linha escura atrás
+      else if (u < 1.0)
+        ch = 'K'; // bloco do quadril e cinto
+      else if (u > len - 1)
+        ch = 's'; // gola
+      else if (v < -w + 1)
+        ch = 'y'; // luz fria da lua nas costas
+      else if (look.litChest && u > len - 2.3)
+        ch = v > w - 0.95 ? 's' : 'S'; // ombro e peito alto na luz
+      else if (v > w - 0.95)
+        ch = look.litChest && u > len - 4.2 ? 's' : 'n'; // lado da frente: claro no peito, sombra embaixo
+      else if (u > len - 2.2 && v > 0)
+        ch = 's'; // luz do ombro
       else if (u < 2.2) ch = 'n';
       else ch = 'N';
       cells.push({ x, y, ch });

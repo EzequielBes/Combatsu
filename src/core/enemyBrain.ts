@@ -1,14 +1,7 @@
 import type { Hit } from './hit';
 
 export type EnemyState =
-  | 'idle'
-  | 'hitstun'
-  | 'stagger'
-  | 'ragdollStun'
-  | 'gettingUp'
-  | 'deadRagdoll'
-  | 'dissolving'
-  | 'gone';
+  'idle' | 'hitstun' | 'stagger' | 'ragdollStun' | 'gettingUp' | 'deadRagdoll' | 'dissolving' | 'gone';
 
 export interface EnemyTuning {
   maxHp: number;
@@ -88,7 +81,10 @@ export class EnemyBrain {
     if (grounded && !hit.tech) this._downHits = 1;
     if (this._hp === 0) {
       this.enter('deadRagdoll', this.t.deathRagdollMs);
-      return [{ type: 'died', hit }, { type: 'ragdoll', hit }];
+      return [
+        { type: 'died', hit },
+        { type: 'ragdoll', hit },
+      ];
     }
     if (grounded && !hit.tech) return [{ type: 'hurtWhileDown', hit }];
     if (hit.knockdown) {

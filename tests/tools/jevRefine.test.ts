@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildRequest, flagsFor, formatReport, parseAcs, parseGlossary, type Answers } from '../../tools/jev-refine/lib';
+import {
+  buildRequest,
+  flagsFor,
+  formatReport,
+  parseAcs,
+  parseGlossary,
+  type Answers,
+} from '../../tools/jev-refine/lib';
 
 const SPEC = `# Exemplo
 

@@ -46,7 +46,11 @@ const estudo = [
 ];
 const tiras = sets.map((s) => ({
   id: 'tira-' + s.body.name,
-  lines: [0, 6].map((o) => s.sequence.slice(o, o + 6).map((r, k) => ({ name: String(o + k + 1), rows: r.frame, mark: o + k === 7 ? s.strike : undefined }))),
+  lines: [0, 6].map((o) =>
+    s.sequence
+      .slice(o, o + 6)
+      .map((r, k) => ({ name: String(o + k + 1), rows: r.frame, mark: o + k === 7 ? s.strike : undefined })),
+  ),
 }));
 const heads = [CHIBI, ...PRESETS].map((b) => ({ name: b.name, rows: headOf(b).grid }));
 const enemy = ENEMY_VARIANT_FRAMES.corcunda['idle-0'];
@@ -70,52 +74,83 @@ if (!edge) {
 }
 
 const pageFn = (data) => {
-  const S = data.scale, BG = '#2a3863', cw = 32 * S + 8, ch = 30 * S + 24;
+  const S = data.scale,
+    BG = '#2a3863',
+    cw = 32 * S + 8,
+    ch = 30 * S + 24;
   const hex = (n) => '#' + n.toString(16).padStart(6, '0');
   const drawRows = (ctx, rows, x, y, S = data.scale) =>
-    rows.forEach((row, j) => [...row].forEach((c, i) => {
-      if (c === '.') return;
-      ctx.fillStyle = hex(data.palette[c]); ctx.fillRect(x + i * S, y + j * S, S, S);
-    }));
+    rows.forEach((row, j) =>
+      [...row].forEach((c, i) => {
+        if (c === '.') return;
+        ctx.fillStyle = hex(data.palette[c]);
+        ctx.fillRect(x + i * S, y + j * S, S, S);
+      }),
+    );
   const canvasOf = (id, w, h) => {
     const cv = document.createElement('canvas');
-    cv.id = id; cv.width = w; cv.height = h;
+    cv.id = id;
+    cv.width = w;
+    cv.height = h;
     document.body.appendChild(cv);
     const ctx = cv.getContext('2d');
-    ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
-    ctx.font = '13px monospace'; ctx.textBaseline = 'top';
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, w, h);
+    ctx.font = '13px monospace';
+    ctx.textBaseline = 'top';
     return ctx;
   };
   const board = (id, lines) => {
     const cols = Math.max(...lines.map((r) => r.length));
     const ctx = canvasOf(id, cols * cw, lines.length * ch);
-    lines.forEach((frames, ry) => frames.forEach((f, cx) => {
-      const x = cx * cw + 4, y = ry * ch + 2;
-      ctx.strokeStyle = '#4a5780'; ctx.strokeRect(x - 3.5, y - 1.5, cw - 1, ch - 1);
-      ctx.fillStyle = '#35446f'; ctx.fillRect(x, y + 30 * S, 32 * S, 1); // chão
-      drawRows(ctx, f.rows, x, y);
-      ctx.fillStyle = '#fff'; ctx.fillText(f.name, x, y + 30 * S + 4);
-      if (f.mark) { ctx.strokeStyle = '#ff3344'; ctx.lineWidth = 1; ctx.strokeRect(x + f.mark.col * S + 0.5, y + f.mark.row * S + 0.5, S - 1, S - 1); }
-    }));
+    lines.forEach((frames, ry) =>
+      frames.forEach((f, cx) => {
+        const x = cx * cw + 4,
+          y = ry * ch + 2;
+        ctx.strokeStyle = '#4a5780';
+        ctx.strokeRect(x - 3.5, y - 1.5, cw - 1, ch - 1);
+        ctx.fillStyle = '#35446f';
+        ctx.fillRect(x, y + 30 * S, 32 * S, 1); // chão
+        drawRows(ctx, f.rows, x, y);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(f.name, x, y + 30 * S + 4);
+        if (f.mark) {
+          ctx.strokeStyle = '#ff3344';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + f.mark.col * S + 0.5, y + f.mark.row * S + 0.5, S - 1, S - 1);
+        }
+      }),
+    );
   };
   board('estudo', data.estudo);
   for (const t of data.tiras) board(t.id, t.lines);
-  { // Cabeças em escala grande (cabecas.png)
-    const K = S * 2, cwh = 15 * K, chh = 12 * K + 20;
+  {
+    // Cabeças em escala grande (cabecas.png)
+    const K = S * 2,
+      cwh = 15 * K,
+      chh = 12 * K + 20;
     const c2 = canvasOf('cabecas', 4 * cwh, chh);
-    data.heads.forEach((h, k) => { drawRows(c2, h.rows, k * cwh + K, K, K); c2.fillStyle = '#fff'; c2.fillText(h.name, k * cwh + K, 12 * K + 4); });
+    data.heads.forEach((h, k) => {
+      drawRows(c2, h.rows, k * cwh + K, K, K);
+      c2.fillStyle = '#fff';
+      c2.fillText(h.name, k * cwh + K, 12 * K + 4);
+    });
   }
   // Escala: jogador (origem na coluna 10) e inimigo (centro na coluna 12,5) pé a pé, o inimigo 12 texels à frente.
-  const ew = 32, ox = 12;
-  const W = 3 * (ew + ox + 6) * S, H = 34 * S + 24;
+  const ew = 32,
+    ox = 12;
+  const W = 3 * (ew + ox + 6) * S,
+    H = 34 * S + 24;
   const ctx = canvasOf('escala', W, H);
   data.escala.forEach((e, k) => {
     const x0 = k * (ew + ox + 6) * S;
     const gy = 31 * S;
-    ctx.fillStyle = '#35446f'; ctx.fillRect(x0, gy, (ew + ox + 6) * S, 2);
+    ctx.fillStyle = '#35446f';
+    ctx.fillRect(x0, gy, (ew + ox + 6) * S, 2);
     drawRows(ctx, e.player, x0 + 2 * S, gy - 30 * S);
     drawRows(ctx, e.enemy, x0 + (2 + ox + 10 - 12.5) * S, gy - 24 * S);
-    ctx.fillStyle = '#fff'; ctx.fillText(e.name, x0 + 6, gy + 6);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(e.name, x0 + 6, gy + 6);
   });
 };
 
@@ -123,7 +158,14 @@ const browser = await puppeteer.launch({ executablePath: edge, headless: true })
 try {
   const page = await browser.newPage();
   await page.setContent('<body style="margin:0;background:#000"></body>');
-  await page.evaluate(pageFn, { palette: PALETTE, estudo, tiras, escala, heads, scale: Number(process.env.SPRITE_SCALE) || 6 });
+  await page.evaluate(pageFn, {
+    palette: PALETTE,
+    estudo,
+    tiras,
+    escala,
+    heads,
+    scale: Number(process.env.SPRITE_SCALE) || 6,
+  });
   for (const id of ['estudo', 'cabecas', ...tiras.map((t) => t.id), 'escala']) {
     await (await page.$('#' + id)).screenshot({ path: join(outDir, id + '.png') });
     console.log('  ' + join(outDir, id + '.png'));

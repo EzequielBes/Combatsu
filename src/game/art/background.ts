@@ -70,11 +70,7 @@ function rng(seed: number): () => number {
  * - próxima (0,6): muro de pilares de pedra com gradil.
  * Devolve as camadas na ordem de PARALLAX.
  */
-export function buildBackground(
-  scene: Phaser.Scene,
-  widthPx: number,
-  heightPx: number,
-): Phaser.GameObjects.Graphics[] {
+export function buildBackground(scene: Phaser.Scene, widthPx: number, heightPx: number): Phaser.GameObjects.Graphics[] {
   const x0 = -128;
   const x1 = widthPx + 128;
   const bottom = heightPx + 256;
@@ -117,7 +113,13 @@ function paintFar(b: Brush, { x0, x1, ground, bottom }: Span): void {
     const x = x0 + rand() * w;
     const y = 10 + rand() * 180;
     b.dot(x, y, 'w');
-    for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) b.dot(x + dx, y + dy, 'S');
+    for (const [dx, dy] of [
+      [-2, 0],
+      [2, 0],
+      [0, -2],
+      [0, 2],
+    ])
+      b.dot(x + dx, y + dy, 'S');
   }
 
   // Lua com halo.
@@ -141,7 +143,7 @@ function paintFar(b: Brush, { x0, x1, ground, bottom }: Span): void {
 
   // Cidade ao longe: blocos baixos com algumas janelas.
   const city = rng(11);
-  for (let x = x0; x < x1; ) {
+  for (let x = x0; x < x1;) {
     const bw = 40 + Math.floor(city() * 5) * 12;
     const top = ground - 50 - Math.floor(city() * 6) * 10;
     b.rect(x, top, bw, bottom - top, 'E');

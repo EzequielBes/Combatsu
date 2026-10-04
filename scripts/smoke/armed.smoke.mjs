@@ -53,7 +53,10 @@ export default async function ({ page, baseUrl, assert }) {
   await page.keyboard.press('Digit2', { delay: 50 });
   snap = await stepAndSnap(50);
   const downed = snap.enemies.filter((e) => e.state === 'ragdollStun');
-  assert(downed.length > 0, `ARM-10: esperava um armado em ragdoll depois do golpe forte: ${JSON.stringify(snap.enemies)}`);
+  assert(
+    downed.length > 0,
+    `ARM-10: esperava um armado em ragdoll depois do golpe forte: ${JSON.stringify(snap.enemies)}`,
+  );
   assert(
     downed.every((e) => e.weaponVisible === false),
     `ARM-10: em ragdoll a ferramenta deveria sumir: ${JSON.stringify(downed)}`,
@@ -73,7 +76,10 @@ export default async function ({ page, baseUrl, assert }) {
   }
   const knife = snap.worldProps.find((p) => p.key === 'cursedKnife');
   assert(knife, `nenhuma faca largada: ${JSON.stringify(snap.worldProps)}`);
-  assert(knife.state === 'rest' && knife.durabilityLeft === 6, `ARM-08: faca deveria nascer em rest/6: ${JSON.stringify(knife)}`);
+  assert(
+    knife.state === 'rest' && knife.durabilityLeft === 6,
+    `ARM-08: faca deveria nascer em rest/6: ${JSON.stringify(knife)}`,
+  );
 
   // ARM-13: se ninguém pegar, a ferramenta some aos 20 s.
   // Os inimigos agora perseguem e atacam em vez de patrulhar (SPN-10): parado por 20 s o player apanharia até
@@ -167,7 +173,10 @@ export default async function ({ page, baseUrl, assert }) {
         landedHit = true;
         const afterKnife = snap.worldProps.find((p) => p.id === knife2.id);
         if (afterKnife) {
-          assert(afterKnife.durabilityLeft === 5, `ARM-17/27: a faca deveria ter desgastado 1: ${JSON.stringify(afterKnife)}`);
+          assert(
+            afterKnife.durabilityLeft === 5,
+            `ARM-17/27: a faca deveria ter desgastado 1: ${JSON.stringify(afterKnife)}`,
+          );
         }
       }
     }
@@ -180,22 +189,37 @@ export default async function ({ page, baseUrl, assert }) {
   for (let i = 0; i < 40 && knifeNow() && knifeNow().state === 'swing'; i++) snap = await stepAndSnap(20);
   snap = await stepAndSnap(600); // fim da recuperação do balanço do J
   const stillHeld = knifeNow();
-  assert(stillHeld && stillHeld.state === 'held', `a faca deveria seguir na mão depois do golpe: ${JSON.stringify(stillHeld)}`);
+  assert(
+    stillHeld && stillHeld.state === 'held',
+    `a faca deveria seguir na mão depois do golpe: ${JSON.stringify(stillHeld)}`,
+  );
   {
     // AI-04 -> CMT-03/04: o armado comprometido não é cancelado pelo golpe da faca e bate de volta (agora em 2 golpes, DFL-01);
     // o `K` só vale depois que o jogador sai do atordoamento e o ataque do inimigo acaba.
-    for (let i = 0; i < 100 && (snap.player.frame.startsWith('hurt') || snap.enemies.some((e) => e.ai === 'windup' || e.ai === 'attack')); i++) snap = await stepAndSnap(20);
+    for (
+      let i = 0;
+      i < 100 &&
+      (snap.player.frame.startsWith('hurt') || snap.enemies.some((e) => e.ai === 'windup' || e.ai === 'attack'));
+      i++
+    )
+      snap = await stepAndSnap(20);
     await page.keyboard.down('KeyK');
     snap = await stepAndSnap(20);
     await page.keyboard.up('KeyK');
     let sawSwing = false;
     for (let i = 0; i < 15 && !sawSwing; i++) {
       sawSwing = knifeNow()?.state === 'swing';
-      assert(snap.player.move === null, `F7: K com a faca na mão não deveria começar golpe do grafo: ${snap.player.move}`);
+      assert(
+        snap.player.move === null,
+        `F7: K com a faca na mão não deveria começar golpe do grafo: ${snap.player.move}`,
+      );
       if (!sawSwing) snap = await stepAndSnap(20);
     }
     assert(sawSwing, `F7: K com a faca na mão deveria balançar a faca: ${JSON.stringify(knifeNow())}`);
-    assert(snap.player.move === null, `F7: K com a faca na mão não deveria começar golpe do grafo: ${snap.player.move}`);
+    assert(
+      snap.player.move === null,
+      `F7: K com a faca na mão não deveria começar golpe do grafo: ${snap.player.move}`,
+    );
   }
 
   // RAR-03/05: com `?debug&armed=knife&rare=1`, toda ferramenta nasce rara e o nome no HUD termina em " Rara".
@@ -218,8 +242,14 @@ export default async function ({ page, baseUrl, assert }) {
     snap = await stepAndSnap(300);
   }
   const rareKnife = snap.worldProps.find((p) => p.key.startsWith('cursedKnife'));
-  assert(rareKnife && rareKnife.rare === true, `RAR-05: com rare=1 a ferramenta deveria nascer rara: ${JSON.stringify(rareKnife)}`);
-  assert(rareKnife.durabilityLeft === 8, `RAR-06: durabilidade da faca rara deveria ser 8: ${JSON.stringify(rareKnife)}`);
+  assert(
+    rareKnife && rareKnife.rare === true,
+    `RAR-05: com rare=1 a ferramenta deveria nascer rara: ${JSON.stringify(rareKnife)}`,
+  );
+  assert(
+    rareKnife.durabilityLeft === 8,
+    `RAR-06: durabilidade da faca rara deveria ser 8: ${JSON.stringify(rareKnife)}`,
+  );
   // Outros objetos do mapa podem estar bem perto (a zona de coleta pega o mais próximo em `rest`): se a faca
   // rara não for a mais próxima ainda, larga o que pegou e chega mais perto até acertar ela.
   let rareHeld = false;

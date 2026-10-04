@@ -15,7 +15,11 @@ describe('combineStrikePresses (CTL-01, CTL-02, CTL-04)', () => {
   });
 
   it('nenhum aperto não reporta nada', () => {
-    expect(combineStrikePresses(false, false)).toEqual({ lightPressed: false, heavyPressed: false, bothPressed: false });
+    expect(combineStrikePresses(false, false)).toEqual({
+      lightPressed: false,
+      heavyPressed: false,
+      bothPressed: false,
+    });
   });
 });
 
