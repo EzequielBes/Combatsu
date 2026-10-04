@@ -307,7 +307,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: criação do ColorMatrix de `KokusenFx.ts:136`
 **Requirement**: IMP-11, IMP-12, IMP-14, EDG-05
 **Done when**:
-- [ ] `npm run build` passa.
+- [x] `npm run build` passa.
 **Tests**: none
 **Gate**: build
 
