@@ -10,7 +10,7 @@
  */
 import { selOut } from '../selOut';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, type Grid } from '../sprites/player';
-import { headOf } from './heads';
+import { headOf } from './presets';
 import { CHIBI, solve, worldAngles, dir, type JointName, type Pose, type Proportions, type Thickness, type Vec2 } from './skeleton';
 
 export const RIG_W = PLAYER_FRAME_W;
