@@ -31,3 +31,33 @@ export const HEAD_LARGE: HeadSprite = {
   grid: ['...k..k..k..', '..kHk.kHkjk.', '.kjHjkjHjHjk', 'kjhhHjhhhppk', 'khhhxPpwbppk', 'khhhxPppppk.', '.khhxPpbbpk.', '.knnNkxPPxk.'],
   neckCol: 5,
 };
+
+/** Cabeça do heroico alto, idle (concentrado): 7 linhas com o cabelo, olho com íris e brilho, sobrancelha, nariz, orelha e queixo. */
+export const HEAD_TALL_IDLE: HeadSprite = {
+  grid: [
+    '..k..k.k....',
+    '.kHk.kHkjk..',
+    'kjHjkjHjHjk.',
+    'kjhhhhhPhhpk',
+    'khhhhxPpwbpk',
+    'khhhxPppppxk',
+    '.khhxPppxxpk',
+    '..kkxPPPpkk.',
+  ],
+  neckCol: 5,
+};
+
+/** Cabeça do heroico alto na luta (esforço): sobrancelha baixa sobre o olho cerrado e boca aberta com os dentes. */
+export const HEAD_TALL_FIGHT: HeadSprite = {
+  grid: [
+    '..k..k.k....',
+    '.kHk.kHkjk..',
+    'kjHjkjHjHjk.',
+    'kjhhhhhPhhhk',
+    'khhhhxPpxbpk',
+    'khhhxPppppxk',
+    '.khhxPppbwpk',
+    '..kkxPPPpkk.',
+  ],
+  neckCol: 5,
+};
