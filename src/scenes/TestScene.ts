@@ -304,7 +304,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.shopInput = new ShopInput(this);
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2, target?: Hittable): void => this.onConnect(hit, at, hit.strength, target);
-    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike);
+    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike, () => {});
     this.player.onEvent = (ev) => {
       this.debugEvents.push(ev);
       if (ev.startsWith('move:')) this.onPlayerMoveStart(ev.slice(5));

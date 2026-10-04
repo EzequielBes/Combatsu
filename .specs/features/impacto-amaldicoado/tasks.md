@@ -321,7 +321,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `StepIn`, `onMove`
 **Requirement**: POS-07, POS-08, POS-09, IMP-14, TRL-07, TRL-08, EDG-02
 **Done when**:
-- [ ] `npm run build && npm test` passam.
+- [x] `npm run build && npm test` passam.
 **Tests**: none
 **Gate**: build
 
