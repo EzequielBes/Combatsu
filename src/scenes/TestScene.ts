@@ -82,6 +82,10 @@ import { TechRunner, type TechTarget } from '../game/TechRunner';
 import { Aura } from '../game/techFx/Aura';
 import { Callout } from '../game/techFx/Callout';
 import { KokusenFx } from '../game/techFx/KokusenFx';
+import { CursedFx } from '../game/CursedFx';
+import { strikeToWorld } from '../core/strikePath';
+import { STRIKE_POINTS } from '../game/art/sprites/strikePoints';
+import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../game/art/sprites/player';
 import { SIZE, TEX } from '../game/textures';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
@@ -199,6 +203,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private callout!: Callout;
   /** Cinema do Kokusen (T24): negativo/duotom/raios/faíscas/zoom/cartão, tudo em tempo real (TFX-05). */
   private kokusenFx!: KokusenFx;
+  private cursedFx!: CursedFx;
+  /** Quadros sem ponto de golpe já avisados (EDG-01: um aviso por nome). */
+  private warnedStrikeFrames = new Set<string>();
+  /** Golpe do jogador em startup com a chama acesa (TRL-07), para a chama seguir o ponto de golpe. */
+  private flameMove: string | null = null;
   /** Último estado de conjuração visto (CAST-15/19): dispara o zoom da câmera só na troca de estado. */
   private lastCastState: CastState | null = null;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
@@ -304,7 +313,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.shopInput = new ShopInput(this);
     const p = this.level.player;
     const strike = (hit: Hit, at: Vec2, target?: Hittable): void => this.onConnect(hit, at, hit.strength, target);
-    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike, () => {});
+    this.player = new Player(this, p.x, p.y - SPAWN_LIFT, this.terrain, () => this.props, this.fx, this.modifiers, strike, (name, phase) => this.onStrikePhase(name, phase));
     this.player.onEvent = (ev) => {
       this.debugEvents.push(ev);
       if (ev.startsWith('move:')) this.onPlayerMoveStart(ev.slice(5));
@@ -319,6 +328,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.aura = new Aura(this, this.realtimeFx, this.fxRegistry);
     // T24: cartão/raios/faíscas/zoom do Kokusen, na `uiLayer` (o cartão é HUD) + câmera/mundo (raios, faíscas).
     this.kokusenFx = new KokusenFx(this, this.realtimeFx, this.fxRegistry, this.uiLayer);
+    // Impacto amaldiçoado: rastro, chama, estilhaços, anel, rachadura e o quadro de impacto (EDG-05: não com loja ou título).
+    this.cursedFx = new CursedFx(this);
+    this.warnedStrikeFrames = new Set();
+    this.flameMove = null;
+    // EDG-04: reinício da cena destrói todo efeito vivo.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cursedFx.destroyAll());
     // T22+: dono da hitbox do Punho Divergente/Kokusen e das camadas de fx próprias delas (eco, anel, estouro...).
     this.techRunner = new TechRunner(
       this,
@@ -457,6 +472,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       const raw = this.controls.read();
       const input = acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT;
       this.player.update(dt, input);
+      this.updateCursedFx();
       // FIN-01/03: `J`+`K` juntos perto de um inimigo quebrado é o finalizador; sem alvo, nada acontece.
       if (input.bothPressed && !this.player.dead) this.tryFinisher();
       this.comboCounter.update(dt);
@@ -1269,7 +1285,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       tech: this.techSnapshot(),
       kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
       techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
-      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState, aura: this.aura.pos },
+      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState, aura: this.aura.pos, trails: this.cursedFx.trails },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
       camera: {
         zoom: this.cameras.main.zoom,
@@ -1323,6 +1339,56 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.comboCounter.hit(hit.moveName ?? 'objeto');
       // PST-13: o foco é o último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (não o chefe).
       if (target instanceof Enemy) this.focusId = target.id;
+    }
+  }
+
+  /** Fase do golpe do jogador: rastro no `active` e chama no startup do forte (TRL-03, TRL-07, TRL-08, EDG-01). */
+  private onStrikePhase(name: string, phase: 'startup' | 'active' | 'recovery' | 'end'): void {
+    const strength = MOVES[name]?.strength ?? 'light';
+    if (phase === 'startup') {
+      if (strength !== 'heavy') return;
+      const wind = this.strikeWorld(`${name}-wind`);
+      if (!wind) return;
+      this.flameMove = name;
+      this.cursedFx.flameStart(wind);
+    } else if (phase === 'active') {
+      this.stopFlame();
+      const from = this.strikeWorld(`${name}-wind`);
+      const to = this.strikeWorld(`${name}-hit`);
+      if (from && to) this.cursedFx.trail([from, to], strength);
+    } else {
+      this.stopFlame();
+    }
+  }
+
+  private stopFlame(): void {
+    this.flameMove = null;
+    this.cursedFx.flameStop();
+  }
+
+  /** Ponto de golpe do quadro em coordenadas de mundo; `null` (com um aviso por nome) sem entrada (EDG-01). */
+  private strikeWorld(frameName: string): Vec2 | null {
+    const pt = STRIKE_POINTS[frameName];
+    if (!pt) {
+      if (!this.warnedStrikeFrames.has(frameName)) {
+        this.warnedStrikeFrames.add(frameName);
+        console.warn(`Sem ponto de golpe para o quadro ${frameName}: nenhum rastro.`);
+      }
+      return null;
+    }
+    const drawn = this.player.renderPos;
+    return strikeToWorld(pt, { x: drawn.x, footY: drawn.y + SIZE.player.h / 2 }, this.player.facing, {
+      originCol: PLAYER_ORIGIN.x * PLAYER_FRAME_W,
+      rows: PLAYER_FRAME_H,
+    });
+  }
+
+  /** Por quadro: a chama segue o ponto de golpe e o jogador atingido apaga a chama (EDG-02). */
+  private updateCursedFx(): void {
+    if (this.flameMove !== null) {
+      const at = this.strikeWorld(`${this.flameMove}-wind`);
+      if (at && this.player.hp >= this.lastPlayerHp && !this.player.dead) this.cursedFx.flameMove(at);
+      else this.stopFlame();
     }
   }
 

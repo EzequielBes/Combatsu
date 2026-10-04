@@ -335,7 +335,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `CursedFx`, `STRIKE_POINTS`, `strikeToWorld`
 **Requirement**: TRL-03, TRL-07, TRL-08, TRL-10, EDG-01, EDG-04
 **Done when**:
-- [ ] `npm run build && npm test` passam.
+- [x] `npm run build && npm test` passam.
 **Tests**: none
 **Gate**: build
 
