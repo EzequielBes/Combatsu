@@ -99,9 +99,9 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `src/core/rng.ts`, `Hit`
 **Requirement**: IMP-01, IMP-02, IMP-03, IMP-04, IMP-05, IMP-09, IMP-10
 **Done when**:
-- [ ] Um caso por AC; `counter` + `light` dá `decisive`; `heavy` sem nada decisivo dá `heavy`.
-- [ ] `impactSpikes`: mesma seed dá a mesma saída; seeds diferentes dão saídas diferentes; todo comprimento em [18, 30] em 200 seeds; `count` respeitado.
-- [ ] `Hit` ganha `swingId?: number`.
+- [x] Um caso por AC; `counter` + `light` dá `decisive`; `heavy` sem nada decisivo dá `heavy`.
+- [x] `impactSpikes`: mesma seed dá a mesma saída; seeds diferentes dão saídas diferentes; todo comprimento em [18, 30] em 200 seeds; `count` respeitado.
+- [x] `Hit` ganha `swingId?: number`.
 **Tests**: unit
 **Gate**: quick
 
