@@ -405,7 +405,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `fight-kit.mjs`
 **Requirement**: TRL-04, TRL-05, TRL-10, IMP-16, RCT-01, RCT-06, POS-07
 **Done when**:
-- [ ] Passa 3 vezes seguidas; suíte inteira passa.
+- [x] Passa 3 vezes seguidas; suíte inteira passa.
 **Tests**: smoke
 **Gate**: full
 
