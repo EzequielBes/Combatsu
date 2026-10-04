@@ -83,12 +83,7 @@ import { KokusenFx } from '../game/techFx/KokusenFx';
 import { CursedFx } from '../game/CursedFx';
 import { ImpactFrame } from '../game/ImpactFrame';
 import { FocusLines } from '../game/FocusLines';
-import { impactTier, type ImpactTier } from '../core/impactTier';
 import { CAMERA_FEEL } from '../data/feel';
-import { strikeToWorld } from '../core/strikePath';
-import { STRIKE_POINTS } from '../game/art/sprites/strikePoints';
-import { currentSearch, rigStrike } from '../game/art/rig/flag';
-import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../game/art/sprites/player';
 import { SIZE, TEX } from '../game/textures';
 import { debugParam, debugIntParam, NEUTRAL_INPUT, isDroppedTool, SPAWN_LIFT } from './test/params';
 import {
@@ -100,6 +95,7 @@ import {
   CameraRig,
 } from './test/camera';
 import { EffectsDirector } from './test/effects';
+import { ImpactFx } from './test/impactFx';
 
 type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
 
@@ -116,6 +112,7 @@ const BOSS_UPGRADE_BANNER_MS = 800;
 const SPAWN_VIEW_MARGIN = 32;
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
+  readonly impactFx = new ImpactFx(this);
   readonly effects = new EffectsDirector(this);
   readonly camera = new CameraRig(this);
   level!: LevelData;
@@ -174,20 +171,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   impactFrame!: ImpactFrame;
   /** Linhas de foco do golpe decisivo (FOC-01), na `uiLayer`. */
   focusLines!: FocusLines;
-  /** Último impacto do golpe do jogador, para o snapshot (IMP-16). */
-  lastImpact: { tier: ImpactTier; impactFrame: boolean } | null = null;
-  /** `swingId` do último golpe que recebeu o quadro de impacto (IMP-14, IMP-16). */
-  framedSwingId: number | null = null;
-  /** Quadros sem ponto de golpe já avisados (EDG-01: um aviso por nome). */
-  warnedStrikeFrames = new Set<string>();
-  /** Golpe do jogador em startup com a chama acesa (TRL-07), para a chama seguir o ponto de golpe. */
-  flameMove: string | null = null;
-  /** Inimigos derrubados por golpe do jogador esperando tocar o chão para ganhar a rachadura (IMP-15). */
-  crackWatch = new Map<Enemy, number>();
-  /** Inimigos quebrados no começo do frame, para saber qual golpe quebrou a postura (IMP-03). */
-  brokenAtFrameStart = new Set<number>();
-  /** Quadro do jogo em que o último Kokusen disparou (IMP-13). */
-  kokusenFrame = -1;
   /** Loja aberta (SHOP-01), recriada a cada `shopOpen`; `null` fora da loja. */
   shop: Shop | null = null;
   /** 1ª técnica equipada nesta compra (TSH-06), para o ícone voar da carta ao slot (T21); `null` fora disso. */
@@ -299,7 +282,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.fx,
       this.modifiers,
       strike,
-      (name, phase) => this.onStrikePhase(name, phase),
+      (name, phase) => this.impactFx.onStrikePhase(name, phase),
     );
     this.player.onEvent = (ev) => {
       this.debugEvents.push(ev);
@@ -318,12 +301,12 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Impacto amaldiçoado: rastro, chama, estilhaços, anel, rachadura e o quadro de impacto (EDG-05: não com loja ou título).
     this.cursedFx = new CursedFx(this);
     this.impactFrame = new ImpactFrame(this, () => this.run.state !== 'shop' && this.run.state !== 'title');
-    this.lastImpact = null;
-    this.warnedStrikeFrames = new Set();
-    this.flameMove = null;
-    this.crackWatch = new Map();
-    this.brokenAtFrameStart = new Set();
-    this.kokusenFrame = -1;
+    this.impactFx.lastImpact = null;
+    this.impactFx.warnedStrikeFrames = new Set();
+    this.impactFx.flameMove = null;
+    this.impactFx.crackWatch = new Map();
+    this.impactFx.brokenAtFrameStart = new Set();
+    this.impactFx.kokusenFrame = -1;
     // EDG-04: reinício da cena destrói todo efeito vivo.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cursedFx.destroyAll());
     // T22+: dono da hitbox do Punho Divergente/Kokusen e das camadas de fx próprias delas (eco, anel, estouro...).
@@ -342,7 +325,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.effects.freeze();
       },
       (target, point, facing, streak) => {
-        this.kokusenFrame = this.game.getFrame();
+        this.impactFx.kokusenFrame = this.game.getFrame();
         this.kokusenFx.trigger(target, point, facing, streak);
       },
       // MST-01/02: acerto de técnica em alvo real vira ponto de maestria.
@@ -461,9 +444,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
       const raw = this.controls.read();
       const input = acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT;
-      this.brokenAtFrameStart = new Set(this.enemies.filter((e) => e.broken).map((e) => e.id));
+      this.impactFx.brokenAtFrameStart = new Set(this.enemies.filter((e) => e.broken).map((e) => e.id));
       this.player.update(dt, input);
-      this.updateCursedFx();
+      this.impactFx.updateCursedFx();
       // FIN-01/03: `J`+`K` juntos perto de um inimigo quebrado é o finalizador; sem alvo, nada acontece.
       if (input.bothPressed && !this.player.dead) this.tryFinisher();
       this.comboCounter.update(dt);
@@ -1302,7 +1285,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         aura: this.aura.pos,
         trails: this.cursedFx.trails,
         focus: this.focusLines.view,
-        lastImpact: this.lastImpact,
+        lastImpact: this.impactFx.lastImpact,
       },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
       camera: {
@@ -1344,7 +1327,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
    */
   onConnect(hit: Hit, point: Vec2, kind: SparkKind, target?: Hittable): void {
     // IMP-06, CAM-06: o golpe corpo a corpo do jogador troca a faísca e a tremida pelo impacto amaldiçoado.
-    if (hit.ownerId === this.player.id && hit.moveName !== undefined) this.onMeleeImpact(hit, point, target);
+    if (hit.ownerId === this.player.id && hit.moveName !== undefined) this.impactFx.onMeleeImpact(hit, point, target);
     else {
       this.fx.spark(point.x, point.y, kind);
       if (hit.strength === 'heavy') this.fx.shake();
@@ -1361,130 +1344,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.comboCounter.hit(hit.moveName ?? 'objeto');
       // PST-13: o foco é o último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (não o chefe).
       if (target instanceof Enemy) this.focusId = target.id;
-    }
-  }
-
-  /**
-   * Impacto do golpe corpo a corpo do jogador (IMP-06..16): nível, camadas do `CursedFx`, quadro de impacto só no
-   * decisivo sem Kokusen e uma vez por golpe (IMP-11, IMP-13, IMP-14), e a rachadura na queda da derrubada.
-   */
-  onMeleeImpact(hit: Hit, point: Vec2, target?: Hittable): void {
-    const brokePosture = target instanceof Enemy && target.broken && !this.brokenAtFrameStart.has(target.id);
-    const tier = impactTier(hit, { brokePosture });
-    this.cursedFx.impact(
-      tier,
-      point,
-      { x: hit.direction.x, y: hit.direction.y },
-      hit.swingId ?? Math.floor(this.clockMs),
-    );
-    const kokusen = this.kokusenFrame === this.game.getFrame();
-    const framed =
-      tier === 'decisive' && !kokusen && hit.swingId !== undefined ? this.impactFrame.trigger(hit.swingId) : false;
-    if (framed) this.framedSwingId = hit.swingId ?? null;
-    // IMP-16: só o golpe que ganhou o postFX (ou outro alvo do mesmo golpe, IMP-14) reporta `impactFrame`.
-    this.lastImpact = {
-      tier,
-      impactFrame:
-        framed || (this.impactFrame.applied && hit.swingId !== undefined && hit.swingId === this.framedSwingId),
-    };
-    this.debugEvents.push(`impact:${tier}`);
-    // RCT-01, RCT-02: o inimigo comum que fica de pé desliza para longe do jogador.
-    if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1);
-    if (hit.knockdown && target instanceof Enemy) this.crackWatch.set(target, this.clockMs);
-    this.reactCamera(tier, hit, point, brokePosture);
-  }
-
-  /**
-   * Câmera que reage ao impacto (CAM-01..05, CAM-07): tranco no forte, micro-zoom no decisivo (nunca durante o zoom
-   * do finalizador) e câmera lenta na quebra de postura e no Contra; um novo gatilho reinicia sem empilhar (CAM-04).
-   */
-  reactCamera(tier: ImpactTier, hit: Hit, point: Vec2, brokePosture: boolean): void {
-    if (tier === 'decisive') this.focusLines.show(this.camera.worldToScreen(point));
-    if (tier === 'heavy') this.camera.cameraKick.kick(hit.direction.x, hit.direction.y);
-    const cam = this.cameras.main;
-    // O finalizador é decisivo, mas o zoom dele manda (CAM-05); `finisherZoomMs` só liga depois do `onConnect`.
-    if (
-      tier === 'decisive' &&
-      hit.moveName !== FINISHER_MOVE &&
-      this.camera.finisherZoomMs <= 0 &&
-      !cam.zoomEffect.isRunning
-    ) {
-      this.camera.zoomPulse.start();
-      this.camera.zoomPulseMs = CAMERA_FEEL.zoomInMs + CAMERA_FEEL.zoomHoldMs + CAMERA_FEEL.zoomOutMs;
-    }
-    if (brokePosture || hit.counter) this.effects.slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.slowMs);
-  }
-
-  /** Fase do golpe do jogador: rastro no `active` e chama no startup do forte (TRL-03, TRL-07, TRL-08, EDG-01). */
-  onStrikePhase(name: string, phase: 'startup' | 'active' | 'recovery' | 'end'): void {
-    const strength = MOVES[name]?.strength ?? 'light';
-    if (phase === 'startup') {
-      if (strength !== 'heavy') return;
-      const wind = this.strikeWorld(`${name}-wind`);
-      if (!wind) return;
-      this.flameMove = name;
-      this.cursedFx.flameStart(wind);
-    } else if (phase === 'active') {
-      this.stopFlame();
-      const from = this.strikeWorld(`${name}-wind`);
-      const to = this.strikeWorld(`${name}-hit`);
-      if (from && to) this.cursedFx.trail([from, to], strength);
-    } else {
-      this.stopFlame();
-    }
-  }
-
-  stopFlame(): void {
-    this.flameMove = null;
-    this.cursedFx.flameStop();
-  }
-
-  /** Ponto de golpe do quadro em coordenadas de mundo; `null` (com um aviso por nome) sem entrada (EDG-01). */
-  strikeWorld(frameName: string): Vec2 | null {
-    // PRA-08: com o boneco, o wind e o hit do gancho saem do pulso do heroico alto, no frame dele (40x40, eixo na coluna 12).
-    const rig = rigStrike(frameName, currentSearch());
-    const pt = rig?.pt ?? STRIKE_POINTS[frameName];
-    if (!pt) {
-      if (!this.warnedStrikeFrames.has(frameName)) {
-        this.warnedStrikeFrames.add(frameName);
-        console.warn(`Sem ponto de golpe para o quadro ${frameName}: nenhum rastro.`);
-      }
-      return null;
-    }
-    const drawn = this.player.renderPos;
-    return strikeToWorld(
-      pt,
-      { x: drawn.x, footY: drawn.y + SIZE.player.h / 2 },
-      this.player.facing,
-      rig?.frame ?? { originCol: PLAYER_ORIGIN.x * PLAYER_FRAME_W, rows: PLAYER_FRAME_H },
-    );
-  }
-
-  /** Por quadro: a chama segue o ponto de golpe, o jogador atingido apaga a chama (EDG-02) e a rachadura espera o chão. */
-  updateCursedFx(): void {
-    if (this.flameMove !== null) {
-      const at = this.strikeWorld(`${this.flameMove}-wind`);
-      if (at && this.player.hp >= this.lastPlayerHp && !this.player.dead) this.cursedFx.flameMove(at);
-      else this.stopFlame();
-    }
-    for (const [enemy, since] of this.crackWatch) {
-      const bodies = enemy.ragdollBodies;
-      if (enemy.removed || this.clockMs - since > 3000 || (bodies === null && this.clockMs - since > 400)) {
-        this.crackWatch.delete(enemy);
-        continue;
-      }
-      if (bodies === null) continue;
-      const touching = bodies.find(
-        (b) =>
-          this.matter.query.region(this.terrain, {
-            min: { x: b.bounds.min.x, y: b.bounds.max.y - 1 },
-            max: { x: b.bounds.max.x, y: b.bounds.max.y + 2 },
-          }).length > 0,
-      );
-      if (touching) {
-        this.cursedFx.crack({ x: touching.position.x, y: touching.bounds.max.y });
-        this.crackWatch.delete(enemy);
-      }
     }
   }
 
