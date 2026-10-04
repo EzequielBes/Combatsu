@@ -349,7 +349,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `impactTier`, `CursedFx`, `ImpactFrame`
 **Requirement**: IMP-06, IMP-11, IMP-12, IMP-13, IMP-14, IMP-15, IMP-16, CAM-06, EDG-05
 **Done when**:
-- [ ] `npm run build && npm test` passam; suíte de smokes inteira roda e só asserts de faísca/tremida do golpe do jogador mudam.
+- [x] `npm run build && npm test` passam; suíte de smokes inteira roda e só asserts de faísca/tremida do golpe do jogador mudam.
 **Tests**: none
 **Gate**: full
 
