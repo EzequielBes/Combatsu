@@ -14,6 +14,9 @@ npm install
 npm run dev         # servidor de desenvolvimento (normalmente http://localhost:5173)
 npm test            # testes da lógica pura e da arte (Vitest, em Node)
 npm run typecheck   # só o TypeScript
+npm run lint        # oxlint: tetos de tamanho (400 linhas, 80 por função) e complexidade (15); exceções em .oxlintrc.json
+npm run format      # Prettier em tudo (format:check só confere)
+npm run gate        # typecheck + lint + format:check + test
 npm run build       # typecheck + build estático em dist/
 npm run smoke       # build + cenários no Edge headless (scripts/smoke/); `npm run smoke -- boss` roda só os que têm "boss" no nome
 ```

@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke/run.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "lint": "oxlint",
+    "gate": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },
   "dependencies": {
     "phaser": "^3.90.0"
