@@ -219,3 +219,34 @@ describe('STRIKE_POINTS (TRL-01, TRL-02, POS-01)', () => {
     expect(insideBox(p, box, 4), `${move}-hit em (${p.x}, ${p.y})`).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------- varredura de todos os golpes (POS-02, POS-03)
+
+const SWEEP_FRAMES = STRIKE_MOVES.flatMap((m) => ['wind', 'hit', 'recover'].map((ph) => `${m}-${ph}`));
+/** POS-03 não vale para golpe aéreo (`input` press com `air: true`). */
+const isAirPress = (move: string): boolean => {
+  const input = MOVES[move]?.input;
+  return input?.via === 'press' && input.air === true;
+};
+
+describe('varredura: todo golpe de MOVES, jab e kick (POS-02, POS-03)', () => {
+  it.each(SWEEP_FRAMES)('%s existe e os texels opacos formam um componente só (POS-02)', (name) => {
+    expect(ALL[name], name).toBeDefined();
+    expect(isSingleComponent(ALL[name]), name).toBe(true);
+  });
+
+  it.each(STRIKE_MOVES.filter((m) => !isAirPress(m)))('%s-hit: há texel opaco na última linha (POS-03)', (move) => {
+    expect(touchesBottom(ALL[`${move}-hit`]), move).toBe(true);
+  });
+
+  it('os golpes aéreos ficam fora do POS-03: socoAereo, voadora e pisao', () => {
+    expect(STRIKE_MOVES.filter(isAirPress).sort()).toEqual(['pisao', 'socoAereo', 'voadora']);
+  });
+});
+
+describe('pisão: o corpo tem pernas visíveis abaixo do cinto em toda a sequência', () => {
+  it.each(['wind', 'hit', 'recover'])('pisao-%s tem texels opacos nas linhas 24 em diante (as pernas)', (phase) => {
+    const legs = ALL[`pisao-${phase}`].slice(24).join('');
+    expect([...legs].some((c) => c !== '.'), phase).toBe(true);
+  });
+});

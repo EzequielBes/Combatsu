@@ -278,8 +278,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: partes existentes
 **Requirement**: POS-01, POS-02, POS-03
 **Done when**:
-- [ ] Teste varre todos os golpes de `MOVES` + `jab` + `kick` com POS-01/02/03 e passa.
-- [ ] Prancha conferida.
+- [x] Teste varre todos os golpes de `MOVES` + `jab` + `kick` com POS-01/02/03 e passa.
+- [x] Prancha conferida.
 **Tests**: unit
 **Gate**: build
 

@@ -548,21 +548,30 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 8, 9],
     far: [far(ARM_GUARD), 3, 9],
-    legs: [[LEG_KNEE_UP, 8, 2]],
+    legs: [
+      [LEGS_AIR, 0, Y_LEGS - 2],
+      [LEG_KNEE_UP, 8, 2],
+    ],
   }),
   'pisao-hit': pose({
     lean: 1,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 8, 9],
     far: [far(ARM_GUARD), 3, 9],
-    legs: [[legDown(11), 9, 12]],
+    legs: [
+      [LEGS_AIR, 0, Y_LEGS - 3],
+      [legDown(11), 9, 12],
+    ],
   }),
   'pisao-recover': pose({
     lean: 0,
     head: HEAD_FOCUS,
     near: [ARM_GUARD, 8, 9],
     far: [far(ARM_GUARD), 3, 9],
-    legs: [[LEG_KNEE_UP, 8, 8]],
+    legs: [
+      [LEGS_AIR, 0, Y_LEGS - 2],
+      [LEG_KNEE_UP, 8, 8],
+    ],
   }),
 
   // Palma explosiva (meia-lua, braço da frente): palma aberta à frente com o brilho de golpe forte.
