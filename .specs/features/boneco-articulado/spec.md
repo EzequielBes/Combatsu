@@ -30,7 +30,8 @@ A arte do player é montada à mão, peça por peça, em grades de texto (AD-002
 | Intermediários | Interpolação dos ângulos com easing (antecipação no wind, overshoot no hit) | É o que dá fluidez de jogo de luta sem desenhar cada quadro | n |
 | Chave de debug | `?debug&rig=1` troca os 3 frames do gancho ascendente pelos do boneco | Teste no jogo sem risco para quem joga sem debug | n |
 | Frame do heroico alto | Grade própria de 40x40 (origem no pé, coluna 12) numa textura `player-rig` só com `rig=1` | O corpo de 32 texels mais o punho acima da cabeça não cabem em 32x30; `PLAYER_FRAME_*` e os frames atuais não mudam | n |
-| Punho do hit do heroico alto | Dentro da hitbox do `ganchoAscendente` + 4 px (até 24,5 texels acima do pé); o punho passa acima da própria cabeça só no follow-through, logo depois do hit | A hitbox é a verdade do jogo e não muda sem `rig=1`; com 32 texels de altura o topo do cabelo fica em ~33 no hit | n |
+| Punho do hit do heroico alto | Acima e à frente da cabeça, dentro da hitbox do `ganchoAscendente` crescida 20 px para cima (`RIG_UPPERCUT_HITBOX`), usada pelo Player só com `rig=1` | A hitbox do `MOVES` + 4 px prende o pulso a 24,5 texels do pé e o corpo de 32 tem o cabelo em ~31; sem `rig=1` a hitbox do jogo não muda | n |
+| Camada do braço do gancho | Nos quadros do gancho do heroico alto a cabeça cobre o braço de perto (`headOverNearArm`) | Em vista lateral o braço que sobe cruza o rosto; por trás do queixo o olho fica visível, como nos sprites de luta de 3/4 | n |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -85,8 +86,8 @@ A arte do player é montada à mão, peça por peça, em grades de texto (AD-002
 2. PRA-02: In the `heroicoAlto` preset the near and far arm, leg, foot, shoulder and pelvis SHALL have the same length.
 3. PRA-03: The `heroicoAlto` preset SHALL have an idle head grid and a fight head grid, each with `head` rows, the spiked hair (`h`, `H`, `j`), the eye with iris and highlight (`b`, `w`), the skin line (`x`) and the `k` outline, and the fight grid SHALL differ from the idle grid.
 4. PRA-04: WHEN the `heroicoAlto` idle, wind, hit, recover and the 12 sequence frames are rasterized in the 40x40 frame THEN each SHALL use only `PALETTE` keys, be a single 8-connected component, have no clipped texel and keep every bone length within 0.5 texel, and the hit SHALL have a texel on the bottom row.
-5. PRA-05: The wrist of the `heroicoAlto` hit, converted with the 40x40 frame origin (column 12, foot on the bottom row), SHALL lie within the `ganchoAscendente` hitbox plus 4 px, above the hair top of `idle-0` and at least 6 texels ahead of the origin.
-6. PRA-06: In every sequence frame of the `heroicoAlto` uppercut the near wrist texel SHALL NOT fall inside the head grid, and at least one frame after the hit SHALL have the wrist above the top row of the head.
+5. PRA-05: The wrist of the `heroicoAlto` hit, converted with the 40x40 frame origin (column 12, foot on the bottom row), SHALL lie within `RIG_UPPERCUT_HITBOX` (the `ganchoAscendente` hitbox grown 20 px upward) plus 4 px, above the hair top of `idle-0` and at least 6 texels ahead of the origin; WHERE the URL has no `rig=1` `rigHitbox` SHALL return undefined.
+6. PRA-06: In every sequence frame of the `heroicoAlto` uppercut the near wrist texel SHALL NOT be an opaque texel of the head grid, and in the hit frame the topmost opaque row SHALL be above the head grid and contain skin keys (the fist is above the head).
 7. PRA-07: The `heroicoAlto` idle frame SHALL contain the trousers keys `K` and `n` below the belt, the buckle `A` and `z`, the jacket highlight `s` or `S`, the cold rim `y` and a sole line under each shoe.
 8. PRA-08: WHERE the URL has `?debug&rig=1` the game SHALL register a `player-rig` texture with the 12 `heroicoAlto` frames (40x40, origin at the foot on column 12), the Player SHALL draw them during the `ganchoAscendente` and return to `player-art` afterwards, and the strike points of the rig wind and hit SHALL be the rig wrist; WHERE the URL has no `rig=1` the `player-rig` texture SHALL NOT be registered.
 9. PRA-09: The preview tool SHALL write `heroico.png`, `tira.png`, `rosto.png` and `escala.png` at 6x into `.fable-out/`.
@@ -120,12 +121,12 @@ A arte do player é montada à mão, peça por peça, em grades de texto (AD-002
 | PRP-03 | P2: Estudo de proporções | Execute | Done |
 | PRP-04 | P2: Estudo de proporções | Execute | Done |
 | PRP-05 | P2: Estudo de proporções | Execute | Done |
-| PRA-01 | P3: Heroico alto no jogo | Execute | Pending |
-| PRA-02 | P3: Heroico alto no jogo | Execute | Pending |
-| PRA-03 | P3: Heroico alto no jogo | Execute | Pending |
-| PRA-04 | P3: Heroico alto no jogo | Execute | Pending |
-| PRA-05 | P3: Heroico alto no jogo | Execute | Pending |
-| PRA-06 | P3: Heroico alto no jogo | Execute | Pending |
+| PRA-01 | P3: Heroico alto no jogo | Execute | Done |
+| PRA-02 | P3: Heroico alto no jogo | Execute | Done |
+| PRA-03 | P3: Heroico alto no jogo | Execute | Done |
+| PRA-04 | P3: Heroico alto no jogo | Execute | Done |
+| PRA-05 | P3: Heroico alto no jogo | Execute | Done |
+| PRA-06 | P3: Heroico alto no jogo | Execute | Done |
 | PRA-07 | P3: Heroico alto no jogo | Execute | Pending |
 | PRA-08 | P3: Heroico alto no jogo | Execute | Pending |
 | PRA-09 | P3: Heroico alto no jogo | Execute | Pending |

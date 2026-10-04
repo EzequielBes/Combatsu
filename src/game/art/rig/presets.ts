@@ -1,9 +1,9 @@
 /*
- * Presets de proporção do boneco (estudo do spike boneco-articulado). Todos medem de 24 a 26 texels em pé (cabem no
- * frame de 32x30 com a origem no pé), com braço e perna de perto e de longe do mesmo comprimento.
- * Altura = cabeça + pescoço + tronco + coxa + canela + `SOLE`.
+ * Presets de proporção do boneco (estudo do spike boneco-articulado). Os três do estudo medem de 24 a 26 texels em pé
+ * (cabem no frame de 32x30 com a origem no pé); o `heroicoAlto` mede 32 e usa o frame de 40x40. Todos têm braço e
+ * perna de perto e de longe do mesmo comprimento. Altura = cabeça + pescoço + tronco + coxa + canela + `SOLE`.
  */
-import { HEAD_LARGE, HEAD_MEDIUM, HEAD_SMALL, HEAD_CHIBI, type HeadSprite } from './heads';
+import { HEAD_LARGE, HEAD_MEDIUM, HEAD_SMALL, HEAD_CHIBI, HEAD_TALL_FIGHT, HEAD_TALL_IDLE, type HeadSprite } from './heads';
 import { CHIBI, type Proportions } from './skeleton';
 
 /** A `heroico` (estilo Sifu): cabeça pequena, pernas pela metade da altura, ombros largos e cintura fina. */
@@ -84,12 +84,52 @@ export const INTER: Proportions = {
   },
 };
 
+/**
+ * O heroico alto (PRA-01): o `heroico` reescalado para 32 texels em pé, com a cabeça (8 linhas com os espetos) em 1/4
+ * da altura, as pernas (coxa + canela + sapato) em metade, ombros em V sobre a cintura fina e os dois lados iguais.
+ * Vive no frame de 40x40 (`RIG_FRAME_40`): 32 de corpo mais a folga para o punho acima da cabeça.
+ */
+export const HEROICO_ALTO: Proportions = {
+  name: 'heroicoAlto',
+  height: 32,
+  head: 8,
+  neck: 1.6,
+  torso: 6.6,
+  shoulderNear: 1.4,
+  shoulderFar: 1.4,
+  upperArm: 4.8,
+  foreArm: 4.7,
+  thigh: 7.4,
+  shin: 6.6,
+  foot: 2.8,
+  footFar: 2.8,
+  pelvisNear: 1.5,
+  pelvisFar: 1.5,
+  thick: {
+    arm: { shoulder: 1.5, elbow: 1.2, wrist: 1 },
+    leg: { hip: 1.8, knee: 1.45, ankle: 1.15 },
+    hand: 1,
+    shoe: 0.72,
+    torso: { hip: 2.7, waist: 2.4, shoulder: 4.3, collar: 1.7, shoulderFrom: 5.4, taper: true, buttons: [2.2, 3.8, 5.4] },
+  },
+};
+
 /** Os presets do estudo, na ordem A, B, C. */
 export const PRESETS: readonly Proportions[] = [HEROICO, SEMI, INTER];
 
-const HEADS: Record<string, HeadSprite> = { [CHIBI.name]: HEAD_CHIBI, heroico: HEAD_SMALL, semi: HEAD_MEDIUM, inter: HEAD_LARGE };
+/** Expressão da cabeça: `idle` (concentrado) ou `fight` (esforço, nos golpes). */
+export type HeadMood = 'idle' | 'fight';
 
-/** Cabeça do corpo (a do chibi se o corpo não tem cabeça própria). */
-export function headOf(body: Proportions): HeadSprite {
-  return HEADS[body.name] ?? HEAD_CHIBI;
+const HEADS: Record<string, { idle: HeadSprite; fight?: HeadSprite }> = {
+  [CHIBI.name]: { idle: HEAD_CHIBI },
+  heroico: { idle: HEAD_SMALL },
+  semi: { idle: HEAD_MEDIUM },
+  inter: { idle: HEAD_LARGE },
+  heroicoAlto: { idle: HEAD_TALL_IDLE, fight: HEAD_TALL_FIGHT },
+};
+
+/** Cabeça do corpo na expressão pedida (a do chibi se o corpo não tem cabeça própria; a de idle se não tem a de luta). */
+export function headOf(body: Proportions, mood: HeadMood = 'idle'): HeadSprite {
+  const heads = HEADS[body.name] ?? { idle: HEAD_CHIBI };
+  return (mood === 'fight' && heads.fight) || heads.idle;
 }

@@ -2,6 +2,7 @@
  * Chave de debug do boneco articulado (RIG-09, RIG-10): só `?debug&rig=1` troca os 3 frames do gancho ascendente.
  * Funções puras sobre a query string, para o Vitest testar sem navegador.
  */
+import { MOVES, type MoveDef } from '../../../data/moves';
 import { RIG_GANCHO_FRAMES, RIG_GANCHO_SEQUENCE, RIG_GANCHO_STRIKE } from './poses/ganchoAscendente';
 
 /** `?debug&rig=1` na URL. */
@@ -50,6 +51,24 @@ export function withRigFrames(
 /** Ponto de golpe do boneco para o frame, ou `undefined` (fora do `rig=1` ou de outro frame). */
 export function rigStrikePoint(frameName: string, search: string): { col: number; row: number } | undefined {
   return rigEnabled(search) && frameName === 'ganchoAscendente-hit' ? RIG_GANCHO_STRIKE : undefined;
+}
+
+/** Quanto a hitbox do gancho ascendente cresce para cima com o heroico alto (px): o punho dele sobe 10 texels a mais. */
+export const RIG_UPPERCUT_EXTRA_PX = 20;
+
+/**
+ * Hitbox do gancho ascendente do heroico alto (PRA-05): a do `MOVES` com a borda de cima 20 px mais alta e a de baixo no
+ * mesmo lugar. O corpo de 32 texels bate acima da própria cabeça, fora da caixa do sprite de 24.
+ */
+export const RIG_UPPERCUT_HITBOX: NonNullable<MoveDef['hitbox']> = {
+  ...MOVES.ganchoAscendente.hitbox!,
+  offsetY: MOVES.ganchoAscendente.hitbox!.offsetY - RIG_UPPERCUT_EXTRA_PX / 2,
+  height: MOVES.ganchoAscendente.hitbox!.height + RIG_UPPERCUT_EXTRA_PX,
+};
+
+/** Hitbox do golpe com o boneco: só o gancho ascendente, só com `?debug&rig=1`; senão `undefined` (a do `MOVES` vale). */
+export function rigHitbox(moveName: string, search: string): NonNullable<MoveDef['hitbox']> | undefined {
+  return rigEnabled(search) && moveName === 'ganchoAscendente' ? RIG_UPPERCUT_HITBOX : undefined;
 }
 
 /** Query string da página, ou vazia fora do navegador (testes em Node). */
