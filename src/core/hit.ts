@@ -40,6 +40,8 @@ export interface Hit {
   counter?: boolean;
   /** Golpe de uma sequência de inimigo (DFL-10, DFL-15). */
   string?: HitString;
+  /** Um id por golpe iniciado do jogador: agrupa os alvos de um mesmo golpe (IMP-14). */
+  swingId?: number;
 }
 
 /** O alvo conta a quem bateu que segurou o golpe com a guarda (TGT-06). */
