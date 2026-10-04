@@ -19,15 +19,15 @@ import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE, type MoveDe
 import type { ParryInfo } from '../core/defense';
 import { normalize, type Hit, type HitReport, type Vec2 } from '../core/hit';
 import { enemyAnimKey } from './art';
-import { ENEMY_BAR_WELL } from './art/hud';
-import { ART_SCALE, PALETTE } from './art/palette';
+import { PALETTE } from './art/palette';
 import { ENEMY_ORIGIN } from './art/sprites/enemy';
-import { STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_BREAK_COLOR, STRUCTURE_BAR_FILL_COLOR } from './art/combatColors';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { BodyRenderPos, PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { Ragdoll } from './Ragdoll';
 import { SIZE, TEX, enemyTex } from './textures';
+import type { EnemyCtx } from './enemy/context';
+import { BAR_DEPTH, BAR_RISE, EnemyHud } from './enemy/EnemyHud';
 
 /** Duração (ms) da reação `body` de quem foi esbarrado por um inimigo deslizando (RCT-04): soma dos 3 frames. */
 const TOUCH_REACTION_MS = 220;
@@ -38,17 +38,8 @@ const WEAPON_AURA_MS = 150;
 const WEAPON_OFFSET = { x: 10, y: 2 };
 /** No golpe o inimigo fica acima do player (depth 1): a garra aparece por cima de quem ela atinge. */
 const ATTACK_DEPTH = 2;
-/** Barra de vida (HUD-02): altura do topo acima do centro do corpo (px) e profundidade, acima de todos. */
-const BAR_RISE = 44;
-const BAR_DEPTH = 3;
 /** Marcador do tipo do golpe (HGT-07): a base fica esta folga (px) acima do topo da barra de vida, na mesma profundidade. */
 const TELEGRAPH_GAP = 3;
-/** Barra de estrutura (STR-01): fina, logo abaixo da barra de vida (px de mundo). */
-const STRUCTURE_BAR_H = 4;
-const STRUCTURE_BAR_GAP = 1;
-/** Ícone de estrela girando sobre a cabeça do inimigo quebrado (STR-05): altura acima do centro e giro (°/s). */
-const BREAK_STAR_RISE = 34;
-const BREAK_STAR_SPIN = 360;
 /** Empurrão scriptado (SPC-02): número de steps do Matter em que o corpo anda os px do golpe. */
 const SLIDE_STEPS = 25;
 /** Gancho ascendente (MOV-11): velocidade vertical inicial (px/step) que leva o centro além dos 64 px do golpe. */
@@ -92,7 +83,6 @@ export class Enemy implements Hittable {
   /** Posição do corpo como a tela a mostra, entre os dois últimos passos de física (ITP-07). */
   private readonly drawPos: BodyRenderPos;
   private readonly view: Phaser.GameObjects.Sprite;
-  private ragdoll: Ragdoll | null = null;
   /** Reação leve em curso (HRX-02); só vale enquanto o cérebro está em hitstun. */
   private reaction: LightReaction | null = null;
   /** Última reação de cabeça, para a alternância cabeça-a/cabeça-b (HRX-01). */
@@ -105,30 +95,18 @@ export class Enemy implements Hittable {
   private pendingRagdollReveal = false;
   /** Sprite da ferramenta na mão (ARM-09/10), `null` se o inimigo não está armado. */
   private readonly weaponView: Phaser.GameObjects.Sprite | null;
-  /** Barra de vida acima da cabeça, na câmera do mundo: aparece no primeiro dano e some ao morrer (HUD-02). */
-  private readonly barFrame: Phaser.GameObjects.Image;
-  private readonly barFill: Phaser.GameObjects.Rectangle;
   /** Marcador do tipo do golpe sobre a cabeça, visível em `windup` e `attack` (HGT-07, HGT-08). */
   private readonly marker: Phaser.GameObjects.Image;
   /** Chave da `PALETTE` do flash de compromisso em curso (CMT-02); `null` fora do flash. */
   private commitFlashKey: string | null = null;
   /** Id da sequência de golpes em curso; muda a cada `windupStart` (DFL-10). */
   private stringId = 0;
-  private facing: 1 | -1 = 1;
-  /**
-   * vx da IA em px por step, reaplicado a cada step do Matter (null = a física manda). O Matter roda em passo
-   * fixo de 60 Hz e dá vários steps por frame abaixo de 60 fps; aplicado só uma vez por frame, o atrito com o
-   * chão comia o vx nos steps seguintes e a velocidade caía junto com o fps (AI-06).
-   */
-  private walkVxStep: number | null = null;
   /** Dano da última garra realmente aberta (DIF-04); antes do primeiro golpe, o dano com que o inimigo nasceu. */
   private lastAttackDamage: number;
   /** BLU-04: velocidade (px/step) do puxão do orbe Azul, reaplicada a cada step (L-001); `null` fora do raio. */
   private pull: Vec2 | null = null;
   /** Estrutura do inimigo (STR-01..05, PAR-03): quebra atordoa; `update` avança o relógio de jogo. */
   private readonly structure = new Structure(ENEMY_STRUCTURE);
-  /** Tempo (ms de jogo) sem atacar nem andar depois de um parry (PAR-10). */
-  private suppressedMs = 0;
   /** O finalizador já bateu nesta quebra (um por quebra, FIN-03). */
   private finished = false;
   /** Sorteio da guarda (EBL-01): o stream da run, entregue pela cena; sem ele nunca levanta a guarda. */
@@ -166,9 +144,6 @@ export class Enemy implements Hittable {
     stepsLeft: number;
     friction: Map<MatterJS.BodyType, { f: number; fs: number }>;
   } | null = null;
-  private readonly structBg: Phaser.GameObjects.Rectangle;
-  private readonly structFill: Phaser.GameObjects.Rectangle;
-  private readonly breakStar: Phaser.GameObjects.Image;
   /** Evento de debug do inimigo (`guardBreak:<id>`, ...), entregue à cena. */
   onEvent: ((name: string) => void) | null = null;
   private readonly onStep = (): void => {
@@ -178,15 +153,16 @@ export class Enemy implements Hittable {
     }
     // Os steps do Matter rodam antes do update da cena: sem este teste, o vx de andar do frame anterior passava
     // por cima do empurrão de um golpe recebido neste frame.
-    if (this.brain.state !== 'idle' || this.ragdoll) return;
+    if (this.brain.state !== 'idle' || this.c.s.ragdoll) return;
     if (this.pull) {
       this.scene.matter.body.setVelocity(this.body, { x: this.pull.x, y: this.pull.y });
       return;
     }
-    if (this.walkVxStep === null) return;
-    this.scene.matter.body.setVelocity(this.body, { x: this.walkVxStep, y: this.body.velocity.y });
+    if (this.c.s.walkVxStep === null) return;
+    this.scene.matter.body.setVelocity(this.body, { x: this.c.s.walkVxStep, y: this.body.velocity.y });
   };
-  private _removed = false;
+  private readonly c: EnemyCtx;
+  private readonly hud: EnemyHud;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -218,6 +194,20 @@ export class Enemy implements Hittable {
     tagBody(this.body, { kind: 'character', target: this });
     this.drawPos = new BodyRenderPos(scene, this.body);
     this.ai = new EnemyAI(tuning.ai);
+    this.c = {
+      id: this.id,
+      scene,
+      body: this.body,
+      tuning,
+      variant,
+      brain: this.brain,
+      ai: this.ai,
+      structure: this.structure,
+      guard: this.guard,
+      drawPos: this.drawPos,
+      hooks: { event: (name) => this.onEvent?.(name), block: (point) => this.onBlock?.(point) },
+      s: { facing: 1, ragdoll: null, walkVxStep: null, suppressedMs: 0, removed: false },
+    };
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     this.view = scene.add
       .sprite(spawn.x, spawn.y + h / 2, enemyTex(variant), 'idle-0')
@@ -230,33 +220,15 @@ export class Enemy implements Hittable {
           'hold-a',
         )
       : null;
-    this.barFrame = scene.add.image(0, 0, TEX.enemyBar).setOrigin(0, 0).setDepth(BAR_DEPTH).setVisible(false);
     // Mundo, não HUD (AD-003): a câmera de UI ignora tudo o que nasce fora da `uiLayer`.
     this.marker = scene.add
       .image(0, 0, TEX.fxTelegraph, tuning.attack.kind)
       .setOrigin(0.5, 1)
       .setDepth(BAR_DEPTH)
       .setVisible(false);
-    const well = ENEMY_BAR_WELL;
     scene.matter.world.on('beforeupdate', this.onStep);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
-    this.barFill = scene.add
-      .rectangle(0, 0, well.w * ART_SCALE, well.h * ART_SCALE, PALETTE.r)
-      .setOrigin(0, 0)
-      .setDepth(BAR_DEPTH)
-      .setVisible(false);
-    const barW = this.barFrame.width;
-    this.structBg = scene.add
-      .rectangle(0, 0, barW, STRUCTURE_BAR_H, STRUCTURE_BAR_BG_COLOR)
-      .setOrigin(0, 0)
-      .setDepth(BAR_DEPTH)
-      .setVisible(false);
-    this.structFill = scene.add
-      .rectangle(0, 0, 0, STRUCTURE_BAR_H - 2, STRUCTURE_BAR_FILL_COLOR)
-      .setOrigin(0, 0)
-      .setDepth(BAR_DEPTH)
-      .setVisible(false);
-    this.breakStar = scene.add.image(0, 0, TEX.fxStar, 'heavy').setDepth(BAR_DEPTH).setVisible(false);
+    this.hud = new EnemyHud(this.c);
   }
 
   get x(): number {
@@ -288,7 +260,7 @@ export class Enemy implements Hittable {
   }
 
   get removed(): boolean {
-    return this._removed;
+    return this.c.s.removed;
   }
 
   /** DIV-06: o alvo já morreu (ragdoll de morte, dissolvendo ou já sumido). */
@@ -343,17 +315,17 @@ export class Enemy implements Hittable {
 
   /** Ragdoll existe e está visível; `null` fora de ragdoll (debug, HRX-05). */
   get ragdollVisible(): boolean | null {
-    return this.ragdoll ? this.ragdoll.parts[0].visible : null;
+    return this.c.s.ragdoll ? this.c.s.ragdoll.parts[0].visible : null;
   }
 
   /** Corpos das partes do ragdoll; `null` fora de ragdoll (rachadura da queda, IMP-15). */
   get ragdollBodies(): MatterJS.BodyType[] | null {
-    return this.ragdoll ? this.ragdoll.bodies : null;
+    return this.c.s.ragdoll ? this.c.s.ragdoll.bodies : null;
   }
 
   /** Chaves de textura das partes do ragdoll; `null` fora de ragdoll (debug, EVR-06). */
   get ragdollTextures(): string[] | null {
-    return this.ragdoll ? this.ragdoll.textureKeys : null;
+    return this.c.s.ragdoll ? this.c.s.ragdoll.textureKeys : null;
   }
 
   /** Golpes aceitos no `ragdollStun` atual, para o snapshot (GND-05). */
@@ -409,7 +381,7 @@ export class Enemy implements Hittable {
     if (this.brain.isDead) return false;
     const wasBroken = this.structure.broken;
     // EBL-02..05: a guarda segura o leve que vem de frente; forte e carregado passam com dano cheio e encerram a guarda.
-    const fromFront = hit.direction.x * this.facing < 0;
+    const fromFront = hit.direction.x * this.c.s.facing < 0;
     const res = this.guard.resolveHit({
       damage: hit.damage,
       strength: hit.strength,
@@ -437,7 +409,7 @@ export class Enemy implements Hittable {
     // Comprometido e sem que o golpe derrube, mate ou seja Contra: a IA segue e o golpe pendente sai (CMT-05).
     const armored = events.some((ev) => ev.type === 'armored');
     if (!armored) {
-      this.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
+      this.c.s.walkVxStep = null; // o golpe manda no corpo a partir de agora, não a IA
       // Levar golpe cancela o preparo ou o golpe em andamento antes do compromisso (AI-04, CMT-03).
       this.onAI(this.ai.interrupt());
     }
@@ -447,7 +419,7 @@ export class Enemy implements Hittable {
     if (survived && this.structure.add(enemyStructureGain(hit))) this.onBreak();
     if (survived && effect && !armored) this.applyEffect(effect, hit);
     if (survived) this.trackStreak(hit);
-    this.updateBar();
+    this.hud.updateBar();
     return true;
   }
 
@@ -463,7 +435,7 @@ export class Enemy implements Hittable {
     }
     if (hit.tech || hit.moveName === undefined) return;
     const count = this.streak.onLight(this.clockMs);
-    const free = !this.ai.committed && !this.structure.broken && !this.ragdoll && !this.brain.isDead;
+    const free = !this.ai.committed && !this.structure.broken && !this.c.s.ragdoll && !this.brain.isDead;
     if (!free || !this.guardRng || !shoveRoll({ streak: count, chance: this.shoveChance, roll: this.guardRng })) return;
     this.streak.reset();
     this.brain.recover();
@@ -475,23 +447,23 @@ export class Enemy implements Hittable {
   /** Golpe leve segurado pela guarda (EBL-02): sem dano nem reação, soma estrutura e avisa a cena. */
   private onBlocked(structureGain: number): boolean {
     this.onEvent?.(`enemyBlock:${this.id}`);
-    this.onBlock?.({ x: this.body.position.x + this.facing * 10, y: this.body.position.y - 4 });
+    this.onBlock?.({ x: this.body.position.x + this.c.s.facing * 10, y: this.body.position.y - 4 });
     if (this.structure.add(structureGain)) this.onBreak();
-    this.updateBar();
+    this.hud.updateBar();
     // `false`: o golpe não conectou de fato (sem faísca vermelha, hitstop nem combo); o feedback é o azul do bloqueio.
     return false;
   }
 
   /** Reação de golpe que sobrevive (MOV-11, MOV-10 pelo `ragdollStunMs`, SPC-02): lançar e empurrar. */
   private applyEffect(effect: NonNullable<(typeof MOVES)[string]['effect']>, hit: Hit): void {
-    if (effect.type === 'launch') this.ragdoll?.launch(LAUNCH_VY);
+    if (effect.type === 'launch') this.c.s.ragdoll?.launch(LAUNCH_VY);
     else if (effect.type === 'push') this.startSlide(hit.direction.x >= 0 ? 1 : -1, effect.px);
   }
 
   private startSlide(dir: 1 | -1, px: number): void {
     this.slide = { vxStep: (dir * px) / SLIDE_STEPS, stepsLeft: SLIDE_STEPS, friction: new Map() };
     // Sem atrito durante o empurrão: o chão não come o deslocamento, que fica exato (SPC-02); volta ao fim.
-    for (const b of this.ragdoll ? this.ragdoll.bodies : [this.body]) {
+    for (const b of this.c.s.ragdoll ? this.c.s.ragdoll.bodies : [this.body]) {
       this.slide.friction.set(b, { f: b.friction, fs: b.frictionStatic });
       b.friction = 0;
       b.frictionStatic = 0;
@@ -506,7 +478,7 @@ export class Enemy implements Hittable {
     const slide = this.slide;
     if (!slide) return;
     const done = slide.stepsLeft === 0;
-    const bodies = this.ragdoll ? this.ragdoll.bodies : [this.body];
+    const bodies = this.c.s.ragdoll ? this.c.s.ragdoll.bodies : [this.body];
     for (const b of bodies) {
       // Matter descontou `frictionAir` da velocidade a cada step: compensa para o corpo andar os px pedidos.
       const vx = done ? 0 : slide.vxStep / (1 - b.frictionAir);
@@ -531,8 +503,8 @@ export class Enemy implements Hittable {
   private onBreak(): void {
     this.guard.reset();
     this.onAI(this.ai.interrupt());
-    this.walkVxStep = null;
-    if (!this.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
+    this.c.s.walkVxStep = null;
+    if (!this.c.s.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
     this.onEvent?.(`guardBreak:${this.id}`);
   }
 
@@ -545,13 +517,13 @@ export class Enemy implements Hittable {
     if (this.brain.isDead) return;
     if (info.final) {
       this.onAI(this.ai.interrupt());
-      this.walkVxStep = null;
-      this.suppressedMs = DEFENSE.parrySuppressMs;
-      if (!this.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
+      this.c.s.walkVxStep = null;
+      this.c.s.suppressedMs = DEFENSE.parrySuppressMs;
+      if (!this.c.s.ragdoll) this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
       if (info.deflect) this.brain.forceStagger(COUNTER.deflectStaggerMs);
     }
     if (this.structure.add(STRUCTURE.enemy.parryGain)) this.onBreak();
-    this.updateBar();
+    this.hud.updateBar();
   }
 
   /** Estrutura viva para o snapshot (STR-01). */
@@ -603,7 +575,7 @@ export class Enemy implements Hittable {
     round: number,
     reading: { repeats: number; override?: number },
   ): boolean {
-    if (this._removed || this.ragdoll || this.brain.isDead || this.structure.broken) return false;
+    if (this.c.s.removed || this.c.s.ragdoll || this.brain.isDead || this.structure.broken) return false;
     // Comprometido (inclui `attack`, CMT-10) e levantando não levantam a guarda.
     if (this.ai.committed || this.brain.state === 'gettingUp') return false;
     const ex = this.body.position.x;
@@ -628,46 +600,10 @@ export class Enemy implements Hittable {
       this.onEvent?.(`read:${this.id}`);
     }
     this.onAI(this.ai.interrupt());
-    this.walkVxStep = null;
-    this.facing = player.x >= ex ? 1 : -1;
+    this.c.s.walkVxStep = null;
+    this.c.s.facing = player.x >= ex ? 1 : -1;
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
     return true;
-  }
-
-  /** Mostra a barra depois do primeiro dano e até morrer, cheia na proporção da vida, em passos de 1 texel. */
-  private updateBar(): void {
-    const show = !this.brain.isDead && this.brain.hp < this.tuning.brain.maxHp;
-    this.barFrame.setVisible(show);
-    const well = ENEMY_BAR_WELL;
-    const texels = Math.round((well.w * this.brain.hp) / this.tuning.brain.maxHp);
-    this.barFill.setVisible(show && texels > 0).setSize(texels * ART_SCALE, well.h * ART_SCALE);
-    this.updateStructureBar();
-    if (!show) return;
-    const { x, y } = this.drawPos.get();
-    const left = Math.round(x - this.barFrame.width / 2);
-    const top = Math.round(y - BAR_RISE);
-    this.barFrame.setPosition(left, top);
-    this.barFill.setPosition(left + well.x * ART_SCALE, top + well.y * ART_SCALE);
-  }
-
-  /** Barra de estrutura amarela sob a de vida; a quebra estoura em branco e a estrela gira sobre a cabeça (STR-05). */
-  private updateStructureBar(): void {
-    const s = this.structure;
-    const show = !this.brain.isDead && (s.cur > 0 || s.broken);
-    this.structBg.setVisible(show);
-    this.structFill.setVisible(show && s.cur > 0);
-    this.breakStar.setVisible(show && s.broken);
-    if (!show) return;
-    const { x, y } = this.drawPos.get();
-    const left = Math.round(x - this.barFrame.width / 2);
-    const top = Math.round(y - BAR_RISE) + this.barFrame.height + STRUCTURE_BAR_GAP;
-    this.structBg.setPosition(left, top);
-    const inner = Math.max(0, this.barFrame.width - 2);
-    this.structFill
-      .setPosition(left + 1, top + 1)
-      .setSize(Math.round((inner * s.cur) / s.max), STRUCTURE_BAR_H - 2)
-      .setFillStyle(s.broken ? STRUCTURE_BAR_BREAK_COLOR : STRUCTURE_BAR_FILL_COLOR);
-    this.breakStar.setPosition(x, y - BREAK_STAR_RISE).setAngle((this.scene.time.now * BREAK_STAR_SPIN) / 1000);
   }
 
   /**
@@ -675,19 +611,19 @@ export class Enemy implements Hittable {
    * entre windups), `holdRank` (posição na fila de espera do lado do player) e `focus` (alvo em foco). A IA continua pura.
    */
   update(dtMs: number, playerX: number, gate: EnemyFrameInput = NO_GATE): void {
-    if (this._removed) return;
+    if (this.c.s.removed) return;
     this.wantAttackNow = false;
     this.windupStartNow = false;
     this.clockMs += dtMs;
     this.grace.update(dtMs);
-    this.suppressedMs = Math.max(0, this.suppressedMs - dtMs);
+    this.c.s.suppressedMs = Math.max(0, this.c.s.suppressedMs - dtMs);
     // PST-14, PST-16: no foco a postura cai devagar; fora dele, rápido. O atraso de 1500 ms vale nos dois.
     this.structure.update(dtMs, gate.focus ? STRUCTURE.enemy.decayPerSec : STRUCTURE.enemy.offFocusDecayPerSec);
     if (!this.structure.broken) this.finished = false;
     this.guard.update(dtMs);
     if (this.pendingRagdollReveal) this.revealRagdoll();
     this.handle(this.brain.update(dtMs));
-    if (this._removed) return;
+    if (this.c.s.removed) return;
     this.stepHitSlide(dtMs);
     this.touchMs = Math.max(0, this.touchMs - dtMs);
     // Só age com o cérebro livre e fora da graça de nascimento: reação a golpe, ragdoll, levantando, morto,
@@ -696,7 +632,7 @@ export class Enemy implements Hittable {
       this.brain.state === 'idle' &&
       !this.brain.isDead &&
       !this.grace.active &&
-      this.suppressedMs <= 0 &&
+      this.c.s.suppressedMs <= 0 &&
       !this.structure.broken &&
       !this.guard.guarding;
     const out = this.ai.update(dtMs, {
@@ -708,12 +644,12 @@ export class Enemy implements Hittable {
       holdRank: gate.holdRank,
     });
     this.onAI(out.events);
-    this.walkVxStep = canAct && !this.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
-    if (this.ragdoll) {
+    this.c.s.walkVxStep = canAct && !this.c.s.ragdoll ? out.vx * PX_PER_S_TO_STEP : null;
+    if (this.c.s.ragdoll) {
       // Corpo escondido acompanha o tronco para o "levantar" nascer no lugar certo.
-      this.scene.matter.body.setPosition(this.body, this.ragdoll.center);
+      this.scene.matter.body.setPosition(this.body, this.c.s.ragdoll.center);
       this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
-      this.updateBar();
+      this.hud.updateBar();
       this.updateWeaponView(); // some junto com o sprite em ragdoll (ARM-10)
       return;
     }
@@ -722,28 +658,28 @@ export class Enemy implements Hittable {
       this.scene.matter.body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
     }
     if (canAct) {
-      this.facing = out.facing;
+      this.c.s.facing = out.facing;
       // A IA só mexe no x; o y fica com a física (gravidade). Sem canAct o empurrão do golpe segue livre.
       this.scene.matter.body.setVelocity(this.body, { x: out.vx * PX_PER_S_TO_STEP, y: this.body.velocity.y });
     }
-    this.attack.follow(this.body.position.x, this.body.position.y, this.facing);
+    this.attack.follow(this.body.position.x, this.body.position.y, this.c.s.facing);
     this.animate();
-    this.updateBar();
+    this.hud.updateBar();
     this.updateWeaponView();
   }
 
   /** Ferramenta na mão (ARM-09/10): some em ragdoll, senão segue a mão com a aura/preparo certo. */
   private updateWeaponView(): void {
     if (!this.weaponView) return;
-    if (this.ragdoll || this._removed) {
+    if (this.c.s.ragdoll || this.c.s.removed) {
       this.weaponView.setVisible(false);
       return;
     }
     this.weaponView.setVisible(true);
     this.weaponView.setFrame(this.weaponFrame());
     const { x, y } = this.drawPos.get();
-    this.weaponView.setPosition(x + WEAPON_OFFSET.x * this.facing, y + WEAPON_OFFSET.y);
-    this.weaponView.setFlipX(this.facing < 0);
+    this.weaponView.setPosition(x + WEAPON_OFFSET.x * this.c.s.facing, y + WEAPON_OFFSET.y);
+    this.weaponView.setFlipX(this.c.s.facing < 0);
     this.weaponView.setDepth(this.view.depth);
   }
 
@@ -770,9 +706,9 @@ export class Enemy implements Hittable {
 
   /** Marcador sobre a cabeça: visível em `windup` e `attack`, fora do ragdoll, na posição de desenho (HGT-07, HGT-08). */
   private updateTelegraph(): void {
-    if (this._removed) return;
+    if (this.c.s.removed) return;
     const st = this.ai.state;
-    const show = (st === 'windup' || st === 'attack') && !this.ragdoll && !this.brain.isDead;
+    const show = (st === 'windup' || st === 'attack') && !this.c.s.ragdoll && !this.brain.isDead;
     this.marker.setVisible(show);
     if (!show) return;
     const { x, y } = this.drawPos.get();
@@ -802,12 +738,12 @@ export class Enemy implements Hittable {
       damage: step.damage,
       strength: step.strength,
       force: step.force,
-      direction: { x: this.facing, y: -0.3 },
+      direction: { x: this.c.s.facing, y: -0.3 },
       ...hitFieldsFor(this.kind),
       string: { id: this.stringId, index: this.ai.hitIndex, length: this.ai.hits },
     };
     this.lastAttackDamage = hit.damage;
-    this.attack.open(step.hitbox!, hit, this.body.position.x, this.body.position.y, this.facing);
+    this.attack.open(step.hitbox!, hit, this.body.position.x, this.body.position.y, this.c.s.facing);
   }
 
   /**
@@ -815,7 +751,7 @@ export class Enemy implements Hittable {
    * Derrubado, morto ou comprometido (o golpe foi absorvido) não desliza; `dir` é o lado para onde ele vai.
    */
   slideBy(tier: ImpactTier, dir: 1 | -1): void {
-    if (tier === 'light' || this.ragdoll || this.brain.isDead || this.ai.committed) return;
+    if (tier === 'light' || this.c.s.ragdoll || this.brain.isDead || this.ai.committed) return;
     this.hitSlide.start(tier, dir);
     this.hitSlideDir = dir;
     this.slideResidueMs = 0;
@@ -830,7 +766,7 @@ export class Enemy implements Hittable {
 
   /** Esbarrão de outro inimigo deslizando (RCT-04): toca `body` sem perder vida nem postura. */
   touched(): void {
-    if (this._removed || this.ragdoll || this.brain.isDead || this.brain.state !== 'idle') return;
+    if (this.c.s.removed || this.c.s.ragdoll || this.brain.isDead || this.brain.state !== 'idle') return;
     this.touchMs = TOUCH_REACTION_MS;
     this.reactionKey = null;
     this.onEvent?.(`slideTouch:${this.id}`);
@@ -839,7 +775,7 @@ export class Enemy implements Hittable {
   /** Um passo do deslizamento (tempo de jogo): anda, deixa resíduo, esbarra e para na parede (RCT-03..05). */
   private stepHitSlide(dtMs: number): void {
     if (this.hitSlide.remainingPx === null) return;
-    if (this.ragdoll || this.brain.isDead) {
+    if (this.c.s.ragdoll || this.brain.isDead) {
       this.hitSlide.start('light', 1);
       return;
     }
@@ -868,7 +804,7 @@ export class Enemy implements Hittable {
 
   private animate(): void {
     const vxPerS = this.body.velocity.x / PX_PER_S_TO_STEP;
-    const stunned = this.suppressedMs > 0 || this.structure.broken;
+    const stunned = this.c.s.suppressedMs > 0 || this.structure.broken;
     if (this.brain.state !== 'hitstun') this.reaction = null;
     const picked = pickEnemyAnim({
       brain: this.brain.state,
@@ -882,7 +818,7 @@ export class Enemy implements Hittable {
     const draw = this.drawPos.get();
     this.view.setPosition(draw.x, draw.y + SIZE.enemy.h / 2);
     // Escala negativa espelha em volta da origem (o pé no centro do corpo), não do centro do frame largo.
-    this.view.setScale(this.facing, 1);
+    this.view.setScale(this.c.s.facing, 1);
     this.view.setDepth(anim === 'attack' ? ATTACK_DEPTH : 0);
     // Guarda (EBL-01): sem quadro próprio na arte, o corpo fica azulado enquanto a guarda está de pé.
     if (this.guard.guarding) {
@@ -920,7 +856,7 @@ export class Enemy implements Hittable {
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
       else if (ev.type === 'ragdoll') this.enterRagdoll(ev.hit);
       else if (ev.type === 'getUp') this.getUp();
-      else if (ev.type === 'dissolve') this.ragdoll?.dissolve(this.tuning.brain.dissolveMs);
+      else if (ev.type === 'dissolve') this.c.s.ragdoll?.dissolve(this.tuning.brain.dissolveMs);
       else if (ev.type === 'removed') this.remove();
     }
   }
@@ -935,7 +871,7 @@ export class Enemy implements Hittable {
     if (picked && picked !== 'impact' && this.brain.state !== 'stagger') {
       this.reaction = picked;
       if (picked === 'head-a' || picked === 'head-b') this.lastReaction = picked;
-      if (!this.structure.broken && this.suppressedMs <= 0) {
+      if (!this.structure.broken && this.c.s.suppressedMs <= 0) {
         const key = enemyAnimKey(this.variant, `hurt-${picked}`);
         this.view.anims.play(key, false);
         this.view.anims.restart();
@@ -950,7 +886,7 @@ export class Enemy implements Hittable {
 
   /** Golpe absorvido por quem está comprometido (CMT-04, CMT-06, RCT-09): faísca de guarda e o evento; a IA segue. */
   private onArmored(): void {
-    this.onBlock?.({ x: this.body.position.x + this.facing * 10, y: this.body.position.y - 4 });
+    this.onBlock?.({ x: this.body.position.x + this.c.s.facing * 10, y: this.body.position.y - 4 });
     this.onEvent?.(`armored:${this.id}`);
   }
 
@@ -970,12 +906,12 @@ export class Enemy implements Hittable {
 
   private enterRagdoll(hit: Hit): void {
     this.view.clearTint();
-    if (!this.ragdoll) {
-      this.ragdoll = new Ragdoll(this.scene, this.body.position.x, this.body.position.y - 3, this.variant);
-      for (const b of this.ragdoll.bodies) tagBody(b, { kind: 'character', target: this });
+    if (!this.c.s.ragdoll) {
+      this.c.s.ragdoll = new Ragdoll(this.scene, this.body.position.x, this.body.position.y - 3, this.variant);
+      for (const b of this.c.s.ragdoll.bodies) tagBody(b, { kind: 'character', target: this });
       // Pose de impacto (HRX-05/06): a cena não atualiza o inimigo durante o hitstop, então o ragdoll nasce
       // escondido e o sprite fica no frame `impact` até o próximo `update`, que faz a troca.
-      this.ragdoll.setVisible(false);
+      this.c.s.ragdoll.setVisible(false);
       this.view.anims.stop();
       this.view.setVisible(true).setFrame('impact');
       this.reactionKey = null;
@@ -984,23 +920,23 @@ export class Enemy implements Hittable {
       applyFilter(this.body, Filters.hidden);
       setIgnoreGravity(this.body, true);
     }
-    this.ragdoll.impulse(hit.direction, hit.force);
+    this.c.s.ragdoll.impulse(hit.direction, hit.force);
   }
 
   /** Primeiro update depois da pose de impacto: o ragdoll aparece e o sprite some (HRX-05/06). */
   private revealRagdoll(): void {
     this.pendingRagdollReveal = false;
-    if (!this.ragdoll) return;
-    this.ragdoll.setVisible(true);
+    if (!this.c.s.ragdoll) return;
+    this.c.s.ragdoll.setVisible(true);
     this.view.setVisible(false);
   }
 
   /** Levantar: o ragdoll some e o sprite volta tocando a animação `getup` (o cérebro fica em gettingUp). */
   private getUp(): void {
-    if (!this.ragdoll) return;
-    const c = this.ragdoll.center;
-    this.ragdoll.destroy();
-    this.ragdoll = null;
+    if (!this.c.s.ragdoll) return;
+    const c = this.c.s.ragdoll.center;
+    this.c.s.ragdoll.destroy();
+    this.c.s.ragdoll = null;
     const y = c.y - 12;
     this.scene.matter.body.setPosition(this.body, { x: c.x, y });
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
@@ -1022,27 +958,23 @@ export class Enemy implements Hittable {
    * uma vez): corpo, sprite, barra, ragdoll e o listener `beforeupdate` somem já (RUN-01/05).
    */
   destroyNow(): void {
-    if (this._removed) return;
+    if (this.c.s.removed) return;
     this.cleanup();
   }
 
   private cleanup(): void {
-    this.walkVxStep = null;
+    this.c.s.walkVxStep = null;
     this.scene.matter.world.off('beforeupdate', this.onStep);
     this.drawPos.stop();
     this.attack.close();
-    this.ragdoll?.destroy();
-    this.ragdoll = null;
+    this.c.s.ragdoll?.destroy();
+    this.c.s.ragdoll = null;
     this.scene.matter.world.remove(this.body);
     this.view.destroy();
     this.weaponView?.destroy();
-    this.barFrame.destroy();
-    this.barFill.destroy();
-    this.structBg.destroy();
-    this.structFill.destroy();
-    this.breakStar.destroy();
+    this.hud.destroy();
     this.marker.destroy();
     this.slide = null;
-    this._removed = true;
+    this.c.s.removed = true;
   }
 }
