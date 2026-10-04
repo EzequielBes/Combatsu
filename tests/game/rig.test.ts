@@ -1,5 +1,6 @@
 // Boneco articulado 2D (spike boneco-articulado): RIG-01..07 e EDG-01, derivados da spec em .specs/features/boneco-articulado/spec.md.
 import { describe, expect, it } from 'vitest';
+import { easeInCubic, easeInOutCubic, easeOutBack, inbetween, shortestArc } from '../../src/game/art/rig/interpolate';
 import { BONES, REST_ANGLES, aimLimb, makePose, measuredLength, solve, type BoneName, type JointName, type Pose } from '../../src/game/art/rig/skeleton';
 
 const JOINTS_REQUIRED: JointName[] = [
@@ -54,5 +55,43 @@ describe('comprimento dos ossos (RIG-02)', () => {
       const joints = solve(aimLimb(makePose({ x: 10, y: 22 }), 'armNear', target, 1));
       for (const b of BONES) expect(Math.abs(measuredLength(joints, b) - b.length), b.name).toBeLessThanOrEqual(0.5);
     }
+  });
+});
+
+describe('inbetween (RIG-07)', () => {
+  const a = makePose({ x: 10, y: 24 }, { spine: 170, thighNear: 350, foreArmNear: 20 });
+  const b = makePose({ x: 12, y: 20 }, { spine: 200, thighNear: 10, foreArmNear: -30 });
+
+  it('com t = 0 devolve a pose a e com t = 1 devolve a pose b', () => {
+    expect(inbetween(a, b, 0)).toEqual(a);
+    expect(inbetween(a, b, 1)).toEqual(b);
+  });
+
+  it('devolve cópias: mexer no resultado não altera as poses de entrada', () => {
+    const r = inbetween(a, b, 0);
+    r.angles.spine = 0;
+    expect(a.angles.spine).toBe(170);
+  });
+
+  it('interpola pelo menor arco: de 350 a 10 graus passa por 0, não por 180', () => {
+    expect(shortestArc(0, inbetween(a, b, 0.5).angles.thighNear)).toBeCloseTo(0, 6);
+    expect(shortestArc(350, 10)).toBe(20);
+    expect(shortestArc(10, 350)).toBe(-20);
+  });
+
+  it('a raiz e os ângulos andam em linha reta no meio do caminho', () => {
+    const m = inbetween(a, b, 0.5);
+    expect(m.root).toEqual({ x: 11, y: 22 });
+    expect(m.angles.spine).toBeCloseTo(185, 6);
+    expect(m.angles.foreArmNear).toBeCloseTo(-5, 6);
+  });
+
+  it('fora de [0, 1] extrapola (overshoot) e o easing parte de 0 e chega em 1', () => {
+    expect(inbetween(a, b, 1.5).root).toEqual({ x: 13, y: 18 });
+    for (const ease of [easeInOutCubic, easeInCubic, easeOutBack]) {
+      expect(ease(0), ease.name).toBeCloseTo(0, 9);
+      expect(ease(1), ease.name).toBeCloseTo(1, 9);
+    }
+    expect(Math.max(...[0.6, 0.7, 0.8, 0.9].map((t) => easeOutBack(t)))).toBeGreaterThan(1);
   });
 });
