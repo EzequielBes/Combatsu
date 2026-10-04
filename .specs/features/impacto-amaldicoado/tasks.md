@@ -219,8 +219,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: partes de `player.ts`
 **Requirement**: POS-05, POS-10
 **Done when**:
-- [ ] Testes POS-05 e POS-10 em `tests/game/feelArt.test.ts` com o ponto de golpe provisório do frame `-hit`.
-- [ ] Prancha conferida.
+- [x] Testes POS-05 e POS-10 em `tests/game/feelArt.test.ts` com o ponto de golpe provisório do frame `-hit`.
+- [x] Prancha conferida.
 **Tests**: unit
 **Gate**: quick
 

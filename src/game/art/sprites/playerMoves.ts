@@ -15,7 +15,7 @@
  * - `chuteGiratorio`: chute normal, mas os braços do impacto são espelhados (o golpe chega de costas); o tronco fica na origem.
  * - `socoBaixo`: corpo agachado (`drop` grande), punho na altura do tronco/pernas do oponente.
  * - `rasteira`: corpo quase no chão (`drop` máximo), perna varrendo bem baixo.
- * - `ganchoAscendente`: punho subindo pela frente do rosto (`armRaised`), sem `drop` negativo (cabeça fica na grade).
+ * - `ganchoAscendente`: corpo subindo na ponta do pé (`drop` -1, pernas esticadas) e braço na diagonal (`armDiagonal`), com o punho acima e à frente da cabeça, na folga do topo do frame.
  * - `chuteEmpurrao`: perna esticada ao máximo, corpo inclinado para trás (empurra, não avança).
  * - `chuteCarregado`: corpo torcido para trás no wind (`lean` bem negativo), extensão máxima no hit.
  *
@@ -31,7 +31,6 @@
 import {
   ARM_COCK,
   ARM_GUARD,
-  ARM_UP,
   HEAD_FOCUS,
   LEGS_WIDE,
   LEG_SUPPORT,
@@ -108,9 +107,46 @@ function legDown(len: number): string[] {
   return rows;
 }
 
-/** Braço erguido na vertical (gancho ascendente): o `ARM_UP` esticado até `len` linhas, com a manga no meio. */
-function armRaised(len: number): string[] {
-  return [...ARM_UP.slice(0, 3), ...Array<string>(len - 6).fill('kNnk'), ...ARM_UP.slice(3)];
+/**
+ * Braço esticado na diagonal para cima e à frente (gancho ascendente e contra-gancho): sai do ombro, embaixo à
+ * esquerda, e termina no punho 3x3, `rise` linhas acima e `run` colunas à direita. Manga com luz à esquerda
+ * (`s`, `N`, `n`), punho de manga claro (`s`) antes da mão e contorno `k` em volta.
+ * A parte tem `run + 4` colunas e `rise + 3` linhas; o centro do punho fica na coluna `run + 1`, linha 2.
+ */
+function armDiagonal(rise: number, run: number): string[] {
+  const w = run + 4;
+  const h = rise + 3;
+  const cells = Array.from({ length: h }, () => Array<string>(w).fill('.'));
+  const fist = [
+    'ppp',
+    'ppP',
+    'pPP',
+  ];
+  fist.forEach((row, dy) => [...row].forEach((c, dx) => (cells[1 + dy][run + dx] = c)));
+  const last = h - 2; // linha do ombro
+  for (let y = 4; y <= last; y++) {
+    const cx = run + 1 - Math.round((run * (y - 4)) / (last - 4));
+    if (y === 4) {
+      for (let x = cx - 1; x <= cx + 1; x++) cells[y][x] = 's';
+      continue;
+    }
+    cells[y][cx - 1] = y % 4 === 0 ? 'o' : 's';
+    cells[y][cx] = 'N';
+    cells[y][cx + 1] = 'n';
+  }
+  const filled = cells.map((row) => row.map((c) => c !== '.'));
+  const near = (x: number, y: number): boolean => filled[y]?.[x] === true;
+  return cells.map((row, y) =>
+    row.map((c, x) => (c === '.' && (near(x - 1, y) || near(x + 1, y) || near(x, y - 1) || near(x, y + 1)) ? 'k' : c)).join(''),
+  );
+}
+
+/** Braço do gancho ascendente no hit: punho a 8 colunas e 13 linhas do ombro, acima e à frente da cabeça. */
+const UPPERCUT_ARM = armDiagonal(13, 8);
+
+/** Estica as pernas na vertical (corpo na ponta do pé): repete `extra` vezes a linha 1 da parte, a do quadril. */
+function stretchLegs(legs: Grid, extra: number): string[] {
+  return [legs[0], ...Array<string>(extra).fill(legs[1]), ...legs.slice(1)];
 }
 
 /** Pernas dobradas no ar (golpes aéreos): réplica local do `LEGS_TUCK` de `player.ts` (não exportado ali),
@@ -394,15 +430,16 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   }),
   'ganchoAscendente-hit': pose({
     lean: 1,
+    drop: -1,
     head: HEAD_FOCUS,
-    near: [armRaised(11), 13, 1],
-    far: [far(ARM_GUARD), 8, 11],
-    legs: [[LEGS_WIDE, 1, Y_LEGS]],
+    near: [UPPERCUT_ARM, 10, -3],
+    far: [far(ARM_GUARD), 8, 10],
+    legs: [[stretchLegs(LEGS_WIDE, 1), 1, Y_LEGS - 1]],
   }),
   'ganchoAscendente-recover': pose({
     lean: 0,
     head: HEAD_FOCUS,
-    near: [armRaised(8), 12, 4],
+    near: [armDiagonal(8, 5), 10, 1],
     far: [far(ARM_GUARD), 8, 11],
     legs: [[LEGS_WIDE, 0, Y_LEGS]],
   }),
@@ -645,7 +682,7 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   }),
 
   // Contra gancho (CNT-10): sai do agachado do abaixar e sobe com o punho pela frente do rosto, o mesmo braço erguido
-  // do gancho ascendente. O tronco sobe, mas nunca acima da grade (`drop` >= 0).
+  // do gancho ascendente (`armDiagonal`), com o corpo na ponta do pé no hit.
   'contraGancho-wind': pose({
     lean: -1,
     drop: 4,
@@ -656,17 +693,17 @@ export const PLAYER_MOVE_FRAMES: Record<string, readonly string[]> = {
   }),
   'contraGancho-hit': pose({
     lean: 2,
-    drop: 1,
+    drop: -1,
     head: HEAD_FOCUS,
-    near: [armRaised(11), 13, 1],
-    far: [far(ARM_GUARD), 8, 12],
-    legs: [[LEGS_WIDE, 1, Y_LEGS]],
+    near: [UPPERCUT_ARM, 11, -3],
+    far: [far(ARM_GUARD), 9, 10],
+    legs: [[stretchLegs(LEGS_WIDE, 1), 1, Y_LEGS - 1]],
   }),
   'contraGancho-recover': pose({
     lean: 1,
     drop: 1,
     head: HEAD_FOCUS,
-    near: [armRaised(8), 12, 4],
+    near: [armDiagonal(7, 4), 11, 3],
     far: [far(ARM_GUARD), 8, 12],
     legs: [[LEGS_WIDE, 0, Y_LEGS]],
   }),
