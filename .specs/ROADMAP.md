@@ -6,7 +6,7 @@ Mapa das features do jogo. Cada item é uma pasta tlc em `.specs/features/<nome>
 
 - **Em `dev`**: F0 a F5, F7, F10, F11 e as quatro features de arte e sensação de jogo (`sprite-player-polish`, `enemy-sprite-variety`, `sprite-chefes-e-acabamento`, `movimento-suave-e-objetos-no-chefe`). 1780 testes unitários e 30 smokes.
 - **Fora do remoto**: `dev` local está à frente de `origin/dev`; nada foi enviado nesta leva.
-- **Próxima feature**: F12 `combate-mestre`.
+- **Feature em andamento**: F12 `combate-mestre`, no branch `feat/combate-mestre` (155 ACs, 34 de 41 tasks; pausada em 03/10, ver o Handoff em `STATE.md`).
 - **Decisões do usuário em aberto**: silhueta própria para a Tecelã (hoje é o Oni com outro mapa de cores, BTIER-06); alcance do arremesso (a garrafa cai depois de ~260 px, a cadeira depois de ~140 px); taxa de atualização do monitor dele, para conferir o movimento acima de 60 Hz fora da simulação.
 
 ```
@@ -43,7 +43,7 @@ Arte e sensação de jogo (sem número; entram quando o usuário pede)
 | F11 | `ritmo-economia-e-chefe` | Large | PRG, SPN, LIM, ECN, BFX, MST | Done (Verifier PASS, rodada 2; 61 ACs) |
 | — | `sprite-chefes-e-acabamento` | Large | BSP, BAN, LMB, BPW, OBJ, EPD | Done (Verifier PASS, rodada 2; 47 ACs); UAT do usuário ok e merge em `dev` em 03/10 |
 | — | `movimento-suave-e-objetos-no-chefe` | Medium | PRB, CAM, ITP | Done (Verifier PASS, rodada 2; 23 ACs); UAT do usuário ok e merge em `dev` em 03/10 |
-| F12 | `combate-mestre` | Complex | HGT, TGT, PST, DEF, CNT, RDG | Planejada (próxima) |
+| F12 | `combate-mestre` | Complex | HGT, CMT, TGT, PST, GND, VOA, DEF, CNT, DFL, RDG | Em andamento em `feat/combate-mestre`: 34 de 41 tasks (implementação pronta; faltam smokes e o Verifier), pausada em 03/10 |
 | F13 | `foco-e-ambiente` | Large | FOC, WAL, TKD | Planejada |
 | F14 | `ia-tatica` | Complex | DIR, RNG, STG, ARC, IND, SFX | Planejada |
 | F15 | `inimigos-a-distancia` | Large | CJR, PRJ | Planejada |
