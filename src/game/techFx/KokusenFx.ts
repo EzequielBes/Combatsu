@@ -1,3 +1,4 @@
+import { pts } from '../points';
 import { UI_SIZE, zoom } from '../art/hd/screen';
 import Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
@@ -95,7 +96,7 @@ const facingDir = (facing: 1 | -1): Vec2 => ({ x: facing, y: 0 });
 export class KokusenFx {
   /** TFX-11: sem WebGL, nenhum postFX é criado (TFX-06) e o snapshot reporta isto. */
   readonly degraded: boolean;
-  private readonly colorMatrix: Phaser.FX.ColorMatrix | null;
+  private readonly colorMatrix: Phaser.Filters.ColorMatrix | null;
 
   private phase: 'idle' | 'invert' | 'duotone' = 'idle';
   private phaseElapsedMs = 0;
@@ -135,7 +136,7 @@ export class KokusenFx {
     uiLayer: Phaser.GameObjects.Layer,
   ) {
     this.degraded = scene.game.renderer.type !== Phaser.WEBGL; // TFX-06/11
-    this.colorMatrix = this.degraded ? null : scene.cameras.main.postFX.addColorMatrix();
+    this.colorMatrix = this.degraded ? null : scene.cameras.main.filters.internal.addColorMatrix();
 
     const cx = UI_SIZE.w / 2;
     const cy = UI_SIZE.h / 2;
@@ -155,7 +156,7 @@ export class KokusenFx {
     this.cardInk = scene.add
       .graphics()
       .fillStyle(PALETTE.b, 0.55)
-      .fillPoints(brushBandPoints(cx, cy, cardW + INK_PAD * 2, KANJI_SIZE + INK_PAD * 2), true)
+      .fillPoints(pts(brushBandPoints(cx, cy, cardW + INK_PAD * 2, KANJI_SIZE + INK_PAD * 2)), true)
       .setVisible(false);
     this.cardStreakText = scene.add
       .text(left + cardW + STREAK_GAP, cy, '', { fontFamily: 'monospace', fontSize: '28px', color: '#ff3344' })
@@ -176,8 +177,8 @@ export class KokusenFx {
     this.phaseElapsedMs = 0;
     this.target = target;
     this.fx.add('kokusen.invert', KOKUSEN.invertMs, 'real'); // KOK-14
-    if (!this.degraded) this.colorMatrix!.negative();
-    target.fxSprite?.setTintFill(PALETTE.b); // KOK-16
+    if (!this.degraded) this.colorMatrix!.colorMatrix.negative();
+    target.fxSprite?.setTint(PALETTE.b).setTintMode(Phaser.TintModes.FILL); // KOK-16
 
     this.boltsActive = true;
     this.boltRegenMs = 0;
@@ -234,11 +235,11 @@ export class KokusenFx {
       this.phase = 'duotone';
       this.fx.add('kokusen.duotone', KOKUSEN.duotoneMs, 'real'); // KOK-15
       this.target?.fxSprite?.clearTint(); // KOK-16: silhueta só durante o negativo
-      if (!this.degraded) this.colorMatrix!.set(duotoneMatrix(DUOTONE_BASE, DUOTONE_TARGET));
+      if (!this.degraded) this.colorMatrix!.colorMatrix.set(duotoneMatrix(DUOTONE_BASE, DUOTONE_TARGET));
     } else if (this.phase === 'duotone' && this.phaseElapsedMs >= KOKUSEN.invertMs + KOKUSEN.duotoneMs) {
       this.phase = 'idle';
       this.target = null;
-      if (!this.degraded) this.colorMatrix!.reset();
+      if (!this.degraded) this.colorMatrix!.colorMatrix.reset();
     }
   }
 
@@ -272,8 +273,8 @@ export class KokusenFx {
     this.boltsGfx.clear();
     // Polimento (fix(fx)): raios pretos (núcleo 4 px) com borda vermelha de 2 px de cada lado (largura total 8 px),
     // legíveis sobre o cenário - o núcleo preto é o que domina, a borda R só contorna.
-    for (const bolt of bolts) this.boltsGfx.lineStyle(8, PALETTE.R, 1).strokePoints(bolt.vertices, false); // KOK-22 borda
-    for (const bolt of bolts) this.boltsGfx.lineStyle(4, PALETTE.b, 1).strokePoints(bolt.vertices, false); // KOK-22 núcleo
+    for (const bolt of bolts) this.boltsGfx.lineStyle(8, PALETTE.R, 1).strokePoints(pts(bolt.vertices), false); // KOK-22 borda
+    for (const bolt of bolts) this.boltsGfx.lineStyle(4, PALETTE.b, 1).strokePoints(pts(bolt.vertices), false); // KOK-22 núcleo
   }
 
   private teardownBolts(): void {

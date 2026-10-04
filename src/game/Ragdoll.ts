@@ -106,7 +106,7 @@ export class Ragdoll {
   /** Fumaça/energia amaldiçoada + fade. */
   dissolve(durationMs: number): void {
     // Preenchimento (não multiplicação): o corpo vira silhueta roxa da paleta enquanto some (ART-01).
-    for (const p of this.parts) p.setTintFill(PALETTE.u);
+    for (const p of this.parts) p.setTint(PALETTE.u).setTintMode(Phaser.TintModes.FILL);
     this.scene.tweens.add({ targets: this.parts, alpha: 0, duration: durationMs });
     const c = this.center;
     const smoke = this.scene.add.particles(c.x, c.y, TEX.smokeCurse, {

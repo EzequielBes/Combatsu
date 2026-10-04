@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import {
   RUN_THRESHOLD,
   attackFrame,
@@ -66,7 +67,7 @@ export class PlayerAnimator {
   flash(colorKey: string, ms: number): void {
     this.flashMs = ms;
     this.flashColor = colorKey;
-    this.p.view.setTintFill(PALETTE[colorKey]);
+    this.p.view.setTint(PALETTE[colorKey]).setTintMode(Phaser.TintModes.FILL);
   }
 
   tickFlash(dtMs: number): void {
@@ -203,7 +204,7 @@ export class PlayerAnimator {
     const charged = this.p.heavyHoldMs >= CHARGE_MS;
     if (charged) {
       this.chargeTinted = true;
-      if (Math.floor(this.p.clockMs / 80) % 2 === 0) this.p.view.setTintFill(PALETTE.w);
+      if (Math.floor(this.p.clockMs / 80) % 2 === 0) this.p.view.setTint(PALETTE.w).setTintMode(Phaser.TintModes.FILL);
       else this.p.view.clearTint();
     } else if (this.chargeTinted) {
       this.chargeTinted = false;

@@ -1,4 +1,4 @@
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 import { parseSheet } from '../core/pixelGrid';
 import { PALETTE, PALETTE_KEYS } from './art/palette';
 import { registerSheet } from './art/render';
@@ -118,7 +118,8 @@ export class Fx {
       .setOrigin(sprite.originX, sprite.originY)
       .setScale(sprite.scaleX, sprite.scaleY)
       .setDepth(sprite.depth - 0.5)
-      .setTintFill(AFTERIMAGE_COLOR)
+      .setTint(AFTERIMAGE_COLOR)
+      .setTintMode(Phaser.TintModes.FILL)
       .setAlpha(AFTERIMAGE_ALPHA);
     this.scene.tweens.add({
       targets: ghost,

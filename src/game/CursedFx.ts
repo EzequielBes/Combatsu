@@ -1,3 +1,4 @@
+import { pts } from './points';
 import type Phaser from 'phaser';
 import { parseSheet } from '../core/pixelGrid';
 import type { Strength, Vec2 } from '../core/hit';
@@ -158,7 +159,7 @@ export class CursedFx {
     const gfx = this.add(this.scene.add.graphics().setDepth(FX_DEPTH));
     const fill = (poly: Vec2[], color: CursedKey, alpha: number): void => {
       if (poly.length < 3) return;
-      gfx.fillStyle(PALETTE[color]!, alpha).fillPoints(poly, true);
+      gfx.fillStyle(PALETTE[color]!, alpha).fillPoints(pts(poly), true);
     };
     fill(trailPolygon(path, widthPx * 1.6, TRAIL_BULGE * 1.1), 'd', 0.65);
     fill(body, 'c', 0.95);
@@ -233,13 +234,13 @@ export class CursedFx {
       const len = 14 + rng.next() * 18;
       const mid = len * 0.5;
       const jx = (rng.next() - 0.5) * 8;
-      const pts = [
+      const points = [
         { x: snap(at.x), y: snap(at.y) },
         { x: snap(at.x + Math.cos(ang) * mid + jx), y: snap(at.y + Math.sin(ang) * mid * 0.35) },
         { x: snap(at.x + Math.cos(ang) * len), y: snap(at.y + Math.sin(ang) * len * 0.3) },
       ];
-      gfx.lineStyle(GRID, PALETTE.d!, 1).strokePoints(pts, false);
-      gfx.lineStyle(1, PALETTE[i % 2 === 0 ? 'c' : 'u']!, 1).strokePoints(pts, false);
+      gfx.lineStyle(GRID, PALETTE.d!, 1).strokePoints(pts(points), false);
+      gfx.lineStyle(1, PALETTE[i % 2 === 0 ? 'c' : 'u']!, 1).strokePoints(pts(points), false);
     }
     gfx.fillStyle(PALETTE.C!, 1).fillRect(snap(at.x) - 1, snap(at.y) - 1, GRID, GRID);
     this.scene.tweens.add({
@@ -351,8 +352,8 @@ export class CursedFx {
           { x: snap(cx + cos * (r0 + len + extra)), y: snap(cy + sin * (r0 + len + extra)) },
           { x: snap(cx + cos * (r0 - extra) + sin * half), y: snap(cy + sin * (r0 - extra) - cos * half) },
         ];
-        gfx.fillStyle(PALETTE[purple ? 'u' : 'c']!, 1).fillPoints(tri(3, 2), true);
-        gfx.fillStyle(PALETTE[purple ? 'U' : 'C']!, 1).fillPoints(tri(1.5, 0), true);
+        gfx.fillStyle(PALETTE[purple ? 'u' : 'c']!, 1).fillPoints(pts(tri(3, 2)), true);
+        gfx.fillStyle(PALETTE[purple ? 'U' : 'C']!, 1).fillPoints(pts(tri(1.5, 0)), true);
       });
       // Anel com espessura: sombra `d`, corpo `c` e fio de luz `C` por dentro.
       gfx.lineStyle(thick + GRID, PALETTE.d!, 1).strokeCircle(cx, cy, r);
@@ -362,12 +363,12 @@ export class CursedFx {
         // Lampejo de losango no centro do golpe decisivo.
         const f = 8 * (1 - p * 2);
         gfx.fillStyle(PALETTE.C!, 1).fillPoints(
-          [
+          pts([
             { x: cx, y: snap(cy - f) },
             { x: snap(cx + f), y: cy },
             { x: cx, y: snap(cy + f) },
             { x: snap(cx - f), y: cy },
-          ],
+          ]),
           true,
         );
       }
