@@ -190,7 +190,7 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: `src/core/pixelGrid.ts`
 **Requirement**: POS-02, POS-03, POS-04, POS-05, POS-06, TRL-02
 **Done when**:
-- [ ] Cada função tem casos verdadeiros e falsos em grades pequenas escritas no teste (inclui diagonal conta como conectado).
+- [x] Cada função tem casos verdadeiros e falsos em grades pequenas escritas no teste (inclui diagonal conta como conectado).
 **Tests**: unit
 **Gate**: quick
 
