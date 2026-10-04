@@ -9,9 +9,10 @@ import { strikeToBody } from '../../src/core/strikePath';
 import { MOVES } from '../../src/data/moves';
 import { SIZE } from '../../src/game/textures';
 import { PLAYER_FRAMES, PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../src/game/art/sprites/player';
+import { POSE_IDLE } from '../../src/game/art/rig/poses/idle';
 import { RIG_PHASE_FRAMES, rigEnabled, rigMoveFrame, rigSequenceFrameName, rigStrikePoint, withRigFrames } from '../../src/game/art/rig/flag';
 import { PLAYER_MOVE_FRAMES } from '../../src/game/art/sprites/playerMoves';
-import { BONES, REST_ANGLES, aimLimb, makePose, measuredLength, solve, type BoneName, type JointName, type Pose } from '../../src/game/art/rig/skeleton';
+import { BONES, REST_ANGLES, aimLimb, boneLength, makePose, measuredLength, solve, type BoneName, type JointName, type Pose } from '../../src/game/art/rig/skeleton';
 
 const JOINTS_REQUIRED: JointName[] = [
   'hip', 'chest', 'neck',
@@ -190,7 +191,7 @@ describe('frames do gancho ascendente pelo boneco', () => {
   it.each(RIG_NAMES)('%s: nenhum texel recortado e todo osso mede o comprimento definido (RIG-02)', (name) => {
     const r = rasterize(RIG_GANCHO_POSES[name]);
     expect(r.clipped, name).toBe(0);
-    for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - b.length), `${name} ${b.name}`).toBeLessThanOrEqual(0.5);
+    for (const b of BONES) expect(Math.abs(measuredLength(r.joints, b) - boneLength(RIG_GANCHO_POSES[name], b)), `${name} ${b.name}`).toBeLessThanOrEqual(0.5);
   });
 
   it.each(RIG_NAMES)('%s: os texels opacos formam um componente só, 8-conexo (RIG-04, POS-02)', (name) => {
@@ -302,5 +303,42 @@ describe('quadros da sequência por fase do gancho ascendente (rig=1)', () => {
     for (let i = 0; i < 12; i++) expect(on[rigSequenceFrameName(i)], `quadro ${i}`).toBeDefined();
     const off = withRigFrames(PLAYER_MOVE_FRAMES, '?debug');
     expect(Object.keys(off).filter((k) => k.includes('-rig-'))).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------- calibração do corpo pelo idle-0 (portão de qualidade)
+
+describe('corpo do boneco calibrado pelo idle-0', () => {
+  const drawn = PLAYER_FRAMES['idle-0'];
+  const rig = rasterize(POSE_IDLE).frame;
+  const opaque = (f: readonly string[]): Set<string> =>
+    new Set(f.flatMap((row, y) => [...row].flatMap((c, x) => (c !== '.' ? [x + ',' + y] : []))));
+  /** Colunas transparentes entre o primeiro e o último texel opaco da linha. */
+  const gapCols = (row: string): number[] => {
+    const first = row.search(/[^.]/);
+    const last = row.length - 1 - [...row].reverse().join('').search(/[^.]/);
+    return [...row].flatMap((c, x) => (x > first && x < last && c === '.' ? [x] : []));
+  };
+
+  it('a silhueta do idle do boneco cobre a do idle-0 desenhado com IoU >= 0,85', () => {
+    const a = opaque(drawn);
+    const b = opaque(rig);
+    const inter = [...a].filter((k) => b.has(k)).length;
+    const iou = inter / (a.size + b.size - inter);
+    expect(iou, `IoU ${iou.toFixed(3)}`).toBeGreaterThanOrEqual(0.85);
+  });
+
+  it('as duas pernas aparecem separadas por uma coluna transparente nas 3 linhas de baixo, como no idle-0', () => {
+    for (const row of [27, 28, 29]) {
+      expect(gapCols(drawn[row]).length, `idle-0 linha ${row}`).toBeGreaterThan(0);
+      expect(gapCols(rig[row]).length, `boneco linha ${row}`).toBeGreaterThan(0);
+    }
+  });
+
+  it('o idle do boneco é uma peça só, não recorta e usa só teclas da PALETTE', () => {
+    const r = rasterize(POSE_IDLE);
+    expect(isSingleComponent(r.frame)).toBe(true);
+    expect(r.clipped).toBe(0);
+    for (const row of r.frame) for (const ch of row) expect(ch === '.' || PALETTE_KEYS.has(ch)).toBe(true);
   });
 });

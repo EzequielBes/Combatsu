@@ -1,6 +1,7 @@
-// Prancha do boneco articulado (spike boneco-articulado, RIG-08). Grava dois PNGs a 4x:
+// Prancha do boneco articulado (spike boneco-articulado, RIG-08). Grava três PNGs (escala em SPRITE_SCALE, padrão 4x):
 //   compare.png: em cima os 3 frames atuais do ganchoAscendente, embaixo os 3 do boneco (quadrado vermelho = ponto de golpe);
-//   strip.png: a sequência de quadros do boneco (antecipação, wind, hit, overshoot, recover).
+//   strip.png: a sequência de quadros do boneco (antecipação, wind, hit, overshoot, recover);
+//   idle-compare.png: o `idle-0` desenhado à mão ao lado do idle do boneco (calibração do corpo).
 // Uso, a partir da raiz do repo:  node tools/rig-preview.mjs [outDir]
 // Os .ts são importados em Node com um hook de resolução; o desenho roda no Edge via puppeteer-core.
 import { existsSync, mkdirSync } from 'node:fs';
@@ -25,6 +26,9 @@ const src = (p) => import(pathToFileURL(join(root, 'src', p)).href);
 const { PALETTE } = await src('game/art/palette.ts');
 const { PLAYER_MOVE_FRAMES } = await src('game/art/sprites/playerMoves.ts');
 const { RIG_GANCHO_FRAMES, RIG_GANCHO_SEQUENCE, RIG_GANCHO_STRIKE } = await src('game/art/rig/poses/ganchoAscendente.ts');
+const { PLAYER_FRAMES } = await src('game/art/sprites/player.ts');
+const { rasterize } = await src('game/art/rig/rasterize.ts');
+const { POSE_IDLE } = await src('game/art/rig/poses/idle.ts');
 const { DEFAULT_EDGE_PATHS, findEdge } = await import(pathToFileURL(join(root, 'scripts', 'smoke', 'lib.ts')).href);
 
 const NAMES = ['ganchoAscendente-wind', 'ganchoAscendente-hit', 'ganchoAscendente-recover'];
@@ -32,6 +36,11 @@ const current = NAMES.map((n) => ({ name: 'atual ' + n.split('-')[1], rows: PLAY
 const rig = NAMES.map((n) => ({ name: 'boneco ' + n.split('-')[1], rows: RIG_GANCHO_FRAMES[n] }));
 rig[1].mark = RIG_GANCHO_STRIKE;
 const strip = RIG_GANCHO_SEQUENCE.map((r, i) => ({ name: String(i + 1), rows: r.frame }));
+
+const idleCompare = [
+  { name: 'idle-0 desenhado', rows: PLAYER_FRAMES['idle-0'] },
+  { name: 'idle do boneco', rows: rasterize(POSE_IDLE).frame },
+];
 
 const edge = findEdge(process.env.EDGE_PATH, DEFAULT_EDGE_PATHS, existsSync);
 if (!edge) {
@@ -63,14 +72,15 @@ const pageFn = (data) => {
   };
   board('compare', [data.current, data.rig]);
   board('strip', [data.strip]);
+  board('idle-compare', [data.idleCompare]);
 };
 
 const browser = await puppeteer.launch({ executablePath: edge, headless: true });
 try {
   const page = await browser.newPage();
   await page.setContent('<body style="margin:0;background:#000"></body>');
-  await page.evaluate(pageFn, { palette: PALETTE, current, rig, strip, scale: Number(process.env.SPRITE_SCALE) || 4 });
-  for (const id of ['compare', 'strip']) {
+  await page.evaluate(pageFn, { palette: PALETTE, current, rig, strip, idleCompare, scale: Number(process.env.SPRITE_SCALE) || 4 });
+  for (const id of ['compare', 'strip', 'idle-compare']) {
     await (await page.$('#' + id)).screenshot({ path: join(outDir, id + '.png') });
     console.log('  ' + join(outDir, id + '.png'));
   }
