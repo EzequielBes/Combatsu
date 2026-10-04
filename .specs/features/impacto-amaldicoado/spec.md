@@ -114,7 +114,7 @@ As mecânicas da F12 deixaram o combate profundo, mas ele ainda não parece core
 **Acceptance Criteria**:
 
 1. POS-01: The ponto de golpe of every `<move>-hit` frame, converted to px relative to the player's body center with facing right, SHALL lie inside that move's hitbox rectangle expanded by 4 px on every side.
-2. POS-02: The non-transparent texels of every player frame SHALL form a single 8-connected component.
+2. POS-02: The non-transparent texels of every `<move>-wind`, `<move>-hit` and `<move>-recover` frame of the moves in `MOVES`, of `jab-*`, `kick-*` and of the POS-04 jump sequence SHALL form a single 8-connected component.
 3. POS-03: For every `<move>-hit` frame of a move whose `input` is not `{ via: 'press', air: true }`, at least one non-transparent texel SHALL lie on the frame's bottom row.
 4. POS-04: In the frame sequence `idle-0`, `jump-0`, `jump-1`, `apex-0`, `fall-0`, `fall-1`, `land-0`, `land-1`, the leftmost column of the head SHALL differ by at most 1 texel between consecutive frames, measured with the hair color keys `h`, `H` and `j`.
 5. POS-05: The ponto de golpe of `ganchoAscendente-hit` SHALL lie above the topmost hair texel (`h`, `H`, `j`) of `idle-0`.
