@@ -3,7 +3,7 @@ import type { EnemyTuning } from '../core/enemyBrain';
 import type { HealthTuning } from '../core/health';
 import type { AttackStep } from '../core/combo';
 import type { MoveTuning } from '../core/movement';
-import type { DifficultyTuning } from '../core/difficulty';
+import type { DifficultyTuning, EnemyAttackDef } from '../core/difficulty';
 import type { WaveTuning } from '../core/waves';
 import type { AttackGateTuning } from '../core/attackGate';
 import type { RunTuning } from '../core/run';
@@ -22,8 +22,8 @@ export const PLAYER_MOVE: MoveTuning = {
   jumpBufferMs: 110,
 };
 
-/** Vida do player (HP-01..04). */
-export const PLAYER_HEALTH: HealthTuning = { maxHp: 100, invulnMs: 700, staggerMs: 200, respawnMs: 1000 };
+/** Vida do player (HP-01..04); `invulnMs` 300 depois de um golpe cheio (PST-15, substitui os 700 ms do HP-02). */
+export const PLAYER_HEALTH: HealthTuning = { maxHp: 100, invulnMs: 300, staggerMs: 200, respawnMs: 1000 };
 
 /** Recuo do player ao levar golpe (px/s na horizontal), mantido durante o atordoamento (HP-03). */
 export const PLAYER_KNOCKBACK = 180;
@@ -83,6 +83,7 @@ export const ENEMY: EnemyTuning = {
   getUpMs: 350,
   deathRagdollMs: 2200,
   dissolveMs: 700,
+  staggerMs: 380,
 };
 
 /** IA do inimigo (SPN-10..12, LIM-03/05/07, AI-03): distâncias só na horizontal, em px; velocidades em px/s. */
@@ -98,10 +99,17 @@ export const ENEMY_AI: EnemyAITuning = {
   holdTolerance: 2,
   farRange: 320,
   farSpeedMult: 1.6,
+  commitMs: 200,
+  stringGapMs: 300,
+  hits: 1,
 };
 
-/** Garra do inimigo: a hitbox fica ligada enquanto a IA está em `attack` (activeMs = ENEMY_AI.attackMs). */
-export const ENEMY_ATTACK: AttackStep = {
+/**
+ * Garra do inimigo: a hitbox fica ligada enquanto a IA está em `attack` (activeMs = ENEMY_AI.attackMs). O `kind` é o
+ * tipo padrão; a cena troca pelo de `attackKindFor` ou do debug (HGT-01..03, HGT-13).
+ */
+export const ENEMY_ATTACK: EnemyAttackDef = {
+  kind: 'white',
   name: 'garra',
   damage: 12,
   strength: 'light',
@@ -214,13 +222,14 @@ export const PICKUP: PickupTuning = {
 
 /** Multiplicadores do inimigo armado por ferramenta (ARM-05..07). */
 export interface ArmedTuning {
-  knife: { dmg: number; widen: number };
+  /** `hits`: golpes da sequência do inimigo com faca (DFL-01). */
+  knife: { dmg: number; widen: number; hits: number };
   club: { dmg: number; widen: number; windupPlus: number };
 }
 
 /** Números do inimigo armado (Assumptions da spec economia-drops-cura). */
 export const ARMED: ArmedTuning = {
-  knife: { dmg: 1.25, widen: 8 },
+  knife: { dmg: 1.25, widen: 8, hits: 2 },
   club: { dmg: 1.6, widen: 12, windupPlus: 150 },
 };
 

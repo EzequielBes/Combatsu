@@ -142,9 +142,9 @@ describe('tuning da economia (T1, valores das Assumptions da spec economia-drops
     });
   });
 
-  it('ARMED = faca ×1,25 (+8 px) e porrete ×1,6 (+12 px, +150 ms de preparo)', () => {
+  it('ARMED = faca ×1,25 (+8 px, 2 golpes por sequência, DFL-01) e porrete ×1,6 (+12 px, +150 ms de preparo)', () => {
     expect(ARMED).toEqual({
-      knife: { dmg: 1.25, widen: 8 },
+      knife: { dmg: 1.25, widen: 8, hits: 2 },
       club: { dmg: 1.6, widen: 12, windupPlus: 150 },
     });
   });

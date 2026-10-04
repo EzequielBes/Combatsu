@@ -1,7 +1,9 @@
+import type { AttackKind } from '../core/attackKind';
 import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { CastState } from '../core/cast';
+import type { CounterKind } from '../core/counter';
 import type { EnemyVariant } from '../core/enemyVariant';
 import type { EnemyAIState } from '../core/enemyAI';
 import type { EnemyState } from '../core/enemyBrain';
@@ -39,6 +41,12 @@ export interface GameSnapshot {
     /** Estrutura 0..100 arredondada; `broken` = atordoado pela guarda quebrada (STR-01, STR-06). */
     structure: { cur: number; max: number; broken: boolean };
     dodge: { active: boolean; invulnerable: boolean; cooldownMs: number };
+    /** Abaixado: `active` pelos 320 ms de jogo do abaixar (DEF-07, DEF-09, DEF-10). */
+    duck: { active: boolean };
+    /** Janela de Contra (CNT-01..07): `remainingMs` é tempo de jogo e não diminui no hitstop (CNT-20). */
+    counter: { open: boolean; kind: CounterKind | null; remainingMs: number };
+    /** Invulnerável depois de um golpe cheio, por 300 ms de jogo (PST-15). */
+    invulnerable: boolean;
   };
   enemies: {
     id: number;
@@ -71,7 +79,25 @@ export interface GameSnapshot {
     ragdollVisible: boolean | null;
     /** Chaves de textura das 6 partes do ragdoll; `null` fora de ragdoll (EVR-06). */
     ragdollTextures: string[] | null;
+    /** Frame do marcador de telegrafo visível, lido do sprite desenhado; `null` com ele escondido (HGT-07, HGT-08). */
+    telegraph: AttackKind | null;
+    /** Comprometido: o golpe pendente sai mesmo levando golpe comum (CMT-01). */
+    committed: boolean;
+    /** Chave da `PALETTE` do flash de compromisso em curso, lida do tint do sprite; `null` fora dele (CMT-02). */
+    commitFlash: string | null;
+    /** Tipo do golpe e posição na sequência: `index` a partir de 1 em `windup` e `attack`, 0 fora (DFL-15). */
+    attack: { kind: AttackKind; index: number; length: number };
+    /** Golpes aceitos no `ragdollStun` atual (GND-05). */
+    downHits: number;
+    /** Leves seguidos aceitos por este inimigo (RDG-13..15). */
+    lightStreak: number;
+    /** A guarda de pé é de leitura (RDG-06). */
+    guardRead: boolean;
   }[];
+  /** Foco da postura: último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (PST-13); `null` sem foco. */
+  focusId: number | null;
+  /** Último golpe do grafo iniciado e as repetições dele nos 3000 ms anteriores (RDG-01); `move` `null` sem histórico. */
+  reading: { move: string | null; repeats: number };
   events: string[];
   /** Um por abate, com a posição que chegou em `onEnemyDied` (FND-08). */
   deaths: { id: number; x: number; y: number }[];

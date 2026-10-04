@@ -40,10 +40,12 @@ export interface EnemyHitResult {
 /**
  * Guarda do inimigo comum (EBL-01..05): ao ver o jogador iniciar um golpe leve de frente e perto, levanta a
  * guarda por 600 ms com chance `min(0.1 + 0.03 × (rodada − 1), 0.4)`. Guardando: leve de frente = 0 de dano e +8
- * de estrutura; forte = dano cheio e a guarda acaba; o carregado passa por cima.
+ * de estrutura; forte = dano cheio e a guarda acaba; o carregado passa por cima. A guarda de leitura (RDG-06..08)
+ * levantada pela repetição do jogador também segura o forte sem `unblockable`, uma vez: 0 de dano, +8 e a guarda acaba.
  */
 export class EnemyGuard {
   private leftMs = 0;
+  private readGuard = false;
 
   constructor(private readonly roll: GuardRoll) {}
 
@@ -56,11 +58,20 @@ export class EnemyGuard {
     return this.leftMs > 0;
   }
 
-  /** O jogador iniciou um golpe leve; sorteia só se as condições da spec valem. `true` se a guarda subiu. */
-  onPlayerLightMove(t: GuardTrigger, chanceOverride?: number): boolean {
-    if (this.guarding || !t.idle || !t.playerFacingEnemy || t.distancePx > ENEMY_GUARD.triggerRangePx) return false;
-    if (!this.roll.chance(chanceOverride ?? EnemyGuard.chanceFor(t.round))) return false;
+  /** A guarda de pé é de leitura (RDG-06): `false` sem guarda, depois que ela termina e depois de `reset()`. */
+  get read(): boolean {
+    return this.guarding && this.readGuard;
+  }
+
+  /**
+   * Tenta levantar a guarda com a `chance` dada (RDG-03): com chance 0 ou menos não sorteia (RDG-04), com 1 ou mais
+   * levanta sem sortear, e já guardando não faz nada. `read` marca a guarda como de leitura. `true` se subiu.
+   */
+  tryRaise(chance: number, read: boolean): boolean {
+    if (this.guarding || chance <= 0) return false;
+    if (chance < 1 && !this.roll.chance(chance)) return false;
     this.leftMs = ENEMY_GUARD.durationMs;
+    this.readGuard = read;
     return true;
   }
 
@@ -76,11 +87,16 @@ export class EnemyGuard {
     if (hit.strength === 'light' && !hit.unblockable) {
       return { damage: 0, structureGain: STRUCTURE.enemy.guardedLightGain, blocked: true, guardEnded: false };
     }
+    if (this.readGuard && !hit.unblockable) {
+      this.leftMs = 0;
+      return { damage: 0, structureGain: STRUCTURE.enemy.guardedLightGain, blocked: true, guardEnded: true };
+    }
     this.leftMs = 0;
     return { damage: hit.damage, structureGain: hit.structureGain, blocked: false, guardEnded: true };
   }
 
   reset(): void {
     this.leftMs = 0;
+    this.readGuard = false;
   }
 }

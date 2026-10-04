@@ -104,7 +104,7 @@
 - **Trade-off**: Toda arte nova de inimigo precisa existir nas 3 aparências; o ragdoll aparece 1 hitstop mais tarde do que antes.
 - **Scope**: Inimigo comum (não chefes).
 - **Date**: 2026-10-01
-- **Status**: active
+- **Status**: active (emendada pela AD-020: a aparência também define o tipo do golpe)
 
 ### AD-014
 - **Decision**: A dificuldade do jogo vem de mecânica (composição de inimigos, leitura, fintas, golpes atrasados, cadência de tokens), não de vida/dano: HP e dano dos inimigos comuns ficam fixos por rodada.
@@ -154,31 +154,33 @@
 - **Date**: 2026-10-03
 - **Status**: active
 
+### AD-020
+- **Decision**: Todo golpe de inimigo declara um tipo (`white`, `red` ou `low`), que vira `height` e `unblockable` no `Hit`; mostra o marcador do tipo sobre a cabeça durante o preparo e o golpe; e tem um ponto de compromisso (200 ms antes da hitbox), a partir do qual só golpe que derruba, quebra de postura, morte ou Contra o interrompe. Golpe de sequência leva `string: { id, index, length }` no `Hit`. O tipo sai da arma e da aparência (`attackKindFor`): porrete `red`, `rastejante` `low`, o resto `white`.
+- **Reason**: O loop ler → responder → punir da F12 depende de o jogador saber o tipo antes do golpe e de a defesa certa ser a única resposta depois do compromisso. Emenda a AD-013: a aparência deixa de ser só visual no tipo do golpe; corpo, hitbox e tuning continuam iguais.
+- **Trade-off**: Todo ataque novo de inimigo (arquétipos da F14, Conjurador da F15) precisa declarar tipo, marcador e compromisso; `rastejante` passa a exigir pulo ou esquiva desde a rodada 1.
+- **Scope**: Inimigos comuns e seus projéteis futuros. O chefe só ganha `height` nos golpes que já tem.
+- **Date**: 2026-10-03
+- **Status**: active
+
+### AD-021
+- **Decision**: O inimigo comum que sobrevive a um golpe só entra em ragdoll se o `Hit` tem `knockdown: true`; golpe forte sem a marca cambaleia (`stagger`). Golpe de técnica amaldiçoada leva `tech: true`, fica fora do limite de 1 golpe no chão e, quando forte, leva `knockdown`. Golpe do jogador com limite de alvos passa pelo `TargetGate`; o alvo avisa o bloqueio pelo `report` de `receiveHit`.
+- **Reason**: Implementa a AD-015 com uma regra única e legível no dado do golpe, sem reabrir o balanceamento das técnicas da F5.
+- **Trade-off**: Quem cria um `Hit` novo precisa decidir as marcas; esquecer `knockdown` num golpe que deveria derrubar só aparece jogando ou no smoke.
+- **Scope**: Todo `Hit` contra inimigo comum.
+- **Date**: 2026-10-03
+- **Status**: active
+
+### AD-022
+- **Decision**: A F12 fecha sem os smokes T36 a T40 e sem o Verifier formal: o gate foi `npm run build`, os 2088 testes unitários e a suíte inteira de smokes (31 ok; `kokusen` falhou 1 vez e passou 3 de 3 isolado), mais o UAT do usuário, que aprovou as mecânicas.
+- **Reason**: Pedido do usuário ("não vai precisar de tanto smoke"); as regras novas já têm testes unitários em Node (AD-001).
+- **Trade-off**: A tabela de defesa, o Contra, a voadora e a leitura não têm smoke de ponta a ponta; uma regressão na cena só aparece jogando ou na suíte antiga.
+- **Scope**: F12; nas próximas features, smoke só para o que os unitários não alcançam.
+- **Date**: 2026-10-03
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: nenhuma em andamento. `sprite-chefes-e-acabamento` (47 ACs) e `movimento-suave-e-objetos-no-chefe` (23 ACs) fechadas com Verifier PASS (rodada 2 nas duas), aprovadas pelo usuário no UAT de 03/10 ("Pode dar merge pra dev. tá legal") e mergeadas em `dev` com `--no-ff` (merges `7267f58` e `20a5cb8`). Não houve push.
-- **O que entrou**: chefes redesenhados e animados, golpes do player afinados, objetos e pendências dos inimigos; objetos acertam o chefe, câmera sem tremor e interpolação entre passos de física (AD-018, AD-019).
-- **Origem e escopo**: o usuário pediu "melhore sprites" e depois relatou itens atravessando o inimigo e o personagem "dando flicadas". O escopo foi escolhido sem consulta (Assumptions das duas specs com "Confirmed? n"); o resultado ele aprovou jogando.
-- **Verificado em `dev` depois do merge**: build ok e 1780 testes; a árvore é idêntica à da branch que passou nos 30 smokes.
-- **Pendente**:
-  1. Perguntas que ficaram sem resposta do usuário: a taxa de atualização do monitor dele (75/120/144 Hz só foram conferidos por simulação) e se o alcance do arremesso incomoda (a garrafa cai depois de ~260 px, a cadeira depois de ~140 px).
-  2. Decisão do usuário em aberto: silhueta própria para a Tecelã (substitui o BTIER-06).
-  3. `main` só recebe `dev` quando o usuário pedir (AD-008). As branches `feat/sprite-chefes-e-acabamento` e `feat/movimento-suave-e-objetos-no-chefe` continuam existindo; apagar só se ele quiser.
-  4. Pendências antigas: remover a worktree `scratchpad/wt-f10` (`git worktree remove`; o `node_modules` dela é junction, não apague com rm recursivo) e as branches já mergeadas, se o usuário quiser; UAT em `dev` de ritmo e spawn, limitador de 2 atacantes, loja/maestria, chefe vencível no soco e Vermelho carmim. A worktree `surGue-player-refine` é um rascunho de 28/09, 159 commits atrás de `dev`.
-- **Próximo**: F12 `combate-mestre` (Specify), seguindo `docs/superpowers/specs/2026-10-02-combate-mestre-design.md`; depois F13–F16. F6 e F9 ficam para depois da expansão.
-- **Identidade do git**: no perfil `sexta-feira` não há `user.name`/`user.email`. Os commits das duas features usaram `git -c user.name="Claude" -c user.email="ezequieltbeserra00@gmail.com"` (a identidade do histórico), sem gravar configuração; o usuário ainda não confirmou.
-- **Lições**: L-052 a L-058 (candidatas) saíram das rodadas do Verifier; L-010 e L-043 seguem as únicas confirmadas. Fora do `lessons.py`: rodar o teste de cada AC novo contra a branch base antes de implementar (EPD-03, OBJ-03 e OBJ-04 já passavam em `dev`).
-- **Como trabalhar**: Opus 5.5 planeja/orquestra, workers Sonnet 5.5 (`model: sonnet`), no máximo 2 agentes; `py`/`python` (não `python3`) roda os scripts do tlc; `lessons.py` recebe `--root .` antes do subcomando; o Verifier usa worktree temporária com junction para o `node_modules` (remover a junction antes da worktree).
-- **Dicas técnicas**:
-  - Posição de desenho: ator novo com sprite separado do corpo usa `BodyRenderPos` (`src/game/physics.ts`); o que fica preso ao sprite do player segue `player.renderPos`. No snapshot, `view` é o sprite desenhado e `physics.alpha` é a fração entre os passos.
-  - No harness de debug o alfa é constante, mas nem sempre 0,5: depende do que o loop em tempo real deixou no acumulador do Matter antes do primeiro `step()`. Smoke que mede posição de desenho lê `physics.alpha` e só conta quadro com exatamente um passo.
-  - Revisão de arte: `node tools/sprite-preview.mjs [dir]` (com `SPRITE_SCALE=8`) cobre player e inimigos; não cobre chefes nem objetos. Pranchas desta entrega em `docs/art/sprite-chefes-e-acabamento/` (ignorada pelo git).
-  - Captura de tela do jogo: o `step()` do harness não redesenha; use `window.__game.render()` ou deixe o loop em tempo real. Em Edge headless com swiftshader o jogo roda a ~15 fps, então medir fluidez em tempo real ali não serve.
-  - Smoke que golpeia inimigo comum precisa de `enemyGuard=0` (L-042). Tecla 3 do debug mata o player; `?debug&round=5` abre o Oni e `round=15` a Tecelã; `?debug&enemyVariant=corcunda|rastejante|bruto` força a aparência.
-  - Intermitentes: `heal` (HEAL-09) e `armed` (ARM-12) também em `dev`; `enemy-react` falhou 1 vez em 2 suítes completas ("socoBaixo deveria acertar", golpe não chegou a sair) e passou 3 de 3 sozinho. A causa conhecida é a entrada por tecla entre o tempo real e o `step`.
-  - `tests/core/lightning.test.ts` (1000 seeds) estoura 5 s com a máquina carregada; passa livre ou com `--maxWorkers=2`.
-  - Ciclo do inimigo: 450 ms windup + 120 ms ataque + 800 ms descanso; `step(16)` = 1 frame, `step(16.7)` pode virar 2.
-- **Para o UAT da F7**: pé solto nos frames `chuteGiratorio-wind` e `chuteCarregado-wind`; parry anula até golpe imbloqueável e a onda de choque do chefe (leitura literal de PAR-02; decidir se fica); tempos/hitboxes dos golpes em `src/data/moves.ts`.
-- **Para o UAT do sprite**: seguem abertos `land-1` com pernas um pouco longas, braço de trás solto no `jump-0`, `ganchoAscendente-hit` com cabeça torta e `voadora-hit` com o joelho de trás lendo como braço. No chefe, olhar a pose do `dead`, o orbe do preparo da rajada e o novelo creme da Tecelã.
-- **Blockers**: nenhum para seguir em `dev`; `main` espera o pedido do usuário.
-- **Branch**: `dev`
+- **Feature**: nenhuma em andamento. F12 `combate-mestre` mergeada em `dev` em 03/10 (AD-022).
+- **Next step**: o usuário pediu melhorias de feel do combate (impacto, rastro do soco, chute e pulo que deixam o personagem torto, gancho perto demais do corpo). Analisar antes de abrir a feature.
+
+Pendências antigas que continuam: silhueta própria para a Tecelã; alcance do arremesso (garrafa ~260 px, cadeira ~140 px); taxa de atualização do monitor do usuário; `main` só recebe `dev` quando ele pedir; worktrees antigas (`scratchpad/wt-f10`, `surGue-player-refine`) e branches já mergeadas para limpar se ele quiser. Depois da F12: F13 `foco-e-ambiente`, F14, F15, F16; F6 e F9 depois da expansão.

@@ -28,6 +28,9 @@ npm run smoke       # build + cenários no Edge headless (scripts/smoke/); `npm 
 | K / Z | golpe forte |
 | U / Shift | guarda; apertada na hora do golpe, parry |
 | Q | esquiva |
+| S + Q | abaixar (escapa do golpe alto) |
+| U + direção | virar com a guarda levantada |
+| J logo depois de uma defesa certa | Contra (contra-ataque garantido) |
 | E | pegar objeto / arremessar |
 | S + E | largar o objeto |
 | L / C e I / V | técnica do slot 1 e do slot 2 (compradas na loja) |
@@ -61,7 +64,10 @@ Parâmetros da URL, todos junto de `?debug`:
 | `round=N` | começar na rodada N: `round=5` abre o Oni do Portão, `round=15` a Tecelã de Maldições |
 | `maxAlive=N` | máximo de inimigos vivos ao mesmo tempo |
 | `enemyVariant=corcunda\|rastejante\|bruto` | forçar a aparência dos inimigos |
-| `enemyGuard=N` | fixar a chance de o inimigo levantar a guarda contra golpe leve (0 = nunca, 1 = sempre) |
+| `enemyGuard=N` | fixar a chance total de o inimigo levantar a guarda (0 = nunca, 1 = sempre); desliga a leitura de repetição |
+| `enemyAttack=white\|red\|low` | forçar o tipo do golpe dos inimigos (alto, imbloqueável, baixo) |
+| `enemyString=1..4` | forçar quantos golpes seguidos o inimigo dá |
+| `shove=N` | chance (0 a 1) de o inimigo empurrar no 4º golpe leve seguido |
 | `tech=<id>[,<id>]` | começar com técnicas equipadas (`divergente`, `vermelho`, `azul`, `corte`) |
 | `fragments=N` | começar com N fragmentos |
 | `noshop=1` | pular a loja entre as rodadas |
@@ -85,6 +91,7 @@ Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapsh
 
 - Movimento, inimigo, IA, chefe, economia e drops: `src/data/tuning.ts`
 - Golpes (tempos, hitboxes, dano, efeitos) e defesa (guarda, parry, esquiva): `src/data/moves.ts`
+- Abaixar, janela de Contra e Deflexão, leitura de repetição e empurrão: `DUCK`, `COUNTER` e `READING` em `src/data/moves.ts`
 - Técnicas amaldiçoadas: `src/data/techniques.ts`
 - Ofertas e preços da loja: `src/data/shop.ts`
 - Hitstop (congelamento do golpe leve e do forte): `src/data/fx.ts`

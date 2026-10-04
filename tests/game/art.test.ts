@@ -75,6 +75,12 @@ import {
   TECELA_FRAMES,
 } from '../../src/game/art/sprites/boss';
 import { BOSS, PLAYER_MOVE } from '../../src/data/tuning';
+import { MOVE_NAMES } from '../../src/data/moves';
+import type Phaser from 'phaser';
+import { createArt } from '../../src/game/art';
+import { TEX } from '../../src/game/textures';
+import { TELEGRAPH_FRAMES } from '../../src/game/art/sprites/telegraph';
+import { KIND_COLOR, type AttackKind } from '../../src/core/attackKind';
 
 describe('paleta única (ART-01)', () => {
   it('tem no máximo 42 cores (RDA-01, AD-017), cada uma com chave de 1 caractere', () => {
@@ -1304,6 +1310,56 @@ describe('frames aéreos, de defesa e de status (MOV-14, T9)', () => {
   });
 });
 
+describe('frames do abaixar e dos Contras (CNT-17, T9 da combate-mestre)', () => {
+  const COUNTER_MOVES = ['contra', 'contraGancho'] as const;
+  const NEW_FRAMES = [
+    'duck',
+    'contra-wind',
+    'contra-hit',
+    'contra-recover',
+    'contraGancho-wind',
+    'contraGancho-hit',
+    'contraGancho-recover',
+  ] as const;
+  const topRow = (rows: readonly string[]): number => rows.findIndex((r) => [...r].some((c) => c !== TRANSPARENT));
+
+  it('os 7 frames existem em PLAYER_MOVE_FRAMES (CNT-17)', () => {
+    for (const name of NEW_FRAMES) expect(Object.hasOwn(PLAYER_MOVE_FRAMES, name), name).toBe(true);
+  });
+
+  it('passam no parseSheet só com cores da paleta, no tamanho dos outros frames (32x24 texels)', () => {
+    const subset = Object.fromEntries(NEW_FRAMES.map((n) => [n, PLAYER_MOVE_FRAMES[n]]));
+    const sheet = parseSheet('player-moves-counter', subset, PALETTE_KEYS);
+    expect(sheet.frames).toHaveLength(7);
+    expect(sheet.width).toBe(PLAYER_FRAME_W);
+    expect(sheet.height).toBe(PLAYER_FRAME_H);
+  });
+
+  it('todo golpe de MOVE_NAMES tem os frames wind, hit e recover na folha do jogador (MOV-14)', () => {
+    const all = { ...PLAYER_FRAMES, ...PLAYER_MOVE_FRAMES };
+    expect(MOVE_NAMES).toEqual(expect.arrayContaining(['contra', 'contraGancho']));
+    for (const move of MOVE_NAMES) {
+      for (const part of ['wind', 'hit', 'recover']) expect(Object.hasOwn(all, `${move}-${part}`), `${move}-${part}`).toBe(true);
+    }
+  });
+
+  it('as 3 fases de cada Contra são distintas entre si (golpe legível)', () => {
+    for (const move of COUNTER_MOVES) {
+      const wind = PLAYER_MOVE_FRAMES[`${move}-wind`];
+      const hit = PLAYER_MOVE_FRAMES[`${move}-hit`];
+      const recover = PLAYER_MOVE_FRAMES[`${move}-recover`];
+      expect(wind, `${move}: wind vs hit`).not.toEqual(hit);
+      expect(hit, `${move}: hit vs recover`).not.toEqual(recover);
+      expect(wind, `${move}: wind vs recover`).not.toEqual(recover);
+    }
+  });
+
+  it('o topo opaco do duck fica pelo menos 3 texels abaixo do topo do idle-0', () => {
+    expect(topRow(PLAYER_MOVE_FRAMES.duck) - topRow(PLAYER_FRAMES['idle-0'])).toBeGreaterThanOrEqual(3);
+  });
+
+});
+
 describe('cores da barra de estrutura e do combo (STR-09)', () => {
   it('fundo, preenchimento e quebra da barra de estrutura são cores da paleta', () => {
     for (const c of [STRUCTURE_BAR_BG_COLOR, STRUCTURE_BAR_FILL_COLOR, STRUCTURE_BAR_BREAK_COLOR]) {
@@ -1776,5 +1832,58 @@ describe('ponta dos dedos do Vermelho por frame (RDA-04)', () => {
 
   it('um frame que não é do Vermelho lança erro', () => {
     expect(() => redFingertip('azul-charge')).toThrow(/azul-charge/);
+  });
+});
+
+describe('marcador de telegrafo (HGT-09, T16 da combate-mestre)', () => {
+  const KINDS: AttackKind[] = ['white', 'red', 'low'];
+  const opaque = (kind: AttackKind): string[] =>
+    TELEGRAPH_FRAMES[kind].flatMap((row, y) => [...row].flatMap((c, x) => (c === TRANSPARENT ? [] : [`${x},${y}`])));
+
+  it('a folha tem os frames white, red e low, todos do mesmo tamanho (7x7 texels), só com cores da paleta', () => {
+    expect(Object.keys(TELEGRAPH_FRAMES).sort()).toEqual(['low', 'red', 'white']);
+    const sheet = parseSheet('telegraph', TELEGRAPH_FRAMES, PALETTE_KEYS);
+    expect(sheet.frames).toHaveLength(3);
+    expect(sheet.width).toBe(7);
+    expect(sheet.height).toBe(7);
+  });
+
+  it('o conjunto de texels opacos difere em cada par de frames', () => {
+    for (const [a, b] of [['white', 'red'], ['white', 'low'], ['red', 'low']] as const) {
+      expect(opaque(a), `${a} vs ${b}`).not.toEqual(opaque(b));
+    }
+  });
+
+  it.each(KINDS)('%s: usa a cor do tipo (KIND_COLOR) e o contorno k, e mais nenhuma', (kind) => {
+    const colors = new Set(TELEGRAPH_FRAMES[kind].flatMap((row) => [...row]).filter((c) => c !== TRANSPARENT));
+    expect([...colors].sort()).toEqual(['k', KIND_COLOR[kind]].sort());
+  });
+
+  it('TEX.fxTelegraph existe e não repete a chave de outra textura', () => {
+    expect(typeof TEX.fxTelegraph).toBe('string');
+    const sameKey = Object.entries(TEX).filter(([, key]) => key === TEX.fxTelegraph);
+    expect(sameKey).toHaveLength(1);
+  });
+
+  it('createArt registra a folha do marcador em TEX.fxTelegraph, com um frame por tipo', () => {
+    const sheets = new Map<string, string[]>();
+    const ctx = new Proxy({}, { get: () => () => undefined, set: () => true });
+    const graphics = new Proxy({}, { get: () => () => undefined });
+    const scene = {
+      textures: {
+        exists: () => false,
+        remove: () => undefined,
+        createCanvas: (key: string) => {
+          const frames: string[] = [];
+          sheets.set(key, frames);
+          return { getContext: () => ctx, add: (name: string) => frames.push(name), refresh: () => undefined };
+        },
+        get: (key: string) => ({ has: (frame: string) => sheets.get(key)?.includes(frame) ?? false }),
+      },
+      anims: { exists: () => false, remove: () => undefined, create: () => undefined },
+      add: { graphics: () => graphics },
+    } as unknown as Phaser.Scene;
+    createArt(scene);
+    expect(sheets.get(TEX.fxTelegraph)).toEqual(['white', 'red', 'low']);
   });
 });
