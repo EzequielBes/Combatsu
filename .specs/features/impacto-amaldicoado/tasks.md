@@ -130,8 +130,8 @@ T20 → T21 → T22 → T23 → T24
 **Reuses**: padrão de relógio de `src/core/dodge.ts`
 **Requirement**: POS-07, POS-08, POS-09
 **Done when**:
-- [ ] Soma dos passos = 10 px (forte) e 4 px (leve), terminando exatamente em `startupMs`; nada depois.
-- [ ] `blocked` no meio para o resto; um novo `start` reinicia.
+- [x] Soma dos passos = 10 px (forte) e 4 px (leve), terminando exatamente em `startupMs`; nada depois.
+- [x] `blocked` no meio para o resto; um novo `start` reinicia.
 **Tests**: unit
 **Gate**: quick
 
