@@ -1,6 +1,9 @@
 // Boneco articulado 2D (spike boneco-articulado): RIG-01..07 e EDG-01, derivados da spec em .specs/features/boneco-articulado/spec.md.
 import { describe, expect, it } from 'vitest';
 import { easeInCubic, easeInOutCubic, easeOutBack, inbetween, shortestArc } from '../../src/game/art/rig/interpolate';
+import { PALETTE_KEYS } from '../../src/game/art/palette';
+import { rasterize } from '../../src/game/art/rig/rasterize';
+import { topRowOf } from '../../src/core/frameInvariants';
 import { BONES, REST_ANGLES, aimLimb, makePose, measuredLength, solve, type BoneName, type JointName, type Pose } from '../../src/game/art/rig/skeleton';
 
 const JOINTS_REQUIRED: JointName[] = [
@@ -93,5 +96,68 @@ describe('inbetween (RIG-07)', () => {
       expect(ease(1), ease.name).toBeCloseTo(1, 9);
     }
     expect(Math.max(...[0.6, 0.7, 0.8, 0.9].map((t) => easeOutBack(t)))).toBeGreaterThan(1);
+  });
+});
+
+// ---------------------------------------------------------------- rasterizador (RIG-03, EDG-01)
+
+/** Poses variadas (repouso, braços erguidos, perna esticada, tronco inclinado) para varrer o rasterizador. */
+/** Guarda dentro da grade: braços dobrados na frente do peito, pés no chão. */
+const stanceAt = (x: number): Pose => {
+  let p = makePose({ x, y: 22.5 });
+  p = aimLimb(p, 'armNear', { x: x + 3.5, y: 17.5 }, -1);
+  p = aimLimb(p, 'armFar', { x: x + 3, y: 16 }, -1);
+  p = aimLimb(p, 'legNear', { x: x + 3, y: 28 }, 1);
+  return aimLimb(p, 'legFar', { x: x - 3, y: 28 }, 1);
+};
+const RASTER_POSES: Array<[string, Pose]> = [
+  ['guarda', stanceAt(10)],
+  ['braço para cima', aimLimb(makePose({ x: 10, y: 22.5 }), 'armNear', { x: 16, y: 8 }, -1)],
+  ['perna para a frente', aimLimb(makePose({ x: 10, y: 22.5 }), 'legNear', { x: 15, y: 25 }, 1)],
+  ['tronco para trás', makePose({ x: 10, y: 21 }, { spine: 200 })],
+];
+
+describe('rasterize (RIG-03)', () => {
+  it.each(RASTER_POSES)('%s: grade de 30 linhas x 32 colunas só com teclas da PALETTE', (_name, pose) => {
+    const { frame } = rasterize(pose);
+    expect(frame).toHaveLength(30);
+    for (const row of frame) {
+      expect(row).toHaveLength(32);
+      for (const ch of row) expect(ch === '.' || PALETTE_KEYS.has(ch), `tecla '${ch}'`).toBe(true);
+    }
+  });
+
+  it('o corpo aparece: há texels opacos, a cabeça é carimbada no pescoço e o contorno k existe', () => {
+    const { frame } = rasterize(RASTER_POSES[0][1]);
+    const opaque = frame.join('').replace(/\./g, '');
+    expect(opaque.length).toBeGreaterThan(100);
+    expect(topRowOf(frame, ['h', 'H', 'j'])).not.toBeNull();
+    expect(opaque).toContain('k');
+  });
+});
+
+describe('recorte (EDG-01)', () => {
+  const opaqueCols = (frame: readonly string[], col: number): number[] => frame.map((r, y) => (r[col] !== '.' ? y : -1)).filter((y) => y >= 0);
+
+  it('uma pose inteira dentro da grade não recorta nada', () => {
+    expect(rasterize(RASTER_POSES[0][1]).clipped).toBe(0);
+  });
+
+  it('empurrada para fora da borda esquerda, recorta e conta os texels; o que fica é igual ao da pose original', () => {
+    const base = stanceAt(14);
+    const shift = 9;
+    const moved = { root: { x: base.root.x - shift, y: base.root.y }, angles: base.angles };
+    const a = rasterize(base);
+    const b = rasterize(moved);
+    expect(a.clipped).toBe(0);
+    expect(b.clipped).toBeGreaterThan(0);
+    expect(b.frame).toHaveLength(30);
+    for (let x = 0; x < 32 - shift; x++) expect(opaqueCols(b.frame, x), `coluna ${x}`).toEqual(opaqueCols(a.frame, x + shift));
+  });
+
+  it('o que cai fora da borda de baixo também é contado', () => {
+    const r = rasterize({ ...stanceAt(10), root: { x: 10, y: 28 } });
+    expect(r.frame).toHaveLength(30);
+    expect(r.clipped).toBeGreaterThan(0);
   });
 });
