@@ -85,6 +85,7 @@ import { Callout } from '../game/techFx/Callout';
 import { KokusenFx } from '../game/techFx/KokusenFx';
 import { CursedFx } from '../game/CursedFx';
 import { ImpactFrame } from '../game/ImpactFrame';
+import { FocusLines } from '../game/FocusLines';
 import { impactTier, type ImpactTier } from '../core/impactTier';
 import { CAMERA_FEEL } from '../data/feel';
 import { strikeToWorld } from '../core/strikePath';
@@ -209,6 +210,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private kokusenFx!: KokusenFx;
   private cursedFx!: CursedFx;
   private impactFrame!: ImpactFrame;
+  /** Linhas de foco do golpe decisivo (FOC-01), na `uiLayer`. */
+  private focusLines!: FocusLines;
   /** Último impacto do golpe do jogador, para o snapshot (IMP-16). */
   private lastImpact: { tier: ImpactTier; impactFrame: boolean } | null = null;
   /** Quadros sem ponto de golpe já avisados (EDG-01: um aviso por nome). */
@@ -434,6 +437,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     });
     this.addHud();
     this.shopPanel = new ShopPanel(this, this.uiLayer);
+    this.focusLines = new FocusLines(this, this.uiLayer, this.scale.width, this.scale.height);
   }
 
   /** Zona morta, lerp, vista (com o zoom atual) e limites do mundo para o seguidor da câmera. */
@@ -475,6 +479,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // Câmera lenta da esquiva perfeita (DOD-07): conta em tempo real e, enquanto dura, o tempo de jogo (física,
     // tweens, timers e a lógica pelo `dt` abaixo) anda a 30%. O relógio real dos efeitos (`base`) não desacelera.
     this.slowMo.update(realDt);
+    // FOC-01: as linhas de foco andam em tempo real, também no hitstop.
+    this.focusLines.update(realDt);
     this.applyTimeScale();
     const base = realDt * (this.fxLab?.timeScale ?? 1);
     const clamped = base * this.slowMo.timeScale;
@@ -1338,7 +1344,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       tech: this.techSnapshot(),
       kokusen: this.techRunner.kokusenSnapshot, // TFX-07, KOK-01/02/10/11/30/31
       techObjects: this.techRunner.techObjectsSnapshot, // RED-14, BLU-10
-      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState, aura: this.aura.pos, trails: this.cursedFx.trails, lastImpact: this.lastImpact },
+      fx: { live: this.fxRegistry.size, degraded: this.kokusenFx.degraded, layers: this.realtimeFx.layers(), red: this.techRunner.redDebugState, aura: this.aura.pos, trails: this.cursedFx.trails, focus: this.focusLines.view, lastImpact: this.lastImpact },
       // Desvio da Fase 6 (CAST-15/KOK-24): zoom da câmera principal, sem contrato prévio no snapshot.
       camera: {
         zoom: this.cameras.main.zoom,
@@ -1414,14 +1420,22 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // RCT-01, RCT-02: o inimigo comum que fica de pé desliza para longe do jogador.
     if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1);
     if (hit.knockdown && target instanceof Enemy) this.crackWatch.set(target, this.clockMs);
-    this.reactCamera(tier, hit, brokePosture);
+    this.reactCamera(tier, hit, point, brokePosture);
+  }
+
+  /** Ponto do mundo na tela da câmera principal (FOC-01), já com zoom e tranco. */
+  private worldToScreen(p: Vec2): Vec2 {
+    const view = this.cameras.main.worldView;
+    const zoom = this.cameras.main.zoom;
+    return { x: (p.x - view.x) * zoom, y: (p.y - view.y) * zoom };
   }
 
   /**
    * Câmera que reage ao impacto (CAM-01..05, CAM-07): tranco no forte, micro-zoom no decisivo (nunca durante o zoom
    * do finalizador) e câmera lenta na quebra de postura e no Contra; um novo gatilho reinicia sem empilhar (CAM-04).
    */
-  private reactCamera(tier: ImpactTier, hit: Hit, brokePosture: boolean): void {
+  private reactCamera(tier: ImpactTier, hit: Hit, point: Vec2, brokePosture: boolean): void {
+    if (tier === 'decisive') this.focusLines.show(this.worldToScreen(point));
     if (tier === 'heavy') this.cameraKick.kick(hit.direction.x, hit.direction.y);
     const cam = this.cameras.main;
     if (tier === 'decisive' && this.finisherZoomMs <= 0 && !cam.zoomEffect.isRunning) {
