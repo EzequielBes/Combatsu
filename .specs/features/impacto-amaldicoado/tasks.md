@@ -17,7 +17,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 Regras que valem para toda task:
 
 - Um commit por task, em Conventional Commits, com a task marcada aqui no mesmo commit. Identidade: `git -c user.name="Claude" -c user.email="ezequieltbeserra00@gmail.com" commit`.
-- Nenhum teste antigo é apagado, pulado ou afrouxado. As exceções são os asserts da faísca e da tremida do golpe corpo a corpo do jogador (IMP-06, CAM-06) e as linhas literais da altura 24 do frame (T9). O commit diz qual.
+- Nenhum teste antigo é apagado, pulado ou afrouxado. As exceções são os asserts da faísca e da tremida do golpe corpo a corpo do jogador (IMP-06, CAM-06) as linhas literais da altura 24 do frame (T9) e a saída do `kick` do `it.each` do SPR-14 (as linhas `S` do chute foram removidas de propósito na T11). O commit diz qual.
 - Todo limiar citado num AC é testado nos dois lados (L-010). A chamada do adaptador que repassa um valor ao Phaser é conferida, não só o helper (L-043).
 - Antes de implementar, rodar o teste novo e ver falhar.
 - Tasks de arte: gerar a prancha com `node tools/sprite-preview.mjs <scratchpad> --only player` e olhar os PNG dos frames mexidos antes do commit.
