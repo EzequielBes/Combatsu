@@ -64,27 +64,27 @@ export interface Bone {
 
 /*
  * Medidas tiradas do `idle-0`: cabeça de 11 linhas (6..16), tronco de 6 de comprimento do quadril ao pescoço (linhas
- * 17..24 com cinto e gola), ombros a ~3 texels do pescoço. As pernas (thigh+shin = 7) ficam dobradas na postura de
- * guarda para caber nas 5 linhas do `idle-0`, e esticam na ponta do pé no golpe. O braço (6 + 6) é mais longo que o do
+ * 17..24 com cinto e gola), ombros a ~3 texels do pescoço. As pernas (coxa + canela = 6,4 texels) ficam dobradas na postura de
+ * guarda para caber nas 5 linhas do `idle-0`, e esticam na ponta do pé no golpe. O braço (6,5 + 6,5) é mais longo que o do
  * idle (7 desenhado de lado, em perspectiva achatada): o golpe esticado precisa de ~13 texels do ombro ao punho
  * (SPEC_DEVIATION de proporção, ver spec RIG-06).
  */
 export const BONES: readonly Bone[] = [
   { name: 'spine', from: 'hip', to: 'chest', length: 3, parent: null },
   { name: 'neckBone', from: 'chest', to: 'neck', length: 3, parent: 'spine' },
-  { name: 'shoulderNear', from: 'chest', to: 'shoulderNear', length: 1, parent: 'spine' },
-  { name: 'upperArmNear', from: 'shoulderNear', to: 'elbowNear', length: 6, parent: null },
-  { name: 'foreArmNear', from: 'elbowNear', to: 'wristNear', length: 6, parent: 'upperArmNear' },
-  { name: 'shoulderFar', from: 'chest', to: 'shoulderFar', length: 1, parent: 'spine' },
-  { name: 'upperArmFar', from: 'shoulderFar', to: 'elbowFar', length: 6, parent: null },
-  { name: 'foreArmFar', from: 'elbowFar', to: 'wristFar', length: 6, parent: 'upperArmFar' },
+  { name: 'shoulderNear', from: 'chest', to: 'shoulderNear', length: 2.2, parent: 'spine' },
+  { name: 'upperArmNear', from: 'shoulderNear', to: 'elbowNear', length: 6.5, parent: null },
+  { name: 'foreArmNear', from: 'elbowNear', to: 'wristNear', length: 6.5, parent: 'upperArmNear' },
+  { name: 'shoulderFar', from: 'chest', to: 'shoulderFar', length: 1.4, parent: 'spine' },
+  { name: 'upperArmFar', from: 'shoulderFar', to: 'elbowFar', length: 6.5, parent: null },
+  { name: 'foreArmFar', from: 'elbowFar', to: 'wristFar', length: 6.5, parent: 'upperArmFar' },
   { name: 'pelvisNear', from: 'hip', to: 'hipNear', length: 1.6, parent: null },
-  { name: 'thighNear', from: 'hipNear', to: 'kneeNear', length: 3.5, parent: null },
-  { name: 'shinNear', from: 'kneeNear', to: 'ankleNear', length: 3.5, parent: 'thighNear' },
+  { name: 'thighNear', from: 'hipNear', to: 'kneeNear', length: 3.2, parent: null },
+  { name: 'shinNear', from: 'kneeNear', to: 'ankleNear', length: 3.2, parent: 'thighNear' },
   { name: 'footNear', from: 'ankleNear', to: 'toeNear', length: 3, parent: null },
   { name: 'pelvisFar', from: 'hip', to: 'hipFar', length: 1.6, parent: null },
-  { name: 'thighFar', from: 'hipFar', to: 'kneeFar', length: 3.5, parent: null },
-  { name: 'shinFar', from: 'kneeFar', to: 'ankleFar', length: 3.5, parent: 'thighFar' },
+  { name: 'thighFar', from: 'hipFar', to: 'kneeFar', length: 3.2, parent: null },
+  { name: 'shinFar', from: 'kneeFar', to: 'ankleFar', length: 3.2, parent: 'thighFar' },
   { name: 'footFar', from: 'ankleFar', to: 'toeFar', length: 3, parent: null },
 ];
 
