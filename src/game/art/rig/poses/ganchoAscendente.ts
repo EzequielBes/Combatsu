@@ -3,7 +3,7 @@
  * sequência de quadros com antecipação (agacha além do wind) e overshoot (o punho passa do ponto do hit e volta).
  * Os alvos são pontos do frame de 32x30 (bordas de texel); a cinemática inversa devolve os ângulos.
  */
-import { easeInCubic, easeInOutCubic, inbetween } from '../interpolate';
+import { easeInOutCubic, inbetween } from '../interpolate';
 import { rasterize, wristTexel, type RasterResult } from '../rasterize';
 import { aimLimb, makePose, type Pose, type Vec2 } from '../skeleton';
 
@@ -93,12 +93,12 @@ interface Step {
 /** Quadros da animação: guarda, antecipação, wind, subida acelerando, hit, overshoot, e a volta até o recover. */
 const STEPS: readonly Step[] = [
   { from: POSE_GUARD, to: POSE_WIND, t: 0 },
-  { from: POSE_GUARD, to: POSE_WIND, t: 0.55, ease: easeInOutCubic },
-  { from: POSE_GUARD, to: POSE_WIND, t: 1.25 },
+  { from: POSE_GUARD, to: POSE_WIND, t: 1.3 },
   { from: POSE_GUARD, to: POSE_WIND, t: 1 },
-  { from: POSE_WIND, to: POSE_HIT, t: 0.3, ease: easeInCubic },
-  { from: POSE_WIND, to: POSE_HIT, t: 0.62, ease: easeInCubic },
-  { from: POSE_WIND, to: POSE_HIT, t: 0.88 },
+  { from: POSE_WIND, to: POSE_HIT, t: 0.25, ease: easeInOutCubic },
+  { from: POSE_WIND, to: POSE_HIT, t: 0.45 },
+  { from: POSE_WIND, to: POSE_HIT, t: 0.65 },
+  { from: POSE_WIND, to: POSE_HIT, t: 0.82 },
   { from: POSE_WIND, to: POSE_HIT, t: 1 },
   { from: POSE_WIND, to: POSE_HIT, t: 1.08 },
   { from: POSE_HIT, to: POSE_RECOVER, t: 0.35, ease: easeInOutCubic },
