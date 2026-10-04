@@ -20,6 +20,11 @@ export function inbetween(a: Pose, b: Pose, t: number): Pose {
   if (a.body) out.body = a.body;
   const sa = a.armScale ?? 1;
   const sb = b.armScale ?? 1;
+  if (a.handScale !== undefined || b.handScale !== undefined) {
+    const ha = a.handScale ?? 1;
+    const hb = b.handScale ?? 1;
+    out.handScale = ha + (hb - ha) * t;
+  }
   if (a.armScale !== undefined || b.armScale !== undefined) out.armScale = sa + (sb - sa) * t;
   for (const { name } of BONES) out.angles[name] = a.angles[name] + shortestArc(a.angles[name], b.angles[name]) * t;
   return out;

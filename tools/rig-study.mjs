@@ -28,8 +28,10 @@ const { PLAYER_MOVE_FRAMES } = await src('game/art/sprites/playerMoves.ts');
 const { ENEMY_VARIANT_FRAMES } = await src('game/art/sprites/enemy.ts');
 const { PRESETS } = await src('game/art/rig/presets.ts');
 const { uppercutFor, reachShortfall } = await src('game/art/rig/poses/uppercut.ts');
-const { TUNINGS } = await src('game/art/rig/poses/tunings.ts');
+const { TUNINGS, MIN_STRIKE } = await src('game/art/rig/poses/tunings.ts');
 const { rasterize } = await src('game/art/rig/rasterize.ts');
+const { headOf } = await src('game/art/rig/presets.ts');
+const { CHIBI } = await src('game/art/rig/skeleton.ts');
 const { DEFAULT_EDGE_PATHS, findEdge } = await import(pathToFileURL(join(root, 'scripts', 'smoke', 'lib.ts')).href);
 
 const sets = PRESETS.map((b) => uppercutFor(b, TUNINGS[b.name]));
@@ -44,8 +46,9 @@ const estudo = [
 ];
 const tiras = sets.map((s) => ({
   id: 'tira-' + s.body.name,
-  lines: [s.sequence.map((r, k) => ({ name: String(k + 1), rows: r.frame, mark: k === 7 ? s.strike : undefined }))],
+  lines: [0, 6].map((o) => s.sequence.slice(o, o + 6).map((r, k) => ({ name: String(o + k + 1), rows: r.frame, mark: o + k === 7 ? s.strike : undefined }))),
 }));
+const heads = [CHIBI, ...PRESETS].map((b) => ({ name: b.name, rows: headOf(b).grid }));
 const enemy = ENEMY_VARIANT_FRAMES.corcunda['idle-0'];
 const escala = sets.map((s, i) => ({ name: label(i), player: rasterize(s.idle).frame, enemy }));
 
@@ -56,7 +59,7 @@ for (const [i, s] of sets.entries()) {
   const target = TUNINGS[body.name]?.strike ?? { x: 17.2, y: 6.2 };
   console.log(
     `${label(i)}: topo ${top} (altura ${30 - top}), cabeça ${body.head}, perna (quadril ao chão) ${(body.thigh + body.shin + 1.8).toFixed(1)}, braço ${(body.upperArm + body.foreArm).toFixed(1)}, ` +
-      `golpe col ${s.strike.col} row ${s.strike.row}, falta ${reachShortfall(s, target).toFixed(2)}`,
+      `golpe col ${s.strike.col} row ${s.strike.row}, falta p/ alvo ${reachShortfall(s, target).toFixed(2)}, p/ mínimo ${reachShortfall(s, MIN_STRIKE).toFixed(2)}`,
   );
 }
 
@@ -69,7 +72,7 @@ if (!edge) {
 const pageFn = (data) => {
   const S = data.scale, BG = '#2a3863', cw = 32 * S + 8, ch = 30 * S + 24;
   const hex = (n) => '#' + n.toString(16).padStart(6, '0');
-  const drawRows = (ctx, rows, x, y) =>
+  const drawRows = (ctx, rows, x, y, S = data.scale) =>
     rows.forEach((row, j) => [...row].forEach((c, i) => {
       if (c === '.') return;
       ctx.fillStyle = hex(data.palette[c]); ctx.fillRect(x + i * S, y + j * S, S, S);
@@ -97,6 +100,11 @@ const pageFn = (data) => {
   };
   board('estudo', data.estudo);
   for (const t of data.tiras) board(t.id, t.lines);
+  { // Cabeças em escala grande (cabecas.png)
+    const K = S * 2, cwh = 15 * K, chh = 12 * K + 20;
+    const c2 = canvasOf('cabecas', 4 * cwh, chh);
+    data.heads.forEach((h, k) => { drawRows(c2, h.rows, k * cwh + K, K, K); c2.fillStyle = '#fff'; c2.fillText(h.name, k * cwh + K, 12 * K + 4); });
+  }
   // Escala: jogador (origem na coluna 10) e inimigo (centro na coluna 12,5) pé a pé, o inimigo 12 texels à frente.
   const ew = 32, ox = 12;
   const W = 3 * (ew + ox + 6) * S, H = 34 * S + 24;
@@ -115,8 +123,8 @@ const browser = await puppeteer.launch({ executablePath: edge, headless: true })
 try {
   const page = await browser.newPage();
   await page.setContent('<body style="margin:0;background:#000"></body>');
-  await page.evaluate(pageFn, { palette: PALETTE, estudo, tiras, escala, scale: Number(process.env.SPRITE_SCALE) || 6 });
-  for (const id of ['estudo', ...tiras.map((t) => t.id), 'escala']) {
+  await page.evaluate(pageFn, { palette: PALETTE, estudo, tiras, escala, heads, scale: Number(process.env.SPRITE_SCALE) || 6 });
+  for (const id of ['estudo', 'cabecas', ...tiras.map((t) => t.id), 'escala']) {
     await (await page.$('#' + id)).screenshot({ path: join(outDir, id + '.png') });
     console.log('  ' + join(outDir, id + '.png'));
   }

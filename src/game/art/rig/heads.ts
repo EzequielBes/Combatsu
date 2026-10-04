@@ -16,18 +16,18 @@ export const HEAD_CHIBI: HeadSprite = { grid: HEAD_FOCUS, neckCol: 5 };
 
 /** Cabeça de 5 linhas (heroico): espetos, franja, o olho e o queixo. */
 export const HEAD_SMALL: HeadSprite = {
-  grid: ['.k.k.k.', 'kHjHjhk', 'khhhppk', 'khhxbpk', '.knPpk.'],
+  grid: ['.k.k.k..', 'kHjHjjk.', 'khhhhppk', 'khhxwbpk', '.knPppk.'],
   neckCol: 3,
 };
 
 /** Cabeça de 6 linhas (semi). */
 export const HEAD_MEDIUM: HeadSprite = {
-  grid: ['..k..k.k..', '.kHkkHjjk.', 'kjHjjjhhpk', 'khhhhhwbpk', 'khhhxPpppk', '.kknPpxk..'],
+  grid: ['..k..k.k..', '.kHkkHjjk.', 'kjHjjhhppk', 'khhhxPwbpk', 'khhhxPppbk', '.kknnPPpk.'],
   neckCol: 4,
 };
 
 /** Cabeça de 8 linhas (inter): a do golpe com as mechas e o rosto comprimidos. */
 export const HEAD_LARGE: HeadSprite = {
-  grid: ['...k..k..k..', '..kHk.kHkjk.', '.kjHjkjHjHjk', 'kjhhHjhhjhpk', 'khhhhhpphwbk', 'khhhxPpppppk', '.khhxPpbbpk.', '.knnNkxPPxk.'],
+  grid: ['...k..k..k..', '..kHk.kHkjk.', '.kjHjkjHjHjk', 'kjhhHjhhhppk', 'khhhxPpwbppk', 'khhhxPppppk.', '.khhxPpbbpk.', '.knnNkxPPxk.'],
   neckCol: 5,
 };

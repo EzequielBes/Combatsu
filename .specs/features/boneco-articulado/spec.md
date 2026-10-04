@@ -59,6 +59,20 @@ A arte do player é montada à mão, peça por peça, em grades de texto (AD-002
 
 ---
 
+### P2: Estudo de proporções do boneco
+
+**User Story**: Como jogador, quero um personagem com proporções de lutador (cabeça menor, pernas longas, braço do tamanho do corpo), para ele não parecer um anão de braços grandes.
+
+**Acceptance Criteria**:
+
+1. PRP-01: The rig SHALL define three `Proportions` presets (`heroico`, `semi`, `inter`) whose standing height is 24 to 26 texels and equals head + neck + torso + thigh + shin + sole.
+2. PRP-02: In every preset the near and far arm, leg and foot SHALL have the same length.
+3. PRP-03: Each preset SHALL have its own head grid with the spiked hair, the eye and the `k` outline, with as many rows as its `head` proportion.
+4. PRP-04: For each preset the rasterized idle, wind, hit, recover and the 12 sequence frames SHALL pass RIG-02, RIG-03, POS-02 (and POS-03 for the hit) with no clipped texel.
+5. PRP-05: For each preset the wrist of the hit SHALL pass POS-01, POS-05 and POS-10 with the arm not longer than the preset's arm.
+
+---
+
 ## Edge Cases
 
 - EDG-01: IF a bone end falls outside the 32x30 grid THEN the rasterizer SHALL clip it and report the clipped texel count, like `composeWithStats`.
@@ -79,9 +93,14 @@ A arte do player é montada à mão, peça por peça, em grades de texto (AD-002
 | RIG-08 | P1: Gancho ascendente pelo boneco | Execute | Done |
 | RIG-09 | P1: Gancho ascendente pelo boneco | Execute | Done |
 | RIG-10 | P1: Gancho ascendente pelo boneco | Execute | Done |
+| PRP-01 | P2: Estudo de proporções | Execute | Done |
+| PRP-02 | P2: Estudo de proporções | Execute | Done |
+| PRP-03 | P2: Estudo de proporções | Execute | Done |
+| PRP-04 | P2: Estudo de proporções | Execute | Done |
+| PRP-05 | P2: Estudo de proporções | Execute | Done |
 | EDG-01 | Edge Cases | Execute | Done |
 
-**Coverage:** 11 total, 11 mapped to implicit Execute steps (spike Medium), tests in `tests/game/rig.test.ts`.
+**Coverage:** 16 total, 16 mapped to implicit Execute steps (spike Medium), tests in `tests/game/rig.test.ts` and `tests/game/rigProportions.test.ts`.
 
 ---
 

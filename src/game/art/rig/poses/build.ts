@@ -18,6 +18,8 @@ export interface PoseSpec {
   neck?: number;
   /** Encurtamento de perspectiva dos braços (padrão 1: comprimento cheio). */
   armScale?: number;
+  /** Escala só da mão (padrão: a do braço). */
+  handScale?: number;
   /** Ângulo local do ombro de perto: 90 (padrão) o deixa atrás do eixo; -90 o leva para a frente (soco). */
   shoulderNear?: number;
   /** Proporções do corpo (padrão: o chibi `atual`). */
@@ -35,6 +37,7 @@ export function buildPose(s: PoseSpec): Pose {
     s.body,
   );
   if (s.armScale !== undefined) p.armScale = s.armScale;
+  if (s.handScale !== undefined) p.handScale = s.handScale;
   p = aimLimb(p, 'legNear', s.legNear.ankle, s.legNear.bend ?? 1);
   p = aimLimb(p, 'legFar', s.legFar.ankle, s.legFar.bend ?? 1);
   for (const [limb, joint, t] of [

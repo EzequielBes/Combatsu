@@ -220,6 +220,8 @@ export interface Pose {
    * 13 no soco). Vale para braço e antebraço dos dois lados.
    */
   armScale?: number;
+  /** Escala só da mão fechada (padrão: a de `armScale`): a mão que cai junto ao corpo é menor que a do soco. */
+  handScale?: number;
   /** Proporções do corpo; sem este campo, `CHIBI`. */
   body?: Proportions;
 }
@@ -264,6 +266,7 @@ export function makePose(root: Vec2, angles: Partial<Record<BoneName, number>> =
 export function clonePose(p: Pose): Pose {
   const out: Pose = { root: { ...p.root }, angles: { ...p.angles } };
   if (p.armScale !== undefined) out.armScale = p.armScale;
+  if (p.handScale !== undefined) out.handScale = p.handScale;
   if (p.body) out.body = p.body;
   return out;
 }
