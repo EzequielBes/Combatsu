@@ -63,8 +63,8 @@ export const POSE_HIT: Pose = build({
   spine: 193,
   armNear: { to: { x: 19.4, y: 5.8 }, bend: -1 },
   armFar: { to: { x: 12.6, y: 13.2 }, bend: -1 },
-  legNear: { ankle: { x: 12.6, y: 26.2 }, foot: 55 },
-  legFar: { ankle: { x: 6.6, y: 25 }, foot: 35 },
+  legNear: { ankle: { x: 12.6, y: 27 }, foot: 55 },
+  legFar: { ankle: { x: 6.6, y: 26 }, foot: 35 },
 });
 
 /** Recover: desce, braço volta. */
