@@ -228,6 +228,8 @@ export interface GameSnapshot {
     layers: string[];
     /** Centro da aura de conjuração enquanto visível (ITP-10); `null` sem aura. */
     aura: { x: number; y: number } | null;
+    /** Rastros de energia vivos (TRL-10). */
+    trails: { tier: 'light' | 'heavy'; widthPx: number; ageMs: number }[];
     /** Vermelho (RDA-04/05/06/13, EDG-01): cores do halo e do flash, Glow só com WebGL, centro do orbe na carga. */
     red: {
       glowColor: number | null;
