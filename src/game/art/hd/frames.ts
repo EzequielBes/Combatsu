@@ -91,11 +91,12 @@ export const moveFrameName = (move: string, phase: MovePhase, i: number): string
  */
 export function expandMove(k: Kit, name: string, m: HdMoveSpec): Record<string, HdFrameSpec> {
   const expr = m.expr ?? 'effort';
-  const opts = { expr, headOverNearArm: m.headOverNearArm };
+  // O grito vale do meio da subida ao overshoot; na antecipação e na volta o rosto é o de esforço.
+  const opts = { expr: expr === 'shout' ? ('effort' as const) : expr, headOverNearArm: m.headOverNearArm };
   const at = (from: Pose, to: Pose, t: number): Pose => k.grounded(inbetween(from, to, t));
   const over = m.over ?? at(m.wind, m.hit, 1.06);
   const wind: HdFrameSpec = { pose: m.wind, ...opts };
-  const peak = { hands: m.hands, farFront: m.farFront, ...opts };
+  const peak = { hands: m.hands, farFront: m.farFront, ...opts, expr };
   const hit: HdFrameSpec = { pose: m.hit, ...peak };
   const recover: HdFrameSpec = { pose: m.recover, ...opts };
   return {
