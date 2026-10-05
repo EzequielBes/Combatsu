@@ -42,8 +42,11 @@ export class DivergentFx {
     private readonly registry: FxRegistry,
   ) {}
 
-  /** DIV-10: aura tremulando em volta do punho, durante `sign`/`charge`. */
-  fistAura(dtMs: number, x: number, y: number, facing: 1 | -1): void {
+  /**
+   * DIV-10: aura tremulando em volta do punho, durante `sign`/`charge`. `at` é onde o punho está em relação ao centro
+   * do corpo (com o corpo HD, o punho do quadro: armado atrás na antecipação); sem ele, o ponto fixo `FIST_OFFSET`.
+   */
+  fistAura(dtMs: number, x: number, y: number, facing: 1 | -1, at: { x: number; y: number } = FIST_OFFSET): void {
     this.fx.add('divergente.fistAura', Math.max(dtMs, 1), 'game');
     if (!this.fistSprite) {
       this.fistSprite = this.scene.add.sprite(0, 0, TEX.techAura, 'blue-a').setScale(0.9).setAlpha(0.9).setDepth(2);
@@ -51,7 +54,7 @@ export class DivergentFx {
       this.fistFlickerMs = 0;
       this.fistFrameB = false;
     }
-    this.fistSprite.setPosition(x + FIST_OFFSET.x * facing, y + FIST_OFFSET.y).setFlipX(facing < 0);
+    this.fistSprite.setPosition(x + at.x * facing, y + at.y).setFlipX(facing < 0);
     this.fistFlickerMs += dtMs;
     if (this.fistFlickerMs >= FIST_FLICKER_MS) {
       this.fistFlickerMs -= FIST_FLICKER_MS;

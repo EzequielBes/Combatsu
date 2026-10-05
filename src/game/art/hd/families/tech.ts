@@ -6,7 +6,7 @@
  * Punho Divergente e o Kokusen são de Itadori: base baixa, corpo torcido e o soco atravessando o alvo.
  *
  * Os efeitos são desenhados pelo jogo por cima do sprite, em pontos fixos em relação ao pé (1 px = 1 texel): a mão
- * que conjura fica nesses pontos (ver `RED_TIP` e `FIST_AURA`).
+ * que conjura fica nesses pontos (ver `RED_TIP`).
  */
 import type { ArmTarget, PoseSpec } from '../../rig/poses/build';
 import { solve, type Pose, type Vec2 } from '../../rig/skeleton';
@@ -25,8 +25,6 @@ const TIP = { fist: 4.3, open: 6.4, sign: 8.2, palm: 1.6 };
  * aqui (`hdAnchors`). No disparo o corpo recua, então o dedo não avança tanto quanto o braço esticado sugere.
  */
 const RED_TIP = { sign: [24, 39], charge: [25, 40], release: [25, 38] } as const;
-/** Centro da aura do punho do Divergente no selo e na carga (`FIST_OFFSET` de `DivergentFx`, a partir do pé). */
-const FIST_AURA = [22, 22] as const;
 
 /**
  * Alvo de braço para a PONTA da mão: o pulso recua `len` ao longo do antebraço. Ponto fixo amortecido, porque o
@@ -93,55 +91,63 @@ function lunge(k: Kit, front: number, back: number, lift: number): Pick<Body, 'l
   };
 }
 
-/** Punho Divergente: o punho recua para o quadril com a mão da frente medindo o alvo; o soco sai no corpo. */
+/**
+ * Punho Divergente, o soco do Itadori: ele arma o punho bem atrás, com o corpo torcido e a mão da frente aberta
+ * medindo o alvo; afunda e enrola; e solta um soco de corpo inteiro, com o quadril atravessando, a perna de trás
+ * esticada na ponta do pé e o braço de trás chicoteado para trás. A volta segura o braço estendido: no anime a energia
+ * chega depois do punho, e é nesse quadro que o segundo impacto acontece.
+ */
 function divergente(k: Kit): Record<string, HdFrameSpec> {
-  const aim: Tip = [FIST_AURA[0], FIST_AURA[1], TIP.fist];
   return {
     'divergente-sign': {
       pose: build(k, {
-        hip: [-2, 4.5],
-        spine: 174,
-        neck: 6,
-        near: { to: k.at(-7, 27), bend: 1 },
+        hip: [-4, 7],
+        spine: 176,
+        neck: 4,
+        near: { to: k.at(-13, 38), bend: 1 },
         far: byTip(),
-        farTip: aim,
+        farTip: [21, 39, TIP.open],
+        ...lunge(k, 11, -10, 0),
       }),
+      hands: { far: 'open' },
+      expr: 'effort',
     },
     'divergente-charge': {
       pose: build(k, {
-        hip: [-5, 10],
-        spine: 162,
-        neck: 14,
-        near: { to: k.at(-13, 28), bend: 1 },
+        hip: [-2, 11],
+        spine: 160,
+        neck: 16,
+        near: { to: k.at(-16, 31), bend: 1 },
         far: byTip(),
-        farTip: aim,
-        legFar: { ankle: { x: k.cx + k.stance.far, y: k.g - 2 }, foot: 62 },
+        farTip: [17, 35, TIP.open],
+        ...lunge(k, 12, -11, 2),
       }),
+      hands: { far: 'open' },
       expr: 'effort',
     },
     'divergente-release': {
       pose: build(k, {
-        hip: [6, 5.5],
-        spine: 157,
-        neck: 15,
+        hip: [9, 6.5],
+        spine: 147,
+        neck: 24,
         shoulderNear: -90,
         near: byTip(),
-        nearTip: [34, 29, TIP.fist],
-        far: { rel: { x: k.arm * 0.2, y: k.arm * 0.1 }, bend: -1 },
-        ...lunge(k, 15, -10, 2),
+        nearTip: [40, 31, TIP.fist],
+        far: { to: k.at(-15, 37), bend: 1 },
+        ...lunge(k, 18, -14, 3),
       }),
       expr: 'shout',
     },
     'divergente-recover': {
       pose: build(k, {
-        hip: [3, 5],
-        spine: 165,
-        neck: 11,
-        shoulderNear: -40,
+        hip: [8, 8],
+        spine: 150,
+        neck: 20,
+        shoulderNear: -70,
         near: byTip(),
-        nearTip: [26, 24, TIP.fist],
-        far: tucked(k),
-        ...lunge(k, 12, -9, 0.6),
+        nearTip: [35, 25, TIP.fist],
+        far: { to: k.at(-9, 30), bend: 1 },
+        ...lunge(k, 17, -13, 1.5),
       }),
       expr: 'effort',
     },
