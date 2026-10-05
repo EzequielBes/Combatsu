@@ -6,6 +6,7 @@
  * Puro, sem `phaser`.
  */
 import { PLAYER_ANIMS, type AnimDef } from '../sprites/player';
+import { HEAVY } from './families/carry';
 import { MOVE_PHASE_FRAMES, moveFrameName, type MovePhase } from './frames';
 import { renderHdPlayer, type HdAnchors } from './player';
 
@@ -67,8 +68,27 @@ export const playerHdAnimKey = (name: string): string => `player-hd-${name}`;
 
 /** As animações do player cujos quadros a folha HD já tem todos (as outras continuam na folha antiga). */
 export function hdAnims(): Record<string, AnimDef> {
-  return (anims ??= Object.fromEntries(Object.entries(PLAYER_ANIMS).filter(([, def]) => def.frames.every(hdHasFrame))));
+  if (anims) return anims;
+  anims = {};
+  for (const [name, def] of Object.entries(PLAYER_ANIMS)) {
+    if (def.frames.every(hdHasFrame)) anims[name] = def;
+    // A pegada pesada tem a mesma animação com os quadros `heavy-`, quando a folha tem todos.
+    const heavy = def.frames.map((f) => HEAVY + f);
+    if (heavy.every(hdHasFrame)) anims[HEAVY + name] = { ...def, frames: heavy };
+  }
+  return anims;
 }
+
+/**
+ * Nome do quadro, da animação ou do golpe para o objeto que o player segura: com um objeto pesado, a variante
+ * `heavy-` quando a folha HD a tem; senão o próprio nome.
+ */
+export function hdHeldName(name: string, heavy: boolean, has: (n: string) => boolean): string {
+  return heavy && has(HEAVY + name) ? HEAVY + name : name;
+}
+
+/** O golpe tem sequência de quadros na folha HD? */
+export const hdHasMove = (name: string): boolean => rendered().moves.includes(name);
 
 /** A animação `name` existe inteira na folha HD? */
 export const hdHasAnim = (name: string): boolean => name in hdAnims();

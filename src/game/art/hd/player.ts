@@ -55,6 +55,11 @@ export interface HdAnchors {
   near: Vec2;
   far: Vec2;
   tip: Vec2;
+  /**
+   * Giro (graus, sentido horário, com o player olhando para a direita) de um objeto na mão de perto: 0 quando o
+   * antebraço aponta para cima, e o objeto fica em pé; 90 com o antebraço para a frente, e o objeto deita.
+   */
+  nearAngle: number;
 }
 
 /** Do pulso à ponta de cada forma de mão, ao longo do antebraço (as medidas de `hand.ts`). */
@@ -74,6 +79,7 @@ function anchorsOf(j: Joints, spec: HdFrameSpec): HdAnchors {
     near: beyondWrist(j.elbowNear, j.wristNear, 2),
     far: beyondWrist(j.elbowFar, j.wristFar, 2),
     tip: beyondWrist(j.elbowNear, j.wristNear, TIP_LENGTH[spec.hands?.near ?? 'fist']),
+    nearAngle: (Math.atan2(j.wristNear.y - j.elbowNear.y, j.wristNear.x - j.elbowNear.x) * 180) / Math.PI + 90,
   };
 }
 

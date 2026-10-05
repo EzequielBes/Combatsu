@@ -277,7 +277,7 @@ export class Player implements Hittable {
     this.hitbox.follow(this.sprite.x, this.sprite.y, this.facing);
     // O objeto na mão acompanha o sprite, não o corpo: senão ele treme contra a mão acima de 60 Hz.
     const draw = this.renderPos;
-    this.held?.follow(draw.x, draw.y, this.facing, this.hdHands());
+    this.held?.follow(draw.x, draw.y, this.facing, this.hdHand());
     this.throwPoseMs = Math.max(0, this.throwPoseMs - dtMs);
     this.poseMs = Math.max(0, this.poseMs - dtMs);
     this.anim.animate(sensors.grounded);
@@ -285,16 +285,10 @@ export class Player implements Hittable {
     this.anim.tickFlash(dtMs);
   }
 
-  /** `?hd=1`: as mãos do quadro HD na tela, em px a partir do centro do corpo, para o objeto ficar na mão. */
-  private hdHands(): { front: Vec2; back: Vec2 } | undefined {
+  /** `?hd=1`: a mão de perto do quadro HD, em px a partir do centro do corpo, e o giro do antebraço: o objeto fica nela. */
+  private hdHand(): { x: number; y: number; angle: number } | undefined {
     const a = HD_ON ? hdAnchors(this.frameName) : undefined;
-    if (!a) return undefined;
-    const foot = SIZE.player.h / 2;
-    const front = { x: a.near.x, y: a.near.y + foot };
-    // Durante o golpe com objeto inteiro (não só com a hitbox aberta) o objeto fica na mão que bate, a de perto:
-    // senão o objeto pesado, carregado na mão de longe, salta de uma mão para a outra na volta.
-    const swinging = this.propSwing.phase !== 'idle';
-    return { front, back: swinging ? front : { x: a.far.x, y: a.far.y + foot } };
+    return a ? { x: a.near.x, y: a.near.y + SIZE.player.h / 2, angle: a.nearAngle } : undefined;
   }
 
   /** hp 0 (HP-04): larga o objeto (ele cai em repouso), e a tela escurece até o respawn. */
