@@ -1,0 +1,395 @@
+import { UI_SIZE } from './art/hd/screen';
+import type Phaser from 'phaser';
+import {
+  COMBO_GRADE_COLORS,
+  COMBO_TEXT_COLOR,
+  STRUCTURE_BAR_BG_COLOR,
+  STRUCTURE_BAR_BREAK_COLOR,
+  STRUCTURE_BAR_FILL_COLOR,
+} from './art/combatColors';
+import { HUD_BAR_WELL } from './art/hud';
+import { ART_SCALE, PALETTE } from './art/palette';
+import { TEX } from './textures';
+
+/** Canto da barra de vida e do painel na tela (px da câmera de UI, zoom 1). */
+const MARGIN = 12;
+/** Espaço reservado para o rótulo "HP" à esquerda da barra. */
+const LABEL_W = 26;
+/** Cor da paleta em CSS (`#rrggbb` ou `#rrggbbaa`), para o texto do Phaser, que não aceita número (ART-01). */
+const css = (color: number, alpha = 1): string =>
+  `#${color.toString(16).padStart(6, '0')}${
+    alpha < 1
+      ? Math.round(alpha * 255)
+          .toString(16)
+          .padStart(2, '0')
+      : ''
+  }`;
+const TEXT_STYLE = { fontFamily: 'monospace', fontSize: '12px', color: css(PALETTE.w) };
+
+/** Cores dos elementos novos do HUD da run (RHUD-04): rodada/restantes, faixa e telas de título/game over. */
+export const RUN_TEXT_COLOR = PALETTE.w;
+export const RUN_BG_COLOR = PALETTE.k;
+const RUN_TEXT_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(RUN_TEXT_COLOR) };
+const RUN_PANEL_STYLE = { ...RUN_TEXT_STYLE, backgroundColor: css(RUN_BG_COLOR, 0.8), align: 'center' as const };
+/** Contador de combo (CMB-04/05): à direita, abaixo de "Inimigos"; a nota fica embaixo do texto de hits. */
+const COMBO_Y = MARGIN + 48;
+const COMBO_HITS_STYLE = { fontFamily: 'monospace', fontSize: '22px', fontStyle: 'bold', color: css(COMBO_TEXT_COLOR) };
+const COMBO_GRADE_STYLE = {
+  fontFamily: 'monospace',
+  fontSize: '34px',
+  fontStyle: 'bold',
+  color: css(COMBO_GRADE_COLORS.D),
+};
+/** Nome do jogo, mostrado na tela de título (RHUD-05). */
+export const GAME_NAME = 'Combatsu';
+
+/** Cores da barra do chefe (BHUD-06), todas da paleta. */
+export const BOSS_BAR_FILL_COLOR = PALETTE.a;
+export const BOSS_BAR_BG_COLOR = PALETTE.k;
+export const BOSS_BAR_MARK_COLOR = PALETTE.w;
+export const BOSS_BAR_NAME_COLOR = PALETTE.w;
+const BOSS_BAR_NAME_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(BOSS_BAR_NAME_COLOR) };
+/** Largura total da barra do chefe (BHUD-01) e marcas de fase, em fração da largura (BAI-01: 66%/33%). */
+const BOSS_BAR_WIDTH = 400;
+const BOSS_BAR_HEIGHT = 12;
+const BOSS_BAR_MARK_W = 2;
+const BOSS_BAR_MARK_FRACTIONS = [0.66, 0.33] as const;
+
+/**
+ * HUD na câmera de UI (AD-003): barra de vida do player com moldura pixel art (HUD-01) e o painel de controles, que
+ * aparece por um tempo e alterna no Tab (HUD-03). Todo objeto entra na camada de UI.
+ */
+export class Hud {
+  private readonly fill: Phaser.GameObjects.Rectangle;
+  private readonly panel: Phaser.GameObjects.Text;
+  private hideTimer: Phaser.Time.TimerEvent | null = null;
+  /** Rodada e restantes da run (RHUD-01), no canto superior direito. */
+  private readonly roundText: Phaser.GameObjects.Text;
+  private readonly remainingText: Phaser.GameObjects.Text;
+  /** Faixa central temporária (RHUD-02) ou até a próxima chamada (RHUD-03). */
+  private readonly bannerText: Phaser.GameObjects.Text;
+  private bannerMsLeft = 0;
+  /** Texto central da tela de título/game over (RHUD-05/06); `null` = escondido. */
+  private readonly centerText: Phaser.GameObjects.Text;
+  private centerLines: string[] | null = null;
+  /** Barra do chefe (BHUD-01..03/06/07), no topo central; escondida fora de uma luta de chefe. */
+  private readonly bossBarBg: Phaser.GameObjects.Rectangle;
+  private readonly bossBarFill: Phaser.GameObjects.Rectangle;
+  private readonly bossBarMarks: Phaser.GameObjects.Rectangle[];
+  private readonly bossBarName: Phaser.GameObjects.Text;
+  private bossBarVisible = false;
+  /** Combo (CMB-04/05): com 2 hits ou mais mostra `N hits` e a nota embaixo; pulsa a cada hit novo. */
+  setCombo(hits: number, grade: 'D' | 'C' | 'B' | 'A' | 'S' | null): void {
+    const show = hits >= 2 && grade !== null;
+    this.comboHitsText.setVisible(show);
+    this.comboGradeText.setVisible(show);
+    if (!show) {
+      this.lastComboHits = hits;
+      return;
+    }
+    this.comboHitsText.setText(`${hits} hits`);
+    this.comboGradeText.setText(grade).setColor(css(COMBO_GRADE_COLORS[grade]));
+    if (hits > this.lastComboHits) {
+      this.comboHitsText.setScale(1.25).setOrigin(1, 0);
+      this.scene.tweens.add({ targets: this.comboHitsText, scale: 1, duration: 120 });
+    }
+    this.lastComboHits = hits;
+  }
+
+  /** Barra de estrutura do jogador (STR-01), fina, logo abaixo da barra de vida; só aparece com estrutura acumulada. */
+  private readonly structBg: Phaser.GameObjects.Rectangle;
+  private readonly structFill: Phaser.GameObjects.Rectangle;
+  /** Contador de fragmentos (ECO-16), abaixo da barra de HP: ícone + número, que pulsa ao mudar. */
+  private readonly fragmentIcon: Phaser.GameObjects.Image;
+  private readonly fragmentText: Phaser.GameObjects.Text;
+  private lastFragments = 0;
+  /** Combo (CMB-04/05): `N hits` e a letra da nota embaixo; escondidos com menos de 2 hits. */
+  private readonly comboHitsText: Phaser.GameObjects.Text;
+  private readonly comboGradeText: Phaser.GameObjects.Text;
+  private lastComboHits = 0;
+  /** Objeto na mão (ITEM-01..03), abaixo do contador de fragmentos. */
+  private readonly heldItemText: Phaser.GameObjects.Text;
+  private heldItemState: { name: string; pips: number; maxPips: number } | null = null;
+
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly layer: Phaser.GameObjects.Layer,
+    controlsText: string,
+  ) {
+    const barX = MARGIN + LABEL_W;
+    const label = scene.add.text(MARGIN, MARGIN + 1, 'HP', TEXT_STYLE);
+    const frame = scene.add.image(barX, MARGIN, TEX.hudBar).setOrigin(0, 0);
+    const w = HUD_BAR_WELL;
+    this.fill = scene.add
+      .rectangle(barX + w.x * ART_SCALE, MARGIN + w.y * ART_SCALE, w.w * ART_SCALE, w.h * ART_SCALE, PALETTE.r)
+      .setOrigin(0, 0);
+    // Painel de controles no canto de baixo: não cobre as barras nem o meio da tela enquanto aparece.
+    const panelStyle = { ...TEXT_STYLE, backgroundColor: css(PALETTE.k, 0.8), padding: { x: 6, y: 4 } };
+    this.panel = scene.add.text(MARGIN, UI_SIZE.h - MARGIN, controlsText, panelStyle).setOrigin(0, 1);
+    const w2 = UI_SIZE.w;
+    const h2 = UI_SIZE.h;
+    this.roundText = scene.add
+      .text(w2 - MARGIN, MARGIN, '', RUN_TEXT_STYLE)
+      .setOrigin(1, 0)
+      .setVisible(false);
+    this.remainingText = scene.add
+      .text(w2 - MARGIN, MARGIN + 16, '', RUN_TEXT_STYLE)
+      .setOrigin(1, 0)
+      .setVisible(false);
+    this.bannerText = scene.add
+      .text(w2 / 2, h2 * 0.25, '', { ...RUN_PANEL_STYLE, padding: { x: 10, y: 6 } })
+      .setOrigin(0.5, 0.5)
+      .setVisible(false);
+    this.centerText = scene.add
+      .text(w2 / 2, h2 / 2, '', { ...RUN_PANEL_STYLE, padding: { x: 14, y: 10 } })
+      .setOrigin(0.5, 0.5)
+      .setVisible(false);
+
+    // Barra do chefe (BHUD-01): 400 px no topo central, nome acima e marcas de fase em 66%/33% da largura.
+    const bossX = w2 / 2 - BOSS_BAR_WIDTH / 2;
+    this.bossBarBg = scene.add
+      .rectangle(bossX, MARGIN, BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT, BOSS_BAR_BG_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.bossBarFill = scene.add
+      .rectangle(bossX, MARGIN, BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT, BOSS_BAR_FILL_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.bossBarMarks = BOSS_BAR_MARK_FRACTIONS.map((f) =>
+      scene.add
+        .rectangle(bossX + BOSS_BAR_WIDTH * f, MARGIN, BOSS_BAR_MARK_W, BOSS_BAR_HEIGHT, BOSS_BAR_MARK_COLOR)
+        .setOrigin(0.5, 0)
+        .setVisible(false),
+    );
+    this.bossBarName = scene.add
+      .text(w2 / 2, MARGIN - 2, '', BOSS_BAR_NAME_STYLE)
+      .setOrigin(0.5, 1)
+      .setVisible(false);
+
+    // Estrutura do jogador: 3 px de altura entre a barra de vida (termina em y=28) e a de energia (começa em y=34).
+    const structW = w.w * ART_SCALE;
+    const structY = MARGIN + 17;
+    this.structBg = scene.add
+      .rectangle(barX + w.x * ART_SCALE, structY, structW, 3, STRUCTURE_BAR_BG_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.structFill = scene.add
+      .rectangle(barX + w.x * ART_SCALE, structY, 0, 3, STRUCTURE_BAR_FILL_COLOR)
+      .setOrigin(0, 0)
+      .setVisible(false);
+    // Contador de fragmentos (ECO-16), abaixo das barras de HP e de energia (`EnergyHud`, que termina em y=50).
+    const fragY = MARGIN + 42;
+    this.fragmentIcon = scene.add.image(MARGIN, fragY, TEX.fragmentIcon, 'icon').setOrigin(0, 0);
+    this.fragmentText = scene.add.text(MARGIN + 16, fragY - 2, '0', TEXT_STYLE);
+    // Item na mão (ITEM-01..03), logo abaixo do contador de fragmentos; escondido de mãos vazias.
+    this.heldItemText = scene.add.text(MARGIN, fragY + 16, '', TEXT_STYLE).setVisible(false);
+
+    this.comboHitsText = scene.add
+      .text(w2 - MARGIN, COMBO_Y, '', COMBO_HITS_STYLE)
+      .setOrigin(1, 0)
+      .setVisible(false);
+    this.comboGradeText = scene.add
+      .text(w2 - MARGIN, COMBO_Y + 26, '', COMBO_GRADE_STYLE)
+      .setOrigin(1, 0)
+      .setVisible(false);
+    const runObjs = [
+      this.roundText,
+      this.remainingText,
+      this.bannerText,
+      this.centerText,
+      this.comboHitsText,
+      this.comboGradeText,
+    ];
+    const bossBarObjs = [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName];
+    const fragmentObjs = [this.fragmentIcon, this.fragmentText, this.heldItemText, this.structBg, this.structFill];
+    for (const obj of [label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]) {
+      obj.setScrollFactor(0).setDepth(100);
+    }
+    layer.add([label, frame, this.fill, this.panel, ...runObjs, ...bossBarObjs, ...fragmentObjs]);
+  }
+
+  /** Nome e pips do objeto na mão (ITEM-01/02), `null` esconde a linha (ITEM-03). */
+  setHeldItem(item: { name: string; pips: number; maxPips: number } | null): void {
+    this.heldItemState = item;
+    if (!item) {
+      this.heldItemText.setVisible(false);
+      return;
+    }
+    const filled = '#'.repeat(Math.max(0, item.pips));
+    const empty = '-'.repeat(Math.max(0, item.maxPips - item.pips));
+    this.heldItemText.setText(`${item.name} ${filled}${empty}`).setVisible(true);
+  }
+
+  /** Atualiza o contador (ECO-16): pulsa de 1,3 para 1 em 150 ms quando o valor muda. */
+  setFragments(n: number): void {
+    this.fragmentText.setText(String(n));
+    if (n === this.lastFragments) return;
+    this.lastFragments = n;
+    this.fragmentText.setScale(1.3);
+    this.scene.tweens.add({ targets: this.fragmentText, scale: 1, duration: 150 });
+  }
+
+  /** Barra de estrutura do jogador (STR-01): amarela subindo, branca na quebra; escondida em 0. */
+  setPlayerStructure(s: { cur: number; max: number; broken: boolean }): void {
+    const show = s.cur > 0 || s.broken;
+    this.structBg.setVisible(show);
+    this.structFill
+      .setVisible(show && s.cur > 0)
+      .setSize(Math.round((HUD_BAR_WELL.w * ART_SCALE * s.cur) / s.max), 3)
+      .setFillStyle(s.broken ? STRUCTURE_BAR_BREAK_COLOR : STRUCTURE_BAR_FILL_COLOR);
+  }
+
+  /** Enche a barra na proporção da vida, em passos de 1 texel (2 px). */
+  setPlayerHp(hp: number, max: number): void {
+    const texels = Math.round(HUD_BAR_WELL.w * Math.min(1, Math.max(0, hp / max)));
+    this.fill.setSize(texels * ART_SCALE, HUD_BAR_WELL.h * ART_SCALE).setVisible(texels > 0);
+  }
+
+  setControlsText(text: string): void {
+    this.panel.setText(text);
+  }
+
+  /** Mostra o painel e esconde sozinho depois de `ms` (no início e a cada reinício). */
+  showControls(ms: number): void {
+    this.panel.setVisible(true);
+    this.hideTimer?.remove();
+    this.hideTimer = this.scene.time.delayedCall(ms, () => {
+      this.panel.setVisible(false);
+      this.hideTimer = null;
+    });
+  }
+
+  /** Tab: alterna o painel; quem pediu manda, então o esconder automático é cancelado. */
+  toggleControls(): void {
+    this.hideTimer?.remove();
+    this.hideTimer = null;
+    this.panel.setVisible(!this.panel.visible);
+  }
+
+  get controlsVisible(): boolean {
+    return this.panel.visible;
+  }
+
+  /** Rodada e inimigos restantes (RHUD-01); `null` esconde (fora de uma rodada, ex.: `title`). */
+  setRun(state: { round: number; remaining: number } | null): void {
+    if (state === null) {
+      this.roundText.setVisible(false);
+      this.remainingText.setVisible(false);
+      return;
+    }
+    this.roundText.setText(`Rodada ${state.round}`).setVisible(true);
+    this.remainingText.setText(`Inimigos: ${state.remaining}`).setVisible(true);
+  }
+
+  /**
+   * Mostra a faixa central por `ms` (RHUD-02); com `Infinity` fica até a próxima chamada de `banner` ou
+   * `hideBanner` (RHUD-03: "Rodada N concluída" até a próxima rodada começar).
+   */
+  banner(text: string, ms: number): void {
+    this.bannerText.setText(text).setVisible(true);
+    this.bannerMsLeft = ms;
+  }
+
+  hideBanner(): void {
+    this.bannerText.setVisible(false);
+    this.bannerMsLeft = 0;
+  }
+
+  /** Texto central da tela de título (RHUD-05) ou de game over (RHUD-06); `null` esconde. */
+  setCenter(lines: string[] | null): void {
+    this.centerLines = lines;
+    if (lines === null) {
+      this.centerText.setVisible(false);
+      return;
+    }
+    this.centerText.setText(lines.join('\n')).setVisible(true);
+  }
+
+  /** Conta o tempo da faixa central pelo `dt` da cena, que já para durante o hitstop (RHUD-02). */
+  update(dtMs: number): void {
+    if (!this.bannerText.visible) return;
+    this.bannerMsLeft -= dtMs;
+    if (this.bannerMsLeft <= 0) this.hideBanner();
+  }
+
+  /**
+   * `ignoredByMain` é a checagem real de que a `uiLayer` está na lista de ignorados da câmera principal (AD-003),
+   * não uma constante fixa: se a rota de câmeras quebrar, este bit some e o smoke pega (RHUD-07).
+   */
+  debugState(): {
+    ignoredByMain: boolean;
+    round: string;
+    remaining: string;
+    banner: string | null;
+    center: string[] | null;
+    bannerPos: { x: number; y: number };
+    bossBar: { visible: boolean; name: string; width: number; fillWidth: number; marks: number[] };
+    bossBarIgnoredByMain: boolean;
+    fragments: string;
+    heldItem: { name: string; pips: number; maxPips: number } | null;
+    combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
+    controls: string;
+  } {
+    const mainId = this.scene.cameras.main.id;
+    return {
+      ignoredByMain: (this.layer.cameraFilter & mainId) === mainId,
+      round: this.roundText.text,
+      remaining: this.remainingText.text,
+      banner: this.bannerText.visible ? this.bannerText.text : null,
+      center: this.centerLines,
+      fragments: this.fragmentText.text,
+      heldItem: this.heldItemState,
+      // CTL-06: texto vivo do painel de controles.
+      controls: this.panel.text,
+      // CMB-04/05: texto e nota vivos (`null` escondidos), `x` = borda direita do texto na tela de UI, e ambos na `uiLayer`.
+      combo: {
+        text: this.comboHitsText.visible ? this.comboHitsText.text : null,
+        grade: this.comboGradeText.visible ? this.comboGradeText.text : null,
+        x: this.comboHitsText.x,
+        ignoredByMain:
+          (this.layer.cameraFilter & mainId) === mainId &&
+          [this.comboHitsText, this.comboGradeText].every((o) => o.displayList === this.layer),
+      },
+      // Centro visual do texto (RHUD-02): com origem não centralizada, o ponto de âncora (x/y) não discriminaria
+      // uma faixa que cresce só para um lado.
+      bannerPos: (() => {
+        const b = this.bannerText.getBounds();
+        return { x: b.centerX, y: b.centerY };
+      })(),
+      // Medidas lidas dos retângulos desenhados (BHUD-01/02), relativas ao início da barra.
+      bossBar: {
+        visible: this.bossBarVisible,
+        name: this.bossBarName.text,
+        width: this.bossBarBg.width,
+        fillWidth: this.bossBarFill.width,
+        marks: this.bossBarMarks.map((m) => m.x - this.bossBarBg.x),
+      },
+      // BHUD-07: cada peça da barra está na `uiLayer`, e a camada é ignorada pela câmera principal.
+      bossBarIgnoredByMain:
+        (this.layer.cameraFilter & mainId) === mainId &&
+        [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName].every(
+          (o) => o.displayList === this.layer,
+        ),
+    };
+  }
+
+  /** Mostra a barra do chefe cheia, com o nome acima (BHUD-01). */
+  showBossBar(name: string): void {
+    this.bossBarVisible = true;
+    this.bossBarName.setText(name);
+    this.bossBarFill.width = BOSS_BAR_WIDTH;
+    for (const o of [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName]) o.setVisible(true);
+  }
+
+  /** Largura do preenchimento proporcional à vida (BHUD-02). */
+  setBossHp(hp: number, max: number): void {
+    if (!this.bossBarVisible) return;
+    this.bossBarFill.width = Math.round((BOSS_BAR_WIDTH * Math.max(0, hp)) / max);
+  }
+
+  /** Esconde a barra (BHUD-03): chefe morto ou run nova. */
+  hideBossBar(): void {
+    this.bossBarVisible = false;
+    for (const o of [this.bossBarBg, this.bossBarFill, ...this.bossBarMarks, this.bossBarName]) o.setVisible(false);
+  }
+}

@@ -1,0 +1,208 @@
+import { describe, expect, it } from 'vitest';
+import { Health } from '../../src/core/health';
+import { PLAYER_HEALTH } from '../../src/data/tuning';
+
+/** Números do spec: hp 100, invulnerável 300 ms (PST-15, substitui os 700 ms do HP-02), atordoado 200 ms, respawn 1000 ms. */
+const SPEC = { maxHp: 100, invulnMs: 300, staggerMs: 200, respawnMs: 1000 };
+/** Dano do golpe do inimigo no spec. */
+const ENEMY_HIT = 12;
+
+describe('tuning real da vida do player (números do spec)', () => {
+  it('PLAYER_HEALTH = 100 / 300 / 200 / 1000', () => {
+    expect(PLAYER_HEALTH).toEqual(SPEC);
+  });
+});
+
+describe('Health: dano e invulnerabilidade (HP-01, HP-02)', () => {
+  it('começa com hp cheio, vivo, sem invulnerabilidade nem atordoamento', () => {
+    const h = new Health(PLAYER_HEALTH);
+    expect(h.hp).toBe(100);
+    expect(h.max).toBe(100);
+    expect(h.dead).toBe(false);
+    expect(h.invulnerable).toBe(false);
+    expect(h.staggered).toBe(false);
+  });
+
+  it('um golpe tira o dano do hp e deixa invulnerável', () => {
+    const h = new Health(PLAYER_HEALTH);
+    expect(h.receive(ENEMY_HIT)).toBe('hurt');
+    expect(h.hp).toBe(88);
+    expect(h.invulnerable).toBe(true);
+  });
+
+  it('PST-15: invulnerável por 300 ms: golpe em 299 ms é ignorado, em 300 ms é aceito', () => {
+    const h = new Health(PLAYER_HEALTH);
+    h.receive(ENEMY_HIT);
+    expect(h.update(299)).not.toContain('invulnEnd');
+    expect(h.receive(ENEMY_HIT)).toBe('ignored');
+    expect(h.hp).toBe(88);
+    expect(h.update(1)).toContain('invulnEnd');
+    expect(h.invulnerable).toBe(false);
+    expect(h.receive(ENEMY_HIT)).toBe('hurt');
+    expect(h.hp).toBe(76);
+  });
+
+  it('PST-15 com um tuning diferente do padrão (invulnMs 100): 99 ms ignora e 100 ms aceita', () => {
+    const h = new Health({ ...PLAYER_HEALTH, invulnMs: 100 });
+    h.receive(ENEMY_HIT);
+    h.update(99);
+    expect(h.receive(ENEMY_HIT)).toBe('ignored');
+    h.update(1);
+    expect(h.receive(ENEMY_HIT)).toBe('hurt');
+  });
+
+  it('borda: dois golpes no mesmo frame tiram vida uma vez só', () => {
+    const h = new Health(PLAYER_HEALTH);
+    expect(h.receive(ENEMY_HIT)).toBe('hurt');
+    expect(h.receive(ENEMY_HIT)).toBe('ignored');
+    expect(h.hp).toBe(88);
+  });
+});
+
+describe('Health: atordoamento (HP-03)', () => {
+  it('atordoado por 200 ms depois do golpe', () => {
+    const h = new Health(PLAYER_HEALTH);
+    h.receive(ENEMY_HIT);
+    expect(h.staggered).toBe(true);
+    expect(h.update(199)).toEqual([]);
+    expect(h.staggered).toBe(true);
+    expect(h.update(1)).toEqual(['staggerEnd']);
+    expect(h.staggered).toBe(false);
+    // Ainda invulnerável: o atordoamento é mais curto que a invulnerabilidade.
+    expect(h.invulnerable).toBe(true);
+  });
+});
+
+describe('Health: morte e respawn (HP-04)', () => {
+  const kill = (h: Health): void => {
+    for (let i = 0; i < 20 && !h.dead; i++) {
+      h.receive(ENEMY_HIT);
+      h.update(PLAYER_HEALTH.invulnMs);
+    }
+  };
+
+  it('hp chega a 0: died; renasce com 100 de hp depois de 1000 ms', () => {
+    const h = new Health(PLAYER_HEALTH);
+    for (let i = 0; i < 8; i++) {
+      expect(h.receive(ENEMY_HIT)).toBe('hurt');
+      h.update(PLAYER_HEALTH.invulnMs);
+    }
+    expect(h.hp).toBe(4);
+    expect(h.receive(ENEMY_HIT)).toBe('died');
+    expect(h.hp).toBe(0);
+    expect(h.dead).toBe(true);
+    expect(h.update(999)).not.toContain('respawn');
+    expect(h.dead).toBe(true);
+    expect(h.update(1)).toContain('respawn');
+    expect(h.dead).toBe(false);
+    expect(h.hp).toBe(100);
+  });
+
+  it('dano excedente não deixa o hp negativo', () => {
+    const h = new Health(PLAYER_HEALTH);
+    expect(h.receive(250)).toBe('died');
+    expect(h.hp).toBe(0);
+  });
+
+  it('morto ignora golpes até renascer', () => {
+    const h = new Health(PLAYER_HEALTH);
+    kill(h);
+    expect(h.receive(ENEMY_HIT)).toBe('ignored');
+    expect(h.hp).toBe(0);
+  });
+
+  it('depois de renascer volta a levar dano normalmente', () => {
+    const h = new Health(PLAYER_HEALTH);
+    kill(h);
+    h.update(1000);
+    expect(h.receive(ENEMY_HIT)).toBe('hurt');
+    expect(h.hp).toBe(88);
+  });
+});
+
+describe('Health: cura com teto (FND-05, FND-06, FND-07)', () => {
+  it('vivo com 50/100: heal(20) deixa hp 70 e devolve 20', () => {
+    const h = new Health(SPEC);
+    h.receive(50);
+    expect(h.hp).toBe(50);
+    expect(h.heal(20)).toBe(20);
+    expect(h.hp).toBe(70);
+  });
+
+  it('borda: 95/100, heal(10) para em 100 e devolve só 5', () => {
+    const h = new Health(SPEC);
+    h.receive(5);
+    expect(h.heal(10)).toBe(5);
+    expect(h.hp).toBe(100);
+  });
+
+  it('morto: heal(30) mantém hp 0, devolve 0 e não revive', () => {
+    const h = new Health(SPEC);
+    expect(h.receive(100)).toBe('died');
+    expect(h.heal(30)).toBe(0);
+    expect(h.hp).toBe(0);
+    expect(h.dead).toBe(true);
+  });
+
+  it.each([0, -5, NaN, Infinity])('heal(%s) não muda o hp e devolve 0', (n) => {
+    const h = new Health(SPEC);
+    h.receive(50);
+    expect(h.heal(n)).toBe(0);
+    expect(h.hp).toBe(50);
+  });
+});
+
+describe('Health: teto ajustável por setMax (MOD-04, MOD-11, MOD-10)', () => {
+  it('setMax(115) com hp cheio (100) não cura: max 115, hp continua 100; heal(15) depois enche até 115', () => {
+    const h = new Health(SPEC);
+    h.setMax(115);
+    expect(h.max).toBe(115);
+    expect(h.hp).toBe(100);
+    expect(h.heal(15)).toBe(15);
+    expect(h.hp).toBe(115);
+  });
+
+  it('setMax(115) com hp 110: heal(15) para no novo teto (125 → 115), não passa dele', () => {
+    const h = new Health(SPEC);
+    h.setMax(115);
+    h.heal(10); // hp 100 -> 110, ainda abaixo do novo teto
+    expect(h.hp).toBe(110);
+    expect(h.heal(15)).toBe(5); // 110 + 15 = 125, recortado para 115
+    expect(h.hp).toBe(115);
+  });
+
+  it('reset() volta o teto a 100 (tuning) e o hp a 100, mesmo depois de setMax', () => {
+    const h = new Health(SPEC);
+    h.setMax(115);
+    h.heal(15);
+    h.reset();
+    expect(h.max).toBe(100);
+    expect(h.hp).toBe(100);
+  });
+
+  it('testes antigos de Health (sem setMax) continuam válidos: max começa igual a t.maxHp', () => {
+    const h = new Health(SPEC);
+    expect(h.max).toBe(SPEC.maxHp);
+  });
+});
+
+describe('Health.chip: dano que passa pela guarda do chefe (GRD-06)', () => {
+  it('tira o dano do hp sem invulnerabilidade nem atordoamento', () => {
+    const h = new Health(PLAYER_HEALTH);
+    expect(h.chip(5)).toBe('hurt');
+    expect(h.hp).toBe(95);
+    expect(h.invulnerable).toBe(false);
+    expect(h.staggered).toBe(false);
+  });
+
+  it('hp 0 mata como um golpe normal; morto ou invulnerável ignora', () => {
+    const h = new Health(PLAYER_HEALTH);
+    expect(h.chip(100)).toBe('died');
+    expect(h.dead).toBe(true);
+    expect(h.chip(5)).toBe('ignored');
+    const g = new Health(PLAYER_HEALTH);
+    g.receive(10);
+    expect(g.chip(5)).toBe('ignored');
+    expect(g.hp).toBe(90);
+  });
+});

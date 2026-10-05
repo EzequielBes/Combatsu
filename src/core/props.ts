@@ -1,5 +1,5 @@
 import { Filters, type CollisionFilter } from './collision';
-import { makeHitGate, type Hit, type Vec2 } from './hit';
+import { TargetGate, type Hit, type TargetOutcome, type Vec2 } from './hit';
 
 /** Criar um objeto novo = preencher um PropDef, sem código novo. */
 export interface PropDef {
@@ -11,7 +11,6 @@ export interface PropDef {
   throwSpeed: number; // px/s
   knockback: number; // impulso em px por step do Matter
   socket: 'front' | 'back'; // onde fica na mão: à frente ou nas costas/ombro
-  debrisColor: number;
   tags: readonly string[]; // reservado para técnicas futuras ("cortante", "inflamável")
 }
 
@@ -19,6 +18,9 @@ export type PropState = 'rest' | 'held' | 'swing' | 'thrown' | 'breaking' | 'gon
 export type PropImpact = 'ignored' | 'continue' | 'toRest' | 'broke';
 
 export const PROP_BREAK_MS = 400;
+
+/** Alvos que um balanço com o objeto na mão alcança (TGT-07); o arremesso não tem teto (PST-07). */
+export const PROP_SWING_TARGETS = 2;
 
 const FILTER_BY_STATE: Record<PropState, CollisionFilter> = {
   rest: Filters.propRest,
@@ -38,9 +40,13 @@ export function validatePropDef(def: PropDef): void {
   if (def.damage < 0) throw new Error(`${def.key}: damage não pode ser negativo`);
 }
 
-/** Bater ou arremessar objeto é sempre golpe forte. */
-export function propHit(def: PropDef, ownerId: number, direction: Vec2): Hit {
-  return { ownerId, damage: def.damage, strength: 'heavy', direction, force: def.knockback };
+/**
+ * Bater ou arremessar objeto é sempre golpe forte. O arremesso derruba quem sobrevive (`knockdown`, PST-07); o
+ * balanço só faz cambalear (PST-08).
+ */
+export function propHit(def: PropDef, ownerId: number, direction: Vec2, state: PropState = 'swing'): Hit {
+  const hit: Hit = { ownerId, damage: def.damage, strength: 'heavy', direction, force: def.knockback };
+  return state === 'thrown' ? { ...hit, knockdown: true } : hit;
 }
 
 /**
@@ -53,7 +59,7 @@ export class PropMachine {
   private _impacts = 0;
   private _holderId: number | null = null;
   private _ownerId: number | null = null;
-  private gate: ((targetId: number) => boolean) | null = null;
+  private gate: TargetGate | null = null;
   private breakTimer = 0;
 
   constructor(readonly def: PropDef) {
@@ -96,7 +102,7 @@ export class PropMachine {
   startSwing(): boolean {
     if (this._state !== 'held' || this._holderId === null) return false;
     this._state = 'swing';
-    this.arm(this._holderId);
+    this.arm(this._holderId, PROP_SWING_TARGETS);
     return true;
   }
 
@@ -112,7 +118,7 @@ export class PropMachine {
     const owner = this._holderId;
     this._state = 'thrown';
     this._holderId = null;
-    this.arm(owner);
+    this.arm(owner, Infinity);
     return true;
   }
 
@@ -123,9 +129,24 @@ export class PropMachine {
     return true;
   }
 
-  /** Consome o gate: true só na primeira vez para cada alvo neste golpe/arremesso, nunca para o dono. */
+  /**
+   * O golpe ou arremesso em curso ainda quer este alvo? Só consulta: `false` para o dono, para alvo já tentado e,
+   * no balanço, sem vaga (TGT-07). Quem bate depois conta o desfecho em `note`.
+   */
+  wants(targetId: number): boolean {
+    return this.gate !== null && this.gate.wants(targetId);
+  }
+
+  /** Anota o desfecho do golpe no alvo: aceito e segurado pela guarda gastam vaga, recusado não (TGT-05, TGT-06). */
+  note(targetId: number, outcome: TargetOutcome): void {
+    this.gate?.note(targetId, outcome);
+  }
+
+  /** Atalho de `wants` + `note` como golpe aceito: `true` só na primeira vez de cada alvo, nunca para o dono. */
   tryHit(targetId: number): boolean {
-    return this.gate !== null && this.gate(targetId);
+    if (!this.wants(targetId)) return false;
+    this.note(targetId, 'accepted');
+    return true;
   }
 
   /** Um impacto (em personagem, parede, chão) durante golpe ou voo. */
@@ -155,9 +176,9 @@ export class PropMachine {
     return true;
   }
 
-  private arm(ownerId: number): void {
+  private arm(ownerId: number, maxTargets: number): void {
     this._ownerId = ownerId;
-    this.gate = makeHitGate(ownerId);
+    this.gate = new TargetGate(ownerId, maxTargets);
   }
 
   private disarm(): void {

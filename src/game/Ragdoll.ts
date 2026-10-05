@@ -1,30 +1,35 @@
 import Phaser from 'phaser';
 import { ragdollFilter } from '../core/collision';
 import { normalize, type Vec2 } from '../core/hit';
+import { PALETTE } from './art/palette';
 import { bodyOf } from './physics';
-import { TEX } from './textures';
+import type { EnemyVariant } from '../core/enemyVariant';
+import { TEX, ragTex, type RagPart } from './textures';
 
 interface PartSpec {
-  key: string;
+  part: RagPart;
   dx: number;
   dy: number;
 }
 
-/** Posições relativas ao centro do inimigo. Índice 0 = tronco. Poucos segmentos grandes de propósito. */
+/**
+ * Posições relativas ao centro do inimigo. Índice 0 = tronco. Poucos segmentos grandes de propósito.
+ * Tamanhos vindos da arte (ENEMY_RAG_PARTS, 2 px por texel): tronco 16x20, cabeça 16x14, membro 6x16.
+ */
 const PARTS: readonly PartSpec[] = [
-  { key: TEX.ragTorso, dx: 0, dy: -1 },
-  { key: TEX.ragHead, dx: 0, dy: -15 },
-  { key: TEX.ragLimb, dx: -9, dy: -2 },
-  { key: TEX.ragLimb, dx: 9, dy: -2 },
-  { key: TEX.ragLimb, dx: -4, dy: 13 },
-  { key: TEX.ragLimb, dx: 4, dy: 13 },
+  { part: 'torso', dx: 0, dy: 0 },
+  { part: 'head', dx: 0, dy: -17 },
+  { part: 'limb', dx: -11, dy: -1 },
+  { part: 'limb', dx: 11, dy: -1 },
+  { part: 'limb', dx: -4, dy: 12 },
+  { part: 'limb', dx: 4, dy: 12 },
 ];
 
 /** [parte A, parte B, x da junta, y da junta] relativos ao centro do inimigo: pescoço, ombros, quadris. */
 const JOINTS: readonly (readonly [number, number, number, number])[] = [
   [0, 1, 0, -10],
-  [0, 2, -7, -8],
-  [0, 3, 7, -8],
+  [0, 2, -8, -7],
+  [0, 3, 8, -7],
   [0, 4, -4, 7],
   [0, 5, 4, 7],
 ];
@@ -40,10 +45,12 @@ export class Ragdoll {
     private readonly scene: Phaser.Scene,
     x: number,
     y: number,
+    /** Aparência do inimigo: define as texturas das partes (EVR-06). */
+    readonly variant: EnemyVariant = 'corcunda',
   ) {
     const filter = ragdollFilter(scene.matter.world.nextGroup(true));
     this.parts = PARTS.map((p) =>
-      scene.matter.add.image(x + p.dx, y + p.dy, p.key, undefined, {
+      scene.matter.add.image(x + p.dx, y + p.dy, ragTex(p.part, variant), undefined, {
         collisionFilter: { ...filter },
         friction: 0.6,
         frictionAir: 0.03,
@@ -81,25 +88,34 @@ export class Ragdoll {
     this.parts[0].setAngularVelocity(0.12 * Math.sign(d.x || 1));
   }
 
-  flash(): void {
-    for (const p of this.parts) p.setTintFill(0xffffff);
-    this.scene.time.delayedCall(60, () => {
-      for (const p of this.parts) if (p.active) p.clearTint();
-    });
+  /** Sobe todas as partes com a velocidade vertical dada (px/step, negativa = para cima): gancho ascendente (MOV-11). */
+  launch(vyStep: number): void {
+    for (const p of this.parts) p.setVelocityY(vyStep);
+  }
+
+  /** Mostra ou esconde as 6 partes (a pose de impacto esconde o ragdoll até o fim do hitstop, HRX-05). */
+  setVisible(v: boolean): void {
+    for (const p of this.parts) p.setVisible(v);
+  }
+
+  /** Chaves de textura das partes, para o debug (EVR-06). */
+  get textureKeys(): string[] {
+    return this.parts.map((p) => p.texture.key);
   }
 
   /** Fumaça/energia amaldiçoada + fade. */
   dissolve(durationMs: number): void {
-    for (const p of this.parts) p.setTint(0x7b2cbf);
+    // Preenchimento (não multiplicação): o corpo vira silhueta roxa da paleta enquanto some (ART-01).
+    for (const p of this.parts) p.setTint(PALETTE.u).setTintMode(Phaser.TintModes.FILL);
     this.scene.tweens.add({ targets: this.parts, alpha: 0, duration: durationMs });
     const c = this.center;
-    const smoke = this.scene.add.particles(c.x, c.y, TEX.smoke, {
+    const smoke = this.scene.add.particles(c.x, c.y, TEX.smokeCurse, {
+      frame: ['u', 'v', 'U'], // cor de origem vem do frame, sem tint multiplicativo (ART-01)
       speed: { min: 15, max: 60 },
       angle: { min: 200, max: 340 },
       lifespan: 800,
-      scale: { start: 1.4, end: 0 },
+      scale: { start: 1, end: 0 }, // começa no tamanho de texel da textura (ART-03)
       alpha: { start: 0.8, end: 0 },
-      tint: [0x7b2cbf, 0x3c096c, 0xc77dff],
       emitting: false,
     });
     smoke.explode(30);

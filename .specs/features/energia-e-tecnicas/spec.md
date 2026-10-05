@@ -1,0 +1,631 @@
+# Energia e técnicas amaldiçoadas — Specification
+
+## Problem Statement
+
+Hoje o jogador só tem o corpo a corpo. Falta o que faz um feiticeiro jujutsu ser um feiticeiro: energia amaldiçoada e técnicas que ele conjura, com o peso visual que o anime dá a cada uma. Uma técnica que só "solta um projétil" não passa a fantasia; o jogador precisa ver o selo de mão, a energia se condensando, o nome sendo chamado, o lançamento e o impacto com os efeitos que ele reconhece do anime.
+
+Esta feature cria a energia amaldiçoada, dois slots de técnica e um ritual de conjuração comum a todas as técnicas, e entrega cinco técnicas com animação e efeitos próprios: Punho Divergente, Kokusen (Black Flash), Reversão de Técnica: Vermelho, Técnica Amplificada: Azul e Desmantelar. O critério de pronto não é só "funciona": cada técnica tem uma direção de arte quadro a quadro, e cada batida dessa direção é observável no snapshot de debug.
+
+## Goals
+
+- [ ] O jogador conjura técnicas gastando energia amaldiçoada, e toda conjuração passa por selo de mão, carga e soltura visíveis antes de causar dano.
+- [ ] Acertar o Kokusen depende de timing (não de sorte) e dispara a sequência do anime: tela invertida, raios negros com borda vermelha, cartão 黒閃 e zona.
+- [ ] O Vermelho e o Azul se leem como opostos: o Vermelho empurra (faíscas saindo, explosão que repele) e o Azul puxa (espiral entrando, implosão).
+- [ ] Toda regra de energia, conjuração, janela do Kokusen, zona e geração de raios vive em `src/core`/`src/data` e é testada em Node (AD-001); todo efeito é verificável pelo snapshot de debug ou por teste de dados.
+- [ ] Nenhum efeito de técnica deixa objetos vivos na cena: tudo some até 300 ms depois do fim do efeito.
+
+## Out of Scope
+
+| Feature | Reason |
+| --- | --- |
+| Vazio Roxo, Expansão de Domínio (Vazio Infinito), Encantamento | Vão para a F9 `tecnicas-avancadas`; dependem das técnicas desta feature estarem estáveis |
+| Kokusen nos golpes comuns do combo | F8 reusa a regra de janela desta feature no finalizador do combo |
+| Som, voz e trilha | Não há assets; pode virar feature própria com síntese WebAudio |
+| Técnicas usadas pelos inimigos ou pelo chefe | Muda a leitura das lutas da F1/F2; fica para depois |
+| Técnicas com nível acima de 3 | AD-005 fixa os níveis 1–3 |
+
+---
+
+## Assumptions & Open Questions
+
+Todas as decisões abaixo foram tomadas pelo agente por delegação do usuário ("vai tomando as decisões… o jogo tem que ser divertido"; pedido de 25/09 de fidelidade ao anime). Números ficam em `src/data/techniques.ts` e `src/data/tuning.ts`.
+
+| Assumption / decision | Chosen default | Rationale | Confirmed? |
+| --- | --- | --- | --- |
+| Onde vive o Kokusen | Nesta feature (P1), no 2º impacto do Punho Divergente; a F8 só estende a regra ao combo | No anime o Yuji acerta o Black Flash no Punho Divergente quando o atraso da energia some; o usuário pediu o Kokusen nesta US | y |
+| Como se acerta o Kokusen | Timing: apertar de novo a tecla do slot nos 80 ms antes do 2º impacto; um anel de aproximação que encolhe sobre o alvo marca o ritmo | Habilidade e não sorte; a janela curta faz cada acerto ser comemorado | y |
+| Prioridade do Vermelho | P1 (era P3 no esboço) | Pedido explícito do usuário | y |
+| Divisão do escopo | Roxo, Domínio e Encantamento vão para a F9 | Mantém a F5 executável num ciclo | y |
+| Arte das técnicas | Grades de texto (AD-002) + geometria procedural e postFX do Phaser, com cores só da `PALETTE` e geometria na grade de 2 px (AD-009) | Raios, anéis e inversão de tela não saem bem só de sprites fixos | y |
+| Cores novas da paleta | `b` preto do Kokusen, `R` vermelho-vivo, `W` branco puro, `d` azul-profundo | O Kokusen precisa de preto puro e vermelho saturado; o Azul precisa de um núcleo mais fundo que `c` | y |
+| Nomes das técnicas na tela | Kanji desenhado em grade de texto (黒, 閃, 赫, 蒼, 解) + nome em português em texto | Não depende de fonte CJK instalada; é o que o anime mostra | y |
+| Teclas | Slot 1: `L` ou `C`; slot 2: `I` ou `V` | Ficam ao lado de J/K (ataque/interação) e de X/Z (setas) | y |
+| Energia | Máx. 100, regen 8/s, +3 por golpe corpo a corpo aplicado; regen para durante a conjuração | Uma técnica cara a cada ~6 s sem bater; bater acelera, o que premia agressividade | y |
+| Custo e recarga | Custo pago na soltura; recarga começa na soltura | Ser interrompido não pune duas vezes | y |
+| Conjurar no ar | Permitido; no selo e na carga a gravidade vale 30% | Pose de "pairar" do Gojo; dá jogadas aéreas | y |
+| Conjurar durante golpe | Só na fase `recover` do golpe corpo a corpo; nunca segurando objeto nem em hitstun | Um cancel simples e divertido sem abrir o sistema de cancel da F8 | y |
+| Tempo das técnicas | Todo tempo de técnica conta em tempo de jogo, que para durante o hitstop | Mesmo modelo dos golpes e do chefe | y |
+| Efeitos durante o hitstop | Efeitos presos ao gameplay pausam com o hitstop; as camadas cinemáticas do Kokusen (inversão, duotom, raios, cartão) correm em tempo real | O anime congela a ação e anima o raio por cima; sem isso o Kokusen fica estático | y |
+| Níveis 1–3 | Dano ×1,0 / ×1,25 / ×1,5 (arredondado); custo −0 / −5 / −10 | Curva simples para a loja da F4 | y |
+| Energia do Kokusen | +30 (com teto) | No anime a energia flui melhor depois do Black Flash | y |
+| Zona | 8 s; janela passa de 80 para 140 ms; cada Kokusen na zona renova os 8 s | "Estar na zona" do anime; recompensa encadear | y |
+| Azul contra o chefe | Aplica dano, não puxa | O chefe tem peso e padrões próprios (F2) | y |
+| Técnicas na loja (decidido em 26/09, depois da F4) | Entradas `kind: 'technique'` no `SHOP_CATALOG`: Punho Divergente e Desmantelar comuns, Azul e Vermelho raras; comprar sem ter equipa no 1º slot livre no nível 1; comprar tendo sobe 1 nível | A F4 foi fechada sem vender técnicas; sem isso o jogador nunca teria técnica fora do debug (AD-005) |
+| Preço das técnicas | `base + step × nível atual`: divergente 20 + 15n, corte 30 + 15n, azul 35 + 20n, vermelho 40 + 20n | A primeira técnica cabe na carteira da rodada 1–2; subir nível custa mais que um modificador |
+| Nível mínimo das técnicas | Nível 2 exige rodada ≥ 3; nível 3 exige rodada ≥ 6 | AD-005: níveis altos exigem rodada mínima |
+| Técnica garantida | Enquanto os dois slots estão vazios, o espaço 0 de toda loja (inclusive após reroll) é uma técnica, sorteada entre as técnicas pelo peso de raridade | AD-005 trade-off: a loja precisa garantir técnicas cedo; o 1º "uau" não pode depender de sorte |
+| Troca de técnica | Com os dois slots cheios, técnica que o jogador não tem não é oferecida | Sem tela de troca nesta feature; mantém a escolha dos 2 slots com peso |
+| Upgrades de energia na loja | Modificadores `energia` (máx. +20 por nível, até 5) e `fluxo` (regen +2/s por nível, até 4), comuns, custo 10 + 6n e 12 + 6n; só oferecidos com ao menos uma técnica equipada | Reusa CE-07/CE-09; sem técnica eles não servem para nada |
+| Renderer sem WebGL | Pula os postFX e mantém os efeitos em sprite e geometria | Não quebrar o jogo em máquina sem WebGL; o smoke headless pode cair em Canvas | y |
+
+**Open questions:** none - all resolved or logged above.
+
+**Refinamento Jev (AD-007):** três rodadas em 25/09 (`refinement.md`): de 124 ACs com 65 sinalizados para 148 ACs com 54 sinalizados. Todos os ACs com precisão baixa ou com dois comportamentos claros foram reescritos ou divididos; o que sobrou está aceito com justificativa na revisão do autor.
+
+**Implicit-requirement dimensions sweep:**
+- State-transition integrity: coberta por CAST-01..CAST-20 (máquina `sign → charge → release → recover`, cancelamento) e KOK-03..KOK-05 (janela, trava por tentativa).
+- Input validation & bounds: coberta por CE-02, CE-03 (energia entre 0 e o máximo), CE-07/CE-09 (tetos dos upgrades) e TEC-04/TEC-05 (slot duplicado e nível fora de 1–3).
+- Failure / partial-failure states: coberta por CAST-05/CAST-06 (sem energia, em recarga) e TFX-06 (sem WebGL).
+- Idempotency / duplicate handling: coberta por CAST-03 (custo pago uma vez), RED-06 (cada inimigo atingido uma vez por Vermelho) e KOK-04 (um Kokusen por Punho Divergente).
+- Auth boundaries & rate limits: N/A because é um jogo local sem contas; o "limite de taxa" das técnicas é a recarga (CAST-06).
+- Concurrency / ordering: coberta por CAST-08 (uma conjuração por vez), KOK-12 (Kokusen e limiar de fase no mesmo frame) e pela regra de hitstop (TFX-05).
+- Data lifecycle / expiry: coberta por TFX-03 (objetos de efeito somem) e pelos edge cases de morte e nova run.
+- Observability: coberta por TEC-08 e pelos campos `ce`, `tech`, `kokusen`, `techObjects` e `fx` do snapshot, e pelos `events` de cada story.
+- External-dependency failure: coberta por TFX-06 (renderer sem WebGL).
+
+---
+
+## Snapshot de debug (contrato usado pelos ACs)
+
+Campos novos em `GameSnapshot` (`src/game/debugApi.ts`), lidos do estado vivo:
+
+```ts
+ce: { cur: number; max: number; regen: number };
+tech: {
+  slots: [{ id: TechId; level: 1 | 2 | 3; cooldownMs: number } | null, { … } | null];
+  cast: { slot: 0 | 1; id: TechId; state: 'sign' | 'charge' | 'release' | 'recover'; elapsedMs: number } | null;
+};
+kokusen: { zone: boolean; zoneMs: number; streak: number; windowOpen: boolean };
+techObjects: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[];
+fx: { live: number; degraded: boolean; layers: string[] };
+```
+
+`TechId` = `'divergente' | 'vermelho' | 'azul' | 'corte'` (o Kokusen não é técnica de slot: é o resultado do Punho Divergente). `fx.layers` lista os nomes das camadas de efeito vivas (ex.: `kokusen.invert`), e é por ela que o smoke confere cada batida da direção de arte.
+
+---
+
+## User Stories
+
+### P1: Energia amaldiçoada e slots ⭐ MVP
+
+**User Story**: Como jogador, quero uma barra de energia amaldiçoada e dois slots de técnica, para decidir quando gastar energia e ver o que tenho equipado.
+
+**Why P1**: Toda técnica depende disso.
+
+**Acceptance Criteria**:
+
+1. CE-01: WHEN a run starts THEN the player cursed energy SHALL be 100 with max 100 and regen 8 per second.
+2. CE-02: The cursed energy SHALL never be below 0.
+3. CE-03: The cursed energy SHALL never be above its max.
+4. CE-04: WHILE no cast is in progress, the cursed energy SHALL increase by `regen × dt / 1000` per frame of game time, capped at max.
+5. CE-05: WHILE a cast is in progress (any cast state), the cursed energy SHALL NOT regenerate.
+6. CE-06: WHEN a basic melee hit (jab, cross, kick or prop hit) is applied to an enemy or the boss THEN the cursed energy SHALL increase by 3, capped at max.
+7. CE-07: WHEN the max upgrade is applied at level `n` (n ≥ 0) THEN max SHALL be `min(100 + 20n, 200)`.
+8. CE-09: WHEN the regen upgrade is applied at level `n` (n ≥ 0) THEN regen SHALL be `min(8 + 2n, 16)`.
+9. CE-08: WHEN damage dealt by a technique is applied to a target THEN the cursed energy SHALL NOT receive the +3 of CE-06.
+10. TEC-01: WHEN a run starts without the `tech` debug parameter THEN both technique slots SHALL be empty (AD-005).
+11. TEC-02: WHERE the debug mode is on and the URL has `tech=<id>[,<id>]` THEN the slots SHALL start with those techniques at level 1, in order, ignoring unknown ids.
+12. TEC-03: WHEN `equip(slot, id, level)` is called with a valid slot, a known id and a level in 1–3 THEN that slot SHALL hold that technique at that level.
+13. TEC-04: IF `equip` is called with an id already in the other slot THEN both slots SHALL keep the technique and level they had before the call.
+14. TEC-13: IF `equip` is called with an id already in the other slot THEN `equip` SHALL return `false`.
+15. TEC-05: IF `equip` or `upgrade` would set a level outside 1–3 THEN the loadout SHALL stay unchanged and the call SHALL return `false`.
+16. TEC-06: For a technique at level `n` ∈ {1, 2, 3}, each damage value SHALL be `round(base × k)`, with k = 1.0, 1.25 and 1.5 for n = 1, 2 and 3, where `base` is the level-1 value and `round` rounds halves up.
+17. TEC-14: For a technique at level `n` ∈ {1, 2, 3}, its cost SHALL be `baseCost − 5 × (n − 1)`, where `baseCost` is its level-1 cost (Vermelho: 45, 40, 35).
+18. TEC-07: The HUD SHALL show the cursed energy bar under the HP bar, with fill width `barWidth × cur / max` (±1 px).
+19. TEC-12: WHILE a slot holds a technique, the energy bar SHALL show a vertical mark for it at `barLeft + barWidth × cost / max` px (±1 px), where `cost` is that technique cost at its level.
+20. TEC-09: WHILE a slot holds a technique, its HUD icon SHALL have a dark overlay of height `iconHeight × cooldownMs / cooldown` px (±1 px), where `cooldown` is that technique full cooldown.
+21. TEC-10: WHEN a cast is denied for lack of energy THEN the energy bar SHALL flash in `R` for 300 ms.
+22. TEC-08: WHERE the debug mode is on, the snapshot SHALL include `ce` and `tech` as defined in the snapshot contract.
+23. TEC-11: The energy bar and slot icon objects SHALL be in the main camera ignore list, reported as `hud.techIgnoredByMain: true` in the debug snapshot.
+24. TEC-15: The fill, background, mark, flash and overlay colors of the energy bar and slot icons SHALL be exported constants whose values belong to `PALETTE` (data test).
+
+**Independent Test**: `energy.test.ts` e `loadout.test.ts` em Node (limites 0/máx., regen com e sem conjuração, +3, tetos dos upgrades nos níveis 5/6 e 4/5, duplicado, nível 0 e 4); smoke `tech.smoke.mjs` com `?debug&tech=vermelho` confere barra, marca e ícone.
+
+---
+
+### P1: Técnicas e energia na loja ⭐ MVP
+
+**User Story**: Como jogador, quero comprar minha primeira técnica na loja entre rodadas e depois evoluí-la, para montar meu feiticeiro ao longo da run.
+
+**Why P1**: Sem isso nenhuma técnica aparece fora do debug (AD-005); é o elo entre a economia da F3/F4 e esta feature.
+
+**Direção de feel**: a carta de técnica mostra o kanji da técnica no topo; comprar a primeira técnica faz o ícone voar da carta até o slot do HUD em 300 ms.
+
+**Acceptance Criteria**:
+
+1. TSH-01: The shop catalog SHALL include the techniques `divergente` and `corte` with rarity common and `azul` and `vermelho` with rarity rare, each with `kind: 'technique'` and maxLevel 3.
+2. TSH-02: WHEN a technique at level `n` (0 if not equipped) is offered THEN its cost SHALL be `base + step × n`, with (base, step) = (20, 15) for `divergente`, (30, 15) for `corte`, (35, 20) for `azul` and (40, 20) for `vermelho`.
+3. TSH-03: The offer pool SHALL include a technique that is not equipped if and only if at least one slot is empty.
+4. TSH-04: The offer pool SHALL include an equipped technique if and only if its level is below 3 and the current round is ≥ 3 for level 2 or ≥ 6 for level 3.
+5. TSH-05: WHILE both slots are empty, slot 0 of every drawn set of offers (at shop open and after each reroll) SHALL be a technique, drawn among the eligible techniques by SHOP-08 weights before the other slots.
+6. TSH-06: WHEN a technique that is not equipped is bought THEN it SHALL be equipped at level 1 in the first empty slot (slot 1 before slot 2).
+7. TSH-07: WHEN an equipped technique is bought THEN its level SHALL increase by exactly 1.
+8. TSH-08: The shop catalog SHALL include the common modifier `energia` with maxLevel 5 and cost `10 + 6n`.
+9. TSH-15: The shop catalog SHALL include the common modifier `fluxo` with maxLevel 4 and cost `12 + 6n`.
+10. TSH-09: The offer pool SHALL include `energia` and `fluxo` only while at least one slot holds a technique.
+11. TSH-10: WHILE `energia` is at level `n`, the cursed energy max SHALL be `min(100 + 20n, 200)`.
+12. TSH-11: WHILE `fluxo` is at level `n`, the cursed energy regen SHALL be `min(8 + 2n, 16)` per second.
+13. TSH-12: WHILE a technique is not equipped, its card preview text SHALL be `Nova · slot <k>`, where `k` is 1 if slot 1 is empty and 2 otherwise.
+14. TSH-16: WHILE a technique is equipped at level `n` < 3, its card preview text SHALL be `Dano ×<a> → ×<b>`, with `a` and `b` the TEC-06 factors of levels `n` and `n + 1` written with a comma decimal (`×1,0`, `×1,25`, `×1,5`).
+15. TSH-13: The `energia` card preview text SHALL be `Energia máx. <cur> → <new>`, with `cur` the current max and `new` the max at the next level.
+16. TSH-17: The `fluxo` card preview text SHALL be `Regen <cur>/s → <new>/s`, with `cur` the current regen and `new` the regen at the next level.
+17. TSH-14: WHEN a technique is bought while both slots are empty THEN `events` SHALL get exactly one `techUnlock:<id>`, where `id` is the bought technique id.
+
+**Independent Test**: `shop.test.ts` e `techShop.test.ts` em Node (pool com 0, 1 e 2 slots cheios; níveis nas rodadas 2/3 e 5/6; garantia do espaço 0 também após reroll; compra que equipa no slot 1 e depois no 2; upgrade; custos; prévias); smoke `shop.smoke.mjs` compra a técnica garantida na rodada 1 e confere `tech.slots`.
+
+---
+
+### P1: Conjuração — selo, carga e soltura ⭐ MVP
+
+**User Story**: Como jogador, quero que toda técnica tenha um ritual visível — selo de mão, energia se condensando, o nome chamado e a soltura — para sentir que estou conjurando uma técnica, não apertando um botão de tiro.
+
+**Why P1**: É o que dá a sensação de anime a todas as técnicas; sem isso cada técnica precisaria inventar a própria.
+
+**Direção de arte (beats do anime)**:
+1. **Selo** — o player trava no frame do selo de mão daquela técnica (grade 32×24 própria). Uma aura de energia na cor da técnica começa a tremular em volta do corpo (pixels de chama subindo, 2 frames alternando).
+2. **Carga** — a aura cresce; a câmera do mundo aproxima devagar (zoom 1,5 → 1,6) como se o mundo prendesse a respiração. No ar, o player quase para de cair.
+3. **Chamada** — na soltura, uma faixa no HUD mostra o kanji da técnica em pixel art e o nome em português por 900 ms, deslizando da esquerda.
+4. **Soltura** — frame de soltura do player; a câmera volta ao zoom normal em 250 ms.
+5. **Recuperação** — frame de recuperação; a aura se apaga em 150 ms.
+
+**Acceptance Criteria**:
+
+1. CAST-01: WHEN the player presses a slot key holding a technique with enough energy and no cooldown THEN a cast SHALL start in the `sign` state.
+2. CAST-02: WHEN a cast starts THEN it SHALL stay in `sign` for the technique sign time, then in `charge` for its charge time, then in `release` for its release time, then in `recover` for its recover time, and then end, skipping any state whose time is 0 ms.
+3. CAST-03: WHEN a cast enters `release` THEN the technique cost SHALL be subtracted from the cursed energy exactly once.
+4. CAST-04: WHEN a cast enters `release` THEN the slot cooldown SHALL be set to the technique cooldown.
+5. CAST-05: IF the player presses a slot key and the cursed energy is below the cost THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:energy`.
+6. CAST-06: IF the player presses a slot key whose cooldown is above 0 THEN no cast SHALL start and the snapshot `events` SHALL get `techDenied:cooldown`.
+7. CAST-07: WHEN the player takes damage during `sign` or `charge` THEN the cast SHALL end and the cursed energy SHALL keep the value it had before that damage.
+8. CAST-21: WHEN a cast ends by CAST-07 THEN the slot cooldown SHALL stay 0.
+9. CAST-20: WHEN a cast ends by CAST-07 THEN `events` SHALL get `techCancel`.
+10. CAST-08: WHILE a cast is in progress, a slot key press SHALL NOT start another cast.
+11. CAST-09: IF the player presses a slot key while holding a prop, in hitstun, or in the `startup` or `active` phase of a melee attack THEN no cast SHALL start and `events` SHALL get `techDenied:busy`.
+12. CAST-10: WHEN the player presses a slot key during the `recover` phase of a melee attack, with enough energy and no cooldown for that technique, THEN the melee attack SHALL end and the cast SHALL start in that same frame.
+13. CAST-11: WHILE the player is airborne in `sign` or `charge`, the gravity applied to the player SHALL be 30% of `PLAYER_MOVE.gravity`.
+14. CAST-12: WHILE a cast is in `sign`, `charge`, `release` or `recover`, the player SHALL NOT move horizontally from input.
+15. CAST-13: WHILE a cast is in `sign`, the player sprite SHALL show that technique's sign frame; in `charge` its charge frame; in `release` its release frame; in `recover` its recover frame.
+16. CAST-14: WHILE a cast is in `sign` or `charge`, `fx.layers` SHALL include `cast.aura`.
+17. CAST-15: WHEN a cast enters `charge` THEN the main camera zoom SHALL move from 1.5 to 1.6 over the charge time.
+18. CAST-19: WHEN a cast enters `release` THEN the main camera zoom SHALL return to 1.5 within 250 ms.
+19. CAST-16: WHEN a cast enters `release` THEN the HUD SHALL show the callout with the technique kanji grid and Portuguese name for 900 ms, reported as `hud.callout` in the snapshot.
+20. CAST-17: WHEN a cast enters `release` THEN `events` SHALL get `techCast:<id>`.
+21. CAST-18: For each technique id in {`divergente`, `vermelho`, `azul`, `corte`}, the player sheet SHALL contain the frames `<id>-sign`, `<id>-charge`, `<id>-release` and `<id>-recover`, each 32×24 texels (data test).
+22. CAST-22: Every texel of the frames listed in CAST-18 SHALL be '.' or a `PALETTE` key (data test).
+
+**Independent Test**: `cast.test.ts` em Node (ordem dos estados, custo único, cancelamento em `sign`/`charge` e não em `release`, recusas, cancel na `recover` do golpe); smoke confere `tech.cast.state` passo a passo, `cast.aura`, zoom e `hud.callout`.
+
+---
+
+### P1: Punho Divergente ⭐ MVP
+
+**User Story**: Como jogador, quero um soco que acerta duas vezes — o punho e depois a energia atrasada —, como o do Yuji, para ter uma técnica corpo a corpo forte e com ritmo próprio.
+
+**Why P1**: É a técnica mais barata e a base do Kokusen.
+
+**Direção de arte (beats do anime)**:
+1. **Preparo** — o punho fica envolto em energia azul (`c`/`C`) tremulando; o player puxa o braço para trás.
+2. **1º impacto** — soco esticado; faísca normal de golpe leve no ponto de contato.
+3. **O atraso** — nos 200 ms seguintes, o eco da energia chispa no alvo (pontinhos azuis) e um **anel de aproximação** branco encolhe de 32 px até 0 sobre o ponto de contato — é o ritmo do Kokusen.
+4. **2º impacto** — anel azul-branco estoura no ponto de contato e uma cópia translúcida do punho aparece deslocada 8 px à frente; o alvo é empurrado.
+
+**Acceptance Criteria**:
+
+1. DIV-01: The Punho Divergente SHALL have cost 20, cooldown 1200 ms, sign 60 ms, charge 60 ms, release 80 ms and recover 200 ms at level 1.
+2. DIV-02: WHILE the Punho Divergente is in `release`, a punch hitbox with the same size and offset as the cross hitbox SHALL be open.
+3. DIV-11: WHEN the Punho Divergente punch hitbox touches its first target THEN it SHALL ignore every other target for the rest of that cast.
+4. DIV-03: WHEN the punch hitbox touches a target THEN that target SHALL take a first impact of 12 light damage.
+5. DIV-04: WHEN 200 ms of game time have passed since the first impact THEN the first-impact target SHALL take 18 heavy damage.
+6. DIV-12: WHEN the second impact happens THEN its effects SHALL be drawn at the first-impact target center in that frame.
+7. DIV-05: IF the punch hitbox touches no target during `release` THEN no second impact SHALL happen.
+8. DIV-06: IF the target died from the first impact THEN no second impact SHALL happen.
+9. DIV-07: WHILE the time since the first impact is between 0 and 200 ms, `fx.layers` SHALL include `divergente.echo` and `divergente.ring`.
+10. DIV-08: WHILE the approach ring is visible, its radius SHALL be `32 × (1 − t / 200)` px (±2 px), where `t` is the ms since the first impact.
+11. DIV-09: WHEN the second impact happens without a Kokusen THEN `fx.layers` SHALL include `divergente.burst` and `divergente.fistGhost` in that frame and `events` SHALL get `divergent2`.
+12. DIV-10: WHILE the Punho Divergente is in `sign` or `charge`, `fx.layers` SHALL include `divergente.fistAura`.
+
+**Independent Test**: `divergent.test.ts` em Node (tempos, um alvo só, 2º impacto aos 199/200 ms, sem 2º quando erra ou mata); smoke com `?debug&tech=divergente` acerta um inimigo e confere hp, eventos e camadas.
+
+---
+
+### P1: Kokusen (Black Flash) ⭐ MVP
+
+**User Story**: Como jogador, quero acertar o Kokusen com o timing perfeito e ver a tela explodir em preto e vermelho como no anime, para sentir o momento mais forte do jogo e querer repetir.
+
+**Why P1**: Pedido central do usuário; é o momento de maior impacto da feature.
+
+**Direção de arte (beats do anime)** — tudo acontece dentro do congelamento do impacto:
+1. **Congelamento** — hitstop de 220 ms; o player fica no frame do soco esticado (frame próprio `kokusen-hit`, corpo mais inclinado que o `cross`).
+2. **Inversão** — por 2 frames a tela do mundo inverte as cores (negativo). O alvo vira uma silhueta preta (`b`).
+3. **Duotom** — por mais 4 frames o mundo fica em preto e vermelho (`b`/`R`).
+4. **Raios negros** — de 5 a 8 raios pretos com borda vermelho-viva saem do ponto de contato, com 40 a 110 px, em zigue-zague, redesenhados a cada 2 frames (o raio "pisca" e muda de forma) durante o congelamento e somem em 150 ms depois.
+5. **Faíscas e choque** — faíscas vermelhas e pretas em leque na direção do soco; um anel de choque branco expande em 3 frames.
+6. **Câmera** — zoom-punch (+12% em 60 ms, volta em 300 ms) e tremida forte.
+7. **Cartão** — "黒閃" grande no centro da tela, revelado da esquerda para a direita como uma pincelada, por 800 ms; na zona aparece "×N" ao lado.
+8. **Zona** — enquanto dura, uma aura preta com faíscas vermelhas tremula no player, discreta.
+
+**Acceptance Criteria**:
+
+1. KOK-01: WHILE the time since a Punho Divergente first impact is at least 120 ms and at most 200 ms (outside the zone), the Kokusen window SHALL be open (`kokusen.windowOpen === true`).
+2. KOK-02: WHILE in the zone, the Kokusen window SHALL be open from 60 ms to 200 ms after the first impact.
+3. KOK-03: WHEN the player presses the slot key that cast the Punho Divergente while `kokusen.windowOpen` is true and that cast is not locked by KOK-04 THEN the second impact of that cast SHALL be a Kokusen.
+4. KOK-04: WHEN the player presses the same slot key after the first impact and before the window opens THEN that Punho Divergente SHALL NOT produce a Kokusen, and `events` SHALL get `kokusenMiss`.
+5. KOK-05: WHILE a Punho Divergente is in `sign`, `charge` or `release` before its first impact, a press of its slot key SHALL NOT count for KOK-03 or KOK-04.
+6. KOK-06: WHEN a Kokusen lands THEN the target SHALL take 45 heavy damage (18 × 2.5) instead of the normal second impact.
+7. KOK-07: WHEN a Kokusen lands on a regular enemy that survives THEN the enemy SHALL enter ragdoll with twice the heavy-hit knockback.
+8. KOK-08: WHEN a Kokusen lands on the boss THEN the boss poise SHALL drop by `3 × 45`, never below 0.
+9. KOK-09: WHEN a Kokusen lands THEN the cursed energy SHALL increase by 30, capped at max.
+10. KOK-10: WHEN a Kokusen lands THEN `kokusen.zoneMs` SHALL be set to 8000 and `kokusen.zone` to true.
+11. KOK-30: WHEN a Kokusen lands THEN `kokusen.streak` SHALL increase by 1.
+12. KOK-11: WHEN `kokusen.zoneMs` reaches 0 THEN `kokusen.zone` SHALL become false.
+13. KOK-31: WHEN `kokusen.zone` becomes false THEN `kokusen.streak` SHALL become 0.
+14. KOK-12: IF a Kokusen takes the boss hp from above a phase threshold to at or below it THEN the boss SHALL lose the full 45 hp and enter `roar` in that frame (BAI-05).
+15. KOK-32: IF a Kokusen takes the boss hp from above a phase threshold to at or below it THEN the cursed energy SHALL still increase by 30 (KOK-09).
+16. KOK-13: WHEN a Kokusen lands THEN the game SHALL apply a hitstop of 220 ms (FX-02: the longest pending hitstop wins).
+17. KOK-14: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.invert` for at least 33 ms of real time (2 frames at 60 fps, rounded up to whole frames).
+18. KOK-15: WHEN `kokusen.invert` ends THEN `fx.layers` SHALL include `kokusen.duotone` for at least 66 ms of real time (4 frames at 60 fps, rounded up to whole frames), and SHALL NOT include `kokusen.invert` at the same time.
+19. KOK-16: WHILE `kokusen.invert` is active, the target sprite SHALL be drawn as a solid `b` silhouette.
+20. KOK-17: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.bolts` until 150 ms of real time after the hitstop ends.
+21. KOK-18: For any seed, `lightningBolts(seed, origin, dir)` SHALL return at least 5 and at most 8 bolts.
+22. KOK-33: For any seed, the sum of the segment lengths of each bolt returned by `lightningBolts` SHALL be at least 40 px and at most 110 px.
+23. KOK-19: For any seed, every vertex returned by `lightningBolts` SHALL have integer coordinates that are multiples of 2 relative to the origin.
+24. KOK-20: WHEN `lightningBolts` is called twice with the same seed, origin and direction THEN it SHALL return the same bolts.
+25. KOK-21: WHILE `kokusen.bolts` is active during the hitstop, the bolts SHALL be regenerated with a new seed every 2 frames.
+26. KOK-22: The bolt stroke SHALL be `b` with a 1-texel `R` border.
+27. KOK-23: WHEN a Kokusen lands THEN `fx.layers` SHALL include `kokusen.sparks` and `kokusen.shock` in that frame.
+28. KOK-24: WHEN a Kokusen lands THEN the main camera zoom SHALL reach 1.68 (1.5 × 1.12) within 60 ms of real time and return to 1.5 within the next 300 ms.
+29. KOK-25: WHEN a Kokusen lands THEN the HUD SHALL show the 黒閃 card at the screen center for 800 ms, reported as `hud.kokusenCard` in the snapshot.
+30. KOK-26: WHILE `kokusen.streak` ≥ 2, the card SHALL show `×N` with N = streak.
+31. KOK-27: WHILE the zone is active, `fx.layers` SHALL include `kokusen.zoneAura`.
+32. KOK-28: WHEN a Kokusen lands THEN `events` SHALL get exactly one `kokusen` entry.
+33. KOK-29: The 黒 and 閃 grids SHALL be 24×24 texels each (data test).
+34. KOK-34: Every texel of the 黒 and 閃 grids SHALL be '.' or a `PALETTE` key (data test).
+
+**Independent Test**: `kokusen.test.ts` em Node (janela nos limites 119/120 e 200/201 ms, na zona 59/60 ms, trava por tentativa, zona 7999/8000 ms, streak, dano, energia com teto); `lightning.test.ts` (quantidade, comprimentos, grade de 2 px, determinismo por seed); smoke `kokusen.smoke.mjs` aperta a tecla aos 160 ms e confere camadas, hitstop, zoom, cartão e evento; um segundo cenário aperta aos 60 ms e confere `kokusenMiss`.
+
+---
+
+### P1: Reversão de Técnica: Vermelho ⭐ MVP
+
+**User Story**: Como jogador, quero condensar uma esfera vermelha na ponta dos dedos e lançá-la como o Gojo, com uma explosão que joga os inimigos longe, para limpar a tela com estilo.
+
+**Why P1**: Pedido explícito do usuário; é a técnica de área e de "uau".
+
+**Direção de arte (beats do anime)**:
+1. **Selo** — braço esticado para a frente, indicador e médio apontados (frame próprio). Aura vermelha.
+2. **Carga** — uma esfera vermelha nasce na ponta dos dedos e cresce em 3 passos (4 → 8 → 12 texels), com núcleo branco-quente (`W`). Faíscas vermelhas são **expelidas** para fora (repulsão — o oposto do Azul). Um anel de brilho pulsa em volta da esfera. A poeira do chão é empurrada para longe dos pés.
+3. **Chamada** — "赫 Reversão de Técnica: Vermelho".
+4. **Soltura** — a esfera dispara reta; o player recua com o tranco. A esfera deixa um rastro de riscos vermelhos e estala (pequenos raios vermelhos em volta).
+5. **Contato** — inimigo tocado é arremessado para longe em ragdoll.
+6. **Detonação** — flash branco no núcleo → esfera vermelha expandindo em 3 frames → onda de choque em anel → detritos e fumaça. A tela pisca vermelho por 80 ms e treme.
+
+**Acceptance Criteria**:
+
+1. RED-01: The Vermelho SHALL have cost 45, cooldown 3000 ms, sign 250 ms, charge 350 ms, release 100 ms and recover 250 ms at level 1.
+2. RED-02: WHILE the Vermelho is in `charge`, the orb frame SHALL be the 4-texel frame in the first third of the charge time, the 8-texel frame in the second third and the 12-texel frame in the last third.
+3. RED-03: WHILE the Vermelho is in `charge`, `fx.layers` SHALL include `red.orb`, `red.sparksOut`, `red.glowRing` and `red.dustPush`.
+4. RED-04: The `red.sparksOut` particles SHALL have velocities pointing away from the orb center (the dot product of velocity and offset from the center is positive).
+5. RED-05: WHEN the Vermelho enters `release` THEN a red orb SHALL be launched horizontally toward the player's facing at 560 px/s from the fingertip position.
+6. RED-15: WHEN the Vermelho enters `release` on the ground THEN the player SHALL be pushed 12 px (±2 px) opposite to its facing.
+7. RED-06: WHEN the red orb touches a regular enemy it has not hit before THEN that enemy SHALL take 30 heavy damage and enter ragdoll with an impulse pointing away from the orb.
+8. RED-07: WHILE the red orb is in flight, `fx.layers` SHALL include `red.trail` and `red.crackle`.
+9. RED-08: WHEN the red orb touches a wall, touches the boss, or has traveled 420 px THEN it SHALL detonate in that frame.
+10. RED-09: WHEN the red orb detonates on the boss THEN the boss SHALL take 30 heavy damage.
+11. RED-10: WHEN the red orb detonates THEN every regular enemy whose center is within 96 px of the detonation point and that the orb has not hit before SHALL take 25 heavy damage and a radial impulse away from that point.
+12. RED-11: WHEN the red orb detonates THEN `fx.layers` SHALL include `red.flashCore`, `red.sphere`, `red.shockRing`, `red.debris` and `red.screenFlash` in that frame.
+13. RED-16: WHEN the red orb detonates THEN `events` SHALL get exactly one `redDetonate`.
+14. RED-12: WHEN the red orb detonates THEN `red.screenFlash` SHALL stay in `fx.layers` for 80 ms (rounded up to whole frames).
+15. RED-17: WHEN the red orb detonates THEN the main camera SHALL shake for 200 ms.
+16. RED-13: WHEN the red orb detonates THEN it SHALL be removed from `techObjects` in that frame.
+17. RED-14: WHILE the red orb is in flight, `techObjects` SHALL list it with `kind: 'red'` and its `traveled` distance.
+
+**Independent Test**: `redOrb.test.ts` em Node (velocidade, alcance 419/420 px, cada inimigo uma vez, raio 95/96/97 px, detonação em parede e no chefe); teste de dados das grades da esfera; smoke `red.smoke.mjs` com `?debug&tech=vermelho` e dois inimigos na linha confere dano, ragdoll, camadas e evento.
+
+---
+
+### P2: Técnica Amplificada: Azul
+
+**User Story**: Como jogador, quero criar um ponto de atração azul que suga os inimigos e os esmaga, para agrupar a tela e combinar com o corpo a corpo.
+
+**Why P2**: Dá controle de grupo e o contraste com o Vermelho; a feature se sustenta sem ela.
+
+**Direção de arte (beats do anime)**:
+1. **Selo** — mão erguida à frente, dedos juntos (frame próprio). Aura azul.
+2. **Carga** — um ponto azul-profundo (`d`) aparece à frente e engrossa.
+3. **Chamada** — "蒼 Técnica Amplificada: Azul".
+4. **Esfera ativa** — núcleo `d` com borda ciano (`C`); partículas em espiral **entrando**; anéis de distorção contraindo; pedrinhas do chão sugadas.
+5. **Implosão** — a esfera colapsa num ponto branco e some.
+
+**Acceptance Criteria**:
+
+1. BLU-01: The Azul SHALL have cost 35, cooldown 4000 ms, sign 200 ms, charge 250 ms, release 100 ms and recover 200 ms at level 1.
+2. BLU-02: WHEN the Azul enters `release` THEN a blue orb SHALL appear 110 px ahead of the player center at the player center height, or 16 px before the first wall if a wall is closer than 110 px.
+3. BLU-03: WHEN the blue orb has existed for 1400 ms THEN it SHALL end (BLU-07, BLU-11).
+4. BLU-12: WHILE the blue orb exists, its position SHALL stay equal to its spawn position.
+5. BLU-04: WHILE the blue orb exists, every regular enemy whose center is within 130 px of the orb SHALL be moved toward the orb center at 150 px/s.
+6. BLU-05: WHILE the blue orb exists, the boss SHALL NOT be moved by it.
+7. BLU-06: WHILE the blue orb exists, every 250 ms of its life every enemy and the boss within 130 px SHALL take 5 light damage.
+8. BLU-07: WHEN the blue orb ends THEN every regular enemy and the boss whose center is within 130 px of the orb center SHALL take 10 light damage once.
+9. BLU-11: WHEN the blue orb reaches 1400 ms THEN it SHALL be removed from `techObjects` and `events` SHALL get exactly one `blueImplode`.
+10. BLU-08: WHILE the blue orb exists, `fx.layers` SHALL include `blue.core`, `blue.spiralIn`, `blue.distortRing` and `blue.debrisIn`.
+11. BLU-09: The `blue.spiralIn` particles SHALL have velocities with a component pointing toward the orb center (the dot product of velocity and offset from the center is negative).
+12. BLU-10: WHILE the blue orb exists, `techObjects` SHALL list it with `kind: 'blue'`.
+
+**Independent Test**: `blueOrb.test.ts` em Node (posição com e sem parede, raio 129/130/131 px, 5 ticks + implosão, chefe não puxado); smoke com `?debug&tech=azul` confere puxão, dano e camadas.
+
+---
+
+### P2: Desmantelar
+
+**User Story**: Como jogador, quero um corte invisível e instantâneo à distância, para acertar quem está fora do alcance do soco sem esperar um projétil.
+
+**Why P2**: Completa o conjunto com uma técnica rápida; não é base de outras.
+
+**Direção de arte (beats do anime)**:
+1. **Selo** — gesto rápido de dois dedos cortando o ar (frame próprio). Aura branca curta.
+2. **Chamada** — "解 Desmantelar".
+3. **Cortes** — nada avisa. Cada corte aparece como uma linha branca fina (1 texel, `W`) cruzando a área num ângulo diferente, por 1 frame cheia e depois some em 120 ms; o alvo pisca partido ao meio (duas metades deslocadas 2 px por 2 frames).
+
+**Acceptance Criteria**:
+
+1. CUT-01: The Desmantelar SHALL have cost 30, cooldown 2500 ms, sign 150 ms, charge 0 ms, release 150 ms and recover 200 ms at level 1.
+2. CUT-02: WHEN the Desmantelar enters `release` THEN it SHALL make 3 cuts, at 0, 60 and 120 ms after entering `release`.
+3. CUT-03: WHEN a cut happens THEN every enemy and the boss whose body overlaps the rectangle from 60 to 180 px ahead of the player center and 48 px tall centered on it SHALL take 10 light damage.
+4. CUT-04: WHEN a cut happens THEN `fx.layers` SHALL include `cut.line` in that frame.
+5. CUT-08: WHEN a cut happens THEN `events` SHALL get exactly one `cut`.
+6. CUT-05: The 3 cut lines of one cast SHALL be at 20°, −25° and 70° from the horizontal, in cut order, mirrored horizontally when the player faces left.
+7. CUT-06: WHEN a cut damages a target THEN `fx.layers` SHALL include `cut.split` for that target for at least 33 ms (2 frames at 60 fps, rounded up to whole frames).
+
+**Independent Test**: `cut.test.ts` em Node (tempos, área 59/60 e 180/181 px); smoke com `?debug&tech=corte` confere dano nos 3 cortes, ângulos e camadas.
+
+---
+
+### P2: Laboratório de efeitos
+
+**User Story**: Como jogador (e como quem aprova a arte), quero uma sala onde disparo cada técnica à vontade e em câmera lenta, para julgar se os efeitos estão fiéis ao anime.
+
+**Why P2**: É a ferramenta do UAT visual; o jogo funciona sem ela.
+
+**Acceptance Criteria**:
+
+1. FXL-01: WHERE the debug mode is on and the URL has `fxlab` THEN the run SHALL spawn no waves.
+2. FXL-05: WHERE the debug mode is on and the URL has `fxlab` THEN the scene SHALL place 3 training dummies on the main floor at `playerSpawn.x + 120`, `+ 200` and `+ 280` px.
+3. FXL-06: WHEN a training dummy hp reaches 0 THEN the dummy SHALL stay in place and its hp SHALL be set to max 1000 ms later.
+4. FXL-02: WHILE in `fxlab`, the keys 1, 2, 3, 4, 5 and 6 SHALL play, respectively, the cast aura, the Punho Divergente, a Kokusen, the Vermelho, the Azul and the Desmantelar, aimed at the nearest dummy.
+5. FXL-07: WHILE in `fxlab`, the effects played by the keys 1 to 6 SHALL NOT change the cursed energy.
+6. FXL-09: WHILE in `fxlab`, the effects played by the keys 1 to 6 SHALL NOT change any slot cooldown.
+7. FXL-03: WHILE in `fxlab`, the key 0 SHALL toggle the scene time scale between 1 and 0.25.
+8. FXL-04: WHILE in `fxlab`, the HUD SHALL show the legend `1 aura · 2 divergente · 3 kokusen · 4 vermelho · 5 azul · 6 corte · 0 lento`.
+9. FXL-08: WHILE in `fxlab`, the HUD SHALL show `velocidade: 1x` when the time scale is 1 and `velocidade: 0.25x` when it is 0.25.
+
+**Independent Test**: smoke `fxlab.smoke.mjs` dispara 1–6, confere as camadas de cada efeito e salva uma captura de cada um na pasta de saída do smoke para o UAT.
+
+---
+
+### P1: Invariantes dos efeitos de técnica ⭐ MVP
+
+**User Story**: Como jogador, quero que os efeitos fiquem bonitos sem pesar o jogo nem deixar lixo na tela, para a imersão não quebrar.
+
+**Why P1**: Vale para todas as técnicas desde a primeira.
+
+**Acceptance Criteria**:
+
+1. TFX-01: Every color used by technique effects, technique frames, kanji grids and technique HUD parts SHALL belong to `PALETTE` (data test).
+2. TFX-08: This feature SHALL add exactly four keys to `PALETTE`: `b` = 0x050205, `R` = 0xff3344, `W` = 0xffffff and `d` = 0x14307a (data test).
+3. TFX-02: For every procedural effect geometry (bolt, ring, cut line), the x and y offsets of every vertex from the effect origin SHALL be even integers (px).
+4. TFX-03: WHEN a technique effect ends THEN every game object it created SHALL be destroyed within 300 ms.
+5. TFX-09: WHEN 300 ms have passed since a technique effect ended THEN `fx.live` SHALL equal its value from the frame before that effect started.
+6. TFX-04: Every technique particle emitter SHALL have at most 64 live particles at any time.
+7. TFX-05: WHILE a hitstop is active, every technique effect layer other than `kokusen.invert`, `kokusen.duotone`, `kokusen.bolts` and the 黒閃 card SHALL NOT advance its animation time.
+8. TFX-06: IF the renderer is not WebGL THEN no postFX SHALL be added to any camera or game object.
+9. TFX-10: IF the renderer is not WebGL THEN the sprite and geometry layers of each effect SHALL still appear in `fx.layers` as with WebGL.
+10. TFX-11: IF the renderer is not WebGL THEN the snapshot SHALL report `fx.degraded: true`.
+11. TFX-07: WHERE the debug mode is on, the snapshot SHALL include `kokusen`, `techObjects` and `fx` as defined in the snapshot contract.
+
+**Independent Test**: teste de dados da paleta e das grades; `lightning.test.ts` e testes das geometrias na grade de 2 px; smoke confere `fx.live` antes e 300 ms depois de cada técnica e o hitstop congelando as camadas.
+
+---
+
+## Edge Cases
+
+- WHEN the player dies during a cast THEN the cast SHALL end without spending energy and every technique object SHALL be removed.
+- WHEN a new run starts THEN every technique object and effect SHALL be removed, the zone SHALL end and the energy SHALL reset to CE-01.
+- WHEN a round is cleared while a red or blue orb exists THEN the orb SHALL keep its behavior until it detonates or expires.
+- IF the red orb passes through a regular enemy that is already in ragdoll from that same orb THEN that enemy SHALL NOT take damage again.
+- IF the Punho Divergente first impact target enters ragdoll or moves before the second impact THEN the second impact SHALL still hit that same target, drawn at its current center (DIV-12).
+- IF the Punho Divergente target is the boss in `roar` or in the entrance invulnerability THEN both impacts SHALL deal 0 damage and no Kokusen SHALL be possible (BOSS-08, BAI-12).
+- WHEN the player is in the air at the end of a cast THEN normal gravity SHALL resume in that frame.
+- IF both slot keys are pressed in the same frame THEN only slot 1 SHALL be considered.
+
+---
+
+## Requirement Traceability
+
+| Requirement ID | Story | Phase | Status |
+| --- | --- | --- | --- |
+| CE-01 | P1: Energia e slots | Specify | Verified |
+| CE-02 | P1: Energia e slots | Specify | Verified |
+| CE-03 | P1: Energia e slots | Specify | Verified |
+| CE-04 | P1: Energia e slots | Specify | Verified |
+| CE-05 | P1: Energia e slots | Specify | Verified |
+| CE-06 | P1: Energia e slots | Specify | Verified |
+| CE-07 | P1: Energia e slots | Specify | Verified |
+| CE-09 | P1: Energia e slots | Specify | Verified |
+| CE-08 | P1: Energia e slots | Specify | Verified |
+| TEC-01 | P1: Energia e slots | Specify | Verified |
+| TEC-02 | P1: Energia e slots | Specify | Verified |
+| TEC-03 | P1: Energia e slots | Specify | Verified |
+| TEC-04 | P1: Energia e slots | Specify | Verified |
+| TEC-13 | P1: Energia e slots | Specify | Verified |
+| TEC-05 | P1: Energia e slots | Specify | Verified |
+| TEC-06 | P1: Energia e slots | Specify | Verified |
+| TEC-14 | P1: Energia e slots | Specify | Verified |
+| TEC-07 | P1: Energia e slots | Specify | Verified |
+| TEC-12 | P1: Energia e slots | Specify | Verified |
+| TEC-09 | P1: Energia e slots | Specify | Verified |
+| TEC-10 | P1: Energia e slots | Specify | Verified |
+| TEC-08 | P1: Energia e slots | Specify | Verified |
+| TEC-11 | P1: Energia e slots | Specify | Verified |
+| TEC-15 | P1: Energia e slots | Specify | Verified |
+| TSH-01 | P1: Técnicas na loja | Specify | Verified |
+| TSH-02 | P1: Técnicas na loja | Specify | Verified |
+| TSH-03 | P1: Técnicas na loja | Specify | Verified |
+| TSH-04 | P1: Técnicas na loja | Specify | Verified |
+| TSH-05 | P1: Técnicas na loja | Specify | Verified |
+| TSH-06 | P1: Técnicas na loja | Specify | Verified |
+| TSH-07 | P1: Técnicas na loja | Specify | Verified |
+| TSH-08 | P1: Técnicas na loja | Specify | Verified |
+| TSH-09 | P1: Técnicas na loja | Specify | Verified |
+| TSH-10 | P1: Técnicas na loja | Specify | Verified |
+| TSH-11 | P1: Técnicas na loja | Specify | Verified |
+| TSH-12 | P1: Técnicas na loja | Specify | Verified |
+| TSH-13 | P1: Técnicas na loja | Specify | Verified |
+| TSH-14 | P1: Técnicas na loja | Specify | Verified |
+| TSH-15 | P1: Técnicas na loja | Specify | Verified |
+| TSH-16 | P1: Técnicas na loja | Specify | Verified |
+| TSH-17 | P1: Técnicas na loja | Specify | Verified |
+| CAST-01 | P1: Conjuração | Specify | Verified |
+| CAST-02 | P1: Conjuração | Specify | Verified |
+| CAST-03 | P1: Conjuração | Specify | Verified |
+| CAST-04 | P1: Conjuração | Specify | Verified |
+| CAST-05 | P1: Conjuração | Specify | Verified |
+| CAST-06 | P1: Conjuração | Specify | Verified |
+| CAST-07 | P1: Conjuração | Specify | Verified |
+| CAST-21 | P1: Conjuração | Specify | Verified |
+| CAST-20 | P1: Conjuração | Specify | Verified |
+| CAST-08 | P1: Conjuração | Specify | Verified |
+| CAST-09 | P1: Conjuração | Specify | Verified |
+| CAST-10 | P1: Conjuração | Specify | Verified |
+| CAST-11 | P1: Conjuração | Specify | Verified |
+| CAST-12 | P1: Conjuração | Specify | Verified |
+| CAST-13 | P1: Conjuração | Specify | Verified |
+| CAST-14 | P1: Conjuração | Specify | Verified |
+| CAST-15 | P1: Conjuração | Specify | Verified |
+| CAST-19 | P1: Conjuração | Specify | Verified |
+| CAST-16 | P1: Conjuração | Specify | Verified |
+| CAST-17 | P1: Conjuração | Specify | Verified |
+| CAST-18 | P1: Conjuração | Specify | Verified |
+| CAST-22 | P1: Conjuração | Specify | Verified |
+| DIV-01 | P1: Punho Divergente | Specify | Verified |
+| DIV-02 | P1: Punho Divergente | Specify | Verified |
+| DIV-11 | P1: Punho Divergente | Specify | Verified |
+| DIV-03 | P1: Punho Divergente | Specify | Verified |
+| DIV-04 | P1: Punho Divergente | Specify | Verified |
+| DIV-12 | P1: Punho Divergente | Specify | Verified |
+| DIV-05 | P1: Punho Divergente | Specify | Verified |
+| DIV-06 | P1: Punho Divergente | Specify | Verified |
+| DIV-07 | P1: Punho Divergente | Specify | Verified |
+| DIV-08 | P1: Punho Divergente | Specify | Verified |
+| DIV-09 | P1: Punho Divergente | Specify | Verified |
+| DIV-10 | P1: Punho Divergente | Specify | Verified |
+| KOK-01 | P1: Kokusen | Specify | Verified |
+| KOK-02 | P1: Kokusen | Specify | Verified |
+| KOK-03 | P1: Kokusen | Specify | Verified |
+| KOK-04 | P1: Kokusen | Specify | Verified |
+| KOK-05 | P1: Kokusen | Specify | Verified |
+| KOK-06 | P1: Kokusen | Specify | Verified |
+| KOK-07 | P1: Kokusen | Specify | Verified |
+| KOK-08 | P1: Kokusen | Specify | Verified |
+| KOK-09 | P1: Kokusen | Specify | Verified |
+| KOK-10 | P1: Kokusen | Specify | Verified |
+| KOK-30 | P1: Kokusen | Specify | Verified |
+| KOK-11 | P1: Kokusen | Specify | Verified |
+| KOK-31 | P1: Kokusen | Specify | Verified |
+| KOK-12 | P1: Kokusen | Specify | Verified |
+| KOK-32 | P1: Kokusen | Specify | Verified |
+| KOK-13 | P1: Kokusen | Specify | Verified |
+| KOK-14 | P1: Kokusen | Specify | Verified |
+| KOK-15 | P1: Kokusen | Specify | Verified |
+| KOK-16 | P1: Kokusen | Specify | Verified |
+| KOK-17 | P1: Kokusen | Specify | Verified |
+| KOK-18 | P1: Kokusen | Specify | Verified |
+| KOK-33 | P1: Kokusen | Specify | Verified |
+| KOK-19 | P1: Kokusen | Specify | Verified |
+| KOK-20 | P1: Kokusen | Specify | Verified |
+| KOK-21 | P1: Kokusen | Specify | Verified |
+| KOK-22 | P1: Kokusen | Specify | Verified |
+| KOK-23 | P1: Kokusen | Specify | Verified |
+| KOK-24 | P1: Kokusen | Specify | Verified |
+| KOK-25 | P1: Kokusen | Specify | Verified |
+| KOK-26 | P1: Kokusen | Specify | Verified |
+| KOK-27 | P1: Kokusen | Specify | Verified |
+| KOK-28 | P1: Kokusen | Specify | Verified |
+| KOK-29 | P1: Kokusen | Specify | Verified |
+| KOK-34 | P1: Kokusen | Specify | Verified |
+| RED-01 | P1: Vermelho | Specify | Verified |
+| RED-02 | P1: Vermelho | Specify | Verified |
+| RED-03 | P1: Vermelho | Specify | Verified |
+| RED-04 | P1: Vermelho | Specify | Verified |
+| RED-05 | P1: Vermelho | Specify | Verified |
+| RED-15 | P1: Vermelho | Specify | Verified |
+| RED-06 | P1: Vermelho | Specify | Verified |
+| RED-07 | P1: Vermelho | Specify | Verified |
+| RED-08 | P1: Vermelho | Specify | Verified |
+| RED-09 | P1: Vermelho | Specify | Verified |
+| RED-10 | P1: Vermelho | Specify | Verified |
+| RED-11 | P1: Vermelho | Specify | Verified |
+| RED-16 | P1: Vermelho | Specify | Verified |
+| RED-12 | P1: Vermelho | Specify | Verified |
+| RED-17 | P1: Vermelho | Specify | Verified |
+| RED-13 | P1: Vermelho | Specify | Verified |
+| RED-14 | P1: Vermelho | Specify | Verified |
+| BLU-01 | P2: Azul | Specify | Verified |
+| BLU-02 | P2: Azul | Specify | Verified |
+| BLU-03 | P2: Azul | Specify | Verified |
+| BLU-12 | P2: Azul | Specify | Verified |
+| BLU-04 | P2: Azul | Specify | Verified |
+| BLU-05 | P2: Azul | Specify | Verified |
+| BLU-06 | P2: Azul | Specify | Verified |
+| BLU-07 | P2: Azul | Specify | Verified |
+| BLU-11 | P2: Azul | Specify | Verified |
+| BLU-08 | P2: Azul | Specify | Verified |
+| BLU-09 | P2: Azul | Specify | Verified |
+| BLU-10 | P2: Azul | Specify | Verified |
+| CUT-01 | P2: Desmantelar | Specify | Verified |
+| CUT-02 | P2: Desmantelar | Specify | Verified |
+| CUT-03 | P2: Desmantelar | Specify | Verified |
+| CUT-04 | P2: Desmantelar | Specify | Verified |
+| CUT-08 | P2: Desmantelar | Specify | Verified |
+| CUT-05 | P2: Desmantelar | Specify | Verified |
+| CUT-06 | P2: Desmantelar | Specify | Verified |
+| FXL-01 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-05 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-06 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-02 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-07 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-09 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-03 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-04 | P2: Laboratório de efeitos | Specify | Verified |
+| FXL-08 | P2: Laboratório de efeitos | Specify | Verified |
+| TFX-01 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-08 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-02 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-03 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-09 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-04 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-05 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-06 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-10 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-11 | P1: Invariantes dos efeitos | Specify | Verified |
+| TFX-07 | P1: Invariantes dos efeitos | Specify | Verified |
+
+**Coverage:** 165 total, 165 Verified (Verifier rodada 2, `validation.md`, PASS; 9 ACs com evidência indireta listados no backlog) ✅
+
+---
+
+## Success Criteria
+
+- [ ] Com `?debug&tech=divergente,vermelho`, o jogador conjura as duas técnicas, e cada conjuração mostra selo, aura, chamada com kanji e soltura antes de qualquer dano.
+- [ ] No laboratório de efeitos em câmera lenta, o Kokusen mostra inversão, duotom, raios negros com borda vermelha, zoom-punch e o cartão 黒閃, e o usuário aprova no UAT que "parece o anime".
+- [ ] Um jogador que aprendeu o ritmo acerta o Kokusen apertando no fim do anel de aproximação, e erra ao apertar cedo.
+- [ ] `npm test`, `npm run typecheck`, `npm run build` e `npm run smoke` passam, e `fx.live` volta ao valor base depois de cada técnica em todos os cenários.

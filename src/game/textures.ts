@@ -1,17 +1,68 @@
 import type Phaser from 'phaser';
+import type { EnemyVariant } from '../core/enemyVariant';
 
 /** Chaves de textura. Trocar placeholder por arte real = carregar um PNG com a mesma chave. */
 export const TEX = {
   terrain: 'terrain',
   player: 'player',
+  /** Folha animada do player (o `player` acima é o corpo físico invisível). */
+  playerArt: 'player-art',
+  /** Folha do heroico alto do boneco articulado (12 quadros de 40x40 do gancho ascendente), só com `?debug&rig=1` (PRA-08). */
+  playerRig: 'player-rig',
+  /** Folha HD do player (1 texel = 1 px de mundo, quadros de 96x80), só com `?hd=1` (fase 1 do plano de sprites HD). */
+  playerHd: 'player-hd',
+  /** Folha animada do inimigo `corcunda` (o corpo físico é um retângulo Matter, sem textura); veja `enemyTex`. */
   enemy: 'enemy',
   chair: 'chair',
   bottle: 'bottle',
   smoke: 'smoke',
-  ragHead: 'rag-head',
-  ragTorso: 'rag-torso',
-  ragLimb: 'rag-limb',
+  smokeCurse: 'smoke-curse',
+  /** Efeitos (FX-03/04): estrela do ponto de contato e pedacinhos da faísca e da poeira. */
+  fxStar: 'fx-star',
+  fxBit: 'fx-bit',
+  /** Pedacinhos da energia amaldiçoada (impacto-amaldiçoado): um frame por cor da paleta do efeito. */
+  cursedBit: 'cursed-bit',
+  /** Marcador do tipo do golpe inimigo sobre a cabeça, um frame por tipo: `white`, `red`, `low` (HGT-07, HGT-09). */
+  fxTelegraph: 'fx-telegraph',
+  /** Molduras das barras de vida do player (HUD-01) e do inimigo (HUD-02). */
+  hudBar: 'hud-bar',
+  enemyBar: 'enemy-bar',
+  /** Folha do chefe (BTIER-06): uma textura por arquétipo, nunca a mesma folha com tint. */
+  bossOni: 'boss-oni',
+  bossTecela: 'boss-tecela',
+  /** Projétil da rajada e onda de choque do pouso (BAT-03/04). */
+  bossProjectile: 'boss-projectile',
+  bossShockwave: 'boss-shockwave',
+  /** Cristal do fragmento amaldiçoado e ícone do contador no HUD (ECO-23). */
+  fragment: 'fragment',
+  fragmentIcon: 'fragment-icon',
+  /** Gota de cura (HEAL). */
+  healDrop: 'heal-drop',
+  /** Ferramentas amaldiçoadas: comum/rara e as poses na mão do inimigo (ARM-19). */
+  cursedKnife: 'cursed-knife',
+  cursedClub: 'cursed-club',
+  /** Kanji das técnicas (KOK-29): ícones de slot do HUD (TEC-09) e a chamada da conjuração (CAST-16). */
+  kanji: 'kanji',
+  /** Chama da aura de conjuração (CAST-14), 2 frames por cor. */
+  techAura: 'tech-aura',
+  /** Chama de energia amaldiçoada em línguas (`CursedFlame`): cor, estágio e tamanho por frame. */
+  cursedFlame: 'cursed-flame',
+  /** Faíscas de técnica (2x2 texels): Kokusen, expelidas pelo Vermelho, sugadas pelo Azul (KOK-23). */
+  techSpark: 'tech-spark',
+  /** Orbe Vermelho (RED-02): um frame por terço da carga, 4/8/12 texels, cada um numa textura própria. */
+  techOrbRed4: 'tech-orb-red-4',
+  techOrbRed8: 'tech-orb-red-8',
+  techOrbRed12: 'tech-orb-red-12',
+  /** Orbe Azul ativo (BLU-08): um frame só. */
+  techOrbBlue: 'tech-orb-blue',
 } as const;
+
+export type RagPart = 'head' | 'torso' | 'limb';
+
+/** Textura da folha do inimigo de uma aparência: `enemy` para a `corcunda` (FxLab), `enemy-<v>` nas outras. */
+export const enemyTex = (v: EnemyVariant): string => (v === 'corcunda' ? TEX.enemy : `enemy-${v}`);
+/** Partes do ragdoll do inimigo, desenhadas com as cores da folha da aparência (CHR-04, EVR-06). */
+export const ragTex = (part: RagPart, v: EnemyVariant): string => `rag-${part}-${v}`;
 
 export const SIZE = {
   player: { w: 20, h: 36 },
@@ -37,17 +88,4 @@ function box(scene: Phaser.Scene, key: string, w: number, h: number, fill: numbe
 export function createPlaceholderTextures(scene: Phaser.Scene): void {
   box(scene, TEX.terrain, 32, 32, 0x4a4e69);
   box(scene, TEX.player, SIZE.player.w, SIZE.player.h, 0x3a86ff, true);
-  box(scene, TEX.enemy, SIZE.enemy.w, SIZE.enemy.h, 0xd62828, true);
-  box(scene, TEX.chair, 26, 26, 0x8d5524);
-  box(scene, TEX.bottle, 8, 20, 0x2a9d8f);
-  box(scene, TEX.ragHead, 10, 10, 0xd62828);
-  box(scene, TEX.ragTorso, 14, 18, 0xb71c1c);
-  box(scene, TEX.ragLimb, 5, 14, 0xd62828);
-  if (!scene.textures.exists(TEX.smoke)) {
-    const g = scene.add.graphics();
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(4, 4, 4);
-    g.generateTexture(TEX.smoke, 8, 8);
-    g.destroy();
-  }
 }

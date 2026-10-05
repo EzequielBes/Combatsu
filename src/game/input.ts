@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { combineStrikePresses } from '../core/fightInput';
 
 export interface InputSnapshot {
   left: boolean;
@@ -6,7 +7,25 @@ export interface InputSnapshot {
   down: boolean;
   jumpPressed: boolean;
   jumpHeld: boolean;
-  attackPressed: boolean;
+  /** `W` apertada no frame (pulo que o `J` seguinte pode virar gancho ascendente, AD-011). */
+  jumpWPressed: boolean;
+  /** `W`/`↑` segurada (golpe para cima, MOV-07). */
+  upHeld: boolean;
+  /** `J`/`X` apertada no frame, sem `K`/`Z` junto (CTL-01). */
+  lightPressed: boolean;
+  /** `K`/`Z` apertada no frame, sem `J`/`X` junto (CTL-02). */
+  heavyPressed: boolean;
+  /** `K`/`Z` segurada (chute carregado, MOV-09). */
+  heavyHeld: boolean;
+  /** `J` e `K` apertadas no mesmo frame (CTL-04, finalizador). */
+  bothPressed: boolean;
+  /** `U`/`Shift` segurada (guarda). */
+  guardHeld: boolean;
+  /** `U`/`Shift` apertada no frame (parry). */
+  guardPressed: boolean;
+  /** `Q` apertada no frame (esquiva). */
+  dodgePressed: boolean;
+  /** `E` apertada no frame: pegar, arremessar ou largar (CTL-03, CTL-07, CTL-08). */
   interactPressed: boolean;
 }
 
@@ -21,7 +40,12 @@ export class PlayerInput {
   private readonly right: Key[];
   private readonly down: Key[];
   private readonly jump: Key[];
-  private readonly attack: Key[];
+  private readonly up: Key[];
+  private readonly keyW: Key;
+  private readonly light: Key[];
+  private readonly heavy: Key[];
+  private readonly guard: Key[];
+  private readonly dodge: Key[];
   private readonly interact: Key[];
 
   constructor(scene: Phaser.Scene) {
@@ -32,20 +56,91 @@ export class PlayerInput {
     this.right = keys(K.D, K.RIGHT);
     this.down = keys(K.S, K.DOWN);
     this.jump = keys(K.SPACE, K.W, K.UP);
-    this.attack = keys(K.J, K.X);
-    this.interact = keys(K.K, K.Z);
+    this.up = keys(K.W, K.UP);
+    this.keyW = kb.addKey(K.W);
+    this.light = keys(K.J, K.X);
+    this.heavy = keys(K.K, K.Z);
+    this.guard = keys(K.U, K.SHIFT);
+    this.dodge = keys(K.Q);
+    this.interact = keys(K.E);
   }
 
   /** Chamar uma vez por frame. */
   read(): InputSnapshot {
+    // `W` e o pulo dividem o mesmo objeto Key: consumir a borda de W primeiro e somá-la ao pulo evita perdê-la.
+    const wPressed = Phaser.Input.Keyboard.JustDown(this.keyW);
+    const strikes = combineStrikePresses(anyJustDown(this.light), anyJustDown(this.heavy));
     return {
       left: anyDown(this.left),
       right: anyDown(this.right),
       down: anyDown(this.down),
-      jumpPressed: anyJustDown(this.jump),
+      jumpPressed: anyJustDown(this.jump) || wPressed,
       jumpHeld: anyDown(this.jump),
-      attackPressed: anyJustDown(this.attack),
+      jumpWPressed: wPressed,
+      upHeld: anyDown(this.up),
+      ...strikes,
+      heavyHeld: anyDown(this.heavy),
+      guardHeld: anyDown(this.guard),
+      guardPressed: anyJustDown(this.guard),
+      dodgePressed: anyJustDown(this.dodge),
       interactPressed: anyJustDown(this.interact),
+    };
+  }
+}
+
+/** Teclas da loja (SHOP-45, SHOP-28..30, SHOP-16, SHOP-03), só consultadas com `run.state === 'shop'`. */
+export interface ShopInputSnapshot {
+  /** Slot 0/1/2 pela tecla 1/2/3 (SHOP-45); `null` sem tecla nova neste frame. */
+  buySlot: 0 | 1 | 2 | null;
+  /** `J`: compra o slot selecionado (SHOP-30). */
+  buySelected: boolean;
+  /** `→`/`D` (SHOP-28). */
+  moveRight: boolean;
+  /** `←`/`A` (SHOP-29). */
+  moveLeft: boolean;
+  /** `R`: reroll (SHOP-16). */
+  reroll: boolean;
+  /** `Enter`: continua para a próxima rodada (SHOP-03). */
+  confirm: boolean;
+}
+
+export class ShopInput {
+  private readonly one: Key;
+  private readonly two: Key;
+  private readonly three: Key;
+  private readonly j: Key;
+  private readonly left: Key[];
+  private readonly right: Key[];
+  private readonly r: Key;
+  private readonly enter: Key;
+
+  constructor(scene: Phaser.Scene) {
+    const kb = scene.input.keyboard!;
+    const K = Phaser.Input.Keyboard.KeyCodes;
+    const keys = (...codes: number[]): Key[] => codes.map((c) => kb.addKey(c));
+    this.one = kb.addKey(K.ONE);
+    this.two = kb.addKey(K.TWO);
+    this.three = kb.addKey(K.THREE);
+    this.j = kb.addKey(K.J);
+    this.left = keys(K.A, K.LEFT);
+    this.right = keys(K.D, K.RIGHT);
+    this.r = kb.addKey(K.R);
+    this.enter = kb.addKey(K.ENTER);
+  }
+
+  /** Chamar uma vez por frame, só com `run.state === 'shop'` (SHOP-20). */
+  read(): ShopInputSnapshot {
+    let buySlot: 0 | 1 | 2 | null = null;
+    if (Phaser.Input.Keyboard.JustDown(this.one)) buySlot = 0;
+    if (Phaser.Input.Keyboard.JustDown(this.two)) buySlot = 1;
+    if (Phaser.Input.Keyboard.JustDown(this.three)) buySlot = 2;
+    return {
+      buySlot,
+      buySelected: Phaser.Input.Keyboard.JustDown(this.j),
+      moveRight: anyJustDown(this.right),
+      moveLeft: anyJustDown(this.left),
+      reroll: Phaser.Input.Keyboard.JustDown(this.r),
+      confirm: Phaser.Input.Keyboard.JustDown(this.enter),
     };
   }
 }

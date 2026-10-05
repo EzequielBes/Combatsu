@@ -7,6 +7,10 @@ export const Category = {
   PROP: 0x0008,
   HITBOX: 0x0010,
   RAGDOLL: 0x0020,
+  /** Só o chefe (BAT-13): ao contrário do inimigo comum, o corpo dele empurra o player. */
+  BOSS: 0x0040,
+  /** Projétil e onda de choque do chefe (BAT-03/04/06): sensor que acerta o player e some na parede. */
+  PROJECTILE: 0x0080,
   ALL: 0xffff,
 } as const;
 
@@ -26,14 +30,26 @@ const filter = (category: number, mask: number, group = 0): CollisionFilter => (
  */
 export const Filters = {
   terrain: filter(C.TERRAIN, C.ALL),
-  player: filter(C.PLAYER, C.TERRAIN | C.HITBOX),
+  // BAT-13: o player também colide fisicamente com o chefe (categoria própria), diferente do inimigo comum.
+  // BAT-04/06: o player também detecta o projétil/onda do chefe (sensor, sem resposta física).
+  player: filter(C.PLAYER, C.TERRAIN | C.HITBOX | C.BOSS | C.PROJECTILE),
   enemy: filter(C.ENEMY, C.TERRAIN | C.HITBOX),
+  boss: filter(C.BOSS, C.TERRAIN | C.HITBOX | C.PLAYER),
+  // Chefe no ar (salto): só hitboxes o alcançam. Trocar o filtro (reavaliado a cada passo) em vez de virar sensor,
+  // porque o par criado enquanto o corpo é sensor continua sensor depois, e o chefe afundava no chão ao pousar.
+  bossAirborne: filter(C.BOSS, C.HITBOX),
   hidden: filter(C.NONE, C.NONE),
-  hitbox: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL),
+  hitbox: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
+  // BAT-06: some ao tocar parede (terreno) ou o player; nunca colide com inimigo, objeto ou outro projétil.
+  projectile: filter(C.PROJECTILE, C.TERRAIN | C.PLAYER),
+  // RED-08: o orbe Vermelho (ataque do player) detona em parede, inimigo ou chefe; categoria HITBOX porque
+  // inimigo/chefe já aceitam essa categoria na própria máscara (nunca colide com o player que o lançou).
+  techOrb: filter(C.HITBOX, C.TERRAIN | C.ENEMY | C.BOSS),
   propRest: filter(C.PROP, C.TERRAIN | C.PROP),
   propHeld: filter(C.PROP, C.NONE),
-  propSwing: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL),
-  propThrown: filter(C.HITBOX, C.TERRAIN | C.PLAYER | C.ENEMY | C.RAGDOLL),
+  // PRB-01/02: o objeto na mão e o arremessado também acertam o chefe, como a hitbox do player.
+  propSwing: filter(C.HITBOX, C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
+  propThrown: filter(C.HITBOX, C.TERRAIN | C.PLAYER | C.ENEMY | C.RAGDOLL | C.BOSS),
   propBreaking: filter(C.PROP, C.NONE),
 } satisfies Record<string, CollisionFilter>;
 

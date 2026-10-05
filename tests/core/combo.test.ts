@@ -142,3 +142,48 @@ describe('dados de combo', () => {
     expect(PROP_SWING.strength).toBe('heavy');
   });
 });
+
+describe('ComboTracker.phase (CHR-02)', () => {
+  it('passa por idle → startup → active → recovery → window → idle nos tempos do golpe', () => {
+    // STEPS: startup 50, active 50, recovery 100; janela 200.
+    const c = new ComboTracker(STEPS, WINDOW);
+    expect(c.phase).toBe('idle');
+    c.press();
+    expect(c.phase).toBe('startup');
+    c.update(49);
+    expect(c.phase).toBe('startup');
+    c.update(1);
+    expect(c.phase).toBe('active');
+    c.update(49);
+    expect(c.phase).toBe('active');
+    c.update(1);
+    expect(c.phase).toBe('recovery');
+    c.update(99);
+    expect(c.phase).toBe('recovery');
+    c.update(1);
+    expect(c.phase).toBe('window');
+    c.update(199);
+    expect(c.phase).toBe('window');
+    c.update(1);
+    expect(c.phase).toBe('idle');
+  });
+
+  it('a fase active coincide com o evento hitboxOn e termina no hitboxOff', () => {
+    const c = new ComboTracker(STEPS, WINDOW);
+    c.press();
+    const on = c.update(50);
+    expect(types(on)).toEqual(['hitboxOn']);
+    expect(c.phase).toBe('active');
+    const off = c.update(50);
+    expect(types(off)).toEqual(['hitboxOff']);
+    expect(c.phase).toBe('recovery');
+  });
+
+  it('cancelar volta para idle', () => {
+    const c = new ComboTracker(STEPS, WINDOW);
+    c.press();
+    c.update(50);
+    c.cancel();
+    expect(c.phase).toBe('idle');
+  });
+});

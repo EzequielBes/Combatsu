@@ -5,6 +5,7 @@ import { PROP_BREAK_MS, PropMachine, propHit, validatePropDef, type PropDef } fr
 const PLAYER = 1;
 const ENEMY = 2;
 const ENEMY_2 = 3;
+const ENEMY_3 = 4;
 
 const def = (durability: number): PropDef => ({
   key: 'test',
@@ -15,7 +16,6 @@ const def = (durability: number): PropDef => ({
   throwSpeed: 500,
   knockback: 8,
   socket: 'front',
-  debrisColor: 0xffffff,
   tags: [],
 });
 
@@ -166,10 +166,89 @@ describe('PropMachine — arremesso', () => {
   });
 });
 
+describe('PropMachine — alvos do balanço e do arremesso (TGT-07)', () => {
+  it('no balanço o 2º alvo é aceito e o 3º é recusado (teto 2)', () => {
+    const m = held();
+    m.startSwing();
+    expect(m.wants(ENEMY)).toBe(true);
+    m.note(ENEMY, 'accepted');
+    expect(m.wants(ENEMY_2)).toBe(true);
+    m.note(ENEMY_2, 'accepted');
+    expect(m.wants(ENEMY_3)).toBe(false);
+  });
+
+  it('no balanço o dono e o alvo já tentado não entram de novo', () => {
+    const m = held();
+    m.startSwing();
+    expect(m.wants(PLAYER)).toBe(false);
+    m.note(ENEMY, 'accepted');
+    expect(m.wants(ENEMY)).toBe(false);
+  });
+
+  it('um alvo recusado não gasta vaga: o balanço ainda alcança dois alvos depois dele', () => {
+    const m = held();
+    m.startSwing();
+    m.note(ENEMY, 'refused');
+    expect(m.wants(ENEMY)).toBe(false);
+    expect(m.wants(ENEMY_2)).toBe(true);
+    m.note(ENEMY_2, 'accepted');
+    expect(m.wants(ENEMY_3)).toBe(true);
+    m.note(ENEMY_3, 'accepted');
+    expect(m.wants(5)).toBe(false);
+  });
+
+  it('um golpe segurado pela guarda gasta vaga', () => {
+    const m = held();
+    m.startSwing();
+    m.note(ENEMY, 'blocked');
+    m.note(ENEMY_2, 'blocked');
+    expect(m.wants(ENEMY_3)).toBe(false);
+  });
+
+  it('cada balanço começa com as duas vagas de novo', () => {
+    const m = held();
+    m.startSwing();
+    m.note(ENEMY, 'accepted');
+    m.note(ENEMY_2, 'accepted');
+    m.endSwing();
+    m.startSwing();
+    expect(m.wants(ENEMY_3)).toBe(true);
+  });
+
+  it('no arremesso não há teto de alvos, mas o dono segue de fora', () => {
+    const m = held();
+    m.throw();
+    for (const id of [10, 11, 12, 13, 14, 15]) {
+      expect(m.wants(id)).toBe(true);
+      m.note(id, 'accepted');
+    }
+    expect(m.wants(16)).toBe(true);
+    expect(m.wants(PLAYER)).toBe(false);
+  });
+});
+
 describe('propHit e validação', () => {
   it('golpe com objeto é sempre forte e usa dano/força do objeto', () => {
     const hit = propHit(def(3), PLAYER, { x: 1, y: 0 });
     expect(hit).toEqual({ ownerId: PLAYER, damage: 10, strength: 'heavy', direction: { x: 1, y: 0 }, force: 8 });
+  });
+
+  it('arremesso derruba (knockdown) e o balanço não (PST-07, PST-08)', () => {
+    const dir = { x: 1, y: 0 };
+    expect(propHit(def(3), PLAYER, dir, 'thrown').knockdown).toBe(true);
+    expect(propHit(def(3), PLAYER, dir, 'swing').knockdown ?? false).toBe(false);
+  });
+
+  it('o arremesso mantém dano, força e golpe forte do objeto', () => {
+    const hit = propHit(def(3), PLAYER, { x: 1, y: 0 }, 'thrown');
+    expect(hit).toEqual({
+      ownerId: PLAYER,
+      damage: 10,
+      strength: 'heavy',
+      direction: { x: 1, y: 0 },
+      force: 8,
+      knockdown: true,
+    });
   });
 
   it('recusa definições inválidas', () => {

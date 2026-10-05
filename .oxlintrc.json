@@ -1,0 +1,122 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error"
+  },
+  "ignorePatterns": ["dist/", "docs/art/", ".fable-out/", ".claude/", "tests/game/fixtures/"],
+  "rules": {
+    "unicorn/no-useless-spread": "off",
+    "unicorn/prefer-string-starts-ends-with": "off",
+    "max-lines": [
+      "error",
+      {
+        "max": 400,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "max-lines-per-function": [
+      "error",
+      {
+        "max": 80,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "complexity": [
+      "error",
+      {
+        "max": 15
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["tests/**"],
+      "rules": {
+        "max-lines-per-function": "off"
+      }
+    },
+    {
+      "files": ["scripts/smoke/**"],
+      "rules": {
+        "max-lines-per-function": "off",
+        "complexity": "off"
+      }
+    },
+    {
+      "files": [
+        "scripts/smoke/targets.smoke.mjs",
+        "src/game/TechRunner.ts",
+        "src/game/art/rig/rasterize.ts",
+        "src/game/art/sprites/enemy.ts",
+        "src/game/art/sprites/player.ts",
+        "src/game/art/sprites/playerMoves.ts",
+        "tests/core/bossBrain.test.ts",
+        "tests/core/enemyAI.test.ts",
+        "tests/core/enemyBrain.test.ts",
+        "tests/core/run.test.ts"
+      ],
+      "rules": {
+        "max-lines": [
+          "warn",
+          {
+            "max": 400,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/game/Hud.ts",
+        "src/game/art/rig/poses/uppercut.ts",
+        "src/game/art/sprites/enemy.ts",
+        "src/game/player/animator.ts",
+        "src/game/techFx/RedOrb.ts",
+        "src/scenes/TestScene.ts",
+        "src/scenes/test/snapshot.ts",
+        "tools/rig-heroico.mjs"
+      ],
+      "rules": {
+        "max-lines-per-function": [
+          "warn",
+          {
+            "max": 80,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/core/enemyAI.ts",
+        "src/core/enemyBrain.ts",
+        "src/core/level.ts",
+        "src/core/movement.ts",
+        "src/core/run.ts",
+        "src/game/Player.ts",
+        "src/game/ShopPanel.ts",
+        "src/game/TechRunner.ts",
+        "src/game/art/rig/rasterize.ts",
+        "src/game/enemy/EnemyAnimator.ts",
+        "src/game/enemy/EnemyDefense.ts",
+        "src/game/player/animator.ts",
+        "src/game/player/defense.ts",
+        "src/game/player/strikes.ts",
+        "src/scenes/TestScene.ts",
+        "src/scenes/test/impactFx.ts"
+      ],
+      "rules": {
+        "complexity": [
+          "warn",
+          {
+            "max": 15
+          }
+        ]
+      }
+    }
+  ]
+}

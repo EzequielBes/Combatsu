@@ -1,9 +1,13 @@
 import Phaser from 'phaser';
-import { normalize, type Vec2 } from '../core/hit';
-import { PROP_BREAK_MS, PropMachine, propHit, type PropDef, type PropImpact, type PropState } from '../core/props';
-import { tagBody, type BodyTag } from './bodyTags';
+import { normalize, type HitReport, type Vec2 } from '../core/hit';
+import type { Modifiers } from '../core/modifiers';
+import { PropMachine, propHit, type PropDef, type PropImpact, type PropState } from '../core/props';
+import { shardsKey } from './art';
+import { ART_SCALE } from './art/palette';
+import { PROP_SHARDS } from './art/sprites/props';
+import { newEntityId, tagBody, type BodyTag } from './bodyTags';
+import { contactWith, type OnConnect } from './hitbox';
 import { PX_PER_S_TO_STEP, applyFilter, bodyOf } from './physics';
-import { TEX } from './textures';
 
 /** Posição do objeto relativa ao centro de quem segura (x espelhado pelo facing). */
 const SOCKET: Record<'front' | 'back' | 'swing', Vec2> = {
@@ -11,22 +15,39 @@ const SOCKET: Record<'front' | 'back' | 'swing', Vec2> = {
   back: { x: -8, y: -16 },
   swing: { x: 22, y: -2 },
 };
+/** Com o corpo HD, quanto o centro do objeto fica além da mão, no eixo do objeto (px): o leve e o pesado. */
+const HAND_REACH: Record<'front' | 'back', number> = { front: 5, back: 9 };
 /** Fração da velocidade de arremesso usada para cima. */
 const THROW_LIFT = 0.22;
+/** Estilhaços: duração do voo (ms), gravidade (px/s²), velocidade para fora (px/s) e pulo para cima (px/s). */
+const SHARD_MS = 500;
+const SHARD_GRAVITY = 700;
+const SHARD_SPEED = { min: 50, max: 130 };
+const SHARD_LIFT = { min: 60, max: 130 };
+/** Alternância do contorno raro (RAR-03): troca entre `common` e `rare` a cada 200 ms. */
+const RARE_BLINK_MS = 200;
 
 export class Prop {
+  readonly id = newEntityId();
   readonly machine: PropMachine;
   readonly sprite: Phaser.Physics.Matter.Image;
   private applied: PropState = 'rest';
   private facing: 1 | -1 = 1;
   /** Última posição em voo fora do terreno; é para onde o objeto volta ao bater. */
   private lastSafe: Vec2;
+  private destroyed = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
     x: number,
     y: number,
     readonly def: PropDef,
+    /** Modificadores da run (MOD-05): dano do golpe/arremesso escalado por `forca`, lido na hora. */
+    private readonly modifiers: Modifiers,
+    /** Golpe de objeto que conectou (faísca roxa + hitstop do forte), injetado pela cena. */
+    private readonly onConnect?: OnConnect,
+    /** Ferramenta rara (RAR-02/03/06): sprite alterna `common`/`rare`; sem efeito num objeto comum. */
+    readonly rare: boolean = false,
   ) {
     this.machine = new PropMachine(def);
     this.sprite = scene.matter.add.image(x, y, def.texture, undefined, {
@@ -44,8 +65,20 @@ export class Prop {
     return bodyOf(this.sprite);
   }
 
+  /** Velocidade horizontal do corpo em px/s (ARM-26, snapshot de debug). */
+  get vx(): number {
+    return this.body.velocity.x / PX_PER_S_TO_STEP;
+  }
+
   get isGone(): boolean {
-    return this.machine.state === 'gone';
+    return this.machine.state === 'gone' || this.destroyed;
+  }
+
+  /** Remoção forçada (ARM-13/14: sumiço por tempo ou teto), fora do ciclo natural de quebra. */
+  destroyNow(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.sprite.destroy();
   }
 
   pickUp(holderId: number): boolean {
@@ -62,11 +95,38 @@ export class Prop {
     if (this.machine.endSwing()) this.sync();
   }
 
-  /** Chamado todo frame por quem segura. Sem colisão, só posição visual no socket. */
-  follow(holderX: number, holderY: number, facing: 1 | -1): void {
+  /**
+   * Quem segurava morreu ou sumiu (HP-04): o objeto cai em repouso de onde estava a mão. O ponto seguro vira o
+   * centro de quem segurava, que nunca está dentro do terreno.
+   */
+  holderGone(holderX: number, holderY: number): void {
+    if (!this.machine.holderGone()) return;
+    this.lastSafe = { x: holderX, y: holderY };
+    this.sprite.setPosition(holderX, holderY);
+    this.sync();
+  }
+
+  /**
+   * Chamado todo frame por quem segura. Sem colisão, só posição visual no socket. Com `hand` (a mão de perto do
+   * quadro do corpo HD, em px a partir do centro de quem segura e já virada para a frente dele, e o giro do antebraço),
+   * o objeto fica na mão e gira com ela, em qualquer estado.
+   */
+  follow(holderX: number, holderY: number, facing: 1 | -1, hand?: { x: number; y: number; angle: number }): void {
     const st = this.machine.state;
     if (st !== 'held' && st !== 'swing') return;
     this.facing = facing;
+    if (hand) {
+      // O objeto gira com o antebraço e fica um pouco além da mão no próprio eixo: a mão segura a parte de baixo.
+      const rad = (hand.angle * Math.PI) / 180;
+      const reach = HAND_REACH[this.def.socket];
+      this.sprite.setPosition(
+        holderX + (hand.x + Math.sin(rad) * reach) * facing,
+        holderY + hand.y - Math.cos(rad) * reach,
+      );
+      this.sprite.setAngle(hand.angle * facing);
+      this.sprite.setFlipX(facing < 0);
+      return;
+    }
     const socket = st === 'swing' ? SOCKET.swing : SOCKET[this.def.socket];
     this.sprite.setPosition(holderX + socket.x * facing, holderY + socket.y);
     this.sprite.setAngle(st === 'swing' ? 90 * facing : 0);
@@ -100,6 +160,8 @@ export class Prop {
     // Os eventos de colisão rodam no step do Matter, antes deste update:
     // se estamos em voo aqui, a posição atual está fora do terreno.
     if (this.machine.state === 'thrown') this.lastSafe = { x: this.sprite.x, y: this.sprite.y };
+    // RAR-03: contorno raro piscando, em qualquer estado (chão, na mão, arremessado).
+    if (this.rare) this.sprite.setFrame(Math.floor(this.scene.time.now / RARE_BLINK_MS) % 2 === 0 ? 'common' : 'rare');
   }
 
   private onTouch(other: BodyTag): void {
@@ -111,8 +173,23 @@ export class Prop {
     }
     if (other.kind !== 'character') return;
     const ownerId = this.machine.ownerId;
-    if (ownerId === null || !this.machine.tryHit(other.target.id)) return;
-    other.target.receiveHit(propHit(this.def, ownerId, this.hitDirection(st)));
+    if (ownerId === null || !this.machine.wants(other.target.id)) return;
+    const hit = propHit(this.def, ownerId, this.hitDirection(st), st);
+    // MOD-05: dano do objeto segurado/arremessado escalado por `forca`, lido na hora.
+    hit.damage = this.modifiers.meleeDamage(hit.damage);
+    // O objeto bate de verdade mesmo se o alvo ignorar o golpe (conta impacto), mas só golpe aceito tem feedback (FX-06).
+    const report: HitReport = {};
+    const accepted = other.target.receiveHit(hit, report);
+    this.machine.note(other.target.id, accepted ? 'accepted' : report.blocked ? 'blocked' : 'refused');
+    if (accepted) {
+      // Posição + tamanho do sprite (girado 90° no golpe com o objeto na mão), nunca body.bounds.
+      const [w, h] = st === 'swing' ? [this.sprite.height, this.sprite.width] : [this.sprite.width, this.sprite.height];
+      this.onConnect?.(
+        hit,
+        contactWith({ x: this.sprite.x, y: this.sprite.y, width: w, height: h }, other.target),
+        other.target,
+      );
+    }
     this.afterImpact(this.machine.registerImpact());
   }
 
@@ -151,17 +228,47 @@ export class Prop {
     if (st === 'breaking') this.shatter();
   }
 
+  /**
+   * Quebra (PRP-01): o sprite some e no lugar dele voam os estilhaços recortados da própria arte, cada um saindo
+   * da sua posição no objeto (com o giro e o espelhamento que o objeto tinha) para fora do centro, e caindo.
+   */
   private shatter(): void {
-    const debris = this.scene.add.particles(this.sprite.x, this.sprite.y, TEX.smoke, {
-      speed: { min: 40, max: 140 },
-      lifespan: 450,
-      scale: { start: 0.8, end: 0 },
-      tint: this.def.debrisColor,
-      gravityY: 400,
-      emitting: false,
-    });
-    debris.explode(14);
-    this.scene.time.delayedCall(600, () => debris.destroy());
-    this.scene.tweens.add({ targets: this.sprite, alpha: 0, duration: PROP_BREAK_MS });
+    const spr = this.sprite;
+    const shards = PROP_SHARDS[this.def.key as keyof typeof PROP_SHARDS] ?? [];
+    const cols = spr.width / ART_SCALE;
+    const rows = spr.height / ART_SCALE;
+    const flip = spr.flipX ? -1 : 1;
+    const cos = Math.cos(spr.rotation);
+    const sin = Math.sin(spr.rotation);
+    for (const s of shards) {
+      const half = s.grid.length / 2;
+      const lx = (s.x + half - cols / 2) * ART_SCALE * flip;
+      const ly = (s.y + half - rows / 2) * ART_SCALE;
+      const ox = lx * cos - ly * sin;
+      const oy = lx * sin + ly * cos;
+      const x0 = spr.x + ox;
+      const y0 = spr.y + oy;
+      const piece = this.scene.add
+        .image(x0, y0, shardsKey(this.def.texture), s.key)
+        .setFlipX(spr.flipX)
+        .setRotation(spr.rotation);
+      const len = Math.hypot(ox, oy) || 1;
+      const speed = Phaser.Math.Between(SHARD_SPEED.min, SHARD_SPEED.max);
+      const vx = (ox / len) * speed;
+      const vy = (oy / len) * speed - Phaser.Math.Between(SHARD_LIFT.min, SHARD_LIFT.max);
+      // Tween da cena: pausa junto com o hitstop, e os estilhaços ficam parados durante o congelamento.
+      this.scene.tweens.addCounter({
+        from: 0,
+        to: SHARD_MS / 1000,
+        duration: SHARD_MS,
+        onUpdate: (tw) => {
+          const t = tw.getValue() ?? 0;
+          piece.setPosition(x0 + vx * t, y0 + vy * t + 0.5 * SHARD_GRAVITY * t * t);
+          piece.setAlpha(1 - tw.progress);
+        },
+        onComplete: () => piece.destroy(),
+      });
+    }
+    spr.setAlpha(0);
   }
 }
