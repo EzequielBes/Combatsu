@@ -94,7 +94,7 @@ const facingDir = (facing: 1 | -1): Vec2 => ({ x: facing, y: 0 });
  * só fora do congelamento, junto do resto do jogo (KOK-27, zona liga/desliga como qualquer outra camada `game`).
  */
 export class KokusenFx {
-  /** TFX-11: sem WebGL, nenhum postFX é criado (TFX-06) e o snapshot reporta isto. */
+  /** TFX-11: sem WebGL, nenhum filtro é criado (TFX-06) e o snapshot reporta isto. */
   readonly degraded: boolean;
   private readonly colorMatrix: Phaser.Filters.ColorMatrix | null;
 

@@ -1,7 +1,7 @@
 import type { Vec2 } from './hit';
 
 /**
- * Margem do acumulador de tempo do Matter no Phaser 3.90 (`Runner._timeBufferMargin`): a física só dá um passo
+ * Margem do acumulador de tempo do Matter do Phaser (igual no 3.90 e no 4.2) (`Runner._timeBufferMargin`): a física só dá um passo
  * quando há 1,5 passo acumulado, então depois do passo sobram de 0,5 a 1,5 passo no acumulador.
  */
 export const STEP_BUFFER_MARGIN = 1.5;

@@ -6,15 +6,15 @@ import { duotoneMatrix } from './techFx/KokusenFx';
 export const IMPACT_FRAME_RENDERS = 2;
 
 /**
- * Quadro de impacto do golpe decisivo: por exatamente 2 quadros renderizados a câmera do mundo ganha o postFX
+ * Quadro de impacto do golpe decisivo: por exatamente 2 quadros renderizados a câmera do mundo ganha o filtro
  * `impactFrame` (duotone de energia amaldiçoada: sombras no marinho quase preto `k`, luzes no ciano `C`, como os
  * quadros de corte do anime; o negativo preto e vermelho fica só para o Kokusen) e depois ele é removido
  * (IMP-11). A contagem é em `POST_RENDER` do jogo, que também roda durante o hitstop, então o efeito dura 2
  * quadros na tela mesmo com a simulação congelada. Um mesmo `swingId` só dispara uma vez (IMP-14). Sem WebGL o
- * postFX não existe: `degraded` fica `true` e `trigger` não faz nada (IMP-12); anel e espinhos seguem no `CursedFx`.
+ * filtro não existe: `degraded` fica `true` e `trigger` não faz nada (IMP-12); anel e espinhos seguem no `CursedFx`.
  */
 export class ImpactFrame {
-  /** `true` sem WebGL (IMP-12): o postFX não é criado. */
+  /** `true` sem WebGL (IMP-12): o filtro não é criado. */
   readonly degraded: boolean;
   private effect: Phaser.Filters.ColorMatrix | null = null;
   private rendersLeft = 0;
@@ -32,7 +32,7 @@ export class ImpactFrame {
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.destroy, this);
   }
 
-  /** `true` enquanto o postFX está na câmera (o snapshot lê isto: `fx.lastImpact.impactFrame`). */
+  /** `true` enquanto o filtro está na câmera (o snapshot lê isto: `fx.lastImpact.impactFrame`). */
   get applied(): boolean {
     return this.effect !== null;
   }
@@ -54,7 +54,7 @@ export class ImpactFrame {
     return true;
   }
 
-  /** Remove o postFX na hora e solta os ouvintes (reinício da cena). */
+  /** Remove o filtro na hora e solta os ouvintes (reinício da cena). */
   destroy(): void {
     this.clear();
     this.scene.game?.events?.off(Phaser.Core.Events.POST_RENDER, this.onPostRender, this);

@@ -55,7 +55,7 @@ export class ImpactFx {
     const framed =
       tier === 'decisive' && !kokusen && hit.swingId !== undefined ? this.s.impactFrame.trigger(hit.swingId) : false;
     if (framed) this.framedSwingId = hit.swingId ?? null;
-    // IMP-16: só o golpe que ganhou o postFX (ou outro alvo do mesmo golpe, IMP-14) reporta `impactFrame`.
+    // IMP-16: só o golpe que ganhou o filtro (ou outro alvo do mesmo golpe, IMP-14) reporta `impactFrame`.
     this.lastImpact = {
       tier,
       impactFrame:

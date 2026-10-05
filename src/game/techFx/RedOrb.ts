@@ -85,7 +85,7 @@ export class RedOrbFx {
   private trailMs = 0;
   private crackleMs = 0;
   private readonly screenFlash: Phaser.GameObjects.Rectangle;
-  /** RDA-06 / EDG-01 / AD-009: sem WebGL, nenhum postFX (Glow) é criado e o resto do efeito toca igual. */
+  /** RDA-06 / EDG-01 / AD-009: sem WebGL, nenhum filtro (Glow) é criado e o resto do efeito toca igual. */
   private readonly degraded: boolean;
   private glowFx: Phaser.Filters.Glow | null = null;
   private distortRing: Phaser.GameObjects.Graphics | null = null;
