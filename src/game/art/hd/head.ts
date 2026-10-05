@@ -4,16 +4,13 @@
  * cabeça inclina junto com o pescoço porque o sistema gira; as feições têm posição escolhida à mão.
  * Identidade: cabelo escuro espetado em mechas, franja caindo sobre a testa, olho claro com íris escura.
  */
+import type { Vec2 } from '../rig/skeleton';
+import { paintFace, type Expression } from './face';
 import { MAT } from './palette';
-import type { HdCanvas, Normal } from './raster';
-import { boxed, domeShade, inLocal, localEllipse, localRect, localTri, type Local, type LocalShape } from './shapes';
+import type { HdCanvas } from './raster';
+import { boxed, domeShade, inLocal, localEllipse, localTri, type Local, type LocalShape } from './shapes';
 
-/**
- * Expressão: `focus` (idle, concentrado), `effort` (golpe: sobrancelha baixa e boca aberta), `pain` (levando golpe:
- * olho fechado numa linha, sobrancelha caída para fora e os dentes cerrados) ou `shout` (o grito dos golpes mais
- * fortes: sobrancelha pesada e a boca escancarada).
- */
-export type Expression = 'focus' | 'effort' | 'pain' | 'shout';
+export type { Expression } from './face';
 
 type Pt = readonly [number, number];
 
@@ -86,42 +83,16 @@ const FRINGE: readonly Spike[] = [
   ],
 ];
 
-/** Linha do cabelo: acima dela o crânio é cabelo. Sobe na testa e desce atrás da orelha até a nuca. */
+/**
+ * Linha do cabelo: acima dela o crânio é cabelo. Reta na testa, desce pela têmpora até a ponta da costeleta, passa
+ * por cima da orelha e cai atrás dela até a nuca.
+ */
 function hairline(f: number): number {
-  if (f >= 0.4) return 12.4 + (f - 0.4) * 0.1;
-  if (f >= -2.6) return 12.4 + (f - 0.4) * 2;
+  if (f >= 1.4) return 12.4 + (f - 1.4) * 0.1;
+  if (f >= -0.8) return 7.6 + (f + 0.8) * 2.18;
+  if (f >= -3.3) return 8.9;
   return 4.6;
 }
-
-/** Luz do rosto: um plano quase de frente para a luz, que escurece de leve para trás e para o queixo. */
-const faceShade = (f: number, u: number): Normal => {
-  const x = 0.25 + ((f - 0.7) / 5.9) * 0.5;
-  const y = ((u - 8.4) / 6.3) * 0.45;
-  return { x, y, z: Math.sqrt(Math.max(0.05, 1 - x * x - y * y)) };
-};
-
-/** Rosto: o crânio (elipse) e a mandíbula, que afina até o queixo. */
-const face: LocalShape = boxed(
-  (f, u) => {
-    if (localEllipse(0.7, 8.4, 5.9, 6.3)(f, u)) return faceShade(f, u);
-    if (u < 1 || u > 7.2 || f < -3.2) return null;
-    // Linha da frente da mandíbula: do malar ao queixo.
-    const front = 3.6 + ((u - 1) * 2.6) / 6.2;
-    const back = -3.2 + (7.2 - u) * 0.35;
-    return f > front || f < back ? null : faceShade(f, u);
-  },
-  [-4, 7, 0.5, 15],
-);
-
-/** Nariz: uma cunha que sai da linha do rosto. */
-const nose: LocalShape = boxed(
-  (f, u) => {
-    const k = 1 - Math.abs(u - 6.7) / 1.5;
-    if (k <= 0 || f < 5 || f > 6.1 + 1.5 * k) return null;
-    return { x: 0.5, y: u > 6.7 ? 0.35 : -0.4, z: 0.75 };
-  },
-  [4.5, 8, 5, 8.5],
-);
 
 /** Cabelo sobre o crânio: a casca de cima, acima da linha do cabelo. */
 const scalp: LocalShape = boxed(
@@ -133,97 +104,40 @@ const scalp: LocalShape = boxed(
   [-8.5, 7.5, 2, 16.5],
 );
 
+/** Comprimento da mecha (da base à ponta) que leva o desvio inteiro; as mais curtas levam em proporção. */
+const FULL_SWAY_LENGTH = 5.5;
+
+/** Desvio de tela (`sway`, texels) no sistema local da cabeça. */
+const leanOf = (l: Local, sway?: Vec2): Pt =>
+  sway ? [sway.x * l.fwd.x + sway.y * l.fwd.y, sway.x * l.up.x + sway.y * l.up.y] : [0, 0];
+
 /**
  * Pinta as mechas: cada uma inteira num tom abaixo do volume e, por cima, a metade da frente (do ponto da frente da
- * base até a ponta) no tom do volume. A face clara de cada mecha dá o corte facetado do cabelo.
+ * base até a ponta) no tom do volume. A face clara de cada mecha dá o corte facetado do cabelo. `lean` desloca a
+ * ponta (a base fica presa ao crânio): é o cabelo atrasando em relação à cabeça.
  */
-function paintHair(c: HdCanvas, l: Local, part: number, spikes: readonly Spike[], bias: number): void {
-  for (const [front, back, tip] of spikes) {
+function paintHair(c: HdCanvas, l: Local, part: number, spikes: readonly Spike[], bias: number, lean: Pt): void {
+  for (const [front, back, rest] of spikes) {
     const mid: Pt = [(front[0] + back[0]) / 2, (front[1] + back[1]) / 2];
+    const w = Math.min(1, Math.hypot(rest[0] - mid[0], rest[1] - mid[1]) / FULL_SWAY_LENGTH);
+    const tip: Pt = [rest[0] + lean[0] * w, rest[1] + lean[1] * w];
     c.paint(inLocal(l, localTri(front, back, tip, HAIR_SHADE)), MAT.hair, part, { bias: bias - 1 });
     c.paint(inLocal(l, localTri(front, mid, tip, HAIR_SHADE)), MAT.hair, part, { bias });
   }
 }
 
-/** O que muda no rosto em cada expressão: a abertura do olho, a sobrancelha e a boca. */
-interface Face {
-  /** Linha de baixo e de cima do olho. */
-  low: number;
-  top: number;
-  /** Olho fechado: só a linha da pálpebra, sem branco. */
-  closed?: boolean;
-  /** Brilho na íris (só com o olho bem aberto). */
-  shine?: boolean;
-  /** Texels de pele entre o olho e a sobrancelha, inclinação dela (positiva desce para o nariz) e o tom. */
-  browGap: number;
-  browSlope: number;
-  browTone: number;
-}
-
-const FACES: Record<Expression, Face> = {
-  focus: { low: 7.4, top: 9.4, shine: true, browGap: 1, browSlope: 0.12, browTone: 1 },
-  effort: { low: 7.6, top: 8.6, browGap: 0, browSlope: 0.4, browTone: 0 },
-  pain: { low: 7.6, top: 8.6, closed: true, browGap: 0.6, browSlope: -0.3, browTone: 0 },
-  shout: { low: 7.6, top: 8.6, browGap: 0, browSlope: 0.5, browTone: 0 },
-};
-
-/** Olho: branco atrás e íris escura na frente (o olhar vai para o alvo); fechado, só a linha da pálpebra. */
-function paintEye(c: HdCanvas, l: Local, part: number, face: Face): void {
-  const on = { onlyOn: part };
-  if (face.closed) {
-    c.paint(inLocal(l, localRect(2.5, 5.5, face.low, face.top)), MAT.hair, part, { ...on, flat: 0 });
-    return;
-  }
-  c.paint(inLocal(l, localRect(2.5, 5.5, face.low, face.top)), MAT.white, part, { ...on, flat: 3 });
-  c.paint(inLocal(l, localRect(4, 5.5, face.low, face.top)), MAT.hair, part, { ...on, flat: 0 });
-  if (face.shine) c.paint(inLocal(l, localRect(4.75, 5.5, 8.4, face.top)), MAT.white, part, { ...on, flat: 4 });
-}
-
-/** Boca: linha fechada no foco; aberta com os dentes em cima no esforço; dentes cerrados na dor. */
-function paintMouth(c: HdCanvas, l: Local, part: number, expr: Expression): void {
-  const on = { onlyOn: part };
-  if (expr === 'focus') {
-    c.paint(inLocal(l, localRect(2.6, 4.6, 3.4, 4.4)), MAT.skin, part, { ...on, flat: 1 });
-    return;
-  }
-  // No grito a boca escancara: mais alta e mais larga, com os dentes só em cima.
-  const open = expr === 'shout' ? localRect(1.8, 4.2, 1.6, 4.8) : localRect(2.2, 3.9, 2.8, 4.8);
-  c.paint(inLocal(l, open), MAT.skin, part, { ...on, flat: 0 });
-  const teeth = expr === 'pain' ? localRect(2.2, 3.9, 2.8, 3.8) : localRect(2.6, 3.9, 3.8, 4.8);
-  c.paint(inLocal(l, teeth), MAT.white, part, { ...on, flat: 3 });
-}
-
-function paintFeatures(c: HdCanvas, l: Local, part: number, expr: Expression): void {
-  const face = FACES[expr];
-  const on = { onlyOn: part };
-  // Orelha: atrás do rosto, com a sombra de dentro.
-  c.paint(inLocal(l, localEllipse(-2, 7.3, 1.5, 2.1)), MAT.skin, part, { ...on, flat: 3 });
-  c.paint(inLocal(l, localEllipse(-1.9, 7.3, 0.7, 1.2)), MAT.skin, part, { ...on, flat: 1 });
-  paintEye(c, l, part, face);
-  // Sobrancelha: no foco deixa uma linha de pele acima do olho; no esforço desce sobre ele, pesada; na dor levanta
-  // do lado do nariz.
-  const brow = face.top + face.browGap;
-  const line = boxed(
-    (f, u) => {
-      const base = brow + (5.8 - f) * face.browSlope;
-      return f >= 2 && f <= 6 && u >= base && u <= base + 1 ? { x: 0, y: 0, z: 1 } : null;
-    },
-    [1.5, 6.5, 7, 13.5],
-  );
-  c.paint(inLocal(l, line), MAT.hair, part, { ...on, flat: face.browTone });
-  paintMouth(c, l, part, expr);
-}
-
-/** Pinta a cabeça inteira na parte `part`, no sistema local `l` (origem na junta do pescoço). */
-export function paintHead(c: HdCanvas, l: Local, part: number, expr: Expression): void {
+/**
+ * Pinta a cabeça inteira na parte `part`, no sistema local `l` (origem na junta do pescoço). `sway` (texels de tela)
+ * arrasta as pontas das mechas.
+ */
+export function paintHead(c: HdCanvas, l: Local, part: number, expr: Expression, sway?: Vec2): void {
+  const lean = leanOf(l, sway);
   c.paint(inLocal(l, localEllipse(-1.8, 9, 6.6, 6.2)), MAT.hair, part, { bias: -2 });
-  paintHair(c, l, part, BACK_SPIKES, -1);
-  c.paint(inLocal(l, face), MAT.skin, part);
-  c.paint(inLocal(l, nose), MAT.skin, part);
-  paintFeatures(c, l, part, expr);
+  paintHair(c, l, part, BACK_SPIKES, -1, lean);
+  paintFace(c, l, part, expr);
   c.paint(inLocal(l, scalp), MAT.hair, part, { rim: true, bias: -1 });
-  paintHair(c, l, part, TOP_SPIKES, 1);
-  paintHair(c, l, part, FRINGE, -1);
+  paintHair(c, l, part, TOP_SPIKES, 1, lean);
+  paintHair(c, l, part, FRINGE, -1, lean);
 }
 
 /** Mechas da cabeça vista por trás: as de cima abertas em leque e as dos lados, mais curtas, caindo para fora. */
@@ -278,12 +192,12 @@ const REAR_SHADE = domeShade(0, 9, 8, 8.4);
  * Pinta a cabeça vista por trás (o corpo de costas para a câmera no meio de um giro): só a massa do cabelo com as
  * mechas, as duas orelhas saindo dos lados e as pontas da nuca sobre o pescoço.
  */
-export function paintHeadBack(c: HdCanvas, l: Local, part: number): void {
+export function paintHeadBack(c: HdCanvas, l: Local, part: number, sway?: Vec2): void {
   for (const f of [-6.2, 6.2]) c.paint(inLocal(l, localEllipse(f, 7.2, 1.3, 2)), MAT.skin, part, { flat: 1 });
   const mass: LocalShape = boxed(
     (f, u) => (localEllipse(0, 9, 6.5, 6.3)(f, u) ? { ...REAR_SHADE(f, u), noRim: u < 11 } : null),
     [-6.5, 6.5, 2.7, 15.3],
   );
   c.paint(inLocal(l, mass), MAT.hair, part, { rim: true, bias: -1 });
-  paintHair(c, l, part, REAR_SPIKES, 0);
+  paintHair(c, l, part, REAR_SPIKES, 0, leanOf(l, sway));
 }

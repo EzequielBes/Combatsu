@@ -23,6 +23,8 @@ import {
 import { makeKit, type HdStage, type Kit } from './kit';
 import { HD_COLORS } from './palette';
 import { HdCanvas, finish } from './raster';
+import { strikePoint } from './smear';
+import { swayLooseFrames } from './sway';
 
 /** Frame do player HD: 96x80, eixo do corpo na coluna 36 e o pé na última linha. */
 export const HD_STAGE: HdStage = { w: 96, h: 80, originCol: 36 };
@@ -85,26 +87,10 @@ function anchorsOf(j: Joints, spec: HdFrameSpec): HdAnchors {
 
 type Joints = Record<JointName, Vec2>;
 
-/** Juntas que definem cada parte que acerta: de onde vem e a ponta. */
-const LIMB_JOINTS: Record<StrikeLimb, readonly [JointName, JointName, number]> = {
-  handNear: ['elbowNear', 'wristNear', 2.2],
-  handFar: ['elbowFar', 'wristFar', 2.2],
-  footNear: ['ankleNear', 'toeNear', 0],
-  footFar: ['ankleFar', 'toeFar', 0],
-  kneeNear: ['hipNear', 'kneeNear', 0],
-  elbowNear: ['shoulderNear', 'elbowNear', 0],
-};
-
-/** Texel da parte que acerta: a ponta do osso, mais `extra` texels adiante (o centro do punho passa do pulso). */
+/** Texel da parte que acerta (`strikePoint`: a ponta do osso; no punho, o centro dele, que passa do pulso). */
 function strikeTexel(j: Joints, limb: StrikeLimb): { col: number; row: number } {
-  const [from, to, extra] = LIMB_JOINTS[limb];
-  const a = j[from];
-  const b = j[to];
-  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-  return {
-    col: Math.floor(b.x + ((b.x - a.x) / len) * extra),
-    row: Math.floor(b.y + ((b.y - a.y) / len) * extra),
-  };
+  const p = strikePoint(j, limb);
+  return { col: Math.floor(p.x), row: Math.floor(p.y) };
 }
 
 interface Drawn {
@@ -120,6 +106,8 @@ function draw(spec: HdFrameSpec): Drawn {
     headOverNearArm: spec.headOverNearArm,
     farFront: spec.farFront,
     turned: spec.turned,
+    sway: spec.sway,
+    smear: spec.smear,
   });
   return { pixels: finish(c), joints };
 }
@@ -137,6 +125,7 @@ export function hdFrameSpecs(): { frames: Record<string, HdFrameSpec>; moves: Re
       Object.assign(frames, expandMove(k, name, move));
     }
   }
+  swayLooseFrames(frames, k.guard());
   return { frames, moves };
 }
 
