@@ -225,3 +225,65 @@ export function paintHead(c: HdCanvas, l: Local, part: number, expr: Expression)
   paintHair(c, l, part, TOP_SPIKES, 1);
   paintHair(c, l, part, FRINGE, -1);
 }
+
+/** Mechas da cabeça vista por trás: as de cima abertas em leque e as dos lados, mais curtas, caindo para fora. */
+const REAR_SPIKES: readonly Spike[] = [
+  [
+    [-1.6, 14.4],
+    [-5.2, 12.6],
+    [-6.8, 18],
+  ],
+  [
+    [1.6, 14.8],
+    [-2, 14.8],
+    [-0.6, 19.8],
+  ],
+  [
+    [5.2, 12.6],
+    [1.6, 14.4],
+    [5.6, 18.2],
+  ],
+  [
+    [-5.4, 12.4],
+    [-6.6, 8.6],
+    [-9.6, 11.6],
+  ],
+  [
+    [5.4, 12.4],
+    [6.6, 8.6],
+    [9.4, 12],
+  ],
+  // Nuca: três pontas que descem sobre o pescoço.
+  [
+    [-1.6, 4.4],
+    [-5, 5],
+    [-4, 1.8],
+  ],
+  [
+    [1.8, 4],
+    [-1.8, 4],
+    [0, 1.2],
+  ],
+  [
+    [5, 5],
+    [1.6, 4.4],
+    [4, 2],
+  ],
+];
+
+/** Volume da cabeça vista por trás: uma cúpula centrada, sem rosto. */
+const REAR_SHADE = domeShade(0, 9, 8, 8.4);
+
+/**
+ * Pinta a cabeça vista por trás (o corpo de costas para a câmera no meio de um giro): só a massa do cabelo com as
+ * mechas, as duas orelhas saindo dos lados e as pontas da nuca sobre o pescoço.
+ */
+export function paintHeadBack(c: HdCanvas, l: Local, part: number): void {
+  for (const f of [-6.2, 6.2]) c.paint(inLocal(l, localEllipse(f, 7.2, 1.3, 2)), MAT.skin, part, { flat: 1 });
+  const mass: LocalShape = boxed(
+    (f, u) => (localEllipse(0, 9, 6.5, 6.3)(f, u) ? { ...REAR_SHADE(f, u), noRim: u < 11 } : null),
+    [-6.5, 6.5, 2.7, 15.3],
+  );
+  c.paint(inLocal(l, mass), MAT.hair, part, { rim: true, bias: -1 });
+  paintHair(c, l, part, REAR_SPIKES, 0);
+}

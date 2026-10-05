@@ -29,6 +29,13 @@ export interface FarFront {
   leg?: boolean;
 }
 
+/**
+ * Corpo virado num giro: `away` é de costas para a câmera (as costas do paletó e a cabeça por trás, só cabelo) e
+ * `shoulder` mantém as costas com a cabeça de perfil, olhando o alvo por cima do ombro. Virado, o lado de perto passa
+ * para trás (um tom abaixo) e os braços ficam atrás do tronco, salvo o de longe com `farFront.arm`.
+ */
+export type Turned = 'away' | 'shoulder';
+
 /** Parte do corpo que acerta: de onde sai o ponto de golpe (rastro e faísca). */
 export type StrikeLimb = 'handNear' | 'handFar' | 'footNear' | 'footFar' | 'kneeNear' | 'elbowNear';
 
@@ -41,6 +48,8 @@ export interface HdFrameSpec {
   /** A cabeça por cima do braço de perto (o braço passa por trás do rosto). */
   headOverNearArm?: boolean;
   farFront?: FarFront;
+  /** Corpo virado de costas (padrão: de perfil, olhando o alvo). */
+  turned?: Turned;
 }
 
 /**
@@ -69,6 +78,8 @@ export interface HdMoveSpec {
   /** Expressão dos quadros do golpe (padrão `effort`). */
   expr?: Expression;
   headOverNearArm?: boolean;
+  /** Corpo virado de costas no meio da subida (`mid`) e no pico com o overshoot (`hit`): os quadros de um giro. */
+  turned?: { mid?: Turned; hit?: Turned };
 }
 
 /** O que uma família de poses devolve. */
@@ -97,13 +108,18 @@ export function expandMove(k: Kit, name: string, m: HdMoveSpec): Record<string, 
   const over = m.over ?? at(m.wind, m.hit, 1.06);
   const wind: HdFrameSpec = { pose: m.wind, ...opts };
   const peak = { hands: m.hands, farFront: m.farFront, ...opts, expr };
-  const hit: HdFrameSpec = { pose: m.hit, ...peak };
+  const turnedHit = { turned: m.turned?.hit };
+  const hit: HdFrameSpec = { pose: m.hit, ...peak, ...turnedHit };
   const recover: HdFrameSpec = { pose: m.recover, ...opts };
   return {
     [moveFrameName(name, 'startup', 0)]: wind,
-    [moveFrameName(name, 'startup', 1)]: { pose: m.mid ?? at(m.wind, m.hit, 0.55), ...peak },
+    [moveFrameName(name, 'startup', 1)]: {
+      pose: m.mid ?? at(m.wind, m.hit, 0.55),
+      ...peak,
+      turned: m.turned?.mid,
+    },
     [moveFrameName(name, 'active', 0)]: hit,
-    [moveFrameName(name, 'active', 1)]: { pose: over, ...peak },
+    [moveFrameName(name, 'active', 1)]: { pose: over, ...peak, ...turnedHit },
     [moveFrameName(name, 'recovery', 0)]: { pose: m.down ?? at(over, m.recover, 0.5), ...opts },
     [moveFrameName(name, 'recovery', 1)]: recover,
     [moveFrameName(name, 'recovery', 2)]: { pose: at(m.recover, m.back ?? k.guard(), 0.6), ...opts },

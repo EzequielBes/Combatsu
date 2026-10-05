@@ -119,6 +119,7 @@ function draw(spec: HdFrameSpec): Drawn {
     hands: spec.hands,
     headOverNearArm: spec.headOverNearArm,
     farFront: spec.farFront,
+    turned: spec.turned,
   });
   return { pixels: finish(c), joints };
 }
