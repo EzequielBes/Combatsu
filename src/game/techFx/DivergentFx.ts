@@ -5,11 +5,15 @@ import { PALETTE } from '../art/palette';
 import { HD_ON } from '../art/hd/flag';
 import { HD_ORIGIN, hdHasFrame } from '../art/hd/sheet';
 import { TEX } from '../textures';
+import { CursedFlame } from './CursedFlame';
 
 /** Offset do punho (Direção de arte, spec P1 Punho Divergente): mesmo offset da hitbox do `direto` (DIV-02). */
 const FIST_OFFSET = { x: 22, y: -4 };
-const FIST_FLICKER_MS = 120;
-const FIST_FADE_MS = 150;
+/**
+ * A chama do punho fica logo atrás do player (profundidade 1): o punho e o corpo continuam legíveis, e a chama
+ * aparece em volta e acima do punho e em rastro atrás do braço.
+ */
+const FLAME_DEPTH = 0.9;
 /** "cópia translúcida do punho... deslocada 8 px à frente" (spec, "2º impacto"). */
 const GHOST_OFFSET = 8;
 const GHOST_MS = 180;
@@ -29,9 +33,8 @@ const ECHO_BLINK_MS = 90;
  * o que mostrar e quando é o `TechRunner`, a partir do `DivergentState` (core, puro).
  */
 export class DivergentFx {
-  private fistSprite: Phaser.GameObjects.Sprite | null = null;
-  private fistFlickerMs = 0;
-  private fistFrameB = false;
+  private flame: CursedFlame | null = null;
+  private flameSeed = 1;
   private ring: Phaser.GameObjects.Graphics | null = null;
   private echo: Phaser.GameObjects.Graphics | null = null;
   private echoBlinkMs = 0;
@@ -43,33 +46,34 @@ export class DivergentFx {
   ) {}
 
   /**
-   * DIV-10: aura tremulando em volta do punho, durante `sign`/`charge`. `at` é onde o punho está em relação ao centro
-   * do corpo (com o corpo HD, o punho do quadro: armado atrás na antecipação); sem ele, o ponto fixo `FIST_OFFSET`.
+   * DIV-10: chama de energia amaldiçoada no punho, durante `sign`/`charge`. `at` é onde o punho está em relação ao
+   * centro do corpo (com o corpo HD, o punho do quadro: armado atrás na antecipação); sem ele, o ponto fixo
+   * `FIST_OFFSET`.
    */
   fistAura(dtMs: number, x: number, y: number, facing: 1 | -1, at: { x: number; y: number } = FIST_OFFSET): void {
     this.fx.add('divergente.fistAura', Math.max(dtMs, 1), 'game');
-    if (!this.fistSprite) {
-      this.fistSprite = this.scene.add.sprite(0, 0, TEX.techAura, 'blue-a').setScale(0.9).setAlpha(0.9).setDepth(2);
-      this.registry.add(this.fistSprite);
-      this.fistFlickerMs = 0;
-      this.fistFrameB = false;
-    }
-    this.fistSprite.setPosition(x + at.x * facing, y + at.y).setFlipX(facing < 0);
-    this.fistFlickerMs += dtMs;
-    if (this.fistFlickerMs >= FIST_FLICKER_MS) {
-      this.fistFlickerMs -= FIST_FLICKER_MS;
-      this.fistFrameB = !this.fistFrameB;
-      this.fistSprite.setFrame(`blue-${this.fistFrameB ? 'b' : 'a'}`);
-    }
+    this.fistFlame(dtMs, x, y, facing, at);
   }
 
-  /** Fora de `sign`/`charge`: a aura do punho some em 150 ms (mesmo ritmo da aura geral, CAST-14). */
-  hideFistAura(): void {
-    if (!this.fistSprite) return;
-    const sprite = this.fistSprite;
-    this.fistSprite = null;
-    this.scene.tweens.add({ targets: sprite, alpha: 0, duration: FIST_FADE_MS });
-    this.registry.scheduleDestroy(sprite, FIST_FADE_MS);
+  /**
+   * A mesma chama sem a marca do preparo: segue acesa no punho durante o soco (`release`), deixando o rastro azul
+   * atrás dele, como a energia que chega depois do punho no anime.
+   */
+  fistFlame(dtMs: number, x: number, y: number, facing: 1 | -1, at: { x: number; y: number } = FIST_OFFSET): void {
+    if (!this.flame) {
+      this.flame = new CursedFlame(this.scene, 'blue', FLAME_DEPTH, this.flameSeed++);
+      this.registry.add(this.flame.root);
+    }
+    this.flame.tick(dtMs, { x: x + at.x * facing, y: y + at.y }, 1);
+  }
+
+  /** Fora do golpe: a chama para de nascer e as línguas que restam sobem e apagam sozinhas. */
+  hideFistAura(dtMs = 0): void {
+    if (!this.flame) return;
+    this.flame.tick(dtMs, null);
+    if (!this.flame.empty) return;
+    this.registry.scheduleDestroy(this.flame.root, 0);
+    this.flame = null;
   }
 
   /**
