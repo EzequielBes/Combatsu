@@ -13,10 +13,12 @@ import { PLAYER_ORIGIN } from '../art/sprites/player';
 import { RIG_ON, RIG_TALL_ORIGIN, rigMoveFrame } from '../art/rig/flag';
 import { HD_ON } from '../art/hd/flag';
 import { HD_ORIGIN, hdHasAnim, hdHasFrame, hdHasMove, hdHeldName, hdMoveFrame, playerHdAnimKey } from '../art/hd/sheet';
-import { PROP_SWING } from '../../data/tuning';
+import { PLAYER_MOVE, PROP_SWING } from '../../data/tuning';
 import { SIZE, TEX } from '../textures';
 import type { Player } from '../Player';
 
+/** Animações de corrida cujo ritmo na folha HD acompanha a velocidade de corrida. */
+const HD_RUN_ANIMS: ReadonlySet<string> = new Set(['run', 'carry-run']);
 /** Piscar da invulnerabilidade: meio período (ms) e alpha da fase apagada. */
 const BLINK_MS = 70;
 const BLINK_ALPHA = 0.25;
@@ -147,6 +149,9 @@ export class PlayerAnimator {
     else this.placeView();
     v.setScale(this.p.facing, 1);
     v.anims.play(hd ? playerHdAnimKey(anim) : playerAnimKey(anim), true);
+    // A corrida HD tem o passo medido para a velocidade de corrida base: com a corrida mais rápida (MOD-06) o ciclo
+    // acelera na mesma proporção, e o pé de apoio continua sem patinar.
+    v.anims.timeScale = hd && HD_RUN_ANIMS.has(name) ? this.p.modifiers.runSpeed / PLAYER_MOVE.runSpeed : 1;
     return v;
   }
 

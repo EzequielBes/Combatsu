@@ -5,8 +5,10 @@
  * (`idle-0`, `guard`, `jab-hit`), então o jogo usa a folha HD em todo quadro que ela já tem e a antiga no resto.
  * Puro, sem `phaser`.
  */
+import { PLAYER_MOVE } from '../../../data/tuning';
 import { PLAYER_ANIMS, type AnimDef } from '../sprites/player';
 import { HEAVY } from './families/carry';
+import { RUN_FRAMES, RUN_STEP } from './families/locomotion';
 import { MOVE_PHASE_FRAMES, moveFrameName, type MovePhase } from './frames';
 import { renderHdPlayer, type HdAnchors } from './player';
 
@@ -61,6 +63,23 @@ export function hdMoveFrame(
   return moveFrameName(moveName, ph, Math.min(slices - 1, slice));
 }
 
+/**
+ * Tempo de um quadro da corrida HD (ms): o que o corpo leva para andar, na velocidade de corrida, o `RUN_STEP` que o
+ * pé de apoio recua de um quadro para o outro. Com isso o pé no chão fica parado no mundo, sem patinar.
+ */
+export const HD_RUN_FRAME_MS = Math.round((1000 * RUN_STEP) / PLAYER_MOVE.runSpeed);
+
+/** Ciclo de corrida da folha HD: `RUN_FRAMES` quadros de mesma duração. */
+const hdRunAnim = (name: string): AnimDef => ({
+  frames: Array.from({ length: RUN_FRAMES }, (_, i) => `${name}-${i}`),
+  frameRate: Math.round(1000 / HD_RUN_FRAME_MS),
+  repeat: -1,
+  durations: Array.from({ length: RUN_FRAMES }, () => HD_RUN_FRAME_MS),
+});
+
+/** Animações que na folha HD têm quadros e tempos próprios, diferentes dos da folha antiga. */
+const HD_OWN_ANIMS: Readonly<Record<string, AnimDef>> = { run: hdRunAnim('run'), 'carry-run': hdRunAnim('carry-run') };
+
 let anims: Record<string, AnimDef> | undefined;
 
 /** Chave da animação `name` na folha HD. */
@@ -70,7 +89,8 @@ export const playerHdAnimKey = (name: string): string => `player-hd-${name}`;
 export function hdAnims(): Record<string, AnimDef> {
   if (anims) return anims;
   anims = {};
-  for (const [name, def] of Object.entries(PLAYER_ANIMS)) {
+  for (const [name, old] of Object.entries(PLAYER_ANIMS)) {
+    const def = HD_OWN_ANIMS[name] ?? old;
     if (def.frames.every(hdHasFrame)) anims[name] = def;
     // A pegada pesada tem a mesma animação com os quadros `heavy-`, quando a folha tem todos.
     const heavy = def.frames.map((f) => HEAVY + f);
