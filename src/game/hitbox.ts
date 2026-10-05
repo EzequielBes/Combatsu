@@ -121,7 +121,9 @@ export class AttackHitbox {
       },
     });
     const color = hit.strength === 'heavy' ? PALETTE.A : PALETTE.w;
-    const view = this.scene.add.rectangle(0, 0, shape.width, shape.height, color, 0.35).setVisible(isDebug());
+    // Só com o desenho da física ligado (`H` no debug): com o `?debug` sozinho o retângulo piscava na frente do golpe.
+    const shown = isDebug() && this.scene.matter.world.drawDebug;
+    const view = this.scene.add.rectangle(0, 0, shape.width, shape.height, color, 0.35).setVisible(shown);
     this.current = { body, view, shape, ownerX: x };
     this.follow(x, y, facing);
   }

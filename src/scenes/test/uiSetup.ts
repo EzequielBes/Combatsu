@@ -52,7 +52,7 @@ export class UiSetup {
       'E: pegar / arremessar   S+E: largar   J/X leve   K/Z forte',
       'S+Q: abaixar   U+direção: virar na guarda   defesa certa + J: Contra',
       'R: reiniciar   Tab: mostrar/esconder controles',
-      ...(isDebug() ? ['F1: sair do debug   H: debug da física   1/2: golpe leve/forte de teste'] : []),
+      ...(isDebug() ? ['F1: sair do debug   H: física e hitboxes   1/2: golpe leve/forte de teste'] : []),
       ...(this.s.fxLab ? [FxLab.LEGEND, this.s.fxLab.speedLabel] : []),
     ];
   }
