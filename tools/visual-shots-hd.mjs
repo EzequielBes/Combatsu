@@ -63,6 +63,30 @@ export const hdScenarios = (BASE) => ({
       ['84-hd-divergente-recover+9', frame('divergente-recover'), 9],
     ]);
   },
+  // Impacto dos golpes com o corpo HD: soco leve, chute forte e o decisivo, do contato até o efeito apagar.
+  async hdImpacto(t) {
+    const hit = (s) => s.fx.lastImpact !== null;
+    for (const [tag, keys] of [
+      ['leve', ['KeyJ']],
+      ['forte', ['KeyK']],
+      ['decisivo', ['KeyS', 'KeyK']],
+    ]) {
+      await t.open(`hd=1&${BASE}`);
+      await t.approach(40);
+      await t.press(...keys);
+      // Um quadro por vez até o golpe acertar; o que vem antes é o preparo e o rastro.
+      let s = await t.snap(0);
+      for (let i = 0; i < 90 && !hit(s); i++) {
+        if (i % 3 === 0) await t.close(`86-hd-${tag}-pre-${String(i).padStart(2, '0')}`, 96);
+        s = await t.frame();
+      }
+      t.assert(hit(s), `o golpe ${tag} não acertou`);
+      for (let i = 0; i < 16; i++) {
+        if (i < 8 || i % 2 === 0) await t.close(`86-hd-${tag}-hit+${String(i).padStart(2, '0')}`, 96);
+        await t.frame();
+      }
+    }
+  },
   // Objeto na mão com o corpo HD: pega a cadeira (pesada) e depois a garrafa (leve); parado, correndo e batendo.
   async hdCarry(t) {
     let s = await t.open(`hd=1&${BASE}`);
