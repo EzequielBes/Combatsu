@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { parseSheet } from '../core/pixelGrid';
+import { Rng } from '../core/rng';
+import { HD_ON } from './art/hd/flag';
 import { PALETTE, PALETTE_KEYS } from './art/palette';
+import { drawSpark, type ImpactTone } from './cursedImpact';
 import { registerSheet } from './art/render';
 import { TEX } from './textures';
 
@@ -11,7 +14,7 @@ import { TEX } from './textures';
 export type SparkKind = 'light' | 'heavy' | 'prop' | 'guard' | 'parry';
 
 /**
- * Estrela do ponto de contato (9x9 texels): raios no tom base, miolo no tom claro de cada tipo e contorno escuro,
+ * Estrela de 9x9 texels (hoje só o marcador de postura quebrada do inimigo a usa, no quadro `heavy`): raios no tom base, miolo no tom claro de cada tipo e contorno escuro,
  * para a faísca branca aparecer até sobre o flash branco do inimigo.
  */
 const star = (ray: string, core: string): string[] =>
@@ -45,8 +48,32 @@ const BIT_FRAMES: Record<SparkKind | 'dust', readonly string[]> = {
 
 /** Acima de personagens (0..2) e objetos: o efeito aparece por cima de quem ele toca. */
 const FX_DEPTH = 3;
-/** Quanto tempo (ms) a estrela fica na tela depois do congelamento. */
-const STAR_MS = 110;
+/** Quanto tempo (ms) o lampejo leva para abrir e apagar depois do congelamento. */
+const STAR_MS = 150;
+/** Passo da grade de arte em px de mundo: 2 px no corpo antigo, 1 px com o corpo HD (`?hd=1`). */
+const GRID = HD_ON ? 1 : 2;
+const snap = (v: number): number => Math.round(v / GRID) * GRID;
+const tone = (shadow: string, body: string, core: string, alt: string): ImpactTone => ({
+  shadow: PALETTE[shadow]!,
+  body: PALETTE[body]!,
+  core: PALETTE[core]!,
+  altBody: PALETTE[alt]!,
+  altCore: PALETTE[core]!,
+});
+/**
+ * Cores do lampejo por tipo (FX-03), no mesmo desenho do impacto amaldiçoado: sombra escura por baixo para a faísca
+ * branca aparecer até sobre o flash branco do inimigo.
+ */
+const SPARK_TONE: Record<SparkKind, ImpactTone> = {
+  light: tone('k', 'S', 'w', 'w'),
+  heavy: tone('k', 'a', 'A', 'A'),
+  prop: tone('k', 'u', 'U', 'c'),
+  guard: tone('d', 'c', 'w', 'C'),
+  parry: tone('k', 'A', 'w', 'w'),
+};
+/** Meio eixo do lampejo e número de agulhas por tipo: o leve e a guarda são menores. */
+const sparkSize = (kind: SparkKind): { size: number; rays: number } =>
+  kind === 'light' || kind === 'guard' ? { size: 10, rays: 5 } : { size: 15, rays: 7 };
 /** Duração (ms) do anel dourado do parry. */
 const RING_MS = 200;
 /** Rastro (FX-05): cor, alpha inicial, tempo para sumir e intervalo mínimo entre cópias (ms). */
@@ -76,12 +103,32 @@ export class Fx {
     registerSheet(scene, TEX.fxBit, parseSheet('fx-bit', BIT_FRAMES, PALETTE_KEYS));
   }
 
-  /** Faísca no ponto de contato: estrela parada + pedacinhos voando, na cor do tipo do golpe (FX-03). */
+  /**
+   * Faísca no ponto de contato, na cor do tipo do golpe (FX-03): lampejo em estrela com agulhas em volta (o mesmo
+   * desenho do impacto amaldiçoado) e pedacinhos voando.
+   */
   spark(x: number, y: number, kind: SparkKind): void {
     const s = this.scene;
-    const img = s.add.image(x, y, TEX.fxStar, kind).setDepth(FX_DEPTH);
-    // Tween pausa junto com o hitstop: a estrela fica acesa durante todo o congelamento e só depois apaga.
-    s.tweens.add({ targets: img, alpha: 0, duration: STAR_MS, onComplete: () => img.destroy() });
+    const { size, rays } = sparkSize(kind);
+    const rng = new Rng(Math.floor(x * 7 + y * 13));
+    const list = Array.from({ length: rays }, (_, i) => ({
+      angle: ((i + rng.next() * 0.6) / rays) * Math.PI * 2,
+      dist: 14 + rng.next() * 16,
+    }));
+    // Eixo longo de pé: sem direção de golpe, o lampejo lê como um corte vertical no ponto de contato.
+    const shape = { cx: snap(x), cy: snap(y), dirAngle: 0, snap, grid: GRID, tone: SPARK_TONE[kind] };
+    const gfx = s.add.graphics().setDepth(FX_DEPTH);
+    drawSpark(gfx, shape, list, size, 0);
+    // Tween pausa junto com o hitstop: o lampejo fica aceso durante todo o congelamento e só depois abre e apaga.
+    s.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: STAR_MS,
+      onUpdate: (t) => {
+        if (gfx.active) drawSpark(gfx, shape, list, size, t.getValue() ?? 1);
+      },
+      onComplete: () => gfx.destroy(),
+    });
     this.burst(x, y, kind, {
       speed: { min: 70, max: kind === 'light' || kind === 'guard' ? 150 : 210 },
       lifespan: 220,
@@ -173,6 +220,8 @@ export class Fx {
         speed: cfg.speed,
         angle: cfg.angle ?? { min: 0, max: 360 },
         lifespan: cfg.lifespan,
+        // Com o corpo HD o pedacinho de 4 px lia como um quadrado solto: metade do tamanho.
+        scale: HD_ON ? 0.5 : 1,
         alpha: { start: 1, end: 0 },
         gravityY: cfg.gravityY,
         emitting: false,
