@@ -12,7 +12,8 @@ import { PALETTE } from '../art/palette';
 import { PLAYER_ORIGIN } from '../art/sprites/player';
 import { RIG_ON, RIG_TALL_ORIGIN, rigMoveFrame } from '../art/rig/flag';
 import { HD_ON } from '../art/hd/flag';
-import { HD_ORIGIN, hdHasAnim, hdHasFrame, hdMoveFrame, playerHdAnimKey } from '../art/hd/sheet';
+import { HD_ORIGIN, hdHasAnim, hdHasFrame, hdHasMove, hdHeldName, hdMoveFrame, playerHdAnimKey } from '../art/hd/sheet';
+import { PROP_SWING } from '../../data/tuning';
 import { SIZE, TEX } from '../textures';
 import type { Player } from '../Player';
 
@@ -85,7 +86,11 @@ export class PlayerAnimator {
    */
   /** Ms desde que a fase atual do golpe começou (só para os quadros do boneco, `?debug&rig=1`). */
   rigPhaseMs(phase: AttackPhase): number {
-    const k = `${this.p.strikes.swingId}:${phase}`;
+    return this.phaseMs(`${this.p.strikes.swingId}:${phase}`);
+  }
+
+  /** Ms desde que a chave de fase `k` passou a valer (a chave muda a cada fase de cada golpe). */
+  private phaseMs(k: string): number {
     if (this.rigPhaseKey !== k) {
       this.rigPhaseKey = k;
       this.rigPhaseT0 = this.p.clockMs;
@@ -108,8 +113,9 @@ export class PlayerAnimator {
    * Escala negativa espelha em volta da origem (o pé no centro do corpo); o flipX espelharia em volta do centro do
    * frame, que é mais largo que o corpo.
    */
-  private show(frame: string): Phaser.GameObjects.Sprite {
+  private show(name: string): Phaser.GameObjects.Sprite {
     const v = this.p.view;
+    const frame = HD_ON ? hdHeldName(name, this.heavyHeld(), hdHasFrame) : name;
     if (HD_ON && hdHasFrame(frame)) this.placeView(TEX.playerHd, HD_ORIGIN);
     else this.placeView();
     v.setScale(this.p.facing, 1);
@@ -118,9 +124,24 @@ export class PlayerAnimator {
     return v;
   }
 
+  /** O objeto na mão é dos pesados (cadeira, clava): com `?hd=1` a pegada é a do ombro, com os quadros `heavy-`. */
+  private heavyHeld(): boolean {
+    return this.p.held?.def.socket === 'back';
+  }
+
+  /**
+   * Quadro do golpe com objeto (`?hd=1`): a sequência HD da pegada em uso, pela fase do golpe; `undefined` sem ela.
+   */
+  private propSwingFrame(phase: AttackPhase): string | undefined {
+    if (!HD_ON) return undefined;
+    const move = hdHeldName('swing', this.heavyHeld(), hdHasMove);
+    return hdMoveFrame(move, phase, this.phaseMs(`prop:${phase}`), PROP_SWING);
+  }
+
   /** Toca uma animação, na folha HD quando ela tem todos os quadros dela (`?hd=1`). */
-  private play(anim: string): Phaser.GameObjects.Sprite {
+  private play(name: string): Phaser.GameObjects.Sprite {
     const v = this.p.view;
+    const anim = HD_ON ? hdHeldName(name, this.heavyHeld(), hdHasAnim) : name;
     const hd = HD_ON && hdHasAnim(anim);
     if (hd) this.placeView(TEX.playerHd, HD_ORIGIN);
     else this.placeView();
@@ -193,7 +214,8 @@ export class PlayerAnimator {
     };
     const anim = pickPlayerAnim(input);
     const still = input.attack && anim !== 'throw' && anim !== 'hurt';
-    const v = still ? this.show(`${anim}-${attackFrame(input.attack!.phase)}`) : this.play(anim);
+    const swing = still && anim === 'swing' ? this.propSwingFrame(input.attack!.phase as AttackPhase) : undefined;
+    const v = still ? this.show(swing ?? `${anim}-${attackFrame(input.attack!.phase)}`) : this.play(anim);
     // Rastro enquanto o chute está na fase ativa ou a pose de arremesso está na tela (FX-05), já com o frame novo.
     if ((anim === 'kick' && input.attack?.phase === 'active') || anim === 'throw') this.p.fx.afterimage(v);
   }

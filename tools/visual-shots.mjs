@@ -9,7 +9,7 @@
 // 1000/60 ms por passo de `__game.step` (os tweens do Phaser contam `Date.now`), `Math.random` vira um gerador com
 // semente fixa e o `requestAnimationFrame` nunca dispara (sem isto o Matter acumula um passo de física por quadro real
 // até o primeiro `step`). Cada captura chama `__game.render()` e lê o canvas no mesmo turno, sem escala do navegador.
-import { hdScenarios } from './visual-shots-hd.mjs';
+import { hdScenarios, makeClose } from './visual-shots-hd.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
@@ -95,6 +95,7 @@ function makeTools(page, baseUrl, log) {
     writeFileSync(join(outDir, `${name}.json`), JSON.stringify(brief(s)));
     log(`  ${name}`);
   };
+  const close = makeClose(page, outDir, log);
   /** Abre o jogo com a query; `start` aperta `J` no título e espera a rodada começar. */
   const open = async (query, start = true) => {
     await page.goto(`${baseUrl}?debug&seed=1&${query}`, { waitUntil: 'load' });
@@ -158,7 +159,7 @@ function makeTools(page, baseUrl, log) {
     }
     return s;
   };
-  return { ...kit, page, shot, at, mash, open, press, watch, layer, assert };
+  return { ...kit, page, shot, close, at, mash, open, press, watch, layer, assert };
 }
 
 const SCENARIOS = {

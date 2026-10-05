@@ -5,7 +5,15 @@ import { HD_COLORS } from '../../src/game/art/hd/palette';
 import { HD_STAGE, renderHdPlayer } from '../../src/game/art/hd/player';
 import { moveFrameName } from '../../src/game/art/hd/frames';
 import { PLAYER_ANIMS } from '../../src/game/art/sprites/player';
-import { HD_FRAME, hdAnims, hdHasFrame, hdPlayerSheet, hdStrike } from '../../src/game/art/hd/sheet';
+import {
+  HD_FRAME,
+  hdAnims,
+  hdHasAnim,
+  hdHasFrame,
+  hdHeldName,
+  hdPlayerSheet,
+  hdStrike,
+} from '../../src/game/art/hd/sheet';
 import { SIZE } from '../../src/game/textures';
 
 const render = renderHdPlayer();
@@ -46,6 +54,17 @@ describe('HD-01: a folha player-hd tem os quadros do contrato', () => {
 
   it('a animação idle existe inteira na folha HD', () => {
     expect(Object.keys(hdAnims())).toContain('idle');
+  });
+
+  it('carregar objeto tem as duas pegadas: a leve com os nomes da folha antiga e a pesada com o prefixo heavy-', () => {
+    const anims = Object.keys(hdAnims());
+    for (const name of ['carry-idle', 'carry-run', 'heavy-carry-idle', 'heavy-carry-run'])
+      expect(anims).toContain(name);
+    expect(render.moves).toContain('swing');
+    expect(render.moves).toContain('heavy-swing');
+    expect(hdHeldName('carry-idle', true, hdHasAnim)).toBe('heavy-carry-idle');
+    expect(hdHeldName('carry-idle', false, hdHasAnim)).toBe('carry-idle');
+    expect(hdHeldName('jab-hit', true, hdHasFrame)).toBe('jab-hit');
   });
 
   it('todo índice de cor existe na tabela e a paleta fica em até 64 cores', () => {

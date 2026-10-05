@@ -15,6 +15,8 @@ const SOCKET: Record<'front' | 'back' | 'swing', Vec2> = {
   back: { x: -8, y: -16 },
   swing: { x: 22, y: -2 },
 };
+/** Com o corpo HD, quanto o centro do objeto fica além da mão, no eixo do objeto (px): o leve e o pesado. */
+const HAND_REACH: Record<'front' | 'back', number> = { front: 5, back: 9 };
 /** Fração da velocidade de arremesso usada para cima. */
 const THROW_LIFT = 0.22;
 /** Estilhaços: duração do voo (ms), gravidade (px/s²), velocidade para fora (px/s) e pulo para cima (px/s). */
@@ -105,16 +107,27 @@ export class Prop {
   }
 
   /**
-   * Chamado todo frame por quem segura. Sem colisão, só posição visual no socket. Com `hands` (as mãos do quadro
-   * do corpo HD, em px a partir do centro de quem segura, já viradas para a frente dele), o objeto fica na mão: a da
-   * frente para o socket `front` e no golpe, a de trás para o `back`.
+   * Chamado todo frame por quem segura. Sem colisão, só posição visual no socket. Com `hand` (a mão de perto do
+   * quadro do corpo HD, em px a partir do centro de quem segura e já virada para a frente dele, e o giro do antebraço),
+   * o objeto fica na mão e gira com ela, em qualquer estado.
    */
-  follow(holderX: number, holderY: number, facing: 1 | -1, hands?: { front: Vec2; back: Vec2 }): void {
+  follow(holderX: number, holderY: number, facing: 1 | -1, hand?: { x: number; y: number; angle: number }): void {
     const st = this.machine.state;
     if (st !== 'held' && st !== 'swing') return;
     this.facing = facing;
-    const fixed = st === 'swing' ? SOCKET.swing : SOCKET[this.def.socket];
-    const socket = hands ? (st === 'swing' ? hands.front : hands[this.def.socket]) : fixed;
+    if (hand) {
+      // O objeto gira com o antebraço e fica um pouco além da mão no próprio eixo: a mão segura a parte de baixo.
+      const rad = (hand.angle * Math.PI) / 180;
+      const reach = HAND_REACH[this.def.socket];
+      this.sprite.setPosition(
+        holderX + (hand.x + Math.sin(rad) * reach) * facing,
+        holderY + hand.y - Math.cos(rad) * reach,
+      );
+      this.sprite.setAngle(hand.angle * facing);
+      this.sprite.setFlipX(facing < 0);
+      return;
+    }
+    const socket = st === 'swing' ? SOCKET.swing : SOCKET[this.def.socket];
     this.sprite.setPosition(holderX + socket.x * facing, holderY + socket.y);
     this.sprite.setAngle(st === 'swing' ? 90 * facing : 0);
     this.sprite.setFlipX(facing < 0);

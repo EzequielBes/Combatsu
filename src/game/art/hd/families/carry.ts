@@ -1,30 +1,46 @@
 /*
  * Player HD com objeto: parado e correndo com o objeto na mão, o golpe com o objeto e o arremesso.
  *
- * O objeto não faz parte do sprite: com `?hd=1` o jogo o desenha por cima, preso à mão do quadro (`hdAnchors`). O
- * objeto leve (garrafa, faca) fica na mão de perto; o pesado (cadeira, clava) na de longe; no golpe, na de perto,
- * deitado. Como o sprite não sabe qual objeto é, as duas mãos ficam sempre onde qualquer um dos dois faça sentido: a
- * de perto segurando à frente na altura da cintura, a de longe erguida ao lado do ombro de trás.
+ * O objeto não faz parte do sprite: com `?hd=1` o jogo o desenha preso à mão de perto do quadro (`hdAnchors`) e
+ * girado com o antebraço. Há duas pegadas, porque um sprite só não serve para os dois pesos:
+ * - leve (garrafa, faca): o objeto é uma arma na mão da frente, erguida na guarda; a outra mão fica no queixo. Os
+ *   quadros têm os nomes da folha antiga (`carry-idle-0`, `swing-hit`).
+ * - pesada (cadeira, clava): o objeto vai apoiado no ombro, com a mão de perto segurando junto ao pescoço, e a outra
+ *   mão aberta à frente para equilibrar. Os quadros levam o prefixo `heavy-`.
  */
 import type { HdFamily, HdFrameSpec, HdMoveSpec } from '../frames';
 import type { Kit } from '../kit';
-import type { Pose, Vec2 } from '../../rig/skeleton';
+import type { Pose } from '../../rig/skeleton';
 
-/** Mão de perto: o objeto leve à frente, na altura da cintura. */
-const frontGrip = (k: Kit, dx = 0, dy = 0): Vec2 => k.at(12 + dx, 31 + dy);
-/** Mão de longe: o objeto pesado apoiado no ombro de trás. */
-const backGrip = (k: Kit, dx = 0, dy = 0): Vec2 => k.at(-9 + dx, 41 + dy);
+/** Prefixo dos quadros da pegada pesada. */
+export const HEAVY = 'heavy-';
 
-/** Base armada: joelhos dobrados, uma mão à frente na cintura e a outra erguida no ombro de trás. */
-function hold(k: Kit, sink: number): Pose {
+const feet = (k: Kit) => ({
+  legNear: { ankle: { x: k.cx + k.stance.near, y: k.g }, foot: 90 },
+  legFar: { ankle: { x: k.cx + k.stance.far, y: k.g }, foot: 90 },
+});
+
+/** Pegada leve: a guarda de luta com a arma na mão da frente, o antebraço erguido para a arma apontar para cima. */
+function holdLight(k: Kit, sink: number): Pose {
   return k.pose({
-    hip: { x: k.cx - 0.4, y: k.hy + 4.2 + sink },
+    hip: { x: k.cx - 0.6, y: k.hy + 3.4 + sink },
     spine: 168,
     neck: 9,
-    armNear: { to: frontGrip(k, 0, -sink * 0.7), bend: -1 },
-    armFar: { to: backGrip(k, 0, -sink * 0.7), bend: 1 },
-    legNear: { ankle: { x: k.cx + k.stance.near, y: k.g }, foot: 90 },
-    legFar: { ankle: { x: k.cx + k.stance.far, y: k.g }, foot: 90 },
+    armNear: { to: k.at(13, 38 - sink * 0.6), bend: -1 },
+    armFar: { rel: { x: k.arm * 0.34, y: -k.arm * 0.06 + sink * 0.4 }, bend: -1 },
+    ...feet(k),
+  });
+}
+
+/** Pegada pesada: o peso no ombro dobra o tronco à frente; a mão de perto segura junto ao pescoço. */
+function holdHeavy(k: Kit, sink: number): Pose {
+  return k.pose({
+    hip: { x: k.cx - 1.2, y: k.hy + 4.6 + sink },
+    spine: 163,
+    neck: 13,
+    armNear: { to: k.at(-7, 47 - sink * 0.7), bend: 1 },
+    armFar: { to: k.at(13, 33 - sink * 0.5), bend: -1 },
+    ...feet(k),
   });
 }
 
@@ -37,87 +53,144 @@ interface Leg {
 /** Os dois instantes do passo da corrida comum que a corrida com objeto usa: contato e impulso. */
 const STRIDE = [
   { lead: { ahead: 17, up: 1.2, foot: 108 }, trail: { ahead: -17, up: 5.5, foot: 14 }, hipX: 3, sink: 4.6, bob: 0 },
-  { lead: { ahead: -9, up: 1.6, foot: 58 }, trail: { ahead: 12, up: 14, foot: 72 }, hipX: 4.2, sink: 3.4, bob: 1.2 },
+  { lead: { ahead: -9, up: 1.6, foot: 58 }, trail: { ahead: 12, up: 14, foot: 84 }, hipX: 4.2, sink: 3.4, bob: 1.2 },
 ] as const;
 
-/** Corrida com o objeto: o contato e o impulso de cada perna da corrida comum, com os braços presos ao objeto. */
-function carryRun(k: Kit): Record<string, HdFrameSpec> {
+/**
+ * Corrida com o objeto: o contato e o impulso de cada perna da corrida comum. A mão que segura fica quase parada (a
+ * arma à frente, ou o peso no ombro) e o braço livre bombeia em oposição às pernas.
+ */
+function carryRun(k: Kit, heavy: boolean): Record<string, HdFrameSpec> {
   const frame = (i: number): HdFrameSpec => {
     const s = STRIDE[i % 2]!;
     const nearLeads = i < 2;
     const leg = (l: Leg) => ({ ankle: { x: k.cx + s.hipX + l.ahead, y: k.g - l.up }, foot: l.foot });
-    const sway = nearLeads ? -1 : 1;
+    // O braço livre é o de longe: vai à frente quando a perna de perto lidera.
+    const swing = (nearLeads ? 1 : -1) * (i % 2 === 0 ? 1 : 0.4);
+    const free = { rel: { x: k.arm * (0.1 + 0.5 * swing), y: k.arm * (0.3 - 0.14 * swing) }, bend: -1 as const };
+    const grip = heavy ? k.at(-4, 46 + s.bob) : k.at(17, 37 + s.bob);
     return {
       pose: k.pose({
         hip: { x: k.cx + s.hipX, y: k.hy + s.sink },
-        spine: 150,
-        neck: 22,
-        armNear: { to: frontGrip(k, 3 + sway, s.bob - 1), bend: -1 },
-        armFar: { to: backGrip(k, 3 - sway, s.bob - 1), bend: 1 },
+        spine: heavy ? 152 : 148,
+        neck: heavy ? 20 : 24,
+        armNear: { to: grip, bend: heavy ? 1 : -1 },
+        armFar: free,
         legNear: leg(nearLeads ? s.lead : s.trail),
         legFar: leg(nearLeads ? s.trail : s.lead),
       }),
+      hands: heavy ? { far: 'open' } : undefined,
     };
   };
-  return Object.fromEntries([0, 1, 2, 3].map((i) => [`carry-run-${i}`, frame(i)]));
+  return Object.fromEntries([0, 1, 2, 3].map((i) => [`${heavy ? HEAVY : ''}carry-run-${i}`, frame(i)]));
 }
 
-/** Pico da pancada: o corpo vai sobre a perna da frente e o braço estica na altura do tronco do alvo. `over` atravessa. */
-function swingHit(k: Kit, over: number): Pose {
-  const grip = k.at(31 + over, 31 - over * 7);
+/** Pico do golpe leve: o corpo entra sobre a perna da frente e o braço desce em diagonal. `over` atravessa. */
+function lightHit(k: Kit, over: number): Pose {
   return k.pose({
-    hip: { x: k.cx + 5 + over * 1.5, y: k.hy + 6.5 + over * 1.5 },
-    spine: 150 - over * 5,
-    neck: 24 + over * 3,
+    hip: { x: k.cx + 5 + over * 1.5, y: k.hy + 6 + over },
+    spine: 154 - over * 4,
+    neck: 20 + over * 3,
     shoulderNear: -90,
-    armNear: { to: grip, bend: -1 },
-    armFar: { to: { x: grip.x - 4, y: grip.y + 1 }, bend: -1 },
+    armNear: { to: k.at(31 + over, 36 - over * 9), bend: -1 },
+    armFar: { rel: { x: k.arm * 0.2, y: k.arm * 0.12 }, bend: -1 },
     legNear: { ankle: { x: k.cx + k.stance.near, y: k.g }, foot: 90 },
-    legFar: { ankle: { x: k.cx + k.stance.far, y: k.g - 1.4 - over * 1.4 }, foot: 62 - over * 14 },
+    legFar: { ankle: { x: k.cx + k.stance.far, y: k.g - 1.4 - over }, foot: 62 - over * 12 },
   });
 }
 
-/** A pancada de cadeira: recolhe o objeto atrás do ombro, passa por cima da cabeça e desce com o corpo inteiro. */
-function swing(k: Kit): HdMoveSpec {
-  const feet = {
-    legNear: { ankle: { x: k.cx + k.stance.near, y: k.g }, foot: 90 },
-    legFar: { ankle: { x: k.cx + k.stance.far, y: k.g }, foot: 90 },
+/** Golpe com objeto leve: arma atrás da cabeça e desce num corte em diagonal, seco, com o ombro entrando. */
+function swingLight(k: Kit): HdMoveSpec {
+  return {
+    strike: 'handNear',
+    wind: k.pose({
+      hip: { x: k.cx - 3, y: k.hy + 4.5 },
+      spine: 184,
+      neck: -2,
+      armNear: { to: k.at(-9, 52), bend: 1 },
+      armFar: { rel: { x: k.arm * 0.6, y: k.arm * 0.02 }, bend: -1 },
+      ...feet(k),
+    }),
+    mid: k.pose({
+      hip: { x: k.cx + 1.5, y: k.hy + 4 },
+      spine: 170,
+      neck: 8,
+      shoulderNear: -60,
+      armNear: { to: k.at(16, 56), bend: 1 },
+      armFar: { rel: { x: k.arm * 0.4, y: k.arm * 0.06 }, bend: -1 },
+      ...feet(k),
+    }),
+    hit: lightHit(k, 0),
+    over: lightHit(k, 1),
+    down: k.pose({
+      hip: { x: k.cx + 4.5, y: k.hy + 7 },
+      spine: 156,
+      neck: 18,
+      shoulderNear: -60,
+      armNear: { to: k.at(24, 24), bend: -1 },
+      armFar: { rel: { x: k.arm * 0.3, y: k.arm * 0.04 }, bend: -1 },
+      ...feet(k),
+    }),
+    recover: holdLight(k, 2),
+    // A volta caminha para a pose de carregar, não para a guarda sem objeto.
+    back: holdLight(k, 0),
   };
+}
+
+/** Pico da pancada pesada: o corpo dobra sobre a perna da frente e os dois braços descem esticados. */
+function heavyHit(k: Kit, over: number): Pose {
+  const grip = k.at(29 + over, 27 - over * 13);
+  return k.pose({
+    hip: { x: k.cx + 6 + over * 1.5, y: k.hy + 8 + over * 2 },
+    spine: 142 - over * 8,
+    neck: 30 + over * 4,
+    shoulderNear: -90,
+    armNear: { to: grip, bend: -1 },
+    armFar: { to: { x: grip.x - 4, y: grip.y + 2 }, bend: -1 },
+    legNear: { ankle: { x: k.cx + k.stance.near + 1, y: k.g }, foot: 90 },
+    legFar: { ankle: { x: k.cx + k.stance.far - 1, y: k.g - 1.6 - over * 1.2 }, foot: 60 - over * 14 },
+  });
+}
+
+/**
+ * A pancada de cadeira: tira o peso do ombro para trás e para o alto com as duas mãos, passa por cima da cabeça e
+ * desce com o corpo inteiro até o chão. É lenta e pesada: a volta demora a levantar o objeto de novo.
+ */
+function swingHeavy(k: Kit): HdMoveSpec {
   return {
     strike: 'handNear',
     expr: 'shout',
     wind: k.pose({
-      hip: { x: k.cx - 4, y: k.hy + 5.5 },
-      spine: 191,
-      neck: -6,
-      armNear: { to: k.at(-19, 53), bend: -1 },
-      armFar: { to: k.at(-16, 50), bend: -1 },
+      hip: { x: k.cx - 4, y: k.hy + 6 },
+      spine: 194,
+      neck: -8,
+      armNear: { to: k.at(-15, 58), bend: 1 },
+      armFar: { to: k.at(-11, 55), bend: 1 },
       legNear: { ankle: { x: k.cx + k.stance.near, y: k.g - 0.8 }, foot: 76 },
-      legFar: feet.legFar,
+      legFar: { ankle: { x: k.cx + k.stance.far, y: k.g }, foot: 90 },
     }),
     mid: k.pose({
-      hip: { x: k.cx + 1.5, y: k.hy + 3 },
-      spine: 166,
-      neck: 10,
+      hip: { x: k.cx + 1, y: k.hy + 3 },
+      spine: 176,
+      neck: 4,
       shoulderNear: -90,
-      armNear: { to: k.at(24, 54), bend: 1 },
-      armFar: { to: k.at(20, 55), bend: 1 },
-      ...feet,
+      armNear: { to: k.at(10, 64), bend: 1 },
+      armFar: { to: k.at(7, 62), bend: 1 },
+      ...feet(k),
     }),
-    hit: swingHit(k, 0),
-    over: swingHit(k, 1),
+    hit: heavyHit(k, 0),
+    over: heavyHit(k, 1),
     down: k.pose({
-      hip: { x: k.cx + 4, y: k.hy + 8.5 },
-      spine: 150,
-      neck: 22,
+      hip: { x: k.cx + 5, y: k.hy + 10 },
+      spine: 140,
+      neck: 30,
       shoulderNear: -90,
-      armNear: { to: k.at(23, 20), bend: -1 },
-      armFar: { to: k.at(18, 22), bend: -1 },
-      ...feet,
+      armNear: { to: k.at(24, 16), bend: -1 },
+      armFar: { to: k.at(20, 18), bend: -1 },
+      ...feet(k),
     }),
-    recover: hold(k, 2.6),
-    // A volta caminha para a pose de carregar, não para a guarda sem objeto.
-    back: hold(k, 0),
+    recover: holdHeavy(k, 3),
+    back: holdHeavy(k, 0),
   };
 }
 
@@ -155,13 +228,17 @@ function throwFrames(k: Kit): Record<string, HdFrameSpec> {
 }
 
 export function carryFamily(k: Kit): HdFamily {
+  const open = { far: 'open' } as const;
   return {
     frames: {
-      'carry-idle-0': { pose: hold(k, 0) },
-      'carry-idle-1': { pose: hold(k, 1) },
-      ...carryRun(k),
+      'carry-idle-0': { pose: holdLight(k, 0) },
+      'carry-idle-1': { pose: holdLight(k, 1) },
+      [`${HEAVY}carry-idle-0`]: { pose: holdHeavy(k, 0), hands: open },
+      [`${HEAVY}carry-idle-1`]: { pose: holdHeavy(k, 1), hands: open },
+      ...carryRun(k, false),
+      ...carryRun(k, true),
       ...throwFrames(k),
     },
-    moves: { swing: swing(k) },
+    moves: { swing: swingLight(k), [`${HEAVY}swing`]: swingHeavy(k) },
   };
 }
