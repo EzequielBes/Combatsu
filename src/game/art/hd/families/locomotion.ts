@@ -1,108 +1,159 @@
 /*
  * Locomoção do player HD: corrida, pulo, ápice, queda e pouso.
  *
- * A corrida é um ciclo de 6 quadros com dois passos espelhados (contato, descida e impulso de cada perna): o tronco
- * vai bem inclinado para a frente, os punhos fechados bombeiam em oposição às pernas e a cabeça sobe e desce com o
- * quadril. No ar, a origem continua sendo a sola do corpo físico (linha 79): as pernas recolhem acima dela.
+ * A corrida é um ciclo de 8 quadros, quatro instantes para cada perna: contato (o calcanhar toca à frente, a perna
+ * quase esticada), amortecimento (o ponto mais baixo, o peso cai sobre o joelho dobrado), impulso (o pé já atrás do
+ * quadril, na ponta, empurrando o chão) e voo (o ponto mais alto, a perna de trás esticada e o joelho da frente alto).
+ * O tronco vai bem inclinado para a frente, os punhos fechados bombeiam em oposição às pernas e a cabeça fica firme
+ * enquanto o tronco balança. No ar, a origem continua sendo a sola do corpo físico (linha 79): as pernas recolhem
+ * acima dela.
  */
+import { dir, type Vec2 } from '../../rig/skeleton';
+import type { ArmTarget, PoseSpec } from '../../rig/poses/build';
 import type { HdFamily, HdFrameSpec } from '../frames';
-import type { Kit } from '../kit';
-import type { ArmTarget } from '../../rig/poses/build';
+import { BODY_HD, type Kit } from '../kit';
 
-interface Leg {
-  /** Tornozelo: texels à frente do eixo e acima da linha do tornozelo no chão. */
-  ahead: number;
-  up: number;
-  foot: number;
-  bend?: 1 | -1;
-}
+type LegSpec = PoseSpec['legNear'];
 
-/** Um instante do passo: a perna que lidera (a que acabou de pousar), a que vem atrás e o corpo. */
-interface Stride {
-  lead: Leg;
-  trail: Leg;
-  /** Quadril: avanço em relação ao eixo e quanto desce abaixo de `k.hy`. */
-  hipX: number;
-  sink: number;
-  spine: number;
-  neck: number;
-  /** Braço do lado da perna que lidera (vai para trás) e o oposto (vai para a frente), a partir do ombro. */
-  armBack: { x: number; y: number };
-  armFwd: { x: number; y: number };
-}
+/** Quadros do ciclo da corrida (dois passos de quatro quadros). */
+export const RUN_FRAMES = 8;
 
-/** Os três instantes de um passo: contato, descida (o peso cai sobre a perna) e impulso (a perna empurra o chão). */
-const STRIDE: readonly Stride[] = [
-  {
-    lead: { ahead: 17, up: 1.2, foot: 108 },
-    trail: { ahead: -17, up: 5.5, foot: 14 },
-    hipX: 3,
-    sink: 4.4,
-    spine: 143,
-    neck: 27,
-    armBack: { x: -0.66, y: 0.3 },
-    armFwd: { x: 0.66, y: 0.04 },
-  },
-  {
-    lead: { ahead: 7, up: 0, foot: 90 },
-    trail: { ahead: -13, up: 15, foot: 10 },
-    hipX: 3.6,
-    sink: 5.8,
-    spine: 140,
-    neck: 28,
-    armBack: { x: -0.5, y: 0.46 },
-    armFwd: { x: 0.58, y: 0.22 },
-  },
-  {
-    lead: { ahead: -11, up: 1.6, foot: 56 },
-    trail: { ahead: 14, up: 13, foot: 84 },
-    hipX: 4.4,
-    sink: 3.8,
-    spine: 145,
-    neck: 25,
-    armBack: { x: -0.52, y: 0.4 },
-    armFwd: { x: 0.56, y: 0.3 },
-  },
+/**
+ * Quanto o pé de apoio recua a cada quadro, em texels (1 texel = 1 px de mundo). É o que o corpo anda no mundo durante
+ * um quadro: a duração do quadro sai daqui e da velocidade de corrida (`sheet.ts`), e o pé não patina no chão.
+ */
+export const RUN_STEP = 14.7;
+
+/** Quadril da corrida à frente do eixo do corpo, e o tornozelo no contato à frente da raiz da perna. */
+const HIP_AHEAD = 3;
+const CONTACT_AHEAD = 14;
+
+/**
+ * Perna num instante do ciclo. `plant` é o pé no chão: quantos quadros faz que ele pousou e o ângulo do pé (acima de
+ * 90 o calcanhar apoia com a ponta para cima; abaixo, o calcanhar sobe e a ponta fica presa ao chão). `swing` é a perna
+ * no ar, pelos ângulos de mundo da coxa e da canela (0 para baixo, 90 para a frente) e o do tornozelo em relação à
+ * canela (90 neutro): com a canela sempre em ângulo menor que o da coxa, o joelho só dobra para a frente.
+ */
+type LegKey = { plant: number; foot: number } | { swing: readonly [thigh: number, shin: number, flex: number] };
+
+/** Os oito instantes de uma perna, a partir do quadro em que ela pousa. A outra perna está quatro quadros adiante. */
+const LEG_CYCLE: readonly LegKey[] = [
+  // Contato: o calcanhar toca à frente, a ponta do pé para cima.
+  { plant: 0, foot: 110 },
+  // Amortecimento: o pé chapado sob o joelho dobrado.
+  { plant: 1, foot: 90 },
+  // Impulso: o pé atrás do quadril, o calcanhar sobe e a ponta empurra.
+  { plant: 2, foot: 52 },
+  // Voo: a perna sai do chão esticada para trás, o pé em ponta.
+  { swing: [-46, -60, 55] },
+  // A canela dobra para cima enquanto a outra perna pousa.
+  { swing: [-38, -95, 48] },
+  // Passagem: o joelho vem para a frente com o calcanhar recolhido junto ao quadril.
+  { swing: [18, -110, 70] },
+  // O joelho sobe à frente e a canela começa a abrir.
+  { swing: [58, -52, 85] },
+  // Voo da outra perna: joelho alto, a canela desce buscando o chão.
+  { swing: [70, 6, 100] },
 ];
 
-function leg(k: Kit, hipX: number, l: Leg) {
-  return { ankle: { x: k.cx + hipX + l.ahead, y: k.g - l.up }, foot: l.foot, bend: l.bend ?? 1 };
+/** O corpo nos quatro instantes do passo: quanto o quadril desce abaixo de `k.hy` e a inclinação do tronco. */
+const BODY_CYCLE = [
+  { sink: 4.3, spine: 149 },
+  { sink: 6.6, spine: 145 },
+  { sink: 4.4, spine: 146 },
+  { sink: 1.7, spine: 150 },
+] as const;
+
+/** Ângulo de mundo da cabeça (tronco mais pescoço): o pescoço desfaz quase todo o balanço do tronco. */
+const HEAD_ANGLE = 171;
+const HEAD_FOLLOW = 0.25;
+
+function runLeg(k: Kit, hip: Vec2, side: number, key: LegKey): LegSpec {
+  const rootX = k.cx + HIP_AHEAD + side;
+  if ('swing' in key) {
+    const [thigh, shin, flex] = key.swing;
+    const a = dir(thigh);
+    const b = dir(shin);
+    return {
+      ankle: {
+        x: rootX + a.x * BODY_HD.thigh + b.x * BODY_HD.shin,
+        y: hip.y + a.y * BODY_HD.thigh + b.y * BODY_HD.shin,
+      },
+      foot: shin + flex,
+      bend: 1,
+    };
+  }
+  // O ponto preso ao chão recua `RUN_STEP` por quadro: o calcanhar enquanto o pé está chapado ou de ponta para cima, a
+  // ponta do pé quando o calcanhar sobe.
+  const heel = rootX + CONTACT_AHEAD - key.plant * RUN_STEP;
+  const lift = key.foot < 90 ? dir(key.foot) : { x: 1, y: 0 };
+  return {
+    ankle: { x: heel + BODY_HD.foot * (1 - lift.x), y: k.g - BODY_HD.foot * lift.y },
+    foot: key.foot,
+    bend: 1,
+  };
 }
 
 /**
- * Balanço do braço de perto em cada quadro, de -1 (todo para trás) a 1 (todo para a frente). O braço anda em oposição
- * à perna do mesmo lado e de forma contínua: enquanto a perna de perto vai da frente para trás (quadros 0 a 3), o braço
- * de perto vem de trás para a frente, e volta nos quadros seguintes. O braço de longe faz o contrário.
+ * Braço da corrida para um balanço `swing` de -1 (todo para trás) a 1 (todo para a frente). O braço gira no ombro com
+ * o cotovelo dobrado perto de 90 graus: à frente o punho sobe até o peito, atrás o cotovelo sobe e o punho fica junto
+ * ao quadril. O antebraço fica sempre em ângulo maior que o do braço, então o cotovelo dobra sempre para o mesmo lado
+ * (aponta para trás): é o que impede o braço de "virar ao contrário" de um passo para o outro.
  */
-const NEAR_ARM_SWING = [-1, -0.45, 0.55, 1, 0.45, -0.55];
-
-/**
- * Braço da corrida para um balanço `swing`: o punho à frente sobe até o peito, atrás desce até o quadril, e no meio do
- * caminho passa baixo, rente ao corpo. O cotovelo dobra sempre para o mesmo lado (para trás), como num braço de
- * verdade: é o que impede o braço de "virar ao contrário" de um passo para o outro.
- */
-function runArm(k: Kit, swing: number, far: boolean): ArmTarget {
-  // O ombro de longe fica à frente do eixo: o braço de longe recua mais para o punho de trás sair da silhueta.
-  const back = far && swing < 0 ? 0.3 * -swing : 0;
-  const x = 0.1 + 0.56 * swing - back;
-  const y = 0.24 - 0.16 * swing + 0.14 * (1 - Math.abs(swing));
-  return { rel: { x: k.arm * x, y: k.arm * y }, bend: -1 };
+export function runArm(swing: number): ArmTarget {
+  const upper = -25 + 60 * swing;
+  const fore = upper + 92 + 8 * swing;
+  const a = dir(upper);
+  const b = dir(fore);
+  return {
+    rel: { x: a.x * BODY_HD.upperArm + b.x * BODY_HD.foreArm, y: a.y * BODY_HD.upperArm + b.y * BODY_HD.foreArm },
+    bend: -1,
+  };
 }
 
-/** Quadro `i` (0..5) da corrida: nos três primeiros lidera a perna de perto, nos três últimos a de longe. */
+/**
+ * Balanço do braço de perto no quadro `i`. O braço anda em oposição à perna do mesmo lado, numa onda só por ciclo: a
+ * perna de perto está toda à frente no quadro 7 (joelho alto) e toda atrás no 3 (acabou de empurrar), e o braço de
+ * perto faz o contrário. O braço de longe é o mesmo caminho meio ciclo adiante (o balanço com o sinal trocado). A onda
+ * cai entre os quadros: os extremos duram dois quadros (o braço segura no fim do curso, como num bombeio de verdade) e
+ * os dois punhos nunca se cruzam no mesmo ponto bem em cima de um quadro.
+ */
+export const runArmSwing = (i: number): number => -Math.cos((2 * Math.PI * (i + 0.5)) / RUN_FRAMES);
+
+/**
+ * Giro do tronco fingido de perfil: o ombro do braço que vai à frente avança com ele e o outro recua. O ombro de perto
+ * mede para trás do eixo do peito e o de longe para a frente, então os dois encolhem quando o braço de perto avança.
+ */
+const SHOULDER_TWIST = 1.5;
+const runShoulders = (nearSwing: number): { near: number; far: number } => ({
+  near: BODY_HD.shoulderNear - SHOULDER_TWIST * nearSwing,
+  far: BODY_HD.shoulderFar - SHOULDER_TWIST * nearSwing,
+});
+
+/** Quadril, tronco, cabeça e pernas do quadro `i` da corrida; a corrida com objeto usa as mesmas pernas. */
+export function runBody(k: Kit, i: number): Pick<PoseSpec, 'hip' | 'spine' | 'neck' | 'legNear' | 'legFar'> {
+  const half = RUN_FRAMES / 2;
+  const body = BODY_CYCLE[i % half]!;
+  const hip = { x: k.cx + HIP_AHEAD, y: k.hy + body.sink };
+  const head = HEAD_ANGLE + (body.spine - 147.5) * HEAD_FOLLOW;
+  return {
+    hip,
+    spine: body.spine,
+    neck: head - body.spine,
+    legNear: runLeg(k, hip, BODY_HD.pelvisNear, LEG_CYCLE[i % RUN_FRAMES]!),
+    legFar: runLeg(k, hip, -BODY_HD.pelvisFar, LEG_CYCLE[(i + half) % RUN_FRAMES]!),
+  };
+}
+
+/** Quadro `i` (0..7) da corrida: a perna de perto pousa no quadro 0 e a de longe no 4. */
 function runFrame(k: Kit, i: number): HdFrameSpec {
-  const s = STRIDE[i % 3]!;
-  const nearLeads = i < 3;
-  const swing = NEAR_ARM_SWING[i]!;
+  const swing = runArmSwing(i);
   return {
     pose: k.pose({
-      hip: { x: k.cx + s.hipX, y: k.hy + s.sink },
-      spine: s.spine,
-      neck: s.neck,
-      armNear: runArm(k, swing, false),
-      armFar: runArm(k, -swing, true),
-      legNear: leg(k, s.hipX, nearLeads ? s.lead : s.trail),
-      legFar: leg(k, s.hipX, nearLeads ? s.trail : s.lead),
+      ...runBody(k, i),
+      armNear: runArm(swing),
+      armFar: runArm(-swing),
+      shoulders: runShoulders(swing),
     }),
   };
 }
@@ -200,7 +251,7 @@ function landFrames(k: Kit): Record<string, HdFrameSpec> {
 }
 
 export function locomotionFamily(k: Kit): HdFamily {
-  const run = Object.fromEntries([0, 1, 2, 3, 4, 5].map((i) => [`run-${i}`, runFrame(k, i)]));
+  const run = Object.fromEntries(Array.from({ length: RUN_FRAMES }, (_, i) => [`run-${i}`, runFrame(k, i)]));
   return {
     frames: {
       ...run,

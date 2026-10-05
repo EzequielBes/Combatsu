@@ -11,6 +11,7 @@
 import type { HdFamily, HdFrameSpec, HdMoveSpec } from '../frames';
 import type { Kit } from '../kit';
 import type { Pose } from '../../rig/skeleton';
+import { RUN_FRAMES, runArm, runArmSwing, runBody } from './locomotion';
 
 /** Prefixo dos quadros da pegada pesada. */
 export const HEAVY = 'heavy-';
@@ -44,45 +45,34 @@ function holdHeavy(k: Kit, sink: number): Pose {
   });
 }
 
-interface Leg {
-  ahead: number;
-  up: number;
-  foot: number;
-}
-
-/** Os dois instantes do passo da corrida comum que a corrida com objeto usa: contato e impulso. */
-const STRIDE = [
-  { lead: { ahead: 17, up: 1.2, foot: 108 }, trail: { ahead: -17, up: 5.5, foot: 14 }, hipX: 3, sink: 4.6, bob: 0 },
-  { lead: { ahead: -9, up: 1.6, foot: 58 }, trail: { ahead: 12, up: 14, foot: 84 }, hipX: 4.2, sink: 3.4, bob: 1.2 },
-] as const;
+/** Altura média do quadril na corrida, abaixo de `k.hy`: a mão que segura sobe e desce em torno dela. */
+const RUN_SINK = 4.4;
 
 /**
- * Corrida com o objeto: o contato e o impulso de cada perna da corrida comum. A mão que segura fica quase parada (a
- * arma à frente, ou o peso no ombro) e o braço livre bombeia em oposição às pernas.
+ * Corrida com o objeto: o quadril e as pernas são os da corrida comum (`runBody`), quadro a quadro, com o tronco um
+ * pouco mais em pé. A mão que segura fica quase parada (a arma à frente, ou o peso no ombro), só acompanhando o
+ * sobe-e-desce do quadril, e o braço livre (o de longe) bombeia em oposição às pernas, como na corrida comum.
  */
 function carryRun(k: Kit, heavy: boolean): Record<string, HdFrameSpec> {
+  const upright = heavy ? 5 : 2;
   const frame = (i: number): HdFrameSpec => {
-    const s = STRIDE[i % 2]!;
-    const nearLeads = i < 2;
-    const leg = (l: Leg) => ({ ankle: { x: k.cx + s.hipX + l.ahead, y: k.g - l.up }, foot: l.foot });
-    // O braço livre é o de longe: vai à frente quando a perna de perto lidera.
-    const swing = (nearLeads ? 1 : -1) * (i % 2 === 0 ? 1 : 0.4);
-    const free = { rel: { x: k.arm * (0.1 + 0.5 * swing), y: k.arm * (0.3 - 0.14 * swing) }, bend: -1 as const };
-    const grip = heavy ? k.at(-4, 46 + s.bob) : k.at(17, 37 + s.bob);
+    const body = runBody(k, i);
+    const bob = k.hy + RUN_SINK - body.hip.y;
+    const grip = heavy ? k.at(-4, 46 + bob) : k.at(18.5, 32 + bob);
     return {
       pose: k.pose({
-        hip: { x: k.cx + s.hipX, y: k.hy + s.sink },
-        spine: heavy ? 152 : 148,
-        neck: heavy ? 20 : 24,
+        ...body,
+        spine: body.spine + upright,
+        neck: (body.neck ?? 0) - upright,
         armNear: { to: grip, bend: heavy ? 1 : -1 },
-        armFar: free,
-        legNear: leg(nearLeads ? s.lead : s.trail),
-        legFar: leg(nearLeads ? s.trail : s.lead),
+        armFar: runArm(-runArmSwing(i)),
       }),
       hands: heavy ? { far: 'open' } : undefined,
     };
   };
-  return Object.fromEntries([0, 1, 2, 3].map((i) => [`${heavy ? HEAVY : ''}carry-run-${i}`, frame(i)]));
+  return Object.fromEntries(
+    Array.from({ length: RUN_FRAMES }, (_, i) => [`${heavy ? HEAVY : ''}carry-run-${i}`, frame(i)]),
+  );
 }
 
 /** Pico do golpe leve: o corpo entra sobre a perna da frente e o braço desce em diagonal. `over` atravessa. */
