@@ -24,7 +24,9 @@ import { Boss } from './Boss';
 import { AttackHitbox } from './hitbox';
 import type { Player } from './Player';
 import { bodyOf, PX_PER_S_TO_STEP, setIgnoreGravity } from './physics';
-import { TEX } from './textures';
+import { SIZE, TEX } from './textures';
+import { HD_ON } from './art/hd/flag';
+import { hdAnchors } from './art/hd/sheet';
 import { DivergentFx } from './techFx/DivergentFx';
 import { RedOrbFx } from './techFx/RedOrb';
 import { BlueOrbFx } from './techFx/BlueOrb';
@@ -231,7 +233,10 @@ export class TechRunner {
     const isDivergent = cast?.id === 'divergente';
     if (isDivergent && (cast!.state === 'sign' || cast!.state === 'charge')) {
       // DIV-10: aura do punho durante o preparo.
-      this.divergentFx.fistAura(dtMs, this.player.sprite.x, this.player.sprite.y, this.player.facing);
+      // `?hd=1`: a aura fica no punho que vai bater (o de perto do quadro HD), não no ponto fixo à frente do corpo.
+      const hand = HD_ON ? hdAnchors(this.player.frameName)?.near : undefined;
+      const at = hand ? { x: hand.x, y: hand.y + SIZE.player.h / 2 } : undefined;
+      this.divergentFx.fistAura(dtMs, this.player.sprite.x, this.player.sprite.y, this.player.facing, at);
     } else {
       this.divergentFx.hideFistAura();
     }
