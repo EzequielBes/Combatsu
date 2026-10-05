@@ -45,6 +45,8 @@ export const TEX = {
   kanji: 'kanji',
   /** Chama da aura de conjuração (CAST-14), 2 frames por cor. */
   techAura: 'tech-aura',
+  /** Chama de energia amaldiçoada em línguas (`CursedFlame`): cor, estágio e tamanho por frame. */
+  cursedFlame: 'cursed-flame',
   /** Faíscas de técnica (2x2 texels): Kokusen, expelidas pelo Vermelho, sugadas pelo Azul (KOK-23). */
   techSpark: 'tech-spark',
   /** Orbe Vermelho (RED-02): um frame por terço da carga, 4/8/12 texels, cada um numa textura própria. */

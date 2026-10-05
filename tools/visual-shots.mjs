@@ -9,6 +9,7 @@
 // 1000/60 ms por passo de `__game.step` (os tweens do Phaser contam `Date.now`), `Math.random` vira um gerador com
 // semente fixa e o `requestAnimationFrame` nunca dispara (sem isto o Matter acumula um passo de física por quadro real
 // até o primeiro `step`). Cada captura chama `__game.render()` e lê o canvas no mesmo turno, sem escala do navegador.
+import { hdScenarios } from './visual-shots-hd.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
@@ -344,24 +345,7 @@ const SCENARIOS = {
     await t.at(100, '72-morte');
     await t.watch(300, [['73-game-over', (x) => x.run.state === 'gameOver', 70]]);
   },
-  async hd(t) {
-    await t.open(`hd=1&${BASE}&tech=vermelho`);
-    await t.at(500, '80-hd-idle');
-    await t.down('KeyD');
-    await t.at(250, '81-hd-corrida-a');
-    await t.at(100, '81-hd-corrida-b');
-    await t.up('KeyD');
-    await t.settle();
-    await t.press('KeyW', 'KeyJ');
-    await t.watch(80, [['82-hd-gancho', (s) => s.player.frame === 'ganchoAscendente@active-0']]);
-    await t.settle();
-    await t.tap('KeyL');
-    await t.watch(240, [
-      ['83-hd-vermelho-carga', (s) => s.fx.red.glow.active, 10],
-      ['83-hd-vermelho-carga+16', (s) => s.fx.red.glow.active, 16],
-      ['83-hd-vermelho-voo', t.layer('red.trail'), 3],
-    ]);
-  },
+  ...hdScenarios(BASE),
 };
 
 const freePort = () =>

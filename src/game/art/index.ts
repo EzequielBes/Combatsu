@@ -9,6 +9,7 @@ import { registerIndexedSheet, registerSheet } from './render';
 import { HD_ON } from './hd/flag';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
 import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites/enemy';
+import { FLAME_FRAMES } from './sprites/flame';
 import { KANJI_FRAMES } from './sprites/kanji';
 import { PLAYER_ANIMS, PLAYER_FRAMES, animFrameConfigs, type AnimDef } from './sprites/player';
 import { PLAYER_MOVE_FRAMES } from './sprites/playerMoves';
@@ -95,6 +96,8 @@ export function createArt(scene: Phaser.Scene): void {
   registerSheet(scene, TEX.kanji, parseSheet('kanji', KANJI_FRAMES, PALETTE_KEYS));
   // Aura de conjuração (CAST-14): 2 frames de chama por cor (blue-a/b, red-a/b, white-a/b).
   registerSheet(scene, TEX.techAura, parseSheet('tech-aura', AURA_FRAMES, PALETTE_KEYS));
+  // Chama de energia amaldiçoada em línguas (punho do Divergente): cor x estágio x tamanho.
+  registerSheet(scene, TEX.cursedFlame, parseSheet('cursed-flame', FLAME_FRAMES, PALETTE_KEYS));
   // Faíscas de técnica (KOK-23): kokusen (preta/vermelha), redOut, blueIn.
   registerSheet(scene, TEX.techSpark, parseSheet('tech-spark', TECH_SPARK_FRAMES, PALETTE_KEYS));
   // Orbe Vermelho (RED-02): um frame por terço da carga, cada tamanho na sua própria textura (parseSheet exige
