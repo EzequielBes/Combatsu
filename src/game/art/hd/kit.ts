@@ -80,8 +80,12 @@ export interface Kit {
   stance: { near: number; far: number };
   /** Ponto do frame a `ahead` texels à frente do eixo do corpo e `up` texels acima do chão (1 texel = 1 px de mundo). */
   at(ahead: number, up: number): Vec2;
-  /** Monta uma pose do corpo HD (cinemática inversa nos braços e nas pernas). */
-  pose(spec: Omit<PoseSpec, 'body'>): Pose;
+  /**
+   * Monta uma pose do corpo HD (cinemática inversa nos braços e nas pernas). `shoulders` é opcional e muda, só nesta
+   * pose, quanto cada ombro sai do eixo do peito (texels; padrão: o do corpo): é o giro de tronco fingido de perfil, o
+   * ombro que bate projetado à frente e o outro recolhido atrás. O lado sai de `shoulderNear`/`shoulderFar`.
+   */
+  pose(spec: Omit<PoseSpec, 'body'> & { shoulders?: { near?: number; far?: number } }): Pose;
   /**
    * Guarda de luta: joelhos dobrados, tronco inclinado para o alvo e queixo recolhido, a mão da frente (de perto)
    * adiantada na altura do esterno e a de trás junto ao peito. `sink` abaixa o quadril e as mãos acompanham.
@@ -94,7 +98,12 @@ export interface Kit {
 export function makeKit(stage: HdStage): Kit {
   const cx = stage.originCol;
   const g = groundOf(stage);
-  const pose: Kit['pose'] = (spec) => buildPose({ ...spec, body: BODY_HD });
+  const pose: Kit['pose'] = ({ shoulders: sh, ...spec }) => {
+    const body = sh
+      ? { ...BODY_HD, shoulderNear: sh.near ?? BODY_HD.shoulderNear, shoulderFar: sh.far ?? BODY_HD.shoulderFar }
+      : BODY_HD;
+    return buildPose({ ...spec, body });
+  };
   return {
     stage,
     cx,

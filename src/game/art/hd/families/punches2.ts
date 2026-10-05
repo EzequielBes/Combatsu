@@ -2,8 +2,61 @@
  * Golpes de mão do player HD, segunda parte: a palma explosiva e os Contras (o contra-ataque depois de uma defesa
  * certa). Juntados à família em `punches.ts`.
  */
+import type { PoseSpec } from '../../rig/poses/build';
+import { dir, type Vec2 } from '../../rig/skeleton';
+import { ANKLE_HEIGHT } from '../body';
 import type { HdFamily, HdMoveSpec } from '../frames';
-import type { Kit } from '../kit';
+import { BODY_HD, type Kit } from '../kit';
+
+type Leg = PoseSpec['legNear'];
+type Arm = PoseSpec['armNear'];
+
+/** Atalhos dos socos: tudo em texels à frente do eixo (`ahead`) e acima do chão (`up`). */
+export interface PunchKit {
+  /** Quadril a `dx` do eixo e `dy` abaixo da linha do quadril em pé. */
+  hip(dx: number, dy: number): Vec2;
+  /**
+   * Giro de tronco fingido de perfil: quanto cada ombro fica à frente (+) ou atrás (-) do eixo do peito, em texels. A
+   * guarda é `turn(-2.6, 2.6)`; o ombro que bate vai a +6 e o outro recolhe, e na antecipação é o contrário.
+   */
+  turn(
+    near: number,
+    far: number,
+  ): { shoulderNear: number; shoulderFar: number; shoulders: { near: number; far: number } };
+  /** Braço com a mão a (`x`, `y`) braços do ombro (x para a frente, y para baixo). */
+  arm(x: number, y: number, bend?: 1 | -1): Arm;
+  /** Braço com a mão em `k.at(ahead, up)`. */
+  armTo(ahead: number, up: number, bend?: 1 | -1): Arm;
+  /** Pé no lugar da guarda; `heel` (graus) sobe o calcanhar girando sobre a ponta, que não sai do lugar. */
+  near(heel?: number): Leg;
+  far(heel?: number): Leg;
+}
+
+export function punchKit(k: Kit): PunchKit {
+  // O pé gira em torno do ponto da sola sob a ponta do osso: o tornozelo sobe e avança, a ponta fica no chão.
+  const pivot = (x: number, heel: number): Leg => {
+    const f = dir(90 - heel);
+    return {
+      ankle: {
+        x: x + BODY_HD.foot * (1 - f.x) + ANKLE_HEIGHT * f.y,
+        y: k.g + ANKLE_HEIGHT * (1 - f.x) - BODY_HD.foot * f.y,
+      },
+      foot: 90 - heel,
+    };
+  };
+  return {
+    hip: (dx, dy) => ({ x: k.cx + dx, y: k.hy + dy }),
+    turn: (near, far) => ({
+      shoulderNear: near >= 0 ? -90 : 90,
+      shoulderFar: far >= 0 ? -90 : 90,
+      shoulders: { near: Math.abs(near), far: Math.abs(far) },
+    }),
+    arm: (x, y, bend = -1) => ({ rel: { x: k.arm * x, y: k.arm * y }, bend }),
+    armTo: (ahead, up, bend = -1) => ({ to: k.at(ahead, up), bend }),
+    near: (heel = 0) => pivot(k.cx + k.stance.near, heel),
+    far: (heel = 0) => pivot(k.cx + k.stance.far, heel),
+  };
+}
 
 /** Pé de perto plantado no lugar da guarda. */
 export const nearFoot = (k: Kit) => ({ ankle: { x: k.cx + k.stance.near, y: k.g }, foot: 90 });
