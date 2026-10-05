@@ -4,7 +4,7 @@ import { STEP_BUFFER_MARGIN, StepLerp, stepAlpha } from '../../src/core/stepLerp
 const STEP = 1000 / 60;
 
 describe('stepAlpha: fração entre os dois últimos passos (ITP-01, EDG-01)', () => {
-  it('a margem do acumulador é 1,5 passo, como no runner do Matter do Phaser 3.90', () => {
+  it('a margem do acumulador é 1,5 passo, como no runner do Matter do Phaser', () => {
     expect(STEP_BUFFER_MARGIN).toBe(1.5);
   });
 

@@ -1,6 +1,6 @@
 # Combatsu
 
-Roguelite de luta em pixel art, para navegador (Phaser 3 + Matter.js). O jogador enfrenta ondas de espíritos
+Roguelite de luta em pixel art, para navegador (Phaser 4 + Matter.js). O jogador enfrenta ondas de espíritos
 amaldiçoados numa sala, com combate corpo a corpo estilo jogo de luta, objetos do cenário como arma, técnicas
 amaldiçoadas compradas na loja entre as rodadas e um chefe a cada 5 rodadas. O repositório se chama `surgue`.
 
