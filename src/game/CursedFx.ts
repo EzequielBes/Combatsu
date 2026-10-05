@@ -6,7 +6,9 @@ import { impactSpikes, type ImpactTier } from '../core/impactTier';
 import { Rng } from '../core/rng';
 import { trailStyle } from '../core/strikePath';
 import { IMPACT_FEEL, SLIDE_FEEL } from '../data/feel';
+import { HD_ON } from './art/hd/flag';
 import { PALETTE, PALETTE_KEYS } from './art/palette';
+import { drawHeavyImpact, drawLightImpact, type ImpactShape } from './cursedImpact';
 import { registerSheet } from './art/render';
 import { TEX } from './textures';
 
@@ -19,11 +21,13 @@ type CursedKey = (typeof CURSED_FX_KEYS)[number];
 
 /** Acima de personagens (0..2) e objetos, como a faísca: o efeito aparece por cima de quem ele toca. */
 const FX_DEPTH = 3;
-/** Passo da grade de arte em px de mundo (AD-009). */
-const GRID = 2;
+/** Passo da grade de arte em px de mundo (AD-009): 2 px no corpo antigo, 1 px com o corpo HD (`?hd=1`). */
+const GRID = HD_ON ? 1 : 2;
 /** Intervalo (ms de jogo) entre as fagulhas da chama do golpe forte. */
 const FLAME_EVERY_MS = 40;
 const FLAME_LIFE_MS = 260;
+/** Escala inicial da fagulha da chama (o pedacinho tem 4 px de lado). */
+const FLAME_SCALE = 0.7;
 /** Quantos pontos amostram a espinha do rastro: mais pontos, curva mais lisa. */
 const TRAIL_SAMPLES = 10;
 /** Quanto a espinha do rastro entorta para cima, em fração do comprimento: dá o arco do golpe de anime. */
@@ -211,16 +215,16 @@ export class CursedFx {
   }
 
   /**
-   * Impacto em camadas (IMP-07..09). `light`: 6 estilhaços num cone de ±35° em volta de `dir`. `heavy` e
-   * `decisive`: anel grosso de 6 a 28 px com espinhos afiados em raio (os de `impactSpikes(seed, 6)`), e um
-   * lampejo no centro. `seed` fixa o desenho (AD-006).
+   * Impacto em camadas (IMP-07..09). `light`: lampejo pequeno e 6 agulhas num cone de ±35° em volta de `dir`.
+   * `heavy` e `decisive`: lampejo em estrela, onda de choque fina de 6 a 28 px, riscos em raio (os de
+   * `impactSpikes(seed, 6)`) e um jato na direção do golpe. `seed` fixa o desenho (AD-006).
    */
   impact(tier: ImpactTier, at: Vec2, dir: Vec2, seed: number): void {
     if (tier === 'light') {
       this.shards(at, dir, seed);
       return;
     }
-    this.ringAndSpikes(at, seed, tier === 'decisive');
+    this.ringAndSpikes(at, dir, seed, tier === 'decisive');
   }
 
   /** Rachadura no chão do pouso da derrubada (IMP-15): linhas finas que somem em `crackMs`. */
@@ -292,97 +296,54 @@ export class CursedFx {
     const key: CursedKey = pick < 0.5 ? 'c' : pick < 0.8 ? 'C' : 'U';
     const x = this.flameAt.x + (rng.next() - 0.5) * 8;
     const y = this.flameAt.y + (rng.next() - 0.5) * 6;
-    const img = this.bit(key, x, y);
+    // Fagulha pequena em losango (o pedacinho girado 45°): quadrado cheio lia como defeito em cima do corpo.
+    const img = this.bit(key, x, y).setAngle(45).setScale(FLAME_SCALE);
     this.scene.tweens.add({
       targets: img,
       x: snap(x + (rng.next() - 0.5) * 10),
       y: snap(y - 12 - rng.next() * 12),
       alpha: 0,
-      scale: 0.5,
+      scale: FLAME_SCALE * 0.4,
       duration: FLAME_LIFE_MS,
       ease: 'Quad.easeOut',
       onComplete: () => img.destroy(),
     });
   }
 
-  private shards(at: Vec2, dir: Vec2, seed: number): void {
-    if (!canSpawnParticle(this.live.size)) return;
-    const rng = new Rng(seed);
-    const base = Math.atan2(dir.y, dir.x);
-    const cone = (IMPACT_FEEL.shardConeDeg * Math.PI) / 180;
-    const keys: CursedKey[] = ['C', 'c', 'U', 'C', 'c', 'u'];
-    for (let i = 0; i < IMPACT_FEEL.shardCount; i++) {
-      const ang = base + (rng.next() * 2 - 1) * cone;
-      const dist = 26 + rng.next() * 30;
-      const img = this.bit(keys[i % keys.length]!, at.x, at.y);
-      // Estilhaço esticado no sentido do voo: uma agulha de energia em vez de um quadrado.
-      img.setRotation(ang).setScale(2.5, 1);
-      this.scene.tweens.add({
-        targets: img,
-        x: at.x + Math.cos(ang) * dist,
-        y: at.y + Math.sin(ang) * dist,
-        alpha: 0,
-        duration: IMPACT_FEEL.shardLifeMs,
-        ease: 'Cubic.easeOut',
-        onComplete: () => img.destroy(),
-      });
-    }
+  private shapeAt(at: Vec2, dir: Vec2): ImpactShape {
+    return { cx: snap(at.x), cy: snap(at.y), dirAngle: Math.atan2(dir.y, dir.x), snap, grid: GRID };
   }
 
-  private ringAndSpikes(at: Vec2, seed: number, decisive: boolean): void {
+  /** Toca um desenho de impacto de `p = 0` a 1 em `ms` de jogo (parado em 0 durante o hitstop) e o destrói no fim. */
+  private play(ms: number, draw: (gfx: Phaser.GameObjects.Graphics, p: number) => void): void {
     const gfx = this.add(this.scene.add.graphics().setDepth(FX_DEPTH + 0.1));
-    const spikes = impactSpikes(seed, IMPACT_FEEL.spikeCount);
-    const cx = snap(at.x);
-    const cy = snap(at.y);
-    const draw = (p: number): void => {
-      const eased = 1 - (1 - p) * (1 - p);
-      const r = IMPACT_FEEL.ringFromPx + (IMPACT_FEEL.ringToPx - IMPACT_FEEL.ringFromPx) * eased;
-      const thick = Math.max(GRID, snap(6 - 4 * p));
-      gfx.clear();
-      // Espinhos primeiro: raios afiados que nascem do anel e crescem até o comprimento sorteado.
-      const grow = 0.45 + 0.55 * eased;
-      spikes.forEach((s, i) => {
-        const purple = i % 2 === 1;
-        const len = s.length * grow;
-        const cos = Math.cos(s.angle);
-        const sin = Math.sin(s.angle);
-        const r0 = IMPACT_FEEL.ringFromPx - 2;
-        const tri = (half: number, extra: number): Vec2[] => [
-          { x: snap(cx + cos * (r0 - extra) - sin * half), y: snap(cy + sin * (r0 - extra) + cos * half) },
-          { x: snap(cx + cos * (r0 + len + extra)), y: snap(cy + sin * (r0 + len + extra)) },
-          { x: snap(cx + cos * (r0 - extra) + sin * half), y: snap(cy + sin * (r0 - extra) - cos * half) },
-        ];
-        gfx.fillStyle(PALETTE[purple ? 'u' : 'c']!, 1).fillPoints(pts(tri(3, 2)), true);
-        gfx.fillStyle(PALETTE[purple ? 'U' : 'C']!, 1).fillPoints(pts(tri(1.5, 0)), true);
-      });
-      // Anel com espessura: sombra `d`, corpo `c` e fio de luz `C` por dentro.
-      gfx.lineStyle(thick + GRID, PALETTE.d!, 1).strokeCircle(cx, cy, r);
-      gfx.lineStyle(thick, PALETTE.c!, 1).strokeCircle(cx, cy, r);
-      if (thick > GRID) gfx.lineStyle(thick - GRID, PALETTE.C!, 1).strokeCircle(cx, cy, r);
-      if (decisive && p < 0.5) {
-        // Lampejo de losango no centro do golpe decisivo.
-        const f = 8 * (1 - p * 2);
-        gfx.fillStyle(PALETTE.C!, 1).fillPoints(
-          pts([
-            { x: cx, y: snap(cy - f) },
-            { x: snap(cx + f), y: cy },
-            { x: cx, y: snap(cy + f) },
-            { x: snap(cx - f), y: cy },
-          ]),
-          true,
-        );
-      }
-      gfx.setAlpha(1 - p);
-    };
-    draw(0);
+    draw(gfx, 0);
     this.scene.tweens.addCounter({
       from: 0,
       to: 1,
-      duration: IMPACT_FEEL.ringMs,
+      duration: ms,
       onUpdate: (t) => {
-        if (gfx.active) draw(t.getValue() ?? 1);
+        if (gfx.active) draw(gfx, t.getValue() ?? 1);
       },
       onComplete: () => gfx.destroy(),
     });
+  }
+
+  private shards(at: Vec2, dir: Vec2, seed: number): void {
+    if (!canSpawnParticle(this.live.size)) return;
+    const rng = new Rng(seed);
+    const shape = this.shapeAt(at, dir);
+    const cone = (IMPACT_FEEL.shardConeDeg * Math.PI) / 180;
+    const list = Array.from({ length: IMPACT_FEEL.shardCount }, () => ({
+      angle: shape.dirAngle + (rng.next() * 2 - 1) * cone,
+      dist: 26 + rng.next() * 30,
+    }));
+    this.play(IMPACT_FEEL.shardLifeMs, (gfx, p) => drawLightImpact(gfx, shape, list, p));
+  }
+
+  private ringAndSpikes(at: Vec2, dir: Vec2, seed: number, decisive: boolean): void {
+    const spikes = impactSpikes(seed, IMPACT_FEEL.spikeCount);
+    const shape = this.shapeAt(at, dir);
+    this.play(IMPACT_FEEL.ringMs, (gfx, p) => drawHeavyImpact(gfx, shape, spikes, decisive, p));
   }
 }
