@@ -35,8 +35,11 @@ export class UiSetup {
     ui.setOrigin(0, 0).setZoom(UI_SCALE);
     const route = (obj: Phaser.GameObjects.GameObject): void => {
       // Um objeto nasce na lista da cena e só depois é movido para a camada: aí ele volta a ser da UI.
-      if (obj.displayList === this.s.uiLayer) obj.cameraFilter &= ~ui.id;
-      else ui.ignore(obj);
+      if (obj.displayList === this.s.uiLayer) {
+        obj.cameraFilter &= ~ui.id;
+        // A câmera de UI amplia por `UI_SCALE`: o texto é rasterizado já nesse tamanho para não sair borrado.
+        if (UI_SCALE !== 1 && obj instanceof Phaser.GameObjects.Text) obj.setResolution(UI_SCALE);
+      } else ui.ignore(obj);
     };
     this.s.events.on(Phaser.Scenes.Events.ADDED_TO_SCENE, route);
     this.s.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
@@ -49,7 +52,7 @@ export class UiSetup {
     return [
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
       'J leve · K forte · U guarda/parry · Q esquiva · E pegar',
-      'E: pegar / arremessar   S+E: largar   J/X leve   K/Z forte',
+      'E: pegar / arremessar   S+E: largar   L / I: técnicas',
       'S+Q: abaixar   U+direção: virar na guarda   defesa certa + J: Contra',
       'R: reiniciar   Tab: mostrar/esconder controles',
       ...(isDebug() ? ['F1: sair do debug   H: física e hitboxes   1/2: golpe leve/forte de teste'] : []),
