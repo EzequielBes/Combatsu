@@ -5,7 +5,7 @@ import type { Mastery } from '../core/mastery';
 import { masteryBarWidth } from '../core/masteryBar';
 import { TECHNIQUES } from '../data/techniques';
 import { ART_SCALE, PALETTE } from './art/palette';
-import { HUD_BAR } from './art/hud';
+import { HUD_BAR_WELL } from './art/hud';
 import {
   ENERGY_BAR_BG_COLOR,
   ENERGY_BAR_FILL_COLOR,
@@ -16,20 +16,26 @@ import {
 import { TEX } from './textures';
 
 /**
- * Alinhada com a barra de HP (Hud.ts: `MARGIN` 12), abaixo do painel de controles (`PANEL_Y = 36` + ~5 linhas de
- * texto) para não empilhar em cima dele nos primeiros `CONTROLS_MS` de cada run (conferido no screenshot de T20).
- * Polimento (feat(hud)): mesma largura da barra de HP (Hud.ts: 56 texels x `ART_SCALE`) e mais alta/visível.
+ * A barra de energia é irmã da de HP (Hud.ts): mesma moldura em pixel art, mesmo rótulo à esquerda (`CE`, de
+ * "cursed energy") e a mesma largura, logo abaixo dela e da faixa fina de estrutura (que termina em y=32). O
+ * preenchimento ocupa o poço da moldura.
  */
-const BAR_X = 12;
-const BAR_Y = 124;
-const BAR_W = HUD_BAR[0].length * ART_SCALE;
-const BAR_H = 14;
-const MARK_W = 3;
+const MARGIN = 12;
+const LABEL_W = 26;
+const FRAME_X = MARGIN + LABEL_W;
+const FRAME_Y = 34;
+const BAR_X = FRAME_X + HUD_BAR_WELL.x * ART_SCALE;
+const BAR_Y = FRAME_Y + HUD_BAR_WELL.y * ART_SCALE;
+const BAR_W = HUD_BAR_WELL.w * ART_SCALE;
+const BAR_H = HUD_BAR_WELL.h * ART_SCALE;
+const MARK_W = 2;
 /** Ícones de slot (polimento): quadrados, kanji em 2x (era 24 px), borda e rótulo da tecla (`L`/`I`) no canto. */
 const ICON_SIZE = 48;
 const ICON_BORDER_W = 2;
 const ICON_GAP = 10;
-const ICON_Y = BAR_Y + BAR_H + 8;
+/** Abaixo do contador de fragmentos e da linha do objeto na mão (Hud.ts: y=54 e y=70, 14 px de texto). */
+const ICON_Y = 92;
+const ICON_X = MARGIN + ICON_BORDER_W;
 /** Barra de maestria (MST-08): 2 px de altura, colada sob o ícone, com a largura do slot. */
 const MASTERY_BAR_H = 2;
 const MASTERY_BAR_Y = ICON_Y + ICON_SIZE + ICON_BORDER_W + 2;
@@ -38,6 +44,12 @@ const SLOT_LABEL: readonly ['L', 'I'] = ['L', 'I'];
 /** Duração do flash de recusa por falta de energia (TEC-10). */
 const FLASH_MS = 300;
 const DEPTH = 101;
+/** O mesmo texto do rótulo `HP` (Hud.ts). */
+const LABEL_STYLE = {
+  fontFamily: 'monospace',
+  fontSize: '12px',
+  color: `#${PALETTE.w!.toString(16).padStart(6, '0')}`,
+};
 
 interface SlotIcon {
   icon: Phaser.GameObjects.Sprite;
@@ -63,13 +75,15 @@ export class EnergyHud {
     private readonly scene: Phaser.Scene,
     private readonly layer: Phaser.GameObjects.Layer,
   ) {
+    const label = scene.add.text(MARGIN, FRAME_Y + 1, 'CE', LABEL_STYLE);
+    const frame = scene.add.image(FRAME_X, FRAME_Y, TEX.hudBar).setOrigin(0, 0);
     this.bg = scene.add.rectangle(BAR_X, BAR_Y, BAR_W, BAR_H, ENERGY_BAR_BG_COLOR).setOrigin(0, 0);
     this.fill = scene.add.rectangle(BAR_X, BAR_Y, 0, BAR_H, ENERGY_BAR_FILL_COLOR).setOrigin(0, 0);
     this.marks = [0, 1].map(() =>
       scene.add.rectangle(BAR_X, BAR_Y, MARK_W, BAR_H, ENERGY_BAR_MARK_COLOR).setOrigin(0, 0).setVisible(false),
     ) as [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
     this.slots = [0, 1].map((i) => {
-      const x = BAR_X + i * (ICON_SIZE + ICON_GAP);
+      const x = ICON_X + i * (ICON_SIZE + ICON_GAP);
       // Borda do ícone quadrado (polimento): moldura simples, não a pixel art da barra de HP.
       const border = scene.add
         .rectangle(
@@ -108,12 +122,14 @@ export class EnergyHud {
 
     this.masteryBars = [0, 1].map((i) =>
       scene.add
-        .rectangle(BAR_X + i * (ICON_SIZE + ICON_GAP), MASTERY_BAR_Y, 0, MASTERY_BAR_H, ENERGY_BAR_FILL_COLOR)
+        .rectangle(ICON_X + i * (ICON_SIZE + ICON_GAP), MASTERY_BAR_Y, 0, MASTERY_BAR_H, ENERGY_BAR_FILL_COLOR)
         .setOrigin(0, 0)
         .setVisible(false),
     ) as [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
 
-    const objs: (Phaser.GameObjects.Rectangle | Phaser.GameObjects.Sprite | Phaser.GameObjects.Text)[] = [
+    const objs = [
+      label,
+      frame,
       this.bg,
       this.fill,
       ...this.marks,

@@ -15,8 +15,6 @@ import { TEX } from './textures';
 const MARGIN = 12;
 /** Espaço reservado para o rótulo "HP" à esquerda da barra. */
 const LABEL_W = 26;
-/** O painel de controles começa abaixo da barra. */
-const PANEL_Y = 36;
 /** Cor da paleta em CSS (`#rrggbb` ou `#rrggbbaa`), para o texto do Phaser, que não aceita número (ART-01). */
 const css = (color: number, alpha = 1): string =>
   `#${color.toString(16).padStart(6, '0')}${
@@ -125,11 +123,9 @@ export class Hud {
     this.fill = scene.add
       .rectangle(barX + w.x * ART_SCALE, MARGIN + w.y * ART_SCALE, w.w * ART_SCALE, w.h * ART_SCALE, PALETTE.r)
       .setOrigin(0, 0);
-    this.panel = scene.add.text(MARGIN, PANEL_Y, controlsText, {
-      ...TEXT_STYLE,
-      backgroundColor: css(PALETTE.k, 0.8),
-      padding: { x: 6, y: 4 },
-    });
+    // Painel de controles no canto de baixo: não cobre as barras nem o meio da tela enquanto aparece.
+    const panelStyle = { ...TEXT_STYLE, backgroundColor: css(PALETTE.k, 0.8), padding: { x: 6, y: 4 } };
+    this.panel = scene.add.text(MARGIN, UI_SIZE.h - MARGIN, controlsText, panelStyle).setOrigin(0, 1);
     const w2 = UI_SIZE.w;
     const h2 = UI_SIZE.h;
     this.roundText = scene.add
@@ -170,7 +166,7 @@ export class Hud {
       .setOrigin(0.5, 1)
       .setVisible(false);
 
-    // Estrutura do jogador: 3 px de altura entre a barra de vida (termina em y=28) e o contador de fragmentos (y=32).
+    // Estrutura do jogador: 3 px de altura entre a barra de vida (termina em y=28) e a de energia (começa em y=34).
     const structW = w.w * ART_SCALE;
     const structY = MARGIN + 17;
     this.structBg = scene.add
@@ -181,8 +177,8 @@ export class Hud {
       .rectangle(barX + w.x * ART_SCALE, structY, 0, 3, STRUCTURE_BAR_FILL_COLOR)
       .setOrigin(0, 0)
       .setVisible(false);
-    // Contador de fragmentos (ECO-16), logo abaixo da barra de HP.
-    const fragY = MARGIN + 20;
+    // Contador de fragmentos (ECO-16), abaixo das barras de HP e de energia (`EnergyHud`, que termina em y=50).
+    const fragY = MARGIN + 42;
     this.fragmentIcon = scene.add.image(MARGIN, fragY, TEX.fragmentIcon, 'icon').setOrigin(0, 0);
     this.fragmentText = scene.add.text(MARGIN + 16, fragY - 2, '0', TEXT_STYLE);
     // Item na mão (ITEM-01..03), logo abaixo do contador de fragmentos; escondido de mãos vazias.
