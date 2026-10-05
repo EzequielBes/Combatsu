@@ -10,6 +10,8 @@ import { paintHand } from './hand';
 import { paintHead, paintHeadBack, type Expression } from './head';
 import { MAT } from './palette';
 import type { HdCanvas } from './raster';
+import { SMEAR_LAYER, paintSmear, type Smear } from './smear';
+import type { Sway } from './sway';
 import {
   along,
   inLocal,
@@ -81,39 +83,60 @@ export interface BodyOpts {
   farFront?: FarFront;
   /** Corpo virado de costas num giro (ver `Turned`). */
   turned?: Turned;
+  /** Atraso do cabelo e da barra do paletó (padrão: rígidos). */
+  sway?: Sway;
+  /** Borrão de movimento do membro que bate, pintado atrás dele. */
+  smear?: Smear;
 }
 
 type Joints = Record<JointName, Vec2>;
 
-const torsoShape: LocalShape = boxed(
-  (f, u) => {
-    if (u < TORSO[0][0] || u > TORSO[TORSO.length - 1][0]) return null;
-    const [front, back] = radiusAt(TORSO, u);
-    const o = f / (f >= 0 ? front : back);
-    if (Math.abs(o) > 1) return null;
-    // O alto dos ombros vira para cima e pega a luz; a luz de recorte só acende do peito para cima.
-    const ny = Math.min(0.6, Math.max(0, (u - 9.5) / 6));
-    const k = Math.sqrt(1 - ny * ny);
-    return { x: o * k, y: ny, z: Math.sqrt(1 - o * o) * k, noRim: u < 7.4, dt: u < -2.6 ? -2 : 0 };
-  },
-  [-8, 8, -4, 14.5],
-);
+/**
+ * Quanto do desvio da barra vale na altura `u`: nada logo acima do quadril, tudo na barra. É o que faz a barra do
+ * paletó arrastar com o quadril parado no lugar.
+ */
+const hemAt = (u: number): number => Math.min(1, Math.max(0, (0.6 - u) / 4.2));
 
 /**
- * Tronco visto de costas: simétrico e mais largo nos ombros do que o de perfil, com a mesma luz de cima.
+ * Tronco de perfil. `hem` (texels, + para a frente) arrasta a barra: a borda do lado para onde ela vai anda inteira e
+ * a outra só metade, então a barra abre em vez de só deslizar.
  */
-const backShape: LocalShape = boxed(
-  (f, u) => {
-    if (u < TORSO[0][0] || u > TORSO[TORSO.length - 1][0]) return null;
-    const [front, back] = radiusAt(TORSO, u);
-    const o = f / (((front + back) / 2) * (1.08 + 0.2 * Math.min(1, Math.max(0, (u - 3) / 6))));
-    if (Math.abs(o) > 1) return null;
-    const ny = Math.min(0.6, Math.max(0, (u - 9.5) / 6));
-    const k = Math.sqrt(1 - ny * ny);
-    return { x: o * k, y: ny, z: Math.sqrt(1 - o * o) * k, noRim: u < 7.4, dt: u < -2.6 ? -2 : 0 };
-  },
-  [-8.5, 8.5, -4, 14.5],
-);
+const torsoShape = (hem: number): LocalShape =>
+  boxed(
+    (f, u) => {
+      if (u < TORSO[0][0] || u > TORSO[TORSO.length - 1][0]) return null;
+      const [front, back] = radiusAt(TORSO, u);
+      const shift = hem * hemAt(u);
+      const mid = shift * 0.75;
+      const g = f - mid;
+      const o = g / (g >= 0 ? front + shift * (hem > 0 ? 1 : 0.5) - mid : back - shift * (hem < 0 ? 1 : 0.5) + mid);
+      if (Math.abs(o) > 1) return null;
+      // O alto dos ombros vira para cima e pega a luz; a luz de recorte só acende do peito para cima.
+      const ny = Math.min(0.6, Math.max(0, (u - 9.5) / 6));
+      const k = Math.sqrt(1 - ny * ny);
+      return { x: o * k, y: ny, z: Math.sqrt(1 - o * o) * k, noRim: u < 7.4, dt: u < -2.6 ? -2 : 0 };
+    },
+    [-8 - Math.abs(hem), 8 + Math.abs(hem), -4, 14.5],
+  );
+
+/**
+ * Tronco visto de costas: simétrico e mais largo nos ombros do que o de perfil, com a mesma luz de cima. `hem`
+ * desliza a barra para o lado.
+ */
+const backShape = (hem: number): LocalShape =>
+  boxed(
+    (f, u) => {
+      if (u < TORSO[0][0] || u > TORSO[TORSO.length - 1][0]) return null;
+      const [front, back] = radiusAt(TORSO, u);
+      const g = f - hem * hemAt(u);
+      const o = g / (((front + back) / 2) * (1.08 + 0.2 * Math.min(1, Math.max(0, (u - 3) / 6))));
+      if (Math.abs(o) > 1) return null;
+      const ny = Math.min(0.6, Math.max(0, (u - 9.5) / 6));
+      const k = Math.sqrt(1 - ny * ny);
+      return { x: o * k, y: ny, z: Math.sqrt(1 - o * o) * k, noRim: u < 7.4, dt: u < -2.6 ? -2 : 0 };
+    },
+    [-8.5 - Math.abs(hem), 8.5 + Math.abs(hem), -4, 14.5],
+  );
 
 /** `dim`: o braço fica um tom abaixo e sem luz de recorte (o lado de longe, quando está atrás do corpo). */
 function paintArm(c: HdCanvas, j: Joints, side: 'Near' | 'Far', part: number, hand: HandShape, dim: boolean): void {
@@ -183,24 +206,26 @@ function paintShoe(c: HdCanvas, ankle: Vec2, footAngle: number, part: number, fa
 }
 
 /** As costas do paletó: lisas, com a costura do meio e a gola alta fechando a nuca. */
-function paintTorsoBack(c: HdCanvas, spine: Local, part: number, len: number): void {
-  c.paint(inLocal(spine, backShape), MAT.jacket, part, { rim: true });
+function paintTorsoBack(c: HdCanvas, spine: Local, part: number, len: number, hem: number): void {
+  c.paint(inLocal(spine, backShape(hem)), MAT.jacket, part, { rim: true });
   const on = { onlyOn: part };
-  c.paint(inLocal(spine, localRect(-0.5, 0.5, -2.6, len - 2.4)), MAT.jacket, part, { ...on, flat: 1 });
+  const seam = localRect(-0.5, 0.5, -2.6, len - 2.4);
+  const leaning: LocalShape = boxed((f, u) => seam(f - hem * hemAt(u), u), [-2.5, 2.5, -2.6, len]);
+  c.paint(inLocal(spine, leaning), MAT.jacket, part, { ...on, flat: 1 });
   c.paint(inLocal(spine, localRect(-3.2, 3.2, len - 1.2, len - 0.2)), MAT.jacket, part, { ...on, flat: 0 });
   c.paint(inLocal(spine, localRect(-3, 3, len - 0.2, len + 2)), MAT.jacket, part, { flat: 3 });
 }
 
-function paintTorso(c: HdCanvas, spine: Local, part: number, len: number): void {
-  c.paint(inLocal(spine, torsoShape), MAT.jacket, part, { rim: true });
+function paintTorso(c: HdCanvas, spine: Local, part: number, len: number, hem: number): void {
+  c.paint(inLocal(spine, torsoShape(hem)), MAT.jacket, part, { rim: true });
   const on = { onlyOn: part };
-  // Costura da frente, interrompida em dois pontos, e o botão dourado.
+  // Costura da frente, interrompida em dois pontos, e o botão dourado. A costura acompanha a barra.
   const seam: LocalShape = boxed(
     (f, u) => {
       const gap = (u > 1.6 && u < 2.8) || (u > 6.2 && u < 7.2);
-      return gap ? null : localRect(2.4, 3.4, -2.6, len - 2)(f, u);
+      return gap ? null : localRect(2.4, 3.4, -2.6, len - 2)(f - hem * hemAt(u), u);
     },
-    [2.4, 3.4, -2.6, len],
+    [2.4 - Math.abs(hem), 3.4 + Math.abs(hem), -2.6, len],
   );
   c.paint(inLocal(spine, seam), MAT.jacket, part, { ...on, flat: 1 });
   c.paint(inLocal(spine, localRect(4, 6, len - 3.6, len - 1.6)), MAT.gold, part, { ...on, flat: 3 });
@@ -220,22 +245,38 @@ export function paintBody(c: HdCanvas, pose: Pose, opts: BodyOpts): Joints {
   const front = opts.farFront ?? {};
   // A parte de cada camada é a sua posição na ordem de pintura: a linha interna cai sempre na camada de trás.
   let part = 0;
-  const farArm = (dim: boolean): void => paintArm(c, j, 'Far', ++part, opts.hands?.far ?? 'fist', dim);
-  const farLeg = (dim: boolean): void => paintLeg(c, j, wa.footFar, 'Far', ++part, dim);
+  // O borrão de movimento entra logo antes do seu membro, numa camada própria: fica atrás dele e na frente do resto.
+  const blur = (layer: (typeof SMEAR_LAYER)[keyof typeof SMEAR_LAYER], dim: boolean): void => {
+    if (opts.smear && SMEAR_LAYER[opts.smear.limb] === layer) paintSmear(c, j, opts.smear, ++part, dim);
+  };
+  const farArm = (dim: boolean): void => {
+    blur('armFar', dim);
+    paintArm(c, j, 'Far', ++part, opts.hands?.far ?? 'fist', dim);
+  };
+  const farLeg = (dim: boolean): void => {
+    blur('legFar', dim);
+    paintLeg(c, j, wa.footFar, 'Far', ++part, dim);
+  };
 
   // Virado de costas, o lado de perto passa para trás e os dois braços ficam atrás do tronco.
   const turned = opts.turned !== undefined;
-  const arm = (): void => paintArm(c, j, 'Near', ++part, opts.hands?.near ?? 'fist', turned);
+  const arm = (): void => {
+    blur('armNear', turned);
+    paintArm(c, j, 'Near', ++part, opts.hands?.near ?? 'fist', turned);
+  };
   if (turned) arm();
   if (!front.arm) farArm(!turned);
   if (!front.leg) farLeg(true);
+  blur('legNear', turned);
   paintLeg(c, j, wa.footNear, 'Near', ++part, turned);
   if (front.leg) farLeg(false);
   const neck = limb(toScreen(spine, 0, len), toScreen(localOf(j.neck, neckUp), 0.4, 3), NECK);
   c.paint(neck, MAT.skin, ++part, { bias: -1 });
   const torso = ++part;
-  if (turned) paintTorsoBack(c, spine, torso, len);
-  else paintTorso(c, spine, torso, len);
+  // A barra do paletó só anda de lado: do desvio de tela vale a parte ao longo da frente do tronco.
+  const hem = opts.sway ? opts.sway.hem.x * spine.fwd.x + opts.sway.hem.y * spine.fwd.y : 0;
+  if (turned) paintTorsoBack(c, spine, torso, len, hem);
+  else paintTorso(c, spine, torso, len, hem);
   // Sombra projetada do braço de perto no paletó: o braço deslocado para trás e para baixo, só sobre o tronco.
   const cast = (p: Vec2): Vec2 => ({ x: p.x - 1, y: p.y + 1 });
   const casts = [
@@ -246,7 +287,9 @@ export function paintBody(c: HdCanvas, pose: Pose, opts: BodyOpts): Joints {
     c.paint(limb(cast(a), cast(b), prof), MAT.jacket, torso, { onlyOn: torso, darken: 1 });
   const headAt = localOf(j.neck, neckUp);
   const head = (): void =>
-    opts.turned === 'away' ? paintHeadBack(c, headAt, ++part) : paintHead(c, headAt, ++part, opts.expr);
+    opts.turned === 'away'
+      ? paintHeadBack(c, headAt, ++part, opts.sway?.hair)
+      : paintHead(c, headAt, ++part, opts.expr, opts.sway?.hair);
   if (turned) head();
   else if (opts.headOverNearArm) {
     arm();

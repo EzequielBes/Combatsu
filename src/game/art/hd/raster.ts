@@ -65,6 +65,11 @@ export interface PaintOpts {
   onlyOn?: number;
   /** Sombra projetada: em vez de pintar, escurece em tantos tons o que já está lá (material e parte ficam). */
   darken?: number;
+  /**
+   * Pintura sem borda (o borrão de movimento): não ganha contorno externo, não faz linha interna nas camadas de trás
+   * nem recebe a das camadas da frente. O que é pintado por cima dela não muda em nada.
+   */
+  soft?: boolean;
 }
 
 function toneFor(n: Normal, o: PaintOpts): number {
@@ -79,6 +84,8 @@ export class HdCanvas {
   readonly mat: Uint8Array;
   readonly tone: Uint8Array;
   readonly part: Uint8Array;
+  /** 1 nos texels pintados com `soft`. */
+  readonly soft: Uint8Array;
 
   constructor(w: number, h: number) {
     this.w = w;
@@ -86,6 +93,7 @@ export class HdCanvas {
     this.mat = new Uint8Array(w * h);
     this.tone = new Uint8Array(w * h);
     this.part = new Uint8Array(w * h);
+    this.soft = new Uint8Array(w * h);
   }
 
   /** Pinta a forma com o material; a parte decide onde entram as linhas internas. */
@@ -107,6 +115,7 @@ export class HdCanvas {
         }
         this.mat[i] = mat;
         this.part[i] = part;
+        this.soft[i] = o.soft ? 1 : 0;
         this.tone[i] = toneFor(n, o);
       }
     }
@@ -127,7 +136,8 @@ function underFront(c: HdCanvas, x: number, y: number): boolean {
     const nx = x + dx;
     const ny = y + dy;
     if (nx < 0 || nx >= c.w || ny < 0 || ny >= c.h) continue;
-    if (c.part[ny * c.w + nx] > p) return true;
+    const n = ny * c.w + nx;
+    if (c.part[n] > p && c.soft[n] === 0) return true;
   }
   return false;
 }
@@ -137,7 +147,8 @@ function innerLines(c: HdCanvas): void {
   const dark: number[] = [];
   for (let y = 0; y < c.h; y++) {
     for (let x = 0; x < c.w; x++) {
-      if (c.part[y * c.w + x] !== 0 && underFront(c, x, y)) dark.push(y * c.w + x);
+      const i = y * c.w + x;
+      if (c.part[i] !== 0 && c.soft[i] === 0 && underFront(c, x, y)) dark.push(i);
     }
   }
   for (const i of dark) c.tone[i] = 0;
@@ -147,7 +158,8 @@ function outlineAt(c: HdCanvas, x: number, y: number): number {
   const at = (dx: number, dy: number): number => {
     const nx = x + dx;
     const ny = y + dy;
-    return nx < 0 || nx >= c.w || ny < 0 || ny >= c.h ? 0 : c.mat[ny * c.w + nx];
+    if (nx < 0 || nx >= c.w || ny < 0 || ny >= c.h || c.soft[ny * c.w + nx] !== 0) return 0;
+    return c.mat[ny * c.w + nx];
   };
   // Vizinho de baixo ou da esquerda: este texel está em cima ou na frente do corpo, do lado da luz.
   const lit = at(0, 1) || at(-1, 0);

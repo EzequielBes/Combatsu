@@ -4,9 +4,11 @@
  * jogo trocar de folha quadro a quadro. Puro, sem `phaser`.
  */
 import { inbetween } from '../rig/interpolate';
-import type { Pose } from '../rig/skeleton';
+import { solve, type Pose } from '../rig/skeleton';
 import type { Expression } from './head';
 import type { Kit } from './kit';
+import { SMEAR_MIN_TRAVEL, strikePoint, type Smear } from './smear';
+import { swayOf, type Sway } from './sway';
 
 /**
  * Forma da mão: punho fechado, mão aberta no eixo do antebraço (faca de mão, guarda aberta), o selo de dois dedos das
@@ -50,6 +52,10 @@ export interface HdFrameSpec {
   farFront?: FarFront;
   /** Corpo virado de costas (padrão: de perfil, olhando o alvo). */
   turned?: Turned;
+  /** Atraso do cabelo e da barra do paletó em relação ao corpo (padrão: rígidos). */
+  sway?: Sway;
+  /** Borrão de movimento do membro que bate (só no quadro rápido de um golpe). */
+  smear?: Smear;
 }
 
 /**
@@ -111,20 +117,52 @@ export function expandMove(k: Kit, name: string, m: HdMoveSpec): Record<string, 
   const turnedHit = { turned: m.turned?.hit };
   const hit: HdFrameSpec = { pose: m.hit, ...peak, ...turnedHit };
   const recover: HdFrameSpec = { pose: m.recover, ...opts };
+  const back = m.back ?? k.guard();
+  const mid: HdFrameSpec = { pose: m.mid ?? at(m.wind, m.hit, 0.55), ...peak, turned: m.turned?.mid };
+  // A sequência na ordem em que o jogo a mostra: é dela que saem o atraso do cabelo e do paletó e o borrão.
+  const seq: HdFrameSpec[] = [
+    wind,
+    mid,
+    hit,
+    { pose: over, ...peak, ...turnedHit },
+    { pose: m.down ?? at(over, m.recover, 0.5), ...opts },
+    recover,
+    { pose: at(m.recover, back, 0.6), ...opts },
+  ];
+  swayOf(
+    seq.map((f) => f.pose),
+    { from: back },
+  ).forEach((sway, i) => {
+    if (sway) seq[i]!.sway = sway;
+  });
+  smearFast(m.strike, mid, hit);
   return {
-    [moveFrameName(name, 'startup', 0)]: wind,
-    [moveFrameName(name, 'startup', 1)]: {
-      pose: m.mid ?? at(m.wind, m.hit, 0.55),
-      ...peak,
-      turned: m.turned?.mid,
-    },
-    [moveFrameName(name, 'active', 0)]: hit,
-    [moveFrameName(name, 'active', 1)]: { pose: over, ...peak, ...turnedHit },
-    [moveFrameName(name, 'recovery', 0)]: { pose: m.down ?? at(over, m.recover, 0.5), ...opts },
-    [moveFrameName(name, 'recovery', 1)]: recover,
-    [moveFrameName(name, 'recovery', 2)]: { pose: at(m.recover, m.back ?? k.guard(), 0.6), ...opts },
+    ...Object.fromEntries(seq.map((f, i) => [moveFrameName(name, SEQ_PHASES[i]![0], SEQ_PHASES[i]![1]), f])),
     [`${name}-wind`]: wind,
     [`${name}-hit`]: hit,
     [`${name}-recover`]: recover,
   };
+}
+
+/** Fase e índice de cada quadro da sequência de um golpe, na ordem. */
+const SEQ_PHASES: readonly (readonly [MovePhase, number])[] = [
+  ['startup', 0],
+  ['startup', 1],
+  ['active', 0],
+  ['active', 1],
+  ['recovery', 0],
+  ['recovery', 1],
+  ['recovery', 2],
+];
+
+/**
+ * Dá o borrão de movimento ao quadro `to` se o ponto de golpe andou mais que `SMEAR_MIN_TRAVEL` desde `from`. Só a
+ * chegada ao pico passa por aqui. No meio da subida o membro ainda está junto do corpo, e o borrão do punho cairia
+ * sobre o rosto; o overshoot (o membro parado no pico) e a volta ficam nítidos.
+ */
+function smearFast(limb: StrikeLimb, from: HdFrameSpec, to: HdFrameSpec): void {
+  const before = solve(from.pose);
+  const a = strikePoint(before, limb);
+  const b = strikePoint(solve(to.pose), limb);
+  if (Math.hypot(b.x - a.x, b.y - a.y) > SMEAR_MIN_TRAVEL) to.smear = { limb, from: before };
 }
