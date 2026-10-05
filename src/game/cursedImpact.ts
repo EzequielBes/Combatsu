@@ -23,13 +23,29 @@ export interface ImpactShape {
   snap: (v: number) => number;
   /** Passo da grade em px de mundo. */
   grid: number;
+  /** Cores do desenho; sem isto, as da energia amaldiçoada. */
+  tone?: ImpactTone;
 }
 
-const D = PALETTE.d!;
-const BLUE = PALETTE.c!;
-const CYAN = PALETTE.C!;
-const PURPLE = PALETTE.u!;
-const LILAC = PALETTE.U!;
+/** Cores de um impacto: sombra por baixo, corpo e miolo claro, e o par alternado de alguns riscos. */
+export interface ImpactTone {
+  shadow: number;
+  body: number;
+  core: number;
+  altBody: number;
+  altCore: number;
+}
+
+/** Energia amaldiçoada (TRL-06): azul com miolo ciano, riscos alternados em roxo. */
+export const CURSED_TONE: ImpactTone = {
+  shadow: PALETTE.d!,
+  body: PALETTE.c!,
+  core: PALETTE.C!,
+  altBody: PALETTE.u!,
+  altCore: PALETTE.U!,
+};
+
+const toneOf = (s: ImpactShape): ImpactTone => s.tone ?? CURSED_TONE;
 
 const easeOut = (p: number): number => 1 - (1 - p) * (1 - p);
 
@@ -37,8 +53,9 @@ const easeOut = (p: number): number => 1 - (1 - p) * (1 - p);
  * Agulha de energia ao longo de `ang`, de `from` a `to` px do centro: um losango fino com o bojo perto da cauda e a
  * ponta afiada na frente, com o miolo claro por dentro.
  */
-function needle(g: Gfx, s: ImpactShape, ang: number, from: number, to: number, half: number, purple = false): void {
+function needle(g: Gfx, s: ImpactShape, ang: number, from: number, to: number, half: number, alt = false): void {
   if (to - from < s.grid * 2) return;
+  const tone = toneOf(s);
   const cos = Math.cos(ang);
   const sin = Math.sin(ang);
   const at = (r: number, h: number): Vec2 => ({
@@ -46,13 +63,13 @@ function needle(g: Gfx, s: ImpactShape, ang: number, from: number, to: number, h
     y: s.snap(s.cy + sin * r + cos * h),
   });
   const belly = from + (to - from) * 0.3;
-  g.fillStyle(purple ? PURPLE : BLUE, 1).fillPoints(
+  g.fillStyle(alt ? tone.altBody : tone.body, 1).fillPoints(
     pts([at(from, 0), at(belly, half), at(to, 0), at(belly, -half)]),
     true,
   );
   const inner = half * 0.45;
   if (inner < s.grid * 0.5) return;
-  g.fillStyle(purple ? LILAC : CYAN, 1).fillPoints(
+  g.fillStyle(alt ? tone.altCore : tone.core, 1).fillPoints(
     pts([at(from + 2, 0), at(belly, inner), at(to - 3, 0), at(belly, -inner)]),
     true,
   );
@@ -66,6 +83,7 @@ function starFlash(g: Gfx, s: ImpactShape, size: number): void {
   // Abaixo disso a estrela vira um borrão escuro (só a sombra aparece): some de uma vez.
   if (size < 5) return;
   const across = s.dirAngle + Math.PI / 2;
+  const tone = toneOf(s);
   const arm = (ang: number, len: number, half: number, color: number): void => {
     const cos = Math.cos(ang);
     const sin = Math.sin(ang);
@@ -77,12 +95,12 @@ function starFlash(g: Gfx, s: ImpactShape, size: number): void {
   };
   const half = Math.max(s.grid, size * 0.2);
   // Sombra azul-profunda por baixo: segura a leitura sobre o flash claro do inimigo.
-  arm(across, size + 2, half + 2, D);
-  arm(s.dirAngle, size * 0.55 + 2, half + 2, D);
-  arm(across, size, half, BLUE);
-  arm(s.dirAngle, size * 0.55, half, BLUE);
-  arm(across, size * 0.72, half * 0.5, CYAN);
-  arm(s.dirAngle, size * 0.36, half * 0.5, CYAN);
+  arm(across, size + 2, half + 2, tone.shadow);
+  arm(s.dirAngle, size * 0.55 + 2, half + 2, tone.shadow);
+  arm(across, size, half, tone.body);
+  arm(s.dirAngle, size * 0.55, half, tone.body);
+  arm(across, size * 0.72, half * 0.5, tone.core);
+  arm(s.dirAngle, size * 0.36, half * 0.5, tone.core);
 }
 
 /** Onda de choque: anel fino que, depois da metade, se parte em arcos (a onda se desfazendo). */
@@ -127,8 +145,8 @@ export function drawHeavyImpact(g: Gfx, s: ImpactShape, spikes: readonly Spike[]
   });
   if (p > 0.06) {
     const r = (IMPACT_FEEL.ringFromPx + (IMPACT_FEEL.ringToPx - IMPACT_FEEL.ringFromPx) * e) * k;
-    shockwave(g, s, r, p, p < 0.35 ? CYAN : BLUE, s.dirAngle);
-    if (decisive && p > 0.25) shockwave(g, s, r * 0.62, p, PURPLE, s.dirAngle + 1);
+    shockwave(g, s, r, p, p < 0.35 ? CURSED_TONE.core : CURSED_TONE.body, s.dirAngle);
+    if (decisive && p > 0.25) shockwave(g, s, r * 0.62, p, CURSED_TONE.altBody, s.dirAngle + 1);
   }
   // O lampejo nasce cheio (é ele que fica parado no hitstop) e fecha rápido.
   starFlash(g, s, (decisive ? 26 : 18) * Math.max(0, 1 - p * 2.2));
@@ -153,5 +171,25 @@ export function drawLightImpact(
     needle(g, s, sh.angle, tail, tip, 2 * (1 - p * 0.5), i % 3 === 2);
   });
   starFlash(g, s, 10 * Math.max(0, 1 - p * 2.4));
+  g.setAlpha(p < 0.5 ? 1 : 1 - (p - 0.5) / 0.5);
+}
+
+/**
+ * Faísca de contato sem direção (golpe de técnica, de objeto, guarda, parry e os golpes que o jogador recebe): o mesmo
+ * lampejo em estrela, de meio eixo `size`, com `rays` agulhas em volta que voam até a sua distância.
+ */
+export function drawSpark(
+  g: Gfx,
+  s: ImpactShape,
+  rays: readonly { angle: number; dist: number }[],
+  size: number,
+  p: number,
+): void {
+  const e = easeOut(p);
+  g.clear();
+  rays.forEach((r, i) => {
+    needle(g, s, r.angle, 4 + r.dist * e * 0.85, 8 + r.dist * (0.3 + 0.7 * e), 2 * (1 - p * 0.5), i % 2 === 1);
+  });
+  starFlash(g, s, size * Math.max(0, 1 - p * 1.8));
   g.setAlpha(p < 0.5 ? 1 : 1 - (p - 0.5) / 0.5);
 }

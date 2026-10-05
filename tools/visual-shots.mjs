@@ -9,6 +9,7 @@
 // 1000/60 ms por passo de `__game.step` (os tweens do Phaser contam `Date.now`), `Math.random` vira um gerador com
 // semente fixa e o `requestAnimationFrame` nunca dispara (sem isto o Matter acumula um passo de física por quadro real
 // até o primeiro `step`). Cada captura chama `__game.render()` e lê o canvas no mesmo turno, sem escala do navegador.
+import { fxScenarios } from './visual-shots-fx.mjs';
 import { hdScenarios, makeClose } from './visual-shots-hd.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -347,6 +348,7 @@ const SCENARIOS = {
     await t.watch(300, [['73-game-over', (x) => x.run.state === 'gameOver', 70]]);
   },
   ...hdScenarios(BASE),
+  ...fxScenarios(BASE),
 };
 
 const freePort = () =>
