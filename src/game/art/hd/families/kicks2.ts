@@ -67,51 +67,62 @@ export function kickKit(k: Kit): KickKit {
 }
 
 /**
- * Chute giratório (perna de trás): o tronco fecha e a cabeça olha por cima do ombro, a perna de trás vem varrendo em
- * extensão total com o tronco deitado para trás e os braços abertos, e passa do alvo antes de recolher.
+ * Chute giratório (perna de trás, coice de costas): o corpo gira sobre a ponta do pé da frente. Na antecipação o tronco
+ * fecha sobre o pé de apoio; no meio da subida o corpo está de costas, com a perna de trás recolhida e o calcanhar
+ * apontado para o alvo; no pico a perna estala para trás com a sola de frente para o alvo, o tronco inclina para longe
+ * e a cabeça olha por cima do ombro. Na volta o pé desce junto do apoio antes de recuar para a guarda.
  */
 export function spinKick(k: Kit, t: KickKit): HdMoveSpec {
   const hit = (over: number) =>
     k.pose({
-      ...t.farKick(5 + over, 0.5 + over * 0.5, 102 - over * 10, 98 - over * 8, 20),
-      spine: 222 + over * 4,
-      neck: -30,
-      armNear: t.arm(-0.7, 0.1, 1),
-      armFar: t.arm(0.45, 0.6),
-      legNear: t.plantNear(0.3, 1.5),
+      ...t.farKick(7.4 + over, 0.3, 85 + over * 3, 98 - over * 2, 75),
+      spine: 208 + over * 3,
+      neck: -24,
+      armNear: t.arm(-0.75, 0.25, 1),
+      armFar: t.arm(0.3, 0.3),
+      legNear: t.plantNear(0.3, 1.2),
     });
   return {
     strike: 'footFar',
     farFront: { leg: true },
+    turned: { mid: 'away', hit: 'shoulder' },
     expr: 'shout',
     wind: k.pose({
-      hip: t.hip(0, 7),
-      spine: 168,
-      neck: 8,
-      armNear: t.arm(0.35, 0.1, -1),
-      armFar: t.arm(0.4, 0.2),
+      hip: t.hip(2, 6),
+      spine: 172,
+      neck: 6,
+      armNear: t.arm(-0.2, 0.6, 1),
+      armFar: t.arm(0.45, 0.2),
       legNear: t.plantNear(),
-      legFar: t.plantFar(6, 2),
+      legFar: t.plantFar(5, 2),
     }),
     mid: k.pose({
-      ...t.farKick(3, 2, 116, 18, 50),
-      spine: 200,
-      neck: -12,
-      armNear: t.arm(-0.3, 0.75, 1),
-      armFar: t.arm(0.55, 0.3),
-      legNear: t.plantNear(0.2, 1),
+      ...t.farKick(6, 0.5, -25, 85, 90),
+      spine: 192,
+      neck: -6,
+      armNear: t.arm(-0.3, 0.5, 1),
+      armFar: t.arm(0.35, 0.35),
+      legNear: t.plantNear(0.2, 1.5),
     }),
     hit: hit(0),
     over: hit(1),
     down: k.pose({
-      ...t.farKick(3, 3, 96, 4, 60),
-      spine: 194,
-      neck: -8,
-      armNear: t.arm(-0.2, 0.8, 1),
-      armFar: t.arm(0.6, 0.2),
-      legNear: t.plantNear(),
+      ...t.farKick(4, 2, 80, 15, 70),
+      spine: 190,
+      neck: -6,
+      armNear: t.arm(0.3, 0.6),
+      armFar: t.arm(0.5, 0.15),
+      legNear: t.plantNear(0, 0.5),
     }),
-    recover: k.guard(3.4),
+    recover: k.pose({
+      hip: t.hip(0.5, 5.5),
+      spine: 172,
+      neck: 6,
+      armNear: t.arm(0.6, 0.4),
+      armFar: t.arm(0.4, 0.05),
+      legNear: t.plantNear(),
+      legFar: { ...t.plantFar(10.5, 2.5), bend: 1 },
+    }),
   };
 }
 
@@ -169,13 +180,13 @@ export function sweep(k: Kit, t: KickKit): HdMoveSpec {
 export function chargedKick(k: Kit, t: KickKit): HdMoveSpec {
   const hit = (over: number) =>
     k.pose({
-      hip: t.hip(9 + over * 2, 0),
+      hip: t.hip(9 + over * 1.5, 0.5 + over * 0.5),
       spine: 220 + over * 4,
       neck: -36,
       armNear: t.arm(-0.8, 0.35, 1),
       armFar: t.arm(0.3, 0.3),
-      legNear: t.leg(37 + over * 2, 30, 168),
-      legFar: t.plantFar(6 + over * 2, 2.5),
+      legNear: t.leg(37 + over * 1.5, 30, 168),
+      legFar: t.plantFar(3 + over * 0.5, 3),
     });
   return {
     strike: 'footNear',
@@ -207,7 +218,7 @@ export function chargedKick(k: Kit, t: KickKit): HdMoveSpec {
       armNear: t.arm(0.1, 0.8),
       armFar: t.arm(0.4, 0.05),
       legNear: t.leg(15, 14, 70),
-      legFar: t.plantFar(4),
+      legFar: t.plantFar(2, 0.5),
     }),
     recover: k.guard(4.5),
   };

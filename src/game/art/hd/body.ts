@@ -5,9 +5,9 @@
  * Puro, sem `phaser`.
  */
 import { dir, solve, worldAngles, type JointName, type Pose, type Vec2 } from '../rig/skeleton';
-import type { FarFront, HandShape, Hands } from './frames';
+import type { FarFront, HandShape, Hands, Turned } from './frames';
 import { paintHand } from './hand';
-import { paintHead, type Expression } from './head';
+import { paintHead, paintHeadBack, type Expression } from './head';
 import { MAT } from './palette';
 import type { HdCanvas } from './raster';
 import {
@@ -79,6 +79,8 @@ export interface BodyOpts {
   headOverNearArm?: boolean;
   /** Membro de longe pintado na frente do corpo, nos tons do lado de perto. */
   farFront?: FarFront;
+  /** Corpo virado de costas num giro (ver `Turned`). */
+  turned?: Turned;
 }
 
 type Joints = Record<JointName, Vec2>;
@@ -95,6 +97,22 @@ const torsoShape: LocalShape = boxed(
     return { x: o * k, y: ny, z: Math.sqrt(1 - o * o) * k, noRim: u < 7.4, dt: u < -2.6 ? -2 : 0 };
   },
   [-8, 8, -4, 14.5],
+);
+
+/**
+ * Tronco visto de costas: simétrico e mais largo nos ombros do que o de perfil, com a mesma luz de cima.
+ */
+const backShape: LocalShape = boxed(
+  (f, u) => {
+    if (u < TORSO[0][0] || u > TORSO[TORSO.length - 1][0]) return null;
+    const [front, back] = radiusAt(TORSO, u);
+    const o = f / (((front + back) / 2) * (1.08 + 0.2 * Math.min(1, Math.max(0, (u - 3) / 6))));
+    if (Math.abs(o) > 1) return null;
+    const ny = Math.min(0.6, Math.max(0, (u - 9.5) / 6));
+    const k = Math.sqrt(1 - ny * ny);
+    return { x: o * k, y: ny, z: Math.sqrt(1 - o * o) * k, noRim: u < 7.4, dt: u < -2.6 ? -2 : 0 };
+  },
+  [-8.5, 8.5, -4, 14.5],
 );
 
 /** `dim`: o braço fica um tom abaixo e sem luz de recorte (o lado de longe, quando está atrás do corpo). */
@@ -164,6 +182,15 @@ function paintShoe(c: HdCanvas, ankle: Vec2, footAngle: number, part: number, fa
   c.paint(inLocal(foot, localRect(-2.8, -0.8, -2.3, -1.3)), MAT.shoe, part, { ...on, flat: 0 });
 }
 
+/** As costas do paletó: lisas, com a costura do meio e a gola alta fechando a nuca. */
+function paintTorsoBack(c: HdCanvas, spine: Local, part: number, len: number): void {
+  c.paint(inLocal(spine, backShape), MAT.jacket, part, { rim: true });
+  const on = { onlyOn: part };
+  c.paint(inLocal(spine, localRect(-0.5, 0.5, -2.6, len - 2.4)), MAT.jacket, part, { ...on, flat: 1 });
+  c.paint(inLocal(spine, localRect(-3.2, 3.2, len - 1.2, len - 0.2)), MAT.jacket, part, { ...on, flat: 0 });
+  c.paint(inLocal(spine, localRect(-3, 3, len - 0.2, len + 2)), MAT.jacket, part, { flat: 3 });
+}
+
 function paintTorso(c: HdCanvas, spine: Local, part: number, len: number): void {
   c.paint(inLocal(spine, torsoShape), MAT.jacket, part, { rim: true });
   const on = { onlyOn: part };
@@ -196,24 +223,32 @@ export function paintBody(c: HdCanvas, pose: Pose, opts: BodyOpts): Joints {
   const farArm = (dim: boolean): void => paintArm(c, j, 'Far', ++part, opts.hands?.far ?? 'fist', dim);
   const farLeg = (dim: boolean): void => paintLeg(c, j, wa.footFar, 'Far', ++part, dim);
 
-  if (!front.arm) farArm(true);
+  // Virado de costas, o lado de perto passa para trás e os dois braços ficam atrás do tronco.
+  const turned = opts.turned !== undefined;
+  const arm = (): void => paintArm(c, j, 'Near', ++part, opts.hands?.near ?? 'fist', turned);
+  if (turned) arm();
+  if (!front.arm) farArm(!turned);
   if (!front.leg) farLeg(true);
-  paintLeg(c, j, wa.footNear, 'Near', ++part, false);
+  paintLeg(c, j, wa.footNear, 'Near', ++part, turned);
   if (front.leg) farLeg(false);
   const neck = limb(toScreen(spine, 0, len), toScreen(localOf(j.neck, neckUp), 0.4, 3), NECK);
   c.paint(neck, MAT.skin, ++part, { bias: -1 });
   const torso = ++part;
-  paintTorso(c, spine, torso, len);
+  if (turned) paintTorsoBack(c, spine, torso, len);
+  else paintTorso(c, spine, torso, len);
   // Sombra projetada do braço de perto no paletó: o braço deslocado para trás e para baixo, só sobre o tronco.
   const cast = (p: Vec2): Vec2 => ({ x: p.x - 1, y: p.y + 1 });
-  for (const [a, b, prof] of [
+  const casts = [
     [j.shoulderNear, j.elbowNear, UPPER_ARM],
     [j.elbowNear, j.wristNear, FOREARM],
-  ] as const)
+  ] as const;
+  for (const [a, b, prof] of turned ? [] : casts)
     c.paint(limb(cast(a), cast(b), prof), MAT.jacket, torso, { onlyOn: torso, darken: 1 });
-  const head = (): void => paintHead(c, localOf(j.neck, neckUp), ++part, opts.expr);
-  const arm = (): void => paintArm(c, j, 'Near', ++part, opts.hands?.near ?? 'fist', false);
-  if (opts.headOverNearArm) {
+  const headAt = localOf(j.neck, neckUp);
+  const head = (): void =>
+    opts.turned === 'away' ? paintHeadBack(c, headAt, ++part) : paintHead(c, headAt, ++part, opts.expr);
+  if (turned) head();
+  else if (opts.headOverNearArm) {
     arm();
     head();
   } else {
