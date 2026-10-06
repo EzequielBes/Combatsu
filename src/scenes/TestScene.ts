@@ -12,7 +12,7 @@ import { parseLevel, type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
 import { MoveReading } from '../core/moveReading';
 import { Mastery } from '../core/mastery';
-import { Loot } from '../core/loot';
+import { ElixirRoll, Loot } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
 import { type Rng } from '../core/rng';
 import { acceptsPlayerInput, Run } from '../core/run';
@@ -64,6 +64,7 @@ import { RunDirector } from './test/runDirector';
 import { UiSetup } from './test/uiSetup';
 import { TerrainBuilder } from './test/terrain';
 import { TechDirector } from './test/techDirector';
+import { Recovery } from './test/recovery';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly techDirector = new TechDirector(this);
@@ -73,6 +74,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly snapshot = new DebugSnapshot(this);
   readonly shopDirector = new ShopDirector(this);
   readonly drops = new Drops(this);
+  /** Regeneração passiva, cura de fim de rodada e Energia Amaldiçoada Reversa (REG-*, RCT-*). */
+  readonly recovery = new Recovery(this);
   readonly spawner = new Spawner(this);
   readonly combat = new CombatLinks(this);
   readonly impactFx = new ImpactFx(this);
@@ -133,6 +136,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
   shopPanel!: ShopPanel;
   loot!: Loot;
+  /** Sorteio do Elixir (ELX-01..03), no stream próprio da run; recriado a cada `startRun`. */
+  elixir!: ElixirRoll;
   lootRng!: Rng;
   pickups!: Pickups;
   floatTexts!: FloatTexts;
@@ -406,7 +411,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       if (input.bothPressed && !this.player.dead) this.combat.tryFinisher();
       this.comboCounter.update(dt);
       // CMB-02: o jogador levar dano zera o combo (a vida caiu neste frame, seja golpe cheio ou o que passa pela guarda).
-      if (this.player.hp < this.lastPlayerHp) this.comboCounter.playerDamaged();
+      const damaged = this.player.hp < this.lastPlayerHp;
+      if (damaged) this.comboCounter.playerDamaged();
+      // REG-*/RCT-*: a recuperação lê o dano deste frame; a cura dela entra na conta do próximo.
+      this.recovery.update(dt, input, damaged);
       this.lastPlayerHp = this.player.hp;
       // DOD-11: enquanto a esquiva está ativa a camada `dodge.trail` fica viva (o rastro em si sai do Player).
       if (this.player.dodgeView.active) this.realtimeFx.add('dodge.trail', 100);

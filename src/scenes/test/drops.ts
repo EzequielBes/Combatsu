@@ -1,9 +1,9 @@
 import { propName, rareDef } from '../../core/armed';
-import { capDrop, type EnemyDropResult, type ToolKey } from '../../core/loot';
-import { type PickupPlayer } from '../../core/pickup';
+import { capDrop, elixirHeal, type EnemyDropResult, type ToolKey } from '../../core/loot';
+import { type PickupKind, type PickupPlayer } from '../../core/pickup';
 import { type PropState } from '../../core/props';
 import { TOOL_DEFS } from '../../data/props';
-import { ECONOMY } from '../../data/tuning';
+import { ECONOMY, ELIXIR } from '../../data/tuning';
 import { Prop } from '../../game/Prop';
 import { isDroppedTool } from './params';
 import type { TestScene } from '../TestScene';
@@ -36,7 +36,7 @@ export class Drops {
   }
 
   /** Fragmento credita a carteira; gota cura (teto em maxHp, HEAL-03) - cada uma com o "+N" e o evento (ECO-29/HEAL-08). */
-  onPickupCollected(p: { kind: 'fragment' | 'heal'; value: number; x: number; y: number }): void {
+  onPickupCollected(p: { kind: PickupKind; value: number; x: number; y: number }): void {
     if (p.kind === 'fragment') {
       this.s.wallet.add(p.value);
       this.s.snapshot.debugEvents.push(`collect:fragment:${p.value}`);
@@ -44,7 +44,7 @@ export class Drops {
       return;
     }
     const restored = this.s.player.heal(p.value);
-    this.s.snapshot.debugEvents.push(`collect:heal:${restored}`);
+    this.s.snapshot.debugEvents.push(`collect:${p.kind}:${restored}`);
     this.s.floatTexts.spawn(`+${restored}`, 'G', p.x, p.y);
     this.s.player.flash('G', 80);
   }
@@ -62,6 +62,17 @@ export class Drops {
     if (cap.spawn > 0)
       this.s.pickups.spawnDrop(this.s.lootRng, x, y, 'fragment', cap.spawn, result.value, cap.extraOnLast);
     if (result.heal) this.s.pickups.spawnDrop(this.s.lootRng, x, y, 'heal', 1, ECONOMY.healAmount, 0);
+  }
+
+  /**
+   * Sorteia o Elixir de um abate de inimigo comum (ELX-01/02) no stream próprio e o solta no ponto da morte; a cura
+   * é fixada no drop pela vida máxima de agora (ELX-04). A velocidade do estouro sai do mesmo stream do Elixir.
+   */
+  rollElixir(armed: boolean, x: number, y: number): void {
+    const rng = this.s.run.elixirRng;
+    if (!rng || !this.s.elixir.enemyDrop(armed)) return;
+    this.s.pickups.spawnDrop(rng, x, y, 'elixir', 1, elixirHeal(this.s.player.maxHp, ELIXIR), 0);
+    this.s.snapshot.debugEvents.push('drop:elixir');
   }
 
   /**

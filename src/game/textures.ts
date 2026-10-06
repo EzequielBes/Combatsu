@@ -38,6 +38,8 @@ export const TEX = {
   fragmentIcon: 'fragment-icon',
   /** Gota de cura (HEAL). */
   healDrop: 'heal-drop',
+  /** Elixir, a cura grande e rara (ELX-05). */
+  elixir: 'elixir',
   /** Ferramentas amaldiçoadas: comum/rara e as poses na mão do inimigo (ARM-19). */
   cursedKnife: 'cursed-knife',
   cursedClub: 'cursed-club',

@@ -161,6 +161,8 @@ export class PlayerAnimator {
     const down = p.health.staggered || p.health.dead;
     // CAST-13: em qualquer fase da conjuração, o frame vem do `castLock`, não do animState normal.
     if (p.castLock) return { frame: `${p.castLock.id}-${p.castLock.state}` };
+    // RCT-05: canalizando a Energia Reversa, o selo de mão parado.
+    if (p.channeling && !down) return { frame: 'azul-sign' };
     if (p.poseMs > 0 && !down) return { frame: 'palmaExplosiva-hit', trail: true };
     // Guarda quebrada (STR-06): cambaleia alternando os dois frames de atordoamento.
     if (p.structure.broken && !p.health.dead) return { frame: `stunned-${Math.floor(p.clockMs / STUN_FRAME_MS) % 2}` };

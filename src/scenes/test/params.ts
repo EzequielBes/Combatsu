@@ -32,6 +32,7 @@ export const NEUTRAL_INPUT: InputSnapshot = {
   guardPressed: false,
   dodgePressed: false,
   interactPressed: false,
+  reverseHeld: false,
 };
 
 /** Ferramenta amaldiçoada largada (chave em `TOOL_DEFS`, comum ou rara), nunca um objeto do mapa. */

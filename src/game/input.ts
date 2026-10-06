@@ -27,6 +27,8 @@ export interface InputSnapshot {
   dodgePressed: boolean;
   /** `E` apertada no frame: pegar, arremessar ou largar (CTL-03, CTL-07, CTL-08). */
   interactPressed: boolean;
+  /** `F` segurada: canaliza a Energia Amaldiçoada Reversa (RCT-01). */
+  reverseHeld: boolean;
 }
 
 type Key = Phaser.Input.Keyboard.Key;
@@ -47,6 +49,7 @@ export class PlayerInput {
   private readonly guard: Key[];
   private readonly dodge: Key[];
   private readonly interact: Key[];
+  private readonly reverse: Key[];
 
   constructor(scene: Phaser.Scene) {
     const kb = scene.input.keyboard!;
@@ -63,6 +66,7 @@ export class PlayerInput {
     this.guard = keys(K.U, K.SHIFT);
     this.dodge = keys(K.Q);
     this.interact = keys(K.E);
+    this.reverse = keys(K.F);
   }
 
   /** Chamar uma vez por frame. */
@@ -84,6 +88,7 @@ export class PlayerInput {
       guardPressed: anyJustDown(this.guard),
       dodgePressed: anyJustDown(this.dodge),
       interactPressed: anyJustDown(this.interact),
+      reverseHeld: anyDown(this.reverse),
     };
   }
 }

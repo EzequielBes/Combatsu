@@ -61,6 +61,8 @@ export class Player implements Hittable {
    * aqui (design "Integration Points").
    */
   castLock: CastPose | null = null;
+  /** Canalizando a Energia Reversa (RCT-05), escrito pela cena a cada frame: trava o player como uma conjuração. */
+  channeling = false;
   /** Chamado quando um golpe é de fato aplicado (CAST-07); o `TechCaster` usa para cancelar a conjuração. */
   onDamaged: (() => void) | null = null;
   move: MoveState = initialMoveState();
@@ -243,7 +245,7 @@ export class Player implements Hittable {
     const stunned = this.health.staggered || this.health.dead || this.structure.broken || this.shoveLockMs > 0;
     // Conjurando (CAST-12/13): trava golpe, interação e movimento por input igual a um golpe em andamento — o
     // "Selo" da direção de arte trava o player por inteiro, não só o eixo horizontal citado na letra da AC.
-    const casting = this.castLock !== null;
+    const casting = this.castLock !== null || this.channeling;
 
     // O objeto pode ter quebrado na mão durante o step de física.
     if (this.held && this.held.machine.holderId !== this.id) {
@@ -392,6 +394,21 @@ export class Player implements Hittable {
       this.guard.state !== 'none' ||
       this.dodge.active ||
       this.duck.active
+    );
+  }
+
+  /**
+   * Livre para canalizar a Energia Reversa (RCT-01, RCT-04): vivo, sem atordoamento, conjuração, golpe, guarda,
+   * esquiva, abaixar nem objeto na mão.
+   */
+  canChannel(): boolean {
+    return (
+      !this.health.dead &&
+      !this.isBusyForCast() &&
+      this.shoveLockMs <= 0 &&
+      this.castLock === null &&
+      !this.moves.isMoving &&
+      !this.propSwing.isAttacking
     );
   }
 

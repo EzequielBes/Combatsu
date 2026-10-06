@@ -37,6 +37,7 @@ npm run smoke       # build + cenários no Edge headless (scripts/smoke/); `npm 
 | E | pegar objeto / arremessar |
 | S + E | largar o objeto |
 | L / C e I / V | técnica do slot 1 e do slot 2 (compradas na loja) |
+| F (segurar) | Energia Amaldiçoada Reversa: cura 12 HP/s gastando o dobro em energia; parado, cortada por golpe |
 | J + K | finalizador, perto de um inimigo com a postura quebrada ou do chefe atordoado |
 | J / Enter | começar a run (título e game over) |
 | 1 / 2 / 3 e R | na loja: comprar a oferta e trocar as ofertas |

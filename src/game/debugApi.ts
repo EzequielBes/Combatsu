@@ -197,7 +197,7 @@ export interface GameSnapshot {
   /** Um item por pickup vivo (fragmento ou gota de cura), lido do objeto vivo (ECO-19). */
   pickups: {
     id: number;
-    kind: 'fragment' | 'heal';
+    kind: 'fragment' | 'heal' | 'elixir';
     value: number;
     x: number;
     y: number;

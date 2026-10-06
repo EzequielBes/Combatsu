@@ -63,7 +63,7 @@ export class Pickups {
    * último pickup carrega `value + extraValue` (ECO-28); os demais carregam `value`.
    */
   spawnDrop(rng: Rng, x: number, y: number, kind: PickupKind, count: number, value: number, extraValue: number): void {
-    const texture = kind === 'fragment' ? TEX.fragment : TEX.healDrop;
+    const texture = kind === 'fragment' ? TEX.fragment : kind === 'elixir' ? TEX.elixir : TEX.healDrop;
     for (let i = 0; i < count; i++) {
       const { vx, vy } = burstVelocity(rng);
       const v = i === count - 1 ? value + extraValue : value;

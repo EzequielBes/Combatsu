@@ -52,7 +52,7 @@ export class UiSetup {
     return [
       'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
       'J leve · K forte · U guarda/parry · Q esquiva · E pegar',
-      'E: pegar / arremessar   S+E: largar   L / I: técnicas',
+      'E: pegar / arremessar   S+E: largar   L / I: técnicas   F (segurar): Energia Reversa',
       'S+Q: abaixar   U+direção: virar na guarda   defesa certa + J: Contra',
       'R: reiniciar   Tab: mostrar/esconder controles',
       ...(isDebug() ? ['F1: sair do debug   H: física e hitboxes   1/2: golpe leve/forte de teste'] : []),
