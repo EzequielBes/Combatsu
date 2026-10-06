@@ -46,6 +46,7 @@ import { ShopPanel } from '../game/ShopPanel';
 import { TechCaster } from '../game/TechCaster';
 import { TechRunner } from '../game/TechRunner';
 import { Aura } from '../game/techFx/Aura';
+import { DodgeFx } from '../game/DodgeFx';
 import { Callout } from '../game/techFx/Callout';
 import { KokusenFx } from '../game/techFx/KokusenFx';
 import { CursedFx } from '../game/CursedFx';
@@ -126,6 +127,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Objetos de efeito de técnica vivos (TFX-03/09); `fx.live` do snapshot é `fxRegistry.size`. */
   fxRegistry!: FxRegistry;
   aura!: Aura;
+  /** Esquiva cinematográfica (DGA-*): passo-relâmpago no dash e imagem residual na esquiva perfeita. */
+  dodgeFx!: DodgeFx;
   callout!: Callout;
   /** Cinema do Kokusen (T24): negativo/duotom/raios/faíscas/zoom/cartão, tudo em tempo real (TFX-05). */
   kokusenFx!: KokusenFx;
@@ -247,6 +250,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.player.onEvent = (ev) => {
       this.snapshot.debugEvents.push(ev);
       if (ev.startsWith('move:')) this.combat.onPlayerMoveStart(ev.slice(5));
+      // DGA-01/02: o dash da esquiva começa com o passo-relâmpago.
+      if (ev === 'dodge') this.combat.onDodgeStart();
     };
     this.player.attackerOf = (ownerId) => this.combat.attackerOf(ownerId);
     this.player.onDefense = (kind, point) => this.combat.onDefense(kind, point);
@@ -256,6 +261,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.realtimeFx = new FxTimeline();
     this.fxRegistry = new FxRegistry();
     this.aura = new Aura(this, this.realtimeFx, this.fxRegistry);
+    this.dodgeFx = new DodgeFx(this, this.realtimeFx, this.fxRegistry);
     // T24: cartão/raios/faíscas/zoom do Kokusen, na `uiLayer` (o cartão é HUD) + câmera/mundo (raios, faíscas).
     this.kokusenFx = new KokusenFx(this, this.realtimeFx, this.fxRegistry, this.uiLayer);
     // Impacto amaldiçoado: rastro, chama, estilhaços, anel, rachadura e o quadro de impacto (EDG-05: não com loja ou título).

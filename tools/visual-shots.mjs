@@ -175,7 +175,7 @@ const SCENARIOS = {
     await t.at(100, '04-corrida-b');
     await t.up('KeyD');
     await t.snap(300);
-    await t.press('Space');
+    await t.press('ArrowUp');
     let rose = false;
     const apex = (s) => (rose ||= s.player.vy < -1) && s.player.vy >= 0;
     await t.watch(90, [['05-pulo-apice', apex]]);
@@ -212,7 +212,7 @@ const SCENARIOS = {
     await t.at(120, '20-guarda');
     await t.up('KeyU');
     await t.snap(100);
-    await t.press('KeyQ');
+    await t.press('Space');
     await t.watch(30, [
       ['21-esquiva-rastro', t.layer('dodge.trail'), 3],
       ['21-esquiva-rastro+8', t.layer('dodge.trail'), 8],

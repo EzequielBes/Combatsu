@@ -2,14 +2,11 @@ import { HealthRegen, roundClearHeal } from '../../core/healthRegen';
 import { ReverseCursed } from '../../core/reverseCursed';
 import { PLAYER_REGEN } from '../../data/tuning';
 import { ReverseAuraFx } from '../../game/techFx/ReverseAura';
-import { SIZE } from '../../game/textures';
+import { DRAWN_PLAYER, SIZE } from '../../game/textures';
 import { HD_ON } from '../../game/art/hd/flag';
 import type { InputSnapshot } from '../../game/input';
 import { debugParam } from './params';
 import type { TestScene } from '../TestScene';
-
-/** Tamanho do corpo desenhado para a aura (px de mundo, medido nas capturas): o sprite HD é mais alto. */
-const AURA_BODY = { base: { width: 22, height: 44 }, hd: { width: 30, height: 60 } } as const;
 
 /** De quanto em quanto tempo de cura a Energia Reversa mostra o "+N" acumulado (ms). */
 const REVERSE_TEXT_MS = 500;
@@ -123,7 +120,7 @@ export class Recovery {
         this.s,
         this.s.realtimeFx,
         this.s.fxRegistry,
-        HD_ON ? AURA_BODY.hd : AURA_BODY.base,
+        HD_ON ? DRAWN_PLAYER.hd : DRAWN_PLAYER.base,
       );
       this.auraRegistry = this.s.fxRegistry;
     }

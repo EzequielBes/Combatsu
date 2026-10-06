@@ -2,14 +2,16 @@ import Phaser from 'phaser';
 import { bossFinisherDamage } from '../../core/bossFinisher';
 import { type Hit, type Strength, type Vec2 } from '../../core/hit';
 import { HITSTOP_MS } from '../../data/fx';
-import { DEFENSE, FINISHER_MOVE, MOVES, STRUCTURE } from '../../data/moves';
+import { DEFENSE, DODGE, FINISHER_MOVE, MOVES, STRUCTURE } from '../../data/moves';
 import { CE } from '../../data/techniques';
 import { BOSS, PLAYER_COMBO } from '../../data/tuning';
 import { routeContacts, type Hittable } from '../../game/bodyTags';
 import { Enemy } from '../../game/Enemy';
 import { type SparkKind } from '../../game/fx';
 import { type Attacker, type DefenseKind } from '../../game/Player';
-import { SIZE } from '../../game/textures';
+import { HD_ON } from '../../game/art/hd/flag';
+import { DRAWN_PLAYER, SIZE } from '../../game/textures';
+import { CAMERA_FEEL } from '../../data/feel';
 import { debugParam } from './params';
 import { FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, FINISHER_ZOOM_HOLD_MS } from './camera';
 import type { TestScene } from '../TestScene';
@@ -151,10 +153,38 @@ export class CombatLinks {
       this.s.effects.slowMo.trigger();
       this.s.player.flash('w', 60);
       this.warnAboveHead('CONTRA', 'A');
+      this.cinematicDodge();
     } else if (kind === 'duckEvade') {
       this.warnAboveHead('CONTRA', 'A');
     }
     // `jumpEvade` não abre janela de Contra: sem aviso (DEF-18).
+  }
+
+  /** DGA-01/02: o dash da esquiva acabou de começar - passo-relâmpago na direção do dash. */
+  onDodgeStart(): void {
+    const p = this.s.player;
+    this.s.dodgeFx.flashStep(p.view, p.dodge.direction, DODGE.distancePx, this.drawnHeight());
+  }
+
+  /**
+   * DGA-03..05: a esquiva perfeita vira um quadro de anime - a imagem residual no ponto onde o golpe passou, as linhas
+   * de foco convergindo no player e um pulso de zoom (fora do zoom do finalizador e de outro zoom em curso).
+   */
+  private cinematicDodge(): void {
+    const p = this.s.player;
+    const height = this.drawnHeight();
+    this.s.dodgeFx.zanzou(p.view, p.dodge.direction, height);
+    const at = p.renderPos;
+    this.s.focusLines.show(this.s.camera.worldToScreen({ x: at.x, y: at.y + SIZE.player.h / 2 - height * 0.55 }));
+    const cam = this.s.cameras.main;
+    if (this.s.camera.finisherZoomMs <= 0 && !cam.zoomEffect.isRunning) {
+      this.s.camera.zoomPulse.start();
+      this.s.camera.zoomPulseMs = CAMERA_FEEL.zoomInMs + CAMERA_FEEL.zoomHoldMs + CAMERA_FEEL.zoomOutMs;
+    }
+  }
+
+  private drawnHeight(): number {
+    return (HD_ON ? DRAWN_PLAYER.hd : DRAWN_PLAYER.base).height;
   }
 
   /** Texto flutuante sobre a cabeça do jogador, a menos de 40 px do centro do corpo (CNT-15, DFL-13); cor da paleta. */

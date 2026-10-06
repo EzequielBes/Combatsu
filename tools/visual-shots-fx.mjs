@@ -54,6 +54,36 @@ export const fxScenarios = (BASE) => ({
 
 /** Cenários da aura da Energia Reversa e do Azul (RCA-*, BLA-*), recortados em volta do efeito. */
 export const techFxScenarios = () => ({
+  // Esquiva cinematográfica (DGA-*): o passo-relâmpago do dash e a imagem residual da esquiva perfeita.
+  async esquiva(t) {
+    const base = 'enemyGuard=0&noshop=1&maxAlive=1&shove=0';
+    await t.open(base);
+    await t.page.keyboard.press('Tab');
+    await t.snap(300);
+    await t.press('Space');
+    for (const n of [1, 3, 6, 10]) {
+      await t.close(`92-esquiva-dash+${String(n).padStart(2, '0')}`, 110);
+      for (let k = 0; k < (n === 1 ? 2 : n === 3 ? 3 : 4); k++) await t.frame();
+    }
+    // Esquiva perfeita: o golpe do inimigo conecta ~28 quadros depois de ele chegar a 40 px (`startDuel`).
+    await t.open(base);
+    await t.page.keyboard.press('Tab');
+    // Como o `defense.smoke`: encosta no inimigo e aperta 25 quadros depois do `startDuel`.
+    let s = await t.startDuel();
+    let f = 0;
+    const dist = (x) => Math.abs(t.nearest(x).x - x.player.x);
+    await t.down('KeyD');
+    for (let i = 0; i < 20 && dist(s) > 30; i++, f++) s = await t.frame();
+    await t.up('KeyD');
+    for (; f < 25; f++) s = await t.frame();
+    await t.press('Space');
+    await t.watch(60, [
+      ['93-esquiva-perfeita', t.layer('dodge.zanzou'), 0],
+      ['93-esquiva-perfeita+04', t.layer('dodge.zanzou'), 4],
+      ['93-esquiva-perfeita+10', t.layer('dodge.zanzou'), 10],
+      ['93-esquiva-perfeita+20', t.layer('dodge.zanzou'), 20],
+    ]);
+  },
   // Aura da Energia Amaldiçoada Reversa (RCA-*): concentração, aura cheia curando e o apagar, sem inimigos na tela.
   async reversa(t) {
     for (const hd of ['', 'hd=1&']) {
