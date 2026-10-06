@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Filters, collides } from '../../src/core/collision';
-import { PROP_BREAK_MS, PropMachine, propHit, validatePropDef, type PropDef } from '../../src/core/props';
+import { PROP_BREAK_MS, PropMachine, propHit, throwOrigin, validatePropDef, type PropDef } from '../../src/core/props';
 
 const PLAYER = 1;
 const ENEMY = 2;
@@ -257,5 +257,18 @@ describe('propHit e validação', () => {
     expect(() => validatePropDef({ ...def(1), mass: 0 })).toThrow(/mass/);
     expect(() => validatePropDef({ ...def(1), throwSpeed: 0 })).toThrow(/throwSpeed/);
     expect(() => validatePropDef({ ...def(1), damage: -1 })).toThrow(/damage/);
+  });
+});
+
+describe('throwOrigin (THR-01)', () => {
+  it('parte à frente de quem arremessa, para os dois lados', () => {
+    expect(throwOrigin(100, 200, 1).x).toBeGreaterThan(100);
+    expect(throwOrigin(100, 200, -1).x).toBeLessThan(100);
+  });
+
+  it('parte na altura do tronco: dentro da metade de cima de um corpo de 36 px, abaixo do topo', () => {
+    const { y } = throwOrigin(100, 200, 1);
+    expect(y).toBeGreaterThan(200 - 18);
+    expect(y).toBeLessThanOrEqual(200);
   });
 });

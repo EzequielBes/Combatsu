@@ -192,3 +192,16 @@ export class PropMachine {
     this.disarm();
   }
 }
+
+/** Saída do arremesso em relação ao centro do corpo de quem arremessa (px; x para a frente). */
+export const THROW_RELEASE: Vec2 = { x: 12, y: -4 };
+
+/**
+ * Ponto de onde o objeto arremessado parte (THR-01): na altura do tronco de quem arremessa, à frente dele, e nunca
+ * na mão. Com o corpo HD a mão fica acima da cabeça de um inimigo comum (a cadeira vai no ombro), e o objeto que
+ * saía dali passava por cima do alvo; como player e inimigo têm corpos de mesma altura no mesmo chão, partir do
+ * tronco mantém o arco do arremesso dentro da altura do inimigo.
+ */
+export function throwOrigin(holderX: number, holderY: number, facing: 1 | -1): Vec2 {
+  return { x: holderX + THROW_RELEASE.x * facing, y: holderY + THROW_RELEASE.y };
+}
