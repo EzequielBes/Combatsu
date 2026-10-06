@@ -6,25 +6,32 @@ import { join } from 'node:path';
 /** Grava só a região em volta do player, ampliada 3x (para conferir pose, mãos e objeto na mão). */
 export const makeClose =
   (page, outDir, log) =>
-  async (name, half = 72) => {
-    const url = await page.evaluate(async (h) => {
-      window.__game.render();
-      // O canvas WebGL só guarda a imagem até o fim do quadro: exporta primeiro e recorta a partir da exportação.
-      const full = new Image();
-      full.src = document.querySelector('canvas').toDataURL('image/png');
-      await full.decode();
-      const s = window.__game.snapshot();
-      const z = s.camera.zoom;
-      // A câmera do Phaser amplia em volta do centro da tela: mundo -> tela desconta o scroll e meia tela.
-      const cx = (s.player.x - s.camera.scroll.x - full.width / 2) * z + full.width / 2;
-      const cy = (s.player.y - s.camera.scroll.y - full.height / 2) * z + full.height / 2;
-      const out = document.createElement('canvas');
-      out.width = out.height = h * 2 * 3;
-      const ctx = out.getContext('2d');
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(full, cx - h, cy - h * 1.45, h * 2, h * 2, 0, 0, out.width, out.height);
-      return out.toDataURL('image/png');
-    }, half);
+  async (name, half = 72, at = null) => {
+    const url = await page.evaluate(
+      async (h, at) => {
+        window.__game.render();
+        // O canvas WebGL só guarda a imagem até o fim do quadro: exporta primeiro e recorta a partir da exportação.
+        const full = new Image();
+        full.src = document.querySelector('canvas').toDataURL('image/png');
+        await full.decode();
+        const s = window.__game.snapshot();
+        const z = s.camera.zoom;
+        // A câmera do Phaser amplia em volta do centro da tela: mundo -> tela desconta o scroll e meia tela.
+        // `at`: outro centro do recorte em coordenadas de mundo (ex.: um orbe); sem ele, o player.
+        const px = at ? at.x : s.player.x;
+        const py = at ? at.y : s.player.y;
+        const cx = (px - s.camera.scroll.x - full.width / 2) * z + full.width / 2;
+        const cy = (py - s.camera.scroll.y - full.height / 2) * z + full.height / 2;
+        const out = document.createElement('canvas');
+        out.width = out.height = h * 2 * 3;
+        const ctx = out.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(full, cx - h, cy - h * (at ? 1 : 1.45), h * 2, h * 2, 0, 0, out.width, out.height);
+        return out.toDataURL('image/png');
+      },
+      half,
+      at,
+    );
     writeFileSync(join(outDir, `${name}.png`), Buffer.from(url.split(',')[1], 'base64'));
     log(`  ${name}`);
   };

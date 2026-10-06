@@ -51,3 +51,54 @@ export const fxScenarios = (BASE) => ({
     await t.up('KeyU');
   },
 });
+
+/** Cenários da aura da Energia Reversa e do Azul (RCA-*, BLA-*), recortados em volta do efeito. */
+export const techFxScenarios = () => ({
+  // Aura da Energia Amaldiçoada Reversa (RCA-*): concentração, aura cheia curando e o apagar, sem inimigos na tela.
+  async reversa(t) {
+    for (const hd of ['', 'hd=1&']) {
+      const tag = hd ? 'hd' : 'base';
+      await t.open(`${hd}spawn=0&regen=0&noshop=1&enemyGuard=0`);
+      await t.page.keyboard.press('Tab');
+      await t.page.keyboard.press('Digit4');
+      await t.snap(400);
+      await t.down('KeyF');
+      for (const [n, wait] of [
+        ['02', 2],
+        ['08', 6],
+        ['20', 12],
+        ['30', 10],
+        ['34', 4],
+        ['40', 6],
+      ]) {
+        await t.snap((1000 / 60) * wait);
+        await t.close(`90-reversa-${tag}-${n}`, 80);
+      }
+      await t.up('KeyF');
+      await t.snap(1000 / 60);
+      await t.close(`90-reversa-${tag}-solta+1`, 80);
+    }
+  },
+  // Azul no estilo do anime (BLA-*): recorte em volta do orbe, do nascer à implosão.
+  async azul(t) {
+    await t.open('enemyGuard=0&noshop=1&fxlab');
+    await t.page.keyboard.press('Tab');
+    await t.snap(300);
+    await t.page.keyboard.press('Digit5');
+    const orb = (s) => s.techObjects?.find((o) => o.kind === 'blue');
+    let s = await t.snap(0);
+    for (let i = 0; i < 120 && !orb(s); i++) s = await t.frame();
+    t.assert(orb(s), 'o Azul não nasceu');
+    const at = orb(s);
+    const shots = new Set([1, 4, 10, 20, 40, 60]);
+    for (let i = 1; i <= 60 && orb(s); i++) {
+      s = await t.frame();
+      if (shots.has(i)) await t.close(`91-azul-${String(i).padStart(2, '0')}`, 80, at);
+    }
+    for (let i = 0; i < 200 && orb(s); i++) s = await t.frame();
+    for (const n of [0, 3, 6, 10]) {
+      await t.close(`91-azul-implosao+${n}`, 80, at);
+      for (let k = 0; k < (n === 0 ? 3 : n === 3 ? 3 : 4); k++) await t.frame();
+    }
+  },
+});
