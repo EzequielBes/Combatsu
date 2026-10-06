@@ -26,12 +26,12 @@ npm run smoke       # build + cenários no Edge headless (scripts/smoke/); `npm 
 | Tecla | Ação |
 | --- | --- |
 | A/D ou ←/→ | mover |
-| Espaço / W / ↑ | pular (segurar = pulo mais alto) |
+| W / ↑ | pular (segurar = pulo mais alto) |
 | J / X | golpe leve |
 | K / Z | golpe forte |
 | U / Shift | guarda; apertada na hora do golpe, parry |
-| Q | esquiva |
-| S + Q | abaixar (escapa do golpe alto) |
+| Espaço (ou Q) | esquiva |
+| S + Espaço | abaixar (escapa do golpe alto) |
 | U + direção | virar com a guarda levantada |
 | J logo depois de uma defesa certa | Contra (contra-ataque garantido) |
 | E | pegar objeto / arremessar |

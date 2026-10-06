@@ -94,7 +94,7 @@ export default async function (ctx) {
   await hdWhile('corrida', ['KeyD'], 20, 'run-');
   await hdWhile('guarda', ['KeyU'], 20, 'guard');
   await hdWhile('jab', ['KeyJ'], 4, 'jab@');
-  await hdWhile('pulo', ['Space'], 12, 'jump-');
+  await hdWhile('pulo', ['ArrowUp'], 12, 'jump-');
 
   assert(errors.length === 0, `erros na página: ${errors.join(' | ')}`);
   void snap;

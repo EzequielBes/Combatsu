@@ -47,7 +47,7 @@ export default async function (ctx) {
 
   // CTL-06: o painel de controles lista as teclas de luta.
   assert(
-    s.hud.controls.split('\n').includes('J leve · K forte · U guarda/parry · Q esquiva · E pegar'),
+    s.hud.controls.split('\n').includes('J leve · K forte · U guarda/parry · Espaço esquiva · E pegar'),
     `CTL-06: painel sem a linha de controles: ${JSON.stringify(s.hud.controls)}`,
   );
 
@@ -236,9 +236,9 @@ export default async function (ctx) {
   // O pulo é só preparo da voadora, e o evento de tecla do navegador às vezes chega depois do step (intermitência do
   // harness, sem relação com o golpe): tenta de novo, com o player de volta ao chão, antes de dar o pulo por perdido.
   for (let attempt = 0; attempt < 3; attempt++) {
-    await down('Space');
+    await down('ArrowUp');
     await snap(50);
-    await up('Space');
+    await up('ArrowUp');
     await snap(100);
     s = await frame();
     if (s.player.y < ground - 5) break;

@@ -267,7 +267,7 @@ export default async function ({ page, baseUrl, assert }) {
 
   // CAST-11: no ar, em sign/charge, a gravidade vale 30% (1800 × 0,3 / 60 = 9 px/s por passo; em queda livre, 30).
   await waitCastReady();
-  snap = await press1('Space');
+  snap = await press1('ArrowUp');
   snap = await frame();
   const vyA = (snap = await frame()).player.vy;
   const vyB = (snap = await frame()).player.vy;

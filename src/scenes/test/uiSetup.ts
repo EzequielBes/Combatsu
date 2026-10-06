@@ -50,10 +50,10 @@ export class UiSetup {
   /** FXL-04/08: legenda e rótulo de velocidade do laboratório, só linhas extras quando `fxLab` existe. */
   controlsLines(): string[] {
     return [
-      'A/D ou ←/→: mover   Espaço/W: pular (segure = mais alto)',
-      'J leve · K forte · U guarda/parry · Q esquiva · E pegar',
+      'A/D ou ←/→: mover   W/↑: pular (segure = mais alto)',
+      'J leve · K forte · U guarda/parry · Espaço esquiva · E pegar',
       'E: pegar / arremessar   S+E: largar   L / I: técnicas   F (segurar): Energia Reversa',
-      'S+Q: abaixar   U+direção: virar na guarda   defesa certa + J: Contra',
+      'S+Espaço: abaixar   U+direção: virar na guarda   defesa certa + J: Contra',
       'R: reiniciar   Tab: mostrar/esconder controles',
       ...(isDebug() ? ['F1: sair do debug   H: física e hitboxes   1/2: golpe leve/forte de teste'] : []),
       ...(this.s.fxLab ? [FxLab.LEGEND, this.s.fxLab.speedLabel] : []),

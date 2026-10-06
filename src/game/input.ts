@@ -23,7 +23,7 @@ export interface InputSnapshot {
   guardHeld: boolean;
   /** `U`/`Shift` apertada no frame (parry). */
   guardPressed: boolean;
-  /** `Q` apertada no frame (esquiva). */
+  /** `Espaço`/`Q` apertada no frame (esquiva; com `S`, abaixar). */
   dodgePressed: boolean;
   /** `E` apertada no frame: pegar, arremessar ou largar (CTL-03, CTL-07, CTL-08). */
   interactPressed: boolean;
@@ -58,13 +58,16 @@ export class PlayerInput {
     this.left = keys(K.A, K.LEFT);
     this.right = keys(K.D, K.RIGHT);
     this.down = keys(K.S, K.DOWN);
-    this.jump = keys(K.SPACE, K.W, K.UP);
+    // O pulo fica no W/↑ e o Espaço vira a esquiva (DGA-06): o dedo que segura o A para ir à esquerda não alcança o
+    // Q sem soltar a direção, e o polegar no Espaço esquiva para os dois lados igual.
+    this.jump = keys(K.W, K.UP);
     this.up = keys(K.W, K.UP);
     this.keyW = kb.addKey(K.W);
     this.light = keys(K.J, K.X);
     this.heavy = keys(K.K, K.Z);
     this.guard = keys(K.U, K.SHIFT);
-    this.dodge = keys(K.Q);
+    // `Q` continua como atalho, para quem já se acostumou.
+    this.dodge = keys(K.SPACE, K.Q);
     this.interact = keys(K.E);
     this.reverse = keys(K.F);
   }
