@@ -1,5 +1,5 @@
 import type { Rng } from './rng';
-import type { EconomyTuning } from '../data/tuning';
+import type { EconomyTuning, ElixirTuning } from '../data/tuning';
 
 export type ToolKey = 'cursedKnife' | 'cursedClub';
 
@@ -96,4 +96,25 @@ export class Loot {
     const rare = this.overrides.rare ?? this.rng.chance(this.t.armed.rareChance);
     return { tool, rare };
   }
+}
+
+/**
+ * Sorteio do Elixir (ELX-01..03), num stream próprio da run: um sorteio por abate de inimigo comum, com chance maior
+ * para o armado. Separado do `Loot` para não mudar a ordem nem a sequência dos sorteios que já existem (ECO-17).
+ */
+export class ElixirRoll {
+  constructor(
+    private readonly rng: Rng,
+    private readonly t: ElixirTuning,
+  ) {}
+
+  /** O abate solta um Elixir? (ELX-01, ELX-02) */
+  enemyDrop(armed: boolean): boolean {
+    return this.rng.chance(armed ? this.t.armedChance : this.t.chance);
+  }
+}
+
+/** Cura de um Elixir para o hp máximo atual, arredondada e de ao menos 1 HP (ELX-04). */
+export function elixirHeal(maxHp: number, t: ElixirTuning): number {
+  return Math.max(1, Math.round(maxHp * t.healFraction));
 }

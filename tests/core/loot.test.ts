@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../../src/core/rng';
-import { Loot, armedChance, burstVelocity, capDrop, fragmentValue, type ToolKey } from '../../src/core/loot';
+import {
+  ElixirRoll,
+  Loot,
+  armedChance,
+  burstVelocity,
+  capDrop,
+  elixirHeal,
+  fragmentValue,
+  type ToolKey,
+} from '../../src/core/loot';
 import { Modifiers } from '../../src/core/modifiers';
 import { ECONOMY } from '../../src/data/tuning';
 
@@ -231,5 +240,35 @@ describe('Determinismo por seed', () => {
     for (let i = 0; i < 20; i++) {
       expect(a.enemyDrop(3, i % 2 === 0)).toEqual(b.enemyDrop(3, i % 2 === 0));
     }
+  });
+});
+
+describe('ElixirRoll e elixirHeal (ELX-01..04)', () => {
+  const t = { chance: 0.04, armedChance: 0.2, healFraction: 0.25 };
+
+  it('ELX-01/02: comum perto de 4%, armado perto de 20%, em 10000 abates', () => {
+    const roll = new ElixirRoll(new Rng(7), t);
+    let common = 0;
+    let armed = 0;
+    for (let i = 0; i < 10000; i++) {
+      if (roll.enemyDrop(false)) common++;
+      if (roll.enemyDrop(true)) armed++;
+    }
+    expect(common / 10000).toBeGreaterThan(0.03);
+    expect(common / 10000).toBeLessThan(0.05);
+    expect(armed / 10000).toBeGreaterThan(0.18);
+    expect(armed / 10000).toBeLessThan(0.22);
+  });
+
+  it('ELX-03: mesma seed, mesma sequência', () => {
+    const a = new ElixirRoll(new Rng(3), t);
+    const b = new ElixirRoll(new Rng(3), t);
+    for (let i = 0; i < 200; i++) expect(a.enemyDrop(i % 3 === 0)).toBe(b.enemyDrop(i % 3 === 0));
+  });
+
+  it('ELX-04: cura uma fração do hp máximo atual, ao menos 1 HP', () => {
+    expect(elixirHeal(100, t)).toBe(25);
+    expect(elixirHeal(175, t)).toBe(44);
+    expect(elixirHeal(1, t)).toBe(1);
   });
 });

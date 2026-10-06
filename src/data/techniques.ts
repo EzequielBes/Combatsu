@@ -92,6 +92,19 @@ export const CE = {
   regenCap: 16,
 };
 
+/**
+ * Energia Amaldiçoada Reversa (RCT-01..09): segurar a tecla converte energia em vida, gastando o dobro em energia
+ * do que cura. Começa depois de uma concentração curta e trava o player como uma conjuração.
+ */
+export const REVERSE_CURSED = {
+  /** Concentração antes da primeira cura (ms): o player já está parado e vulnerável. */
+  warmupMs: 250,
+  /** HP curado por segundo de canalização. */
+  hpPerSec: 12,
+  /** Energia gasta por HP curado. */
+  energyPerHp: 2,
+};
+
 /** Kokusen / Black Flash (KOK-*): janela, zona, dano e camadas cinemáticas. */
 export const KOKUSEN = {
   windowFrom: 120,
