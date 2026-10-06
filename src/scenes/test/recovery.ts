@@ -1,9 +1,15 @@
 import { HealthRegen, roundClearHeal } from '../../core/healthRegen';
 import { ReverseCursed } from '../../core/reverseCursed';
 import { PLAYER_REGEN } from '../../data/tuning';
+import { ReverseAuraFx } from '../../game/techFx/ReverseAura';
+import { SIZE } from '../../game/textures';
+import { HD_ON } from '../../game/art/hd/flag';
 import type { InputSnapshot } from '../../game/input';
 import { debugParam } from './params';
 import type { TestScene } from '../TestScene';
+
+/** Tamanho do corpo desenhado para a aura (px de mundo, medido nas capturas): o sprite HD é mais alto. */
+const AURA_BODY = { base: { width: 22, height: 44 }, hd: { width: 30, height: 60 } } as const;
 
 /** De quanto em quanto tempo de cura a Energia Reversa mostra o "+N" acumulado (ms). */
 const REVERSE_TEXT_MS = 500;
@@ -24,6 +30,10 @@ export class Recovery {
    * (gota de cura, dano). A Energia Reversa continua ligada.
    */
   private passiveOn: boolean | null = null;
+
+  /** Aura da Energia Reversa (RCA-*), criada na primeira vez que a cena roda. */
+  private aura: ReverseAuraFx | null = null;
+  private auraRegistry: unknown = null;
 
   constructor(readonly s: TestScene) {}
 
@@ -55,8 +65,12 @@ export class Recovery {
     if (step.heal > 0 && this.s.energy.trySpend(step.spend)) {
       const restored = p.heal(step.heal);
       this.shownPending += restored;
+      if (restored > 0) this.reverseAura().pulse();
     }
     p.channeling = this.reverse.active;
+    // RCA-01..05: presa ao sprite (posição de desenho), com o pé na base do corpo.
+    const drawn = p.renderPos;
+    this.reverseAura().update(dt, this.reverse.active, this.reverse.warmup, drawn.x, drawn.y + SIZE.player.h / 2);
     this.showReverseHeal(dt);
 
     // REG-01..04: a passiva não soma com a canalização, que já está curando.
@@ -81,6 +95,7 @@ export class Recovery {
     this.reverse.reset();
     this.regen.reset();
     this.s.player.channeling = false;
+    this.aura?.destroy();
     this.shownPending = 0;
     this.textMs = 0;
   }
@@ -99,6 +114,20 @@ export class Recovery {
     this.s.player.flash('G', 80);
     this.shownPending = 0;
     this.textMs = 0;
+  }
+
+  /** A cena recria `fxRegistry` ao reiniciar (`R`); a aura acompanha o registro atual. */
+  private reverseAura(): ReverseAuraFx {
+    if (!this.aura || this.auraRegistry !== this.s.fxRegistry) {
+      this.aura = new ReverseAuraFx(
+        this.s,
+        this.s.realtimeFx,
+        this.s.fxRegistry,
+        HD_ON ? AURA_BODY.hd : AURA_BODY.base,
+      );
+      this.auraRegistry = this.s.fxRegistry;
+    }
+    return this.aura;
   }
 
   private push(events: readonly string[]): void {

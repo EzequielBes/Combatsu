@@ -33,7 +33,7 @@ const AURA_SCALE = 2.2;
  */
 export class Aura {
   private sprite: Phaser.GameObjects.Sprite | null = null;
-  private activeColor: AuraColor | null = null;
+  private activeTech: TechId | null = null;
   private flickerMs = 0;
   private frameB = false;
 
@@ -48,25 +48,21 @@ export class Aura {
     return this.sprite ? { x: this.sprite.x, y: this.sprite.y } : null;
   }
 
-  /**
-   * `reverse` (RCT-10): canalizando a Energia Reversa sem conjuração, a mesma chama em branco; a conjuração, quando
-   * existe, tem a preferência.
-   */
-  update(dtMs: number, cast: ActiveCastView | null, x: number, y: number, reverse = false): void {
-    const casting = cast !== null && (cast.state === 'sign' || cast.state === 'charge');
-    const color: AuraColor | null = casting ? AURA_COLOR_BY_TECH[cast.id] : reverse ? 'white' : null;
-    if (color) {
+  update(dtMs: number, cast: ActiveCastView | null, x: number, y: number): void {
+    const showing = cast !== null && (cast.state === 'sign' || cast.state === 'charge');
+    if (showing) {
       // CAST-14: reafirmada a cada frame vivo; some sozinha assim que este `if` deixar de rodar.
       this.fx.add('cast.aura', Math.max(dtMs, 1), 'game');
-      if (!this.sprite || this.activeColor !== color) {
+      if (!this.sprite || this.activeTech !== cast.id) {
         this.sprite?.destroy();
+        const color = AURA_COLOR_BY_TECH[cast.id];
         this.sprite = this.scene.add
           .sprite(x, y, TEX.techAura, `${color}-a`)
           .setDepth(AURA_DEPTH)
           .setAlpha(0.9)
           .setScale(AURA_SCALE);
         this.registry.add(this.sprite);
-        this.activeColor = color;
+        this.activeTech = cast.id;
         this.flickerMs = 0;
         this.frameB = false;
       }
@@ -75,13 +71,13 @@ export class Aura {
       if (this.flickerMs >= FLICKER_MS) {
         this.flickerMs -= FLICKER_MS;
         this.frameB = !this.frameB;
-        this.sprite.setFrame(`${color}-${this.frameB ? 'b' : 'a'}`);
+        this.sprite.setFrame(`${AURA_COLOR_BY_TECH[this.activeTech]}-${this.frameB ? 'b' : 'a'}`);
       }
     } else if (this.sprite) {
       // TFX-03: fora de sign/charge (release/recover/cancelada) a chama some em 150 ms.
       const sprite = this.sprite;
       this.sprite = null;
-      this.activeColor = null;
+      this.activeTech = null;
       this.scene.tweens.add({ targets: sprite, alpha: 0, duration: FADE_MS });
       this.registry.scheduleDestroy(sprite, FADE_MS);
     }

@@ -47,13 +47,7 @@ export class TechDirector {
     // CAST-14: aura por técnica em sign/charge, sobre o player; tecla 1 do fxlab mostra só a aura. Ela fica presa
     // ao sprite (posição de desenho), não ao corpo: senão anda meio passo à frente dele ao correr (ITP-10).
     const drawn = this.s.player.renderPos;
-    this.s.aura.update(
-      dt,
-      this.s.techCaster.cast ?? this.s.fxLab?.auraDemoCast() ?? null,
-      drawn.x,
-      drawn.y,
-      this.s.recovery.reverse.active,
-    );
+    this.s.aura.update(dt, this.s.techCaster.cast ?? this.s.fxLab?.auraDemoCast() ?? null, drawn.x, drawn.y);
     // KOK-27: aura preta com faíscas vermelhas no player enquanto a zona do Kokusen está ativa.
     this.s.kokusenFx.zoneAura(
       dt,

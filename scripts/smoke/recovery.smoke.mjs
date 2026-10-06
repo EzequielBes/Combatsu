@@ -51,6 +51,10 @@ export default async function ({ page, baseUrl, assert }) {
   const spent = ceFull - r.snap.ce.cur;
   assert(healed >= 10 && healed <= 13, `RCT-02: ~12 hp em 1 s de cura: ${healed}`);
   assert(Math.abs(spent - healed * 2) < 0.01, `RCT-03/06: gasto ${spent} deveria ser o dobro da cura ${healed}`);
+  assert(
+    r.snap.fx.layers.includes('reverse.aura'),
+    `RCA-01: a aura deveria estar na tela canalizando: ${JSON.stringify(r.snap.fx.layers)}`,
+  );
 
   // RCT-05: travado no lugar, mesmo apertando para andar.
   const x0 = r.snap.player.x;
@@ -74,6 +78,7 @@ export default async function ({ page, baseUrl, assert }) {
   assert(r.events.includes('rctStop'), `RCT-04: soltar F deveria parar: ${JSON.stringify(r.events)}`);
   const hpIdle = r.snap.player.hp;
   r = await stepCollect(500);
+  assert(!r.snap.fx.layers.includes('reverse.aura'), `RCA-02: a aura deveria apagar com F solta`);
   assert(
     r.snap.player.hp === hpIdle,
     `com F solta e regen=0, o hp não deveria subir: ${hpIdle} -> ${r.snap.player.hp}`,

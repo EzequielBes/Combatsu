@@ -111,3 +111,17 @@ describe('ReverseCursed (RCT-01..09)', () => {
     expect(REVERSE_CURSED.energyPerHp).toBe(2);
   });
 });
+
+describe('ReverseCursed.warmup (RCA-02)', () => {
+  it('sobe de 0 a 1 na concentração e volta a 0 ao parar', () => {
+    const r = new ReverseCursed(t);
+    expect(r.warmup).toBe(0);
+    channel(r, 128, input());
+    expect(r.warmup).toBeGreaterThan(0.3);
+    expect(r.warmup).toBeLessThan(0.7);
+    channel(r, 400, input());
+    expect(r.warmup).toBe(1);
+    r.update(16, input({ held: false }));
+    expect(r.warmup).toBe(0);
+  });
+});

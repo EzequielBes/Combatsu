@@ -41,6 +41,11 @@ export class ReverseCursed {
     return this._active;
   }
 
+  /** Quanto da concentração já passou (0..1); 0 parada (RCA-02: a aura cresce com isto). */
+  get warmup(): number {
+    return this._active ? Math.min(1, this.warmMs / this.t.warmupMs) : 0;
+  }
+
   /** Já passou da concentração e está curando. */
   get healing(): boolean {
     return this._active && this.warmMs >= this.t.warmupMs;
