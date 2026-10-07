@@ -348,7 +348,7 @@ o espaço.
 | RCH-05 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
 | LEG-01 | P1: Sala de teste e compatibilidade | Design | Implementing |
 | LEG-02 | P1: Sala de teste e compatibilidade | Design | Implementing |
-| LEG-03 | P1: Sala de teste e compatibilidade | Design | Pending |
+| LEG-03 | P1: Sala de teste e compatibilidade | Design | Implementing |
 | LEG-04 | P1: Sala de teste e compatibilidade | Design | Implementing |
 | LEG-05 | P1: Sala de teste e compatibilidade | Design | Implementing |
 | SLT-01 | P2: Objetos sorteados nos slots | Design | Implementing |

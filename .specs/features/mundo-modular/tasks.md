@@ -304,7 +304,7 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: o `page` que o runner já passa aos cenários
 **Requirement**: LEG-03
 **Done when**:
-- [ ] Os 35 smokes antigos passam (intermitentes conhecidos: só contam como regressão se falharem em 2 de 3 execuções isoladas).
+- [x] Os 35 smokes antigos passam (intermitentes conhecidos: só contam como regressão se falharem em 2 de 3 execuções isoladas).
 **Tests**: smoke
 **Gate**: full
 
