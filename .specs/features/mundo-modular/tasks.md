@@ -346,7 +346,7 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: a forma de vencer o chefe do `boss-victory.smoke.mjs`
 **Requirement**: ARE-03
 **Done when**:
-- [ ] Confere: `area.modules` = `['santuario']`; o chefe nasce; depois da vitória, `traverse` e `sealed === false`.
+- [x] Confere: `area.modules` = `['santuario']`; o chefe nasce; depois da vitória, `traverse` e `sealed === false`.
 **Tests**: smoke
 **Gate**: full
 
