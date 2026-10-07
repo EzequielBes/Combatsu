@@ -21,10 +21,8 @@ import { CameraKick, ZoomPulse } from '../core/cameraKick';
 import { Wallet } from '../core/wallet';
 import { requireSpawnPoints } from '../core/waves';
 import { LEVEL_1 } from '../data/level1';
-import { PROP_DEFS } from '../data/props';
 import { FULL_SHOP_CATALOG } from '../data/shop';
 import { DROPPED_TOOLS, ATTACK_GATE, PICKUP, RUN, WAVE } from '../data/tuning';
-import { buildBackground } from '../game/art/background';
 import { createArt } from '../game/art';
 import { type Hittable } from '../game/bodyTags';
 import { Boss } from '../game/Boss';
@@ -41,7 +39,7 @@ import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Pickups } from '../game/Pickups';
 import { Player } from '../game/Player';
-import { Prop } from '../game/Prop';
+import { type Prop } from '../game/Prop';
 import { ShopPanel } from '../game/ShopPanel';
 import { TechCaster } from '../game/TechCaster';
 import { TechRunner } from '../game/TechRunner';
@@ -63,13 +61,13 @@ import { ShopDirector } from './test/shopDirector';
 import { DebugSnapshot } from './test/snapshot';
 import { RunDirector } from './test/runDirector';
 import { UiSetup } from './test/uiSetup';
-import { TerrainBuilder } from './test/terrain';
+import { WorldBuilder } from './test/world';
 import { TechDirector } from './test/techDirector';
 import { Recovery } from './test/recovery';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly techDirector = new TechDirector(this);
-  readonly terrainBuilder = new TerrainBuilder(this);
+  readonly world = new WorldBuilder(this);
   readonly ui = new UiSetup(this);
   readonly runDirector = new RunDirector(this);
   readonly snapshot = new DebugSnapshot(this);
@@ -197,12 +195,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.fx = new Fx(this);
     this.level = parseLevel(LEVEL_1);
     requireSpawnPoints(this.level, 'LEVEL_1');
-    buildBackground(this, this.level.widthPx, this.level.heightPx);
     this.terrain = [];
+    this.props = [];
     this.enemies = [];
     this.attackGate = new AttackGate(ATTACK_GATE);
     this.projectiles = [];
-    this.terrainBuilder.buildTerrain();
+    // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
+    this.modifiers = new Modifiers(FULL_SHOP_CATALOG);
+    this.world.build(LEVEL_1, this.level);
     this.combat.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
@@ -213,23 +213,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.clockMs = 0;
     this.spawner.spawnLastUsed = new Map();
     this.wasPlayerDead = false;
-    // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
-    this.modifiers = new Modifiers(FULL_SHOP_CATALOG);
     // F5: uma instância por cena, zeradas a cada `startRun` (CE-01, TEC-01).
     this.energy = new CursedEnergy();
     this.loadout = new Loadout();
     this.mastery = new Mastery();
-
-    this.props = [];
-    for (const s of this.level.props) {
-      const def = PROP_DEFS[s.key];
-      if (!def) throw new Error(`Objeto sem definição: ${s.key}`);
-      this.props.push(
-        new Prop(this, s.x, s.y, def, this.modifiers, (hit, at, target) =>
-          this.combat.onConnect(hit, at, 'prop', target),
-        ),
-      );
-    }
 
     this.controls = new PlayerInput(this);
     this.shopInput = new ShopInput(this);

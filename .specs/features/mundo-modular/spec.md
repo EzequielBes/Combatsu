@@ -323,12 +323,12 @@ o espaço.
 | ARE-08 | P1: Área montada pela seed | Design | Implementing |
 | ARE-09 | P1: Área montada pela seed | Design | Implementing |
 | ARE-10 | P1: Área montada pela seed | Design | Pending |
-| ARE-11 | P1: Área montada pela seed | Design | Pending |
+| ARE-11 | P1: Área montada pela seed | Design | Implementing |
 | ARE-12 | P1: Área montada pela seed | Design | Implementing |
 | ARE-13 | P1: Área montada pela seed | Design | Implementing |
 | TRV-01 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-02 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-03 | P1: Selo, travessia e saída | Design | Pending |
+| TRV-03 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-04 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-05 | P1: Selo, travessia e saída | Design | Pending |
 | TRV-06 | P1: Selo, travessia e saída | Design | Implementing |

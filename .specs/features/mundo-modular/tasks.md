@@ -199,9 +199,9 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `TerrainBuilder.buildTerrain`, `buildBackground`, `new Prop` do `create`, `Pickups.clear`, `FloatTexts.clear`, `DroppedTools.clear`
 **Requirement**: ARE-11, TRV-01, TRV-03
 **Done when**:
-- [ ] `s.terrain` e `s.props` são esvaziados no lugar no teardown (nunca reatribuídos).
-- [ ] O selo usa o frame `seal` se existir, senão um retângulo da `PALETTE`; o efeito de 400 ms usa `AREA.sealBurnMs`.
-- [ ] `npm run gate && npm run build` passa; `npm run smoke` com a sala continua com os 35 cenários passando (o runner da T16 ainda não existe, então rodar com `?area=sala` não é preciso aqui: o modo modular só liga na T11).
+- [x] `s.terrain` e `s.props` são esvaziados no lugar no teardown (nunca reatribuídos).
+- [x] O selo usa o frame `seal` se existir, senão um retângulo da `PALETTE`; o efeito de 400 ms usa `AREA.sealBurnMs`.
+- [x] `npm run gate && npm run build` passa; `npm run smoke` com a sala continua com os 35 cenários passando (o runner da T16 ainda não existe, então rodar com `?area=sala` não é preciso aqui: o modo modular só liga na T11).
 **Tests**: none
 **Gate**: full
 
