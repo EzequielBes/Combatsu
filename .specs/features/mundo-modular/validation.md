@@ -1,20 +1,54 @@
-# Mundo modular Validation (rodada 2)
+# Mundo modular Validation (rodada 3)
 
-**Verdict**: FAIL
+**Verdict**: PASS
 
 **Date**: 2026-10-07
 **Spec**: `.specs/features/mundo-modular/spec.md`
-**Diff range**: feature `1c75d95..HEAD` (`HEAD` = `75624a7`); correções da rodada 2 `d442568..HEAD` (`4e5a6af`, `8960c0c`, `47e7804`, `4473868`, `75624a7`)
-**Verifier**: sub-agente independente (autor ≠ verifier), evidence-or-zero, rodada 2 de no máximo 3
+**Diff range**: feature `1c75d95..HEAD` (`HEAD` = `a6170b7`); correção da rodada 3 `9fd26d2..HEAD` (só `a6170b7`, T30)
+**Verifier**: sub-agente independente (autor ≠ verifier), evidence-or-zero, rodada 3 de no máximo 3
 
-Resumo: as correções da Phase 5 (T26-T29) fecharam os 9 gaps da rodada 1 com asserções vivas e de valor exato. A5 e
-A6 agora morrem, e 11 das 12 mutações novas também. Sobrou uma: a konbini abrir a loja com `round + 1` (mutante KA)
-passa no `world-traverse`. O motivo é que a comparação de KON-02 roda na rodada 1, sem nada comprado e sem técnica, e
-nesse estado o `round` não muda nem as ofertas nem os preços. Fiz uma sonda fora do repo, o mesmo cenário com
-`&tech=corte` nas duas URLs: ela passa no HEAD e mata o KA. Então o mutante não é equivalente, e o FAIL fica por um
-único ajuste de teste num AC P1.
+Resumo: a T30 fechou o único gap da rodada 2. As duas URLs do `world-traverse` agora levam `&tech=corte`
+(`world-traverse.smoke.mjs:10` e `:347`), e com a técnica no nível 1 a rodada decide se o upgrade Nv1→2 aparece. O
+mutante KA (`round + 1` só no modular) agora morre, e o KB (outro stream) continua morrendo. O diff da T30 só acrescenta
+o parâmetro nas URLs e um comentário; nenhuma asserção foi enfraquecida. Gate e smokes verdes. 54/54 ACs.
 
 ---
+
+## Rodada 3: correção T30
+
+### Diff `9fd26d2..HEAD`
+
+- `scripts/smoke/world-traverse.smoke.mjs`: `&tech=corte` acrescentado à URL da konbini (`:10`) e à da sala (`:347`), mais
+  um comentário de 2 linhas (`:345-346`) explicando o porquê. Nenhuma asserção foi removida nem afrouxada: a captura
+  (`:238-239`) e a comparação `JSON.stringify(roomShop) === JSON.stringify(konbiniShop)` (`:361-364`) são as mesmas.
+- `.specs/features/mundo-modular/tasks.md`: só a Phase 6 / T30 acrescentada.
+- `tech=corte` também vale para todo o resto do `world-traverse`, que passou inteiro no HEAD (sem mudança de asserção).
+
+### Gate (rodada 3)
+
+- `npm run gate`: exit 0. 121 arquivos, **2697 passaram**, 0 falharam, 0 pulados.
+- `npm run smoke`: **41/41 ok** (`41 cenário(s) ok`, exit 0) numa execução completa; nenhum intermitente apareceu.
+
+### Sensor (rodada 3)
+
+Isolamento: `git worktree add --detach <scratchpad>/verifier3-wt HEAD` (`a6170b7`), junction `node_modules` para o repo
+real. Cada mutação aplicada por script que exige o padrão exato em `src/scenes/test/shopDirector.ts:105`
+(`this.s.run.shopRng!, round, this.s.loadout`) e revertida com `git checkout -- src`. `npm run build` e
+`npm run smoke -- world-traverse` no worktree.
+
+| # | Mutação | Result | Morto por |
+| --- | --- | --- | --- |
+| base | sem mutação | ✅ ok | `1 cenário(s) ok` |
+| KA | `round` → `this.s.area.mode === 'modular' ? round + 1 : round` | ✅ **Killed** | `world-traverse:361-364` "KON-02: a loja da konbini difere da da sala": konbini `[corte Nv1 34, divergente 15, vida 12]` != sala `[divergente 15, vida 12, fluxo 12]` |
+| KB | `shopRng!` → `this.s.area.mode === 'modular' ? this.s.run.stageRng! : this.s.run.shopRng!` | ✅ Killed | mesma asserção: konbini `[fluxo, agilidade, vida]` != sala |
+
+Limpeza: junction desfeita (o `node_modules` real intacto), `git worktree remove --force`, o worktree some de
+`git worktree list`; `git status --porcelain` do repo real antes e depois idêntico (`?? .claude/`, `?? BRIEF-FABLE.md`,
+`?? SKILL.md`, `diff` vazio). **Result**: **2/2 mortos**. ✅ PASS.
+
+---
+
+# Relatório da rodada 2 (mantido; só a linha de KON-02, o status e o fecho foram atualizados para a rodada 3)
 
 ## Task Completion
 
@@ -102,7 +136,7 @@ linhas.
 | AC | `file:line` + assertion | Valor da spec | Result |
 | --- | --- | --- | --- |
 | KON-01 | `world-traverse.smoke.mjs:216-229` `["konbini"]`, `22*TILE`, `shop`, `round === 1`, `shopOpen:1`, `colOf === 3`; `run.test.ts:613-614` | konbini, coluna 3, `shop` + `shopOpen` da rodada atual | ✅ |
-| KON-02 | `world-traverse.smoke.mjs:235-237` captura `{offers:{id,level,maxLevel,cost,sold}, rerollCost}` da konbini; `:342-360` `JSON.stringify(roomShop) === JSON.stringify(konbiniShop)` contra `area=sala`, mesma seed, rodada 1, sem compras | a loja se comporta exatamente como antes (mesmas ofertas, preços, reroll e painel) | ❌ **gap (P1)**: a comparação é real e matou o KB (stream trocado), mas foi feita num estado em que o `round` não pesa (rodada 1, nível 0, sem técnica: `minRound` de todo item é 1 e o preço não depende da rodada). O KA (`round + 1` só no modular) **sobreviveu**. O painel não é comparado (só a `view`) |
+| KON-02 | `world-traverse.smoke.mjs:238-239` captura `{offers:{id,level,maxLevel,cost,sold}, rerollCost}` da konbini; `:361-364` `JSON.stringify(roomShop) === JSON.stringify(konbiniShop)` contra `area=sala`, mesma seed, rodada 1, sem compras, **com `tech=corte` nas duas URLs (`:10`, `:347`)**, estado em que a rodada decide a oferta do upgrade Nv1→2 (`src/core/shop.ts:33`, `minRound(level + 1) <= round`) | a loja se comporta exatamente como antes (mesmas ofertas, preços, reroll e painel) | ✅ (rodada 3: gap fechado pela T30; KA e KB mortos. O painel segue comparado via `view`, gap menor aceito) |
 | KON-03 | `world-traverse.smoke.mjs:305-318` `roundActive`, `round === 2`, `colOf === 3`, loja fechada; `run.test.ts:677` | próxima área + `roundStart(round+1)` + coluna 3 | ✅ |
 | KON-04 | `run.test.ts:621-623`; `world-run.smoke.mjs:101-104` | sem `shopOpen` com `noshop` | ✅ |
 | KON-05 | `world-traverse.smoke.mjs:263-274` nenhum inimigo vivo nem novo em 1 s; `stageArea.test.ts:162` | nenhum spawn na konbini | ✅ |
@@ -143,7 +177,7 @@ linhas.
 | THM-02 | Tiles: `world-traverse.smoke.mjs:49-58,94-99` `area.sheets` `[{beco,'terrain-beco'},{parque,'terrain-parque'}]`, lido da textura do tile desenhado (`world.ts` `floorSheets`); `:238` konbini `terrain-konbini`; `:330-333` rodada 2. Fundo: mesma função, `area.bands` `{n,N}`, `{g,G}`, konbini `{N,s}` (lidos do objeto da camada próxima). Paleta: `tests/game/art/background.test.ts:10-16` `NEAR_COLORS` uma chave por tema e só chaves da `PALETTE`; `:18-27` `bandsFor` uma faixa por trecho com a cor do tema; `tiles.test.ts:50-55` | tiles com o tema, faixa com a cor do tema, só `PALETTE` | ✅ (gap 6 fechado; A6 morto: `"sheet":"terrain"`) |
 | THM-03 | `world-traverse.smoke.mjs:100-102` `seal.texture === 'seal' && frame === 'seal' && alpha === 1` fechado; `world-exit.smoke.mjs:76-78` idem junto ao selo; `:114-141` a imagem some (`seal === null`) ao fim do efeito; `world-traverse.smoke.mjs:239` konbini `seal === null` | frame `seal` enquanto sólido; nada depois do efeito | ✅ (gap 7 fechado; SK morto) |
 
-**Status**: ❌ **53/54** ACs com evidência que bate com a spec; 1 gap P1 (KON-02, mutante KA sobrevivente).
+**Status**: ✅ **54/54** ACs com evidência que bate com a spec (rodada 3; na rodada 2 eram 53/54, com KON-02 em gap).
 
 ---
 
@@ -171,7 +205,7 @@ antes e depois: `?? .claude/`, `?? BRIEF-FABLE.md`, `?? SKILL.md`, idêntico (`d
 | --- | --- | --- | --- | --- |
 | A5 | TRV-10: `inputFor` sem `!this.area.transitioning` (input cru na transição) | `src/scenes/TestScene.ts:451` | ✅ Killed | `world-traverse` "TRV-10: com D apertada o player deveria só perder velocidade no fade de saída" (`dx` constante de 1,47) |
 | A6 | THM-02: `sheetFor` sempre `TEX.terrain` | `src/scenes/test/world.ts:142` | ✅ Killed | `world-traverse` "THM-02 rodada 1: folhas de terreno por trecho: terrain" |
-| KA | KON-02: no modular a loja nasce com `round + 1` (evento `shopOpen` intocado) | `src/scenes/test/shopDirector.ts:105` | ❌ **Survived** | nenhum: `world-traverse` passou. Sonda descartável (cópia do `world-traverse` com `&tech=corte` nas duas URLs, só no worktree): passa no HEAD e **mata** o KA (a konbini oferece `corte` nível 1→2, que a sala não oferece na rodada 1). Não é equivalente |
+| KA | KON-02: no modular a loja nasce com `round + 1` (evento `shopOpen` intocado) | `src/scenes/test/shopDirector.ts:105` | ❌ **Survived** (rodada 2; morto na rodada 3, acima) | nenhum: `world-traverse` passou. Sonda descartável (cópia do `world-traverse` com `&tech=corte` nas duas URLs, só no worktree): passa no HEAD e **mata** o KA (a konbini oferece `corte` nível 1→2, que a sala não oferece na rodada 1). Não é equivalente |
 | KB | KON-02: no modular a loja usa o `stageRng` em vez do `shopRng` | `src/scenes/test/shopDirector.ts:105` | ✅ Killed | `world-traverse` "KON-02: a loja da konbini difere da da sala" |
 | RA | Edge nova run: `this.stage ??= new Stage(...)` (o `Stage` da run anterior continua) | `src/scenes/test/areaDirector.ts:71` | ✅ Killed | `world-restart` "a run nova com a mesma seed deveria repetir ["parque","rua"]: ["rua","beco"]" |
 | RB | Edge nova run: o `roundStart(1)` da run nova não reconstrói (fica a área anterior) | `src/scenes/test/areaDirector.ts:78` | ✅ Killed | `world-restart` "esperava dois areaBuilt iguais (um por run)" |
@@ -185,7 +219,7 @@ antes e depois: `?? .claude/`, `?? BRIEF-FABLE.md`, `?? SKILL.md`, idêntico (`d
 
 **Sensor depth**: expandido, todo por adaptador (smoke): A5 e A6 da rodada 1 reaplicados, mais 11 mutações novas,
 cobrindo os 4 pedidos (a) KA/KB, (b) RA/RB, (c) OC/OC2, (d) BD1/BD2, e ainda HF, SB e SK.
-**Result**: **12/13 mortos, 1 sobreviveu (KA)**. ❌ FAIL. Os 24 mutantes unitários e os A1-A4 da rodada 1 não foram
+**Result** (rodada 2): **12/13 mortos, 1 sobreviveu (KA)**, reprovado naquela rodada (KA morto na rodada 3). Os 24 mutantes unitários e os A1-A4 da rodada 1 não foram
 refeitos: o código e os testes que eles mediam não mudaram desde `d442568`.
 
 ---
@@ -238,11 +272,7 @@ refeitos: o código e os testes que eles mediam não mudaram desde `d442568`.
 
 ## Fix Plans
 
-### Fix 1 (Major, P1): KON-02 não discrimina o `round` da loja na konbini
-
-- **Root cause**: `world-traverse.smoke.mjs:342-360` compara konbini e sala na rodada 1, sem compras e sem técnica. Nesse estado todo `minRound` é 1 e o custo não depende da rodada, então qualquer `round` dá as mesmas ofertas.
-- **Fix task**: fazer a comparação num estado em que a rodada decide a oferta. A opção mínima, provada pela sonda deste Verifier, é acrescentar `&tech=corte` às duas URLs do `world-traverse` (`:10` e `:343`): com a técnica no nível 1, a rodada 1 não pode oferecer o nível 2 (`techGate(2) = 2`), e o `round + 1` passa a oferecê-lo. Outras opções servem: comparar também a loja da rodada 2, ou comprar e rolar de novo nas duas.
-- **Done when**: o mutante KA (`shopDirector.ts:105`, `round` → `this.s.area.mode === 'modular' ? round + 1 : round`) faz o `world-traverse` falhar, e `npm run gate && npm run smoke` passa.
+Nenhum. O Fix 1 da rodada 2 (KON-02 não discrimina o `round`) foi feito pela T30 (`a6170b7`) e verificado nesta rodada.
 
 ---
 
@@ -250,26 +280,28 @@ refeitos: o código e os testes que eles mediam não mudaram desde `d442568`.
 
 | Requirement | New Status |
 | --- | --- |
-| MDL-01..10, ARE-01..13, TRV-01..10, KON-01, KON-03..05, RCH-01..05, LEG-01..05, SLT-01..03, THM-01..03 | ✅ Verified |
-| KON-02 | ❌ Needs Fix (teste não discrimina o `round`) |
+| MDL-01..10, ARE-01..13, TRV-01..10, KON-01..05, RCH-01..05, LEG-01..05, SLT-01..03, THM-01..03 | ✅ Verified |
 
 ---
 
 ## Summary
 
-**Overall**: ❌ Not Ready (falta 1 fix de teste)
+**Overall**: ✅ Ready
 
-**Spec-anchored check**: 53/54 ACs batem com a spec | 1 gap P1 (KON-02) | 6/6 edge cases com evidência
-**Sensor**: 12/13 mortos (KA sobreviveu)
-**Gate**: 2697 unit passaram; smokes 41/41; `world-exit` isolado 3/3
+**Spec-anchored check**: 54/54 ACs batem com a spec | 6/6 edge cases com evidência
+**Sensor**: rodada 3 2/2 mortos (KA, KB); acumulado rodada 2 + 3: 13/13 dos mutantes de adaptador da rodada 2 mortos
+**Gate**: 2697 unit passaram; smokes 41/41
 
-**What works**: todos os gaps da rodada 1 foram fechados com valor vivo e exato. A5 e A6 morrem, e também as
-mutações novas de limites da câmera, curas, duração e sumiço do selo, nova run e objeto além do selo.
-
-**Next steps**: rodar o Fix 1 (uma linha em duas URLs do `world-traverse`) e chamar o Verifier da rodada 3 (a última
-antes de escalar ao usuário).
+**Gaps menores aceitos** (não bloqueiam): painel de KON-02 comparado via `view`; tolerância de quadros do TRV-10;
+TRV-01 só contra o player; LEG-03 indireto.
 
 ---
+
+## Rodada 2 (resumo)
+
+Rodada 2 (`d442568..75624a7`, relatório commitado em `9fd26d2`): **FAIL**. 53/54 ACs; os 9 gaps da rodada 1 fechados
+(A5 e A6 mortos). Sensor 12/13: o KA (loja da konbini com `round + 1`) sobreviveu porque a comparação konbini × sala
+rodava na rodada 1 sem técnica. Gate: 2697 unit e 41/41 smokes. Virou a fix task T30 (Phase 6).
 
 ## Rodada 1 (resumo)
 

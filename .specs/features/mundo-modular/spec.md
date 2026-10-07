@@ -303,60 +303,60 @@ o espaço.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| MDL-01 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-02 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-03 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-04 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-05 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-06 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-07 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-08 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-09 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-10 | P1: Módulos com gramática validada | Design | Implementing |
-| ARE-01 | P1: Área montada pela seed | Design | Implementing |
-| ARE-02 | P1: Área montada pela seed | Design | Implementing |
-| ARE-03 | P1: Área montada pela seed | Design | Implementing |
-| ARE-04 | P1: Área montada pela seed | Design | Implementing |
-| ARE-05 | P1: Área montada pela seed | Design | Implementing |
-| ARE-06 | P1: Área montada pela seed | Design | Implementing |
-| ARE-07 | P1: Área montada pela seed | Design | Implementing |
-| ARE-08 | P1: Área montada pela seed | Design | Implementing |
-| ARE-09 | P1: Área montada pela seed | Design | Implementing |
-| ARE-10 | P1: Área montada pela seed | Design | Implementing |
-| ARE-11 | P1: Área montada pela seed | Design | Implementing |
-| ARE-12 | P1: Área montada pela seed | Design | Implementing |
-| ARE-13 | P1: Área montada pela seed | Design | Implementing |
-| TRV-01 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-02 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-03 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-04 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-05 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-06 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-07 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-08 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-09 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-10 | P1: Selo, travessia e saída | Design | Implementing |
-| KON-01 | P1: Konbini como loja | Design | Implementing |
-| KON-02 | P1: Konbini como loja | Design | Implementing |
-| KON-03 | P1: Konbini como loja | Design | Implementing |
-| KON-04 | P1: Konbini como loja | Design | Implementing |
-| KON-05 | P1: Konbini como loja | Design | Implementing |
-| RCH-01 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
-| RCH-02 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
-| RCH-03 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
-| RCH-04 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
-| RCH-05 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
-| LEG-01 | P1: Sala de teste e compatibilidade | Design | Implementing |
-| LEG-02 | P1: Sala de teste e compatibilidade | Design | Implementing |
-| LEG-03 | P1: Sala de teste e compatibilidade | Design | Implementing |
-| LEG-04 | P1: Sala de teste e compatibilidade | Design | Implementing |
-| LEG-05 | P1: Sala de teste e compatibilidade | Design | Implementing |
-| SLT-01 | P2: Objetos sorteados nos slots | Design | Implementing |
-| SLT-02 | P2: Objetos sorteados nos slots | Design | Implementing |
-| SLT-03 | P2: Objetos sorteados nos slots | Design | Implementing |
-| THM-01 | P2: Tema visual por módulo | Design | Implementing |
-| THM-02 | P2: Tema visual por módulo | Design | Implementing |
-| THM-03 | P2: Tema visual por módulo | Design | Implementing |
+| MDL-01 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-02 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-03 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-04 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-05 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-06 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-07 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-08 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-09 | P1: Módulos com gramática validada | Execute | Verified |
+| MDL-10 | P1: Módulos com gramática validada | Execute | Verified |
+| ARE-01 | P1: Área montada pela seed | Execute | Verified |
+| ARE-02 | P1: Área montada pela seed | Execute | Verified |
+| ARE-03 | P1: Área montada pela seed | Execute | Verified |
+| ARE-04 | P1: Área montada pela seed | Execute | Verified |
+| ARE-05 | P1: Área montada pela seed | Execute | Verified |
+| ARE-06 | P1: Área montada pela seed | Execute | Verified |
+| ARE-07 | P1: Área montada pela seed | Execute | Verified |
+| ARE-08 | P1: Área montada pela seed | Execute | Verified |
+| ARE-09 | P1: Área montada pela seed | Execute | Verified |
+| ARE-10 | P1: Área montada pela seed | Execute | Verified |
+| ARE-11 | P1: Área montada pela seed | Execute | Verified |
+| ARE-12 | P1: Área montada pela seed | Execute | Verified |
+| ARE-13 | P1: Área montada pela seed | Execute | Verified |
+| TRV-01 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-02 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-03 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-04 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-05 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-06 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-07 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-08 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-09 | P1: Selo, travessia e saída | Execute | Verified |
+| TRV-10 | P1: Selo, travessia e saída | Execute | Verified |
+| KON-01 | P1: Konbini como loja | Execute | Verified |
+| KON-02 | P1: Konbini como loja | Execute | Verified |
+| KON-03 | P1: Konbini como loja | Execute | Verified |
+| KON-04 | P1: Konbini como loja | Execute | Verified |
+| KON-05 | P1: Konbini como loja | Execute | Verified |
+| RCH-01 | P1: Spawn ao alcance num mapa maior | Execute | Verified |
+| RCH-02 | P1: Spawn ao alcance num mapa maior | Execute | Verified |
+| RCH-03 | P1: Spawn ao alcance num mapa maior | Execute | Verified |
+| RCH-04 | P1: Spawn ao alcance num mapa maior | Execute | Verified |
+| RCH-05 | P1: Spawn ao alcance num mapa maior | Execute | Verified |
+| LEG-01 | P1: Sala de teste e compatibilidade | Execute | Verified |
+| LEG-02 | P1: Sala de teste e compatibilidade | Execute | Verified |
+| LEG-03 | P1: Sala de teste e compatibilidade | Execute | Verified |
+| LEG-04 | P1: Sala de teste e compatibilidade | Execute | Verified |
+| LEG-05 | P1: Sala de teste e compatibilidade | Execute | Verified |
+| SLT-01 | P2: Objetos sorteados nos slots | Execute | Verified |
+| SLT-02 | P2: Objetos sorteados nos slots | Execute | Verified |
+| SLT-03 | P2: Objetos sorteados nos slots | Execute | Verified |
+| THM-01 | P2: Tema visual por módulo | Execute | Verified |
+| THM-02 | P2: Tema visual por módulo | Execute | Verified |
+| THM-03 | P2: Tema visual por módulo | Execute | Verified |
 
 **Coverage:** 54 total, 0 mapped to tasks, 54 unmapped ⚠️ (mapeamento no Tasks)
 

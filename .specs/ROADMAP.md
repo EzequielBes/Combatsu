@@ -51,7 +51,7 @@ Parte D — Mundo modular (expansão de ambiente; a F13 corre em paralelo, a F14
 | F14 | `ia-tatica` | Complex | DIR, RNG, STG, ARC, IND, SFX | Planejada (depois da F19: usa o grafo de navegação) |
 | F15 | `inimigos-a-distancia` | Large | CJR, PRJ | Planejada |
 | F16 | `pressao-e-curva` | Medium | PRS, CUR | Planejada (só curva/composição; volume de spawn foi para F11) |
-| F18 | `mundo-modular` | Complex | MDL, ARE, TRV, KON, RCH, LEG, SLT, THM | Em andamento: Execute concluído, aguardando Verifier e UAT |
+| F18 | `mundo-modular` | Complex | MDL, ARE, TRV, KON, RCH, LEG, SLT, THM | Done (Verifier PASS, rodada 3; 54 ACs); aguardando UAT do usuário |
 | F19 | `verticalidade` | Complex | — | Planejada |
 | F20 | `portas-e-destrutiveis` | Complex | WAL (vinda da F13) | Planejada |
 | F21 | `perigos-e-rotas` | Complex | — | Planejada |

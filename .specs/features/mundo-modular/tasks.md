@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/mundo-modular/spec.md`
 **Design**: `.specs/features/mundo-modular/design.md`
-**Status**: Approved
+**Status**: Done (Verifier PASS, rodada 3); aguardando UAT do usuário
 **Branch**: `feat/mundo-modular` (a partir da `master` local em `0d35d77`; volta para a `master` com `--no-ff` depois do Verifier PASS e do UAT)
 **Modelos**: Opus 5.5 planeja, orquestra e roda o Verifier; os workers que codam rodam em Sonnet 5.5 (`model: sonnet`), um batch por vez.
 
