@@ -73,8 +73,6 @@
         "src/game/art/rig/poses/uppercut.ts",
         "src/game/art/sprites/enemy.ts",
         "src/game/player/animator.ts",
-        "src/game/techFx/RedOrb.ts",
-        "src/scenes/TestScene.ts",
         "src/scenes/test/snapshot.ts",
         "tools/rig-heroico.mjs"
       ],
@@ -104,7 +102,6 @@
         "src/game/player/animator.ts",
         "src/game/player/defense.ts",
         "src/game/player/strikes.ts",
-        "src/scenes/TestScene.ts",
         "src/scenes/test/impactFx.ts"
       ],
       "rules": {
