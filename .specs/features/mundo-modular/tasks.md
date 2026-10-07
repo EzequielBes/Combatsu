@@ -154,8 +154,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: o padrão dos streams e do pedido `closeShop`
 **Requirement**: TRV-02, TRV-04, TRV-06, TRV-09, KON-01, KON-03, KON-04
 **Done when**:
-- [ ] `tests/core/run.test.ts` ganha: modular → último abate leva a `traverse` com `roundCleared`; `traverse` não emite `spawn` nem avança timer em 10 s; `exitReached` em `traverse` → `shop` + `shopOpen`; com `skipShop` → `roundStart(r + 1)` sem `shopOpen`; `exitReached` em `roundActive`, `shop` e `title` é ignorado; dois `exitReached` no mesmo update = uma transição; morte em `traverse` → `gameOver` com o resumo; morte e último abate no mesmo update → `gameOver`; `stageRng`/`slotRng` reproduzíveis pela seed; os streams que já existem dão as mesmas sequências de antes; o fluxo `sala` continua idêntico (todos os testes atuais passam sem mudança).
-- [ ] `npm run gate` passa.
+- [x] `tests/core/run.test.ts` ganha: modular → último abate leva a `traverse` com `roundCleared`; `traverse` não emite `spawn` nem avança timer em 10 s; `exitReached` em `traverse` → `shop` + `shopOpen`; com `skipShop` → `roundStart(r + 1)` sem `shopOpen`; `exitReached` em `roundActive`, `shop` e `title` é ignorado; dois `exitReached` no mesmo update = uma transição; morte em `traverse` → `gameOver` com o resumo; morte e último abate no mesmo update → `gameOver`; `stageRng`/`slotRng` reproduzíveis pela seed; os streams que já existem dão as mesmas sequências de antes; o fluxo `sala` continua idêntico (todos os testes atuais passam sem mudança).
+- [x] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 

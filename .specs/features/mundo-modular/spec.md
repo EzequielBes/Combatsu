@@ -327,19 +327,19 @@ o espaço.
 | ARE-12 | P1: Área montada pela seed | Design | Implementing |
 | ARE-13 | P1: Área montada pela seed | Design | Implementing |
 | TRV-01 | P1: Selo, travessia e saída | Design | Implementing |
-| TRV-02 | P1: Selo, travessia e saída | Design | Pending |
+| TRV-02 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-03 | P1: Selo, travessia e saída | Design | Pending |
-| TRV-04 | P1: Selo, travessia e saída | Design | Pending |
+| TRV-04 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-05 | P1: Selo, travessia e saída | Design | Pending |
-| TRV-06 | P1: Selo, travessia e saída | Design | Pending |
+| TRV-06 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-07 | P1: Selo, travessia e saída | Design | Pending |
 | TRV-08 | P1: Selo, travessia e saída | Design | Pending |
-| TRV-09 | P1: Selo, travessia e saída | Design | Pending |
+| TRV-09 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-10 | P1: Selo, travessia e saída | Design | Pending |
-| KON-01 | P1: Konbini como loja | Design | Pending |
+| KON-01 | P1: Konbini como loja | Design | Implementing |
 | KON-02 | P1: Konbini como loja | Design | Pending |
-| KON-03 | P1: Konbini como loja | Design | Pending |
-| KON-04 | P1: Konbini como loja | Design | Pending |
+| KON-03 | P1: Konbini como loja | Design | Implementing |
+| KON-04 | P1: Konbini como loja | Design | Implementing |
 | KON-05 | P1: Konbini como loja | Design | Pending |
 | RCH-01 | P1: Spawn ao alcance num mapa maior | Design | Pending |
 | RCH-02 | P1: Spawn ao alcance num mapa maior | Design | Pending |

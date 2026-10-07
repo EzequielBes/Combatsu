@@ -567,3 +567,178 @@ describe('Run: stream do ponto de spawn e teto de vivos (SPN-02, SPN-04, SPN-08)
     expect(run.update(1, SEED).filter(isSpawn)).toHaveLength(1);
   });
 });
+
+/** Run modular em `roundActive` round 1; `clearedModular` mata os 6 inimigos da rodada e chega a `traverse`. */
+const modularRun = (opts: { skipShop?: boolean } = {}): Run => {
+  const run = new Run(RUN, WAVE, { flow: 'modular', ...opts });
+  run.startPressed();
+  run.update(0, SEED);
+  return run;
+};
+const clearedModular = (opts: { skipShop?: boolean } = {}): { run: Run; commands: RunCommand[] } => {
+  const run = modularRun(opts);
+  for (let id = 1; id <= 6; id++) run.enemyDied(id);
+  return { run, commands: run.update(0, SEED) };
+};
+
+describe('Run modular: fim da onda leva a traverse (TRV-02, TRV-04)', () => {
+  it('o último abate vai a traverse e emite roundCleared no mesmo update', () => {
+    const { run, commands } = clearedModular();
+    expect(run.state).toBe('traverse');
+    expect(commands).toEqual([{ type: 'roundCleared', round: 1 }]);
+  });
+
+  it('no fluxo sala o último abate continua indo a intermission', () => {
+    expect(cleared().run.state).toBe('intermission');
+  });
+
+  it('traverse não emite spawn nem avança timer: 10 s depois continua em traverse, sem comandos', () => {
+    const { run } = clearedModular();
+    expect(run.update(10000, SEED)).toEqual([]);
+    expect(run.state).toBe('traverse');
+    expect(run.update(10000, SEED)).toEqual([]);
+  });
+
+  it('acceptsPlayerInput(traverse) é true; shop e gameOver continuam false', () => {
+    expect(acceptsPlayerInput('traverse')).toBe(true);
+    expect(acceptsPlayerInput('shop')).toBe(false);
+    expect(acceptsPlayerInput('gameOver')).toBe(false);
+  });
+});
+
+describe('Run modular: exitReached (TRV-05, TRV-06, KON-01, KON-04)', () => {
+  it('em traverse leva a shop e emite shopOpen da rodada atual', () => {
+    const { run } = clearedModular();
+    run.exitReached();
+    expect(run.update(0, SEED)).toEqual([{ type: 'shopOpen', round: 1 }]);
+    expect(run.state).toBe('shop');
+  });
+
+  it('com skipShop leva direto a roundActive da rodada seguinte, sem shopOpen', () => {
+    const { run } = clearedModular({ skipShop: true });
+    run.exitReached();
+    const commands = run.update(0, SEED);
+    expect(commands).toEqual([{ type: 'roundStart', round: 2 }]);
+    expect(run.state).toBe('roundActive');
+    expect(run.round).toBe(2);
+    // Onda nova: o próximo update já emite o burst de spawns da rodada 2.
+    expect(run.update(0, SEED).filter(isSpawn).length).toBeGreaterThan(0);
+  });
+
+  it('é ignorado em roundActive: nem a onda que fecha logo depois o aproveita', () => {
+    const run = modularRun();
+    run.exitReached();
+    for (let id = 1; id <= 6; id++) run.enemyDied(id);
+    run.update(0, SEED);
+    expect(run.state).toBe('traverse');
+    expect(run.update(0, SEED)).toEqual([]);
+    expect(run.state).toBe('traverse');
+  });
+
+  it('é ignorado em shop e em title', () => {
+    const { run } = clearedModular();
+    run.exitReached();
+    run.update(0, SEED);
+    expect(run.state).toBe('shop');
+    run.exitReached();
+    expect(run.update(0, SEED)).toEqual([]);
+    expect(run.state).toBe('shop');
+    const title = newRun();
+    title.exitReached();
+    expect(title.update(0, SEED)).toEqual([]);
+    expect(title.state).toBe('title');
+  });
+
+  it('dois exitReached no mesmo update viram uma transição só', () => {
+    const { run } = clearedModular({ skipShop: true });
+    run.exitReached();
+    run.exitReached();
+    expect(run.update(0, SEED)).toEqual([{ type: 'roundStart', round: 2 }]);
+    expect(run.round).toBe(2);
+    expect(run.update(0, SEED).filter((c) => c.type === 'roundStart')).toEqual([]);
+    expect(run.round).toBe(2);
+  });
+
+  it('o pedido de saída não fica represado: depois de uma volta a traverse ele não dispara sozinho', () => {
+    const { run } = clearedModular({ skipShop: true });
+    run.exitReached();
+    run.update(0, SEED);
+    for (let id = 1; id <= 8; id++) run.enemyDied(id);
+    run.update(0, SEED);
+    expect(run.state).toBe('traverse');
+    expect(run.update(0, SEED)).toEqual([]);
+  });
+
+  it('fechar a loja continua levando à rodada seguinte', () => {
+    const { run } = clearedModular();
+    run.exitReached();
+    run.update(0, SEED);
+    run.closeShop();
+    expect(run.update(0, SEED)).toEqual([{ type: 'roundStart', round: 2 }]);
+  });
+});
+
+describe('Run modular: morte em traverse (TRV-09, RUN-04)', () => {
+  it('morte em traverse vai a gameOver com o resumo da rodada', () => {
+    const { run } = clearedModular();
+    run.playerDied();
+    expect(run.update(0, SEED)).toEqual([{ type: 'gameOver', round: 1, kills: 6 }]);
+    expect(run.state).toBe('gameOver');
+    expect(run.summary).toEqual({ round: 1, kills: 6 });
+  });
+
+  it('morte e último abate no mesmo update vão a gameOver, nunca a traverse', () => {
+    const run = modularRun();
+    for (let id = 1; id <= 6; id++) run.enemyDied(id);
+    run.playerDied();
+    const commands = run.update(0, SEED);
+    expect(run.state).toBe('gameOver');
+    expect(commands.map((c) => c.type)).toEqual(['gameOver']);
+  });
+
+  it('morte e exitReached no mesmo update vão a gameOver', () => {
+    const { run } = clearedModular();
+    run.exitReached();
+    run.playerDied();
+    expect(run.update(0, SEED).map((c) => c.type)).toEqual(['gameOver']);
+    expect(run.state).toBe('gameOver');
+  });
+});
+
+describe('Run modular: streams do mundo (ARE-07, SLT-01)', () => {
+  it('stageRng e slotRng são null antes do start e depois dele com seed s são new Rng(s ^ salt)', () => {
+    const run = newRun();
+    expect(run.stageRng).toBeNull();
+    expect(run.slotRng).toBeNull();
+    run.startPressed();
+    run.update(0, SEED);
+    expect(run.stageRng!.next()).toBe(new Rng(7 ^ 0x1f83d9ab).next());
+    expect(run.slotRng!.next()).toBe(new Rng(7 ^ 0x5be0cd19).next());
+  });
+
+  it('a mesma seed reproduz as sequências e os dois streams são independentes entre si', () => {
+    const a = started();
+    const b = started();
+    for (let i = 0; i < 100; i++) b.stageRng!.next();
+    expect(b.slotRng!.next()).toBe(a.slotRng!.next());
+    expect(b.lootRng!.next()).toBe(a.lootRng!.next());
+    expect(b.shopRng!.next()).toBe(a.shopRng!.next());
+    expect(b.guardRng!.next()).toBe(a.guardRng!.next());
+    expect(b.variantRng!.next()).toBe(a.variantRng!.next());
+    expect(b.spawnRng!.next()).toBe(a.spawnRng!.next());
+    expect(b.elixirRng!.next()).toBe(a.elixirRng!.next());
+  });
+
+  it('os streams que já existiam dão as mesmas sequências de antes (valores fixados, seed 7)', () => {
+    const run = started();
+    const take = (r: Rng) => Array.from({ length: 4 }, () => r.next());
+    expect(take(run.lootRng!)).toEqual([
+      0.9823943767696619, 0.3341257639694959, 0.6892532545607537, 0.12651141709648073,
+    ]);
+    expect(take(run.guardRng!)).toEqual([
+      0.5889583916869015, 0.13402440771460533, 0.4920719088986516, 0.7194477405864745,
+    ]);
+    expect(run.spawnRng!.next()).toBe(new Rng(7 ^ 0x3c6ef372).next());
+    expect(run.elixirRng!.next()).toBe(new Rng(7 ^ 0x510e527f).next());
+  });
+});
