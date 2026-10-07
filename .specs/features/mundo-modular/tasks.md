@@ -374,8 +374,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: a folha `terrain` atual e o `tileFrameFor`
 **Requirement**: THM-01, THM-02, THM-03
 **Done when**:
-- [ ] Testes de arte: cada folha tem todos os frames de `TileVariant`, todas as cores estão na `PALETTE`, e o `seal` existe.
-- [ ] `npm run gate` passa.
+- [x] Testes de arte: cada folha tem todos os frames de `TileVariant`, todas as cores estão na `PALETTE`, e o `seal` existe.
+- [x] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 

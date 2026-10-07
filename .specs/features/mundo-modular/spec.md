@@ -354,9 +354,9 @@ o espaço.
 | SLT-01 | P2: Objetos sorteados nos slots | Design | Implementing |
 | SLT-02 | P2: Objetos sorteados nos slots | Design | Implementing |
 | SLT-03 | P2: Objetos sorteados nos slots | Design | Implementing |
-| THM-01 | P2: Tema visual por módulo | Design | Pending |
-| THM-02 | P2: Tema visual por módulo | Design | Pending |
-| THM-03 | P2: Tema visual por módulo | Design | Pending |
+| THM-01 | P2: Tema visual por módulo | Design | Implementing |
+| THM-02 | P2: Tema visual por módulo | Design | Implementing |
+| THM-03 | P2: Tema visual por módulo | Design | Implementing |
 
 **Coverage:** 54 total, 0 mapped to tasks, 54 unmapped ⚠️ (mapeamento no Tasks)
 

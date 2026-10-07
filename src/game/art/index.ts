@@ -22,6 +22,7 @@ import { TELEGRAPH_FRAMES } from './sprites/telegraph';
 import { TOOL_FRAMES, TOOL_SHARDS } from './sprites/tools';
 import { BOSS_ANIMS, BOSS_FRAMES, PROJECTILE_FRAME, SHOCKWAVE_FRAME, TECELA_FRAMES, bossAnimKey } from './sprites/boss';
 import { registerTiles } from './tiles';
+import { registerThemedTiles } from './tilesThemes';
 
 /** Chave da animação do player no AnimationManager (global do jogo). */
 export const playerAnimKey = (name: string): string => `player-${name}`;
@@ -39,6 +40,7 @@ export const shardsKey = (texture: string): string => `${texture}-shards`;
 export function createArt(scene: Phaser.Scene): void {
   createPlaceholderTextures(scene);
   registerTiles(scene);
+  registerThemedTiles(scene);
   // Folha do player + os frames de conjuração das técnicas (CAST-18) e do combate estilo luta (MOV-14), na
   // mesma textura (CAST-13/MOV-18 trocam de frame).
   registerSheet(
