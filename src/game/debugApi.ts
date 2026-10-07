@@ -150,6 +150,26 @@ export interface GameSnapshot {
   gate: { active: number; queue: number[] };
   /** Spawn do player no level, já com o mesmo ajuste que a cena aplica (RUN-02/05). */
   level: { playerSpawn: { x: number; y: number } };
+  /** Área atual (LEG-05): modo, ids dos módulos, tamanho em px, selo fechado, borda esquerda do selo e corpos estáticos do Matter. */
+  area: {
+    mode: 'modular' | 'sala';
+    modules: string[];
+    widthPx: number;
+    heightPx: number;
+    sealed: boolean;
+    exitX: number | null;
+    staticBodies: number;
+    /** Folha de terreno do chão no meio de cada trecho, lida da imagem desenhada (THM-02); vazio na sala. */
+    sheets: { id: string; sheet: string | null }[];
+    /** Cores `wall` e `top` das faixas do fundo próximo, uma por trecho (THM-02); vazio na sala. */
+    bands: { wall: string; top: string }[];
+    /** Imagem do selo desenhada agora (THM-03); `null` sem selo ou depois do efeito de 400 ms. */
+    seal: { texture: string; frame: string; alpha: number } | null;
+    /** Entre o início do fade de saída e o fim do fade de entrada: o input do player é neutro (TRV-10). */
+    transitioning: boolean;
+    /** Fade da câmera do mundo (TRV-10): `out` escurece, senão clareia; `alpha` de 0 (claro) a 1 (preto). */
+    fade: { running: boolean; out: boolean; alpha: number };
+  };
   /** Estado do HUD da run (RHUD-01..07). */
   hud: {
     ignoredByMain: boolean;
@@ -273,6 +293,8 @@ export interface GameSnapshot {
   camera: {
     zoom: number;
     worldView: { left: number; right: number };
+    /** Limites da câmera do mundo (`getBounds`): a área inteira em px (ARE-10). */
+    bounds: { x: number; y: number; width: number; height: number };
     /** Centro da câmera do mundo em ponto flutuante e o scroll aplicado, na grade de pixel de tela (CAM-07). */
     center: { x: number; y: number };
     scroll: { x: number; y: number };

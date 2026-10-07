@@ -23,12 +23,15 @@ export interface LevelData {
   player: Spawn;
   enemies: Spawn[];
   props: PropSpawn[];
+  /** Coluna do selo (`S`), fora de `solids`: a cena cria e remove o corpo dela à parte (ARE-08, TRV-01); `null` sem `S`. */
+  seal: Rect | null;
 }
 
 const PROP_CHARS: Record<string, string> = { c: 'chair', b: 'bottle' };
 
 /**
- * Legenda: '#' sólido, '.' vazio, 'P' player, 'E' inimigo, 'c' cadeira, 'b' garrafa.
+ * Legenda: '#' sólido, '.' vazio, 'P' player, 'E' inimigo, 'c' cadeira, 'b' garrafa, 'S' selo (uma coluna só,
+ * do primeiro ao último 'S'; nunca se mescla nos sólidos).
  * Sólidos vizinhos na mesma linha viram um retângulo só, para o player não
  * enganchar nas emendas entre tiles.
  */
@@ -39,6 +42,7 @@ export function parseLevel(rows: readonly string[]): LevelData {
   const enemies: Spawn[] = [];
   const props: PropSpawn[] = [];
   let player: Spawn | null = null;
+  let seal: Rect | null = null;
 
   for (let ty = 0; ty < rows.length; ty++) {
     const row = rows[ty];
@@ -57,6 +61,10 @@ export function parseLevel(rows: readonly string[]): LevelData {
         runStart = -1;
       }
       if (tx === width || ch === '.') continue;
+      if (ch === 'S') {
+        seal = growSeal(seal, tx, ty);
+        continue;
+      }
       const center = { x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 };
       if (ch === 'P') {
         if (player) throw new Error('Mais de um P no level');
@@ -72,7 +80,14 @@ export function parseLevel(rows: readonly string[]): LevelData {
   }
 
   if (!player) throw new Error('Level sem P (spawn do player)');
-  return { widthPx: width * TILE, heightPx: rows.length * TILE, solids, player, enemies, props };
+  return { widthPx: width * TILE, heightPx: rows.length * TILE, solids, player, enemies, props, seal };
+}
+
+/** Estende o retângulo do selo com o 'S' em (tx, ty); o selo é uma coluna só (TRV-01). */
+function growSeal(seal: Rect | null, tx: number, ty: number): Rect {
+  if (!seal) return { x: tx * TILE, y: ty * TILE, width: TILE, height: TILE };
+  if (seal.x !== tx * TILE) throw new Error(`Selo em mais de uma coluna: 'S' em (${tx}, ${ty})`);
+  return { ...seal, height: (ty + 1) * TILE - seal.y };
 }
 
 export type TileVariant =

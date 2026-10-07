@@ -1,7 +1,7 @@
 # Combatsu
 
 Roguelite de luta em pixel art, para navegador (Phaser 4 + Matter.js). O jogador enfrenta ondas de espíritos
-amaldiçoados numa sala, com combate corpo a corpo estilo jogo de luta, objetos do cenário como arma, técnicas
+amaldiçoados num bairro de Tóquio sob o Véu, em áreas montadas por módulos, com combate corpo a corpo estilo jogo de luta, objetos do cenário como arma, técnicas
 amaldiçoadas compradas na loja entre as rodadas e um chefe a cada 5 rodadas. O repositório se chama `surgue`.
 
 O mapa das features e o que vem a seguir estão em `.specs/ROADMAP.md`; as decisões do projeto e o ponto em que o
@@ -41,11 +41,20 @@ npm run smoke       # build + cenários no Edge headless (scripts/smoke/); `npm 
 | J + K | finalizador, perto de um inimigo com a postura quebrada ou do chefe atordoado |
 | J / Enter | começar a run (título e game over) |
 | 1 / 2 / 3 e R | na loja: comprar a oferta e trocar as ofertas |
-| R | fora da loja: reiniciar a sala |
+| R | fora da loja: reiniciar a área |
 | Tab | mostrar/esconder o painel de controles |
 
 O painel de controles aparece por 8 s ao iniciar e a cada reinício. Direção + golpe muda o golpe (gancho, rasteira,
 chute alto e os outros do grafo em `src/data/moves.ts`).
+
+## Mundo modular
+
+Cada rodada acontece numa área montada com 2 módulos de cenário (rodadas 1 e 2) ou 3 (da rodada 3 em diante), sorteados
+pela seed da run: `rua`, `beco` e `parque`; a rodada de chefe usa o pátio do `santuario`. Cada módulo tem o chão e
+o fundo do seu tema. Os inimigos vêm em ondas, e a área é fechada à direita por um selo (uma faixa de talismãs). Ao
+limpar a rodada o selo rompe e a travessia abre: é só andar até a saída. Depois da saída o jogo entra na konbini, um
+mercadinho sem inimigos que é a loja; fechar a loja leva à próxima área, com módulos novos. Os módulos são escritos à
+mão em `src/data/modules/` e montados por `src/core/stage.ts`.
 
 ## Modo debug
 
@@ -74,10 +83,16 @@ Parâmetros da URL, todos junto de `?debug`:
 | `shove=N` | chance (0 a 1) de o inimigo empurrar no 4º golpe leve seguido |
 | `tech=<id>[,<id>]` | começar com técnicas equipadas (`divergente`, `vermelho`, `azul`, `corte`) |
 | `fragments=N` | começar com N fragmentos |
-| `noshop=1` | pular a loja entre as rodadas |
+| `noshop=1` | pular a loja entre as rodadas: a saída leva direto à próxima área, sem konbini |
+| `modules=rua,beco,parque` | área de combate montada só com esses módulos, nesta ordem (ids desconhecidos ou especiais são ignorados) |
+| `area=sala` | sala de teste de uma tela só (`src/data/level1.ts`), sem selo, travessia nem konbini; a loja abre na própria sala. O `fxlab` também usa a sala |
 | `heal=N`, `armed=knife\|club`, `rare=1` | forçar a chance de cura, a ferramenta do inimigo armado e a raridade |
 | `fxlab` | laboratório de efeitos: sem ondas, bonecos de treino, teclas 1 a 6 disparam cada efeito e 0 liga a câmera lenta |
 | `hd=1` | spike de sprites HD: canvas 1280x720, zoom 2 e folha `player-hd` (1 texel = 1 px) no idle e no gancho ascendente; funciona com ou sem `debug` |
+
+Sem `area=sala`, com ou sem `?debug`, o jogo usa o mundo modular. Os smokes antigos medem posições da sala, então o
+runner (`scripts/smoke/run.mjs`) acrescenta `area=sala` a toda URL de cenário que não tenha `area=` nem `modules=`;
+os smokes do mundo novo pedem `area=modular` (ou `modules=`) de forma explícita.
 
 Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapshot()` devolve o estado vivo,
 `step(ms)` avança o jogo em passos fixos e `render()` desenha o quadro atual.
@@ -101,7 +116,8 @@ Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapsh
 - Ofertas e preços da loja: `src/data/shop.ts`
 - Hitstop (congelamento do golpe leve e do forte): `src/data/fx.ts`
 - Objetos e ferramentas (peso, dano, durabilidade, arremesso): `src/data/props.ts`
-- Sala: `src/data/level1.ts` (legenda em `src/core/level.ts`)
+- Módulos do mundo (grades e legenda): `src/data/modules/`; montagem da área: `src/core/stage.ts`
+- Sala de teste: `src/data/level1.ts` (legenda em `src/core/level.ts`)
 - Câmera (zoom, zona morta e amortecimento): `WORLD_ZOOM`, `FOLLOW_DEADZONE` e `FOLLOW_LERP` em `src/scenes/TestScene.ts`
 - Ragdoll (juntas, impulso máximo): `src/game/Ragdoll.ts`
 - Efeitos (faísca, poeira, rastro, tremida): `src/game/fx.ts`
@@ -125,7 +141,7 @@ canvas na inicialização com 1 texel = 2 px de mundo.
   a origem fica no pé. `tests/game/feelArt.test.ts` confere que o membro do frame de impacto chega à hitbox do golpe,
   que o boneco é uma peça só e que golpes no chão têm o pé de apoio no chão
 - Chefes: `src/game/art/sprites/boss.ts` monta cada frame por pose (volumes pintados por código, rosto, chifres e pés desenhados à mão por cima); o resultado é a mesma grade de texto
-- Tiles do cenário: `src/game/art/tiles.ts`
+- Tiles do cenário: `src/game/art/tiles.ts` (sala) e `src/game/art/tilesThemes.ts` (uma folha por tema do módulo e o selo)
 - Fundo com parallax: `src/game/art/background.ts`
 - Molduras das barras de vida: `src/game/art/hud.ts`
 - Registro de tudo e das animações: `src/game/art/index.ts`

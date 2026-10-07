@@ -104,6 +104,16 @@ export class Pickups {
     return { collected, expired };
   }
 
+  /**
+   * Saída da área (TRV-07): remove todos os pickups vivos da cena e os devolve, para a cena creditar cada um pelo
+   * mesmo caminho de uma coleta (carteira, cura com teto, "+N" e eventos).
+   */
+  takeAll(): PickupState[] {
+    const taken = this.entries.map((e) => e.state);
+    this.clear();
+    return taken;
+  }
+
   /** Nova run (ECO-27): remove todos os pickups da cena. */
   clear(): void {
     for (const e of this.entries) e.sprite.destroy();

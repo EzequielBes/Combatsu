@@ -107,8 +107,17 @@ export class ShopDirector {
     this.s.snapshot.debugEvents.push(`shopOpen:${round}`);
   }
 
-  /** Fecha a loja (SHOP-03/35): arma o pedido na `Run`, retoma o Matter e limpa a loja. */
+  /**
+   * Fecha a loja (SHOP-03/35). No mundo modular (KON-02, TRV-10) escurece a câmera em `AREA.fadeMs` e só então fecha de
+   * verdade; na sala fecha na hora, como sempre.
+   */
   closeShop(): void {
+    if (this.s.area.mode === 'modular') this.s.area.closeShopWithFade(() => this.finishClose());
+    else this.finishClose();
+  }
+
+  /** Fechamento de verdade (SHOP-03/35): arma o pedido na `Run`, retoma o Matter (antes do fade de entrada da área nova, KON-03) e limpa a loja. */
+  private finishClose(): void {
     this.s.run.closeShop();
     this.s.matter.world.resume();
     this.shop = null;

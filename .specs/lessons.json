@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 64,
+  "next_id": 69,
   "lessons": [
     {
       "id": "L-001",
@@ -778,14 +778,14 @@
         "personagem-e-vermelho"
       ],
       "recurrence": 3,
-      "harmful": 0,
+      "harmful": 1,
       "evidence": [
         "M7 src/game/art/index.ts:128 (art-adapter)",
         "M2b src/scenes/TestScene.ts:843 (art-adapter) (art-adapter)",
         "M11-adapt TechRunner.ts:350 (art-adapter)"
       ],
       "created": "2026-10-01T14:45:04Z",
-      "last_seen": "2026-10-02T21:33:41Z"
+      "last_seen": "2026-10-07T16:20:07Z"
     },
     {
       "id": "L-044",
@@ -1146,6 +1146,96 @@
       ],
       "created": "2026-10-04T03:16:30Z",
       "last_seen": "2026-10-04T03:16:30Z"
+    },
+    {
+      "id": "L-064",
+      "key": "surviving_mutant::for every timed transition the spec defines assert each phase s duration and the input gating live in the smoke not only that the transition completes",
+      "text": "For every timed transition the spec defines, assert each phase's duration and the input gating live in the smoke, not only that the transition completes",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "mundo-modular"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "A5 src/scenes/TestScene.ts:451 (TRV-10) (smoke)"
+      ],
+      "created": "2026-10-07T16:20:07Z",
+      "last_seen": "2026-10-07T16:20:07Z"
+    },
+    {
+      "id": "L-065",
+      "key": "ac_gap::when an acceptance criterion lists several item kinds assert the outcome of each kind not only the first one",
+      "text": "When an acceptance criterion lists several item kinds, assert the outcome of each kind, not only the first one",
+      "signal": "ac_gap",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "mundo-modular"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "TRV-07 scripts/smoke/world-traverse.smoke.mjs:183 (smoke)"
+      ],
+      "created": "2026-10-07T16:20:07Z",
+      "last_seen": "2026-10-07T16:20:07Z"
+    },
+    {
+      "id": "L-066",
+      "key": "spec_precision_gap::when the spec requires an error to name several fields assert every field in every failing branch not only the identifier",
+      "text": "When the spec requires an error to name several fields, assert every field in every failing branch, not only the identifier",
+      "signal": "spec_precision_gap",
+      "scope": "tests core",
+      "status": "candidate",
+      "features": [
+        "mundo-modular"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MDL-03 tests/core/module.test.ts:26 (tests core)"
+      ],
+      "created": "2026-10-07T16:20:07Z",
+      "last_seen": "2026-10-07T16:20:07Z"
+    },
+    {
+      "id": "L-067",
+      "key": "ac_gap::give every spec edge case its own test even when the code path looks structurally safe",
+      "text": "Give every spec edge case its own test, even when the code path looks structurally safe",
+      "signal": "ac_gap",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "mundo-modular"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "edge case: new run from gameOver; edge case: prop thrown past the seal (smoke)"
+      ],
+      "created": "2026-10-07T16:20:07Z",
+      "last_seen": "2026-10-07T16:20:07Z"
+    },
+    {
+      "id": "L-068",
+      "key": "surviving_mutant::when a test compares a behavior against its baseline run the comparison in a state where each input under test changes the outcome since an equality in a trivial state passes any mutant of that input",
+      "text": "When a test compares a behavior against its baseline, run the comparison in a state where each input under test changes the outcome, since an equality in a trivial state passes any mutant of that input",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "mundo-modular"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "KA src/scenes/test/shopDirector.ts:105 (KON-02); scripts/smoke/world-traverse.smoke.mjs:342-360 (smoke)"
+      ],
+      "created": "2026-10-07T17:31:20Z",
+      "last_seen": "2026-10-07T17:31:20Z"
     }
   ]
 }

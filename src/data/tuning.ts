@@ -163,8 +163,14 @@ export const WAVE: WaveTuning = {
   pointGapMs: 800,
 };
 
-/** Spawn (SPN-08): chance de preferir os pontos às costas do player. */
-export const SPAWN = { preferBackChance: 0.35 } as const;
+/**
+ * Mundo modular (ARE-06, ARE-09, TRV-03, TRV-10): fade de 250 ms em cada ponta da transição, efeito do selo de
+ * 400 ms, player na coluna 3 da área e largura da área entre 48 e 120 colunas (parede e selo incluídos).
+ */
+export const AREA = { fadeMs: 250, sealBurnMs: 400, playerCol: 3, minCols: 48, maxCols: 120 } as const;
+
+/** Spawn (SPN-08, RCH-01): chance de preferir os pontos às costas do player; alcance horizontal máximo em px. */
+export const SPAWN = { preferBackChance: 0.35, reachPx: 900 } as const;
 
 /** Limitador de atacantes (LIM-01, LIM-02): 2 vagas e 350 ms entre windups. */
 export const ATTACK_GATE: AttackGateTuning = { maxActive: 2, minWindupGapMs: 350 };

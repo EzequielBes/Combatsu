@@ -1,4 +1,6 @@
 import type Phaser from 'phaser';
+import type { ModuleTheme } from '../../core/module';
+import { TILE } from '../../core/level';
 import { ART_SCALE, PALETTE } from './palette';
 
 /** Fatores de rolagem das três camadas de fundo (ENV-02): distante, média e próxima. */
@@ -12,6 +14,48 @@ const DEPTH = [-30, -20, -10];
  * piso cobre a base de cada camada; tudo abaixo dessa linha é preenchido até o fim para nunca abrir buraco.
  */
 const GROUND = [400, 420, 450];
+
+/** Cor do muro da camada próxima por tema (THM-02): `wall` é a base e `top` a linha acesa; só chaves da paleta. */
+export const NEAR_COLORS: Record<ModuleTheme, { wall: string; top: string }> = {
+  rua: { wall: 'E', top: 'f' },
+  beco: { wall: 'n', top: 'N' },
+  parque: { wall: 'g', top: 'G' },
+  konbini: { wall: 'N', top: 's' },
+  santuario: { wall: 'm', top: 'M' },
+};
+
+/** Trecho de um módulo na área, em colunas de tile com a parede, como o `AreaSpan` do `stage.ts` (THM-02). */
+export interface ThemeSpan {
+  theme: ModuleTheme;
+  col0: number;
+  col1: number;
+}
+
+/** Faixa de cor da camada próxima: de `x0` a `x1` na coordenada da própria camada. */
+export interface Band {
+  x0: number;
+  x1: number;
+  wall: string;
+  top: string;
+}
+
+/** Largura de vista em px de mundo (640 no canvas normal e no HD, ver `hd/screen.ts`). */
+const VIEW_W = 640;
+
+/**
+ * Faixas da camada próxima para os trechos: a camada rola a `PARALLAX[2]` da câmera, então o ponto de mundo X
+ * aparece na coordenada da camada onde a câmera centrada em X o enxerga (`0,6 X + 0,4 · VIEW_W / 2`). A primeira
+ * faixa vai até a borda esquerda e a última até a direita.
+ */
+export function bandsFor(spans: readonly ThemeSpan[], x0: number, x1: number): Band[] {
+  const f = PARALLAX[2];
+  const toLayer = (worldX: number): number => f * worldX + (1 - f) * (VIEW_W / 2);
+  return spans.map((sp, i) => ({
+    x0: i === 0 ? x0 : toLayer(sp.col0 * TILE),
+    x1: i === spans.length - 1 ? x1 : toLayer((sp.col1 + 1) * TILE),
+    ...NEAR_COLORS[sp.theme],
+  }));
+}
 
 type Key = keyof typeof PALETTE & string;
 
@@ -68,18 +112,28 @@ function rng(seed: number): () => number {
  * - distante (0,1): céu em faixas com dither, estrelas, lua com halo e a silhueta do prédio principal com a torre;
  * - média (0,3): alas da escola com telhado de beiral, árvores e postes acesos;
  * - próxima (0,6): muro de pilares de pedra com gradil.
+ * Com `spans` (THM-02) a camada próxima ganha a cor do tema de cada módulo; sem eles (a sala) sai a de sempre.
  * Devolve as camadas na ordem de PARALLAX.
  */
-export function buildBackground(scene: Phaser.Scene, widthPx: number, heightPx: number): Phaser.GameObjects.Graphics[] {
+export function buildBackground(
+  scene: Phaser.Scene,
+  widthPx: number,
+  heightPx: number,
+  spans?: readonly ThemeSpan[],
+): Phaser.GameObjects.Graphics[] {
   const x0 = -128;
   const x1 = widthPx + 128;
   const bottom = heightPx + 256;
-  const painters = [paintFar, paintMid, paintNear];
-  return PARALLAX.map((factor, i) => {
+  const bands = spans && spans.length > 0 ? bandsFor(spans, x0, x1) : undefined;
+  const painters = [paintFar, paintMid, (b: Brush, span: Span) => paintNear(b, span, bands)];
+  const layers = PARALLAX.map((factor, i) => {
     const g = scene.add.graphics().setScrollFactor(factor, factor).setDepth(DEPTH[i]);
     painters[i](new Brush(g), { x0, x1, ground: GROUND[i], bottom });
     return g;
   });
+  // As cores pintadas na camada próxima ficam no objeto, para o snapshot de debug conferir o tema (THM-02).
+  layers[2].setData('bands', bands ?? []);
+  return layers;
 }
 
 interface Span {
@@ -232,12 +286,14 @@ function paintMid(b: Brush, { x0, x1, ground, bottom }: Span): void {
   }
 }
 
-function paintNear(b: Brush, { x0, x1, ground, bottom }: Span): void {
+function paintNear(b: Brush, { x0, x1, ground, bottom }: Span, bands?: readonly Band[]): void {
   // Tons médios (E/f), nunca o preto do contorno: os personagens passam na frente desta camada e o contorno
   // deles (k) precisa se destacar dela.
   // Muro baixo de pedra.
-  b.rect(x0, ground - 36, x1 - x0, bottom - ground + 36, 'E');
-  b.rect(x0, ground - 36, x1 - x0, 2, 'f');
+  for (const band of bands ?? [{ x0, x1, wall: 'E', top: 'f' }]) {
+    b.rect(band.x0, ground - 36, band.x1 - band.x0, bottom - ground + 36, band.wall);
+    b.rect(band.x0, ground - 36, band.x1 - band.x0, 2, band.top);
+  }
   // Gradil: dois trilhos e barras finas.
   const railTop = ground - 76;
   b.rect(x0, railTop, x1 - x0, 4, 'K');

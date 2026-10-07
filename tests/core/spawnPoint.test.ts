@@ -151,3 +151,108 @@ describe('pickSpawnPoint: nenhum ponto fora da câmera (SPN-09)', () => {
     expect(pickSpawnPoint(base({ points, playerX: 790 }))).toBe(0);
   });
 });
+
+describe('pickSpawnPoint: alcance maxReach (RCH-01, RCH-02)', () => {
+  // playerX 600, câmera 400..800 (margem 32): fora = x < 368 ou x > 832. Distância ao player = |x - 600|.
+  const reach = (over: Partial<PickSpawnPointInput>): PickSpawnPointInput => base({ maxReach: 900, ...over });
+
+  it('ponto a 900 px é candidato (<=)', () => {
+    // [1500 (900 px), 100 (500 px)]: pick 0 escolhe o primeiro candidato; se 1500 não fosse candidato sairia o 1.
+    expect(pickSpawnPoint(reach({ points: [{ x: 1500 }, { x: 100 }], rng: fakeRng(false, 0).rng }))).toBe(0);
+  });
+
+  it('ponto a 901 px não é candidato', () => {
+    expect(pickSpawnPoint(reach({ points: [{ x: 1501 }, { x: 100 }], rng: fakeRng(false, 0).rng }))).toBe(1);
+  });
+
+  it('pontos a 500, 901 e 2000 px: só o de 500 é candidato', () => {
+    const points = [{ x: 2600 }, { x: 1501 }, { x: 1100 }];
+    for (let pick = 0; pick < 3; pick++) {
+      const { rng, calls } = fakeRng(false, pick);
+      expect(pickSpawnPoint(reach({ points, rng }))).toBe(2);
+      expect(calls.int).toBe(1);
+    }
+  });
+
+  it('o alcance conta a distância dos dois lados do player', () => {
+    // -300 está a 900 px à esquerda (candidato) e -301 a 901 px (fora do alcance).
+    const left = pickSpawnPoint(reach({ points: [{ x: -300 }, { x: 1100 }], rng: fakeRng(false, 0).rng }));
+    expect(left).toBe(0);
+    const farLeft = pickSpawnPoint(reach({ points: [{ x: -301 }, { x: 1100 }], rng: fakeRng(false, 0).rng }));
+    expect(farLeft).toBe(1);
+  });
+});
+
+describe('pickSpawnPoint: sem candidato no alcance (RCH-03, RCH-04)', () => {
+  it('todos acima de 900 px: devolve o fora da câmera mais perto, sem consumir rng.int', () => {
+    const { rng, calls } = fakeRng(false, 3);
+    const points = [{ x: 2600 }, { x: 1501 }, { x: 3000 }];
+    expect(pickSpawnPoint(base({ points, maxReach: 900, rng }))).toBe(1);
+    expect(calls.int).toBe(0);
+  });
+
+  it('o mais perto vale dos dois lados e o empate fica com o menor índice', () => {
+    expect(pickSpawnPoint(base({ points: [{ x: 2200 }, { x: -800 }], maxReach: 900 }))).toBe(1);
+    expect(pickSpawnPoint(base({ points: [{ x: 2300 }, { x: -900 }], maxReach: 900 }))).toBe(1);
+    // Empate: 1800 e -1200 distam 1200 px do player.
+    expect(pickSpawnPoint(base({ points: [{ x: 1800 }, { x: -600 }], maxReach: 900 }))).toBe(0);
+    expect(pickSpawnPoint(base({ points: [{ x: -600 }, { x: 1800 }], maxReach: 900 }))).toBe(0);
+  });
+
+  it('o ponto dentro da câmera não vale nem como o mais perto: só fora da câmera', () => {
+    const points = [{ x: 600 }, { x: 2600 }];
+    expect(pickSpawnPoint(base({ points, maxReach: 900 }))).toBe(1);
+  });
+
+  it('nenhum ponto fora da câmera: farthestPoint, com ou sem maxReach', () => {
+    const points = [{ x: 450 }, { x: 700 }, { x: 790 }];
+    expect(pickSpawnPoint(base({ points, playerX: 450, maxReach: 10 }))).toBe(2);
+    expect(pickSpawnPoint(base({ points, playerX: 790, maxReach: 10 }))).toBe(0);
+  });
+
+  it('rng.chance é consumido uma vez em todos os ramos', () => {
+    const run = (points: { x: number }[], maxReach?: number): number => {
+      const { rng, calls } = fakeRng(true, 0);
+      pickSpawnPoint(base({ points, maxReach, rng }));
+      return calls.chance;
+    };
+    expect(run([{ x: 1100 }, { x: 100 }], 900)).toBe(1); // candidatos no alcance
+    expect(run([{ x: 2600 }], 900)).toBe(1); // mais perto fora da câmera
+    expect(run([{ x: 450 }], 900)).toBe(1); // farthestPoint
+    expect(run([{ x: 2600 }])).toBe(1); // sem maxReach
+  });
+});
+
+describe('pickSpawnPoint: costas e gap só sobre os do alcance (RCH-05)', () => {
+  it('preferência pelas costas ignora o ponto de trás que está fora do alcance', () => {
+    // player olha para a direita: -400 está atrás, mas a 1000 px; o único candidato é o 1100 (à frente).
+    const points = [{ x: -400 }, { x: 1100 }];
+    expect(pickSpawnPoint(base({ points, maxReach: 900, rng: fakeRng(true, 0).rng }))).toBe(1);
+  });
+
+  it('preferência pelas costas continua valendo entre os do alcance', () => {
+    const points = [{ x: 1100 }, { x: 100 }];
+    expect(pickSpawnPoint(base({ points, maxReach: 900, rng: fakeRng(true, 0).rng }))).toBe(1);
+    expect(pickSpawnPoint(base({ points, maxReach: 900, rng: fakeRng(false, 0).rng }))).toBe(0);
+  });
+
+  it('o gap só olha os do alcance: o livre fora do alcance não tira o usado do alcance', () => {
+    const lastUsedAt = new Map([[0, 9999]]);
+    const points = [{ x: 1100 }, { x: 2600 }];
+    expect(pickSpawnPoint(base({ points, lastUsedAt, maxReach: 900, rng: fakeRng(false, 0).rng }))).toBe(0);
+  });
+
+  it('o gap exclui o usado do alcance quando há outro livre no alcance', () => {
+    const lastUsedAt = new Map([[0, 9999]]);
+    const points = [{ x: 1100 }, { x: 100 }];
+    expect(pickSpawnPoint(base({ points, lastUsedAt, maxReach: 900, rng: fakeRng(false, 0).rng }))).toBe(1);
+  });
+});
+
+describe('pickSpawnPoint: sem maxReach nada muda (LEG-01)', () => {
+  it('ponto a 2000 px é candidato sem maxReach e com maxReach infinito', () => {
+    const points = [{ x: 2600 }, { x: 100 }];
+    expect(pickSpawnPoint(base({ points, rng: fakeRng(false, 0).rng }))).toBe(0);
+    expect(pickSpawnPoint(base({ points, maxReach: Infinity, rng: fakeRng(false, 0).rng }))).toBe(0);
+  });
+});

@@ -85,6 +85,17 @@ const files = readdirSync(here)
   .filter((f) => !process.argv[2] || f.includes(process.argv[2]))
   .sort();
 
+// LEG-03: os cenários antigos medem a geometria da sala de teste; toda URL sem `area=` nem `modules=` ganha `area=sala`.
+const withLegacyRoom = (url) => {
+  if (/[?&](area|modules)=/.test(url)) return url;
+  return url + (url.includes('?') ? '&' : '?') + 'area=sala';
+};
+const wrapGoto = (page) => {
+  const goto = page.goto.bind(page);
+  page.goto = (url, options) => goto(withLegacyRoom(url), options);
+  return page;
+};
+
 const results = [];
 const browser = await puppeteer.launch({
   executablePath: edge,
@@ -93,7 +104,7 @@ const browser = await puppeteer.launch({
 });
 try {
   for (const name of files) {
-    const page = await browser.newPage();
+    const page = wrapGoto(await browser.newPage());
     try {
       const mod = await import(pathToFileURL(join(here, name)).href);
       await mod.default({ page, baseUrl, assert });

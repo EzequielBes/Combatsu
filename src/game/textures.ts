@@ -4,6 +4,13 @@ import type { EnemyVariant } from '../core/enemyVariant';
 /** Chaves de textura. Trocar placeholder por arte real = carregar um PNG com a mesma chave. */
 export const TEX = {
   terrain: 'terrain',
+  /** Folhas de terreno por tema do módulo (THM-01) e a faixa de talismãs do selo (THM-03). */
+  terrainRua: 'terrain-rua',
+  terrainBeco: 'terrain-beco',
+  terrainParque: 'terrain-parque',
+  terrainKonbini: 'terrain-konbini',
+  terrainSantuario: 'terrain-santuario',
+  seal: 'seal',
   player: 'player',
   /** Folha animada do player (o `player` acima é o corpo físico invisível). */
   playerArt: 'player-art',

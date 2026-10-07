@@ -92,6 +92,20 @@ describe('installDebugApi', () => {
       attackers: 0,
       gate: { active: 0, queue: [] },
       level: { playerSpawn: { x: 96, y: 460 } },
+      area: {
+        mode: 'sala',
+        modules: [],
+        widthPx: 1280,
+        heightPx: 544,
+        sealed: false,
+        exitX: null,
+        staticBodies: 4,
+        sheets: [],
+        bands: [],
+        seal: null,
+        transitioning: false,
+        fade: { running: false, out: true, alpha: 0 },
+      },
       hud: {
         ignoredByMain: true,
         round: 'Rodada 1',
@@ -159,6 +173,7 @@ describe('installDebugApi', () => {
       camera: {
         zoom: 1.5,
         worldView: { left: 0, right: 640 },
+        bounds: { x: 0, y: 0, width: 1280, height: 544 },
         center: { x: 320, y: 180 },
         scroll: { x: -160, y: -90 },
         roundPixels: false,

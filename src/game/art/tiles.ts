@@ -60,7 +60,11 @@ const THIN = [...SLAB, A1, A2, A3, MORTAR, B2, B3, 'KKKKKKKKKKKKKKKK', OUTLINE];
  * Contorno lateral de 1 texel escuro (`k`) na coluna da esquerda ou da direita; com `round`, a primeira e a
  * última linha perdem o texel da quina, arredondando o canto.
  */
-function edge(rows: readonly string[], side: 'left' | 'right', round: { top: boolean; bottom: boolean }): string[] {
+export function edge(
+  rows: readonly string[],
+  side: 'left' | 'right',
+  round: { top: boolean; bottom: boolean },
+): string[] {
   const last = rows.length - 1;
   return rows.map((row, y) => {
     const corner = (y === 0 && round.top) || (y === last && round.bottom);

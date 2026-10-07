@@ -13,6 +13,32 @@ export class DebugSnapshot {
 
   debugDeaths: { id: number; x: number; y: number }[] = [];
 
+  /** Campo `area` (LEG-05): na sala `modules` é vazio, `sealed` é `false` e `exitX` é `null`; `staticBodies` conta os corpos `isStatic` do mundo do Matter. */
+  areaSnapshot(): GameSnapshot['area'] {
+    const area = this.s.area;
+    const fade = this.s.cameras.main.fadeEffect;
+    return {
+      mode: area.mode,
+      modules: [...area.moduleIds],
+      widthPx: this.s.level.widthPx,
+      heightPx: this.s.level.heightPx,
+      sealed: this.s.world.sealed,
+      exitX: this.s.world.exitX,
+      staticBodies: this.s.matter.world.getAllBodies().filter((b) => (b as MatterJS.BodyType).isStatic).length,
+      sheets: this.s.world.floorSheets(),
+      bands: this.s.world.nearBands(),
+      seal: this.s.world.sealView,
+      transitioning: area.transitioning,
+      fade: { running: fade.isRunning, out: fade.direction, alpha: fade.direction ? fade.progress : 1 - fade.progress },
+    };
+  }
+
+  /** Limites da câmera do mundo como o Phaser os guarda (ARE-10). */
+  private cameraBounds(): { x: number; y: number; width: number; height: number } {
+    const { x, y, width, height } = this.s.cameras.main.getBounds();
+    return { x, y, width, height };
+  }
+
   debugSnapshot(): GameSnapshot {
     return {
       player: {
@@ -114,6 +140,7 @@ export class DebugSnapshot {
       timeScale: this.s.effects.slowMo.timeScale,
       hitstop: { frozen: this.s.effects.hitstop.frozen, remainingMs: this.s.effects.hitstop.remaining },
       level: { playerSpawn: { x: this.s.level.player.x, y: this.s.level.player.y - SPAWN_LIFT } },
+      area: this.areaSnapshot(),
       wallet: { fragments: this.s.wallet.fragments },
       shop: this.s.shopDirector.shopSnapshot(),
       modifiers: this.s.modifiers.levels,
@@ -149,6 +176,7 @@ export class DebugSnapshot {
       camera: {
         zoom: this.s.cameras.main.zoom,
         worldView: { left: this.s.cameras.main.worldView.left, right: this.s.cameras.main.worldView.right },
+        bounds: this.cameraBounds(),
         // CAM-07: estado do seguidor novo e os dois interruptores do Phaser que ele substitui.
         center: { x: this.s.camera.camCenter.x, y: this.s.camera.camCenter.y },
         scroll: { x: this.s.cameras.main.scrollX, y: this.s.cameras.main.scrollY },
