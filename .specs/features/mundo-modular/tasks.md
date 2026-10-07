@@ -419,7 +419,7 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: as tabelas de modo debug existentes
 **Requirement**: LEG-03, ARE-12
 **Done when**:
-- [ ] `npm run format:check` passa.
+- [x] `npm run format:check` passa.
 **Tests**: none
 **Gate**: build
 
