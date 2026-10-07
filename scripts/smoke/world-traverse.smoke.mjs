@@ -7,7 +7,9 @@ const FLAT_SOLIDS = 17;
 const MODULE_COLS = { rua: 40, beco: 20, parque: 32, konbini: 20, santuario: 40 };
 
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&modules=beco,parque&maxAlive=1&seed=3`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&modules=beco,parque&maxAlive=1&seed=3&tech=corte`, {
+    waitUntil: 'load',
+  });
   await page.waitForFunction(
     () => {
       try {
@@ -340,7 +342,9 @@ export default async function ({ page, baseUrl, assert }) {
   assert(camChecks > 30, `a câmera deveria ter sido medida várias vezes: ${camChecks}`);
 
   // KON-02: a loja da konbini é igual à da sala (mesma seed, rodada 1, sem compras): mesmas ofertas, preços e reroll.
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&area=sala&maxAlive=1&seed=3`, { waitUntil: 'load' });
+  // As duas URLs equipam `tech=corte`: com ela a loja oferece o upgrade Nv1->2, que exige rodada >= 2 (`minRound`); sem
+  // técnica toda oferta vale desde a rodada 1 e abrir a loja com a rodada errada passaria despercebido.
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&area=sala&maxAlive=1&seed=3&tech=corte`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof window.__game?.snapshot === 'function', { timeout: 15_000 });
   await stepAndSnap(20);
   await page.keyboard.press('KeyJ', { delay: 50 });

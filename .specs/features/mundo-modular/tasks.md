@@ -513,3 +513,21 @@ T26 → T27 → T28 → T29
 - [x] `npm run gate && npm run smoke` passa.
 **Tests**: unit, smoke
 **Gate**: full
+
+---
+
+## Phase 6: Correções do Verifier (rodada 2)
+
+### T30: A comparação da loja da konbini com a da sala com uma técnica equipada (KON-02)
+
+**What**: A rodada 1 sem técnica não muda nenhuma oferta (todo `minRound` vale 1), então o mutante KA (abrir a loja com `round + 1` só no modo modular) sobrevivia. Equipar `tech=corte` nas duas URLs faz a konbini oferecer o upgrade Nv1 para 2, que exige rodada >= 2.
+**Where**: `scripts/smoke/world-traverse.smoke.mjs`
+**Depends on**: None (fases 1 a 5 concluídas)
+**Reuses**: `shopView`, `konbiniShop`
+**Requirement**: KON-02
+**Done when**:
+- [x] As duas URLs do `world-traverse` (a da konbini e a da sala) levam `&tech=corte`, e o comentário do bloco KON-02 explica o porquê.
+- [x] `world-traverse` passa no HEAD e o mutante KA (`round + 1` em `shopDirector.ts`) faz o `world-traverse` falhar.
+- [x] `npm run gate && npm run smoke` passa.
+**Tests**: smoke
+**Gate**: full
