@@ -167,6 +167,19 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   create(): void {
+    this.resetSceneState();
+    this.createWorldAndRun();
+    this.createPlayer();
+    this.createTechniques();
+    this.createEconomyAndCamera();
+    this.bindKeys();
+    this.ui.addHud();
+    this.shopPanel = new ShopPanel(this, this.uiLayer);
+    this.focusLines = new FocusLines(this, this.uiLayer, UI_SIZE.w, UI_SIZE.h);
+  }
+
+  /** Câmera de UI, arte e o estado que não pode vazar da cena anterior (hitstop, câmera lenta, sonda de debug). */
+  private resetSceneState(): void {
     // Antes de criar qualquer objeto, para a câmera de UI ignorar tudo que for mundo.
     this.ui.addUiCamera();
     createArt(this);
@@ -194,6 +207,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.snapshot.debugDeaths = [];
     registerDebugProbe(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => registerDebugProbe(null));
+  }
+
+  /** Área inicial, listas do mundo e a `Run` com os recursos que ela zera a cada `startRun`. */
+  private createWorldAndRun(): void {
     this.fx = new Fx(this);
     const initial = this.area.initialArea();
     this.level = initial.level;
@@ -223,7 +240,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.energy = new CursedEnergy();
     this.loadout = new Loadout();
     this.mastery = new Mastery();
+  }
 
+  private createPlayer(): void {
     this.controls = new PlayerInput(this);
     this.shopInput = new ShopInput(this);
     const p = this.level.player;
@@ -249,6 +268,10 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.player.attackerOf = (ownerId) => this.combat.attackerOf(ownerId);
     this.player.onDefense = (kind, point) => this.combat.onDefense(kind, point);
     this.lastPlayerHp = this.player.hp;
+  }
+
+  /** Conjuração, camadas de efeito e o `TechRunner`; com `?debug&fxlab`, também o laboratório de efeitos. */
+  private createTechniques(): void {
     // Sem spawn inicial de inimigos (RUN-01): a run começa em `title`, e os inimigos entram pelo comando `spawn`.
     this.techCaster = new TechCaster(this, this.player, this.energy, this.loadout);
     this.realtimeFx = new FxTimeline();
@@ -293,12 +316,15 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
     // T28: laboratório de efeitos (`?debug&fxlab`) - bonecos de treino + teclas 1-6/0, sem ondas (FXL-01).
     if (debugParam('fxlab') !== null) {
+      const p = this.level.player;
       this.fxLab = new FxLab(this, this.player, this.loadout, this.energy, this.techCaster);
       this.fxLab.spawnDummies({ x: p.x, y: p.y - SPAWN_LIFT });
       const lab = this.fxLab;
       this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => lab.destroyNow());
     }
+  }
 
+  private createEconomyAndCamera(): void {
     // Economia (ECO-12..14): carteira e pickups vivem a cena toda; `loot`/`lootRng` são recriados a cada startRun.
     this.wallet = new Wallet();
     this.pickups = new Pickups(this, PICKUP);
@@ -314,7 +340,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     const follow = this.camera.followConfig();
     this.camera.camCenter = clampCenter(this.player.renderPos, follow.view, follow.bounds);
     this.camera.followCamera(0);
+  }
 
+  private bindKeys(): void {
     // J também é ataque (PlayerInput): o listener aqui é independente e só começa/recomeça a run (RUN-02/05).
     this.onKey('J', () => this.run.startPressed());
     this.onKey('ENTER', () => this.run.startPressed());
@@ -351,9 +379,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.onKey('R', () => {
       if (this.run.state !== 'shop') this.scene.restart();
     });
-    this.ui.addHud();
-    this.shopPanel = new ShopPanel(this, this.uiLayer);
-    this.focusLines = new FocusLines(this, this.uiLayer, UI_SIZE.w, UI_SIZE.h);
   }
 
   update(_time: number, delta: number): void {
@@ -363,7 +388,31 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setCombo(this.comboCounter.hits, this.comboCounter.grade);
     // FXL-03: a câmera lenta multiplica o `dt` de jogo/efeitos junto com `time`/`tweens`/física do Matter
     // (aplicados em `fxLab.toggleTimeScale`) - um só fator, tudo anda devagar junto.
-    const realDt = Math.min(delta, MAX_FRAME_MS);
+    const dt = this.tickRealtime(Math.min(delta, MAX_FRAME_MS));
+    // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
+    if (this.effects.frozen) return;
+    this.clockMs += dt;
+    // SHOP-33: na loja, nada de gameplay anda; só o input da loja, `run.update`, o painel e o HUD.
+    if (this.run.state === 'shop') this.shopDirector.updateShop();
+    else this.updateGameplay(dt);
+    this.area.update(dt);
+    for (const cmd of this.run.update(dt, this.runDirector.seedForNewRun)) this.runDirector.applyRunCommand(cmd);
+    // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
+    // T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner interno da `Run` segue contando como se
+    // tivesse nascido - sem isso "Inimigos: N" mentiria na tela do laboratório.
+    this.hud.setRun(
+      this.run.round > 0 && !this.fxLab ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null,
+    );
+    this.hud.setHeldItem(this.drops.heldItemInfo());
+    this.hud.update(dt);
+    this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
+  }
+
+  /**
+   * O que anda em tempo real, inclusive no hitstop e na loja: câmera, câmera lenta e as camadas de efeito.
+   * Devolve o `dt` de jogo do quadro (já com a câmera lenta do fxlab e da esquiva perfeita).
+   */
+  private tickRealtime(realDt: number): number {
     // A câmera segue no tempo real, inclusive no hitstop e na loja: a posição de desenho do player já é a deste quadro.
     this.camera.followCamera(realDt);
     // Câmera lenta da esquiva perfeita (DOD-07): conta em tempo real e, enquanto dura, o tempo de jogo (física,
@@ -392,58 +441,43 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.fxRegistry.update(base);
     // T24 (TFX-05): negativo/duotom/raios/faíscas/cartão do Kokusen andam com o relógio real, mesmo congelados.
     this.kokusenFx.update(base, this.effects.frozen);
-    // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
-    if (this.effects.frozen) return;
-    const dt = clamped;
-    this.clockMs += dt;
-    // SHOP-33: na loja, nada de gameplay anda; só o input da loja, `run.update`, o painel e o HUD.
-    if (this.run.state === 'shop') {
-      this.shopDirector.updateShop();
-    } else {
-      // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
-      const raw = this.controls.read();
-      const input = this.inputFor(raw);
-      this.impactFx.brokenAtFrameStart = new Set(this.enemies.filter((e) => e.broken).map((e) => e.id));
-      this.player.update(dt, input);
-      this.impactFx.updateCursedFx();
-      // FIN-01/03: `J`+`K` juntos perto de um inimigo quebrado é o finalizador; sem alvo, nada acontece.
-      if (input.bothPressed && !this.player.dead) this.combat.tryFinisher();
-      this.comboCounter.update(dt);
-      // CMB-02: o jogador levar dano zera o combo (a vida caiu neste frame, seja golpe cheio ou o que passa pela guarda).
-      const damaged = this.player.hp < this.lastPlayerHp;
-      if (damaged) this.comboCounter.playerDamaged();
-      // REG-*/RCT-*: a recuperação lê o dano deste frame; a cura dela entra na conta do próximo.
-      this.recovery.update(dt, input, damaged);
-      this.lastPlayerHp = this.player.hp;
-      // DOD-11: enquanto a esquiva está ativa a camada `dodge.trail` fica viva (o rastro em si sai do Player).
-      if (this.player.dodgeView.active) this.realtimeFx.add('dodge.trail', 100);
-      // AIR-05: enquanto a voadora está ativa a camada `air.kickTrail` fica viva (o rastro em si sai do Player).
-      if (this.player.moveName === 'voadora' && this.player.movePhase === 'active')
-        this.realtimeFx.add('air.kickTrail', 100);
-      this.techDirector.update(dt);
-      this.drops.updatePickups(dt);
-      // Morte do player (RUN-04): só a transição para morto conta, uma vez.
-      if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
-      this.wasPlayerDead = this.player.dead;
-      this.combat.updateEnemies(dt);
-      this.runDirector.updateBoss(dt);
-      for (const proj of this.projectiles) proj.update(dt);
-      this.projectiles = this.projectiles.filter((proj) => !proj.removed);
-      for (const prop of this.props) prop.update(dt);
-      this.drops.updateDroppedTools(dt);
-      this.props = this.props.filter((prop) => !prop.isGone);
-    }
-    this.area.update(dt);
-    for (const cmd of this.run.update(dt, this.runDirector.seedForNewRun)) this.runDirector.applyRunCommand(cmd);
-    // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
-    // T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner interno da `Run` segue contando como se
-    // tivesse nascido - sem isso "Inimigos: N" mentiria na tela do laboratório.
-    this.hud.setRun(
-      this.run.round > 0 && !this.fxLab ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null,
-    );
-    this.hud.setHeldItem(this.drops.heldItemInfo());
-    this.hud.update(dt);
-    this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
+    return clamped;
+  }
+
+  /** Um quadro de jogo fora da loja: player, técnicas, inimigos, chefe, projéteis e objetos. */
+  private updateGameplay(dt: number): void {
+    // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
+    const raw = this.controls.read();
+    const input = this.inputFor(raw);
+    this.impactFx.brokenAtFrameStart = new Set(this.enemies.filter((e) => e.broken).map((e) => e.id));
+    this.player.update(dt, input);
+    this.impactFx.updateCursedFx();
+    // FIN-01/03: `J`+`K` juntos perto de um inimigo quebrado é o finalizador; sem alvo, nada acontece.
+    if (input.bothPressed && !this.player.dead) this.combat.tryFinisher();
+    this.comboCounter.update(dt);
+    // CMB-02: o jogador levar dano zera o combo (a vida caiu neste frame, seja golpe cheio ou o que passa pela guarda).
+    const damaged = this.player.hp < this.lastPlayerHp;
+    if (damaged) this.comboCounter.playerDamaged();
+    // REG-*/RCT-*: a recuperação lê o dano deste frame; a cura dela entra na conta do próximo.
+    this.recovery.update(dt, input, damaged);
+    this.lastPlayerHp = this.player.hp;
+    // DOD-11: enquanto a esquiva está ativa a camada `dodge.trail` fica viva (o rastro em si sai do Player).
+    if (this.player.dodgeView.active) this.realtimeFx.add('dodge.trail', 100);
+    // AIR-05: enquanto a voadora está ativa a camada `air.kickTrail` fica viva (o rastro em si sai do Player).
+    if (this.player.moveName === 'voadora' && this.player.movePhase === 'active')
+      this.realtimeFx.add('air.kickTrail', 100);
+    this.techDirector.update(dt);
+    this.drops.updatePickups(dt);
+    // Morte do player (RUN-04): só a transição para morto conta, uma vez.
+    if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();
+    this.wasPlayerDead = this.player.dead;
+    this.combat.updateEnemies(dt);
+    this.runDirector.updateBoss(dt);
+    for (const proj of this.projectiles) proj.update(dt);
+    this.projectiles = this.projectiles.filter((proj) => !proj.removed);
+    for (const prop of this.props) prop.update(dt);
+    this.drops.updateDroppedTools(dt);
+    this.props = this.props.filter((prop) => !prop.isGone);
   }
 
   /** Input do quadro: neutro fora de `roundActive`/`intermission`/`traverse` (RUN-08) e durante a transição de área (TRV-10). */
