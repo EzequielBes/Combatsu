@@ -303,15 +303,15 @@ o espaço.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| MDL-01 | P1: Módulos com gramática validada | Design | Pending |
-| MDL-02 | P1: Módulos com gramática validada | Design | Pending |
-| MDL-03 | P1: Módulos com gramática validada | Design | Pending |
-| MDL-04 | P1: Módulos com gramática validada | Design | Pending |
-| MDL-05 | P1: Módulos com gramática validada | Design | Pending |
-| MDL-06 | P1: Módulos com gramática validada | Design | Pending |
-| MDL-07 | P1: Módulos com gramática validada | Design | Pending |
-| MDL-08 | P1: Módulos com gramática validada | Design | Pending |
-| MDL-09 | P1: Módulos com gramática validada | Design | Pending |
+| MDL-01 | P1: Módulos com gramática validada | Design | Implementing |
+| MDL-02 | P1: Módulos com gramática validada | Design | Implementing |
+| MDL-03 | P1: Módulos com gramática validada | Design | Implementing |
+| MDL-04 | P1: Módulos com gramática validada | Design | Implementing |
+| MDL-05 | P1: Módulos com gramática validada | Design | Implementing |
+| MDL-06 | P1: Módulos com gramática validada | Design | Implementing |
+| MDL-07 | P1: Módulos com gramática validada | Design | Implementing |
+| MDL-08 | P1: Módulos com gramática validada | Design | Implementing |
+| MDL-09 | P1: Módulos com gramática validada | Design | Implementing |
 | MDL-10 | P1: Módulos com gramática validada | Design | Pending |
 | ARE-01 | P1: Área montada pela seed | Design | Pending |
 | ARE-02 | P1: Área montada pela seed | Design | Pending |

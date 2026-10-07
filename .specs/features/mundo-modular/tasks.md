@@ -78,8 +78,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: estilo de `parseLevel` (mensagens com linha e coluna) em `src/core/level.ts`
 **Requirement**: MDL-01, MDL-02, MDL-03, MDL-04, MDL-05, MDL-06, MDL-07, MDL-08, MDL-09
 **Done when**:
-- [ ] Testes em `tests/core/module.test.ts` cobrem: 16 e 48 colunas (aceitas), 15 e 49 (recusadas); 16 e 18 linhas (recusadas); linha de largura diferente; `P` e `x` recusados com id, linha e coluna na mensagem; chão faltando 1 tile na linha 15 e outro na 16; `#` na linha 14 e na 0; 12 colunas abertas (passa) e 11 (falha); 1 `E` (falha), 2 `E` (passa), `E` na linha 13 (falha); combate sem `c`/`b`/`p` (falha); konbini com `E` (falha); módulo `boss` sujeito a MDL-06..08.
-- [ ] `npm run gate` passa.
+- [x] Testes em `tests/core/module.test.ts` cobrem: 16 e 48 colunas (aceitas), 15 e 49 (recusadas); 16 e 18 linhas (recusadas); linha de largura diferente; `P` e `x` recusados com id, linha e coluna na mensagem; chão faltando 1 tile na linha 15 e outro na 16; `#` na linha 14 e na 0; 12 colunas abertas (passa) e 11 (falha); 1 `E` (falha), 2 `E` (passa), `E` na linha 13 (falha); combate sem `c`/`b`/`p` (falha); konbini com `E` (falha); módulo `boss` sujeito a MDL-06..08.
+- [x] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 
