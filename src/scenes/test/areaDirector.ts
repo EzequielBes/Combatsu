@@ -44,6 +44,10 @@ export class AreaDirector {
    * modular (a seed da run só entra no `roundStart(1)`, que reconstrói).
    */
   initialArea(): InitialArea {
+    // A instância vive a cena toda: um reinício (R) no meio de uma transição não pode deixar estado para trás.
+    this.transitioning = false;
+    this.onFadeOut = null;
+    this.stage = null;
     if (this.mode === 'sala') {
       const level = parseLevel(LEVEL_1);
       requireSpawnPoints(level, 'LEVEL_1');

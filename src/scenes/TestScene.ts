@@ -8,7 +8,7 @@ import { FxRegistry } from '../core/fxRegistry';
 import { FxTimeline } from '../core/fxTimeline';
 import { type Hit, type Vec2 } from '../core/hit';
 import { AttackGate } from '../core/attackGate';
-import { parseLevel, type LevelData } from '../core/level';
+import { type LevelData } from '../core/level';
 import { Loadout } from '../core/loadout';
 import { MoveReading } from '../core/moveReading';
 import { Mastery } from '../core/mastery';
@@ -19,8 +19,7 @@ import { acceptsPlayerInput, Run } from '../core/run';
 import { SlowMo } from '../core/slowMo';
 import { CameraKick, ZoomPulse } from '../core/cameraKick';
 import { Wallet } from '../core/wallet';
-import { requireSpawnPoints } from '../core/waves';
-import { LEVEL_1 } from '../data/level1';
+import { areaModeFor } from '../core/stage';
 import { FULL_SHOP_CATALOG } from '../data/shop';
 import { DROPPED_TOOLS, ATTACK_GATE, PICKUP, RUN, WAVE } from '../data/tuning';
 import { createArt } from '../game/art';
@@ -34,7 +33,7 @@ import { EnergyHud } from '../game/EnergyHud';
 import { Fx } from '../game/fx';
 import { FxLab } from '../game/FxLab';
 import { Hud } from '../game/Hud';
-import { PlayerInput, ShopInput } from '../game/input';
+import { PlayerInput, ShopInput, type InputSnapshot } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Pickups } from '../game/Pickups';
@@ -61,6 +60,7 @@ import { ShopDirector } from './test/shopDirector';
 import { DebugSnapshot } from './test/snapshot';
 import { RunDirector } from './test/runDirector';
 import { UiSetup } from './test/uiSetup';
+import { AreaDirector } from './test/areaDirector';
 import { WorldBuilder } from './test/world';
 import { TechDirector } from './test/techDirector';
 import { Recovery } from './test/recovery';
@@ -68,6 +68,8 @@ import { Recovery } from './test/recovery';
 export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly techDirector = new TechDirector(this);
   readonly world = new WorldBuilder(this);
+  /** Modo `modular` (padrão) ou `sala` (`?area=sala`, `?debug&fxlab`): LEG-01, LEG-02, LEG-04. */
+  readonly area = new AreaDirector(this, areaModeFor(window.location.search));
   readonly ui = new UiSetup(this);
   readonly runDirector = new RunDirector(this);
   readonly snapshot = new DebugSnapshot(this);
@@ -193,8 +195,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     registerDebugProbe(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => registerDebugProbe(null));
     this.fx = new Fx(this);
-    this.level = parseLevel(LEVEL_1);
-    requireSpawnPoints(this.level, 'LEVEL_1');
+    const initial = this.area.initialArea();
+    this.level = initial.level;
     this.terrain = [];
     this.props = [];
     this.enemies = [];
@@ -202,13 +204,17 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.projectiles = [];
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
     this.modifiers = new Modifiers(FULL_SHOP_CATALOG);
-    this.world.build(LEVEL_1, this.level);
+    this.world.build(initial.rows, initial.level);
     this.combat.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
+    // Modular: a rodada fechada vai a `traverse` (TRV-02) e `?debug&noshop=1` pula a konbini na própria run (KON-04).
+    const modular = this.area.mode === 'modular';
     this.run = new Run(RUN, WAVE, {
       firstRound: this.runDirector.firstRoundForDebug(),
       maxAliveOverride: debugIntParam('maxAlive', 1),
+      flow: this.area.mode,
+      skipShop: modular && debugParam('noshop') === '1',
     });
     this.clockMs = 0;
     this.spawner.spawnLastUsed = new Map();
@@ -396,7 +402,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     } else {
       // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
       const raw = this.controls.read();
-      const input = acceptsPlayerInput(this.run.state) ? raw : NEUTRAL_INPUT;
+      const input = this.inputFor(raw);
       this.impactFx.brokenAtFrameStart = new Set(this.enemies.filter((e) => e.broken).map((e) => e.id));
       this.player.update(dt, input);
       this.impactFx.updateCursedFx();
@@ -427,6 +433,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.drops.updateDroppedTools(dt);
       this.props = this.props.filter((prop) => !prop.isGone);
     }
+    this.area.update(dt);
     for (const cmd of this.run.update(dt, this.runDirector.seedForNewRun)) this.runDirector.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
     // T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner interno da `Run` segue contando como se
@@ -437,6 +444,11 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.hud.setHeldItem(this.drops.heldItemInfo());
     this.hud.update(dt);
     this.energyHud.update(dt, this.energy, this.loadout, this.mastery);
+  }
+
+  /** Input do quadro: neutro fora de `roundActive`/`intermission`/`traverse` (RUN-08) e durante a transição de área (TRV-10). */
+  private inputFor(raw: InputSnapshot): InputSnapshot {
+    return acceptsPlayerInput(this.run.state) && !this.area.transitioning ? raw : NEUTRAL_INPUT;
   }
 
   onKey(key: string, fn: () => void): void {

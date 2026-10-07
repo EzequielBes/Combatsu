@@ -231,8 +231,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `debugParam`, `PlayerInput` neutro de hoje (RUN-08)
 **Requirement**: LEG-01, LEG-02, LEG-04, TRV-10, KON-04
 **Done when**:
-- [ ] A `TestScene` não cresce: o que sai para o `WorldBuilder` compensa o que entra (conferir `npm run lint` sem exceção nova no `.oxlintrc.json`).
-- [ ] `npm run gate && npm run build` passa.
+- [x] A `TestScene` não cresce: o que sai para o `WorldBuilder` compensa o que entra (conferir `npm run lint` sem exceção nova no `.oxlintrc.json`).
+- [x] `npm run gate && npm run build` passa.
 **Tests**: none
 **Gate**: build
 
