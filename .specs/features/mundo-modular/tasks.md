@@ -215,9 +215,9 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `Stage`, `composeArea`, `konbiniArea`, `parseLevel`, `requireSpawnPoints`, `WorldBuilder`, `clampCenter`
 **Requirement**: ARE-09, ARE-10, ARE-11, TRV-03, TRV-05, TRV-07, TRV-08, TRV-10, KON-01, KON-03, KON-05
 **Done when**:
-- [ ] A morte do player durante o fade de saída cancela a transição.
-- [ ] Evento de debug `areaBuilt:<ids separados por vírgula>` a cada `rebuild`.
-- [ ] `npm run gate && npm run build` passa.
+- [x] A morte do player durante o fade de saída cancela a transição.
+- [x] Evento de debug `areaBuilt:<ids separados por vírgula>` a cada `rebuild`.
+- [x] `npm run gate && npm run build` passa.
 **Tests**: none
 **Gate**: build
 
