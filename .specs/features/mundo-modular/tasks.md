@@ -109,8 +109,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: a mesclagem de sólidos existente
 **Requirement**: ARE-08, TRV-01
 **Done when**:
-- [ ] `tests/core/level.test.ts`: grade com `S` nas linhas 0 a 14 dá `seal = { x: col·32, y: 0, width: 32, height: 15·32 }`; grade sem `S` dá `seal = null`; o `#` vizinho do `S` não se mescla com ele; os testes atuais da `LEVEL_1` continuam passando sem mudança.
-- [ ] `npm run gate` passa.
+- [x] `tests/core/level.test.ts`: grade com `S` nas linhas 0 a 14 dá `seal = { x: col·32, y: 0, width: 32, height: 15·32 }`; grade sem `S` dá `seal = null`; o `#` vizinho do `S` não se mescla com ele; os testes atuais da `LEVEL_1` continuam passando sem mudança.
+- [x] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 

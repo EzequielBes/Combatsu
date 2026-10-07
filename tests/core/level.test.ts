@@ -112,3 +112,53 @@ describe('LEVEL_1: pontos de spawn E (SPN-06)', () => {
     expect(new Set(lvl.enemies.map((e) => e.y)).size).toBe(1);
   });
 });
+
+describe('parseLevel: selo (ARE-08, TRV-01)', () => {
+  /** 5 colunas, 17 linhas: parede na 0, selo na 4 (S nas linhas 0 a 14), chão nas linhas 15 e 16. */
+  const sealed = (): string[] => [
+    ...Array.from({ length: 15 }, (_, r) => (r === 14 ? '#.P.S' : '#...S')),
+    '#####',
+    '#####',
+  ];
+
+  it('S nas linhas 0 a 14 vira o retângulo da coluna', () => {
+    expect(parseLevel(sealed()).seal).toEqual({ x: 4 * TILE, y: 0, width: TILE, height: 15 * TILE });
+  });
+
+  it('o selo cobre do primeiro ao último S', () => {
+    const lvl = parseLevel(['..S', '..S', 'P.S', '..S', '...']);
+    expect(lvl.seal).toEqual({ x: 2 * TILE, y: 0, width: TILE, height: 4 * TILE });
+    expect(parseLevel(['...', '..S', 'P..']).seal).toEqual({ x: 2 * TILE, y: TILE, width: TILE, height: TILE });
+  });
+
+  it('grade sem S dá seal null', () => {
+    expect(parseLevel(['P..', '###']).seal).toBeNull();
+    expect(parseLevel(LEVEL_1).seal).toBeNull();
+  });
+
+  it('o selo fica fora de solids e o # vizinho não se mescla com ele', () => {
+    const lvl = parseLevel(sealed());
+    expect(lvl.solids).toEqual(
+      [
+        { x: 0, y: 15 * TILE, width: 5 * TILE, height: TILE },
+        { x: 0, y: 16 * TILE, width: 5 * TILE, height: TILE },
+        ...Array.from({ length: 15 }, (_, r) => ({ x: 0, y: r * TILE, width: TILE, height: TILE })),
+      ].sort((a, b) => a.y - b.y),
+    );
+    const row = parseLevel(['##S#', 'P...']);
+    expect(row.solids).toEqual([
+      { x: 0, y: 0, width: 2 * TILE, height: TILE },
+      { x: 3 * TILE, y: 0, width: TILE, height: TILE },
+    ]);
+  });
+
+  it('recusa S em duas colunas diferentes', () => {
+    expect(() => parseLevel(['S.S', 'P..'])).toThrow(/Selo/);
+  });
+
+  it('tileVariant trata S como vazio e o # vizinho como borda', () => {
+    const rows = ['##S', '###'];
+    expect(tileVariant(rows, 2, 0)).toBeNull();
+    expect(tileVariant(rows, 1, 0)).toBe('top-right');
+  });
+});
