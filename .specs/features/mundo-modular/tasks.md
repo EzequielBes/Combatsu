@@ -318,7 +318,7 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `stepAndSnap`, tecla 2 de debug para derrubar a onda
 **Requirement**: TRV-01, TRV-02, TRV-03, TRV-05, TRV-07, TRV-08, TRV-10, KON-01, KON-02, KON-03, KON-05, ARE-09, ARE-10, ARE-11, LEG-05
 **Done when**:
-- [ ] Confere: em `roundActive` o player andando para a direita para antes de `exitX` e `sealed === true`; ao fechar a onda, `run.state === 'traverse'` e `sealed === false`; fragmentos no chão ao sair somam na carteira (valor antes + valor vivo); objeto na mão some; `area.modules` vira `['konbini']`, `run.state === 'shop'`; nenhum inimigo vivo na konbini; fechar a loja leva à rodada 2 com `area.modules` de 2 ids e o player na coluna 3; `staticBodies` = sólidos mesclados da área nova + 1; o scroll da câmera nunca passa de `widthPx − vista` (L-043).
+- [x] Confere: em `roundActive` o player andando para a direita para antes de `exitX` e `sealed === true`; ao fechar a onda, `run.state === 'traverse'` e `sealed === false`; fragmentos no chão ao sair somam na carteira (valor antes + valor vivo); objeto na mão some; `area.modules` vira `['konbini']`, `run.state === 'shop'`; nenhum inimigo vivo na konbini; fechar a loja leva à rodada 2 com `area.modules` de 2 ids e o player na coluna 3; `staticBodies` = sólidos mesclados da área nova + 1; o scroll da câmera nunca passa de `widthPx − vista` (L-043).
 **Tests**: smoke
 **Gate**: full
 
