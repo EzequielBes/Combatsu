@@ -15,10 +15,10 @@ Corroborated across multiple features. Safe to apply as guidance.
 - last seen: 2026-10-01T12:33:06Z
 
 ### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
-- signal: `surviving_mutant` · recurrence: 3 feature(s) · scope: `art-adapter` · harmful: 0
+- signal: `surviving_mutant` · recurrence: 3 feature(s) · scope: `art-adapter` · harmful: 1
 - features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho
 - evidence: M7 src/game/art/index.ts:128 (art-adapter) (+2 more)
-- last seen: 2026-10-02T21:33:41Z
+- last seen: 2026-10-07T16:20:07Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -389,6 +389,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: impacto-amaldicoado
 - evidence: M2 Player.ts:1133 (adapters)
 - last seen: 2026-10-04T03:16:30Z
+
+### L-064 - For every timed transition the spec defines, assert each phase's duration and the input gating live in the smoke, not only that the transition completes
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: mundo-modular
+- evidence: A5 src/scenes/TestScene.ts:451 (TRV-10) (smoke)
+- last seen: 2026-10-07T16:20:07Z
+
+### L-065 - When an acceptance criterion lists several item kinds, assert the outcome of each kind, not only the first one
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: mundo-modular
+- evidence: TRV-07 scripts/smoke/world-traverse.smoke.mjs:183 (smoke)
+- last seen: 2026-10-07T16:20:07Z
+
+### L-066 - When the spec requires an error to name several fields, assert every field in every failing branch, not only the identifier
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `tests core` · harmful: 0
+- features: mundo-modular
+- evidence: MDL-03 tests/core/module.test.ts:26 (tests core)
+- last seen: 2026-10-07T16:20:07Z
+
+### L-067 - Give every spec edge case its own test, even when the code path looks structurally safe
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: mundo-modular
+- evidence: edge case: new run from gameOver; edge case: prop thrown past the seal (smoke)
+- last seen: 2026-10-07T16:20:07Z
 
 ## Quarantined (failed when applied - ignore)
 
