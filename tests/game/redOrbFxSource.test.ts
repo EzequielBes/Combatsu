@@ -1,6 +1,11 @@
 /// <reference types="vite/client" />
-import source from '../../src/game/techFx/RedOrb.ts?raw';
+import orbSource from '../../src/game/techFx/RedOrb.ts?raw';
+import detonationSource from '../../src/game/techFx/redDetonation.ts?raw';
 import { describe, expect, it } from 'vitest';
+
+/** As vistas do Vermelho moram em dois arquivos; a regra de cor vale para os dois. */
+const source = `${orbSource}
+${detonationSource}`;
 
 describe('RDA-14: o RedOrbFx só lê cores de RED_FX_COLORS', () => {
   const allowed = new Set(['b', 't', 'T', 'R', 'W']);

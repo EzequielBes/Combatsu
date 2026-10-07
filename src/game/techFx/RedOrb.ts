@@ -4,23 +4,20 @@ import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
 import { RedOrbState } from '../../core/redOrb';
 import type { Vec2 } from '../../core/hit';
-import { PALETTE } from '../art/palette';
 import { fingertipOffsetPx } from '../art/sprites/playerTech';
 import { HD_ON } from '../art/hd/flag';
 import { hdAnchors } from '../art/hd/sheet';
-import { RED_FX_COLORS } from './redPalette';
-import { DISTORT_PERIOD_MS, FRAME_MS, REPULSE_MS, TRAIL_EVERY_MS, TRAIL_FADE_MS } from './redTiming';
+import {
+  DEBRIS_MS,
+  FLASH_CORE_MS,
+  RED_COLORS as C,
+  SHOCK_RING_MS,
+  SPHERE_MS,
+  evenPx,
+  redDetonationBurst,
+} from './redDetonation';
+import { DISTORT_PERIOD_MS, REPULSE_MS, TRAIL_EVERY_MS, TRAIL_FADE_MS } from './redTiming';
 import { TEX } from '../textures';
-
-/** Cores do efeito, sempre lidas de `RED_FX_COLORS` (RDA-03/14): nunca `a`/`A`. */
-const C = {
-  core: PALETTE[RED_FX_COLORS.core],
-  glow: PALETTE[RED_FX_COLORS.glow],
-  ring: PALETTE[RED_FX_COLORS.ring],
-  edge: PALETTE[RED_FX_COLORS.edge],
-  shadow: PALETTE[RED_FX_COLORS.shadow],
-  flash: PALETTE[RED_FX_COLORS.flash],
-};
 
 /**
  * Frame usado para achar a ponta dos dedos quando o player não está num frame sign/charge/release do Vermelho
@@ -34,24 +31,6 @@ const CHARGE_TEX: Record<4 | 8 | 12, string> = { 4: TEX.techOrbRed4, 8: TEX.tech
 const SPARKS_OUT_MAX = 40; // TFX-04: bem abaixo de 64
 const DUST_EVERY_MS = 150;
 const CRACKLE_EVERY_MS = 90;
-/** Polimento (feat(fx)): "flash branco no núcleo (1-2 frames)" - era 100 ms (6 frames), tempo demais para um flash. */
-const FLASH_CORE_MS = FRAME_MS * 2;
-/** "esfera vermelha expandindo em 3 frames" (Direção de arte, beat 6): mesma convenção do SHOCK_MS de KokusenFx. */
-const SPHERE_MS = FRAME_MS * 3;
-/** Polimento: a esfera cresce até o raio real do dano (RED-10, redOrb.ts DETONATION_RADIUS) - antes parava em 30 px. */
-const SPHERE_MAX_RADIUS = 96;
-/** Polimento: onda de choque GROSSA (Direção de arte) e mais demorada, passando bem além do raio de dano. */
-const SHOCK_RING_MS = 280;
-const SHOCK_RING_MAX_RADIUS = 160;
-const SHOCK_RING_THICK_OUT = 6;
-const SHOCK_RING_THICK_IN = 4;
-const EMBER_DEBRIS_COUNT = 22; // TFX-04: bem abaixo de 64
-const DEBRIS_MS = 420;
-/** Polimento: detritos do chão (pedaços `k`/`s`), simulados à mão (sem body Matter) num único Graphics. */
-const CHUNK_DEBRIS_COUNT = 9;
-const CHUNK_GRAVITY = 500; // px/s^2
-const SMOKE_COUNT = 10;
-const SMOKE_MS = 560;
 /** RED-12 / RDA-15: a tela pisca carmim por exatamente 80 ms. */
 const SCREEN_FLASH_MS = 80;
 /** RED-17: a câmera treme por exatamente 200 ms. */
@@ -59,16 +38,6 @@ const SHAKE_MS = 200;
 const SHAKE_INTENSITY = 0.02;
 /** RDA-10: o cone da repulsão alcança 80 px à frente (duração em `redTiming`). */
 const REPULSE_REACH_PX = 80;
-
-/** Snap para a grade de 2 px (AD-009/TFX-02): geometria procedural sempre em texels pares. */
-const evenPx = (v: number): number => Math.round(v / 2) * 2;
-
-interface ChunkDebris {
-  readonly vx: number;
-  readonly vy: number;
-  readonly size: number;
-  readonly color: number;
-}
 
 /**
  * Vistas do Vermelho (RED-02/03/04/07/11/12/17): carga (orbe crescendo + faíscas expelidas + anel de brilho +
@@ -145,7 +114,14 @@ export class RedOrbFx {
     this.fx.add('red.glowRing', Math.max(dtMs, 1), 'game');
     this.fx.add('red.distortRing', Math.max(dtMs, 1), 'game'); // RDA-07
     this.fx.add('red.dustPush', Math.max(dtMs, 1), 'game');
+    this.chargeOrb(x, y, size);
+    this.chargeSparks(x, y);
+    this.chargeGlowRing(dtMs, x, y, size);
+    this.chargeDistortRing(dtMs, x, y, size);
+    this.chargeDust(dtMs, playerX, playerY, facing);
+  }
 
+  private chargeOrb(x: number, y: number, size: 4 | 8 | 12): void {
     if (!this.chargeSprite) {
       this.chargeSprite = this.scene.add.sprite(x, y, CHARGE_TEX[size], 'orb').setDepth(2);
       this.registry.add(this.chargeSprite);
@@ -162,7 +138,9 @@ export class RedOrbFx {
       this.chargeSprite.enableFilters();
       this.glowFx = this.chargeSprite.filters!.external.addGlow(C.glow, 4, 0, 1, false, 20, 12); // RDA-06
     }
+  }
 
+  private chargeSparks(x: number, y: number): void {
     if (!this.sparksOut) {
       // RED-04: nascem no centro e o ângulo cheio (0-360) já as manda radialmente para fora dele.
       // Polimento (feat(fx)): mais rápidas e maiores ("bem visíveis", Direção de arte) - eram quase invisíveis.
@@ -181,7 +159,9 @@ export class RedOrbFx {
       this.registry.add(this.sparksOut);
     }
     this.sparksOut.setPosition(x, y);
+  }
 
+  private chargeGlowRing(dtMs: number, x: number, y: number, size: number): void {
     if (!this.glowRing) {
       this.glowRing = this.scene.add.graphics().setDepth(1);
       this.registry.add(this.glowRing);
@@ -193,8 +173,10 @@ export class RedOrbFx {
       .clear()
       .lineStyle(2, C.glow, 0.7)
       .strokeCircle(x, y, (size / 2 + 5) * pulse);
+  }
 
-    // RDA-07: dois arcos `T` opostos girando em volta do orbe (2π a cada 400 ms).
+  /** RDA-07: dois arcos `T` opostos girando em volta do orbe (2π a cada 400 ms). */
+  private chargeDistortRing(dtMs: number, x: number, y: number, size: number): void {
     if (!this.distortRing) {
       this.distortRing = this.scene.add.graphics().setDepth(3);
       this.registry.add(this.distortRing);
@@ -212,7 +194,9 @@ export class RedOrbFx {
       .beginPath()
       .arc(x, y, ringR, spin + Math.PI, spin + Math.PI * 1.6)
       .strokePath();
+  }
 
+  private chargeDust(dtMs: number, playerX: number, playerY: number, facing: 1 | -1): void {
     this.dustMs += dtMs;
     if (this.dustMs >= DUST_EVERY_MS) {
       this.dustMs -= DUST_EVERY_MS;
@@ -348,128 +332,12 @@ export class RedOrbFx {
     this.fx.add('red.shockRing', SHOCK_RING_MS, 'game');
     this.fx.add('red.debris', DEBRIS_MS, 'game');
     this.fx.add('red.screenFlash', SCREEN_FLASH_MS, 'game'); // RED-12
+    redDetonationBurst(this.scene, this.registry, point);
+    this.detonateScreen();
+  }
 
-    const flash = this.scene.add
-      .sprite(point.x, point.y, TEX.techOrbRed12, 'orb')
-      .setTint(C.core)
-      .setTintMode(Phaser.TintModes.FILL)
-      .setScale(1.6)
-      .setDepth(6);
-    this.registry.add(flash);
-    this.registry.scheduleDestroy(flash, FLASH_CORE_MS);
-    this.scene.tweens.add({ targets: flash, alpha: 0, scale: 0.8, duration: FLASH_CORE_MS });
-
-    // Esfera: 3 camadas concêntricas (fora -> dentro) - borda escura `k`, corpo `R`, núcleo `W` encolhendo (o
-    // flash inicial que "vira" o corpo vermelho conforme a esfera cresce até os 96 px do dano real, RED-10).
-    const sphere = this.scene.add.graphics().setDepth(4);
-    this.registry.add(sphere);
-    this.registry.scheduleDestroy(sphere, SPHERE_MS);
-    this.scene.tweens.addCounter({
-      from: 0,
-      to: 1,
-      duration: SPHERE_MS,
-      onUpdate: (tw) => {
-        const t = tw.getValue() ?? 0;
-        const r = evenPx(8 + t * (SPHERE_MAX_RADIUS - 8));
-        const coreR = evenPx(Math.max(0, r * 0.5 * (1 - t)));
-        sphere
-          .clear()
-          .fillStyle(C.shadow, 0.85 * (1 - t))
-          .fillCircle(point.x, point.y, r + 4)
-          .fillStyle(C.glow, 0.9 - t * 0.2)
-          .fillCircle(point.x, point.y, r)
-          .fillStyle(C.core, Math.max(0, 1 - t * 1.6))
-          .fillCircle(point.x, point.y, coreR);
-      },
-    });
-
-    // Onda de choque: anel GROSSO (4-6 px, Direção de arte) - branco por baixo, vermelho por cima e mais fino,
-    // deixando 1-2 px de borda branca visível nos dois lados (mesma técnica de "contorno" das outras vistas).
-    const shock = this.scene.add.graphics().setDepth(4);
-    this.registry.add(shock);
-    this.registry.scheduleDestroy(shock, SHOCK_RING_MS);
-    this.scene.tweens.addCounter({
-      from: 0,
-      to: 1,
-      duration: SHOCK_RING_MS,
-      onUpdate: (tw) => {
-        const t = tw.getValue() ?? 0;
-        const r = evenPx(20 + t * (SHOCK_RING_MAX_RADIUS - 20));
-        const a = 1 - t;
-        shock
-          .clear()
-          .lineStyle(SHOCK_RING_THICK_OUT, C.ring, a)
-          .strokeCircle(point.x, point.y, r)
-          .lineStyle(SHOCK_RING_THICK_IN, C.glow, a)
-          .strokeCircle(point.x, point.y, r);
-      },
-    });
-
-    // Detritos-faísca (embers): a mesma faísca `redOut`, em mais quantidade e maior, para o "estouro" ficar denso.
-    const embers = this.scene.add
-      .particles(point.x, point.y, TEX.techSpark, {
-        frame: 'redOut',
-        angle: { min: 0, max: 360 },
-        speed: { min: 80, max: 220 },
-        lifespan: DEBRIS_MS,
-        scale: { start: 1.4, end: 0.4 },
-        alpha: { start: 1, end: 0 },
-        gravityY: 260,
-        emitting: false,
-      })
-      .setDepth(4);
-    embers.explode(EMBER_DEBRIS_COUNT); // TFX-04: bem abaixo de 64
-    this.registry.add(embers);
-    this.registry.scheduleDestroy(embers, DEBRIS_MS);
-
-    // Detritos do chão (pedaços `k`/`s`, Direção de arte): sem particle system (só 2 cores fixas por peça, cada
-    // uma com seu próprio tamanho) - um único Graphics simula a queda de cada pedaço à mão (sem body Matter).
-    const chunks: ChunkDebris[] = Array.from({ length: CHUNK_DEBRIS_COUNT }, (_, i) => {
-      const angle = Math.PI * (i / CHUNK_DEBRIS_COUNT) * 2 + Math.random() * 0.6 - 0.9; // espalhado, tendendo para cima
-      const speed = 70 + Math.random() * 110;
-      return {
-        vx: Math.cos(angle) * speed,
-        vy: -Math.abs(Math.sin(angle) * speed) - 40,
-        size: evenPx(2 + Math.round(Math.random())) || 2,
-        color: i % 2 === 0 ? C.shadow : C.glow,
-      };
-    });
-    const debris = this.scene.add.graphics().setDepth(4);
-    this.registry.add(debris);
-    this.registry.scheduleDestroy(debris, DEBRIS_MS);
-    this.scene.tweens.addCounter({
-      from: 0,
-      to: DEBRIS_MS,
-      duration: DEBRIS_MS,
-      onUpdate: (tw) => {
-        const elapsedMs = tw.getValue() ?? 0;
-        const tSec = elapsedMs / 1000;
-        const a = 1 - elapsedMs / DEBRIS_MS;
-        debris.clear();
-        for (const c of chunks) {
-          const px = evenPx(point.x + c.vx * tSec);
-          const py = evenPx(point.y + c.vy * tSec + 0.5 * CHUNK_GRAVITY * tSec * tSec);
-          debris.fillStyle(c.color, a).fillRect(px - c.size / 2, py - c.size / 2, c.size, c.size);
-        }
-      },
-    });
-
-    // Fumaça (Direção de arte, beat 6): rajada curta com a textura genérica `smoke`, sem tint (ART-01).
-    const smoke = this.scene.add
-      .particles(point.x, point.y, TEX.smoke, {
-        frame: 'smoke',
-        speed: { min: 20, max: 70 },
-        angle: { min: 200, max: 340 },
-        lifespan: SMOKE_MS,
-        scale: { start: 1.6, end: 0.4 },
-        alpha: { start: 0.55, end: 0 },
-        emitting: false,
-      })
-      .setDepth(3);
-    smoke.explode(SMOKE_COUNT);
-    this.registry.add(smoke);
-    this.registry.scheduleDestroy(smoke, SMOKE_MS);
-
+  /** Tela vermelha por 80 ms (RED-12) e tremida de 200 ms (RED-17). */
+  private detonateScreen(): void {
     this.screenFlashColor = C.flash; // RDA-13
     this.screenFlash.setFillStyle(C.flash, 0.4).setVisible(true);
     this.scene.tweens.add({
