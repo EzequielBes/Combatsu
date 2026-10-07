@@ -332,7 +332,7 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: o laço de derrubar a onda da T17
 **Requirement**: ARE-01, ARE-02, ARE-05, ARE-07, ARE-12, KON-04, RCH-01
 **Done when**:
-- [ ] Confere: rodadas 1 e 2 com 2 módulos e a 3 com 3; primeiro módulo diferente entre áreas seguidas; nenhum `shopOpen` nos eventos; recarregar com a mesma seed repete os ids das 3 áreas; todo inimigo nasce a no máximo 900 px do player; `?debug&modules=parque,rua` força a ordem.
+- [x] Confere: rodadas 1 e 2 com 2 módulos e a 3 com 3; primeiro módulo diferente entre áreas seguidas; nenhum `shopOpen` nos eventos; recarregar com a mesma seed repete os ids das 3 áreas; todo inimigo nasce a no máximo 900 px do player; `?debug&modules=parque,rua` força a ordem.
 **Tests**: smoke
 **Gate**: full
 
