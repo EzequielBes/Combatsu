@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 68,
+  "next_id": 69,
   "lessons": [
     {
       "id": "L-001",
@@ -1218,6 +1218,24 @@
       ],
       "created": "2026-10-07T16:20:07Z",
       "last_seen": "2026-10-07T16:20:07Z"
+    },
+    {
+      "id": "L-068",
+      "key": "surviving_mutant::when a test compares a behavior against its baseline run the comparison in a state where each input under test changes the outcome since an equality in a trivial state passes any mutant of that input",
+      "text": "When a test compares a behavior against its baseline, run the comparison in a state where each input under test changes the outcome, since an equality in a trivial state passes any mutant of that input",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "mundo-modular"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "KA src/scenes/test/shopDirector.ts:105 (KON-02); scripts/smoke/world-traverse.smoke.mjs:342-360 (smoke)"
+      ],
+      "created": "2026-10-07T17:31:20Z",
+      "last_seen": "2026-10-07T17:31:20Z"
     }
   ]
 }

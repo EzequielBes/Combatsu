@@ -414,6 +414,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: edge case: new run from gameOver; edge case: prop thrown past the seal (smoke)
 - last seen: 2026-10-07T16:20:07Z
 
+### L-068 - When a test compares a behavior against its baseline, run the comparison in a state where each input under test changes the outcome, since an equality in a trivial state passes any mutant of that input
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: mundo-modular
+- evidence: KA src/scenes/test/shopDirector.ts:105 (KON-02); scripts/smoke/world-traverse.smoke.mjs:342-360 (smoke)
+- last seen: 2026-10-07T17:31:20Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
