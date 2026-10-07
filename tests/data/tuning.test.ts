@@ -157,5 +157,6 @@ describe('tuning da economia (T1, valores das Assumptions da spec economia-drops
 describe('SPAWN (SPN-08)', () => {
   it('prefere as costas com chance 0,35', () => {
     expect(SPAWN.preferBackChance).toBe(0.35);
+    expect(SPAWN.reachPx).toBe(900);
   });
 });

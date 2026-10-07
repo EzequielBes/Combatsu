@@ -341,11 +341,11 @@ o espaço.
 | KON-03 | P1: Konbini como loja | Design | Implementing |
 | KON-04 | P1: Konbini como loja | Design | Implementing |
 | KON-05 | P1: Konbini como loja | Design | Pending |
-| RCH-01 | P1: Spawn ao alcance num mapa maior | Design | Pending |
-| RCH-02 | P1: Spawn ao alcance num mapa maior | Design | Pending |
-| RCH-03 | P1: Spawn ao alcance num mapa maior | Design | Pending |
-| RCH-04 | P1: Spawn ao alcance num mapa maior | Design | Pending |
-| RCH-05 | P1: Spawn ao alcance num mapa maior | Design | Pending |
+| RCH-01 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
+| RCH-02 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
+| RCH-03 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
+| RCH-04 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
+| RCH-05 | P1: Spawn ao alcance num mapa maior | Design | Implementing |
 | LEG-01 | P1: Sala de teste e compatibilidade | Design | Implementing |
 | LEG-02 | P1: Sala de teste e compatibilidade | Design | Implementing |
 | LEG-03 | P1: Sala de teste e compatibilidade | Design | Pending |

@@ -169,8 +169,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `farthestPoint`
 **Requirement**: RCH-01, RCH-02, RCH-03, RCH-04, RCH-05
 **Done when**:
-- [ ] `tests/core/spawnPoint.test.ts` ganha: ponto a 900 px é candidato e a 901 px não; pontos a 500, 901 e 2000 px → só o de 500; todos acima de 900 → o fora da câmera mais perto; nenhum fora da câmera → `farthestPoint`; preferência pelas costas e gap aplicados só sobre os do alcance; `rng.chance` consumido em todos os ramos; sem `maxReach` o comportamento atual não muda.
-- [ ] `npm run gate` passa.
+- [x] `tests/core/spawnPoint.test.ts` ganha: ponto a 900 px é candidato e a 901 px não; pontos a 500, 901 e 2000 px → só o de 500; todos acima de 900 → o fora da câmera mais perto; nenhum fora da câmera → `farthestPoint`; preferência pelas costas e gap aplicados só sobre os do alcance; `rng.chance` consumido em todos os ramos; sem `maxReach` o comportamento atual não muda.
+- [x] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 

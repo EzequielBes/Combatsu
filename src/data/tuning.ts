@@ -169,8 +169,8 @@ export const WAVE: WaveTuning = {
  */
 export const AREA = { fadeMs: 250, sealBurnMs: 400, playerCol: 3, minCols: 48, maxCols: 120 } as const;
 
-/** Spawn (SPN-08): chance de preferir os pontos às costas do player. */
-export const SPAWN = { preferBackChance: 0.35 } as const;
+/** Spawn (SPN-08, RCH-01): chance de preferir os pontos às costas do player; alcance horizontal máximo em px. */
+export const SPAWN = { preferBackChance: 0.35, reachPx: 900 } as const;
 
 /** Limitador de atacantes (LIM-01, LIM-02): 2 vagas e 350 ms entre windups. */
 export const ATTACK_GATE: AttackGateTuning = { maxActive: 2, minWindupGapMs: 350 };
