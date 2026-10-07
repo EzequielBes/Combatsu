@@ -47,7 +47,6 @@
     {
       "files": [
         "scripts/smoke/targets.smoke.mjs",
-        "src/game/TechRunner.ts",
         "src/game/art/rig/rasterize.ts",
         "src/game/art/sprites/enemy.ts",
         "src/game/art/sprites/player.ts",
@@ -99,7 +98,6 @@
         "src/core/run.ts",
         "src/game/Player.ts",
         "src/game/ShopPanel.ts",
-        "src/game/TechRunner.ts",
         "src/game/art/rig/rasterize.ts",
         "src/game/enemy/EnemyAnimator.ts",
         "src/game/enemy/EnemyDefense.ts",
