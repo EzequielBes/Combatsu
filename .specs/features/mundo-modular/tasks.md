@@ -506,10 +506,10 @@ T26 → T27 → T28 → T29
 **Reuses**: `validateModule`, `snap.shop`, o laço de derrubar a onda, a garrafa fixa do beco
 **Requirement**: ARE-10, MDL-03, KON-02
 **Done when**:
-- [ ] `camera.bounds` do snapshot vale `{x: 0, y: 0, width: widthPx, height: heightPx}` em todo quadro medido do `world-traverse`.
-- [ ] `module.test.ts`: as quebras de MDL-01 (15 e 49 colunas, 16 e 18 linhas, linha larga ou estreita) afirmam a mensagem exata com id, linha e coluna.
-- [ ] `world-traverse` compara as ofertas, os preços e o preço do reroll da konbini com os da sala (`area=sala`) para a mesma seed e a rodada 1, sem compras.
-- [ ] `world-restart`: morre, reinicia e a área da rodada 1 repete os módulos da primeira run (mesma seed), com `areaBuilt` e o player na coluna 3; `world-exit`: a garrafa jogada além do selo aberto não tira a run de `traverse`.
-- [ ] `npm run gate && npm run smoke` passa.
+- [x] `camera.bounds` do snapshot vale `{x: 0, y: 0, width: widthPx, height: heightPx}` em todo quadro medido do `world-traverse`.
+- [x] `module.test.ts`: as quebras de MDL-01 (15 e 49 colunas, 16 e 18 linhas, linha larga ou estreita) afirmam a mensagem exata com id, linha e coluna.
+- [x] `world-traverse` compara as ofertas, os preços e o preço do reroll da konbini com os da sala (`area=sala`) para a mesma seed e a rodada 1, sem compras.
+- [x] `world-restart`: morre, reinicia e a área da rodada 1 repete os módulos da primeira run (mesma seed), com `areaBuilt` e o player na coluna 3; `world-exit`: a garrafa jogada além do selo aberto não tira a run de `traverse`.
+- [x] `npm run gate && npm run smoke` passa.
 **Tests**: unit, smoke
 **Gate**: full

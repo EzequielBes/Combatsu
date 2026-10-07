@@ -293,6 +293,8 @@ export interface GameSnapshot {
   camera: {
     zoom: number;
     worldView: { left: number; right: number };
+    /** Limites da câmera do mundo (`getBounds`): a área inteira em px (ARE-10). */
+    bounds: { x: number; y: number; width: number; height: number };
     /** Centro da câmera do mundo em ponto flutuante e o scroll aplicado, na grade de pixel de tela (CAM-07). */
     center: { x: number; y: number };
     scroll: { x: number; y: number };

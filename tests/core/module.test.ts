@@ -22,22 +22,33 @@ describe('validateModule: formato (MDL-01, MDL-02, MDL-03)', () => {
     expect(() => validateModule(mod(48))).not.toThrow();
   });
 
-  it('recusa 15 e 49 colunas', () => {
-    expect(() => validateModule(mod(15))).toThrow(/teste/);
-    expect(() => validateModule(mod(49))).toThrow(/teste/);
+  it('recusa 15 e 49 colunas, com id, linha e coluna na mensagem (MDL-03)', () => {
+    expect(() => validateModule(mod(15))).toThrow('Módulo "teste": linha 0, coluna 15: largura 15');
+    expect(() => validateModule(mod(49))).toThrow('Módulo "teste": linha 0, coluna 49: largura 49');
   });
 
-  it('recusa 16 e 18 linhas', () => {
+  it('recusa 16 e 18 linhas, com id, linha e coluna na mensagem (MDL-03)', () => {
     const m = mod(20);
-    expect(() => validateModule({ ...m, grid: m.grid.slice(1) })).toThrow(/teste/);
-    expect(() => validateModule({ ...m, grid: [...m.grid, FLOOR(20)] })).toThrow(/teste/);
+    expect(() => validateModule({ ...m, grid: m.grid.slice(1) })).toThrow(
+      'Módulo "teste": linha 16, coluna 0: a grade tem 16 linhas',
+    );
+    expect(() => validateModule({ ...m, grid: [...m.grid, FLOOR(20)] })).toThrow(
+      'Módulo "teste": linha 18, coluna 0: a grade tem 18 linhas',
+    );
   });
 
-  it('recusa linha de largura diferente, citando a linha', () => {
+  it('recusa linha de largura diferente, citando id, linha e coluna (MDL-03)', () => {
     const m = mod(20);
-    const grid = [...m.grid];
-    grid[5] = '.'.repeat(19);
-    expect(() => validateModule({ ...m, grid })).toThrow(/linha 5/);
+    const narrow = [...m.grid];
+    narrow[5] = '.'.repeat(19);
+    expect(() => validateModule({ ...m, grid: narrow })).toThrow(
+      'Módulo "teste": linha 5, coluna 19: a linha tem 19 colunas; esperado 20',
+    );
+    const wide = [...m.grid];
+    wide[5] = '.'.repeat(21);
+    expect(() => validateModule({ ...m, grid: wide })).toThrow(
+      'Módulo "teste": linha 5, coluna 21: a linha tem 21 colunas; esperado 20',
+    );
   });
 
   it('recusa P com id, linha e coluna na mensagem', () => {

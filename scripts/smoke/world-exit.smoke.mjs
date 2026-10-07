@@ -37,6 +37,23 @@ export default async function ({ page, baseUrl, assert }) {
     `selo fechado em ${53 * TILE}: ${JSON.stringify(snap.area)}`,
   );
 
+  // Pega a garrafa fixa do beco: depois do selo aberto ela é jogada para além da saída.
+  const bottle = snap.worldProps
+    .filter((p) => p.key === 'bottle')
+    .reduce((a, b) => (Math.abs(a.x - snap.player.x) <= Math.abs(b.x - snap.player.x) ? a : b), { x: Infinity });
+  assert(bottle.x !== Infinity, `esperava a garrafa fixa do beco: ${JSON.stringify(snap.worldProps)}`);
+  for (let i = 0; i < 100 && Math.abs(snap.player.x - bottle.x) > 4; i++) {
+    const dir = bottle.x >= snap.player.x ? 'KeyD' : 'KeyA';
+    await page.keyboard.down(dir);
+    snap = await stepAndSnap(50);
+    await page.keyboard.up(dir);
+  }
+  await page.keyboard.down('KeyE');
+  snap = await stepAndSnap(20);
+  await page.keyboard.up('KeyE');
+  snap = await stepAndSnap(50);
+  assert(snap.hud.heldItem !== null, `deveria estar com a garrafa na mão: ${JSON.stringify(snap.hud.heldItem)}`);
+
   // Anda até o selo fechado, derrubando no caminho (tecla 2) até 3 inimigos para a onda de 6 seguir aberta.
   await page.keyboard.down('KeyD');
   let still = 0;
@@ -123,6 +140,26 @@ export default async function ({ page, baseUrl, assert }) {
   assert(duration >= 350 && duration <= 450, `TRV-03: o efeito do selo durou ${duration.toFixed(0)} ms (esperava 400)`);
   assert(burn.ms <= 800, `TRV-03: a imagem do selo deveria sumir ao fim do efeito: ${burn.ms.toFixed(0)} ms`);
   snap = await stepAndSnap(16);
+
+  // Edge: um objeto jogado além do selo aberto não é o player: a run segue em `traverse` e a área não muda.
+  assert(
+    snap.hud.heldItem !== null && snap.run.state === 'traverse',
+    `a garrafa deveria seguir na mão: ${JSON.stringify(snap.hud)}`,
+  );
+  await page.keyboard.down('KeyE');
+  snap = await stepAndSnap(20);
+  await page.keyboard.up('KeyE');
+  let thrownMaxX = -Infinity;
+  for (let i = 0; i < 90; i++) {
+    snap = await stepAndSnap(16);
+    for (const p of snap.worldProps) if (p.key === 'bottle') thrownMaxX = Math.max(thrownMaxX, p.x);
+  }
+  assert(snap.hud.heldItem === null, `a garrafa deveria ter saído da mão: ${JSON.stringify(snap.hud.heldItem)}`);
+  assert(thrownMaxX > exitX, `a garrafa deveria passar do selo aberto (${exitX}): máximo ${thrownMaxX}`);
+  assert(
+    snap.run.state === 'traverse' && snap.area.modules[0] === 'beco' && snap.player.x < exitX,
+    `um objeto além do selo não pode acionar a saída: ${JSON.stringify({ run: snap.run, area: snap.area.modules, x: snap.player.x })}`,
+  );
   await page.keyboard.down('KeyD');
 
   // Cruza a saída (D segue apertada). Perto do fim do fade de saída tira 50 de vida (tecla 4): as curas vivas ainda

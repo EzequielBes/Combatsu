@@ -31,12 +31,22 @@ export default async function ({ page, baseUrl, assert }) {
   const checkCamera = (snap, where) => {
     const { worldView } = snap.camera;
     camChecks++;
+    const { bounds } = snap.camera;
+    assert(
+      bounds.x === 0 && bounds.y === 0 && bounds.width === snap.area.widthPx && bounds.height === snap.area.heightPx,
+      `${where}: limites da câmera != área (ARE-10): ${JSON.stringify(bounds)} em ${snap.area.widthPx}x${snap.area.heightPx}`,
+    );
     assert(
       worldView.left >= -1 && worldView.right <= snap.area.widthPx + 1,
       `${where}: vista fora da área (ARE-10): ${JSON.stringify(worldView)} em ${snap.area.widthPx}px`,
     );
   };
 
+  // Ofertas sem a acessibilidade (`affordable` depende dos fragmentos da run), preços e preço do reroll.
+  const shopView = (s) => ({
+    offers: s.shop.offers.map(({ id, level, maxLevel, cost, sold }) => ({ id, level, maxLevel, cost, sold })),
+    rerollCost: s.shop.rerollCost,
+  });
   const assertTheme = (s, where, expected) => {
     assert(
       JSON.stringify(s.area.sheets) === JSON.stringify(expected.map(({ id, sheet }) => ({ id, sheet }))),
@@ -222,6 +232,9 @@ export default async function ({ page, baseUrl, assert }) {
     `ARE-11: konbini sem selo com ${FLAT_SOLIDS} corpos: ${JSON.stringify(snap.area)}`,
   );
   checkCamera(snap, 'konbini');
+  // KON-02: ofertas, preços e reroll da loja da konbini, para comparar com os da sala no fim do cenário.
+  const konbiniShop = shopView(snap);
+  assert(konbiniShop.offers.length > 0, `KON-02: a loja da konbini deveria ter ofertas: ${JSON.stringify(snap.shop)}`);
   assertTheme(snap, 'konbini', [{ id: 'konbini', sheet: 'terrain-konbini', band: { wall: 'N', top: 's' } }]);
   assert(snap.area.seal === null, `THM-03: a konbini não tem selo: ${JSON.stringify(snap.area.seal)}`);
   // TRV-07: os fragmentos que sobravam no chão entram na carteira (valor antes + valor vivo).
@@ -325,4 +338,24 @@ export default async function ({ page, baseUrl, assert }) {
     `rodada 2 sem onda: ${JSON.stringify(snap.run)}`,
   );
   assert(camChecks > 30, `a câmera deveria ter sido medida várias vezes: ${camChecks}`);
+
+  // KON-02: a loja da konbini é igual à da sala (mesma seed, rodada 1, sem compras): mesmas ofertas, preços e reroll.
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&area=sala&maxAlive=1&seed=3`, { waitUntil: 'load' });
+  await page.waitForFunction(() => typeof window.__game?.snapshot === 'function', { timeout: 15_000 });
+  await stepAndSnap(20);
+  await page.keyboard.press('KeyJ', { delay: 50 });
+  snap = await stepAndSnap(50);
+  for (let i = 0; i < 1200 && snap.run.state !== 'shop'; i++) {
+    if (snap.enemies.some((e) => e.hp > 0)) await page.keyboard.press('Digit2', { delay: 20 });
+    snap = await stepAndSnap(100);
+  }
+  assert(
+    snap.area.mode === 'sala' && snap.run.state === 'shop',
+    `a sala deveria abrir a loja: ${JSON.stringify(snap.run)}`,
+  );
+  const roomShop = shopView(snap);
+  assert(
+    JSON.stringify(roomShop) === JSON.stringify(konbiniShop),
+    `KON-02: a loja da konbini difere da da sala: ${JSON.stringify(konbiniShop)} != ${JSON.stringify(roomShop)}`,
+  );
 }

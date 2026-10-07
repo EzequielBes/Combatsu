@@ -33,6 +33,12 @@ export class DebugSnapshot {
     };
   }
 
+  /** Limites da câmera do mundo como o Phaser os guarda (ARE-10). */
+  private cameraBounds(): { x: number; y: number; width: number; height: number } {
+    const { x, y, width, height } = this.s.cameras.main.getBounds();
+    return { x, y, width, height };
+  }
+
   debugSnapshot(): GameSnapshot {
     return {
       player: {
@@ -170,6 +176,7 @@ export class DebugSnapshot {
       camera: {
         zoom: this.s.cameras.main.zoom,
         worldView: { left: this.s.cameras.main.worldView.left, right: this.s.cameras.main.worldView.right },
+        bounds: this.cameraBounds(),
         // CAM-07: estado do seguidor novo e os dois interruptores do Phaser que ele substitui.
         center: { x: this.s.camera.camCenter.x, y: this.s.camera.camCenter.y },
         scroll: { x: this.s.cameras.main.scrollX, y: this.s.cameras.main.scrollY },

@@ -173,6 +173,7 @@ describe('installDebugApi', () => {
       camera: {
         zoom: 1.5,
         worldView: { left: 0, right: 640 },
+        bounds: { x: 0, y: 0, width: 1280, height: 544 },
         center: { x: 320, y: 180 },
         scroll: { x: -160, y: -90 },
         roundPixels: false,
