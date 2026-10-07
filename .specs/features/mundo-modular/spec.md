@@ -321,7 +321,7 @@ o espaço.
 | ARE-06 | P1: Área montada pela seed | Design | Implementing |
 | ARE-07 | P1: Área montada pela seed | Design | Implementing |
 | ARE-08 | P1: Área montada pela seed | Design | Implementing |
-| ARE-09 | P1: Área montada pela seed | Design | Pending |
+| ARE-09 | P1: Área montada pela seed | Design | Implementing |
 | ARE-10 | P1: Área montada pela seed | Design | Pending |
 | ARE-11 | P1: Área montada pela seed | Design | Pending |
 | ARE-12 | P1: Área montada pela seed | Design | Implementing |
@@ -346,14 +346,14 @@ o espaço.
 | RCH-03 | P1: Spawn ao alcance num mapa maior | Design | Pending |
 | RCH-04 | P1: Spawn ao alcance num mapa maior | Design | Pending |
 | RCH-05 | P1: Spawn ao alcance num mapa maior | Design | Pending |
-| LEG-01 | P1: Sala de teste e compatibilidade | Design | Pending |
-| LEG-02 | P1: Sala de teste e compatibilidade | Design | Pending |
+| LEG-01 | P1: Sala de teste e compatibilidade | Design | Implementing |
+| LEG-02 | P1: Sala de teste e compatibilidade | Design | Implementing |
 | LEG-03 | P1: Sala de teste e compatibilidade | Design | Pending |
-| LEG-04 | P1: Sala de teste e compatibilidade | Design | Pending |
+| LEG-04 | P1: Sala de teste e compatibilidade | Design | Implementing |
 | LEG-05 | P1: Sala de teste e compatibilidade | Design | Pending |
-| SLT-01 | P2: Objetos sorteados nos slots | Design | Pending |
-| SLT-02 | P2: Objetos sorteados nos slots | Design | Pending |
-| SLT-03 | P2: Objetos sorteados nos slots | Design | Pending |
+| SLT-01 | P2: Objetos sorteados nos slots | Design | Implementing |
+| SLT-02 | P2: Objetos sorteados nos slots | Design | Implementing |
+| SLT-03 | P2: Objetos sorteados nos slots | Design | Implementing |
 | THM-01 | P2: Tema visual por módulo | Design | Pending |
 | THM-02 | P2: Tema visual por módulo | Design | Pending |
 | THM-03 | P2: Tema visual por módulo | Design | Pending |

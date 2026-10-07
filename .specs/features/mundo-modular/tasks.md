@@ -139,8 +139,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `parseLevel` para conferir o resultado nos testes
 **Requirement**: ARE-06, ARE-08, ARE-09, SLT-01, SLT-02, SLT-03, LEG-01, LEG-02, LEG-04
 **Done when**:
-- [ ] Testes cobrem: largura = soma + 2; coluna 0 toda `#`; última coluna `S` nas linhas 0 a 14 e `#` nas 15 e 16; `parseLevel` da grade dá o player na coluna 3; `slotRng.next()` em 0,39 → `c`, 0,4 → `b`, 0,79 → `b`, 0,8 → `.`; 1000 slots em 40/40/20 ± 5 pontos; trocar o número de slots não muda os ids sorteados para a mesma seed; `c`/`b` fixos ficam; a konbini não tem `S` nem `E`; `areaModeFor('?area=sala')`, `('?debug&fxlab')`, `('?debug&fxlab&modules=rua')` = `sala`; `('?debug')` e `('')` = `modular`.
-- [ ] `npm run gate` passa.
+- [x] Testes cobrem: largura = soma + 2; coluna 0 toda `#`; última coluna `S` nas linhas 0 a 14 e `#` nas 15 e 16; `parseLevel` da grade dá o player na coluna 3; `slotRng.next()` em 0,39 → `c`, 0,4 → `b`, 0,79 → `b`, 0,8 → `.`; 1000 slots em 40/40/20 ± 5 pontos; trocar o número de slots não muda os ids sorteados para a mesma seed; `c`/`b` fixos ficam; a konbini não tem `S` nem `E`; `areaModeFor('?area=sala')`, `('?debug&fxlab')`, `('?debug&fxlab&modules=rua')` = `sala`; `('?debug')` e `('')` = `modular`.
+- [x] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 
