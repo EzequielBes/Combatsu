@@ -92,16 +92,16 @@ export default async function ({ page, baseUrl, assert }) {
         const dir = onPlatform(s) || s.player.x > s.boss.x + 34 ? 'KeyA' : null;
         if (dir) keys.push(dir);
       } else if (!onPlatform(s)) {
-        // Sobe na plataforma: vai a x=235, pula segurando o espaço e segue para a direita até pousar nela.
+        // Sobe na plataforma: vai a x=235, pula segurando o ↑ e segue para a direita até pousar nela.
         if (jumpFrames > 0 || s.player.y < 440) {
-          keys.push('Space', 'KeyD');
+          keys.push('ArrowUp', 'KeyD');
           jumpFrames = Math.max(0, jumpFrames - 1);
         } else {
           const dir = goTo(s, 235, 6);
           if (dir) keys.push(dir);
           else {
             jumpFrames = 16;
-            keys.push('Space', 'KeyD');
+            keys.push('ArrowUp', 'KeyD');
           }
         }
       } else {

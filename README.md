@@ -26,17 +26,18 @@ npm run smoke       # build + cenários no Edge headless (scripts/smoke/); `npm 
 | Tecla | Ação |
 | --- | --- |
 | A/D ou ←/→ | mover |
-| Espaço / W / ↑ | pular (segurar = pulo mais alto) |
+| W / ↑ | pular (segurar = pulo mais alto) |
 | J / X | golpe leve |
 | K / Z | golpe forte |
 | U / Shift | guarda; apertada na hora do golpe, parry |
-| Q | esquiva |
-| S + Q | abaixar (escapa do golpe alto) |
+| Espaço (ou Q) | esquiva |
+| S + Espaço | abaixar (escapa do golpe alto) |
 | U + direção | virar com a guarda levantada |
 | J logo depois de uma defesa certa | Contra (contra-ataque garantido) |
 | E | pegar objeto / arremessar |
 | S + E | largar o objeto |
 | L / C e I / V | técnica do slot 1 e do slot 2 (compradas na loja) |
+| F (segurar) | Energia Amaldiçoada Reversa: cura 12 HP/s gastando o dobro em energia; parado, cortada por golpe |
 | J + K | finalizador, perto de um inimigo com a postura quebrada ou do chefe atordoado |
 | J / Enter | começar a run (título e game over) |
 | 1 / 2 / 3 e R | na loja: comprar a oferta e trocar as ofertas |

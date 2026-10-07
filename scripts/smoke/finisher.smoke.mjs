@@ -159,16 +159,16 @@ export default async function (ctx) {
   const airFrames = async (withStomp) => {
     await boot('enemyGuard=0');
     let s = await snap(60);
-    // Só pula parado no chão: logo após o boot o jogador ainda pode estar caindo do spawn e o Space seria ignorado.
+    // Só pula parado no chão: logo após o boot o jogador ainda pode estar caindo do spawn e o pulo (↑) seria ignorado.
     for (let i = 0, prevY = NaN; i < 60; i++) {
       if (s.player.vy === 0 && s.player.y === prevY) break;
       prevY = s.player.y;
       s = await frame();
     }
-    // Segura o Space até o topo: soltar cedo corta o pulo (salto curto) e o jogador mal sai do chão.
-    await down('Space');
+    // Segura o ↑ até o topo: soltar cedo corta o pulo (salto curto) e o jogador mal sai do chão.
+    await down('ArrowUp');
     for (let i = 0; i < 40 && !(s.player.vy >= 0 && s.player.y < 440); i++) s = await frame();
-    await up('Space');
+    await up('ArrowUp');
     const air = { y: s.player.y, vy: s.player.vy };
     if (!withStomp) {
       s = await frame();

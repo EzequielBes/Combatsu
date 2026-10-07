@@ -78,6 +78,7 @@ export class Spawner {
       (dead, x, y) => {
         this.s.combat.onEnemyDied(dead.id, x, y);
         this.s.drops.applyDrop(this.s.loot.enemyDrop(this.s.run.round, dead.weapon !== null), x, y);
+        this.s.drops.rollElixir(dead.weapon !== null, x, y);
         if (dead.weapon) this.s.drops.dropTool(dead.weapon, dead.weaponRare, x, y);
       },
       armedRoll,

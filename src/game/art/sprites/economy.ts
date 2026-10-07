@@ -26,3 +26,36 @@ const HEAL_B: Grid = ['..kk..', '.kGgk.', 'kgGGgk', 'kGGGgk', 'kGGGgk', 'kGGGgk'
 
 /** Folha da gota de cura (2 frames, para o pulsar). */
 export const HEAL_FRAMES: Record<string, Grid> = { a: HEAL_A, b: HEAL_B };
+
+/**
+ * Elixir (ELX-05, 8x10 texels): frasco de vidro (`S`) com rolha de madeira (`M`/`m`) e o líquido verde (`g`/`G`)
+ * que ondula entre os frames, com um brilho (`w`/`C`) no ombro. Maior e mais vistoso que a gota, para ler como cura
+ * grande de longe.
+ */
+const ELIXIR_A: Grid = [
+  '..kkkk..',
+  '..kMmk..',
+  '..kwSk..',
+  '.kkSSkk.',
+  'kSwGGGSk',
+  'kwGGGGGk',
+  'kGGgGGgk',
+  'kgGGGGgk',
+  '.kggggk.',
+  '..kkkk..',
+];
+const ELIXIR_B: Grid = [
+  '..kkkk..',
+  '..kMmk..',
+  '..kSwk..',
+  '.kkSSkk.',
+  'kSCGGGSk',
+  'kGGGgGGk',
+  'kGgGGGGk',
+  'kgGGgGgk',
+  '.kggggk.',
+  '..kkkk..',
+];
+
+/** Folha do Elixir (2 frames, para o líquido ondular). */
+export const ELIXIR_FRAMES: Record<string, Grid> = { a: ELIXIR_A, b: ELIXIR_B };

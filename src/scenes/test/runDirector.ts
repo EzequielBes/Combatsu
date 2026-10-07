@@ -1,11 +1,11 @@
 import { bossRewardSlot } from '../../core/bossReward';
 import { type MasterySlot } from '../../core/mastery';
-import { Loot, type LootOverrides } from '../../core/loot';
+import { ElixirRoll, Loot, type LootOverrides } from '../../core/loot';
 import { type RunCommand } from '../../core/run';
 import { isBossRound } from '../../core/waves';
 import { FULL_SHOP_CATALOG } from '../../data/shop';
 import { TECHNIQUES, type TechId } from '../../data/techniques';
-import { ECONOMY, RUN } from '../../data/tuning';
+import { ECONOMY, ELIXIR, RUN } from '../../data/tuning';
 import { isDebug } from '../../game/debug';
 import { CAMERA_FEEL } from '../../data/feel';
 import { debugParam, debugIntParam, isDroppedTool } from './params';
@@ -51,8 +51,9 @@ export class RunDirector {
         this.onStartRun();
         break;
       case 'spawn':
-        // FXL-01: nenhuma onda nasce no laboratório de efeitos - só os bonecos de treino (FXL-05).
-        if (this.s.fxLab) break;
+        // FXL-01: nenhuma onda nasce no laboratório de efeitos - só os bonecos de treino (FXL-05). `?debug&spawn=0`
+        // faz o mesmo na cena comum, para os cenários que medem a vida do player sem ninguém batendo nele.
+        if (this.s.fxLab || debugParam('spawn') === '0') break;
         if (cmd.kind === 'boss') this.s.spawner.spawnBoss(cmd.round);
         // SPN-07..09: comum nasce fora da câmera (worldView real, facing do player); o chefe segue no mais distante.
         else this.s.spawner.spawnFromCommand(this.s.spawner.pickEnemySpawnPoint(), cmd.round);
@@ -66,6 +67,8 @@ export class RunDirector {
         // Fica até o próximo `roundStart` (RHUD-03). Na rodada de chefe, ela entra depois de "Chefe derrotado!",
         // que o `onBossDefeated` já mostrou (BHUD-03).
         if (!isBossRound(cmd.round)) this.s.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
+        // REG-05: fechar a rodada devolve uma fatia da vida.
+        this.s.recovery.roundCleared();
         // CAM-08: o último inimigo da onda morreu, câmera lenta curta.
         this.s.effects.slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.slowMs);
         break;
@@ -108,6 +111,7 @@ export class RunDirector {
     for (const proj of this.s.projectiles) proj.destroyNow();
     this.s.projectiles = [];
     this.s.player.resetForRun();
+    this.s.recovery.reset();
     // Edge case: nova run zera o combo e a câmera lenta (estruturas zeram no reset do player e dos inimigos).
     this.s.comboCounter.reset();
     this.s.effects.slowMo.reset();
@@ -138,6 +142,7 @@ export class RunDirector {
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
     this.s.lootRng = this.s.run.lootRng!;
     this.s.loot = new Loot(this.s.lootRng, ECONOMY, this.lootOverrides(), this.s.modifiers);
+    this.s.elixir = new ElixirRoll(this.s.run.elixirRng!, ELIXIR);
   }
 
   /**

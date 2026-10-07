@@ -9,7 +9,7 @@
 // 1000/60 ms por passo de `__game.step` (os tweens do Phaser contam `Date.now`), `Math.random` vira um gerador com
 // semente fixa e o `requestAnimationFrame` nunca dispara (sem isto o Matter acumula um passo de física por quadro real
 // até o primeiro `step`). Cada captura chama `__game.render()` e lê o canvas no mesmo turno, sem escala do navegador.
-import { fxScenarios } from './visual-shots-fx.mjs';
+import { fxScenarios, techFxScenarios } from './visual-shots-fx.mjs';
 import { hdScenarios, makeClose } from './visual-shots-hd.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -175,7 +175,7 @@ const SCENARIOS = {
     await t.at(100, '04-corrida-b');
     await t.up('KeyD');
     await t.snap(300);
-    await t.press('Space');
+    await t.press('ArrowUp');
     let rose = false;
     const apex = (s) => (rose ||= s.player.vy < -1) && s.player.vy >= 0;
     await t.watch(90, [['05-pulo-apice', apex]]);
@@ -212,7 +212,7 @@ const SCENARIOS = {
     await t.at(120, '20-guarda');
     await t.up('KeyU');
     await t.snap(100);
-    await t.press('KeyQ');
+    await t.press('Space');
     await t.watch(30, [
       ['21-esquiva-rastro', t.layer('dodge.trail'), 3],
       ['21-esquiva-rastro+8', t.layer('dodge.trail'), 8],
@@ -349,6 +349,7 @@ const SCENARIOS = {
   },
   ...hdScenarios(BASE),
   ...fxScenarios(BASE),
+  ...techFxScenarios(),
 };
 
 const freePort = () =>

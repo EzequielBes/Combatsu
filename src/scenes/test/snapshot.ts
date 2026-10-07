@@ -128,6 +128,8 @@ export class DebugSnapshot {
         durabilityLeft: p.def.durability - p.machine.impacts,
         rare: p.rare,
         vx: p.vx,
+        texture: p.sprite.texture.key,
+        frame: p.sprite.frame.name,
       })),
       ce: { cur: this.s.energy.cur, max: this.s.energy.max, regen: this.s.energy.regen },
       tech: this.techSnapshot(),

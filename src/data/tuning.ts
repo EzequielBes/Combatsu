@@ -25,6 +25,23 @@ export const PLAYER_MOVE: MoveTuning = {
 /** Vida do player (HP-01..04); `invulnMs` 300 depois de um golpe cheio (PST-15, substitui os 700 ms do HP-02). */
 export const PLAYER_HEALTH: HealthTuning = { maxHp: 100, invulnMs: 300, staggerMs: 200, respawnMs: 1000 };
 
+/**
+ * Recuperação de vida do player (REG-01..05): fora de combate a vida volta devagar até uma fração do teto, e fechar
+ * uma rodada devolve uma fatia do teto. A vida cheia continua dependendo de cura (gota, Elixir, loja, Energia Reversa).
+ */
+export interface PlayerRegenTuning {
+  /** Tempo sem levar dano até a regeneração começar (ms). */
+  delayMs: number;
+  /** HP por segundo regenerados depois do atraso. */
+  perSec: number;
+  /** A regeneração passiva para nesta fração do hp máximo. */
+  capFraction: number;
+  /** Fração do hp máximo curada ao fechar uma rodada. */
+  roundClearFraction: number;
+}
+
+export const PLAYER_REGEN: PlayerRegenTuning = { delayMs: 4000, perSec: 2, capFraction: 0.6, roundClearFraction: 0.2 };
+
 /** Recuo do player ao levar golpe (px/s na horizontal), mantido durante o atordoamento (HP-03). */
 export const PLAYER_KNOCKBACK = 180;
 
@@ -185,6 +202,18 @@ export const ECONOMY: EconomyTuning = {
   maxLiveFragments: 60,
   armed: { startRound: 3, base: 0.15, perRound: 0.05, cap: 0.5, rareChance: 0.15 },
 };
+
+/**
+ * Elixir (ELX-01..05): item de cura grande e raro, sorteado num stream próprio para não mexer nos drops que já
+ * existem. Cura uma fração do hp máximo; o inimigo armado solta mais, o chefe não solta (ele já cura ao morrer).
+ */
+export interface ElixirTuning {
+  chance: number;
+  armedChance: number;
+  healFraction: number;
+}
+
+export const ELIXIR: ElixirTuning = { chance: 0.04, armedChance: 0.2, healFraction: 0.25 };
 
 /** Tuning da física, ímã e vida do pickup (ECO-06..11, ECO-18, ECO-21, HEAL-04/05/09). */
 export interface PickupTuning {

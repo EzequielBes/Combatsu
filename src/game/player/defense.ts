@@ -125,13 +125,13 @@ export class PlayerDefense {
     this.wasDashing = false;
   }
 
-  /** Recarga de `Q`: o maior dos relógios da esquiva e do abaixar, que dividem os 450 ms (DEF-15). */
+  /** Recarga da esquiva (`Espaço`): o maior dos relógios da esquiva e do abaixar, que dividem os 450 ms (DEF-15). */
   get evadeCooldownMs(): number {
     return Math.max(this.p.dodge.cooldownMs, this.p.duck.cooldownMs);
   }
 
   /**
-   * `Q`: esquiva ou abaixar, que dividem a recarga (DEF-15). Com `S` segurada vale sempre o abaixar, nunca a esquiva,
+   * `Espaço`: esquiva ou abaixar, que dividem a recarga (DEF-15). Com `S` segurada vale sempre o abaixar, nunca a esquiva,
    * mesmo com direção horizontal (DEF-22) e mesmo no ar, onde nada acontece (DEF-16).
    * Esquiva (DOD-01, DOD-04..06, DOD-09, DOD-10): no chão, sem golpe nem objeto em andamento, com a recarga zerada.
    * Um golpe que já acertou pode ser cancelado na recovery pela esquiva, no mesmo frame (DOD-06).

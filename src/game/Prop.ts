@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { normalize, type HitReport, type Vec2 } from '../core/hit';
 import type { Modifiers } from '../core/modifiers';
-import { PropMachine, propHit, type PropDef, type PropImpact, type PropState } from '../core/props';
+import { PropMachine, propHit, throwOrigin, type PropDef, type PropImpact, type PropState } from '../core/props';
 import { shardsKey } from './art';
 import { ART_SCALE } from './art/palette';
 import { PROP_SHARDS } from './art/sprites/props';
@@ -50,7 +50,9 @@ export class Prop {
     readonly rare: boolean = false,
   ) {
     this.machine = new PropMachine(def);
-    this.sprite = scene.matter.add.image(x, y, def.texture, undefined, {
+    // Folha com vários quadros (ferramentas, ARM-19) abre no `common`; sem frame, o Phaser mostraria a folha inteira.
+    const frame = scene.textures.get(def.texture).has('common') ? 'common' : undefined;
+    this.sprite = scene.matter.add.image(x, y, def.texture, frame, {
       friction: 0.6,
       frictionAir: 0.01,
       restitution: 0.15,
@@ -145,6 +147,10 @@ export class Prop {
     if (mode === 'drop') this.sprite.setPosition(holderX, holderY);
     this.sync();
     if (mode === 'throw') {
+      // THR-01: sai do tronco, não da mão (que no corpo HD fica acima da cabeça do inimigo), e em pé.
+      const from = throwOrigin(holderX, holderY, facing);
+      this.sprite.setPosition(from.x, from.y);
+      this.sprite.setAngle(0);
       const v = this.def.throwSpeed * PX_PER_S_TO_STEP;
       this.sprite.setVelocity(v * facing, -v * THROW_LIFT);
       this.sprite.setAngularVelocity(0.25 * facing);

@@ -332,12 +332,20 @@ export default async function (ctx) {
 
   // --- Esquiva perfeita (DOD-03/07/08/11/12) --------------------------------------------------------------------------------------
   d = await duel();
-  await d.to(25); // Q 3 frames antes do contato: a invencibilidade (180 ms) cobre o golpe
+  await d.to(25); // Espaço 3 frames antes do contato: a invencibilidade (180 ms) cobre o golpe
   const perfectBefore = count(d.s, 'perfectDodge');
   const enemyHp = nearest(d.s).hp;
   const hpDodge = d.s.player.hp;
-  await tapFrame(d, 'KeyQ');
+  // DGA-06: a esquiva principal é o Espaço (o Q segue como atalho, coberto pelos outros cenários).
+  const yBeforeDodge = d.s.player.y;
+  await tapFrame(d, 'Space');
+  assert(
+    d.s.player.y >= yBeforeDodge - 1,
+    `DGA-06: o Espaço não deveria mais pular: ${yBeforeDodge} -> ${d.s.player.y}`,
+  );
   await until(d, (st) => count(st, 'perfectDodge') === perfectBefore + 1, 40, 'DOD-03 perfectDodge');
+  // DGA-03/04: a esquiva perfeita deixa a imagem residual e acende as linhas de foco.
+  assert(d.s.fx.layers.includes('dodge.zanzou'), `DGA-03: esperava dodge.zanzou: ${JSON.stringify(d.s.fx.layers)}`);
   const perfectAt = d.f;
   assert(
     d.s.player.hp === hpDodge,

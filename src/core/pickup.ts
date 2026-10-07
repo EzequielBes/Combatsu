@@ -1,7 +1,10 @@
 import type { Rect } from './level';
 import type { PickupTuning } from '../data/tuning';
 
-export type PickupKind = 'fragment' | 'heal';
+export type PickupKind = 'fragment' | 'heal' | 'elixir';
+
+/** A gota e o Elixir curam: só coletam e só ligam o ímã com vida faltando (HEAL-04, HEAL-09, ELX-05). */
+export const isHealKind = (kind: PickupKind): boolean => kind === 'heal' || kind === 'elixir';
 export type PickupStepResult = 'none' | 'collected' | 'expired';
 
 /** Estado de um pickup no chão (fragmento ou gota de cura); `x`/`y` são o centro da caixa. */
@@ -54,7 +57,7 @@ export function createPickup(
 
 /** Tempo de vida do pickup (ECO-09, HEAL-05). */
 export function lifetimeMs(kind: PickupKind, t: PickupTuning): number {
-  return kind === 'heal' ? t.healLifeMs : t.fragmentLifeMs;
+  return isHealKind(kind) ? t.healLifeMs : t.fragmentLifeMs;
 }
 
 /** Visibilidade do pickup (ECO-21): sempre visível, pisca a cada `blinkEveryMs` nos últimos `blinkLastMs`. */
@@ -71,7 +74,7 @@ function overlapsRect(ax: number, ay: number, aw: number, ah: number, b: Rect): 
 /** Só coleta e só liga o ímã com o player vivo e, para a gota, com vida faltando (ECO-11, HEAL-04, HEAL-09). */
 function canInteract(p: PickupState, ctx: PickupContext): boolean {
   if (!ctx.player.alive) return false;
-  if (p.kind === 'heal' && !ctx.player.canHeal) return false;
+  if (isHealKind(p.kind) && !ctx.player.canHeal) return false;
   return true;
 }
 

@@ -34,7 +34,8 @@ export class TechDirector {
     this.s.energy.setLevels(this.s.modifiers.level('energia'), this.s.modifiers.level('fluxo'));
     this.s.loadout.tick(dt);
     // CE-04/05: sem regen enquanto há uma conjuração em andamento.
-    this.s.energy.update(dt, this.s.techCaster.cast !== null);
+    // RCT-06: nem enquanto a Energia Reversa canaliza.
+    this.s.energy.update(dt, this.s.techCaster.cast !== null || this.s.recovery.reverse.active);
     // FXL-07/09: no laboratório a energia fica sempre no teto e a recarga do slot 0 sempre zerada - nenhuma
     // técnica de teste gasta ou deixa recarga pendente, mesmo enquanto uma conjuração está no meio do caminho.
     if (this.s.fxLab) {

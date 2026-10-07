@@ -38,6 +38,8 @@ export const TEX = {
   fragmentIcon: 'fragment-icon',
   /** Gota de cura (HEAL). */
   healDrop: 'heal-drop',
+  /** Elixir, a cura grande e rara (ELX-05). */
+  elixir: 'elixir',
   /** Ferramentas amaldiçoadas: comum/rara e as poses na mão do inimigo (ARM-19). */
   cursedKnife: 'cursed-knife',
   cursedClub: 'cursed-club',
@@ -68,6 +70,12 @@ export const SIZE = {
   player: { w: 20, h: 36 },
   enemy: { w: 22, h: 36 },
 } as const;
+
+/**
+ * Tamanho do player como a tela o desenha (px de mundo, medido nas capturas), maior que o corpo físico: os efeitos
+ * presos à silhueta (aura da Energia Reversa, linhas da esquiva) usam isto. O sprite HD (`?hd=1`) é mais alto.
+ */
+export const DRAWN_PLAYER = { base: { width: 22, height: 44 }, hd: { width: 30, height: 60 } } as const;
 
 function box(scene: Phaser.Scene, key: string, w: number, h: number, fill: number, eye = false): void {
   if (scene.textures.exists(key)) return;

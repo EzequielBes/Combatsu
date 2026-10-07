@@ -70,7 +70,7 @@ export class PlayerMovement {
       gravity: castAirGravity ? PLAYER_MOVE.gravity * CAST_FX.airGravity : PLAYER_MOVE.gravity,
     };
     this.p.move = stepMovement(this.p.move, input, sensors, dtMs, moveTuning, frozen);
-    // DEF-10: abaixado a velocidade horizontal é 0, sem deslizar a corrida que vinha antes do `S`+`Q`.
+    // DEF-10: abaixado a velocidade horizontal é 0, sem deslizar a corrida que vinha antes do `S`+`Espaço`.
     if (ducking) this.p.move = { ...this.p.move, vx: 0 };
     // VOA-06: o quique mantém os −240 px/s no primeiro `update` depois do acerto; a gravidade só atua a partir do seguinte.
     if (bounceVy !== null) this.p.move = { ...this.p.move, vy: bounceVy, jumping: false };

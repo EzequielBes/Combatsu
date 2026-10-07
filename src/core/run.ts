@@ -54,6 +54,7 @@ export class Run {
   private guardRngValue: Rng | null = null;
   private variantRngValue: Rng | null = null;
   private spawnRngValue: Rng | null = null;
+  private elixirRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -110,6 +111,11 @@ export class Run {
   /** Stream de sorteio dos drops (ECO-17): próprio, criado com `seed ^ 0x9e3779b9`; `null` antes do primeiro start. */
   get lootRng(): Rng | null {
     return this.lootRngValue;
+  }
+
+  /** Stream de sorteio do Elixir (ELX-03): próprio, `seed ^ 0x510e527f`, para não mexer nos drops que já existem. */
+  get elixirRng(): Rng | null {
+    return this.elixirRngValue;
   }
 
   /** Stream de sorteio da loja (SHOP-09): próprio, criado com `seed ^ SHOP.rngSalt`; `null` antes do 1º start. */
@@ -214,6 +220,7 @@ export class Run {
         this.guardRngValue = new Rng(seed ^ 0x2545f491);
         this.variantRngValue = new Rng(seed ^ 0x6a09e667);
         this.spawnRngValue = new Rng(seed ^ 0x3c6ef372);
+        this.elixirRngValue = new Rng(seed ^ 0x510e527f);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;

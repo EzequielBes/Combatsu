@@ -77,7 +77,8 @@ const sparkSize = (kind: SparkKind): { size: number; rays: number } =>
 /** Duração (ms) do anel dourado do parry. */
 const RING_MS = 200;
 /** Rastro (FX-05): cor, alpha inicial, tempo para sumir e intervalo mínimo entre cópias (ms). */
-const AFTERIMAGE_COLOR = PALETTE.c;
+/** O rastro alterna azul e ciano, quadro a quadro (DGA-05): lê como borrão de velocidade, não como cópias iguais. */
+const AFTERIMAGE_COLORS = [PALETTE.c, PALETTE.C] as const;
 const AFTERIMAGE_ALPHA = 0.5;
 const AFTERIMAGE_FADE_MS = 180;
 const AFTERIMAGE_EVERY_MS = 30;
@@ -97,6 +98,7 @@ const CURSE_SMOKE_COUNT = 16;
  */
 export class Fx {
   private lastAfterimage = -Infinity;
+  private afterimageCount = 0;
 
   constructor(private readonly scene: Phaser.Scene) {
     registerSheet(scene, TEX.fxStar, parseSheet('fx-star', STAR_FRAMES, PALETTE_KEYS));
@@ -165,7 +167,7 @@ export class Fx {
       .setOrigin(sprite.originX, sprite.originY)
       .setScale(sprite.scaleX, sprite.scaleY)
       .setDepth(sprite.depth - 0.5)
-      .setTint(AFTERIMAGE_COLOR)
+      .setTint(AFTERIMAGE_COLORS[this.afterimageCount++ % AFTERIMAGE_COLORS.length])
       .setTintMode(Phaser.TintModes.FILL)
       .setAlpha(AFTERIMAGE_ALPHA);
     this.scene.tweens.add({
