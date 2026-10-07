@@ -457,9 +457,9 @@ T26 → T27 → T28 → T29
 **Reuses**: `AreaDirector.transitioning`, `cameras.main.fadeEffect` (Phaser)
 **Requirement**: TRV-10
 **Done when**:
-- [ ] `world-traverse` afirma: com `KeyD` e `KeyJ` seguradas, durante o fade de entrada da rodada 2 (`transitioning`) o `player.x` fica igual ao do spawn e `player.move` fica `null`; o fade de saída para o player sem acelerar; o fade de entrada dura 12 a 19 quadros (~250 ms), na saída e no fechamento da loja.
-- [ ] O mutante A5 (`!this.area.transitioning` removido de `TestScene.inputFor`) morre: `world-traverse` falha.
-- [ ] `npm run gate && npm run smoke` passa.
+- [x] `world-traverse` afirma: com `KeyD` e `KeyJ` seguradas, durante o fade de entrada da rodada 2 (`transitioning`) o `player.x` fica igual ao do spawn e `player.move` fica `null`; o fade de saída para o player sem acelerar; o fade de entrada dura 12 a 19 quadros (~250 ms), na saída e no fechamento da loja.
+- [x] O mutante A5 (`!this.area.transitioning` removido de `TestScene.inputFor`) morre: `world-traverse` falha.
+- [x] `npm run gate && npm run smoke` passa.
 **Tests**: smoke
 **Gate**: full
 

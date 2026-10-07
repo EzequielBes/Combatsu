@@ -16,6 +16,7 @@ export class DebugSnapshot {
   /** Campo `area` (LEG-05): na sala `modules` é vazio, `sealed` é `false` e `exitX` é `null`; `staticBodies` conta os corpos `isStatic` do mundo do Matter. */
   areaSnapshot(): GameSnapshot['area'] {
     const area = this.s.area;
+    const fade = this.s.cameras.main.fadeEffect;
     return {
       mode: area.mode,
       modules: [...area.moduleIds],
@@ -24,6 +25,8 @@ export class DebugSnapshot {
       sealed: this.s.world.sealed,
       exitX: this.s.world.exitX,
       staticBodies: this.s.matter.world.getAllBodies().filter((b) => (b as MatterJS.BodyType).isStatic).length,
+      transitioning: area.transitioning,
+      fade: { running: fade.isRunning, out: fade.direction, alpha: fade.direction ? fade.progress : 1 - fade.progress },
     };
   }
 

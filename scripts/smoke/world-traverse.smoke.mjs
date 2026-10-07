@@ -143,12 +143,20 @@ export default async function ({ page, baseUrl, assert }) {
   let before = snap;
   let crossedAt = -1;
   let frames = 0;
+  // TRV-10: `KeyD` segue apertada desde a caminhada; no primeiro quadro do fade de saída aperta-se `KeyJ` também.
+  const fadeOut = [];
   for (let i = 0; i < 1200 && snap.area.modules[0] !== 'konbini'; i++) {
     before = snap;
     snap = await stepAndSnap(16);
     frames++;
     if (crossedAt < 0 && snap.player.x > exitX) crossedAt = frames;
-    if (snap.area.modules[0] !== 'konbini') checkCamera(snap, 'travessia');
+    if (snap.area.modules[0] !== 'konbini') {
+      checkCamera(snap, 'travessia');
+      if (snap.area.transitioning) {
+        if (fadeOut.length === 0) await page.keyboard.press('KeyJ', { delay: 20 });
+        fadeOut.push(snap);
+      }
+    }
     assert(!snap.player.dead, 'o player morreu em traverse');
   }
   assert(
@@ -159,6 +167,20 @@ export default async function ({ page, baseUrl, assert }) {
   // TRV-10: o fade de saída dura 250 ms (15 quadros de 16,7 ms), com folga de 3 quadros para o disparo e o fim.
   const fadeFrames = frames - crossedAt;
   assert(fadeFrames >= 12 && fadeFrames <= 19, `TRV-10: fade de saída de ${fadeFrames} quadros (esperava ~15)`);
+  // TRV-10: no fade de saída a câmera escurece (`out`) e o input é neutro: sem golpe e sem acelerar (D segue apertada).
+  assert(
+    fadeOut.length >= 12 && fadeOut.every((s) => s.area.fade.running && s.area.fade.out),
+    `TRV-10: a câmera deveria escurecer em todo o fade de saída: ${JSON.stringify(fadeOut.map((s) => s.area.fade))}`,
+  );
+  assert(
+    fadeOut.every((s) => s.player.move === null),
+    `TRV-10: o player golpeou com J apertada durante a transição: ${JSON.stringify(fadeOut.map((s) => s.player.move))}`,
+  );
+  const dxs = fadeOut.slice(1).map((s, i) => s.player.x - fadeOut[i].player.x);
+  assert(
+    dxs.every((dx, i) => i === 0 || dx <= dxs[i - 1] + 0.01) && dxs[dxs.length - 1] < dxs[0] * 0.25,
+    `TRV-10: com D apertada o player deveria só perder velocidade no fade de saída: ${JSON.stringify(dxs)}`,
+  );
 
   // KON-01: konbini com a loja aberta, player na coluna 3, selo e saída ausentes.
   assert(
@@ -191,6 +213,17 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.hud.heldItem === null, `TRV-08: a mão deveria estar vazia: ${JSON.stringify(snap.hud.heldItem)}`);
   // ARE-11: nenhum objeto da área anterior sobrevive (a konbini não tem objetos).
   assert(snap.worldProps.length === 0, `ARE-11: objetos da área anterior: ${JSON.stringify(snap.worldProps)}`);
+  // TRV-10: o fade de entrada clareia a câmera por ~250 ms (12 a 19 quadros) e só então `transitioning` cai.
+  let fadeIn = 1;
+  assert(
+    snap.area.transitioning && !snap.area.fade.out,
+    `TRV-10: a konbini deveria nascer clareando: ${JSON.stringify(snap.area)}`,
+  );
+  for (let i = 0; i < 60 && snap.area.transitioning; i++) {
+    snap = await stepAndSnap(16);
+    if (snap.area.transitioning) fadeIn++;
+  }
+  assert(fadeIn >= 12 && fadeIn <= 19, `TRV-10: fade de entrada da konbini de ${fadeIn} quadros (esperava ~15)`);
   // KON-05: nenhum inimigo vivo e nenhum nasce na konbini, mesmo com a loja aberta por 1 s.
   const known = new Set(snap.enemies.map((e) => e.id));
   assert(
@@ -206,11 +239,33 @@ export default async function ({ page, baseUrl, assert }) {
 
   // KON-03/TRV-10: Enter fecha a loja com fade e a rodada 2 começa numa área nova, com o player na coluna 3.
   await page.keyboard.down('Enter');
-  snap = await stepAndSnap(50);
+  snap = await stepAndSnap(16);
   await page.keyboard.up('Enter');
-  for (let i = 0; i < 100 && !(snap.run.state === 'roundActive' && snap.run.round === 2); i++) {
-    snap = await stepAndSnap(50);
+  // TRV-10: fecha a loja com D apertada; o fade de saída (loja) e o de entrada (rodada 2) duram ~250 ms cada, e no de
+  // entrada o player fica parado no spawn e sem golpear mesmo com `KeyJ` apertada (input neutro nos 500 ms).
+  let shopFadeOut = 0;
+  const roundFadeIn = [];
+  for (let i = 0; i < 120 && !(roundFadeIn.length > 0 && !snap.area.transitioning); i++) {
+    snap = await stepAndSnap(16);
+    if (snap.area.transitioning && snap.area.fade.out) shopFadeOut++;
+    if (snap.run.state === 'roundActive' && snap.area.transitioning && !snap.area.fade.out) {
+      if (roundFadeIn.length === 0) await page.keyboard.press('KeyJ', { delay: 20 });
+      roundFadeIn.push(snap);
+    }
   }
+  assert(
+    shopFadeOut >= 11 && shopFadeOut <= 19,
+    `TRV-10: fade de saída da loja de ${shopFadeOut} quadros (esperava ~15)`,
+  );
+  assert(
+    roundFadeIn.length >= 12 && roundFadeIn.length <= 19,
+    `TRV-10: fade de entrada da rodada 2 de ${roundFadeIn.length} quadros (esperava ~15)`,
+  );
+  const spawnX = roundFadeIn[0].level.playerSpawn.x;
+  assert(
+    roundFadeIn.every((s) => Math.abs(s.player.x - spawnX) < 0.5 && s.player.move === null),
+    `TRV-10: o player saiu do spawn ${spawnX} ou golpeou na transição: ${JSON.stringify(roundFadeIn.map((s) => [s.player.x, s.player.move]))}`,
+  );
   assert(
     snap.run.state === 'roundActive' && snap.run.round === 2,
     `KON-03: a rodada 2 deveria começar: ${JSON.stringify(snap.run)}`,
