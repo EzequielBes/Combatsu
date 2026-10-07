@@ -124,8 +124,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `Rng` (`src/core/rng.ts`), `isBossRound` (`src/core/waves.ts`)
 **Requirement**: ARE-01, ARE-02, ARE-03, ARE-04, ARE-05, ARE-06, ARE-07, ARE-12, ARE-13
 **Done when**:
-- [ ] `tests/core/stage.test.ts` cobre: 2 módulos nas rodadas 1 e 2, 3 na rodada 3; rodada 5 e 10 = `['santuario']`; 20 seeds × rodadas 1 a 10 sem vizinho repetido, sem primeiro igual ao da área anterior e com largura entre 48 e 120; a regra de largura com um catálogo sintético que passa de 120 (troca o último) e um que fica abaixo de 48 (acrescenta o `beco`), cada um no limite exato (48 e 120 aceitos; 47 e 121 corrigidos); mesma seed = mesma sequência; `modules=beco,parque` força a ordem; `modules=konbini,xyz` e `modules=` voltam ao sorteio.
-- [ ] `npm run gate` passa.
+- [x] `tests/core/stage.test.ts` cobre: 2 módulos nas rodadas 1 e 2, 3 na rodada 3; rodada 5 e 10 = `['santuario']`; 20 seeds × rodadas 1 a 10 sem vizinho repetido, sem primeiro igual ao da área anterior e com largura entre 48 e 120; a regra de largura com um catálogo sintético que passa de 120 (troca o último) e um que fica abaixo de 48 (acrescenta o `beco`), cada um no limite exato (48 e 120 aceitos; 47 e 121 corrigidos); mesma seed = mesma sequência; `modules=beco,parque` força a ordem; `modules=konbini,xyz` e `modules=` voltam ao sorteio.
+- [x] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 
