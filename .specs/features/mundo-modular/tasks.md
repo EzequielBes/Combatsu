@@ -374,8 +374,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: a folha `terrain` atual e o `tileFrameFor`
 **Requirement**: THM-01, THM-02, THM-03
 **Done when**:
-- [x] Testes de arte: cada folha tem todos os frames de `TileVariant`, todas as cores estão na `PALETTE`, e o `seal` existe.
-- [x] `npm run gate` passa.
+- [ ] Testes de arte: cada folha tem todos os frames de `TileVariant`, todas as cores estão na `PALETTE`, e o `seal` existe.
+- [ ] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 
@@ -389,8 +389,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `paintNear`
 **Requirement**: THM-02
 **Done when**:
-- [x] Sem `spans` (sala) o fundo fica idêntico ao de hoje.
-- [x] `npm run gate && npm run build` passa.
+- [ ] Sem `spans` (sala) o fundo fica idêntico ao de hoje.
+- [ ] `npm run gate && npm run build` passa.
 **Tests**: none
 **Gate**: build
 
@@ -404,8 +404,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `tileFrameFor`
 **Requirement**: THM-02, THM-03
 **Done when**:
-- [x] Captura com `tools/visual-shots.mjs` de `?debug&modules=rua,beco,parque` e do `santuario`, em `hd=1` e sem ele, conferida a olho (três chãos distintos e o selo).
-- [x] `npm run gate && npm run smoke` passa.
+- [ ] Captura com `tools/visual-shots.mjs` de `?debug&modules=rua,beco,parque` e do `santuario`, em `hd=1` e sem ele, conferida a olho (três chãos distintos e o selo).
+- [ ] `npm run gate && npm run smoke` passa.
 **Tests**: smoke
 **Gate**: full
 
@@ -419,7 +419,7 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: as tabelas de modo debug existentes
 **Requirement**: LEG-03, ARE-12
 **Done when**:
-- [x] `npm run format:check` passa.
+- [ ] `npm run format:check` passa.
 **Tests**: none
 **Gate**: build
 
@@ -433,6 +433,6 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: o plano aprovado (seção 9)
 **Requirement**: MDL-10
 **Done when**:
-- [x] `npm run format:check` passa.
+- [ ] `npm run format:check` passa.
 **Tests**: none
 **Gate**: build
