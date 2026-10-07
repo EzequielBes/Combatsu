@@ -433,6 +433,6 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: o plano aprovado (seção 9)
 **Requirement**: MDL-10
 **Done when**:
-- [ ] `npm run format:check` passa.
+- [x] `npm run format:check` passa.
 **Tests**: none
 **Gate**: build

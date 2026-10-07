@@ -6,7 +6,7 @@ Mapa das features do jogo. Cada item é uma pasta tlc em `.specs/features/<nome>
 
 - **Em `dev`**: F0 a F5, F7, F10, F11 e as quatro features de arte e sensação de jogo (`sprite-player-polish`, `enemy-sprite-variety`, `sprite-chefes-e-acabamento`, `movimento-suave-e-objetos-no-chefe`). 1780 testes unitários e 30 smokes.
 - **Fora do remoto**: `dev` local está à frente de `origin/dev`; nada foi enviado nesta leva.
-- **Feature em andamento**: nenhuma. F17 `impacto-amaldicoado` (feel JJK + Sifu) mergeada em `dev` em 04/10 (Verifier PASS na 2ª iteração, UAT aprovado). Próximos: spike do boneco articulado 2D (arte do player feita pelo Claude) e spike de migração para o Phaser 4.2; depois F13. F12 `combate-mestre` foi mergeada em `dev` em 03/10 (smokes T36 a T40 cancelados, UAT aprovado pelo usuário).
+- **Feature em andamento**: F18 `mundo-modular` (branch `feat/mundo-modular`): Execute concluído, aguardando Verifier e UAT. A seguir vêm F19 a F21. F17 `impacto-amaldicoado` (feel JJK + Sifu) mergeada em `dev` em 04/10 (Verifier PASS na 2ª iteração, UAT aprovado). Próximos: spike do boneco articulado 2D (arte do player feita pelo Claude) e spike de migração para o Phaser 4.2; depois F13 (a F14 só vem depois da F19). F12 `combate-mestre` foi mergeada em `dev` em 03/10 (smokes T36 a T40 cancelados, UAT aprovado pelo usuário).
 - **Decisões do usuário em aberto**: silhueta própria para a Tecelã (hoje é o Oni com outro mapa de cores, BTIER-06); alcance do arremesso (a garrafa cai depois de ~260 px, a cadeira depois de ~140 px); taxa de atualização do monitor dele, para conferir o movimento acima de 60 Hz fora da simulação.
 
 ```
@@ -23,6 +23,9 @@ Parte C — Combate de Mestre
 
 Arte e sensação de jogo (sem número; entram quando o usuário pede)
  sprite-player-polish ─► enemy-sprite-variety ─► sprite-chefes-e-acabamento ─► movimento-suave-e-objetos-no-chefe
+Parte D — Mundo modular (expansão de ambiente; a F13 corre em paralelo, a F14 espera a F19)
+ F18 mundo-modular ─► F19 verticalidade ─┬─► F20 portas-e-destrutiveis ─► F21 perigos-e-rotas
+                                         └─► F14 ia-tatica (grafo de navegação dos inimigos)
 ```
 
 | # | Feature | Tamanho | IDs | Status |
@@ -44,17 +47,22 @@ Arte e sensação de jogo (sem número; entram quando o usuário pede)
 | — | `sprite-chefes-e-acabamento` | Large | BSP, BAN, LMB, BPW, OBJ, EPD | Done (Verifier PASS, rodada 2; 47 ACs); UAT do usuário ok e merge em `dev` em 03/10 |
 | — | `movimento-suave-e-objetos-no-chefe` | Medium | PRB, CAM, ITP | Done (Verifier PASS, rodada 2; 23 ACs); UAT do usuário ok e merge em `dev` em 03/10 |
 | F12 | `combate-mestre` | Complex | HGT, CMT, TGT, PST, GND, VOA, DEF, CNT, DFL, RDG | Em `dev` (03/10): 36 de 41 tasks; T36 a T40 (smokes) cancelados a pedido do usuário; UAT aprovado |
-| F13 | `foco-e-ambiente` | Large | FOC, WAL, TKD | Planejada |
-| F14 | `ia-tatica` | Complex | DIR, RNG, STG, ARC, IND, SFX | Planejada |
+| F13 | `foco-e-ambiente` | Large | FOC, TKD | Planejada (a parte de parede, WAL, foi para a F20; ganha os finalizadores "pela janela" e "escada abaixo") |
+| F14 | `ia-tatica` | Complex | DIR, RNG, STG, ARC, IND, SFX | Planejada (depois da F19: usa o grafo de navegação) |
 | F15 | `inimigos-a-distancia` | Large | CJR, PRJ | Planejada |
 | F16 | `pressao-e-curva` | Medium | PRS, CUR | Planejada (só curva/composição; volume de spawn foi para F11) |
+| F18 | `mundo-modular` | Complex | MDL, ARE, TRV, KON, RCH, LEG, SLT, THM | Em andamento: Execute concluído, aguardando Verifier e UAT |
+| F19 | `verticalidade` | Complex | — | Planejada |
+| F20 | `portas-e-destrutiveis` | Complex | WAL (vinda da F13) | Planejada |
+| F21 | `perigos-e-rotas` | Complex | — | Planejada |
 
 ## Próximos passos
 
-1. **F12 `combate-mestre`** (Specify): altura e cor de telegrafo nos golpes, `maxTargets`, regras de ragdoll, limite de 1 golpe no chão, tabela de defesa, Deflexão, janela de Contra, leitura de repetição.
-2. **F13 a F16**, nessa ordem, com UAT do usuário em `dev` ao fim de cada uma.
-3. **F6 e F9** depois da expansão.
-4. Quando o usuário pedir: `dev` → `main` e o push.
+1. **F18 `mundo-modular`**: Verifier independente e UAT do usuário; depois o merge em `dev`.
+2. **F19 `verticalidade`**, **F20 `portas-e-destrutiveis`** e **F21 `perigos-e-rotas`** (Specify de cada uma, nessa ordem, sobre o mundo modular da F18).
+3. **F13**, **F14** (só depois da F19), **F15** e **F16**, com UAT do usuário em `dev` ao fim de cada uma.
+4. **F6 e F9** depois da expansão.
+5. Quando o usuário pedir: `dev` → `main` e o push.
 
 Ao criar um ator novo (o Conjurador da F15, por exemplo), valem as decisões das features de arte: 3 aparências por inimigo comum (AD-013), chefe por pose articulada (AD-018) e sprite desenhado entre os passos de física com `BodyRenderPos` (AD-019).
 
@@ -147,9 +155,27 @@ Design completo e aprovado em `docs/superpowers/specs/2026-10-02-combate-mestre-
 - Deflexão; janela de Contra; voadora com custo e quique; leitura de repetição; invulnerabilidade de 700 para 300 ms.
 - Frames novos do player que ficaram para cá: `duck`, `duck-counter` e `counter`.
 
+### F18 mundo-modular (spec em `.specs/features/mundo-modular/spec.md`)
+- P1 Formato de módulo (grade de 17 linhas) e montagem da área pela seed, com RNG próprio (2 módulos nas rodadas 1 e 2, 3 depois; chefe só no `santuario`).
+- P1 Fluxo híbrido: limpar a rodada rompe o selo, a travessia leva à saída; a konbini é a loja entre as áreas.
+- P1 Rua, beco, parque, konbini e santuário, só no térreo; P2 tema visual por módulo (chão, fundo e selo de talismãs).
+- Sala de teste preservada (`?area=sala`); `?debug&modules=<ids>` para escolher os módulos.
+
+### F19 verticalidade
+- Piso atravessável, escada com luta, buraco e grafo de navegação dos inimigos.
+- Casa Amaldiçoada e prédio em obras (andares).
+
+### F20 portas-e-destrutiveis
+- Porta (abrir, chutar, arrombar), shoji, janela, estante e lustre; técnicas × ambiente; spawn diegético.
+- Parede (WAL), vinda da F13.
+
+### F21 perigos-e-rotas
+- Beirada e telhados, vidro, saída dupla e condições do Véu.
+- Desafios e segredos; curadoria anti-repetição.
+
 ### F13 foco-e-ambiente
-- Barra de Foco e os 3 golpes de Foco (tecla F); parede (impacto que atordoa); empurrão em corrente.
-- Finalizadores contextuais (normal, parede, arremesso no grupo); cura e Foco no finalizador.
+- Barra de Foco e os 3 golpes de Foco (tecla F); empurrão em corrente. A parede (impacto que atordoa, WAL) foi para a F20.
+- Finalizadores contextuais (normal, parede, arremesso no grupo, "pela janela" e "escada abaixo"); cura e Foco no finalizador.
 
 ### F14 ia-tatica
 - `AttackDirector` com 2 tokens e token de oportunidade (AD-016); anel tático com fintas e flanco.
