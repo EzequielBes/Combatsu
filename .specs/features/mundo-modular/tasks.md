@@ -276,7 +276,7 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `pickSpawnPoint`
 **Requirement**: RCH-01, LEG-01
 **Done when**:
-- [ ] `npm run gate && npm run build` passa.
+- [x] `npm run gate && npm run build` passa.
 **Tests**: none
 **Gate**: build
 

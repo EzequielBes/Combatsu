@@ -40,6 +40,8 @@ export class Spawner {
       gapMs: WAVE.pointGapMs,
       rng: this.s.run.spawnRng!,
       preferBackChance: SPAWN.preferBackChance,
+      // RCH-01, LEG-01: só o mundo modular limita o alcance; a sala segue sem `maxReach`.
+      ...(this.s.area.mode === 'modular' ? { maxReach: SPAWN.reachPx } : {}),
     });
     this.spawnLastUsed.set(point, this.s.clockMs);
     return point;
