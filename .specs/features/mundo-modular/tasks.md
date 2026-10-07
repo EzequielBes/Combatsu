@@ -184,8 +184,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `respawn`, `resetForRun`, `Prop.destroyNow`
 **Requirement**: ARE-09, TRV-08
 **Done when**:
-- [ ] `spawn` deixa de ser `readonly`; nada mais muda no `Player`.
-- [ ] `npm run gate && npm run build` passa.
+- [x] `spawn` deixa de ser `readonly`; nada mais muda no `Player`.
+- [x] `npm run gate && npm run build` passa.
 **Tests**: none
 **Gate**: build
 

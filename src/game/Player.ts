@@ -101,8 +101,8 @@ export class Player implements Hittable {
   /** Sentido do recuo do último golpe recebido. */
   knockDir: 1 | -1 = 1;
   blinkMs = 0;
-  /** Onde o player renasce: o spawn do level. */
-  private readonly spawn: { x: number; y: number };
+  /** Onde o player renasce: o spawn do level (muda a cada área no mundo modular, ARE-09). */
+  private spawn: { x: number; y: number };
   /** Sensor de chão do frame anterior, para a poeira do pouso (FX-04). */
   wasGrounded = true;
   /** ms desde o último pouso (SPR-13); Infinity até o primeiro. Alimenta a animação `land`. */
@@ -306,6 +306,17 @@ export class Player implements Hittable {
 
   /** Renasce no spawn do level com a vida cheia (o Health já voltou para o máximo). */
   private respawn(): void {
+    this.placeAtSpawn();
+    this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
+  }
+
+  /** Novo ponto de nascimento (ARE-09): a área nova põe o player na coluna 3, no chão. */
+  setSpawn(x: number, y: number): void {
+    this.spawn = { x, y };
+  }
+
+  /** Põe o player parado no spawn, sem fade e sem mexer na vida (ARE-09): o `respawn` sem o fade. */
+  placeAtSpawn(): void {
     this.sprite.setPosition(this.spawn.x, this.spawn.y);
     // EDG-02: a posição de desenho e o sprite vão junto na hora, sem deslizar nem ficar um quadro para trás.
     this.drawPos.snap();
@@ -313,7 +324,13 @@ export class Player implements Hittable {
     this.sprite.setVelocity(0, 0);
     this.move = initialMoveState();
     this.defense.resetDefense();
-    this.scene.cameras.main.fadeIn(RESPAWN_FADE_MS);
+  }
+
+  /** Saída da área (TRV-08): o objeto da mão é destruído junto com o resto da área e `held` volta a `null`. */
+  dropHeldForTransition(): void {
+    if (!this.held) return;
+    this.held.destroyNow();
+    this.held = null;
   }
 
   /**

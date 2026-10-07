@@ -333,7 +333,7 @@ o espaço.
 | TRV-05 | P1: Selo, travessia e saída | Design | Pending |
 | TRV-06 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-07 | P1: Selo, travessia e saída | Design | Pending |
-| TRV-08 | P1: Selo, travessia e saída | Design | Pending |
+| TRV-08 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-09 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-10 | P1: Selo, travessia e saída | Design | Pending |
 | KON-01 | P1: Konbini como loja | Design | Implementing |
