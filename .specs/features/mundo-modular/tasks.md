@@ -66,6 +66,12 @@ T16 → T17 → T18 → T19 → T20
 T21 → T22 → T23 → T24 → T25
 ```
 
+### Phase 5: Correções do Verifier (rodada 1) — worker de correção
+
+```
+T26 → T27 → T28 → T29
+```
+
 ---
 
 ## Task Breakdown
@@ -436,3 +442,74 @@ T21 → T22 → T23 → T24 → T25
 - [x] `npm run format:check` passa.
 **Tests**: none
 **Gate**: build
+
+---
+
+## Phase 5: Correções do Verifier (rodada 1)
+
+> Origem: `.specs/features/mundo-modular/validation.md` (FAIL por lacunas de teste, sem bug de jogo confirmado), seção "Fix Plans". Os testes afirmam o valor que a spec define; só o snapshot de debug ganha campos novos.
+
+### T26: Input neutro e fade de entrada medidos na transição
+
+**What**: Expor `area.transitioning` e `area.fade` (direção e alpha do fade da câmera) no snapshot e fazer o `world-traverse` segurar `KeyD` e `KeyJ` pela saída e pelo fechamento da loja, afirmando o player parado e sem golpe durante a transição e o fade de entrada de ~250 ms.
+**Where**: `scripts/smoke/world-traverse.smoke.mjs`, `src/scenes/test/snapshot.ts`, `src/game/debugApi.ts`, `tests/game/debugApi.test.ts`
+**Depends on**: None (fases 1 a 4 concluídas)
+**Reuses**: `AreaDirector.transitioning`, `cameras.main.fadeEffect` (Phaser)
+**Requirement**: TRV-10
+**Done when**:
+- [ ] `world-traverse` afirma: com `KeyD` e `KeyJ` seguradas, durante o fade de entrada da rodada 2 (`transitioning`) o `player.x` fica igual ao do spawn e `player.move` fica `null`; o fade de saída para o player sem acelerar; o fade de entrada dura 12 a 19 quadros (~250 ms), na saída e no fechamento da loja.
+- [ ] O mutante A5 (`!this.area.transitioning` removido de `TestScene.inputFor`) morre: `world-traverse` falha.
+- [ ] `npm run gate && npm run smoke` passa.
+**Tests**: smoke
+**Gate**: full
+
+---
+
+### T27: Curas e Elixir creditados na saída
+
+**What**: Novo smoke `world-exit` com `?debug&seed=9&armed=knife&heal=1&regen=0&modules=beco,parque&maxAlive=1`: o último abate solta uma gota de cura e um Elixir (a seed 9 sorteia o Elixir no sexto abate); com a vida abaixo do máximo no fim do fade de saída, a vida na konbini vale `min(maxHp, hp antes + soma das curas vivas)` e nenhum pickup sobra.
+**Where**: `scripts/smoke/world-exit.smoke.mjs`
+**Depends on**: T26
+**Reuses**: o laço de derrubar a onda e o `stepAndSnap` do `world-traverse`; `AreaDirector.finishExit`; tecla de debug `4`
+**Requirement**: TRV-07
+**Done when**:
+- [ ] O smoke afirma que há uma gota `heal` e um `elixir` no chão antes da saída, `player.hp === min(maxHp, hpAntes + soma)` na konbini, nenhum pickup de qualquer tipo depois e os eventos `collect:heal:` e `collect:elixir:`.
+- [ ] Um mutante que credita só `kind === 'fragment'` no `finishExit` morre: `world-exit` falha.
+- [ ] `npm run gate && npm run smoke` passa.
+**Tests**: smoke
+**Gate**: full
+
+---
+
+### T28: Tema por trecho, faixa de fundo e frame do selo medidos
+
+**What**: Expor no snapshot a folha de um tile do chão por trecho (`area.sheets`), as cores da faixa próxima (`area.bands`) e a imagem do selo (`area.seal`); testar `NEAR_COLORS` e `bandsFor` na unidade e, nos smokes, os trechos do `beco,parque` com `terrain-beco` e `terrain-parque`, o selo com o frame `seal` enquanto sólido e ausente 400 ms depois do `openSeal`.
+**Where**: `src/scenes/test/world.ts`, `src/scenes/test/snapshot.ts`, `src/game/debugApi.ts`, `src/game/art/background.ts`, `tests/game/art/background.test.ts`, `tests/game/debugApi.test.ts`, `scripts/smoke/world-traverse.smoke.mjs`, `scripts/smoke/world-exit.smoke.mjs`
+**Depends on**: T27
+**Reuses**: `THEME_TEXTURES`, `NEAR_COLORS`, `AreaSpan`, a medição em quadros da T26
+**Requirement**: THM-02, THM-03, TRV-03
+**Done when**:
+- [ ] `tests/game/art/background.test.ts`: `NEAR_COLORS` tem uma entrada por tema e só chaves da `PALETTE`; `bandsFor` devolve uma faixa por trecho com a cor do tema dele.
+- [ ] `world-traverse` afirma `area.sheets` = `terrain-beco`, `terrain-parque`; `world-exit` afirma o selo `seal`/`seal` enquanto `sealed` e `null` entre 350 e 450 ms depois do fim da onda.
+- [ ] O mutante A6 (`sheetFor` sempre `TEX.terrain`) morre: `world-traverse` falha.
+- [ ] `npm run gate && npm run smoke` passa.
+**Tests**: unit, smoke
+**Gate**: full
+
+---
+
+### T29: Lacunas menores (ARE-10, MDL-03, KON-02 e os dois edge cases)
+
+**What**: Afirmar `camera.getBounds()` igual à área no snapshot vivo; as mensagens com linha e coluna nas quebras de MDL-01; as ofertas e preços da konbini iguais aos da sala para a mesma seed; a nova run depois do `gameOver` e o objeto jogado além do selo aberto.
+**Where**: `src/scenes/test/snapshot.ts`, `src/game/debugApi.ts`, `tests/game/debugApi.test.ts`, `tests/core/module.test.ts`, `scripts/smoke/world-traverse.smoke.mjs`, `scripts/smoke/world-exit.smoke.mjs`, `scripts/smoke/world-restart.smoke.mjs`
+**Depends on**: T28
+**Reuses**: `validateModule`, `snap.shop`, o laço de derrubar a onda, a garrafa fixa do beco
+**Requirement**: ARE-10, MDL-03, KON-02
+**Done when**:
+- [ ] `camera.bounds` do snapshot vale `{x: 0, y: 0, width: widthPx, height: heightPx}` em todo quadro medido do `world-traverse`.
+- [ ] `module.test.ts`: as quebras de MDL-01 (15 e 49 colunas, 16 e 18 linhas, linha larga ou estreita) afirmam a mensagem exata com id, linha e coluna.
+- [ ] `world-traverse` compara as ofertas, os preços e o preço do reroll da konbini com os da sala (`area=sala`) para a mesma seed e a rodada 1, sem compras.
+- [ ] `world-restart`: morre, reinicia e a área da rodada 1 repete os módulos da primeira run (mesma seed), com `areaBuilt` e o player na coluna 3; `world-exit`: a garrafa jogada além do selo aberto não tira a run de `traverse`.
+- [ ] `npm run gate && npm run smoke` passa.
+**Tests**: unit, smoke
+**Gate**: full
