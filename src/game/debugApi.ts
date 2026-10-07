@@ -159,6 +159,12 @@ export interface GameSnapshot {
     sealed: boolean;
     exitX: number | null;
     staticBodies: number;
+    /** Folha de terreno do chão no meio de cada trecho, lida da imagem desenhada (THM-02); vazio na sala. */
+    sheets: { id: string; sheet: string | null }[];
+    /** Cores `wall` e `top` das faixas do fundo próximo, uma por trecho (THM-02); vazio na sala. */
+    bands: { wall: string; top: string }[];
+    /** Imagem do selo desenhada agora (THM-03); `null` sem selo ou depois do efeito de 400 ms. */
+    seal: { texture: string; frame: string; alpha: number } | null;
     /** Entre o início do fade de saída e o fim do fade de entrada: o input do player é neutro (TRV-10). */
     transitioning: boolean;
     /** Fade da câmera do mundo (TRV-10): `out` escurece, senão clareia; `alpha` de 0 (claro) a 1 (preto). */

@@ -32,7 +32,7 @@ export interface ThemeSpan {
 }
 
 /** Faixa de cor da camada próxima: de `x0` a `x1` na coordenada da própria camada. */
-interface Band {
+export interface Band {
   x0: number;
   x1: number;
   wall: string;
@@ -47,7 +47,7 @@ const VIEW_W = 640;
  * aparece na coordenada da camada onde a câmera centrada em X o enxerga (`0,6 X + 0,4 · VIEW_W / 2`). A primeira
  * faixa vai até a borda esquerda e a última até a direita.
  */
-function bandsFor(spans: readonly ThemeSpan[], x0: number, x1: number): Band[] {
+export function bandsFor(spans: readonly ThemeSpan[], x0: number, x1: number): Band[] {
   const f = PARALLAX[2];
   const toLayer = (worldX: number): number => f * worldX + (1 - f) * (VIEW_W / 2);
   return spans.map((sp, i) => ({
@@ -126,11 +126,14 @@ export function buildBackground(
   const bottom = heightPx + 256;
   const bands = spans && spans.length > 0 ? bandsFor(spans, x0, x1) : undefined;
   const painters = [paintFar, paintMid, (b: Brush, span: Span) => paintNear(b, span, bands)];
-  return PARALLAX.map((factor, i) => {
+  const layers = PARALLAX.map((factor, i) => {
     const g = scene.add.graphics().setScrollFactor(factor, factor).setDepth(DEPTH[i]);
     painters[i](new Brush(g), { x0, x1, ground: GROUND[i], bottom });
     return g;
   });
+  // As cores pintadas na camada próxima ficam no objeto, para o snapshot de debug conferir o tema (THM-02).
+  layers[2].setData('bands', bands ?? []);
+  return layers;
 }
 
 interface Span {

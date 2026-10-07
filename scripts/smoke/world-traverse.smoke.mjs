@@ -37,6 +37,17 @@ export default async function ({ page, baseUrl, assert }) {
     );
   };
 
+  const assertTheme = (s, where, expected) => {
+    assert(
+      JSON.stringify(s.area.sheets) === JSON.stringify(expected.map(({ id, sheet }) => ({ id, sheet }))),
+      `THM-02 ${where}: folhas de terreno por trecho: ${JSON.stringify(s.area.sheets)}`,
+    );
+    assert(
+      JSON.stringify(s.area.bands) === JSON.stringify(expected.map((e) => e.band)),
+      `THM-02 ${where}: faixas do fundo por trecho: ${JSON.stringify(s.area.bands)}`,
+    );
+  };
+
   // Antes da run: o fundo do título é o `rua` selado (ARE-09), em modo modular.
   let snap = await stepAndSnap(20);
   assert(snap.area.mode === 'modular', `o modo padrão deveria ser modular (LEG-04): ${snap.area.mode}`);
@@ -70,6 +81,16 @@ export default async function ({ page, baseUrl, assert }) {
   );
   const exitX = snap.area.exitX;
   checkCamera(snap, 'início da rodada 1');
+  // THM-02/03: cada trecho desenha o chão com a folha do tema dele, a faixa de fundo usa a cor do tema e o selo fechado
+  // usa o frame `seal`.
+  assertTheme(snap, 'rodada 1', [
+    { id: 'beco', sheet: 'terrain-beco', band: { wall: 'n', top: 'N' } },
+    { id: 'parque', sheet: 'terrain-parque', band: { wall: 'g', top: 'G' } },
+  ]);
+  assert(
+    snap.area.seal?.texture === 'seal' && snap.area.seal.frame === 'seal' && snap.area.seal.alpha === 1,
+    `THM-03: o selo fechado deveria usar o frame seal: ${JSON.stringify(snap.area.seal)}`,
+  );
 
   // TRV-08 (pré-condição): a garrafa fixa do beco vai para a mão do player.
   const bottle = snap.worldProps
@@ -201,6 +222,8 @@ export default async function ({ page, baseUrl, assert }) {
     `ARE-11: konbini sem selo com ${FLAT_SOLIDS} corpos: ${JSON.stringify(snap.area)}`,
   );
   checkCamera(snap, 'konbini');
+  assertTheme(snap, 'konbini', [{ id: 'konbini', sheet: 'terrain-konbini', band: { wall: 'N', top: 's' } }]);
+  assert(snap.area.seal === null, `THM-03: a konbini não tem selo: ${JSON.stringify(snap.area.seal)}`);
   // TRV-07: os fragmentos que sobravam no chão entram na carteira (valor antes + valor vivo).
   const swept = before.pickups.filter((p) => p.kind === 'fragment').reduce((n, p) => n + p.value, 0);
   assert(swept > 0, `os fragmentos do chão deveriam existir até a saída: ${JSON.stringify(before.pickups)}`);
@@ -291,6 +314,10 @@ export default async function ({ page, baseUrl, assert }) {
     `ARE-11: esperava ${FLAT_SOLIDS + 1} corpos estáticos e selo em ${snap.area.widthPx - TILE}: ${JSON.stringify(snap.area)}`,
   );
   checkCamera(snap, 'rodada 2');
+  assertTheme(snap, 'rodada 2', [
+    { id: 'beco', sheet: 'terrain-beco', band: { wall: 'n', top: 'N' } },
+    { id: 'parque', sheet: 'terrain-parque', band: { wall: 'g', top: 'G' } },
+  ]);
   snap = await stepAndSnap(1000);
   checkCamera(snap, 'rodada 2 depois de 1 s');
   assert(

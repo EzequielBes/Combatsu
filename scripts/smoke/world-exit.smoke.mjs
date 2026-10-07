@@ -53,6 +53,14 @@ export default async function ({ page, baseUrl, assert }) {
   }
   assert(still >= 5, `player não chegou ao selo: x=${snap.player.x} exitX=${exitX}`);
 
+  // THM-03: enquanto o selo é sólido ele é desenhado com o frame `seal`. Daqui o player fica parado (D solta) para o
+  // efeito do selo ser medido sem a saída o interromper.
+  await page.keyboard.up('KeyD');
+  assert(
+    snap.area.sealed && snap.area.seal?.texture === 'seal' && snap.area.seal.frame === 'seal',
+    `THM-03: o selo sólido deveria usar o frame seal: ${JSON.stringify(snap.area)}`,
+  );
+
   // Derruba o resto da onda junto ao selo; o último abate deixa as curas e o Elixir frescos no chão.
   for (let i = 0; i < 1200 && snap.run.state === 'roundActive'; i++) {
     if (snap.enemies.some((e) => e.hp > 0)) await page.keyboard.press('Digit2', { delay: 20 });
@@ -71,6 +79,51 @@ export default async function ({ page, baseUrl, assert }) {
     snap.player.hp === snap.player.maxHp,
     `a vida deveria estar cheia até aqui: ${snap.player.hp}/${snap.player.maxHp}`,
   );
+
+  // TRV-03/THM-03: o selo rompe com um efeito de 400 ms e depois a imagem some. O `TweenManager` do Phaser anda pelo
+  // relógio de parede (`Date.now()`), não pelos passos do `step`: a duração é medida em tempo real dentro da página,
+  // quadro a quadro, com uma pausa curta entre os passos.
+  assert(
+    snap.area.sealed === false && snap.area.seal !== null,
+    `TRV-03: o selo deveria estar rompendo: ${JSON.stringify(snap.area)}`,
+  );
+  const burn = await page.evaluate(async () => {
+    const t0 = performance.now();
+    const alphas = [];
+    const times = [];
+    for (;;) {
+      window.__game.step(16);
+      const s = window.__game.snapshot();
+      if (s.area.seal === null || performance.now() - t0 > 2000) {
+        return { ms: performance.now() - t0, alphas, times, module: s.area.modules[0], state: s.run.state };
+      }
+      alphas.push(s.area.seal.alpha);
+      times.push(performance.now() - t0);
+      await new Promise((resolve) => setTimeout(resolve, 4));
+    }
+  });
+  assert(
+    burn.alphas.every((a, i) => i === 0 || a <= burn.alphas[i - 1]) && burn.alphas.length > 5,
+    `TRV-03: o selo deveria só esmaecer: ${JSON.stringify(burn.alphas)}`,
+  );
+  assert(
+    burn.module === 'beco' && burn.state === 'traverse',
+    `a área não deveria mudar ainda: ${JSON.stringify(burn)}`,
+  );
+  // Os primeiros ~100 ms do tween andam devagar no modo em passos (o `TweenManager` ainda alcança o relógio de parede);
+  // por isso a duração sai da inclinação da parte linear (alpha de 0,8 a 0,1), que vale `duração = Δt / Δalpha`.
+  const at = (limit) => burn.alphas.findIndex((a) => a <= limit);
+  const from = at(0.8);
+  const to = burn.alphas.length - 1;
+  assert(
+    from >= 0 && burn.alphas[to] <= 0.1,
+    `TRV-03: o selo deveria chegar perto de 0: ${JSON.stringify(burn.alphas)}`,
+  );
+  const duration = (burn.times[to] - burn.times[from]) / (burn.alphas[from] - burn.alphas[to]);
+  assert(duration >= 350 && duration <= 450, `TRV-03: o efeito do selo durou ${duration.toFixed(0)} ms (esperava 400)`);
+  assert(burn.ms <= 800, `TRV-03: a imagem do selo deveria sumir ao fim do efeito: ${burn.ms.toFixed(0)} ms`);
+  snap = await stepAndSnap(16);
+  await page.keyboard.down('KeyD');
 
   // Cruza a saída (D segue apertada). Perto do fim do fade de saída tira 50 de vida (tecla 4): as curas vivas ainda
   // estão no chão e só a saída pode aplicá-las.

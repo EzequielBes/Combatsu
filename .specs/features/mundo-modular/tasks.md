@@ -489,10 +489,10 @@ T26 → T27 → T28 → T29
 **Reuses**: `THEME_TEXTURES`, `NEAR_COLORS`, `AreaSpan`, a medição em quadros da T26
 **Requirement**: THM-02, THM-03, TRV-03
 **Done when**:
-- [ ] `tests/game/art/background.test.ts`: `NEAR_COLORS` tem uma entrada por tema e só chaves da `PALETTE`; `bandsFor` devolve uma faixa por trecho com a cor do tema dele.
-- [ ] `world-traverse` afirma `area.sheets` = `terrain-beco`, `terrain-parque`; `world-exit` afirma o selo `seal`/`seal` enquanto `sealed` e `null` entre 350 e 450 ms depois do fim da onda.
-- [ ] O mutante A6 (`sheetFor` sempre `TEX.terrain`) morre: `world-traverse` falha.
-- [ ] `npm run gate && npm run smoke` passa.
+- [x] `tests/game/art/background.test.ts`: `NEAR_COLORS` tem uma entrada por tema e só chaves da `PALETTE`; `bandsFor` devolve uma faixa por trecho com a cor do tema dele.
+- [x] `world-traverse` afirma `area.sheets` = `terrain-beco`, `terrain-parque`; `world-exit` afirma o selo `seal`/`seal` enquanto `sealed` e `null` entre 350 e 450 ms depois do fim da onda.
+- [x] O mutante A6 (`sheetFor` sempre `TEX.terrain`) morre: `world-traverse` falha.
+- [x] `npm run gate && npm run smoke` passa.
 **Tests**: unit, smoke
 **Gate**: full
 

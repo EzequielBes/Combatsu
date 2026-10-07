@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { Filters } from '../../core/collision';
 import { TILE, tileVariant, type LevelData, type Rect } from '../../core/level';
+import { FLOOR_ROWS } from '../../core/module';
 import { AREA } from '../../data/tuning';
 import type { AreaSpan } from '../../core/stage';
 import { PROP_DEFS } from '../../data/props';
@@ -33,10 +34,35 @@ export class WorldBuilder {
   private sealImage: Phaser.GameObjects.TileSprite | Phaser.GameObjects.Rectangle | null = null;
   private sealRect: Rect | null = null;
   private sparks: Phaser.GameObjects.Image[] = [];
+  private spans: readonly AreaSpan[] = [];
 
   /** Selo ainda fechado (corpo sólido na área); `false` na sala, na konbini e depois de `openSeal`. */
   get sealed(): boolean {
     return this.sealBody !== null;
+  }
+
+  /** Imagem do selo como está desenhada agora (THM-03): textura, frame e alpha; `null` sem selo ou depois do efeito. */
+  get sealView(): { texture: string; frame: string; alpha: number } | null {
+    const image = this.sealImage;
+    if (!image) return null;
+    if (!('texture' in image)) return { texture: '', frame: '', alpha: image.alpha };
+    return { texture: image.texture.key, frame: String(image.frame.name), alpha: image.alpha };
+  }
+
+  /** Folha do tile do chão no meio de cada trecho, lida da imagem desenhada (THM-02); vazio na sala. */
+  floorSheets(): { id: string; sheet: string | null }[] {
+    const y = FLOOR_ROWS[0] * TILE + TILE / 2;
+    return this.spans.map((sp) => {
+      const x = Math.floor((sp.col0 + sp.col1) / 2) * TILE + TILE / 2;
+      const tile = this.tiles.find((t) => t.x === x && t.y === y);
+      return { id: sp.id, sheet: tile ? tile.texture.key : null };
+    });
+  }
+
+  /** Cores das faixas do fundo próximo como foram pintadas (THM-02); vazio na sala. */
+  nearBands(): { wall: string; top: string }[] {
+    const bands = this.background[2]?.getData('bands') as { wall: string; top: string }[] | undefined;
+    return (bands ?? []).map((b) => ({ wall: b.wall, top: b.top }));
   }
 
   /** Borda esquerda do selo em px (TRV-05); `null` quando a área não tem selo. */
@@ -52,6 +78,7 @@ export class WorldBuilder {
    */
   build(rows: readonly string[], level: LevelData, spans: readonly AreaSpan[] = []): void {
     this.resetState();
+    this.spans = spans;
     this.buildTiles(rows, spans);
     for (const r of level.solids) this.staticBodies.push(this.addTerrainBody(r));
     this.buildSeal(level.seal);
@@ -107,6 +134,7 @@ export class WorldBuilder {
     this.sealImage = null;
     this.sealRect = null;
     this.sparks = [];
+    this.spans = [];
   }
 
   /** Folha de terreno da coluna `tx` (THM-02): a do tema do trecho; a parede e o selo usam a do módulo vizinho. */
