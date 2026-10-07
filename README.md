@@ -102,6 +102,7 @@ Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapsh
 - `src/core/`: regras do jogo em TypeScript puro, sem Phaser, testadas no Vitest (`tests/core/`).
 - `src/data/`: números de ajuste.
 - `src/game/` e `src/scenes/`: adaptadores do Phaser (player, inimigo, chefe, objetos, HUD, efeitos e a cena).
+- `CLAUDE.md`: mapa por assunto (regra pura, adaptador e smoke de cada parte) e o processo de trabalho.
 - `src/game/art/`: toda a arte, em código.
 - `scripts/smoke/`: cenários que jogam o jogo de verdade num navegador headless.
 - `tools/`: prévia de sprites (`sprite-preview.mjs`) e refinamento de critérios de aceite (`jev-refine.mjs`).
@@ -118,12 +119,12 @@ Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapsh
 - Objetos e ferramentas (peso, dano, durabilidade, arremesso): `src/data/props.ts`
 - Módulos do mundo (grades e legenda): `src/data/modules/`; montagem da área: `src/core/stage.ts`
 - Sala de teste: `src/data/level1.ts` (legenda em `src/core/level.ts`)
-- Câmera (zoom, zona morta e amortecimento): `WORLD_ZOOM`, `FOLLOW_DEADZONE` e `FOLLOW_LERP` em `src/scenes/TestScene.ts`
+- Câmera (zoom, zona morta e amortecimento): `WORLD_ZOOM`, `FOLLOW_DEADZONE` e `FOLLOW_LERP` em `src/scenes/test/camera.ts`
 - Ragdoll (juntas, impulso máximo): `src/game/Ragdoll.ts`
 - Efeitos (faísca, poeira, rastro, tremida): `src/game/fx.ts`
 - Feel amaldiçoado (rastro, impacto, deslizamento, câmera, linhas de foco): números em `src/data/feel.ts`; desenho em
-  `src/game/CursedFx.ts`, `src/game/ImpactFrame.ts` e `src/game/FocusLines.ts`; ligação em `onMeleeImpact` da
-  `TestScene`
+  `src/game/CursedFx.ts`, `src/game/ImpactFrame.ts` e `src/game/FocusLines.ts`; ligação em `onMeleeImpact` de
+  `src/scenes/test/impactFx.ts`
 - De onde sai o rastro de cada golpe (ponta do punho ou do pé, por frame): `src/game/art/sprites/strikePoints.ts`
 
 A física roda em passo fixo de 60 Hz. O que a tela mostra (player, inimigos e chefe) é a posição entre os dois

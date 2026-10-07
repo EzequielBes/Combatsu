@@ -188,6 +188,7 @@
 
 ## Handoff
 
+- **07/10/2026, manutenção**: branch `chore/enxugar-excecoes-de-lint` (a partir de `master`, sem push). `TechRunner.ts` dividido por técnica em `src/game/tech/`, `RedOrb.ts` com a detonação em `techFx/redDetonation.ts`, `TestScene.create`/`update` em passos nomeados; os três saíram das exceções do `.oxlintrc.json` (36 avisos para 30). Gate e smokes de técnica, luta, impacto e run verdes. Criado o `CLAUDE.md` na raiz: mapa por assunto e processo, lido no começo de toda sessão. As entradas abaixo são de sessões anteriores.
 - **Onde está**: branch `chore/phaser-4` (sobre `feat/sprites-hd-fase1`, sobre `chore/organizacao-do-codigo`, sobre `spike/heroico-fable`), sem push, árvore limpa. Em 04/10/2026, fim da sessão de refino: typecheck, lint, formatação e 2532 testes verdes. Os smokes `fight`, `hd`, `impact`, `player-anim`, `defense`, `hud`, `tech`, `shop` e `held-item` passaram durante a sessão, mas nenhum foi rodado depois dos dois últimos commits (corrida e rosto). É a base atual do projeto: nada disso foi mergeado em `dev`.
 - **Feito antes desta sessão**: organização do código (Prettier, oxlint com tetos, `npm run gate`), player HD inteiro atrás de `?hd=1` (`src/game/art/hd/`, golpes como `HdMoveSpec` expandidos em 7 quadros), Phaser 4.2.1 (AD-023), chama azul do Divergente e as duas pegadas de objeto.
 - **Feito nesta sessão** (pedido do usuário: refino rumo a "super profissional", Jujutsu Kaisen com peso de Sifu):
