@@ -404,8 +404,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `tileFrameFor`
 **Requirement**: THM-02, THM-03
 **Done when**:
-- [ ] Captura com `tools/visual-shots.mjs` de `?debug&modules=rua,beco,parque` e do `santuario`, em `hd=1` e sem ele, conferida a olho (três chãos distintos e o selo).
-- [ ] `npm run gate && npm run smoke` passa.
+- [x] Captura com `tools/visual-shots.mjs` de `?debug&modules=rua,beco,parque` e do `santuario`, em `hd=1` e sem ele, conferida a olho (três chãos distintos e o selo).
+- [x] `npm run gate && npm run smoke` passa.
 **Tests**: smoke
 **Gate**: full
 

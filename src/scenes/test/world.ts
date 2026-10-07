@@ -2,17 +2,19 @@ import type Phaser from 'phaser';
 import { Filters } from '../../core/collision';
 import { TILE, tileVariant, type LevelData, type Rect } from '../../core/level';
 import { AREA } from '../../data/tuning';
+import type { AreaSpan } from '../../core/stage';
 import { PROP_DEFS } from '../../data/props';
 import { buildBackground } from '../../game/art/background';
 import { PALETTE } from '../../game/art/palette';
 import { tileFrameFor } from '../../game/art/tiles';
+import { THEME_TEXTURES } from '../../game/art/tilesThemes';
 import { tagBody } from '../../game/bodyTags';
 import { Prop } from '../../game/Prop';
 import { TEX } from '../../game/textures';
 import type { TestScene } from '../TestScene';
 
-/** Chave da folha do talismã do selo (arte P2); sem ela o selo é um retângulo da paleta (ARE-11). */
-export const SEAL_SHEET = 'seal';
+/** Chave da folha do talismã do selo (THM-03); sem ela o selo é um retângulo da paleta (ARE-11). */
+export const SEAL_SHEET = TEX.seal;
 
 /** Quantas faíscas amaldiçoadas sobem do selo quando ele rompe (TRV-03). */
 const SEAL_SPARKS = 10;
@@ -28,7 +30,7 @@ export class WorldBuilder {
   private background: Phaser.GameObjects.Graphics[] = [];
   private staticBodies: MatterJS.BodyType[] = [];
   private sealBody: MatterJS.BodyType | null = null;
-  private sealImage: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | null = null;
+  private sealImage: Phaser.GameObjects.TileSprite | Phaser.GameObjects.Rectangle | null = null;
   private sealRect: Rect | null = null;
   private sparks: Phaser.GameObjects.Image[] = [];
 
@@ -48,12 +50,12 @@ export class WorldBuilder {
    * `Spawner` guardam a referência (design "Risks & Concerns"). O estado da construção anterior é descartado sem
    * destruir nada: numa cena reiniciada os objetos antigos já morreram com a cena.
    */
-  build(rows: readonly string[], level: LevelData): void {
+  build(rows: readonly string[], level: LevelData, spans: readonly AreaSpan[] = []): void {
     this.resetState();
-    this.buildTiles(rows);
+    this.buildTiles(rows, spans);
     for (const r of level.solids) this.staticBodies.push(this.addTerrainBody(r));
     this.buildSeal(level.seal);
-    this.background = buildBackground(this.s, level.widthPx, level.heightPx);
+    this.background = buildBackground(this.s, level.widthPx, level.heightPx, spans);
     this.buildProps(level);
   }
 
@@ -107,13 +109,25 @@ export class WorldBuilder {
     this.sparks = [];
   }
 
-  private buildTiles(rows: readonly string[]): void {
+  /** Folha de terreno da coluna `tx` (THM-02): a do tema do trecho; a parede e o selo usam a do módulo vizinho. */
+  private sheetFor(tx: number, spans: readonly AreaSpan[]): string {
+    if (spans.length === 0) return TEX.terrain;
+    const span = spans.find((sp) => tx <= sp.col1) ?? spans[spans.length - 1];
+    return THEME_TEXTURES[span.theme];
+  }
+
+  private buildTiles(rows: readonly string[], spans: readonly AreaSpan[]): void {
     rows.forEach((row, ty) => {
       for (let tx = 0; tx < row.length; tx++) {
         const variant = tileVariant(rows, tx, ty);
         if (!variant) continue;
         this.tiles.push(
-          this.s.add.image(tx * TILE + TILE / 2, ty * TILE + TILE / 2, TEX.terrain, tileFrameFor(variant, tx, ty)),
+          this.s.add.image(
+            tx * TILE + TILE / 2,
+            ty * TILE + TILE / 2,
+            this.sheetFor(tx, spans),
+            tileFrameFor(variant, tx, ty),
+          ),
         );
       }
     });
@@ -138,7 +152,7 @@ export class WorldBuilder {
     const cx = seal.x + seal.width / 2;
     const cy = seal.y + seal.height / 2;
     this.sealImage = this.s.textures.exists(SEAL_SHEET)
-      ? this.s.add.image(cx, cy, SEAL_SHEET, 'seal')
+      ? this.s.add.tileSprite(cx, cy, seal.width, seal.height, SEAL_SHEET, 'seal')
       : this.s.add.rectangle(cx, cy, seal.width, seal.height, PALETTE.v, 0.7).setStrokeStyle(2, PALETTE.U);
     this.sealImage.setDepth(1);
   }

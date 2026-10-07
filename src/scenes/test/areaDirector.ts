@@ -3,7 +3,7 @@ import { clampCenter } from '../../core/cameraFollow';
 import { parseLevel, type LevelData } from '../../core/level';
 import { Rng } from '../../core/rng';
 import { type RunCommand } from '../../core/run';
-import { composeArea, konbiniArea, parseModulesParam, Stage, type AreaGrid } from '../../core/stage';
+import { composeArea, konbiniArea, parseModulesParam, Stage, type AreaGrid, type AreaSpan } from '../../core/stage';
 import { requireSpawnPoints } from '../../core/waves';
 import { LEVEL_1 } from '../../data/level1';
 import { COMBAT_IDS, MODULES } from '../../data/modules';
@@ -18,6 +18,8 @@ const TITLE_SEED = 1;
 export interface InitialArea {
   rows: readonly string[];
   level: LevelData;
+  /** Trechos com tema por módulo (THM-02); ausente na sala. */
+  spans?: readonly AreaSpan[];
 }
 
 /**
@@ -58,7 +60,7 @@ export class AreaDirector {
     const level = parseLevel(grid.rows);
     requireSpawnPoints(level, 'rua');
     this.moduleIds = grid.spans.map((sp) => sp.id);
-    return { rows: grid.rows, level };
+    return { rows: grid.rows, level, spans: grid.spans };
   }
 
   /** Comandos da `Run` que mudam o mundo (design "Fluxo de comandos"); chamado antes do tratamento de hoje. */
@@ -117,7 +119,7 @@ export class AreaDirector {
     // KON-05: a konbini (sem selo) nunca tem ponto de spawn; toda área de combate ou de chefe tem de ter.
     if (grid.sealCol !== null) requireSpawnPoints(level, grid.spans.map((sp) => sp.id).join(','));
     s.level = level;
-    s.world.build(grid.rows, level);
+    s.world.build(grid.rows, level, grid.spans);
     s.player.setSpawn(level.player.x, level.player.y - SPAWN_LIFT);
     s.player.placeAtSpawn();
     s.cameras.main.setBounds(0, 0, level.widthPx, level.heightPx);

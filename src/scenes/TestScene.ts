@@ -204,7 +204,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.projectiles = [];
     // MOD-01: uma instância por cena, zerada a cada `startRun` (MOD-10); Player/Prop/Pickups/Loot leem dela na hora.
     this.modifiers = new Modifiers(FULL_SHOP_CATALOG);
-    this.world.build(initial.rows, initial.level);
+    this.world.build(initial.rows, initial.level, initial.spans);
     this.combat.listenForContacts();
     // `?debug&round=N` (design): só em debug, a run já começa na rodada N (smoke da luta de chefe sem esperar 4 rodadas).
     // `?debug&maxAlive=N` (inteiro >= 1) fixa o teto de vivos no lugar de `maxAliveFor` (SPN-02).
