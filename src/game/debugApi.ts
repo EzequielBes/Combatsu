@@ -227,6 +227,9 @@ export interface GameSnapshot {
     durabilityLeft: number;
     rare: boolean;
     vx: number;
+    /** Textura e frame do sprite (`__MISSING` = chave sem textura registrada). */
+    texture: string;
+    frame: string;
   }[];
   /** Energia amaldiçoada do player (CE-01..09, TEC-08), lida do estado vivo. */
   ce: { cur: number; max: number; regen: number };

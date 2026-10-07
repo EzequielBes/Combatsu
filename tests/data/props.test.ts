@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { validatePropDef } from '../../src/core/props';
-import { PROP_DEFS } from '../../src/data/props';
+import { PROP_DEFS, TOOL_DEFS } from '../../src/data/props';
 import { TEX } from '../../src/game/textures';
 
 describe('PROP_DEFS', () => {
   it('todas as definições são válidas e apontam para texturas existentes', () => {
     const textures: string[] = Object.values(TEX);
     for (const d of Object.values(PROP_DEFS)) {
+      expect(() => validatePropDef(d)).not.toThrow();
+      expect(textures).toContain(d.texture);
+    }
+  });
+
+  it('as ferramentas amaldiçoadas também apontam para texturas existentes', () => {
+    const textures: string[] = Object.values(TEX);
+    for (const d of Object.values(TOOL_DEFS)) {
       expect(() => validatePropDef(d)).not.toThrow();
       expect(textures).toContain(d.texture);
     }

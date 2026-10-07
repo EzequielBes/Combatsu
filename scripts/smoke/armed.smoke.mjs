@@ -80,6 +80,11 @@ export default async function ({ page, baseUrl, assert }) {
     knife.state === 'rest' && knife.durabilityLeft === 6,
     `ARM-08: faca deveria nascer em rest/6: ${JSON.stringify(knife)}`,
   );
+  // ARM-19: a faca largada usa a própria folha, no frame comum (e não o quadrado de textura ausente do Phaser).
+  assert(
+    knife.texture === 'cursed-knife' && knife.frame === 'common',
+    `ARM-19: faca largada deveria usar cursed-knife/common: ${JSON.stringify(knife)}`,
+  );
 
   // ARM-13: se ninguém pegar, a ferramenta some aos 20 s.
   // Os inimigos agora perseguem e atacam em vez de patrulhar (SPN-10): parado por 20 s o player apanharia até

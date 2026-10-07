@@ -50,7 +50,9 @@ export class Prop {
     readonly rare: boolean = false,
   ) {
     this.machine = new PropMachine(def);
-    this.sprite = scene.matter.add.image(x, y, def.texture, undefined, {
+    // Folha com vários quadros (ferramentas, ARM-19) abre no `common`; sem frame, o Phaser mostraria a folha inteira.
+    const frame = scene.textures.get(def.texture).has('common') ? 'common' : undefined;
+    this.sprite = scene.matter.add.image(x, y, def.texture, frame, {
       friction: 0.6,
       frictionAir: 0.01,
       restitution: 0.15,

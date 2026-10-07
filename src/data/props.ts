@@ -36,7 +36,7 @@ export const PROP_DEFS: Record<string, PropDef> = {
 export const TOOL_DEFS: Record<'cursedKnife' | 'cursedClub', PropDef> = {
   cursedKnife: {
     key: 'cursedKnife',
-    texture: 'cursedKnife',
+    texture: 'cursed-knife',
     mass: 1,
     damage: 16,
     durability: 6,
@@ -47,7 +47,7 @@ export const TOOL_DEFS: Record<'cursedKnife' | 'cursedClub', PropDef> = {
   },
   cursedClub: {
     key: 'cursedClub',
-    texture: 'cursedClub',
+    texture: 'cursed-club',
     mass: 6,
     damage: 26,
     durability: 5,
