@@ -261,8 +261,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `closeShop` atual (resume do Matter)
 **Requirement**: KON-02, KON-03, TRV-10
 **Done when**:
-- [ ] O Matter volta (`resume`) antes do fade de entrada da área nova.
-- [ ] `npm run gate && npm run build` passa.
+- [x] O Matter volta (`resume`) antes do fade de entrada da área nova.
+- [x] `npm run gate && npm run build` passa.
 **Tests**: none
 **Gate**: build
 

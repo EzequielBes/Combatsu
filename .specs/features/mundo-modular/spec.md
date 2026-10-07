@@ -337,7 +337,7 @@ o espaço.
 | TRV-09 | P1: Selo, travessia e saída | Design | Implementing |
 | TRV-10 | P1: Selo, travessia e saída | Design | Implementing |
 | KON-01 | P1: Konbini como loja | Design | Implementing |
-| KON-02 | P1: Konbini como loja | Design | Pending |
+| KON-02 | P1: Konbini como loja | Design | Implementing |
 | KON-03 | P1: Konbini como loja | Design | Implementing |
 | KON-04 | P1: Konbini como loja | Design | Implementing |
 | KON-05 | P1: Konbini como loja | Design | Implementing |
