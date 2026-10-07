@@ -389,8 +389,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `paintNear`
 **Requirement**: THM-02
 **Done when**:
-- [ ] Sem `spans` (sala) o fundo fica idêntico ao de hoje.
-- [ ] `npm run gate && npm run build` passa.
+- [x] Sem `spans` (sala) o fundo fica idêntico ao de hoje.
+- [x] `npm run gate && npm run build` passa.
 **Tests**: none
 **Gate**: build
 
