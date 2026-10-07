@@ -5,6 +5,10 @@ Responder e comentar em português do Brasil; commits em inglês (Conventional C
 
 Este arquivo é o mapa de entrada. Use-o para ir direto ao arquivo certo em vez de varrer a base.
 
+Para o detalhe de uma pasta, rode `npm run map -- <trecho do caminho>` (ex.: `npm run map -- game/enemy`): uma linha
+por arquivo com tamanho, o que faz e o que exporta, tirada do código na hora. Sem argumento, lista as pastas. Só
+depois disso abra arquivos, e só os que a tarefa toca.
+
 ## Por onde começar
 
 1. Ponto de parada: só a seção `## Handoff` de `.specs/STATE.md` (as decisões `AD-*` acima dela, só a que for citada).
@@ -63,4 +67,4 @@ movimento no jogo: prancha estática não mostra braço trocando de lado entre q
   `git -c user.name="EzequielBes" -c user.email="ezequieltdbeserra@gmail.com" commit`.
 - **Refatoração:** mover sem mudar comportamento; se um teste lê o código-fonte de um arquivo (`?raw`), ele acompanha
   a mudança.
-- **Ao fechar a sessão:** atualizar o `## Handoff` de `.specs/STATE.md` e, se a estrutura mudou, as tabelas acima.
+- **Ao fechar a sessão:** reescrever (não empilhar) o `## Handoff` de `.specs/STATE.md` e, se a estrutura mudou, as tabelas acima.

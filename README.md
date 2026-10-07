@@ -17,6 +17,7 @@ npm run typecheck   # só o TypeScript
 npm run lint        # oxlint: tetos de tamanho (400 linhas, 80 por função) e complexidade (15); exceções em .oxlintrc.json
 npm run format      # Prettier em tudo (format:check só confere)
 npm run gate        # typecheck + lint + format:check + test
+npm run map         # mapa do código: pastas; `npm run map -- game/tech` detalha os arquivos que casam
 npm run build       # typecheck + build estático em dist/
 npm run smoke       # build + cenários no Edge headless (scripts/smoke/); `npm run smoke -- boss` roda só os que têm "boss" no nome
 ```
