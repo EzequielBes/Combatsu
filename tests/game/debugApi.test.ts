@@ -92,6 +92,7 @@ describe('installDebugApi', () => {
       attackers: 0,
       gate: { active: 0, queue: [] },
       level: { playerSpawn: { x: 96, y: 460 } },
+      area: { mode: 'sala', modules: [], widthPx: 1280, heightPx: 544, sealed: false, exitX: null, staticBodies: 4 },
       hud: {
         ignoredByMain: true,
         round: 'Rodada 1',

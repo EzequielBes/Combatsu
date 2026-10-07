@@ -13,6 +13,20 @@ export class DebugSnapshot {
 
   debugDeaths: { id: number; x: number; y: number }[] = [];
 
+  /** Campo `area` (LEG-05): na sala `modules` é vazio, `sealed` é `false` e `exitX` é `null`; `staticBodies` conta os corpos `isStatic` do mundo do Matter. */
+  areaSnapshot(): GameSnapshot['area'] {
+    const area = this.s.area;
+    return {
+      mode: area.mode,
+      modules: [...area.moduleIds],
+      widthPx: this.s.level.widthPx,
+      heightPx: this.s.level.heightPx,
+      sealed: this.s.world.sealed,
+      exitX: this.s.world.exitX,
+      staticBodies: this.s.matter.world.getAllBodies().filter((b) => (b as MatterJS.BodyType).isStatic).length,
+    };
+  }
+
   debugSnapshot(): GameSnapshot {
     return {
       player: {
@@ -114,6 +128,7 @@ export class DebugSnapshot {
       timeScale: this.s.effects.slowMo.timeScale,
       hitstop: { frozen: this.s.effects.hitstop.frozen, remainingMs: this.s.effects.hitstop.remaining },
       level: { playerSpawn: { x: this.s.level.player.x, y: this.s.level.player.y - SPAWN_LIFT } },
+      area: this.areaSnapshot(),
       wallet: { fragments: this.s.wallet.fragments },
       shop: this.s.shopDirector.shopSnapshot(),
       modifiers: this.s.modifiers.levels,

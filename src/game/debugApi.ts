@@ -150,6 +150,16 @@ export interface GameSnapshot {
   gate: { active: number; queue: number[] };
   /** Spawn do player no level, já com o mesmo ajuste que a cena aplica (RUN-02/05). */
   level: { playerSpawn: { x: number; y: number } };
+  /** Área atual (LEG-05): modo, ids dos módulos, tamanho em px, selo fechado, borda esquerda do selo e corpos estáticos do Matter. */
+  area: {
+    mode: 'modular' | 'sala';
+    modules: string[];
+    widthPx: number;
+    heightPx: number;
+    sealed: boolean;
+    exitX: number | null;
+    staticBodies: number;
+  };
   /** Estado do HUD da run (RHUD-01..07). */
   hud: {
     ignoredByMain: boolean;

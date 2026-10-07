@@ -290,7 +290,7 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: o padrão dos campos `worldProps` e `run`
 **Requirement**: LEG-05
 **Done when**:
-- [ ] `npm run gate && npm run smoke` passa (os 35 cenários ainda sem o `area=sala` do runner: o modo padrão já é o modular aqui, então os que quebrarem são esperados e ficam registrados para a T16 confirmar que voltam).
+- [x] `npm run gate && npm run smoke` passa (os 35 cenários ainda sem o `area=sala` do runner: o modo padrão já é o modular aqui, então os que quebrarem são esperados e ficam registrados para a T16 confirmar que voltam).
 **Tests**: none
 **Gate**: full
 
