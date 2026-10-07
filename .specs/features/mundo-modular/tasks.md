@@ -93,9 +93,9 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: legenda e chão da `LEVEL_1`
 **Requirement**: MDL-10
 **Done when**:
-- [ ] Todo módulo de combate tem um `E` a até 4 colunas de cada borda e pelo menos 1 `p`.
-- [ ] `tests/data/modules.test.ts`: as larguras exatas, o `kind` e o `theme` de cada um, e `validateModule` + `lintModule` sem erro para todos.
-- [ ] `npm run gate` passa.
+- [x] Todo módulo de combate tem um `E` a até 4 colunas de cada borda e pelo menos 1 `p`.
+- [x] `tests/data/modules.test.ts`: as larguras exatas, o `kind` e o `theme` de cada um, e `validateModule` + `lintModule` sem erro para todos.
+- [x] `npm run gate` passa.
 **Tests**: unit
 **Gate**: quick
 

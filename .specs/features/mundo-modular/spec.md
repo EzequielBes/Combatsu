@@ -312,7 +312,7 @@ o espaço.
 | MDL-07 | P1: Módulos com gramática validada | Design | Implementing |
 | MDL-08 | P1: Módulos com gramática validada | Design | Implementing |
 | MDL-09 | P1: Módulos com gramática validada | Design | Implementing |
-| MDL-10 | P1: Módulos com gramática validada | Design | Pending |
+| MDL-10 | P1: Módulos com gramática validada | Design | Implementing |
 | ARE-01 | P1: Área montada pela seed | Design | Pending |
 | ARE-02 | P1: Área montada pela seed | Design | Pending |
 | ARE-03 | P1: Área montada pela seed | Design | Pending |
