@@ -246,8 +246,8 @@ T21 → T22 → T23 → T24 → T25
 **Reuses**: `applyRunCommand`
 **Requirement**: TRV-02, TRV-03, KON-01, KON-03
 **Done when**:
-- [ ] No modo sala o `AreaDirector` não faz nada e o fluxo fica idêntico.
-- [ ] `npm run gate && npm run build` passa.
+- [x] No modo sala o `AreaDirector` não faz nada e o fluxo fica idêntico.
+- [x] `npm run gate && npm run build` passa.
 **Tests**: none
 **Gate**: build
 

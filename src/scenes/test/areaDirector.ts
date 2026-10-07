@@ -124,6 +124,8 @@ export class AreaDirector {
     const follow = s.camera.followConfig();
     s.camera.camCenter = clampCenter(s.player.renderPos, follow.view, follow.bounds);
     s.camera.followCamera(0);
+    // O `worldView` só se atualiza no `preRender` do desenho: sem isto os `spawn` do mesmo update veriam a vista da área antiga (SPN-07).
+    s.cameras.main.preRender();
     s.spawner.spawnLastUsed.clear();
     this.moduleIds = grid.spans.map((sp) => sp.id);
     s.cameras.main.fadeIn(AREA.fadeMs);

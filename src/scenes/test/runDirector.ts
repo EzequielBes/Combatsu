@@ -46,6 +46,8 @@ export class RunDirector {
   }
 
   applyRunCommand(cmd: RunCommand): void {
+    // Mundo modular (ARE-09..11, TRV-03, KON-01/03): o `AreaDirector` reconstrói a área antes do tratamento de hoje; na sala é inerte.
+    this.s.area.onCommand(cmd);
     switch (cmd.type) {
       case 'startRun':
         this.onStartRun();
@@ -232,7 +234,7 @@ export class RunDirector {
         this.clearedBanner.upgradeText = null;
       }
       if (this.clearedBanner.afterMs <= 0) {
-        if (this.s.run.state === 'intermission')
+        if (this.s.run.state === 'intermission' || this.s.run.state === 'traverse')
           this.s.hud.banner(`Rodada ${this.clearedBanner.round} concluída`, Infinity);
         this.clearedBanner = null;
       }
