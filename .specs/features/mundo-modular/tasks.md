@@ -473,9 +473,9 @@ T26 → T27 → T28 → T29
 **Reuses**: o laço de derrubar a onda e o `stepAndSnap` do `world-traverse`; `AreaDirector.finishExit`; tecla de debug `4`
 **Requirement**: TRV-07
 **Done when**:
-- [ ] O smoke afirma que há uma gota `heal` e um `elixir` no chão antes da saída, `player.hp === min(maxHp, hpAntes + soma)` na konbini, nenhum pickup de qualquer tipo depois e os eventos `collect:heal:` e `collect:elixir:`.
-- [ ] Um mutante que credita só `kind === 'fragment'` no `finishExit` morre: `world-exit` falha.
-- [ ] `npm run gate && npm run smoke` passa.
+- [x] O smoke afirma que há uma gota `heal` e um `elixir` no chão antes da saída, `player.hp === min(maxHp, hpAntes + soma)` na konbini, nenhum pickup de qualquer tipo depois e os eventos `collect:heal:` e `collect:elixir:`.
+- [x] Um mutante que credita só `kind === 'fragment'` no `finishExit` morre: `world-exit` falha.
+- [x] `npm run gate && npm run smoke` passa.
 **Tests**: smoke
 **Gate**: full
 
