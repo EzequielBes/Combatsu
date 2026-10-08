@@ -16,8 +16,15 @@ const MID_GROUND = 420;
 const NEAR_THEMES: readonly ModuleTheme[] = ['rua', 'beco', 'parque', 'konbini', 'santuario'];
 const MID_THEMES: readonly ModuleTheme[] = ['rua', 'beco', 'parque', 'konbini', 'santuario'];
 
+/** Rasters já pintados: cada tema é rasterizado uma vez por camada (o arquivo pesava no gate em paralelo). */
+const painted = new Map<string, RasterSink>();
+
 function paint(theme: ModuleTheme, which: 'mid' | 'near', ground: number): RasterSink {
+  const key = `${theme}/${which}/${ground}`;
+  const cached = painted.get(key);
+  if (cached) return cached;
   const sink = new RasterSink();
+  painted.set(key, sink);
   THEME_SCENERY[theme][which](new Brush(clipX(sink, X0, X1)), {
     x0: X0,
     x1: X1,

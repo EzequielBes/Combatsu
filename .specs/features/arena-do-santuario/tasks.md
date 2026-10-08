@@ -158,8 +158,8 @@ T8 → T9
 
 **Done when**:
 
-- [ ] Teste: o santuário pinta decoração e primeiro plano; o edge case do tema sem peça continua coberto
-- [ ] Gate verde
+- [x] Teste: o santuário pinta decoração e primeiro plano; o edge case do tema sem peça continua coberto
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

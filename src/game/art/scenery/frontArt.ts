@@ -51,12 +51,22 @@ function shelfEnd(b: Brush, x: number, floorTop: number, bottom: number): void {
   b.rect(x - 26, top + 8, 52, 2, 'K');
 }
 
-/** Peças de primeiro plano por tema; o santuário fica sem (F23). */
+/** Raiz grossa saindo do chão do santuário, com uma pedra coberta de musgo. */
+function roots(b: Brush, x: number, floorTop: number, bottom: number): void {
+  const top = Math.max(floorTop + CLEAR, bottom - 26);
+  for (let i = 0; i < 5; i++) b.rect(x - 30 + i * 12, top + (i % 2) * 6, 10, bottom - top, 'k');
+  b.rect(x - 30, top, 60, 2, 'K');
+  b.disc(x + 34, bottom - 6, 10, 'k');
+  b.rect(x + 28, bottom - 16, 10, 2, 'g');
+}
+
+/** Peças de primeiro plano por tema. */
 const FRONT_ART: Partial<Record<ModuleTheme, readonly FrontPainter[]>> = {
   rua: [cone, grass],
   beco: [pipeRun, cone],
   parque: [grass, grass],
   konbini: [shelfEnd],
+  santuario: [roots, grass],
 };
 
 /** Distância entre duas peças do primeiro plano, na coordenada da camada. */

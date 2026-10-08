@@ -13,7 +13,7 @@ describe('primeiro plano (CEN-12)', () => {
     expect(sink.topY()).toBeGreaterThanOrEqual(FLOOR_TOP);
   });
 
-  it.each(['rua', 'beco', 'parque', 'konbini'] as const)('%s: tem peças', (theme) => {
+  it.each(['rua', 'beco', 'parque', 'konbini', 'santuario'] as const)('%s: tem peças', (theme) => {
     const sink = new RasterSink();
     paintFront(new Brush(sink), theme, { x0: 0, x1: 2000, floorTop: FLOOR_TOP, bottom: 560 });
     expect(sink.texels.size).toBeGreaterThan(0);
