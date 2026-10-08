@@ -353,8 +353,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Capturas olhadas
-- [ ] Gate verde
+- [x] Capturas olhadas
+- [x] Gate verde
 
 **Tests**: none
 **Gate**: build

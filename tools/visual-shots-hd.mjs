@@ -53,9 +53,29 @@ async function sceneryScenario(t, BASE) {
   }
 }
 
+/** Votos e evolução (VOW-01, EVO-05): o painel de votos depois do Oni e o Vazio Roxo carregando e em voo. */
+async function vowsScenario(t, BASE) {
+  let s = await t.open(`hd=1&${BASE}&area=modular&round=5&regen=0&maxAlive=1`);
+  s = await t.mash('Digit2', 80, (x) => x.run.state !== 'roundActive');
+  for (let i = 0; i < 200 && s.run.state !== 'traverse'; i++) s = await t.snap(50);
+  await t.down('KeyD');
+  for (let i = 0; i < 600 && s.run.state !== 'shop'; i++) s = await t.snap(50);
+  await t.up('KeyD');
+  await t.at(300, '91-votos-painel');
+  await t.open(`hd=1&${BASE}&fxlab&noshop=1&tech=roxo`);
+  await t.snap(300);
+  await t.down('KeyL');
+  await t.snap(17);
+  await t.up('KeyL');
+  await t.at(400, '92-roxo-carga');
+  await t.at(500, '93-roxo-voo');
+  await t.at(500, '94-roxo-voo-fim');
+}
+
 /** Os cenários HD; `base` são os parâmetros de URL comuns a todas as capturas. */
 export const hdScenarios = (BASE) => ({
   cenario: (t) => sceneryScenario(t, BASE),
+  votos: (t) => vowsScenario(t, BASE),
   async hd(t) {
     await t.open(`hd=1&${BASE}&tech=vermelho`);
     await t.at(500, '80-hd-idle');
