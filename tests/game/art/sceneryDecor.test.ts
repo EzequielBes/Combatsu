@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { TILE } from '../../../src/core/level';
+import { PALETTE } from '../../../src/game/art/palette';
+import { Brush } from '../../../src/game/art/scenery/brush';
 import { decorSlots } from '../../../src/game/art/scenery/decor';
+import { paintDecor } from '../../../src/game/art/scenery/decorArt';
+import { RasterSink } from './sceneryRaster';
+
+const PALETTE_COLORS = new Set(Object.values(PALETTE));
 
 const AREA = [
   { theme: 'beco' as const, col0: 1, col1: 24 },
@@ -36,5 +42,24 @@ describe('posições da decoração (CEN-13, CEN-15)', () => {
       expect(s.x).toBeGreaterThanOrEqual((sp.col0 + 3) * TILE);
       expect(s.x).toBeLessThan((sp.col1 - 2) * TILE);
     }
+  });
+});
+
+describe('arte da decoração (CEN-13)', () => {
+  it.each(['rua', 'beco', 'parque', 'konbini'] as const)(
+    '%s tem peça, pintada só acima do chão e com a paleta',
+    (theme) => {
+      const sink = new RasterSink();
+      paintDecor(new Brush(sink), theme, 200, 480);
+      expect(sink.texels.size).toBeGreaterThan(0);
+      for (const c of sink.texels.values()) expect(PALETTE_COLORS.has(c)).toBe(true);
+      for (const key of sink.texels.keys()) expect(Number(key.split(',')[1]) * 2).toBeLessThan(480);
+    },
+  );
+
+  it('tema sem peça (santuário) não pinta nada e não lança erro', () => {
+    const sink = new RasterSink();
+    expect(() => paintDecor(new Brush(sink), 'santuario', 200, 480)).not.toThrow();
+    expect(sink.texels.size).toBe(0);
   });
 });

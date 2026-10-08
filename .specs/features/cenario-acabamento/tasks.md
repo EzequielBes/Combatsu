@@ -356,8 +356,8 @@ T19
 
 **Done when**:
 
-- [ ] Teste: cada tema de combate e a konbini têm peça; a peça só pinta cores da `PALETTE`; tema sem peça não pinta nada nem lança erro
-- [ ] Gate verde
+- [x] Teste: cada tema de combate e a konbini têm peça; a peça só pinta cores da `PALETTE`; tema sem peça não pinta nada nem lança erro
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
