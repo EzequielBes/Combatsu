@@ -261,8 +261,8 @@ T19
 
 **Done when**:
 
-- [ ] Mesmos testes da T9 para o `beco`, e a média difere da `rua`
-- [ ] Gate verde
+- [x] Mesmos testes da T9 para o `beco`, e a média difere da `rua`
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
