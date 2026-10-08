@@ -12,7 +12,7 @@ const NEAR_GROUND = 450;
 const MID_GROUND = 420;
 
 /** Temas que já têm muro próprio (CEN-01) e horizonte próprio (CEN-08, CEN-09). */
-const NEAR_THEMES: readonly ModuleTheme[] = ['rua', 'beco', 'parque', 'konbini'];
+const NEAR_THEMES: readonly ModuleTheme[] = ['rua', 'beco', 'parque', 'konbini', 'santuario'];
 const MID_THEMES: readonly ModuleTheme[] = ['rua', 'beco', 'parque', 'konbini'];
 
 function paint(theme: ModuleTheme, which: 'mid' | 'near', ground: number): RasterSink {

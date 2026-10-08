@@ -318,8 +318,8 @@ T19
 
 **Done when**:
 
-- [ ] Teste de janelas da T9 para o `santuario` (próxima)
-- [ ] Gate verde e `npm run smoke -- world-` verde
+- [x] Teste de janelas da T9 para o `santuario` (próxima)
+- [x] Gate verde e `npm run smoke -- world-` verde
 
 **Tests**: unit
 **Gate**: full

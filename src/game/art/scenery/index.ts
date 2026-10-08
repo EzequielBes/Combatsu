@@ -3,10 +3,14 @@ import { BECO_SCENERY } from './beco';
 import { KONBINI_SCENERY } from './konbini';
 import { PARQUE_SCENERY } from './parque';
 import { RUA_SCENERY } from './rua';
+import { SANTUARIO_SCENERY } from './santuario';
 import { schoolMid, schoolNear, type NearColors } from './school';
 import type { ThemeScenery } from './types';
 
-/** Cor do muro da camada próxima por tema (THM-02): `wall` é a base e `top` a linha acesa; só chaves da paleta. */
+/**
+ * Cor-chave da camada próxima por tema (THM-02): o snapshot de debug ainda reporta estas chaves por trecho (CEN-06);
+ * o desenho do muro de cada tema está no arquivo do tema. A sala de teste ainda pinta o muro da escola com elas.
+ */
 export const NEAR_COLORS: Record<ModuleTheme, NearColors> = {
   rua: { wall: 'E', top: 'f' },
   beco: { wall: 'n', top: 'N' },
@@ -15,16 +19,13 @@ export const NEAR_COLORS: Record<ModuleTheme, NearColors> = {
   santuario: { wall: 'm', top: 'M' },
 };
 
-/**
- * Pintores de cenário de cada tema (CEN-07, CEN-08). Começam todos com a escola e a cor de muro da F18 (THM-02);
- * cada tema troca pelos seus nas tarefas T9 a T13.
- */
+/** Pintores de cenário de cada tema (CEN-07, CEN-08); o santuário ainda usa a média da escola até a F23. */
 export const THEME_SCENERY: Record<ModuleTheme, ThemeScenery> = {
   rua: RUA_SCENERY,
   beco: BECO_SCENERY,
   parque: PARQUE_SCENERY,
   konbini: KONBINI_SCENERY,
-  santuario: { mid: schoolMid, near: schoolNear(NEAR_COLORS.santuario) },
+  santuario: SANTUARIO_SCENERY,
 };
 
 /** O fundo da sala de teste (sem trechos): a escola de sempre. */
