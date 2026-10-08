@@ -186,6 +186,14 @@
 - **Date**: 2026-10-04
 - **Status**: active
 
+### AD-024
+- **Decision**: Rejogabilidade do pedido de 08/10 (`docs/plano-cenario-rejogabilidade-hordas.md`), decidida pelo usuário: (1) Votos Vinculativos (troca de desvantagem por poder) depois de cada chefe; (2) evoluções de técnica por receita (a primeira é o Vazio Roxo = Azul + Vermelho no nível máximo); (3) a meta-progressão entre runs libera conteúdo e um pouco de poder base, com teto; (4) a run ganha final (vencer o chefe da rodada 20) e zerar libera o modo sem fim.
+- **Reason**: Respostas do usuário em 08/10 ("Gostei da ideia 1 2 3 e 4 zerar libera o modo sem fim").
+- **Trade-off**: Votos e evoluções aumentam as combinações e o custo de balanceamento; o final na rodada 20 limita a run padrão até o desbloqueio.
+- **Scope**: F24 `votos-e-evolucoes` (1 e 2), F25 `meta-progressao` (3 e 4), F26 `graus-e-eventos`.
+- **Date**: 2026-10-08
+- **Status**: active
+
 ## Handoff
 
 Só o estado atual; o histórico de cada sessão está no `git log`. Reescrever esta seção ao fechar a sessão, não empilhar.
