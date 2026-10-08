@@ -203,8 +203,8 @@ T19
 
 **Done when**:
 
-- [ ] `world-traverse.smoke.mjs` confere um `midBands` por módulo, com o tema dele
-- [ ] Gate verde e `npm run smoke -- world-` verde
+- [x] `world-traverse.smoke.mjs` confere um `midBands` por módulo, com o tema dele
+- [x] Gate verde e `npm run smoke -- world-` verde
 
 **Tests**: smoke
 **Gate**: full

@@ -163,6 +163,8 @@ export interface GameSnapshot {
     sheets: { id: string; sheet: string | null }[];
     /** Cores `wall` e `top` das faixas do fundo próximo, uma por trecho (THM-02); vazio na sala. */
     bands: { wall: string; top: string }[];
+    /** Tema de cada faixa da camada média, uma por trecho (CEN-10); vazio na sala. */
+    midBands: { theme: string }[];
     /** Imagem do selo desenhada agora (THM-03); `null` sem selo ou depois do efeito de 400 ms. */
     seal: { texture: string; frame: string; alpha: number } | null;
     /** Entre o início do fade de saída e o fim do fade de entrada: o input do player é neutro (TRV-10). */

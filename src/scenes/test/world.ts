@@ -65,6 +65,12 @@ export class WorldBuilder {
     return (bands ?? []).map((b) => ({ wall: b.wall, top: b.top }));
   }
 
+  /** Tema de cada faixa da camada média como foi pintada (CEN-10); vazio na sala. */
+  midBands(): { theme: string }[] {
+    const bands = this.background[1]?.getData('midBands') as { theme: string }[] | undefined;
+    return (bands ?? []).map((b) => ({ theme: b.theme }));
+  }
+
   /** Borda esquerda do selo em px (TRV-05); `null` quando a área não tem selo. */
   get exitX(): number | null {
     return this.sealRect ? this.sealRect.x : null;

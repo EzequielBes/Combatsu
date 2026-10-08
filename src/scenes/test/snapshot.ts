@@ -27,6 +27,7 @@ export class DebugSnapshot {
       staticBodies: this.s.matter.world.getAllBodies().filter((b) => (b as MatterJS.BodyType).isStatic).length,
       sheets: this.s.world.floorSheets(),
       bands: this.s.world.nearBands(),
+      midBands: this.s.world.midBands(),
       seal: this.s.world.sealView,
       transitioning: area.transitioning,
       fade: { running: fade.isRunning, out: fade.direction, alpha: fade.direction ? fade.progress : 1 - fade.progress },

@@ -58,6 +58,11 @@ export default async function ({ page, baseUrl, assert }) {
       JSON.stringify(s.area.bands) === JSON.stringify(expected.map((e) => e.band)),
       `THM-02 ${where}: faixas do fundo por trecho: ${JSON.stringify(s.area.bands)}`,
     );
+    // CEN-10: a camada média também tem uma faixa por módulo, com o tema dele (aqui o id do módulo é o tema).
+    assert(
+      JSON.stringify(s.area.midBands) === JSON.stringify(expected.map((e) => ({ theme: e.id }))),
+      `CEN-10 ${where}: faixas da camada média por trecho: ${JSON.stringify(s.area.midBands)}`,
+    );
   };
 
   // Antes da run: o fundo do título é o `rua` selado (ARE-09), em modo modular.

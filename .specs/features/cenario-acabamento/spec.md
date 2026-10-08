@@ -127,7 +127,7 @@ habitado.
 | CEN-07 | P2: Horizonte por tema | Tasks | Pending |
 | CEN-08 | P2: Horizonte por tema | Tasks | Pending |
 | CEN-09 | P2: Horizonte por tema | Tasks | Pending |
-| CEN-10 | P2: Horizonte por tema | Tasks | Pending |
+| CEN-10 | P2: Horizonte por tema | Execute | Implementing |
 | CEN-11 | P3: Profundidade e decoração | Tasks | Pending |
 | CEN-12 | P3: Profundidade e decoração | Tasks | Pending |
 | CEN-13 | P3: Profundidade e decoração | Tasks | Pending |
