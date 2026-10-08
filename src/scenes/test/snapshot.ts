@@ -31,6 +31,8 @@ export class DebugSnapshot {
       decor: this.s.world.decorPieces,
       front: this.s.world.frontScroll,
       arenaVariant: this.s.world.arenaVariant,
+      leftSeal: this.s.world.arena.leftSealView,
+      veil: this.s.world.arena.veilView,
       layout: {
         ...this.s.world.sceneryLayout,
         playerDepth: this.s.player.view.depth,

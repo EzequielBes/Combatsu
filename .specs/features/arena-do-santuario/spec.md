@@ -113,11 +113,11 @@ na fase 1, 0,18 na fase 2 e volta a 0 depois da vitória.
 | ARN-04 | P1: Santuário próprio | Execute | Implementing |
 | ARN-05 | P1: Santuário próprio | Execute | Implementing |
 | ARN-06 | P1: Santuário próprio | Execute | Implementing |
-| ARN-07 | P2: A arena reage ao chefe | Tasks | Pending |
-| ARN-08 | P2: A arena reage ao chefe | Tasks | Pending |
-| ARN-09 | P2: A arena reage ao chefe | Tasks | Pending |
-| ARN-10 | P2: A arena reage ao chefe | Tasks | Pending |
-| ARN-11 | P2: A arena reage ao chefe | Tasks | Pending |
+| ARN-07 | P2: A arena reage ao chefe | Execute | Implementing |
+| ARN-08 | P2: A arena reage ao chefe | Execute | Implementing |
+| ARN-09 | P2: A arena reage ao chefe | Execute | Implementing |
+| ARN-10 | P2: A arena reage ao chefe | Execute | Implementing |
+| ARN-11 | P2: A arena reage ao chefe | Execute | Implementing |
 | ARN-12 | P3: Arena mais larga | Tasks | Pending |
 
 **Coverage:** 12 total, 12 mapped to tasks, 0 unmapped.

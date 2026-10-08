@@ -196,8 +196,8 @@ T8 → T9
 
 **Done when**:
 
-- [ ] `world-boss` confere `leftSeal` com o frame `seal` na luta e `null` depois do efeito; área comum sem `leftSeal`
-- [ ] Gate verde e smokes `world-` verdes
+- [x] `world-boss` confere `leftSeal` com o frame `seal` na luta e `null` depois do efeito; área comum sem `leftSeal`
+- [x] Gate verde e smokes `world-` verdes
 
 **Tests**: smoke
 **Gate**: full
@@ -215,12 +215,12 @@ T8 → T9
 
 **Done when**:
 
-- [ ] `world-boss` confere alpha 0 na fase 1, 0,18 na fase 2 e 0 até 600 ms depois da vitória; profundidade −7 lida do objeto
-- [ ] Gate verde e smokes `world-` e `boss` verdes
+- [x] `world-boss` confere alpha 0 na fase 1, 0,18 na fase 2 e 0 até 600 ms depois da vitória; profundidade −7 lida do objeto
+- [x] Gate verde e smokes `world-` e `boss` verdes
 
 **Tests**: smoke
 **Gate**: full
-**Commit**: `feat(world): tint the arena red from the boss second phase`
+**Commit**: `feat(world): tint the arena red from the boss second phase` (feito no mesmo commit da T6: os dois moram em `src/scenes/test/arena.ts`)
 
 ---
 

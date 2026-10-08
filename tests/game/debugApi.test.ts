@@ -106,6 +106,8 @@ describe('installDebugApi', () => {
         decor: 0,
         front: null,
         arenaVariant: null,
+        leftSeal: null,
+        veil: null,
         layout: {
           nearDepth: null,
           decorDepth: null,

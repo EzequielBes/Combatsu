@@ -19,6 +19,7 @@ import { tagBody } from '../../game/bodyTags';
 import { Prop } from '../../game/Prop';
 import { TEX } from '../../game/textures';
 import type { TestScene } from '../TestScene';
+import { ArenaDressing } from './arena';
 import { debugParam } from './params';
 
 /** Chave da folha do talismã do selo (THM-03); sem ela o selo é um retângulo da paleta (ARE-11). */
@@ -38,7 +39,12 @@ const SEAL_SPARKS = 10;
  * fundo e objetos. A sala usa o mesmo `build` com a `LEVEL_1`, então só existe um caminho de construção.
  */
 export class WorldBuilder {
-  constructor(readonly s: TestScene) {}
+  constructor(readonly s: TestScene) {
+    this.arena = new ArenaDressing(s);
+  }
+
+  /** Selo da esquerda e véu vermelho da arena do chefe (ARN-07..11). */
+  readonly arena: ArenaDressing;
 
   private tiles: Phaser.GameObjects.Image[] = [];
   private background: Phaser.GameObjects.Graphics[] = [];
@@ -119,6 +125,7 @@ export class WorldBuilder {
     this.background = buildBackground(this.s, level.widthPx, level.heightPx, spans, variant);
     // `?debug&decor=0` desliga decoração e primeiro plano (o smoke compara os corpos do Matter com e sem eles).
     if (spans.length > 0 && debugParam('decor') !== '0') this.buildScenery(spans, level);
+    this.arena.build(variant);
     this.buildProps(level);
   }
 
@@ -131,6 +138,7 @@ export class WorldBuilder {
     this.front?.destroy();
     for (const body of this.staticBodies) s.matter.world.remove(body);
     this.removeSeal();
+    this.arena.teardown();
     this.clearSparks();
     for (const prop of s.props) prop.destroyNow();
     for (const proj of s.projectiles) proj.destroyNow();
@@ -162,6 +170,7 @@ export class WorldBuilder {
       });
     }
     this.burstSparks(rect);
+    this.arena.openSeal();
   }
 
   private resetState(): void {

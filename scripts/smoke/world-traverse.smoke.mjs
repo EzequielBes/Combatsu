@@ -53,6 +53,10 @@ export default async function ({ page, baseUrl, assert }) {
     // ARN-05: área comum (e a konbini) não recebe arquétipo de chefe.
     assert(s.area.arenaVariant === null, `ARN-05 ${where}: arquétipo fora da arena: ${s.area.arenaVariant}`);
     assert(
+      s.area.leftSeal === null && s.area.veil === null,
+      `ARN-07/09 ${where}: selo da esquerda ou véu fora da arena: ${JSON.stringify([s.area.leftSeal, s.area.veil])}`,
+    );
+    assert(
       JSON.stringify(s.area.sheets) === JSON.stringify(expected.map(({ id, sheet }) => ({ id, sheet }))),
       `THM-02 ${where}: folhas de terreno por trecho: ${JSON.stringify(s.area.sheets)}`,
     );

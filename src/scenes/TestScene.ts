@@ -396,6 +396,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // FXL-03: a câmera lenta multiplica o `dt` de jogo/efeitos junto com `time`/`tweens`/física do Matter
     // (aplicados em `fxLab.toggleTimeScale`) - um só fator, tudo anda devagar junto.
     const dt = this.tickRealtime(Math.min(delta, MAX_FRAME_MS));
+    // ARN-09..11: o véu da arena anda no tempo real (a vitória tem câmera lenta) e mesmo no hitstop.
+    this.world.arena.update(Math.min(delta, MAX_FRAME_MS), this.boss && this.boss.hp > 0 ? this.boss.phase : null);
     // Congelado pelo hitstop: player, inimigos e objetos param (os timers de combo, IA e vida também).
     if (this.effects.frozen) return;
     this.clockMs += dt;

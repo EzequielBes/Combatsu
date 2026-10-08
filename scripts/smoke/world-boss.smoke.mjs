@@ -45,14 +45,45 @@ export default async function ({ page, baseUrl, assert }) {
   // O chefe nasce dentro da área do santuário (0 a 1344 px), não nas coordenadas da sala.
   assert(s.boss.x >= 0 && s.boss.x <= s.area.widthPx, `chefe fora da área: x=${s.boss.x}`);
 
+  // ARN-07: a arena fecha dos dois lados; o selo da esquerda usa o frame do talismã.
+  assert(
+    s.area.leftSeal && s.area.leftSeal.frame === 'seal' && s.area.leftSeal.alpha === 1,
+    `ARN-07: selo da esquerda na luta: ${JSON.stringify(s.area.leftSeal)}`,
+  );
+  // ARN-09/10: o véu vermelho existe, preso à câmera na profundidade −7, apagado na fase 1.
+  const RED = 0xb3314f;
+  assert(
+    s.area.veil && s.area.veil.depth === -7 && s.area.veil.color === RED && s.area.veil.scroll === 0,
+    `ARN-09: véu da arena: ${JSON.stringify(s.area.veil)}`,
+  );
+  assert(
+    s.boss.phase === 1 && s.area.veil.alpha === 0,
+    `ARN-10: véu apagado na fase 1: ${JSON.stringify(s.area.veil)}`,
+  );
+
   // Golpes de teste até o chefe morrer; o player recebe cura na vitória, então a tecla 4 não é preciso.
+  let sawPhase2 = false;
   for (let i = 0; i < 200 && s.boss && s.boss.state !== 'dead' && s.run.state === 'roundActive'; i++) {
     s = await press('Digit2', 17);
     if (s.events.includes('bossDefeatedFx')) break;
     s = await step(80);
     assert(!s.player.dead, 'o player morreu antes do chefe');
+    // ARN-09: nas fases 2 e 3 (chefe vivo) o véu fica em 0,18.
+    if (s.boss && s.boss.hp > 0 && s.boss.phase >= 2) {
+      sawPhase2 = true;
+      assert(Math.abs(s.area.veil.alpha - 0.18) < 1e-9, `ARN-09: véu na fase ${s.boss.phase}: ${s.area.veil.alpha}`);
+    }
   }
+  assert(sawPhase2, 'o chefe deveria passar pela fase 2 antes de morrer');
   assert(s.events.includes('bossDefeatedFx'), `chefe não morreu: ${JSON.stringify(s.boss)} player ${s.player.hp}`);
+  // ARN-11: 600 ms depois da vitória o véu já desceu a 0; antes disso ainda estava aceso.
+  const veilAtDeath = s.area.veil.alpha;
+  s = await step(650);
+  assert(veilAtDeath > 0, `ARN-11: o véu deveria estar aceso na morte do chefe: ${veilAtDeath}`);
+  assert(
+    s.area.veil && s.area.veil.alpha === 0,
+    `ARN-11: véu 650 ms depois da vitória: ${JSON.stringify(s.area.veil)}`,
+  );
 
   // Edge case: vencer o chefe leva a traverse e o selo do santuário abre como qualquer outro (TRV-02/03).
   for (let i = 0; i < 100 && s.run.state === 'roundActive'; i++) s = await step(50);
@@ -61,6 +92,27 @@ export default async function ({ page, baseUrl, assert }) {
     `depois da vitória esperava traverse na rodada 5: ${JSON.stringify(s.run)}`,
   );
   assert(s.area.sealed === false, `o selo do santuario deveria abrir: ${JSON.stringify(s.area)}`);
+
+  // ARN-08: o selo da esquerda queima junto com o da direita. Os tweens andam no relógio de parede (ver world-exit):
+  // passos curtos com pausa real até os dois sumirem, conferindo que os dois esmaecem lado a lado.
+  const burn = await page.evaluate(async () => {
+    const t0 = performance.now();
+    const pairs = [];
+    for (;;) {
+      window.__game.step(16);
+      const a = window.__game.snapshot().area;
+      if ((a.leftSeal === null && a.seal === null) || performance.now() - t0 > 3000) {
+        return { ms: performance.now() - t0, pairs, left: a.leftSeal, right: a.seal };
+      }
+      pairs.push([a.leftSeal?.alpha ?? 0, a.seal?.alpha ?? 0]);
+      await new Promise((resolve) => setTimeout(resolve, 4));
+    }
+  });
+  assert(burn.left === null && burn.right === null, `ARN-08: os dois selos deveriam sumir: ${JSON.stringify(burn)}`);
+  assert(
+    burn.pairs.length > 3 && burn.pairs.every(([l, r]) => Math.abs(l - r) < 0.15),
+    `ARN-08: o selo da esquerda deveria esmaecer junto com o da direita: ${JSON.stringify(burn.pairs)}`,
+  );
   assert(
     s.area.staticBodies === staticBefore - 1,
     `o corpo do selo deveria sair do mundo: ${staticBefore} -> ${s.area.staticBodies}`,
