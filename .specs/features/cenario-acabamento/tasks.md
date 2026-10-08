@@ -123,9 +123,9 @@ T19
 
 **Done when**:
 
-- [ ] Teste: coluna 0 nas linhas 0 e 14 de um trecho `parque` dá `TEX.terrain`; coluna 0 na linha 15 dá a folha do parque; coluna 1 na linha 14 dá a folha do parque; sem trechos dá `TEX.terrain`
-- [ ] `world.ts` chama `terrainSheetFor`
-- [ ] Gate verde e `npm run smoke -- world-` verde
+- [x] Teste: coluna 0 nas linhas 0 e 14 de um trecho `parque` dá `TEX.terrain`; coluna 0 na linha 15 dá a folha do parque; coluna 1 na linha 14 dá a folha do parque; sem trechos dá `TEX.terrain`
+- [x] `world.ts` chama `terrainSheetFor`
+- [x] Gate verde e `npm run smoke -- world-` verde
 
 **Tests**: unit
 **Gate**: full

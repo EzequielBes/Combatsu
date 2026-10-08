@@ -8,7 +8,7 @@ import { PROP_DEFS } from '../../data/props';
 import { buildBackground } from '../../game/art/background';
 import { PALETTE } from '../../game/art/palette';
 import { tileFrameFor } from '../../game/art/tiles';
-import { THEME_TEXTURES } from '../../game/art/tilesThemes';
+import { terrainSheetFor } from '../../game/art/tilesThemes';
 import { tagBody } from '../../game/bodyTags';
 import { Prop } from '../../game/Prop';
 import { TEX } from '../../game/textures';
@@ -137,13 +137,6 @@ export class WorldBuilder {
     this.spans = [];
   }
 
-  /** Folha de terreno da coluna `tx` (THM-02): a do tema do trecho; a parede e o selo usam a do módulo vizinho. */
-  private sheetFor(tx: number, spans: readonly AreaSpan[]): string {
-    if (spans.length === 0) return TEX.terrain;
-    const span = spans.find((sp) => tx <= sp.col1) ?? spans[spans.length - 1];
-    return THEME_TEXTURES[span.theme];
-  }
-
   private buildTiles(rows: readonly string[], spans: readonly AreaSpan[]): void {
     rows.forEach((row, ty) => {
       for (let tx = 0; tx < row.length; tx++) {
@@ -153,7 +146,7 @@ export class WorldBuilder {
           this.s.add.image(
             tx * TILE + TILE / 2,
             ty * TILE + TILE / 2,
-            this.sheetFor(tx, spans),
+            terrainSheetFor(tx, ty, spans),
             tileFrameFor(variant, tx, ty),
           ),
         );

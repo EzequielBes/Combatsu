@@ -120,7 +120,7 @@ habitado.
 | --- | --- | --- | --- |
 | CEN-01 | P1: Consertos visuais | Tasks | Pending |
 | CEN-02 | P1: Consertos visuais | Tasks | Pending |
-| CEN-03 | P1: Consertos visuais | Tasks | Pending |
+| CEN-03 | P1: Consertos visuais | Execute | Implementing |
 | CEN-04 | P1: Consertos visuais | Execute | Implementing |
 | CEN-05 | P1: Consertos visuais | Execute | Implementing |
 | CEN-06 | P1: Consertos visuais | Tasks | Pending |

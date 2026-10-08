@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import type { ModuleTheme } from '../../core/module';
+import { FLOOR_ROWS, type ModuleTheme } from '../../core/module';
 import { parseSheet } from '../../core/pixelGrid';
 import { TEX } from '../textures';
 import { PALETTE_KEYS } from './palette';
@@ -292,6 +292,21 @@ export const THEME_TEXTURES: Record<ModuleTheme, string> = {
   konbini: TEX.terrainKonbini,
   santuario: TEX.terrainSantuario,
 };
+
+/**
+ * Folha de terreno do tile (`tx`, `ty`) da área (THM-02, CEN-03): a do tema do trecho; a coluna 0 acima do chão é o
+ * muro de contenção e usa a pedra neutra `terrain` em todo tema (com a folha do vizinho, o parque virava um pilar de
+ * terra). Sem trechos (a sala) tudo é `terrain`.
+ */
+export function terrainSheetFor(
+  tx: number,
+  ty: number,
+  spans: readonly { theme: ModuleTheme; col1: number }[],
+): string {
+  if (spans.length === 0 || (tx === 0 && ty < FLOOR_ROWS[0])) return TEX.terrain;
+  const span = spans.find((sp) => tx <= sp.col1) ?? spans[spans.length - 1];
+  return THEME_TEXTURES[span.theme];
+}
 
 /** Registra as cinco folhas de terreno por tema e a folha do selo. */
 export function registerThemedTiles(scene: Phaser.Scene): void {
