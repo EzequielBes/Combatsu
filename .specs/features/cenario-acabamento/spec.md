@@ -118,21 +118,21 @@ habitado.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CEN-01 | P1: Consertos visuais | Execute | Implementing |
-| CEN-02 | P1: Consertos visuais | Execute | Implementing |
-| CEN-03 | P1: Consertos visuais | Execute | Implementing |
-| CEN-04 | P1: Consertos visuais | Execute | Implementing |
-| CEN-05 | P1: Consertos visuais | Execute | Implementing |
-| CEN-06 | P1: Consertos visuais | Execute | Implementing |
-| CEN-07 | P2: Horizonte por tema | Execute | Implementing |
-| CEN-08 | P2: Horizonte por tema | Execute | Implementing |
-| CEN-09 | P2: Horizonte por tema | Execute | Implementing |
-| CEN-10 | P2: Horizonte por tema | Execute | Implementing |
-| CEN-11 | P3: Profundidade e decoração | Execute | Implementing |
-| CEN-12 | P3: Profundidade e decoração | Execute | Implementing |
-| CEN-13 | P3: Profundidade e decoração | Execute | Implementing |
-| CEN-14 | P3: Profundidade e decoração | Execute | Implementing |
-| CEN-15 | P3: Profundidade e decoração | Execute | Implementing |
+| CEN-01 | P1: Consertos visuais | Execute | Verified |
+| CEN-02 | P1: Consertos visuais | Execute | Verified |
+| CEN-03 | P1: Consertos visuais | Execute | Verified |
+| CEN-04 | P1: Consertos visuais | Execute | Verified |
+| CEN-05 | P1: Consertos visuais | Execute | Verified |
+| CEN-06 | P1: Consertos visuais | Execute | Verified |
+| CEN-07 | P2: Horizonte por tema | Execute | Verified |
+| CEN-08 | P2: Horizonte por tema | Execute | Verified |
+| CEN-09 | P2: Horizonte por tema | Execute | Verified |
+| CEN-10 | P2: Horizonte por tema | Execute | Verified |
+| CEN-11 | P3: Profundidade e decoração | Execute | Verified |
+| CEN-12 | P3: Profundidade e decoração | Execute | Verified |
+| CEN-13 | P3: Profundidade e decoração | Execute | Verified |
+| CEN-14 | P3: Profundidade e decoração | Execute | Verified |
+| CEN-15 | P3: Profundidade e decoração | Execute | Verified |
 
 **Coverage:** 15 total, 15 mapped to tasks, 0 unmapped.
 

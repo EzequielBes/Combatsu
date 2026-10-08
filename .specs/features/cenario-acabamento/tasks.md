@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/cenario-acabamento/spec.md`
 **Design**: `.specs/features/cenario-acabamento/design.md`
-**Status**: In Progress
+**Status**: Done (Verifier PASS na rodada 3; T26 depois do PASS, da observação da rodada 3); aguardando o usuário jogar
 **Branch**: `feat/cenario-acabamento` (a partir do `master` em `2914ee4`)
 **Modelos**: Opus 5.5 executa inline (é trabalho de arte; regra do handoff: arte e revisão em Opus) e despacha o Verifier no fim.
 

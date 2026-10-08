@@ -15,10 +15,10 @@ Corroborated across multiple features. Safe to apply as guidance.
 - last seen: 2026-10-01T12:33:06Z
 
 ### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
-- signal: `surviving_mutant` · recurrence: 3 feature(s) · scope: `art-adapter` · harmful: 1
-- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho
-- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+2 more)
-- last seen: 2026-10-07T16:20:07Z
+- signal: `surviving_mutant` · recurrence: 4 feature(s) · scope: `art-adapter` · harmful: 1
+- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho, cenario-acabamento
+- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+3 more)
+- last seen: 2026-10-08T16:05:39Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -419,6 +419,36 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: mundo-modular
 - evidence: KA src/scenes/test/shopDirector.ts:105 (KON-02); scripts/smoke/world-traverse.smoke.mjs:342-360 (smoke)
 - last seen: 2026-10-07T17:31:20Z
+
+### L-069 - Test a per-segment dispatcher with at least two segments of different kinds, because a single-segment test cannot tell each segment's handler from the first one's.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `art` · harmful: 0
+- features: cenario-acabamento
+- evidence: M9 src/game/art/background.ts:78 vs tests/game/art/scenerySeams.test.ts:29 (art)
+- last seen: 2026-10-08T16:05:39Z
+
+### L-070 - Assert the draw-order a spec ranks (behind X, in front of Y) by reading each object's depth from the live scene.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scene-adapter` · harmful: 0
+- features: cenario-acabamento
+- evidence: M14 src/scenes/test/world.ts:30 (CEN-13) (scene-adapter)
+- last seen: 2026-10-08T16:05:39Z
+
+### L-071 - When a spec says every NxN window of a band, cover the whole band (last window aligned to its edge), because a fixed grid leaves the remainder rows unchecked.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `art` · harmful: 0
+- features: cenario-acabamento
+- evidence: CEN-09 tests/game/art/sceneryThemes.test.ts:41 (art)
+- last seen: 2026-10-08T16:05:39Z
+
+### L-072 - When an AC lists a family of UI elements, grep every module that creates one (not only the main HUD file) before fixing or snapshotting them.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `hud` · harmful: 0
+- features: cenario-acabamento
+- evidence: CEN-05 src/game/EnergyHud.ts:48 (hud)
+- last seen: 2026-10-08T16:30:40Z
+
+### L-073 - When a spec says behind or in front of a group of objects, assert the depth against every member of the group, not just one representative.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scene-adapter` · harmful: 0
+- features: cenario-acabamento
+- evidence: N3a src/scenes/test/world.ts:208 (scene-adapter)
+- last seen: 2026-10-08T16:30:41Z
 
 ## Quarantined (failed when applied - ignore)
 
