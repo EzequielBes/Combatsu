@@ -322,3 +322,66 @@ T11 → T12 → T13
 **Tests**: unit
 **Gate**: quick
 **Commit**: `test(world): cover the arena veil when the boss dies in phase 1`
+
+---
+
+## Phase 5: Consertos do Verifier (rodada 2)
+
+```
+T14 → T15 → T16
+```
+
+### T14: Fundo conferido pela pintura
+
+**What**: Teste unitário do `buildBackground` com uma cena falsa cujas `Graphics` gravam texels: a camada distante da arena é igual ao `veilSky` e a média é igual ao `santuarioMid` com a variante pedida (`oni` ≠ `tecela`); fora da arena, a distante é a escola (mutantes N1, N2).
+**Where**: `tests/game/art/sceneryBuild.test.ts`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `RasterSink`
+**Requirement**: ARN-01, ARN-04, ARN-05
+
+**Done when**:
+
+- [x] Rasters das camadas 0 e 1 comparados com os pintores diretos
+- [x] Gate verde
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `test(art): compare the built arena layers with the shrine painters`
+
+---
+
+### T15: Pegada do selo pela medida exibida
+
+**What**: `leftSealView` usa `displayWidth`/`displayHeight` (incluem a escala), no lugar de `width`/`height` (mutante N3).
+**Where**: `src/scenes/test/arena.ts`
+**Depends on**: T14
+**Reuses**: smoke `world-boss`
+**Requirement**: ARN-07
+
+**Done when**:
+
+- [ ] Smoke `world-boss` verde com a medida exibida
+- [ ] Gate verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `fix(world): measure the left seal by its displayed size`
+
+---
+
+### T16: Véu apagado a cada passo quando o chefe morre na fase 1
+
+**What**: O teste do edge case confere `alpha === 0` em todo passo depois que o chefe some na fase 1 (mutante N4).
+**Where**: `tests/scenes/arena.test.ts`
+**Depends on**: T15
+**Reuses**: `ArenaDressing`
+**Requirement**: ARN-10
+
+**Done when**:
+
+- [ ] Asserção dentro do laço
+- [ ] Gate verde
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `test(world): keep the veil dark on every step after a phase 1 death`
