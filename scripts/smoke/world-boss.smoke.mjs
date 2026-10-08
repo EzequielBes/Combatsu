@@ -3,7 +3,7 @@
 const TILE = 32;
 
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&area=modular&enemyGuard=0&seed=5&round=5`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&hd=1&area=modular&enemyGuard=0&seed=5&round=5`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
       try {
@@ -40,6 +40,11 @@ export default async function ({ page, baseUrl, assert }) {
   );
   // ARN-05: o fundo da arena recebe o arquétipo do chefe da rodada (o Oni na rodada 5).
   assert(s.area.arenaVariant === 'oni', `ARN-05: arquétipo da arena: ${s.area.arenaVariant}`);
+  // ARN-01/05: lido das camadas vivas do fundo: o céu do Véu na distante e o Oni na média.
+  assert(
+    s.area.background.far === 'veil' && s.area.background.variant === 'oni',
+    `ARN-01/05: fundo da arena do Oni: ${JSON.stringify(s.area.background)}`,
+  );
   const staticBefore = s.area.staticBodies;
   assert(s.boss && s.boss.name === 'Oni do Portão', `o chefe deveria nascer: ${JSON.stringify(s.boss)}`);
   // O chefe nasce dentro da área do santuário (0 a 1600 px), não nas coordenadas da sala.
@@ -118,4 +123,27 @@ export default async function ({ page, baseUrl, assert }) {
     `o corpo do selo deveria sair do mundo: ${staticBefore} -> ${s.area.staticBodies}`,
   );
   assert(s.boss === null, `o chefe deveria sumir: ${JSON.stringify(s.boss)}`);
+
+  // ARN-05: na rodada 15 a arena é da Tecelã, lida do jogo vivo.
+  await page.goto(`${baseUrl}?debug&hd=1&area=modular&enemyGuard=0&seed=5&round=15`, { waitUntil: 'load' });
+  await page.waitForFunction(
+    () => {
+      try {
+        return !!window.__game.snapshot();
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 15_000 },
+  );
+  await step(20);
+  s = await press('KeyJ', 50);
+  assert(
+    s.run.round === 15 && s.area.arenaVariant === 'tecela',
+    `ARN-05: arena da rodada 15: ${s.run.round} ${s.area.arenaVariant}`,
+  );
+  assert(
+    s.area.background.far === 'veil' && s.area.background.variant === 'tecela',
+    `ARN-01/05: fundo da arena da Tecelã: ${JSON.stringify(s.area.background)}`,
+  );
 }

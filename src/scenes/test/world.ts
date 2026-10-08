@@ -190,6 +190,17 @@ export class WorldBuilder {
     this.decorBottom = null;
   }
 
+  /**
+   * O que o fundo vivo recebeu (ARN-01, ARN-05): o pintor da camada distante (`veil` ou `school`) e a variante que a
+   * camada média pintou; `far` é `null` sem fundo.
+   */
+  get backgroundInfo(): { far: string | null; variant: string | null } {
+    return {
+      far: (this.background[0]?.getData('far') as string | undefined) ?? null,
+      variant: (this.background[1]?.getData('variant') as string | null | undefined) ?? null,
+    };
+  }
+
   /** Arquétipo do chefe passado ao fundo da arena (ARN-05); `null` fora da área de chefe. */
   get arenaVariant(): BossArchetype | null {
     return this.variant;

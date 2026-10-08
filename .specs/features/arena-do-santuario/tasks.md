@@ -259,3 +259,66 @@ T8 → T9
 **Tests**: none
 **Gate**: build
 **Commit**: `chore(tools): capture both shrine arena variants`
+
+---
+
+## Phase 4: Consertos do Verifier (rodada 1)
+
+```
+T11 → T12 → T13
+```
+
+### T11: Fundo da arena lido do jogo vivo
+
+**What**: `buildBackground` guarda nas camadas qual pintor fez a distante (`veil` ou `school`) e a variante que a média recebeu; o snapshot expõe `area.background`; o `world-boss` (em HD) confere `veil` + `oni` na rodada 5 e `tecela` na rodada 15; o `world-traverse` confere `school` + `null` (mutantes U15, U16, S2).
+**Where**: `src/game/art/background.ts`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `farPainterFor`
+**Requirement**: ARN-01, ARN-05
+
+**Done when**:
+
+- [x] Smokes conferem o pintor da distante e a variante lidos das camadas vivas, nas rodadas 5 e 15
+- [x] Gate verde e smokes `world-` verdes
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(world): read the arena sky and variant from the live background`
+
+---
+
+### T12: Slots do santuário e lugar do selo da esquerda
+
+**What**: `modules.test.ts` exige exatamente dois `p` e um `E` perto de cada borda no santuário; `leftSeal` no snapshot ganha `x`, `y`, `width` e `height`, e o `world-boss` confere coluna 0, linhas 0 a 14 (mutantes U12, U14, S5, S6).
+**Where**: `tests/data/modules.test.ts`
+**Depends on**: T11
+**Reuses**: `ArenaDressing.leftSealView`
+**Requirement**: ARN-07, ARN-12
+
+**Done when**:
+
+- [ ] Teste do módulo e smoke conferem os valores da spec
+- [ ] Gate verde e smoke `world-boss` verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(world): pin the shrine slots and the left seal footprint`
+
+---
+
+### T13: Chefe que morre na fase 1
+
+**What**: Teste unitário do `ArenaDressing.update` com uma cena falsa: chefe na fase 1 que some deixa o véu em 0; fase 2 acende em 0,18; o fade leva 600 ms (edge case da spec).
+**Where**: `tests/scenes/arena.test.ts`
+**Depends on**: T12
+**Reuses**: `ArenaDressing`
+**Requirement**: ARN-10, ARN-11
+
+**Done when**:
+
+- [ ] Teste cobre fase 1 → morte (alpha 0), fase 2 (0,18) e o fade (0,09 aos 300 ms, 0 aos 600 ms)
+- [ ] Gate verde
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `test(world): cover the arena veil when the boss dies in phase 1`

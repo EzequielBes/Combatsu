@@ -169,6 +169,8 @@ export interface GameSnapshot {
     decor: number;
     /** Arquétipo do chefe que o fundo da arena recebeu (ARN-05); `null` fora da área de chefe. */
     arenaVariant: string | null;
+    /** Pintor da camada distante (`veil` ou `school`) e variante da média, lidos das camadas vivas (ARN-01, ARN-05). */
+    background: { far: string | null; variant: string | null };
     /** Selo da esquerda da arena (ARN-07, ARN-08); `null` fora da arena ou depois do efeito. */
     leftSeal: { texture: string; frame: string; alpha: number } | null;
     /** Véu vermelho da fase do chefe, lido do objeto (ARN-09..11); `null` fora da arena. */
