@@ -136,8 +136,8 @@ conjurar → a esfera atravessa a fila de inimigos acertando cada um uma vez.
 | EVO-02 | P2: Evolução Vazio Roxo | Execute | Implementing |
 | EVO-03 | P2: Evolução Vazio Roxo | Execute | Implementing |
 | EVO-04 | P2: Evolução Vazio Roxo | Execute | Implementing |
-| EVO-05 | P2: Evolução Vazio Roxo | Tasks | Pending |
-| EVO-06 | P2: Evolução Vazio Roxo | Tasks | Pending |
+| EVO-05 | P2: Evolução Vazio Roxo | Execute | Implementing |
+| EVO-06 | P2: Evolução Vazio Roxo | Execute | Implementing |
 | EVO-07 | P2: Evolução Vazio Roxo | Execute | Implementing |
 | EVO-08 | P2: Evolução Vazio Roxo | Execute | Implementing |
 

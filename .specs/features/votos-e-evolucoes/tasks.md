@@ -296,8 +296,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Testes: posição aos 0, 800 e 1600 ms; some depois de 1600 ms; o mesmo alvo nunca duas vezes; alvo fora do raio não é tocado
-- [ ] Gate verde
+- [x] Testes: posição aos 0, 800 e 1600 ms; some depois de 1600 ms; o mesmo alvo nunca duas vezes; alvo fora do raio não é tocado
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
