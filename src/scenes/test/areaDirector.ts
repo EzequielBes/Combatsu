@@ -4,7 +4,8 @@ import { parseLevel, type LevelData } from '../../core/level';
 import { Rng } from '../../core/rng';
 import { type RunCommand } from '../../core/run';
 import { composeArea, konbiniArea, parseModulesParam, Stage, type AreaGrid, type AreaSpan } from '../../core/stage';
-import { requireSpawnPoints } from '../../core/waves';
+import { isBossRound, requireSpawnPoints } from '../../core/waves';
+import { bossSpecFor, type BossArchetype } from '../../core/bossTier';
 import { LEVEL_1 } from '../../data/level1';
 import { COMBAT_IDS, MODULES } from '../../data/modules';
 import { AREA } from '../../data/tuning';
@@ -75,7 +76,12 @@ export class AreaDirector {
         );
         break;
       case 'roundStart':
-        if (this.stage) this.rebuild(this.stage.compose(this.stage.nextArea(cmd.round)));
+        // ARN-05: a área de chefe recebe o arquétipo do chefe da rodada para o fundo da arena.
+        if (this.stage)
+          this.rebuild(
+            this.stage.compose(this.stage.nextArea(cmd.round)),
+            isBossRound(cmd.round) ? bossSpecFor(cmd.round).archetype : null,
+          );
         break;
       case 'roundCleared':
         this.s.world.openSeal();
@@ -112,14 +118,14 @@ export class AreaDirector {
   }
 
   /** Reconstrói o mundo com a grade da área (ARE-09, ARE-10, ARE-11) e clareia a câmera. */
-  rebuild(grid: AreaGrid): void {
+  rebuild(grid: AreaGrid, variant: BossArchetype | null = null): void {
     const s = this.s;
     s.world.teardown();
     const level = parseLevel(grid.rows);
     // KON-05: a konbini (sem selo) nunca tem ponto de spawn; toda área de combate ou de chefe tem de ter.
     if (grid.sealCol !== null) requireSpawnPoints(level, grid.spans.map((sp) => sp.id).join(','));
     s.level = level;
-    s.world.build(grid.rows, level, grid.spans);
+    s.world.build(grid.rows, level, grid.spans, variant);
     s.player.setSpawn(level.player.x, level.player.y - SPAWN_LIFT);
     s.player.placeAtSpawn();
     s.cameras.main.setBounds(0, 0, level.widthPx, level.heightPx);

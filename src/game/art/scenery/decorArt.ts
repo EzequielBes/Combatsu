@@ -78,12 +78,27 @@ function baskets(b: Brush, cx: number, floor: number): void {
   b.rect(cx + 28, floor - 8, 2, 8, 'k');
 }
 
-/** Peça de cada tema; o santuário fica sem peça até a F23. */
+/** Caixa de oferendas do santuário: madeira com grade no tampo, o sino em cima e a corda grossa pendurada. */
+function offeringBox(b: Brush, cx: number, floor: number): void {
+  b.rect(cx - 20, floor - 24, 40, 24, 'm');
+  b.rect(cx - 20, floor - 24, 40, 2, 'M');
+  b.rect(cx - 18, floor - 20, 36, 2, 'k');
+  for (let x = cx - 16; x < cx + 16; x += 6) b.rect(x, floor - 22, 2, 4, 'K');
+  b.rect(cx - 20, floor - 8, 40, 2, 'K');
+  b.rect(cx - 2, floor - 64, 4, 34, 'k');
+  b.disc(cx, floor - 66, 6, 'z');
+  b.rect(cx - 4, floor - 70, 4, 2, 'A');
+  for (let y = floor - 58; y < floor - 28; y += 4)
+    b.rect(cx + 4 + ((y / 4) % 2) * 2, y, 4, 4, (y / 4) % 2 === 0 ? 'r' : 'w');
+}
+
+/** Peça de cada tema. */
 export const DECOR_ART: Partial<Record<ModuleTheme, readonly DecorPainter[]>> = {
   rua: [vendingMachine],
   beco: [trash],
   parque: [parkLamp],
   konbini: [baskets],
+  santuario: [offeringBox],
 };
 
 /**

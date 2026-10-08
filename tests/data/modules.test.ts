@@ -7,7 +7,7 @@ const EXPECTED = [
   ['beco', 20, 'combat'],
   ['parque', 32, 'combat'],
   ['konbini', 20, 'konbini'],
-  ['santuario', 40, 'boss'],
+  ['santuario', 48, 'boss'],
 ] as const;
 
 describe('catálogo de módulos (MDL-10, THM-01)', () => {
@@ -34,6 +34,14 @@ describe('catálogo de módulos (MDL-10, THM-01)', () => {
       });
     });
   }
+
+  it('o santuário tem exatamente dois slots de objeto p (ARN-12)', () => {
+    const slots = MODULES.santuario.grid
+      .join('')
+      .split('')
+      .filter((ch) => ch === 'p').length;
+    expect(slots).toBe(2);
+  });
 
   it('todo módulo de combate e o santuário têm um E a até 4 colunas de cada borda', () => {
     for (const id of [...COMBAT_IDS, 'santuario']) {

@@ -105,6 +105,10 @@ describe('installDebugApi', () => {
         midBands: [],
         decor: 0,
         front: null,
+        arenaVariant: null,
+        background: { far: 'school', variant: null },
+        leftSeal: null,
+        veil: null,
         layout: {
           nearDepth: null,
           decorDepth: null,

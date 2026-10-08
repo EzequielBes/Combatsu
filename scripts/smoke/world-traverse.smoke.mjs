@@ -4,7 +4,7 @@
 const TILE = 32;
 // Corpos estáticos de uma área plana: a parede (linhas 0 a 14, um retângulo por linha) e o chão (linhas 15 e 16).
 const FLAT_SOLIDS = 17;
-const MODULE_COLS = { rua: 40, beco: 20, parque: 32, konbini: 20, santuario: 40 };
+const MODULE_COLS = { rua: 40, beco: 20, parque: 32, konbini: 20, santuario: 48 };
 
 export default async function ({ page, baseUrl, assert }) {
   await page.goto(`${baseUrl}?debug&enemyGuard=0&modules=beco,parque&maxAlive=1&seed=3&tech=corte`, {
@@ -50,6 +50,16 @@ export default async function ({ page, baseUrl, assert }) {
     rerollCost: s.shop.rerollCost,
   });
   const assertTheme = (s, where, expected) => {
+    // ARN-05: área comum (e a konbini) não recebe arquétipo de chefe.
+    assert(s.area.arenaVariant === null, `ARN-05 ${where}: arquétipo fora da arena: ${s.area.arenaVariant}`);
+    assert(
+      s.area.background.far === 'school' && s.area.background.variant === null,
+      `ARN-01/05 ${where}: fundo fora da arena: ${JSON.stringify(s.area.background)}`,
+    );
+    assert(
+      s.area.leftSeal === null && s.area.veil === null,
+      `ARN-07/09 ${where}: selo da esquerda ou véu fora da arena: ${JSON.stringify([s.area.leftSeal, s.area.veil])}`,
+    );
     assert(
       JSON.stringify(s.area.sheets) === JSON.stringify(expected.map(({ id, sheet }) => ({ id, sheet }))),
       `THM-02 ${where}: folhas de terreno por trecho: ${JSON.stringify(s.area.sheets)}`,

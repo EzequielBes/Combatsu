@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TILE } from '../../../src/core/level';
 import { NEAR_COLORS, PARALLAX, bandsFor } from '../../../src/game/art/background';
+import { toLayerX } from '../../../src/game/art/scenery/layers';
 import { PALETTE } from '../../../src/game/art/palette';
 import { THEME_FRAMES } from '../../../src/game/art/tilesThemes';
 
@@ -35,7 +36,7 @@ describe('faixa de fundo por tema (THM-02)', () => {
     const f = PARALLAX[2];
     expect(first.x0).toBe(-128);
     expect(last.x1).toBe(4000);
-    expect(first.x1).toBe(f * (21 * TILE) + (1 - f) * 320);
+    expect(first.x1).toBe(toLayerX(21 * TILE, f));
     expect(last.x0).toBe(first.x1);
   });
 });

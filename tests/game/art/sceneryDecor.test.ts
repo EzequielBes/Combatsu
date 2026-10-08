@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TILE } from '../../../src/core/level';
+import type { ModuleTheme } from '../../../src/core/module';
 import { PALETTE } from '../../../src/game/art/palette';
 import { Brush } from '../../../src/game/art/scenery/brush';
 import { decorSlots } from '../../../src/game/art/scenery/decor';
@@ -46,7 +47,7 @@ describe('posições da decoração (CEN-13, CEN-15)', () => {
 });
 
 describe('arte da decoração (CEN-13)', () => {
-  it.each(['rua', 'beco', 'parque', 'konbini'] as const)(
+  it.each(['rua', 'beco', 'parque', 'konbini', 'santuario'] as const)(
     '%s tem peça, pintada só acima do chão e com a paleta',
     (theme) => {
       const sink = new RasterSink();
@@ -57,9 +58,10 @@ describe('arte da decoração (CEN-13)', () => {
     },
   );
 
-  it('tema sem peça (santuário) não pinta nada e não lança erro', () => {
+  it('tema sem peça não pinta nada e não lança erro', () => {
     const sink = new RasterSink();
-    expect(paintDecor(new Brush(sink), 'santuario', 200, 480)).toBe(false);
+    // Todo tema do jogo tem peça desde a F23; o edge case é coberto com um tema que não existe.
+    expect(paintDecor(new Brush(sink), 'inexistente' as ModuleTheme, 200, 480)).toBe(false);
     expect(sink.texels.size).toBe(0);
   });
 });

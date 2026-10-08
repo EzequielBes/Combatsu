@@ -56,7 +56,7 @@ Parte D — Mundo modular (expansão de ambiente; a F13 corre em paralelo, a F14
 | F20 | `portas-e-destrutiveis` | Complex | WAL (vinda da F13) | Planejada |
 | F21 | `perigos-e-rotas` | Complex | — | Planejada |
 | F22 | `cenario-acabamento` | Large | CEN | Done (Verifier PASS, rodada 3; 15 ACs); aguardando o usuário jogar |
-| F23 | `arena-do-santuario` | Large | — | Planejada (plano em `docs/plano-cenario-rejogabilidade-hordas.md`) |
+| F23 | `arena-do-santuario` | Large | ARN | Done (Verifier PASS, rodada 3; 12 ACs); aguardando o usuário lutar nas duas arenas |
 | F24 | `votos-e-evolucoes` | Complex | — | Planejada |
 | F25 | `meta-progressao` | Complex | — | Planejada |
 | F26 | `graus-e-eventos` | Large | — | Planejada |

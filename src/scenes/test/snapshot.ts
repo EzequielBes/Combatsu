@@ -30,6 +30,10 @@ export class DebugSnapshot {
       midBands: this.s.world.midBands(),
       decor: this.s.world.decorPieces,
       front: this.s.world.frontScroll,
+      arenaVariant: this.s.world.arenaVariant,
+      background: this.s.world.backgroundInfo,
+      leftSeal: this.s.world.arena.leftSealView,
+      veil: this.s.world.arena.veilView,
       layout: {
         ...this.s.world.sceneryLayout,
         playerDepth: this.s.player.view.depth,

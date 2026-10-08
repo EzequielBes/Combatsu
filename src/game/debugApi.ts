@@ -167,6 +167,22 @@ export interface GameSnapshot {
     midBands: { theme: string }[];
     /** Peças de decoração desenhadas na área (CEN-13); 0 na sala e com `?debug&decor=0`. */
     decor: number;
+    /** Arquétipo do chefe que o fundo da arena recebeu (ARN-05); `null` fora da área de chefe. */
+    arenaVariant: string | null;
+    /** Pintor da camada distante (`veil` ou `school`) e variante da média, lidos das camadas vivas (ARN-01, ARN-05). */
+    background: { far: string | null; variant: string | null };
+    /** Selo da esquerda da arena (ARN-07, ARN-08); `null` fora da arena ou depois do efeito. */
+    leftSeal: {
+      texture: string;
+      frame: string;
+      alpha: number;
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+    } | null;
+    /** Véu vermelho da fase do chefe, lido do objeto (ARN-09..11); `null` fora da arena. */
+    veil: { alpha: number; depth: number; color: number; scroll: number } | null;
     /** Rolagem do primeiro plano lida do objeto (CEN-11); `null` na sala e com `?debug&decor=0`. */
     front: { sx: number; sy: number } | null;
     /** Profundidades vivas da camada próxima, da decoração e do player, e o pé da decoração em px (CEN-13). */
