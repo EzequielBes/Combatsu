@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/arena-do-santuario/spec.md`
 **Design**: inline (abaixo); reaproveita a estrutura da F22 (`src/game/art/scenery/`)
-**Status**: In Progress
+**Status**: Done (Verifier PASS na rodada 3); aguardando o usuário lutar nas duas arenas
 **Branch**: `feat/arena-do-santuario` (a partir do `master` em `e658c64`)
 **Modelos**: Opus 5.5 executa inline (arte) e despacha o Verifier no fim.
 

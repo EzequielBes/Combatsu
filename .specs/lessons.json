@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 74,
+  "next_id": 79,
   "lessons": [
     {
       "id": "L-001",
@@ -776,18 +776,20 @@
         "sprite-player-polish",
         "enemy-sprite-variety",
         "personagem-e-vermelho",
-        "cenario-acabamento"
+        "cenario-acabamento",
+        "arena-do-santuario"
       ],
-      "recurrence": 4,
+      "recurrence": 5,
       "harmful": 1,
       "evidence": [
         "M7 src/game/art/index.ts:128 (art-adapter)",
         "M2b src/scenes/TestScene.ts:843 (art-adapter) (art-adapter)",
         "M11-adapt TechRunner.ts:350 (art-adapter)",
-        "M10 src/game/Hud.ts:134 vs tests/game/hudText.test.ts:10 (art-adapter)"
+        "M10 src/game/Hud.ts:134 vs tests/game/hudText.test.ts:10 (art-adapter)",
+        "U15 src/game/art/background.ts:57 (ARN-01) (art-adapter)"
       ],
       "created": "2026-10-01T14:45:04Z",
-      "last_seen": "2026-10-08T16:05:39Z"
+      "last_seen": "2026-10-08T17:35:38Z"
     },
     {
       "id": "L-044",
@@ -1328,6 +1330,96 @@
       ],
       "created": "2026-10-08T16:30:41Z",
       "last_seen": "2026-10-08T16:30:41Z"
+    },
+    {
+      "id": "L-074",
+      "key": "surviving_mutant::when a value is chosen per case per archetype per round assert it live for at least two cases because one case cannot tell the lookup from a constant",
+      "text": "When a value is chosen per case (per archetype, per round), assert it live for at least two cases, because one case cannot tell the lookup from a constant.",
+      "signal": "surviving_mutant",
+      "scope": "scene-adapter",
+      "status": "candidate",
+      "features": [
+        "arena-do-santuario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "S2 src/scenes/test/areaDirector.ts:83 (ARN-05) (scene-adapter)"
+      ],
+      "created": "2026-10-08T17:35:38Z",
+      "last_seen": "2026-10-08T17:35:38Z"
+    },
+    {
+      "id": "L-075",
+      "key": "spec_precision_gap::assert every count and position an ac names two slots column 0 rows 0 to 14 not just the presence or the frame of the element",
+      "text": "Assert every count and position an AC names (two slots, column 0, rows 0 to 14), not just the presence or the frame of the element.",
+      "signal": "spec_precision_gap",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "arena-do-santuario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ARN-12 tests/data/modules.test.ts:26; ARN-07 scripts/smoke/world-boss.smoke.mjs:49 (tests)"
+      ],
+      "created": "2026-10-08T17:35:38Z",
+      "last_seen": "2026-10-08T17:35:38Z"
+    },
+    {
+      "id": "L-076",
+      "key": "surviving_mutant::a debug field that echoes the input handed to a helper the chosen painter the variant parameter does not prove the helper used it assert on its output such as the painted texels",
+      "text": "A debug field that echoes the input handed to a helper (the chosen painter, the variant parameter) does not prove the helper used it; assert on its output, such as the painted texels.",
+      "signal": "surviving_mutant",
+      "scope": "game/art adapter snapshot",
+      "status": "candidate",
+      "features": [
+        "arena-do-santuario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N1,N2 src/game/art/background.ts:70,103 (game/art adapter snapshot)"
+      ],
+      "created": "2026-10-08T17:51:53Z",
+      "last_seen": "2026-10-08T17:51:53Z"
+    },
+    {
+      "id": "L-077",
+      "key": "surviving_mutant::read an on screen footprint from getbounds or displaywidth displayheight because width and height ignore scale and a shrunken sprite still reports the full size",
+      "text": "Read an on-screen footprint from getBounds or displayWidth/displayHeight, because width and height ignore scale and a shrunken sprite still reports the full size.",
+      "signal": "surviving_mutant",
+      "scope": "scenes snapshot phaser",
+      "status": "candidate",
+      "features": [
+        "arena-do-santuario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N3 src/scenes/test/arena.ts:102-105 (scenes snapshot phaser)"
+      ],
+      "created": "2026-10-08T17:51:53Z",
+      "last_seen": "2026-10-08T17:51:53Z"
+    },
+    {
+      "id": "L-078",
+      "key": "surviving_mutant::when a spec says a value stays put over time assert it after every step because checking only the end lets a flash then recover pass",
+      "text": "When a spec says a value stays put over time, assert it after every step, because checking only the end lets a flash-then-recover pass.",
+      "signal": "surviving_mutant",
+      "scope": "tests edge case",
+      "status": "candidate",
+      "features": [
+        "arena-do-santuario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N4 tests/scenes/arena.test.ts:46 (tests edge case)"
+      ],
+      "created": "2026-10-08T17:51:53Z",
+      "last_seen": "2026-10-08T17:51:53Z"
     }
   ]
 }

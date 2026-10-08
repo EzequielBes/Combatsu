@@ -15,10 +15,10 @@ Corroborated across multiple features. Safe to apply as guidance.
 - last seen: 2026-10-01T12:33:06Z
 
 ### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
-- signal: `surviving_mutant` · recurrence: 4 feature(s) · scope: `art-adapter` · harmful: 1
-- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho, cenario-acabamento
-- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+3 more)
-- last seen: 2026-10-08T16:05:39Z
+- signal: `surviving_mutant` · recurrence: 5 feature(s) · scope: `art-adapter` · harmful: 1
+- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho, cenario-acabamento, arena-do-santuario
+- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+4 more)
+- last seen: 2026-10-08T17:35:38Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -449,6 +449,36 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: cenario-acabamento
 - evidence: N3a src/scenes/test/world.ts:208 (scene-adapter)
 - last seen: 2026-10-08T16:30:41Z
+
+### L-074 - When a value is chosen per case (per archetype, per round), assert it live for at least two cases, because one case cannot tell the lookup from a constant.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scene-adapter` · harmful: 0
+- features: arena-do-santuario
+- evidence: S2 src/scenes/test/areaDirector.ts:83 (ARN-05) (scene-adapter)
+- last seen: 2026-10-08T17:35:38Z
+
+### L-075 - Assert every count and position an AC names (two slots, column 0, rows 0 to 14), not just the presence or the frame of the element.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: arena-do-santuario
+- evidence: ARN-12 tests/data/modules.test.ts:26; ARN-07 scripts/smoke/world-boss.smoke.mjs:49 (tests)
+- last seen: 2026-10-08T17:35:38Z
+
+### L-076 - A debug field that echoes the input handed to a helper (the chosen painter, the variant parameter) does not prove the helper used it; assert on its output, such as the painted texels.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `game/art adapter snapshot` · harmful: 0
+- features: arena-do-santuario
+- evidence: N1,N2 src/game/art/background.ts:70,103 (game/art adapter snapshot)
+- last seen: 2026-10-08T17:51:53Z
+
+### L-077 - Read an on-screen footprint from getBounds or displayWidth/displayHeight, because width and height ignore scale and a shrunken sprite still reports the full size.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scenes snapshot phaser` · harmful: 0
+- features: arena-do-santuario
+- evidence: N3 src/scenes/test/arena.ts:102-105 (scenes snapshot phaser)
+- last seen: 2026-10-08T17:51:53Z
+
+### L-078 - When a spec says a value stays put over time, assert it after every step, because checking only the end lets a flash-then-recover pass.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests edge case` · harmful: 0
+- features: arena-do-santuario
+- evidence: N4 tests/scenes/arena.test.ts:46 (tests edge case)
+- last seen: 2026-10-08T17:51:53Z
 
 ## Quarantined (failed when applied - ignore)
 

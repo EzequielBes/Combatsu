@@ -76,8 +76,8 @@ export function buildBackground(
 
 /**
  * Pinta uma camada faixa a faixa com o pintor do tema de cada uma (`theme: null` é a escola da sala), recortado na
- * faixa (CEN-07); na camada próxima, cobre cada emenda com um pilar de pedra (CEN-02). Devolve a variante que os
- * pintores receberam (ARN-05), para o snapshot ler o que foi pintado e não o que foi pedido.
+ * faixa (CEN-07); na camada próxima, cobre cada emenda com um pilar de pedra (CEN-02). Devolve a variante repassada
+ * aos pintores (ARN-05); o que de fato foi pintado é provado pelos texels em `tests/game/art/sceneryBuild.test.ts`.
  */
 export function paintBands(
   sink: PaintSink,

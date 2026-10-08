@@ -107,18 +107,18 @@ na fase 1, 0,18 na fase 2 e volta a 0 depois da vitória.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| ARN-01 | P1: Santuário próprio | Execute | Implementing |
-| ARN-02 | P1: Santuário próprio | Execute | Implementing |
-| ARN-03 | P1: Santuário próprio | Execute | Implementing |
-| ARN-04 | P1: Santuário próprio | Execute | Implementing |
-| ARN-05 | P1: Santuário próprio | Execute | Implementing |
-| ARN-06 | P1: Santuário próprio | Execute | Implementing |
-| ARN-07 | P2: A arena reage ao chefe | Execute | Implementing |
-| ARN-08 | P2: A arena reage ao chefe | Execute | Implementing |
-| ARN-09 | P2: A arena reage ao chefe | Execute | Implementing |
-| ARN-10 | P2: A arena reage ao chefe | Execute | Implementing |
-| ARN-11 | P2: A arena reage ao chefe | Execute | Implementing |
-| ARN-12 | P3: Arena mais larga | Execute | Implementing |
+| ARN-01 | P1: Santuário próprio | Execute | Verified |
+| ARN-02 | P1: Santuário próprio | Execute | Verified |
+| ARN-03 | P1: Santuário próprio | Execute | Verified |
+| ARN-04 | P1: Santuário próprio | Execute | Verified |
+| ARN-05 | P1: Santuário próprio | Execute | Verified |
+| ARN-06 | P1: Santuário próprio | Execute | Verified |
+| ARN-07 | P2: A arena reage ao chefe | Execute | Verified |
+| ARN-08 | P2: A arena reage ao chefe | Execute | Verified |
+| ARN-09 | P2: A arena reage ao chefe | Execute | Verified |
+| ARN-10 | P2: A arena reage ao chefe | Execute | Verified |
+| ARN-11 | P2: A arena reage ao chefe | Execute | Verified |
+| ARN-12 | P3: Arena mais larga | Execute | Verified |
 
 **Coverage:** 12 total, 12 mapped to tasks, 0 unmapped.
 
