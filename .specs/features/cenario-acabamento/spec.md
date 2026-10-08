@@ -123,7 +123,7 @@ habitado.
 | CEN-03 | P1: Consertos visuais | Execute | Implementing |
 | CEN-04 | P1: Consertos visuais | Execute | Implementing |
 | CEN-05 | P1: Consertos visuais | Execute | Implementing |
-| CEN-06 | P1: Consertos visuais | Tasks | Pending |
+| CEN-06 | P1: Consertos visuais | Execute | Implementing |
 | CEN-07 | P2: Horizonte por tema | Tasks | Pending |
 | CEN-08 | P2: Horizonte por tema | Execute | Implementing |
 | CEN-09 | P2: Horizonte por tema | Execute | Implementing |

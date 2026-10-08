@@ -413,8 +413,8 @@ T19
 
 **Done when**:
 
-- [ ] `npm run smoke -- world-` verde, com o cenário novo
-- [ ] Gate verde
+- [x] `npm run smoke -- world-` verde, com o cenário novo
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full
