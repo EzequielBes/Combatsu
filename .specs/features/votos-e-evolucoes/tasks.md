@@ -104,8 +104,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Um teste por voto com os números da spec; Fúria em 0, 1, 15 e 16 abates (teto de 45%); dois votos no mesmo número se multiplicam
-- [ ] Gate verde
+- [x] Um teste por voto com os números da spec; Fúria em 0, 1, 15 e 16 abates (teto de 45%); dois votos no mesmo número se multiplicam
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

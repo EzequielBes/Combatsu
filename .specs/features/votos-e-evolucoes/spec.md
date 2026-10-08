@@ -123,15 +123,15 @@ conjurar → a esfera atravessa a fila de inimigos acertando cada um uma vez.
 | VOW-07 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-08 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-09 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-10 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-11 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-12 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-13 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-14 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-15 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-16 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-17 | P1: Votos Vinculativos | Tasks | Pending |
-| VOW-18 | P1: Votos Vinculativos | Tasks | Pending |
+| VOW-10 | P1: Votos Vinculativos | Execute | Implementing |
+| VOW-11 | P1: Votos Vinculativos | Execute | Implementing |
+| VOW-12 | P1: Votos Vinculativos | Execute | Implementing |
+| VOW-13 | P1: Votos Vinculativos | Execute | Implementing |
+| VOW-14 | P1: Votos Vinculativos | Execute | Implementing |
+| VOW-15 | P1: Votos Vinculativos | Execute | Implementing |
+| VOW-16 | P1: Votos Vinculativos | Execute | Implementing |
+| VOW-17 | P1: Votos Vinculativos | Execute | Implementing |
+| VOW-18 | P1: Votos Vinculativos | Execute | Implementing |
 | EVO-01 | P2: Evolução Vazio Roxo | Tasks | Pending |
 | EVO-02 | P2: Evolução Vazio Roxo | Tasks | Pending |
 | EVO-03 | P2: Evolução Vazio Roxo | Tasks | Pending |
