@@ -1,6 +1,7 @@
 import { type Brush, rng } from './brush';
 import { hashSeed, speckle } from './paint';
-import { schoolFar, schoolMid } from './school';
+import { veilSky } from './santuarioSky';
+import { schoolMid } from './school';
 import type { LayerArea, ThemeScenery } from './types';
 
 /**
@@ -65,5 +66,4 @@ function near(b: Brush, { x0, x1, ground, bottom }: LayerArea): void {
   for (let x = x0 + 70; x < x1; x += 220) lantern(b, x, ground);
 }
 
-// A distante própria entra na T2; até lá a escola, para a escolha por tema já valer (ARN-01).
-export const SANTUARIO_SCENERY: ThemeScenery = { far: schoolFar, mid: schoolMid, near };
+export const SANTUARIO_SCENERY: ThemeScenery = { far: veilSky, mid: schoolMid, near };

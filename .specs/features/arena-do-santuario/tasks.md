@@ -99,9 +99,9 @@ T8 → T9
 
 **Done when**:
 
-- [ ] Teste rasterizado: nenhum texel `a`/`A`; só cores da `PALETTE`; difere da `schoolFar`
-- [ ] Captura olhada
-- [ ] Gate verde
+- [x] Teste rasterizado: nenhum texel `a`/`A`; só cores da `PALETTE`; difere da `schoolFar`
+- [x] Captura olhada
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
