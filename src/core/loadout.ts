@@ -69,6 +69,12 @@ export class Loadout {
     return true;
   }
 
+  /** Esvazia `slot` (EVO-03: a segunda técnica da receita sai na fusão), sem recarga pendente. */
+  clear(slot: 0 | 1): void {
+    this.slots[slot] = null;
+    this.cooldowns[slot] = 0;
+  }
+
   /** Sobe 1 nível a técnica `id` já equipada (TSH-07); recusa e não muda nada no nível 3 (TEC-05) ou se não equipada. */
   upgrade(id: TechId): boolean {
     const slot = this.slots[0]?.id === id ? 0 : this.slots[1]?.id === id ? 1 : null;

@@ -132,9 +132,9 @@ conjurar → a esfera atravessa a fila de inimigos acertando cada um uma vez.
 | VOW-16 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-17 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-18 | P1: Votos Vinculativos | Execute | Implementing |
-| EVO-01 | P2: Evolução Vazio Roxo | Tasks | Pending |
-| EVO-02 | P2: Evolução Vazio Roxo | Tasks | Pending |
-| EVO-03 | P2: Evolução Vazio Roxo | Tasks | Pending |
+| EVO-01 | P2: Evolução Vazio Roxo | Execute | Implementing |
+| EVO-02 | P2: Evolução Vazio Roxo | Execute | Implementing |
+| EVO-03 | P2: Evolução Vazio Roxo | Execute | Implementing |
 | EVO-04 | P2: Evolução Vazio Roxo | Tasks | Pending |
 | EVO-05 | P2: Evolução Vazio Roxo | Tasks | Pending |
 | EVO-06 | P2: Evolução Vazio Roxo | Tasks | Pending |

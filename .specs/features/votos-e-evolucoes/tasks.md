@@ -238,8 +238,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Testes: pronta só com as duas no nível 3 (nível 2 numa delas não); fusão em qualquer ordem de slots
-- [ ] Gate verde
+- [x] Testes: pronta só com as duas no nível 3 (nível 2 numa delas não); fusão em qualquer ordem de slots
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
