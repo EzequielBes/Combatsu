@@ -9,13 +9,13 @@ import { ART_SCALE } from '../../src/game/art/palette';
 const DEF = { startupMs: 90, activeMs: 90, recoveryMs: 260 };
 
 describe('hdEnabled', () => {
-  it('liga só com hd=1', () => {
+  it('fica ligado por padrão e só desliga com hd=0', () => {
+    expect(hdEnabled('')).toBe(true);
+    expect(hdEnabled('?debug')).toBe(true);
     expect(hdEnabled('?hd=1')).toBe(true);
-    expect(hdEnabled('?debug&hd=1')).toBe(true);
+    expect(hdEnabled('?hd')).toBe(true);
     expect(hdEnabled('?hd=0')).toBe(false);
-    expect(hdEnabled('?hd')).toBe(false);
-    expect(hdEnabled('?debug')).toBe(false);
-    expect(hdEnabled('')).toBe(false);
+    expect(hdEnabled('?debug&hd=0')).toBe(false);
   });
 });
 

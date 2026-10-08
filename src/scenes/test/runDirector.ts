@@ -64,6 +64,8 @@ export class RunDirector {
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
         this.s.hud.setCenter(null);
         this.s.hud.banner(`Rodada ${cmd.round}`, RUN.bannerMs);
+        // ARS-09/10: a arma vinculada (ou a ferramenta comprada) entra na mão com a área já montada.
+        this.s.arsenal.onRoundStart();
         break;
       case 'roundCleared':
         // Fica até o próximo `roundStart` (RHUD-03). Na rodada de chefe, ela entra depois de "Chefe derrotado!",
@@ -139,6 +141,8 @@ export class RunDirector {
     this.s.energy.reset();
     this.s.loadout.reset();
     this.s.mastery.reset();
+    this.s.build.reset();
+    this.s.arsenal.reset();
     this.equipDebugTech();
     this.applyDebugMastery();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.

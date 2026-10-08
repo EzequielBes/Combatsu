@@ -268,7 +268,7 @@ export class PlayerStrikes {
     const hit: Hit = {
       ownerId: this.p.id,
       // MOD-05: dano do golpe escalado por `forca`, lido na hora.
-      damage: this.p.modifiers.meleeDamage(move.damage),
+      damage: Math.round(this.p.modifiers.meleeDamage(move.damage) * (this.p.damageMul?.(move) ?? 1)),
       strength: move.strength,
       force: move.force,
       direction: { x: this.p.facing, y: move.strength === 'heavy' ? -0.6 : -0.15 },

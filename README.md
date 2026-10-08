@@ -84,12 +84,14 @@ Parâmetros da URL, todos junto de `?debug`:
 | `shove=N` | chance (0 a 1) de o inimigo empurrar no 4º golpe leve seguido |
 | `tech=<id>[,<id>]` | começar com técnicas equipadas (`divergente`, `vermelho`, `azul`, `corte`) |
 | `fragments=N` | começar com N fragmentos |
+| `arsenal=<id>[,<id>]` | começar com itens do arsenal; repetir o id sobe o nível (`manoplas`, `faixas`, `rosario`, `bastao`, `lamina`, `faca`, `porrete`) |
+| `perks=<id>[,<id>]` | começar com passivas de build (`punhoPesado`, `executor`, `refluxo`, `condutor`, `passoSombrio`, `contraAfiado`) |
 | `noshop=1` | pular a loja entre as rodadas: a saída leva direto à próxima área, sem konbini |
 | `modules=rua,beco,parque` | área de combate montada só com esses módulos, nesta ordem (ids desconhecidos ou especiais são ignorados) |
 | `area=sala` | sala de teste de uma tela só (`src/data/level1.ts`), sem selo, travessia nem konbini; a loja abre na própria sala. O `fxlab` também usa a sala |
 | `heal=N`, `armed=knife\|club`, `rare=1` | forçar a chance de cura, a ferramenta do inimigo armado e a raridade |
 | `fxlab` | laboratório de efeitos: sem ondas, bonecos de treino, teclas 1 a 6 disparam cada efeito e 0 liga a câmera lenta |
-| `hd=1` | spike de sprites HD: canvas 1280x720, zoom 2 e folha `player-hd` (1 texel = 1 px) no idle e no gancho ascendente; funciona com ou sem `debug` |
+| `hd=0` | volta à versão antiga (canvas 960x540, corpo de 32 texels). O jogo abre em HD por padrão: canvas 1280x720, zoom 2 e a folha `player-hd` (1 texel = 1 px); funciona com ou sem `debug` |
 
 Sem `area=sala`, com ou sem `?debug`, o jogo usa o mundo modular. Os smokes antigos medem posições da sala, então o
 runner (`scripts/smoke/run.mjs`) acrescenta `area=sala` a toda URL de cenário que não tenha `area=` nem `modules=`;
@@ -116,6 +118,8 @@ Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapsh
 - Abaixar, janela de Contra e Deflexão, leitura de repetição e empurrão: `DUCK`, `COUNTER` e `READING` em `src/data/moves.ts`
 - Técnicas amaldiçoadas: `src/data/techniques.ts`
 - Ofertas e preços da loja: `src/data/shop.ts`
+- Builds e passivas (efeitos, preço, quanto a loja puxa a build do jogador): `src/data/perks.ts`
+- Arsenal (relíquias, armas vinculadas e ferramentas à venda: preços, níveis e bônus): `src/data/arsenal.ts`
 - Hitstop (congelamento do golpe leve e do forte): `src/data/fx.ts`
 - Objetos e ferramentas (peso, dano, durabilidade, arremesso): `src/data/props.ts`
 - Módulos do mundo (grades e legenda): `src/data/modules/`; montagem da área: `src/core/stage.ts`

@@ -1,16 +1,18 @@
+import { ARSENAL, ARSENAL_IDS, ARSENAL_TUNING, type ArsenalId } from './arsenal';
+import { PERK, PERK_IDS, PERKS, type PerkId } from './perks';
 import type { TechId } from './techniques';
 
 /**
  * Catálogo da loja (SHOP-06..09, SHOP-18, MOD-03, MOD-09): dirigido por dados para a F5 acrescentar um `kind`
  * novo (técnicas, upgrades de energia) sem mudar a lógica de elegibilidade, sorteio ou compra.
  */
-export type ShopEntryKind = 'modifier' | 'consumable' | 'technique';
+export type ShopEntryKind = 'modifier' | 'consumable' | 'technique' | 'perk' | 'relic' | 'weapon' | 'tool';
 /** Os 5 modificadores da F4 (loja-da-run). */
 export type CoreModifierId = 'vida' | 'forca' | 'agilidade' | 'ima' | 'sorte';
 /** Upgrades de energia amaldiçoada da F5 (TSH-08, TSH-15): rastreados à parte dos 5 da F4 em `Modifiers`. */
 export type EnergyModifierId = 'energia' | 'fluxo';
 export type ModifierId = CoreModifierId | EnergyModifierId;
-export type ShopEntryId = ModifierId | 'cura' | TechId;
+export type ShopEntryId = ModifierId | 'cura' | TechId | PerkId | ArsenalId;
 
 export interface ShopEntryCost {
   base: number;
@@ -22,7 +24,7 @@ export interface ShopEntry {
   kind: ShopEntryKind;
   rarity: 'common' | 'rare';
   name: string;
-  /** 0 para consumível (não tem nível). */
+  /** 0 para consumível e passiva (não têm nível). */
   maxLevel: number;
   cost: ShopEntryCost;
   /** Rodada mínima para comprar o nível `nextLevel` (SHOP-18). */
@@ -184,4 +186,49 @@ export const FULL_SHOP_CATALOG: readonly ShopEntry[] = [
   ...SHOP_CATALOG,
   ...TECHNIQUE_SHOP_ENTRIES,
   ...ENERGY_SHOP_ENTRIES,
+];
+
+/** Passivas de build na loja (BLD-07): raras, compradas uma vez só, a partir da rodada `PERK.minRound`. */
+export const PERK_SHOP_ENTRIES: readonly ShopEntry[] = PERK_IDS.map((id) => ({
+  id,
+  kind: 'perk',
+  rarity: 'rare',
+  name: PERKS[id].name,
+  maxLevel: 0,
+  cost: { base: PERK.cost, step: 0 },
+  minRound: () => PERK.minRound,
+}));
+
+/**
+ * Arsenal na loja (ARS-03, ARS-04): relíquias e armas vinculadas raras, com 3 níveis; ferramentas comuns e sem nível.
+ * O custo e a rodada mínima de verdade dependem do nível, e quem os calcula é `core/arsenal`; os campos daqui valem
+ * para a primeira compra.
+ */
+export const ARSENAL_SHOP_ENTRIES: readonly ShopEntry[] = ARSENAL_IDS.map((id) => {
+  const { kind, name } = ARSENAL[id];
+  const cost =
+    kind === 'tool'
+      ? { base: ARSENAL_TUNING.toolCost, step: 0 }
+      : kind === 'relic'
+        ? ARSENAL_TUNING.relicCost
+        : ARSENAL_TUNING.weaponCost;
+  return {
+    id,
+    kind,
+    rarity: kind === 'tool' ? 'common' : 'rare',
+    name,
+    maxLevel: kind === 'tool' ? 0 : ARSENAL_TUNING.maxLevel,
+    cost,
+    minRound: (nextLevel: number) => ARSENAL_TUNING.minRound[Math.max(0, nextLevel - 1)],
+  };
+});
+
+/**
+ * Catálogo que o jogo usa: o da F5 mais as passivas de build e o arsenal. `FULL_SHOP_CATALOG` fica como está porque
+ * os testes da F5 sorteiam em cima dele com valores fixos de rng.
+ */
+export const GAME_SHOP_CATALOG: readonly ShopEntry[] = [
+  ...FULL_SHOP_CATALOG,
+  ...PERK_SHOP_ENTRIES,
+  ...ARSENAL_SHOP_ENTRIES,
 ];

@@ -6,9 +6,15 @@ import { ART_SCALE, PALETTE } from './palette';
  * Pinta uma folha já validada numa textura de canvas: frames lado a lado na horizontal, cada texel como um
  * bloco ART_SCALE x ART_SCALE com a cor da paleta, e um frame nomeado por quadro (a chave do frame na folha).
  */
-export function registerSheet(scene: Phaser.Scene, textureKey: string, sheet: ParsedSheet): void {
-  const w = sheet.width * ART_SCALE;
-  const h = sheet.height * ART_SCALE;
+export function registerSheet(
+  scene: Phaser.Scene,
+  textureKey: string,
+  sheet: ParsedSheet,
+  /** Px de mundo por texel: o padrão é o da arte antiga; as folhas HD passam 1. */
+  scale: number = ART_SCALE,
+): void {
+  const w = sheet.width * scale;
+  const h = sheet.height * scale;
   // As texturas são do jogo, não da cena: no reinício a antiga ainda existe.
   if (scene.textures.exists(textureKey)) scene.textures.remove(textureKey);
   const texture = scene.textures.createCanvas(textureKey, w * sheet.frames.length, h);
@@ -21,7 +27,7 @@ export function registerSheet(scene: Phaser.Scene, textureKey: string, sheet: Pa
       row.forEach((ch, x) => {
         if (ch === null) return;
         ctx.fillStyle = `#${PALETTE[ch].toString(16).padStart(6, '0')}`;
-        ctx.fillRect(x0 + x * ART_SCALE, y * ART_SCALE, ART_SCALE, ART_SCALE);
+        ctx.fillRect(x0 + x * scale, y * scale, scale, scale);
       }),
     );
     texture.add(frame.key, 0, x0, 0, w, h);

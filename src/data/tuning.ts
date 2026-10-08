@@ -92,6 +92,16 @@ export const PROP_SWING: AttackStep = {
   recoveryMs: 220,
 };
 
+/**
+ * Combo de três golpes com objeto (apertos seguidos de J ou K): o primeiro é o `PROP_SWING`, o segundo é mais curto e
+ * o terceiro fecha o combo, mais lento para entrar e para voltar. Dano e força seguem vindo do PropDef.
+ */
+export const PROP_SWING_COMBO: readonly AttackStep[] = [
+  PROP_SWING,
+  { ...PROP_SWING, name: 'golpe-com-objeto-2', startupMs: 100, activeMs: 120, recoveryMs: 200 },
+  { ...PROP_SWING, name: 'golpe-com-objeto-3', startupMs: 150, activeMs: 150, recoveryMs: 300 },
+];
+
 /** 60 de hp = ~2 combos completos, ou 3 cadeiradas. */
 export const ENEMY: EnemyTuning = {
   maxHp: 60,

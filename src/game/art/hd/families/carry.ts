@@ -11,6 +11,7 @@
 import type { HdFamily, HdFrameSpec, HdMoveSpec } from '../frames';
 import type { Kit } from '../kit';
 import type { Pose } from '../../rig/skeleton';
+import { extraSwings } from './carrySwings';
 import { RUN_FRAMES, runArm, runArmSwing, runBody } from './locomotion';
 
 /** Prefixo dos quadros da pegada pesada. */
@@ -229,6 +230,10 @@ export function carryFamily(k: Kit): HdFamily {
       ...carryRun(k, true),
       ...throwFrames(k),
     },
-    moves: { swing: swingLight(k), [`${HEAVY}swing`]: swingHeavy(k) },
+    moves: {
+      swing: swingLight(k),
+      [`${HEAVY}swing`]: swingHeavy(k),
+      ...extraSwings(k, holdLight, holdHeavy, HEAVY),
+    },
   };
 }

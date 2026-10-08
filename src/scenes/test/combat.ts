@@ -95,6 +95,7 @@ export class CombatLinks {
     // não passa por este caminho.
     if (hit.ownerId === this.s.player.id) {
       this.s.energy.gain(CE.meleeGain);
+      this.s.build.onMeleeHit();
       if (hit.moveName) this.s.player.hitLanded();
       // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
       this.s.comboCounter.hit(hit.moveName ?? 'objeto');
@@ -135,6 +136,7 @@ export class CombatLinks {
    * e hitstop de 80 ms. As camadas `game` seguem vivas durante o hitstop, como a estrela do golpe.
    */
   onDefense(kind: DefenseKind, point: Vec2): void {
+    this.s.build.onDefense(kind);
     if (kind === 'block') {
       this.s.fx.spark(point.x, point.y, 'guard');
       this.s.realtimeFx.add('guard.spark', 100);
@@ -230,6 +232,7 @@ export class CombatLinks {
     this.s.player.finisherPose(dir);
     if (!target.receiveHit(hit)) return;
     target.markFinished();
+    this.s.build.onFinisher();
     this.s.snapshot.debugEvents.push(`finisher:${target.id}`);
     // Faísca, tremida, energia e combo do golpe comum; depois o congelamento maior do finalizador (o maior vence).
     this.onConnect(hit, { x: at.x, y: at.y }, 'heavy', target);

@@ -140,6 +140,8 @@ describe('installDebugApi', () => {
       wallet: { fragments: 4 },
       shop: { open: false, offers: [], rerollCost: 0, selected: 0, panel: null },
       modifiers: { vida: 0, forca: 0, agilidade: 0, ima: 0, sorte: 0 },
+      build: { build: null, points: { lutador: 0, feiticeiro: 0, veloz: 0 }, perks: [], shadowArmed: false },
+      arsenal: { relic: null, relicLevel: 0, weapon: null, weaponLevel: 0, tool: null },
       pickups: [{ id: 1, kind: 'fragment', value: 1, x: 70, y: 80, ageMs: 100, magnet: false }],
       floatTexts: [{ text: '+1', color: 'U', x: 70, y: 76 }],
       worldProps: [

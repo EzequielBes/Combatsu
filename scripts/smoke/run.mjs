@@ -90,9 +90,12 @@ const withLegacyRoom = (url) => {
   if (/[?&](area|modules)=/.test(url)) return url;
   return url + (url.includes('?') ? '&' : '?') + 'area=sala';
 };
+// O jogo abre em HD; os cenários antigos medem o corpo e a tela da versão anterior, então toda URL sem `hd=` ganha
+// `hd=0`. Cenário novo pede `hd=1` de forma explícita.
+const withLegacyBody = (url) => (/[?&]hd=/.test(url) ? url : url + (url.includes('?') ? '&' : '?') + 'hd=0');
 const wrapGoto = (page) => {
   const goto = page.goto.bind(page);
-  page.goto = (url, options) => goto(withLegacyRoom(url), options);
+  page.goto = (url, options) => goto(withLegacyBody(withLegacyRoom(url)), options);
   return page;
 };
 
