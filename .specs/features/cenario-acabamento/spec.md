@@ -132,7 +132,7 @@ habitado.
 | CEN-12 | P3: Profundidade e decoração | Tasks | Pending |
 | CEN-13 | P3: Profundidade e decoração | Tasks | Pending |
 | CEN-14 | P3: Profundidade e decoração | Tasks | Pending |
-| CEN-15 | P3: Profundidade e decoração | Tasks | Pending |
+| CEN-15 | P3: Profundidade e decoração | Execute | Implementing |
 
 **Coverage:** 15 total, 15 mapped to tasks, 0 unmapped.
 

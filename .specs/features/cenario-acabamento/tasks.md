@@ -337,8 +337,8 @@ T19
 
 **Done when**:
 
-- [ ] Teste: ≥ 1 posição por trecho, todas dentro do trecho; a mesma entrada dá a mesma saída; trechos diferentes dão posições diferentes
-- [ ] Gate verde
+- [x] Teste: ≥ 1 posição por trecho, todas dentro do trecho; a mesma entrada dá a mesma saída; trechos diferentes dão posições diferentes
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
