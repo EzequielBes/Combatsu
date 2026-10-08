@@ -1,6 +1,7 @@
 /**
  * Kanji das técnicas em pixel art, 24x24 texels (KOK-29): 黒 (kuro, Kokusen), 閃 (sen, só no cartão 黒閃), 赫
- * (aka, Vermelho), 蒼 (ao, Azul), 解 (kai, Desmantelar) e 拳 (ken, Punho Divergente, de "逕庭拳").
+ * (aka, Vermelho), 蒼 (ao, Azul), 解 (kai, Desmantelar), 拳 (ken, Punho Divergente, de "逕庭拳") e 紫 (murasaki,
+ * Vazio Roxo; rasterizado do Yu Gothic UI em negrito, traço `U` com contorno `v`, EVO-08).
  *
  * As grades vêm de uma rasterização real: cada glifo foi desenhado com uma fonte japonesa do Windows (Yu Gothic
  * UI para 黒/閃/赫/蒼/拳, MS Gothic para 解 — a única que manteve os traços finos de 解 contínuos em 24x24), em
@@ -11,7 +12,7 @@
  * Divergente — mesma dupla do orbe/aura azul-ciano da técnica, TECHNIQUES.divergente.aura = 'c'). Dados puros
  * (sem `phaser` como valor): rodam no Vitest.
  */
-export type KanjiId = 'kuro' | 'sen' | 'aka' | 'ao' | 'kai' | 'ken';
+export type KanjiId = 'kuro' | 'sen' | 'aka' | 'ao' | 'kai' | 'ken' | 'murasaki';
 
 /** 黒 (kuro, "preto"), traço `b` com contorno `R`. */
 const KURO: readonly string[] = [
@@ -181,6 +182,34 @@ const KEN: readonly string[] = [
   '........ddddd...........',
 ];
 
+/** 紫 (murasaki, "roxo"), traço `U` com contorno `v` (Vazio Roxo, EVO-08). */
+const MURASAKI: readonly string[] = [
+  '......vvvv..vvvv........',
+  '......vUUv..vUUv..vvv...',
+  '..vvvvvUUv..vUUvvvvUvv..',
+  '..vUUvvUUvvvvUUvvUUUUv..',
+  '..vUUvvUUUUUvUUUUUUUvv..',
+  '..vUUvvUUvvvvUUUUvvvvvv.',
+  '..vUUvvUUvvvvUUvvvvvUUv.',
+  '.vvUUvvUUUUUvUUUvvvUUUv.',
+  'vvUUUUUUUUUUvUUUUUUUUUv.',
+  'vUUUUUUUUvUUvvUUUUUUvvv.',
+  'vvUvvvvvvUUUvvUUvvvvv...',
+  '.vvvvUUvUUUvvUUUUv......',
+  '....vUUUUUvvUUUUvvvvv...',
+  '....vvUUUUvUUUvvvUUUv...',
+  '.vvvvvvvUUUUUvvvvUUUvv..',
+  '.vUUUUUUUUUUUUUUUUUUUvv.',
+  '.vUUUUUUUUUUUUUUUvvUUUv.',
+  '.vvvvvUUvvUUUvvUUvvvvvv.',
+  '..vvvUUUUvUUUvvUUUUvvv..',
+  '.vvUUUUUvvUUUvvvUUUUUv..',
+  '.vUUUUvvvvUUUv.vvUUUUv..',
+  '.vvUvvv..vUUUv..vvvUvv..',
+  '..vvv....vvvvv....vvv...',
+  '........................',
+];
+
 export const KANJI_FRAMES: Record<KanjiId, readonly string[]> = {
   kuro: KURO,
   sen: SEN,
@@ -188,4 +217,5 @@ export const KANJI_FRAMES: Record<KanjiId, readonly string[]> = {
   ao: AO,
   kai: KAI,
   ken: KEN,
+  murasaki: MURASAKI,
 };

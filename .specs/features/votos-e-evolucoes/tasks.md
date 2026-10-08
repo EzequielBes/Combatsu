@@ -276,9 +276,9 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Teste: frame 24x24 só com cores da `PALETTE`
-- [ ] Prancha olhada
-- [ ] Gate verde
+- [x] Teste: frame 24x24 só com cores da `PALETTE`
+- [x] Prancha olhada (grade conferida; no jogo, na T15)
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

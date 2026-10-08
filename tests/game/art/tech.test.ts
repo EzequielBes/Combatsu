@@ -66,15 +66,15 @@ describe('kanji das técnicas (KOK-29, KOK-34, TFX-01)', () => {
     }
   });
 
-  it('赫 (aka), 蒼 (ao), 解 (kai) e 拳 (ken) também têm 24x24 texels, só com cores da paleta (TFX-01)', () => {
-    for (const id of ['aka', 'ao', 'kai', 'ken'] as const) {
+  it('赫 (aka), 蒼 (ao), 解 (kai), 拳 (ken) e 紫 (murasaki) também têm 24x24 texels, só com cores da paleta (TFX-01, EVO-08)', () => {
+    for (const id of ['aka', 'ao', 'kai', 'ken', 'murasaki'] as const) {
       const sheet = parseSheet(`kanji-${id}`, { [id]: KANJI_FRAMES[id] }, PALETTE_KEYS);
       expect(sheet.width, id).toBe(24);
       expect(sheet.height, id).toBe(24);
     }
   });
 
-  it('os 6 kanji têm silhuetas distintas entre si', () => {
+  it('os 7 kanji têm silhuetas distintas entre si', () => {
     const ids = Object.keys(KANJI_FRAMES) as (keyof typeof KANJI_FRAMES)[];
     for (let i = 0; i < ids.length; i++) {
       for (let j = i + 1; j < ids.length; j++) {
