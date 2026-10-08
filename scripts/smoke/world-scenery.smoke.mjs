@@ -42,10 +42,15 @@ export default async function ({ page, baseUrl, assert }) {
     `CEN-13: peças por módulo: ${JSON.stringify(area.layout.decorPerModule)}`,
   );
   // CEN-13: a decoração fica na frente da camada próxima e atrás do player, e as peças encostam no topo do piso.
-  const { nearDepth, decorDepth, playerDepth, decorFoot } = area.layout;
+  // "Atrás dos atores" vale para o player, os inimigos vivos e o terreno, lidos dos objetos vivos.
+  const { nearDepth, decorDepth, playerDepth, enemyMinDepth, terrainDepth, decorFoot } = area.layout;
   assert(
-    nearDepth < decorDepth && decorDepth < playerDepth,
-    `CEN-13: profundidades próxima < decoração < player: ${JSON.stringify(area.layout)}`,
+    enemyMinDepth !== null && terrainDepth !== null,
+    `CEN-13: sem inimigo ou terreno: ${JSON.stringify(area.layout)}`,
+  );
+  assert(
+    nearDepth < decorDepth && decorDepth < Math.min(playerDepth, enemyMinDepth, terrainDepth),
+    `CEN-13: profundidades próxima < decoração < atores e terreno: ${JSON.stringify(area.layout)}`,
   );
   assert(decorFoot === 480, `CEN-13: o pé da decoração deveria ser o topo do piso (480): ${decorFoot}`);
 

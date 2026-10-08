@@ -176,7 +176,11 @@ export interface GameSnapshot {
       decorFoot: number | null;
       /** Peças de decoração desenhadas em cada módulo, na ordem dos módulos. */
       decorPerModule: number[];
+      /** Profundidade dos tiles do terreno (CEN-13); `null` sem tiles. */
+      terrainDepth: number | null;
       playerDepth: number;
+      /** Menor profundidade entre os inimigos vivos (CEN-13); `null` sem inimigo. */
+      enemyMinDepth: number | null;
     };
     /** Todos os corpos do mundo do Matter, estáticos e dinâmicos (CEN-14). */
     bodies: number;

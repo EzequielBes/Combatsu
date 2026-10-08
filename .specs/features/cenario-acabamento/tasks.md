@@ -605,8 +605,8 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Smoke confere `decorDepth < min(terreno, inimigos, player)` e `nearDepth < decorDepth`
-- [ ] Gate verde e `npm run smoke -- world-scenery` verde
+- [x] Smoke confere `decorDepth < min(terreno, inimigos, player)` e `nearDepth < decorDepth`
+- [x] Gate verde e `npm run smoke -- world-scenery` verde
 
 **Tests**: smoke
 **Gate**: full

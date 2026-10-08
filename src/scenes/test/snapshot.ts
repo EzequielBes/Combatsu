@@ -30,7 +30,11 @@ export class DebugSnapshot {
       midBands: this.s.world.midBands(),
       decor: this.s.world.decorPieces,
       front: this.s.world.frontScroll,
-      layout: { ...this.s.world.sceneryLayout, playerDepth: this.s.player.view.depth },
+      layout: {
+        ...this.s.world.sceneryLayout,
+        playerDepth: this.s.player.view.depth,
+        enemyMinDepth: this.s.enemies.length > 0 ? Math.min(...this.s.enemies.map((e) => e.fxSprite.depth)) : null,
+      },
       bodies: this.s.matter.world.getAllBodies().length,
       seal: this.s.world.sealView,
       transitioning: area.transitioning,

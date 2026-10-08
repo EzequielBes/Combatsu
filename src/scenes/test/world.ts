@@ -185,8 +185,10 @@ export class WorldBuilder {
     decorDepth: number | null;
     decorFoot: number | null;
     decorPerModule: number[];
+    terrainDepth: number | null;
   } {
     return {
+      terrainDepth: this.tiles[0]?.depth ?? null,
       decorPerModule: [...this.decorPerSpan],
       nearDepth: this.background[2]?.depth ?? null,
       decorDepth: this.decor?.depth ?? null,
