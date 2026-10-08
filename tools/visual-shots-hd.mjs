@@ -36,13 +36,14 @@ export const makeClose =
     log(`  ${name}`);
   };
 
-/** Cenário por tema (CEN-08, F22): cada módulo de combate sozinho e a arena do chefe, parado e depois de andar. */
+/** Cenário por tema (CEN-08, ARN-04): cada módulo de combate sozinho e a arena dos dois chefes, parado e depois de andar. */
 async function sceneryScenario(t, BASE) {
   for (const [name, query] of [
     ['rua', 'modules=rua'],
     ['beco', 'modules=beco'],
     ['parque', 'modules=parque'],
-    ['santuario', 'area=modular&round=5'],
+    ['santuario-oni', 'area=modular&round=5'],
+    ['santuario-tecela', 'area=modular&round=15'],
   ]) {
     await t.open(`hd=1&${BASE}&maxAlive=0&${query}`);
     await t.at(300, `90-cenario-${name}-inicio`);

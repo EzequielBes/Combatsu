@@ -253,8 +253,8 @@ T8 → T9
 
 **Done when**:
 
-- [ ] Capturas da rodada 5 e da 15 geradas e olhadas
-- [ ] Gate verde
+- [x] Capturas da rodada 5 e da 15 geradas e olhadas
+- [x] Gate verde
 
 **Tests**: none
 **Gate**: build
