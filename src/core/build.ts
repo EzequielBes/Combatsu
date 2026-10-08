@@ -8,8 +8,10 @@ import {
   type Build,
   type PerkId,
 } from '../data/perks';
+import { ARSENAL, type ArsenalId } from '../data/arsenal';
 import type { ShopEntryId } from '../data/shop';
 import { TECHNIQUES, type TechId } from '../data/techniques';
+import type { Arsenal } from './arsenal';
 import type { Loadout } from './loadout';
 import type { Modifiers } from './modifiers';
 
@@ -44,17 +46,22 @@ const BUILDS: readonly Build[] = ['lutador', 'feiticeiro', 'veloz'];
 /**
  * Pontos de afinidade de cada build (BLD-02), só pelo que já foi comprado. A primeira técnica não conta para
  * `feiticeiro`: a loja a garante para todo mundo, então ela não diz nada sobre a escolha do jogador; contam os
- * níveis acima do primeiro, `energia` e `fluxo`.
+ * níveis acima do primeiro, `energia` e `fluxo`. Relíquia e arma vinculada valem o próprio nível na build delas.
  */
-export function buildPoints(modifiers: Modifiers, loadout: Loadout, perks: Perks): BuildPoints {
+export function buildPoints(modifiers: Modifiers, loadout: Loadout, perks: Perks, arsenal?: Arsenal): BuildPoints {
   const techIds = Object.keys(TECHNIQUES) as TechId[];
   const techUpgrades = techIds.reduce((sum, id) => sum + Math.max(0, loadout.levelOf(id) - 1), 0);
   const perkPoints = (build: Build): number =>
     perks.list.filter((id) => PERKS[id].build === build).length * PERK_POINTS;
+  const gear = (build: Build): number =>
+    [arsenal?.relic, arsenal?.weapon].reduce(
+      (sum, slot) => sum + (slot && ARSENAL[slot.id].build === build ? slot.level : 0),
+      perkPoints(build),
+    );
   return {
-    lutador: modifiers.level('forca') + Math.floor(modifiers.level('vida') / 2) + perkPoints('lutador'),
-    feiticeiro: techUpgrades + modifiers.level('energia') + modifiers.level('fluxo') + perkPoints('feiticeiro'),
-    veloz: modifiers.level('agilidade') + perkPoints('veloz'),
+    lutador: modifiers.level('forca') + Math.floor(modifiers.level('vida') / 2) + gear('lutador'),
+    feiticeiro: techUpgrades + modifiers.level('energia') + modifiers.level('fluxo') + gear('feiticeiro'),
+    veloz: modifiers.level('agilidade') + gear('veloz'),
   };
 }
 
@@ -71,6 +78,7 @@ export function dominantBuild(points: BuildPoints): Build | null {
 /** Build a que uma carta da loja pertence (BLD-04); `null` para as neutras (ímã, sorte, cura). */
 export function buildOfEntry(id: ShopEntryId): Build | null {
   if (id in PERKS) return PERKS[id as PerkId].build;
+  if (id in ARSENAL) return ARSENAL[id as ArsenalId].build;
   if (id in TECHNIQUES || id === 'energia' || id === 'fluxo') return 'feiticeiro';
   if (id === 'forca' || id === 'vida') return 'lutador';
   if (id === 'agilidade') return 'veloz';

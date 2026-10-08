@@ -11,11 +11,17 @@ export const PROP_NAMES: Record<string, string> = {
   cursedClub: 'Porrete Amaldiçoado',
 };
 
+/** Nome das armas vinculadas (ARS-07), pela chave do `PropDef`; à parte porque `PROP_NAMES` é só dos objetos comuns. */
+export const BOUND_NAMES: Record<string, string> = {
+  boundClub: 'Bastão Selado',
+  boundKnife: 'Lâmina Vinculada',
+};
+
 /** Nome em português do objeto, com o sufixo " Rara" quando a def for a versão rara (ITEM-01, RAR-07). */
 export function propName(def: PropDef): string {
   const rare = def.key.endsWith('Rare');
   const baseKey = rare ? def.key.slice(0, -'Rare'.length) : def.key;
-  const name = PROP_NAMES[baseKey] ?? baseKey;
+  const name = PROP_NAMES[baseKey] ?? BOUND_NAMES[baseKey] ?? baseKey;
   return rare ? `${name} Rara` : name;
 }
 

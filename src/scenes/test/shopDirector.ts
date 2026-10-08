@@ -1,5 +1,5 @@
 import { Shop, type BuyContext } from '../../core/shop';
-import { GAME_SHOP_CATALOG, type ModifierId } from '../../data/shop';
+import { GAME_SHOP_CATALOG } from '../../data/shop';
 import { TECHNIQUES, type TechId } from '../../data/techniques';
 import { SHOP } from '../../data/tuning';
 import { type GameSnapshot } from '../../game/debugApi';
@@ -54,6 +54,7 @@ export class ShopDirector {
         if (bothEmptyBefore) this.s.snapshot.debugEvents.push(`techUnlock:${id}`);
       },
       applyPerk: (id) => this.s.build.perks.add(id),
+      applyArsenal: (id) => this.s.arsenal.buy(id),
     };
     if (input.buySlot !== null) this.resolveBuy(shop, input.buySlot, ctx);
     else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);
@@ -97,7 +98,7 @@ export class ShopDirector {
 
   /**
    * Abre a loja (SHOP-01): varre os fragmentos vivos para a carteira e pausa o Matter (SHOP-05/33/36/37).
-   * `GAME_SHOP_CATALOG` inclui as técnicas, `energia`/`fluxo` e as passivas de build (BLD-07); o `loadout` decide elegibilidade e a
+   * `GAME_SHOP_CATALOG` inclui as técnicas, `energia`/`fluxo`, as passivas de build (BLD-07) e o arsenal (ARS-03); o `loadout` decide elegibilidade e a
    * garantia do espaço 0 (TSH-05).
    */
   openShop(round: number): void {
@@ -110,6 +111,7 @@ export class ShopDirector {
       round,
       this.s.loadout,
       this.s.build.perks,
+      this.s.arsenal.arsenal,
     );
     this.s.shopPanel.show(this.shop.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
     this.s.snapshot.debugEvents.push(`shopOpen:${round}`);
@@ -145,12 +147,7 @@ export class ShopDirector {
         .filter((o) => o.id !== null)
         .map((o) => {
           const entry = GAME_SHOP_CATALOG.find((e) => e.id === o.id)!;
-          const level =
-            entry.kind === 'modifier'
-              ? this.s.modifiers.level(entry.id as ModifierId)
-              : entry.kind === 'technique'
-                ? this.s.loadout.levelOf(entry.id as TechId)
-                : 0;
+          const level = this.shop!.levelOf(entry);
           return { id: o.id!, level, maxLevel: entry.maxLevel, cost: o.cost!, sold: o.sold, affordable: o.affordable };
         }),
       rerollCost: view?.rerollCost ?? 0,

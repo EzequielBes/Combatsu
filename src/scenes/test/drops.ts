@@ -79,7 +79,7 @@ export class Drops {
    * Ferramenta largada por um inimigo armado (ARM-08): nasce em `rest`, pronta para pegar (design.md). Se o teto
    * de 6 já estiver cheio, a mais antiga em `rest` some antes (ARM-14).
    */
-  dropTool(tool: ToolKey, rare: boolean, x: number, y: number): void {
+  dropTool(tool: ToolKey, rare: boolean, x: number, y: number): Prop {
     const def = rare ? rareDef(TOOL_DEFS[tool]) : TOOL_DEFS[tool];
     const prop = new Prop(
       this.s,
@@ -96,6 +96,7 @@ export class Drops {
       this.s.droppedTools.forget(evictId);
     }
     this.s.props.push(prop);
+    return prop;
   }
 
   /** Estado atual de cada ferramenta largada registrada (para `DroppedTools.admit`/`update`). */

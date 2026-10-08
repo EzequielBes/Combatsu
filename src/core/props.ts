@@ -12,6 +12,8 @@ export interface PropDef {
   knockback: number; // impulso em px por step do Matter
   socket: 'front' | 'back'; // onde fica na mão: à frente ou nas costas/ombro
   tags: readonly string[]; // reservado para técnicas futuras ("cortante", "inflamável")
+  /** Arma vinculada (ARS-07): os impactos não contam, então nunca quebra. */
+  unbreakable?: boolean;
 }
 
 export type PropState = 'rest' | 'held' | 'swing' | 'thrown' | 'breaking' | 'gone';
@@ -152,7 +154,7 @@ export class PropMachine {
   /** Um impacto (em personagem, parede, chão) durante golpe ou voo. */
   registerImpact(): PropImpact {
     if (this._state !== 'swing' && this._state !== 'thrown') return 'ignored';
-    this._impacts += 1;
+    if (!this.def.unbreakable) this._impacts += 1;
     if (this._impacts >= this.def.durability) {
       this._state = 'breaking';
       this._holderId = null;

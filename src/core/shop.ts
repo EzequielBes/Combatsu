@@ -3,7 +3,9 @@ import type { Wallet } from './wallet';
 import { magnetRangeAtLevel, maxHpAtLevel, healChanceAtLevel, runSpeedAtLevel, type Modifiers } from './modifiers';
 import { cursedEnergyMaxAtLevel, cursedEnergyRegenAtLevel } from './energy';
 import type { Loadout } from './loadout';
+import { arsenalCost, arsenalEligible, arsenalPreview, type Arsenal } from './arsenal';
 import { buildPoints, buildWeight, type Perks } from './build';
+import { ARSENAL, type ArsenalId } from '../data/arsenal';
 import { BUILD_NAMES, PERKS, type PerkId } from '../data/perks';
 import { SHOP } from '../data/tuning';
 import { LEVEL_FACTOR, type TechId } from '../data/techniques';
@@ -14,12 +16,22 @@ function weightOf(entry: ShopEntry): number {
   return entry.rarity === 'common' ? SHOP.weights.common : SHOP.weights.rare;
 }
 
+/** Técnica no pool (TSH-03, TSH-04). */
+function techniqueEligible(entry: ShopEntry, loadout: Loadout, round: number): boolean {
+  const level = loadout.levelOf(entry.id as TechId);
+  // TSH-04: equipada entra se abaixo do nível máximo e a rodada mínima do próximo nível já passou.
+  if (level > 0) return level < entry.maxLevel && entry.minRound(level + 1) <= round;
+  // TSH-03: não equipada entra se e só se houver slot vazio.
+  return loadout.firstEmpty() !== null;
+}
+
 /**
  * Entradas elegíveis para a loja na rodada `round` (SHOP-07, SHOP-18, SHOP-39, TSH-03, TSH-04, TSH-09): o
  * consumível está sempre no pool; um modificador comum (F4) entra se e só se estiver abaixo do teto e a rodada
  * mínima do próximo nível já tiver passado; `loadout` é opcional (sem ele, técnicas e `energia`/`fluxo` nunca
  * entram no pool — é o comportamento antigo da F4, usado pelos testes que não conhecem loadout). Passiva (BLD-07)
- * entra se ainda não foi comprada e a rodada mínima já passou; sem `perks`, nunca entra.
+ * entra se ainda não foi comprada e a rodada mínima já passou; sem `perks`, nunca entra. Arsenal (ARS-03) segue
+ * `arsenalEligible`; sem `arsenal`, nunca entra.
  */
 export function eligible(
   catalog: readonly ShopEntry[],
@@ -27,18 +39,13 @@ export function eligible(
   round: number,
   loadout?: Loadout,
   perks?: Perks,
+  arsenal?: Arsenal,
 ): ShopEntry[] {
   return catalog.filter((entry) => {
     if (entry.kind === 'consumable') return true;
+    if (entry.id in ARSENAL) return !!arsenal && arsenalEligible(entry.id as ArsenalId, arsenal, round);
     if (entry.kind === 'perk') return !!perks && !perks.has(entry.id as PerkId) && entry.minRound(1) <= round;
-    if (entry.kind === 'technique') {
-      if (!loadout) return false;
-      const level = loadout.levelOf(entry.id as TechId);
-      // TSH-04: equipada entra se abaixo do nível máximo e a rodada mínima do próximo nível já passou.
-      if (level > 0) return level < entry.maxLevel && entry.minRound(level + 1) <= round;
-      // TSH-03: não equipada entra se e só se houver slot vazio.
-      return loadout.firstEmpty() !== null;
-    }
+    if (entry.kind === 'technique') return !!loadout && techniqueEligible(entry, loadout, round);
     if (entry.id === 'energia' || entry.id === 'fluxo') {
       // TSH-09: energia/fluxo só entram no pool com ao menos uma técnica equipada.
       if (!loadout || !loadout.hasAny()) return false;
@@ -108,7 +115,9 @@ export function previewText(
   hp: number,
   maxHp: number,
   loadout?: Loadout,
+  arsenal?: Arsenal,
 ): string {
+  if (entry.id in ARSENAL) return arsenal ? arsenalPreview(entry.id as ArsenalId, arsenal) : '';
   if (entry.id === 'cura') {
     const after = Math.min(hp + SHOP.curaHp, maxHp);
     return `Vida ${hp} → ${after}`;
@@ -176,10 +185,13 @@ export interface BuyContext {
   applyTechnique: (id: TechId) => void;
   /** BLD-01: registra a passiva comprada; opcional para quem monta a loja sem builds. */
   applyPerk?: (id: PerkId) => void;
+  /** ARS-02: equipa/sobe a relíquia ou a arma, ou reserva a ferramenta; opcional para quem monta a loja sem arsenal. */
+  applyArsenal?: (id: ArsenalId) => void;
 }
 
 /** Custo de `entry`, unificando modificadores (F4, por `Modifiers`) e técnicas (F5, por nível no `loadout`). */
-function costOf(entry: ShopEntry, modifiers: Modifiers, loadout?: Loadout): number {
+function costOf(entry: ShopEntry, modifiers: Modifiers, loadout?: Loadout, arsenal?: Arsenal): number {
+  if (arsenal && entry.id in ARSENAL) return arsenalCost(entry.id as ArsenalId, arsenal); // ARS-04
   if (entry.kind === 'technique') {
     const level = loadout?.levelOf(entry.id as TechId) ?? 0;
     return entry.cost.base + entry.cost.step * level; // TSH-02
@@ -190,7 +202,7 @@ function costOf(entry: ShopEntry, modifiers: Modifiers, loadout?: Loadout): numb
 /** `Nv <n+1>/<max>` para modificador e técnica (SHOP-21, ECN-08); vazio para consumível; a build, para passiva. */
 function levelText(entry: ShopEntry, level: number): string {
   if (entry.kind === 'perk') return BUILD_NAMES[PERKS[entry.id as PerkId].build];
-  return entry.kind === 'consumable' ? '' : `Nv ${level + 1}/${entry.maxLevel}`;
+  return entry.maxLevel === 0 ? '' : `Nv ${level + 1}/${entry.maxLevel}`;
 }
 
 const EMPTY_OFFER_VIEW = (slot: number): OfferView => ({
@@ -222,6 +234,7 @@ export class Shop {
     private readonly round: number,
     private readonly loadout?: Loadout,
     private readonly perks?: Perks,
+    private readonly arsenal?: Arsenal,
   ) {
     this.offers = this.drawFresh();
   }
@@ -229,7 +242,7 @@ export class Shop {
   /** BLD-05: com passivas ligadas, o peso de raridade é multiplicado pela afinidade do jogador com a build da carta. */
   private weightFn(): ((entry: ShopEntry) => number) | undefined {
     if (!this.perks || !this.loadout) return undefined;
-    const points = buildPoints(this.modifiers, this.loadout, this.perks);
+    const points = buildPoints(this.modifiers, this.loadout, this.perks, this.arsenal);
     return (entry) => weightOf(entry) * buildWeight(entry.id, points);
   }
 
@@ -240,7 +253,7 @@ export class Shop {
    * é reservado para aprimorá-la (ECN-05, ECN-06; o reroll passa por aqui de novo).
    */
   private drawFresh(): (Offer | null)[] {
-    const pool = eligible(this.catalog, this.modifiers, this.round, this.loadout, this.perks);
+    const pool = eligible(this.catalog, this.modifiers, this.round, this.loadout, this.perks, this.arsenal);
     const weight = this.weightFn();
     const slots: (Offer | null)[] = [];
     let rest = pool;
@@ -286,13 +299,14 @@ export class Shop {
     if (!offer) return { ok: false, reason: 'empty' };
     if (this.sold.has(slot)) return { ok: false, reason: 'sold' };
     if (offer.entry.id === 'cura' && ctx.hp >= ctx.maxHp) return { ok: false, reason: 'fullHp' };
-    const cost = costOf(offer.entry, this.modifiers, this.loadout);
+    const cost = costOf(offer.entry, this.modifiers, this.loadout, this.arsenal);
     if (!ctx.wallet.spend(cost)) return { ok: false, reason: 'funds' };
     this.sold.add(slot);
     if (offer.entry.kind === 'modifier') ctx.applyModifier(offer.entry.id as ModifierId);
     else if (offer.entry.kind === 'technique') ctx.applyTechnique(offer.entry.id as TechId);
     else if (offer.entry.kind === 'perk') ctx.applyPerk?.(offer.entry.id as PerkId);
-    else ctx.healPlayer(SHOP.curaHp);
+    else if (offer.entry.id in ARSENAL) ctx.applyArsenal?.(offer.entry.id as ArsenalId);
+    else if (offer.entry.kind === 'consumable') ctx.healPlayer(SHOP.curaHp);
     return { ok: true, id: offer.entry.id, cost };
   }
 
@@ -313,23 +327,26 @@ export class Shop {
     this._selected = (this._selected + delta + SHOP.offers) % SHOP.offers;
   }
 
+  /** Nível atual do que a carta vende: modificador, técnica, relíquia ou arma; 0 para o que não tem nível. */
+  levelOf(entry: ShopEntry): number {
+    if (entry.kind === 'modifier') return this.modifiers.level(entry.id as ModifierId);
+    if (entry.kind === 'technique') return this.loadout?.levelOf(entry.id as TechId) ?? 0;
+    if (entry.id in ARSENAL) return this.arsenal?.levelOf(entry.id as ArsenalId) ?? 0;
+    return 0;
+  }
+
   /** Dados prontos para o painel e o snapshot de debug (SHOP-21, SHOP-38, SHOP-44). */
   view(wallet: Wallet, hp: number, maxHp: number): ShopView {
     const offers = this.offers.map((offer, slot): OfferView => {
       if (!offer) return EMPTY_OFFER_VIEW(slot);
-      const cost = costOf(offer.entry, this.modifiers, this.loadout);
-      const level =
-        offer.entry.kind === 'modifier'
-          ? this.modifiers.level(offer.entry.id as ModifierId)
-          : offer.entry.kind === 'technique'
-            ? (this.loadout?.levelOf(offer.entry.id as TechId) ?? 0)
-            : 0;
+      const cost = costOf(offer.entry, this.modifiers, this.loadout, this.arsenal);
+      const level = this.levelOf(offer.entry);
       return {
         slot,
         id: offer.entry.id,
         name: offer.entry.name,
         levelText: levelText(offer.entry, level),
-        preview: previewText(offer.entry, this.modifiers, hp, maxHp, this.loadout),
+        preview: previewText(offer.entry, this.modifiers, hp, maxHp, this.loadout, this.arsenal),
         cost,
         sold: this.sold.has(slot),
         affordable: cost <= wallet.fragments,

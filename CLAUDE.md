@@ -37,6 +37,7 @@ depois disso abra arquivos, e só os que a tarefa toca.
 | Chefe | `core/bossAI`, `bossBrain`, `bossTier` | `game/Boss.ts` | `boss` |
 | Técnicas | `core/cast`, `divergent`, `kokusen`, `redOrb`, `blueOrb`, `cut` | `game/TechCaster.ts`, `TechRunner.ts` + `game/tech/` (uma por técnica); vistas em `game/techFx/` | `tech`, `kokusen`, `red-anime`, `fxlab` |
 | Builds e passivas | `core/build`; números em `data/perks` | `scenes/test/buildDirector` (liga cada passiva ao combate) | `build.smoke` |
+| Arsenal (relíquia, arma vinculada, ferramenta) | `core/arsenal`; números em `data/arsenal` | `scenes/test/arsenalDirector` (entrega na mão a cada rodada) | `arsenal` |
 | Run, ondas, loja | `core/run`, `shop`, `economy`, `loadout` | `scenes/test/runDirector`, `shopDirector`, `spawner`; `game/ShopPanel.ts` | `run-loop`, `shop`, `spawn-pressure` |
 | Mundo modular | `core/stage`, `level` | `scenes/test/areaDirector`, `world`; grades em `data/modules/` | `world-` |
 | Impacto e efeitos | `core/fxTimeline`, `fxRegistry` | `game/fx.ts`, `CursedFx.ts`, `cursedImpact.ts`; `scenes/test/effects`, `impactFx` | `impact`, `feel` |

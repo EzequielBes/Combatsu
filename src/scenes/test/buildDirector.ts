@@ -21,7 +21,7 @@ export class BuildDirector {
   }
 
   get points(): BuildPoints {
-    return buildPoints(this.s.modifiers, this.s.loadout, this.perks);
+    return buildPoints(this.s.modifiers, this.s.loadout, this.perks, this.s.arsenal.arsenal);
   }
 
   get build(): Build | null {

@@ -14,6 +14,8 @@ interface LoadoutSlot {
 export class Loadout {
   private slots: [LoadoutSlot | null, LoadoutSlot | null] = [null, null];
   private cooldowns: [number, number] = [0, 0];
+  /** ARS-06: multiplicador de dano de toda técnica (a relíquia Rosário); 1 sem ela. */
+  damageMul = 1;
 
   get slotsView(): readonly [LoadoutSlot | null, LoadoutSlot | null] {
     return [this.slots[0], this.slots[1]];
@@ -68,7 +70,7 @@ export class Loadout {
   /** Dano de `base` escalado pelo nível atual de `id` (TEC-06: arredonda meio para cima). */
   damage(id: TechId, base: number): number {
     const level = this.levelOf(id) || 1;
-    return Math.round(base * LEVEL_FACTOR[level - 1]);
+    return Math.round(base * LEVEL_FACTOR[level - 1] * this.damageMul);
   }
 
   /** Recarga restante do slot, em ms (CAST-04, CAST-06). */
@@ -98,5 +100,6 @@ export class Loadout {
   reset(): void {
     this.slots = [null, null];
     this.cooldowns = [0, 0];
+    this.damageMul = 1;
   }
 }

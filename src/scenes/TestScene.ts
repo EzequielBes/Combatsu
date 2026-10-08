@@ -65,6 +65,7 @@ import { WorldBuilder } from './test/world';
 import { TechDirector } from './test/techDirector';
 import { Recovery } from './test/recovery';
 import { BuildDirector } from './test/buildDirector';
+import { ArsenalDirector } from './test/arsenalDirector';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly techDirector = new TechDirector(this);
@@ -81,6 +82,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly spawner = new Spawner(this);
   /** Passivas da run e a build deduzida das compras (BLD-*). */
   readonly build = new BuildDirector(this);
+  /** Relíquia, arma vinculada e ferramenta comprada (ARS-*). */
+  readonly arsenal = new ArsenalDirector(this);
   readonly combat = new CombatLinks(this);
   readonly impactFx = new ImpactFx(this);
   readonly effects = new EffectsDirector(this);
@@ -270,7 +273,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     };
     this.player.attackerOf = (ownerId) => this.combat.attackerOf(ownerId);
     this.player.onDefense = (kind, point) => this.combat.onDefense(kind, point);
-    this.player.damageMul = (move) => this.build.strikeMul(move);
+    this.player.damageMul = (move) => this.build.strikeMul(move) * this.arsenal.strikeMul(move);
     this.lastPlayerHp = this.player.hp;
   }
 

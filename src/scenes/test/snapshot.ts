@@ -145,6 +145,7 @@ export class DebugSnapshot {
       shop: this.s.shopDirector.shopSnapshot(),
       modifiers: this.s.modifiers.levels,
       build: this.s.build.snapshot(),
+      arsenal: this.s.arsenal.snapshot(),
       pickups: this.s.pickups.debug(),
       floatTexts: this.s.floatTexts.debug(),
       worldProps: this.s.props.map((p) => ({

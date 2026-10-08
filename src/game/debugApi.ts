@@ -237,6 +237,14 @@ export interface GameSnapshot {
   modifiers: Record<string, number>;
   /** Build deduzida das compras, pontos por linha e passivas da run (BLD-*). */
   build: { build: string | null; points: Record<string, number>; perks: string[]; shadowArmed: boolean };
+  /** Relíquia e arma vinculada equipadas, com o nível, e a ferramenta comprada ainda não entregue (ARS-*). */
+  arsenal: {
+    relic: string | null;
+    relicLevel: number;
+    weapon: string | null;
+    weaponLevel: number;
+    tool: string | null;
+  };
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
