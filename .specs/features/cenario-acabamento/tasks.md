@@ -84,8 +84,8 @@ T19
 
 **Done when**:
 
-- [ ] `tests/game/hudText.test.ts` confere `stroke` = `css(PALETTE.k)` e `strokeThickness` = 3 nos dois estilos
-- [ ] Gate verde
+- [x] `tests/game/hudText.test.ts` confere `stroke` = `css(PALETTE.k)` e `strokeThickness` = 3 nos dois estilos
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
