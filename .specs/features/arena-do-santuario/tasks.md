@@ -80,8 +80,8 @@ T8 → T9
 
 **Done when**:
 
-- [ ] Teste: só `santuario` dá o pintor do santuário; `santuario` + `rua` e sem trechos dão a escola
-- [ ] Gate verde
+- [x] Teste: só `santuario` dá o pintor do santuário; `santuario` + `rua` e sem trechos dão a escola
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

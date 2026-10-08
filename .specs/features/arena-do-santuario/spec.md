@@ -107,7 +107,7 @@ na fase 1, 0,18 na fase 2 e volta a 0 depois da vitória.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| ARN-01 | P1: Santuário próprio | Tasks | Pending |
+| ARN-01 | P1: Santuário próprio | Execute | Implementing |
 | ARN-02 | P1: Santuário próprio | Tasks | Pending |
 | ARN-03 | P1: Santuário próprio | Tasks | Pending |
 | ARN-04 | P1: Santuário próprio | Tasks | Pending |

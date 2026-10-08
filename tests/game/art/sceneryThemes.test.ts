@@ -17,7 +17,13 @@ const MID_THEMES: readonly ModuleTheme[] = ['rua', 'beco', 'parque', 'konbini'];
 
 function paint(theme: ModuleTheme, which: 'mid' | 'near', ground: number): RasterSink {
   const sink = new RasterSink();
-  THEME_SCENERY[theme][which](new Brush(clipX(sink, X0, X1)), { x0: X0, x1: X1, ground, bottom: ground + 40 });
+  THEME_SCENERY[theme][which](new Brush(clipX(sink, X0, X1)), {
+    x0: X0,
+    x1: X1,
+    ground,
+    bottom: ground + 40,
+    variant: null,
+  });
   return sink;
 }
 

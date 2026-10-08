@@ -5,7 +5,7 @@ import { Brush, clipX } from '../../../src/game/art/scenery/brush';
 import { THEME_SCENERY } from '../../../src/game/art/scenery/index';
 import { RasterSink } from './sceneryRaster';
 
-const AREA = { ground: 450, bottom: 500 };
+const AREA = { ground: 450, bottom: 500, variant: null };
 
 describe('pilar na emenda dos módulos (CEN-02)', () => {
   it.each(['near'] as const)('camada %s: pilar de 20 px centrado em cada fronteira', (which) => {

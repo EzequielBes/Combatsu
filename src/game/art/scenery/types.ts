@@ -6,13 +6,16 @@ export interface LayerArea {
   x1: number;
   ground: number;
   bottom: number;
+  /** Arquétipo do chefe na arena (ARN-04); `null` fora dela. */
+  variant: 'oni' | 'tecela' | null;
 }
 
 /** Pinta uma faixa de camada; o pincel já vem recortado em [`x0`, `x1`). */
 export type LayerPainter = (b: Brush, area: LayerArea) => void;
 
-/** Pintores de um tema (CEN-07): camada média (0,3) e próxima (0,6). */
+/** Pintores de um tema (CEN-07): camada média (0,3) e próxima (0,6); `far` troca a distante (ARN-01). */
 export interface ThemeScenery {
+  far?: LayerPainter;
   mid: LayerPainter;
   near: LayerPainter;
 }
