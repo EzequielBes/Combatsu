@@ -56,7 +56,7 @@ export const BOSS_BAR_FILL_COLOR = PALETTE.a;
 export const BOSS_BAR_BG_COLOR = PALETTE.k;
 export const BOSS_BAR_MARK_COLOR = PALETTE.w;
 export const BOSS_BAR_NAME_COLOR = PALETTE.w;
-const BOSS_BAR_NAME_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(BOSS_BAR_NAME_COLOR) };
+const BOSS_BAR_NAME_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(BOSS_BAR_NAME_COLOR), ...OUTLINE };
 /** Largura total da barra do chefe (BHUD-01) e marcas de fase, em fração da largura (BAI-01: 66%/33%). */
 const BOSS_BAR_WIDTH = 400;
 const BOSS_BAR_HEIGHT = 12;
@@ -340,7 +340,10 @@ export class Hud {
     heldItem: { name: string; pips: number; maxPips: number } | null;
     combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
     controls: string;
-    outlines: Record<'hp' | 'fragments' | 'heldItem' | 'round' | 'remaining', { stroke: string; thickness: number }>;
+    outlines: Record<
+      'hp' | 'fragments' | 'heldItem' | 'round' | 'remaining' | 'bossName',
+      { stroke: string; thickness: number }
+    >;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -358,6 +361,7 @@ export class Hud {
         heldItem: outlineOf(this.heldItemText),
         round: outlineOf(this.roundText),
         remaining: outlineOf(this.remainingText),
+        bossName: outlineOf(this.bossBarName),
       },
       // CTL-06: texto vivo do painel de controles.
       controls: this.panel.text,

@@ -212,7 +212,10 @@ export interface GameSnapshot {
     /** Contorno do rótulo "CE" da barra de energia, lido do texto vivo (CEN-05). */
     ceOutline: { stroke: string; thickness: number };
     /** Contorno lido dos textos vivos do HUD (CEN-05). */
-    outlines: Record<'hp' | 'fragments' | 'heldItem' | 'round' | 'remaining', { stroke: string; thickness: number }>;
+    outlines: Record<
+      'hp' | 'fragments' | 'heldItem' | 'round' | 'remaining' | 'bossName',
+      { stroke: string; thickness: number }
+    >;
     /** Barra de energia e ícones de slot na `uiLayer` (TEC-11). */
     techIgnoredByMain: boolean;
     /** Chamada da conjuração (CAST-16), `null` fora da janela de 900 ms. */

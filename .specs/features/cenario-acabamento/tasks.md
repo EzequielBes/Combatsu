@@ -611,3 +611,28 @@ T24 → T25
 **Tests**: smoke
 **Gate**: full
 **Commit**: `test(world): keep the decoration behind every actor and the terrain`
+
+---
+
+## Phase 8: Observação do Verifier (rodada 3)
+
+```
+T26
+```
+
+### T26: Contorno no nome do chefe
+
+**What**: O nome do chefe no alto da arena usa o mesmo contorno `k` de 3 px e entra em `hud.outlines`, conferido pelo smoke `hud` (observação da rodada 3: é o mesmo defeito do texto creme sobre o selo).
+**Where**: `src/game/Hud.ts`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `OUTLINE`
+**Requirement**: CEN-05
+
+**Done when**:
+
+- [x] Smoke `hud` confere o contorno de `bossName` lido do texto vivo
+- [x] Gate verde e smoke `hud` verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `fix(hud): outline the boss name`

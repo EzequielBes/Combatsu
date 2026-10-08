@@ -139,6 +139,7 @@ describe('installDebugApi', () => {
           heldItem: { stroke: '#0b0d1a', thickness: 3 },
           round: { stroke: '#0b0d1a', thickness: 3 },
           remaining: { stroke: '#0b0d1a', thickness: 3 },
+          bossName: { stroke: '#0b0d1a', thickness: 3 },
         },
         techIgnoredByMain: true,
         energy: {
