@@ -375,8 +375,8 @@ T19
 
 **Done when**:
 
-- [ ] Teste rasterizado: nenhum texel acima de y 480 para todo tema
-- [ ] Gate verde
+- [x] Teste rasterizado: nenhum texel acima de y 480 para todo tema
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
