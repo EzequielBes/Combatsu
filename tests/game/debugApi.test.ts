@@ -122,6 +122,13 @@ describe('installDebugApi', () => {
         heldItem: null,
         combo: { text: null, grade: null, x: 948, ignoredByMain: true },
         controls: '',
+        outlines: {
+          hp: { stroke: '#0b0d1a', thickness: 3 },
+          fragments: { stroke: '#0b0d1a', thickness: 3 },
+          heldItem: { stroke: '#0b0d1a', thickness: 3 },
+          round: { stroke: '#0b0d1a', thickness: 3 },
+          remaining: { stroke: '#0b0d1a', thickness: 3 },
+        },
         techIgnoredByMain: true,
         energy: {
           width: 104,

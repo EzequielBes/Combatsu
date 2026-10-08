@@ -522,8 +522,8 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Smoke confere contorno `#0b0d1a` de 3 px nos textos vivos
-- [ ] Gate verde e smoke `hud` verde
+- [x] Smoke confere contorno `#0b0d1a` de 3 px nos textos vivos
+- [x] Gate verde e smoke `hud` verde
 
 **Tests**: smoke
 **Gate**: full

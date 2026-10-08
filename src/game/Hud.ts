@@ -24,6 +24,12 @@ const css = (color: number, alpha = 1): string =>
           .padStart(2, '0')
       : ''
   }`;
+/** Contorno como o texto vivo do Phaser guarda (CEN-05). */
+const outlineOf = (t: Phaser.GameObjects.Text): { stroke: string; thickness: number } => ({
+  stroke: String(t.style.stroke),
+  thickness: t.style.strokeThickness,
+});
+
 /** Contorno do texto do HUD (CEN-05): sem ele o texto creme some sobre fundo claro, como o talismã do selo. */
 const OUTLINE = { stroke: css(PALETTE.k), strokeThickness: 3 };
 export const HUD_TEXT_STYLE = { fontFamily: 'monospace', fontSize: '12px', color: css(PALETTE.w), ...OUTLINE };
@@ -111,6 +117,8 @@ export class Hud {
   private lastComboHits = 0;
   /** Objeto na mão (ITEM-01..03), abaixo do contador de fragmentos. */
   private readonly heldItemText: Phaser.GameObjects.Text;
+  /** Rótulo "HP" da barra de vida (CEN-05: o contorno é lido dele no snapshot). */
+  private readonly hpLabel: Phaser.GameObjects.Text;
   private heldItemState: { name: string; pips: number; maxPips: number } | null = null;
 
   constructor(
@@ -120,6 +128,7 @@ export class Hud {
   ) {
     const barX = MARGIN + LABEL_W;
     const label = scene.add.text(MARGIN, MARGIN + 1, 'HP', HUD_TEXT_STYLE);
+    this.hpLabel = label;
     const frame = scene.add.image(barX, MARGIN, TEX.hudBar).setOrigin(0, 0);
     const w = HUD_BAR_WELL;
     this.fill = scene.add
@@ -331,6 +340,7 @@ export class Hud {
     heldItem: { name: string; pips: number; maxPips: number } | null;
     combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
     controls: string;
+    outlines: Record<'hp' | 'fragments' | 'heldItem' | 'round' | 'remaining', { stroke: string; thickness: number }>;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -341,6 +351,14 @@ export class Hud {
       center: this.centerLines,
       fragments: this.fragmentText.text,
       heldItem: this.heldItemState,
+      // CEN-05: contorno lido dos textos vivos, não da constante de estilo (L-043).
+      outlines: {
+        hp: outlineOf(this.hpLabel),
+        fragments: outlineOf(this.fragmentText),
+        heldItem: outlineOf(this.heldItemText),
+        round: outlineOf(this.roundText),
+        remaining: outlineOf(this.remainingText),
+      },
       // CTL-06: texto vivo do painel de controles.
       controls: this.panel.text,
       // CMB-04/05: texto e nota vivos (`null` escondidos), `x` = borda direita do texto na tela de UI, e ambos na `uiLayer`.
