@@ -4,6 +4,7 @@ import { ElixirRoll, Loot, type LootOverrides } from '../../core/loot';
 import { type RunCommand } from '../../core/run';
 import { isBossRound } from '../../core/waves';
 import { FULL_SHOP_CATALOG } from '../../data/shop';
+import { parseDebugTech } from '../../core/loadout';
 import { TECHNIQUES, type TechId } from '../../data/techniques';
 import { ECONOMY, ELIXIR, RUN } from '../../data/tuning';
 import { isDebug } from '../../game/debug';
@@ -153,17 +154,16 @@ export class RunDirector {
   }
 
   /**
-   * `?debug&tech=<id>[,<id>]` (TEC-02): equipa em nível 1, na ordem, ignorando ids desconhecidos e o segundo id
+   * `?debug&tech=<id>[:nível][,<id>[:nível]]` (TEC-02): equipa no nível pedido (1 sem ele), na ordem, ignorando ids desconhecidos e o segundo id
    * quando os dois slots já couberam; sem o parâmetro, os dois slots ficam vazios (TEC-01, AD-005).
    */
   equipDebugTech(): void {
     const raw = debugParam('tech');
     if (raw === null) return;
-    const ids = raw.split(',').filter((id): id is TechId => id in TECHNIQUES);
     let slot = 0;
-    for (const id of ids) {
+    for (const { id, level } of parseDebugTech(raw)) {
       if (slot > 1) break;
-      if (this.s.loadout.equip(slot as 0 | 1, id, 1)) slot++;
+      if (this.s.loadout.equip(slot as 0 | 1, id, level)) slot++;
     }
   }
 

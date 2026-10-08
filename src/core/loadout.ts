@@ -11,6 +11,20 @@ interface LoadoutSlot {
  * Loadout de técnicas do player (TEC-01..06, 13, 14): 2 slots, cada um vazio ou com uma técnica em nível 1–3;
  * dono também da recarga por slot (CAST-04). Sem `phaser` aqui.
  */
+/**
+ * `?debug&tech=` (TEC-02, EVO): lista `id` ou `id:nível` separada por vírgula; ids desconhecidos saem, nível fora de
+ * 1..3 vira 1. Puro, para o teste.
+ */
+export function parseDebugTech(raw: string): { id: TechId; level: TechLevel }[] {
+  return raw.split(',').flatMap((part) => {
+    const [id, lv] = part.split(':');
+    if (!(id in TECHNIQUES)) return [];
+    const n = Number(lv);
+    const level = (lv !== undefined && Number.isInteger(n) && n >= 1 && n <= 3 ? n : 1) as TechLevel;
+    return [{ id: id as TechId, level }];
+  });
+}
+
 export class Loadout {
   private slots: [LoadoutSlot | null, LoadoutSlot | null] = [null, null];
   private cooldowns: [number, number] = [0, 0];

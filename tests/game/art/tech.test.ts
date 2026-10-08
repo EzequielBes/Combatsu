@@ -180,10 +180,10 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
 
   it('a chama da aura tem 2 frames por cor, do mesmo tamanho, que não são idênticos (cintilam)', () => {
     const sheet = parseSheet('aura', AURA_FRAMES, PALETTE_KEYS);
-    for (const color of ['blue', 'red', 'white'] as const) {
+    for (const color of ['blue', 'red', 'white', 'purple'] as const) {
       expect(AURA_FRAMES[`${color}-a`], color).not.toEqual(AURA_FRAMES[`${color}-b`]);
     }
-    expect(sheet.frames).toHaveLength(6);
+    expect(sheet.frames).toHaveLength(8);
   });
 
   it('as faíscas das técnicas passam no parseSheet só com cores da paleta', () => {

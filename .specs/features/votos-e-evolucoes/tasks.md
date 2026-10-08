@@ -219,8 +219,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Teste dos números do Vazio Roxo; teste do parser de `tech` com nível
-- [ ] Gate verde
+- [x] Teste dos números do Vazio Roxo; teste do parser de `tech` com nível
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

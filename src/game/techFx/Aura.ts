@@ -13,6 +13,7 @@ const AURA_COLOR_BY_TECH: Record<TechId, AuraColor> = {
   vermelho: 'red',
   azul: 'blue',
   corte: 'white',
+  roxo: 'purple',
 };
 
 /** Troca de frame da chama (tremular, CAST-14): arbitrário dentro do "tremular" da direção de arte. */

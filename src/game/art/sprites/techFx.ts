@@ -60,7 +60,7 @@ export const BLUE_ORB_FRAME: readonly string[] = disc(10, [
 
 /** Cor de aura por técnica (Direção de arte de cada story): Divergente/Azul em azul, Vermelho em vermelho,
  * Desmantelar em branco. */
-export type AuraColor = 'blue' | 'red' | 'white';
+export type AuraColor = 'blue' | 'red' | 'white' | 'purple';
 
 /** Corpo arredondado da chama (8 linhas), igual nos dois frames — só as pontas em cima variam (flicker). */
 const FLAME_BODY: readonly string[] = [
@@ -99,6 +99,7 @@ function flame(base: string, hi: string, variant: 'a' | 'b'): string[] {
 const AURA_COLORS: Record<AuraColor, { base: string; hi: string }> = {
   blue: { base: 'c', hi: 'C' },
   red: { base: 'r', hi: 'R' },
+  purple: { base: 'u', hi: 'U' },
   white: { base: 'w', hi: 'W' },
 };
 

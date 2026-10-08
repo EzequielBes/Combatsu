@@ -2,13 +2,14 @@
  * Dados das técnicas amaldiçoadas (DIV-01, RED-01, BLU-01, CUT-01, TEC-14) e tuning de energia, Kokusen e fx de
  * conjuração comuns a toda a feature (design "src/data/techniques.ts (novo) e tuning"). Sem `phaser` aqui.
  */
-export type TechId = 'divergente' | 'vermelho' | 'azul' | 'corte';
+/** `roxo` (Vazio Roxo) não é vendida direto: nasce da evolução de Azul + Vermelho (EVO-03). */
+export type TechId = 'divergente' | 'vermelho' | 'azul' | 'corte' | 'roxo';
 
 export interface TechDef {
   id: TechId;
   name: string;
   /** Kanji da técnica (拳/赫/蒼/解); 黒/閃 só aparecem no card do Kokusen. */
-  kanji: 'ken' | 'aka' | 'ao' | 'kai';
+  kanji: 'ken' | 'aka' | 'ao' | 'kai' | 'murasaki';
   /** Chave de `PALETTE` usada na aura da conjuração (CAST-14). */
   aura: string;
   /** Custo de energia em nível 1 (TEC-14 escala com o nível). */
@@ -74,6 +75,19 @@ export const TECHNIQUES: Record<TechId, TechDef> = {
     releaseMs: 150,
     recoverMs: 200,
     damage: { cut: 10 }, // CUT-03
+  },
+  roxo: {
+    id: 'roxo',
+    name: 'Vazio Roxo',
+    kanji: 'murasaki', // 紫
+    aura: 'u',
+    cost: 70, // EVO-07
+    cooldownMs: 6000, // EVO-07
+    signMs: 300,
+    chargeMs: 400,
+    releaseMs: 100,
+    recoverMs: 300,
+    damage: { hit: 60 }, // EVO-06
   },
 };
 

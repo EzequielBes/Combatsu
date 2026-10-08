@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Loadout } from '../../src/core/loadout';
+import { Loadout, parseDebugTech } from '../../src/core/loadout';
 
 describe('TEC-01: uma run nova (sem ?tech=) começa com os dois slots vazios', () => {
   it('slotsView é [null, null] na criação', () => {
@@ -182,5 +182,20 @@ describe('votos no loadout (VOW-12, VOW-13)', () => {
     expect(lo.damage('corte', 10)).toBe(18);
     lo.reset();
     expect([lo.damageMul, lo.vowDamageMul, lo.costMul]).toEqual([1, 1, 1]);
+  });
+});
+
+describe('?debug&tech= com nível (EVO)', () => {
+  it('id e id:nível; desconhecido sai; nível fora de 1..3 vira 1', () => {
+    expect(parseDebugTech('azul:3,vermelho:3')).toEqual([
+      { id: 'azul', level: 3 },
+      { id: 'vermelho', level: 3 },
+    ]);
+    expect(parseDebugTech('corte,naoExiste:2,divergente:0,azul:4,vermelho:2')).toEqual([
+      { id: 'corte', level: 1 },
+      { id: 'divergente', level: 1 },
+      { id: 'azul', level: 1 },
+      { id: 'vermelho', level: 2 },
+    ]);
   });
 });
