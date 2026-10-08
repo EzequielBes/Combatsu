@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 69,
+  "next_id": 74,
   "lessons": [
     {
       "id": "L-001",
@@ -775,17 +775,19 @@
       "features": [
         "sprite-player-polish",
         "enemy-sprite-variety",
-        "personagem-e-vermelho"
+        "personagem-e-vermelho",
+        "cenario-acabamento"
       ],
-      "recurrence": 3,
+      "recurrence": 4,
       "harmful": 1,
       "evidence": [
         "M7 src/game/art/index.ts:128 (art-adapter)",
         "M2b src/scenes/TestScene.ts:843 (art-adapter) (art-adapter)",
-        "M11-adapt TechRunner.ts:350 (art-adapter)"
+        "M11-adapt TechRunner.ts:350 (art-adapter)",
+        "M10 src/game/Hud.ts:134 vs tests/game/hudText.test.ts:10 (art-adapter)"
       ],
       "created": "2026-10-01T14:45:04Z",
-      "last_seen": "2026-10-07T16:20:07Z"
+      "last_seen": "2026-10-08T16:05:39Z"
     },
     {
       "id": "L-044",
@@ -1236,6 +1238,96 @@
       ],
       "created": "2026-10-07T17:31:20Z",
       "last_seen": "2026-10-07T17:31:20Z"
+    },
+    {
+      "id": "L-069",
+      "key": "surviving_mutant::test a per segment dispatcher with at least two segments of different kinds because a single segment test cannot tell each segment s handler from the first one s",
+      "text": "Test a per-segment dispatcher with at least two segments of different kinds, because a single-segment test cannot tell each segment's handler from the first one's.",
+      "signal": "surviving_mutant",
+      "scope": "art",
+      "status": "candidate",
+      "features": [
+        "cenario-acabamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M9 src/game/art/background.ts:78 vs tests/game/art/scenerySeams.test.ts:29 (art)"
+      ],
+      "created": "2026-10-08T16:05:39Z",
+      "last_seen": "2026-10-08T16:05:39Z"
+    },
+    {
+      "id": "L-070",
+      "key": "surviving_mutant::assert the draw order a spec ranks behind x in front of y by reading each object s depth from the live scene",
+      "text": "Assert the draw-order a spec ranks (behind X, in front of Y) by reading each object's depth from the live scene.",
+      "signal": "surviving_mutant",
+      "scope": "scene-adapter",
+      "status": "candidate",
+      "features": [
+        "cenario-acabamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M14 src/scenes/test/world.ts:30 (CEN-13) (scene-adapter)"
+      ],
+      "created": "2026-10-08T16:05:39Z",
+      "last_seen": "2026-10-08T16:05:39Z"
+    },
+    {
+      "id": "L-071",
+      "key": "spec_precision_gap::when a spec says every nxn window of a band cover the whole band last window aligned to its edge because a fixed grid leaves the remainder rows unchecked",
+      "text": "When a spec says every NxN window of a band, cover the whole band (last window aligned to its edge), because a fixed grid leaves the remainder rows unchecked.",
+      "signal": "spec_precision_gap",
+      "scope": "art",
+      "status": "candidate",
+      "features": [
+        "cenario-acabamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CEN-09 tests/game/art/sceneryThemes.test.ts:41 (art)"
+      ],
+      "created": "2026-10-08T16:05:39Z",
+      "last_seen": "2026-10-08T16:05:39Z"
+    },
+    {
+      "id": "L-072",
+      "key": "ac_gap::when an ac lists a family of ui elements grep every module that creates one not only the main hud file before fixing or snapshotting them",
+      "text": "When an AC lists a family of UI elements, grep every module that creates one (not only the main HUD file) before fixing or snapshotting them.",
+      "signal": "ac_gap",
+      "scope": "hud",
+      "status": "candidate",
+      "features": [
+        "cenario-acabamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "CEN-05 src/game/EnergyHud.ts:48 (hud)"
+      ],
+      "created": "2026-10-08T16:30:40Z",
+      "last_seen": "2026-10-08T16:30:40Z"
+    },
+    {
+      "id": "L-073",
+      "key": "surviving_mutant::when a spec says behind or in front of a group of objects assert the depth against every member of the group not just one representative",
+      "text": "When a spec says behind or in front of a group of objects, assert the depth against every member of the group, not just one representative.",
+      "signal": "surviving_mutant",
+      "scope": "scene-adapter",
+      "status": "candidate",
+      "features": [
+        "cenario-acabamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N3a src/scenes/test/world.ts:208 (scene-adapter)"
+      ],
+      "created": "2026-10-08T16:30:41Z",
+      "last_seen": "2026-10-08T16:30:41Z"
     }
   ]
 }

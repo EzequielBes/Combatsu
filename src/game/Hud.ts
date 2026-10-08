@@ -24,12 +24,20 @@ const css = (color: number, alpha = 1): string =>
           .padStart(2, '0')
       : ''
   }`;
-const TEXT_STYLE = { fontFamily: 'monospace', fontSize: '12px', color: css(PALETTE.w) };
+/** Contorno como o texto vivo do Phaser guarda (CEN-05). */
+const outlineOf = (t: Phaser.GameObjects.Text): { stroke: string; thickness: number } => ({
+  stroke: String(t.style.stroke),
+  thickness: t.style.strokeThickness,
+});
+
+/** Contorno do texto do HUD (CEN-05): sem ele o texto creme some sobre fundo claro, como o talismã do selo. */
+const OUTLINE = { stroke: css(PALETTE.k), strokeThickness: 3 };
+export const HUD_TEXT_STYLE = { fontFamily: 'monospace', fontSize: '12px', color: css(PALETTE.w), ...OUTLINE };
 
 /** Cores dos elementos novos do HUD da run (RHUD-04): rodada/restantes, faixa e telas de título/game over. */
 export const RUN_TEXT_COLOR = PALETTE.w;
 export const RUN_BG_COLOR = PALETTE.k;
-const RUN_TEXT_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(RUN_TEXT_COLOR) };
+export const RUN_TEXT_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(RUN_TEXT_COLOR), ...OUTLINE };
 const RUN_PANEL_STYLE = { ...RUN_TEXT_STYLE, backgroundColor: css(RUN_BG_COLOR, 0.8), align: 'center' as const };
 /** Contador de combo (CMB-04/05): à direita, abaixo de "Inimigos"; a nota fica embaixo do texto de hits. */
 const COMBO_Y = MARGIN + 48;
@@ -48,7 +56,7 @@ export const BOSS_BAR_FILL_COLOR = PALETTE.a;
 export const BOSS_BAR_BG_COLOR = PALETTE.k;
 export const BOSS_BAR_MARK_COLOR = PALETTE.w;
 export const BOSS_BAR_NAME_COLOR = PALETTE.w;
-const BOSS_BAR_NAME_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(BOSS_BAR_NAME_COLOR) };
+const BOSS_BAR_NAME_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(BOSS_BAR_NAME_COLOR), ...OUTLINE };
 /** Largura total da barra do chefe (BHUD-01) e marcas de fase, em fração da largura (BAI-01: 66%/33%). */
 const BOSS_BAR_WIDTH = 400;
 const BOSS_BAR_HEIGHT = 12;
@@ -109,6 +117,8 @@ export class Hud {
   private lastComboHits = 0;
   /** Objeto na mão (ITEM-01..03), abaixo do contador de fragmentos. */
   private readonly heldItemText: Phaser.GameObjects.Text;
+  /** Rótulo "HP" da barra de vida (CEN-05: o contorno é lido dele no snapshot). */
+  private readonly hpLabel: Phaser.GameObjects.Text;
   private heldItemState: { name: string; pips: number; maxPips: number } | null = null;
 
   constructor(
@@ -117,14 +127,15 @@ export class Hud {
     controlsText: string,
   ) {
     const barX = MARGIN + LABEL_W;
-    const label = scene.add.text(MARGIN, MARGIN + 1, 'HP', TEXT_STYLE);
+    const label = scene.add.text(MARGIN, MARGIN + 1, 'HP', HUD_TEXT_STYLE);
+    this.hpLabel = label;
     const frame = scene.add.image(barX, MARGIN, TEX.hudBar).setOrigin(0, 0);
     const w = HUD_BAR_WELL;
     this.fill = scene.add
       .rectangle(barX + w.x * ART_SCALE, MARGIN + w.y * ART_SCALE, w.w * ART_SCALE, w.h * ART_SCALE, PALETTE.r)
       .setOrigin(0, 0);
     // Painel de controles no canto de baixo: não cobre as barras nem o meio da tela enquanto aparece.
-    const panelStyle = { ...TEXT_STYLE, backgroundColor: css(PALETTE.k, 0.8), padding: { x: 6, y: 4 } };
+    const panelStyle = { ...HUD_TEXT_STYLE, backgroundColor: css(PALETTE.k, 0.8), padding: { x: 6, y: 4 } };
     this.panel = scene.add.text(MARGIN, UI_SIZE.h - MARGIN, controlsText, panelStyle).setOrigin(0, 1);
     const w2 = UI_SIZE.w;
     const h2 = UI_SIZE.h;
@@ -180,9 +191,9 @@ export class Hud {
     // Contador de fragmentos (ECO-16), abaixo das barras de HP e de energia (`EnergyHud`, que termina em y=50).
     const fragY = MARGIN + 42;
     this.fragmentIcon = scene.add.image(MARGIN, fragY, TEX.fragmentIcon, 'icon').setOrigin(0, 0);
-    this.fragmentText = scene.add.text(MARGIN + 16, fragY - 2, '0', TEXT_STYLE);
+    this.fragmentText = scene.add.text(MARGIN + 16, fragY - 2, '0', HUD_TEXT_STYLE);
     // Item na mão (ITEM-01..03), logo abaixo do contador de fragmentos; escondido de mãos vazias.
-    this.heldItemText = scene.add.text(MARGIN, fragY + 16, '', TEXT_STYLE).setVisible(false);
+    this.heldItemText = scene.add.text(MARGIN, fragY + 16, '', HUD_TEXT_STYLE).setVisible(false);
 
     this.comboHitsText = scene.add
       .text(w2 - MARGIN, COMBO_Y, '', COMBO_HITS_STYLE)
@@ -329,6 +340,10 @@ export class Hud {
     heldItem: { name: string; pips: number; maxPips: number } | null;
     combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
     controls: string;
+    outlines: Record<
+      'hp' | 'fragments' | 'heldItem' | 'round' | 'remaining' | 'bossName',
+      { stroke: string; thickness: number }
+    >;
   } {
     const mainId = this.scene.cameras.main.id;
     return {
@@ -339,6 +354,15 @@ export class Hud {
       center: this.centerLines,
       fragments: this.fragmentText.text,
       heldItem: this.heldItemState,
+      // CEN-05: contorno lido dos textos vivos, não da constante de estilo (L-043).
+      outlines: {
+        hp: outlineOf(this.hpLabel),
+        fragments: outlineOf(this.fragmentText),
+        heldItem: outlineOf(this.heldItemText),
+        round: outlineOf(this.roundText),
+        remaining: outlineOf(this.remainingText),
+        bossName: outlineOf(this.bossBarName),
+      },
       // CTL-06: texto vivo do painel de controles.
       controls: this.panel.text,
       // CMB-04/05: texto e nota vivos (`null` escondidos), `x` = borda direita do texto na tela de UI, e ambos na `uiLayer`.

@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import type { ModuleTheme } from '../../core/module';
+import { FLOOR_ROWS, type ModuleTheme } from '../../core/module';
 import { parseSheet } from '../../core/pixelGrid';
 import { TEX } from '../textures';
 import { PALETTE_KEYS } from './palette';
@@ -54,13 +54,23 @@ function put(rows: readonly string[], points: readonly Point[], ch: string): str
 /** Linha de 16 texels com o mesmo caractere. */
 const line = (ch: string): string => ch.repeat(16);
 
-/** Rua: meio-fio claro no topo sobre asfalto escuro; a variação traz a faixa pintada. */
+/** Rua: meio-fio claro no topo sobre asfalto escuro; as variações trazem um remendo e uma trinca. */
 const RUA_BODY = speckle('n', 'nNK', 0.14, 3);
 const RUA: ThemeArt = {
   cap: [OUTLINE, line('S'), 'SSSSSsSSSSSSSsSS', line('s'), line('K'), line('n'), 'nnNnnnnnnnNnnnnn', line('n')],
   capAlt: [OUTLINE, line('S'), 'SSsSSSSSSSsSSSSS', line('s'), line('K'), line('n'), 'nnnnnKnnnnnnnnnn', line('n')],
   body: RUA_BODY,
-  bodyAlt: [...RUA_BODY.slice(0, 7), line('a'), line('a'), ...RUA_BODY.slice(9)],
+  // Remendo de asfalto: placa mais escura com a borda de cima gasta e uma trinca saindo dela (CEN-04).
+  bodyAlt: [
+    ...RUA_BODY.slice(0, 5),
+    'nnnsSssSsssnnnnn',
+    'nnnKKKKKKKKnnnnn',
+    'nnnKKnKKKKKnnnnn',
+    'nnnKKKKKnKKKnnnn',
+    'nnnKKKKKKKKnKnnn',
+    'nnnnnnnnnnnnnKnn',
+    ...RUA_BODY.slice(11),
+  ],
   bodyAlt2: put(
     RUA_BODY,
     [
@@ -282,6 +292,21 @@ export const THEME_TEXTURES: Record<ModuleTheme, string> = {
   konbini: TEX.terrainKonbini,
   santuario: TEX.terrainSantuario,
 };
+
+/**
+ * Folha de terreno do tile (`tx`, `ty`) da área (THM-02, CEN-03): a do tema do trecho; a coluna 0 acima do chão é o
+ * muro de contenção e usa a pedra neutra `terrain` em todo tema (com a folha do vizinho, o parque virava um pilar de
+ * terra). Sem trechos (a sala) tudo é `terrain`.
+ */
+export function terrainSheetFor(
+  tx: number,
+  ty: number,
+  spans: readonly { theme: ModuleTheme; col1: number }[],
+): string {
+  if (spans.length === 0 || (tx === 0 && ty < FLOOR_ROWS[0])) return TEX.terrain;
+  const span = spans.find((sp) => tx <= sp.col1) ?? spans[spans.length - 1];
+  return THEME_TEXTURES[span.theme];
+}
 
 /** Registra as cinco folhas de terreno por tema e a folha do selo. */
 export function registerThemedTiles(scene: Phaser.Scene): void {

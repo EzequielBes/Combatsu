@@ -1,3 +1,4 @@
+import { HUD_TEXT_STYLE } from './Hud';
 import type Phaser from 'phaser';
 import type { CursedEnergy } from '../core/energy';
 import type { Loadout } from '../core/loadout';
@@ -44,12 +45,8 @@ const SLOT_LABEL: readonly ['L', 'I'] = ['L', 'I'];
 /** Duração do flash de recusa por falta de energia (TEC-10). */
 const FLASH_MS = 300;
 const DEPTH = 101;
-/** O mesmo texto do rótulo `HP` (Hud.ts). */
-const LABEL_STYLE = {
-  fontFamily: 'monospace',
-  fontSize: '12px',
-  color: `#${PALETTE.w!.toString(16).padStart(6, '0')}`,
-};
+/** O mesmo texto do rótulo `HP` (Hud.ts), com o mesmo contorno `k` de 3 px (CEN-05). */
+const LABEL_STYLE = { ...HUD_TEXT_STYLE };
 
 interface SlotIcon {
   icon: Phaser.GameObjects.Sprite;
@@ -64,6 +61,8 @@ interface SlotIcon {
  * de `CursedEnergy`/`Loadout` (core).
  */
 export class EnergyHud {
+  /** Rótulo "CE" da barra de energia (CEN-05: o contorno é lido dele no snapshot). */
+  private readonly ceLabel: Phaser.GameObjects.Text;
   private readonly bg: Phaser.GameObjects.Rectangle;
   private readonly fill: Phaser.GameObjects.Rectangle;
   private readonly marks: [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
@@ -76,6 +75,7 @@ export class EnergyHud {
     private readonly layer: Phaser.GameObjects.Layer,
   ) {
     const label = scene.add.text(MARGIN, FRAME_Y + 1, 'CE', LABEL_STYLE);
+    this.ceLabel = label;
     const frame = scene.add.image(FRAME_X, FRAME_Y, TEX.hudBar).setOrigin(0, 0);
     this.bg = scene.add.rectangle(BAR_X, BAR_Y, BAR_W, BAR_H, ENERGY_BAR_BG_COLOR).setOrigin(0, 0);
     this.fill = scene.add.rectangle(BAR_X, BAR_Y, 0, BAR_H, ENERGY_BAR_FILL_COLOR).setOrigin(0, 0);
@@ -194,6 +194,8 @@ export class EnergyHud {
   /** `hud.energy`/`hud.techIgnoredByMain` do snapshot (TEC-08/11). */
   debugState(): {
     techIgnoredByMain: boolean;
+    /** Contorno do rótulo "CE" lido do texto vivo (CEN-05). */
+    ceOutline: { stroke: string; thickness: number };
     energy: {
       width: number;
       fillWidth: number;
@@ -213,6 +215,7 @@ export class EnergyHud {
       ...this.slots.flatMap((s) => [s.border, s.icon, s.overlay, s.label]),
     ];
     return {
+      ceOutline: { stroke: String(this.ceLabel.style.stroke), thickness: this.ceLabel.style.strokeThickness },
       // TEC-11: checagem real (a `uiLayer` está de fato ignorada pela câmera principal e todo objeto está nela).
       techIgnoredByMain:
         (this.layer.cameraFilter & mainId) === mainId && allObjs.every((o) => o.displayList === this.layer),

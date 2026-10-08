@@ -39,7 +39,7 @@ depois disso abra arquivos, e só os que a tarefa toca.
 | Builds e passivas | `core/build`; números em `data/perks` | `scenes/test/buildDirector` (liga cada passiva ao combate) | `build.smoke` |
 | Arsenal (relíquia, arma vinculada, ferramenta) | `core/arsenal`; números em `data/arsenal` | `scenes/test/arsenalDirector` (entrega na mão a cada rodada) | `arsenal` |
 | Run, ondas, loja | `core/run`, `shop`, `economy`, `loadout` | `scenes/test/runDirector`, `shopDirector`, `spawner`; `game/ShopPanel.ts` | `run-loop`, `shop`, `spawn-pressure` |
-| Mundo modular | `core/stage`, `level` | `scenes/test/areaDirector`, `world`; grades em `data/modules/` | `world-` |
+| Mundo modular e cenário | `core/stage`, `level` | `scenes/test/areaDirector`, `world`; grades em `data/modules/`; arte em `game/art/scenery/` | `world-` |
 | Impacto e efeitos | `core/fxTimeline`, `fxRegistry` | `game/fx.ts`, `CursedFx.ts`, `cursedImpact.ts`; `scenes/test/effects`, `impactFx` | `impact`, `feel` |
 | HUD | — | `game/Hud.ts`, `EnergyHud.ts`; `scenes/test/uiSetup` | `hud` |
 | Objetos e drops | `core/droppedTools`, `armed` | `game/Prop.ts`, `Pickups.ts`; `scenes/test/drops` | `drops`, `held-item`, `armed` |
@@ -51,6 +51,7 @@ depois disso abra arquivos, e só os que a tarefa toca.
 | --- | --- |
 | `art/hd/` | A base do jogo: player a 1 texel = 1 px, ligado por padrão (`?hd=0` desliga). Golpes por família em `hd/families/`. É onde a arte nova entra |
 | `art/sprites/` | Caminho antigo: grades de texto (1 caractere = 1 cor). `enemy.ts`, `player.ts`, `playerMoves.ts` são enormes e saem na fase 5: **não ler inteiros nem dividir**, buscar pelo nome do frame |
+| `art/scenery/` | Cenário por tema: um arquivo por tema (camadas média e próxima), decoração e primeiro plano; `background.ts` só monta as camadas. Medido nos testes por janelas de cor (`tests/game/art/sceneryRaster.ts`) |
 | `art/rig/` | Spike do boneco articulado, só com `?debug&rig=1`. Não evoluir |
 | `art/index.ts` | Registro de todas as folhas e animações |
 | `art/palette.ts` | Paleta única; cor fora dela quebra o teste |

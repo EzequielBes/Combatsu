@@ -163,6 +163,27 @@ export interface GameSnapshot {
     sheets: { id: string; sheet: string | null }[];
     /** Cores `wall` e `top` das faixas do fundo próximo, uma por trecho (THM-02); vazio na sala. */
     bands: { wall: string; top: string }[];
+    /** Tema de cada faixa da camada média, uma por trecho (CEN-10); vazio na sala. */
+    midBands: { theme: string }[];
+    /** Peças de decoração desenhadas na área (CEN-13); 0 na sala e com `?debug&decor=0`. */
+    decor: number;
+    /** Rolagem do primeiro plano lida do objeto (CEN-11); `null` na sala e com `?debug&decor=0`. */
+    front: { sx: number; sy: number } | null;
+    /** Profundidades vivas da camada próxima, da decoração e do player, e o pé da decoração em px (CEN-13). */
+    layout: {
+      nearDepth: number | null;
+      decorDepth: number | null;
+      decorFoot: number | null;
+      /** Peças de decoração desenhadas em cada módulo, na ordem dos módulos. */
+      decorPerModule: number[];
+      /** Profundidade dos tiles do terreno (CEN-13); `null` sem tiles. */
+      terrainDepth: number | null;
+      playerDepth: number;
+      /** Menor profundidade entre os inimigos vivos (CEN-13); `null` sem inimigo. */
+      enemyMinDepth: number | null;
+    };
+    /** Todos os corpos do mundo do Matter, estáticos e dinâmicos (CEN-14). */
+    bodies: number;
     /** Imagem do selo desenhada agora (THM-03); `null` sem selo ou depois do efeito de 400 ms. */
     seal: { texture: string; frame: string; alpha: number } | null;
     /** Entre o início do fade de saída e o fim do fade de entrada: o input do player é neutro (TRV-10). */
@@ -188,6 +209,13 @@ export interface GameSnapshot {
     combo: { text: string | null; grade: string | null; x: number; ignoredByMain: boolean };
     /** Texto do painel de controles na tela (CTL-06). */
     controls: string;
+    /** Contorno do rótulo "CE" da barra de energia, lido do texto vivo (CEN-05). */
+    ceOutline: { stroke: string; thickness: number };
+    /** Contorno lido dos textos vivos do HUD (CEN-05). */
+    outlines: Record<
+      'hp' | 'fragments' | 'heldItem' | 'round' | 'remaining' | 'bossName',
+      { stroke: string; thickness: number }
+    >;
     /** Barra de energia e ícones de slot na `uiLayer` (TEC-11). */
     techIgnoredByMain: boolean;
     /** Chamada da conjuração (CAST-16), `null` fora da janela de 900 ms. */

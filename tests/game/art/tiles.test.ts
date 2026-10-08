@@ -4,7 +4,8 @@ import { parseSheet } from '../../../src/core/pixelGrid';
 // Importar no Vitest (Node, sem window) já prova que a paleta não carrega o `phaser` como valor.
 import { ART_SCALE, PALETTE_KEYS } from '../../../src/game/art/palette';
 import { TILE_FRAMES, tileFrameFor } from '../../../src/game/art/tiles';
-import { SEAL_FRAMES, THEME_FRAMES, THEME_TEXTURES } from '../../../src/game/art/tilesThemes';
+import { SEAL_FRAMES, THEME_FRAMES, THEME_TEXTURES, terrainSheetFor } from '../../../src/game/art/tilesThemes';
+import { TEX } from '../../../src/game/textures';
 
 describe('tileset (ENV-01, ART-01)', () => {
   const VARIANTS: TileVariant[] = [
@@ -76,6 +77,22 @@ describe('folhas de terreno por tema e selo (THM-01, THM-03)', () => {
     expect(new Set(tops).size).toBe(THEMES.length);
     const bodies = THEMES.map((t) => THEME_FRAMES[t].middle.join('\n'));
     expect(new Set(bodies).size).toBe(THEMES.length);
+  });
+
+  it('a coluna 0 acima do chão usa a pedra neutra; o chão e o resto usam o tema (CEN-03)', () => {
+    const spans = [{ theme: 'parque' as const, col0: 1, col1: 40 }];
+    expect(terrainSheetFor(0, 0, spans)).toBe(TEX.terrain);
+    expect(terrainSheetFor(0, 14, spans)).toBe(TEX.terrain);
+    expect(terrainSheetFor(0, 15, spans)).toBe(TEX.terrainParque);
+    expect(terrainSheetFor(1, 14, spans)).toBe(TEX.terrainParque);
+    expect(terrainSheetFor(41, 3, spans)).toBe(TEX.terrainParque);
+    expect(terrainSheetFor(3, 15, [])).toBe(TEX.terrain);
+  });
+
+  it('o chão da rua não tem linha inteira laranja (CEN-04)', () => {
+    for (const [name, rows] of Object.entries(THEME_FRAMES.rua)) {
+      for (const row of rows) expect(/^[aA]+$/.test(row), `${name}: ${row}`).toBe(false);
+    }
   });
 
   it('cada tema tem a chave de textura própria em TEX', () => {

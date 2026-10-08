@@ -55,9 +55,17 @@ Parte D — Mundo modular (expansão de ambiente; a F13 corre em paralelo, a F14
 | F19 | `verticalidade` | Complex | — | Planejada |
 | F20 | `portas-e-destrutiveis` | Complex | WAL (vinda da F13) | Planejada |
 | F21 | `perigos-e-rotas` | Complex | — | Planejada |
+| F22 | `cenario-acabamento` | Large | CEN | Done (Verifier PASS, rodada 3; 15 ACs); aguardando o usuário jogar |
+| F23 | `arena-do-santuario` | Large | — | Planejada (plano em `docs/plano-cenario-rejogabilidade-hordas.md`) |
+| F24 | `votos-e-evolucoes` | Complex | — | Planejada |
+| F25 | `meta-progressao` | Complex | — | Planejada |
+| F26 | `graus-e-eventos` | Large | — | Planejada |
+| F27 | `hordas` | Complex | — | Planejada (absorve a F16) |
+| F28 | `reversa-anime` | Medium | — | Planejada |
 
 ## Próximos passos
 
+0. **Pedido de 08/10** (`docs/plano-cenario-rejogabilidade-hordas.md`): cenário (F22 feita, F23), rejogabilidade (F24 a F26), depois hordas (F27) e a Energia Reversa (F28). Vem antes da lista abaixo.
 1. **F18 `mundo-modular`**: Verifier independente e UAT do usuário; depois o merge em `dev`.
 2. **F19 `verticalidade`**, **F20 `portas-e-destrutiveis`** e **F21 `perigos-e-rotas`** (Specify de cada uma, nessa ordem, sobre o mundo modular da F18).
 3. **F13**, **F14** (só depois da F19), **F15** e **F16**, com UAT do usuário em `dev` ao fim de cada uma.

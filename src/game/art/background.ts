@@ -1,7 +1,13 @@
 import type Phaser from 'phaser';
 import type { ModuleTheme } from '../../core/module';
-import { TILE } from '../../core/level';
-import { ART_SCALE, PALETTE } from './palette';
+import { Brush, clipX, rng, type PaintSink } from './scenery/brush';
+import { stonePillar } from './scenery/school';
+import { NEAR_COLORS, SCHOOL_SCENERY, THEME_SCENERY } from './scenery/index';
+import type { LayerArea } from './scenery/types';
+import { layerBands, seams, type ThemeSpan } from './scenery/layers';
+
+export type { ThemeSpan } from './scenery/layers';
+export { NEAR_COLORS } from './scenery/index';
 
 /** Fatores de rolagem das três camadas de fundo (ENV-02): distante, média e próxima. */
 export const PARALLAX = [0.1, 0.3, 0.6] as const;
@@ -15,22 +21,6 @@ const DEPTH = [-30, -20, -10];
  */
 const GROUND = [400, 420, 450];
 
-/** Cor do muro da camada próxima por tema (THM-02): `wall` é a base e `top` a linha acesa; só chaves da paleta. */
-export const NEAR_COLORS: Record<ModuleTheme, { wall: string; top: string }> = {
-  rua: { wall: 'E', top: 'f' },
-  beco: { wall: 'n', top: 'N' },
-  parque: { wall: 'g', top: 'G' },
-  konbini: { wall: 'N', top: 's' },
-  santuario: { wall: 'm', top: 'M' },
-};
-
-/** Trecho de um módulo na área, em colunas de tile com a parede, como o `AreaSpan` do `stage.ts` (THM-02). */
-export interface ThemeSpan {
-  theme: ModuleTheme;
-  col0: number;
-  col1: number;
-}
-
 /** Faixa de cor da camada próxima: de `x0` a `x1` na coordenada da própria camada. */
 export interface Band {
   x0: number;
@@ -39,72 +29,9 @@ export interface Band {
   top: string;
 }
 
-/** Largura de vista em px de mundo (640 no canvas normal e no HD, ver `hd/screen.ts`). */
-const VIEW_W = 640;
-
-/**
- * Faixas da camada próxima para os trechos: a camada rola a `PARALLAX[2]` da câmera, então o ponto de mundo X
- * aparece na coordenada da camada onde a câmera centrada em X o enxerga (`0,6 X + 0,4 · VIEW_W / 2`). A primeira
- * faixa vai até a borda esquerda e a última até a direita.
- */
+/** Faixas da camada próxima com as cores do tema de cada trecho (THM-02): `layerBands` no fator da próxima. */
 export function bandsFor(spans: readonly ThemeSpan[], x0: number, x1: number): Band[] {
-  const f = PARALLAX[2];
-  const toLayer = (worldX: number): number => f * worldX + (1 - f) * (VIEW_W / 2);
-  return spans.map((sp, i) => ({
-    x0: i === 0 ? x0 : toLayer(sp.col0 * TILE),
-    x1: i === spans.length - 1 ? x1 : toLayer((sp.col1 + 1) * TILE),
-    ...NEAR_COLORS[sp.theme],
-  }));
-}
-
-type Key = keyof typeof PALETTE & string;
-
-/** Pincel que só pinta em blocos de texel (ART_SCALE) e só com cores da paleta (ART-01). */
-class Brush {
-  constructor(private readonly g: Phaser.GameObjects.Graphics) {}
-
-  /** Retângulo em px de mundo, alinhado à grade de texel. */
-  rect(x: number, y: number, w: number, h: number, key: Key): void {
-    const s = ART_SCALE;
-    const x0 = Math.round(x / s) * s;
-    const y0 = Math.round(y / s) * s;
-    const x1 = Math.round((x + w) / s) * s;
-    const y1 = Math.round((y + h) / s) * s;
-    if (x1 <= x0 || y1 <= y0) return;
-    this.g.fillStyle(PALETTE[key], 1);
-    this.g.fillRect(x0, y0, x1 - x0, y1 - y0);
-  }
-
-  /** Um texel. */
-  dot(x: number, y: number, key: Key): void {
-    this.rect(x, y, ART_SCALE, ART_SCALE, key);
-  }
-
-  /** Disco pixelado (linha a linha de texels), sem borda suavizada. */
-  disc(cx: number, cy: number, r: number, key: Key): void {
-    const s = ART_SCALE;
-    for (let dy = -r; dy <= r; dy += s) {
-      const half = Math.floor(Math.sqrt(r * r - dy * dy) / s) * s;
-      this.rect(cx - half, cy + dy, half * 2 + s, s, key);
-    }
-  }
-
-  /** Faixa de transição em xadrez entre duas cores (dither), para o gradiente não sair da paleta. */
-  dither(x: number, y: number, w: number, h: number, key: Key): void {
-    const s = ART_SCALE;
-    for (let yy = 0; yy < h; yy += s) {
-      for (let xx = (yy / s) % 2 === 0 ? 0 : s; xx < w; xx += s * 2) this.dot(x + xx, y + yy, key);
-    }
-  }
-}
-
-/** Gerador pseudoaleatório determinístico: o fundo é igual a cada reinício. */
-function rng(seed: number): () => number {
-  let s = seed >>> 0;
-  return () => {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    return s / 0x100000000;
-  };
+  return layerBands(spans, x0, x1, PARALLAX[2]).map((b) => ({ x0: b.x0, x1: b.x1, ...NEAR_COLORS[b.theme] }));
 }
 
 /**
@@ -124,26 +51,40 @@ export function buildBackground(
   const x0 = -128;
   const x1 = widthPx + 128;
   const bottom = heightPx + 256;
-  const bands = spans && spans.length > 0 ? bandsFor(spans, x0, x1) : undefined;
-  const painters = [paintFar, paintMid, (b: Brush, span: Span) => paintNear(b, span, bands)];
-  const layers = PARALLAX.map((factor, i) => {
-    const g = scene.add.graphics().setScrollFactor(factor, factor).setDepth(DEPTH[i]);
-    painters[i](new Brush(g), { x0, x1, ground: GROUND[i], bottom });
-    return g;
-  });
-  // As cores pintadas na camada próxima ficam no objeto, para o snapshot de debug conferir o tema (THM-02).
-  layers[2].setData('bands', bands ?? []);
+  const themed = spans !== undefined && spans.length > 0;
+  const layers = PARALLAX.map((factor, i) => scene.add.graphics().setScrollFactor(factor, factor).setDepth(DEPTH[i]));
+  paintFar(new Brush(layers[0]), { x0, x1, ground: GROUND[0], bottom });
+  for (const layer of [1, 2] as const) {
+    const bands = themed ? layerBands(spans, x0, x1, PARALLAX[layer]) : [{ x0, x1, theme: null }];
+    paintBands(layers[layer], bands, layer === 1 ? 'mid' : 'near', { ground: GROUND[layer], bottom });
+  }
+  // As faixas pintadas ficam no objeto, para o snapshot de debug conferir o tema (THM-02, CEN-10).
+  layers[2].setData('bands', themed ? bandsFor(spans, x0, x1) : []);
+  layers[1].setData('midBands', themed ? layerBands(spans, x0, x1, PARALLAX[1]).map((b) => ({ theme: b.theme })) : []);
   return layers;
 }
 
-interface Span {
-  x0: number;
-  x1: number;
-  ground: number;
-  bottom: number;
+/**
+ * Pinta uma camada faixa a faixa com o pintor do tema de cada uma (`theme: null` é a escola da sala), recortado na
+ * faixa (CEN-07); na camada próxima, cobre cada emenda com um pilar de pedra (CEN-02).
+ */
+export function paintBands(
+  sink: PaintSink,
+  bands: readonly { x0: number; x1: number; theme: ModuleTheme | null }[],
+  which: 'mid' | 'near',
+  { ground, bottom }: { ground: number; bottom: number },
+): void {
+  for (const band of bands) {
+    const scenery = band.theme === null ? SCHOOL_SCENERY : THEME_SCENERY[band.theme];
+    scenery[which](new Brush(clipX(sink, band.x0, band.x1)), { x0: band.x0, x1: band.x1, ground, bottom });
+  }
+  // Só a camada próxima cobre a emenda: na média, um pilar de pedra entre prédios destoa.
+  if (which !== 'near') return;
+  const brush = new Brush(sink);
+  for (const x of seams(bands)) stonePillar(brush, x, ground, bottom);
 }
 
-function paintFar(b: Brush, { x0, x1, ground, bottom }: Span): void {
+function paintFar(b: Brush, { x0, x1, ground, bottom }: LayerArea): void {
   const w = x1 - x0;
   // Céu: topo profundo, meio e horizonte, com faixas de dither entre eles.
   b.rect(x0, -256, w, 256 + 150, 'e');
@@ -230,88 +171,4 @@ function paintFar(b: Brush, { x0, x1, ground, bottom }: Span): void {
   b.disc(tx + 24, tt + 22, 8, 'l');
   b.rect(tx + 24, tt + 14, 2, 8, 'k');
   b.rect(tx + 24, tt + 22, 6, 2, 'k');
-}
-
-function paintMid(b: Brush, { x0, x1, ground, bottom }: Span): void {
-  // Base contínua (muro baixo do pátio) para nunca aparecer céu embaixo.
-  b.rect(x0, ground - 20, x1 - x0, bottom - ground + 20, 'K');
-
-  const rand = rng(31);
-  let x = x0;
-  let n = 0;
-  while (x < x1) {
-    const kind = n % 3;
-    if (kind === 0) {
-      // Ala da escola com telhado de beiral.
-      const w = 160 + Math.floor(rand() * 3) * 32;
-      const top = ground - 70;
-      b.rect(x, top, w, bottom - top, 'K');
-      // Telhado: beiral saliente, duas águas em degraus, cumeeira acesa pela lua.
-      b.rect(x - 10, top - 6, w + 20, 6, 'k');
-      b.rect(x - 12, top - 4, 4, 4, 'k');
-      b.rect(x + w + 8, top - 4, 4, 4, 'k');
-      for (let i = 1; i <= 5; i++) b.rect(x - 8 + i * 8, top - 6 - i * 4, w + 16 - i * 16, 4, 'k');
-      b.rect(x + 32, top - 30, w - 64, 2, 'n');
-      for (let wy = top + 12; wy < ground - 14; wy += 20) {
-        for (let wx = x + 12; wx < x + w - 16; wx += 20) {
-          const r = rand();
-          b.rect(wx, wy, 10, 10, r < 0.2 ? 'A' : r < 0.35 ? 'a' : 'k');
-          b.rect(wx + 4, wy, 2, 10, 'K');
-        }
-      }
-      x += w + 40;
-    } else if (kind === 1) {
-      // Árvore: copa em discos, tronco fino, borda de cima acesa.
-      const cx = x + 40;
-      const top = ground - 90 - Math.floor(rand() * 3) * 10;
-      b.rect(cx - 3, top + 40, 6, ground - top - 40, 'K');
-      b.disc(cx, top + 30, 28, 'K');
-      b.disc(cx - 22, top + 42, 20, 'K');
-      b.disc(cx + 22, top + 44, 18, 'K');
-      b.disc(cx - 4, top + 20, 18, 'K');
-      for (let i = -12; i <= 8; i += 4) b.dot(cx + i, top + 3 + Math.abs(i) / 2, 'n');
-      x += 110;
-    } else {
-      // Poste aceso com um halo pequeno.
-      const px = x + 20;
-      const top = ground - 110;
-      b.disc(px + 8, top + 4, 14, 'n');
-      b.rect(px - 2, top, 4, ground - top, 'k');
-      b.rect(px - 2, top - 2, 14, 4, 'k');
-      b.rect(px + 4, top + 2, 8, 4, 'A');
-      b.rect(px + 6, top + 2, 4, 2, 'w');
-      x += 80;
-    }
-    n++;
-  }
-}
-
-function paintNear(b: Brush, { x0, x1, ground, bottom }: Span, bands?: readonly Band[]): void {
-  // Tons médios (E/f), nunca o preto do contorno: os personagens passam na frente desta camada e o contorno
-  // deles (k) precisa se destacar dela.
-  // Muro baixo de pedra.
-  for (const band of bands ?? [{ x0, x1, wall: 'E', top: 'f' }]) {
-    b.rect(band.x0, ground - 36, band.x1 - band.x0, bottom - ground + 36, band.wall);
-    b.rect(band.x0, ground - 36, band.x1 - band.x0, 2, band.top);
-  }
-  // Gradil: dois trilhos e barras finas.
-  const railTop = ground - 76;
-  b.rect(x0, railTop, x1 - x0, 4, 'K');
-  b.rect(x0, railTop, x1 - x0, 2, 'n');
-  b.rect(x0, railTop + 24, x1 - x0, 4, 'K');
-  for (let x = x0; x < x1; x += 12) {
-    b.rect(x, railTop - 6, 2, 40, 'K');
-    b.dot(x, railTop - 8, 'n');
-  }
-  // Pilares de pedra com capitel.
-  for (let x = x0 + 40; x < x1; x += 208) {
-    const top = ground - 110;
-    b.rect(x, top, 20, bottom - top, 'K');
-    b.rect(x + 2, top + 6, 16, ground - top - 42, 'E');
-    b.rect(x + 2, top + 6, 2, ground - top - 42, 'f');
-    b.rect(x - 4, top - 4, 28, 10, 'K');
-    b.rect(x - 4, top - 4, 28, 2, 'f');
-    b.rect(x + 2, top - 10, 16, 6, 'K');
-    b.rect(x + 4, top - 10, 12, 2, 'n');
-  }
 }

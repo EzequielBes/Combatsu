@@ -22,6 +22,11 @@ export default async function ({ page, baseUrl, assert }) {
     `título sem a chamada para começar: ${JSON.stringify(snap.hud.center)}`,
   );
 
+  // CEN-05: todo texto do HUD que fica sobre o mundo tem contorno #0b0d1a de 3 px, lido do texto vivo.
+  for (const [name, o] of Object.entries({ ...snap.hud.outlines, ce: snap.hud.ceOutline })) {
+    assert(o.stroke === '#0b0d1a' && o.thickness === 3, `CEN-05: contorno do texto ${name}: ${JSON.stringify(o)}`);
+  }
+
   // RHUD-07: o HUD está fora da câmera principal (checagem real do bit de câmera, não uma constante).
   assert(snap.hud.ignoredByMain === true, `HUD deveria estar fora da câmera principal: ${JSON.stringify(snap.hud)}`);
 
