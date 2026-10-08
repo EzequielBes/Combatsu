@@ -484,3 +484,86 @@ T19
 | T2-T6, T8-T16 | Arte pura | unit | unit | ✅ |
 | T7, T17, T18 | Adaptador | smoke | smoke | ✅ |
 | T19 | Ferramenta | none | none | ✅ |
+
+---
+
+## Phase 6: Consertos do Verifier (rodada 1)
+
+```
+T20 → T21 → T22 → T23
+```
+
+### T20: Média pintada com o pintor de cada tema
+
+**What**: Teste que pinta a camada média com três faixas de temas diferentes e compara cada faixa com o pintor do tema dela (mutante M9).
+**Where**: `tests/game/art/scenerySeams.test.ts`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `paintBands`, `clipX`
+**Requirement**: CEN-07
+
+**Done when**:
+
+- [x] O raster de cada faixa é igual ao do `THEME_SCENERY[tema].mid` pintado direto na mesma faixa
+- [x] Gate verde
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `test(art): check each middle band uses its own theme painter`
+
+---
+
+### T21: Contorno lido dos textos vivos do HUD
+
+**What**: O smoke `hud` lê `stroke` e `strokeThickness` dos textos vivos de rótulo, fragmentos, rodada e restantes, expostos pelo snapshot (mutante M10, L-043).
+**Where**: `src/game/Hud.ts`
+**Depends on**: T20
+**Reuses**: snapshot de debug
+**Requirement**: CEN-05
+
+**Done when**:
+
+- [ ] Smoke confere contorno `#0b0d1a` de 3 px nos textos vivos
+- [ ] Gate verde e smoke `hud` verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(hud): read the text outline from the live HUD`
+
+---
+
+### T22: Profundidade e pé da decoração
+
+**What**: O snapshot expõe a profundidade da camada próxima, da decoração e do player, e o pé da peça mais baixa; o `world-scenery` confere `próxima < decoração < player` e que a peça encosta no topo do piso (mutantes M13, M14).
+**Where**: `src/scenes/test/world.ts`
+**Depends on**: T21
+**Reuses**: `paintDecor`
+**Requirement**: CEN-13
+
+**Done when**:
+
+- [ ] Smoke confere a ordem de profundidade e o pé da decoração em y 480
+- [ ] Gate verde e `npm run smoke -- world-scenery` verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(world): check the decoration depth and footing`
+
+---
+
+### T23: Precisão de CEN-09, CEN-13 e CEN-14
+
+**What**: Janelas da média cobrem a faixa inteira de 60 a 20 px; o snapshot conta as peças por módulo e o smoke exige ≥ 1 em cada; o smoke compara todos os corpos do Matter, não só os estáticos.
+**Where**: `scripts/smoke/world-scenery.smoke.mjs`
+**Depends on**: T22
+**Reuses**: `windowColorCounts`
+**Requirement**: CEN-09, CEN-13, CEN-14
+
+**Done when**:
+
+- [ ] Janelas da média alinhadas para cobrir 60 a 20 px acima do chão
+- [ ] Peças por módulo ≥ 1 e corpos totais iguais com e sem `decor=0`
+- [ ] Gate verde e `npm run smoke -- world-scenery` verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(world): tighten the scenery window, per-module decor and body checks`
