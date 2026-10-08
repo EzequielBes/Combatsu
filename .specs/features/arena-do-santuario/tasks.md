@@ -316,8 +316,8 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Teste cobre fase 1 → morte (alpha 0), fase 2 (0,18) e o fade (0,09 aos 300 ms, 0 aos 600 ms)
-- [ ] Gate verde
+- [x] Teste cobre fase 1 → morte (alpha 0), fase 2 (0,18) e o fade (0,09 aos 300 ms, 0 aos 600 ms)
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
