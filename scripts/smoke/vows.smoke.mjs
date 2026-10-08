@@ -198,4 +198,26 @@ export default async function ({ page, baseUrl, assert }) {
     s.run.state === 'shop' && s.vows.panelCards === 0 && s.vows.offers === null && shopCards(s) > 0,
     `VOW-02: loja sem painel: ${JSON.stringify(s.vows)} loja ${shopCards(s)}`,
   );
+
+  // VOW-10/12/18: o Desmantelar nos três bonecos do laboratório. Cada corte tira 10 sem voto, 15 com Pacto do feiticeiro
+  // (×1,5) e 20 com Pacto + Corpo de vidro (10 × 1,5 × 1,35 = 20,25, arredondado): o total segue a mesma razão.
+  const cutDamage = async (vows) => {
+    s = await open(`fxlab&noshop=1&tech=corte&regen=0${vows ? `&vows=${vows}` : ''}`);
+    const start = new Map(s.fxlab.dummies.map((d) => [d.id, d.hp]));
+    const low = new Map(start);
+    await page.keyboard.down('KeyL');
+    s = await step(17);
+    await page.keyboard.up('KeyL');
+    for (let i = 0; i < 40; i++) {
+      s = await step(17);
+      for (const d of s.fxlab.dummies) low.set(d.id, Math.min(low.get(d.id), d.hp));
+    }
+    return [...start].reduce((sum, [id, hp]) => sum + hp - low.get(id), 0);
+  };
+  const plain = await cutDamage('');
+  assert(plain > 0 && plain % 10 === 0, `controle: o Desmantelar deveria tirar múltiplos de 10: ${plain}`);
+  const pacto = await cutDamage('pactoDoFeiticeiro');
+  assert(pacto === plain * 1.5, `VOW-12: técnica ×1,5: ${pacto} (controle ${plain})`);
+  const both = await cutDamage('pactoDoFeiticeiro,corpoDeVidro');
+  assert(both === plain * 2, `VOW-10/18: técnica ×1,5 × 1,35 (20 por corte): ${both} (controle ${plain})`);
 }

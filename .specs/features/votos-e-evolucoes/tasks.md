@@ -397,8 +397,8 @@ T16 → T17 → T18 → T19 → T20 → T21
 
 **Done when**:
 
-- [ ] Smoke verde
-- [ ] Gate verde
+- [x] Smoke verde
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full
