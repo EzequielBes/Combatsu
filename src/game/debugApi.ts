@@ -169,6 +169,8 @@ export interface GameSnapshot {
     decor: number;
     /** Rolagem do primeiro plano lida do objeto (CEN-11); `null` na sala e com `?debug&decor=0`. */
     front: { sx: number; sy: number } | null;
+    /** Profundidades vivas da camada próxima, da decoração e do player, e o pé da decoração em px (CEN-13). */
+    layout: { nearDepth: number | null; decorDepth: number | null; decorFoot: number | null; playerDepth: number };
     /** Imagem do selo desenhada agora (THM-03); `null` sem selo ou depois do efeito de 400 ms. */
     seal: { texture: string; frame: string; alpha: number } | null;
     /** Entre o início do fade de saída e o fim do fade de entrada: o input do player é neutro (TRV-10). */

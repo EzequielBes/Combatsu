@@ -541,8 +541,8 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Smoke confere a ordem de profundidade e o pé da decoração em y 480
-- [ ] Gate verde e `npm run smoke -- world-scenery` verde
+- [x] Smoke confere a ordem de profundidade e o pé da decoração em y 480
+- [x] Gate verde e `npm run smoke -- world-scenery` verde
 
 **Tests**: smoke
 **Gate**: full

@@ -50,6 +50,8 @@ export class WorldBuilder {
   private decor: Phaser.GameObjects.Graphics | null = null;
   private front: Phaser.GameObjects.Graphics | null = null;
   private decorCount = 0;
+  /** Linha mais baixa pintada pela decoração, em px de mundo (CEN-13: o pé das peças); `null` sem decoração. */
+  private decorBottom: number | null = null;
 
   /** Selo ainda fechado (corpo sólido na área); `false` na sala, na konbini e depois de `openSeal`. */
   get sealed(): boolean {
@@ -163,11 +165,24 @@ export class WorldBuilder {
     this.decor = null;
     this.front = null;
     this.decorCount = 0;
+    this.decorBottom = null;
   }
 
   /** Peças de decoração desenhadas na área (CEN-13); 0 na sala. */
   get decorPieces(): number {
     return this.decorCount;
+  }
+
+  /**
+   * Profundidades lidas dos objetos (CEN-13): camada próxima do fundo e decoração (`null` sem ela), e a linha mais
+   * baixa pintada pela decoração.
+   */
+  get sceneryLayout(): { nearDepth: number | null; decorDepth: number | null; decorFoot: number | null } {
+    return {
+      nearDepth: this.background[2]?.depth ?? null,
+      decorDepth: this.decor?.depth ?? null,
+      decorFoot: this.decorBottom,
+    };
   }
 
   /** Rolagem do primeiro plano como está no objeto (CEN-11); `null` sem primeiro plano (a sala). */
@@ -182,8 +197,18 @@ export class WorldBuilder {
   private buildScenery(spans: readonly AreaSpan[], level: LevelData): void {
     const floorTop = FLOOR_ROWS[0] * TILE;
     this.decor = this.s.add.graphics().setDepth(DECOR_DEPTH);
-    const brush = new Brush(this.decor);
+    const decor = this.decor;
+    let foot = -Infinity;
+    // Mede o pé das peças enquanto pinta: a cena é quem escolhe a linha do chão (CEN-13).
+    const brush = new Brush({
+      fillStyle: (color, alpha) => decor.fillStyle(color, alpha),
+      fillRect: (x, y, w, h) => {
+        foot = Math.max(foot, y + h);
+        return decor.fillRect(x, y, w, h);
+      },
+    });
     this.decorCount = decorSlots(spans).filter((slot, i) => paintDecor(brush, slot.theme, slot.x, floorTop, i)).length;
+    this.decorBottom = Number.isFinite(foot) ? foot : null;
     this.front = this.s.add.graphics().setScrollFactor(FRONT_SCROLL.x, FRONT_SCROLL.y).setDepth(FRONT_DEPTH);
     const f = FRONT_SCROLL.x;
     const bands = layerBands(spans, toLayerX(-128, f), toLayerX(level.widthPx + 128, f), f);

@@ -38,6 +38,14 @@ export default async function ({ page, baseUrl, assert }) {
   );
   // CEN-13: pelo menos uma peça por módulo.
   assert(area.decor >= area.modules.length, `CEN-13: peças de decoração: ${area.decor} para ${area.modules.length}`);
+  // CEN-13: a decoração fica na frente da camada próxima e atrás do player, e as peças encostam no topo do piso.
+  const { nearDepth, decorDepth, playerDepth, decorFoot } = area.layout;
+  assert(
+    nearDepth < decorDepth && decorDepth < playerDepth,
+    `CEN-13: profundidades próxima < decoração < player: ${JSON.stringify(area.layout)}`,
+  );
+  assert(decorFoot === 480, `CEN-13: o pé da decoração deveria ser o topo do piso (480): ${decorFoot}`);
+
   // CEN-06 e CEN-10: uma faixa da próxima e uma da média por módulo.
   assert(area.bands.length === 3, `CEN-06: faixas da camada próxima: ${JSON.stringify(area.bands)}`);
   assert(

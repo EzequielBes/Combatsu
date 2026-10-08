@@ -30,6 +30,7 @@ export class DebugSnapshot {
       midBands: this.s.world.midBands(),
       decor: this.s.world.decorPieces,
       front: this.s.world.frontScroll,
+      layout: { ...this.s.world.sceneryLayout, playerDepth: this.s.player.view.depth },
       seal: this.s.world.sealView,
       transitioning: area.transitioning,
       fade: { running: fade.isRunning, out: fade.direction, alpha: fade.direction ? fade.progress : 1 - fade.progress },

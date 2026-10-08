@@ -105,6 +105,7 @@ describe('installDebugApi', () => {
         midBands: [],
         decor: 0,
         front: null,
+        layout: { nearDepth: null, decorDepth: null, decorFoot: null, playerDepth: 1 },
         seal: null,
         transitioning: false,
         fade: { running: false, out: true, alpha: 0 },
