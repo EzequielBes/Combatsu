@@ -163,8 +163,8 @@ T19
 
 **Done when**:
 
-- [ ] Teste: fronteira de trecho no fator 0,3 e 1,15 (`f·X + (1−f)·320`); a primeira faixa começa em `x0` e a última termina em `x1`; `seams` devolve as fronteiras internas (nenhuma com um trecho só)
-- [ ] Gate verde
+- [x] Teste: fronteira de trecho no fator 0,3 e 1,15 (`f·X + (1−f)·320`); a primeira faixa começa em `x0` e a última termina em `x1`; `seams` devolve as fronteiras internas (nenhuma com um trecho só)
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

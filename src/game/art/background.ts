@@ -1,7 +1,9 @@
 import type Phaser from 'phaser';
 import type { ModuleTheme } from '../../core/module';
-import { TILE } from '../../core/level';
 import { Brush, rng } from './scenery/brush';
+import { layerBands, type ThemeSpan } from './scenery/layers';
+
+export type { ThemeSpan } from './scenery/layers';
 
 /** Fatores de rolagem das três camadas de fundo (ENV-02): distante, média e próxima. */
 export const PARALLAX = [0.1, 0.3, 0.6] as const;
@@ -24,13 +26,6 @@ export const NEAR_COLORS: Record<ModuleTheme, { wall: string; top: string }> = {
   santuario: { wall: 'm', top: 'M' },
 };
 
-/** Trecho de um módulo na área, em colunas de tile com a parede, como o `AreaSpan` do `stage.ts` (THM-02). */
-export interface ThemeSpan {
-  theme: ModuleTheme;
-  col0: number;
-  col1: number;
-}
-
 /** Faixa de cor da camada próxima: de `x0` a `x1` na coordenada da própria camada. */
 export interface Band {
   x0: number;
@@ -39,22 +34,9 @@ export interface Band {
   top: string;
 }
 
-/** Largura de vista em px de mundo (640 no canvas normal e no HD, ver `hd/screen.ts`). */
-const VIEW_W = 640;
-
-/**
- * Faixas da camada próxima para os trechos: a camada rola a `PARALLAX[2]` da câmera, então o ponto de mundo X
- * aparece na coordenada da camada onde a câmera centrada em X o enxerga (`0,6 X + 0,4 · VIEW_W / 2`). A primeira
- * faixa vai até a borda esquerda e a última até a direita.
- */
+/** Faixas da camada próxima com as cores do tema de cada trecho (THM-02): `layerBands` no fator da próxima. */
 export function bandsFor(spans: readonly ThemeSpan[], x0: number, x1: number): Band[] {
-  const f = PARALLAX[2];
-  const toLayer = (worldX: number): number => f * worldX + (1 - f) * (VIEW_W / 2);
-  return spans.map((sp, i) => ({
-    x0: i === 0 ? x0 : toLayer(sp.col0 * TILE),
-    x1: i === spans.length - 1 ? x1 : toLayer((sp.col1 + 1) * TILE),
-    ...NEAR_COLORS[sp.theme],
-  }));
+  return layerBands(spans, x0, x1, PARALLAX[2]).map((b) => ({ x0: b.x0, x1: b.x1, ...NEAR_COLORS[b.theme] }));
 }
 
 /**
