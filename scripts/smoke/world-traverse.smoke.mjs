@@ -4,7 +4,7 @@
 const TILE = 32;
 // Corpos estáticos de uma área plana: a parede (linhas 0 a 14, um retângulo por linha) e o chão (linhas 15 e 16).
 const FLAT_SOLIDS = 17;
-const MODULE_COLS = { rua: 40, beco: 20, parque: 32, konbini: 20, santuario: 40 };
+const MODULE_COLS = { rua: 40, beco: 20, parque: 32, konbini: 20, santuario: 48 };
 
 export default async function ({ page, baseUrl, assert }) {
   await page.goto(`${baseUrl}?debug&enemyGuard=0&modules=beco,parque&maxAlive=1&seed=3&tech=corte`, {

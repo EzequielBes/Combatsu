@@ -7,7 +7,7 @@ const EXPECTED = [
   ['beco', 20, 'combat'],
   ['parque', 32, 'combat'],
   ['konbini', 20, 'konbini'],
-  ['santuario', 40, 'boss'],
+  ['santuario', 48, 'boss'],
 ] as const;
 
 describe('catálogo de módulos (MDL-10, THM-01)', () => {

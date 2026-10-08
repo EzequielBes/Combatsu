@@ -224,9 +224,9 @@ T8 → T9
 
 ---
 
-### T8: Arena de 52 colunas
+### T8: Arena de 48 colunas
 
-**What**: O módulo `santuario` passa a 52 colunas, com `E` nas duas bordas e dois `p`; testes e smokes que medem o santuário acompanham.
+**What**: O módulo `santuario` passa a 48 colunas (teto da gramática de módulo), com `E` nas duas bordas e dois `p`; testes e smokes que medem o santuário acompanham.
 **Where**: `src/data/modules/santuario.ts`
 **Depends on**: None (fase anterior concluída)
 **Reuses**: lint de módulo
@@ -234,12 +234,12 @@ T8 → T9
 
 **Done when**:
 
-- [ ] `tests/data/modules.test.ts` exige 52 colunas; `world-boss` mede 54 colunas com parede e selo
-- [ ] Gate verde e smokes `world-` e `boss` verdes
+- [x] `tests/data/modules.test.ts` exige 48 colunas; `world-boss` mede 50 colunas com parede e selo
+- [x] Gate verde e smokes `world-` e `boss` verdes
 
 **Tests**: unit
 **Gate**: full
-**Commit**: `feat(world): widen the shrine arena to 52 columns`
+**Commit**: `feat(world): widen the shrine arena to 48 columns`
 
 ---
 

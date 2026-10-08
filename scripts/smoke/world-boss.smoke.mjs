@@ -1,4 +1,4 @@
-// Santuário (ARE-03, TRV-02/03 com o chefe) com `?debug&round=5&seed=5`: a rodada de chefe é só o módulo `santuario`,
+// Santuário (ARE-03, ARN-12: 48 colunas + parede + selo; TRV-02/03 com o chefe) com `?debug&round=5&seed=5`: a rodada de chefe é só o módulo `santuario`,
 // o Oni nasce, e a vitória leva a `traverse` com o selo aberto. O `area=modular` evita que o runner force a sala.
 const TILE = 32;
 
@@ -33,16 +33,16 @@ export default async function ({ page, baseUrl, assert }) {
     JSON.stringify(s.area.modules) === '["santuario"]',
     `ARE-03: esperava só o santuario: ${JSON.stringify(s.area.modules)}`,
   );
-  assert(s.area.mode === 'modular' && s.area.widthPx === 42 * TILE, `largura do santuario: ${JSON.stringify(s.area)}`);
+  assert(s.area.mode === 'modular' && s.area.widthPx === 50 * TILE, `largura do santuario: ${JSON.stringify(s.area)}`);
   assert(
-    s.area.sealed === true && s.area.exitX === 41 * TILE,
+    s.area.sealed === true && s.area.exitX === 49 * TILE,
     `o selo do santuario deveria estar fechado: ${JSON.stringify(s.area)}`,
   );
   // ARN-05: o fundo da arena recebe o arquétipo do chefe da rodada (o Oni na rodada 5).
   assert(s.area.arenaVariant === 'oni', `ARN-05: arquétipo da arena: ${s.area.arenaVariant}`);
   const staticBefore = s.area.staticBodies;
   assert(s.boss && s.boss.name === 'Oni do Portão', `o chefe deveria nascer: ${JSON.stringify(s.boss)}`);
-  // O chefe nasce dentro da área do santuário (0 a 1344 px), não nas coordenadas da sala.
+  // O chefe nasce dentro da área do santuário (0 a 1600 px), não nas coordenadas da sala.
   assert(s.boss.x >= 0 && s.boss.x <= s.area.widthPx, `chefe fora da área: x=${s.boss.x}`);
 
   // ARN-07: a arena fecha dos dois lados; o selo da esquerda usa o frame do talismã.

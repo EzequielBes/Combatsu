@@ -30,7 +30,7 @@ Plano: `docs/plano-cenario-rejogabilidade-hordas.md`, F23.
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| Largura da arena | 52 colunas (era 40), com os pontos de spawn nas duas bordas e dois slots de objeto | Mais espaço para a investida e o salto do chefe sem sair de 2 telas; mexe em `modules.test.ts` e nos smokes que medem o santuário | n |
+| Largura da arena | 48 colunas (era 40), o teto da gramática de módulo da F18 (`MODULE_MAX_COLS`), com os pontos de spawn nas duas bordas e dois slots de objeto | Mais espaço para a investida e o salto sem mudar a regra dos módulos; 52 foi recusado pelo lint de módulo na T8 | y |
 | Céu do Véu | A camada distante da arena troca a escola e a cidade por um céu escurecido com a borda da cúpula do Véu, lua e montanhas | Tira a cara de "pátio de escola" de que o usuário reclamou | n |
 | Decoração por chefe | Pelo arquétipo do chefe da rodada (`oni` ou `tecela`), passado para a construção da área | Os dois arquétipos já existem em `core/bossTier` | y |
 | Selo da esquerda | Só visual (a coluna 0 já é parede sólida); queima junto com o da direita | Fecha a arena dos dois lados sem mudar a física | y |
@@ -91,7 +91,7 @@ na fase 1, 0,18 na fase 2 e volta a 0 depois da vitória.
 
 **Acceptance Criteria**:
 
-1. ARN-12: The `santuario` module SHALL be 52 columns wide, with spawn points `E` near both edges and two object slots `p`.
+1. ARN-12: The `santuario` module SHALL be 48 columns wide, with spawn points `E` near both edges and two object slots `p`.
 
 ---
 
@@ -118,7 +118,7 @@ na fase 1, 0,18 na fase 2 e volta a 0 depois da vitória.
 | ARN-09 | P2: A arena reage ao chefe | Execute | Implementing |
 | ARN-10 | P2: A arena reage ao chefe | Execute | Implementing |
 | ARN-11 | P2: A arena reage ao chefe | Execute | Implementing |
-| ARN-12 | P3: Arena mais larga | Tasks | Pending |
+| ARN-12 | P3: Arena mais larga | Execute | Implementing |
 
 **Coverage:** 12 total, 12 mapped to tasks, 0 unmapped.
 
