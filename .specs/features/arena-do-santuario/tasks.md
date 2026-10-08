@@ -379,8 +379,8 @@ T14 → T15 → T16
 
 **Done when**:
 
-- [ ] Asserção dentro do laço
-- [ ] Gate verde
+- [x] Asserção dentro do laço
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

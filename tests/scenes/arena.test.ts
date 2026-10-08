@@ -42,8 +42,11 @@ describe('véu vermelho da arena (ARN-09, ARN-10, ARN-11)', () => {
   it('edge case: o chefe some ainda na fase 1 e o véu continua em 0', () => {
     const { arena, veil } = arenaWithVeil();
     arena.update(16, 1);
-    for (let t = 0; t < 1000; t += 16) arena.update(16, null);
-    expect(veil.alpha).toBe(0);
+    // "Continua em 0" vale a cada passo, não só no fim: um véu que piscasse aceso e descesse passaria só no fim.
+    for (let t = 0; t < 1000; t += 16) {
+      arena.update(16, null);
+      expect(veil.alpha).toBe(0);
+    }
   });
 
   it('acende em 0,18 nas fases 2 e 3', () => {
