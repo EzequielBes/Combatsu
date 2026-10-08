@@ -38,9 +38,11 @@ export class Drops {
   /** Fragmento credita a carteira; gota cura (teto em maxHp, HEAL-03) - cada uma com o "+N" e o evento (ECO-29/HEAL-08). */
   onPickupCollected(p: { kind: PickupKind; value: number; x: number; y: number }): void {
     if (p.kind === 'fragment') {
-      this.s.wallet.add(p.value);
-      this.s.snapshot.debugEvents.push(`collect:fragment:${p.value}`);
-      this.s.floatTexts.spawn(`+${p.value}`, 'U', p.x, p.y);
+      // VOW-15: a Ganância aumenta o valor da gota (arredondado).
+      const value = Math.round(p.value * this.s.vows.effects.fragmentMul);
+      this.s.wallet.add(value);
+      this.s.snapshot.debugEvents.push(`collect:fragment:${value}`);
+      this.s.floatTexts.spawn(`+${value}`, 'U', p.x, p.y);
       return;
     }
     const restored = this.s.player.heal(p.value);

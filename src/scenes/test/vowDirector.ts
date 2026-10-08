@@ -31,6 +31,9 @@ export class VowDirector {
     this.s.loadout.vowDamageMul = fx.techDamageMul * fx.damageMul;
     this.s.loadout.costMul = fx.techCostMul;
     this.s.player.damageTakenMul = fx.damageTakenMul;
+    // VOW-10: vida máxima dos modificadores × o voto; também vale depois de comprar `vida`.
+    const maxHp = Math.round(this.s.modifiers.maxHp * fx.maxHpMul);
+    if (this.s.player.maxHp !== maxHp) this.s.player.setMaxHp(maxHp);
   }
 
   /** Multiplicador do golpe corpo a corpo que abre a hitbox (VOW-10..12, VOW-16, VOW-17). */

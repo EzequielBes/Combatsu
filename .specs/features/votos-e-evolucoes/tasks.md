@@ -162,8 +162,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Smoke lê do jogo vivo: vida máxima 60 com Corpo de vidro (e o hp limitado), guarda que não sobe com Sem guarda, Reversa sem cura com Fluxo selado e só abaixo de 30% com Cura proibida
-- [ ] Gate verde e smoke verde
+- [x] Smoke lê do jogo vivo: vida máxima 60 com Corpo de vidro (e o hp limitado), guarda que não sobe com Sem guarda, Reversa sem cura com Fluxo selado e só abaixo de 30% com Cura proibida
+- [x] Gate verde e smoke verde
 
 **Tests**: smoke
 **Gate**: full

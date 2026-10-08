@@ -497,7 +497,9 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
 
   /** Input do quadro: neutro fora de `roundActive`/`intermission`/`traverse` (RUN-08) e durante a transição de área (TRV-10). */
   private inputFor(raw: InputSnapshot): InputSnapshot {
-    return acceptsPlayerInput(this.run.state) && !this.area.transitioning ? raw : NEUTRAL_INPUT;
+    if (!acceptsPlayerInput(this.run.state) || this.area.transitioning) return NEUTRAL_INPUT;
+    // VOW-11: com Sem guarda a guarda e o parry nunca sobem (e a guarda segurada cai no quadro seguinte).
+    return this.vows.effects.guardOff ? { ...raw, guardHeld: false, guardPressed: false } : raw;
   }
 
   /**

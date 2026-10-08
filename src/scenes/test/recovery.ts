@@ -59,8 +59,11 @@ export class Recovery {
     this.push(step.events);
     // RCT-08: sem energia, a barra pisca como numa técnica recusada.
     if (step.events.includes('rctDenied')) this.s.energyHud.flashDenied();
-    if (step.heal > 0 && this.s.energy.trySpend(step.spend)) {
-      const restored = p.heal(step.heal);
+    // VOW-13/14: Fluxo selado desliga a cura da Reversa; Cura proibida dobra e só cura abaixo de 30% da vida.
+    const fx = this.s.vows.effects;
+    const allowed = !fx.rctOff && (fx.rctBelow === null || p.hp < fx.rctBelow * p.maxHp);
+    if (allowed && step.heal > 0 && this.s.energy.trySpend(step.spend)) {
+      const restored = p.heal(Math.round(step.heal * fx.rctHealMul));
       this.shownPending += restored;
       if (restored > 0) this.reverseAura().pulse();
     }
@@ -72,7 +75,8 @@ export class Recovery {
 
     // REG-01..04: a passiva não soma com a canalização, que já está curando.
     const passive = this.regen.update(dt, p.hp, p.maxHp, p.dead);
-    if (passive > 0 && !this.reverse.active && this.passive) p.heal(passive);
+    // VOW-16: a Fúria desliga a regeneração passiva.
+    if (passive > 0 && !this.reverse.active && this.passive && !fx.regenOff) p.heal(passive);
   }
 
   /** REG-05: fechar uma rodada devolve uma fatia da vida máxima, com o "+N" sobre o player. */
