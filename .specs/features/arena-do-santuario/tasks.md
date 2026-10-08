@@ -51,7 +51,7 @@ Base: 2788 testes unitários em `e658c64`.
 ### Phase 1: Santuário próprio
 
 ```
-T1 → T2 → T3 → T4 → T5
+T1 → T2 → T10 → T3 → T4 → T5
 ```
 
 ### Phase 2: Reação ao chefe
@@ -109,11 +109,30 @@ T8 → T9
 
 ---
 
+### T10: Conversão de camada pelo centro do canvas
+
+**What**: `toLayerX` e `layerBands` usam a meia largura do canvas (`SCREEN.w / 2`), que é o centro do zoom do Phaser, no lugar da meia vista de 320 px; os testes passam a derivar o valor do modelo de câmera. Defeito herdado da F18, achado na captura da arena (o santuário caiu para a esquerda; faixas de tema e pilares das emendas ficavam deslocados).
+**Where**: `src/game/art/scenery/layers.ts`
+**Depends on**: T2
+**Reuses**: `SCREEN`
+**Requirement**: ARN-03
+
+**Done when**:
+
+- [x] Teste: o ponto convertido cai no centro da tela pelo modelo de câmera, em HD (640, zoom 2) e na versão antiga (480, zoom 1,5)
+- [x] Gate verde e smokes `world-` verdes
+
+**Tests**: unit
+**Gate**: full
+**Commit**: `fix(art): convert world x to layer x around the canvas center`
+
+---
+
 ### T3: Santuário na camada média, por arquétipo
 
 **What**: `LayerArea.variant`; pintor médio do santuário com escadaria de pedra, torii grande, telhado do santuário e a árvore sagrada com `shimenawa`; `oni` ganha o torii rachado com correntes, `tecela` ganha fios e casulos pendurados.
 **Where**: `src/game/art/scenery/santuario.ts`
-**Depends on**: T2
+**Depends on**: T10
 **Reuses**: `Brush`, `paint.ts`
 **Requirement**: ARN-03, ARN-04
 
