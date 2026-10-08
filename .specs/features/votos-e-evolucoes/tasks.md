@@ -315,8 +315,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Captura olhada
-- [ ] Gate verde
+- [x] Captura olhada
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full

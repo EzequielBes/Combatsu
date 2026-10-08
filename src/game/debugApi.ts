@@ -329,7 +329,7 @@ export interface GameSnapshot {
   /** Janela e zona do Kokusen (KOK-01/02/10/11/30/31), lidas do estado vivo. */
   kokusen: { zone: boolean; zoneMs: number; streak: number; windowOpen: boolean };
   /** Orbes vivos (RED-14, BLU-*); placeholder `[]` até a Fase 5 criar orbes de verdade. */
-  techObjects: { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[];
+  techObjects: { id: number; kind: 'red' | 'blue' | 'purple'; x: number; y: number; traveled: number }[];
   /** Camadas de efeito de técnica vivas (TFX-*), lidas do `FxTimeline`/`FxRegistry` da cena. */
   fx: {
     live: number;

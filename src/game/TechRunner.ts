@@ -11,6 +11,7 @@ import type { Player } from './Player';
 import { BlueTech } from './tech/blue';
 import { CutTech } from './tech/cut';
 import { DivergentTech } from './tech/divergent';
+import { PurpleTech } from './tech/purple';
 import { RedTech } from './tech/red';
 import type { CastRef, TechContext, TechTarget } from './tech/shared';
 import type { RedOrbFx } from './techFx/RedOrb';
@@ -28,6 +29,7 @@ export class TechRunner {
   private readonly red: RedTech;
   private readonly blue: BlueTech;
   private readonly cut: CutTech;
+  private readonly purple: PurpleTech;
   private frameEvents: string[] = [];
   /** Contador de conjurações iniciadas (MST-02): cada `techCast:<id>` ganha um `castId` novo. */
   private castSeq = 0;
@@ -68,6 +70,7 @@ export class TechRunner {
     this.red = new RedTech(ctx, fx, registry, uiLayer);
     this.blue = new BlueTech(ctx, fx, registry, terrain);
     this.cut = new CutTech(ctx, fx, registry);
+    this.purple = new PurpleTech(ctx, fx, registry);
   }
 
   /** Eventos deste frame (`divergent2`, `kokusen`, `kokusenMiss`, `redDetonate`). */
@@ -86,8 +89,8 @@ export class TechRunner {
   }
 
   /** `techObjects` do snapshot (RED-14, BLU-10): os orbes vivos agora. */
-  get techObjectsSnapshot(): { id: number; kind: 'red' | 'blue'; x: number; y: number; traveled: number }[] {
-    return [this.red.snapshot, this.blue.snapshot].filter((orb) => orb !== null);
+  get techObjectsSnapshot(): { id: number; kind: 'red' | 'blue' | 'purple'; x: number; y: number; traveled: number }[] {
+    return [this.red.snapshot, this.blue.snapshot, this.purple.snapshot].filter((orb) => orb !== null);
   }
 
   update(
@@ -106,5 +109,6 @@ export class TechRunner {
     this.red.update(dtMs, cast, castEvents, enemies);
     this.blue.update(dtMs, castEvents, enemies, boss);
     this.cut.update(dtMs, castEvents, enemies, boss);
+    this.purple.update(dtMs, cast, castEvents, enemies, boss);
   }
 }
