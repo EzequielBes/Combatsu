@@ -13,7 +13,7 @@ import { PLAYER_ORIGIN } from '../art/sprites/player';
 import { RIG_ON, RIG_TALL_ORIGIN, rigMoveFrame } from '../art/rig/flag';
 import { HD_ON } from '../art/hd/flag';
 import { HD_ORIGIN, hdHasAnim, hdHasFrame, hdHasMove, hdHeldName, hdMoveFrame, playerHdAnimKey } from '../art/hd/sheet';
-import { PLAYER_MOVE, PROP_SWING } from '../../data/tuning';
+import { PLAYER_MOVE, PROP_SWING_COMBO } from '../../data/tuning';
 import { SIZE, TEX } from '../textures';
 import type { Player } from '../Player';
 
@@ -136,8 +136,10 @@ export class PlayerAnimator {
    */
   private propSwingFrame(phase: AttackPhase): string | undefined {
     if (!HD_ON) return undefined;
-    const move = hdHeldName('swing', this.heavyHeld(), hdHasMove);
-    return hdMoveFrame(move, phase, this.phaseMs(`prop:${phase}`), PROP_SWING);
+    // Cada golpe do combo com objeto tem a própria sequência: `swing`, `swing-2`, `swing-3`.
+    const step = Math.max(0, this.p.propSwing.currentIndex);
+    const move = hdHeldName(step === 0 ? 'swing' : `swing-${step + 1}`, this.heavyHeld(), hdHasMove);
+    return hdMoveFrame(move, phase, this.phaseMs(`prop:${step}:${phase}`), PROP_SWING_COMBO[step]);
   }
 
   /** Toca uma animação, na folha HD quando ela tem todos os quadros dela (`?hd=1`). */

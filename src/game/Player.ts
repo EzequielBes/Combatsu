@@ -13,7 +13,7 @@ import { initialMoveState, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
 import type { MoveDef } from '../data/moves';
 import { PLAYER_STRUCTURE, Structure } from '../core/structure';
-import { PLAYER_HEALTH, PROP_SWING } from '../data/tuning';
+import { COMBO_WINDOW_MS, PLAYER_HEALTH, PROP_SWING_COMBO } from '../data/tuning';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import type { Fx } from './fx';
 import type { InputSnapshot } from './input';
@@ -95,7 +95,7 @@ export class Player implements Hittable {
   shoveLockMs = 0;
   /** Tempo (ms) que a pose do finalizador segue na tela. */
   poseMs = 0;
-  readonly propSwing = new ComboTracker([PROP_SWING], 0);
+  readonly propSwing = new ComboTracker(PROP_SWING_COMBO, COMBO_WINDOW_MS);
   readonly hitbox: AttackHitbox;
   held: Prop | null = null;
   throwPoseMs = 0;
