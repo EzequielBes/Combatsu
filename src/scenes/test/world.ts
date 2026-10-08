@@ -6,6 +6,11 @@ import { AREA } from '../../data/tuning';
 import type { AreaSpan } from '../../core/stage';
 import { PROP_DEFS } from '../../data/props';
 import { buildBackground } from '../../game/art/background';
+import { Brush, clipX } from '../../game/art/scenery/brush';
+import { decorSlots } from '../../game/art/scenery/decor';
+import { paintDecor } from '../../game/art/scenery/decorArt';
+import { paintFront } from '../../game/art/scenery/frontArt';
+import { layerBands, toLayerX } from '../../game/art/scenery/layers';
 import { PALETTE } from '../../game/art/palette';
 import { tileFrameFor } from '../../game/art/tiles';
 import { terrainSheetFor } from '../../game/art/tilesThemes';
@@ -13,9 +18,16 @@ import { tagBody } from '../../game/bodyTags';
 import { Prop } from '../../game/Prop';
 import { TEX } from '../../game/textures';
 import type { TestScene } from '../TestScene';
+import { debugParam } from './params';
 
 /** Chave da folha do talismã do selo (THM-03); sem ela o selo é um retângulo da paleta (ARE-11). */
 export const SEAL_SHEET = TEX.seal;
+
+/** Primeiro plano (CEN-11): rola 1,15 na horizontal e 1 na vertical, na frente dos atores. */
+export const FRONT_SCROLL = { x: 1.15, y: 1 } as const;
+const FRONT_DEPTH = 50;
+/** Decoração (CEN-13): atrás dos atores e do terreno (0) e na frente da camada próxima do fundo (−10). */
+const DECOR_DEPTH = -5;
 
 /** Quantas faíscas amaldiçoadas sobem do selo quando ele rompe (TRV-03). */
 const SEAL_SPARKS = 10;
@@ -35,6 +47,9 @@ export class WorldBuilder {
   private sealRect: Rect | null = null;
   private sparks: Phaser.GameObjects.Image[] = [];
   private spans: readonly AreaSpan[] = [];
+  private decor: Phaser.GameObjects.Graphics | null = null;
+  private front: Phaser.GameObjects.Graphics | null = null;
+  private decorCount = 0;
 
   /** Selo ainda fechado (corpo sólido na área); `false` na sala, na konbini e depois de `openSeal`. */
   get sealed(): boolean {
@@ -89,6 +104,8 @@ export class WorldBuilder {
     for (const r of level.solids) this.staticBodies.push(this.addTerrainBody(r));
     this.buildSeal(level.seal);
     this.background = buildBackground(this.s, level.widthPx, level.heightPx, spans);
+    // `?debug&decor=0` desliga decoração e primeiro plano (o smoke compara os corpos do Matter com e sem eles).
+    if (spans.length > 0 && debugParam('decor') !== '0') this.buildScenery(spans, level);
     this.buildProps(level);
   }
 
@@ -97,6 +114,8 @@ export class WorldBuilder {
     const s = this.s;
     for (const img of this.tiles) img.destroy();
     for (const g of this.background) g.destroy();
+    this.decor?.destroy();
+    this.front?.destroy();
     for (const body of this.staticBodies) s.matter.world.remove(body);
     this.removeSeal();
     this.clearSparks();
@@ -141,6 +160,42 @@ export class WorldBuilder {
     this.sealRect = null;
     this.sparks = [];
     this.spans = [];
+    this.decor = null;
+    this.front = null;
+    this.decorCount = 0;
+  }
+
+  /** Peças de decoração desenhadas na área (CEN-13); 0 na sala. */
+  get decorPieces(): number {
+    return this.decorCount;
+  }
+
+  /** Rolagem do primeiro plano como está no objeto (CEN-11); `null` sem primeiro plano (a sala). */
+  get frontScroll(): { sx: number; sy: number } | null {
+    return this.front ? { sx: this.front.scrollFactorX, sy: this.front.scrollFactorY } : null;
+  }
+
+  /**
+   * Decoração sem colisão (CEN-13, CEN-14) numa `Graphics` só, no mundo, e o primeiro plano (CEN-11, CEN-12) com a
+   * rolagem `FRONT_SCROLL`, só abaixo do topo do piso. Nenhum dos dois cria corpo do Matter.
+   */
+  private buildScenery(spans: readonly AreaSpan[], level: LevelData): void {
+    const floorTop = FLOOR_ROWS[0] * TILE;
+    this.decor = this.s.add.graphics().setDepth(DECOR_DEPTH);
+    const brush = new Brush(this.decor);
+    this.decorCount = decorSlots(spans).filter((slot, i) => paintDecor(brush, slot.theme, slot.x, floorTop, i)).length;
+    this.front = this.s.add.graphics().setScrollFactor(FRONT_SCROLL.x, FRONT_SCROLL.y).setDepth(FRONT_DEPTH);
+    const f = FRONT_SCROLL.x;
+    const bands = layerBands(spans, toLayerX(-128, f), toLayerX(level.widthPx + 128, f), f);
+    for (const band of bands) {
+      paintFront(new Brush(clipX(this.front, band.x0, band.x1)), band.theme, {
+        x0: band.x0,
+        x1: band.x1,
+        floorTop,
+        // A tela mostra o mundo até a altura da área: a peça nasce 8 px abaixo e cresce para dentro da tela.
+        bottom: level.heightPx + 8,
+      });
+    }
   }
 
   private buildTiles(rows: readonly string[], spans: readonly AreaSpan[]): void {

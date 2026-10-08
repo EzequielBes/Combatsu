@@ -59,7 +59,7 @@ describe('arte da decoração (CEN-13)', () => {
 
   it('tema sem peça (santuário) não pinta nada e não lança erro', () => {
     const sink = new RasterSink();
-    expect(() => paintDecor(new Brush(sink), 'santuario', 200, 480)).not.toThrow();
+    expect(paintDecor(new Brush(sink), 'santuario', 200, 480)).toBe(false);
     expect(sink.texels.size).toBe(0);
   });
 });

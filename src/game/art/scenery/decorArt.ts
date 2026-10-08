@@ -86,9 +86,13 @@ export const DECOR_ART: Partial<Record<ModuleTheme, readonly DecorPainter[]>> = 
   konbini: [baskets],
 };
 
-/** Pinta a peça do tema em `cx` (a `index`-ésima do trecho escolhe entre as peças do tema); sem peça, nada. */
-export function paintDecor(b: Brush, theme: ModuleTheme, cx: number, floor: number, index = 0): void {
+/**
+ * Pinta a peça do tema em `cx` (a `index`-ésima do trecho escolhe entre as peças do tema) e devolve `true`; sem peça
+ * para o tema, não pinta nada e devolve `false`.
+ */
+export function paintDecor(b: Brush, theme: ModuleTheme, cx: number, floor: number, index = 0): boolean {
   const pieces = DECOR_ART[theme];
-  if (!pieces || pieces.length === 0) return;
+  if (!pieces || pieces.length === 0) return false;
   pieces[index % pieces.length](b, cx, floor);
+  return true;
 }

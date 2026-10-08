@@ -66,7 +66,7 @@ export function buildBackground(
 
 /**
  * Pinta uma camada faixa a faixa com o pintor do tema de cada uma (`theme: null` é a escola da sala), recortado na
- * faixa (CEN-07), e cobre cada emenda com um pilar de pedra (CEN-02).
+ * faixa (CEN-07); na camada próxima, cobre cada emenda com um pilar de pedra (CEN-02).
  */
 export function paintBands(
   sink: PaintSink,
@@ -78,6 +78,8 @@ export function paintBands(
     const scenery = band.theme === null ? SCHOOL_SCENERY : THEME_SCENERY[band.theme];
     scenery[which](new Brush(clipX(sink, band.x0, band.x1)), { x0: band.x0, x1: band.x1, ground, bottom });
   }
+  // Só a camada próxima cobre a emenda: na média, um pilar de pedra entre prédios destoa.
+  if (which !== 'near') return;
   const brush = new Brush(sink);
   for (const x of seams(bands)) stonePillar(brush, x, ground, bottom);
 }

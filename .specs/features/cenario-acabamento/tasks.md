@@ -214,7 +214,7 @@ T19
 
 ### T8: Pilar na emenda dos módulos
 
-**What**: `buildBackground` desenha um pilar de 20 px centrado em cada `seam` das camadas média e próxima.
+**What**: `buildBackground` desenha um pilar de 20 px centrado em cada `seam` da camada próxima (a média ficou sem pilar depois da captura da T17).
 **Where**: `src/game/art/background.ts`
 **Depends on**: T7
 **Reuses**: `seams`, pilar de `school.ts`
@@ -394,8 +394,8 @@ T19
 
 **Done when**:
 
-- [ ] Fica fora da sala de teste
-- [ ] Gate verde
+- [x] Fica fora da sala de teste
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full

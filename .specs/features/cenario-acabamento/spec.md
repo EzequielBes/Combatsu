@@ -36,7 +36,7 @@ arena do chefe, o texto "Rodada 5" some sobre o selo (texto creme sem contorno s
 | "Paredes verdes" do pedido | São a faixa próxima chapada do `parque` (C1 do plano) | Única área verde de parede na tela nas capturas; o usuário mandou seguir o fluxo sem responder | n |
 | Medida de "muro chapado" | Toda janela de 32x32 px na faixa do muro próximo (de 76 px acima da linha do chão da camada até 20 px abaixo dela: o piso só cobre a camada próxima 30 px abaixo da linha) tem pelo menos 3 cores da paleta; na camada média, toda janela de 32x32 px com algo pintado entre 60 e 20 px acima do chão tem pelo menos 2 cores | Mede o defeito de forma objetiva e não pode ser burlada fatiando o retângulo |  y |
 | Borda esquerda | A coluna 0, nas linhas acima do chão, usa a folha neutra `terrain` (pedra da escola) em todos os temas | Muro de contenção igual em toda área; não precisa de folha nova | y |
-| Emenda entre módulos | Um pilar de 20 px de largura centrado na fronteira, nas camadas média e próxima | O pilar já existe no desenho e esconde o corte | y |
+| Emenda entre módulos | Um pilar de 20 px de largura centrado na fronteira, só na camada próxima (na média, entre prédios, o pilar destoou na captura de 08/10) | O pilar já existe no desenho e esconde o corte | y |
 | Primeiro plano | Camada com `scrollFactor` 1,15 na horizontal e 1 na vertical, desenhada só abaixo do topo do chão | Dá profundidade sem cobrir o corpo dos lutadores | y |
 | Decoração sem colisão | Desenhada no mundo (`scrollFactor` 1) atrás dos atores; posição sorteada por hash da coluna e do tema (determinística, sem consumir o `Rng` da run) | Não muda o sorteio por seed nem os testes de `stage` | y |
 | Cores novas | Até 4 chaves novas na `PALETTE` (tijolo, concreto, folhagem, letreiro), se o desenho pedir | A paleta tem só um verde e nenhum tijolo; cor nova passa pelo teste de paleta | y |
@@ -128,10 +128,10 @@ habitado.
 | CEN-08 | P2: Horizonte por tema | Execute | Implementing |
 | CEN-09 | P2: Horizonte por tema | Execute | Implementing |
 | CEN-10 | P2: Horizonte por tema | Execute | Implementing |
-| CEN-11 | P3: Profundidade e decoração | Tasks | Pending |
+| CEN-11 | P3: Profundidade e decoração | Execute | Implementing |
 | CEN-12 | P3: Profundidade e decoração | Execute | Implementing |
-| CEN-13 | P3: Profundidade e decoração | Tasks | Pending |
-| CEN-14 | P3: Profundidade e decoração | Tasks | Pending |
+| CEN-13 | P3: Profundidade e decoração | Execute | Implementing |
+| CEN-14 | P3: Profundidade e decoração | Execute | Implementing |
 | CEN-15 | P3: Profundidade e decoração | Execute | Implementing |
 
 **Coverage:** 15 total, 15 mapped to tasks, 0 unmapped.

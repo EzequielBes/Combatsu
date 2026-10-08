@@ -8,7 +8,7 @@ import { RasterSink } from './sceneryRaster';
 const AREA = { ground: 450, bottom: 500 };
 
 describe('pilar na emenda dos módulos (CEN-02)', () => {
-  it.each(['near', 'mid'] as const)('camada %s: pilar de 20 px centrado em cada fronteira', (which) => {
+  it.each(['near'] as const)('camada %s: pilar de 20 px centrado em cada fronteira', (which) => {
     const sink = new RasterSink();
     const bands = [
       { x0: 0, x1: 400, theme: 'beco' as const },

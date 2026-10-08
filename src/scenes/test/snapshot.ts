@@ -28,6 +28,8 @@ export class DebugSnapshot {
       sheets: this.s.world.floorSheets(),
       bands: this.s.world.nearBands(),
       midBands: this.s.world.midBands(),
+      decor: this.s.world.decorPieces,
+      front: this.s.world.frontScroll,
       seal: this.s.world.sealView,
       transitioning: area.transitioning,
       fade: { running: fade.isRunning, out: fade.direction, alpha: fade.direction ? fade.progress : 1 - fade.progress },

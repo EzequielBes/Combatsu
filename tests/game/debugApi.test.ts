@@ -103,6 +103,8 @@ describe('installDebugApi', () => {
         sheets: [],
         bands: [],
         midBands: [],
+        decor: 0,
+        front: null,
         seal: null,
         transitioning: false,
         fade: { running: false, out: true, alpha: 0 },
