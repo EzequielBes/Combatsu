@@ -1,5 +1,6 @@
 import type { ModuleTheme } from '../../../core/module';
 import { BECO_SCENERY } from './beco';
+import { KONBINI_SCENERY } from './konbini';
 import { PARQUE_SCENERY } from './parque';
 import { RUA_SCENERY } from './rua';
 import { schoolMid, schoolNear, type NearColors } from './school';
@@ -22,7 +23,7 @@ export const THEME_SCENERY: Record<ModuleTheme, ThemeScenery> = {
   rua: RUA_SCENERY,
   beco: BECO_SCENERY,
   parque: PARQUE_SCENERY,
-  konbini: { mid: schoolMid, near: schoolNear(NEAR_COLORS.konbini) },
+  konbini: KONBINI_SCENERY,
   santuario: { mid: schoolMid, near: schoolNear(NEAR_COLORS.santuario) },
 };
 

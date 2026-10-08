@@ -299,8 +299,8 @@ T19
 
 **Done when**:
 
-- [ ] Mesmos testes da T9 para a `konbini`; as quatro médias são distintas entre si
-- [ ] Gate verde
+- [x] Mesmos testes da T9 para a `konbini`; as quatro médias são distintas entre si
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
