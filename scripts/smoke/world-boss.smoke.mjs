@@ -55,6 +55,12 @@ export default async function ({ page, baseUrl, assert }) {
     s.area.leftSeal && s.area.leftSeal.frame === 'seal' && s.area.leftSeal.alpha === 1,
     `ARN-07: selo da esquerda na luta: ${JSON.stringify(s.area.leftSeal)}`,
   );
+  // ARN-07: o selo da esquerda cobre a coluna 0, das linhas 0 a 14 (de y 0 até o topo do chão em 15 × 32).
+  const ls = s.area.leftSeal;
+  assert(
+    ls.left === 0 && ls.width === TILE && ls.top === 0 && ls.height === 15 * TILE,
+    `ARN-07: lugar do selo da esquerda: ${JSON.stringify(ls)}`,
+  );
   // ARN-09/10: o véu vermelho existe, preso à câmera na profundidade −7, apagado na fase 1.
   const RED = 0xb3314f;
   assert(

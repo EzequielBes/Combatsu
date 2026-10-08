@@ -297,8 +297,8 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Teste do módulo e smoke conferem os valores da spec
-- [ ] Gate verde e smoke `world-boss` verde
+- [x] Teste do módulo e smoke conferem os valores da spec
+- [x] Gate verde e smoke `world-boss` verde
 
 **Tests**: smoke
 **Gate**: full

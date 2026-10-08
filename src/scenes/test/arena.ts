@@ -84,9 +84,26 @@ export class ArenaDressing {
   }
 
   /** Selo da esquerda como está desenhado (ARN-07, ARN-08); `null` fora da arena ou depois do efeito. */
-  get leftSealView(): { texture: string; frame: string; alpha: number } | null {
+  get leftSealView(): {
+    texture: string;
+    frame: string;
+    alpha: number;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null {
     const seal = this.leftSeal;
-    return seal ? { texture: seal.texture.key, frame: String(seal.frame.name), alpha: seal.alpha } : null;
+    if (!seal) return null;
+    return {
+      texture: seal.texture.key,
+      frame: String(seal.frame.name),
+      alpha: seal.alpha,
+      left: seal.x - seal.width * seal.originX,
+      top: seal.y - seal.height * seal.originY,
+      width: seal.width,
+      height: seal.height,
+    };
   }
 
   /** Véu vermelho lido do objeto (ARN-09..11); `null` fora da arena. */

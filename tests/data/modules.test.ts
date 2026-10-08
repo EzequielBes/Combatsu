@@ -35,6 +35,14 @@ describe('catálogo de módulos (MDL-10, THM-01)', () => {
     });
   }
 
+  it('o santuário tem exatamente dois slots de objeto p (ARN-12)', () => {
+    const slots = MODULES.santuario.grid
+      .join('')
+      .split('')
+      .filter((ch) => ch === 'p').length;
+    expect(slots).toBe(2);
+  });
+
   it('todo módulo de combate e o santuário têm um E a até 4 colunas de cada borda', () => {
     for (const id of [...COMBAT_IDS, 'santuario']) {
       const row = MODULES[id].grid[14];
