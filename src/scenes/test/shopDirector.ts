@@ -2,6 +2,8 @@ import { Shop, type BuyContext } from '../../core/shop';
 import { GAME_SHOP_CATALOG } from '../../data/shop';
 import { TECHNIQUES, type TechId } from '../../data/techniques';
 import { VOWS } from '../../data/vows';
+import { RECIPES } from '../../data/evolutions';
+import { evolve } from '../../core/evolution';
 import { isBossRound } from '../../core/waves';
 import { SHOP } from '../../data/tuning';
 import { type GameSnapshot } from '../../game/debugApi';
@@ -58,6 +60,15 @@ export class ShopDirector {
       },
       applyPerk: (id) => this.s.build.perks.add(id),
       applyArsenal: (id) => this.s.arsenal.buy(id),
+      // EVO-03: funde as técnicas da receita; o slot da técnica nova recomeça a maestria.
+      applyEvolution: (id) => {
+        const recipe = RECIPES.find((r) => r.into === id);
+        if (!recipe || !evolve(recipe, this.s.loadout)) return;
+        const slot = this.s.loadout.slotsView[0]?.id === id ? 0 : 1;
+        this.s.mastery.resetSlot(slot);
+        this.s.mastery.resetSlot(slot === 0 ? 1 : 0);
+        this.s.snapshot.debugEvents.push(`evolve:${id}`);
+      },
     };
     if (input.buySlot !== null) this.resolveBuy(shop, input.buySlot, ctx);
     else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);

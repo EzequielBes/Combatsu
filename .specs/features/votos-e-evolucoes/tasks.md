@@ -257,8 +257,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Testes da elegibilidade, do preço, da venda única e do edge case
-- [ ] Gate verde
+- [x] Testes da elegibilidade, do preço, da venda única e do edge case
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

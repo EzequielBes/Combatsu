@@ -9,6 +9,8 @@ import { ARSENAL, type ArsenalId } from '../data/arsenal';
 import { BUILD_NAMES, PERKS, type PerkId } from '../data/perks';
 import { SHOP } from '../data/tuning';
 import { LEVEL_FACTOR, type TechId } from '../data/techniques';
+import { RECIPES, type Recipe } from '../data/evolutions';
+import { recipeReady } from './evolution';
 import type { ModifierId, ShopEntry, ShopEntryId } from '../data/shop';
 
 /** Peso de sorteio de `entry` pela raridade (SHOP-08): comum 3, raro 1. */
@@ -16,8 +18,19 @@ function weightOf(entry: ShopEntry): number {
   return entry.rarity === 'common' ? SHOP.weights.common : SHOP.weights.rare;
 }
 
+/** Receita da evolução que vende `id` (EVO-01). */
+const recipeOf = (id: ShopEntryId): Recipe | undefined => RECIPES.find((r) => r.into === id);
+
+/** EVO-01/02/04: a evolução entra com a receita pronta e ainda não feita (equipada, ela já saiu da receita). */
+function evolutionEligible(entry: ShopEntry, loadout: Loadout): boolean {
+  const recipe = recipeOf(entry.id);
+  return !!recipe && loadout.levelOf(recipe.into) === 0 && recipeReady(recipe, loadout);
+}
+
 /** Técnica no pool (TSH-03, TSH-04). */
 function techniqueEligible(entry: ShopEntry, loadout: Loadout, round: number): boolean {
+  // Edge case da F24: com a evolução equipada, as técnicas da receita não voltam à loja.
+  if (RECIPES.some((r) => r.from.includes(entry.id as TechId) && loadout.levelOf(r.into) > 0)) return false;
   const level = loadout.levelOf(entry.id as TechId);
   // TSH-04: equipada entra se abaixo do nível máximo e a rodada mínima do próximo nível já passou.
   if (level > 0) return level < entry.maxLevel && entry.minRound(level + 1) <= round;
@@ -46,14 +59,18 @@ export function eligible(
     if (entry.id in ARSENAL) return !!arsenal && arsenalEligible(entry.id as ArsenalId, arsenal, round);
     if (entry.kind === 'perk') return !!perks && !perks.has(entry.id as PerkId) && entry.minRound(1) <= round;
     if (entry.kind === 'technique') return !!loadout && techniqueEligible(entry, loadout, round);
-    if (entry.id === 'energia' || entry.id === 'fluxo') {
-      // TSH-09: energia/fluxo só entram no pool com ao menos uma técnica equipada.
-      if (!loadout || !loadout.hasAny()) return false;
-    }
-    const level = modifiers.level(entry.id as ModifierId);
-    if (level >= entry.maxLevel) return false;
-    return entry.minRound(level + 1) <= round;
+    if (entry.kind === 'evolution') return !!loadout && evolutionEligible(entry, loadout);
+    return modifierEligible(entry, modifiers, round, loadout);
   });
+}
+
+/** Modificador no pool (SHOP-07, SHOP-18, TSH-09): abaixo do teto e com a rodada mínima do próximo nível já passada. */
+function modifierEligible(entry: ShopEntry, modifiers: Modifiers, round: number, loadout?: Loadout): boolean {
+  // TSH-09: energia/fluxo só entram no pool com ao menos uma técnica equipada.
+  if ((entry.id === 'energia' || entry.id === 'fluxo') && (!loadout || !loadout.hasAny())) return false;
+  const level = modifiers.level(entry.id as ModifierId);
+  if (level >= entry.maxLevel) return false;
+  return entry.minRound(level + 1) <= round;
 }
 
 /**
@@ -123,6 +140,7 @@ export function previewText(
     return `Vida ${hp} → ${after}`;
   }
   if (entry.kind === 'perk') return PERKS[entry.id as PerkId].effect;
+  if (entry.kind === 'evolution') return 'Funde as duas técnicas (Nv 3) numa só';
   if (entry.kind === 'technique') return techniquePreview(entry.id as TechId, loadout);
   const level = modifiers.level(entry.id as ModifierId);
   switch (entry.id as ModifierId) {
@@ -187,11 +205,14 @@ export interface BuyContext {
   applyPerk?: (id: PerkId) => void;
   /** ARS-02: equipa/sobe a relíquia ou a arma, ou reserva a ferramenta; opcional para quem monta a loja sem arsenal. */
   applyArsenal?: (id: ArsenalId) => void;
+  /** EVO-03: funde as técnicas da receita que vende `id`; opcional para quem monta a loja sem evolução. */
+  applyEvolution?: (id: TechId) => void;
 }
 
 /** Custo de `entry`, unificando modificadores (F4, por `Modifiers`) e técnicas (F5, por nível no `loadout`). */
 function costOf(entry: ShopEntry, modifiers: Modifiers, loadout?: Loadout, arsenal?: Arsenal): number {
   if (arsenal && entry.id in ARSENAL) return arsenalCost(entry.id as ArsenalId, arsenal); // ARS-04
+  if (entry.kind === 'evolution') return entry.cost.base; // EVO-04
   if (entry.kind === 'technique') {
     const level = loadout?.levelOf(entry.id as TechId) ?? 0;
     return entry.cost.base + entry.cost.step * level; // TSH-02
@@ -216,6 +237,16 @@ const EMPTY_OFFER_VIEW = (slot: number): OfferView => ({
   affordable: false,
   rarity: null,
 });
+
+/** Aplica a carta comprada pelo callback do tipo dela (design "Error Handling Strategy"). */
+function applyEntry(entry: ShopEntry, ctx: BuyContext): void {
+  if (entry.kind === 'modifier') ctx.applyModifier(entry.id as ModifierId);
+  else if (entry.kind === 'technique') ctx.applyTechnique(entry.id as TechId);
+  else if (entry.kind === 'perk') ctx.applyPerk?.(entry.id as PerkId);
+  else if (entry.kind === 'evolution') ctx.applyEvolution?.(entry.id as TechId);
+  else if (entry.id in ARSENAL) ctx.applyArsenal?.(entry.id as ArsenalId);
+  else if (entry.kind === 'consumable') ctx.healPlayer(SHOP.curaHp);
+}
 
 /**
  * Uma loja aberta (SHOP-01, SHOP-06): sorteia as ofertas na criação, vende cada carta no máximo uma vez, e
@@ -257,7 +288,13 @@ export class Shop {
     const weight = this.weightFn();
     const slots: (Offer | null)[] = [];
     let rest = pool;
-    if (this.loadout && !this.loadout.hasAny()) {
+    // EVO-01: a evolução pronta sempre aparece (slot 0), antes de qualquer outra regra de reserva.
+    const evolution = pool.find((e) => e.kind === 'evolution');
+    if (evolution) {
+      // Com a evolução no slot 0, os outros dois slots vêm do sorteio normal.
+      slots.push({ id: evolution.id, entry: evolution });
+      rest = pool.filter((e) => e !== evolution);
+    } else if (this.loadout && !this.loadout.hasAny()) {
       const techPool = pool.filter((e) => e.kind === 'technique');
       const [guaranteed] = drawOffers(techPool, this.rng, 1, weight);
       if (guaranteed) {
@@ -302,11 +339,7 @@ export class Shop {
     const cost = costOf(offer.entry, this.modifiers, this.loadout, this.arsenal);
     if (!ctx.wallet.spend(cost)) return { ok: false, reason: 'funds' };
     this.sold.add(slot);
-    if (offer.entry.kind === 'modifier') ctx.applyModifier(offer.entry.id as ModifierId);
-    else if (offer.entry.kind === 'technique') ctx.applyTechnique(offer.entry.id as TechId);
-    else if (offer.entry.kind === 'perk') ctx.applyPerk?.(offer.entry.id as PerkId);
-    else if (offer.entry.id in ARSENAL) ctx.applyArsenal?.(offer.entry.id as ArsenalId);
-    else if (offer.entry.kind === 'consumable') ctx.healPlayer(SHOP.curaHp);
+    applyEntry(offer.entry, ctx);
     return { ok: true, id: offer.entry.id, cost };
   }
 

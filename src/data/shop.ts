@@ -1,12 +1,14 @@
 import { ARSENAL, ARSENAL_IDS, ARSENAL_TUNING, type ArsenalId } from './arsenal';
 import { PERK, PERK_IDS, PERKS, type PerkId } from './perks';
+import { RECIPES } from './evolutions';
 import type { TechId } from './techniques';
 
 /**
  * Catálogo da loja (SHOP-06..09, SHOP-18, MOD-03, MOD-09): dirigido por dados para a F5 acrescentar um `kind`
  * novo (técnicas, upgrades de energia) sem mudar a lógica de elegibilidade, sorteio ou compra.
  */
-export type ShopEntryKind = 'modifier' | 'consumable' | 'technique' | 'perk' | 'relic' | 'weapon' | 'tool';
+export type ShopEntryKind =
+  'modifier' | 'consumable' | 'technique' | 'perk' | 'relic' | 'weapon' | 'tool' | 'evolution';
 /** Os 5 modificadores da F4 (loja-da-run). */
 export type CoreModifierId = 'vida' | 'forca' | 'agilidade' | 'ima' | 'sorte';
 /** Upgrades de energia amaldiçoada da F5 (TSH-08, TSH-15): rastreados à parte dos 5 da F4 em `Modifiers`. */
@@ -227,8 +229,20 @@ export const ARSENAL_SHOP_ENTRIES: readonly ShopEntry[] = ARSENAL_IDS.map((id) =
  * Catálogo que o jogo usa: o da F5 mais as passivas de build e o arsenal. `FULL_SHOP_CATALOG` fica como está porque
  * os testes da F5 sorteiam em cima dele com valores fixos de rng.
  */
+/** Evoluções na loja (EVO-01, EVO-04): raras, sem nível, uma por receita, com o preço da receita. */
+export const EVOLUTION_SHOP_ENTRIES: readonly ShopEntry[] = RECIPES.map((r) => ({
+  id: r.into,
+  kind: 'evolution',
+  rarity: 'rare',
+  name: r.name,
+  maxLevel: 0,
+  cost: { base: r.cost, step: 0 },
+  minRound: () => 1,
+}));
+
 export const GAME_SHOP_CATALOG: readonly ShopEntry[] = [
   ...FULL_SHOP_CATALOG,
   ...PERK_SHOP_ENTRIES,
   ...ARSENAL_SHOP_ENTRIES,
+  ...EVOLUTION_SHOP_ENTRIES,
 ];
