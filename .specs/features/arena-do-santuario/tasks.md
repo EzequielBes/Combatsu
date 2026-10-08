@@ -360,8 +360,8 @@ T14 → T15 → T16
 
 **Done when**:
 
-- [ ] Smoke `world-boss` verde com a medida exibida
-- [ ] Gate verde
+- [x] Smoke `world-boss` verde com a medida exibida
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full

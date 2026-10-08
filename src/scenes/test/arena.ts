@@ -99,10 +99,11 @@ export class ArenaDressing {
       texture: seal.texture.key,
       frame: String(seal.frame.name),
       alpha: seal.alpha,
-      left: seal.x - seal.width * seal.originX,
-      top: seal.y - seal.height * seal.originY,
-      width: seal.width,
-      height: seal.height,
+      // Medida exibida (com a escala), que é o que ocupa a tela; `width`/`height` ignoram `setScale`.
+      left: seal.x - seal.displayWidth * seal.originX,
+      top: seal.y - seal.displayHeight * seal.originY,
+      width: seal.displayWidth,
+      height: seal.displayHeight,
     };
   }
 
