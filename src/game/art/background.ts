@@ -1,8 +1,10 @@
 import type Phaser from 'phaser';
-import { Brush, clipX, rng } from './scenery/brush';
+import type { ModuleTheme } from '../../core/module';
+import { Brush, clipX, rng, type PaintSink } from './scenery/brush';
+import { stonePillar } from './scenery/school';
 import { NEAR_COLORS, SCHOOL_SCENERY, THEME_SCENERY } from './scenery/index';
 import type { LayerArea } from './scenery/types';
-import { layerBands, type ThemeSpan } from './scenery/layers';
+import { layerBands, seams, type ThemeSpan } from './scenery/layers';
 
 export type { ThemeSpan } from './scenery/layers';
 export { NEAR_COLORS } from './scenery/index';
@@ -54,16 +56,30 @@ export function buildBackground(
   paintFar(new Brush(layers[0]), { x0, x1, ground: GROUND[0], bottom });
   for (const layer of [1, 2] as const) {
     const bands = themed ? layerBands(spans, x0, x1, PARALLAX[layer]) : [{ x0, x1, theme: null }];
-    for (const band of bands) {
-      const scenery = band.theme === null ? SCHOOL_SCENERY : THEME_SCENERY[band.theme];
-      const paint = layer === 1 ? scenery.mid : scenery.near;
-      paint(new Brush(clipX(layers[layer], band.x0, band.x1)), { ...band, ground: GROUND[layer], bottom });
-    }
+    paintBands(layers[layer], bands, layer === 1 ? 'mid' : 'near', { ground: GROUND[layer], bottom });
   }
   // As faixas pintadas ficam no objeto, para o snapshot de debug conferir o tema (THM-02, CEN-10).
   layers[2].setData('bands', themed ? bandsFor(spans, x0, x1) : []);
   layers[1].setData('midBands', themed ? layerBands(spans, x0, x1, PARALLAX[1]).map((b) => ({ theme: b.theme })) : []);
   return layers;
+}
+
+/**
+ * Pinta uma camada faixa a faixa com o pintor do tema de cada uma (`theme: null` é a escola da sala), recortado na
+ * faixa (CEN-07), e cobre cada emenda com um pilar de pedra (CEN-02).
+ */
+export function paintBands(
+  sink: PaintSink,
+  bands: readonly { x0: number; x1: number; theme: ModuleTheme | null }[],
+  which: 'mid' | 'near',
+  { ground, bottom }: { ground: number; bottom: number },
+): void {
+  for (const band of bands) {
+    const scenery = band.theme === null ? SCHOOL_SCENERY : THEME_SCENERY[band.theme];
+    scenery[which](new Brush(clipX(sink, band.x0, band.x1)), { x0: band.x0, x1: band.x1, ground, bottom });
+  }
+  const brush = new Brush(sink);
+  for (const x of seams(bands)) stonePillar(brush, x, ground, bottom);
 }
 
 function paintFar(b: Brush, { x0, x1, ground, bottom }: LayerArea): void {

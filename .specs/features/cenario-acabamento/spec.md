@@ -119,7 +119,7 @@ habitado.
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | CEN-01 | P1: Consertos visuais | Tasks | Pending |
-| CEN-02 | P1: Consertos visuais | Tasks | Pending |
+| CEN-02 | P1: Consertos visuais | Execute | Implementing |
 | CEN-03 | P1: Consertos visuais | Execute | Implementing |
 | CEN-04 | P1: Consertos visuais | Execute | Implementing |
 | CEN-05 | P1: Consertos visuais | Execute | Implementing |

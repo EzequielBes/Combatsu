@@ -222,8 +222,8 @@ T19
 
 **Done when**:
 
-- [ ] Teste rasterizado: a coluna da fronteira tem o pilar (cor do pilar nos texels do centro) e uma área de um trecho só não tem pilar extra
-- [ ] Gate verde
+- [x] Teste rasterizado: a coluna da fronteira tem o pilar (cor do pilar nos texels do centro) e uma área de um trecho só não tem pilar extra
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

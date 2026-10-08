@@ -83,16 +83,22 @@ export function schoolNear(colors: NearColors): LayerPainter {
       b.rect(x, railTop - 6, 2, 40, 'K');
       b.dot(x, railTop - 8, 'n');
     }
-    // Pilares de pedra com capitel.
-    for (let x = x0 + 40; x < x1; x += 208) {
-      const top = ground - 110;
-      b.rect(x, top, 20, bottom - top, 'K');
-      b.rect(x + 2, top + 6, 16, ground - top - 42, 'E');
-      b.rect(x + 2, top + 6, 2, ground - top - 42, 'f');
-      b.rect(x - 4, top - 4, 28, 10, 'K');
-      b.rect(x - 4, top - 4, 28, 2, 'f');
-      b.rect(x + 2, top - 10, 16, 6, 'K');
-      b.rect(x + 4, top - 10, 12, 2, 'n');
-    }
+    for (let x = x0 + 40; x < x1; x += 208) stonePillar(b, x + PILLAR_W / 2, ground, bottom);
   };
+}
+
+/** Largura do pilar de pedra (px de mundo); o mesmo pilar cobre a emenda entre dois módulos (CEN-02). */
+export const PILLAR_W = 20;
+
+/** Pilar de pedra com capitel, centrado em `cx`, do capitel (110 px acima do chão da camada) até `bottom`. */
+export function stonePillar(b: Brush, cx: number, ground: number, bottom: number): void {
+  const x = cx - PILLAR_W / 2;
+  const top = ground - 110;
+  b.rect(x, top, 20, bottom - top, 'K');
+  b.rect(x + 2, top + 6, 16, ground - top - 42, 'E');
+  b.rect(x + 2, top + 6, 2, ground - top - 42, 'f');
+  b.rect(x - 4, top - 4, 28, 10, 'K');
+  b.rect(x - 4, top - 4, 28, 2, 'f');
+  b.rect(x + 2, top - 10, 16, 6, 'K');
+  b.rect(x + 4, top - 10, 12, 2, 'n');
 }

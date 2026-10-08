@@ -39,6 +39,6 @@ export function layerBands(spans: readonly ThemeSpan[], x0: number, x1: number, 
 }
 
 /** Fronteiras internas entre faixas vizinhas (CEN-02), na coordenada da camada; vazio com uma faixa só. */
-export function seams(bands: readonly LayerBand[]): number[] {
+export function seams(bands: readonly { x1: number }[]): number[] {
   return bands.slice(0, -1).map((b) => b.x1);
 }
