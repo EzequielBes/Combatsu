@@ -23,7 +23,7 @@ export default async function ({ page, baseUrl, assert }) {
   );
 
   // CEN-05: todo texto do HUD que fica sobre o mundo tem contorno #0b0d1a de 3 px, lido do texto vivo.
-  for (const [name, o] of Object.entries(snap.hud.outlines)) {
+  for (const [name, o] of Object.entries({ ...snap.hud.outlines, ce: snap.hud.ceOutline })) {
     assert(o.stroke === '#0b0d1a' && o.thickness === 3, `CEN-05: contorno do texto ${name}: ${JSON.stringify(o)}`);
   }
 

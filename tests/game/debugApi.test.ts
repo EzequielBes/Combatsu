@@ -124,6 +124,7 @@ describe('installDebugApi', () => {
         heldItem: null,
         combo: { text: null, grade: null, x: 948, ignoredByMain: true },
         controls: '',
+        ceOutline: { stroke: '#0b0d1a', thickness: 3 },
         outlines: {
           hp: { stroke: '#0b0d1a', thickness: 3 },
           fragments: { stroke: '#0b0d1a', thickness: 3 },

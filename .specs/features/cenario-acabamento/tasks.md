@@ -567,3 +567,47 @@ T20 → T21 → T22 → T23
 **Tests**: smoke
 **Gate**: full
 **Commit**: `test(world): tighten the scenery window, per-module decor and body checks`
+
+---
+
+## Phase 7: Consertos do Verifier (rodada 2)
+
+```
+T24 → T25
+```
+
+### T24: Contorno no rótulo CE
+
+**What**: O rótulo `CE` da barra de energia usa o estilo de texto do HUD (contorno `k` de 3 px) e o snapshot expõe `hud.ceOutline`, conferido pelo smoke `hud`.
+**Where**: `src/game/EnergyHud.ts`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: `HUD_TEXT_STYLE`
+**Requirement**: CEN-05
+
+**Done when**:
+
+- [x] Smoke `hud` confere o contorno do `CE` lido do texto vivo
+- [x] Gate verde e smoke `hud` verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `fix(hud): outline the energy label too`
+
+---
+
+### T25: Decoração atrás de inimigos e terreno
+
+**What**: O snapshot expõe a profundidade do terreno e dos inimigos vivos; o `world-scenery` exige que a decoração fique abaixo de todos os atores e do terreno (mutante N3a).
+**Where**: `scripts/smoke/world-scenery.smoke.mjs`
+**Depends on**: T24
+**Reuses**: `layout` do snapshot
+**Requirement**: CEN-13
+
+**Done when**:
+
+- [ ] Smoke confere `decorDepth < min(terreno, inimigos, player)` e `nearDepth < decorDepth`
+- [ ] Gate verde e `npm run smoke -- world-scenery` verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(world): keep the decoration behind every actor and the terrain`
