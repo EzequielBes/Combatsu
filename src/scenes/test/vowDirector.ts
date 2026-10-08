@@ -1,5 +1,6 @@
 import { drawVows, vowEffects, Vows, type VowEffects } from '../../core/vows';
 import { VOWS, type VowId } from '../../data/vows';
+import { MOVES, type MoveDef } from '../../data/moves';
 import type { TestScene } from '../TestScene';
 import { debugParam } from './params';
 
@@ -19,6 +20,23 @@ export class VowDirector {
     this.vows.reset();
     this.offersValue = null;
     for (const id of (debugParam('vows') ?? '').split(',')) if (id in VOWS) this.vows.take(id as VowId);
+  }
+
+  /**
+   * A cada quadro (VOW-12, VOW-13, VOW-15..17): repassa os efeitos aos números que o combate lê. A Fúria muda com os
+   * abates, então isto roda todo quadro, não só ao tomar o voto.
+   */
+  sync(): void {
+    const fx = this.effects;
+    this.s.loadout.vowDamageMul = fx.techDamageMul * fx.damageMul;
+    this.s.loadout.costMul = fx.techCostMul;
+    this.s.player.damageTakenMul = fx.damageTakenMul;
+  }
+
+  /** Multiplicador do golpe corpo a corpo que abre a hitbox (VOW-10..12, VOW-16, VOW-17). */
+  strikeMul(move: MoveDef): number {
+    const fx = this.effects;
+    return fx.damageMul * fx.meleeMul * (move.strength === 'heavy' ? fx.heavyMul : 1);
   }
 
   /** Efeitos dos votos tomados agora, com os abates da rodada atual (Fúria). */
@@ -56,7 +74,19 @@ export class VowDirector {
   }
 
   /** Campo `vows` do snapshot de debug (VOW-09). */
-  snapshot(): { taken: VowId[]; offers: VowId[] | null; effects: VowEffects } {
-    return { taken: this.vows.list, offers: this.offersValue ? [...this.offersValue] : null, effects: this.effects };
+  snapshot(): {
+    taken: VowId[];
+    offers: VowId[] | null;
+    effects: VowEffects;
+    strike: { light: number; heavy: number };
+  } {
+    // L-076: o multiplicador lido da composição da cena (a mesma do `player.damageMul`), não do efeito daqui.
+    const strike = { light: this.s.strikeMul(MOVES.jab, true), heavy: this.s.strikeMul(MOVES.cotovelada, true) };
+    return {
+      taken: this.vows.list,
+      offers: this.offersValue ? [...this.offersValue] : null,
+      effects: this.effects,
+      strike,
+    };
   }
 }

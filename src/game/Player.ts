@@ -82,6 +82,8 @@ export class Player implements Hittable {
   onDefense: ((kind: DefenseKind, point: Vec2) => void) | null = null;
   /** BLD-06: multiplicador de dano do golpe pelas passivas da run; lido quando a hitbox abre. */
   damageMul: ((move: MoveDef) => number) | null = null;
+  /** Multiplicador do dano sofrido pelos votos (VOW-15, VOW-17); 1 sem voto. */
+  damageTakenMul = 1;
   guard = new Guard();
   readonly dodge = new Dodge();
   /** Abaixar (DEF-07): irmão da esquiva, com a recarga dividida com ela (DEF-15). */
@@ -203,8 +205,9 @@ export class Player implements Hittable {
    * Dano cheio (HP-01..04): perde vida, fica invulnerável (piscando) e atordoado, com recuo na direção do golpe.
    * O golpe em andamento é cancelado. Ao zerar, larga o objeto e a tela escurece até o respawn.
    */
-  takeHit(hit: Hit): boolean {
-    const result = this.health.receive(hit.damage);
+  takeHit(hit: Hit, raw = false): boolean {
+    // VOW-15/17: os votos escalam o dano sofrido; `raw` (só a morte do debug) passa direto.
+    const result = this.health.receive(raw ? hit.damage : Math.round(hit.damage * this.damageTakenMul));
     if (result === 'ignored') return false;
     this.strikes.onMove(this.moves.cancel());
     this.heavyHoldMs = -1;
@@ -489,13 +492,16 @@ export class Player implements Hittable {
   }
 
   debugKill(): void {
-    this.takeHit({
-      ownerId: 0,
-      damage: this.health.max,
-      strength: 'heavy',
-      force: 0,
-      direction: { x: this.facing, y: -1 },
-    });
+    this.takeHit(
+      {
+        ownerId: 0,
+        damage: this.health.max,
+        strength: 'heavy',
+        force: 0,
+        direction: { x: this.facing, y: -1 },
+      },
+      true,
+    );
   }
 
   /** FxLab (T28): vira o player para `dir` antes de disparar uma técnica mirada no boneco mais próximo. */

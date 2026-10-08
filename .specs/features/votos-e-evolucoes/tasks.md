@@ -142,9 +142,9 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Teste unitário de `Loadout.cost` com `costMul`
-- [ ] Smoke lê do jogo vivo: dano do golpe forte com Sem guarda, custo da técnica com Fluxo selado, dano sofrido com Pele de pedra
-- [ ] Gate verde e smoke verde
+- [x] Teste unitário de `Loadout.cost` com `costMul`
+- [x] Smoke lê do jogo vivo: dano do golpe forte com Sem guarda, custo da técnica com Fluxo selado, dano sofrido com Pele de pedra
+- [x] Gate verde e smoke verde
 
 **Tests**: smoke
 **Gate**: full

@@ -16,6 +16,10 @@ export class Loadout {
   private cooldowns: [number, number] = [0, 0];
   /** ARS-06: multiplicador de dano de toda técnica (a relíquia Rosário); 1 sem ela. */
   damageMul = 1;
+  /** VOW-10/12/16/17: multiplicador de dano de técnica dos votos, por cima da relíquia; 1 sem voto. */
+  vowDamageMul = 1;
+  /** VOW-13: multiplicador do custo de energia (Fluxo selado); 1 sem voto. */
+  costMul = 1;
 
   get slotsView(): readonly [LoadoutSlot | null, LoadoutSlot | null] {
     return [this.slots[0], this.slots[1]];
@@ -64,13 +68,13 @@ export class Loadout {
   /** Custo de energia para conjurar `id` no nível atual (0 se não equipada trata como nível 1, TEC-14). */
   cost(id: TechId): number {
     const level = this.levelOf(id) || 1;
-    return TECHNIQUES[id].cost - 5 * (level - 1);
+    return Math.round((TECHNIQUES[id].cost - 5 * (level - 1)) * this.costMul);
   }
 
   /** Dano de `base` escalado pelo nível atual de `id` (TEC-06: arredonda meio para cima). */
   damage(id: TechId, base: number): number {
     const level = this.levelOf(id) || 1;
-    return Math.round(base * LEVEL_FACTOR[level - 1] * this.damageMul);
+    return Math.round(base * LEVEL_FACTOR[level - 1] * this.damageMul * this.vowDamageMul);
   }
 
   /** Recarga restante do slot, em ms (CAST-04, CAST-06). */
@@ -101,5 +105,7 @@ export class Loadout {
     this.slots = [null, null];
     this.cooldowns = [0, 0];
     this.damageMul = 1;
+    this.vowDamageMul = 1;
+    this.costMul = 1;
   }
 }

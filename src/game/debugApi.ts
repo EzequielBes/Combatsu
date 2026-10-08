@@ -291,7 +291,13 @@ export interface GameSnapshot {
     tool: string | null;
   };
   /** Votos da run (VOW-09): tomados, ofertas do painel aberto (`null` fechado) e os efeitos agregados. */
-  vows: { taken: string[]; offers: string[] | null; effects: VowEffects };
+  vows: {
+    taken: string[];
+    offers: string[] | null;
+    effects: VowEffects;
+    /** Multiplicador de um jab e de uma cotovelada (forte), lido da composição da cena (VOW-10..12). */
+    strike: { light: number; heavy: number };
+  };
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */

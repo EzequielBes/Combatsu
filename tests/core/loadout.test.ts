@@ -164,3 +164,23 @@ describe('cooldownOf/startCooldown/tick: recarga por slot (CAST-04, CAST-06)', (
     expect(l.cooldownOf(0)).toBe(0); // nunca negativo
   });
 });
+
+describe('votos no loadout (VOW-12, VOW-13)', () => {
+  it('costMul escala o custo de energia e arredonda (Desmantelar 30 × 0,6 = 18)', () => {
+    const lo = new Loadout();
+    lo.equip(0, 'corte', 1);
+    expect(lo.cost('corte')).toBe(30);
+    lo.costMul = 0.6;
+    expect(lo.cost('corte')).toBe(18);
+  });
+
+  it('vowDamageMul multiplica por cima da relíquia, e reset volta tudo a 1', () => {
+    const lo = new Loadout();
+    lo.equip(0, 'corte', 1);
+    lo.damageMul = 1.2;
+    lo.vowDamageMul = 1.5;
+    expect(lo.damage('corte', 10)).toBe(18);
+    lo.reset();
+    expect([lo.damageMul, lo.vowDamageMul, lo.costMul]).toEqual([1, 1, 1]);
+  });
+});

@@ -29,9 +29,10 @@ export class BuildDirector {
   }
 
   /** BLD-06: multiplicador de dano do golpe que está abrindo a hitbox. */
-  strikeMul(move: MoveDef): number {
+  strikeMul(move: MoveDef, peek = false): number {
     const shadow = this.shadowArmed;
-    this.shadowArmed = false;
+    // `peek` (snapshot de debug) lê sem gastar o Passo sombrio armado.
+    if (!peek) this.shadowArmed = false;
     return strikeMultiplier(this.perks, { heavy: move.strength === 'heavy', counter: !!move.counter, shadow });
   }
 

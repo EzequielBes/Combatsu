@@ -67,6 +67,7 @@ import { Recovery } from './test/recovery';
 import { BuildDirector } from './test/buildDirector';
 import { ArsenalDirector } from './test/arsenalDirector';
 import { VowDirector } from './test/vowDirector';
+import type { MoveDef } from '../data/moves';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly techDirector = new TechDirector(this);
@@ -276,7 +277,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     };
     this.player.attackerOf = (ownerId) => this.combat.attackerOf(ownerId);
     this.player.onDefense = (kind, point) => this.combat.onDefense(kind, point);
-    this.player.damageMul = (move) => this.build.strikeMul(move) * this.arsenal.strikeMul(move);
+    this.player.damageMul = (move) => this.strikeMul(move);
     this.lastPlayerHp = this.player.hp;
   }
 
@@ -392,6 +393,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   update(_time: number, delta: number): void {
+    // VOW-*: os efeitos dos votos (a Fúria muda com os abates) chegam ao loadout e ao player antes de tudo.
+    this.vows.sync();
     // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     this.hud.setPlayerStructure(this.player.structureView);
@@ -495,6 +498,14 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   /** Input do quadro: neutro fora de `roundActive`/`intermission`/`traverse` (RUN-08) e durante a transição de área (TRV-10). */
   private inputFor(raw: InputSnapshot): InputSnapshot {
     return acceptsPlayerInput(this.run.state) && !this.area.transitioning ? raw : NEUTRAL_INPUT;
+  }
+
+  /**
+   * Multiplicador do golpe corpo a corpo do player: build × arsenal × votos (BLD-06, ARS-05, VOW-10..12). `peek` lê
+   * sem gastar estado da build (o snapshot de debug usa).
+   */
+  strikeMul(move: MoveDef, peek = false): number {
+    return this.build.strikeMul(move, peek) * this.arsenal.strikeMul(move) * this.vows.strikeMul(move);
   }
 
   onKey(key: string, fn: () => void): void {
