@@ -90,4 +90,52 @@ export default async function ({ page, baseUrl, assert }) {
   for (const d of dummies) {
     assert(d.hp - low.get(d.id) === 60, `EVO-06: o boneco ${d.id} perdeu ${d.hp - low.get(d.id)} (esperava 60)`);
   }
+
+  // EVO-06 no chefe: na arena do Oni, de frente para ele e a curta distância, a esfera tira 60 uma vez só.
+  s = await open('area=modular&round=5&tech=roxo&regen=0');
+  for (let i = 0; i < 200 && !(s.boss && s.boss.state !== 'intro'); i++) s = await step(50);
+  assert(s.boss, 'o chefe deveria estar na arena');
+  // Tenta até 4 vezes: chega a 140..260 px do chefe, de frente, com ele fora de um ataque, e conjura. Se o chefe cortar
+  // a conjuração (golpe sofrido), espera a recarga e tenta de novo; vale a primeira tentativa em que a esfera voou.
+  let flew = false;
+  let bossHp0 = 0;
+  let bossLow = 0;
+  let bossHits0 = 0;
+  for (let attempt = 0; attempt < 4 && !flew; attempt++) {
+    for (let i = 0; i < 300; i++) {
+      const d = s.boss.x - s.player.x;
+      const calm = s.boss.state === 'rest';
+      if (Math.abs(d) >= 140 && Math.abs(d) <= 260 && calm) break;
+      const key = Math.abs(d) > 260 === d > 0 ? 'KeyD' : 'KeyA';
+      await page.keyboard.down(key);
+      s = await step(34);
+      await page.keyboard.up(key);
+    }
+    const face = s.boss.x > s.player.x ? 'KeyD' : 'KeyA';
+    await page.keyboard.down(face);
+    s = await step(17);
+    await page.keyboard.up(face);
+    bossHp0 = s.boss.hp;
+    bossLow = bossHp0;
+    bossHits0 = hitsIn(s);
+    await page.keyboard.down('KeyL');
+    s = await step(17);
+    await page.keyboard.up('KeyL');
+    for (let i = 0; i < 160; i++) {
+      s = await step(17);
+      const orb = s.techObjects.find((o) => o.kind === 'purple');
+      if (orb) flew = true;
+      if (s.boss) bossLow = Math.min(bossLow, s.boss.hp);
+      if (flew && !orb) break;
+      if (!flew && !s.tech.cast) break;
+    }
+    if (!flew) s = await step(6500);
+    assert(!s.player.dead, 'o player morreu tentando acertar o chefe');
+  }
+  assert(
+    flew,
+    `EVO-06: a esfera deveria voar na arena: ce ${s.ce.cur} cast ${JSON.stringify(s.tech)} ${JSON.stringify(s.events.slice(-8))} boss ${JSON.stringify(s.boss && { x: s.boss.x, st: s.boss.state })} p ${s.player.x}`,
+  );
+  assert(hitsIn(s) - bossHits0 === 1, `EVO-06: um acerto no chefe: ${hitsIn(s) - bossHits0}`);
+  assert(bossHp0 - bossLow === 60, `EVO-06: o chefe perdeu ${bossHp0 - bossLow} (esperava 60)`);
 }

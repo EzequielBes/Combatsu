@@ -359,3 +359,123 @@ T11 → T12 → T13 → T14 → T15
 **Tests**: none
 **Gate**: build
 **Commit**: `chore(tools): capture the vow panel and Hollow Purple`
+
+---
+
+## Phase 6: Consertos do Verifier (rodada 1)
+
+```
+T16 → T17 → T18 → T19 → T20 → T21
+```
+
+### T16: Vazio Roxo no chefe
+
+**What**: Smoke: na rodada 5 com `tech=roxo`, a esfera acerta o chefe uma vez e tira 60 (mutante S11).
+**Where**: `scripts/smoke/evolution.smoke.mjs`
+**Depends on**: None (fase anterior concluída)
+**Reuses**: smoke da evolução
+**Requirement**: EVO-06
+
+**Done when**:
+
+- [x] Smoke verde com o chefe
+- [x] Gate verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(smoke): hit the boss with Hollow Purple once`
+
+---
+
+### T17: Dano de técnica dos votos no jogo vivo
+
+**What**: Smoke no laboratório: o Desmantelar tira 1,5× com Pacto do feiticeiro e 2,025× com Pacto + Corpo de vidro, contra a mesma conjuração sem voto (mutante S9, VOW-18 no jogo).
+**Where**: `scripts/smoke/vows.smoke.mjs`
+**Depends on**: T16
+**Reuses**: bonecos do laboratório
+**Requirement**: VOW-10, VOW-12, VOW-18
+
+**Done when**:
+
+- [ ] Smoke verde
+- [ ] Gate verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(smoke): measure vow technique damage on the training dummies`
+
+---
+
+### T18: Fúria pelos abates da rodada
+
+**What**: Teste de `roundKills` depois de abates na `Run`; smoke com Fúria lê o multiplicador do golpe crescer 3% por abate (mutante S10).
+**Where**: `tests/core/run.test.ts`
+**Depends on**: T17
+**Reuses**: `vows.strike` do snapshot
+**Requirement**: VOW-16
+
+**Done when**:
+
+- [ ] Teste e smoke verdes
+- [ ] Gate verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(world): grow the fury bonus with the round kills`
+
+---
+
+### T19: Run nova sem votos na mesma página
+
+**What**: O smoke toma um voto pelo painel, morre e começa outra run na mesma página: `vows.taken` vazio (mutante S13, VOW-08 e o edge case da morte).
+**Where**: `scripts/smoke/vows.smoke.mjs`
+**Depends on**: T18
+**Reuses**: fluxo do painel
+**Requirement**: VOW-08
+
+**Done when**:
+
+- [ ] Smoke verde
+- [ ] Gate verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(smoke): clear the vows on a new run in the same page`
+
+---
+
+### T20: Comprar vida com Corpo de vidro
+
+**What**: A compra de `vida` aplica o teto com o voto antes de curar (hoje cura contra o teto cheio e o quadro seguinte corta); teste do edge case e do ×2 da Cura proibida medido contra o controle.
+**Where**: `src/scenes/test/shopDirector.ts`
+**Depends on**: T19
+**Reuses**: `VowDirector.sync`
+**Requirement**: VOW-10, VOW-14
+
+**Done when**:
+
+- [ ] Smoke: vida máxima 69 depois da compra, com o hp limitado a ela; a Reversa com Cura proibida cura o dobro do controle
+- [ ] Gate verde
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `fix(shop): cap the vida purchase by the glass body vow`
+
+---
+
+### T21: Stream próprio e distância real da esfera
+
+**What**: Teste de que sortear na loja não muda o sorteio dos votos; `traveled` do Vazio Roxo passa a vir da posição.
+**Where**: `src/game/tech/purple.ts`
+**Depends on**: T20
+**Reuses**: `PurpleSphere`
+**Requirement**: VOW-07, EVO-05
+
+**Done when**:
+
+- [ ] Teste verde; smoke `evolution` verde
+- [ ] Gate verde
+
+**Tests**: unit
+**Gate**: full
+**Commit**: `test(core): keep the vow stream apart from the shop stream`
