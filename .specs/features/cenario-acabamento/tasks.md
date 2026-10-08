@@ -103,9 +103,9 @@ T19
 
 **Done when**:
 
-- [ ] `tests/game/art/tiles.test.ts`: nenhum frame da folha `rua` tem uma linha só de `a` ou `A`
-- [ ] Os cinco chãos continuam distintos (THM-01)
-- [ ] Gate verde
+- [x] `tests/game/art/tiles.test.ts`: nenhum frame da folha `rua` tem uma linha só de `a` ou `A`
+- [x] Os cinco chãos continuam distintos (THM-01)
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

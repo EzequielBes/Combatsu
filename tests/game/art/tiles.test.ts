@@ -78,6 +78,12 @@ describe('folhas de terreno por tema e selo (THM-01, THM-03)', () => {
     expect(new Set(bodies).size).toBe(THEMES.length);
   });
 
+  it('o chão da rua não tem linha inteira laranja (CEN-04)', () => {
+    for (const [name, rows] of Object.entries(THEME_FRAMES.rua)) {
+      for (const row of rows) expect(/^[aA]+$/.test(row), `${name}: ${row}`).toBe(false);
+    }
+  });
+
   it('cada tema tem a chave de textura própria em TEX', () => {
     expect(new Set(Object.values(THEME_TEXTURES)).size).toBe(THEMES.length);
     for (const t of THEMES) expect(THEME_TEXTURES[t]).toBe(`terrain-${t}`);
