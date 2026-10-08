@@ -4,6 +4,8 @@ import type { Modifiers } from '../core/modifiers';
 import { PropMachine, propHit, throwOrigin, type PropDef, type PropImpact, type PropState } from '../core/props';
 import { shardsKey } from './art';
 import { ART_SCALE } from './art/palette';
+import { HD_ON } from './art/hd/flag';
+import { HD_WEAPONS, HD_WEAPON_SUFFIX } from './art/hd/weapons';
 import { PROP_SHARDS } from './art/sprites/props';
 import { newEntityId, tagBody, type BodyTag } from './bodyTags';
 import { contactWith, type OnConnect } from './hitbox';
@@ -17,6 +19,8 @@ const SOCKET: Record<'front' | 'back' | 'swing', Vec2> = {
 };
 /** Com o corpo HD, quanto o centro do objeto fica além da mão, no eixo do objeto (px): o leve e o pesado. */
 const HAND_REACH: Record<'front' | 'back', number> = { front: 5, back: 9 };
+/** Profundidade de desenho da arma HD durante o golpe: logo à frente do player (que fica em 1). */
+const HD_SWING_DEPTH = 1.5;
 /** Fração da velocidade de arremesso usada para cima. */
 const THROW_LIFT = 0.22;
 /** Estilhaços: duração do voo (ms), gravidade (px/s²), velocidade para fora (px/s) e pulo para cima (px/s). */
@@ -36,6 +40,8 @@ export class Prop {
   /** Última posição em voo fora do terreno; é para onde o objeto volta ao bater. */
   private lastSafe: Vec2;
   private destroyed = false;
+  /** Arma com folha HD: distância (px) da base até onde a mão segura; `null` para os objetos da densidade antiga. */
+  private readonly hdGrip: number | null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -51,8 +57,12 @@ export class Prop {
   ) {
     this.machine = new PropMachine(def);
     // Folha com vários quadros (ferramentas, ARM-19) abre no `common`; sem frame, o Phaser mostraria a folha inteira.
-    const frame = scene.textures.get(def.texture).has('common') ? 'common' : undefined;
-    this.sprite = scene.matter.add.image(x, y, def.texture, frame, {
+    // Com o corpo HD, a ferramenta usa a folha da mesma densidade (`-hd`); as armas vinculadas só têm essa.
+    const hdTexture = def.texture + HD_WEAPON_SUFFIX;
+    const texture = HD_ON && hdTexture in HD_WEAPONS ? hdTexture : def.texture;
+    this.hdGrip = HD_WEAPONS[texture]?.grip ?? null;
+    const frame = scene.textures.get(texture).has('common') ? 'common' : undefined;
+    this.sprite = scene.matter.add.image(x, y, texture, frame, {
       friction: 0.6,
       frictionAir: 0.01,
       restitution: 0.15,
@@ -120,7 +130,7 @@ export class Prop {
     if (hand) {
       // O objeto gira com o antebraço e fica um pouco além da mão no próprio eixo: a mão segura a parte de baixo.
       const rad = (hand.angle * Math.PI) / 180;
-      const reach = HAND_REACH[this.def.socket];
+      const reach = this.hdGrip === null ? HAND_REACH[this.def.socket] : this.sprite.height / 2 - this.hdGrip;
       this.sprite.setPosition(
         holderX + (hand.x + Math.sin(rad) * reach) * facing,
         holderY + hand.y - Math.cos(rad) * reach,
@@ -225,6 +235,8 @@ export class Prop {
     this.applied = st;
     applyFilter(this.body, this.machine.filter);
     this.sprite.setSensor(st !== 'rest');
+    // Arma HD no meio do golpe: desenhada à frente do player, senão o corpo e o borrão do golpe a cobrem.
+    if (this.hdGrip !== null) this.sprite.setDepth(st === 'swing' ? HD_SWING_DEPTH : 0);
     const floating = st === 'held' || st === 'swing' || st === 'breaking';
     this.sprite.setIgnoreGravity(floating);
     if (floating) {

@@ -125,7 +125,7 @@ describe('ARS-04..08: custo, bônus e textos', () => {
   it('a arma vinculada é a ferramenta base com o dano do nível e nunca quebra', () => {
     const def = weaponDef('bastao', 3);
     expect(def.damage).toBe(Math.round(TOOL_DEFS.cursedClub.damage * 1.5));
-    expect([def.texture, def.unbreakable, def.key.startsWith('cursed')]).toEqual(['cursed-club', true, false]);
+    expect([def.texture, def.unbreakable, def.key.startsWith('cursed')]).toEqual(['bound-staff', true, false]);
     const machine = new PropMachine(def);
     machine.pickUp(1);
     for (let i = 0; i < 20; i++) {

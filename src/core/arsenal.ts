@@ -11,6 +11,8 @@ import type { PropDef } from './props';
 
 /** Chave do `PropDef` de cada arma vinculada; sem o prefixo das ferramentas largadas, não entra no sumiço por tempo. */
 const WEAPON_KEYS: Record<WeaponId, string> = { bastao: 'boundClub', lamina: 'boundKnife' };
+/** Folha de arte própria de cada arma vinculada (`art/hd/weapons`): o bastão e a lâmina não usam o sprite da ferramenta. */
+const WEAPON_TEXTURES: Record<WeaponId, string> = { bastao: 'bound-staff', lamina: 'bound-blade' };
 
 /** Estado do arsenal na run (ARS-01): uma relíquia, uma arma vinculada e, no máximo, uma ferramenta a entregar. */
 export class Arsenal {
@@ -89,12 +91,13 @@ export function relicTechMul(arsenal: Arsenal): number {
   return arsenal.relic?.id === 'rosario' ? 1 + T.rosarioPerLevel * arsenal.relic.level : 1;
 }
 
-/** ARS-07: o objeto da arma vinculada no nível `level`: a ferramenta base com o dano do nível, sem quebrar. */
+/** ARS-07: o objeto da arma vinculada no nível `level`: peso e pegada da ferramenta base, arte própria, dano do nível, sem quebrar. */
 export function weaponDef(id: WeaponId, level: number): PropDef {
   const base = TOOL_DEFS[ARSENAL[id].tool!];
   return {
     ...base,
     key: WEAPON_KEYS[id],
+    texture: WEAPON_TEXTURES[id],
     damage: Math.round(base.damage * T.weaponFactor[level - 1]),
     durability: 1,
     unbreakable: true,
