@@ -36,8 +36,25 @@ export const makeClose =
     log(`  ${name}`);
   };
 
+/** Cenário por tema (CEN-08, F22): cada módulo de combate sozinho e a arena do chefe, parado e depois de andar. */
+async function sceneryScenario(t, BASE) {
+  for (const [name, query] of [
+    ['rua', 'modules=rua'],
+    ['beco', 'modules=beco'],
+    ['parque', 'modules=parque'],
+    ['santuario', 'area=modular&round=5'],
+  ]) {
+    await t.open(`hd=1&${BASE}&maxAlive=0&${query}`);
+    await t.at(300, `90-cenario-${name}-inicio`);
+    await t.down('KeyD');
+    await t.at(1500, `90-cenario-${name}-meio`);
+    await t.up('KeyD');
+  }
+}
+
 /** Os cenários HD; `base` são os parâmetros de URL comuns a todas as capturas. */
 export const hdScenarios = (BASE) => ({
+  cenario: (t) => sceneryScenario(t, BASE),
   async hd(t) {
     await t.open(`hd=1&${BASE}&tech=vermelho`);
     await t.at(500, '80-hd-idle');

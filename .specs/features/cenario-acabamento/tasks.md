@@ -432,9 +432,9 @@ T19
 
 **Done when**:
 
-- [ ] `node tools/visual-shots.mjs .fable-out/cenario cenario` gera uma captura por tema
-- [ ] Capturas olhadas
-- [ ] Gate verde
+- [x] `node tools/visual-shots.mjs .fable-out/cenario cenario` gera uma captura por tema
+- [x] Capturas olhadas
+- [x] Gate verde
 
 **Tests**: none
 **Gate**: build
