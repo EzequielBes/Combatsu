@@ -182,10 +182,10 @@ T19
 
 **Done when**:
 
-- [ ] Teste: `THEME_SCENERY` tem uma entrada por tema de `THEME_FRAMES`
-- [ ] Sem `spans` (a sala) o fundo é o de antes
-- [ ] `background.ts` abaixo de 400 linhas
-- [ ] Gate verde
+- [x] Teste: `THEME_SCENERY` tem uma entrada por tema de `THEME_FRAMES`
+- [x] Sem `spans` (a sala) o fundo é o de antes
+- [x] `background.ts` abaixo de 400 linhas
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

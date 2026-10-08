@@ -59,3 +59,18 @@ export function rng(seed: number): () => number {
     return s / 0x100000000;
   };
 }
+
+/**
+ * Sink que só deixa passar a parte dos retângulos dentro de [`x0`, `x1`) (CEN-07): o pintor de um tema não invade a
+ * faixa do vizinho, mesmo quando um prédio passa da borda.
+ */
+export function clipX(sink: PaintSink, x0: number, x1: number): PaintSink {
+  return {
+    fillStyle: (color, alpha) => sink.fillStyle(color, alpha),
+    fillRect: (x, y, w, h) => {
+      const a = Math.max(x, x0);
+      const b = Math.min(x + w, x1);
+      return b > a ? sink.fillRect(a, y, b - a, h) : undefined;
+    },
+  };
+}
