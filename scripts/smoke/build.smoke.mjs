@@ -16,7 +16,7 @@ export default async function ({ page, baseUrl, assert }) {
     return stepAndSnap(20);
   };
 
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&fragments=5000&round=2&perks=condutor,naoExiste`, {
+  await page.goto(`${baseUrl}?debug&hd=1&enemyGuard=0&seed=1&fragments=5000&round=2&perks=condutor,naoExiste`, {
     waitUntil: 'load',
   });
   await page.waitForFunction(

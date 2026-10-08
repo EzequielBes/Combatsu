@@ -49,7 +49,7 @@ depois disso abra arquivos, e só os que a tarefa toca.
 
 | Caminho | Estado |
 | --- | --- |
-| `art/hd/` | Caminho novo: player a 1 texel = 1 px, atrás de `?hd=1`. Golpes por família em `hd/families/`. É onde a arte nova entra |
+| `art/hd/` | A base do jogo: player a 1 texel = 1 px, ligado por padrão (`?hd=0` desliga). Golpes por família em `hd/families/`. É onde a arte nova entra |
 | `art/sprites/` | Caminho antigo: grades de texto (1 caractere = 1 cor). `enemy.ts`, `player.ts`, `playerMoves.ts` são enormes e saem na fase 5: **não ler inteiros nem dividir**, buscar pelo nome do frame |
 | `art/rig/` | Spike do boneco articulado, só com `?debug&rig=1`. Não evoluir |
 | `art/index.ts` | Registro de todas as folhas e animações |
@@ -60,6 +60,8 @@ movimento no jogo: prancha estática não mostra braço trocando de lado entre q
 
 ## Processo
 
+- **HD é a base:** todo trabalho novo é feito e conferido em HD (o padrão do jogo). A versão antiga (`?hd=0`) não
+  recebe trabalho; os smokes antigos ainda rodam nela porque o runner acrescenta `hd=0`, e smoke novo pede `hd=1`.
 - **Gate antes de cada commit:** `npm run gate` (typecheck, oxlint, prettier, testes).
 - **Smoke só do que foi tocado:** `npm run smoke -- <trecho do nome>` (coluna "Smoke" acima). A suíte inteira é lenta.
 - **Tetos do lint:** 400 linhas por arquivo, 80 por função, complexidade 15. Arquivo novo nunca entra na lista de

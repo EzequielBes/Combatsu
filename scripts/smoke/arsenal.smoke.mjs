@@ -9,7 +9,7 @@ export default async function ({ page, baseUrl, assert }) {
 
   /** Abre o jogo com a query dada e começa a run; devolve o snapshot logo depois do `roundStart`. */
   const start = async (query) => {
-    await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&${query}`, { waitUntil: 'load' });
+    await page.goto(`${baseUrl}?debug&hd=1&enemyGuard=0&seed=1&${query}`, { waitUntil: 'load' });
     await page.waitForFunction(
       () => {
         try {

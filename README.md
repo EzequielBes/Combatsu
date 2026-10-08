@@ -91,7 +91,7 @@ Parâmetros da URL, todos junto de `?debug`:
 | `area=sala` | sala de teste de uma tela só (`src/data/level1.ts`), sem selo, travessia nem konbini; a loja abre na própria sala. O `fxlab` também usa a sala |
 | `heal=N`, `armed=knife\|club`, `rare=1` | forçar a chance de cura, a ferramenta do inimigo armado e a raridade |
 | `fxlab` | laboratório de efeitos: sem ondas, bonecos de treino, teclas 1 a 6 disparam cada efeito e 0 liga a câmera lenta |
-| `hd=1` | spike de sprites HD: canvas 1280x720, zoom 2 e folha `player-hd` (1 texel = 1 px) no idle e no gancho ascendente; funciona com ou sem `debug` |
+| `hd=0` | volta à versão antiga (canvas 960x540, corpo de 32 texels). O jogo abre em HD por padrão: canvas 1280x720, zoom 2 e a folha `player-hd` (1 texel = 1 px); funciona com ou sem `debug` |
 
 Sem `area=sala`, com ou sem `?debug`, o jogo usa o mundo modular. Os smokes antigos medem posições da sala, então o
 runner (`scripts/smoke/run.mjs`) acrescenta `area=sala` a toda URL de cenário que não tenha `area=` nem `modules=`;
