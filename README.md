@@ -84,6 +84,7 @@ Parâmetros da URL, todos junto de `?debug`:
 | `shove=N` | chance (0 a 1) de o inimigo empurrar no 4º golpe leve seguido |
 | `tech=<id>[,<id>]` | começar com técnicas equipadas (`divergente`, `vermelho`, `azul`, `corte`) |
 | `fragments=N` | começar com N fragmentos |
+| `perks=<id>[,<id>]` | começar com passivas de build (`punhoPesado`, `executor`, `refluxo`, `condutor`, `passoSombrio`, `contraAfiado`) |
 | `noshop=1` | pular a loja entre as rodadas: a saída leva direto à próxima área, sem konbini |
 | `modules=rua,beco,parque` | área de combate montada só com esses módulos, nesta ordem (ids desconhecidos ou especiais são ignorados) |
 | `area=sala` | sala de teste de uma tela só (`src/data/level1.ts`), sem selo, travessia nem konbini; a loja abre na própria sala. O `fxlab` também usa a sala |
@@ -116,6 +117,7 @@ Com `?debug` no carregamento existe `window.__game`, usado pelos smokes: `snapsh
 - Abaixar, janela de Contra e Deflexão, leitura de repetição e empurrão: `DUCK`, `COUNTER` e `READING` em `src/data/moves.ts`
 - Técnicas amaldiçoadas: `src/data/techniques.ts`
 - Ofertas e preços da loja: `src/data/shop.ts`
+- Builds e passivas (efeitos, preço, quanto a loja puxa a build do jogador): `src/data/perks.ts`
 - Hitstop (congelamento do golpe leve e do forte): `src/data/fx.ts`
 - Objetos e ferramentas (peso, dano, durabilidade, arremesso): `src/data/props.ts`
 - Módulos do mundo (grades e legenda): `src/data/modules/`; montagem da área: `src/core/stage.ts`

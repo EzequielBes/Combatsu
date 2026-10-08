@@ -144,6 +144,7 @@ export class DebugSnapshot {
       wallet: { fragments: this.s.wallet.fragments },
       shop: this.s.shopDirector.shopSnapshot(),
       modifiers: this.s.modifiers.levels,
+      build: this.s.build.snapshot(),
       pickups: this.s.pickups.debug(),
       floatTexts: this.s.floatTexts.debug(),
       worldProps: this.s.props.map((p) => ({

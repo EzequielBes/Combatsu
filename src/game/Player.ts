@@ -11,6 +11,7 @@ import { MotionInput } from '../core/motionInput';
 import { MoveMachine } from '../core/moveMachine';
 import { initialMoveState, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
+import type { MoveDef } from '../data/moves';
 import { PLAYER_STRUCTURE, Structure } from '../core/structure';
 import { PLAYER_HEALTH, PROP_SWING } from '../data/tuning';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
@@ -79,6 +80,8 @@ export class Player implements Hittable {
   attackerOf: ((ownerId: number) => Attacker | null) | null = null;
   /** Bloqueio, parry ou esquiva perfeita aconteceram, no ponto de contato (efeitos ficam com a cena). */
   onDefense: ((kind: DefenseKind, point: Vec2) => void) | null = null;
+  /** BLD-06: multiplicador de dano do golpe pelas passivas da run; lido quando a hitbox abre. */
+  damageMul: ((move: MoveDef) => number) | null = null;
   guard = new Guard();
   readonly dodge = new Dodge();
   /** Abaixar (DEF-07): irmão da esquiva, com a recarga dividida com ela (DEF-15). */

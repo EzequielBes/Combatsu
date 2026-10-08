@@ -235,6 +235,8 @@ export interface GameSnapshot {
   };
   /** Nível atual de cada modificador da run (SHOP-22). */
   modifiers: Record<string, number>;
+  /** Build deduzida das compras, pontos por linha e passivas da run (BLD-*). */
+  build: { build: string | null; points: Record<string, number>; perks: string[]; shadowArmed: boolean };
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */

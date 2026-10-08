@@ -139,6 +139,7 @@ export class RunDirector {
     this.s.energy.reset();
     this.s.loadout.reset();
     this.s.mastery.reset();
+    this.s.build.reset();
     this.equipDebugTech();
     this.applyDebugMastery();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
