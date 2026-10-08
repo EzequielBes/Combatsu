@@ -220,4 +220,17 @@ export default async function ({ page, baseUrl, assert }) {
   assert(pacto === plain * 1.5, `VOW-12: técnica ×1,5: ${pacto} (controle ${plain})`);
   const both = await cutDamage('pactoDoFeiticeiro,corpoDeVidro');
   assert(both === plain * 2, `VOW-10/18: técnica ×1,5 × 1,35 (20 por corte): ${both} (controle ${plain})`);
+
+  // VOW-16: com Fúria o multiplicador do golpe, lido da composição da cena, cresce 3% por abate da rodada.
+  s = await open('vows=furia&maxAlive=3&regen=0');
+  assert(s.vows.strike.light === 1, `VOW-16: sem abate, ×1: ${s.vows.strike.light}`);
+  for (let i = 0; i < 80 && s.run.kills < 2; i++) {
+    await page.keyboard.press('Digit2', { delay: 20 });
+    s = await step(80);
+  }
+  assert(s.run.kills >= 2 && s.run.state === 'roundActive', `VOW-16: abates na rodada: ${s.run.kills} ${s.run.state}`);
+  assert(
+    Math.abs(s.vows.strike.light - (1 + 0.03 * s.run.kills)) < 1e-9,
+    `VOW-16: com ${s.run.kills} abates o golpe deveria ser ×${1 + 0.03 * s.run.kills}: ${s.vows.strike.light}`,
+  );
 }

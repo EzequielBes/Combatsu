@@ -755,8 +755,15 @@ describe('stream dos votos e abates da rodada (VOW-07, VOW-16)', () => {
     expect([a.vowRng!.next(), a.vowRng!.next()]).toEqual([b.vowRng!.next(), b.vowRng!.next()]);
   });
 
-  it('roundKills conta os abates da rodada atual', () => {
+  it('roundKills conta os abates da rodada atual (0 antes, 2 depois de dois abates)', () => {
     const run = newRun();
     expect(run.roundKills).toBe(0);
+    run.startPressed();
+    run.update(16, () => 7);
+    run.update(16, () => 7);
+    run.enemyDied(101);
+    run.enemyDied(102);
+    run.update(16, () => 7);
+    expect(run.roundKills).toBe(2);
   });
 });
