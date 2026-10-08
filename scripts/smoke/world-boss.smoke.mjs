@@ -38,6 +38,8 @@ export default async function ({ page, baseUrl, assert }) {
     s.area.sealed === true && s.area.exitX === 41 * TILE,
     `o selo do santuario deveria estar fechado: ${JSON.stringify(s.area)}`,
   );
+  // ARN-05: o fundo da arena recebe o arquétipo do chefe da rodada (o Oni na rodada 5).
+  assert(s.area.arenaVariant === 'oni', `ARN-05: arquétipo da arena: ${s.area.arenaVariant}`);
   const staticBefore = s.area.staticBodies;
   assert(s.boss && s.boss.name === 'Oni do Portão', `o chefe deveria nascer: ${JSON.stringify(s.boss)}`);
   // O chefe nasce dentro da área do santuário (0 a 1344 px), não nas coordenadas da sala.

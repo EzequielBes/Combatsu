@@ -177,8 +177,8 @@ T8 → T9
 
 **Done when**:
 
-- [ ] `world-boss` confere `arenaVariant` = `oni` na rodada 5; `world-traverse` confere `null` na área comum
-- [ ] Gate verde e `npm run smoke -- world-` verde
+- [x] `world-boss` confere `arenaVariant` = `oni` na rodada 5; `world-traverse` confere `null` na área comum
+- [x] Gate verde e `npm run smoke -- world-` verde
 
 **Tests**: smoke
 **Gate**: full

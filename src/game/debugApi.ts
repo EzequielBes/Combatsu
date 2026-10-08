@@ -167,6 +167,8 @@ export interface GameSnapshot {
     midBands: { theme: string }[];
     /** Peças de decoração desenhadas na área (CEN-13); 0 na sala e com `?debug&decor=0`. */
     decor: number;
+    /** Arquétipo do chefe que o fundo da arena recebeu (ARN-05); `null` fora da área de chefe. */
+    arenaVariant: string | null;
     /** Rolagem do primeiro plano lida do objeto (CEN-11); `null` na sala e com `?debug&decor=0`. */
     front: { sx: number; sy: number } | null;
     /** Profundidades vivas da camada próxima, da decoração e do player, e o pé da decoração em px (CEN-13). */

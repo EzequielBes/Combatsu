@@ -105,6 +105,7 @@ describe('installDebugApi', () => {
         midBands: [],
         decor: 0,
         front: null,
+        arenaVariant: null,
         layout: {
           nearDepth: null,
           decorDepth: null,

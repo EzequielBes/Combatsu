@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import type { BossArchetype } from '../../core/bossTier';
 import { Filters } from '../../core/collision';
 import { TILE, tileVariant, type LevelData, type Rect } from '../../core/level';
 import { FLOOR_ROWS } from '../../core/module';
@@ -50,6 +51,8 @@ export class WorldBuilder {
   private decor: Phaser.GameObjects.Graphics | null = null;
   private front: Phaser.GameObjects.Graphics | null = null;
   private decorCount = 0;
+  /** Arquétipo do chefe da arena (ARN-05); `null` fora da área de chefe. */
+  private variant: BossArchetype | null = null;
   /** Peças desenhadas em cada trecho, na ordem dos trechos (CEN-13). */
   private decorPerSpan: number[] = [];
   /** Linha mais baixa pintada pela decoração, em px de mundo (CEN-13: o pé das peças); `null` sem decoração. */
@@ -101,13 +104,19 @@ export class WorldBuilder {
    * `Spawner` guardam a referência (design "Risks & Concerns"). O estado da construção anterior é descartado sem
    * destruir nada: numa cena reiniciada os objetos antigos já morreram com a cena.
    */
-  build(rows: readonly string[], level: LevelData, spans: readonly AreaSpan[] = []): void {
+  build(
+    rows: readonly string[],
+    level: LevelData,
+    spans: readonly AreaSpan[] = [],
+    variant: BossArchetype | null = null,
+  ): void {
     this.resetState();
     this.spans = spans;
+    this.variant = variant;
     this.buildTiles(rows, spans);
     for (const r of level.solids) this.staticBodies.push(this.addTerrainBody(r));
     this.buildSeal(level.seal);
-    this.background = buildBackground(this.s, level.widthPx, level.heightPx, spans);
+    this.background = buildBackground(this.s, level.widthPx, level.heightPx, spans, variant);
     // `?debug&decor=0` desliga decoração e primeiro plano (o smoke compara os corpos do Matter com e sem eles).
     if (spans.length > 0 && debugParam('decor') !== '0') this.buildScenery(spans, level);
     this.buildProps(level);
@@ -167,8 +176,14 @@ export class WorldBuilder {
     this.decor = null;
     this.front = null;
     this.decorCount = 0;
+    this.variant = null;
     this.decorPerSpan = [];
     this.decorBottom = null;
+  }
+
+  /** Arquétipo do chefe passado ao fundo da arena (ARN-05); `null` fora da área de chefe. */
+  get arenaVariant(): BossArchetype | null {
+    return this.variant;
   }
 
   /** Peças de decoração desenhadas na área (CEN-13); 0 na sala. */

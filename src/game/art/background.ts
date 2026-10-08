@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import type { BossArchetype } from '../../core/bossTier';
 import type { ModuleTheme } from '../../core/module';
 import { Brush, clipX, type PaintSink } from './scenery/brush';
 import { stonePillar } from './scenery/school';
@@ -46,16 +47,17 @@ export function buildBackground(
   widthPx: number,
   heightPx: number,
   spans?: readonly ThemeSpan[],
+  variant: BossArchetype | null = null,
 ): Phaser.GameObjects.Graphics[] {
   const x0 = -128;
   const x1 = widthPx + 128;
   const bottom = heightPx + 256;
   const themed = spans !== undefined && spans.length > 0;
   const layers = PARALLAX.map((factor, i) => scene.add.graphics().setScrollFactor(factor, factor).setDepth(DEPTH[i]));
-  farPainterFor(spans ?? [])(new Brush(layers[0]), { x0, x1, ground: GROUND[0], bottom, variant: null });
+  farPainterFor(spans ?? [])(new Brush(layers[0]), { x0, x1, ground: GROUND[0], bottom, variant });
   for (const layer of [1, 2] as const) {
     const bands = themed ? layerBands(spans, x0, x1, PARALLAX[layer]) : [{ x0, x1, theme: null }];
-    paintBands(layers[layer], bands, layer === 1 ? 'mid' : 'near', { ground: GROUND[layer], bottom });
+    paintBands(layers[layer], bands, layer === 1 ? 'mid' : 'near', { ground: GROUND[layer], bottom, variant });
   }
   // As faixas pintadas ficam no objeto, para o snapshot de debug conferir o tema (THM-02, CEN-10).
   layers[2].setData('bands', themed ? bandsFor(spans, x0, x1) : []);
@@ -71,7 +73,7 @@ export function paintBands(
   sink: PaintSink,
   bands: readonly { x0: number; x1: number; theme: ModuleTheme | null }[],
   which: 'mid' | 'near',
-  { ground, bottom }: { ground: number; bottom: number },
+  { ground, bottom, variant = null }: { ground: number; bottom: number; variant?: BossArchetype | null },
 ): void {
   for (const band of bands) {
     const scenery = band.theme === null ? SCHOOL_SCENERY : THEME_SCENERY[band.theme];
@@ -80,7 +82,7 @@ export function paintBands(
       x1: band.x1,
       ground,
       bottom,
-      variant: null,
+      variant,
     });
   }
   // Só a camada próxima cobre a emenda: na média, um pilar de pedra entre prédios destoa.

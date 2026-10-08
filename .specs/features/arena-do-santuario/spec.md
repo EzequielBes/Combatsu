@@ -111,7 +111,7 @@ na fase 1, 0,18 na fase 2 e volta a 0 depois da vitória.
 | ARN-02 | P1: Santuário próprio | Execute | Implementing |
 | ARN-03 | P1: Santuário próprio | Execute | Implementing |
 | ARN-04 | P1: Santuário próprio | Execute | Implementing |
-| ARN-05 | P1: Santuário próprio | Tasks | Pending |
+| ARN-05 | P1: Santuário próprio | Execute | Implementing |
 | ARN-06 | P1: Santuário próprio | Execute | Implementing |
 | ARN-07 | P2: A arena reage ao chefe | Tasks | Pending |
 | ARN-08 | P2: A arena reage ao chefe | Tasks | Pending |
