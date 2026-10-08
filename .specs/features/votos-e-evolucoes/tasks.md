@@ -85,8 +85,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Testes: nunca repete voto tomado; com 2 restantes oferece 2, com 0 oferece 0; mesma seed e mesmos tomados dão o mesmo sorteio; `reset` limpa
-- [ ] Gate verde
+- [x] Testes: nunca repete voto tomado; com 2 restantes oferece 2, com 0 oferece 0; mesma seed e mesmos tomados dão o mesmo sorteio; `reset` limpa
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
