@@ -143,9 +143,9 @@ T19
 
 **Done when**:
 
-- [ ] Teste: `rect` alinha à grade de 2 px e `dither` pinta metade dos texels (rasterizado)
-- [ ] `background.ts` importa o pincel; `background.test.ts` continua verde
-- [ ] Gate verde
+- [x] Teste: `rect` alinha à grade de 2 px e `dither` pinta metade dos texels (rasterizado)
+- [x] `background.ts` importa o pincel; `background.test.ts` continua verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
