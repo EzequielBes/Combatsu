@@ -66,6 +66,7 @@ import { TechDirector } from './test/techDirector';
 import { Recovery } from './test/recovery';
 import { BuildDirector } from './test/buildDirector';
 import { ArsenalDirector } from './test/arsenalDirector';
+import { VowDirector } from './test/vowDirector';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly techDirector = new TechDirector(this);
@@ -84,6 +85,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly build = new BuildDirector(this);
   /** Relíquia, arma vinculada e ferramenta comprada (ARS-*). */
   readonly arsenal = new ArsenalDirector(this);
+  /** Votos Vinculativos da run (VOW-*). */
+  readonly vows = new VowDirector(this);
   readonly combat = new CombatLinks(this);
   readonly impactFx = new ImpactFx(this);
   readonly effects = new EffectsDirector(this);

@@ -8,6 +8,7 @@ import type { EnemyVariant } from '../core/enemyVariant';
 import type { EnemyAIState } from '../core/enemyAI';
 import type { EnemyState } from '../core/enemyBrain';
 import type { ToolKey } from '../core/loot';
+import type { VowEffects } from '../core/vows';
 import type { PropState } from '../core/props';
 import type { RunState } from '../core/run';
 import type { TechId } from '../data/techniques';
@@ -289,6 +290,8 @@ export interface GameSnapshot {
     weaponLevel: number;
     tool: string | null;
   };
+  /** Votos da run (VOW-09): tomados, ofertas do painel aberto (`null` fechado) e os efeitos agregados. */
+  vows: { taken: string[]; offers: string[] | null; effects: VowEffects };
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */

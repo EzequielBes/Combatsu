@@ -159,6 +159,7 @@ export class DebugSnapshot {
       modifiers: this.s.modifiers.levels,
       build: this.s.build.snapshot(),
       arsenal: this.s.arsenal.snapshot(),
+      vows: this.s.vows.snapshot(),
       pickups: this.s.pickups.debug(),
       floatTexts: this.s.floatTexts.debug(),
       worldProps: this.s.props.map((p) => ({

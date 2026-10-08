@@ -122,7 +122,7 @@ conjurar → a esfera atravessa a fila de inimigos acertando cada um uma vez.
 | VOW-06 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-07 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-08 | P1: Votos Vinculativos | Execute | Implementing |
-| VOW-09 | P1: Votos Vinculativos | Tasks | Pending |
+| VOW-09 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-10 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-11 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-12 | P1: Votos Vinculativos | Execute | Implementing |

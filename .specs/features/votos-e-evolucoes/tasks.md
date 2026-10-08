@@ -123,8 +123,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Smoke (`vows.smoke.mjs`, primeiro cenário): `?debug&vows=corpoDeVidro` aparece no snapshot e some numa run nova
-- [ ] Gate verde e smoke verde
+- [x] Smoke (`vows.smoke.mjs`, primeiro cenário): `?debug&vows=corpoDeVidro` aparece no snapshot e some numa run nova
+- [x] Gate verde e smoke verde
 
 **Tests**: smoke
 **Gate**: full
