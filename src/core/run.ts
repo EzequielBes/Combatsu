@@ -64,6 +64,7 @@ export class Run {
   private elixirRngValue: Rng | null = null;
   private stageRngValue: Rng | null = null;
   private slotRngValue: Rng | null = null;
+  private vowRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -107,6 +108,11 @@ export class Run {
 
   get alive(): number {
     return this.spawner?.alive ?? 0;
+  }
+
+  /** Abates contados na rodada atual (VOW-16, a Fúria); 0 sem onda. */
+  get roundKills(): number {
+    return this.spawner?.kills ?? 0;
   }
 
   get queued(): number {
@@ -155,6 +161,11 @@ export class Run {
   /** Stream do sorteio dos módulos de cada área (ARE-07): próprio, `seed ^ 0x1f83d9ab`; `null` antes do 1º start. */
   get stageRng(): Rng | null {
     return this.stageRngValue;
+  }
+
+  /** Stream do sorteio dos votos (VOW-07): próprio, `seed ^ 0x13198a2e`, só o painel de votos consome. */
+  get vowRng(): Rng | null {
+    return this.vowRngValue;
   }
 
   /** Stream dos slots `p` dos módulos (SLT-01): próprio, `seed ^ 0x5be0cd19`, nunca usado nos módulos (SLT-02). */
@@ -286,6 +297,7 @@ export class Run {
         this.elixirRngValue = new Rng(seed ^ 0x510e527f);
         this.stageRngValue = new Rng(seed ^ 0x1f83d9ab);
         this.slotRngValue = new Rng(seed ^ 0x5be0cd19);
+        this.vowRngValue = new Rng(seed ^ 0x13198a2e);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;

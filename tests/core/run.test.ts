@@ -742,3 +742,21 @@ describe('Run modular: streams do mundo (ARE-07, SLT-01)', () => {
     expect(run.elixirRng!.next()).toBe(new Rng(7 ^ 0x510e527f).next());
   });
 });
+
+describe('stream dos votos e abates da rodada (VOW-07, VOW-16)', () => {
+  it('a run cria o stream dos votos pela seed: mesma seed, mesma sequência; antes do start, null', () => {
+    const a = newRun();
+    const b = newRun();
+    expect(a.vowRng).toBeNull();
+    a.startPressed();
+    a.update(16, () => 77);
+    b.startPressed();
+    b.update(16, () => 77);
+    expect([a.vowRng!.next(), a.vowRng!.next()]).toEqual([b.vowRng!.next(), b.vowRng!.next()]);
+  });
+
+  it('roundKills conta os abates da rodada atual', () => {
+    const run = newRun();
+    expect(run.roundKills).toBe(0);
+  });
+});
