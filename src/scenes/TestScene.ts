@@ -67,6 +67,7 @@ import { Recovery } from './test/recovery';
 import { BuildDirector } from './test/buildDirector';
 import { ArsenalDirector } from './test/arsenalDirector';
 import { VowDirector } from './test/vowDirector';
+import { VowPanel } from '../game/VowPanel';
 import type { MoveDef } from '../data/moves';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
@@ -148,6 +149,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   focusLines!: FocusLines;
   /** Painel da loja na câmera de UI (T10), criado uma vez e mostrado/escondido a cada abertura/fechamento. */
   shopPanel!: ShopPanel;
+  /** Painel dos votos depois do chefe (VOW-01). */
+  vowPanel!: VowPanel;
   loot!: Loot;
   /** Sorteio do Elixir (ELX-01..03), no stream próprio da run; recriado a cada `startRun`. */
   elixir!: ElixirRoll;
@@ -185,6 +188,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.bindKeys();
     this.ui.addHud();
     this.shopPanel = new ShopPanel(this, this.uiLayer);
+    this.vowPanel = new VowPanel(this, this.uiLayer);
     this.focusLines = new FocusLines(this, this.uiLayer, UI_SIZE.w, UI_SIZE.h);
   }
 

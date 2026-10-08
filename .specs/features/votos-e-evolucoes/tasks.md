@@ -181,8 +181,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Captura olhada
-- [ ] Gate verde
+- [x] Captura olhada (na T7, com o painel ligado)
+- [x] Gate verde
 
 **Tests**: none
 **Gate**: build

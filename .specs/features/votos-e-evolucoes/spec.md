@@ -114,7 +114,7 @@ conjurar → a esfera atravessa a fila de inimigos acertando cada um uma vez.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| VOW-01 | P1: Votos Vinculativos | Tasks | Pending |
+| VOW-01 | P1: Votos Vinculativos | Execute | Implementing |
 | VOW-02 | P1: Votos Vinculativos | Tasks | Pending |
 | VOW-03 | P1: Votos Vinculativos | Tasks | Pending |
 | VOW-04 | P1: Votos Vinculativos | Tasks | Pending |
