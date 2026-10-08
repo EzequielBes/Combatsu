@@ -297,6 +297,8 @@ export interface GameSnapshot {
     effects: VowEffects;
     /** Multiplicador de um jab e de uma cotovelada (forte), lido da composição da cena (VOW-10..12). */
     strike: { light: number; heavy: number };
+    /** Cartas visíveis no painel de votos (0 fechado). */
+    panelCards: number;
   };
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];

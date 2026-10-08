@@ -1,6 +1,8 @@
 import { Shop, type BuyContext } from '../../core/shop';
 import { GAME_SHOP_CATALOG } from '../../data/shop';
 import { TECHNIQUES, type TechId } from '../../data/techniques';
+import { VOWS } from '../../data/vows';
+import { isBossRound } from '../../core/waves';
 import { SHOP } from '../../data/tuning';
 import { type GameSnapshot } from '../../game/debugApi';
 import type { TestScene } from '../TestScene';
@@ -23,6 +25,7 @@ export class ShopDirector {
     const shop = this.shop;
     if (!shop) return;
     const input = this.s.shopInput.read();
+    if (this.updateVowPanel(input)) return;
     const ctx: BuyContext = {
       wallet: this.s.wallet,
       hp: this.s.player.hp,
@@ -113,8 +116,31 @@ export class ShopDirector {
       this.s.build.perks,
       this.s.arsenal.arsenal,
     );
-    this.s.shopPanel.show(this.shop.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
     this.s.snapshot.debugEvents.push(`shopOpen:${round}`);
+    // VOW-01/02/06: depois de uma rodada de chefe o painel de votos vem antes da loja (sem voto restante, não abre).
+    if (isBossRound(round) && this.s.vows.openPanel()) {
+      // A faixa "Rodada N concluída" sai: o painel tem título próprio.
+      this.s.hud.hideBanner();
+      this.s.vowPanel.show(this.s.vows.offers!.map((id) => VOWS[id]));
+      this.s.snapshot.debugEvents.push('vowPanel');
+      return;
+    }
+    this.s.shopPanel.show(this.shop.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
+  }
+
+  /**
+   * Painel de votos aberto (VOW-03, VOW-04): 1..3 toma o voto, Enter recusa; os dois fecham o painel e abrem a loja.
+   * Devolve `true` enquanto o painel consumiu o quadro (a loja não lê input nesse quadro).
+   */
+  private updateVowPanel(input: { buySlot: 0 | 1 | 2 | null; confirm: boolean }): boolean {
+    if (!this.s.vows.panelOpen) return false;
+    if (input.buySlot === null && !input.confirm) return true;
+    if (input.buySlot !== null && this.s.vows.offers![input.buySlot] === undefined) return true;
+    const taken = this.s.vows.choose(input.buySlot);
+    this.s.snapshot.debugEvents.push(taken ? `vowTaken:${taken}` : 'vowRefused');
+    this.s.vowPanel.hide();
+    this.s.shopPanel.show(this.shop!.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
+    return true;
   }
 
   /**

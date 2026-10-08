@@ -19,6 +19,7 @@ export class VowDirector {
   reset(): void {
     this.vows.reset();
     this.offersValue = null;
+    this.s.vowPanel?.hide();
     for (const id of (debugParam('vows') ?? '').split(',')) if (id in VOWS) this.vows.take(id as VowId);
   }
 
@@ -82,6 +83,7 @@ export class VowDirector {
     offers: VowId[] | null;
     effects: VowEffects;
     strike: { light: number; heavy: number };
+    panelCards: number;
   } {
     // L-076: o multiplicador lido da composição da cena (a mesma do `player.damageMul`), não do efeito daqui.
     const strike = { light: this.s.strikeMul(MOVES.jab, true), heavy: this.s.strikeMul(MOVES.cotovelada, true) };
@@ -90,6 +92,8 @@ export class VowDirector {
       offers: this.offersValue ? [...this.offersValue] : null,
       effects: this.effects,
       strike,
+      // Cartas que o painel desenhou de verdade (VOW-01), lidas do painel.
+      panelCards: this.s.vowPanel?.visibleCards ?? 0,
     };
   }
 }

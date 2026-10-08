@@ -140,4 +140,62 @@ export default async function ({ page, baseUrl, assert }) {
   hurt = s.player.hp;
   s = await step(6000);
   assert(s.player.hp > hurt, `VOW-16: sem voto deveria regenerar (controle): ${hurt} -> ${s.player.hp}`);
+
+  // Vence a rodada e anda até a konbini; devolve o snapshot com a loja aberta (state 'shop').
+  const clearAndReachShop = async () => {
+    for (let i = 0; i < 400 && s.run.state === 'roundActive'; i++) {
+      await page.keyboard.press('Digit2', { delay: 20 });
+      s = await step(80);
+      if (s.player.dead) throw new Error('o player morreu antes de vencer a rodada');
+    }
+    for (let i = 0; i < 200 && s.run.state !== 'traverse'; i++) s = await step(50);
+    await page.keyboard.down('KeyD');
+    for (let i = 0; i < 600 && s.run.state !== 'shop'; i++) s = await step(50);
+    await page.keyboard.up('KeyD');
+    for (let i = 0; i < 20 && s.vows.panelCards === 0 && shopCards(s) === 0; i++) s = await step(50);
+    return s;
+  };
+  // A loja e o painel leem `JustDown`: a tecla fica segurada durante um passo do jogo.
+  const tap = async (code) => {
+    await page.keyboard.down(code);
+    await step(50);
+    await page.keyboard.up(code);
+    return step(20);
+  };
+  const shopCards = (snap) => (snap.shop.panel?.cards ?? []).filter((c) => c.lines.length > 0).length;
+
+  // VOW-01/03: depois do chefe (rodada 5) o painel abre com 3 votos distintos antes da loja; 2 toma o segundo.
+  s = await open('area=modular&round=5&regen=0');
+  s = await clearAndReachShop();
+  assert(s.run.state === 'shop', `VOW-01: deveria chegar à loja: ${s.run.state}`);
+  const offers = s.vows.offers;
+  assert(
+    offers && offers.length === 3 && new Set(offers).size === 3 && s.vows.panelCards === 3,
+    `VOW-01: painel com 3 votos: ${JSON.stringify(s.vows)}`,
+  );
+  assert(shopCards(s) === 0, `VOW-01: a loja não deveria aparecer com o painel aberto: ${shopCards(s)}`);
+  s = await tap('Digit2');
+  assert(
+    JSON.stringify(s.vows.taken) === JSON.stringify([offers[1]]) && s.vows.offers === null && s.vows.panelCards === 0,
+    `VOW-03: deveria tomar ${offers[1]}: ${JSON.stringify(s.vows)}`,
+  );
+  assert(shopCards(s) > 0, 'VOW-03: a loja deveria abrir depois do voto');
+
+  // VOW-04: Enter recusa; nenhum voto e a loja abre.
+  s = await open('area=modular&round=5&regen=0');
+  s = await clearAndReachShop();
+  assert(s.vows.panelCards === 3, `VOW-04: o painel deveria abrir: ${JSON.stringify(s.vows)}`);
+  s = await tap('Enter');
+  assert(
+    JSON.stringify(s.vows.taken) === '[]' && s.vows.panelCards === 0 && shopCards(s) > 0,
+    `VOW-04: recusa: ${JSON.stringify(s.vows)} loja ${shopCards(s)}`,
+  );
+
+  // VOW-02: depois de uma rodada comum (4) a loja abre sem painel.
+  s = await open('area=modular&round=4&regen=0&maxAlive=8');
+  s = await clearAndReachShop();
+  assert(
+    s.run.state === 'shop' && s.vows.panelCards === 0 && s.vows.offers === null && shopCards(s) > 0,
+    `VOW-02: loja sem painel: ${JSON.stringify(s.vows)} loja ${shopCards(s)}`,
+  );
 }

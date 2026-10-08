@@ -187,6 +187,7 @@ describe('installDebugApi', () => {
           regenOff: false,
         },
         strike: { light: 1, heavy: 1 },
+        panelCards: 0,
       },
       pickups: [{ id: 1, kind: 'fragment', value: 1, x: 70, y: 80, ageMs: 100, magnet: false }],
       floatTexts: [{ text: '+1', color: 'U', x: 70, y: 76 }],

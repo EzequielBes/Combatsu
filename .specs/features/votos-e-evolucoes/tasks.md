@@ -200,8 +200,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Smoke: vence o chefe na rodada 5, o painel abre com 3 votos distintos, a tecla 2 toma o segundo e abre a loja; numa segunda carga Enter recusa; a loja da rodada 1 abre sem painel
-- [ ] Gate verde e smoke verde
+- [x] Smoke: vence o chefe na rodada 5, o painel abre com 3 votos distintos, a tecla 2 toma o segundo e abre a loja; numa segunda carga Enter recusa; a loja da rodada 1 abre sem painel
+- [x] Gate verde e smoke verde
 
 **Tests**: smoke
 **Gate**: full

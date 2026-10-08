@@ -52,7 +52,7 @@ export const VOWS: Record<VowId, VowDef> = {
     cost: 'só abaixo de 30% da vida',
   },
   ganancia: { id: 'ganancia', name: 'Ganância', boon: 'fragmentos +60%', cost: 'dano sofrido +25%' },
-  furia: { id: 'furia', name: 'Fúria', boon: '+3% de dano por abate na rodada', cost: 'sem regeneração' },
+  furia: { id: 'furia', name: 'Fúria', boon: '3% de dano por abate na rodada', cost: 'sem regeneração' },
   peleDePedra: { id: 'peleDePedra', name: 'Pele de pedra', boon: 'dano sofrido -30%', cost: 'todo dano -20%' },
 };
 
