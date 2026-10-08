@@ -334,8 +334,8 @@ T11 → T12 → T13 → T14 → T15
 
 **Done when**:
 
-- [ ] Smoke verde
-- [ ] Gate verde
+- [x] Smoke verde
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full
