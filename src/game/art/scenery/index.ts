@@ -1,4 +1,5 @@
 import type { ModuleTheme } from '../../../core/module';
+import { RUA_SCENERY } from './rua';
 import { schoolMid, schoolNear, type NearColors } from './school';
 import type { ThemeScenery } from './types';
 
@@ -16,7 +17,7 @@ export const NEAR_COLORS: Record<ModuleTheme, NearColors> = {
  * cada tema troca pelos seus nas tarefas T9 a T13.
  */
 export const THEME_SCENERY: Record<ModuleTheme, ThemeScenery> = {
-  rua: { mid: schoolMid, near: schoolNear(NEAR_COLORS.rua) },
+  rua: RUA_SCENERY,
   beco: { mid: schoolMid, near: schoolNear(NEAR_COLORS.beco) },
   parque: { mid: schoolMid, near: schoolNear(NEAR_COLORS.parque) },
   konbini: { mid: schoolMid, near: schoolNear(NEAR_COLORS.konbini) },

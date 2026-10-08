@@ -241,9 +241,9 @@ T19
 
 **Done when**:
 
-- [ ] Teste: janelas de 32x32 da faixa do muro com ≥ 3 cores e janelas da média com ≥ 2 cores (rasterizado), só cores da `PALETTE`
-- [ ] Prancha olhada (captura `?debug&modules=rua`)
-- [ ] Gate verde
+- [x] Teste: janelas de 32x32 da faixa do muro com ≥ 3 cores e janelas da média com ≥ 2 cores (rasterizado), só cores da `PALETTE`
+- [x] Prancha olhada (captura `?debug&modules=rua`)
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

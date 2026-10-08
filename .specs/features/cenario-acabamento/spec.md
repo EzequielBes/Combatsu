@@ -34,7 +34,7 @@ arena do chefe, o texto "Rodada 5" some sobre o selo (texto creme sem contorno s
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
 | "Paredes verdes" do pedido | São a faixa próxima chapada do `parque` (C1 do plano) | Única área verde de parede na tela nas capturas; o usuário mandou seguir o fluxo sem responder | n |
-| Medida de "muro chapado" | Toda janela de 32x32 px na faixa do muro próximo (de 76 px acima da linha do chão da camada até ela) tem pelo menos 3 cores da paleta; na camada média, toda janela de 32x32 px com algo pintado entre 60 e 20 px acima do chão tem pelo menos 2 cores | Mede o defeito de forma objetiva e não pode ser burlada fatiando o retângulo |  y |
+| Medida de "muro chapado" | Toda janela de 32x32 px na faixa do muro próximo (de 76 px acima da linha do chão da camada até 20 px abaixo dela: o piso só cobre a camada próxima 30 px abaixo da linha) tem pelo menos 3 cores da paleta; na camada média, toda janela de 32x32 px com algo pintado entre 60 e 20 px acima do chão tem pelo menos 2 cores | Mede o defeito de forma objetiva e não pode ser burlada fatiando o retângulo |  y |
 | Borda esquerda | A coluna 0, nas linhas acima do chão, usa a folha neutra `terrain` (pedra da escola) em todos os temas | Muro de contenção igual em toda área; não precisa de folha nova | y |
 | Emenda entre módulos | Um pilar de 20 px de largura centrado na fronteira, nas camadas média e próxima | O pilar já existe no desenho e esconde o corte | y |
 | Primeiro plano | Camada com `scrollFactor` 1,15 na horizontal e 1 na vertical, desenhada só abaixo do topo do chão | Dá profundidade sem cobrir o corpo dos lutadores | y |
@@ -57,7 +57,7 @@ mundo não pareça quebrado.
 
 **Acceptance Criteria**:
 
-1. CEN-01: Every 32x32 px window of the near background layer between 76 px above its ground line and the ground line SHALL contain at least 3 distinct palette colors, for every theme.
+1. CEN-01: Every 32x32 px window of the near background layer from 76 px above its ground line to 20 px below it SHALL contain at least 3 distinct palette colors, for every theme.
 2. CEN-02: WHEN an area has more than one module THEN the near background layer SHALL draw a 20 px pillar centered on each module boundary.
 3. CEN-03: The tiles of column 0 above the floor rows SHALL use the neutral `terrain` sheet for every theme.
 4. CEN-04: The `rua` floor frames SHALL contain no row made entirely of the orange keys `a` or `A`.
@@ -118,15 +118,15 @@ habitado.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CEN-01 | P1: Consertos visuais | Tasks | Pending |
+| CEN-01 | P1: Consertos visuais | Execute | Implementing |
 | CEN-02 | P1: Consertos visuais | Execute | Implementing |
 | CEN-03 | P1: Consertos visuais | Execute | Implementing |
 | CEN-04 | P1: Consertos visuais | Execute | Implementing |
 | CEN-05 | P1: Consertos visuais | Execute | Implementing |
 | CEN-06 | P1: Consertos visuais | Tasks | Pending |
 | CEN-07 | P2: Horizonte por tema | Tasks | Pending |
-| CEN-08 | P2: Horizonte por tema | Tasks | Pending |
-| CEN-09 | P2: Horizonte por tema | Tasks | Pending |
+| CEN-08 | P2: Horizonte por tema | Execute | Implementing |
+| CEN-09 | P2: Horizonte por tema | Execute | Implementing |
 | CEN-10 | P2: Horizonte por tema | Execute | Implementing |
 | CEN-11 | P3: Profundidade e decoração | Tasks | Pending |
 | CEN-12 | P3: Profundidade e decoração | Tasks | Pending |
