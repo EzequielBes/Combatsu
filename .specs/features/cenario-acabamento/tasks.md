@@ -280,8 +280,8 @@ T19
 
 **Done when**:
 
-- [ ] Mesmos testes da T9 para o `parque`, e a média difere de `rua` e `beco`
-- [ ] Gate verde
+- [x] Mesmos testes da T9 para o `parque`, e a média difere de `rua` e `beco`
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
