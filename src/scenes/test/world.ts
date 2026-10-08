@@ -50,6 +50,8 @@ export class WorldBuilder {
   private decor: Phaser.GameObjects.Graphics | null = null;
   private front: Phaser.GameObjects.Graphics | null = null;
   private decorCount = 0;
+  /** Peças desenhadas em cada trecho, na ordem dos trechos (CEN-13). */
+  private decorPerSpan: number[] = [];
   /** Linha mais baixa pintada pela decoração, em px de mundo (CEN-13: o pé das peças); `null` sem decoração. */
   private decorBottom: number | null = null;
 
@@ -165,6 +167,7 @@ export class WorldBuilder {
     this.decor = null;
     this.front = null;
     this.decorCount = 0;
+    this.decorPerSpan = [];
     this.decorBottom = null;
   }
 
@@ -177,8 +180,14 @@ export class WorldBuilder {
    * Profundidades lidas dos objetos (CEN-13): camada próxima do fundo e decoração (`null` sem ela), e a linha mais
    * baixa pintada pela decoração.
    */
-  get sceneryLayout(): { nearDepth: number | null; decorDepth: number | null; decorFoot: number | null } {
+  get sceneryLayout(): {
+    nearDepth: number | null;
+    decorDepth: number | null;
+    decorFoot: number | null;
+    decorPerModule: number[];
+  } {
     return {
+      decorPerModule: [...this.decorPerSpan],
       nearDepth: this.background[2]?.depth ?? null,
       decorDepth: this.decor?.depth ?? null,
       decorFoot: this.decorBottom,
@@ -207,7 +216,11 @@ export class WorldBuilder {
         return decor.fillRect(x, y, w, h);
       },
     });
-    this.decorCount = decorSlots(spans).filter((slot, i) => paintDecor(brush, slot.theme, slot.x, floorTop, i)).length;
+    const drawn = decorSlots(spans).filter((slot, i) => paintDecor(brush, slot.theme, slot.x, floorTop, i));
+    this.decorCount = drawn.length;
+    this.decorPerSpan = spans.map(
+      (sp) => drawn.filter((d) => d.x >= sp.col0 * TILE && d.x < (sp.col1 + 1) * TILE).length,
+    );
     this.decorBottom = Number.isFinite(foot) ? foot : null;
     this.front = this.s.add.graphics().setScrollFactor(FRONT_SCROLL.x, FRONT_SCROLL.y).setDepth(FRONT_DEPTH);
     const f = FRONT_SCROLL.x;

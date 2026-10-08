@@ -38,9 +38,10 @@ describe('muro da camada próxima por tema (CEN-01)', () => {
 describe('horizonte da camada média por tema (CEN-08, CEN-09)', () => {
   it.each(MID_THEMES)('%s: toda janela pintada de 60 a 20 px acima do chão tem ≥ 2 cores', (theme) => {
     const sink = paint(theme, 'mid', MID_GROUND);
-    const flat = windowColorCounts(sink, X0, X1, MID_GROUND - 60, MID_GROUND - 20, 32, true).filter(
-      (w) => w.colors < 2,
-    );
+    // Duas fileiras de janelas de 32 px cobrem a faixa inteira de 40 px: uma colada em cima e outra colada embaixo.
+    const flat = [MID_GROUND - 60, MID_GROUND - 52]
+      .flatMap((y) => windowColorCounts(sink, X0, X1, y, y + 32, 32, true))
+      .filter((w) => w.colors < 2);
     expect(flat).toEqual([]);
   });
 

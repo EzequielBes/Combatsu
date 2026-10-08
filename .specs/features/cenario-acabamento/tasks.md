@@ -560,9 +560,9 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Janelas da média alinhadas para cobrir 60 a 20 px acima do chão
-- [ ] Peças por módulo ≥ 1 e corpos totais iguais com e sem `decor=0`
-- [ ] Gate verde e `npm run smoke -- world-scenery` verde
+- [x] Janelas da média alinhadas para cobrir 60 a 20 px acima do chão
+- [x] Peças por módulo ≥ 1 e corpos totais iguais com e sem `decor=0`
+- [x] Gate verde e `npm run smoke -- world-scenery` verde
 
 **Tests**: smoke
 **Gate**: full

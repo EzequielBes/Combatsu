@@ -36,8 +36,11 @@ export default async function ({ page, baseUrl, assert }) {
     area.front !== null && area.front.sx === 1.15 && area.front.sy === 1,
     `CEN-11: rolagem do primeiro plano: ${JSON.stringify(area.front)}`,
   );
-  // CEN-13: pelo menos uma peça por módulo.
-  assert(area.decor >= area.modules.length, `CEN-13: peças de decoração: ${area.decor} para ${area.modules.length}`);
+  // CEN-13: pelo menos uma peça em cada módulo.
+  assert(
+    area.layout.decorPerModule.length === area.modules.length && area.layout.decorPerModule.every((n) => n >= 1),
+    `CEN-13: peças por módulo: ${JSON.stringify(area.layout.decorPerModule)}`,
+  );
   // CEN-13: a decoração fica na frente da camada próxima e atrás do player, e as peças encostam no topo do piso.
   const { nearDepth, decorDepth, playerDepth, decorFoot } = area.layout;
   assert(
@@ -61,8 +64,8 @@ export default async function ({ page, baseUrl, assert }) {
   const bare = await load(`${QUERY}&decor=0`);
   assert(bare.decor === 0 && bare.front === null, `decor=0 deveria desligar a decoração: ${JSON.stringify(bare)}`);
   assert(
-    bare.staticBodies === area.staticBodies,
-    `CEN-14: corpos estáticos com decoração ${area.staticBodies}, sem ${bare.staticBodies}`,
+    bare.staticBodies === area.staticBodies && bare.bodies === area.bodies,
+    `CEN-14: corpos com decoração ${area.bodies} (${area.staticBodies} estáticos), sem ${bare.bodies} (${bare.staticBodies})`,
   );
 
   // Edge case: a sala de teste não tem primeiro plano nem decoração.
