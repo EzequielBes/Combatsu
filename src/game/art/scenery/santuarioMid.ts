@@ -1,5 +1,5 @@
-import { type Brush, rng } from './brush';
-import { speckle } from './paint';
+import type { Brush } from './brush';
+import { speckle, wire } from './paint';
 import type { LayerArea } from './types';
 
 /**
@@ -78,10 +78,19 @@ function torii(b: Brush, ground: number, cracked: boolean): void {
   // Oni: o pilar da esquerda racha em diagonal, falta um pedaço da viga e correntes pendem da viga de baixo.
   for (let i = 0; i < 12; i++) b.rect(CX - 82 + (i % 3) * 2, top + 60 + i * 6, 4, 4, 'k');
   b.rect(CX + 40, top + 2, 30, 8, 'e');
-  for (const cx of [CX - 50, CX - 10, CX + 30]) {
-    for (let y = top + 42; y < top + 42 + 40 + (cx % 3) * 8; y += 6) {
-      b.rect(cx, y, 4, 4, 'S');
-      b.dot(cx + 1, y + 1, 'K');
+  // Correntes grossas: elos de 6x6 alternando de frente e de lado.
+  for (const [cx, len] of [
+    [CX - 50, 56],
+    [CX - 10, 40],
+    [CX + 30, 64],
+  ] as const) {
+    for (let y = top + 42, i = 0; y < top + 42 + len; y += 6, i++) {
+      if (i % 2 === 0) {
+        b.rect(cx - 2, y, 6, 6, 'S');
+        b.rect(cx, y + 2, 2, 2, 'K');
+      } else {
+        b.rect(cx, y, 2, 6, 's');
+      }
     }
   }
 }
@@ -106,25 +115,27 @@ function sacredTree(b: Brush, cx: number, ground: number): void {
   }
 }
 
-/** Tecelã: fios pálidos esticados em diagonal e casulos pendurados no beiral e na árvore. */
+/** Tecelã: fios pálidos que caem em curva entre a árvore, o torii e o salão, e casulos pendurados neles. */
 function webs(b: Brush, ground: number): void {
-  const rand = rng(1311);
-  for (let i = 0; i < 7; i++) {
-    const x0 = 40 + i * 120;
-    const y0 = ground - 260 + Math.floor(rand() * 6) * 10;
-    const len = 80 + Math.floor(rand() * 5) * 20;
-    for (let t = 0; t < len; t += 2) b.dot(x0 + t, y0 + Math.round((t * 0.6) / 2) * 2, 'I');
-  }
-  for (const [x, y] of [
-    [CX - 96, ground - 168],
-    [CX + 104, ground - 172],
-    [150, ground - 120],
-    [CX + 210, ground - 150],
-  ] as const) {
-    b.rect(x + 2, y - 20, 2, 20, 'I');
-    b.disc(x + 3, y + 6, 8, 'i');
-    b.rect(x - 2, y, 10, 2, 'I');
-    b.rect(x - 2, y + 6, 10, 2, 'I');
+  const tree = CX - 270;
+  const anchors: readonly (readonly [number, number, number, number, number])[] = [
+    // x0, x1, altura, barriga, casulo na posição (0..1) do fio; 0 = sem casulo.
+    [tree + 40, CX - 112, ground - 170, 20, 0.55],
+    [tree + 20, CX - 100, ground - 130, 26, 0.35],
+    [CX - 112, CX + 112, ground - 166, 30, 0.5],
+    [CX + 112, CX + 260, ground - 160, 22, 0.6],
+    [CX + 90, CX + 230, ground - 120, 18, 0],
+  ];
+  for (const [x0, x1, y, sag, at] of anchors) {
+    wire(b, x0, x1, y, sag, 'I');
+    if (at === 0) continue;
+    const cx = Math.round((x0 + (x1 - x0) * at) / 2) * 2;
+    const cy = y + Math.round((4 * sag * at * (1 - at)) / 2) * 2;
+    b.rect(cx, cy, 2, 10, 'I');
+    b.disc(cx + 1, cy + 18, 7, 'i');
+    b.rect(cx - 4, cy + 14, 10, 2, 'I');
+    b.rect(cx - 4, cy + 20, 10, 2, 'I');
+    b.dot(cx - 2, cy + 16, 'I');
   }
 }
 
