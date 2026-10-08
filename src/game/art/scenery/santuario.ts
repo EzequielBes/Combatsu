@@ -1,13 +1,13 @@
 import { type Brush, rng } from './brush';
 import { hashSeed, speckle } from './paint';
 import { veilSky } from './santuarioSky';
-import { schoolMid } from './school';
+import { santuarioMid } from './santuarioMid';
 import type { LayerArea, ThemeScenery } from './types';
 
 /**
  * Santuário (CEN-01): na próxima, muro de pedra irregular (ishigaki) com a cobertura de telhas de barro escuras e
- * lanternas de pedra (tōrō) acesas na frente, no lugar do muro marrom chapado da F18. A média continua a da escola
- * até a F23 (`arena-do-santuario`).
+ * lanternas de pedra (tōrō) acesas na frente, no lugar do muro marrom chapado da F18. O céu e a média da arena estão
+ * em `santuarioSky.ts` e `santuarioMid.ts` (F23).
  */
 
 /** Altura do muro acima do chão da camada. */
@@ -66,4 +66,4 @@ function near(b: Brush, { x0, x1, ground, bottom }: LayerArea): void {
   for (let x = x0 + 70; x < x1; x += 220) lantern(b, x, ground);
 }
 
-export const SANTUARIO_SCENERY: ThemeScenery = { far: veilSky, mid: schoolMid, near };
+export const SANTUARIO_SCENERY: ThemeScenery = { far: veilSky, mid: santuarioMid, near };

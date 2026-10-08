@@ -138,9 +138,9 @@ T8 → T9
 
 **Done when**:
 
-- [ ] Teste: janelas da média com ≥ 2 cores; difere da `schoolMid`; `oni` e `tecela` dão rasters diferentes
-- [ ] Captura olhada
-- [ ] Gate verde
+- [x] Teste: janelas da média com ≥ 2 cores; difere da `schoolMid`; `oni` e `tecela` dão rasters diferentes
+- [x] Captura olhada
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

@@ -9,10 +9,10 @@ import type { LayerArea } from './types';
  */
 
 /**
- * A distante rola a 0,1: medido na captura da arena (08/10), a câmera mostra x ≈ 260..970 e y ≈ 170..530 da camada,
- * de uma ponta à outra da arena. A cúpula e a lua ficam centradas nessa janela.
+ * A distante rola a 0,1: a câmera centrada no ponto de mundo X mostra no meio da tela o x `0,1 · X + 576` da camada
+ * (`toLayerX`), quase parado entre 608 e 720 na arena. A cúpula e a lua ficam centradas aí.
  */
-const VIEW_CX = 615;
+const VIEW_CX = 650;
 
 /** Cúpula do Véu: arco em dither roxo de raio `rx` × `ry` acima do horizonte; por fora dele, preto. */
 function veilDome(b: Brush, x0: number, x1: number, ground: number): void {
