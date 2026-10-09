@@ -6,7 +6,7 @@ import { RedOrbState } from '../../core/redOrb';
 import type { Vec2 } from '../../core/hit';
 import { fingertipOffsetPx } from '../art/sprites/playerTech';
 import { HD_ON } from '../art/hd/flag';
-import { hdAnchors } from '../art/hd/sheet';
+import { playerAnchors } from '../art/hd/anchors';
 import {
   DEBRIS_MS,
   FLASH_CORE_MS,
@@ -83,7 +83,7 @@ export class RedOrbFx {
    */
   fingertip(playerX: number, playerY: number, facing: 1 | -1, frameName: string = FALLBACK_FINGERTIP_FRAME): Vec2 {
     // `?hd=1`: a ponta dos dedos sai do quadro HD (o braço do corpo novo fica mais alto que o da arte antiga).
-    const hd = HD_ON ? (hdAnchors(frameName) ?? hdAnchors(FALLBACK_FINGERTIP_FRAME)) : undefined;
+    const hd = HD_ON ? (playerAnchors(frameName) ?? playerAnchors(FALLBACK_FINGERTIP_FRAME)) : undefined;
     if (hd) return { x: playerX + hd.tip.x * facing, y: playerY + hd.tip.y };
     let offset: { x: number; y: number };
     try {

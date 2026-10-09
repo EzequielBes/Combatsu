@@ -91,6 +91,7 @@ Parâmetros da URL, todos junto de `?debug`:
 | `area=sala` | sala de teste de uma tela só (`src/data/level1.ts`), sem selo, travessia nem konbini; a loja abre na própria sala. O `fxlab` também usa a sala |
 | `heal=N`, `armed=knife\|club`, `rare=1` | forçar a chance de cura, a ferramenta do inimigo armado e a raridade |
 | `fxlab` | laboratório de efeitos: sem ondas, bonecos de treino, teclas 1 a 6 disparam cada efeito e 0 liga a câmera lenta |
+| `yuta=0` | volta ao boneco da folha `player-hd`. Por padrão a guarda, a corrida, os golpes e as técnicas que a folha `player-yuta` já tem saem dela (quadros desenhados, 2 texels = 1 px) |
 | `hd=0` | volta à versão antiga (canvas 960x540, corpo de 32 texels). O jogo abre em HD por padrão: canvas 1280x720, zoom 2 e a folha `player-hd` (1 texel = 1 px); funciona com ou sem `debug` |
 
 Sem `area=sala`, com ou sem `?debug`, o jogo usa o mundo modular. Os smokes antigos medem posições da sala, então o

@@ -18,6 +18,8 @@ export const TEX = {
   playerRig: 'player-rig',
   /** Folha HD do player (1 texel = 1 px de mundo, quadros de 96x80), só com `?hd=1` (fase 1 do plano de sprites HD). */
   playerHd: 'player-hd',
+  /** Folha do protagonista novo, em quadros desenhados (2 texels = 1 px de mundo); veja `art/hd/atlas/yutaSheet`. */
+  playerYuta: 'player-yuta',
   /** Folha animada do inimigo `corcunda` (o corpo físico é um retângulo Matter, sem textura); veja `enemyTex`. */
   enemy: 'enemy',
   chair: 'chair',

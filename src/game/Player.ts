@@ -29,7 +29,7 @@ import { PlayerStrikes } from './player/strikes';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { SIZE, TEX } from './textures';
 import { HD_ON } from './art/hd/flag';
-import { hdAnchors } from './art/hd/sheet';
+import { playerAnchors } from './art/hd/anchors';
 
 export type { Attacker, CastPose, DefenseKind, OnStrikePhase, StrikePhase } from './player/types';
 
@@ -295,7 +295,7 @@ export class Player implements Hittable {
 
   /** `?hd=1`: a mão de perto do quadro HD, em px a partir do centro do corpo, e o giro do antebraço: o objeto fica nela. */
   private hdHand(): { x: number; y: number; angle: number } | undefined {
-    const a = HD_ON ? hdAnchors(this.frameName) : undefined;
+    const a = HD_ON ? playerAnchors(this.frameName) : undefined;
     return a ? { x: a.near.x, y: a.near.y + SIZE.player.h / 2, angle: a.nearAngle } : undefined;
   }
 

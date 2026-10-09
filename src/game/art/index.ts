@@ -6,7 +6,8 @@ import { TEX, createPlaceholderTextures, enemyTex, ragTex, type RagPart } from '
 import { ENEMY_BAR, HUD_BAR } from './hud';
 import { PALETTE_KEYS } from './palette';
 import { registerIndexedSheet, registerSheet } from './render';
-import { HD_ON } from './hd/flag';
+import { HD_ON, YUTA_ON } from './hd/flag';
+import { playerYutaAnimKey, yutaAnims, yutaSheet } from './hd/atlas/yutaSheet';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
 import { HD_WEAPONS } from './hd/weapons';
 import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites/enemy';
@@ -62,6 +63,11 @@ export function createArt(scene: Phaser.Scene): void {
   if (HD_ON) {
     registerIndexedSheet(scene, TEX.playerHd, hdPlayerSheet());
     registerAnims(scene, TEX.playerHd, hdAnims(), playerHdAnimKey);
+  }
+  // Folha do protagonista novo (quadros desenhados, 2 texels = 1 px): a guarda e a corrida, por cima da folha HD.
+  if (YUTA_ON) {
+    registerIndexedSheet(scene, TEX.playerYuta, yutaSheet());
+    registerAnims(scene, TEX.playerYuta, yutaAnims(), playerYutaAnimKey);
   }
   // Uma folha, as animações e as 3 partes do ragdoll por aparência (EVR-06), nas cores da folha (CHR-04).
   for (const v of ENEMY_VARIANTS) {

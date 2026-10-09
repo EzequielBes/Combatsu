@@ -50,6 +50,7 @@ depois disso abra arquivos, e só os que a tarefa toca.
 | Caminho | Estado |
 | --- | --- |
 | `art/hd/` | A base do jogo: player a 1 texel = 1 px, ligado por padrão (`?hd=0` desliga). Golpes por família em `hd/families/`. É onde a arte nova entra |
+| `art/hd/atlas/` | Protagonista novo em quadros desenhados (folha `player-yuta`, 2 texels = 1 px). A fonte são os PNGs de `assets/yuta/quadros/`; `tools/sprite-atlas.mjs` gera o `yutaAtlas.data.ts`, que não se edita à mão. O jogo usa esta folha no quadro que ela tem e a `player-hd` no resto (`?yuta=0` desliga) |
 | `art/sprites/` | Caminho antigo: grades de texto (1 caractere = 1 cor). `enemy.ts`, `player.ts`, `playerMoves.ts` são enormes e saem na fase 5: **não ler inteiros nem dividir**, buscar pelo nome do frame |
 | `art/scenery/` | Cenário por tema: um arquivo por tema (camadas média e próxima), decoração e primeiro plano; `background.ts` só monta as camadas. Medido nos testes por janelas de cor (`tests/game/art/sceneryRaster.ts`) |
 | `art/rig/` | Spike do boneco articulado, só com `?debug&rig=1`. Não evoluir |

@@ -11,7 +11,15 @@ import { playerAnimKey } from '../art';
 import { PALETTE } from '../art/palette';
 import { PLAYER_ORIGIN } from '../art/sprites/player';
 import { RIG_ON, RIG_TALL_ORIGIN, rigMoveFrame } from '../art/rig/flag';
-import { HD_ON } from '../art/hd/flag';
+import { HD_ON, YUTA_ON } from '../art/hd/flag';
+import {
+  YUTA_ORIGIN,
+  YUTA_SCALE,
+  playerYutaAnimKey,
+  yutaHasAnim,
+  yutaHasFrame,
+  yutaMoveFrame,
+} from '../art/hd/atlas/yutaSheet';
 import { HD_ORIGIN, hdHasAnim, hdHasFrame, hdHasMove, hdHeldName, hdMoveFrame, playerHdAnimKey } from '../art/hd/sheet';
 import { PLAYER_MOVE, PROP_SWING_COMBO } from '../../data/tuning';
 import { SIZE, TEX } from '../textures';
@@ -118,12 +126,22 @@ export class PlayerAnimator {
   private show(name: string): Phaser.GameObjects.Sprite {
     const v = this.p.view;
     const frame = HD_ON ? hdHeldName(name, this.heavyHeld(), hdHasFrame) : name;
-    if (HD_ON && hdHasFrame(frame)) this.placeView(TEX.playerHd, HD_ORIGIN);
-    else this.placeView();
-    v.setScale(this.p.facing, 1);
+    this.useSheet(YUTA_ON && yutaHasFrame(frame), HD_ON && hdHasFrame(frame));
     v.anims.stop();
     v.setFrame(frame);
     return v;
+  }
+
+  /**
+   * Põe o sprite na folha do quadro ou da animação: a do protagonista novo quando ela o tem, depois a HD, depois a
+   * antiga; e acerta a escala (a folha nova tem 2 texels por px de mundo) e o lado para onde o player olha.
+   */
+  private useSheet(yuta: boolean, hd: boolean): void {
+    if (yuta) this.placeView(TEX.playerYuta, YUTA_ORIGIN);
+    else if (hd) this.placeView(TEX.playerHd, HD_ORIGIN);
+    else this.placeView();
+    const scale = yuta ? YUTA_SCALE : 1;
+    this.p.view.setScale(this.p.facing * scale, scale);
   }
 
   /** O objeto na mão é dos pesados (cadeira, clava): com `?hd=1` a pegada é a do ombro, com os quadros `heavy-`. */
@@ -146,14 +164,13 @@ export class PlayerAnimator {
   private play(name: string): Phaser.GameObjects.Sprite {
     const v = this.p.view;
     const anim = HD_ON ? hdHeldName(name, this.heavyHeld(), hdHasAnim) : name;
+    const yuta = YUTA_ON && yutaHasAnim(anim);
     const hd = HD_ON && hdHasAnim(anim);
-    if (hd) this.placeView(TEX.playerHd, HD_ORIGIN);
-    else this.placeView();
-    v.setScale(this.p.facing, 1);
-    v.anims.play(hd ? playerHdAnimKey(anim) : playerAnimKey(anim), true);
+    this.useSheet(yuta, hd);
+    v.anims.play(yuta ? playerYutaAnimKey(anim) : hd ? playerHdAnimKey(anim) : playerAnimKey(anim), true);
     // A corrida HD tem o passo medido para a velocidade de corrida base: com a corrida mais rápida (MOD-06) o ciclo
     // acelera na mesma proporção, e o pé de apoio continua sem patinar.
-    v.anims.timeScale = hd && HD_RUN_ANIMS.has(name) ? this.p.modifiers.runSpeed / PLAYER_MOVE.runSpeed : 1;
+    v.anims.timeScale = (yuta || hd) && HD_RUN_ANIMS.has(name) ? this.p.modifiers.runSpeed / PLAYER_MOVE.runSpeed : 1;
     return v;
   }
 
@@ -186,7 +203,10 @@ export class PlayerAnimator {
     const phase = this.p.moves.phase as AttackPhase;
     const ms = this.rigPhaseMs(phase);
     // Com `?hd=1` o golpe com sequência HD toca os quadros dela; os outros caem no `-wind/-hit/-recover`.
-    const hd = HD_ON ? hdMoveFrame(mv.name, phase, ms, mv) : undefined;
+    // O golpe que a folha do protagonista novo já tem sai dela.
+    const hd =
+      (YUTA_ON ? yutaMoveFrame(mv.name, phase) : undefined) ??
+      (HD_ON ? hdMoveFrame(mv.name, phase, ms, mv) : undefined);
     const rig = this.rigFrame(mv, phase, ms);
     let v: Phaser.GameObjects.Sprite;
     if (rig) {

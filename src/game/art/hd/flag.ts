@@ -18,3 +18,11 @@ const currentSearch = (): string => (typeof window === 'undefined' ? '' : window
  * unitários da arte antiga leem constantes que dependem desta chave, e os da arte HD não passam por ela.
  */
 export const HD_ON = typeof window !== 'undefined' && hdEnabled(currentSearch());
+
+/** Protagonista novo (folha `player-yuta`) ligado: sempre que o HD está, menos com `?yuta=0` na URL. */
+export function yutaEnabled(search: string): boolean {
+  return hdEnabled(search) && new URLSearchParams(search).get('yuta') !== '0';
+}
+
+/** Protagonista novo na página aberta (avaliado uma vez, na carga); desligado fora do navegador, como o `HD_ON`. */
+export const YUTA_ON = typeof window !== 'undefined' && yutaEnabled(currentSearch());

@@ -24,7 +24,8 @@ export default async function (ctx) {
     if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text());
   });
 
-  await boot('hd=1&enemyGuard=0&noshop=1');
+  // `yuta=0`: este cenário mede a folha `player-hd`; a do protagonista novo tem o cenário `yuta`.
+  await boot('hd=1&yuta=0&enemyGuard=0&noshop=1');
   let s = await settle();
 
   // Tela: canvas 1280x720, zoom 2, vista de mundo 640x360.

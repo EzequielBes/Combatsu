@@ -8,7 +8,7 @@ import { Kokusen } from '../../core/kokusen';
 import { KOKUSEN, TECHNIQUES } from '../../data/techniques';
 import { PLAYER_COMBO } from '../../data/tuning';
 import { HD_ON } from '../art/hd/flag';
-import { hdAnchors } from '../art/hd/sheet';
+import { playerAnchors } from '../art/hd/anchors';
 import type { Hittable } from '../bodyTags';
 import { Boss } from '../Boss';
 import { AttackHitbox } from '../hitbox';
@@ -104,7 +104,7 @@ export class DivergentTech {
   private updateFist(dtMs: number, phase: ActiveCastView['state'] | null): void {
     const { player } = this.ctx;
     // `?hd=1`: a chama fica no punho que vai bater (o de perto do quadro HD), não no ponto fixo à frente do corpo.
-    const hand = HD_ON ? hdAnchors(player.frameName)?.near : undefined;
+    const hand = HD_ON ? playerAnchors(player.frameName)?.near : undefined;
     const at = hand ? { x: hand.x, y: hand.y + SIZE.player.h / 2 } : undefined;
     const { x, y } = player.sprite;
     if (phase === 'sign' || phase === 'charge') {
