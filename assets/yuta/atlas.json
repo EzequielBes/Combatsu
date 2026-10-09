@@ -1,0 +1,204 @@
+{
+  "cell": {
+    "w": 192,
+    "h": 160
+  },
+  "origin": {
+    "x": 72
+  },
+  "frames": [
+    "idle-0",
+    "run-0",
+    "run-1",
+    "run-2",
+    "run-3",
+    "run-4",
+    "run-5",
+    "run-6",
+    "run-7",
+    "run-8",
+    "run-9",
+    "jab-wind",
+    "jab-hit",
+    "direto-wind",
+    "direto-hit",
+    "chuteFrontal-wind",
+    "chuteFrontal-hit",
+    "chuteAlto-wind",
+    "chuteAlto-hit",
+    "rasteira-wind",
+    "rasteira-hit",
+    "duck",
+    "jump-0",
+    "jump-1",
+    "apex-0",
+    "fall-0",
+    "land-0",
+    "voadora-wind",
+    "voadora-hit",
+    "guard",
+    "parry",
+    "dodge-0",
+    "dodge-1",
+    "hurt",
+    "fall-1",
+    "land-1",
+    "socoBaixo-wind",
+    "socoBaixo-hit",
+    "ganchoAscendente-wind",
+    "ganchoAscendente-hit",
+    "ganchoAscendente-recover",
+    "socoAereo-wind",
+    "socoAereo-hit",
+    "pisao-wind",
+    "pisao-hit",
+    "chuteGiratorio-wind",
+    "chuteGiratorio-hit",
+    "joelhada-wind",
+    "joelhada-hit",
+    "palmaExplosiva-wind",
+    "palmaExplosiva-hit",
+    "palmaExplosiva-recover",
+    "contra-wind",
+    "contra-hit",
+    "direto-recover",
+    "vermelho-sign",
+    "vermelho-charge",
+    "vermelho-release",
+    "vermelho-recover",
+    "azul-sign",
+    "azul-charge",
+    "azul-release",
+    "azul-recover",
+    "corte-sign",
+    "corte-charge",
+    "corte-release",
+    "corte-recover",
+    "divergente-sign",
+    "divergente-charge",
+    "divergente-release",
+    "divergente-recover",
+    "kokusen-hit"
+  ],
+  "frameData": [
+    {
+      "name": "vermelho-sign",
+      "hand": {
+        "dx": 32,
+        "dy": 90
+      }
+    },
+    {
+      "name": "vermelho-charge",
+      "hand": {
+        "dx": 36,
+        "dy": 82
+      }
+    },
+    {
+      "name": "vermelho-release",
+      "hand": {
+        "dx": 58,
+        "dy": 80
+      }
+    },
+    {
+      "name": "vermelho-recover",
+      "hand": {
+        "dx": 25,
+        "dy": 57
+      }
+    },
+    {
+      "name": "azul-sign",
+      "hand": {
+        "dx": 17,
+        "dy": 83
+      }
+    },
+    {
+      "name": "azul-charge",
+      "hand": {
+        "dx": 58,
+        "dy": 88
+      }
+    },
+    {
+      "name": "azul-release",
+      "hand": {
+        "dx": 50,
+        "dy": 81
+      }
+    },
+    {
+      "name": "azul-recover",
+      "hand": {
+        "dx": 36,
+        "dy": 75
+      }
+    },
+    {
+      "name": "corte-sign",
+      "hand": {
+        "dx": 19,
+        "dy": 89
+      }
+    },
+    {
+      "name": "corte-charge",
+      "hand": {
+        "dx": -6,
+        "dy": 109
+      }
+    },
+    {
+      "name": "corte-release",
+      "hand": {
+        "dx": 58,
+        "dy": 80
+      }
+    },
+    {
+      "name": "corte-recover",
+      "hand": {
+        "dx": 27,
+        "dy": 65
+      }
+    },
+    {
+      "name": "divergente-sign",
+      "hand": {
+        "dx": -9,
+        "dy": 76
+      }
+    },
+    {
+      "name": "divergente-charge",
+      "hand": {
+        "dx": 42,
+        "dy": 76
+      }
+    },
+    {
+      "name": "divergente-release",
+      "hand": {
+        "dx": 71,
+        "dy": 68
+      }
+    },
+    {
+      "name": "divergente-recover",
+      "hand": {
+        "dx": -13,
+        "dy": 94
+      }
+    },
+    {
+      "name": "kokusen-hit",
+      "hand": {
+        "dx": 71,
+        "dy": 68
+      }
+    }
+  ]
+}
