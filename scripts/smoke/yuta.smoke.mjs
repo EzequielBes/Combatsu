@@ -35,7 +35,7 @@ export default async function (ctx) {
   );
   await shoot('yuta-idle.png');
 
-  // Corrida: passa por todos os quadros `run-*` da folha nova, um ciclo inteiro em menos de 1 s.
+  // Corrida: a arrancada e depois os 4 quadros `run-*` da folha nova, em menos de 1 s.
   await down('KeyD');
   const seen = [];
   for (let i = 0; i < 60; i++) {
@@ -45,9 +45,21 @@ export default async function (ctx) {
     if (i === 20) await shoot('yuta-corrida.png');
   }
   await up('KeyD');
+  // Ao soltar, a freada (`run-stop-*`) toca antes de voltar à guarda.
+  const stop = [];
+  for (let i = 0; i < 30; i++) {
+    s = await frame();
+    if (s.player.frame.startsWith('run-stop-') && !stop.includes(s.player.frame)) stop.push(s.player.frame);
+    if (stop.length === 2 && i < 29) await shoot('yuta-freada.png');
+  }
   assert(
-    seen.length >= 8 && seen.every((f) => f.startsWith('run-')),
-    `a corrida deveria passar por pelo menos 8 quadros run-*: ${seen.join(',')}`,
+    seen.some((f) => f.startsWith('run-start-')),
+    `a corrida deveria começar pela arrancada: ${seen.join(',')}`,
+  );
+  assert(stop.length >= 2, `ao parar deveria tocar a freada: ${stop.join(',')} (${s.player.frame})`);
+  assert(
+    seen.length >= 6 && seen.every((f) => f.startsWith('run-')),
+    `a corrida deveria passar pela arrancada e pelos 4 quadros run-*: ${seen.join(',')}`,
   );
   s = await settle();
 
@@ -126,6 +138,130 @@ export default async function (ctx) {
   }
   await up('KeyU');
   assert(guard, `a guarda deveria usar player-yuta/guard: ${s.player.sheet}/${s.player.frame}`);
+
+  // Chute correndo (direção + K = chute de empurrão): sai da folha nova, como um chute voador.
+  s = await settle();
+  for (let i = 0; i < 60; i++) s = await frame();
+  await down('KeyD');
+  for (let i = 0; i < 20; i++) s = await frame();
+  await down('KeyK');
+  const runKick = [];
+  for (let i = 0; i < 30; i++) {
+    s = await frame();
+    if (s.player.move === 'chuteEmpurrao') {
+      assert(
+        s.player.sheet === 'player-yuta',
+        `o chute correndo deveria usar player-yuta: ${s.player.sheet}/${s.player.frame}`,
+      );
+      if (!runKick.includes(s.player.frame)) runKick.push(s.player.frame);
+      if (s.player.frame === 'chuteEmpurrao-hit' && runKick.length === 2) await shoot('yuta-chute-correndo.png');
+    }
+    if (i === 2) await up('KeyK');
+  }
+  await up('KeyD');
+  assert(
+    runKick.includes('chuteEmpurrao-hit'),
+    `correr e chutar deveria mostrar chuteEmpurrao-hit: ${runKick.join(',')} (${s.player.move}/${s.player.frame})`,
+  );
+
+  // Objeto leve na mão (a garrafa do mapa): parado segura na folha nova, e o golpe (J) sai dela também.
+  await boot('hd=1&enemyGuard=0&noshop=1');
+  s = await settle();
+  const bottle = s.worldProps.find((p) => p.key === 'bottle');
+  assert(bottle, `esperava a garrafa do mapa em worldProps: ${JSON.stringify(s.worldProps)}`);
+  for (let i = 0; i < 400 && Math.abs(s.player.x - bottle.x) > 6; i++) {
+    const dir = bottle.x >= s.player.x ? 'KeyD' : 'KeyA';
+    await down(dir);
+    s = await frame();
+    await up(dir);
+  }
+  await down('KeyE');
+  for (let i = 0; i < 4; i++) s = await frame();
+  await up('KeyE');
+  for (let i = 0; i < 50; i++) s = await frame();
+  assert(s.hud.heldItem, `deveria ter pegado a garrafa: ${JSON.stringify(s.hud.heldItem)} em x=${s.player.x}`);
+  assert(
+    s.player.sheet === 'player-yuta' && s.player.frame.startsWith('carry-idle-'),
+    `parado com a garrafa deveria usar player-yuta/carry-idle-*: ${s.player.sheet}/${s.player.frame}`,
+  );
+  await shoot('yuta-objeto.png');
+  await down('KeyJ');
+  const swing = [];
+  for (let i = 0; i < 30; i++) {
+    s = await frame();
+    if (s.player.sheet === 'player-yuta' && s.player.frame.startsWith('swing-') && !swing.includes(s.player.frame)) {
+      swing.push(s.player.frame);
+      if (s.player.frame === 'swing-hit') await shoot('yuta-objeto-golpe.png');
+    }
+    if (i === 2) await up('KeyJ');
+  }
+  assert(
+    swing.includes('swing-hit'),
+    `o golpe com a garrafa deveria mostrar player-yuta/swing-hit: ${swing.join(',')}`,
+  );
+
+  // Correndo com a garrafa: a corrida com objeto da folha nova; lançar em corrida (E) toca a sequência própria.
+  s = await settle();
+  for (let i = 0; i < 40; i++) s = await frame();
+  await down('KeyA');
+  const carry = [];
+  for (let i = 0; i < 40; i++) {
+    s = await frame();
+    if (s.player.sheet === 'player-yuta' && s.player.frame.startsWith('carry-run-') && !carry.includes(s.player.frame))
+      carry.push(s.player.frame);
+    if (i === 25) await shoot('yuta-objeto-corrida.png');
+  }
+  assert(carry.length >= 4, `correndo com a garrafa deveria passar pelos quadros carry-run-*: ${carry.join(',')}`);
+  await down('KeyE');
+  s = await frame();
+  await up('KeyE');
+  const thrown = [];
+  for (let i = 0; i < 14; i++) {
+    s = await frame();
+    if (s.player.frame.startsWith('throw-run-') && !thrown.includes(s.player.frame)) thrown.push(s.player.frame);
+  }
+  await up('KeyA');
+  assert(thrown.length >= 2, `lançar correndo deveria tocar throw-run-*: ${thrown.join(',')} (${s.player.frame})`);
+
+  // Objeto pesado (a cadeira do mapa): a pegada de duas mãos e o golpe (J) também saem da folha nova.
+  await boot('hd=1&enemyGuard=0&noshop=1');
+  s = await settle();
+  const chair = s.worldProps.find((p) => p.key === 'chair');
+  assert(chair, `esperava a cadeira do mapa em worldProps: ${JSON.stringify(s.worldProps)}`);
+  for (let i = 0; i < 400 && Math.abs(s.player.x - chair.x) > 6; i++) {
+    const dir = chair.x >= s.player.x ? 'KeyD' : 'KeyA';
+    await down(dir);
+    s = await frame();
+    await up(dir);
+  }
+  await down('KeyE');
+  for (let i = 0; i < 4; i++) s = await frame();
+  await up('KeyE');
+  for (let i = 0; i < 50; i++) s = await frame();
+  assert(
+    s.player.sheet === 'player-yuta' && s.player.frame.startsWith('heavy-carry-idle-'),
+    `parado com a cadeira deveria usar player-yuta/heavy-carry-idle-*: ${s.player.sheet}/${s.player.frame}`,
+  );
+  await shoot('yuta-pesado.png');
+  await down('KeyJ');
+  const heavy = [];
+  for (let i = 0; i < 40; i++) {
+    s = await frame();
+    if (
+      s.player.sheet === 'player-yuta' &&
+      s.player.frame.startsWith('heavy-swing-') &&
+      !heavy.includes(s.player.frame)
+    ) {
+      heavy.push(s.player.frame);
+      if (s.player.frame === 'heavy-swing-wind') await shoot('yuta-pesado-wind.png');
+      if (s.player.frame === 'heavy-swing-hit') await shoot('yuta-pesado-golpe.png');
+    }
+    if (i === 2) await up('KeyJ');
+  }
+  assert(
+    heavy.includes('heavy-swing-hit'),
+    `o golpe com a cadeira deveria mostrar player-yuta/heavy-swing-hit: ${heavy.join(',')} (${s.player.frame})`,
+  );
 
   // Técnica (L, com `tech=vermelho`): o selo, a carga e o disparo saem da folha nova; a captura do disparo mostra o efeito na mão.
   await boot('hd=1&tech=vermelho&enemyGuard=0&noshop=1');

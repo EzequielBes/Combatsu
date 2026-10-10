@@ -14,10 +14,6 @@
     "run-3",
     "run-4",
     "run-5",
-    "run-6",
-    "run-7",
-    "run-8",
-    "run-9",
     "jab-wind",
     "jab-hit",
     "direto-wind",
@@ -78,7 +74,66 @@
     "divergente-charge",
     "divergente-release",
     "divergente-recover",
-    "kokusen-hit"
+    "kokusen-hit",
+    "hurt-1",
+    "stunned-0",
+    "carry-idle-0",
+    "carry-idle-1",
+    "swing-wind",
+    "throw-0",
+    "swing-hit",
+    "throw-1",
+    "swing-recover",
+    "run-start-0",
+    "run-start-1",
+    "run-stop-0",
+    "run-stop-1",
+    "run-stop-2",
+    "run-stop-3",
+    "stunned-1",
+    "carry-run-0",
+    "carry-run-1",
+    "carry-run-2",
+    "carry-run-3",
+    "carry-run-4",
+    "throw-run-0",
+    "throw-run-1",
+    "throw-run-2",
+    "throw-run-3",
+    "idle-1",
+    "voadora-recover",
+    "socoBaixo-recover",
+    "heavy-carry-idle-0",
+    "heavy-carry-idle-1",
+    "heavy-carry-run-0",
+    "heavy-carry-run-1",
+    "heavy-carry-run-2",
+    "heavy-throw-0",
+    "heavy-throw-1",
+    "heavy-throw-run-0",
+    "heavy-throw-run-1",
+    "heavy-throw-run-2",
+    "gancho-wind",
+    "gancho-hit",
+    "cotovelada-wind",
+    "cotovelada-hit",
+    "contraGancho-wind",
+    "contraGancho-hit",
+    "chuteEmpurrao-wind",
+    "chuteEmpurrao-hit",
+    "chuteEmpurrao-recover",
+    "swing-3-wind",
+    "swing-3-hit",
+    "swing-3-recover",
+    "swing-2-wind",
+    "swing-2-hit",
+    "swing-2-recover",
+    "heavy-swing-wind",
+    "heavy-swing-hit",
+    "heavy-swing-recover",
+    "heavy-swing-2-wind",
+    "heavy-swing-2-hit",
+    "heavy-swing-2-recover"
   ],
   "frameData": [
     {
@@ -152,13 +207,6 @@
       }
     },
     {
-      "name": "corte-release",
-      "hand": {
-        "dx": 58,
-        "dy": 80
-      }
-    },
-    {
       "name": "corte-recover",
       "hand": {
         "dx": 27,
@@ -180,13 +228,6 @@
       }
     },
     {
-      "name": "divergente-release",
-      "hand": {
-        "dx": 71,
-        "dy": 68
-      }
-    },
-    {
       "name": "divergente-recover",
       "hand": {
         "dx": -13,
@@ -194,11 +235,329 @@
       }
     },
     {
+      "name": "carry-idle-0",
+      "hand": {
+        "dx": -7,
+        "dy": 82
+      },
+      "angle": 62
+    },
+    {
+      "name": "carry-idle-1",
+      "hand": {
+        "dx": -7,
+        "dy": 78
+      },
+      "angle": 88
+    },
+    {
+      "name": "throw-0",
+      "hand": {
+        "dx": -17,
+        "dy": 99
+      },
+      "angle": 23
+    },
+    {
+      "name": "throw-1",
+      "hand": {
+        "dx": 49,
+        "dy": 91
+      },
+      "angle": 88
+    },
+    {
+      "name": "carry-run-0",
+      "hand": {
+        "dx": 32,
+        "dy": 72
+      },
+      "angle": 51
+    },
+    {
+      "name": "carry-run-1",
+      "hand": {
+        "dx": 18,
+        "dy": 67
+      },
+      "angle": 62
+    },
+    {
+      "name": "carry-run-2",
+      "hand": {
+        "dx": 14,
+        "dy": 69
+      },
+      "angle": 69
+    },
+    {
+      "name": "carry-run-3",
+      "hand": {
+        "dx": 24,
+        "dy": 72
+      },
+      "angle": 51
+    },
+    {
+      "name": "carry-run-4",
+      "hand": {
+        "dx": 18,
+        "dy": 71
+      },
+      "angle": 55
+    },
+    {
+      "name": "throw-run-0",
+      "hand": {
+        "dx": 38,
+        "dy": 84
+      },
+      "angle": 35
+    },
+    {
+      "name": "throw-run-1",
+      "hand": {
+        "dx": -6,
+        "dy": 104
+      },
+      "angle": 65
+    },
+    {
+      "name": "throw-run-2",
+      "hand": {
+        "dx": 52,
+        "dy": 79
+      },
+      "angle": 90
+    },
+    {
+      "name": "throw-run-3",
+      "hand": {
+        "dx": 58,
+        "dy": 80
+      },
+      "angle": 83
+    },
+    {
+      "name": "corte-release",
+      "hand": {
+        "dx": 43,
+        "dy": 73
+      }
+    },
+    {
+      "name": "divergente-release",
+      "hand": {
+        "dx": 70,
+        "dy": 79
+      }
+    },
+    {
       "name": "kokusen-hit",
       "hand": {
-        "dx": 71,
-        "dy": 68
+        "dx": 69,
+        "dy": 74
       }
+    },
+    {
+      "name": "heavy-carry-idle-0",
+      "hand": {
+        "dx": 10,
+        "dy": 71
+      },
+      "angle": 90
+    },
+    {
+      "name": "heavy-carry-idle-1",
+      "hand": {
+        "dx": 10,
+        "dy": 71
+      },
+      "angle": 90
+    },
+    {
+      "name": "heavy-carry-run-0",
+      "hand": {
+        "dx": 12,
+        "dy": 67
+      },
+      "angle": 115
+    },
+    {
+      "name": "heavy-carry-run-1",
+      "hand": {
+        "dx": 26,
+        "dy": 82
+      },
+      "angle": 35
+    },
+    {
+      "name": "heavy-carry-run-2",
+      "hand": {
+        "dx": 28,
+        "dy": 78
+      },
+      "angle": 50
+    },
+    {
+      "name": "heavy-throw-0",
+      "hand": {
+        "dx": -5,
+        "dy": 103
+      },
+      "angle": 10
+    },
+    {
+      "name": "heavy-throw-1",
+      "hand": {
+        "dx": 49,
+        "dy": 85
+      },
+      "angle": 85
+    },
+    {
+      "name": "heavy-throw-run-0",
+      "hand": {
+        "dx": -6,
+        "dy": 107
+      },
+      "angle": 10
+    },
+    {
+      "name": "heavy-throw-run-1",
+      "hand": {
+        "dx": 49,
+        "dy": 92
+      },
+      "angle": 80
+    },
+    {
+      "name": "heavy-throw-run-2",
+      "hand": {
+        "dx": 43,
+        "dy": 92
+      },
+      "angle": 85
+    },
+    {
+      "name": "swing-3-wind",
+      "hand": {
+        "dx": -10,
+        "dy": 103
+      },
+      "angle": 50
+    },
+    {
+      "name": "swing-3-hit",
+      "hand": {
+        "dx": 56,
+        "dy": 97
+      },
+      "angle": 69
+    },
+    {
+      "name": "swing-3-recover",
+      "hand": {
+        "dx": 25,
+        "dy": 79
+      },
+      "angle": 65
+    },
+    {
+      "name": "swing-wind",
+      "hand": {
+        "dx": -10,
+        "dy": 111
+      },
+      "angle": 20
+    },
+    {
+      "name": "swing-hit",
+      "hand": {
+        "dx": 52,
+        "dy": 85
+      },
+      "angle": 90
+    },
+    {
+      "name": "swing-recover",
+      "hand": {
+        "dx": 41,
+        "dy": 53
+      },
+      "angle": 133
+    },
+    {
+      "name": "swing-2-wind",
+      "hand": {
+        "dx": -2,
+        "dy": 97
+      },
+      "angle": 49
+    },
+    {
+      "name": "swing-2-hit",
+      "hand": {
+        "dx": 63,
+        "dy": 83
+      },
+      "angle": 93
+    },
+    {
+      "name": "swing-2-recover",
+      "hand": {
+        "dx": -2,
+        "dy": 60
+      },
+      "angle": 115
+    },
+    {
+      "name": "heavy-swing-wind",
+      "hand": {
+        "dx": 13,
+        "dy": 116
+      },
+      "angle": -20
+    },
+    {
+      "name": "heavy-swing-hit",
+      "hand": {
+        "dx": 26,
+        "dy": 15
+      },
+      "angle": 105
+    },
+    {
+      "name": "heavy-swing-recover",
+      "hand": {
+        "dx": 36,
+        "dy": 43
+      },
+      "angle": 145
+    },
+    {
+      "name": "heavy-swing-2-wind",
+      "hand": {
+        "dx": 28,
+        "dy": 114
+      },
+      "angle": -10
+    },
+    {
+      "name": "heavy-swing-2-hit",
+      "hand": {
+        "dx": 66,
+        "dy": 61
+      },
+      "angle": 100
+    },
+    {
+      "name": "heavy-swing-2-recover",
+      "hand": {
+        "dx": 49,
+        "dy": 53
+      },
+      "angle": 120
     }
   ]
 }

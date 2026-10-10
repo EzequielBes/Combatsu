@@ -12,13 +12,16 @@ import { PALETTE } from '../art/palette';
 import { PLAYER_ORIGIN } from '../art/sprites/player';
 import { RIG_ON, RIG_TALL_ORIGIN, rigMoveFrame } from '../art/rig/flag';
 import { HD_ON, YUTA_ON } from '../art/hd/flag';
+import { HEAVY } from '../art/hd/families/carry';
 import {
+  THROW_RUN,
   YUTA_ORIGIN,
   YUTA_SCALE,
   playerYutaAnimKey,
   yutaHasAnim,
   yutaHasFrame,
   yutaMoveFrame,
+  yutaRunEdgeMs,
 } from '../art/hd/atlas/yutaSheet';
 import { HD_ORIGIN, hdHasAnim, hdHasFrame, hdHasMove, hdHeldName, hdMoveFrame, playerHdAnimKey } from '../art/hd/sheet';
 import { PLAYER_MOVE, PROP_SWING_COMBO } from '../../data/tuning';
@@ -43,6 +46,12 @@ export class PlayerAnimator {
   private rigPhaseKey = '';
   private rigPhaseT0 = 0;
   private chargeTinted = false;
+  /** Última locomoção no chão (`idle` ou `run`) e a transição em curso entre as duas (`runEdge`). */
+  private loco = '';
+  private edge: 'run-start' | 'run-stop' = 'run-start';
+  private edgeUntil = 0;
+  /** O último objeto que esteve na mão era dos pesados (veja `heavyHeld`). */
+  private lastHeavy = false;
   /** Flash sólido temporário (HEAL-10, ex.: cura), independente do piscar de invulnerabilidade. */
   flashMs = 0;
   flashColor: string | null = null;
@@ -125,7 +134,9 @@ export class PlayerAnimator {
    */
   private show(name: string): Phaser.GameObjects.Sprite {
     const v = this.p.view;
-    const frame = HD_ON ? hdHeldName(name, this.heavyHeld(), hdHasFrame) : name;
+    const frame = HD_ON
+      ? hdHeldName(name, this.heavyHeld(), (n) => hdHasFrame(n) || (YUTA_ON && yutaHasFrame(n)))
+      : name;
     this.useSheet(YUTA_ON && yutaHasFrame(frame), HD_ON && hdHasFrame(frame));
     v.anims.stop();
     v.setFrame(frame);
@@ -144,9 +155,14 @@ export class PlayerAnimator {
     this.p.view.setScale(this.p.facing * scale, scale);
   }
 
-  /** O objeto na mão é dos pesados (cadeira, clava): com `?hd=1` a pegada é a do ombro, com os quadros `heavy-`. */
+  /**
+   * O objeto na mão é dos pesados (cadeira, clava): com `?hd=1` a pegada é a de duas mãos, com os quadros `heavy-`.
+   * Durante a pose de arremesso a mão já está vazia, então vale o peso do objeto que acabou de sair dela.
+   */
   private heavyHeld(): boolean {
-    return this.p.held?.def.socket === 'back';
+    const held = this.p.held;
+    if (held) this.lastHeavy = held.def.socket === 'back';
+    return held ? this.lastHeavy : this.p.throwPoseMs > 0 && this.lastHeavy;
   }
 
   /**
@@ -156,14 +172,40 @@ export class PlayerAnimator {
     if (!HD_ON) return undefined;
     // Cada golpe do combo com objeto tem a própria sequência: `swing`, `swing-2`, `swing-3`.
     const step = Math.max(0, this.p.propSwing.currentIndex);
-    const move = hdHeldName(step === 0 ? 'swing' : `swing-${step + 1}`, this.heavyHeld(), hdHasMove);
+    const base = step === 0 ? 'swing' : `swing-${step + 1}`;
+    // O golpe com objeto que a folha do protagonista novo já tem sai dela (com a pegada pesada, os quadros `heavy-`).
+    const yuta = YUTA_ON ? yutaMoveFrame(this.heavyHeld() ? HEAVY + base : base, phase) : undefined;
+    if (yuta) return yuta;
+    const move = hdHeldName(base, this.heavyHeld(), hdHasMove);
     return hdMoveFrame(move, phase, this.phaseMs(`prop:${step}:${phase}`), PROP_SWING_COMBO[step]);
   }
 
+  /**
+   * Arrancada e freada do protagonista novo: ao sair da guarda para a corrida toca `run-start` uma vez antes do ciclo,
+   * e ao parar toca `run-stop` antes de voltar à guarda. Qualquer outra animação zera a transição.
+   */
+  private runEdge(name: string): string {
+    const now = this.p.clockMs;
+    if (name !== 'idle' && name !== 'run') {
+      this.loco = '';
+      return name;
+    }
+    if (this.loco !== '' && this.loco !== name) {
+      this.edge = name === 'run' ? 'run-start' : 'run-stop';
+      this.edgeUntil = now + yutaRunEdgeMs(this.edge);
+    }
+    this.loco = name;
+    return now < this.edgeUntil ? this.edge : name;
+  }
+
   /** Toca uma animação, na folha HD quando ela tem todos os quadros dela (`?hd=1`). */
-  private play(name: string): Phaser.GameObjects.Sprite {
+  private play(requested: string): Phaser.GameObjects.Sprite {
     const v = this.p.view;
-    const anim = HD_ON ? hdHeldName(name, this.heavyHeld(), hdHasAnim) : name;
+    // Arremesso com o player em corrida: a folha do protagonista novo tem a sequência própria.
+    const running = Math.abs(this.p.move.vx) > RUN_THRESHOLD;
+    const moving = requested === 'throw' && running && yutaHasAnim(THROW_RUN) ? THROW_RUN : requested;
+    const name = YUTA_ON ? this.runEdge(moving) : requested;
+    const anim = HD_ON ? hdHeldName(name, this.heavyHeld(), (n) => hdHasAnim(n) || (YUTA_ON && yutaHasAnim(n))) : name;
     const yuta = YUTA_ON && yutaHasAnim(anim);
     const hd = HD_ON && hdHasAnim(anim);
     this.useSheet(yuta, hd);

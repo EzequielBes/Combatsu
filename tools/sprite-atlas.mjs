@@ -4,7 +4,8 @@
 // O JSON ao lado dá o tamanho da célula, a coluna do eixo do corpo e os nomes dos quadros, na ordem:
 //   { "cell": { "w": 192, "h": 160 }, "origin": { "x": 72 }, "frames": ["idle-0", "run-0", ...] }
 // Opcional: "frameData": [{ "name": "vermelho-release", "hand": { "dx": 58, "dy": 80 } }], a mão que conjura naquele
-// quadro, em texels a partir do eixo (para a frente) e acima da sola. Vai para `hands` no arquivo gerado.
+// quadro, em texels a partir do eixo (para a frente) e acima da sola. Com "angle" (graus, sentido horário; 0 = antebraço
+// para cima, 90 = para a frente), o objeto na mão gira junto. Vai para `hands` no arquivo gerado.
 // A sola do pé de apoio fica na última linha da célula. Alfa abaixo de 128 vira transparente; cada cor opaca vira um
 // índice na tabela `colors` (no máximo 255 cores: o atlas chega aqui já reduzido à paleta).
 //
@@ -208,7 +209,9 @@ const lines = [
   ...Object.entries(frames).map(([k, v]) => `    '${k}': '${v}',`),
   `  },`,
   `  hands: {`,
-  ...hands.map((f) => `    '${f.name}': [${f.hand.dx}, ${f.hand.dy}],`),
+  ...hands.map(
+    (f) => `    '${f.name}': [${[f.hand.dx, f.hand.dy, ...(f.angle === undefined ? [] : [f.angle])].join(', ')}],`,
+  ),
   `  },`,
   `} as const;`,
   '',

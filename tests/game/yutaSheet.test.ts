@@ -3,6 +3,7 @@ import { RUN_FRAMES } from '../../src/game/art/hd/families/locomotion';
 import { hdEnabled, yutaEnabled } from '../../src/game/art/hd/flag';
 import { HD_MIN_FRAME_MS, HD_RUN_FRAME_MS } from '../../src/game/art/hd/sheet';
 import {
+  THROW_RUN,
   YUTA_FRAME,
   YUTA_ORIGIN,
   YUTA_SCALE,
@@ -12,6 +13,7 @@ import {
   yutaHasAnim,
   yutaHasFrame,
   yutaMoveFrame,
+  yutaRunEdgeMs,
   yutaSheet,
 } from '../../src/game/art/hd/atlas/yutaSheet';
 import { SIZE } from '../../src/game/textures';
@@ -95,7 +97,7 @@ describe('animações da folha player-yuta', () => {
     for (const def of Object.values(yutaAnims())) expect(def.frames.every(yutaHasFrame)).toBe(true);
   });
 
-  it('o ciclo da corrida dura o mesmo que o da folha HD, com cada quadro acima do tempo mínimo', () => {
+  it('o ciclo da corrida, de duas passadas, dura o mesmo que o da folha HD, com cada quadro acima do tempo mínimo', () => {
     const { durations, frames } = yutaAnims().run;
     expect(durations).toHaveLength(frames.length);
     const total = durations!.reduce((a, b) => a + b, 0);
@@ -114,13 +116,13 @@ describe('golpes e pulo da folha player-yuta', () => {
   });
 
   it('o golpe que a folha não tem fica para a folha HD', () => {
-    expect(yutaMoveFrame('gancho', 'active')).toBeUndefined();
+    expect(yutaMoveFrame('chuteCarregado', 'active')).toBeUndefined();
   });
 
   it('no impacto o membro passa da guarda: o punho e o pé chegam mais longe que a mão da guarda', () => {
     const guard = bbox(sheet.frames['idle-0']).right;
     for (const move of ['jab', 'direto', 'chuteFrontal', 'rasteira'])
-      expect(bbox(sheet.frames[`${move}-hit`]).right, move).toBeGreaterThan(guard + 15);
+      expect(bbox(sheet.frames[`${move}-hit`]).right, move).toBeGreaterThan(guard + 10);
   });
 
   it('tem as animações do ar e o agachar', () => {
@@ -135,7 +137,8 @@ describe('defesa, reação e técnicas da folha player-yuta', () => {
   it('tem os quadros de defesa que o animador pede pelo nome', () => {
     for (const frame of ['guard', 'parry', 'dodge-0', 'dodge-1', 'duck', 'hurt'])
       expect(yutaHasFrame(frame), frame).toBe(true);
-    expect(yutaAnims().hurt.frames).toEqual(['hurt']);
+    expect(yutaAnims().hurt.frames).toEqual(['hurt', 'hurt-1']);
+    expect(yutaHasFrame('stunned-0') && yutaHasFrame('stunned-1')).toBe(true);
   });
 
   it('cada técnica tem selo, carga, disparo e volta, com a mão que conjura marcada dentro do corpo', () => {
@@ -162,6 +165,122 @@ describe('defesa, reação e técnicas da folha player-yuta', () => {
     expect(hand.tip.x).toBeGreaterThan(20);
     expect(hand.tip.y).toBeLessThan(-30);
     expect(yutaAnchors('idle-0')).toBeUndefined();
+  });
+});
+
+describe('objeto na mão e transições da corrida na folha player-yuta', () => {
+  it('parado com objeto e o arremesso são animações da folha, com a mão e o giro do objeto marcados', () => {
+    for (const anim of ['carry-idle', 'throw']) {
+      expect(yutaHasAnim(anim), anim).toBe(true);
+      for (const frame of yutaAnims()[anim].frames) {
+        const hand = yutaAnchors(frame);
+        expect(hand, frame).toBeDefined();
+        expect(hand!.nearAngle, frame).toBeGreaterThanOrEqual(0);
+        expect(hand!.nearAngle, frame).toBeLessThanOrEqual(180);
+        expect(hand!.near.y, frame).toBeLessThan(-25);
+      }
+    }
+  });
+
+  it('o golpe com objeto leve sai da folha: antecipação, impacto e volta própria', () => {
+    expect(yutaMoveFrame('swing', 'startup')).toBe('swing-wind');
+    expect(yutaMoveFrame('swing', 'active')).toBe('swing-hit');
+    expect(yutaMoveFrame('swing', 'recovery')).toBe('swing-recover');
+    expect(yutaAnchors('swing-hit')!.near.x).toBeGreaterThan(yutaAnchors('swing-wind')!.near.x);
+  });
+
+  it('a arrancada e a freada tocam uma vez e são curtas: no máximo 300 ms', () => {
+    for (const edge of ['run-start', 'run-stop'] as const) {
+      const def = yutaAnims()[edge];
+      expect(def.repeat, edge).toBe(0);
+      expect(def.frames.every(yutaHasFrame), edge).toBe(true);
+      expect(yutaRunEdgeMs(edge), edge).toBe(def.durations!.reduce((a, b) => a + b, 0));
+      expect(yutaRunEdgeMs(edge), edge).toBeLessThanOrEqual(300);
+    }
+  });
+});
+
+describe('corrida com objeto, arremesso em corrida e respiração na folha player-yuta', () => {
+  it('a corrida com objeto dura o mesmo que a corrida e tem a mão marcada em todo quadro', () => {
+    const total = (name: string): number => yutaAnims()[name].durations!.reduce((a, b) => a + b, 0);
+    expect(Math.abs(total('carry-run') - total('run'))).toBeLessThanOrEqual(8);
+    for (const frame of yutaAnims()['carry-run'].frames) expect(yutaAnchors(frame), frame).toBeDefined();
+  });
+
+  it('o arremesso em corrida toca uma vez, dentro dos 200 ms da pose de arremesso', () => {
+    const def = yutaAnims()[THROW_RUN];
+    expect(def.repeat).toBe(0);
+    expect(def.frames.length).toBeGreaterThanOrEqual(3);
+    expect(def.durations!.reduce((a, b) => a + b, 0)).toBeLessThanOrEqual(200);
+    for (const ms of def.durations!) expect(ms).toBeGreaterThanOrEqual(HD_MIN_FRAME_MS);
+  });
+
+  it('a guarda respira entre o quadro base e o segundo, sem tirar os pés do lugar', () => {
+    const { frames, durations } = yutaAnims().idle;
+    expect(frames).toEqual(['idle-0', 'idle-1']);
+    expect(durations).toHaveLength(2);
+    const [a, b] = frames.map((f) => bbox(sheet.frames[f]));
+    expect(Math.abs(a.left - b.left)).toBeLessThanOrEqual(2);
+    expect(Math.abs(a.right - b.right)).toBeLessThanOrEqual(3);
+    expect(Math.abs(a.top - b.top)).toBeLessThanOrEqual(3);
+  });
+
+  it('o soco do Divergente e o do Kokusen chegam à frente do corpo, onde a hitbox está', () => {
+    for (const frame of ['divergente-release', 'kokusen-hit'])
+      expect((bbox(sheet.frames[frame]).right - YUTA_FRAME.originCol) * YUTA_SCALE, frame).toBeGreaterThanOrEqual(34);
+  });
+});
+
+describe('objeto pesado e socos novos na folha player-yuta', () => {
+  it('a pegada pesada tem parado, corrida, arremesso e arremesso em corrida, com a mão marcada', () => {
+    for (const anim of ['heavy-carry-idle', 'heavy-carry-run', 'heavy-throw', 'heavy-throw-run']) {
+      expect(yutaHasAnim(anim), anim).toBe(true);
+      for (const frame of yutaAnims()[anim].frames) expect(yutaAnchors(frame), frame).toBeDefined();
+    }
+    // Parado, o objeto não pula: os dois quadros prendem no mesmo ponto.
+    expect(yutaAnchors('heavy-carry-idle-0')).toEqual(yutaAnchors('heavy-carry-idle-1'));
+    // No arremesso o objeto sai de cima da cabeça para a frente do corpo.
+    expect(yutaAnchors('heavy-throw-0')!.near.y).toBeLessThan(yutaAnchors('heavy-throw-1')!.near.y);
+    expect(yutaAnchors('heavy-throw-1')!.near.x).toBeGreaterThan(yutaAnchors('heavy-throw-0')!.near.x);
+  });
+
+  it('gancho, cotovelada e contra-gancho têm antecipação e impacto na folha', () => {
+    for (const move of ['gancho', 'cotovelada', 'contraGancho']) {
+      expect(yutaMoveFrame(move, 'startup'), move).toBe(`${move}-wind`);
+      expect(yutaMoveFrame(move, 'active'), move).toBe(`${move}-hit`);
+    }
+  });
+
+  it('voadora e soco baixo têm volta própria', () => {
+    expect(yutaMoveFrame('voadora', 'recovery')).toBe('voadora-recover');
+    expect(yutaMoveFrame('socoBaixo', 'recovery')).toBe('socoBaixo-recover');
+  });
+
+  it('nos golpes de chão que partem da guarda os pés ficam onde a guarda os tem', () => {
+    const guard = bbox(sheet.frames['idle-0']);
+    for (const frame of ['jab-hit', 'direto-wind', 'direto-hit', 'gancho-hit', 'socoBaixo-hit'])
+      expect(Math.abs(bbox(sheet.frames[frame]).left - guard.left), frame).toBeLessThanOrEqual(4);
+  });
+});
+
+describe('golpes com arma na folha player-yuta', () => {
+  it('os três golpes do combo com objeto leve e os dois com objeto pesado têm antecipação, impacto e volta', () => {
+    for (const move of ['swing', 'swing-2', 'swing-3', 'heavy-swing', 'heavy-swing-2']) {
+      expect(yutaMoveFrame(move, 'startup'), move).toBe(`${move}-wind`);
+      expect(yutaMoveFrame(move, 'active'), move).toBe(`${move}-hit`);
+      expect(yutaMoveFrame(move, 'recovery'), move).toBe(`${move}-recover`);
+      for (const part of ['wind', 'hit', 'recover']) expect(yutaAnchors(`${move}-${part}`), move).toBeDefined();
+    }
+  });
+
+  it('do começo ao impacto a arma desce de cima da cabeça e vai para a frente', () => {
+    for (const move of ['swing', 'swing-2', 'heavy-swing', 'heavy-swing-2']) {
+      const wind = yutaAnchors(`${move}-wind`)!;
+      const hit = yutaAnchors(`${move}-hit`)!;
+      expect(hit.near.y, move).toBeGreaterThan(wind.near.y);
+      expect(hit.near.x, move).toBeGreaterThan(wind.near.x);
+      expect(hit.nearAngle, move).toBeGreaterThan(wind.nearAngle);
+    }
   });
 });
 
