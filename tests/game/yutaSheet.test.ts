@@ -287,13 +287,14 @@ describe('objeto pesado e socos novos na folha player-yuta', () => {
       expect(yutaHasFrame(`chuteCarregado-${part}`), part).toBe(true);
   });
 
-  it('o gancho ascendente sobe em dois quadros de impacto, e o segundo sai do chão', () => {
+  it('o gancho ascendente sobe em dois quadros de impacto e volta em dois', () => {
     expect(yutaMoveFrame('ganchoAscendente', 'active', 0, 90)).toBe('ganchoAscendente-hit');
     expect(yutaMoveFrame('ganchoAscendente', 'active', 45, 90)).toBe('ganchoAscendente-hit-2');
     expect(yutaMoveFrame('ganchoAscendente', 'recovery', 259, 260)).toBe('ganchoAscendente-recover-2');
+    // Os quadros no ar ficam com a sola no chão da célula: quem os levanta é o salto de `MOVE_HOP`.
     const bottom = (frame: string): number => bbox(sheet.frames[frame]).bottom;
-    expect(bottom('ganchoAscendente-hit-2')).toBeLessThan(bottom('ganchoAscendente-hit'));
-    expect(bottom('ganchoAscendente-recover-2')).toBe(bottom('idle-0'));
+    for (const part of ['hit-2', 'recover', 'recover-2'])
+      expect(bottom(`ganchoAscendente-${part}`), part).toBe(bottom('idle-0'));
   });
 
   it('sem volta própria, a volta passa pelos quadros da antecipação de trás para a frente', () => {

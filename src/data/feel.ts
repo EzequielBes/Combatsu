@@ -4,6 +4,15 @@
  * Sem `phaser` aqui (AD-001).
  */
 
+/**
+ * Salto desenhado do golpe, por nome: o sprite sobe e desce numa parábola enquanto o corpo físico fica no chão. Sai do
+ * chão em `fromActive` do `active`, pousa em `toRecovery` do `recovery` e chega a `peakPx` (px de mundo) no meio. Os
+ * quadros da folha ficam com a sola no chão; é este número que os levanta, quadro a quadro, sem degrau.
+ */
+export const MOVE_HOP: Readonly<Record<string, { fromActive: number; toRecovery: number; peakPx: number }>> = {
+  ganchoAscendente: { fromActive: 0.5, toRecovery: 0.5, peakPx: 16 },
+};
+
 /** Rastro do golpe (TRL-04, TRL-05): largura em px e tempo de jogo até alpha 0. */
 export const TRAIL_FEEL = {
   light: { widthPx: 4, fadeMs: 140 },

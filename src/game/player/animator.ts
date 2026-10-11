@@ -6,6 +6,8 @@ import {
   type AttackPhase,
   type PlayerAnimInput,
 } from '../../core/animState';
+import { hopOffset } from '../../core/moveHop';
+import { MOVE_HOP } from '../../data/feel';
 import { CHARGE_MS, DODGE } from '../../data/moves';
 import { playerAnimKey } from '../art';
 import { PALETTE } from '../art/palette';
@@ -298,6 +300,9 @@ export class PlayerAnimator {
       v.setFrame(rig);
     } else {
       v = this.show(hd ?? `${mv.name}-${attackFrame(phase)}`);
+      // Salto desenhado (só na folha do protagonista novo, que tem os quadros no ar): o sprite sobe, o corpo não.
+      const hop = YUTA_ON ? MOVE_HOP[mv.name] : undefined;
+      if (hop) v.y -= hopOffset(hop, phase, ms, mv);
     }
     if (phase === 'active' && mv.strength === 'heavy') this.p.fx.afterimage(v);
     return true;
