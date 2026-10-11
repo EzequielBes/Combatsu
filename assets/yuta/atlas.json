@@ -145,7 +145,9 @@
     "chuteCarregado-wind-2",
     "chuteCarregado-hit",
     "chuteCarregado-recover",
-    "chuteCarregado-recover-2"
+    "chuteCarregado-recover-2",
+    "ganchoAscendente-hit-2",
+    "ganchoAscendente-recover-2"
   ],
   "frameData": [
     {
