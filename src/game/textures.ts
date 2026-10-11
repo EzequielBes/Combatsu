@@ -20,6 +20,8 @@ export const TEX = {
   playerHd: 'player-hd',
   /** Folha do protagonista novo, em quadros desenhados (2 texels = 1 px de mundo); veja `art/hd/atlas/yutaSheet`. */
   playerYuta: 'player-yuta',
+  /** Folha do dorminhoco, o NPC da poltrona de massagem (2 texels = 1 px de mundo); veja `art/hd/atlas/sleeperSheet`. */
+  sleeper: 'npc-sleeper',
   /** Folha animada do inimigo `corcunda` (o corpo físico é um retângulo Matter, sem textura); veja `enemyTex`. */
   enemy: 'enemy',
   chair: 'chair',

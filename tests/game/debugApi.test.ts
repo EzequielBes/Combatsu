@@ -109,6 +109,7 @@ describe('installDebugApi', () => {
         background: { far: 'school', variant: null },
         leftSeal: null,
         veil: null,
+        sleeper: null,
         layout: {
           nearDepth: null,
           decorDepth: null,

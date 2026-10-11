@@ -34,6 +34,7 @@ export class DebugSnapshot {
       background: this.s.world.backgroundInfo,
       leftSeal: this.s.world.arena.leftSealView,
       veil: this.s.world.arena.veilView,
+      sleeper: this.s.world.sleeper.view,
       layout: {
         ...this.s.world.sceneryLayout,
         playerDepth: this.s.player.view.depth,

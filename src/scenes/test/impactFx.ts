@@ -108,6 +108,7 @@ export class ImpactFx {
       this.s.cursedFx.flameStart(wind);
     } else if (phase === 'active') {
       this.stopFlame();
+      this.s.world.sleeper.onPlayerStrike(this.s.player.sprite.x);
       const drawn = this.handTrail(name);
       if (drawn) {
         this.s.cursedFx.trail(drawn, strength);

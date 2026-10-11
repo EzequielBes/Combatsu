@@ -40,6 +40,7 @@ depois disso abra arquivos, e só os que a tarefa toca.
 | Arsenal (relíquia, arma vinculada, ferramenta) | `core/arsenal`; números em `data/arsenal` | `scenes/test/arsenalDirector` (entrega na mão a cada rodada) | `arsenal` |
 | Run, ondas, loja | `core/run`, `shop`, `economy`, `loadout` | `scenes/test/runDirector`, `shopDirector`, `spawner`; `game/ShopPanel.ts` | `run-loop`, `shop`, `spawn-pressure` |
 | Mundo modular e cenário | `core/stage`, `level` | `scenes/test/areaDirector`, `world`; grades em `data/modules/`; arte em `game/art/scenery/`; fundo pintado uma vez em textura por `game/BakedLayer.ts` | `world-` |
+| NPC de cenário (dorminhoco da rua) | `core/sleeper`; números e frase em `data/npc` | `game/SleeperNpc.ts` (criado pelo `world`); arte em `assets/dorminhoco/` e `art/hd/atlas/sleeperSheet` | `sleeper` |
 | Impacto e efeitos | `core/fxTimeline`, `fxRegistry` | `game/fx.ts`, `CursedFx.ts`, `cursedImpact.ts`; `scenes/test/effects`, `impactFx` | `impact`, `feel` |
 | HUD | — | `game/Hud.ts`, `EnergyHud.ts`; `scenes/test/uiSetup` | `hud` |
 | Objetos e drops | `core/droppedTools`, `armed` | `game/Prop.ts`, `Pickups.ts`; `scenes/test/drops` | `drops`, `held-item`, `armed` |

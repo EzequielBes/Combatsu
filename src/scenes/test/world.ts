@@ -19,6 +19,7 @@ import { terrainSheetFor } from '../../game/art/tilesThemes';
 import { BakedLayer } from '../../game/BakedLayer';
 import { tagBody } from '../../game/bodyTags';
 import { Prop } from '../../game/Prop';
+import { SleeperNpc } from '../../game/SleeperNpc';
 import { TEX } from '../../game/textures';
 import type { TestScene } from '../TestScene';
 import { ArenaDressing } from './arena';
@@ -43,10 +44,13 @@ const SEAL_SPARKS = 10;
 export class WorldBuilder {
   constructor(readonly s: TestScene) {
     this.arena = new ArenaDressing(s);
+    this.sleeper = new SleeperNpc(s);
   }
 
   /** Selo da esquerda e véu vermelho da arena do chefe (ARN-07..11). */
   readonly arena: ArenaDressing;
+  /** O dorminhoco da rua: NPC de cenário, sem corpo físico. */
+  readonly sleeper: SleeperNpc;
 
   private tiles: Phaser.GameObjects.Image[] = [];
   private background: BakedLayer[] = [];
@@ -135,6 +139,7 @@ export class WorldBuilder {
     // `?debug&decor=0` desliga decoração e primeiro plano (o smoke compara os corpos do Matter com e sem eles).
     if (spans.length > 0 && debugParam('decor') !== '0') this.buildScenery(spans, level);
     this.arena.build(variant);
+    this.sleeper.build(spans);
     this.buildProps(level);
   }
 
@@ -148,6 +153,7 @@ export class WorldBuilder {
     for (const body of this.staticBodies) s.matter.world.remove(body);
     this.removeSeal();
     this.arena.teardown();
+    this.sleeper.teardown();
     this.clearSparks();
     for (const prop of s.props) prop.destroyNow();
     for (const proj of s.projectiles) proj.destroyNow();
@@ -158,6 +164,12 @@ export class WorldBuilder {
     s.floatTexts.clear();
     s.droppedTools.clear();
     this.resetState();
+  }
+
+  /** Por quadro: o véu da arena do chefe e o dorminhoco. */
+  update(dtMs: number, bossPhase: number | null): void {
+    this.arena.update(dtMs, bossPhase);
+    this.sleeper.update(dtMs);
   }
 
   /** Rompe o selo (TRV-03): remove o corpo e toca o efeito de `AREA.sealBurnMs`; idempotente. */

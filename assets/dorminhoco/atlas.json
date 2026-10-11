@@ -1,0 +1,5 @@
+{
+  "cell": { "w": 96, "h": 128 },
+  "origin": { "x": 48 },
+  "frames": ["sleep", "talk-0", "talk-1"]
+}

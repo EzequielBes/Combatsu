@@ -184,6 +184,8 @@ export interface GameSnapshot {
     } | null;
     /** Véu vermelho da fase do chefe, lido do objeto (ARN-09..11); `null` fora da arena. */
     veil: { alpha: number; depth: number; color: number; scroll: number } | null;
+    /** O dorminhoco, NPC da rua: posição, se está falando, a parte da frase já dita e o quadro; `null` sem ele na área. */
+    sleeper: { x: number; y: number; talking: boolean; text: string; frame: string; depth: number } | null;
     /** Rolagem do primeiro plano lida do objeto (CEN-11); `null` na sala e com `?debug&decor=0`. */
     front: { sx: number; sy: number } | null;
     /** Profundidades vivas da camada próxima, da decoração e do player, e o pé da decoração em px (CEN-13). */
