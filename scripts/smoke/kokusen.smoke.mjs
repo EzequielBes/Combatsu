@@ -273,6 +273,10 @@ export default async function ({ page, baseUrl, assert }) {
     `KOK-13: hitstop de 220 ms esperado: ${JSON.stringify(landed.hitstop)}`,
   );
   assert(
+    landed.fx.layers.includes('kokusen.burst'),
+    `o estouro desenhado deveria tocar no acerto do Kokusen: ${JSON.stringify(landed.fx.layers)}`,
+  );
+  assert(
     landed.fx.layers.includes('kokusen.invert'),
     `KOK-14: fx.layers deveria ter kokusen.invert: ${JSON.stringify(landed.fx.layers)}`,
   );

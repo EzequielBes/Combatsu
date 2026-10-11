@@ -97,3 +97,22 @@ describe('sinceImpactMs: relógio usado pela janela do Kokusen (KOK-01..05)', ()
     expect(state.sinceImpactMs).toBe(120);
   });
 });
+
+describe('tempo até o 2º impacto sorteado por cast', () => {
+  it('com 280 ms, o 2º impacto só sai aos 280 e o anel fecha nesse tempo', () => {
+    const d = new DivergentState(280);
+    d.firstImpact(1);
+    expect(d.update(200)).toBeNull();
+    expect(d.ringRadius()).toBeCloseTo(32 * (1 - 200 / 280), 9);
+    expect(d.update(79)).toBeNull();
+    expect(d.update(1)).toBe(1);
+    expect(d.ringRadius()).toBe(0);
+  });
+
+  it('com 170 ms, o 2º impacto sai mais cedo', () => {
+    const d = new DivergentState(170);
+    d.firstImpact(1);
+    expect(d.update(169)).toBeNull();
+    expect(d.update(1)).toBe(1);
+  });
+});

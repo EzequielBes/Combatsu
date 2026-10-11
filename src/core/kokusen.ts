@@ -13,6 +13,8 @@ export class Kokusen {
   private locked = false;
   private _zoneMs = 0;
   private _streak = 0;
+  private _delayMs: number = KOKUSEN.windowTo;
+  private widthMs: number = KOKUSEN.windowTo - KOKUSEN.windowFrom;
 
   /** `true` enquanto a zona está ativa (renovada pelo último Kokusen; KOK-10, KOK-11). */
   get zone(): boolean {
@@ -28,10 +30,23 @@ export class Kokusen {
     return this._streak;
   }
 
-  /** Chamar ao iniciar um novo Punho Divergente (`sign`): libera a tentativa deste cast. */
-  startAttempt(): void {
+  /** Tempo (ms) do 1º ao 2º impacto neste cast: o fim da janela e o tempo em que o anel fecha. */
+  get delayMs(): number {
+    return this._delayMs;
+  }
+
+  /**
+   * Chamar ao iniciar um novo Punho Divergente (`sign`): libera a tentativa deste cast. Com `roll` (sorteio de 0 a
+   * 1), o cast sorteia o tempo até o 2º impacto e a largura da janela dentro de `KOKUSEN.delayMs` e
+   * `KOKUSEN.windowMs`, para o mesmo ritmo de dedo não acertar sempre; sem `roll`, vale a janela de base.
+   */
+  startAttempt(roll?: () => number): void {
     this.firstImpactHappened = false;
     this.locked = false;
+    const pick = (range: { min: number; max: number }, r: number): number =>
+      Math.round(range.min + (range.max - range.min) * Math.min(Math.max(r, 0), 1));
+    this._delayMs = roll ? pick(KOKUSEN.delayMs, roll()) : KOKUSEN.windowTo;
+    this.widthMs = roll ? pick(KOKUSEN.windowMs, roll()) : KOKUSEN.windowTo - KOKUSEN.windowFrom;
   }
 
   /** DIV-03: chamar quando o 1º impacto do Divergente em curso acontece; a partir daqui `press` conta (KOK-05). */
@@ -39,10 +54,13 @@ export class Kokusen {
     this.firstImpactHappened = true;
   }
 
-  /** KOK-01, KOK-02: janela aberta em função do tempo desde o 1º impacto e de a zona estar ativa. */
+  /**
+   * KOK-01, KOK-02: janela aberta em função do tempo desde o 1º impacto e de a zona estar ativa. Ela termina no 2º
+   * impacto (`delayMs`) e dura a largura deste cast; na zona abre mais cedo.
+   */
   windowOpen(t: number): boolean {
-    const from = this.zone ? KOKUSEN.zoneFrom : KOKUSEN.windowFrom;
-    return t >= from && t <= KOKUSEN.windowTo;
+    const early = this.zone ? KOKUSEN.windowFrom - KOKUSEN.zoneFrom : 0;
+    return t >= this._delayMs - this.widthMs - early && t <= this._delayMs;
   }
 
   /**

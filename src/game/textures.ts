@@ -22,6 +22,8 @@ export const TEX = {
   playerYuta: 'player-yuta',
   /** Folha do dorminhoco, o NPC da poltrona de massagem (2 texels = 1 px de mundo); veja `art/hd/atlas/sleeperSheet`. */
   sleeper: 'npc-sleeper',
+  /** Estouro desenhado do Kokusen (5 quadros de 88x88, 1 texel = 1 px de mundo); veja `art/hd/atlas/burstSheet`. */
+  kokusenBurst: 'fx-kokusen-burst',
   /** Folha animada do inimigo `corcunda` (o corpo físico é um retângulo Matter, sem textura); veja `enemyTex`. */
   enemy: 'enemy',
   chair: 'chair',

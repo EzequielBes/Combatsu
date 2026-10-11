@@ -35,6 +35,8 @@ export interface TechContext {
   masteryHit(cast: CastRef | null, target: Hittable): void;
   /** Evento deste frame (`divergent2`, `kokusen`, `kokusenMiss`, `redDetonate`, `blueImplode`, `cut`). */
   emit(event: string): void;
+  /** Sorteio de 0 a 1 do stream das técnicas (o tempo e a janela do Kokusen de cada Punho Divergente). */
+  roll(): number;
 }
 
 /**

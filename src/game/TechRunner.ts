@@ -54,6 +54,8 @@ export class TechRunner {
     onKokusen: (target: Hittable, point: Vec2, facing: 1 | -1, streak: number) => void,
     /** MST-01/02: o alvo aceitou um golpe da técnica do `slot` na conjuração `castId` (a cena aplica a maestria). */
     onMasteryHit: (slot: 0 | 1, castId: number, targetId: number, isBoss: boolean) => void,
+    /** Sorteio de 0 a 1 para o tempo e a janela do Kokusen de cada Punho Divergente. */
+    roll: () => number,
   ) {
     const ctx: TechContext = {
       scene,
@@ -65,6 +67,7 @@ export class TechRunner {
         if (cast) onMasteryHit(cast.slot, cast.id, target.id, target instanceof Boss);
       },
       emit: (event) => this.frameEvents.push(event),
+      roll,
     };
     this.divergent = new DivergentTech(ctx, energy, fx, registry, triggerHitstop, onKokusen);
     this.red = new RedTech(ctx, fx, registry, uiLayer);

@@ -7,6 +7,7 @@ import { ENEMY_BAR, HUD_BAR } from './hud';
 import { PALETTE_KEYS } from './palette';
 import { registerIndexedSheet, registerSheet } from './render';
 import { HD_ON, YUTA_ON } from './hd/flag';
+import { burstSheet } from './hd/atlas/burstSheet';
 import { sleeperSheet } from './hd/atlas/sleeperSheet';
 import { playerYutaAnimKey, yutaAnims, yutaSheet } from './hd/atlas/yutaSheet';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
@@ -72,6 +73,8 @@ export function createArt(scene: Phaser.Scene): void {
   }
   // O dorminhoco, NPC de cenário em quadros desenhados; os quadros são trocados pelo `SleeperNpc`, sem animação.
   registerIndexedSheet(scene, TEX.sleeper, sleeperSheet());
+  // Estouro do Kokusen: os quadros são trocados pelo `KokusenBurst`, em tempo real.
+  registerIndexedSheet(scene, TEX.kokusenBurst, burstSheet());
   // Uma folha, as animações e as 3 partes do ragdoll por aparência (EVR-06), nas cores da folha (CHR-04).
   for (const v of ENEMY_VARIANTS) {
     const tex = enemyTex(v);

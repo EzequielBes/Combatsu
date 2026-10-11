@@ -9,6 +9,7 @@ import { KOKUSEN } from '../../data/techniques';
 import type { Hittable } from '../bodyTags';
 import { PALETTE } from '../art/palette';
 import { TEX } from '../textures';
+import { KokusenBurst } from './KokusenBurst';
 
 /** Um frame a 60 fps, para contar "2 frames"/"3 frames"/"4 frames" da Direção de arte em tempo real (L-003). */
 const FRAME_MS = 1000 / 60;
@@ -128,6 +129,7 @@ export class KokusenFx {
   private cardStreak = 0;
 
   private zoneSparkMs = 0;
+  private readonly burst: KokusenBurst;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -136,6 +138,7 @@ export class KokusenFx {
     uiLayer: Phaser.GameObjects.Layer,
   ) {
     this.degraded = scene.game.renderer.type !== Phaser.WEBGL; // TFX-06/11
+    this.burst = new KokusenBurst(scene, fx, registry);
     // Desligado fora do cinema: um filtro ativo, mesmo com a matriz identidade, faz a câmera do mundo compor por
     // framebuffer em todo quadro.
     this.colorMatrix = this.degraded ? null : scene.cameras.main.filters.internal.addColorMatrix().setActive(false);
@@ -194,6 +197,7 @@ export class KokusenFx {
     this.redrawBolts();
 
     this.spawnSparksAndShock(point, facing);
+    this.burst.trigger(point, facing);
 
     this.cardActive = true;
     this.cardElapsedMs = 0;
@@ -217,6 +221,7 @@ export class KokusenFx {
     this.updateInvertDuotone(realDtMs);
     this.updateBolts(realDtMs, frozenNow);
     this.updateShock(realDtMs);
+    this.burst.update(realDtMs);
     this.updateCard(realDtMs);
     this.updateZoomBack(realDtMs);
   }

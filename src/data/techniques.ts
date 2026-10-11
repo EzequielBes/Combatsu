@@ -119,11 +119,18 @@ export const REVERSE_CURSED = {
   energyPerHp: 2,
 };
 
-/** Kokusen / Black Flash (KOK-*): janela, zona, dano e camadas cinemáticas. */
+/**
+ * Kokusen / Black Flash (KOK-*): janela, zona, dano e camadas cinemáticas. `windowFrom`, `windowTo` e `zoneFrom` são
+ * a janela de base (sem sorteio). No jogo cada Punho Divergente sorteia `delayMs` (o tempo do 1º ao 2º impacto, que é
+ * também o fim da janela e o tempo em que o anel fecha) e `windowMs` (a largura dela): o anel mostra quando, mas a
+ * folga muda de um golpe para o outro. Na zona a janela abre `windowFrom − zoneFrom` ms mais cedo.
+ */
 export const KOKUSEN = {
   windowFrom: 120,
   windowTo: 200,
   zoneFrom: 60,
+  delayMs: { min: 170, max: 290 },
+  windowMs: { min: 50, max: 90 },
   zoneMs: 8000,
   damage: 45,
   hitstopMs: 220,
@@ -132,6 +139,8 @@ export const KOKUSEN = {
   invertMs: 33,
   duotoneMs: 66,
   boltsAfterMs: 150,
+  /** Tempo real (ms) de cada um dos 5 quadros do estouro desenhado no ponto do impacto. */
+  burstFrameMs: [40, 60, 90, 70, 70],
   cardMs: 800,
   zoomPeak: 1.68,
   zoomInMs: 60,

@@ -90,13 +90,14 @@ export class DivergentTech {
   }
 
   private beginCast(slot: 0 | 1): void {
-    this.state = new DivergentState();
+    // O sorteio vem antes: o tempo até o 2º impacto deste cast é o que o anel e a janela do Kokusen usam.
+    this.kokusen.startAttempt(this.ctx.roll);
+    this.state = new DivergentState(this.kokusen.delayMs);
     this.cast = this.ctx.currentCast();
     this.target = null;
     this.slot = slot;
     this.pendingKokusen = false;
     this.hitboxOpened = false;
-    this.kokusen.startAttempt();
     this.fx.hideWaiting();
   }
 

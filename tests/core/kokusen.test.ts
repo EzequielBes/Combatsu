@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Kokusen } from '../../src/core/kokusen';
 import { CursedEnergy } from '../../src/core/energy';
+import { Run } from '../../src/core/run';
+import { KOKUSEN } from '../../src/data/techniques';
+import { RUN, WAVE } from '../../src/data/tuning';
 
 function armed(): Kokusen {
   const k = new Kokusen();
@@ -141,5 +144,72 @@ describe('KOK-31: quando a zona fecha, o streak zera', () => {
     k.land(new CursedEnergy());
     k.tick(5000);
     expect(k.streak).toBe(1);
+  });
+});
+
+describe('sorteio por cast: o tempo até o 2º impacto e a largura da janela mudam de um golpe para o outro', () => {
+  /** Devolve os valores dados, em ordem (o 1º sorteio é o tempo, o 2º a largura). */
+  const rolls =
+    (...values: number[]) =>
+    (): number =>
+      values.shift() ?? 0;
+
+  it('sem sorteio vale a janela de base: 2º impacto aos 200 ms, janela de 120 a 200', () => {
+    const k = new Kokusen();
+    k.startAttempt();
+    expect(k.delayMs).toBe(200);
+    expect(k.windowOpen(119)).toBe(false);
+    expect(k.windowOpen(120)).toBe(true);
+  });
+
+  it('o sorteio 0 dá o golpe mais rápido e a janela mais estreita; o 1, o mais lento e a mais larga', () => {
+    const k = new Kokusen();
+    k.startAttempt(rolls(0, 0));
+    expect(k.delayMs).toBe(KOKUSEN.delayMs.min);
+    expect(k.windowOpen(KOKUSEN.delayMs.min - KOKUSEN.windowMs.min - 1)).toBe(false);
+    expect(k.windowOpen(KOKUSEN.delayMs.min - KOKUSEN.windowMs.min)).toBe(true);
+    k.startAttempt(rolls(1, 1));
+    expect(k.delayMs).toBe(KOKUSEN.delayMs.max);
+    expect(k.windowOpen(KOKUSEN.delayMs.max - KOKUSEN.windowMs.max)).toBe(true);
+    expect(k.windowOpen(KOKUSEN.delayMs.max + 1)).toBe(false);
+  });
+
+  it('a janela sempre termina no 2º impacto, que é quando o anel fecha', () => {
+    for (const r of [0, 0.25, 0.5, 0.75, 1]) {
+      const k = new Kokusen();
+      k.startAttempt(rolls(r, 1 - r));
+      expect(k.windowOpen(k.delayMs)).toBe(true);
+      expect(k.windowOpen(k.delayMs + 1)).toBe(false);
+    }
+  });
+
+  it('nenhum instante fixo acerta todos os golpes: o mais rápido já fechou quando o mais lento abre', () => {
+    const fast = new Kokusen();
+    fast.startAttempt(rolls(0, 1));
+    const slow = new Kokusen();
+    slow.startAttempt(rolls(1, 1));
+    for (let t = 0; t <= KOKUSEN.delayMs.max; t++) expect(fast.windowOpen(t) && slow.windowOpen(t), `${t}`).toBe(false);
+  });
+
+  it('na zona a janela sorteada abre 60 ms mais cedo e termina no mesmo instante', () => {
+    const k = new Kokusen();
+    k.land(new CursedEnergy());
+    k.startAttempt(rolls(0.5, 0.5));
+    const width = Math.round((KOKUSEN.windowMs.min + KOKUSEN.windowMs.max) / 2);
+    expect(k.windowOpen(k.delayMs - width - 60)).toBe(true);
+    expect(k.windowOpen(k.delayMs - width - 61)).toBe(false);
+    expect(k.windowOpen(k.delayMs + 1)).toBe(false);
+  });
+
+  it('a run dá um sorteio próprio para o Kokusen, igual para a mesma seed', () => {
+    const draws = (seed: number): number[] => {
+      const run = new Run(RUN, WAVE);
+      run.startPressed();
+      run.update(16, () => seed);
+      return [run.kokusenRng!.next(), run.kokusenRng!.next(), run.kokusenRng!.next()];
+    };
+    expect(new Run(RUN, WAVE).kokusenRng).toBeNull();
+    expect(draws(7)).toEqual(draws(7));
+    expect(draws(7)).not.toEqual(draws(8));
   });
 });

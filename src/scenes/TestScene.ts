@@ -327,6 +327,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       },
       // MST-01/02: acerto de técnica em alvo real vira ponto de maestria.
       (slot, castId, targetId, isBoss) => this.runDirector.onMasteryHit(slot, castId, targetId, isBoss),
+      // Sem run começada (laboratório de efeitos), o meio do sorteio: o tempo do Kokusen fica fixo.
+      () => this.run.kokusenRng?.next() ?? 0.5,
     );
 
     // T28: laboratório de efeitos (`?debug&fxlab`) - bonecos de treino + teclas 1-6/0, sem ondas (FXL-01).

@@ -1,0 +1,5 @@
+{
+  "cell": { "w": 88, "h": 88 },
+  "origin": { "x": 44 },
+  "frames": ["burst-0", "burst-1", "burst-2", "burst-3", "burst-4"]
+}

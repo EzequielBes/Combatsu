@@ -65,6 +65,7 @@ export class Run {
   private stageRngValue: Rng | null = null;
   private slotRngValue: Rng | null = null;
   private vowRngValue: Rng | null = null;
+  private kokusenRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -164,6 +165,11 @@ export class Run {
   }
 
   /** Stream do sorteio dos votos (VOW-07): próprio, `seed ^ 0x13198a2e`, só o painel de votos consome. */
+  /** Stream do sorteio do Kokusen (tempo e janela de cada Punho Divergente); `null` antes do 1º start. */
+  get kokusenRng(): Rng | null {
+    return this.kokusenRngValue;
+  }
+
   get vowRng(): Rng | null {
     return this.vowRngValue;
   }
@@ -298,6 +304,7 @@ export class Run {
         this.stageRngValue = new Rng(seed ^ 0x1f83d9ab);
         this.slotRngValue = new Rng(seed ^ 0x5be0cd19);
         this.vowRngValue = new Rng(seed ^ 0x13198a2e);
+        this.kokusenRngValue = new Rng(seed ^ 0x3243f6a8);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;
