@@ -116,7 +116,7 @@ describe('golpes e pulo da folha player-yuta', () => {
   });
 
   it('o golpe que a folha não tem fica para a folha HD', () => {
-    expect(yutaMoveFrame('chuteCarregado', 'active')).toBeUndefined();
+    expect(yutaMoveFrame('golpeSemArte', 'active')).toBeUndefined();
   });
 
   it('no impacto o membro passa da guarda: o punho e o pé chegam mais longe que a mão da guarda', () => {
@@ -273,6 +273,22 @@ describe('objeto pesado e socos novos na folha player-yuta', () => {
       expect(yutaMoveFrame(move, 'recovery'), move).toBe(`${move}-recover`);
       expect(bbox(sheet.frames[`${move}-hit`]).right, move).toBeGreaterThan(guard + 8);
     }
+  });
+
+  it('a fase com mais de um quadro reparte o tempo dela entre eles, em ordem', () => {
+    expect(yutaMoveFrame('chuteAlto', 'startup', 0, 120)).toBe('chuteAlto-wind');
+    expect(yutaMoveFrame('chuteAlto', 'startup', 59, 120)).toBe('chuteAlto-wind');
+    expect(yutaMoveFrame('chuteAlto', 'startup', 60, 120)).toBe('chuteAlto-wind-2');
+    // Depois do fim da fase (um quadro de atraso) continua no último.
+    expect(yutaMoveFrame('chuteAlto', 'startup', 130, 120)).toBe('chuteAlto-wind-2');
+    expect(yutaMoveFrame('chuteAlto', 'recovery', 0, 260)).toBe('chuteAlto-recover');
+    expect(yutaMoveFrame('chuteAlto', 'recovery', 200, 260)).toBe('chuteAlto-recover-2');
+    for (const part of ['wind', 'wind-2', 'hit', 'recover', 'recover-2'])
+      expect(yutaHasFrame(`chuteCarregado-${part}`), part).toBe(true);
+  });
+
+  it('sem volta própria, a volta passa pelos quadros da antecipação de trás para a frente', () => {
+    expect(yutaMoveFrame('jab', 'recovery', 0, 100)).toBe('jab-wind');
   });
 
   it('nos golpes de chão que partem da guarda os pés ficam onde a guarda os tem', () => {

@@ -28,6 +28,13 @@ import { PLAYER_MOVE, PROP_SWING_COMBO } from '../../data/tuning';
 import { SIZE, TEX } from '../textures';
 import type { Player } from '../Player';
 
+/** Duração (ms) de cada fase de um golpe, para repartir a fase entre os quadros que a folha tem para ela. */
+const PHASE_MS: Record<AttackPhase, (mv: { startupMs: number; activeMs: number; recoveryMs: number }) => number> = {
+  startup: (mv) => mv.startupMs,
+  active: (mv) => mv.activeMs,
+  recovery: (mv) => mv.recoveryMs,
+  window: () => 0,
+};
 /** Animações de corrida cujo ritmo na folha HD acompanha a velocidade de corrida. */
 const HD_RUN_ANIMS: ReadonlySet<string> = new Set(['run', 'carry-run']);
 /** Piscar da invulnerabilidade: meio período (ms) e alpha da fase apagada. */
@@ -279,7 +286,7 @@ export class PlayerAnimator {
     // Com `?hd=1` o golpe com sequência HD toca os quadros dela; os outros caem no `-wind/-hit/-recover`.
     // O golpe que a folha do protagonista novo já tem sai dela.
     const hd =
-      (YUTA_ON ? yutaMoveFrame(mv.name, phase) : undefined) ??
+      (YUTA_ON ? yutaMoveFrame(mv.name, phase, ms, PHASE_MS[phase](mv)) : undefined) ??
       (HD_ON ? hdMoveFrame(mv.name, phase, ms, mv) : undefined);
     const rig = this.rigFrame(mv, phase, ms);
     let v: Phaser.GameObjects.Sprite;

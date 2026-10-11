@@ -175,18 +175,40 @@ export function yutaAnims(): Anims {
   return anims;
 }
 
+const phaseCache = new Map<string, string[]>();
+
+/**
+ * Quadros de uma fase do golpe, na ordem em que tocam: `<golpe>-<parte>` e, se a folha tiver, `<golpe>-<parte>-2`,
+ * `-3`... Vazio se a folha não tem nem o primeiro.
+ */
+function phaseFrames(moveName: string, part: 'wind' | 'hit' | 'recover'): string[] {
+  const key = `${moveName}-${part}`;
+  let frames = phaseCache.get(key);
+  if (!frames) {
+    frames = yutaHasFrame(key) ? [key] : [];
+    while (frames.length > 0 && yutaHasFrame(`${key}-${frames.length + 1}`)) frames.push(`${key}-${frames.length + 1}`);
+    phaseCache.set(key, frames);
+  }
+  return frames;
+}
+
 /**
  * Quadro do golpe em curso na folha, ou `undefined` se ela não tem o golpe: `<golpe>-wind` na antecipação,
- * `<golpe>-hit` com a hitbox ligada e, na volta, `<golpe>-recover` quando existe (senão a antecipação de novo).
+ * `<golpe>-hit` com a hitbox ligada e, na volta, `<golpe>-recover` quando existe (senão a antecipação de trás para a
+ * frente). A fase que tem mais de um quadro (`-2`, `-3`...) reparte `phaseMs` (a duração dela) por igual entre eles,
+ * e `ms` (o tempo já passado na fase) escolhe qual; sem os tempos, sai o primeiro.
  */
-export function yutaMoveFrame(moveName: string, phase: AttackPhase): string | undefined {
-  const wind = `${moveName}-wind`;
-  const hit = `${moveName}-hit`;
-  if (!yutaHasFrame(wind) || !yutaHasFrame(hit)) return undefined;
-  if (phase === 'startup') return wind;
-  if (phase === 'active') return hit;
-  const recover = `${moveName}-recover`;
-  return yutaHasFrame(recover) ? recover : wind;
+export function yutaMoveFrame(moveName: string, phase: AttackPhase, ms = 0, phaseMs = 0): string | undefined {
+  const wind = phaseFrames(moveName, 'wind');
+  const hit = phaseFrames(moveName, 'hit');
+  if (wind.length === 0 || hit.length === 0) return undefined;
+  const recover = phaseFrames(moveName, 'recover');
+  const frames =
+    phase === 'startup' ? wind : phase === 'active' ? hit : recover.length > 0 ? recover : [...wind].reverse();
+  // Na janela de encadeamento, depois da volta, o corpo fica no último quadro dela.
+  if (phase === 'window') return frames[frames.length - 1];
+  if (frames.length === 1 || phaseMs <= 0) return frames[0];
+  return frames[Math.min(frames.length - 1, Math.max(0, Math.floor((ms * frames.length) / phaseMs)))];
 }
 
 const HANDS: Readonly<Record<string, readonly number[]>> = YUTA_ATLAS_DATA.hands;

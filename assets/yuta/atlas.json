@@ -138,7 +138,14 @@
     "guard-hit",
     "contra-recover",
     "chuteAlto-recover",
-    "chuteGiratorio-recover"
+    "chuteGiratorio-recover",
+    "chuteAlto-wind-2",
+    "chuteAlto-recover-2",
+    "chuteCarregado-wind",
+    "chuteCarregado-wind-2",
+    "chuteCarregado-hit",
+    "chuteCarregado-recover",
+    "chuteCarregado-recover-2"
   ],
   "frameData": [
     {
