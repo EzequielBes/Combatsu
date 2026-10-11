@@ -181,6 +181,23 @@ export default async function ({ page, baseUrl, assert }) {
   );
   assert(shopCards(s) > 0, 'VOW-03: a loja deveria abrir depois do voto');
 
+  // VOW-08 (e o edge case da morte): fecha a loja, morre na rodada seguinte (tecla 3) e começa outra run na mesma
+  // página: o voto tomado pelo painel não sobrevive.
+  // O Enter só fecha a loja depois do fade de entrada da konbini (TRV-10).
+  for (let i = 0; i < 40 && s.area.transitioning; i++) s = await step(50);
+  s = await tap('Enter');
+  for (let i = 0; i < 100 && s.run.state !== 'roundActive'; i++) s = await step(50);
+  await page.keyboard.press('Digit3', { delay: 50 });
+  for (let i = 0; i < 100 && s.run.state !== 'gameOver'; i++) s = await step(50);
+  assert(s.run.state === 'gameOver', `VOW-08: deveria morrer: ${s.run.state}`);
+  s = await step(2500);
+  s = await tap('KeyJ');
+  for (let i = 0; i < 40 && s.run.state !== 'roundActive'; i++) s = await step(50);
+  assert(
+    s.run.state === 'roundActive' && s.run.round === 1 && JSON.stringify(s.vows.taken) === '[]',
+    `VOW-08: run nova sem votos: ${s.run.state} rodada ${s.run.round} ${JSON.stringify(s.vows.taken)}`,
+  );
+
   // VOW-04: Enter recusa; nenhum voto e a loja abre.
   s = await open('area=modular&round=5&regen=0');
   s = await clearAndReachShop();
@@ -232,5 +249,44 @@ export default async function ({ page, baseUrl, assert }) {
   assert(
     Math.abs(s.vows.strike.light - (1 + 0.03 * s.run.kills)) < 1e-9,
     `VOW-16: com ${s.run.kills} abates o golpe deveria ser ×${1 + 0.03 * s.run.kills}: ${s.vows.strike.light}`,
+  );
+
+  // VOW-14: o ×2 da Cura proibida, medido contra o controle com o mesmo hp (Corpo de vidro deixa o hp em 10 de 60).
+  const reverseGain = async (vows) => {
+    s = await open(`vows=${vows}&regen=0&maxAlive=0`);
+    await page.keyboard.press('Digit4', { delay: 50 });
+    s = await step(400);
+    const from = s.player.hp;
+    await page.keyboard.down('KeyF');
+    for (let i = 0; i < 70; i++) s = await step(17);
+    await page.keyboard.up('KeyF');
+    s = await step(17);
+    return { from, gain: s.player.hp - from };
+  };
+  const control = await reverseGain('corpoDeVidro');
+  const doubled = await reverseGain('corpoDeVidro,curaProibida');
+  assert(control.from === 10 && doubled.from === 10, `VOW-14: hp de partida ${control.from} e ${doubled.from}`);
+  assert(
+    control.gain > 0 && Math.abs(doubled.gain - 2 * control.gain) <= 2,
+    `VOW-14: cura com Cura proibida ${doubled.gain}, controle ${control.gain} (esperava o dobro)`,
+  );
+
+  // Edge case: comprar `vida` com Corpo de vidro. O teto vai a round(115 × 0,6) = 69 e a cura de 15 fica dentro dele.
+  s = await open('area=sala&vows=corpoDeVidro&fragments=900&maxAlive=2&regen=0');
+  for (let i = 0; i < 400 && s.run.state !== 'shop'; i++) {
+    await page.keyboard.press('Digit2', { delay: 20 });
+    s = await step(80);
+  }
+  assert(s.run.state === 'shop', `edge vida: deveria chegar à loja: ${s.run.state}`);
+  for (let i = 0; i < 25 && !s.shop.offers.some((o) => o.id === 'vida' && !o.sold); i++) s = await tap('KeyR');
+  const vida = s.shop.offers.findIndex((o) => o.id === 'vida');
+  assert(vida >= 0, `edge vida: a loja deveria oferecer vida: ${JSON.stringify(s.shop.offers)}`);
+  const hpBefore = s.player.hp;
+  s = await tap(`Digit${vida + 1}`);
+  s = await step(50);
+  assert(s.player.maxHp === 69, `edge vida: teto ${s.player.maxHp} (esperava 69)`);
+  assert(
+    s.player.hp === Math.min(hpBefore + 15, 69),
+    `edge vida: hp ${hpBefore} -> ${s.player.hp} (esperava ${Math.min(hpBefore + 15, 69)})`,
   );
 }

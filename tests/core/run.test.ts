@@ -755,6 +755,17 @@ describe('stream dos votos e abates da rodada (VOW-07, VOW-16)', () => {
     expect([a.vowRng!.next(), a.vowRng!.next()]).toEqual([b.vowRng!.next(), b.vowRng!.next()]);
   });
 
+  it('o stream dos votos não anda quando a loja sorteia (streams separados)', () => {
+    const a = newRun();
+    const b = newRun();
+    for (const r of [a, b]) {
+      r.startPressed();
+      r.update(16, () => 77);
+    }
+    for (let i = 0; i < 25; i++) a.shopRng!.next();
+    expect([a.vowRng!.next(), a.vowRng!.next()]).toEqual([b.vowRng!.next(), b.vowRng!.next()]);
+  });
+
   it('roundKills conta os abates da rodada atual (0 antes, 2 depois de dois abates)', () => {
     const run = newRun();
     expect(run.roundKills).toBe(0);

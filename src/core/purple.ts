@@ -37,6 +37,11 @@ export class PurpleSphere {
     return this.startX + this.facing * PURPLE.speed * (Math.min(this.elapsedMs, PURPLE.lifeMs) / 1000);
   }
 
+  /** Distância andada desde o ponto de partida (px), lida da posição. */
+  get traveled(): number {
+    return Math.abs(this.x - this.startX);
+  }
+
   /** A esfera ainda voa (EVO-05): some ao completar `PURPLE.lifeMs`. */
   get alive(): boolean {
     return this.elapsedMs < PURPLE.lifeMs;

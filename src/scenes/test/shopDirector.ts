@@ -37,6 +37,9 @@ export class ShopDirector {
         // MOD-04/MOD-11: `vida` sobe o teto real do player e cura os mesmos 15.
         if (applied && id === 'vida') {
           this.s.player.setMaxHp(this.s.modifiers.maxHp);
+          // Edge case da F24: o teto com o voto (Corpo de vidro) vale antes da cura, senão a cura passa do teto
+          // e o quadro seguinte corta.
+          this.s.vows.sync();
           this.s.player.heal(SHOP.vidaPerLevel);
         }
         return applied;

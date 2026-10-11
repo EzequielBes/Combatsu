@@ -37,7 +37,7 @@ export class PurpleTech {
   get snapshot(): { id: number; kind: 'purple'; x: number; y: number; traveled: number } | null {
     const s = this.sphere;
     if (!s) return null;
-    return { id: this.sphereId, kind: 'purple', x: s.x, y: s.y, traveled: (PURPLE.speed * s.ageMs) / 1000 };
+    return { id: this.sphereId, kind: 'purple', x: s.x, y: s.y, traveled: s.traveled };
   }
 
   update(

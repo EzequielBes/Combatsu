@@ -15,10 +15,10 @@ Corroborated across multiple features. Safe to apply as guidance.
 - last seen: 2026-10-01T12:33:06Z
 
 ### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
-- signal: `surviving_mutant` · recurrence: 5 feature(s) · scope: `art-adapter` · harmful: 1
-- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho, cenario-acabamento, arena-do-santuario
-- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+4 more)
-- last seen: 2026-10-08T17:35:38Z
+- signal: `surviving_mutant` · recurrence: 6 feature(s) · scope: `art-adapter` · harmful: 1
+- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho, cenario-acabamento, arena-do-santuario, votos-e-evolucoes
+- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+5 more)
+- last seen: 2026-10-08T20:29:32Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -479,6 +479,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: arena-do-santuario
 - evidence: N4 tests/scenes/arena.test.ts:46 (tests edge case)
 - last seen: 2026-10-08T17:51:53Z
+
+### L-079 - Test a reset-on-new-run rule by starting a second run in the same page, because a fresh page load is clean whether or not the reset runs.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: votos-e-evolucoes
+- evidence: src/scenes/test/vowDirector.ts:20 (S13) (smoke)
+- last seen: 2026-10-08T20:29:32Z
+
+### L-080 - When an AC names several target kinds (common enemies and the boss), hit each kind in the live test, because a single-kind scene cannot tell whether the other kind is wired.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: votos-e-evolucoes
+- evidence: src/game/tech/purple.ts:75 (S11) (smoke)
+- last seen: 2026-10-08T20:29:32Z
+
+### L-081 - When a live multiplier depends on a counter (kills in the round), assert it after the counter moves, because a test at zero cannot tell the counter from a constant.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
+- features: votos-e-evolucoes
+- evidence: src/scenes/test/vowDirector.ts:48 (S10) (smoke)
+- last seen: 2026-10-08T20:29:32Z
 
 ## Quarantined (failed when applied - ignore)
 

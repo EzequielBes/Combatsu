@@ -11,6 +11,7 @@ describe('esfera do Vazio Roxo (EVO-05)', () => {
     expect(s.x).toBeCloseTo(244, 9);
     s.update(800, []);
     expect(s.x).toBeCloseTo(388, 9);
+    expect(s.traveled).toBeCloseTo(288, 9);
     const back = new PurpleSphere(100, 300, -1);
     back.update(800, []);
     expect(back.x).toBeCloseTo(-44, 9);

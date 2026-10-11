@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 79,
+  "next_id": 82,
   "lessons": [
     {
       "id": "L-001",
@@ -777,19 +777,21 @@
         "enemy-sprite-variety",
         "personagem-e-vermelho",
         "cenario-acabamento",
-        "arena-do-santuario"
+        "arena-do-santuario",
+        "votos-e-evolucoes"
       ],
-      "recurrence": 5,
+      "recurrence": 6,
       "harmful": 1,
       "evidence": [
         "M7 src/game/art/index.ts:128 (art-adapter)",
         "M2b src/scenes/TestScene.ts:843 (art-adapter) (art-adapter)",
         "M11-adapt TechRunner.ts:350 (art-adapter)",
         "M10 src/game/Hud.ts:134 vs tests/game/hudText.test.ts:10 (art-adapter)",
-        "U15 src/game/art/background.ts:57 (ARN-01) (art-adapter)"
+        "U15 src/game/art/background.ts:57 (ARN-01) (art-adapter)",
+        "src/scenes/test/vowDirector.ts:32 (S9) (art-adapter)"
       ],
       "created": "2026-10-01T14:45:04Z",
-      "last_seen": "2026-10-08T17:35:38Z"
+      "last_seen": "2026-10-08T20:29:32Z"
     },
     {
       "id": "L-044",
@@ -1420,6 +1422,60 @@
       ],
       "created": "2026-10-08T17:51:53Z",
       "last_seen": "2026-10-08T17:51:53Z"
+    },
+    {
+      "id": "L-079",
+      "key": "surviving_mutant::test a reset on new run rule by starting a second run in the same page because a fresh page load is clean whether or not the reset runs",
+      "text": "Test a reset-on-new-run rule by starting a second run in the same page, because a fresh page load is clean whether or not the reset runs.",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "votos-e-evolucoes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/scenes/test/vowDirector.ts:20 (S13) (smoke)"
+      ],
+      "created": "2026-10-08T20:29:32Z",
+      "last_seen": "2026-10-08T20:29:32Z"
+    },
+    {
+      "id": "L-080",
+      "key": "surviving_mutant::when an ac names several target kinds common enemies and the boss hit each kind in the live test because a single kind scene cannot tell whether the other kind is wired",
+      "text": "When an AC names several target kinds (common enemies and the boss), hit each kind in the live test, because a single-kind scene cannot tell whether the other kind is wired.",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "votos-e-evolucoes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/game/tech/purple.ts:75 (S11) (smoke)"
+      ],
+      "created": "2026-10-08T20:29:32Z",
+      "last_seen": "2026-10-08T20:29:32Z"
+    },
+    {
+      "id": "L-081",
+      "key": "surviving_mutant::when a live multiplier depends on a counter kills in the round assert it after the counter moves because a test at zero cannot tell the counter from a constant",
+      "text": "When a live multiplier depends on a counter (kills in the round), assert it after the counter moves, because a test at zero cannot tell the counter from a constant.",
+      "signal": "surviving_mutant",
+      "scope": "smoke",
+      "status": "candidate",
+      "features": [
+        "votos-e-evolucoes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/scenes/test/vowDirector.ts:48 (S10) (smoke)"
+      ],
+      "created": "2026-10-08T20:29:32Z",
+      "last_seen": "2026-10-08T20:29:32Z"
     }
   ]
 }
