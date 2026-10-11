@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type Phaser from 'phaser';
 import { buildBackground } from '../../../src/game/art/background';
 import { Brush, clipX } from '../../../src/game/art/scenery/brush';
 import { veilSky } from '../../../src/game/art/scenery/santuarioSky';
@@ -8,14 +7,8 @@ import { schoolFar } from '../../../src/game/art/scenery/school';
 import type { BossArchetype } from '../../../src/core/bossTier';
 import { RasterSink } from './sceneryRaster';
 
-/** `Graphics` falso: grava os texels como o `RasterSink` e aceita as chamadas de montagem do `buildBackground`. */
-class FakeGraphics extends RasterSink {
-  setScrollFactor(): this {
-    return this;
-  }
-  setDepth(): this {
-    return this;
-  }
+/** Camada falsa: grava os texels como o `RasterSink` e aceita o `setData` do `buildBackground`. */
+class FakeLayer extends RasterSink {
   setData(): this {
     return this;
   }
@@ -23,8 +16,7 @@ class FakeGraphics extends RasterSink {
 
 /** Monta o fundo de verdade numa cena falsa e devolve os rasters das três camadas. */
 function build(spans: { theme: 'santuario' | 'rua'; col0: number; col1: number }[], variant: BossArchetype | null) {
-  const scene = { add: { graphics: () => new FakeGraphics() } } as unknown as Phaser.Scene;
-  return buildBackground(scene, W, H, spans, variant) as unknown as FakeGraphics[];
+  return buildBackground(() => new FakeLayer(), W, H, spans, variant);
 }
 
 /** Área baixa e larga o bastante para pegar o santuário (x ≈ 680 na média): o teste roda rápido. */

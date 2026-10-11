@@ -50,6 +50,20 @@ export function layerBands(
   }));
 }
 
+/** Folga (px) em volta do que a câmera alcança, para o tranco da câmera não mostrar a borda da pintura. */
+export const EXTENT_MARGIN = 64;
+
+/**
+ * Intervalo, num eixo, da coordenada de uma camada com rolagem `factor` que a câmera consegue mostrar: com zoom ≥ 1
+ * a tela mostra `factor · scroll + [0, screenPx]`, e o centro da câmera fica dentro do mundo, então
+ * `scroll ∈ [−screenPx / 2, worldPx − screenPx / 2]`. Fora daqui a pintura nunca aparece.
+ */
+export function layerExtent(factor: number, worldPx: number, screenPx: number): { min: number; max: number } {
+  const a = factor * (-screenPx / 2);
+  const b = factor * (worldPx - screenPx / 2);
+  return { min: Math.min(a, b) - EXTENT_MARGIN, max: Math.max(a, b) + screenPx + EXTENT_MARGIN };
+}
+
 /** Fronteiras internas entre faixas vizinhas (CEN-02), na coordenada da camada; vazio com uma faixa só. */
 export function seams(bands: readonly { x1: number }[]): number[] {
   return bands.slice(0, -1).map((b) => b.x1);

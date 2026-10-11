@@ -1,4 +1,3 @@
-import type Phaser from 'phaser';
 import type { BossArchetype } from '../../core/bossTier';
 import type { ModuleTheme } from '../../core/module';
 import { Brush, clipX, type PaintSink } from './scenery/brush';
@@ -34,26 +33,32 @@ export function bandsFor(spans: readonly ThemeSpan[], x0: number, x1: number): B
   return layerBands(spans, x0, x1, PARALLAX[2]).map((b) => ({ x0: b.x0, x1: b.x1, ...NEAR_COLORS[b.theme] }));
 }
 
+/** Camada do fundo: recebe a pintura e guarda o que o snapshot de debug lê depois. */
+export interface BackgroundLayer extends PaintSink {
+  setData(key: string, value: unknown): unknown;
+}
+
 /**
- * Fundo da escola à noite em três camadas de parallax (ENV-02), desenhado com Graphics só com cores da paleta:
+ * Fundo da escola à noite em três camadas de parallax (ENV-02), pintado só com cores da paleta nas camadas que
+ * `makeLayer` cria (no jogo, uma `BakedLayer` com a rolagem e a profundidade recebidas):
  * - distante (0,1): céu em faixas com dither, estrelas, lua com halo e a silhueta do prédio principal com a torre;
  * - média (0,3): alas da escola com telhado de beiral, árvores e postes acesos;
  * - próxima (0,6): muro de pilares de pedra com gradil.
  * Com `spans` (THM-02) a camada próxima ganha a cor do tema de cada módulo; sem eles (a sala) sai a de sempre.
  * Devolve as camadas na ordem de PARALLAX.
  */
-export function buildBackground(
-  scene: Phaser.Scene,
+export function buildBackground<L extends BackgroundLayer>(
+  makeLayer: (factor: number, depth: number) => L,
   widthPx: number,
   heightPx: number,
   spans?: readonly ThemeSpan[],
   variant: BossArchetype | null = null,
-): Phaser.GameObjects.Graphics[] {
+): L[] {
   const x0 = -128;
   const x1 = widthPx + 128;
   const bottom = heightPx + 256;
   const themed = spans !== undefined && spans.length > 0;
-  const layers = PARALLAX.map((factor, i) => scene.add.graphics().setScrollFactor(factor, factor).setDepth(DEPTH[i]));
+  const layers = PARALLAX.map((factor, i) => makeLayer(factor, DEPTH[i]));
   const far = farPainterFor(spans ?? []);
   far(new Brush(layers[0]), { x0, x1, ground: GROUND[0], bottom, variant });
   let midVariant: BossArchetype | null = null;

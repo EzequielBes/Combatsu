@@ -11,10 +11,12 @@ import { Brush, clipX } from '../../game/art/scenery/brush';
 import { decorSlots } from '../../game/art/scenery/decor';
 import { paintDecor } from '../../game/art/scenery/decorArt';
 import { paintFront } from '../../game/art/scenery/frontArt';
-import { layerBands, toLayerX } from '../../game/art/scenery/layers';
+import { layerBands, layerExtent, toLayerX } from '../../game/art/scenery/layers';
+import { SCREEN } from '../../game/art/hd/screen';
 import { PALETTE } from '../../game/art/palette';
 import { tileFrameFor } from '../../game/art/tiles';
 import { terrainSheetFor } from '../../game/art/tilesThemes';
+import { BakedLayer } from '../../game/BakedLayer';
 import { tagBody } from '../../game/bodyTags';
 import { Prop } from '../../game/Prop';
 import { TEX } from '../../game/textures';
@@ -47,7 +49,7 @@ export class WorldBuilder {
   readonly arena: ArenaDressing;
 
   private tiles: Phaser.GameObjects.Image[] = [];
-  private background: Phaser.GameObjects.Graphics[] = [];
+  private background: BakedLayer[] = [];
   private staticBodies: MatterJS.BodyType[] = [];
   private sealBody: MatterJS.BodyType | null = null;
   private sealImage: Phaser.GameObjects.TileSprite | Phaser.GameObjects.Rectangle | null = null;
@@ -122,7 +124,14 @@ export class WorldBuilder {
     this.buildTiles(rows, spans);
     for (const r of level.solids) this.staticBodies.push(this.addTerrainBody(r));
     this.buildSeal(level.seal);
-    this.background = buildBackground(this.s, level.widthPx, level.heightPx, spans, variant);
+    this.background = buildBackground(
+      (factor, depth) => this.bakedLayer(factor, depth, level),
+      level.widthPx,
+      level.heightPx,
+      spans,
+      variant,
+    );
+    for (const layer of this.background) layer.commit();
     // `?debug&decor=0` desliga decoração e primeiro plano (o smoke compara os corpos do Matter com e sem eles).
     if (spans.length > 0 && debugParam('decor') !== '0') this.buildScenery(spans, level);
     this.arena.build(variant);
@@ -271,6 +280,18 @@ export class WorldBuilder {
         bottom: level.heightPx + 8,
       });
     }
+  }
+
+  /** Camada do fundo pintada em textura, recortada no que a câmera alcança com a rolagem `factor`. */
+  private bakedLayer(factor: number, depth: number, level: LevelData): BakedLayer {
+    const x = layerExtent(factor, level.widthPx, SCREEN.w);
+    const y = layerExtent(factor, level.heightPx, SCREEN.h);
+    return new BakedLayer(this.s, {
+      depth,
+      scrollX: factor,
+      scrollY: factor,
+      clip: { x0: x.min, y0: y.min, x1: x.max, y1: y.max },
+    });
   }
 
   private buildTiles(rows: readonly string[], spans: readonly AreaSpan[]): void {

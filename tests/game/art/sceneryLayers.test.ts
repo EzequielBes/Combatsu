@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { TILE } from '../../../src/core/level';
-import { CANVAS_CX, layerBands, seams, toLayerX } from '../../../src/game/art/scenery/layers';
+import {
+  CANVAS_CX,
+  EXTENT_MARGIN,
+  layerBands,
+  layerExtent,
+  seams,
+  toLayerX,
+} from '../../../src/game/art/scenery/layers';
 
 const SPANS = [
   { theme: 'beco' as const, col0: 1, col1: 20 },
@@ -52,5 +59,30 @@ describe('faixas por camada de parallax (CEN-07, CEN-02)', () => {
     const bands = layerBands(SPANS, -128, 4000, 0.6);
     expect(seams(bands)).toEqual([bands[0].x1, bands[1].x1]);
     expect(seams(layerBands([SPANS[0]], -128, 4000, 0.6))).toEqual([]);
+  });
+});
+
+describe('alcance da câmera numa camada (recorte da pintura em textura)', () => {
+  const WORLD = 3008;
+  const SCREEN_W = 1280;
+
+  it.each([0.1, 0.3, 0.6, 1.15])('no fator %f, tudo que a tela mostra cai dentro do intervalo', (f) => {
+    const { min, max } = layerExtent(f, WORLD, SCREEN_W);
+    const cx = SCREEN_W / 2;
+    for (const zoom of [1, 2, 3.4]) {
+      // Centro da câmera nas duas pontas do mundo; `s` são as duas bordas da tela.
+      for (const centerX of [0, WORLD]) {
+        for (const s of [0, SCREEN_W]) {
+          const x = f * (centerX - cx) + cx + (s - cx) / zoom;
+          expect(x).toBeGreaterThanOrEqual(min + EXTENT_MARGIN);
+          expect(x).toBeLessThanOrEqual(max - EXTENT_MARGIN);
+        }
+      }
+    }
+  });
+
+  it('a largura do intervalo é a tela mais a fração do mundo que a camada rola, com a folga dos dois lados', () => {
+    const { min, max } = layerExtent(0.1, WORLD, SCREEN_W);
+    expect(max - min).toBeCloseTo(0.1 * WORLD + SCREEN_W + 2 * EXTENT_MARGIN, 9);
   });
 });
