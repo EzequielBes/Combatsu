@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
-import { burstFrameAt, burstTotalMs } from '../../core/kokusenBurst';
+import { burstAlphaAt, burstFrameAt, burstTotalMs } from '../../core/kokusenBurst';
 import type { Vec2 } from '../../core/hit';
 import { KOKUSEN } from '../../data/techniques';
 import { BURST_FRAMES } from '../art/hd/atlas/burstSheet';
@@ -12,11 +12,13 @@ const DEPTH = 7;
 
 /**
  * Estouro desenhado do Kokusen no ponto do impacto: 5 quadros de raios pretos e vermelhos, do núcleo aos estilhaços.
- * Anda em tempo real, como o resto do cinema do Kokusen, então toca por inteiro durante o hitstop do próprio golpe.
+ * Anda em tempo real, como o resto do cinema do Kokusen, então segue durante o hitstop do próprio golpe. Cada acerto
+ * sai girado num quarto de volta diferente (a sequência conta os acertos), para dois seguidos não serem iguais.
  */
 export class KokusenBurst {
   private sprite: Phaser.GameObjects.Sprite | null = null;
   private elapsedMs = 0;
+  private count = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -32,6 +34,9 @@ export class KokusenBurst {
     this.sprite = this.scene.add
       .sprite(point.x, point.y, TEX.kokusenBurst, BURST_FRAMES[0])
       .setFlipX(facing < 0)
+      .setScale(KOKUSEN.burstScale)
+      // Quarto de volta: o desenho continua na grade de pixel.
+      .setAngle(90 * (this.count++ % 4))
       .setDepth(DEPTH);
     this.registry.add(this.sprite);
     this.fx.add('kokusen.burst', burstTotalMs(KOKUSEN.burstFrameMs), 'real');
@@ -43,7 +48,7 @@ export class KokusenBurst {
     this.elapsedMs += realDtMs;
     const frame = burstFrameAt(KOKUSEN.burstFrameMs, this.elapsedMs);
     if (frame === null) this.clear();
-    else sprite.setFrame(BURST_FRAMES[frame]);
+    else sprite.setFrame(BURST_FRAMES[frame]).setAlpha(burstAlphaAt(KOKUSEN.burstFrameMs, this.elapsedMs));
   }
 
   private clear(): void {

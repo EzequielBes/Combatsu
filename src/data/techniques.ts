@@ -139,8 +139,13 @@ export const KOKUSEN = {
   invertMs: 33,
   duotoneMs: 66,
   boltsAfterMs: 150,
-  /** Tempo real (ms) de cada um dos 5 quadros do estouro desenhado no ponto do impacto. */
-  burstFrameMs: [40, 60, 90, 70, 70],
+  /**
+   * Estouro desenhado no ponto do impacto: tempo real (ms) de cada um dos 5 quadros e a escala do desenho. O núcleo
+   * (1º quadro) dura o negativo e o duotom inteiros, que pintam a tela de preto e vermelho e esconderiam os raios; os
+   * raios entram quando a cor volta, ainda dentro do congelamento. Em 1,5 cada texel ocupa 3 px de tela no zoom 2.
+   */
+  burstFrameMs: [100, 60, 110, 90, 100],
+  burstScale: 1.5,
   cardMs: 800,
   zoomPeak: 1.68,
   zoomInMs: 60,
