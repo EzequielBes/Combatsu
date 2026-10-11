@@ -35,6 +35,12 @@ const BLINK_MS = 70;
 const BLINK_ALPHA = 0.25;
 /** Troca de frame do atordoamento da guarda quebrada (ms). */
 const STUN_FRAME_MS = 120;
+/**
+ * Defesa animada da folha do protagonista novo (ms de jogo): quanto tempo o corpo fica encolhido depois de um golpe
+ * bater na guarda (`guard-hit`) e quanto a deflexão (`parry`) fica na tela depois de um parry que acertou.
+ */
+const GUARD_HIT_MS = 160;
+const PARRY_POSE_MS = 220;
 /** Alpha do corpo enquanto a esquiva torna invulnerável. */
 const DODGE_ALPHA = 0.6;
 /** Frame da esquiva pelo tempo que falta de recarga (450 ms desde o início): primeira metade `dodge-0`, depois `dodge-1`. */
@@ -52,11 +58,40 @@ export class PlayerAnimator {
   private edgeUntil = 0;
   /** O último objeto que esteve na mão era dos pesados (veja `heavyHeld`). */
   private lastHeavy = false;
+  /** Até quando (no relógio do player) valem o encolhido do bloqueio e a pose da deflexão. */
+  private blockUntil = 0;
+  private parryUntil = 0;
   /** Flash sólido temporário (HEAL-10, ex.: cura), independente do piscar de invulnerabilidade. */
   flashMs = 0;
   flashColor: string | null = null;
 
   constructor(private readonly p: Player) {}
+
+  /** Um golpe bateu na guarda: o corpo encolhe atrás dos braços por `GUARD_HIT_MS`. */
+  onBlock(): void {
+    this.blockUntil = this.p.clockMs + GUARD_HIT_MS;
+  }
+
+  /** O parry acertou: a deflexão fica na tela por `PARRY_POSE_MS`, mesmo que a guarda já tenha sido solta. */
+  onParry(): void {
+    this.parryUntil = this.p.clockMs + PARRY_POSE_MS;
+  }
+
+  /**
+   * Quadro da defesa, ou `undefined` fora dela. Na folha do protagonista novo a guarda é animada: punhos erguidos
+   * (`guard-raise`) na janela de parry, braços cruzados (`guard`) enquanto segura, encolhido (`guard-hit`) quando um
+   * golpe bate nela, e a deflexão (`parry`) só quando o parry acerta. Nas outras folhas (CTL-09) a guarda é o quadro
+   * `guard` e, com `?hd=1`, a janela de parry mostra o `parry`.
+   */
+  private guardFrame(): string | undefined {
+    const p = this.p;
+    const animated = YUTA_ON && yutaHasFrame('guard-raise') && yutaHasFrame('guard-hit');
+    if (animated && p.clockMs < this.parryUntil) return 'parry';
+    if (p.guard.state === 'none') return undefined;
+    if (!animated) return HD_ON && p.guard.state === 'parry' ? 'parry' : 'guard';
+    if (p.clockMs < this.blockUntil) return 'guard-hit';
+    return p.guard.state === 'parry' ? 'guard-raise' : 'guard';
+  }
 
   /** Troca a folha do sprite visível (e a origem dela) só quando muda: `player-art` ou, no gancho com o boneco, `player-rig` (PRA-08). */
   setSheet(texture: string, origin: { x: number; y: number }): void {
@@ -231,11 +266,8 @@ export class PlayerAnimator {
     if (p.dodge.active) return { frame: `dodge-${DODGE_ELAPSED_HALF(p.dodge.cooldownMs)}`, trail: true };
     // Abaixar (DEF-09): corpo agachado parado enquanto durar.
     if (p.duck.active && !down) return { frame: 'duck' };
-    // CTL-09: guarda ou janela de parry mostram o frame `guard`. Com `?hd=1` a janela de parry mostra a deflexão
-    // (`parry`), que na folha antiga existe mas nunca foi usada.
-    if (p.guard.state !== 'none' && !down && !p.moves.isMoving)
-      return { frame: HD_ON && p.guard.state === 'parry' ? 'parry' : 'guard' };
-    return undefined;
+    const guard = down || p.moves.isMoving ? undefined : this.guardFrame();
+    return guard ? { frame: guard } : undefined;
   }
 
   /** Golpe do grafo: o frame vem da fase, não do relógio da animação (CHR-02). Devolve se havia golpe. */

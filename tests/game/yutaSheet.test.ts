@@ -256,6 +256,25 @@ describe('objeto pesado e socos novos na folha player-yuta', () => {
     expect(yutaMoveFrame('socoBaixo', 'recovery')).toBe('socoBaixo-recover');
   });
 
+  it('a defesa animada tem os punhos erguidos, os braços cruzados e o encolhido do bloqueio, cada um mais baixo', () => {
+    const top = (frame: string): number => bbox(sheet.frames[frame]).top;
+    for (const frame of ['guard-raise', 'guard', 'guard-hit']) expect(yutaHasFrame(frame), frame).toBe(true);
+    expect(top('guard')).toBeGreaterThan(top('guard-raise'));
+    expect(top('guard-hit')).toBeGreaterThan(top('guard'));
+    // Os pés não saem do lugar entre os três quadros.
+    for (const frame of ['guard-raise', 'guard-hit']) {
+      expect(Math.abs(bbox(sheet.frames[frame]).left - bbox(sheet.frames.guard).left), frame).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it('o contra e os chutes alto e giratório têm volta própria, e o impacto passa da guarda', () => {
+    const guard = bbox(sheet.frames['idle-0']).right;
+    for (const move of ['contra', 'chuteAlto', 'chuteGiratorio']) {
+      expect(yutaMoveFrame(move, 'recovery'), move).toBe(`${move}-recover`);
+      expect(bbox(sheet.frames[`${move}-hit`]).right, move).toBeGreaterThan(guard + 8);
+    }
+  });
+
   it('nos golpes de chão que partem da guarda os pés ficam onde a guarda os tem', () => {
     const guard = bbox(sheet.frames['idle-0']);
     for (const frame of ['jab-hit', 'direto-wind', 'direto-hit', 'gancho-hit', 'socoBaixo-hit'])

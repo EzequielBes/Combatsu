@@ -133,7 +133,12 @@
     "heavy-swing-recover",
     "heavy-swing-2-wind",
     "heavy-swing-2-hit",
-    "heavy-swing-2-recover"
+    "heavy-swing-2-recover",
+    "guard-raise",
+    "guard-hit",
+    "contra-recover",
+    "chuteAlto-recover",
+    "chuteGiratorio-recover"
   ],
   "frameData": [
     {

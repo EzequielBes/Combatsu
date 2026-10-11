@@ -46,6 +46,7 @@ export class PlayerDefense {
         // DFL-10, DFL-12: o parry do último golpe de uma sequência aparada inteira é a Deflexão (janela de 900 ms).
         const deflect = this.p.deflect.onParry(hit.string);
         this.p.onEvent?.('parry');
+        this.p.anim.onParry();
         if (deflect) this.p.onEvent?.('deflect');
         // DFL-08, DFL-09: só o parry do último golpe da sequência (ou do golpe sem sequência) deixa o inimigo parado.
         attacker?.parried({ final: hit.string ? hit.string.index === hit.string.length : true, deflect });
@@ -82,6 +83,7 @@ export class PlayerDefense {
         return false;
       case 'block':
         this.p.onEvent?.('block');
+        this.p.anim.onBlock();
         this.blockPush = { dir: awayDir, remainingPx: BLOCK_PUSH_PX };
         this.p.onDefense?.('block', point);
         if (this.p.structure.add(res.playerStructureGain)) this.onGuardBreak();
