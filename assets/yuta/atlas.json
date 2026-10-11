@@ -572,6 +572,27 @@
         "dy": 53
       },
       "angle": 120
+    },
+    {
+      "name": "ganchoAscendente-wind",
+      "hand": {
+        "dx": 0,
+        "dy": 49
+      }
+    },
+    {
+      "name": "ganchoAscendente-hit",
+      "hand": {
+        "dx": 16,
+        "dy": 127
+      }
+    },
+    {
+      "name": "ganchoAscendente-hit-2",
+      "hand": {
+        "dx": 16,
+        "dy": 151
+      }
     }
   ]
 }

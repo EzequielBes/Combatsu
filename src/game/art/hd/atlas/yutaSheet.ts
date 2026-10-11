@@ -181,7 +181,7 @@ const phaseCache = new Map<string, string[]>();
  * Quadros de uma fase do golpe, na ordem em que tocam: `<golpe>-<parte>` e, se a folha tiver, `<golpe>-<parte>-2`,
  * `-3`... Vazio se a folha não tem nem o primeiro.
  */
-function phaseFrames(moveName: string, part: 'wind' | 'hit' | 'recover'): string[] {
+export function yutaPhaseFrames(moveName: string, part: 'wind' | 'hit' | 'recover'): readonly string[] {
   const key = `${moveName}-${part}`;
   let frames = phaseCache.get(key);
   if (!frames) {
@@ -199,10 +199,10 @@ function phaseFrames(moveName: string, part: 'wind' | 'hit' | 'recover'): string
  * e `ms` (o tempo já passado na fase) escolhe qual; sem os tempos, sai o primeiro.
  */
 export function yutaMoveFrame(moveName: string, phase: AttackPhase, ms = 0, phaseMs = 0): string | undefined {
-  const wind = phaseFrames(moveName, 'wind');
-  const hit = phaseFrames(moveName, 'hit');
+  const wind = yutaPhaseFrames(moveName, 'wind');
+  const hit = yutaPhaseFrames(moveName, 'hit');
   if (wind.length === 0 || hit.length === 0) return undefined;
-  const recover = phaseFrames(moveName, 'recover');
+  const recover = yutaPhaseFrames(moveName, 'recover');
   const frames =
     phase === 'startup' ? wind : phase === 'active' ? hit : recover.length > 0 ? recover : [...wind].reverse();
   // Na janela de encadeamento, depois da volta, o corpo fica no último quadro dela.

@@ -6,12 +6,20 @@ import { impactTier, type ImpactTier } from '../../core/impactTier';
 import { CAMERA_FEEL } from '../../data/feel';
 import { strikeToWorld } from '../../core/strikePath';
 import { STRIKE_POINTS } from '../../game/art/sprites/strikePoints';
-import { HD_ON } from '../../game/art/hd/flag';
+import { yutaAnchors, yutaPhaseFrames } from '../../game/art/hd/atlas/yutaSheet';
+import { HD_ON, YUTA_ON } from '../../game/art/hd/flag';
 import { hdStrike } from '../../game/art/hd/sheet';
 import { currentSearch, rigStrike } from '../../game/art/rig/flag';
 import { PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_ORIGIN } from '../../game/art/sprites/player';
 import { SIZE } from '../../game/textures';
 import type { TestScene } from '../TestScene';
+
+/** Quanto o rastro que segue a mão desenhada se curva para a frente do corpo, em px de mundo, no meio do caminho. */
+const HAND_TRAIL_BOW = 9;
+/** Pontos que amostram esse rastro. */
+const HAND_TRAIL_SAMPLES = 8;
+/** Subida (px de mundo) a partir da qual o golpe levanta poeira nos pés: o corpo sai do chão junto com o punho. */
+const RISING_TRAIL_PX = 30;
 
 /** Efeitos do golpe do jogador: impacto amaldiçoado, reação da câmera, rastro, chama e rachadura. */
 export class ImpactFx {
@@ -100,12 +108,49 @@ export class ImpactFx {
       this.s.cursedFx.flameStart(wind);
     } else if (phase === 'active') {
       this.stopFlame();
+      const drawn = this.handTrail(name);
+      if (drawn) {
+        this.s.cursedFx.trail(drawn, strength);
+        const feet = this.s.player.renderPos;
+        if (drawn[0].y - drawn[drawn.length - 1].y >= RISING_TRAIL_PX)
+          this.s.fx.dust(feet.x, feet.y + SIZE.player.h / 2);
+        return;
+      }
       const from = this.strikeWorld(`${name}-wind`);
       const to = this.strikeWorld(`${name}-hit`);
       if (from && to) this.s.cursedFx.trail([from, to], strength);
     } else {
       this.stopFlame();
     }
+  }
+
+  /**
+   * Caminho do rastro pela mão marcada nos quadros da folha do protagonista novo: da antecipação por cada quadro do
+   * impacto, em arco aberto para a frente do corpo. `null` se a folha não marca a mão em todos eles (o rastro sai
+   * então dos pontos de golpe de sempre).
+   */
+  handTrail(name: string): Vec2[] | null {
+    if (!YUTA_ON) return null;
+    const frames = [...yutaPhaseFrames(name, 'wind').slice(0, 1), ...yutaPhaseFrames(name, 'hit')];
+    const hands = frames.map((f) => yutaAnchors(f)?.near);
+    if (hands.length < 2 || hands.some((h) => h === undefined)) return null;
+    const drawn = this.s.player.renderPos;
+    const facing = this.s.player.facing;
+    const footY = drawn.y + SIZE.player.h / 2;
+    const at = hands.map((h) => ({ x: drawn.x + facing * h!.x, y: footY + h!.y }));
+    const path: Vec2[] = [];
+    for (let i = 0; i <= HAND_TRAIL_SAMPLES; i++) {
+      const t = i / HAND_TRAIL_SAMPLES;
+      // Interpola pelos pontos marcados e soma o arco, que é nulo nas duas pontas.
+      const seg = Math.min(at.length - 2, Math.floor(t * (at.length - 1)));
+      const u = t * (at.length - 1) - seg;
+      const bow = facing * HAND_TRAIL_BOW * Math.sin(Math.PI * t);
+      path.push({
+        x: at[seg].x + (at[seg + 1].x - at[seg].x) * u + bow,
+        y: at[seg].y + (at[seg + 1].y - at[seg].y) * u,
+      });
+    }
+    return path;
   }
 
   stopFlame(): void {

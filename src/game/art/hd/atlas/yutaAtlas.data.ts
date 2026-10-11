@@ -347,5 +347,8 @@ export const YUTA_ATLAS_DATA = {
     'heavy-swing-2-wind': [28, 114, -10],
     'heavy-swing-2-hit': [66, 61, 100],
     'heavy-swing-2-recover': [49, 53, 120],
+    'ganchoAscendente-wind': [0, 49],
+    'ganchoAscendente-hit': [16, 127],
+    'ganchoAscendente-hit-2': [16, 151],
   },
 } as const;
