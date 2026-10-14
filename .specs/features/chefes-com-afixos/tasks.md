@@ -130,9 +130,9 @@ privado `dispatch(events)`; comportamento idêntico.
 
 **Done when**:
 
-- [ ] `Boss.ts` com menos linhas efetivas do que as 276 de hoje
-- [ ] `npm run smoke -- boss` verde (igual a antes)
-- [ ] Gate verde, contagem de testes igual
+- [x] `Boss.ts` com menos linhas efetivas do que as 276 de hoje
+- [x] `npm run smoke -- boss` verde (igual a antes)
+- [x] Gate verde, contagem de testes igual
 
 **Tests**: smoke
 **Gate**: full

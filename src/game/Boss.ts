@@ -163,11 +163,7 @@ export class Boss implements Hittable {
   receiveHit(hit: Hit): boolean {
     const state = this.brain.state;
     if (state === 'intro' || state === 'roar' || state === 'dead') return false;
-    const events = this.brain.receiveHit(hit);
-    for (const ev of events) {
-      if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
-      else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
-    }
+    this.dispatch(this.brain.receiveHit(hit));
     return true;
   }
 
@@ -182,12 +178,7 @@ export class Boss implements Hittable {
    * Fora do `stagger`, ou depois do primeiro uso, devolve `[]`.
    */
   receiveFinisher(): BossEvent[] {
-    const events = this.brain.receiveFinisher();
-    for (const ev of events) {
-      if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
-      else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
-    }
-    return events;
+    return this.dispatch(this.brain.receiveFinisher());
   }
 
   /** Golpe do chefe aparado pelo jogador (PAR-07): a postura cai 30, nunca abaixo de 0, sem tirar vida. */
@@ -201,7 +192,11 @@ export class Boss implements Hittable {
    * já decide se o Kokusen pode acontecer neste estado (BOSS-08, BAI-12: nenhum Kokusen na intro/rugido).
    */
   receiveKokusen(damage: number, poiseDamage: number): BossEvent[] {
-    const events = this.brain.receiveKokusen(damage, poiseDamage);
+    return this.dispatch(this.brain.receiveKokusen(damage, poiseDamage));
+  }
+
+  /** Repassa os eventos do cérebro: o rugido empurra o player para longe do chefe; a morte avisa a cena. */
+  private dispatch(events: BossEvent[]): BossEvent[] {
     for (const ev of events) {
       if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
