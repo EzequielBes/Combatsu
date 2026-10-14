@@ -93,9 +93,14 @@ const withLegacyRoom = (url) => {
 // O jogo abre em HD; os cenários antigos medem o corpo e a tela da versão anterior, então toda URL sem `hd=` ganha
 // `hd=0`. Cenário novo pede `hd=1` de forma explícita.
 const withLegacyBody = (url) => (/[?&]hd=/.test(url) ? url : url + (url.includes('?') ? '&' : '?') + 'hd=0');
+// REC-07: todos os cenários rodam no mesmo navegador e o `localStorage` passa de um para o outro; sem isto, uma morte
+// num smoke viraria recorde em outro. Toda URL sem `nosave=` nem `record=` ganha `nosave=1`; quem testa o save pede
+// `nosave=0` de forma explícita.
+const withNoSave = (url) =>
+  /[?&](nosave|record)=/.test(url) ? url : url + (url.includes('?') ? '&' : '?') + 'nosave=1';
 const wrapGoto = (page) => {
   const goto = page.goto.bind(page);
-  page.goto = (url, options) => goto(withLegacyBody(withLegacyRoom(url)), options);
+  page.goto = (url, options) => goto(withNoSave(withLegacyBody(withLegacyRoom(url))), options);
   return page;
 };
 

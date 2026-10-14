@@ -131,9 +131,9 @@ do Divergente (base de DMG-07).
 
 **Done when**:
 
-- [ ] `withNoSave` aplicado junto dos outros embrulhos, com comentário em português
-- [ ] Smokes `hud`, `drops`, `run-loop` verdes, iguais ao antes
-- [ ] Gate verde
+- [x] `withNoSave` aplicado junto dos outros embrulhos, com comentário em português
+- [x] Smokes `hud`, `drops`, `run-loop` verdes, iguais ao antes
+- [x] Gate verde
 
 **Tests**: none (ferramenta: a matriz diz none; os smokes existentes iguais são a prova)
 **Gate**: build
