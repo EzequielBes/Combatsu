@@ -109,10 +109,10 @@ do Divergente (base de DMG-07).
 
 **Done when**:
 
-- [ ] `TechRunner.ts` passa de 92 para no máximo 95 linhas efetivas; `tech/*.ts` e `TestScene.ts` intocados
-- [ ] Mesma contagem de testes da base (2913)
-- [ ] Smokes `tech`, `kokusen`, `red-anime` verdes, iguais ao antes
-- [ ] Gate verde
+- [x] `TechRunner.ts` passa de 92 para no máximo 95 linhas efetivas; `tech/*.ts` e `TestScene.ts` intocados
+- [x] Mesma contagem de testes da base (2913)
+- [x] Smokes `tech`, `kokusen`, `red-anime` verdes, iguais ao antes
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full

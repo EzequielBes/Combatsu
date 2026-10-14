@@ -5,6 +5,7 @@ import type { FxRegistry } from '../core/fxRegistry';
 import type { FxTimeline } from '../core/fxTimeline';
 import type { Hit, Vec2 } from '../core/hit';
 import type { Loadout } from '../core/loadout';
+import type { TechId } from '../data/techniques';
 import type { Hittable } from './bodyTags';
 import { Boss } from './Boss';
 import type { Player } from './Player';
@@ -46,8 +47,11 @@ export class TechRunner {
     uiLayer: Phaser.GameObjects.Layer,
     /** BAT-06/terreno: mesma lista do `Player`, para achar a distância até a parede à frente (BLU-02). */
     terrain: MatterJS.BodyType[],
-    /** Golpe de técnica que conectou: faísca + hitstop, sem o +3 de CE-06 (CE-08 - a cena decide isso). */
-    onTechHit: (hit: Hit, point: Vec2) => void,
+    /**
+     * Golpe de técnica que conectou: faísca + hitstop, sem o +3 de CE-06 (CE-08 - a cena decide isso). `source` diz
+     * qual técnica acertou (o Kokusen conta como Punho Divergente).
+     */
+    onTechHit: (hit: Hit, point: Vec2, source: TechId) => void,
     /** KOK-13: hitstop de 220 ms do Kokusen (FX-02 já garante que o maior pendente vence). */
     triggerHitstop: (ms: number) => void,
     /** T24: cinema do Kokusen (negativo/duotom/raios/faíscas/zoom/cartão), chamado uma vez por acerto. */
@@ -57,23 +61,24 @@ export class TechRunner {
     /** Sorteio de 0 a 1 para o tempo e a janela do Kokusen de cada Punho Divergente. */
     roll: () => number,
   ) {
-    const ctx: TechContext = {
+    // Um contexto por técnica: cada um carimba a própria origem nos acertos (`tech/*.ts` nem sabem disso).
+    const ctxFor = (source: TechId): TechContext => ({
       scene,
       player,
       loadout,
       currentCast: () => this.currentCast,
-      onTechHit,
+      onTechHit: (hit, point) => onTechHit(hit, point, source),
       masteryHit: (cast, target) => {
         if (cast) onMasteryHit(cast.slot, cast.id, target.id, target instanceof Boss);
       },
       emit: (event) => this.frameEvents.push(event),
       roll,
-    };
-    this.divergent = new DivergentTech(ctx, energy, fx, registry, triggerHitstop, onKokusen);
-    this.red = new RedTech(ctx, fx, registry, uiLayer);
-    this.blue = new BlueTech(ctx, fx, registry, terrain);
-    this.cut = new CutTech(ctx, fx, registry);
-    this.purple = new PurpleTech(ctx, fx, registry);
+    });
+    this.divergent = new DivergentTech(ctxFor('divergente'), energy, fx, registry, triggerHitstop, onKokusen);
+    this.red = new RedTech(ctxFor('vermelho'), fx, registry, uiLayer);
+    this.blue = new BlueTech(ctxFor('azul'), fx, registry, terrain);
+    this.cut = new CutTech(ctxFor('corte'), fx, registry);
+    this.purple = new PurpleTech(ctxFor('roxo'), fx, registry);
   }
 
   /** Eventos deste frame (`divergent2`, `kokusen`, `kokusenMiss`, `redDetonate`). */
