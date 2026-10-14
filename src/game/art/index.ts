@@ -11,6 +11,7 @@ import { burstSheet } from './hd/atlas/burstSheet';
 import { sleeperSheet } from './hd/atlas/sleeperSheet';
 import { playerYutaAnimKey, yutaAnims, yutaSheet } from './hd/atlas/yutaSheet';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
+import { techIconSheet } from './hd/techIcons';
 import { HD_WEAPONS } from './hd/weapons';
 import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites/enemy';
 import { FLAME_FRAMES } from './sprites/flame';
@@ -71,10 +72,7 @@ export function createArt(scene: Phaser.Scene): void {
     registerIndexedSheet(scene, TEX.playerYuta, yutaSheet());
     registerAnims(scene, TEX.playerYuta, yutaAnims(), playerYutaAnimKey);
   }
-  // O dorminhoco, NPC de cenário em quadros desenhados; os quadros são trocados pelo `SleeperNpc`, sem animação.
-  registerIndexedSheet(scene, TEX.sleeper, sleeperSheet());
-  // Estouro do Kokusen: os quadros são trocados pelo `KokusenBurst`, em tempo real.
-  registerIndexedSheet(scene, TEX.kokusenBurst, burstSheet());
+  registerHdSheets(scene);
   // Uma folha, as animações e as 3 partes do ragdoll por aparência (EVR-06), nas cores da folha (CHR-04).
   for (const v of ENEMY_VARIANTS) {
     const tex = enemyTex(v);
@@ -141,6 +139,18 @@ export function createArt(scene: Phaser.Scene): void {
     parseSheet('boss-projectile', { projectile: PROJECTILE_FRAME }, PALETTE_KEYS),
   );
   registerSheet(scene, TEX.bossShockwave, parseSheet('boss-shockwave', { shockwave: SHOCKWAVE_FRAME }, PALETTE_KEYS));
+}
+
+/** Folhas HD sem animação, ligadas sempre (não dependem de `?hd`): os quadros são trocados por quem as usa. */
+function registerHdSheets(scene: Phaser.Scene): void {
+  // O dorminhoco, NPC de cenário em quadros desenhados; os quadros são trocados pelo `SleeperNpc`, sem animação.
+  registerIndexedSheet(scene, TEX.sleeper, sleeperSheet());
+  // Estouro do Kokusen: os quadros são trocados pelo `KokusenBurst`, em tempo real.
+  registerIndexedSheet(scene, TEX.kokusenBurst, burstSheet());
+  // Ícones HD das técnicas e dos Domínios, nos dois tamanhos nativos (48 do slot, 24 da carta). Ainda sem uso: o
+  // HUD e a loja trocam o kanji por eles na F34.
+  registerIndexedSheet(scene, TEX.techIcons, techIconSheet(48));
+  registerIndexedSheet(scene, TEX.techIconsSmall, techIconSheet(24));
 }
 
 /**
