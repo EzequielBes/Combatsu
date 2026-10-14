@@ -96,7 +96,9 @@ no toque.
   - `const PROP_TRAITS: MeleeTraits` = `{heavy: true, light: false, counter: false, shadow: false}` (POW-11)
   - `statSheet(input: StatInput): StatSheet`, com `StatInput = { perks, arsenal, vows: VowEffects, baseMaxHp }`
   - `StatSheet = { meleeMul(t: MeleeTraits): number; relicTechMul; vowTechMul; costMul; damageTakenMul; maxHp; guardOff }`
-    - `meleeMul` = `strikeMultiplier(perks, t) × relicStrikeMul(arsenal, t.light) × vows.damageMul × vows.meleeMul × (t.heavy ? vows.heavyMul : 1)`
+    - `meleeMul` = `strikeMultiplier(perks, t) × relicStrikeMul(arsenal, t.light) × (vows.damageMul × vows.meleeMul × (t.heavy ? vows.heavyMul : 1))`;
+      os parênteses importam: a parte dos votos é calculada antes, como no `VowDirector.strikeMul` de hoje. Sem eles,
+      com todos os votos e a Fúria no teto, o último bit muda e o teste de equivalência quebra
     - `relicTechMul` → `loadout.damageMul`; `vowTechMul` = `vows.techDamageMul × vows.damageMul` → `loadout.vowDamageMul`
     - `maxHp` = `round(baseMaxHp × vows.maxHpMul)`
 - **Reuses**: `build.ts`, `arsenal.ts`, `vows.ts`. A ordem dos fatores é a de hoje (`TestScene.ts:516`), para o

@@ -117,13 +117,13 @@ T24 → T25 → T26
 
 **Done when**:
 
-- [ ] `tests/core/statSheet.test.ts`: grade de 9 votos (nenhum + 8) × 7 relíquias (nenhuma, 3 × Nv 1 e Nv 3) × 7
+- [x] `tests/core/statSheet.test.ts`: grade de 9 votos (nenhum + 8) × 7 relíquias (nenhuma, 3 × Nv 1 e Nv 3) × 7
       passivas (nenhuma + 6) × `jab`, `cotovelada` e o contra, com e sem Passo sombrio, comparada com `toBe` contra a
       fórmula literal de hoje (POW-01.3)
-- [ ] `relicTechMul`, `vowTechMul`, `costMul` e `damageTakenMul` iguais à composição de hoje; `maxHp` 115 sem voto e 69
+- [x] `relicTechMul`, `vowTechMul`, `costMul` e `damageTakenMul` iguais à composição de hoje; `maxHp` 115 sem voto e 69
       com "Corpo de vidro" (a conta do POW-01.5)
-- [ ] `PROP_TRAITS` = `{heavy: true, light: false, counter: false, shadow: false}`
-- [ ] Gate verde; contagem de testes = 2913 + os novos
+- [x] `PROP_TRAITS` = `{heavy: true, light: false, counter: false, shadow: false}`
+- [x] Gate verde; contagem de testes = 2913 + os novos (2930 em 147 arquivos: +17)
 
 **Tests**: unit
 **Gate**: quick
