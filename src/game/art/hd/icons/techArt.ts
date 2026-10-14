@@ -7,26 +7,21 @@
 import { bevelInk, sphereInk } from './canvas';
 import { fist } from './hands';
 import type { IconRecipe } from './plate';
-import { box, circle, poly, slash, spiral, stroke, union, type Sdf } from './sdf';
+import { box, circle, slash, spiral, stroke, union, type Sdf } from './sdf';
 
 const TAU = Math.PI * 2;
 
-/** Raio de `n` pontas em volta de (cx, cy), do raio `r0` ao `r1`, com meia largura `w` na base. */
+/**
+ * Raios do estouro em volta de (cx, cy): `n` traços afinados do raio `r0` ao `r1` (os ímpares mais curtos), com meia
+ * largura `w` na base. Traço solto, e não espinho de polígono: espinho grosso lê como mina, não como algo expulso.
+ */
 function rays(cx: number, cy: number, n: number, r0: number, r1: number, w: number, a0 = 0): Sdf {
   const parts: Sdf[] = [];
   for (let k = 0; k < n; k++) {
     const a = a0 + (k * TAU) / n;
-    const long = k % 2 === 0 ? 1 : 0.72;
-    const ux = Math.cos(a);
-    const uy = Math.sin(a);
-    const tip = r0 + (r1 - r0) * long;
-    parts.push(
-      poly([
-        [cx + ux * r0 - uy * w, cy + uy * r0 + ux * w],
-        [cx + ux * tip, cy + uy * tip],
-        [cx + ux * r0 + uy * w, cy + uy * r0 - ux * w],
-      ]),
-    );
+    const tip = r0 + (r1 - r0) * (k % 2 === 0 ? 1 : 0.7);
+    const [ux, uy] = [Math.cos(a), Math.sin(a)];
+    parts.push(stroke(cx + ux * r0, cy + uy * r0, cx + ux * tip, cy + uy * tip, w, 0.004));
   }
   return union(...parts);
 }
@@ -40,7 +35,7 @@ export const VERMELHO: IconRecipe = {
   },
   draw: (c) => {
     const small = c.size < 32;
-    c.fill(rays(0.5, 0.5, 8, 0.2, small ? 0.47 : 0.45, small ? 0.07 : 0.06, -Math.PI / 8), 'R', { line: 't' });
+    c.fill(rays(0.5, 0.5, 8, 0.2, small ? 0.47 : 0.46, small ? 0.06 : 0.045, -Math.PI / 8), 'R', { line: 't' });
     c.fill(circle(0.5, 0.5, 0.215), sphereInk(0.5, 0.5, 0.215, ['t', 'R', 'R', 'T', 'W']));
   },
 };
@@ -113,13 +108,13 @@ export const DIVERGENTE: IconRecipe = {
 export const CORTE: IconRecipe = {
   plate: {
     halo: [
-      [0.22, 'v'],
-      [0.4, 'r'],
+      [0.3, 'r'],
+      [0.42, 'v'],
     ],
   },
   draw: (c) => {
     const small = c.size < 32;
-    const w = small ? 0.06 : 0.045;
+    const w = small ? 0.05 : 0.04;
     const cuts = [-0.18, 0, 0.18].map((o) => slash(0.84 + o, 0.12 + o, 0.16 + o, 0.88 + o, w, 0.05));
     c.fill(union(...cuts), 'W', { line: small ? undefined : 'R' });
   },

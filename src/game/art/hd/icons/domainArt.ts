@@ -64,9 +64,10 @@ function seven(cx: number, cy: number, h: number, w: number): Sdf {
 export const JACKPOT: IconRecipe = {
   plate: {
     halo: [
-      [0.22, 'g'],
-      [0.46, 'g'],
+      [0.24, 'g'],
+      [0.46, 'n'],
     ],
+    at: [0.5, 0.56],
     domain: true,
   },
   draw: (c) => {

@@ -12,10 +12,17 @@ import { box, circle, rotate, stroke, union, type Sdf } from './sdf';
 export function fist(c: IconCanvas, cx: number, cy: number, s: number, skin: readonly string[]): void {
   const [line, lo, base, hi] = skin;
   const p = c.px;
-  const hand = union(box(cx, cy, s * 0.5, s * 0.42, s * 0.18), circle(cx - s * 0.48, cy + s * 0.08, s * 0.14));
-  c.fill(hand, bevelInk(hand, p, base, hi, lo), { line });
   const fw = s / 4;
-  if (c.size < 32) {
+  const small = c.size < 32;
+  // No pequeno, os nós dos dedos saem na silhueta (quatro calombos em cima): o risco interno sozinho lia como pão.
+  const knuckles = [0, 1, 2, 3].map((k) => circle(cx - s * 0.5 + fw * (k + 0.5), cy - s * 0.36, fw * 0.55));
+  const hand = union(
+    box(cx, cy, s * 0.5, s * 0.42, s * 0.18),
+    circle(cx - s * 0.48, cy + s * 0.08, s * 0.14),
+    ...(small ? knuckles : []),
+  );
+  c.fill(hand, bevelInk(hand, p, base, hi, lo), { line });
+  if (small) {
     for (let k = 1; k < 4; k++) c.fill(box(cx - s * 0.5 + fw * k, cy - s * 0.26, p * 0.5, s * 0.14), line);
   } else {
     for (let k = 0; k < 4; k++) {

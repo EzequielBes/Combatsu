@@ -11,14 +11,14 @@ import { arc, box, circle, ellipse, minus, rotate, star, stroke } from './sdf';
 export const BOOGIE: IconRecipe = {
   plate: {
     halo: [
-      [0.22, 'z'],
-      [0.44, 'a'],
+      [0.3, 'a'],
+      [0.44, 'z'],
     ],
-    at: [0.5, 0.42],
+    at: [0.5, 0.36],
   },
   draw: (c) => {
     const small = c.size < 32;
-    c.fill(star(0.5, 0.42, 4, 0.5, small ? 0.14 : 0.11, -Math.PI / 4), 'A', { line: small ? undefined : 'a' });
+    c.fill(star(0.5, 0.42, 4, 0.5, small ? 0.14 : 0.11, -Math.PI / 4), 'A', { line: small ? undefined : 'z' });
     c.fill(star(0.5, 0.42, 4, 0.3, 0.07, -Math.PI / 2), 'w');
     palm(c, 0.54, 0.66, 0.42, ['q', 'P', 'p', 'w']);
   },
@@ -28,33 +28,43 @@ export const BOOGIE: IconRecipe = {
 function nail(c: Parameters<IconRecipe['draw']>[0], hx: number, hy: number, tx: number, ty: number): void {
   const ang = Math.atan2(ty - hy, tx - hx);
   const small = c.size < 32;
-  const shaft = stroke(hx, hy, tx, ty, small ? 0.065 : 0.07, 0.01);
-  c.fill(shaft, bevelInk(shaft, c.px, 'S', 'W', 's', small ? 1 : 1.5), { line: small ? undefined : 'k' });
-  const head = rotate(box(hx, hy, small ? 0.06 : 0.055, small ? 0.19 : 0.17, 0.02), hx, hy, ang);
-  const steel = small ? bevelInk(head, c.px, 's', 'S', 'n', 1) : bevelInk(head, c.px, 'I', 'W', 'S');
-  c.fill(head, steel, { line: small ? undefined : 'k' });
+  const shaft = stroke(hx, hy, tx, ty, small ? 0.07 : 0.06, 0.008);
+  c.fill(shaft, bevelInk(shaft, c.px, 'I', 'W', 'S', 1), { line: small ? undefined : 'n' });
+  const head = rotate(box(hx, hy, small ? 0.05 : 0.045, small ? 0.16 : 0.15, 0.015), hx, hy, ang);
+  c.fill(head, bevelInk(head, c.px, 'S', 'W', 's', 1), { line: small ? undefined : 'n' });
+}
+
+/** Martelo inclinado com a cabeça centrada em (cx, cy), a face batendo embaixo à esquerda e o cabo de madeira. */
+function hammer(c: Parameters<IconRecipe['draw']>[0], cx: number, cy: number): void {
+  const small = c.size < 32;
+  const tilt = -0.45;
+  const [nx, ny] = [-Math.sin(tilt), Math.cos(tilt)];
+  const handle = stroke(cx, cy, cx + nx * 0.58, cy + ny * 0.58, small ? 0.06 : 0.05, small ? 0.06 : 0.045);
+  c.fill(handle, bevelInk(handle, c.px, 'M', 'A', 'm', 1), { line: small ? undefined : 'm' });
+  const head = rotate(box(cx, cy, 0.22, small ? 0.1 : 0.09, 0.02), cx, cy, tilt);
+  c.fill(head, bevelInk(head, c.px, 's', 'S', 'n', small ? 1 : 1.5), { line: small ? undefined : 'k' });
+  // A face que bate, mais clara: o lado do martelo que encosta no prego.
+  const face = rotate(box(cx - 0.19, cy, 0.03, small ? 0.1 : 0.09, 0.01), cx, cy, tilt);
+  c.fill(face, small ? 'S' : 'I', { line: small ? undefined : 'k' });
 }
 
 export const RESSONANCIA: IconRecipe = {
   plate: {
     halo: [
       [0.24, 'd'],
-      [0.44, 'n'],
+      [0.42, 'n'],
     ],
-    at: [0.42, 0.3],
+    at: [0.345, 0.43],
   },
   draw: (c) => {
     const small = c.size < 32;
-    const [hx, hy] = [0.42, 0.3];
-    if (small) c.fill(star(hx, hy, 4, 0.34, 0.09, -Math.PI / 4), 'C');
-    else c.fill(star(hx, hy, 8, 0.27, 0.11, -Math.PI / 8), 'C', { line: 'c' });
-    c.fill(star(hx, hy, 4, small ? 0.24 : 0.15, small ? 0.07 : 0.05), 'W');
-    nail(c, hx, hy + 0.02, 0.6, 0.9);
-    if (small) return;
-    const handle = stroke(0.95, 0.46, 0.75, 0.2, 0.04);
-    c.fill(handle, bevelInk(handle, c.px, 'M', 'A', 'm'), { line: 'm' });
-    const head = rotate(box(0.7, 0.16, 0.15, 0.075, 0.015), 0.7, 0.16, Math.PI / 4 - 0.15);
-    c.fill(head, bevelInk(head, c.px, 's', 'S', 'n'), { line: 'k' });
+    // A batida entre a face do martelo e a cabeça do prego: é o instante que ecoa no alvo.
+    c.fill(star(0.345, 0.43, small ? 4 : 8, small ? 0.18 : 0.16, small ? 0.06 : 0.07, -Math.PI / 4), 'C', {
+      line: small ? undefined : 'c',
+    });
+    hammer(c, 0.53, 0.27);
+    nail(c, 0.33, 0.52, 0.24, 0.9);
+    if (!small) c.fill(star(0.345, 0.43, 4, 0.09, 0.03), 'W');
   },
 };
 
