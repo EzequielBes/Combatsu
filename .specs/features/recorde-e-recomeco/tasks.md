@@ -181,11 +181,11 @@ current)` devolvendo `LoadResult` (`ok`/`empty`/`invalid`/`newer`), `validateRec
 
 **Done when**:
 
-- [ ] REC-02 nos dois lados de cada empate (L-010): rodada igual com abates +1/igual/-1; rodada +1/-1; sem recorde sempre melhor
-- [ ] REC-03: empate exato e pior → `write: false`, recorde antigo fica; `canRecord: false` não troca nada
-- [ ] Marcador por estado: escondido sem recorde, em `title` e `gameOver`; visível em `roundActive`, `intermission`, `traverse`, `shop`; `round > best.round` mostra a rodada atual com `highlight`
-- [ ] Banner: `Rodada N · Novo recorde!` só em `best.round + 1`, uma vez por run, de novo depois de `startRun`; sem recorde nunca comemora
-- [ ] Gate verde; contagem = anterior + novos
+- [x] REC-02 nos dois lados de cada empate (L-010): rodada igual com abates +1/igual/-1; rodada +1/-1; sem recorde sempre melhor
+- [x] REC-03: empate exato e pior → `write: false`, recorde antigo fica; `canRecord: false` não troca nada
+- [x] Marcador por estado: escondido sem recorde, em `title` e `gameOver`; visível em `roundActive`, `intermission`, `traverse`, `shop`; `round > best.round` mostra a rodada atual com `highlight`
+- [x] Banner: `Rodada N · Novo recorde!` só em `best.round + 1`, uma vez por run, de novo depois de `startRun`; sem recorde nunca comemora
+- [x] Gate verde; contagem = anterior + novos
 
 **Tests**: unit
 **Gate**: quick
