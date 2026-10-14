@@ -25,7 +25,10 @@ export default async function ({ page, baseUrl, assert }) {
   /** Um único frame (`step(16)`; `step(16.7)` viraria dois). */
   const frame = () => snap(16);
   const boot = async (query) => {
-    await page.goto(`${baseUrl}?debug&seed=1&round=5&enemyGuard=0${query ? `&${query}` : ''}`, { waitUntil: 'load' });
+    await page.goto(
+      `${baseUrl}?debug&seed=1&round=5&enemyGuard=0&bossArch=oni&bossAffix=none&finger=0${query ? `&${query}` : ''}`,
+      { waitUntil: 'load' },
+    );
     await ready();
     await snap(20);
     await page.keyboard.press('KeyJ', { delay: 50 });

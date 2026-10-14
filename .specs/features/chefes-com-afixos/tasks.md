@@ -109,9 +109,9 @@ prontos para quando o sorteio entrar (T12).
 
 **Done when**:
 
-- [ ] As 8 URLs listadas levam os 3 parâmetros; nenhuma asserção muda
-- [ ] `npm run smoke -- boss` e `npm run smoke -- world-boss` verdes (iguais a antes)
-- [ ] Gate verde
+- [x] As 8 URLs listadas levam os 3 parâmetros; nenhuma asserção muda
+- [x] `npm run smoke -- boss` e `npm run smoke -- world-boss` verdes (iguais a antes)
+- [x] Gate verde
 
 **Tests**: none
 **Gate**: build
