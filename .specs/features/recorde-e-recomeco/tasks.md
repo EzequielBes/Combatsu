@@ -156,12 +156,12 @@ current)` devolvendo `LoadResult` (`ok`/`empty`/`invalid`/`newer`), `validateRec
 
 **Done when**:
 
-- [ ] Ida e volta `serializeSave` → `parseSave`; `null`, string vazia e JSON inválido → `empty`/`invalid`
-- [ ] Cada campo nos dois lados: `round` 0 e 1, `kills` -1 e 0, `level` 0 e 1, não inteiro (1.5), tipo errado, `version` não inteira
-- [ ] Migração injetada `{1: ..., 2: ...}` com `current = 3` aplicada em ordem (o teste prova a ordem); passo faltando → `invalid`; `version` maior → `newer`
-- [ ] Id desconhecido continua válido (caso de borda)
-- [ ] SAVE-01: lê `src/core/save.ts?raw` e garante sem `phaser` e sem `localStorage`
-- [ ] Gate verde; contagem = base + novos
+- [x] Ida e volta `serializeSave` → `parseSave`; `null`, string vazia e JSON inválido → `empty`/`invalid`
+- [x] Cada campo nos dois lados: `round` 0 e 1, `kills` -1 e 0, `level` 0 e 1, não inteiro (1.5), tipo errado, `version` não inteira
+- [x] Migração injetada `{1: ..., 2: ...}` com `current = 3` aplicada em ordem (o teste prova a ordem); passo faltando → `invalid`; `version` maior → `newer`
+- [x] Id desconhecido continua válido (caso de borda)
+- [x] SAVE-01: lê `src/core/save.ts?raw` e garante sem `phaser` e sem `localStorage`
+- [x] Gate verde; contagem = base + novos (2913 + 24 = 2937)
 
 **Tests**: unit
 **Gate**: quick
