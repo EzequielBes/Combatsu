@@ -205,10 +205,10 @@ current)` devolvendo `LoadResult` (`ok`/`empty`/`invalid`/`newer`), `validateRec
 
 **Done when**:
 
-- [ ] `rows` filtra dano 0, ordena do maior ao menor, desempate pela ordem de `DAMAGE_SOURCES`
-- [ ] Arredondamento: dano inteiro; soma das porcentagens 100 ± 1 com três fontes de frações difíceis
-- [ ] `reset` zera todas as fontes (DMG-06); rótulos `Golpe`, `Objeto` e nome da técnica
-- [ ] Gate verde; contagem = anterior + novos
+- [x] `rows` filtra dano 0, ordena do maior ao menor, desempate pela ordem de `DAMAGE_SOURCES`
+- [x] Arredondamento: dano inteiro; soma das porcentagens 100 ± 1 com três fontes de frações difíceis
+- [x] `reset` zera todas as fontes (DMG-06); rótulos `Golpe`, `Objeto` e nome da técnica
+- [x] Gate verde; contagem = anterior + novos (2957 + 9 = 2966)
 
 **Tests**: unit
 **Gate**: quick
