@@ -87,3 +87,29 @@ export const DAMAGE_NUMBER_FEEL = {
   midFrom: 15,
   bigFrom: 40,
 } as const;
+
+/**
+ * Força (POW-07 a POW-10): pontos com teto de 10 para a escala contínua e patamares em 2, 5 e 8 pontos. Por ponto
+ * (p): impacto +0,05, tranco de câmera +0,3 px sobre o `CAMERA_FEEL.kickPx`, `force` e deslize +0,03, rastro +1 px a
+ * cada 2 pontos. Por patamar (0 a 3): bônus de hitstop sobre o `HITSTOP_MS`, tom do impacto forte em chaves da
+ * `PALETTE` (sombra, corpo, miolo, corpo e miolo alternados) e o `power` da chama da aura. O tremor entra no patamar
+ * `shakeFromTier`. O `handOffset` da aura nasce medido na prancha (T20).
+ */
+export const POWER_FEEL = {
+  capPoints: 10,
+  tierFrom: [2, 5, 8],
+  scalePerPoint: 0.05,
+  kickPxPerPoint: 0.3,
+  forcePerPoint: 0.03,
+  slidePerPoint: 0.03,
+  trailEveryPoints: 2,
+  hitstopBonusMs: { light: [0, 0, 5, 10], heavy: [0, 10, 20, 30] },
+  shakeFromTier: 2,
+  tones: [
+    { shadow: 'd', body: 'c', core: 'C', altBody: 'u', altCore: 'U' },
+    { shadow: 'd', body: 'C', core: 'w', altBody: 'c', altCore: 'W' },
+    { shadow: 'r', body: 'R', core: 'w', altBody: 't', altCore: 'T' },
+    { shadow: 'R', body: 'b', core: 'R', altBody: 'r', altCore: 'W' },
+  ],
+  auraPower: { embers: 0.3, flame: 0.6 },
+} as const;

@@ -436,13 +436,13 @@ deslize, rastro, bônus de hitstop, tremor, tom por chaves, aura) e `atRest`; `P
 
 **Done when**:
 
-- [ ] `tests/core/power.test.ts`: pontos = Força + 2 × Manoplas + 2 com Punho Pesado; patamar em 1/2, 4/5 e 7/8
+- [x] `tests/core/power.test.ts`: pontos = Força + 2 × Manoplas + 2 com Punho Pesado; patamar em 1/2, 4/5 e 7/8
       pontos; 13 pontos reportam 13 e usam `p = 10` (edge case); em p 0, 1 e 10: escala 1,0/1,05/1,5, tranco
       4/4,3/7 px, força e deslize 1/1,03/1,3, rastro +0/+0/+5; hitstop forte +0/+10/+20/+30 e leve +0/+0/+5/+10 por
       patamar; tremor só do patamar 2; tom e aura por patamar; `atRest` falso em cada condição (andando, no ar,
       `castLock`, `channeling`, morto, quadro fora do `idle`)
-- [ ] `tests/data/powerFeel.test.ts`: toda chave de tom existe na `PALETTE`; `HITSTOP_MS` 50/90 e `kickPx` 4 (POW-08.10)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `tests/data/powerFeel.test.ts`: toda chave de tom existe na `PALETTE`; `HITSTOP_MS` 50/90 e `kickPx` 4 (POW-08.10)
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick

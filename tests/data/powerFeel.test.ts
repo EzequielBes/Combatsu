@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { colorsFor, DAMAGE_KIND_PRIORITY } from '../../src/core/damageNumber';
-import { DAMAGE_NUMBER_FEEL } from '../../src/data/feel';
+import { CAMERA_FEEL, DAMAGE_NUMBER_FEEL, POWER_FEEL } from '../../src/data/feel';
+import { HITSTOP_MS } from '../../src/data/fx';
 import { PALETTE } from '../../src/game/art/palette';
 
 describe('números de dano: dados (POW-05)', () => {
@@ -21,5 +22,25 @@ describe('números de dano: dados (POW-05)', () => {
     expect(DAMAGE_NUMBER_FEEL.cap).toBe(12);
     expect(DAMAGE_NUMBER_FEEL.popScale).toBe(1.6);
     expect(DAMAGE_NUMBER_FEEL.popMs).toBe(120);
+  });
+});
+
+describe('força: dados (POW-07 a POW-10)', () => {
+  it('toda chave de tom existe na PALETTE (POW-09)', () => {
+    expect(POWER_FEEL.tones).toHaveLength(4);
+    for (const tone of POWER_FEEL.tones) {
+      for (const key of Object.values(tone)) expect(PALETTE[key], key).toBeTypeOf('number');
+    }
+  });
+
+  it('a base não muda: HITSTOP_MS 50/90 e tranco padrão 4 px (POW-08.10)', () => {
+    expect(HITSTOP_MS).toEqual({ light: 50, heavy: 90 });
+    expect(CAMERA_FEEL.kickPx).toBe(4);
+  });
+
+  it('teto de 10 pontos, patamares em 2, 5 e 8 e aura 0,3/0,6', () => {
+    expect(POWER_FEEL.capPoints).toBe(10);
+    expect(POWER_FEEL.tierFrom).toEqual([2, 5, 8]);
+    expect(POWER_FEEL.auraPower).toEqual({ embers: 0.3, flame: 0.6 });
   });
 });
