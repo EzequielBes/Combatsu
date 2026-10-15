@@ -3,10 +3,14 @@ import type { PowerAura, PowerTier, ToneKeys } from '../core/power';
 
 /** Campos do snapshot de debug da fundação de poder (POW-13), fora do `debugApi.ts` para ele não crescer. */
 
-/** Números de dano: quantos estão vivos e o último tocado (valor já somado e tipo); `null` antes do primeiro. */
+/**
+ * Números de dano: quantos estão vivos, o último tocado (valor já somado e tipo; `null` antes do primeiro) e onde cada
+ * vivo está desenhado (base do texto em px de mundo, com a subida e o espalhamento).
+ */
 export interface DamageNumbersSnapshot {
   live: number;
   last: { value: number; kind: DamageKind } | null;
+  spots: { x: number; y: number }[];
 }
 
 /** Força do corpo (POW-07, POW-08): pontos, patamar e o que eles mudam; `aura` é o estado real da chama na mão. */

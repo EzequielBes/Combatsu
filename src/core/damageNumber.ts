@@ -3,7 +3,7 @@
  * ou abre um novo. Sem Phaser: a vista (`game/DamageNumbers.ts`) só desenha o que o livro devolve.
  */
 import { DAMAGE_NUMBER_FEEL } from '../data/feel';
-import type { HitBand } from './hit';
+import type { HitBand, Vec2 } from './hit';
 
 export type DamageKind = 'kokusen' | 'crit' | 'tech' | 'strike' | 'micro' | 'chip';
 
@@ -40,6 +40,58 @@ export function colorsFor(kind: DamageKind): DamageColors {
 /** Tipo do número de um golpe de técnica (POW-06.7): a faixa do acerto decide; sem faixa, `tech`. */
 export function techKind(band: HitBand | undefined): DamageKind {
   return band ?? 'tech';
+}
+
+/**
+ * Degraus do espalhamento, em caixas `spreadPx` (POW-05): no lugar, depois dos lados meio degrau acima, logo acima, e
+ * assim por diante. Vizinhos da lista nunca se cobrem: diferem uma caixa inteira na largura ou na altura.
+ */
+const SPREAD_STEPS: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [1, -0.5],
+  [-1, -0.5],
+  [0, -1],
+  [1, -1.5],
+  [-1, -1.5],
+  [0, -2],
+  [2, -1],
+  [-2, -1],
+];
+
+/** Folga de `p` até o vizinho mais perto em `taken`, em caixas: >= 1 numa das direções quer dizer que não cobre. */
+function gapTo(p: Vec2, taken: readonly Vec2[]): number {
+  const { w, h } = DAMAGE_NUMBER_FEEL.spreadPx;
+  let gap = Infinity;
+  for (const t of taken) gap = Math.min(gap, Math.max(Math.abs(p.x - t.x) / w, Math.abs(p.y - t.y) / h));
+  return gap;
+}
+
+/**
+ * Deslocamento que afasta um número que nasce em `at` dos números vivos em `taken` (POW-05): o primeiro degrau cuja
+ * caixa não cobre a de nenhum deles. Com todos ocupados, fica o degrau mais longe do vizinho mais perto. `slack` é a
+ * folga mínima, em caixas, para um degrau contar como livre: abaixo de 1 tolera uma sobra pequena (o número que já está
+ * no lugar não troca de degrau porque o alvo andou 2 px). Com `near`, entre os degraus livres fica o mais perto desse
+ * ponto: o número que troca de degrau anda o mínimo e não atravessa os outros.
+ */
+export function spreadOffset(at: Vec2, taken: readonly Vec2[], slack = 1, near?: Vec2): Vec2 {
+  const { w, h } = DAMAGE_NUMBER_FEEL.spreadPx;
+  let crowded: Vec2 = { x: 0, y: 0 };
+  let crowdedGap = -1;
+  let free: Vec2 | null = null;
+  let freeDist = Infinity;
+  for (const [sx, sy] of SPREAD_STEPS) {
+    const off = { x: sx * w, y: sy * h };
+    const p = { x: at.x + off.x, y: at.y + off.y };
+    const gap = gapTo(p, taken);
+    if (gap >= slack) {
+      if (!near) return off;
+      const dist = Math.hypot(p.x - near.x, p.y - near.y);
+      if (dist < freeDist) [free, freeDist] = [off, dist];
+    } else if (gap > crowdedGap) {
+      [crowded, crowdedGap] = [off, gap];
+    }
+  }
+  return free ?? crowded;
 }
 
 /** O tipo de maior prioridade entre os dois. */

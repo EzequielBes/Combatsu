@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { colorsFor, DamageBook, sizeFor, techKind, type DamageKind } from '../../src/core/damageNumber';
+import { colorsFor, DamageBook, sizeFor, spreadOffset, techKind, type DamageKind } from '../../src/core/damageNumber';
+import { DAMAGE_NUMBER_FEEL } from '../../src/data/feel';
 
 const SCALED: DamageKind[] = ['strike', 'tech', 'crit', 'kokusen'];
 
@@ -184,5 +185,62 @@ describe('DamageBook: promote, expire e clear', () => {
     expect(book.live).toBe(0);
     expect(book.last).toBeNull();
     expect(book.promote(1, 'kokusen')).toBeNull();
+  });
+});
+
+describe('spreadOffset (POW-05): números que nascem no mesmo ponto', () => {
+  const { w, h } = DAMAGE_NUMBER_FEEL.spreadPx;
+  /** Duas caixas se cobrem quando o centro de uma está a menos de uma caixa da outra nas duas direções. */
+  const overlaps = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    Math.abs(a.x - b.x) < w && Math.abs(a.y - b.y) < h;
+
+  it('sem vizinho, fica no lugar', () => {
+    expect(spreadOffset({ x: 100, y: 50 }, [])).toEqual({ x: 0, y: 0 });
+  });
+
+  it('vizinho longe não empurra', () => {
+    expect(spreadOffset({ x: 100, y: 50 }, [{ x: 100 + w, y: 50 }])).toEqual({ x: 0, y: 0 });
+  });
+
+  it('5 números no mesmo ponto (Azul): nenhum par se cobre', () => {
+    const at = { x: 220, y: 300 };
+    const placed: { x: number; y: number }[] = [];
+    for (let i = 0; i < 5; i++) {
+      const off = spreadOffset(at, placed);
+      placed.push({ x: at.x + off.x, y: at.y + off.y });
+    }
+    for (let i = 0; i < placed.length; i++)
+      for (let j = i + 1; j < placed.length; j++) expect(overlaps(placed[i], placed[j])).toBe(false);
+  });
+
+  it('9 degraus cheios: o décimo vai para o menos coberto, sem lançar', () => {
+    const at = { x: 0, y: 0 };
+    const placed: { x: number; y: number }[] = [];
+    for (let i = 0; i < 10; i++) {
+      const off = spreadOffset(at, placed);
+      placed.push({ x: at.x + off.x, y: at.y + off.y });
+    }
+    const distinct = new Set(placed.slice(0, 9).map((p) => `${p.x},${p.y}`));
+    expect(distinct.size).toBe(9);
+  });
+});
+
+describe('spreadOffset: folga de quem já está no lugar', () => {
+  const { w } = DAMAGE_NUMBER_FEEL.spreadPx;
+  it('vizinho a 0,9 caixa cobre na folga cheia e fica livre na folga de 0,7', () => {
+    const taken = [{ x: 0.9 * w, y: 0 }];
+    expect(spreadOffset({ x: 0, y: 0 }, taken)).not.toEqual({ x: 0, y: 0 });
+    expect(spreadOffset({ x: 0, y: 0 }, taken, 0.7)).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('spreadOffset: com `near`, o degrau livre mais perto', () => {
+  const { w, h } = DAMAGE_NUMBER_FEEL.spreadPx;
+  it('o número à direita que perdeu o lugar sobe em vez de atravessar para a esquerda', () => {
+    const at = { x: 0, y: 0 };
+    const taken = [at, { x: w, y: -0.5 * h }];
+    // Sem `near`, o primeiro livre é o da esquerda; perto de (w, -h/2), o livre mais perto é logo acima dele.
+    expect(spreadOffset(at, taken)).toEqual({ x: -w, y: -0.5 * h });
+    expect(spreadOffset(at, taken, 1, { x: w, y: -0.5 * h })).toEqual({ x: w, y: -1.5 * h });
   });
 });

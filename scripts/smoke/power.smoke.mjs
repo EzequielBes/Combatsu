@@ -12,6 +12,25 @@ const PLAYER_HIT_FRAMES = 8;
 /** Tentativas de Azul (recarga de 4000 ms entre elas) até ver um inimigo sair do `windup` para o `attack`. */
 const BLUE_TRIES = 4;
 
+/**
+ * Caixa de um número de dano (`DAMAGE_NUMBER_FEEL.spreadPx`, 28 x 16 px) vezes a folga de 0,7 que o número já no lugar
+ * tolera (`KEEP_SLACK` do `DamageNumbers`): dois números vivos mais perto que isso nas duas direções se cobrem.
+ */
+const NUMBER_BOX = { w: 28 * 0.7, h: 16 * 0.7 };
+/** Quadros seguidos (100 ms) que dois números podem passar um pelo outro ao trocar de degrau. */
+const NUMBER_CROSS_FRAMES = 6;
+
+/** O primeiro par de números de dano vivos que se cobrem no quadro, ou `null`. */
+function overlappingNumbers(spots) {
+  for (let i = 0; i < spots.length; i++)
+    for (let j = i + 1; j < spots.length; j++) {
+      const a = spots[i];
+      const b = spots[j];
+      if (Math.abs(a.x - b.x) < NUMBER_BOX.w && Math.abs(a.y - b.y) < NUMBER_BOX.h) return [a, b];
+    }
+  return null;
+}
+
 const living = (s) => s.enemies.filter((e) => e.hp > 0 && e.state !== 'deadRagdoll' && e.state !== 'dissolving');
 
 /**
@@ -31,12 +50,15 @@ async function castBlue(kit, start) {
     chipKinds: new Set(),
     implosionFrozen: null,
     implosionHit: false,
+    maxNumbers: 0,
+    overlap: null,
   };
   if (!out.cast) return { out, s };
   let eventsSeen = start.events.length;
   let lastPlayerHitFrame = -Infinity;
   let prevHp = s.player.hp;
   const inWindup = new Set();
+  let overlapRun = 0;
   let orbSeen = false;
   for (let f = 0; f < 200; f++) {
     const before = s;
@@ -45,6 +67,10 @@ async function castBlue(kit, start) {
     prevHp = s.player.hp;
     const fresh = s.events.slice(eventsSeen);
     eventsSeen = s.events.length;
+    out.maxNumbers = Math.max(out.maxNumbers, s.damageNumbers.live);
+    // Os números podem se cruzar por alguns quadros quando um troca de degrau; só a sobreposição que dura conta.
+    overlapRun = overlappingNumbers(s.damageNumbers.spots) ? overlapRun + 1 : 0;
+    if (overlapRun > NUMBER_CROSS_FRAMES) out.overlap ??= { f, spots: s.damageNumbers.spots };
     const orbAlive = s.techObjects.some((o) => o.kind === 'blue');
     const imploded = fresh.includes('blueImplode');
     if (imploded) {
@@ -95,6 +121,7 @@ async function blueTicksAsChip(ctx) {
   const chipKinds = new Set();
   let tickFrames = 0;
   let implosions = 0;
+  let maxNumbers = 0;
   for (let attempt = 0; attempt < BLUE_TRIES && windupToAttack.size === 0; attempt++) {
     for (let i = 0; i < 100 && (s.tech.cast !== null || s.tech.slots[0].cooldownMs > 0); i++) s = await kit.snap(100);
     const res = await castBlue(kit, s);
@@ -112,6 +139,9 @@ async function blueTicksAsChip(ctx) {
       o.hitstun.length === 0,
       `POW-04.11: inimigo em hitstun pelo tique: ${JSON.stringify(o.hitstun.slice(0, 5))}`,
     );
+    // POW-05: com os alvos empilhados no Azul, os números de cada um não dividem a mesma caixa.
+    assert(o.overlap === null, `POW-05: números de dano um em cima do outro: ${JSON.stringify(o.overlap)}`);
+    maxNumbers = Math.max(maxNumbers, o.maxNumbers);
     if (o.implosionHit) {
       assert(o.implosionFrozen === true, 'POW-04.10: a implosão acertou e deveria congelar a cena');
       implosions++;
@@ -128,6 +158,7 @@ async function blueTicksAsChip(ctx) {
     `POW-06.7: o tique do Azul deveria mostrar o número chip: ${JSON.stringify([...chipKinds])}`,
   );
   assert(tickFrames >= 3, `POW-04.11: poucos quadros de tique conferidos: ${tickFrames}`);
+  assert(maxNumbers >= 3, `POW-05: a conferência da sobreposição precisa de 3+ números vivos: ${maxNumbers}`);
   assert(implosions >= 1, 'POW-04.10: nenhuma implosão acertou um inimigo');
   assert(windupToAttack.size >= 1, `POW-04.11: nenhum inimigo foi de windup a attack em ${BLUE_TRIES} Azuis`);
 }

@@ -75,6 +75,9 @@ export const HIT_BAND_FEEL = {
  * Números de dano (POW-05): vida de 700 ms subindo 18 px; acertos no mesmo alvo a até 300 ms do último somado viram um
  * número só; no máximo 12 vivos; o Kokusen dá um "pop" de 1,6 a 1,0 em 120 ms. Tamanho do texto em px: `small` abaixo
  * de `midFrom` de dano, `mid` até `bigFrom` exclusive e `big` dali para cima (micro e chip ficam sempre em `small`).
+ * O número nasce `liftPx` acima do ponto de contato, fora do miolo do impacto, e persegue o ponto do acerto mais recente
+ * do alvo com meia-vida de `followMs`. Dois números vivos nunca dividem a caixa `spreadPx` (largura e altura do centro
+ * de um ao do outro): quem nasce em cima de outro vai para o lado ou para cima, em degraus dessa caixa.
  */
 export const DAMAGE_NUMBER_FEEL = {
   lifeMs: 700,
@@ -86,6 +89,9 @@ export const DAMAGE_NUMBER_FEEL = {
   sizePx: { small: 12, mid: 16, big: 20 },
   midFrom: 15,
   bigFrom: 40,
+  liftPx: 20,
+  followMs: 40,
+  spreadPx: { w: 28, h: 16 },
 } as const;
 
 /**
