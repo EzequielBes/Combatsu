@@ -43,6 +43,13 @@ dos merges e são reconferidas no começo de cada passo. Linhas efetivas contada
    de tela, um por quadro. No Punho Negro só o alvo principal dispara o cinema; os outros alvos ganham o número
    promovido a `kokusen` e o estouro de faíscas e onda do mesmo `KokusenFx` (PND-06 pede "o número e o flash").
 
+**Revisão adversarial (15/10).** Mudanças de requisito que este design acompanha: a loja mostra até 2 receitas, com
+rodízio pela rodada quando há 3 (OFR-01, OFR-02); a rajada da Ressonância Cortante vai de 0 a 180 px e crava no
+máximo `floor(N / 2)` marcas por alvo (CRT-01, CRT-02, CRT-09); o Punho Negro ganha a peça `eixo`
+`divergente.alvos` 1 (RCP-03, RCP-05, RCP-06) e dá a carga do Domínio e o anel da Zona Negra Nv 3 uma vez por
+conjuração (PND-01); as linhas da carta de receita são recalculadas a cada `view()` (OFR-07, GRM-04); a linha da União
+que mantém a principal é `+1 vaga, devolve <n>`.
+
 ---
 
 ## Architecture Overview
@@ -152,7 +159,7 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
 | `Arsenal.weapon.evolution`, `WeaponDirector.evolve`, `arsenal.abandon` | F36 `src/core/arsenal.ts`, `scenes/test/weaponDirector.ts` | Combo da arma sem mudança; a vista lê a evolução daqui |
 | `ledgerKeyOf` | F36 `src/core/weaponEvolution.ts` | Vai para `core/evolution.ts` e vale para toda receita (livro da principal; o Roxo no `into`) |
 | `ResonanceState` (`stick`, `marksOn`, `nextTap`, `update`) | `wt-leva1` `src/core/resonance.ts:175-300`, `:406-420` (privado `stick`) | O corte crava marca pelo mesmo `stick` do prego: Grampo, Coroa, Boneco e propagação reagem sem tabela nova (CRT-03) |
-| `cutPlan`, `rectsTouch`, retângulo do Desmantelar | F33 `src/core/cutBranch.ts`; F30 `TECH_GEOMETRY.corte`; hoje `src/core/cut.ts:21-37` | Ângulos 20/−25/70, retângulo de 60 a 180 px e altura 48 a 0 ponto, toque com bordas inclusas (CRT-01) |
+| `cutPlan`, `rectsTouch`, retângulo do Desmantelar | F33 `src/core/cutBranch.ts`; F30 `TECH_GEOMETRY.corte`; hoje `src/core/cut.ts:21-37` | Ângulos 20/−25/70, o longe de 180 px e a altura 48 do Desmantelar a 0 ponto, com a borda perto no centro do player (`COMBO.cortante.nearPx = 0`); toque com bordas inclusas (CRT-01) |
 | `CutFx.cut(center, dir, angle, rect)` | F33 `src/game/techFx/CutFx.ts` | Desenha cada corte da Ressonância Cortante pelo retângulo (CRT-06) |
 | `resonanceHits` (evento `nail`, `grampo`) | F34 `game/tech/resonanceHits.ts` | O acerto `micro` do corte é o evento `nail` de hoje (dano 3 pelo `scaleTechDamage`) |
 | `pickSwapTarget`, `swapPlacement`, `BoogieState.swap` | `wt-leva1` `src/core/swap.ts:28-80`, `src/core/boogie.ts:213-247` | O Vácuo só põe um candidato prioritário antes do `pickSwapTarget`; encaixe, recusa, cargas e eco ficam (VAC-03, VAC-05) |
@@ -190,8 +197,9 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
 - `RECIPES: readonly Recipe[]` com as sete da tabela do RCP-05, na ordem da lista (Uniões, Evoluções de técnica,
   Evoluções de arma), `cost: COMBO.cost` (60). Nome, texto e dica (ver "Data Models"). O nome da carta do Roxo continua
   `Vazio Roxo (Azul + Vermelho)` (o `evolution.smoke.mjs` e a carta de hoje não mudam).
-- `COMBO = { cost: 60, maxShown: 3, duoCap: 4, hintMax: 10, blackFistMul: 0.3, cortante: { gapMs: 60, damage: 3 } }`
-  e `UNION_INHERIT_CAP` (F33).
+- `COMBO = { cost: 60, maxShop: 2, maxChest: 3, duoCap: 4, hintMax: 10, blackFistMul: 0.3, cortante: { gapMs: 60,
+  nearPx: 0 } }` e `UNION_INHERIT_CAP` (F33). O dano do corte é o do prego, lido do `data/resonance.ts` da F34 pelo
+  `stick`, sem número repetido aqui.
 - `COMBO_AXIS_NAMES: Partial<Record<RecipeId, Partial<Record<AxisId, string>>>>` = `{ ressonanciaCortante: { pregos:
   'Cortes' } }` (CRT-07).
 - `recipeById(id): Recipe | undefined`.
@@ -207,6 +215,9 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
   - `level('arma', id)` = `arsenal.weapon?.id === id ? loadout.axes.level(id) : 0` (F36);
   - `level('reliquia', id)` = `arsenal.levelOf(id)`;
   - `level('dominio', id)` = `domain.id === id ? domain.level : 0` (F31);
+  - `level('eixo', 'item.eixo')` = os pontos do eixo no `AxisBuild` com o item equipado, 0 sem ele ou com o eixo
+    morto pelo ramo (`alvos` no Concentrado, F33 DVG-06: a mesma pergunta que o `shopEligibility` faz para não oferecer
+    o eixo);
   - `techniques` = os slots ocupados com `{ id, level }` (curinga, DUO-01);
   - `comboOf('tecnica', id)` = `loadout.comboOf(id)`; `comboOf('arma', id)` = a `evolution` da arma equipada; os outros
     `null` (nenhuma receita da leva 1 tem talento, relíquia ou Domínio como principal).
@@ -235,11 +246,13 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
 
 - `class ComboRun`: `reveal(id)`, `revealed: ReadonlySet<RecipeId>`, `addDuo(id)`, `duos`, `get duosDone`, `reset()`
   (CGL-06, GRM-03). A F39 troca o `reveal` por gravação persistente.
-- `halfHeld(r, view)` = não feita, não pronta e `assignPieces(r, view, false)` com pelo menos `ceil(peças / 2)` não
-  nulos (GRM-01).
+- `halfHeld(r, view)` = não feita, não pronta e `assignPieces(r, view, false)` com pelo menos `ceil(itens / 2)` não
+  nulos entre as peças que não são `eixo` (GRM-01).
 - `offerPiece(entry, offer, view): OfferPiece | null`: o que a carta vende, visto como peça. Técnica, talento, arma ou
   relíquia que a vista dá nível 0 → `{ kind, id, adds: 'new' }`; carta de ponto de eixo de técnica ou arma, nível de
-  talento ou de relíquia → `{ kind, id, adds: 'level' }`; o resto (modificador, consumível, Corpo, receita) → `null`.
+  talento ou de relíquia → `{ kind, id, adds: 'level' }`, e a carta de ponto de eixo de técnica traz também o eixo
+  escolhido (`axis`) para casar com uma peça `eixo` que falta; o resto (modificador, consumível, Corpo, receita) →
+  `null`.
 - `grimoireHint(piece, view, list = RECIPES): Recipe | null`: a 1ª receita meio na mão em que a peça falta (`new`: o id
   casa com uma peça sem dono, ou com o curinga) ou está abaixo do mínimo (`level`: possuída abaixo do `minLevel`)
   (GRM-02).
@@ -252,8 +265,10 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
 - **Interfaces**:
   - `recipeKindLine(r)`: `União`, `Evolução` (ou `Duo`, sem uso na F37).
   - `recipeLines(r, ctx: { inherit: number; refund: number; voids: string | null }): string[]`: União com `into` →
-    `herda <N> pontos` (o `unionInheritance` das peças de agora); União sem `into` → `libera vaga +<n>` (o
-    `refund` da técnica que sai, ABD-02); depois, com `voids`, `anula <dica>`.
+    `herda <N> pontos` (o `unionInheritance` das peças de agora); União sem `into` → `+1 vaga, devolve <n>` (o
+    `refund` da técnica que sai, ABD-02; 20 caracteres com `n` de 3 dígitos); depois, com `voids`, `anula <dica>`.
+  - Chamado a cada `Shop.view()` com a vista do momento (como o ABD-07 recalcula preço e `OCUPA VAGA`), nunca guardado
+    no sorteio: comprar o Vácuo põe o `anula Vácuo` na carta do Roxo aberta, e comprar o Roxo deixa a do Vácuo cinza.
   - `grimoireLine(hint)`: `Grimório: <dica>` (10 + até 10 = 20 caracteres).
 - Toda linha com até 20 caracteres; o teste confere com o maior número de cada linha.
 
@@ -276,17 +291,24 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
   `[20, −25, 70][i mod 3]` (CRT-01; o `cutPlan` da F33 com intervalo 60 e sem Para Trás).
 - `class CortanteVolley(n)`: `update(dtMs): number[]` (índices vencidos, cada um uma vez, com o corte 0 no 1º
   `update` depois do `release`), `left`, `done`.
-- `cortanteRect(center, facing)`: o retângulo do Desmantelar a 0 ponto, lido do `TECH_GEOMETRY.corte` da F30 pela
-  mesma função de retângulo que o `cut.ts` usa, sem ler o `AxisBuild` (o Desmantelar já saiu da build).
+- `cortanteRect(center, facing)`: de `COMBO.cortante.nearPx` (0, o centro do player) ao longe do Desmantelar a 0 ponto
+  (180, `TECH_GEOMETRY.corte` da F30), altura 48 centrada no player, sem ler o `AxisBuild` (o Desmantelar já saiu da
+  build).
 - `cortanteTargets(rect, targets: { id; box }[]): number[]`: os ids cuja caixa toca o retângulo (`rectsTouch`, bordas
-  inclusas: 60 e 180 px dentro, 59 e 181 fora).
+  inclusas: caixa com a borda perto em 0 e em 180 px dentro; toda atrás do centro, a −1 px, e com a borda perto a
+  181 px fora).
+- `cortanteMarkCap(n)` = `floor(n / 2)` (1, 2, 2, 3 para n de 3 a 6, CRT-02) e `class CortanteMarks`: conta as marcas
+  que a rajada pôs em cada alvo; `mayMark(id)` responde se ainda cabe uma.
+- CRT-09 é provado sobre estas funções: uma rajada de n cortes com 1 alvo na faixa dá `cortanteMarkCap(n)` < n marcas,
+  e com 3 alvos dá `3 × cortanteMarkCap(n)` ≤ 1,5 × n.
 - Sem `phaser`.
 
 ### `core/resonance.ts` (F34, muda no passo 2, ~357 → ~367)
 
 - Campo `cutsLeft = 0`; `throwCuts(n): { cost } | null` (só na fase `ready`: vai a `armed` com `cutsLeft = n`, sem
   prego); `cutStick(target, point, targets): ResonanceEvent[]` (chama o `stick` privado: evento `nail` com o dano do
-  prego, marca e Grampo, CRT-02, CRT-03); `cutDone()` (desconta 1).
+  prego, marca e Grampo, CRT-02, CRT-03); `cutGraze(target): ResonanceEvent` (o evento `nail` com o dano do prego, sem
+  marca nem Grampo, para o alvo que já está no teto da rajada); `cutDone()` (desconta 1).
 - `nextTap`: `detonate` só com `cutsLeft === 0` e marca viva (CRT-04: aperto durante a rajada é `consume` sem nada).
 - `update`: a recarga começa com `nails.length === 0 && cutsLeft === 0 && marks.size === 0` (CRT-05).
 - `reset`/fim de detonação zeram `cutsLeft`. Nenhuma outra regra muda.
@@ -356,8 +378,8 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
   - `start(state: ResonanceState, facing)`: `state.throwCuts(state.stats.nails)`, nova `CortanteVolley`, guarda o
     `facing` do `release`.
   - `update(dtMs, playerCenter, targets: ResTarget[]): ResonanceEvent[]`: para cada corte vencido,
-    `rect = cortanteRect(playerCenter, facing)`, `ports.cut(playerCenter, facing, ângulo, rect)`, `cortanteTargets` e
-    `state.cutStick` em cada alvo (um por corte), `state.cutDone()`.
+    `rect = cortanteRect(playerCenter, facing)`, `ports.cut(playerCenter, facing, ângulo, rect)`, `cortanteTargets` e,
+    em cada alvo (um por corte), `state.cutStick` se `marks.mayMark(id)`, senão `state.cutGraze`; `state.cutDone()`.
   - `active`, `reset()`.
 - Só `import type` de `phaser` e dos corpos: o teste do adaptador (L-043) usa uma porta falsa e confere o retângulo e o
   ângulo entregues.
@@ -401,6 +423,11 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
   'punhoNegro' })`; cada id vivo leva o 2º impacto como Kokusen (`kokusenDamage` do ESC-02) e o evento `kokusen`; o
   anel do Eco usa `ringWithoutKokusen`; `kokusen.land` e o hitstop uma vez por conjuração (PND-01, PND-05).
 - `ctx.onKokusen(target, point, facing, streak, primary)` com `primary = id === mainId`.
+- Ganhos "por Kokusen" de outras fases (PND-01): a carga de +15 do Domínio (F31 DOM-02) e o anel de 48 px da Zona Negra
+  Nv 3 (F35 TAL-15) saem só com `primary`, e o anel recebe a lista de quem levou Kokusen para pular. O passo 3 começa
+  conferindo onde a F31 e a F35 ligam os dois: se for no evento `kokusen` de debug ou no `onKokusen` sem filtro, passam a
+  ler o `kokusen.land` (uma vez por conjuração) ou o `primary`; teste do `domain.test.ts` (F31) ou do
+  `talentsKokusen` (F35) com 3 Kokusen numa conjuração → +15 e 1 anel.
 
 ### `scenes/test/impactFx.ts` (muda no passo 3, F36 ~192 → ~194) e `game/techFx/KokusenFx.ts` (317 → ~320)
 
@@ -425,9 +452,11 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
 - `core/shopEligibility.ts` (F36 ~68 → ~62): a entrada `evolution` vale com `recipeById(id)` fora do Duo e
   `recipeReady(view)`; sai a elegibilidade própria da evolução de arma; o edge case da F24 (`techniqueEligible`, a
   linha de `src/core/shop.ts:33` hoje) só olha receita com `into` (RCP-07).
-- `core/shopDraw.ts` (F36 ~108 → ~116): `DrawContext.view`; `recipes = entradas evolution do pool na ordem do
-  RECIPES, até COMBO.maxShown`; cartas 0 a k − 1; com k = 0, a carta 0 do CRD-02 como na F30 (OFR-09); a regra de item
-  novo (POL-06) na carta `max(k, 1)`; o resto pelo sorteio. Com k ≤ 1 a ordem dos sorteios é a de hoje.
+- `core/shopDraw.ts` (F36 ~108 → ~118): `DrawContext.view` e `round`; `ready = entradas evolution do pool na ordem do
+  RECIPES`; `shown = shopRecipes(ready, round)`: até `COMBO.maxShop` (2); com 3 ou mais, as 3 primeiras menos a de
+  índice `round % 3`, na ordem da lista (OFR-02); cartas 0 a k − 1; com k = 0, a carta 0 do CRD-02 como na F30 (OFR-09);
+  a regra de item novo (POL-06) na carta `max(k, 1)`; o resto pelo sorteio, então a carta 3 é sempre de sorteio. Com
+  k ≤ 1 a ordem dos sorteios é a de hoje. O reroll da mesma loja tem a mesma rodada e mostra as mesmas receitas.
 - `core/shop.ts` (~229 → ~234): `BuyContext.applyRecipe?(id: RecipeId)`; `buy` recusa `evolution` com a receita fora
   do `recipeReady` (`reason: 'item'`, sem cobrar, OFR-06) e o `view` dá `frame: 'grey'` e `FORA DA BUILD`;
   `OfferView.grimoire: RecipeId | null` (passo 5).
@@ -436,7 +465,7 @@ confirmação de uma receita chama `combos.apply(id, 'chest', 0)`; a loja abre e
   do `preview` (passo 5). O `ShopPanel` já desenha o `preview` com `\n` (`ShopPanel.ts:140`, `:229`).
 - `core/bossChest.ts` (F36 ~57 → ~60): `ChestOption` troca `{ kind: 'uniao'; into }` e `{ kind: 'arma'; id }` por
   `{ kind: 'receita'; id: RecipeId }` (passo 1); `chestOptionId` usa o `recipeOptionId`; `drawChest(candidates, rng)`:
-  receitas (até 3, na ordem da lista) forçadas, as outras opções sorteadas pelo `rng` até 3, e a ordem final embaralhada
+  receitas (até `COMBO.maxChest` = 3, na ordem da lista) forçadas, as outras opções sorteadas pelo `rng` até 3, e a ordem final embaralhada
   pelo `rng` (OFR-04).
 - `core/choicePages.ts` (F35 ~112 → ~116): opção `receita` com o nome, `recipeKindLine` e `recipeLines`; título e linha
   de eixo por `itemLabel`/`axisLabel`; o `ctx.unionOf` vira o mapa genérico que o `transferPoints` grava.
@@ -524,13 +553,13 @@ Smokes: `combos` (cena das duas prontas: Roxo e Lâmina Dividida), `evolution`, 
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
 | `src/data/evolutions.ts`, `src/data/shop.ts` | `RECIPES`, catálogo | `ressonanciaCortante`; entrada no fim; `COMBO_AXIS_NAMES` |
-| `src/core/resonance.ts` (F34) | `nextTap` (l.197), `update` (l.242-256), `stick` (l.406) | `throwCuts`, `cutStick`, `cutDone`, `cutsLeft` |
+| `src/core/resonance.ts` (F34) | `nextTap` (l.197), `update` (l.242-256), `stick` (l.406) | `throwCuts`, `cutStick`, `cutGraze`, `cutDone`, `cutsLeft` |
 | `src/core/resonanceCut.ts` (novo), `src/game/tech/resonanceCortante.ts` (novo) | — | rajada |
 | `src/game/tech/resonance.ts` (F34) | `update`, `state` | ramo do combo; `cortante` |
 | `src/core/choice.ts` (F33/F35) | — | `transferPoints` |
 | `src/scenes/test/trayDirector.ts` (F35) | `abandon` | `removeTechnique` |
 | `src/scenes/test/comboDirector.ts` | — | `applyKeepUnion` |
-| `src/core/recipePreview.ts` | — | `libera vaga +<n>` |
+| `src/core/recipePreview.ts` | — | `+1 vaga, devolve <n>` |
 | `src/core/comboLabel.ts` (novo), `src/game/comboMark.ts` (novo) | — | nome, eixo e marca |
 | `src/core/buildTray.ts`, `src/game/BuildBar.ts`, `src/game/TechSlotsHud.ts`, `src/core/shopPreview.ts`, `src/core/choicePages.ts` | rótulos e ícones | `itemLabel`, `axisLabel`, `drawComboMark` |
 | `tests/core/resonanceCut.test.ts`, `tests/game/resonanceCortante.test.ts`, `tests/core/comboLabel.test.ts` (novos); `tests/core/resonance.test.ts` (F34, casos da rajada), `tests/core/choice.test.ts`, `tests/core/buildTray.test.ts` | — | ver "Testes" |
@@ -543,7 +572,9 @@ Smokes: `combos`, `resonance`, `build-bar`, `choice-panel`, `shop`, `tech-axes`,
 | --- | --- | --- |
 | `src/data/evolutions.ts`, `src/data/shop.ts` | — | `punhoNegro` |
 | `src/core/blackFist.ts` (novo) | — | alvos, multiplicador, anel |
+| `src/data/evolutions.ts`, `src/core/recipeView.ts` | `RECIPES`, `level` | peça `eixo` `divergente.alvos` 1 e o nível `eixo` da vista |
 | `src/core/buildEffects.ts` (F35), `src/scenes/test/statsDirector.ts` | `kokusenMul` | `blackFist` |
+| Ligação da carga do Domínio (F31) e do anel da Zona Negra Nv 3 (F35) | onde o passo 3 achar | só no `primary` / `kokusen.land` (PND-01) |
 | `src/game/tech/divergentImpacts.ts` (F33) | resolução do 2º impacto | `kokusenTargets` |
 | `src/scenes/test/impactFx.ts` | 104-108 | `primary` |
 | `src/game/techFx/KokusenFx.ts` | 294 | `burst` |
@@ -586,10 +617,11 @@ Smokes: `combos`, `shop`, `shop-axes`, `shop-progress`, `boss-chest`.
 ```typescript
 // data/evolutions.ts
 export type RecipeType = 'uniao' | 'evolucao' | 'duo';
-export type PieceKind = 'tecnica' | 'talento' | 'arma' | 'reliquia' | 'dominio';
+export type PieceKind = 'tecnica' | 'talento' | 'arma' | 'reliquia' | 'dominio' | 'eixo';
 export interface RecipePiece {
   kind: PieceKind;
-  id: TechId | PerkId | WeaponId | RelicId | DomainId | '*';  // '*' só em técnica (curinga do Duo, DUO-01)
+  // '*' só em técnica (curinga do Duo, DUO-01); `${item}.${eixo}` só em `eixo` (pontos naquele eixo, RCP-03)
+  id: TechId | PerkId | WeaponId | RelicId | DomainId | '*' | `${TechId}.${string}`;
   minLevel: number;
 }
 export type WeaponEvolutionId = 'laminaDividida' | 'nuvemItinerante' | 'arsenalToji';
@@ -614,7 +646,8 @@ export const RECIPES: readonly Recipe[] = [
     pieces: [{ kind: 'tecnica', id: 'ressonancia', minLevel: 4 }, { kind: 'tecnica', id: 'corte', minLevel: 1 }] },
   { type: 'evolucao', id: 'punhoNegro', name: 'Punho Negro Divergente',
     text: 'Kokusen em todo alvo do soco', hint: 'P. Negro', cost: 60,
-    pieces: [{ kind: 'tecnica', id: 'divergente', minLevel: 4 }, { kind: 'talento', id: 'zonaNegra', minLevel: 1 }] },
+    pieces: [{ kind: 'tecnica', id: 'divergente', minLevel: 4 }, { kind: 'talento', id: 'zonaNegra', minLevel: 1 },
+             { kind: 'eixo', id: 'divergente.alvos', minLevel: 1 }] },
   { type: 'evolucao', id: 'vacuoDeTroca', name: 'Vácuo de Troca',
     text: 'Troca com o Azul e leva o grupo', hint: 'Vácuo', cost: 60,
     pieces: [{ kind: 'tecnica', id: 'boogie', minLevel: 4 }, { kind: 'tecnica', id: 'azul', minLevel: 1 }] },
@@ -699,7 +732,7 @@ estimativas dos designs da F30 a F36 (a tabela da F36 não somou a F34 em `data/
 | `src/data/weapons.ts` (F36) | — | ~105 | ~96 | saem as receitas |
 | `src/core/weaponEvolution.ts` (F36) | — | ~45 | — | sai |
 | `src/core/shopEligibility.ts` (F30) | — | ~68 | ~62 | regra única |
-| `src/core/shopDraw.ts` (F30) | — | ~108 | ~116 | cartas 0 a k − 1 |
+| `src/core/shopDraw.ts` (F30) | — | ~108 | ~118 | cartas 0 a k − 1, rodízio com 3 |
 | `src/core/shopPreview.ts` (F30) | — | ~84 | ~94 | receita, rótulos, Grimório (as linhas moram no `recipePreview`) |
 | `src/core/bossChest.ts` (F33) | — | ~57 | ~60 | `receita`, forçadas |
 | `src/core/choice.ts` (F33) | — | ~89 | ~95 | `transferPoints`, `addFront` |
@@ -720,7 +753,7 @@ estimativas dos designs da F30 a F36 (a tabela da F36 não somou a F34 em `data/
 | `tests/core/resonance.test.ts` (F34) | — | — | ver Risks | se passar de 380, os casos da rajada vão ao `resonanceCut.test.ts` |
 
 Arquivos novos (todos abaixo de 400, nenhum na lista de exceções): `core/recipeView.ts` ~45, `core/grimoire.ts` ~80,
-`core/recipePreview.ts` ~45, `core/comboLabel.ts` ~35, `core/comboParam.ts` ~20, `core/resonanceCut.ts` ~55,
+`core/recipePreview.ts` ~45, `core/comboLabel.ts` ~35, `core/comboParam.ts` ~20, `core/resonanceCut.ts` ~65,
 `core/blackFist.ts` ~30, `core/vacuumSwap.ts` ~55, `scenes/test/comboDirector.ts` ~150,
 `game/tech/resonanceCortante.ts` ~70, `game/tech/boogieVacuum.ts` ~60, `game/comboMark.ts` ~20,
 `scripts/smoke/combos.smoke.mjs` ~360 (passando de 380, as três cenas de luta vão a `combos-fight.smoke.mjs`). Sai:
@@ -737,7 +770,9 @@ Funções nas listas de exceção que este design toca: nenhuma. O `debugSnapsho
 | --- | --- | --- |
 | Carta de receita comprada depois que uma peça saiu (outra receita da mesma loja, abandono) | `Shop.buy` reconfere `recipeReady` e devolve `reason: 'item'` sem cobrar; o `view` dá moldura cinza e `FORA DA BUILD` (OFR-06) | `buyDenied:item`; a carta fica à vista, morta |
 | Receita que fica pronta por uma compra na loja aberta | As cartas abertas não mudam; a carta aparece no próximo sorteio (reroll ou próxima loja) | Edge case da spec |
-| Mais de 3 receitas prontas | `readyRecipes` devolve todas; a loja e o baú mostram as 3 primeiras da lista (OFR-02) | A 4ª aparece quando uma sair |
+| 3 ou mais receitas prontas | `readyRecipes` devolve todas; o baú mostra as 3 primeiras; a loja mostra 2 delas pelo rodízio `round % 3` (OFR-02) | Cada uma fica fora de no máximo uma loja seguida; a loja guarda a carta de item novo e uma de sorteio |
+| Divergente com 0 ponto em Alvos ou no Concentrado | A peça `eixo` lê 0; o Punho Negro não fica pronto (RCP-06) | A carta de ponto de Alvos leva `Grimório: P. Negro` |
+| Alvo da rajada no teto de marcas | `CortanteMarks.mayMark` falso: `cutGraze`, acerto `micro` sem marca nem Grampo (CRT-02) | O corte ainda dá o acerto; a cabeça de prego não cresce |
 | Opção de receita do baú que deixou de valer antes da confirmação | `combos.apply` reconfere e devolve `{ ok: false }` com `comboDenied:<id>`; o painel avança sem efeito | Não acontece na leva 1 (nenhuma página do mesmo painel tira peça); a regra fecha a porta |
 | `evo=` com id desconhecido, Duo ou receita não pronta | `parseEvoParam` tira o desconhecido e o Duo; `apply` ignora a não pronta (CDB-01) | O smoke precisa montar as peças antes |
 | `evo=roxo,vacuoDeTroca` (o Roxo consome o Azul) | Aplica em ordem; o Vácuo não está mais pronto e é ignorado | Igual à loja (edge case) |
@@ -764,6 +799,7 @@ Funções nas listas de exceção que este design toca: nenhuma. O `debugSnapsho
 | --- | --- | --- | --- |
 | **Usuário.** A carta de técnica, talento ou ponto já tem até duas linhas de texto (as duas linhas de eixo da F30, o `OCUPA VAGA` da F35); a linha `Grimório:` é mais uma, e o `ShopPanel` não pode crescer | `src/game/ShopPanel.ts:44` (`preview: CARD_TOP + 42`), `:140`, `:229`; F30 CRD-05; F35 POL-07 | O texto pode encostar no preço ou sair da carta | O passo 5 começa medindo a carta mais cheia com o `ShopPanel.debug()` e a caixa do texto no smoke; se não couber, duas saídas para o usuário escolher antes do commit: (a) a linha do Grimório troca a 2ª linha de eixo (fica só o eixo-foco); (b) a carta mostra só o nome curto `Grimório` no lugar do `OCUPA VAGA`, com a dica completa no `ShopPanel.hint` da carta selecionada |
 | **Usuário.** `Punho Negro Divergente` (22) e `Lâmina Dividida da Alma` (23) passam dos 20 caracteres do CRD-05 no nome da carta e na pergunta do Abandonar | CGL-04; F35 `buildTray` (pergunta), `BuildBar` | Nome cortado ou fora da carta | A F36 já põe `Lâmina Dividida da Alma` no nome da carta; o passo 2 confere a largura do nome no smoke (`debug().cards[i]`); se cortar, o usuário escolhe um nome curto por receita (campo `short`) para a carta e a faixa |
+| Ressonância Cortante dominante contra o grupo | spec, "Cortes da Ressonância Cortante"; F34 RES-03 (pregos todos no 1º alvo) | Sem teto, N marcas em cada alvo da faixa = N × alvos marcas, com a Coroa e o Grampo junto | Teto `floor(N / 2)` por alvo por rajada (CRT-02) e a conta do CRT-09 no `resonanceCut.test.ts`; se a conferência em movimento (CRT-08) mostrar a rajada fraca contra 1 alvo demais, o ajuste é o teto, nunca tirar o teto |
 | `core/resonance.ts` chega a ~367 efetivas | `wt-leva1` `src/core/resonance.ts` (357 hoje) | Pouca folga para a F41 (Prego Rubro) | A rajada mora em `core/resonanceCut.ts`; a classe só ganha o contador e três métodos de uma linha; se passar de 380, a cascata e a Coroa (`cascade`, `crown`, `propagate`) saem para `core/resonanceDetonation.ts` num passo de refatoração com os smokes iguais |
 | `debugApi.ts` chega a ~345 somando os designs da F32 a F36 | `src/game/debugApi.ts` (310 na F29) | A soma pode passar da estimativa em algum merge | A F37 só põe 1 campo e 1 import; os tipos ficam em `game/buildSnapshot.ts`; reconferir no começo do passo 1 |
 | Ordem do `domain=` em relação ao `evo=` | F31 `domainDirector` (lugar do `domain=` no reset); F36 põe o `evo=` no fim do `BuildDirector.applyDebugAxes` | Receita com Domínio de peça ficaria fora do `evo=` | Nenhuma receita da leva 1 usa Domínio; o passo 1 confere onde o `domain=` roda e, se for depois do `applyDebugAxes`, chama o `combos.applyDebug()` logo depois dele (CDB-01) |
@@ -784,7 +820,7 @@ Funções nas listas de exceção que este design toca: nenhuma. O `debugSnapsho
 | --- | --- | --- |
 | Onde mora o combo | Com o dono da principal: `Loadout` (técnica) e `Arsenal.weapon.evolution` (arma, F36) | Sai junto com o item pelo caminho que já apaga os pontos (abordagem A) |
 | Uma regra de pronto | `recipeReady(recipe, view)` sobre a `RecipeView` | Loja, baú, Grimório, debug e snapshot leem a mesma regra (RCP-02) |
-| Teto das prontas mostradas | `readyRecipes` sem teto; quem mostra corta em 3 | O snapshot mostra todas; a loja e o baú mostram 3 (OFR-02, CDB-02) |
+| Teto das prontas mostradas | `readyRecipes` sem teto; o baú corta em 3 e a loja em 2 com rodízio pela rodada | O snapshot mostra todas; a loja guarda a carta de item novo e uma de sorteio (OFR-01, OFR-02, CDB-02) |
 | Quem aplica | `ComboDirector.apply` para loja, baú e debug | Um despacho por tipo; o evento `combo:<id>` e a revelação num lugar só (CGL-03) |
 | Saída da técnica na União que mantém a principal | `trayDirector.removeTechnique`, o mesmo corpo do Abandonar | A devolução e a limpeza já são as do ABD-02/ABD-03 (UNI-03, UNI-04) |
 | Efeito do combo na luta | Lido no aperto por `loadout.comboOf`, sem reconstruir módulo | O combo vale na conjuração seguinte à compra, como o ponto de eixo |
@@ -799,7 +835,8 @@ F35 reserva a AD-028, a F34 a AD-029 e a F36 pega a seguinte; conferir antes).
 - **AD-NNN** substitui a AD-027 repetindo as partes (1), (3) e (4) sem mudança e trocando a (2): toda receita (União,
   Evolução e Duo) mora na lista única `RECIPES` com peças `{ kind, id, minLevel }` de técnica, talento, arma, relíquia
   ou Domínio; a peça principal pede o Nv 4 e o catalisador qualquer nível; uma regra pura decide se está pronta; toda
-  receita pronta é oferecida na loja (60, com inflação) e no baú do chefe (grátis), até 3 de cada vez; um item carrega
+  receita pronta é oferecida no baú do chefe (grátis, até 3) e na loja (60, com inflação, até 2, em rodízio pela rodada
+  quando há 3); a peça `eixo` pede pontos num eixo vivo da principal quando o combo depende dele; um item carrega
   no máximo 1 combo, e ele sai com o item. A AD-027 passa a `superseded by AD-NNN`.
 
 O resto segue AD-001 (regras novas em `core/` com teste par), AD-003 (`ChoicePanel` e `BuildBar` na `uiLayer`), AD-006
@@ -816,21 +853,23 @@ AD-026 (F33), AD-028 (F35), AD-029 (F34) e a da F36 (arma imbuída).
 | --- | --- |
 | `tests/data/combos.test.ts` | RCP-05 (as 7 receitas na ordem, peças, mínimos e custo 60); NOM-01 (nomes e textos de todo ramo e Despertar do `AXIS_ITEMS`, das Uniões, das Evoluções e dos Duos, depois de `trim` e minúsculas, sem repetição); NOM-02 (nome e texto não vazios, dica de 1 a 10: 10 passa, 11 falha numa receita sintética); NOM-03 (uma peça no Nv 4, primeira, as outras no Nv 1; o Roxo com `into` aceita a do Nv 4 em 2º); NOM-04 (lê tudo dos módulos de dados) |
 | `tests/core/recipeView.test.ts` | RCP-03 (técnica fora do slot = 0, `1 + pontos` dentro; talento pelo nível; arma só equipada; relíquia pelo nível; Domínio só o possuído) |
-| `tests/core/resonanceCut.test.ts` | CRT-01 (4 cortes a 0/60/120/180 ms, ângulos 20/−25/70/20, nos dois `facing`); CRT-02 (comum a 60 e a 180 px cortado, a 59 e a 181 não, L-010; 2 comuns com 4 cortes → 4 marcas cada); com o `ResonanceState`: CRT-04 (`nextTap` `none` com `cutsLeft > 0`), CRT-05 (recarga depois do último corte sem marca), CRT-03 (Grampo sai do `cutStick`) |
+| `tests/core/resonanceCut.test.ts` | CRT-01 (4 cortes a 0/60/120/180 ms, ângulos 20/−25/70/20, nos dois `facing`; retângulo de 0 a 180 px); CRT-02 (caixa com a borda perto em 0 e em 180 px cortada, toda atrás a −1 e a 181 não, L-010; 2 comuns com 4 cortes → 4 acertos e 2 marcas cada, o 3º e o 4º pelo `cutGraze`); CRT-09 (n de 3 a 6: 1 alvo < n marcas, 3 alvos ≤ 1,5 × n); com o `ResonanceState`: CRT-04 (`nextTap` `none` com `cutsLeft > 0`), CRT-05 (recarga depois do último corte sem marca), CRT-03 (Grampo sai do `cutStick`) |
 | `tests/game/resonanceCortante.test.ts` | L-043: o retângulo e o ângulo que o `CortanteRunner` entrega à porta `cut` em cada corte, com o centro do player do quadro e o `facing` do `release` |
 | `tests/core/blackFist.test.ts` | PND-01 (3 registrados e `hit` → 3; sem combo → só o principal); PND-04 (`miss` e `null` → nenhum); PND-02 (2,5/2,8/3,1 → 2,8/3,1/3,4; 3,4 nunca vira 3,7, L-010); PND-05 (anel sem quem leva Kokusen) |
 | `tests/core/vacuumSwap.test.ts` | VAC-01 (orbe a exatamente o alcance → alvo, 1 px além → não, L-010; atrás do player também vale; empate pelo menor id); VAC-04 (comum com o centro a exatamente o raio anda, 1 px além fica; comum que não cabe fica; deslocamento igual ao do orbe) |
 | `tests/game/boogieVacuum.test.ts` | L-043: o destino entregue a cada `teleport` falso e a contagem devolvida |
-| `tests/core/grimoire.test.ts` | GRM-01 (`ceil(peças / 2)` em qualquer nível; feita ou pronta → falso); GRM-02 (Boogie sem Azul: carta do Azul → `Vácuo`; Boogie Nv 3 com Azul: ponto do Boogie → `Vácuo`; Boogie Nv 4 com Azul: nada, está pronta; a 1ª receita da lista quando a carta serve duas); GRM-03 (`ComboRun.reveal`, `reset`); GRM-04 (Azul, Vermelho Nv 4 e o Vácuo feito: o Roxo dá `anula Vácuo`) |
-| `tests/core/recipePreview.test.ts` | OFR-07 (`União`/`Evolução`, `herda 3 pontos`, `libera vaga +<n>` com o maior `n` possível, `anula <dica>`, `Grimório: Lâmina Div`), todas com até 20 caracteres |
+| `tests/core/grimoire.test.ts` | GRM-01 (`ceil(itens / 2)` em qualquer nível, sem contar a peça `eixo`; feita ou pronta → falso; Divergente Nv 4 com Zona Negra e Alvos 0 → meio na mão e a carta de ponto de Alvos dá `P. Negro`); GRM-02 (Boogie sem Azul: carta do Azul → `Vácuo`; Boogie Nv 3 com Azul: ponto do Boogie → `Vácuo`; Boogie Nv 4 com Azul: nada, está pronta; a 1ª receita da lista quando a carta serve duas); GRM-03 (`ComboRun.reveal`, `reset`); GRM-04 (Azul, Vermelho Nv 4 e o Vácuo feito: o Roxo dá `anula Vácuo`) |
+| `tests/core/recipePreview.test.ts` | OFR-07 (`União`/`Evolução`, `herda 3 pontos`, `+1 vaga, devolve <n>` com o maior `n` possível, `anula <dica>`, `Grimório: Lâmina Div`), todas com até 20 caracteres |
 | `tests/core/comboLabel.test.ts` | CGL-04 (`itemLabel` com e sem combo), CRT-07 (`axisLabel` da Ressonância com o combo = `Cortes`, sem = o nome do registro) |
 | `tests/core/duo.test.ts` | DUO-01 (Duo sintético talento `contraAfiado` 1 + técnica `*` Nv 3: pronto com uma técnica Nv 3, não com Nv 2, L-010; o curinga não casa com outra peça de técnica da receita); DUO-02 (3 feitos → segue o `recipeReady`, 4 → falso); DUO-03 (`readyRecipes` nunca devolve Duo; o `RECIPES` não tem Duo) |
 | `tests/core/comboParam.test.ts` | CDB-01 (id desconhecido some; ordem mantida; repetido fica para a aplicação ignorar) |
 
 **Testes refeitos:** `tests/core/evolution.test.ts` (RCP-02 a RCP-04, RCP-06 nos dois lados do Nv 4 para cada principal
-e catalisador ausente/Nv 1, RCP-07, `evolve` do Roxo, `unionInheritance`, `ledgerKeyOf`, `recipeDone`);
+e catalisador ausente/Nv 1, o Punho Negro com Alvos 0 e 1 e com 1 ponto no Concentrado, RCP-07, `evolve` do Roxo, `unionInheritance`, `ledgerKeyOf`, `recipeDone`);
 `tests/core/evolutionShop.test.ts` e `tests/core/shopDraw.test.ts` (OFR-01: Roxo e Vácuo prontos → cartas 0 e 1 nessa
-ordem e carta 2 de item novo; 3 prontas → carta 3 de item novo; OFR-02: 4 prontas → as 3 primeiras; OFR-03: reroll
+ordem e carta 2 de item novo; OFR-02: 3 prontas A, B, C → B e C na r6, A e C na r7, A e B na r8, carta 2 de item novo e
+carta 3 de sorteio; 4 prontas → o rodízio só entre as 3 primeiras; OFR-07/GRM-04: linhas recalculadas na mesma loja depois
+de uma compra; OFR-03: reroll
 mantém as receitas; OFR-06: Vácuo e depois Roxo aceitos, Roxo e depois Vácuo recusado sem gasto com `FORA DA BUILD`;
 OFR-09: sem receita, carta 0 do CRD-02; OFR-05: `round(60 × 1,3)` na r6); `tests/core/bossChest.test.ts` (OFR-04: 2
 prontas e "2 pontos" → as 3; 3 prontas → só elas; 1 pronta e 4 outras → a receita sempre, 2 outras pelo `rng`; ordem pelo
@@ -843,11 +882,12 @@ de ramo sai); `tests/core/resonance.test.ts` (F34; casos da rajada no `resonance
 `combos` e `combo`).
 
 Cada limiar nos dois lados (L-010): Nv 3 e Nv 4 da principal em cada receita; catalisador ausente e Nv 1; curinga Nv 2 e
-Nv 3; 3 e 4 Duos; 3 e 4 receitas prontas; 59/60 e 180/181 px do corte; alcance do Boogie e 1 px além; raio do orbe e
+Nv 3; 3 e 4 Duos; 2 e 3 receitas prontas na loja; Alvos 0 e 1; borda em 0/−1 e 180/181 px do corte; teto de marcas
+`floor(n / 2)` e um corte além; alcance do Boogie e 1 px além; raio do orbe e
 1 px além; 3,1 + 0,3 = 3,4 e nunca 3,7; dica de 10 e de 11.
 
 **Adaptador (L-043, L-055).** Além dos dois testes de porta falsa, o smoke lê o objeto vivo: `CutFx.debug().lastRect`
-(largura 120, altura 48, borda perto a 60 px do centro do player, nos dois lados), `BoogieFx.debug()` (anel vivo nos
+(largura 180, altura 48, borda perto no centro do player, nos dois lados), `BoogieFx.debug()` (anel vivo nos
 dois pontos), a posição dos comuns depois da palma e o `damageNumbers` de cada alvo do Kokusen.
 
 **Smoke novo:** `combos.smoke.mjs` (todas as cenas com `?debug&hd=1&area=modular`; vira `combos.smoke.mjs` +
@@ -858,23 +898,25 @@ dois pontos), a posição dos comuns depois da palma e o `damageNumbers` de cada
    0 e 1 nessa ordem e moldura dourada; com o baú do chefe (`chest=1`), as duas opções lá; comprar a Lâmina e depois o
    Roxo → os dois feitos, `combo:laminaDividida` e `combo:roxo`; `evo=` com id desconhecido não muda nada.
 2. Ressonância Cortante na loja (passo 2): `tech=ressonancia,corte&axes=ressonancia.pregos:2,ressonancia.detonacao:1&
-   ramo=ressonancia:a&round=6&fragments=200` → carta 0 com `libera vaga +0`; comprada: slot do Desmantelar vazio,
+   ramo=ressonancia:a&round=6&fragments=200` → carta 0 com `+1 vaga, devolve 0`; comprada: slot do Desmantelar vazio,
    `build.pool.used` cai 1, a Ressonância no mesmo slot com os 3 pontos, `build.ressonancia.combo ===
    'ressonanciaCortante'`, `uniaoRefund:ressonanciaCortante:0`, a `BuildBar` com `Ressonância Cortante` e a marca;
    a carta seguinte do Desmantelar volta como técnica nova e a receita não fica pronta de novo.
-3. Ressonância Cortante na luta (passo 2): `...&evo=ressonanciaCortante&maxAlive=3&seed=1` → 1º toque: nenhum
-   `techObjects` de prego, `techState.ressonancia.cortante`, marcas nos 3 comuns perto, `CutFx.debug().lastRect` nos dois
-   lados (L-074); aperto durante a rajada não dá evento em toda a janela (L-020); 2º toque → `resonanceDetonate:<n>` com
-   n ≥ 6; com `ramo=ressonancia:a`, o Grampo sai num corte.
+3. Ressonância Cortante na luta (passo 2): `...&evo=ressonanciaCortante&maxAlive=3&seed=1` (Pregos 2, N = 5) → 1º
+   toque: nenhum `techObjects` de prego, `techState.ressonancia.cortante`, 2 marcas em cada um dos 3 comuns perto,
+   inclusive o colado no player, `CutFx.debug().lastRect` nos dois
+   lados (L-074); aperto durante a rajada não dá evento em toda a janela (L-020); 2º toque → `resonanceDetonate:6`; com `ramo=ressonancia:a`, o Grampo sai num corte.
 4. Punho Negro (passo 3): `tech=divergente&axes=divergente.alvos:3&perks=zonaNegra&evo=punhoNegro&maxAlive=3` e o aperto
-   na janela → 3 eventos `kokusen` no mesmo soco, 3 números `kokusen`, `ce.cur` sobe uma vez (L-036),
-   `stats.kokusenMul` 2,8; sem o aperto → nenhum; sem o `evo=` → 1 evento.
+   na janela → 3 eventos `kokusen` no mesmo soco, 3 números `kokusen`, `ce.cur` e a barra de Domínio (com
+   `domain=santuario`) sobem uma vez (L-036), `stats.kokusenMul` 2,8; sem o aperto → nenhum; sem o `evo=` → 1 evento;
+   com `axes=divergente.zona:3` no lugar de Alvos, `combos.ready` sem `evolucao:punhoNegro` e o `evo=` ignorado.
 5. Vácuo de Troca (passo 4): `tech=boogie,azul&axes=boogie.alcance:2,boogie.cargas:1&evo=vacuoDeTroca&maxAlive=3` →
    Azul, palma: o player no ponto do orbe, os comuns puxados perto do ponto antigo do player, `boogieSwap:azul:<id>` e
    `vacuo:<n>` com n ≥ 1, o chefe nunca anda; nos dois lados; sem orbe no alcance, troca normal com um comum.
 6. Grimório (passo 5): `tech=boogie&round=4&fragments=100` → a carta do Azul (quando sai) com `Grimório: Vácuo`;
    `combos.revealed` com `evolucao:vacuoDeTroca`; com `tech=boogie,azul,vermelho&axes=vermelho.potencia:3,
-   boogie.alcance:2,boogie.cargas:1&evo=vacuoDeTroca&round=6`, a carta do Roxo com `anula Vácuo`.
+   boogie.alcance:2,boogie.cargas:1&evo=vacuoDeTroca&round=6`, a carta do Roxo com `anula Vácuo`; sem o `evo=`, com o
+   Roxo e o Vácuo nas cartas 0 e 1, comprar o Vácuo põe `anula Vácuo` na carta do Roxo aberta (`ShopPanel.debug()`).
 
 **Smokes antigos que mudam:** `boss-chest.smoke.mjs` e `weapon-imbued.smoke.mjs` (ou `weapon-evolution.smoke.mjs`) no
 passo 1, onde leem `arma:<id>` (vira `evolucao:<id>`, CDB-03).
