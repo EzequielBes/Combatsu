@@ -201,7 +201,7 @@ no toque.
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
 | `src/core/hit.ts` | 22-45 | `HitBand` e `band?: HitBand` |
-| `src/core/enemyBrain.ts` | 17-27, 73-107 | evento `{ type: 'chip'; hit }`; `receiveHit` extrai as recusas para `refuses(hit)` (tira 4 de complexidade) e ganha `if (hit.band) return ...` depois da morte; `_downHits` não muda com banda |
+| `src/core/enemyBrain.ts` | 17-27, 73-107 | evento `{ type: 'chip'; hit }`; `receiveHit` extrai as recusas para `refuses(hit)` (complexidade de 20 para 18, já com o ramo da banda) e ganha `if (hit.band) return ...` depois da morte; `_downHits` não muda com banda |
 | `src/game/enemy/EnemyDefense.ts` | 103-150 | `if (hit.band) return this.receiveBand(hit)` logo depois da guarda (l.115-118); a montagem de `effect`/`reaction` (l.119-125) vira `reactionFor(hit, wasBroken)` para a complexidade não subir |
 | | 262-273 | `handle` trata `chip`: evento `chip:<id>`, sem reação de corpo (POW-15.9) |
 | `src/core/bossBrain.ts` | 6-16, 94 | `chipPoiseMul` no `BossBrainTuning`; `poiseDamage = bandPoiseDamage(hit, t.chipPoiseMul)` |

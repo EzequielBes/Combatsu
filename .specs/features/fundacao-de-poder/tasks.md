@@ -195,11 +195,12 @@ da morte, devolve `[{type: 'chip', hit}]` para acerto com banda, sem mudar estad
 
 **Done when**:
 
-- [ ] `tests/core/enemyBrainChip.test.ts`: vivo com banda devolve exatamente `[{type: 'chip', hit}]` e mantém o estado
-      (`idle`, `windup`, `attack`) sem `hitstun`, `stagger` nem `ragdollStun`; `downHits` igual (POW-03.4); letal devolve
-      `died` e `ragdoll` (POW-03.5); `gettingUp` e `downHits` 1 recusam sem `tech` e aceitam com `tech: true` (edge case)
-- [ ] `oxlint` mostra a complexidade do `receiveHit` sem subir (20 hoje); `tests/core/enemyBrain.test.ts` verde
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `tests/core/enemyBrainChip.test.ts`: vivo com banda devolve exatamente `[{type: 'chip', hit}]` e mantém o estado
+      do cérebro (`idle`, `hitstun`, `stagger`, `ragdollStun`; `windup` e `attack` moram no `enemyAI`, não no cérebro)
+      sem entrar em `hitstun`, `stagger` nem `ragdollStun`; `downHits` igual (POW-03.4); letal devolve `died` e `ragdoll`
+      (POW-03.5); `gettingUp` e `downHits` 1 recusam sem `tech` e aceitam com `tech: true` (edge case)
+- [x] `oxlint` mostra a complexidade do `receiveHit` sem subir (20 antes, 18 depois); `tests/core/enemyBrain.test.ts` verde
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick

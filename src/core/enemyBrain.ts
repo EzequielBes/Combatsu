@@ -21,6 +21,7 @@ export type EnemyEvent =
   | { type: 'ragdoll'; hit: Hit } // entra em ragdoll, ou novo impulso se já estiver
   | { type: 'hurtWhileDown'; hit: Hit }
   | { type: 'died'; hit: Hit }
+  | { type: 'chip'; hit: Hit } // acerto com banda (chip ou micro) que não mata: só dano, sem reação (POW-03.4)
   | { type: 'getUp' }
   | { type: 'recovered' }
   | { type: 'dissolve' }
@@ -69,16 +70,15 @@ export class EnemyBrain {
     return this._downHits;
   }
 
-  /** Devolve `[]` quando o golpe é recusado (já morto, levantando ou no limite do chão: GND-02, GND-03). */
+  /**
+   * Devolve `[]` quando o golpe é recusado (`refuses`). Um acerto com banda (`chip`, `micro`) que não mata só tira vida:
+   * devolve `chip` sem mudar o estado nem o `downHits` (POW-03.4); o letal morre como qualquer outro (POW-03.5).
+   */
   receiveHit(hit: Hit, ctx: HitContext = {}): EnemyEvent[] {
-    if (this.isDead) return [];
+    if (this.refuses(hit)) return [];
     const grounded = this._state === 'ragdollStun';
-    if (!hit.tech) {
-      if (this._state === 'gettingUp') return [];
-      if (grounded && this._downHits >= 1) return [];
-    }
     this._hp = Math.max(0, this._hp - hit.damage);
-    if (grounded && !hit.tech) this._downHits = 1;
+    if (grounded && !hit.tech && !hit.band) this._downHits = 1;
     if (this._hp === 0) {
       this.enter('deadRagdoll', this.t.deathRagdollMs);
       return [
@@ -86,6 +86,7 @@ export class EnemyBrain {
         { type: 'ragdoll', hit },
       ];
     }
+    if (hit.band) return [{ type: 'chip', hit }];
     if (grounded && !hit.tech) return [{ type: 'hurtWhileDown', hit }];
     if (hit.knockdown) {
       this.enter('ragdollStun', ctx.ragdollStunMs ?? this.t.ragdollStunMs);
@@ -104,6 +105,13 @@ export class EnemyBrain {
     if (grounded) return [{ type: 'hurtWhileDown', hit }];
     this.enter('hitstun', this.t.hitstunMs);
     return [{ type: 'hitReaction', hit }];
+  }
+
+  /** Golpe recusado: já morto, levantando ou no limite do chão; a técnica passa nos dois últimos (GND-02, GND-03). */
+  private refuses(hit: Hit): boolean {
+    if (this.isDead) return true;
+    if (hit.tech) return false;
+    return this._state === 'gettingUp' || (this._state === 'ragdollStun' && this._downHits >= 1);
   }
 
   /** Deflexão: cambaleia por `ms` se está vivo e fora do chão (DFL-11). Devolve se entrou em `stagger`. */
