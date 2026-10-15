@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { axisAt, axisLevel, bitePctFor, boxCenter, maxHpBite, resolveBuild } from '../../src/core/axisRule';
+import {
+  axisAt,
+  axisLevel,
+  bitePctFor,
+  boxCenter,
+  killRefundPct,
+  maxHpBite,
+  resolveBuild,
+} from '../../src/core/axisRule';
 
 const ZERO = { a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 };
 
@@ -71,7 +79,21 @@ describe('ajudantes', () => {
     expect(axisAt([10, 20, 30, 40], 3)).toBe(40);
   });
 
+  it('axisAt com eixo faltando ou fora da tabela lança RangeError (não vira NaN)', () => {
+    expect(() => axisAt([10, 20, 30, 40], undefined as unknown as number)).toThrow(RangeError);
+    expect(() => axisAt([10, 20, 30, 40], 4)).toThrow(RangeError);
+    expect(() => axisAt([10, 20, 30, 40], -1)).toThrow(RangeError);
+  });
+
   it('boxCenter', () => {
     expect(boxCenter({ x: 10, y: 20, width: 20, height: 40 })).toEqual({ x: 20, y: 40 });
+  });
+});
+
+describe('TRL-06: Recarga no 3º ponto devolve 30% no abate', () => {
+  it('só com o eixo no teto', () => {
+    expect(killRefundPct(3)).toBe(0.3);
+    expect(killRefundPct(2)).toBe(0);
+    expect(killRefundPct(0)).toBe(0);
   });
 });

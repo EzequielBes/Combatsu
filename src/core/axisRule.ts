@@ -49,9 +49,23 @@ export function resolveBuild<A extends string, B extends string>(build: TechBuil
   return { level, branch: build.branch, awakened: build.branch !== null && level >= TECH_RULE.awakenLevel };
 }
 
-/** Valor da tabela para os pontos do eixo (0 a 3). */
+/**
+ * Valor da tabela para os pontos do eixo (0 a 3). Eixo que falta na entrada (`undefined`) ou fora da tabela lança
+ * `RangeError`, em vez de virar `NaN` nos números da técnica.
+ */
 export function axisAt<T>(table: AxisTable<T>, points: number): T {
+  if (!Number.isInteger(points) || points < 0 || points >= table.length) {
+    throw new RangeError(`eixo com ${points} pontos (0 a ${table.length - 1})`);
+  }
   return table[points];
+}
+
+/**
+ * TRL-06 (plano, seção 2.1, "Recarga no 3º ponto"): com o eixo Recarga no teto, o abate com a técnica devolve 30% da
+ * recarga, uma vez por conjuração; abaixo do teto, nada.
+ */
+export function killRefundPct(recargaPoints: number): number {
+  return recargaPoints >= TECH_RULE.axisCap ? TECH_RULE.killRefund : 0;
 }
 
 /**

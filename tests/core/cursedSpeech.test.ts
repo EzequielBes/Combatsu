@@ -130,7 +130,7 @@ describe('FAL-07: Exploda em Cadeia (Despertar do "Exploda")', () => {
     const r = cast(awake, [tgt(1, 60)]);
     if (!r.ok) throw new Error('recusou');
     expect(r.cast.isStunned(1)).toBe(true);
-    const living = [tgt(2, 120), tgt(3, 60, 70, 'boss', 1000), tgt(4, 200)];
+    const living = [tgt(2, 120), tgt(3, 60, 70, 'boss', 1000), tgt(4, 200), tgt(5, 60, -71)]; // 5 a 71 px
     expect(r.cast.onTargetDied({ id: 1, center: { x: 60, y: 0 } }, living)).toEqual({
       center: { x: 60, y: 0 },
       hits: [
@@ -191,8 +191,38 @@ describe('FAL-08: Esmague (Despertar do "Volte")', () => {
     expect(r.cast.onPushedImpact(tgt(7, 60), 'wall')).toBeNull();
     r.cast.update(801);
     expect(r.cast.onPushedImpact(tgt(1, 60), 'wall')).toBeNull();
+    const edge = cast(awake, [tgt(1, 60)]);
+    if (!edge.ok) throw new Error('recusou');
+    edge.cast.update(800);
+    expect(edge.cast.onPushedImpact(tgt(1, 60), 'wall')).toHaveLength(1); // 800 ms ainda vale
     const s = cast(build({ alcance: 3 }, 'volte'), [tgt(1, 60)]);
     if (!s.ok) throw new Error('recusou');
     expect(s.cast.onPushedImpact(tgt(1, 60), 'wall')).toBeNull();
+  });
+});
+
+describe('FAL-09: linha de visão', () => {
+  it('quem está atrás de parede (sem linha de visão) fica fora da fala', () => {
+    const lineOfSight = (_from: unknown, to: { x: number }): boolean => to.x < 80;
+    const r = speak(speechStats(build()), {
+      origin: ORIGIN,
+      facing: 1,
+      hp: 100,
+      targets: [tgt(1, 60), tgt(2, 100)],
+      lineOfSight,
+    });
+    expect(r.ok && r.hits.map((h) => h.targetId)).toEqual([1]);
+  });
+});
+
+describe('TRL-06: abate com Recarga no 3 devolve 30% da recarga, uma vez por fala', () => {
+  it('2200 → 660 no 1º abate, 0 nos seguintes; sem o teto, 0', () => {
+    const r = cast(build({ recarga: 3 }, null), [tgt(1, 60)]);
+    if (!r.ok) throw new Error('recusou');
+    expect(r.cast.claimKillRefund()).toBe(660);
+    expect(r.cast.claimKillRefund()).toBe(0);
+    const s = cast(build({ recarga: 2 }), [tgt(1, 60)]);
+    if (!s.ok) throw new Error('recusou');
+    expect(s.cast.claimKillRefund()).toBe(0);
   });
 });

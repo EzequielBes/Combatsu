@@ -1,4 +1,4 @@
-import { axisAt, bitePctFor, maxHpBite, resolveBuild, type BodyKind, type TechBuild } from './axisRule';
+import { axisAt, bitePctFor, killRefundPct, maxHpBite, resolveBuild, type BodyKind, type TechBuild } from './axisRule';
 import { normalize, type Vec2 } from './hit';
 import { CURSED_SPEECH, type SpeechAxisId, type SpeechBranchId } from '../data/cursedSpeech';
 
@@ -16,6 +16,8 @@ export interface SpeechStats {
   coneDeg: number;
   cost: number;
   cooldownMs: number;
+  /** TRL-06: fração da recarga devolvida pelo 1º abate da conjuração (0,3 com Recarga no 3, senão 0). */
+  killRefundPct: number;
   signMs: number;
   releaseMs: number;
   recoverMs: number;
@@ -37,6 +39,7 @@ export function speechStats(build: SpeechBuild): SpeechStats {
     coneDeg: axisAt(CURSED_SPEECH.axes.cone, a.cone),
     cost: axisAt(CURSED_SPEECH.axes.eficiencia, a.eficiencia),
     cooldownMs: axisAt(CURSED_SPEECH.axes.recarga, a.recarga),
+    killRefundPct: killRefundPct(a.recarga),
     signMs: CURSED_SPEECH.signMs,
     releaseMs: CURSED_SPEECH.releaseMs,
     recoverMs: CURSED_SPEECH.recoverMs,
@@ -90,6 +93,11 @@ export interface SpeechContext {
   /** Vida atual do player. */
   hp: number;
   targets: readonly SpeechTarget[];
+  /**
+   * FAL-09: linha de visão do player até o alvo (o adaptador testa os sólidos do mundo). Sem ela, todo alvo no cone
+   * é visto.
+   */
+  lineOfSight?: (from: Vec2, to: Vec2) => boolean;
 }
 
 export type SpeechResult =
@@ -121,6 +129,7 @@ export function speak(stats: SpeechStats, ctx: SpeechContext): SpeechResult {
   const dist = (t: SpeechTarget): number => Math.hypot(t.center.x - ctx.origin.x, t.center.y - ctx.origin.y);
   const hits = ctx.targets
     .filter((t) => inCone(ctx.origin, ctx.facing, stats.rangePx, stats.coneDeg, t.center))
+    .filter((t) => ctx.lineOfSight?.(ctx.origin, t.center) ?? true)
     .sort((a, b) => dist(a) - dist(b) || a.id - b.id)
     .map((t) => speechHit(stats, ctx.origin, t));
   return { ok: true, hpCost: stats.hpCost, cost: stats.cost, hits, cast: new SpeechCast(stats, hits) };
@@ -135,6 +144,7 @@ export class SpeechCast {
   private readonly pushed = new Set<number>();
   private readonly bitten = new Set<number>();
   private elapsedMs = 0;
+  private refundClaimed = false;
 
   constructor(
     private readonly stats: SpeechStats,
@@ -197,6 +207,16 @@ export class SpeechCast {
       hits.push({ targetId: other.id, stunMs: 0, damage: 0, knockdown: other.kind === 'enemy', band: 'micro' });
     }
     return hits;
+  }
+
+  /**
+   * TRL-06: o adaptador avisa que um acerto desta fala matou. O 1º abate da conjuração devolve 30% da recarga (com
+   * Recarga no 3): devolve os ms a cortar da recarga, e 0 nos seguintes ou abaixo do teto.
+   */
+  claimKillRefund(): number {
+    if (this.refundClaimed || this.stats.killRefundPct <= 0) return 0;
+    this.refundClaimed = true;
+    return Math.round(this.stats.cooldownMs * this.stats.killRefundPct);
   }
 
   private bite(t: SpeechTarget): number {

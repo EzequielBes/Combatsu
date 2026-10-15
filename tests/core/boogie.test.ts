@@ -103,6 +103,13 @@ describe('BOO-07: choque nos dois pontos', () => {
     expect(r.ok && r.shock[0]).toEqual({ targetId: 1, damage: 8, band: 'chip' });
   });
 
+  it('a borda do raio de 40 px entra; 41 px fica de fora', () => {
+    const b = new BoogieState(build({ choque: 3 }));
+    const r = b.swap(ctx([enemy(1, 200), enemy(6, -40), enemy(7, -41, 0)]));
+    expect(r.ok && r.shock.map((h) => h.targetId)).toEqual([1, 6]);
+    expect(r.ok && r.shock[1].damage).toBe(20);
+  });
+
   it('choque 0 não atinge ninguém; orbe e projétil nunca levam choque', () => {
     expect(shockHits([{ x: 0, y: 0 }], 0, 40, [enemy(1, 0)])).toEqual([]);
     const orb: SwapCandidate = { id: 2, kind: 'orb', center: { x: 0, y: 0 } };
@@ -151,7 +158,9 @@ describe('BOO-09: Dupla Palma', () => {
     b.swap(ctx([enemy(1, 100)]));
     expect(b.swap(ctx([], () => true))).toMatchObject({ ok: false, reason: 'noTarget' });
     expect(b.followUpArmed).toBe(true);
-    b.update(1000);
+    b.update(999);
+    expect(b.followUpArmed).toBe(true);
+    b.update(1);
     expect(b.followUpArmed).toBe(false);
   });
 
@@ -212,8 +221,15 @@ describe('BOO-11: Finta Total (Despertar da Palma Falsa)', () => {
     const b = awake();
     expect(b.feint({ x: 0, y: 0 }, [boss(true)])).toMatchObject({ bossCancel: { targetId: 9, maxHpPct: 0.01 } });
     expect(b.feint({ x: 0, y: 0 }, [boss(true)])).toMatchObject({ bossCancel: null });
-    b.update(10000);
+    b.update(9999);
+    expect(b.feint({ x: 0, y: 0 }, [boss(true)])).toMatchObject({ bossCancel: null });
+    b.update(1);
     expect(b.feint({ x: 0, y: 0 }, [boss(true)])).toMatchObject({ bossCancel: { targetId: 9 } });
+  });
+
+  it('chefe a mais de 120 px não é enganado', () => {
+    const far = { id: 9, kind: 'boss' as const, center: { x: 121, y: 0 }, windingUp: true };
+    expect(awake().feint({ x: 0, y: 0 }, [far])).toMatchObject({ bossCancel: null });
   });
 
   it('chefe que não está preparando golpe não gasta a Finta Total', () => {
@@ -255,5 +271,32 @@ describe('BOO-12: Eco da Palma (Despertar da Dupla Palma)', () => {
     b.swap(ctx([enemy(1, 100)]));
     b.swap(ctx([enemy(2, 100)]));
     expect(b.update(1000)).toEqual([]);
+  });
+});
+
+describe('TRL-06: abate com Recarga no 3 corta 30% da recarga da carga em curso', () => {
+  it('o 1º abate da troca corta 360 de 1200 e pode devolver a carga; o 2º não corta', () => {
+    const b = new BoogieState(build({ recarga: 3, cargas: 1 }));
+    expect(b.stats.killRefundPct).toBe(0.3);
+    b.swap(ctx([enemy(1, 100)]));
+    b.update(900);
+    expect(b.charges).toBe(1);
+    expect(b.onTechKill()).toBe(360);
+    expect(b.charges).toBe(2);
+    expect(b.onTechKill()).toBe(0);
+  });
+
+  it('a próxima troca arma de novo; sem o teto de Recarga não corta', () => {
+    const b = new BoogieState(build({ recarga: 3, cargas: 1 }));
+    b.swap(ctx([enemy(1, 100)]));
+    b.onTechKill();
+    b.swap(ctx([enemy(1, 100)]));
+    expect(b.rechargeLeftMs).toBe(840);
+    expect(b.onTechKill()).toBe(360);
+    expect(b.rechargeLeftMs).toBe(480);
+    const c = new BoogieState(build({ recarga: 2 }));
+    c.swap(ctx([enemy(1, 100)]));
+    expect(c.onTechKill()).toBe(0);
+    expect(c.rechargeLeftMs).toBe(1600);
   });
 });

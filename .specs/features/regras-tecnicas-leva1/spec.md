@@ -54,6 +54,8 @@ e Fala).
 | Fala: vida | recusa se a vida não passa do custo (nunca mata o player) | Custo em vida não é suicídio | n |
 | Fala: "Volte" | força 9 para longe; o comum cai; o chefe só recua (força × 0,3) | Chefe não é derrubado por técnica comum | n |
 | Fala: Esmague | o empurrado que bate em parede ou corpo toma 4% (chefe 1%) uma vez; os dois caem, exceto o chefe | "e os dois caem" | n |
+| Recarga no 3º ponto (revisão) | 30% da recarga no 1º abate da conjuração, não por abate. Boogie: corta a recarga da carga em curso (`onTechKill`); Ressonância: a recarga já começa cortada se a detonação mata; Fala: `SpeechCast.claimKillRefund()` devolve os ms para quem guarda a recarga | A 2.1 vale para toda técnica; "por abate" daria mais de 100% com 4 abates | n |
+| Mundo nas regras (revisão) | sondas opcionais vindas do adaptador: `WallProbe` no voo do prego e `lineOfSight` na fala; sem elas, campo aberto | O núcleo não conhece o Matter; o Boogie já recebe o `fits` | n |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -73,6 +75,7 @@ técnicas lerem os pontos do mesmo jeito.
 3. TRL-03: IF a branch is set below level 2 THEN the rule SHALL throw a `RangeError`.
 4. TRL-04: WHEN the branch is set and the level is 5 or more THEN the build SHALL be awakened; otherwise it SHALL NOT.
 5. TRL-05: The proportional bite SHALL be `round(maxHp × pct)` for a common target and `round(maxHp × min(pct, 1%))` for the boss.
+6. TRL-06: WHEN the Recarga axis has 3 points and a hit of the technique kills THEN the first kill of the cast SHALL give back 30% of the cooldown (plano, seção 2.1); below 3 points it SHALL give nothing.
 
 **Independent Test**: `tests/core/axisRule.test.ts`.
 
@@ -120,6 +123,8 @@ de uma vez.
 10. RES-10: WHEN Coroa de Pregos is awakened and 5 or more marks detonate at once THEN a second detonation SHALL hit within 80 px of the marked group's center for one mark plus 4% (boss 1%).
 11. RES-11: WHEN Boneco de Palha is awakened THEN for 3000 ms after the detonation the marked boss SHALL echo 50% of any damage, with poise, and the first echo SHALL bite 1%.
 12. RES-12: Nail spread jitter SHALL come only from a received `Rng`; without it the spread SHALL be even.
+13. RES-13: WHEN the adapter's wall probe reports a solid before any target along the nail's step THEN the nail SHALL drop there with a `nailBlocked` event and no mark.
+14. RES-14: WHILE nails are in flight and no mark is alive, the second tap SHALL do nothing (no detonation, nails keep flying, no cooldown).
 
 **Independent Test**: `tests/core/resonance.test.ts`.
 
@@ -140,6 +145,7 @@ do grupo.
 6. FAL-06: WHILE the branch is "Volte", every target SHALL be pushed away with force 9; the common one SHALL be knocked down and the boss SHALL only recoil (force × 0.3).
 7. FAL-07: WHEN Exploda em Cadeia is awakened and a target stunned by the cast dies THEN it SHALL explode, stunning living neighbors within 70 px for 300 ms (boss 75) with 4% (boss 1%), and the chain SHALL continue.
 8. FAL-08: WHEN Esmague is awakened and a pushed target hits a wall or a body THEN it SHALL take 4% (boss 1%) once and both SHALL fall, except the boss.
+9. FAL-09: WHEN the adapter gives a line-of-sight test and a target in the cone is not in sight THEN the cast SHALL NOT hit it.
 
 **Independent Test**: `tests/core/cursedSpeech.test.ts`.
 
@@ -152,6 +158,9 @@ do grupo.
 - Boogie com Dupla Palma: a 2ª troca recusada não desarma a janela; a janela vence sozinha em 1000 ms.
 - Ressonância: detonar sem marca nenhuma não acontece (o 2º toque só existe com algo vivo); marca vencida não detona.
 - Fala com a vida igual ao custo: recusa.
+- Ressonância: 2º toque logo depois do 1º (pregos no ar, nada cravado) não faz nada (RES-14).
+- Ressonância: o chefe que a própria detonação mata não ganha o eco do Boneco nem a janela do Boneco de Palha.
+- Eixo faltando na entrada (`undefined`) lança `RangeError` no `axisAt`, em vez de virar `NaN`.
 
 ---
 
@@ -164,6 +173,7 @@ do grupo.
 | TRL-03 | P1: Regra comum de eixos | Execute | Verified |
 | TRL-04 | P1: Regra comum de eixos | Execute | Verified |
 | TRL-05 | P1: Regra comum de eixos | Execute | Verified |
+| TRL-06 | P1: Regra comum de eixos | Execute | Verified |
 | BOO-01 | P1: Boogie Woogie | Execute | Verified |
 | BOO-02 | P1: Boogie Woogie | Execute | Verified |
 | BOO-03 | P1: Boogie Woogie | Execute | Verified |
@@ -188,6 +198,8 @@ do grupo.
 | RES-10 | P1: Ressonância | Execute | Verified |
 | RES-11 | P1: Ressonância | Execute | Verified |
 | RES-12 | P1: Ressonância | Execute | Verified |
+| RES-13 | P1: Ressonância | Execute | Verified |
+| RES-14 | P1: Ressonância | Execute | Verified |
 | FAL-01 | P1: Fala Amaldiçoada | Execute | Verified |
 | FAL-02 | P1: Fala Amaldiçoada | Execute | Verified |
 | FAL-03 | P1: Fala Amaldiçoada | Execute | Verified |
@@ -196,8 +208,9 @@ do grupo.
 | FAL-06 | P1: Fala Amaldiçoada | Execute | Verified |
 | FAL-07 | P1: Fala Amaldiçoada | Execute | Verified |
 | FAL-08 | P1: Fala Amaldiçoada | Execute | Verified |
+| FAL-09 | P1: Fala Amaldiçoada | Execute | Verified |
 
-**Coverage:** 37 total, 37 mapped to commits (one per technique; the shared rule ships with Boogie), 0 unmapped.
+**Coverage:** 41 total, 41 mapped to commits (one per technique; the shared rule ships with Boogie; TRL-06, RES-13, RES-14 and FAL-09 ship with the review fix), 0 unmapped.
 
 ---
 

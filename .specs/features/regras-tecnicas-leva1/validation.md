@@ -71,3 +71,18 @@ com typecheck, oxlint e prettier verdes), e os 8 mutantes morreram.
 - `TechId`, `TECHNIQUES` e `GAME_SHOP_CATALOG` não mudaram: nenhum arquivo fora dos novos foi tocado (`git diff --stat 4c0efae..HEAD`).
 - Não há `Math.random`: `tests/core/noMathRandom.test.ts` passa.
 - Arquivos novos fora da lista de exceções do `.oxlintrc.json`, e o oxlint não aponta nada neles.
+
+## Revisão adversarial (depois do `f4e5108`)
+
+Revisor separado do autor, com sensor de mutação próprio (14 mutantes, todos mortos; arquivos restaurados).
+
+| Achado | Correção | Teste |
+| --- | --- | --- |
+| 2º toque com os pregos no ar e nada cravado detonava vazio, apagava os pregos e começava a recarga | `detonate` devolve `null` sem marca viva; `nextTap` só diz `detonate` com marca (RES-14) | `tests/core/resonance.test.ts` "RES-14" |
+| O prego atravessava parede: nada do mundo chegava à regra | `update(dt, alvos, wall?)` com a `WallProbe`; evento `nailBlocked` (RES-13) | "RES-13" |
+| O adaptador não sabia onde estão os pregos no ar nem onde o prego cravou | `nailsView` e `point` no evento `nail` | "RES-03" |
+| Chefe morto pela detonação ganhava eco do Boneco e janela do Boneco de Palha | pula o `killed` | "RES-09" |
+| "Recarga no 3º ponto: o abate devolve 30% da recarga" (plano 2.1) não existia | `killRefundPct` nos stats; `BoogieState.onTechKill`, corte na detonação, `SpeechCast.claimKillRefund` (TRL-06) | "TRL-06" nos 4 arquivos |
+| A fala atravessava parede | `lineOfSight` opcional no `SpeechContext` (FAL-09) | `tests/core/cursedSpeech.test.ts` "FAL-09" |
+| Eixo faltando virava `NaN` | `axisAt` lança `RangeError` | `tests/core/axisRule.test.ts` |
+| Bordas sem teste: choque 40/41 px, janela da Dupla Palma 999 ms, Finta Total 9999 ms e chefe a 121 px, alcance do prego 320/321, Coroa com 4 e 5 marcas e raio 80/81, cadeia a 71 px, Esmague em 800 ms | testes de borda | arquivos acima |

@@ -1,4 +1,13 @@
-import { axisAt, bitePctFor, boxCenter, resolveBuild, type BodyKind, type Box, type TechBuild } from './axisRule';
+import {
+  axisAt,
+  bitePctFor,
+  boxCenter,
+  killRefundPct,
+  resolveBuild,
+  type BodyKind,
+  type Box,
+  type TechBuild,
+} from './axisRule';
 import type { Vec2 } from './hit';
 import {
   pickSwapTarget,
@@ -24,6 +33,8 @@ export interface BoogieStats {
   chargeCooldownMs: number;
   shockDamage: number;
   cost: number;
+  /** TRL-06: fração da recarga devolvida pelo 1º abate da conjuração (0,3 com Recarga no 3, senão 0). */
+  killRefundPct: number;
   signMs: number;
   releaseMs: number;
   recoverMs: number;
@@ -44,6 +55,7 @@ export function boogieStats(build: BoogieBuild): BoogieStats {
     chargeCooldownMs: Math.round(axisAt(BOOGIE.axes.recarga, a.recarga) * capMul),
     shockDamage: axisAt(BOOGIE.axes.choque, a.choque),
     cost: axisAt(BOOGIE.axes.eficiencia, a.eficiencia),
+    killRefundPct: killRefundPct(a.recarga),
     signMs: BOOGIE.signMs,
     releaseMs: BOOGIE.releaseMs,
     recoverMs: BOOGIE.recoverMs,
@@ -145,6 +157,7 @@ export class BoogieState {
   private rechargeLeft = 0;
   private followUpLeft = 0;
   private fintaLeft = 0;
+  private refundArmed = false;
   private echoes: { targetId: number; kind: SwapKind; leftMs: number }[] = [];
 
   constructor(build: BoogieBuild) {
@@ -214,6 +227,7 @@ export class BoogieState {
       this.spendCharge();
       if (this.stats.branch === 'duplaPalma') this.followUpLeft = BOOGIE.doubleWindowMs;
     }
+    this.refundArmed = true;
     const arrival = boxCenter(placement.playerBox);
     return {
       ok: true,
@@ -228,11 +242,26 @@ export class BoogieState {
     };
   }
 
+  /**
+   * TRL-06: o adaptador avisa que um acerto desta técnica (choque, eco, Finta Total) matou. O 1º abate desde a última
+   * troca ou finta corta 30% da recarga da carga em curso (com Recarga no 3). Devolve os ms cortados.
+   */
+  onTechKill(): number {
+    if (!this.refundArmed || this.stats.killRefundPct <= 0) return 0;
+    this.refundArmed = false;
+    if (this._charges >= this.stats.maxCharges) return 0;
+    const cut = Math.round(this.stats.chargeCooldownMs * this.stats.killRefundPct);
+    this.rechargeLeft -= cut;
+    this.tickRecharge(0);
+    return cut;
+  }
+
   /** BOO-10, BOO-11: a Palma Falsa. Gasta carga e energia como a troca, mas ninguém sai do lugar. */
   feint(origin: Vec2, candidates: readonly FeintCandidate[]): BoogieFeint | BoogieRefusal {
     if (this.stats.branch !== 'palmaFalsa') return this.refuse('noBranch');
     if (this._charges <= 0) return this.refuse('noCharge');
     this.spendCharge();
+    this.refundArmed = true;
     const near = candidates.filter(
       (c) => Math.hypot(c.center.x - origin.x, c.center.y - origin.y) <= BOOGIE.feintRadiusPx,
     );

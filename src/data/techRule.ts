@@ -14,6 +14,8 @@ export const TECH_RULE = {
   awakenLevel: 5,
   /** Componente proporcional: fração do HP máximo do comum e teto no chefe. */
   maxHpPct: { enemy: 0.04, boss: 0.01 },
+  /** Recarga no 3º ponto: o abate com a técnica devolve esta fração da recarga, uma vez por conjuração. */
+  killRefund: 0.3,
 } as const;
 
 /** Tabela de um eixo: o valor com 0, 1, 2 e 3 pontos. */

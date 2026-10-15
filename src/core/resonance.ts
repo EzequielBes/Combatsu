@@ -2,6 +2,7 @@ import {
   axisAt,
   bitePctFor,
   boxCenter,
+  killRefundPct,
   maxHpBite,
   resolveBuild,
   type BodyKind,
@@ -25,6 +26,8 @@ export interface ResonanceStats {
   propagationPx: number;
   cost: number;
   cooldownMs: number;
+  /** TRL-06: fração da recarga devolvida quando a detonação mata (0,3 com Recarga no 3, senão 0). */
+  killRefundPct: number;
   signMs: number;
   releaseMs: number;
   recoverMs: number;
@@ -44,6 +47,7 @@ export function resonanceStats(build: ResonanceBuild): ResonanceStats {
     propagationPx: axisAt(RESONANCE.axes.propagacao, a.propagacao),
     cost: axisAt(RESONANCE.axes.eficiencia, a.eficiencia),
     cooldownMs: axisAt(RESONANCE.axes.recarga, a.recarga),
+    killRefundPct: killRefundPct(a.recarga),
     signMs: RESONANCE.signMs,
     releaseMs: RESONANCE.releaseMs,
     recoverMs: RESONANCE.recoverMs,
@@ -65,8 +69,28 @@ export interface MicroHit {
   band: 'micro';
 }
 
+/**
+ * O que o passo devolve: o prego que cravou (com o ponto, para a vista), o que bateu na parede, a explosão do Grampo
+ * e o eco do Boneco.
+ */
 export type ResonanceEvent =
-  ({ type: 'nail' } & MicroHit) | { type: 'grampo'; center: Vec2; hits: MicroHit[] } | ({ type: 'echo' } & MicroHit);
+  | ({ type: 'nail'; point: Vec2 } & MicroHit)
+  | { type: 'nailBlocked'; point: Vec2 }
+  | { type: 'grampo'; center: Vec2; hits: MicroHit[] }
+  | ({ type: 'echo' } & MicroHit);
+
+/**
+ * Sonda do mundo, fornecida pelo adaptador: distância, ao longo do voo horizontal a partir de `from`, até o primeiro
+ * sólido (corpo estático do Matter ou módulo do mundo) dentro de `maxDist`, ou `null` se o trecho está livre.
+ */
+export type WallProbe = (from: Vec2, dir: 1 | -1, maxDist: number) => number | null;
+
+/** Prego no ar, para o adaptador desenhar. */
+export interface NailView {
+  x: number;
+  y: number;
+  dir: 1 | -1;
+}
 
 export interface DetonationHit {
   targetId: number;
@@ -166,14 +190,22 @@ export class ResonanceState {
     return this._phase;
   }
 
-  /** O que a tecla faz agora: lançar, detonar ou nada (recarga). */
+  /**
+   * O que a tecla faz agora: lançar, detonar ou nada. Na fase armada só detona com marca viva: com os pregos ainda no
+   * ar e nada cravado, o toque não faz nada (não apaga os pregos nem gasta a conjuração).
+   */
   get nextTap(): 'throw' | 'detonate' | 'none' {
     if (this._phase === 'ready') return 'throw';
-    return this._phase === 'armed' ? 'detonate' : 'none';
+    return this._phase === 'armed' && this.marks.size > 0 ? 'detonate' : 'none';
   }
 
   get nailsInFlight(): number {
     return this.nails.length;
+  }
+
+  /** Os pregos no ar (cópia), para a vista. */
+  get nailsView(): NailView[] {
+    return this.nails.map(({ x, y, dir }) => ({ x, y, dir }));
   }
 
   get cooldownLeftMs(): number {
@@ -203,11 +235,14 @@ export class ResonanceState {
     return { cost: this.stats.cost };
   }
 
-  /** RES-03, RES-05, RES-08, RES-09: avança pregos, marcas, ecos, janelas e recarga. */
-  update(dtMs: number, targets: readonly ResTarget[]): ResonanceEvent[] {
+  /**
+   * RES-03, RES-05, RES-08, RES-09, RES-13: avança pregos, marcas, ecos, janelas e recarga. Com `wall`, o prego que
+   * chega num sólido antes de um alvo cai ali.
+   */
+  update(dtMs: number, targets: readonly ResTarget[], wall?: WallProbe): ResonanceEvent[] {
     this.tickCooldown(dtMs);
     this.tickMarks(dtMs);
-    const events = this.advanceNails(dtMs, targets);
+    const events = this.advanceNails(dtMs, targets, wall);
     events.push(...this.tickEchoes(dtMs));
     for (const [id, left] of this.straw) {
       if (left - dtMs <= 0) this.straw.delete(id);
@@ -217,15 +252,21 @@ export class ResonanceState {
     return events;
   }
 
-  /** RES-04, RES-06, RES-09, RES-10, RES-11: o 2º toque. `null` fora da fase armada. */
+  /**
+   * RES-04, RES-06, RES-09, RES-10, RES-11, RES-14, TRL-06: o 2º toque. `null` fora da fase armada ou sem marca viva
+   * (nada muda: os pregos seguem no ar). Se a detonação mata, a recarga já começa com o corte do 3º ponto de Recarga.
+   */
   detonate(targets: readonly ResTarget[]): Detonation | null {
-    if (this._phase !== 'armed') return null;
+    if (this._phase !== 'armed' || this.marks.size === 0) return null;
     const { hits, marks } = this.cascade(targets);
     const crown = this.crown(hits, marks, targets);
     this.afterDetonation(hits, targets);
     this.marks.clear();
     this.nails = [];
     this.startCooldown();
+    if (hits.some((h) => h.killed)) {
+      this.cooldownLeft = Math.round(this.stats.cooldownMs * (1 - this.stats.killRefundPct));
+    }
     return { hits, crown };
   }
 
@@ -319,21 +360,26 @@ export class ResonanceState {
     const bosses = new Set(targets.filter((t) => t.kind === 'boss').map((t) => t.id));
     this.strawBitten.clear();
     for (const h of hits) {
-      if (!bosses.has(h.targetId)) continue;
+      if (h.killed || !bosses.has(h.targetId)) continue;
       const damage = Math.round(h.damage * RESONANCE.boneco.echoMul);
       this.echoes.push({ targetId: h.targetId, damage, leftMs: RESONANCE.boneco.echoDelayMs });
       if (this.stats.awakened) this.straw.set(h.targetId, RESONANCE.bonecoDePalha.windowMs);
     }
   }
 
-  private advanceNails(dtMs: number, targets: readonly ResTarget[]): ResonanceEvent[] {
+  private advanceNails(dtMs: number, targets: readonly ResTarget[], wall?: WallProbe): ResonanceEvent[] {
     const events: ResonanceEvent[] = [];
     const flying: Nail[] = [];
     for (const nail of this.nails) {
       const step = Math.min(RESONANCE.nail.speed * (dtMs / 1000), RESONANCE.nail.rangePx - nail.traveled);
-      const hit = this.firstAlong(nail, step, targets);
+      const wallDist = wall?.({ x: nail.x, y: nail.y }, nail.dir, step) ?? null;
+      const hit = this.firstAlong(nail, wallDist ?? step, targets);
       if (hit !== null) {
         events.push(...this.stick(hit.target, { x: nail.x + nail.dir * hit.dist, y: nail.y }, targets));
+        continue;
+      }
+      if (wallDist !== null) {
+        events.push({ type: 'nailBlocked', point: { x: nail.x + nail.dir * wallDist, y: nail.y } });
         continue;
       }
       nail.x += nail.dir * step;
@@ -359,7 +405,7 @@ export class ResonanceState {
   private stick(target: ResTarget, point: Vec2, targets: readonly ResTarget[]): ResonanceEvent[] {
     this.addMark(target.id);
     const events: ResonanceEvent[] = [
-      { type: 'nail', targetId: target.id, damage: RESONANCE.nail.damage, band: 'micro' },
+      { type: 'nail', targetId: target.id, damage: RESONANCE.nail.damage, band: 'micro', point },
     ];
     if (this.stats.branch === 'grampo') {
       const hits = targets

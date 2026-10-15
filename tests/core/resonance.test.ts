@@ -5,6 +5,7 @@ import {
   resonanceStats,
   type ResTarget,
   type ResonanceBuild,
+  type WallProbe,
 } from '../../src/core/resonance';
 import { Rng } from '../../src/core/rng';
 import type { ResonanceAxisId, ResonanceBranchId } from '../../src/data/resonance';
@@ -73,12 +74,13 @@ describe('RES-03: o 1º toque crava os pregos', () => {
     const r = new ResonanceState(build());
     expect(r.nextTap).toBe('throw');
     expect(r.throwNails(ORIGIN, 1)).toEqual({ cost: 25 });
-    expect(r.nextTap).toBe('detonate');
+    expect(r.nextTap).toBe('none'); // pregos no ar, nada cravado ainda
     const events = r.update(400, [tgt(1, 50), tgt(2, 100)]);
+    expect(r.nextTap).toBe('detonate');
     expect(events).toEqual([
-      { type: 'nail', targetId: 1, damage: 3, band: 'micro' },
-      { type: 'nail', targetId: 1, damage: 3, band: 'micro' },
-      { type: 'nail', targetId: 1, damage: 3, band: 'micro' },
+      { type: 'nail', targetId: 1, damage: 3, band: 'micro', point: { x: 40, y: -18 } },
+      { type: 'nail', targetId: 1, damage: 3, band: 'micro', point: { x: 40, y: 0 } },
+      { type: 'nail', targetId: 1, damage: 3, band: 'micro', point: { x: 40, y: 18 } },
     ]);
     expect(r.marksOn(1)).toBe(3);
     expect(r.marksOn(2)).toBe(0);
@@ -90,6 +92,7 @@ describe('RES-03: o 1º toque crava os pregos', () => {
     r.throwNails(ORIGIN, 1);
     expect(r.update(40, [tgt(1, 60)])).toEqual([]); // 36 px, a caixa começa em 50
     expect(r.nailsInFlight).toBe(3);
+    expect(r.nailsView.map((n) => `${n.x},${n.y},${n.dir}`)).toEqual(['36,-18,1', '36,0,1', '36,18,1']);
     expect(r.update(20, [tgt(1, 60)])).toHaveLength(3); // 54 px
   });
 
@@ -168,6 +171,16 @@ describe('RES-05: a janela fecha sem nada vivo', () => {
     expect(r.nailsInFlight).toBe(0);
     expect(r.phase).toBe('cooldown');
     expect(r.cooldownLeftMs).toBe(3000);
+  });
+
+  it('o prego voa 320 px: a caixa que começa em 320 é cravada, a que começa em 321 não', () => {
+    const r = new ResonanceState(build());
+    r.throwNails(ORIGIN, 1);
+    expect(r.update(400, [tgt(1, 330)])).toHaveLength(3);
+    const s = new ResonanceState(build());
+    s.throwNails(ORIGIN, 1);
+    expect(s.update(400, [tgt(1, 331)])).toEqual([]);
+    expect(s.phase).toBe('cooldown');
   });
 
   it('as marcas vencem: a janela fecha', () => {
@@ -264,6 +277,14 @@ describe('RES-09: Boneco', () => {
     expect(r.update(1000, field)).toEqual([]);
   });
 
+  it('o chefe que a detonação mata não ganha eco', () => {
+    const r = new ResonanceState(build({ pregos: 1 }, 'boneco'));
+    const field = [tgt(1, 50, { kind: 'boss', hp: 10 })];
+    throwAndLand(r, field);
+    expect(r.detonate(field)?.hits[0].killed).toBe(true);
+    expect(r.update(250, field)).toEqual([]);
+  });
+
   it('com o Grampo, nada de eco', () => {
     const r = new ResonanceState(build({ pregos: 1 }, 'grampo'));
     const field = [tgt(1, 50, { kind: 'boss' })];
@@ -279,7 +300,8 @@ describe('RES-10: Coroa de Pregos (Despertar do Grampo)', () => {
   it('5+ marcas na mesma detonação: 2ª detonação no centro do grupo, 1 marca + 4% (chefe 1%)', () => {
     const r = awake();
     expect(r.stats).toMatchObject({ level: 5, awakened: true });
-    const field = [tgt(1, 50), tgt(2, -20, { kind: 'boss', maxHp: 2000 }), tgt(3, -200)];
+    // 4 e 5 ficam atrás do alvo 1 (os pregos param nele): caixas a 80 e a 81 px do centro
+    const field = [tgt(1, 50), tgt(2, -20, { kind: 'boss', maxHp: 2000 }), tgt(3, -200), tgt(4, 140), tgt(5, 141)];
     throwAndLand(r, field); // 6 pregos no alvo 1
     const d = r.detonate(field);
     expect(d?.crown).toEqual({
@@ -287,8 +309,21 @@ describe('RES-10: Coroa de Pregos (Despertar do Grampo)', () => {
       hits: [
         { targetId: 1, damage: 28 + 40, band: 'normal' },
         { targetId: 2, damage: 28 + 20, band: 'normal' }, // caixa a 60 px do centro
+        { targetId: 4, damage: 28 + 40, band: 'normal' },
       ],
     });
+  });
+
+  it('4 marcas não soltam a coroa; 5 soltam', () => {
+    // 6 pregos em y −18, −10,8, −3,6, 3,6, 10,8, 18
+    const four = awake();
+    throwAndLand(four, [tgt(1, 50, { y: -22 })]); // caixa de −52 a 8
+    expect(four.totalMarks).toBe(4);
+    expect(four.detonate([tgt(1, 50, { y: -22 })])?.crown).toBeNull();
+    const five = awake();
+    throwAndLand(five, [tgt(1, 50, { y: -15 })]); // caixa de −45 a 15
+    expect(five.totalMarks).toBe(5);
+    expect(five.detonate([tgt(1, 50, { y: -15 })])?.crown).not.toBeNull();
   });
 
   it('quem a 1ª detonação matou fica fora da coroa', () => {
@@ -351,5 +386,65 @@ describe('RES-12: leque dos pregos', () => {
     const b = nailHeights(6, 0, new Rng(7));
     expect(a).toEqual(b);
     nailHeights(6, 0).forEach((y, i) => expect(Math.abs(a[i] - y)).toBeLessThanOrEqual(4));
+  });
+});
+
+describe('RES-13: o prego para na parede', () => {
+  /** Parede vertical em x = `at`, vista pela sonda do adaptador. */
+  const wallAt =
+    (at: number): WallProbe =>
+    (from, dir, maxDist) => {
+      const d = (at - from.x) * dir;
+      return d >= 0 && d <= maxDist ? d : null;
+    };
+
+  it('a parede antes do alvo derruba os pregos ali; sem marca, a janela fecha', () => {
+    const r = new ResonanceState(build());
+    r.throwNails(ORIGIN, 1);
+    const events = r.update(400, [tgt(1, 50)], wallAt(30));
+    expect(events.map((e) => e.type === 'nailBlocked' && `${e.point.x},${e.point.y}`)).toEqual([
+      '30,-18',
+      '30,0',
+      '30,18',
+    ]);
+    expect(r.totalMarks).toBe(0);
+    expect(r.phase).toBe('cooldown');
+  });
+
+  it('o alvo antes da parede é cravado', () => {
+    const r = new ResonanceState(build());
+    r.throwNails(ORIGIN, 1);
+    r.update(400, [tgt(1, 50)], wallAt(70));
+    expect(r.marksOn(1)).toBe(3);
+  });
+});
+
+describe('RES-14: o 2º toque com os pregos no ar e nada cravado não detona', () => {
+  it('devolve null, os pregos seguem e cravam depois', () => {
+    const r = new ResonanceState(build());
+    r.throwNails(ORIGIN, 1);
+    r.update(20, [tgt(1, 100)]);
+    expect(r.detonate([tgt(1, 100)])).toBeNull();
+    expect(r.nailsInFlight).toBe(3);
+    expect(r.phase).toBe('armed');
+    r.update(200, [tgt(1, 100)]);
+    expect(r.detonate([tgt(1, 100)])?.hits).toHaveLength(1);
+  });
+});
+
+describe('TRL-06: abate na detonação com Recarga no 3 corta 30% da recarga', () => {
+  it('1500 vira 1050 com abate; sem abate, ou sem o teto, a recarga é inteira', () => {
+    const kill = new ResonanceState(build({ recarga: 3 }));
+    throwAndLand(kill, [tgt(1, 50)]);
+    kill.detonate([tgt(1, 50, { hp: 10 })]);
+    expect(kill.cooldownLeftMs).toBe(1050);
+    const noKill = new ResonanceState(build({ recarga: 3 }));
+    throwAndLand(noKill, [tgt(1, 50)]);
+    noKill.detonate([tgt(1, 50)]);
+    expect(noKill.cooldownLeftMs).toBe(1500);
+    const base = new ResonanceState(build({ recarga: 2 }));
+    throwAndLand(base, [tgt(1, 50)]);
+    base.detonate([tgt(1, 50, { hp: 10 })]);
+    expect(base.cooldownLeftMs).toBe(1900);
   });
 });
