@@ -100,6 +100,7 @@ export class CombatLinks {
     // não passa por este caminho.
     if (mine) {
       this.s.energy.gain(CE.meleeGain);
+      this.s.runDirector.record.onPlayerHit(hit);
       this.s.build.onMeleeHit();
       if (hit.moveName) this.s.player.hitLanded();
       // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
@@ -269,6 +270,7 @@ export class CombatLinks {
     const dir: 1 | -1 = boss.x >= this.s.player.sprite.x ? 1 : -1;
     this.s.player.finisherPose(dir);
     boss.receiveFinisher();
+    this.s.runDirector.record.addDamage('golpe', damage);
     this.s.snapshot.debugEvents.push('finisher:boss');
     const at = boss.hurtRect();
     // POW-06.7: o finalizador também mostra o número, com os 12% da vida que ele tirou.

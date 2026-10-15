@@ -93,7 +93,7 @@ export default async function ({ page, baseUrl, assert }) {
   let over = await stepAndSnap(100);
   for (let i = 0; i < 20 && over.run.state !== 'gameOver'; i++) over = await stepAndSnap(100);
   assert(over.run.state === 'gameOver', `esperava game over: ${JSON.stringify(over.run)}`);
-  const center = over.hud.center ?? [];
+  const center = over.record.panel.lines;
   assert(
     center.includes(`Fragmentos: ${walletAtDeath}`),
     `game over sem a linha de fragmentos esperada (Fragmentos: ${walletAtDeath}): ${JSON.stringify(center)}`,

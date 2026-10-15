@@ -105,14 +105,17 @@ export default async function ({ page, baseUrl, assert }) {
     return window.__game.snapshot();
   });
   assert(snap.run.state === 'gameOver', `run deveria estar em gameOver: ${JSON.stringify(snap.run)}`);
-  const center = snap.hud.center ?? [];
+  // END-01/02: o painel de fim de run substitui o texto central, que fica vazio.
+  assert(snap.hud.center === null, `END-02: o texto central deveria sumir: ${JSON.stringify(snap.hud.center)}`);
+  const center = snap.record.panel.lines;
+  assert(snap.record.panel.visible, `END-01: o painel de fim deveria aparecer: ${JSON.stringify(snap.record.panel)}`);
   assert(
     center.includes(`Rodada alcançada: ${snap.run.round}`),
     `game over sem a rodada alcançada: ${JSON.stringify(center)}`,
   );
   assert(center.includes(`Abates: ${snap.run.kills}`), `game over sem os abates: ${JSON.stringify(center)}`);
   assert(
-    center.includes('J / Enter para tentar de novo'),
+    center.at(-1) === 'J / Enter para tentar de novo',
     `game over sem a chamada para tentar de novo: ${JSON.stringify(center)}`,
   );
 }

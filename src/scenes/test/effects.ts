@@ -5,6 +5,7 @@ import { Hitstop } from '../../core/hitstop';
 import { SlowMo } from '../../core/slowMo';
 import { HIT_BAND_FEEL } from '../../data/feel';
 import { HITSTOP_MS } from '../../data/fx';
+import type { TechId } from '../../data/techniques';
 import type { Hittable } from '../../game/bodyTags';
 import { MAX_FRAME_MS } from '../../game/physics';
 import type { TestScene } from '../TestScene';
@@ -39,9 +40,11 @@ export class EffectsDirector {
    * frequente: o chip só risca a faísca pequena, sem hitstop nem `freeze`; o micro ganha 15/20 ms enquanto o teto
    * deixa (a faísca média sai mesmo com o teto cheio). Nenhuma das duas treme a câmera. Todo acerto, de qualquer
    * faixa, mostra no alvo o dano que ele levou (o chefe em `stagger` leva ×1,5, BFX-05), com o tipo da faixa (`tech`,
-   * `micro` ou `chip`, POW-06.7).
+   * `micro` ou `chip`, POW-06.7). O dano entra no registro da run pela técnica de origem, antes da faixa (DMG-02; o
+   * Kokusen chega como `divergente`, DMG-07).
    */
-  onTechConnect(hit: Hit, point: Vec2, target: Hittable): void {
+  onTechConnect(hit: Hit, point: Vec2, target: Hittable, source: TechId): void {
+    this.s.runDirector.record.onTechHit(source, hit.damage);
     this.s.ui.damageNumbers.show(target, target.lastDamageTaken ?? hit.damage, techKind(hit.band), point);
     if (hit.band === 'chip') {
       this.s.fx.spark(point.x, point.y, hit.strength, HIT_BAND_FEEL.chip.sparkSize);

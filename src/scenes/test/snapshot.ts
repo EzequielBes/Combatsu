@@ -165,6 +165,7 @@ export class DebugSnapshot {
       build: this.s.build.snapshot(),
       arsenal: this.s.arsenal.snapshot(),
       vows: this.s.vows.snapshot(),
+      record: this.s.runDirector.record.snapshot(),
       pickups: this.s.pickups.debug(),
       floatTexts: this.s.floatTexts.debug(),
       ...this.s.stats.snapshotFields(),

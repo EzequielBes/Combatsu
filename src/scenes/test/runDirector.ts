@@ -10,6 +10,7 @@ import { ECONOMY, ELIXIR, RUN } from '../../data/tuning';
 import { isDebug } from '../../game/debug';
 import { CAMERA_FEEL } from '../../data/feel';
 import { debugParam, debugIntParam, isDroppedTool } from './params';
+import { RecordDirector } from './recordDirector';
 import type { TestScene } from '../TestScene';
 
 /** Duração (ms) do banner do upgrade grátis do chefe: o fim da faixa "Chefe derrotado!", sem atrasar "Rodada N concluída" (BFX-10). */
@@ -17,7 +18,12 @@ export const BOSS_UPGRADE_BANNER_MS = 800;
 
 /** Diretor da run e das rodadas: comandos da `Run`, nova run, banners, maestria e overrides de debug. */
 export class RunDirector {
-  constructor(readonly s: TestScene) {}
+  /** Recorde da sessão: carga do save, marcador `Recorde: rN` e painel de fim de run (REC-*, RMK-*, END-*). */
+  readonly record: RecordDirector;
+
+  constructor(readonly s: TestScene) {
+    this.record = new RecordDirector(s);
+  }
 
   /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
   bossDefeatedPending = false;
@@ -49,6 +55,7 @@ export class RunDirector {
   applyRunCommand(cmd: RunCommand): void {
     // Mundo modular (ARE-09..11, TRV-03, KON-01/03): o `AreaDirector` reconstrói a área antes do tratamento de hoje; na sala é inerte.
     this.s.area.onCommand(cmd);
+    this.record.onCommand(cmd);
     switch (cmd.type) {
       case 'startRun':
         this.onStartRun();
@@ -64,7 +71,7 @@ export class RunDirector {
       case 'roundStart':
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
         this.s.hud.setCenter(null);
-        this.s.hud.banner(`Rodada ${cmd.round}`, RUN.bannerMs);
+        this.s.hud.banner(this.record.roundBanner(cmd.round), RUN.bannerMs);
         // ARS-09/10: a arma vinculada (ou a ferramenta comprada) entra na mão com a área já montada.
         this.s.arsenal.onRoundStart();
         break;
@@ -81,14 +88,6 @@ export class RunDirector {
         // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
         if (debugParam('noshop') === '1') this.s.run.closeShop();
         else this.s.shopDirector.openShop(cmd.round);
-        break;
-      case 'gameOver':
-        this.s.hud.setCenter([
-          `Rodada alcançada: ${cmd.round}`,
-          `Abates: ${cmd.kills}`,
-          `Fragmentos: ${this.s.wallet.fragments}`,
-          'J / Enter para tentar de novo',
-        ]);
         break;
     }
   }
