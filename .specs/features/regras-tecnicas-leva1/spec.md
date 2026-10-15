@@ -188,14 +188,14 @@ do grupo.
 | RES-10 | P1: Ressonância | Execute | Implementing |
 | RES-11 | P1: Ressonância | Execute | Implementing |
 | RES-12 | P1: Ressonância | Execute | Implementing |
-| FAL-01 | P1: Fala Amaldiçoada | Execute | Pending |
-| FAL-02 | P1: Fala Amaldiçoada | Execute | Pending |
-| FAL-03 | P1: Fala Amaldiçoada | Execute | Pending |
-| FAL-04 | P1: Fala Amaldiçoada | Execute | Pending |
-| FAL-05 | P1: Fala Amaldiçoada | Execute | Pending |
-| FAL-06 | P1: Fala Amaldiçoada | Execute | Pending |
-| FAL-07 | P1: Fala Amaldiçoada | Execute | Pending |
-| FAL-08 | P1: Fala Amaldiçoada | Execute | Pending |
+| FAL-01 | P1: Fala Amaldiçoada | Execute | Implementing |
+| FAL-02 | P1: Fala Amaldiçoada | Execute | Implementing |
+| FAL-03 | P1: Fala Amaldiçoada | Execute | Implementing |
+| FAL-04 | P1: Fala Amaldiçoada | Execute | Implementing |
+| FAL-05 | P1: Fala Amaldiçoada | Execute | Implementing |
+| FAL-06 | P1: Fala Amaldiçoada | Execute | Implementing |
+| FAL-07 | P1: Fala Amaldiçoada | Execute | Implementing |
+| FAL-08 | P1: Fala Amaldiçoada | Execute | Implementing |
 
 **Coverage:** 37 total, 37 mapped to commits (um por técnica; a regra comum entra com o Boogie), 0 unmapped.
 
