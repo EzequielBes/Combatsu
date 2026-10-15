@@ -235,9 +235,9 @@ leem `this.t.cycles`; `BOSS.cycles` em `data/tuning.ts` guarda os ciclos de hoje
 
 **Done when**:
 
-- [ ] `tests/core/bossAffix.test.ts` (novo): sequência de `run.bossAffixRng` igual a `new Rng(seed ^ 0x9b05688c)`;
+- [x] `tests/core/bossAffix.test.ts` (novo): sequência de `run.bossAffixRng` igual a `new Rng(seed ^ 0x9b05688c)`;
       run nova cria outro objeto `Rng`; salt diferente dos 10 existentes
-- [ ] `tests/core/run.test.ts` intacto; gate verde
+- [x] `tests/core/run.test.ts` intacto; gate verde
 
 **Tests**: unit
 **Gate**: quick
