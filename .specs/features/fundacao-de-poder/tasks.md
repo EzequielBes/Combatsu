@@ -665,9 +665,9 @@ inteiro positivo.
 
 **Done when**:
 
-- [ ] `tests/core/modsParam.test.ts`: `forca:5` e `forca:5,vida:2`; `null` e vazio dão `[]`; `xx:2`, `forca:-1`,
+- [x] `tests/core/modsParam.test.ts`: `forca:5` e `forca:5,vida:2`; `null` e vazio dão `[]`; `xx:2`, `forca:-1`,
       `forca:0`, `forca:1.5` e `forca:` somem e o resto vale
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (3061 em 155 arquivos: +14)
 
 **Tests**: unit
 **Gate**: quick
