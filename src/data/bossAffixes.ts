@@ -77,7 +77,8 @@ export const BOSS_AFFIX = {
     damageMult: 1.5,
     extraProjectiles: 1,
     name: { m: 'Portador de Dedo', f: 'Portadora de Dedo' } as GenderedName,
-    glyph: 'R',
+    // Branco, não vermelho: ao lado do Sangue (`r`) os dois vermelhos se confundiam.
+    glyph: 'w',
   },
   /** Com Ígneo e Invocador juntos, o contorno alterna a cada tanto (BRD-03). */
   outlineSwapMs: 600,

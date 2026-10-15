@@ -7,12 +7,12 @@ import { BOSS_BAR_WIDTH, MARGIN, RUN_TEXT_STYLE } from '../Hud';
 const GLYPH_SIZE = 6;
 /** Espaço entre dois glifos vizinhos. */
 const GLYPH_GAP = 2;
-/** Espaço entre a ponta direita da barra do chefe e o primeiro glifo. */
-const BAR_GAP = 5;
+/** Espaço entre a barra do chefe e o 1º glifo: o do Ígneo tem a cor da barra e, colado nela, parecia um pedaço dela. */
+const BAR_GAP = 8;
 /** Topo do glifo: centrado na barra de 12 px que começa em `MARGIN`. */
 const GLYPH_Y = MARGIN + 3;
-/** Borda escura de 1 px, para o glifo claro (Portador, Ígneo) não sumir no cenário. */
-const GLYPH_EDGE_COLOR = PALETTE.k;
+/** Borda clara de 1 px: a escura (`k`) sumia no céu escuro, e esta separa o glifo do Ígneo da barra laranja. */
+const GLYPH_EDGE_COLOR = PALETTE.S;
 /** Mesma profundidade da barra do chefe no `Hud`. */
 const UI_DEPTH = 100;
 /** Topo do aviso "Próximo:" na loja: logo abaixo da área da barra do chefe (12 px de barra a partir de `MARGIN`). */

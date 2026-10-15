@@ -155,7 +155,7 @@ describe('Rótulos do chefe: barra e aviso da loja (BRD-01, BRD-04)', () => {
 describe('Glifos ao lado da barra (BRD-02)', () => {
   it('um glifo por afixo, na ordem da escalação, mais o R do Portador', () => {
     expect(glyphKeys({ affixes: ['sangue', 'igneo'], finger: false })).toEqual(['r', 'a']);
-    expect(glyphKeys({ affixes: ['adaptativo', 'invocador'], finger: true })).toEqual(['A', 'u', 'R']);
+    expect(glyphKeys({ affixes: ['adaptativo', 'invocador'], finger: true })).toEqual(['A', 'u', 'w']);
     expect(glyphKeys({ affixes: [], finger: false })).toEqual([]);
   });
 });

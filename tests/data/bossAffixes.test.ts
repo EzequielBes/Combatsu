@@ -65,7 +65,7 @@ describe('cores dos afixos vêm da PALETTE (BRD-07)', () => {
   it('usa as cores da spec: contorno a/u, glifos a/u/r/A e R do Portador', () => {
     expect(BOSS_AFFIX_IDS.map((id) => BOSS_AFFIXES[id].outline)).toEqual(['a', 'u', null, null]);
     expect(BOSS_AFFIX_IDS.map((id) => BOSS_AFFIXES[id].glyph)).toEqual(['a', 'u', 'r', 'A']);
-    expect(BOSS_AFFIX.finger.glyph).toBe('R');
+    expect(BOSS_AFFIX.finger.glyph).toBe('w');
   });
 
   it('a regra do teste pega uma chave que não existe', () => {

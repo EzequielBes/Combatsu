@@ -96,7 +96,7 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   `beam { warnMs: 800, activeMs: 250, damage: 16, thickness: [1, 6], height: 10 }`, `adapt { windowMs: 20000,
   minHits: 5, maxAdapted: 2, forgetMs: 10000, mult: 0.5 }`, `finger { fromRound: 10, chance: 0.1, scale: 1.25,
   hpMult: 1.3, damageMult: 1.5, extraProjectiles: 1, name: { m: 'Portador de Dedo', f: 'Portadora de Dedo' },
-  glyph: 'R' }`, `outlineSwapMs: 600`, `adaptLabels` ("Leve", "Forte", "Divergente", "Vermelho", "Azul", "Corte",
+  glyph: 'w' }`, `outlineSwapMs: 600`, `adaptLabels` ("Leve", "Forte", "Divergente", "Vermelho", "Azul", "Corte",
   "Roxo").
 
 ### `data/tuning.ts` (`BOSS`, linhas 330-379)

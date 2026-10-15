@@ -112,7 +112,7 @@ export default async function ({ page, baseUrl, assert }) {
   expectBar(
     full,
     'Tecelã de Maldições · Sangue Convergente · Adaptativa · Portadora de Dedo',
-    ['r', 'A', 'R'],
+    ['r', 'A', 'w'],
     'tecela completa',
   );
   await page.evaluate(() => window.__game.render());
