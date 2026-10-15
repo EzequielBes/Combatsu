@@ -349,7 +349,7 @@ async function fullBuildPanel(ctx, startAndDie) {
   const { assert } = ctx;
   const perks = 'punhoPesado,executor,refluxo,condutor,passoSombrio,contraAfiado';
   const vows = 'semGuarda,pactoDoFeiticeiro,fluxoSelado,curaProibida,ganancia';
-  const query = `tech=azul:3,vermelho:3&perks=${perks}&vows=${vows}&arsenal=manoplas,bastao`;
+  const query = `tech=azul:3,vermelho&axes=vermelho.potencia:2&perks=${perks}&vows=${vows}&arsenal=manoplas,bastao`;
   const snap = await startAndDie(query);
   const { lines, bounds } = snap.record.panel;
   for (const prefix of ['Técnicas: ', 'Passivas: ', 'Arsenal: ', 'Votos: '])

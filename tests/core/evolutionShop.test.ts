@@ -9,11 +9,15 @@ import { eligible } from '../../src/core/shopEligibility';
 import { Wallet } from '../../src/core/wallet';
 import { GAME_SHOP_CATALOG } from '../../src/data/shop';
 import type { TechId } from '../../src/data/techniques';
+import { equipRed } from './redLevel';
 
 function loadoutWith(a: [TechId, 1 | 2 | 3] | null, b: [TechId, 1 | 2 | 3] | null): Loadout {
   const lo = new Loadout();
-  if (a) lo.equip(0, a[0], a[1]);
-  if (b) lo.equip(1, b[0], b[1]);
+  for (const [slot, pick] of [a, b].entries()) {
+    if (!pick) continue;
+    if (pick[0] === 'vermelho') equipRed(lo, slot as 0 | 1, pick[1]);
+    else lo.equip(slot as 0 | 1, pick[0], pick[1]);
+  }
   return lo;
 }
 

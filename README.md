@@ -85,7 +85,9 @@ Parâmetros da URL, todos junto de `?debug`:
 | `enemyAttack=white\|red\|low` | forçar o tipo do golpe dos inimigos (alto, imbloqueável, baixo) |
 | `enemyString=1..4` | forçar quantos golpes seguidos o inimigo dá |
 | `shove=N` | chance (0 a 1) de o inimigo empurrar no 4º golpe leve seguido |
-| `tech=<id>[,<id>]` | começar com técnicas equipadas (`divergente`, `vermelho`, `azul`, `corte`) |
+| `tech=<id>[:N][,<id>[:N]]` | começar com técnicas equipadas (`divergente`, `vermelho`, `azul`, `corte`), no nível N (1 a 3; 1 sem ele). `vermelho:N` não muda o nível do Vermelho: o nível dele é o dos eixos, pelo `axes=` |
+| `axes=<item>.<eixo>:<n>[,...]` | começar com pontos de eixo, ponto a ponto, parando no teto (3 por eixo, 5 por item; nível = 1 + pontos). Vermelho (`potencia`, `escala`, `conjuracao`, `eficiencia`, `recarga`, `perfuracao`), só com o `tech=vermelho` junto; Corpo (`impacto`, `peso`, `ritmo`, `alcance`, `fluxo`, `furia`). Item, eixo ou nível que não é inteiro positivo é ignorado. Ex.: `tech=vermelho&axes=vermelho.potencia:3,vermelho.escala:2` |
+| `ramo=<item>:<a\|b>[,...]` | escolher o ramo (precisa do Nv 2 pelo `axes=`): `vermelho:a` Ricochete, `vermelho:b` Contido, `corpo:a` Cadência, `corpo:b` Onda do Punho. Com Nv 5 o Despertar já começa ligado |
 | `fragments=N` | começar com N fragmentos |
 | `arsenal=<id>[,<id>]` | começar com itens do arsenal; repetir o id sobe o nível (`manoplas`, `faixas`, `rosario`, `bastao`, `lamina`, `faca`, `porrete`) |
 | `mods=<id>:<n>[,<id>:<n>]` | começar com modificadores da loja já comprados (`vida`, `forca`, `agilidade`, `ima`, `sorte`), parando no nível máximo; id desconhecido ou nível que não é inteiro positivo é ignorado. `vida:N` sobe a vida máxima sem curar |

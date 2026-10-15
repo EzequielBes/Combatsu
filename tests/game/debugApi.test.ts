@@ -173,7 +173,21 @@ describe('installDebugApi', () => {
       wallet: { fragments: 4 },
       shop: { open: false, offers: [], rerollCost: 0, selected: 0, panel: null },
       modifiers: { vida: 0, forca: 0, agilidade: 0, ima: 0, sorte: 0 },
-      build: { build: null, points: { lutador: 0, feiticeiro: 0, veloz: 0 }, perks: [], shadowArmed: false },
+      build: {
+        build: null,
+        points: { lutador: 0, feiticeiro: 0, veloz: 0 },
+        perks: [],
+        shadowArmed: false,
+        vermelho: null,
+        corpo: {
+          level: 1,
+          axes: { impacto: 0, peso: 0, ritmo: 0, alcance: 0, fluxo: 0, furia: 0 },
+          branch: null,
+          awakened: false,
+          fury: { stacks: 0, bonus: 0 },
+          cadence: 0,
+        },
+      },
       arsenal: { relic: null, relicLevel: 0, weapon: null, weaponLevel: 0, tool: null },
       vows: {
         taken: [],

@@ -9,6 +9,7 @@ import { Wallet } from '../../src/core/wallet';
 import { CursedEnergy, cursedEnergyRegenAtLevel } from '../../src/core/energy';
 import { FULL_SHOP_CATALOG, type ShopEntry } from '../../src/data/shop';
 import type { TechId } from '../../src/data/techniques';
+import { equipRed } from './redLevel';
 
 const technique = (id: string): ShopEntry => {
   const found = FULL_SHOP_CATALOG.find((e) => e.id === id);
@@ -59,7 +60,7 @@ describe('TSH-02: custo = base + step × nível atual (0 se não equipada)', () 
 
   it('Shop.view reporta o custo real: vermelho equipada no nível 2 custa 30 + 15×2 = 60', () => {
     const loadout = new Loadout();
-    loadout.equip(0, 'vermelho', 2);
+    equipRed(loadout, 0, 2);
     const shop = new Shop([technique('vermelho')], new Modifiers(FULL_SHOP_CATALOG), fakeRng([0]), 6, loadout);
     const wallet = new Wallet();
     wallet.add(200);

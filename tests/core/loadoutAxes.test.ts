@@ -119,17 +119,18 @@ describe('Vermelho que sai do slot leva os pontos (evolução)', () => {
   });
 });
 
-describe('ponte da T14: tech=vermelho:N vira N − 1 pontos no eixo-foco', () => {
+describe('VRM-02: o equip grava o Vermelho no Nv 1 e ignora o nível pedido (o nível é o dos eixos)', () => {
   it.each([1, 2, 3] as const)('equip no Nv %i', (lv) => {
     const loadout = new Loadout();
     expect(loadout.equip(0, 'vermelho', lv)).toBe(true);
-    expect(loadout.levelOf('vermelho')).toBe(lv);
-    expect(loadout.axes.points('vermelho', 'potencia')).toBe(lv - 1);
+    expect(loadout.levelOf('vermelho')).toBe(1);
+    expect(loadout.axes.total('vermelho')).toBe(0);
   });
 
   it('equipar no outro slot recusa sem mudar os pontos (TEC-04)', () => {
     const loadout = new Loadout();
-    loadout.equip(0, 'vermelho', 2);
+    loadout.equip(0, 'vermelho');
+    loadout.axes.add('vermelho', 'potencia');
     expect(loadout.equip(1, 'vermelho', 3)).toBe(false);
     expect(loadout.levelOf('vermelho')).toBe(2);
   });

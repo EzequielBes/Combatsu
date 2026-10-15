@@ -22,6 +22,7 @@ import {
 } from '../../src/data/techAxes';
 import { CE, TECH_GEOMETRY } from '../../src/data/techniques';
 import type { AxisTable } from '../../src/data/techRule';
+import { equipRed } from '../core/redLevel';
 
 /** Lê a linha inteira pelo `axisAt`, como o jogo lê: 0, 1, 2 e 3 pontos. */
 const row = <T>(table: AxisTable<T>): T[] => [0, 1, 2, 3].map((p) => axisAt(table, p));
@@ -245,22 +246,19 @@ describe('VRM-01: o Vermelho sem ponto de eixo', () => {
     expect(red(new AxisBuild(), lv, MUL, VOW)).toEqual(red(new AxisBuild(), 1, MUL, VOW));
   });
 
-  it.each([1, 2, 3] as const)(
-    'Loadout.stats com o Vermelho equipado no Nv %i = Nv − 1 pontos de Potência (ponte da T14)',
-    (lv) => {
-      const loadout = new Loadout();
-      loadout.equip(0, 'vermelho', lv);
-      loadout.damageMul = MUL;
-      loadout.vowDamageMul = VOW;
-      const expected = new AxisBuild();
-      for (let i = 1; i < lv; i++) expected.add('vermelho', 'potencia');
-      expect(loadout.stats('vermelho')).toEqual(red(expected, 1, MUL, VOW));
-      expect(loadout.cost('vermelho')).toBe(30);
-      loadout.startCooldown(0);
-      expect(loadout.cooldownOf(0)).toBe(4500);
-      expect(loadout.damage('vermelho', 10)).toBe(Math.round(10 * MUL * VOW));
-    },
-  );
+  it.each([1, 2, 3] as const)('Loadout.stats com Nv − 1 pontos de Potência no Vermelho (Nv %i)', (lv) => {
+    const loadout = new Loadout();
+    equipRed(loadout, 0, lv);
+    loadout.damageMul = MUL;
+    loadout.vowDamageMul = VOW;
+    const expected = new AxisBuild();
+    for (let i = 1; i < lv; i++) expected.add('vermelho', 'potencia');
+    expect(loadout.stats('vermelho')).toEqual(red(expected, 1, MUL, VOW));
+    expect(loadout.cost('vermelho')).toBe(30);
+    loadout.startCooldown(0);
+    expect(loadout.cooldownOf(0)).toBe(4500);
+    expect(loadout.damage('vermelho', 10)).toBe(Math.round(10 * MUL * VOW));
+  });
 });
 
 /** O que cada eixo muda no stat resolvido com `n` pontos, com dano × 1,35 × 1,2 e custo × 1. */

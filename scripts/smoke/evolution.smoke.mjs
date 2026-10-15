@@ -32,9 +32,12 @@ export default async function ({ page, baseUrl, assert }) {
   };
 
   // EVO-01: vence a rodada na sala; a loja abre com o Vazio Roxo entre as ofertas, por 60 fragmentos.
-  let s = await open('area=sala&tech=azul:3,vermelho:3&fragments=200&maxAlive=2&regen=0');
+  let s = await open('area=sala&tech=azul:3,vermelho&axes=vermelho.potencia:2&fragments=200&maxAlive=2&regen=0');
   assert(
-    s.tech.slots[0]?.id === 'azul' && s.tech.slots[0]?.level === 3 && s.tech.slots[1]?.id === 'vermelho',
+    s.tech.slots[0]?.id === 'azul' &&
+      s.tech.slots[0]?.level === 3 &&
+      s.tech.slots[1]?.id === 'vermelho' &&
+      s.tech.slots[1]?.level === 3,
     `tech com nível do debug: ${JSON.stringify(s.tech.slots)}`,
   );
   for (let i = 0; i < 400 && s.run.state !== 'shop'; i++) {

@@ -70,9 +70,8 @@ export class Loadout {
 
   /**
    * Equipa `id` em `slot` no nível `level` (TEC-03). Recusa e não muda nada (TEC-05) se `level` sair de 1–3, e
-   * recusa (TEC-04, TEC-13) se `id` já estiver no outro slot. O Vermelho grava sempre Nv 1 no slot: o nível dele é o
-   * dos eixos. Ponte da T14 até a T23 (`axes=` no debug): o `level` do Vermelho vira `level − 1` pontos no eixo-foco,
-   * para o `tech=vermelho:3` do smoke `evolution` seguir com o Vermelho no Nv 3.
+   * recusa (TEC-04, TEC-13) se `id` já estiver no outro slot. O Vermelho grava sempre Nv 1 no slot e ignora o
+   * `level`: o nível dele é o dos eixos (VRM-02), que o debug põe pelo `axes=` (VRM-10).
    */
   equip(slot: 0 | 1, id: TechId, level: TechLevel = 1): boolean {
     if (level < 1 || level > 3) return false;
@@ -80,7 +79,6 @@ export class Loadout {
     if (this.slots[other]?.id === id) return false;
     if (this.slots[slot]?.id === 'vermelho') this.axes.resetItem('vermelho');
     this.slots[slot] = { id, level: id === 'vermelho' ? 1 : level };
-    if (id === 'vermelho') for (let i = 1; i < level; i++) this.upgrade(id);
     return true;
   }
 

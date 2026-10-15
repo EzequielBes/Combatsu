@@ -772,7 +772,17 @@ viram a constante `RED_ORB_STOPS`; o mapa do `art/index.ts` sobe para o escopo d
 `build.applyDebugAxes()` depois do `equipDebugTech()`; `build.snapshot()` ganha `vermelho` e `corpo` com os tipos de
 `game/axisSnapshot.ts` (novo) e o literal do `tests/game/debugApi.test.ts`; sai a ponte da T14 (`equip` grava Nv 1) e
 o smoke `evolution` passa a `tech=azul:3,vermelho&axes=vermelho.potencia:2`; `README.md` ganha `axes=` e `ramo=` e a
-nota de que `tech=vermelho:N` não muda o nível; nasce `scripts/smoke/red-axes.smoke.mjs`.
+nota de que `tech=vermelho:N` não muda o nível; nasce `scripts/smoke/red-axes.smoke.mjs`. Como ficou: o
+`applyDebug` compra ponto a ponto pelo `applyAxis` (por isso o `axes=` também emite `axis:`, `branchPending:` e
+`awaken:`) e grava o ramo pelo mesmo caminho do `confirmBranch` (eventos `branch:<item>:<ramo>` e, no Nv 5,
+`awaken:<item>`); o `announce` já mostra o banner e a câmera lenta, e a T35 só o chama da soltura; o `choicePages`
+devolve o `ChoicePage` (`{ item, options }`, com os nomes dos ramos), que mora em `game/axisSnapshot.ts` junto dos
+tipos do snapshot (o `ChoiceSnapshot` e o `DifficultySnapshot` entram com as tarefas que os usam); o `build.corpo`
+sai do `AxisBuild` com a Fúria e a Cadência zeradas até a T43. Sem a ponte, os testes que equipavam o Vermelho no
+Nv 2 ou 3 (`evolution`, `evolutionShop`, `techShop`, `redOrb`, `techAxes`) usam o `equipRed` de
+`tests/core/redLevel.ts` (Nv N = N − 1 pontos de Potência), o bloco da ponte do `loadoutAxes.test.ts` passa a provar
+que o `equip` grava o Nv 1, e o smoke `record-end` também troca o `tech=vermelho:3` pelo `axes=`. Teste de unidade
+novo: `tests/scenes/axisDirector.test.ts` (cena falsa, `debugParam` simulado).
 **Where**: `src/scenes/test/axisDirector.ts`
 **Depends on**: T14, T20
 **Reuses**: `debugParam` (`scenes/test/params.ts`), `parseAxesParam`, `parseBranchParam`
@@ -780,13 +790,13 @@ nota de que `tech=vermelho:N` não muda o nível; nasce `scripts/smoke/red-axes.
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs` (cenário 1), `?debug&hd=1&area=modular&seed=1&maxAlive=3&tech=vermelho`: com
+- [x] `red-axes.smoke.mjs` (cenário 1), `?debug&hd=1&area=modular&seed=1&maxAlive=3&tech=vermelho`: com
       `axes=vermelho.potencia:3,vermelho.escala:2` → `build.vermelho.level` 6, `stats.radius` 144, `stats.touch` 45;
       com `axes=vermelho.recarga:3,vermelho.conjuracao:2` → `tech.slots[0].cooldownMs` 2300 logo depois do `techCast`;
       `axes=vermelho.potencia:4` fica em 3; `ramo=vermelho:a` → `branch` `'ricochete'` (VRM-10, VRM-18)
-- [ ] `axes=vermelho.potencia:1` chegando ao Nv 2 emite `branchPending:vermelho` (VRM-11)
-- [ ] Smokes `evolution`, `boot`, `no-debug`, `red-axes` verdes; `TestScene.ts` intocado
-- [ ] Gate verde; contagem sem perda
+- [x] `axes=vermelho.potencia:1` chegando ao Nv 2 emite `branchPending:vermelho` (VRM-11)
+- [x] Smokes `evolution`, `boot`, `no-debug`, `red-axes` verdes (e o `record-end`); `TestScene.ts` intocado
+- [x] Gate verde; contagem sem perda (4049 + 8 = 4057)
 
 **Tests**: smoke
 **Gate**: full

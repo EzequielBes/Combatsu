@@ -13,6 +13,7 @@ import { Loadout } from '../../src/core/loadout';
 import { RED_BASE, resolveTechStats } from '../../src/core/techStats';
 import { RED_AXES } from '../../src/data/techAxes';
 import { TECHNIQUES } from '../../src/data/techniques';
+import { equipRed } from './redLevel';
 
 /** O orbe do Vermelho Nv 1 sem multiplicadores, como o adaptador o constrói na soltura (TST-02). */
 const RED_LV1 = redOrbConfig(resolveTechStats({ id: 'vermelho', level: 1, damageMul: 1, vowDamageMul: 1, costMul: 1 }));
@@ -259,9 +260,9 @@ describe('TST-02: o orbe lê voo, raio e danos do RedOrbConfig tirado do TechSta
     expect(RED_LV1).toEqual({ speed: 760, rangePx: 320, radius: 96, touch: 30, detonation: 25 });
   });
 
-  it('o dano já vem escalado como o Loadout.damage (Nv 3 = Potência 2 na ponte da T14, Rosário 1,35 e voto 1,35)', () => {
+  it('o dano já vem escalado como o Loadout.damage (Nv 3 = Potência 2, Rosário 1,35 e voto 1,35)', () => {
     const loadout = new Loadout();
-    loadout.equip(0, 'vermelho', 3);
+    equipRed(loadout, 0, 3);
     loadout.damageMul = 1.35;
     loadout.vowDamageMul = 1.35;
     const config = redOrbConfig(loadout.stats('vermelho'));

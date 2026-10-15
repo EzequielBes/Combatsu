@@ -480,7 +480,7 @@ O `redOrbFxSource.test.ts` lê o fonte de `RedOrb.ts` e `redDetonation.ts` (`?ra
 | `src/scenes/test/snapshot.ts` | 235-242 | `level: number`; `mastery.threshold(level)` |
 | `src/game/debugApi.ts` | 335, 383-384, 391 | `build` vira `BuildSnapshot` (de `game/axisSnapshot.ts`); `level: number`; a entrada `red` de `techObjects` ganha `sensorPx` e `texture` (L-043) |
 | `src/game/tech/red.ts` | 58-62 | `snapshot` lê `body.circleRadius` e `view.texture.key` do orbe vivo |
-| `src/game/axisSnapshot.ts` (novo) | — | `RedBuildSnapshot`, `BodyBuildSnapshot`, `BuildSnapshot`, `ChoiceSnapshot`, `DifficultySnapshot` |
+| `src/game/axisSnapshot.ts` (novo) | — | `RedBuildSnapshot`, `BodyBuildSnapshot`, `BuildSnapshot`, `ChoicePage` (T23); `ChoiceSnapshot`, `DifficultySnapshot` (com as tarefas que os usam) |
 | `README.md` | 88-92 | `axes=` e `ramo=` na tabela de parâmetros (perto do `tech=` e do `mods=`); nota de que `tech=vermelho:N` não muda o nível |
 
 `TestScene`: 0.

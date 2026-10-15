@@ -4,6 +4,7 @@ import type { AdaptSource } from '../core/bossAdapt';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { BossAffixId } from '../data/bossAffixes';
+import type { BuildSnapshot } from './axisSnapshot';
 import type { AdaptWheelView } from './boss/AdaptWheel';
 import type { AffixOutlineView } from './boss/AffixOutline';
 import type { BeamView } from './boss/BeamAttack';
@@ -331,8 +332,8 @@ export interface GameSnapshot {
   };
   /** Nível atual de cada modificador da run (SHOP-22). */
   modifiers: Record<string, number>;
-  /** Build deduzida das compras, pontos por linha e passivas da run (BLD-*). */
-  build: { build: string | null; points: Record<string, number>; perks: string[]; shadowArmed: boolean };
+  /** Build deduzida das compras, pontos por linha, passivas da run (BLD-*) e os itens com eixo (VRM-10, CRP-14). */
+  build: BuildSnapshot;
   /** Relíquia e arma vinculada equipadas, com o nível, e a ferramenta comprada ainda não entregue (ARS-*). */
   arsenal: {
     relic: string | null;
