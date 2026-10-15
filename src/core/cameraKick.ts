@@ -23,6 +23,11 @@ export class CameraKick {
     this.elapsed = 0;
   }
 
+  /** Distância do tranco em curso (POW-08.4, lida pelo snapshot de debug); 0 parado. */
+  get activePx(): number {
+    return this.elapsed < CAMERA_FEEL.kickMs ? this.px : 0;
+  }
+
   /** Avança o tempo real e devolve o deslocamento atual da câmera em px. */
   update(realDtMs: number): Vec2 {
     if (this.elapsed < CAMERA_FEEL.kickMs) this.elapsed += realDtMs;

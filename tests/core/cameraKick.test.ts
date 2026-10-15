@@ -56,6 +56,16 @@ describe('POW-08.4: o tranco aceita a distância', () => {
     expect(k.update(60).y).toBeCloseTo(-3.5, 10);
     expect(k.update(60)).toEqual({ x: 0, y: 0 });
   });
+  it('activePx: 0 parado, a distância pedida durante o tranco e 0 de novo aos 120 ms', () => {
+    const k = new CameraKick();
+    expect(k.activePx).toBe(0);
+    k.kick(1, 0, 6.4);
+    expect(k.activePx).toBe(6.4);
+    k.update(119);
+    expect(k.activePx).toBe(6.4);
+    k.update(1);
+    expect(k.activePx).toBe(0);
+  });
   it('o kick seguinte sem px volta ao padrão de 4 px', () => {
     const k = new CameraKick();
     k.kick(1, 0, 7);

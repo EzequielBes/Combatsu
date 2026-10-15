@@ -381,6 +381,9 @@ export interface GameSnapshot {
     /** `roundPixels` da câmera do mundo e se o `startFollow` do Phaser está ligado; os dois ficam desligados (CAM-07). */
     roundPixels: boolean;
     phaserFollow: boolean;
+    /** Distância do tranco em curso, 0 parado (POW-08.4); e se a câmera do mundo está tremendo (POW-08.9). */
+    kickPx: number;
+    shaking: boolean;
   };
   /** Fração (0 a 1) entre os dois últimos passos de física que este quadro desenha (ITP-05, ITP-07). */
   physics: { alpha: number };

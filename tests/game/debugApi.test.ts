@@ -200,6 +200,7 @@ describe('installDebugApi', () => {
         hitstopBonusMs: { light: 0, heavy: 0 },
         tone: { shadow: 'd', body: 'c', core: 'C', altBody: 'u', altCore: 'U' },
         aura: 'off',
+        auraDx: null,
       },
       stats: { meleeMul: 1, techDamageMul: 1, costMul: 1 },
       worldProps: [
@@ -238,6 +239,8 @@ describe('installDebugApi', () => {
         scroll: { x: -160, y: -90 },
         roundPixels: false,
         phaserFollow: false,
+        kickPx: 0,
+        shaking: false,
       },
       physics: { alpha: 0.5 },
       finisher: { distPx: null },

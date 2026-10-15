@@ -21,6 +21,8 @@ export interface PowerSnapshot {
   hitstopBonusMs: { light: number; heavy: number };
   tone: ToneKeys;
   aura: PowerAura;
+  /** Lado da chama: x médio das línguas menos o x de desenho do player (POW-10.13); `null` sem língua acesa. */
+  auraDx: number | null;
 }
 
 /** Atributos da folha (POW-01, POW-13): o forte sem Passo sombrio, o dano das técnicas e o custo de energia. */

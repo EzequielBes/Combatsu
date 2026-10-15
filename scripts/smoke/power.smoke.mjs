@@ -1,10 +1,11 @@
 // Fundação de poder (POW-*) no mundo modular em HD, com `?debug&hd=1&area=modular&seed=1`. Cada parte abre a sua
-// própria página. A parte 1 (o `?mods=`) mora em `power-mods.mjs`, a parte 6 (o objeto) em `power-prop.mjs` e a parte 7
+// própria página. A parte 1 (o `?mods=`) mora em `power-mods.mjs`, a parte 2 (o soco forte) em `power-strike.mjs`, a parte 6 (o objeto) em `power-prop.mjs` e a parte 7
 // (os tetos sob a carga inteira) em `power-load.mjs`.
 import { makeKit } from './fight-kit.mjs';
 import { fullLoadCaps } from './power-load.mjs';
 import { boughtModifiers } from './power-mods.mjs';
 import { propDamageScales } from './power-prop.mjs';
+import { strikeForceScales } from './power-strike.mjs';
 
 const BASE = 'hd=1&area=modular&enemyGuard=0&noshop=1';
 /** Hitstop do golpe forte (90 ms) em quadros de 16 ms, com folga: quadro congelado por golpe no player é explicado. */
@@ -35,8 +36,9 @@ const living = (s) => s.enemies.filter((e) => e.hp > 0 && e.state !== 'deadRagdo
 
 /**
  * Um Azul do toque ao fim da implosão, quadro a quadro. Devolve o que os tiques fizeram: ids com `chip:<id>`, quadros
- * de tique conferidos, quadros congelados sem golpe no player por perto, inimigos em `hitstun`, quem foi de `windup` a
- * `attack`, o tipo do último número de dano em cada quadro de tique e se a implosão congelou.
+ * de tique conferidos, quadros congelados sem golpe no player por perto, inimigos em `hitstun`, quem levou tique no
+ * `windup` e ainda chegou ao `attack` (sem `interrupt`, POW-15.7), estrutura que subiu com o tique (POW-15.8), o tipo
+ * do último número de dano em cada quadro de tique e se a implosão congelou.
  */
 async function castBlue(kit, start) {
   let s = await kit.tap('KeyL');
@@ -47,6 +49,7 @@ async function castBlue(kit, start) {
     strayFrozen: [],
     hitstun: [],
     windupToAttack: new Set(),
+    structureUp: [],
     chipKinds: new Set(),
     implosionFrozen: null,
     implosionHit: false,
@@ -57,7 +60,8 @@ async function castBlue(kit, start) {
   let eventsSeen = start.events.length;
   let lastPlayerHitFrame = -Infinity;
   let prevHp = s.player.hp;
-  const inWindup = new Set();
+  /** Quem levou tique durante o `windup` atual. */
+  const chippedWindup = new Set();
   let overlapRun = 0;
   let orbSeen = false;
   for (let f = 0; f < 200; f++) {
@@ -95,8 +99,13 @@ async function castBlue(kit, start) {
     if (s.hitstop.frozen && !playerHitNear) out.strayFrozen.push({ f, hitstop: s.hitstop, events: fresh });
     for (const e of s.enemies) {
       if (e.state === 'hitstun') out.hitstun.push({ id: e.id, f });
-      if (e.ai === 'windup') inWindup.add(e.id);
-      else if (e.ai === 'attack' && inWindup.has(e.id)) out.windupToAttack.add(e.id);
+      const chipped = chips.includes(`chip:${e.id}`);
+      const was = before.enemies.find((b) => b.id === e.id);
+      if (chipped && was && e.structure.cur > was.structure.cur) out.structureUp.push({ id: e.id, f });
+      if (e.ai === 'windup') {
+        if (chipped) chippedWindup.add(e.id);
+      } else if (e.ai === 'attack' && chippedWindup.has(e.id)) out.windupToAttack.add(e.id);
+      else chippedWindup.delete(e.id);
     }
   }
   return { out, s };
@@ -139,6 +148,10 @@ async function blueTicksAsChip(ctx) {
       o.hitstun.length === 0,
       `POW-04.11: inimigo em hitstun pelo tique: ${JSON.stringify(o.hitstun.slice(0, 5))}`,
     );
+    assert(
+      o.structureUp.length === 0,
+      `POW-15.8: o tique (chip) não enche a estrutura: ${JSON.stringify(o.structureUp.slice(0, 5))}`,
+    );
     // POW-05: com os alvos empilhados no Azul, os números de cada um não dividem a mesma caixa.
     assert(o.overlap === null, `POW-05: números de dano um em cima do outro: ${JSON.stringify(o.overlap)}`);
     maxNumbers = Math.max(maxNumbers, o.maxNumbers);
@@ -160,7 +173,10 @@ async function blueTicksAsChip(ctx) {
   assert(tickFrames >= 3, `POW-04.11: poucos quadros de tique conferidos: ${tickFrames}`);
   assert(maxNumbers >= 3, `POW-05: a conferência da sobreposição precisa de 3+ números vivos: ${maxNumbers}`);
   assert(implosions >= 1, 'POW-04.10: nenhuma implosão acertou um inimigo');
-  assert(windupToAttack.size >= 1, `POW-04.11: nenhum inimigo foi de windup a attack em ${BLUE_TRIES} Azuis`);
+  assert(
+    windupToAttack.size >= 1,
+    `POW-04.11/15.7: nenhum inimigo levou tique no windup e chegou ao attack em ${BLUE_TRIES} Azuis`,
+  );
 }
 
 /**
@@ -289,90 +305,6 @@ async function areaChangeClearsNumbers(ctx) {
 
 /** Build de 8 pontos sem `forca` (POW-07.1): Manoplas Nv 3 (6) e Punho Pesado (2). */
 const EIGHT_POINTS = 'arsenal=manoplas,manoplas,manoplas&perks=punhoPesado';
-/** Quadros lidos depois do acerto do forte, com o hitstop de 90 ms e o deslize inteiros dentro. */
-const PUSH_FRAMES = 40;
-
-/**
- * Encosta no inimigo, dá a cotovelada (forte) e devolve o maior deslocamento do inimigo atingido nos quadros depois
- * do acerto, medido a partir de onde ele estava no quadro do acerto; também o rastro mais largo do golpe, o maior
- * `slide.remainingPx` do atingido, o maior `hitstop.remainingMs` desde o acerto e o `fx.lastImpact` (POW-08, POW-09).
- */
-async function heavyPush(kit, assert, query, label) {
-  await kit.boot(`${BASE}&${query}`);
-  let s = await kit.approach();
-  const hpBefore = new Map(s.enemies.map((e) => [e.id, e.hp]));
-  await kit.down('KeyK');
-  let hit = null;
-  let trailPx = 0;
-  for (let f = 0; f < 60 && hit === null; f++) {
-    s = await kit.frame();
-    if (f === 1) await kit.up('KeyK');
-    for (const t of s.fx.trails) trailPx = Math.max(trailPx, t.widthPx);
-    hit = s.enemies.find((e) => e.hp < (hpBefore.get(e.id) ?? e.hp)) ?? null;
-  }
-  await kit.up('KeyK');
-  assert(hit !== null, `${label}: a cotovelada deveria acertar: ${JSON.stringify(s.enemies.map((e) => [e.x, e.hp]))}`);
-  const x0 = hit.x;
-  const lastImpact = s.fx.lastImpact;
-  let hitstopMs = s.hitstop.remainingMs;
-  let slidePx = hit.slide?.remainingPx ?? 0;
-  let push = 0;
-  for (let f = 0; f < PUSH_FRAMES; f++) {
-    s = await kit.frame();
-    for (const t of s.fx.trails) trailPx = Math.max(trailPx, t.widthPx);
-    hitstopMs = Math.max(hitstopMs, s.hitstop.remainingMs);
-    const e = s.enemies.find((x) => x.id === hit.id);
-    if (e) push = Math.max(push, Math.abs(e.x - x0));
-    if (e?.slide) slidePx = Math.max(slidePx, e.slide.remainingPx);
-  }
-  return { power: s.power, push, state: hit.state, trailPx, slidePx, hitstopMs, lastImpact };
-}
-
-/**
- * POW-07/08/09/13: Manoplas Nv 3 e Punho Pesado são 8 pontos, patamar 3 e escala 1,4 no snapshot, e o forte empurra o
- * inimigo mais longe que sem build (a força do golpe ×1,24 pelo `strikeMods`), com o rastro 4 px mais largo, o
- * deslize 24 % maior, o hitstop partindo de 90 + 30 ms e o impacto pintado com o tom do patamar 3.
- */
-async function strikeForceScales(ctx) {
-  const { assert } = ctx;
-  const kit = makeKit(ctx);
-  const plain = await heavyPush(kit, assert, 'perks=', 'sem build');
-  assert(
-    plain.power.points === 0 && plain.power.tier === 0 && plain.power.impactScale === 1 && plain.power.aura === 'off',
-    `POW-13: sem build o snapshot deveria ler 0 pontos: ${JSON.stringify(plain.power)}`,
-  );
-  const built = await heavyPush(kit, assert, EIGHT_POINTS, '8 pontos');
-  const p = built.power;
-  assert(
-    p.points === 8 && p.tier === 3 && Math.abs(p.impactScale - 1.4) < 1e-9 && p.hitstopBonusMs.heavy === 30,
-    `POW-07/13: esperava 8 pontos, patamar 3 e escala 1,4: ${JSON.stringify(p)}`,
-  );
-  assert(
-    built.push > plain.push + 0.5,
-    `POW-08.5: o forte deveria empurrar mais com 8 pontos: ${built.push.toFixed(2)} px (${built.state}) contra ${plain.push.toFixed(2)} px (${plain.state})`,
-  );
-  assert(
-    plain.trailPx > 0 && built.trailPx === plain.trailPx + 4,
-    `POW-08.7: o rastro deveria ficar 4 px mais largo: ${built.trailPx} contra ${plain.trailPx}`,
-  );
-  assert(
-    plain.slidePx > 0 && Math.abs(built.slidePx / plain.slidePx - 1.24) < 0.02,
-    `POW-08.6: o deslize deveria ser 24 % maior: ${built.slidePx.toFixed(2)} px contra ${plain.slidePx.toFixed(2)} px`,
-  );
-  assert(
-    plain.hitstopMs === 90 && built.hitstopMs === 120,
-    `POW-08.8: o hitstop deveria partir de 90 sem build e de 120 com 8 pontos: ${plain.hitstopMs} e ${built.hitstopMs}`,
-  );
-  assert(
-    plain.lastImpact?.tier === 'heavy' && plain.lastImpact.tone === 'c',
-    `POW-09: sem build o forte pinta no tom de sempre: ${JSON.stringify(plain.lastImpact)}`,
-  );
-  assert(
-    built.lastImpact?.tier === 'heavy' && built.lastImpact.tone === 'b',
-    `POW-09: com 8 pontos o forte pinta no tom do patamar 3: ${JSON.stringify(built.lastImpact)}`,
-  );
-}
-
 /** Build de 6 pontos (patamar 2): Manoplas Nv 2 (4) e Punho Pesado (2). */
 const SIX_POINTS = 'arsenal=manoplas,manoplas&perks=punhoPesado';
 
@@ -384,6 +316,18 @@ async function settleIdle(kit, where) {
     `${where}: o player deveria parar no idle`,
   );
   return { idle: s, next: await kit.frame() };
+}
+
+/**
+ * POW-10.13: com a chama acesa, as línguas ficam do lado da mão da frente (`power.auraDx`, x médio das línguas menos o x
+ * de desenho do player); confere que o lado segue o `facing`.
+ */
+async function assertAuraSide(kit, assert, where) {
+  const s = await kit.waitFor((x) => x.power.auraDx !== null, 30, `${where}: a chama deveria ter línguas`);
+  assert(
+    Math.sign(s.power.auraDx) === s.player.facing,
+    `POW-10.13 (${where}): a chama deveria ficar na mão do lado ${s.player.facing}: dx ${s.power.auraDx}`,
+  );
 }
 
 /** Anda `frames` quadros com a tecla `code` segurada; devolve as auras lidas andando (sem os 2 primeiros quadros). */
@@ -416,6 +360,7 @@ async function restingHandFlame(ctx) {
     `POW-10.12: parado com 8 pontos a chama deveria acender: ${JSON.stringify(next.power)} ${next.player.frame}`,
   );
   const facing = idle.player.facing;
+  await assertAuraSide(kit, assert, 'começo');
 
   // Anda para o lado contrário (para longe do inimigo, que nasce à direita): a chama apaga e o player vira.
   const away = await walk(kit, facing === 1 ? 'KeyA' : 'KeyD', 20);
@@ -429,6 +374,7 @@ async function restingHandFlame(ctx) {
     next.power.aura === 'flame',
     `POW-10 (virar parado): a chama deveria voltar no quadro seguinte ao idle: ${next.power.aura} ${next.player.frame}`,
   );
+  await assertAuraSide(kit, assert, 'virado');
 
   // Lançando o Vermelho: a chama apaga enquanto a conjuração trava o player.
   let s = await kit.tap('KeyL');

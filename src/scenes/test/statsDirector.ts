@@ -118,6 +118,7 @@ export class StatsDirector {
       hitstopBonusMs: { ...hitstopBonusMs },
       tone: { ...tone },
       aura: this.aura.view,
+      auraDx: this.aura.dx,
     };
     const sheet = this.sheet();
     // POW-13: o forte sem Passo sombrio (o mesmo `traitsOf` do golpe) e as técnicas, relíquia × voto, como no `Loadout`.

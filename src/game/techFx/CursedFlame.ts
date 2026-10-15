@@ -53,6 +53,12 @@ export class CursedFlame {
     for (let i = tongues.length; i < this.pool.length; i++) this.pool[i]!.setVisible(false);
   }
 
+  /** X médio das línguas visíveis, em px de mundo (o snapshot de debug lê de que lado a chama está); `null` sem língua. */
+  get meanX(): number | null {
+    const shown = this.pool.filter((img) => img.visible);
+    return shown.length === 0 ? null : shown.reduce((sum, img) => sum + img.x, 0) / shown.length;
+  }
+
   destroy(): void {
     this.root.destroy(true);
     this.pool.length = 0;

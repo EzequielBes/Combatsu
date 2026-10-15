@@ -39,6 +39,14 @@ export class PowerAuraDirector {
   }
 
   /**
+   * Lado da chama na tela (POW-10.13): x médio das línguas menos o x de desenho do player; `null` sem língua acesa.
+   */
+  get dx(): number | null {
+    const x = this.flame?.meanX ?? null;
+    return x === null || !this.player ? null : x - this.player.renderPos.x;
+  }
+
+  /**
    * Player novo (a cada `create`, também no `R`): larga a chama do player anterior. No `SHUTDOWN` a cena já destrói os
    * objetos dela, então a referência só é zerada, sem chama órfã apontando para um container destruído.
    */

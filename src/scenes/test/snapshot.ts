@@ -204,6 +204,8 @@ export class DebugSnapshot {
         scroll: { x: this.s.cameras.main.scrollX, y: this.s.cameras.main.scrollY },
         roundPixels: this.s.cameras.main.roundPixels,
         phaserFollow: (this.s.cameras.main as unknown as { _follow: unknown })._follow != null,
+        kickPx: this.s.camera.cameraKick.activePx,
+        shaking: this.s.cameras.main.shakeEffect.isRunning,
       },
       // ITP-05/07: fração entre os dois últimos passos de física que este quadro desenha.
       physics: { alpha: renderAlpha(this.s) },
