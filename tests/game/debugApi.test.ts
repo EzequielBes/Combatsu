@@ -81,6 +81,7 @@ describe('installDebugApi', () => {
           downHits: 0,
           lightStreak: 0,
           guardRead: false,
+          pull: null,
         },
       ],
       focusId: null,

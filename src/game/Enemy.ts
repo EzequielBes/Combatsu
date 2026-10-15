@@ -405,6 +405,11 @@ export class Enemy implements Hittable {
     return this.move.slideView;
   }
 
+  /** Puxão do Azul ou empurrão do campo do Vermelho Máximo aplicado agora (px/step); `null` sem ele (VRM-15). */
+  get pullView(): Vec2 | null {
+    return this.move.pullView;
+  }
+
   /** Esbarrão de outro inimigo deslizando (RCT-04): toca `body` sem perder vida nem postura. */
   touched(): void {
     if (this.c.s.removed || this.c.s.ragdoll || this.brain.isDead || this.brain.state !== 'idle') return;

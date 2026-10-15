@@ -229,6 +229,147 @@ async function containedEarly(ctx) {
   ctx.assert(Math.abs(r - RADIUS) < 0.5, `VRM-14.8: raio normal (${RADIUS}) sem segurar: ${r}`);
 }
 
+/** Vermelho Máximo: Contido no Nv 5 (4 pontos). */
+const MAXIMO = 'axes=vermelho.potencia:2,vermelho.conjuracao:2&ramo=vermelho:b';
+/** 200 ms de tique do campo em quadros de 1000/60 ms. */
+const TICK_FRAMES = 12;
+
+/**
+ * VRM-15 (cenário 6): com o Vermelho Máximo, a detonação deixa o campo: o boneco parado dentro dele (laboratório) leva
+ * um `chip` de 3 (round(3 × 1 × 1)) a cada 200 ms, 6 vezes em 1200 ms, e o campo acaba.
+ */
+async function fieldChips(ctx) {
+  const kit = makeKit(ctx);
+  let s = await faceDummies(kit, ctx, MAXIMO, 520);
+  const red = s.build.vermelho;
+  ctx.assert(
+    red.awakened === true && red.branch === 'contido',
+    `VRM-17: Vermelho Máximo ligado: ${JSON.stringify(red)}`,
+  );
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s));
+  const ticks = [];
+  let opened = null;
+  let ended = null;
+  for (let f = 0; f < 200 && ended === null; f++) {
+    s = await kit.frame();
+    const fresh = s.events.slice(seen);
+    if (opened === null && fresh.includes('redField')) opened = f;
+    if (fresh.includes('redFieldEnd')) ended = f;
+    const chips = fresh.filter((e) => e.startsWith('redChip:')).length;
+    while (ticks.length < chips) ticks.push({ f, ev: fresh.filter((e) => e.startsWith('redChip:'))[ticks.length] });
+  }
+  const near = s.fxlab.dummies.find((d) => d.x === 232);
+  const mine = ticks.filter((t) => t.ev === `redChip:${near.id}:3`);
+  const view = JSON.stringify({ opened, ended, ticks });
+  ctx.assert(opened !== null && ended !== null, `VRM-15: o campo abre e fecha: ${view}`);
+  ctx.assert(mine.length === 6, `VRM-15: 6 chips de 3 no boneco dentro do campo em 1200 ms: ${view}`);
+  const gaps = mine.slice(1).map((t, i) => t.f - mine[i].f);
+  ctx.assert(
+    gaps.every((g) => Math.abs(g - TICK_FRAMES) <= 1),
+    `VRM-15: um chip a cada 200 ms: ${JSON.stringify(gaps)}`,
+  );
+  ctx.assert(Math.abs(ended - mine[0].f - 5 * TICK_FRAMES) <= 1, `VRM-15: o último tique fecha os 1200 ms: ${view}`);
+}
+
+const distTo = (e, x) => Math.abs(e.x - x);
+const pullLen = (p) => Math.hypot(p.x, p.y);
+
+/**
+ * VRM-15: o comum em pé que entra no campo é empurrado do centro para fora a 150 px/s (2,5 px por passo, lido no
+ * `pull` do movimento do inimigo) e nenhum `pull` sobra depois do fim. O orbe segurado paira a 320 px e só detona
+ * quando o inimigo que vem andando chega perto da borda, para ele entrar no campo em pé.
+ */
+async function fieldPush(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(`${BASE}&enemyGuard=0&${MAXIMO}`);
+  s = await kit.waitFor((x) => x.enemies.length > 0, 300, 'um inimigo deveria nascer');
+  const near = (x) => Math.min(...x.enemies.map((e) => distTo(e, x.player.x)));
+  const toward = s.enemies[0].x > s.player.x ? 'KeyD' : 'KeyA';
+  await kit.down(toward);
+  s = await kit.frame();
+  await kit.up(toward);
+  // O inimigo que vem andando (até 112 px/s) chega à borda do campo pouco depois da saída do orbe.
+  s = await kit.waitFor((x) => near(x) <= 620, 600, 'o inimigo deveria vir andando');
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s, true));
+  let orb = s.techObjects.find((o) => o.kind === 'red');
+  let center = orb?.x;
+  for (let i = 0; i < 90 && orb && Math.min(...s.enemies.map((e) => distTo(e, orb.x))) > HELD_RADIUS + 30; i++) {
+    s = await kit.frame();
+    orb = s.techObjects.find((o) => o.kind === 'red') ?? null;
+    if (orb) center = orb.x;
+  }
+  await kit.up('KeyL');
+  let pushed = 0;
+  let ended = false;
+  for (let i = 0; i < 200 && !ended; i++) {
+    s = await kit.frame();
+    ended = s.events.slice(seen).includes('redFieldEnd');
+    for (const e of s.enemies) {
+      if (ended || !['idle', 'hitstun', 'stagger'].includes(e.state)) continue;
+      // Em pé e bem dentro do raio, o campo tem de empurrar; na borda, o empurrão (quando há) aponta para fora.
+      const deep = distTo(e, center) < HELD_RADIUS - 12;
+      if (!deep && !e.pull) continue;
+      ctx.assert(
+        e.pull && Math.abs(pullLen(e.pull) - 2.5) < 0.05 && Math.sign(e.pull.x) === Math.sign(e.x - center),
+        `VRM-15: o comum em pé dentro do campo é empurrado para fora a 2,5 px/passo: ${JSON.stringify({ center, e })}`,
+      );
+      pushed++;
+    }
+  }
+  ctx.assert(ended, `VRM-15: o campo deveria acabar: ${JSON.stringify(s.events.slice(seen))}`);
+  ctx.assert(
+    pushed > 0,
+    `VRM-15: um comum em pé deveria entrar no campo (centro ${center}): ${JSON.stringify(s.enemies)}`,
+  );
+  ctx.assert(
+    s.enemies.every((e) => e.pull === null),
+    `VRM-15: nenhum pull sobra no fim: ${JSON.stringify(s.enemies)}`,
+  );
+}
+
+/**
+ * VRM-15, edge case: com um orbe Azul vivo, o campo não empurra (o puxão do Azul vale em todo comum) e o chip
+ * continua. O Azul sai primeiro na frente dos inimigos; o Vermelho Máximo segurado detona perto do player logo depois.
+ */
+async function fieldWithBlue(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(`hd=1&area=modular&maxAlive=3&enemyGuard=0&tech=vermelho,azul&${MAXIMO}`);
+  for (let i = 0; i < 40 && s.enemies.length < 3; i++) s = await kit.snap(300);
+  s = await kit.approach(90);
+  const seen = s.events.length;
+  await kit.down('KeyI');
+  s = await kit.frame();
+  await kit.up('KeyI');
+  s = await kit.waitFor((x) => x.events.slice(seen).includes('techCast:azul'), 60, 'o Azul deveria soltar');
+  s = await kit.waitFor((x) => x.tech.cast === null, 60, 'a conjuração do Azul deveria acabar');
+  ({ s } = await castRed(kit, ctx, s, true));
+  for (let i = 0; i < 3; i++) s = await kit.frame();
+  await kit.up('KeyL');
+  let overlap = 0;
+  let pulled = 0;
+  let chips = 0;
+  for (let i = 0; i < 120; i++) {
+    const before = s.events.length;
+    s = await kit.frame();
+    const blue = s.techObjects.find((o) => o.kind === 'blue');
+    const field = s.events.slice(seen).includes('redField') && !s.events.slice(seen).includes('redFieldEnd');
+    if (!blue || !field) continue;
+    overlap++;
+    chips += s.events.slice(before).filter((e) => e.startsWith('redChip:')).length;
+    // Colado no centro do Azul a direção do puxão (calculada antes do passo do Matter) não diz nada: fica de fora.
+    for (const e of s.enemies.filter((x) => x.pull && Math.hypot(x.x - blue.x, x.y - blue.y) > 16)) {
+      const toward = (blue.x - e.x) * e.pull.x + (blue.y - e.y) * e.pull.y;
+      ctx.assert(toward > 0, `VRM-15: com o Azul vivo o puxão é o dele: ${JSON.stringify({ blue, e })}`);
+      pulled++;
+    }
+  }
+  const view = JSON.stringify({ overlap, pulled, chips });
+  ctx.assert(overlap > 0 && pulled > 0, `VRM-15: o Azul puxa enquanto o campo vive: ${view}`);
+  ctx.assert(chips > 0, `VRM-15: o chip do campo continua com o Azul vivo: ${view}`);
+}
+
 /** Cenários dos ramos e Despertares, na ordem das tarefas (T30 em diante). */
 export async function branchScenarios(ctx) {
   await ricochet(ctx);
@@ -237,4 +378,7 @@ export async function branchScenarios(ctx) {
   await containedRelease(ctx);
   await containedTimeout(ctx);
   await containedEarly(ctx);
+  await fieldChips(ctx);
+  await fieldPush(ctx);
+  await fieldWithBlue(ctx);
 }

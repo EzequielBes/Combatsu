@@ -117,7 +117,7 @@ export class TechRunner {
       this.currentCast = cast ? { id: ++this.castSeq, slot: cast.slot } : null;
     }
     this.divergent.update(dtMs, cast, castEvents, slotPressed);
-    this.red.update(dtMs, cast, castEvents, enemies, slotHeld);
+    this.red.update(dtMs, cast, castEvents, enemies, slotHeld, boss);
     this.blue.update(dtMs, castEvents, enemies, boss);
     this.cut.update(dtMs, castEvents, enemies, boss);
     this.purple.update(dtMs, cast, castEvents, enemies, boss);

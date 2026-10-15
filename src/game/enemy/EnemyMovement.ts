@@ -96,6 +96,11 @@ export class EnemyMovement {
     this.slideTouched.clear();
   }
 
+  /** Puxão aplicado agora (px/step), o do Azul ou o empurrão do campo do Vermelho Máximo (VRM-15); `null` sem ele. */
+  get pullView(): Vec2 | null {
+    return this.pull ? { ...this.pull } : null;
+  }
+
   /** Deslizamento em curso para o snapshot (RCT-06); `null` fora dele. */
   get slideView(): { remainingPx: number } | null {
     const remaining = this.hitSlide.remainingPx;

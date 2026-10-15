@@ -113,6 +113,36 @@ async function redRingsScenario(t) {
   }
 }
 
+// Campo do Vermelho Máximo (VRM-15), em HD e para os dois lados: o anel que esmaece nos 1200 ms depois da detonação,
+// com 3 inimigos para ver o empurrão de quem se levanta dentro dele.
+async function redFieldScenario(t) {
+  const orb = (s) => s.techObjects?.find((o) => o.kind === 'red');
+  const axes = 'axes=vermelho.potencia:2,vermelho.conjuracao:2&ramo=vermelho:b';
+  for (const side of ['dir', 'esq']) {
+    await t.open(`hd=1&enemyGuard=0&noshop=1&maxAlive=0&shove=0&tech=vermelho&${axes}`);
+    if (side === 'esq') {
+      // Longe da parede da esquerda, para o orbe voar os 320 px.
+      await t.down('KeyD');
+      await t.snap(1500);
+      await t.up('KeyD');
+      await t.press('KeyA');
+    }
+    await t.snap(300);
+    await t.press('KeyL');
+    let s = await t.snap(0);
+    let at = null;
+    for (let i = 0; i < 200 && (at === null || orb(s)); i++) {
+      if (orb(s)) at = { x: orb(s).x, y: orb(s).y };
+      s = await t.frame();
+    }
+    t.assert(at, `o Vermelho não nasceu (${side})`);
+    for (let i = 0; i <= 78; i += 6) {
+      await t.close(`97-campo-${side}-${String(i).padStart(2, '0')}`, 170, at);
+      for (let k = 0; k < 6; k++) await t.frame();
+    }
+  }
+}
+
 /** Cenários da aura da Energia Reversa e do Azul (RCA-*, BLA-*), recortados em volta do efeito. */
 export const techFxScenarios = () => ({
   // Esquiva cinematográfica (DGA-*): o passo-relâmpago do dash e a imagem residual da esquiva perfeita.
@@ -172,6 +202,7 @@ export const techFxScenarios = () => ({
   },
   vermelhoEixos: (t) => redAxesScenario(t),
   vermelhoAneis: (t) => redRingsScenario(t),
+  vermelhoCampo: (t) => redFieldScenario(t),
   // Azul no estilo do anime (BLA-*): recorte em volta do orbe, do nascer à implosão.
   async azul(t) {
     await t.open('enemyGuard=0&noshop=1&fxlab');

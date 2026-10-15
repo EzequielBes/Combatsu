@@ -1036,10 +1036,20 @@ ao sair ou ao fim; com um orbe Azul vivo o puxão do Azul vale, edge case) e dá
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs` (cenário 6) com `ramo=vermelho:b&axes=` somando 4 pontos: `build.vermelho.awakened` true,
+- [x] `red-axes.smoke.mjs` (cenário 6) com `ramo=vermelho:b&axes=` somando 4 pontos: `build.vermelho.awakened` true,
       números `chip` a cada 200 ms por 1200 ms, comuns em pé afastando do centro, nenhum `pull` sobrando depois do fim;
       com `tech=vermelho,azul` e o Azul vivo, o chip continua e o puxão do Azul não é desfeito
-- [ ] Anel conferido no jogo; smokes `red-axes`, `tech` e `power` verdes; gate verde; contagem sem perda
+- [x] Anel conferido no jogo; smokes `red-axes`, `tech` e `power` verdes; gate verde; contagem sem perda (4065)
+
+Como ficou: `tech/redField.ts` (`RedFieldRunner`) mora no `RedFlight`, que o anda a cada quadro mesmo sem orbe; o chip
+(`loadout.damage('vermelho', 3)`, calculado na soltura no `red.ts`) vai também ao chefe, que passa a chegar ao
+`red.update`. A detonação do Vermelho Máximo leva `wallStun: true` (T33) e o `maxHpBonus` pelo `redPlan`. O adaptador
+emite `redField`, `redChip:<alvo>:<dano>` e `redFieldEnd`; os números `chip` de um mesmo alvo se fundem na tela (300 ms),
+então o smoke conta os tiques nesses eventos (6 chips de 3 a cada 12 quadros num boneco parado do `fxlab`). O
+empurrão é lido do motor: o snapshot dos inimigos ganha `pull` (o `EnemyMovement.pullView`, px/passo); o comum em pé
+que entra no campo tem `pull` de 2,5 px/passo para fora e para na borda, e nenhum `pull` sobra no fim. Com o Azul vivo,
+todo `pull` aponta para o Azul (fora os colados no centro dele) e o chip segue. Vista: anel `RED_FX_COLORS.ring` com
+miolo `glow` que esmaece nos 1200 ms, conferido nos dois lados em `tools/visual-shots-fx.mjs` (`vermelhoCampo`).
 
 **Tests**: smoke
 **Gate**: full

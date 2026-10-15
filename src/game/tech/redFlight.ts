@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import type { FxRegistry } from '../../core/fxRegistry';
 import { canDamage, normalize, type Hit, type HitBand, type Strength, type Vec2 } from '../../core/hit';
 import {
   ContidoHold,
@@ -19,6 +20,7 @@ import type { Rect } from '../bodyTags';
 import { tagBody, type BodyTag, type Hittable } from '../bodyTags';
 import { Boss } from '../Boss';
 import type { RedOrbFx } from '../techFx/RedOrb';
+import { RedFieldRunner } from './redField';
 import { techMarks, type CastRef, type TechContext, type TechTarget } from './shared';
 
 /** Um orbe do Vermelho já nascido: o que a soltura (`red.ts`) entrega ao voo. */
@@ -33,6 +35,8 @@ export interface RedOrbEntry {
   readonly state: RedOrbState;
   readonly body: MatterJS.BodyType;
   readonly view: Phaser.GameObjects.Sprite;
+  /** VRM-15: o chip do campo do Vermelho Máximo, `round(3 × damageMul × vowDamageMul)` na soltura. */
+  readonly fieldChip: number;
   /** VRM-07: avisa um abate da conjuração (o reembolso dela, criado na soltura; só o 1º abate devolve a recarga). */
   readonly onKill: () => void;
 }
@@ -49,6 +53,8 @@ export interface RedBlow {
   readonly band?: HitBand;
   /** VRM-13, VRM-15: fração do HP máximo do alvo somada ao dano (o chefe fica no teto de 1 %). */
   readonly maxHpBonus?: number;
+  /** VRM-15, VRM-16: o comum derrubado pela detonação do Vermelho Máximo fica atordoado se bater numa parede. */
+  readonly wallStun?: boolean;
 }
 
 /** A detonação `n` do orbe (1 na 1ª): o toque do trecho atual conta para ela. */
@@ -113,11 +119,16 @@ export class RedFlight {
    */
   private hold: ContidoHold | null = null;
   private armPending = false;
+  /** VRM-15: o campo do Vermelho Máximo vive além do orbe. */
+  private readonly field: RedFieldRunner;
 
   constructor(
     private readonly ctx: TechContext,
     private readonly fx: RedOrbFx,
-  ) {}
+    registry: FxRegistry,
+  ) {
+    this.field = new RedFieldRunner(ctx, registry);
+  }
 
   /** O orbe vivo agora, se houver. */
   get current(): RedOrbEntry | null {
@@ -136,9 +147,10 @@ export class RedFlight {
   }
 
   /** `slotHeld`: a tecla de cada slot segurada neste quadro (VRM-14: o orbe do Contido detona ao soltar). */
-  update(dtMs: number, enemies: readonly TechTarget[], slotHeld: readonly [boolean, boolean]): void {
+  update(dtMs: number, enemies: readonly TechTarget[], slotHeld: readonly [boolean, boolean], boss: Boss | null): void {
     this.targets = enemies;
     for (const event of this.touchEvents.splice(0)) this.ctx.emit(event);
+    this.field.update(dtMs, enemies, boss);
     const orb = this.orb;
     if (!orb) return;
     const held = orb.cast !== null && slotHeld[orb.cast.slot];
@@ -249,12 +261,17 @@ export class RedFlight {
         force: orb.red.force,
         direction: splash.direction,
         hitstopBonusMs: orb.red.hitstopBonusMs, // VRM-04: 10 ms por ponto de Potência
+        ...(orb.plan.field ? { wallStun: true } : {}), // VRM-16
       };
       if (!strikeRed(this.ctx, enemy, at, orb.cast, blow, orb.onKill)) continue;
       this.ctx.emit(`redBlast:${n}:${enemy.id}:${enemy.lastDamageTaken ?? blow.damage}`);
     }
     this.fx.detonate(point, this.ctx.player.facing, { radius, rings: orb.red.rings }); // RED-11/12/17
     this.ctx.emit('redDetonate'); // RED-16
+    if (orb.plan.field) {
+      // VRM-15: o campo do Vermelho Máximo, do mesmo raio da detonação
+      this.field.open({ center: point, radius, cast: orb.cast, chip: orb.fieldChip, onKill: orb.onKill });
+    }
     if (shouldRebound(orb.plan, n, this.site)) this.rebound(orb, point, n);
     else this.discard(orb);
   }

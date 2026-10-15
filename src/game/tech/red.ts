@@ -10,6 +10,8 @@ import { KillRefund } from '../../core/techKit';
 import type { TechStats } from '../../core/techStats';
 import type { RedObjectSnapshot } from '../debugApi';
 import { redPlan } from '../../core/redBranch';
+import { RED_AWAKENINGS } from '../../data/techAxes';
+import type { Boss } from '../Boss';
 import { RedOrbFx } from '../techFx/RedOrb';
 import { TEX } from '../textures';
 import { RedFlight } from './redFlight';
@@ -43,7 +45,7 @@ export class RedTech {
     uiLayer: Phaser.GameObjects.Layer,
   ) {
     this.fx = new RedOrbFx(ctx.scene, fx, registry, uiLayer);
-    this.flight = new RedFlight(ctx, this.fx);
+    this.flight = new RedFlight(ctx, this.fx, registry);
   }
 
   /** `fx.red` do snapshot (RDA-04/05/06/13): estado vivo das vistas do Vermelho. */
@@ -75,10 +77,11 @@ export class RedTech {
     castEvents: readonly string[],
     enemies: readonly TechTarget[],
     slotHeld: readonly [boolean, boolean],
+    boss: Boss | null,
   ): void {
     this.updateCharge(dtMs, cast);
     if (castEvents.includes('techCast:vermelho')) this.release(enemies);
-    this.flight.update(dtMs, enemies, slotHeld);
+    this.flight.update(dtMs, enemies, slotHeld, boss);
   }
 
   private updateCharge(dtMs: number, cast: ActiveCastView | null): void {
@@ -133,6 +136,7 @@ export class RedTech {
     const view = scene.add.sprite(point.x, point.y, ORB_TEX[red.orbTexels], 'orb').setDepth(2);
     const cast = this.ctx.currentCast();
     const plan = redPlan(red.branch, red.awakened); // VRM-12 a VRM-15
-    this.flight.launch({ cast, id: newEntityId(), stats, red, plan, state, body, view, onKill });
+    const fieldChip = this.ctx.loadout.damage('vermelho', RED_AWAKENINGS.vermelhoMaximo.fieldChip); // VRM-15
+    this.flight.launch({ cast, id: newEntityId(), stats, red, plan, fieldChip, state, body, view, onKill });
   }
 }

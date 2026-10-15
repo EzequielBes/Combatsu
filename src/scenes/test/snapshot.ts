@@ -104,6 +104,7 @@ export class DebugSnapshot {
         downHits: e.downHits,
         lightStreak: e.lightStreak,
         guardRead: e.guardRead,
+        pull: e.pullView,
       })),
       focusId: this.s.focusId,
       reading: { ...this.s.reading.last },

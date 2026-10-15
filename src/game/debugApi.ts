@@ -125,6 +125,8 @@ export interface GameSnapshot {
     lightStreak: number;
     /** A guarda de pé é de leitura (RDG-06). */
     guardRead: boolean;
+    /** Puxão aplicado agora em px/step, lido do movimento do inimigo (Azul ou campo do Vermelho Máximo, VRM-15). */
+    pull: { x: number; y: number } | null;
   }[];
   /** Foco da postura: último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (PST-13); `null` sem foco. */
   focusId: number | null;
