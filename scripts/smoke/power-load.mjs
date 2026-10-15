@@ -136,6 +136,8 @@ export async function fullLoadCaps(ctx) {
   );
   assert(m.fx <= FX_CAP, `POW-14: fx.live passou de ${FX_CAP}: ${view}`);
   assert(m.numbers <= NUMBERS_CAP, `POW-14: damageNumbers.live passou de ${NUMBERS_CAP}: ${view}`);
+  // Conferência vazia por ora: nenhuma técnica emite acerto `micro` antes da F30, então `microMs` fica em 0. O teto de
+  // 60 ms só está provado no teste do `MicroBudget` (tests/core/hitBand.test.ts) até o primeiro emissor entrar.
   assert(m.micro <= MICRO_CAP_MS, `POW-14: o hitstop dos micro passou de ${MICRO_CAP_MS} ms em 1000 ms: ${view}`);
   console.log(`      POW-14 sob a carga: ${view}`);
 }
