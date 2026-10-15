@@ -199,6 +199,7 @@ function warnFrame(s) {
     dir: b.dir,
     side: Math.sign(s.player.x - s.boss.x),
     fromX: Math.round(b.fromX),
+    bossX: s.boss.x,
     toX: b.toX,
     edge: b.dir > 0 ? view.right : view.left,
     y: b.y,
@@ -227,6 +228,10 @@ function checkWarn(m, assert) {
     `a linha nunca afina no aviso: ${ctx}`,
   );
   assert(w.every((f) => f.dir === w[0].dir) && w[0].dir === w[0].side, `a linha sai no lado do player: ${ctx}`);
+  assert(
+    w.every((f) => Math.abs(f.fromX - f.bossX) <= 2),
+    `a linha sai do chefe: ${JSON.stringify(w.map((f) => [f.fromX, Math.round(f.bossX)]))}`,
+  );
   assert(
     w.every((f) => Math.abs(f.toX - f.edge) <= 2),
     `a linha vai até a borda da tela: ${ctx}`,

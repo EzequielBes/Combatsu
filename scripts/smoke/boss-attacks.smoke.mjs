@@ -24,6 +24,8 @@ const THREAD_HALF_W = 6;
 const FINGER = { scale: 1.25, hpMult: 1.3, extraProjectiles: 1 };
 /** Rajada do Oni (`BOSS.volley.count`). */
 const ONI_VOLLEY = 3;
+/** Dano do fio na r5 (CYC-10): o do projétil do tier 1, `round(BOSS.volley.damage × 1)`. */
+const THREAD_DAMAGE_R5 = 10;
 
 export default async function ({ page, baseUrl, assert }) {
   mkdirSync(OUT_DIR, { recursive: true });
@@ -268,7 +270,8 @@ async function threadRainScenario({ page, assert, openBoss, pushToPhase, tick, s
   }
   assert(rain, 'nenhuma Chuva de Fios caiu com o player parado sob um fio e sem outro golpe por perto');
   // CYC-10: um acerto só (um fio por abertura; os vizinhos ficam a 48 px), com o dano de projétil do tier.
-  assert(rain.damage > 0 && rain.hits === 1, `o fio acerta o player uma vez: ${JSON.stringify(rain)}`);
+  assert(rain.damage === THREAD_DAMAGE_R5, `o fio leva o dano de projétil do tier 1: ${JSON.stringify(rain)}`);
+  assert(rain.hits === 1, `o fio acerta o player uma vez: ${JSON.stringify(rain)}`);
   assert(rain.hpLoss === rain.damage, `o player perde o dano de projétil do tier: ${JSON.stringify(rain)}`);
 }
 
