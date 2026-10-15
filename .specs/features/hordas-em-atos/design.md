@@ -125,7 +125,8 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
 | `combat.onEnemyDied` | `src/scenes/test/combat.ts:73-77` | Ganha `kind` (`'enemy'` por padrão; `'swarm'`, `'elite'`) e repassa à `Run` |
 | `combat.onConnect` | `src/scenes/test/combat.ts:83-107` | O golpe que acerta vários membros do enxame conta uma vez (ENX-11), agrupado pelo `Hit.swingId` (`core/hit.ts:50`) |
 | `combat.attackerOf` | `src/scenes/test/combat.ts:125-134` | Acha o membro do enxame pelo id para o parry da mordida (ENX-07) |
-| `AttackHitbox` | `src/game/hitbox.ts:55-108` | Mordida do enxame: uma por membro, com corpo Matter só na abertura (no máximo 3 abertas, ENX-06); entrega e defesa do player iguais às da garra |
+| `AttackHitbox` | `src/game/hitbox.ts:55-108` | Mordida do enxame: uma por membro, com corpo Matter só na abertura (no máximo 3 abertas, ENX-06); entrega e defesa do player iguais às da garra; o `onConnect` da hitbox vai para o `hordeDirector.onBiteConnect` (faísca e hitstop micro), não para o `combat.onConnect`, que daria 50 ms por mordida |
+| `resolveIncomingHit` | `src/core/defense.ts:75-92` | Sem mudança: a mordida `low` sem `unblockable` passa na guarda e no parry (que não olham a altura) e no pulo (`airborne && low`), e o agachar não a evita (só evita `high`) |
 | `newEntityId`, `tagBody`, `Hittable`, `routeContacts` | `src/game/bodyTags.ts:13-85` | O membro é `Hittable`/`TechTarget`; `Hittable` ganha `readonly elite?: boolean` (ELT-12) |
 | `Filters.enemy` | `src/core/collision.ts` | Corpo do enxame: só terreno e hitbox (par inimigo-inimigo nunca é resolvido) |
 | `BodyRenderPos` (AD-019) | `src/game/` (usado em `Enemy.ts:111`) | Sprite do membro na posição interpolada |
@@ -136,7 +137,8 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
 | `outlineKeyAt` e `AffixOutline` (F32) | `core/bossAffix.ts:195-203` (branch `feat/chefes-com-afixos`), `game/boss/AffixOutline.ts` (design da F32) | O ciclo de chaves sai para `cycleKeyAt(keys, ms, swapMs)` (o `outlineKeyAt` passa a chamá-lo); a elite usa o mesmo `AffixOutline` sobre o `fxSprite` (`Enemy.ts:191`) |
 | `ChoiceQueue`, `choiceRank`, `buildPage`, `choiceDirector` (F33) | `core/choice.ts`, `core/choicePages.ts`, `scenes/test/choiceDirector.ts` (F33) | Selo = `{ kind: 'livre', origin: 'selo' }`; página pulada vira fragmentos (ELT-09/10, ESP-04) |
 | `Hud.setRun`, `Hud.banner` | `src/game/Hud.ts:285-293`, `:299` | `setRun` troca o campo `remaining` por `counter` (texto pronto), sem linha nova (HRD-12); banners com os textos de `core/hordeText.ts` |
-| `DamageNumbers` (teto de 12), `MicroBudget` (60 ms) e `Hit.band` (F29) | `game/DamageNumbers.ts`, `core/hitBand.ts` | Nenhum hitstop nem número em massa com o enxame (ENX-15) |
+| `DamageNumbers` (teto de 12), `MicroBudget` (60 ms), `microHitstopMs` e `Hit.band` (F29) | `game/DamageNumbers.ts`, `core/hitBand.ts` | Nenhum hitstop nem número em massa com o enxame (ENX-15); a mordida que conecta ou é bloqueada pede `microHitstopMs('light')` a um `MicroBudget` do `hordeDirector` (ENX-05) |
+| `armedChance`, `ElixirRoll` | `src/core/loot.ts:40-43`, `:105-115` | `a(r)` e a chance média de Elixir `e(r)` da calibragem do enxame (ENX-12, HRD-11) |
 | `debugParam`, `debugIntParam` | `src/scenes/test/params.ts:5-15` | Parâmetros novos lidos no `hordeDirector.runOptions()` |
 | `__game.step(ms)` e `render()` | `src/game/debugApi.ts:428-450` | Medição do HPF-01 em laço dentro da página |
 
@@ -173,7 +175,7 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
   max: 20 }, body: { w: 18, h: 24 }, speed: 95, offsetPx: 14, rangePx: 40, windupMs: 300, biteMs: 120, lungePx: 48,
   restMs: 1000, damage: 5, force: 2, hitStunMs: 150, parry: { pushPx: 40, stunMs: 500 }, dieMs: 300, gate: { max: 3,
   gapMs: 200 }, aerial: { chance: 0.3, liftPx: 96 }, minDistPx: 160, bite: { offsetX: 14, offsetY: -2, width: 20,
-  height: 14 } }`.
+  height: 14, hitHeight: 'low' }, rangeDyPx: 24, jitterPx: 3, depth: -1 }`.
 - **Reuses**: o padrão dos outros arquivos de `data/` (interface + constante, comentário com o requisito).
 
 ### `data/elites.ts` (novo, ~45 linhas)
@@ -213,8 +215,11 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
     `stored` (rodada de enxame ×2 e 18; `semTregua` ×1,3 e ×1,5), `eliteAt` (`[ceil(0,4·q)]`, `[ceil(0,4·q),
     ceil(0,7·q)]` com `eliteDupla`, `[0]` com `?debug&elite=`), regras do Véu ligadas e o `veuHpMul`.
   - `budgetRate(round, elapsedMs, plan, t): number` = `min(1,5 + 0,15·(r−1) + 0,02·t, 6) × plan.rateMul` (pontos/s).
-  - `swarmDropMean(round, comp, waveT): number` = `max(0, (3·W − 3·L − 8·E) / S)` (0 com `S = 0`) e
-    `swarmHealFactor(round, comp, waveT)` = `(W − L − E) / S` (ENX-12, HRD-11).
+  - `swarmDropMean(round, comp, waveT, econ): number` = `max(0, ((W − L) · μ − E · (8 + 2a)) / S)` com `a =
+    armedChance(r, econ.armed)` (teto de hoje, 0,5) e `μ = 3 + a · econ.armedBonus` (0 com `S = 0`);
+    `swarmHealFactor(round, comp, waveT)` = `(W − L − E) / S`; `swarmElixirChance(round, comp, waveT, econ, elixir)` =
+    `swarmHealFactor × (a · elixir.armedChance + (1 − a) · elixir.chance)` (ENX-12, HRD-11). Na r6: `a` 0,3, `μ` 3,6,
+    `m` 0,9; na r8: `m` (6 · 3,8 − 8,8) / 14 = 1,0; na r19: `m` 0,375; na r13 (enxame): `m` 2,67.
 - **Dependencies**: `waves.ts` (`waveSize`, `maxAliveFor`, `isBossRound`), `veu.ts`, `data/horde`, `data/acts`.
 
 ### `core/horde.ts` (novo, ~165 linhas; `WaveHorde` mora aqui só no passo 0)
@@ -242,7 +247,9 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
   `count = min(group, swarmLeft, bodyCap − bodies) > 0`. `bodies` conta vivos e membros em fenda (HRD-04); a elite fica
   fora do teto de lutadores. Nascidos + fendas nunca passam da cota (HRD-05), porque `enemyLeft` e `swarmLeft` já
   descontam os dois.
-- **Contagem**: `enemyDied(id, kind)` com um `Set` de ids (WAVE-06/08), por tipo; `alive = nascidos − abatidos`;
+- **Contagem**: `enemyDied(id, kind)` com um `Set` de ids (WAVE-06/08), por tipo; conta todo id novo, nascido ou não
+  (o `Horde` nunca vê os ids das entidades, e o `run.test.ts` mata os ids 1 a 6 sem nascimento no `cleared()`, l.24-34);
+  `remaining = quota − kills`; vivos por tipo = `max(0, nascidos − abatidos)` e `alive` a soma;
   `queued = max(0, quota − kills − alive − rifting)` (DBH-03); `cleared = kills ≥ quota` (a cota que termina numa fenda
   só fecha quando ela nasce e morre, edge case); `maxAlive = lutadorCap`.
 - **Dependencies**: `hordePlan.ts`, `elite.ts` (`drawAffixes`), `rng.ts`.
@@ -252,11 +259,15 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
 - **Purpose**: regras puras do enxame (ENX-02..07, ENX-12/13, ENX-14 na escolha do quadro).
 - **Interfaces**:
   - `swarmHp(hpMul, t = SWARM)` = `clamp(round(12 × hpMul), 12, 20)` (ENX-02).
-  - `groupOffset(index, count, t)` = `(index − (count − 1) / 2) × 14` (ENX-04).
-  - `class SwarmBrain`: estados `chase | windup | bite | rest | stun | dead`; `update(dtMs, dxToTarget, distToPlayer,
-    gate): SwarmIntent` com `{ vx, startWindup, openBite, closeBite }`; `stun(ms)` (golpe aceito 150, parry 500),
-    `die()`. Persegue só em x a `speed × speedMul` px/s; com o player a até 40 px e vaga no limitador, entra em
-    `windup` (300 ms), `bite` (120 ms, investida de 48 px no sentido do player) e `rest` (1000 ms).
+  - `groupOffset(index, count, id, t)` = `(index − (count − 1) / 2) × 14 + ((id mod 5) − 2) × 3` (ENX-04: o desvio por
+    id impede que membros de grupos diferentes se empilhem no mesmo pixel).
+  - `class SwarmBrain`: estados `chase | windup | bite | rest | stun | dead`; `update(dtMs, dxToTarget, dxToPlayer,
+    dyToPlayer, gate): SwarmIntent` com `{ vx, startWindup, openBite, closeBite }`; `stun(ms)` (golpe aceito 150, parry
+    500), `die()`. Persegue só em x a `speed × speedMul` px/s; com `|dx| ≤ 40` e `|dy| ≤ 24` (mesmo chão) e vaga no
+    limitador, entra em `windup` (300 ms), `bite` (120 ms, investida de 48 px no sentido do player) e `rest` (1000 ms);
+    com o `swarmBite=0` de debug nunca entra no `windup`.
+  - `biteHit(damageMul, t = SWARM): Pick<Hit, 'damage' | 'strength' | 'force' | 'height'>` = `{ damage: round(5 ×
+    damageMul), strength: 'light', force: 2, height: 'low' }`, sem `unblockable` (ENX-05).
   - `class SwarmGate { canWindup(); noteWindup(id); release(id); update(dtMs); activeCount }`: no máximo 3 membros em
     `windup`/`bite` e 200 ms entre dois `windup` (ENX-06), separado do `AttackGate`.
   - `pickSwarmPoint({ points, playerX, minDistPx: 160, maxReach?, rng }): number`: sorteia (spawnRng) entre os `E` a
@@ -286,7 +297,8 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
 
 ### `core/veu.ts` (novo, ~40 linhas)
 
-- `drawVeuOrder(rng): VeuRule[]` (Fisher-Yates com 3 `rng.int`, VRB-01); `veuRulesFor(act, order)` (do ato V, `act −
+- `drawVeuOrder(rng): VeuRule[]` (Fisher-Yates com 3 `rng.int`, VRB-01); `pickVeuOrder(rng, override?)` (sorteia sempre,
+  devolve o override quando há, DBH-01.2); `veuRulesFor(act, order)` (do ato V, `act −
   4` regras, no máximo 4); `veuHpMul(act)` = `1,15^(act − 4)` do ato V, 1 antes (VRB-03); `parseVeuOrder(raw)`
   (DBH-01: ids conhecidos, sem repetir; o resto da ordem completa com os que faltam na ordem de `VEU_RULES`).
 
@@ -295,13 +307,14 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
 - `roundStartText(round, veu)`: "Rodada de enxame!" na rodada de enxame (ESP-03); "Rodada N · Ato X" no 1º round de
   cada ato do II ao IV; "Rodada N · Véu Rompido: <regra nova>" no 1º round de cada ato do V em diante (sem regra nova
   depois da 4ª: "Rodada N · Véu Rompido"); "Rodada N" no resto (ATO-02).
-- `clearedText(round)`: "Rodada N concluída", com " · Próxima: elite" quando `round + 1 === 8` (ELT-11) e " · Próxima:
-  rodada de enxame" quando `isSwarmRound(round + 1)` (ESP-03).
+- `clearedText(round)`: "Rodada N concluída", com " · Próxima: elite" quando `round + 1 === 8` (ELT-11), " · Próxima:
+  rodada de enxame" quando `isSwarmRound(round + 1)` (ESP-03) e " · +1 Selo" quando `isSwarmRound(round)` (ESP-04); os
+  três nunca coincidem (a r7 não é vizinha de rodada de enxame, e duas rodadas de enxame distam 5).
 
 ### `core/hordeParams.ts` (novo, ~50 linhas)
 
 - `parseHordeOverrides(get: (name) => string | null): HordeOverrides` com `quota` (inteiro ≥ 1), `bodyCap` (inteiro ≥ 1),
-  `swarm` (`'0'` → `false`), `swarmBurst` (inteiro de 1 a 60), `elite` (`none` → `[]`; lista de afixos conhecidos,
+  `swarm` (`'0'` → `false`), `swarmBurst` (inteiro de 1 a 60), `swarmBite` (`'0'` → `false`, só para a medição do HPF), `elite` (`none` → `[]`; lista de afixos conhecidos,
   distintos, no máximo 2; qualquer id desconhecido invalida o valor inteiro, como o `parseBossAffixes` da F32) e `veu`
   (`parseVeuOrder`). Inválido some (DBH-01).
 
@@ -331,8 +344,9 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
 - Corpo `scene.matter.add.rectangle(x, y, 18, 24, { friction: 0, frictionAir: 0.02, collisionFilter:
   Filters.enemy })` sem `chamfer` (4 vértices no SAT), `setInertia(Infinity)`, `tagBody(character)`; sprite da folha
   `enemy-swarm` com `SWARM_ORIGIN` e `SWARM_SCALE` vindos de `art/index.ts`; `BodyRenderPos` (AD-019). Sem `EnemyHud`
-  (nenhuma barra; o número de dano mostra o acerto). Mordida por `AttackHitbox` próprio, aberto em `openBite` com
-  `{ damage: round(5 × damageMul), strength: 'light', force: 2, ...hitFieldsFor('white') }` (ENX-05).
+  (nenhuma barra; o número de dano mostra o acerto). Sprite na profundidade `SWARM.depth` (−1), abaixo dos lutadores e
+  do player (ENX-14). Mordida por `AttackHitbox` próprio, aberto em `openBite` com o `biteHit(damageMul)` de `core/swarm.ts`
+  (`height: 'low'` sem `unblockable`), sem passar pelo `hitFieldsFor` (nenhum `AttackKind` é baixo e bloqueável; ENX-05).
 - **Dependencies**: `core/swarm.ts`, `game/hitbox.ts`, `game/bodyTags.ts`, `game/art`.
 
 ### `game/SwarmPack.ts` (novo, ~120 linhas)
@@ -342,8 +356,9 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
   grupo, `y − 96` no aéreo), `update(dtMs, playerX)` (IA, limitador, mordidas, retirada do corpo do morto no mesmo
   quadro, 3 quadros de dissolução em 300 ms e destruição do sprite), `targets(): readonly SwarmEnemy[]` (vivos),
   `byId(id)`, `repeatHit(hit, target): boolean` (ENX-11: `true` do 2º membro em diante com o mesmo `swingId`; golpe sem
-  `swingId` nunca repete), `clear()`, `snapshot()`. Ganchos: `onConnect` (mordida → `combat.onConnect`), `onDied(member,
-  x, y)`, `onEvent`.
+  `swingId` nunca repete), `clear()`, `snapshot()`. Ganchos: `onConnect` (mordida → `hordeDirector.onBiteConnect`:
+  `fx.spark`, `effects.hitstop.trigger(biteBudget.grant('light', realNow))` e `effects.freeze()` só com hitstop > 0;
+  nunca `combat.onConnect`, que daria 50 ms por mordida, ENX-05), `onDied(member, x, y)`, `onEvent`.
 - O ouvinte único itera os membros e aplica, a cada passo do Matter, a velocidade do puxão do Azul, do empurrão ou da
   perseguição (L-001); é registrado no construtor e tirado no `SHUTDOWN`.
 
@@ -404,7 +419,10 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
   `RUN.bannerMs` preso acima da cabeça, `eliteSpawn:<id>`), `update(dt)` (regenerador com `RegenClock` e `enemy.heal`,
   pulso `G` a cada cura; leitura do `shieldValue` para o trecho `c` da barra e para o `shieldBreak:<id>` com faísca `C`
   quando chega a 0; anéis de explosão), `onDied(enemy, x, y)` (Selo `selo:elite`; explosivo agenda o anel de 72 px por
-  700 ms e depois `player.receiveHit` com `red` quando `inBlast`, `eliteBlast:<id>`), `reset()`, `snapshot()`.
+  700 ms e depois `player.receiveHit` com `red` quando `inBlast`, `eliteBlast:<id>`; texto flutuante "+1 Selo" no ponto
+  da morte por `RUN.bannerMs`, o mesmo helper do rótulo), `reset()`, `snapshot()`.
+- O anel conta tempo de jogo: anda no `update(dt)` chamado pelo `combat.updateEnemies`, que não roda com
+  `effects.frozen` (`TestScene.ts:413`) e recebe o `dt` já escalado pela câmera lenta (ELT-05).
 - O relógio do regenerador zera quando `hp + shield` cai entre dois quadros (todo dano, chip incluso, passa pelo
   `EnemyBrain`); a explosão segue se a rodada fecha no mesmo quadro e some no `reset` (rebuild, run nova, `R`).
 
@@ -435,7 +453,7 @@ No laboratório de efeitos e com `?debug&spawn=0` o `hordeDirector` ignora `rift
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
 | `src/core/horde.ts` (novo) | — | `RoundHorde`, `HordeOrder`, `WaveHorde` (embrulha o `WaveSpawner`, mesmos números) |
-| `src/core/run.ts` | 2, 58, 110-130, 249-252, 286, 311 | `spawner` vira `horde: RoundHorde`; `new WaveHorde(new WaveSpawner(...))`; o laço da l.250 repassa a ordem (`commands.push({ ...order, round })`), com o mesmo comando `spawn` de hoje |
+| `src/core/run.ts` | 2, 58, 110-130, 249-252, 286, 311 | `spawner` vira `horde: RoundHorde`; `new WaveHorde(new WaveSpawner(...))`; o laço da l.250 segue com a mesma linha (`commands.push({ type: 'spawn', round: this._round, kind: order.kind })`): no passo 0 o comando fica exatamente `{ type, round, kind }`, porque o `run.test.ts:565` compara com `toEqual` e qualquer campo a mais (`rift`, `count`, `affixes`) o quebra |
 | `src/scenes/test/hordeDirector.ts` (novo) | — | `onCommand` (o `spawn` de hoje, com o filtro de `fxLab` e `spawn=0`), `update` (`hud.setRun` com `counter: Inimigos: ${alive + queued}`), `runOptions()` (`maxAliveOverride: debugIntParam('maxAlive', 1)`) |
 | `src/scenes/test/runDirector.ts` | 51, 56-63 | `this.s.horde.onCommand(cmd)` logo depois do `area.onCommand`; sai o `case 'spawn'` (−7, +1) |
 | `src/scenes/TestScene.ts` | 52, 69-70, 74-97, 248, 423-425 | `import { HordeDirector }` (+1); `readonly horde = new HordeDirector(this)` (+1); a l.248 vira `...this.horde.runOptions(),` (0) e o `debugIntParam` sai do import da l.52 se ficar sem uso (0); as l.423-425 viram `this.horde.update(dt);` (−2). **Saldo 0: 390 → 390** |
@@ -460,7 +478,7 @@ Os smokes do HRD-01.2 (`spawn-pressure`, `run-loop`, `hud`, `boot`, `shop`, `wor
 | `src/scenes/test/hordeDirector.ts` | — | `onRift`, `onSpawn` por `rift`, `reset`, `onGameOver`, `onSceneCreate`, `counterText()` (`Abates: k/q` e `Chefe`), `snapshotFields()` |
 | `src/scenes/test/uiSetup.ts` | 72-94 | `this.s.horde.onSceneCreate()` no `addHud`, depois da `uiLayer` (+1): os objetos do diretor nascem em cada cena, inclusive depois do `R` |
 | `src/scenes/test/combat.ts` | 73-77 | `onEnemyDied(enemyId, x, y, kind: SpawnKind = 'enemy')` repassa `kind` (0) |
-| `tests/core/run.test.ts` | 298 | `const commands = [...run.update(0, SEED), ...run.update(600, SEED)];` (os spawns da r1 saem 600 ms depois das fendas; a linha não cresce, o arquivo está na exceção de tamanho) |
+| `tests/core/run.test.ts` | 298, 363, 423, 551-568 | Só conteúdo, o arquivo (exceção de tamanho) encolhe: l.298 `const commands = [...run.update(0, SEED), ...run.update(600, SEED)];` (os spawns da r1 saem 600 ms depois das fendas); l.363 e l.423 `step < 400` → `step < 800` (com orçamento e fenda a r3 só começa perto de 21 s de jogo; o laço de 400 × 50 ms cobre 20 s e o `toContain(3)` cairia); os casos "maxAliveOverride ... (1 vivo)" e "o 1º update da rodada 1 emite o burst de 3 spawns" (l.551-568: spawn no 1º `update`, formato exato `{ type, round, kind }`, gotejo de 1500 ms) saem e voltam reescritos no `tests/core/runHorde.test.ts` (fenda no 1º `update`, `spawn` 600 ms depois com `rift`, `count` e `affixes`, teto de 1 lutador e ritmo do orçamento) |
 | `tests/core/waves.test.ts` | 93-258 | saem os casos do `WaveSpawner` (o comportamento vira `tests/core/horde.test.ts`); ficam `waveSize`, `maxAliveFor`, `isBossRound`, `farthestPoint` |
 | `scripts/smoke/fight-kit.mjs` | 25-47 | o `boot` espera o 1º `spawnFx:` (até 90 quadros) antes de devolver: a fenda atrasa todo nascimento em 600 ms e os duelos procuram o inimigo logo depois do `J` |
 | `scripts/smoke/spawn-pressure.smoke.mjs` | 1-60 | SPN-03 passa a ler `horde.rifts.length === 3` no 1º `update` e `run.alive === 3` depois de 600 ms; "ao menos 5 nascidos em 6 s" segue (orçamento 9, 1,5 ponto/s: 5º lutador nasce perto de 4,5 s) |
@@ -478,8 +496,8 @@ Os smokes do HRD-01.2 (`spawn-pressure`, `run-loop`, `hud`, `boot`, `shop`, `wor
 | `src/data/horde.ts` | — | `SWARM`; `HORDE.bodyCap` fixado no fim do passo pelo HPF-02 |
 | `src/core/swarm.ts` (novo) | — | ver acima |
 | `src/core/hordePlan.ts` | — | `swarmOn: true`: composição `L/S/E` (E só no passo 3), grupo por ato, `swarmDropMean`, `swarmHealFactor` |
-| `src/core/loot.ts` | 74-98 | `swarmDrop(round, mean, healFactor)`: cura com `healFactor × chance efetiva`, depois `floor(mean)` + 1 com chance `mean − floor(mean)`; nunca Elixir nem ferramenta (+9) |
-| `src/core/hordeParams.ts` | — | `swarm=0`, `swarmBurst` |
+| `src/core/loot.ts` | 74-98, 105-115 | `swarmDrop(round, mean, healFactor)`: cura com `healFactor × chance efetiva`, depois `floor(mean)` + 1 com chance `mean − floor(mean)`; nunca ferramenta (+9); `ElixirRoll.chanceDrop(p)` (um sorteio no stream do Elixir com a chance dada, +3) para o `swarmElixirChance` |
+| `src/core/hordeParams.ts` | — | `swarm=0`, `swarmBurst`, `swarmBite=0` |
 | `src/game/SwarmEnemy.ts`, `src/game/SwarmPack.ts`, `src/game/art/hd/swarmSheet.ts` (novos) | — | ver acima |
 | `src/game/textures.ts` | 5-73 | `TEX.swarm = 'enemy-swarm'` (+1) |
 | `src/game/art/index.ts` | 10-12, 75-77 | import e `export { SWARM_ORIGIN, SWARM_SCALE }` da folha; `registerIndexedSheet(scene, TEX.swarm, swarmSheet())` (+3) |
@@ -487,7 +505,7 @@ Os smokes do HRD-01.2 (`spawn-pressure`, `run-loop`, `hud`, `boot`, `shop`, `wor
 | `src/scenes/test/techDirector.ts` | 18-20 | `: this.s.horde.targets();` no lugar de `: this.s.enemies;` (0) |
 | `src/game/hordeSnapshot.ts`, `src/game/debugApi.ts` | 24-148 | `SwarmSnapshot` e `swarm: SwarmSnapshot[]` no `GameSnapshot` (+1) |
 | F31 `scenes/test/domainDirector.ts` e `domainPowers.ts`, F30 e F33 nos laços de alvo das técnicas que leem `this.s.enemies` | design de cada fase | passam a ler `this.s.horde.targets()` (ENX-10; 0 linha cada) |
-| `src/scenes/test/hordeDirector.ts` | — | `onSpawn` do enxame, drop e cura do membro (`loot.swarmDrop` + `drops.applyDrop`), `updateUnits`, `targets` |
+| `src/scenes/test/hordeDirector.ts` | — | `onSpawn` do enxame, drop, cura e Elixir do membro (`loot.swarmDrop` + `elixir.chanceDrop` + `drops.applyDrop`), `onBiteConnect` com o `MicroBudget` da mordida, `updateUnits`, `targets` |
 | `scripts/smoke/spawn-pressure-horde.smoke.mjs` (novo) | — | HPF-01/02 (ver "Desempenho") |
 
 **Passo 3 (elites e Selo; ELT-01..12, DBH-04 da elite)**
@@ -547,7 +565,7 @@ Os smokes do HRD-01.2 (`spawn-pressure`, `run-loop`, `hud`, `boot`, `shop`, `wor
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
 | `src/core/veu.ts` (novo) | — | ver acima |
-| `src/core/run.ts` | 297-307 | `veuOrder = drawVeuOrder(hordeRng)` logo depois do `hordeRng`; `get veuRules` (regras do ato da rodada atual) (+5) |
+| `src/core/run.ts` | 297-307 | `veuOrder = pickVeuOrder(hordeRng, overrides.veu)` logo depois do `hordeRng` (sorteia sempre e só então troca pelo override: um `override ?? drawVeuOrder(...)` pularia o sorteio e mudaria o stream, DBH-01.2, e abriria ramo no `resolveStart`); `get veuRules` (regras do ato da rodada atual) (+5) |
 | `src/core/hordePlan.ts` | — | regras ligadas, `eliteDupla`, `semTregua`, `veuHpMul` no plano |
 | `src/core/hordeText.ts` | — | "Rodada N · Véu Rompido: <regra>" |
 | `src/scenes/test/runDirector.ts` | 67 | `roundStartText(cmd.round, this.s.run.veuRules)` (0) |
@@ -565,7 +583,7 @@ Os smokes do HRD-01.2 (`spawn-pressure`, `run-loop`, `hud`, `boot`, `shop`, `wor
 export type UnitKind = 'enemy' | 'swarm' | 'elite'; // 'enemy' = lutador, o nome do comando `spawn` de hoje
 export interface Composition { enemy: number; swarm: number; elite: number }
 export interface HordeOverrides {
-  quota?: number; bodyCap?: number; swarm?: false; swarmBurst?: number;
+  quota?: number; bodyCap?: number; swarm?: false; swarmBurst?: number; swarmBite?: false;
   elite?: readonly EliteAffix[]; veu?: readonly VeuRule[];
 }
 export interface RoundPlan {
@@ -646,7 +664,7 @@ F31, F32 e F33 (reconferir no começo de cada passo); "fim da F38" é a estimati
 | `src/scenes/test/areaDirector.ts` | 141 | 141 | ~142 | `enterArea` |
 | `src/core/waves.ts` | 103 | 103 | ~55 | sai o `WaveSpawner` |
 | `src/scenes/test/camera.ts` | 61 | ~61 | ~82 | zoom base e trava |
-| `src/core/loot.ts` | 81 | 81 | ~95 | `swarmDrop`, `eliteDrop`, teto do armado |
+| `src/core/loot.ts` | 81 | 81 | ~98 | `swarmDrop`, `ElixirRoll.chanceDrop`, `eliteDrop`, teto do armado |
 | `src/game/enemy/EnemyHud.ts` | 81 | 81 | ~88 | trecho do escudo |
 | `src/game/art/index.ts` | 137 | 137 | ~140 | folha do enxame e o ponto de troca |
 | `src/scenes/test/arena.ts` | 88 | 88 | ~93 | `sealSpan` |
@@ -671,8 +689,8 @@ Arquivos novos (todos bem abaixo de 400 e de 80 linhas por função; nenhum entr
 
 Funções nas listas de exceção que este design toca: `Run.resolveStart` (2 atribuições, sem ramo), `EnemyBrain.receiveHit`
 (a mesma linha com outra expressão), `EnemyDefense.onPlayerMove` (expressão), `EnemyAnimator` (expressão) e
-`debugSnapshot` (encolhe). Nenhum teste da lista de exceções do `max-lines` cresce: `tests/core/run.test.ts` só troca a
-l.298, `tests/core/enemyBrain.test.ts` não muda (escudo e cura vão para `tests/core/elite.test.ts`), e os streams e o
+`debugSnapshot` (encolhe). Nenhum teste da lista de exceções do `max-lines` cresce: `tests/core/run.test.ts` só troca
+conteúdo e encolhe (l.298, l.363, l.423; os casos das l.551-568 saem para o `runHorde.test.ts`), `tests/core/enemyBrain.test.ts` não muda (escudo e cura vão para `tests/core/elite.test.ts`), e os streams e o
 `Run` com o diretor vão para `tests/core/runHorde.test.ts`.
 
 ---
@@ -696,10 +714,13 @@ l.298, `tests/core/enemyBrain.test.ts` não muda (escudo e cura vão para `tests
 | Pickups | `Pickups` | `ECONOMY.maxLiveFragments` 60 (ECO-15); a média de fragmentos do enxame é menor que a do lutador (0,25 a 2 por membro) |
 
 **Medição (HPF-01/02)**, em `scripts/smoke/spawn-pressure-horde.smoke.mjs`, com
-`?debug&hd=1&area=modular&seed=1&round=6&noshop=1&enemyGuard=0&swarmBurst=<n>&maxAlive=1&quota=1` (o `swarmBurst` soma os `n` membros à cota; o único lutador da cota fica no teto de 1):
+`?debug&hd=1&area=modular&seed=1&round=6&noshop=1&enemyGuard=0&swarmBurst=<n>&swarmBite=0&maxAlive=1&quota=1` (o `swarmBurst` soma os `n` membros à cota; o único lutador da cota fica no teto de 1):
 
-1. Para cada `n` em 8, 16, 24, 32 e 40: boot, `J`, espera os `n` membros nascerem (`horde.alive.swarm === n`), anda
-   até o meio da área e segura a guarda (a mordida é `white`, bloqueável; sem isso o player morre antes do fim).
+1. Para cada `n` em 8, 16, 24, 32 e 40: boot, `J`, espera os `n` membros nascerem (`horde.alive.swarm === n`) e anda
+   até o meio da área. Com `swarmBite=0` os membros perseguem e se amontoam no player mas não mordem: a guarda só
+   protege a frente (`attackerInFront`) e, com 40 membros dos dois lados, o player morreria antes do fim; as no
+   máximo 3 hitboxes de mordida (ENX-06) não pesam na conta de corpos. O lutador único segue atacando: o player segura
+   a guarda virado para ele.
 2. Dentro de um único `page.evaluate`, 300 quadros de `__game.step(16)` cronometrados com `performance.now()` (sem ida e
    volta ao Node por quadro); depois mais 120 quadros de `step(16)` + `render()` (o `step` usa o `headlessStep`, que não
    desenha; a 2ª coluna mostra o custo do desenho, só informativa, porque o Chromium sem GPU desenha em software).
@@ -744,11 +765,14 @@ consulta), que muda o ENX-08 e pede decisão do usuário.
 | Concern | Location (file:line) | Impact | Mitigation |
 | --- | --- | --- | --- |
 | A fenda atrasa todo nascimento em 600 ms | `scripts/smoke/fight-kit.mjs:25-53` (`boot` devolve 50 ms depois do `J`; `nearest(s)` lê `s.enemies[0]` e quebra com a lista vazia) e 14 smokes sem o kit que leem `enemies` (fora o `spawn-pressure`) | Quase toda a suíte de luta quebraria no passo 1 | O `boot` do kit espera o 1º `spawnFx:`; os 14 smokes sem o kit rodam no passo 1 e ganham a mesma espera onde precisarem |
-| `run.test.ts` espera `spawn` no 1º `update` | `tests/core/run.test.ts:296-301` (arquivo na exceção de tamanho) | Teste vermelho no passo 1 | A l.298 junta os dois `update` numa linha (0 linha a mais); os casos do chefe (l.304-321) seguem, porque o chefe não tem fenda |
+| `run.test.ts` depende do ritmo e do formato da onda de hoje | `tests/core/run.test.ts:296-301`, `:354-384`, `:415-445`, `:551-568` (arquivo na exceção de tamanho); `:24-34` mata ids que nunca nasceram | Cinco casos vermelhos no passo 1 (a revisão achou quatro além da l.298); no passo 0 um campo a mais no `spawn` já quebraria a l.565 | Passo 0: o comando `spawn` fica exatamente `{ type, round, kind }`. Passo 1: a l.298 junta os dois `update`; os laços das l.363 e l.423 vão a 800 passos; os dois casos das l.551-568 saem para o `runHorde.test.ts` reescritos; o `Horde` conta todo id novo (nascido ou não) e prende os vivos em 0. Os casos do chefe (l.304-321) seguem, porque o chefe não tem fenda. O arquivo só encolhe |
 | Ordem da página do Selo contradiz a F33 | ELT-09 ("depois da maestria e antes do Baú do Véu e do baú do chefe") e o CHC-02 da F33 (`bau` 0, `veu` 1, ramos 10+, `ponto` 20) | As duas metades não cabem juntas: depois da maestria já é depois dos baús | Rank 30 (depois da maestria), que cumpre a 1ª metade, o edge case da maestria primeiro e a razão do CHC-02 (União e Domínio antes de qualquer ponto); o texto do ELT-09 foi corrigido no passo de tasks (registrar no `STATE.md` se o usuário preferir outra ordem) |
 | Nome "selo" usado para três coisas | AD-004 (moeda persistente "selos"), `world.openSeal`/`TEX.seal`/`sealRect` (selo da área), Selo de elite | Identificador ambíguo no código | No código, `eliteSeal`/`addEliteSeal`; o texto e o evento seguem a spec (`selo:<origin>`, origem `selo`) |
 | Leitores de abate saturam com o enxame | `src/data/vows.ts:34` (Fúria 3%/abate até 45%: 15 abates), F31 (+1 de carga por abate), F33 (`killPoints` da maestria), F35 (Hora Extra a cada 15 abates) | Com 22 a 55 abates por rodada, a Fúria satura cedo e a barra do Domínio enche rápido | A spec quer o enxame alimentando Domínio e talentos de abate; os números ficam nos dados de cada fase e entram no UAT do passo 2 (o usuário joga a r9 e a r13 com Fúria e com Domínio) |
-| `maxTargets` limita quantos membros um golpe acerta | `src/data/moves.ts:90-264` (leve 1, forte 2; AD-015) | O "chute em 3 membros" do teste independente acerta 2 | O smoke prova 2 aceitos e combo +1; a técnica de área (F33) é o que limpa o grupo, como a spec diz ("os eixos de área passam a ter alvo") |
+| `maxTargets` limita quantos membros um golpe acerta | `src/data/moves.ts:90-264` (leve 1, forte 2; AD-015) | O "chute em 3 membros" do teste independente acerta 2. Pelo jogador: da r12 em diante o membro tem 20 de HP, o `chuteGiratorio` (18) não mata de 1 e a cadeia leve (6 + 7 + 9) mata 1 membro por cadeia; a rodada de enxame da r13 pede ~30 chutes sem técnica de área, e o volume pode virar tarefa em vez de "ceifar" | O smoke prova 2 aceitos e combo +1; a técnica de área (F33) é o que limpa o grupo, como a spec diz ("os eixos de área passam a ter alvo"). UAT do passo 2 e do 4 com uma medida: segundos para limpar um grupo de 6 só com o moveset, na r9 e na r13, sem build. Se passar de ~8 s ou o usuário disser que cansa, o primeiro ajuste é baixar o `SWARM.hp` (base 10, teto 16: a cadeia leve mata em 2 golpes em toda rodada), o que troca o ENX-02 e o "12 a 20" da seção 5.9 e pede o aceite do usuário; mudar o AD-015 contra o enxame também fica para decisão dele |
+| Salt repetido entre F31 e F32 | F31 `domainRng` (design, `run.ts`) e F32 `bossAffixRng`, os dois `seed ^ 0x9b05688c` | Os dois streams dariam a mesma sequência: o sorteio do Domínio e a escalação do chefe ficariam correlacionados | Fora da F38 (o `hordeRng` usa 0xc2b2ae35); registrado na spec para a F31 trocar o sal antes do merge; o teste do HRD-08 compara contra todos os sais do `Run` e pega a repetição se ela chegar ao código |
+| Guarda contra o enxame quebra rápido | `src/data/moves.ts:418` (`blockRegular` 15 por golpe bloqueado), `core/defense.ts:89` | Com 3 mordidas em ataque e 200 ms entre preparos, segurar a guarda contra um grupo enche a estrutura do player (100) em ~3 s e o atordoa 800 ms no meio do grupo | Aceito como desenho: a guarda não é a resposta ao volume (pular, bater, sair); a mordida não passa pelo `isBoss`. UAT do passo 2 anota quantas quebras de guarda o usuário leva na r9; se incomodar, o ajuste é um `blockStructure` por atacante no `Attacker` (`game/player/types.ts:20`), que pede mexer na `resolveIncomingHit` (complexidade perto de 15: cuidar do ramo) |
+| `run.kills` muda de escala | F39 `recorde-e-recomeco` (resumo e recorde por abates), F35 Hora Extra | De ~20 para até 55 abates por rodada: recordes de abate de antes da F38 não se comparam aos de depois | A F38 só garante que todo abate conta (Out of Scope); a F39 decide se o recorde guarda rodada, abates ou os dois e se zera ao mergear a F38 |
 | Dano dentro do callback de contato | `src/scenes/test/combat.ts:294-300` (o `onConnect` roda do `routeContacts`) | Remover corpo no meio do passo do Matter | O membro só se marca; a remoção é no `SwarmPack.update` do mesmo quadro (ENX-08) |
 | Escala da elite e a barra | `src/game/enemy/EnemyHud.ts:9` (`BAR_RISE = 44` fixo), `EnemyAnimator.ts:115` | A barra encosta na cabeça do sprite a 1,2; o ragdoll da elite fica em 1,0 | `BAR_RISE × c.scale` na mesma expressão; ragdoll em 1,0 aceito (a arte própria da elite está fora do escopo); conferir na captura HD do passo 3 |
 | Trava vertical da arena | `scenes/test/camera.ts` (novo), arena de 544 px de altura e vista de 400 px a 1,8 | O salto alto do chefe pode passar da borda de cima da vista (y < 144) | O smoke `acts` registra o menor `y` do chefe no salto triplo (F32) com a trava; se passar da borda, a trava usa o centro vertical que mostra o chão e o ápice (decisão no passo 5) |
@@ -777,7 +801,8 @@ consulta), que muda o ENX-08 e pede decisão do usuário.
 | Escudo da elite | No `EnemyBrain`, só no golpe que o `refuses` deixou passar | O golpe recusado (levantando, limite do chão) ou bloqueado não gasta escudo; nenhum ramo novo no `EnemyDefense` (exceção de complexidade) |
 | Relógio do regenerador | O `eliteDirector` lê `hp + shield` a cada quadro | Todo dano passa pelo cérebro, chip incluso; sem gancho novo no caminho do golpe |
 | HP da elite bruta no ato IV | O ELT-02 manda (`round(60 × hpMul × 2,5)`, sem o ×1,3 do bruto); o golpe `red` vale | O ×1,3 é do lutador comum (ATO-04); a elite já tem a vida dela |
-| Mordida | `AttackHitbox` de hoje, uma por membro | A defesa, o parry, o `attackerOf` e o `onConnect` do player são os da garra; no máximo 3 abertas |
+| Mordida | `AttackHitbox` de hoje, uma por membro, `height: 'low'` sem `unblockable`, conexão pelo `onBiteConnect` | A defesa, o parry e o `attackerOf` são os da garra; no máximo 3 abertas. Baixa para o agachar não anular o enxame inteiro (o `white` é alto); bloqueável para a guarda e o parry seguirem valendo; hitstop micro para 3 a 5 mordidas por segundo não congelarem o jogo |
+| Desvio por id no deslocamento do grupo | `((id mod 5) − 2) × 3` px, puro, sem sorteio | Grupos diferentes miram os mesmos deslocamentos; sem o desvio os membros se empilham no mesmo pixel (sem colisão inimigo-inimigo) e o jogador não conta quantos faltam |
 | Barra do membro | Nenhuma | Morre em 1 ou 2 golpes; o número de dano mostra o acerto; 30 barras seriam ruído e custo |
 | Graça ao nascer do membro | Nenhuma além do preparo de 300 ms | A fenda já avisou por 600 ms; o lutador mantém a graça de 600 ms (WAVE-09) |
 | `?debug&quota=n` com enxame | A elite fica; o enxame toma a fração dele de `n − elite`; o resto é lutador | Um número só, determinístico, que serve os smokes |
@@ -792,7 +817,7 @@ consulta), que muda o ENX-08 e pede decisão do usuário.
 Nenhuma decisão de projeto nova: o design segue AD-001 (regras novas em `core/` com teste par), AD-003 (fenda e véu no
 mundo, marca de borda na `uiLayer`), AD-006 (todo sorteio novo com seed, no `hordeRng`), AD-009 (cores da `PALETTE`,
 grade de 2 px), AD-015 (`maxTargets` vale contra o enxame), AD-019 (membro desenhado na posição interpolada), AD-020 (a
-mordida declara o tipo `white`) e AD-023 (contorno por `TintModes.FILL`). A AD-014 já foi revista pela F30 (escala do
+mordida declara os campos do golpe, aqui `height: 'low'` sem `unblockable`, fora dos três `AttackKind` do lutador) e AD-023 (contorno por `TintModes.FILL`). A AD-014 já foi revista pela F30 (escala do
 inimigo), que o Véu estende sem teto da r21 em diante.
 
 ---
@@ -803,20 +828,22 @@ inimigo), que o Véu estende sem teto da r21 em diante.
 
 | Arquivo | Prova |
 | --- | --- |
-| `tests/core/hordePlan.test.ts` | ATO-01 (`actOf` em 5/6, 10/11, 20/21, 25/26); ESP-01 (`isSwarmRound` em 12/13/14, 18, 23, nenhum múltiplo de 5 até a r100); HRD-02 (cota 6, 12, 14, 22, 25, 29, 32, 38, 47, 55 nas r1, r4, r5, r6, r7, r8, r9, r11, r14, r19; r5 sem enxame e r6 com; r7 sem elite e r8 com; chefe 1); HRD-09 (ato I igual a `waveSize`); ESP-02 (r13 30, r18 40, teto 60); HRD-04 (`bodyCap` 6, 22, 32 nas r1, r9, r14 e o override; `lutadorCap` = `maxAliveFor` e o `maxAlive`); HRD-03 (`budgetRate` 1,5 na r1 em t 0, teto 6, ×2 e ×1,3); ENX-03 (grupo 4/5/6 por ato, 6 na rodada de enxame); `applyQuota`; HRD-11 (r1 a r40 sem chefe: `3·L + 8·E + m·S` = `3·W` com folga 0,01, rodada de enxame inclusa, e `expectedIncome` com os valores de hoje); `swarmHealFactor` |
+| `tests/core/hordePlan.test.ts` | ATO-01 (`actOf` em 5/6, 10/11, 20/21, 25/26); ESP-01 (`isSwarmRound` em 12/13/14, 18, 23, nenhum múltiplo de 5 até a r100); HRD-02 (cota 6, 12, 14, 22, 25, 29, 32, 38, 47, 55 nas r1, r4, r5, r6, r7, r8, r9, r11, r14, r19; r5 sem enxame e r6 com; r7 sem elite e r8 com; chefe 1); HRD-09 (ato I igual a `waveSize`); ESP-02 (r13 30, r18 40, teto 60); HRD-04 (`bodyCap` 6, 22, 32 nas r1, r9, r14 e o override; `lutadorCap` = `maxAliveFor` e o `maxAlive`); HRD-03 (`budgetRate` 1,5 na r1 em t 0, teto 6, ×2 e ×1,3); ENX-03 (grupo 4/5/6 por ato, 6 na rodada de enxame); `applyQuota`; HRD-11 (r1 a r40 sem chefe: `L·μ + E·(8 + 2a) + m·S` = `W·μ` com folga 0,01, rodada de enxame inclusa; curas `= W × chance`; Elixires `= (W − E) × e + 0,2·E`; e `expectedIncome` com os valores de hoje); `swarmDropMean` 0,9 na r6, 1,0 na r8, 0,375 na r19, 2,67 na r13; `swarmHealFactor`; `swarmElixirChance` |
 | `tests/core/horde.test.ts` | HRD-03 (orçamento 9 no início; 12 guardado e não 13); HRD-04 (teto e teto + 1, fenda conta no teto, elite fora do teto de lutadores); HRD-05 (nascidos + fendas ≤ cota em todo quadro de 1000 simulações); HRD-06 (r9, 20 s sem abate: 22 corpos com fendas); HRD-07 (mesma seed e mesmos abates, mesmas fendas); HRD-09 (1º `update` com 3 fendas); FEN-01 (nasce em 600 e não em 599); edge cases (cota < 3; última unidade em fenda segura o `cleared`; grupo cortado pela cota e pelo teto); ELT-01 (limiar `ceil(0,4q) − 1` sem elite e `ceil(0,4q)` com; sem vaga espera; uma por rodada; nenhuma na rodada de enxame); VRB-02 `eliteDupla` (2ª em `ceil(0,7q)`); `swarmBurst`; WAVE-06/08 (`enemyDied` por id); DBH-03 (`queued`); chefe sem fenda (FEN-07) |
 | `tests/core/runHorde.test.ts` | O `Run` com o diretor: `rift` e depois `spawn` 600 ms depois; rodada fecha na cota; HRD-08 (`hordeRng` = `new Rng(seed ^ 0xc2b2ae35)` e o sal distinto dos 10 de hoje e dos da F30 a F33); consumir o `hordeRng` não mexe nos outros streams; `RunOptions.horde` aplicado; VRB-01 (ordem do Véu sorteada no start) |
-| `tests/core/swarm.test.ts` | ENX-02 (HP 12 na r1, 16 na r6, 20 na r19, nunca fora de 12..20 até a r40; o `chute` de 18 mata em até 2 golpes da r1 à r40 e em 1 na r1); ENX-04 (deslocamento ±14 por posição; velocidade com o `speedMul`); ENX-05 (40 e 41 px; 299/300 ms do preparo; 120 ms; 1000 ms); ENX-06 (3 e 4 em ataque; 199/200 ms); ENX-07 (500 ms) e ENX-08 (150 ms); ENX-12 (`swarmDrop` com média 0,75 na r6 em 10 mil sorteios, nunca Elixir); ENX-13 (159/160 px, alcance, mais distante sem nenhum); `swarmFrame` |
+| `tests/core/swarm.test.ts` | ENX-02 (HP 12 na r1, 16 na r6, 20 na r19, nunca fora de 12..20 até a r40; o `chuteGiratorio` de 18 mata em até 2 golpes da r1 à r40 e em 1 na r1; a cadeia `jab`/`direto`/`gancho` em até 3, em 2 na r1, lendo os danos do `MOVES`); ENX-04 (deslocamento ±14 por posição mais o desvio `((id mod 5) − 2) × 3`; dois membros de grupos diferentes na mesma posição com ids vizinhos não miram o mesmo x; velocidade com o `speedMul`); ENX-05 (40/41 px na horizontal, 24/25 px na vertical; 299/300 ms do preparo; 120 ms; 1000 ms; `swarmBite=0` nunca prepara); ENX-06 (3 e 4 em ataque; 199/200 ms); ENX-07 (500 ms) e ENX-08 (150 ms); ENX-13 (159/160 px, alcance, mais distante sem nenhum); `swarmFrame` |
+| `tests/core/swarm.test.ts` (mordida) | ENX-05: o `biteHit(damageMul)` (`height: 'low'`, sem `unblockable`, dano `round(5 × damageMul)`, força 2) passa por `resolveIncomingHit` como `block` com guarda e atacante à frente, `parry` com parry, `jumped` no ar, e `hit` agachado; de costas, `hit` mesmo com guarda (DEF-01) |
 | `tests/core/elite.test.ts` | ELT-02 (`round(60 × hpMul × 2,5)`); ELT-03 (0/1/2 afixos por ato, distintos, uniformes em 1000 seeds, sempre 2 sorteios); ELT-04 (`EliteShield` leve e forte, sobra para o HP, escudo 0 idêntico; `EnemyBrain` com escudo: golpe recusado não gasta; `heal` com teto e nada morto); ELT-05 (`inBlast` em 71/72/73 px; dano); ELT-06 (`eliteTuning` rápido: 360 e 480 ms); ELT-07 (`RegenClock` em 1999/2000 ms, tique de 200 ms, `max(1, ...)`, no máximo nada, dano zera); rótulo e chaves do contorno |
 | `tests/core/veu.test.ts` | VRB-01 (permutação, determinística, as 24 ordens aparecem em seeds); `veuRulesFor` nos atos 4, 5, 8 e 9; VRB-03 (`hpMul` na r20, r21 = 2,53, r25, r26 = 3,31; enxame e chefe fora); `parseVeuOrder` |
-| `tests/core/hordeText.test.ts` | ATO-02 ("Rodada 6 · Ato II", "Rodada 11 · Ato III", "Rodada 16 · Ato IV", "Rodada 21 · Véu Rompido: <regra>", r41 sem regra nova); ESP-03 ("Rodada de enxame!" na r13; r12 e r17 com " · Próxima: rodada de enxame"); ELT-11 (r7 com " · Próxima: elite", r6 e r8 sem) |
+| `tests/core/hordeText.test.ts` | ATO-02 ("Rodada 6 · Ato II", "Rodada 11 · Ato III", "Rodada 16 · Ato IV", "Rodada 21 · Véu Rompido: <regra>", r41 sem regra nova); ESP-03 ("Rodada de enxame!" na r13; r12 e r17 com " · Próxima: rodada de enxame"); ESP-04 (r13 e r18 "Rodada N concluída · +1 Selo", r14 sem); ELT-11 (r7 com " · Próxima: elite", r6 e r8 sem) |
 | `tests/core/hordeParams.test.ts` | DBH-01 (cada parâmetro válido e inválido: `quota` 0/1/`abc`, `bodyCap`, `swarm=0`, `swarmBurst` 0/1/60/61, `elite=none`, `elite=escudo,rapido`, `elite=escudo,xx`, `veu`) |
 | `tests/data/horde.test.ts`, `tests/data/acts.test.ts`, `tests/data/elites.test.ts` | Números da spec; ATO-03 (cores e alphas por ato, toda chave na `PALETTE`, a konbini sem véu); ATO-04 (`heavyBruto` e 0,65 do IV); afixos no feminino e cores na `PALETTE` (ELT-08) |
-| `tests/game/swarmReach.test.ts` | ENX-09: para todo golpe de chão do `MOVES` (`data/moves.ts`), a hitbox do player de pé (corpo 20 × 36) encosta no corpo de 18 × 24 no mesmo chão, colado à frente |
+| `tests/game/swarmReach.test.ts` | ENX-09: para todo golpe de chão do `MOVES` (`data/moves.ts`), a hitbox do player de pé (corpo 20 × 36) encosta no corpo de 18 × 24 no mesmo chão, colado à frente; com um corpo de 18 px de altura o `chuteAlto` (base da hitbox 18 px acima do chão) não encosta, o que prova que a altura importa |
 | `tests/game/swarmSheet.test.ts` | ENX-14: os 13 quadros, célula 64 × 56, origem no meio da base, contorno `k`, olhos `W`/`R`, toda cor na `PALETTE`; `art/index.ts` reexporta `SWARM_ORIGIN` e `SWARM_SCALE` |
 
 **Testes refeitos**: `tests/core/waves.test.ts` (saem os casos do `WaveSpawner`, que viram `horde.test.ts`);
-`tests/core/run.test.ts` (só a l.298, sem linha nova); `tests/core/difficulty.test.ts` (`hpExtra` 1 idêntico ao de
+`tests/core/run.test.ts` (l.298, l.363 e l.423 trocam conteúdo; os dois casos das l.551-568 saem para o
+`runHorde.test.ts`; o arquivo encolhe); `tests/core/difficulty.test.ts` (`hpExtra` 1 idêntico ao de
 hoje e ×2,5); `tests/core/attackKind.test.ts` (`heavyBruto`); `tests/core/loot.test.ts` (`swarmDrop`, `eliteDrop` e o
 teto do armado, na ordem "cura, depois fragmentos"); `tests/core/cameraKick.test.ts` (`ZoomPulse` com a base de 1,8);
 `tests/game/debugApi.test.ts` (literal com `horde`, `swarm`, `camera.baseZoom`, `camera.locked`); o teste do
@@ -833,14 +860,16 @@ teto do armado, na ordem "cura, depois fragmentos"); `tests/core/cameraKick.test
      `spawnFx` depois.
    - ENX-03/05/07/08/11: `round=6` → um grupo de 4 por uma fenda (uma `curseSmoke`, FEN-04); um `chuteGiratorio` (18) mata
      um membro de 16; um chute com 3 membros à frente acerta 2 (AD-015) e sobe o combo em 1; o parry da mordida
-     empurra o membro e o deixa em `stun`; `swarm[]` com o HP de cada um.
+     empurra o membro e o deixa em `stun`; agachado, a mordida acerta, e a mordida que conecta não muda o `hitstopMs`
+     além do micro (≤ 15 ms); `swarm[]` com o HP de cada um e nenhum par de membros vivos com o mesmo x por 1 s.
    - ESP-01..04: `round=13` → só enxame, grupos de 6, HUD `Abates: 0/30`, banner "Rodada de enxame!"; ao fechar, a
-     konbini abre uma página `livre` de origem `selo`.
+     faixa "Rodada 13 concluída · +1 Selo" e a konbini abre uma página `livre` de origem `selo`.
    - VRB: `round=21&veu=semTregua` → banner "Rodada 21 · Véu Rompido: Sem trégua" e `horde.veu.rules` com a regra.
 2. `elite.smoke.mjs`: `round=8&elite=escudo&quota=2&swarm=0` → contorno `c`, rótulo "Elite · Escudada", `fxSprite` em
-   escala 1,2 (L-043); o golpe forte tira o dobro do escudo e o `shieldBreak:<id>` sai no zero; o abate põe `selo:elite`
-   e a página `livre` de origem `selo` na konbini seguinte. `elite=explosivo`: o anel dura 700 ms e o player a 72 px leva
-   o golpe `red`, a 80 px não. `elite=regenerador`: parado 2 s, o HP sobe `max(1, round(0,008 × maxHp))` a cada 200 ms.
+   escala 1,2 (L-043); o golpe forte tira o dobro do escudo e o `shieldBreak:<id>` sai no zero; o abate põe `selo:elite`,
+   o texto "+1 Selo" no ponto da morte e a página `livre` de origem `selo` na konbini seguinte. `elite=explosivo`: o anel
+   dura 700 ms de tempo de jogo (o `msLeft` não anda no hitstop do golpe que mata) e o player a 72 px leva o golpe `red`,
+   a 80 px não. `elite=regenerador`: parado 2 s, o HP sobe `max(1, round(0,008 × maxHp))` a cada 200 ms.
    `round=7&quota=1&swarm=0`: a faixa de fechamento lê "Rodada 7 concluída · Próxima: elite".
 3. `acts.smoke.mjs`: `round=11` → banner "Rodada 11 · Ato III" e `horde.veil` `{ key: 'S', alpha: 0.12 }` lido do
    `Rectangle`; `round=16&enemyVariant=bruto` → o 1º `bruto` desarmado (`weapon === null`) entre os nascidos tem golpe `red` e HP 1,3× o do `corcunda` na mesma rodada

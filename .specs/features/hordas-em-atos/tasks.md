@@ -225,7 +225,9 @@ hoje e transforma cada `SpawnOrder` em ordem `spawn`, com `quota = size` e `rift
 
 **What**: `src/core/run.ts`: o campo `spawner` vira `horde: RoundHorde | null`, criado como `new WaveHorde(new
 WaveSpawner(...))` no `resolveStart` e no `startNextRound`; os getters `alive`, `roundKills`, `queued`, `remaining` e
-`maxAlive` delegam; o laço do `advanceTimers` (l.249-252) repassa cada ordem como o mesmo comando `spawn` de hoje.
+`maxAlive` delegam; o laço do `advanceTimers` (l.249-252) repassa cada ordem como o mesmo comando `spawn` de hoje, com a
+mesma linha (`{ type: 'spawn', round: this._round, kind: order.kind }`): nenhum campo da ordem (`rift`, `count`,
+`affixes`) entra no comando neste passo, porque o `run.test.ts:565` compara o formato exato com `toEqual`.
 **Where**: `src/core/run.ts`
 **Depends on**: T1
 **Reuses**: ordem fixa do `Run.update` (morte, abates, tempos, `run.ts:207-217`)
@@ -354,8 +356,8 @@ plan)` (`min(1,5 + 0,15·(r−1) + 0,02·t, 6) × plan.rateMul`).
 #### T7: Parâmetros de debug da horda
 
 **What**: `src/core/hordeParams.ts` com `parseHordeOverrides(get: (name: string) => string | null): HordeOverrides`
-lendo `quota` (inteiro ≥ 1), `bodyCap` (inteiro ≥ 1), `swarm` (`'0'` vira `false`) e `swarmBurst` (inteiro de 1 a 60);
-valor inválido some do resultado (DBH-01). `elite` e `veu` entram na T36 e na T65.
+lendo `quota` (inteiro ≥ 1), `bodyCap` (inteiro ≥ 1), `swarm` (`'0'` vira `false`), `swarmBurst` (inteiro de 1 a 60) e
+`swarmBite` (`'0'` vira `false`); valor inválido some do resultado (DBH-01). `elite` e `veu` entram na T36 e na T65.
 **Where**: `src/core/hordeParams.ts`
 **Depends on**: T6
 **Reuses**: molde do `core/axisParam.ts` (F30) e do `parseBossAffixes` (F32)
@@ -364,7 +366,8 @@ valor inválido some do resultado (DBH-01). `elite` e `veu` entram na T36 e na T
 **Done when**:
 
 - [ ] `tests/core/hordeParams.test.ts` (novo): `quota` 0 / 1 / `abc` / `2.5`; `bodyCap` 0 / 1 / 40; `swarm=0` dá `false` e
-      `swarm=1` fica ausente; `swarmBurst` 0 / 1 / 60 / 61; nenhum parâmetro dá objeto vazio
+      `swarm=1` fica ausente; `swarmBurst` 0 / 1 / 60 / 61; `swarmBite=0` dá `false` e `swarmBite=1` fica ausente;
+      nenhum parâmetro dá objeto vazio
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -418,7 +421,11 @@ outros streams); `RunOptions.horde?: HordeOverrides`; `enemyDied(id, kind = 'ene
 `hordeDirector.onCommand`, `rift` ainda não faz nada e o `spawn` segue escolhendo o ponto na hora (a fenda visível vem
 na T12). Como todo nascimento passa a sair 600 ms depois, o `boot` do `scripts/smoke/fight-kit.mjs` espera o 1º
 `spawnFx:` (até 90 quadros), o `scripts/smoke/spawn-pressure.smoke.mjs` lê a SPN-03 600 ms depois do 1º `update`, e o
-`tests/core/run.test.ts` só troca a l.298 (os dois `update`, 0 e 600 ms, na mesma linha).
+`tests/core/run.test.ts` só troca conteúdo, sem crescer: l.298 (os dois `update`, 0 e 600 ms, na mesma linha); l.363 e
+l.423 (`step < 400` vira `step < 800`: com orçamento e fenda a r3 começa perto de 21 s de jogo); e os dois casos das
+l.551-568 ("maxAliveOverride ... (1 vivo)" e "o 1º update da rodada 1 emite o burst de 3 spawns") saem e voltam
+reescritos no `runHorde.test.ts`. O `Horde` conta todo id novo, nascido ou não, e prende os vivos por tipo em 0 (o
+`cleared()` do `run.test.ts`, l.24-34, mata os ids 1 a 6 sem nascimento).
 **Where**: `src/core/run.ts`
 **Depends on**: T8 (fase 2)
 **Reuses**: streams com sal (`run.ts:297-307`), `planRound` (T6), `Horde` (T8)
@@ -428,9 +435,13 @@ na T12). Como todo nascimento passa a sair 600 ms depois, o `boot` do `scripts/s
 
 - [ ] `tests/core/runHorde.test.ts` (novo): `rift` e depois `spawn` do mesmo id 600 ms depois; a rodada fecha quando os
       abates chegam à cota; `hordeRng` igual a `new Rng(seed ^ 0xc2b2ae35)` e o sal distinto dos de hoje e dos da F30 a
-      F35 (lista conferida no código mergeado); consumir o `hordeRng` não muda nenhum outro stream; `RunOptions.horde`
-      (`quota`) chega ao plano
-- [ ] `tests/core/run.test.ts` com o mesmo número de linhas efetivas e verde
+      F35, inclusive os lidos de `data/` (`SHOP.rngSalt`, `SHOP.axisSalt`, `SHOP.choiceSalt`; lista conferida no código
+      mergeado); consumir o `hordeRng` não muda nenhum outro stream; `RunOptions.horde` (`quota`) chega ao plano; os dois
+      casos vindos do `run.test.ts`: com `maxAliveOverride` 1 sai 1 fenda no 1º `update`, o `spawn` 600 ms depois e
+      nenhum outro em 5000 ms; na r1, 3 fendas no 1º `update` e os 3 `spawn` (com `rift`, `count` 1 e `affixes` `[]`)
+      600 ms depois, e não em 599
+- [ ] `tests/core/run.test.ts` com menos linhas efetivas que antes e verde; o `Horde` com ids nunca nascidos: 6 abates
+      fecham a r1 e nenhum vivo fica negativo
 - [ ] Smokes `spawn-pressure`, `run-loop`, `boot`, `fight`, `defense`, `enemy-react`, `enemy-died`, `telegraph`, `targets`,
       `armed`, `drops`, `held-item`, `kokusen`, `techniques`, `tech`, `world-run`, `world-traverse`, `fxlab` e `no-debug`
       verdes (o que procurar inimigo antes de 600 ms ganha a espera do `fight-kit` na própria linha)
@@ -580,8 +591,8 @@ rodada de chefe; o `update(dt)` passa a usá-lo no `hud.setRun` (escondido fora 
 **What**: `src/data/horde.ts` ganha `SwarmTuning` e `SWARM` (`hp` `{ base: 12, min: 12, max: 20 }`, `body` `{ w: 18, h: 24
 }`, `speed` 95, `offsetPx` 14, `rangePx` 40, `windupMs` 300, `biteMs` 120, `lungePx` 48, `restMs` 1000, `damage` 5,
 `force` 2, `hitStunMs` 150, `parry` `{ pushPx: 40, stunMs: 500 }`, `dieMs` 300, `gate` `{ max: 3, gapMs: 200 }`, `aerial`
-`{ chance: 0.3, liftPx: 96 }`, `minDistPx` 160, `bite` `{ offsetX: 14, offsetY: -2, width: 20, height: 14 }`), e o teste do
-alcance dos golpes contra o corpo de 18 × 24.
+`{ chance: 0.3, liftPx: 96 }`, `minDistPx` 160, `bite` `{ offsetX: 14, offsetY: -2, width: 20, height: 14, hitHeight:
+'low' }`, `rangeDyPx` 24, `jitterPx` 3, `depth` −1), e o teste do alcance dos golpes contra o corpo de 18 × 24.
 **Where**: `src/data/horde.ts`
 **Depends on**: None
 **Reuses**: `MOVES` (`data/moves.ts`), corpo do player (`textures.ts:84`)
@@ -591,8 +602,9 @@ alcance dos golpes contra o corpo de 18 × 24.
 
 - [ ] `tests/data/horde.test.ts`: cada número do `SWARM` conferido com a spec
 - [ ] `tests/game/swarmReach.test.ts` (novo, ENX-09): para todo golpe de chão do `MOVES`, a hitbox do player de pé encosta
-      no corpo de 18 × 24 no mesmo chão, colado à frente; o teste falha se o corpo tiver 22 px de altura (prova que o
-      limite de 24 importa)
+      no corpo de 18 × 24 no mesmo chão, colado à frente; com um corpo de 18 px de altura o `chuteAlto` (base da hitbox
+      18 px acima do chão, `data/moves.ts:148-160`) não encosta, o que prova que a altura importa (a revisão conferiu: com
+      22 px todos os golpes ainda encostam, então 22 não serve de contraprova)
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -604,7 +616,8 @@ alcance dos golpes contra o corpo de 18 × 24.
 #### T16: Regras pequenas do enxame
 
 **What**: `src/core/swarm.ts` com `swarmHp(hpMul, t = SWARM)` (`clamp(round(12 × hpMul), 12, 20)`), `groupOffset(index,
-count, t)` (`(index − (count − 1) / 2) × 14`), `pickSwarmPoint({ points, playerX, minDistPx, maxReach?, rng })` (sorteia
+count, id, t)` (`(index − (count − 1) / 2) × 14 + ((id mod 5) − 2) × 3`), `biteHit(damageMul, t)` (`{ damage: round(5 ×
+damageMul), strength: 'light', force: 2, height: 'low' }`, sem `unblockable`), `pickSwarmPoint({ points, playerX, minDistPx, maxReach?, rng })` (sorteia
 entre os `E` a pelo menos 160 px na horizontal e dentro do alcance; sem nenhum, o mais distante) e `swarmFrame(state, ms,
 dieMs?)` (nome do quadro, com os tempos do design).
 **Where**: `src/core/swarm.ts`
@@ -615,8 +628,12 @@ dieMs?)` (nome do quadro, com os tempos do design).
 **Done when**:
 
 - [ ] `tests/core/swarm.test.ts` (novo): HP 12 na r1, 16 na r6, 20 na r19 e nunca fora de 12..20 até a r40, com o
-      `hpMul` da F30 (ENX-02.1); o `chute` base (18) mata em até 2 golpes da r1 à r40 e em 1 na r1 (ENX-02.2)
-- [ ] `groupOffset` com 4 e 6 membros (simétrico, passo de 14 px) (ENX-04)
+      `hpMul` da F30 (ENX-02.1); o `chuteGiratorio` base (18) mata em até 2 golpes da r1 à r40 e em 1 na r1, e a cadeia
+      `jab` → `direto` → `gancho` (danos lidos do `MOVES`) em até 3, em 2 na r1 (ENX-02.2)
+- [ ] `groupOffset` com 4 e 6 membros (simétrico, passo de 14 px, mais o desvio por id de −6 a +6 px); dois membros na
+      mesma posição de grupos diferentes, com ids vizinhos, miram x diferentes (ENX-04)
+- [ ] `biteHit` por `resolveIncomingHit` (`core/defense.ts`): `block` com guarda e atacante à frente, `parry` com parry,
+      `jumped` no ar, `hit` agachado e `hit` de costas mesmo com guarda (ENX-05, edge cases)
 - [ ] `pickSwarmPoint`: ponto a 159 px fora e a 160 px dentro; fora do alcance fora; sem nenhum a 160 px, o mais distante
       (ENX-13)
 - [ ] `swarmFrame`: os 13 nomes da ENX-14 saem nos estados e tempos do design; `windup` alterna a cada 60 ms; `die` em 3
@@ -632,7 +649,8 @@ dieMs?)` (nome do quadro, com os tempos do design).
 #### T17: IA e limitador do enxame
 
 **What**: `src/core/swarm.ts` ganha `SwarmState`, `SwarmIntent`, `class SwarmBrain` (`chase | windup | bite | rest | stun |
-dead`; `update(dtMs, dxToTarget, distToPlayer, gate)`, `stun(ms)`, `die()`) e `class SwarmGate` (`canWindup()`,
+dead`; `update(dtMs, dxToTarget, dxToPlayer, dyToPlayer, gate)`, preparo só com `|dx| ≤ 40` e `|dy| ≤ 24` e nunca com
+`swarmBite` desligado; `stun(ms)`, `die()`) e `class SwarmGate` (`canWindup()`,
 `noteWindup(id)`, `release(id)`, `update(dtMs)`, `activeCount`), separado do `AttackGate`.
 **Where**: `src/core/swarm.ts`
 **Depends on**: T16
@@ -642,7 +660,8 @@ dead`; `update(dtMs, dxToTarget, distToPlayer, gate)`, `stun(ms)`, `die()`) e `c
 **Done when**:
 
 - [ ] `tests/core/swarm.test.ts`: persegue só em x a `95 × speedMul` px/s rumo ao alvo com o deslocamento (ENX-04);
-      com o player a 40 px e vaga entra em `windup`, a 41 px não; `windup` dura 300 ms (299 ainda em `windup`), `bite`
+      com o player a 40 px na horizontal e vaga entra em `windup`, a 41 px não; com 24 px de diferença vertical entra, com
+      25 não (player numa plataforma); com `swarmBite` desligado nunca entra; `windup` dura 300 ms (299 ainda em `windup`), `bite`
       120 ms com investida de 48 px no sentido do player, `rest` 1000 ms (ENX-05)
 - [ ] `SwarmGate`: 3 em ataque aceitos e o 4º recusado; 199 ms depois de um `windup` recusa, 200 ms aceita; `release`
       libera a vaga (ENX-06)
@@ -660,8 +679,9 @@ dead`; `update(dtMs, dxToTarget, distToPlayer, gate)`, `stun(ms)`, `die()`) e `c
 
 **What**: `src/core/hordePlan.ts`: `composition` com `swarmOn: true` (`enemy = min(6 + 2·(r−1), 14)`, `swarm = 0` até a r5
 e `min(8 + 3·(r−6), 40)` da r6, `elite` 0 até a T34; `swarm=0` zera a parte do enxame), `group` do plano por
-`HORDE.group[ato]`, `swarmDropMean(round, comp)` e `swarmHealFactor(round, comp)`; o `planRound` passa a usar `swarmOn:
-true` por padrão.
+`HORDE.group[ato]`, `swarmDropMean(round, comp, waveT, econ)` (`max(0, ((W − L) · μ − E · (8 + 2a)) / S)`, `a` o
+`armedChance(r)` de hoje e `μ = 3 + 2a`), `swarmHealFactor(round, comp)` e `swarmElixirChance(round, comp, waveT, econ,
+elixir)` (`k × (0,2a + 0,04(1 − a))`); o `planRound` passa a usar `swarmOn: true` por padrão.
 **Where**: `src/core/hordePlan.ts`
 **Depends on**: T15
 **Reuses**: `waveSize` (`W(r)`), `expectedIncome` (`core/economy.ts:10-18`, só leitura)
@@ -671,8 +691,10 @@ true` por padrão.
 
 - [ ] `tests/core/hordePlan.test.ts`: cota 6, 12, 14, 22 e 25 nas r1, r4, r5, r6 e r7 (r5 sem enxame e r6 com); grupo 4
       no ato II, 5 no III, 6 do IV em diante (ENX-03); `swarm=0` na r9 dá só lutadores (edge case, `m` não usado)
-- [ ] HRD-11: da r1 à r40 sem chefe, `3·L + 8·E + m·S` = `3·W(r)` com folga 0,01; `expectedIncome` devolve os valores de
-      hoje (tabela fixa no teste); `swarmDropMean` 0,75 na r6; `swarmHealFactor` = `(W − L − E) / S`
+- [ ] HRD-11: da r1 à r40 sem chefe, `L·μ + E·(8 + 2a) + m·S` = `W·μ` com folga 0,01; curas esperadas = `W × chance` e
+      Elixires = `(W − E) × e + 0,2·E`; `expectedIncome` devolve os valores de hoje (tabela fixa no teste);
+      `swarmDropMean` 0,9 na r6 (os valores com elite, 1,0 na r8 e 0,375 na r19, entram na T34);
+      `swarmHealFactor` = `(W − L − E) / S`
 - [ ] `tests/core/horde.test.ts`: HRD-06 com o plano real da r9 (sem elite neste passo): 20 s sem abate e os corpos vivos
       com fendas chegam a 22
 - [ ] Gate verde; contagem de testes sem perda
@@ -686,8 +708,9 @@ true` por padrão.
 #### T19: Drop do membro do enxame
 
 **What**: `src/core/loot.ts` ganha `swarmDrop(round, mean, healFactor)`: cura com `healFactor × chance efetiva de cura`,
-depois `floor(mean)` fragmentos mais 1 com chance `mean − floor(mean)`; nunca Elixir nem ferramenta; mesmo stream de
-loot e ordem "cura, depois fragmentos" (ECO-17).
+depois `floor(mean)` fragmentos mais 1 com chance `mean − floor(mean)`; nunca ferramenta; mesmo stream de loot e ordem
+"cura, depois fragmentos" (ECO-17); e `ElixirRoll.chanceDrop(p)` (um sorteio no stream do Elixir com a chance dada,
+para o `swarmElixirChance` do membro).
 **Where**: `src/core/loot.ts`
 **Depends on**: None
 **Reuses**: `Loot.enemyDrop` (`loot.ts:74-98`), chance efetiva de cura de hoje
@@ -695,9 +718,10 @@ loot e ordem "cura, depois fragmentos" (ECO-17).
 
 **Done when**:
 
-- [ ] `tests/core/loot.test.ts`: média 0,75 na r6 em 10 mil sorteios (±0,02); `mean` 0 nunca dá fragmento; `mean` 2,0
-      dá sempre 2; nenhuma saída tem Elixir ou ferramenta; a taxa de cura é `healFactor × chance` (±0,01 em 10 mil); a
-      cura é sorteada antes dos fragmentos (ordem do stream)
+- [ ] `tests/core/loot.test.ts`: média 0,9 na r6 em 10 mil sorteios (±0,02); `mean` 0 nunca dá fragmento; `mean` 2,0
+      dá sempre 2; nenhuma saída tem ferramenta; a taxa de cura é `healFactor × chance` (±0,01 em 10 mil); a cura é
+      sorteada antes dos fragmentos (ordem do stream); `ElixirRoll.chanceDrop(0,03)` dá 3% (±0,5 ponto em 10 mil) e não
+      mexe no stream de loot
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -742,8 +766,8 @@ texel, olhos `W` e `R` no preparo e na mordida, rampas `u`/`U`/`v`); `TEX.swarm 
 **What**: `src/game/SwarmPack.ts` (novo: `spawnGroup(at, count, aerial, tuning)`, um único ouvinte `beforeupdate` registrado
 no construtor e tirado no `SHUTDOWN`, `update(dtMs, playerX)` com a IA da T17 só na perseguição e nos quadros (a mordida
 abre hitbox na T25), `targets()`, `byId(id)`, `clear()`, `snapshot()`) e `src/game/SwarmEnemy.ts` (novo: corpo
-`rectangle` 18 × 24 sem `chamfer`, `inertia` infinita, `Filters.enemy`, `tagBody`, sprite `enemy-swarm` com `BodyRenderPos`,
-`applyStep()`; recusa todo golpe até a T22); `hordeDirector.onRift` do enxame (`pickSwarmPoint` com o `spawnRng`, aéreo
+`rectangle` 18 × 24 sem `chamfer`, `inertia` infinita, `Filters.enemy`, `tagBody`, sprite `enemy-swarm` com `BodyRenderPos`
+na profundidade `SWARM.depth` (−1), `applyStep()`; recusa todo golpe até a T22); `hordeDirector.onRift` do enxame (`pickSwarmPoint` com o `spawnRng`, aéreo
 96 px acima), `onSpawn` do enxame (uma `curseSmoke` para o grupo, um `spawnFx:<id>` por membro), `onSceneCreate` recria o
 `SwarmPack`; `combat.updateEnemies` termina com `this.s.horde.updateUnits(dt)` (+1); `SwarmSnapshot` e `swarm` no
 `GameSnapshot`. `horde.smoke.mjs` ganha a parte 3.
@@ -758,7 +782,8 @@ abre hitbox na T25), `targets()`, `byId(id)`, `clear()`, `snapshot()`) e `src/ga
 - [ ] `tests/game/debugApi.test.ts`: literal com `swarm` (`id`, `x`, `y`, `hp`, `maxHp`, `state`)
 - [ ] `horde.smoke.mjs` parte 3, `round=6&seed=1`: um grupo de 4 nasce de uma fenda com uma `curseSmoke` só (FEN-04); cada
       membro com `maxHp` 16 no `swarm[]`; o ponto ficou a 160 px ou mais do player (ENX-13); os membros andam rumo ao
-      player só em x, cada um com o seu deslocamento (ENX-04); o `hurtRect` do membro, lido do corpo, tem 18 × 24 (L-043)
+      player só em x, cada um com o seu deslocamento (ENX-04); o `hurtRect` do membro, lido do corpo, tem 18 × 24 (L-043);
+      o `depth` do sprite do membro, lido do objeto vivo, é −1 e fica abaixo do de todo lutador (ENX-14)
 - [ ] `round=9&enemyGuard=0`: HUD `Abates: 0/31` (a cota da r9 sem elite neste passo) e mais de 3 corpos vivos antes do
       1º abate (HRD-06)
 - [ ] Fenda aérea (seed que a sorteia, anotada no smoke): o grupo nasce 96 px acima do ponto `E` e cai pela gravidade
@@ -781,7 +806,8 @@ abre hitbox na T25), `targets()`, `byId(id)`, `clear()`, `snapshot()`) e `src/ga
 `hit.force × direção`; vida 0 marca `dead`), `SwarmPack.update` tira o corpo do morto da física no mesmo quadro, toca
 os 3 quadros de dissolução em 300 ms e destrói o sprite (sem ragdoll); `onDied(member, x, y)` chama
 `combat.onEnemyDied(id, x, y, 'swarm')` (o `kind` chega à `run.enemyDied`) e o drop do membro no `hordeDirector`
-(`loot.swarmDrop` com o `swarmDropMean` e o `swarmHealFactor` da rodada + `drops.applyDrop`).
+(`loot.swarmDrop` com o `swarmDropMean` e o `swarmHealFactor` da rodada, `elixir.chanceDrop(swarmElixirChance)` +
+`drops.applyDrop`).
 **Where**: `src/game/SwarmEnemy.ts`
 **Depends on**: T21
 **Reuses**: `Drops.applyDrop` (`drops.ts:63-80`), `combat.onEnemyDied` (`combat.ts:73-77`), `swarmDrop` (T19)
@@ -793,8 +819,8 @@ os 3 quadros de dissolução em 300 ms e destrói o sprite (sem ragdoll); `onDie
       no quadro da morte o corpo some do mundo Matter e nenhum corpo de ragdoll nasce (contagem de corpos antes e depois,
       HPF-04); o sprite passa pelos 3 quadros `enxame-die-*` em 300 ms (ENX-08)
 - [ ] Golpe que não mata: `state` `stun` por 150 ms e o membro recua no sentido do golpe (ENX-08)
-- [ ] Cada membro morto soma 1 em `horde.kills` e no HUD; nenhum Elixir nem ferramenta no chão depois de matar 20 membros
-      (ENX-12)
+- [ ] Cada membro morto soma 1 em `horde.kills` e no HUD; nenhuma ferramenta no chão depois de matar 20 membros, e o
+      sorteio de Elixir do membro sai no stream do Elixir com a chance da rodada (evento ou contador do snapshot) (ENX-12)
 - [ ] Smokes `horde`, `drops`, `enemy-died`, `run-loop` e `power` verdes; gate verde; contagem de testes sem perda
 
 **Tests**: smoke
@@ -857,20 +883,25 @@ nunca repete); `combat.onConnect` pergunta `this.s.horde.swarm.repeatHit(hit, ta
 
 #### T25: Mordida, limitador e parry
 
-**What**: `SwarmEnemy` abre um `AttackHitbox` próprio no `openBite` (`round(5 × damageMul)`, força 2, tipo `white`) e
-fecha no `closeBite`; o `SwarmPack` passa o `SwarmGate` (3 ataques, 200 ms) a cada membro; `combat.attackerOf` procura em
-`this.s.horde.swarm.byId(ownerId)` (+2) e o parry da mordida chama `member.parried()` (empurra 40 px e `stun(500)`); o
-`windup` pisca `w` pelo `swarmFrame`.
+**What**: `SwarmEnemy` abre um `AttackHitbox` próprio no `openBite` com o `biteHit(damageMul)` (T16: `round(5 ×
+damageMul)`, força 2, `height: 'low'` sem `unblockable`) e fecha no `closeBite`; o `onConnect` da hitbox vai para o
+`hordeDirector.onBiteConnect` (faísca e `effects.hitstop.trigger` com o que um `MicroBudget` da mordida conceder ao
+`microHitstopMs('light')`), nunca para o `combat.onConnect`; o `SwarmPack` passa o `SwarmGate` (3 ataques, 200 ms) a cada
+membro; `combat.attackerOf` procura em `this.s.horde.swarm.byId(ownerId)` (+2) e o parry da mordida chama
+`member.parried()` (empurra 40 px e `stun(500)`); o `windup` pisca `w` pelo `swarmFrame`.
 **Where**: `src/game/SwarmEnemy.ts`
 **Depends on**: T21
-**Reuses**: `AttackHitbox` (`hitbox.ts:55-108`), `hitFieldsFor('white')` (AD-020), defesa do player de hoje
+**Reuses**: `AttackHitbox` (`hitbox.ts:55-108`), `resolveIncomingHit` sem mudança (`core/defense.ts:75-92`), `MicroBudget`
+e `microHitstopMs` (F29, `core/hitBand.ts`), defesa do player de hoje
 **Requirement**: ENX-05, ENX-06, ENX-07
 
 **Done when**:
 
 - [ ] `horde.smoke.mjs` parte 7 (`round=6&maxAlive=1`): com o player parado, a mordida tira `round(5 × damageMul)` da vida
       do player; nunca mais de 3 membros em `windup`/`bite` no mesmo quadro (amostrado a cada quadro por 10 s) e nunca 2
-      `windup` com menos de 200 ms (ENX-06); segurando a guarda, a mordida é bloqueada (tipo `white`)
+      `windup` com menos de 200 ms (ENX-06); segurando a guarda de frente, a mordida é bloqueada; agachado, ela acerta;
+      pulando por cima, erra (ENX-05); com mordidas conectando, o `hitstopMs` do snapshot nunca passa do micro (15 ms)
+      e a soma por janela respeita o teto do `MicroBudget` (ENX-05)
 - [ ] Parry da mordida (ajudante de defesa do `fight-kit`): o membro recua 40 px (±2) e fica em `stun` 500 ms; a janela
       de Contra do player abre como contra o lutador (ENX-07)
 - [ ] Smokes `horde`, `defense`, `telegraph` e `fight` verdes; gate verde; contagem de testes sem perda
@@ -884,9 +915,10 @@ fecha no `closeBite`; o `SwarmPack` passa o `SwarmGate` (3 ataques, 200 ms) a ca
 #### T26: Medição com muitos corpos e o teto fixado
 
 **What**: `scripts/smoke/spawn-pressure-horde.smoke.mjs` (novo) mede, com
-`?debug&hd=1&area=modular&seed=1&round=6&noshop=1&enemyGuard=0&swarmBurst=<n>&maxAlive=1&quota=1`, 300 quadros de
-`__game.step(16)` (num único `page.evaluate`) e 120 de `step(16)` + `render()` para `n` 8, 16, 24, 32 e 40, com a guarda
-segura, e imprime p50 e p95 de cada coluna; `HORDE.bodyCap` em `src/data/horde.ts` passa ao maior `n` com p95 de `step`
+`?debug&hd=1&area=modular&seed=1&round=6&noshop=1&enemyGuard=0&swarmBurst=<n>&swarmBite=0&maxAlive=1&quota=1`, 300
+quadros de `__game.step(16)` (num único `page.evaluate`) e 120 de `step(16)` + `render()` para `n` 8, 16, 24, 32 e 40,
+com os membros amontoados no player sem morder (`swarmBite=0`: a guarda só protege a frente e o player morreria antes do
+fim) e a guarda virada para o lutador único, e imprime p50 e p95 de cada coluna; `HORDE.bodyCap` em `src/data/horde.ts` passa ao maior `n` com p95 de `step`
 ≤ 1,5 × o p95 com 8, nunca abaixo de 24; o smoke passa a falhar se, com o teto fixado, o p95 passar de 1,5× o de 8.
 **Where**: `scripts/smoke/spawn-pressure-horde.smoke.mjs`
 **Depends on**: T22, T25
@@ -903,7 +935,8 @@ segura, e imprime p50 e p95 de cada coluna; `HORDE.bodyCap` em `src/data/horde.t
       e o caminho tomado vai para o `validation.md`
 - [ ] Fim do passo 2: smokes `horde`, `spawn-pressure-horde`, `spawn-pressure`, `impact`, `feel`, `tech`, `kokusen`,
       `red-anime`, `fxlab`, `drops`, `power` e `targets` verdes; UAT curto do usuário na r9 e na r13 com Fúria e com
-      Domínio (risco "leitores de abate saturam") anotado no `validation.md`
+      Domínio (risco "leitores de abate saturam"), com os segundos para limpar um grupo de 6 só com o moveset e as
+      quebras de guarda na r9 (riscos "`maxTargets`" e "guarda contra o enxame"), anotado no `validation.md`
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
@@ -1101,7 +1134,8 @@ limiar 0, inclusive antes da r8; `applyQuota` mantém a elite quando `quota > el
 - [ ] `tests/core/hordePlan.test.ts`: cota 22, 25, 29, 32, 38, 47 e 55 nas r6, r7, r8, r9, r11, r14 e r19 (r7 sem elite e
       r8 com, HRD-02); `eliteAt` `[ceil(0,4q)]` na r8 (12); `forcedAffixes` na r3 dá 1 elite com limiar 0; `quota` 1 com
       elite forçada dá só a elite
-- [ ] HRD-11 de novo com a elite: r1 a r40 sem chefe, `3·L + 8·E + m·S` = `3·W` com folga 0,01
+- [ ] HRD-11 de novo com a elite: r1 a r40 sem chefe, `L·μ + E·(8 + 2a) + m·S` = `W·μ` com folga 0,01, curas e
+      Elixires esperados como no HRD-11; `swarmDropMean` 1,0 na r8 e 0,375 na r19
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -1323,8 +1357,9 @@ dois quadros; a cura chama `enemy.heal(n)` e dá um pulso `G`; no máximo não c
 
 #### T44: Elite explosiva
 
-**What**: `eliteDirector.onDied(enemy, x, y)`: com `explosivo`, agenda um anel de 72 px que pisca 700 ms no ponto da morte
-e depois chama `player.receiveHit` com `blastDamage(damageMul)` como golpe `red` quando `inBlast` e o player não está
+**What**: `eliteDirector.onDied(enemy, x, y)`: com `explosivo`, agenda um anel de 72 px que pisca 700 ms de tempo de jogo
+no ponto da morte (anda no `update(dt)` do `combat.updateEnemies`, parado no hitstop e lento na câmera lenta) e depois
+chama `player.receiveHit` com `blastDamage(damageMul)` como golpe `red` quando `inBlast` e o player não está
 invulnerável; evento `eliteBlast:<id>`; a explosão segue se a rodada fecha no mesmo quadro e some no `reset` (rebuild,
 run nova, `R`).
 **Where**: `src/scenes/test/eliteDirector.ts`
@@ -1334,7 +1369,8 @@ run nova, `R`).
 
 **Done when**:
 
-- [ ] `elite.smoke.mjs` parte 4, `elite=explosivo`: o anel dura 700 ms; com o player a 72 px do ponto ele leva
+- [ ] `elite.smoke.mjs` parte 4, `elite=explosivo`: o anel dura 700 ms de tempo de jogo (o `msLeft` não anda durante o
+      hitstop do golpe que mata); com o player a 72 px do ponto ele leva
       `round(12 × damageMul × 1,5)` imbloqueável (a guarda segura não para); a 80 px não leva; com esquiva ativa não leva
 - [ ] Elite explosiva como último abate da rodada: a explosão ainda sai; `R` durante o anel: nada explode (edge cases);
       morte pela ativação do Domínio também explode
@@ -1352,7 +1388,8 @@ run nova, `R`).
 **What**: F33 `src/scenes/test/choiceDirector.ts` ganha `addEliteSeal(origin: 'elite' | 'enxame')` (põe a página `livre` de
 origem `selo` e o evento `selo:<origin>`) e, no `skip` do CHC-08 de uma página de Selo, `wallet.add(15 ×
 fragmentValue(round))`, o banner "Selo: +N fragmentos" e o evento `seloFragments:<n>`; o `eliteDirector.onDied` chama
-`this.s.build.choice.addEliteSeal('elite')` para toda elite morta, por qualquer fonte.
+`this.s.build.choice.addEliteSeal('elite')` para toda elite morta, por qualquer fonte, e mostra o texto flutuante
+"+1 Selo" no ponto da morte por `RUN.bannerMs` (o mesmo helper do rótulo da T41).
 **Where**: `src/scenes/test/choiceDirector.ts`
 **Depends on**: T41
 **Reuses**: `buildPage`, `choiceRank` com o Selo (T39), `fragmentValue`
@@ -1360,7 +1397,8 @@ fragmentValue(round))`, o banner "Selo: +N fragmentos" e o evento `seloFragments
 
 **Done when**:
 
-- [ ] `elite.smoke.mjs` parte 5, `round=8&elite=escudo&quota=2&swarm=0`: o abate da elite dá `selo:elite`; a konbini
+- [ ] `elite.smoke.mjs` parte 5, `round=8&elite=escudo&quota=2&swarm=0`: o abate da elite dá `selo:elite` e o texto
+      "+1 Selo" no ponto da morte (lido do objeto de texto vivo); a konbini
       seguinte abre uma página `livre` de origem `selo`, depois de uma página de maestria quando as duas esperam
 - [ ] Com todos os eixos no teto (parâmetro de eixos da F30), a página do Selo é pulada, a carteira sobe `15 ×
       fragmentValue(8)` e o banner "Selo: +N fragmentos" aparece (ELT-10)
@@ -1470,16 +1508,17 @@ enxame: composição `{ 0, min(30 + 2·(r−13), 60), 0 }`, `rateMul` 2, `stored
 #### T50: Faixas da rodada de enxame
 
 **What**: `src/core/hordeText.ts` ganha `roundStartText(round)` ("Rodada de enxame!" na rodada de enxame; "Rodada N" no
-resto) e o `clearedText` ganha " · Próxima: rodada de enxame" quando `isSwarmRound(round + 1)`.
+resto) e o `clearedText` ganha " · Próxima: rodada de enxame" quando `isSwarmRound(round + 1)` e " · +1 Selo" quando
+`isSwarmRound(round)` (ESP-04).
 **Where**: `src/core/hordeText.ts`
 **Depends on**: T49
 **Reuses**: `clearedText` (T37)
-**Requirement**: ESP-03, ATO-02
+**Requirement**: ESP-03, ESP-04, ATO-02
 
 **Done when**:
 
 - [ ] `tests/core/hordeText.test.ts`: r13 "Rodada de enxame!"; r12 e r17 "Rodada N concluída · Próxima: rodada de enxame";
-      r13 e r14 sem o aviso; r7 com o aviso da elite (segue)
+      r13 e r18 "Rodada N concluída · +1 Selo"; r14 sem aviso nenhum; r7 com o aviso da elite (segue)
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -1569,8 +1608,8 @@ chama `this.s.build.choice.addEliteSeal('enxame')` ao fechar uma rodada de enxam
 **Done when**:
 
 - [ ] Parte 8, `round=13&seed=1&enemyGuard=0`: banner "Rodada de enxame!"; HUD `Abates: 0/30`; só nascem membros do enxame,
-      em grupos de 6 (cortados pelo teto de corpos); nenhuma elite; ao fechar, `selo:enxame` e a konbini abre uma página
-      `livre` de origem `selo`
+      em grupos de 6 (cortados pelo teto de corpos); nenhuma elite; ao fechar, `selo:enxame`, a faixa "Rodada 13
+      concluída · +1 Selo" e a konbini abre uma página `livre` de origem `selo`
 - [ ] `round=12&quota=1&swarm=0`: a faixa de fechamento termina em " · Próxima: rodada de enxame"
 - [ ] Fim do passo 4: smokes `horde` (ou `horde-special`), `armed`, `telegraph`, `shop`, `run-loop` e `acts` verdes
 - [ ] Gate verde; contagem de testes sem perda
@@ -1756,7 +1795,7 @@ a parte 3.
 
 #### T62: Ordem e vida do Véu
 
-**What**: `src/core/veu.ts` (novo) com `drawVeuOrder(rng)` (Fisher-Yates com 3 `rng.int`), `veuRulesFor(act, order)` (do ato
+**What**: `src/core/veu.ts` (novo) com `drawVeuOrder(rng)` (Fisher-Yates com 3 `rng.int`), `pickVeuOrder(rng, override?)`, `veuRulesFor(act, order)` (do ato
 V, `act − 4` regras, no máximo 4), `veuHpMul(act)` (`1,15^(act − 4)` do ato V, 1 antes) e `parseVeuOrder(raw)` (ids
 conhecidos, sem repetir; completa com os que faltam na ordem de `VEU_RULES`).
 **Where**: `src/core/veu.ts`
@@ -1770,6 +1809,8 @@ conhecidos, sem repetir; completa com os que faltam na ordem de `VEU_RULES`).
       2000 seeds (VRB-01); `veuRulesFor` dá 0 regra no ato IV, 1 no V, 4 no VIII e 4 no IX (edge case)
 - [ ] `veuHpMul`: 1 no ato IV, 1,15 no V, 1,3225 no VI; com o `hpMul` da F30, 2,53 na r21 e 3,31 na r26 (VRB-03)
 - [ ] `parseVeuOrder`: `semTregua` → começa por ela e completa; `semTregua,semTregua` e `foo` → `null`
+- [ ] `pickVeuOrder(rng, override)`: com e sem override o `rng` anda os mesmos 3 sorteios (o próximo `next()` é igual);
+      com override devolve o override (DBH-01.2)
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -1805,8 +1846,10 @@ conhecidos, sem repetir; completa com os que faltam na ordem de `VEU_RULES`).
 
 #### T64: Ordem do Véu sorteada no início da run
 
-**What**: `src/core/run.ts`: `veuOrder = overrides.veu ?? drawVeuOrder(hordeRng)` logo depois de criar o `hordeRng` (o sorteio
-acontece sempre, para o stream andar igual com e sem o parâmetro); `makeHorde` passa a ordem ao `planRound`; `get
+**What**: `src/core/run.ts`: `veuOrder = pickVeuOrder(hordeRng, overrides.veu)` logo depois de criar o `hordeRng`, com
+`pickVeuOrder` em `core/veu.ts` sorteando sempre e só depois trocando pelo override (`const drawn = drawVeuOrder(rng);
+return override ?? drawn`), para o stream andar igual com e sem o parâmetro (revisão: `overrides.veu ?? drawVeuOrder(...)`
+pularia o sorteio com o parâmetro, e o `??` abriria ramo no `resolveStart`, função da exceção de complexidade); `makeHorde` passa a ordem ao `planRound`; `get
 veuRules` (regras do ato da rodada atual).
 **Where**: `src/core/run.ts`
 **Depends on**: T63
