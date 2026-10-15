@@ -46,8 +46,8 @@ export const TECHNIQUES: Record<TechId, TechDef> = {
     short: 'Vermelho',
     kanji: 'aka',
     aura: 'r',
-    cost: 45,
-    cooldownMs: 3000,
+    cost: 30, // VRM-01: base do Vermelho pelos eixos (era 45); cresce pela Eficiência, não pelo nível
+    cooldownMs: 4500, // VRM-01 (era 3000); a Recarga desce até 2300
     signMs: 250,
     chargeMs: 350,
     releaseMs: 100,
@@ -184,8 +184,8 @@ export const TECH_GEOMETRY = {
     sensorPx: 6,
     /** Velocidade do orbe em px/s (RDA-11). */
     speed: 760,
-    /** Alcance do voo em px (RED-08). */
-    rangePx: 420,
+    /** Alcance do voo em px (RED-08; VRM-01 e VRM-09: 320, era 420). */
+    rangePx: 320,
     /** Força (px/step) do toque e da detonação (RED-06/09/10). */
     force: 8,
     /** Repulsão da soltura (RDA-08): dano, força e alcance horizontal e vertical a partir do centro do player. */

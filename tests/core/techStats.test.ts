@@ -21,7 +21,8 @@ import divergentSrc from '../../src/game/tech/divergent.ts?raw';
 import hudSrc from '../../src/game/EnergyHud.ts?raw';
 import cameraSrc from '../../src/scenes/test/camera.ts?raw';
 
-const IDS: readonly TechId[] = ['divergente', 'vermelho', 'azul', 'corte', 'roxo'];
+/** As quatro técnicas que seguem o nível do slot; o Vermelho sai dos eixos e é medido no `tests/data/techAxes.test.ts`. */
+const IDS: readonly TechId[] = ['divergente', 'azul', 'corte', 'roxo'];
 const LEVELS: readonly TechLevel[] = [1, 2, 3];
 const MULS = [1, 1.35] as const;
 
@@ -36,7 +37,7 @@ function constOf(src: string, name: string): number | number[] {
   return raw.startsWith('[') ? raw.slice(1, -1).split(',').map(Number) : Number(raw);
 }
 
-describe('TST-01.6: resolveTechStats = Loadout de hoje, 5 técnicas × níveis × multiplicadores 1 e 1,35', () => {
+describe('TST-01.6: resolveTechStats = Loadout de hoje, 4 técnicas × níveis × multiplicadores 1 e 1,35', () => {
   for (const id of IDS) {
     for (const level of LEVELS) {
       for (const damageMul of MULS) {
@@ -64,8 +65,8 @@ describe('TST-01.6: resolveTechStats = Loadout de hoje, 5 técnicas × níveis �
     }
   }
 
-  it('custo cai 5 por nível e o costMul arredonda no fim: Vermelho Nv 3 com 1,35 = round(35 × 1,35) = 47', () => {
-    expect(resolveTechStats({ id: 'vermelho', level: 3, damageMul: 1, vowDamageMul: 1, costMul: 1.35 }).cost).toBe(47);
+  it('custo cai 5 por nível e o costMul arredonda no fim: Azul Nv 3 com 1,35 = round(25 × 1,35) = 34', () => {
+    expect(resolveTechStats({ id: 'azul', level: 3, damageMul: 1, vowDamageMul: 1, costMul: 1.35 }).cost).toBe(34);
   });
 
   it('dano arredonda só depois dos três fatores: Divergente 1º Nv 2 com 1,35 e 1,35 = round(27,34) = 27', () => {
@@ -101,7 +102,7 @@ describe('TST-01.6: TECH_GEOMETRY sem número novo (igual às constantes ainda n
       orbTexels: 12,
       sensorPx: 6,
       speed: 760,
-      rangePx: 420,
+      rangePx: 320, // VRM-01, VRM-09: era 420
       force: 8,
       ringPx: 160,
       rings: 1,
@@ -207,7 +208,7 @@ describe('TST-01: cada técnica leva só a própria geometria', () => {
     expect(keys('azul')).toEqual(['blue']);
     expect(keys('corte')).toEqual(['cut']);
     expect(keys('roxo')).toEqual(['purple']);
-    expect(at('vermelho').red).toBe(TECH_GEOMETRY.vermelho);
+    expect(at('vermelho').red).toMatchObject(TECH_GEOMETRY.vermelho); // sem ponto, a geometria de base (VRM-01)
     expect(at('azul').blue).toBe(TECH_GEOMETRY.azul);
     expect(at('corte').cut).toBe(TECH_GEOMETRY.corte);
     expect(at('roxo').purple).toBe(TECH_GEOMETRY.roxo);
@@ -241,18 +242,18 @@ describe('TST-01/TST-02: Loadout.stats(id) = resolveTechStats com os multiplicad
 
   it('o stat acompanha o multiplicador escrito depois (resolvido a cada chamada)', () => {
     const loadout = new Loadout();
-    loadout.equip(0, 'vermelho', 3);
-    const before = loadout.stats('vermelho').cost;
+    loadout.equip(0, 'azul', 3);
+    const before = loadout.stats('azul').cost;
     loadout.costMul = 1.35;
-    expect(before).toBe(TECHNIQUES.vermelho.cost - 10);
-    expect(loadout.stats('vermelho').cost).toBe(47);
+    expect(before).toBe(TECHNIQUES.azul.cost - 10);
+    expect(loadout.stats('azul').cost).toBe(34);
   });
 
   it('dano de base fora da tabela usa o nível do stat: 10 no Nv 2 com 1,35 e 1,35 = round(22,78) = 23', () => {
     const loadout = new Loadout();
-    loadout.equip(0, 'vermelho', 2);
+    loadout.equip(0, 'azul', 2);
     loadout.damageMul = 1.35;
     loadout.vowDamageMul = 1.35;
-    expect(loadout.damage('vermelho', 10)).toBe(23);
+    expect(loadout.damage('azul', 10)).toBe(23);
   });
 });

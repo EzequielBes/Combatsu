@@ -22,8 +22,11 @@ import { RedOrbFx } from '../techFx/RedOrb';
 import { TEX } from '../textures';
 import { techMarks, type CastRef, type TechContext, type TechTarget } from './shared';
 
-/** Textura do orbe em voo pelo `orbTexels` do stat (o sensor é pequeno; o orbe visual dá o tamanho percebido). */
-const ORB_TEX: Record<RedGeometry['orbTexels'], string> = { 12: TEX.techOrbRed12 };
+/**
+ * Textura do orbe em voo pelo `orbTexels` do stat (o sensor é pequeno; o orbe visual dá o tamanho percebido). Os
+ * tamanhos 14, 16 e 18 da Escala entram com as texturas da T22; até lá o orbe sem textura própria usa a de 12.
+ */
+const ORB_TEX: Partial<Record<RedGeometry['orbTexels'], string>> = { 12: TEX.techOrbRed12 };
 
 interface RedOrbEntry {
   readonly cast: CastRef | null;
@@ -182,7 +185,7 @@ export class RedTech {
       collisionFilter: { ...Filters.techOrb },
     });
     setIgnoreGravity(body, true);
-    const view = scene.add.sprite(point.x, point.y, ORB_TEX[red.orbTexels], 'orb').setDepth(2);
+    const view = scene.add.sprite(point.x, point.y, ORB_TEX[red.orbTexels] ?? TEX.techOrbRed12, 'orb').setDepth(2);
     const entry: RedOrbEntry = { cast: this.ctx.currentCast(), id: newEntityId(), stats, red, state, body, view };
     tagBody(body, { kind: 'active', onTouch: (other) => this.onTouch(entry, other) });
     this.orb = entry;

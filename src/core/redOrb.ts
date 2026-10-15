@@ -1,7 +1,7 @@
 import { normalize, type Vec2 } from './hit';
 import { Mover } from './mover';
 import { TECH_GEOMETRY } from '../data/techniques';
-import type { TechStats } from './techStats';
+import { RED_BASE, type TechStats } from './techStats';
 
 /** Velocidade do orbe em px/s (RDA-11, supersede RED-05: era 560), lida de `TECH_GEOMETRY`. */
 export const RED_ORB_SPEED = TECH_GEOMETRY.vermelho.speed;
@@ -21,9 +21,9 @@ export interface RedOrbConfig {
 /** Geometria do Vermelho resolvida no `TechStats` (sensor, orbe, força, raio, anéis). */
 export type RedGeometry = NonNullable<TechStats['red']>;
 
-/** A geometria de um `TechStats` do Vermelho; sem `red` (não é o Vermelho) cai na da tabela. */
+/** A geometria de um `TechStats` do Vermelho; sem `red` (não é o Vermelho) cai no Vermelho sem ponto (VRM-01). */
 export function redGeometry(stats: TechStats): RedGeometry {
-  return stats.red ?? TECH_GEOMETRY.vermelho;
+  return stats.red ?? RED_BASE;
 }
 
 /** O `RedOrbConfig` de um `TechStats` do Vermelho. */

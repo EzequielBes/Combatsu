@@ -98,10 +98,16 @@ describe('TEC-06: dano escalado por nível, round(base × k), k = 1, 1.25, 1.5 (
     expect(l.damage('divergente', 18)).toBe(23);
   });
 
-  it('base 30 (Vermelho) no nível 3 (30 × 1.5 = 45) → 45', () => {
+  it('base 10 (Desmantelar) no nível 3 (10 × 1.5 = 15) → 15', () => {
+    const l = new Loadout();
+    l.equip(0, 'corte', 3);
+    expect(l.damage('corte', 10)).toBe(15);
+  });
+
+  it('o Vermelho não leva o fator de nível (VRM-03.5): base 30 no Nv 3 do slot → 30', () => {
     const l = new Loadout();
     l.equip(0, 'vermelho', 3);
-    expect(l.damage('vermelho', 30)).toBe(45);
+    expect(l.damage('vermelho', 30)).toBe(30);
   });
 
   it('técnica não equipada trata como nível 1 (fator 1.0)', () => {
@@ -111,14 +117,25 @@ describe('TEC-06: dano escalado por nível, round(base × k), k = 1, 1.25, 1.5 (
 });
 
 describe('TEC-14: custo de conjuração = baseCost − 5 × (n − 1)', () => {
-  it('vermelho (base 45) nos níveis 1, 2 e 3: 45, 40, 35', () => {
+  it('azul (base 35) nos níveis 1, 2 e 3: 35, 30, 25', () => {
+    const l = new Loadout();
+    l.equip(0, 'azul', 1);
+    expect(l.cost('azul')).toBe(35);
+    l.upgrade('azul');
+    expect(l.cost('azul')).toBe(30);
+    l.upgrade('azul');
+    expect(l.cost('azul')).toBe(25);
+  });
+
+  it('vermelho custa 30 e recarrega em 4500 ms em todo nível do slot: segue os eixos, não o −5 (VRM-01, VRM-03)', () => {
     const l = new Loadout();
     l.equip(0, 'vermelho', 1);
-    expect(l.cost('vermelho')).toBe(45);
-    l.upgrade('vermelho');
-    expect(l.cost('vermelho')).toBe(40);
-    l.upgrade('vermelho');
-    expect(l.cost('vermelho')).toBe(35);
+    for (let i = 0; i < 3; i++) {
+      expect(l.cost('vermelho')).toBe(30);
+      l.startCooldown(0);
+      expect(l.cooldownOf(0)).toBe(4500);
+      l.upgrade('vermelho');
+    }
   });
 
   it('técnica não equipada usa o custo de nível 1 (divergente: 20)', () => {

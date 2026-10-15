@@ -61,7 +61,7 @@ export default async function ({ page, baseUrl, assert }) {
       target = snap.enemies[0];
     }
     assert(target, `nenhum inimigo nasceu: ${JSON.stringify(snap.enemies)}`);
-    // Fica a ~150 px (bem dentro dos 420 px de alcance, longe de qualquer parede) para o orbe acertar de frente.
+    // Fica a ~150 px (bem dentro dos 320 px de alcance do VRM-01, longe de qualquer parede) para o orbe acertar de frente.
     snap = await approachTo(snap, target.id, 150, 20);
     const t0 = snap.enemies.find((e) => e.id === target.id);
     assert(
@@ -85,7 +85,7 @@ export default async function ({ page, baseUrl, assert }) {
     assert(hit, `RED-06: o orbe nunca acertou o alvo direto: ${JSON.stringify(snap.tech.cast)}`);
     assert(hit.hp === hpBefore - 30, `RED-06: dano direto deveria ser 30: ${hpBefore} -> ${hit.hp}`);
     assert(hit.state === 'ragdollStun', `RED-06: alvo deveria entrar em ragdoll: ${JSON.stringify(hit)}`);
-    // O orbe segue voando (perfura) até os 420 px e detona no ar - RED-11/RED-16.
+    // O orbe segue voando (perfura) até os 320 px (VRM-01) e detona no ar - RED-11/RED-16.
     let detonated = null;
     for (let i = 0; i < 60 && detonated === null; i++) {
       snap = await frame();
@@ -108,25 +108,25 @@ export default async function ({ page, baseUrl, assert }) {
     );
   }
 
-  // --- Vermelho (RED-10): alvo bem além dos 420 px de alcance, dentro dos 96 px de detonação, nunca tocado -------
+  // --- Vermelho (RED-10): alvo além dos 320 px de alcance (VRM-01), dentro dos 96 px de detonação, nunca tocado --
   {
     let snap = await startRun('tech=vermelho');
-    // Os pontos E de x=1200 e x=1232 ficam fora da câmera quando o player está em x~630 (e a 570-600 px dele). O inimigo
-    // recém-nascido espera parado na graça de 600 ms e depois anda ~75 px até a detonação (orbe: ~458 px à frente do
-    // player), então termina a ~20-70 px do estouro e nunca no caminho do orbe. Anda até lá, derrubando com
-    // o golpe de teste (tecla 2) quem aparecer no caminho.
+    // Os pontos E de x=1200 e x=1232 ficam fora da câmera quando o player está em x~730 (e a 470-500 px dele). O inimigo
+    // recém-nascido espera parado na graça de 600 ms e depois anda ~75 px até a detonação (orbe: ~358 px à frente do
+    // player, os 320 px do VRM-01 a partir da ponta dos dedos), então termina a ~40-70 px do estouro (raio 96) e nunca
+    // no caminho do orbe. Anda até lá, derrubando com o golpe de teste (tecla 2) quem aparecer no caminho.
     await page.keyboard.down('KeyD');
-    for (let i = 0; i < 200 && snap.player.x < 628; i++) {
-      snap = await stepAndSnap(snap.player.x < 560 ? 50 : 16);
+    for (let i = 0; i < 200 && snap.player.x < 728; i++) {
+      snap = await stepAndSnap(snap.player.x < 660 ? 50 : 16);
       if (snap.enemies.some((e) => e.hp > 0)) await page.keyboard.press('Digit2', { delay: 30 });
     }
     await page.keyboard.up('KeyD');
     snap = await stepAndSnap(300);
-    assert(Math.abs(snap.player.x - 630) < 20, `o player não chegou perto de x=630: ${snap.player.x}`);
+    assert(Math.abs(snap.player.x - 730) < 20, `o player não chegou perto de x=730: ${snap.player.x}`);
     let splashHp = null;
     for (let attempt = 0; attempt < 6 && splashHp === null; attempt++) {
-      // Espera o slot ficar livre (recarga de 3000 ms entre tentativas).
-      for (let i = 0; i < 40 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++)
+      // Espera o slot ficar livre (recarga de 4500 ms do VRM-01 entre tentativas).
+      for (let i = 0; i < 55 && (snap.tech.cast !== null || snap.tech.slots[0].cooldownMs > 0); i++)
         snap = await stepAndSnap(100);
       // Os inimigos agora perseguem em vez de patrulhar (SPN-10): o único jeito de ter um alvo na janela de detonação
       // (fora do alcance do orbe) é pegá-lo recém-nascido num ponto E (1200 ou 1232), ainda
@@ -138,10 +138,10 @@ export default async function ({ page, baseUrl, assert }) {
         const alive = snap.enemies.filter((e) => e.hp > 0 && e.state === 'idle');
         candidate = alive.find((e) => {
           const dx = e.x - snap.player.x;
-          return e.hp === e.maxHp && dx > 560 && dx <= 610 && lastX.get(e.id) === e.x;
+          return e.hp === e.maxHp && dx > 460 && dx <= 510 && lastX.get(e.id) === e.x;
         });
         if (candidate) break;
-        const settling = alive.some((e) => e.x - snap.player.x > 560 && e.x - snap.player.x <= 610 && !lastX.has(e.id));
+        const settling = alive.some((e) => e.x - snap.player.x > 460 && e.x - snap.player.x <= 510 && !lastX.has(e.id));
         for (const e of alive) lastX.set(e.id, e.x);
         if (alive.length > 0 && !settling) await page.keyboard.press('Digit2', { delay: 30 });
       }
@@ -151,7 +151,7 @@ export default async function ({ page, baseUrl, assert }) {
       const detonateBefore = countOf(snap.events, 'redDetonate');
       snap = await tap('KeyL');
       if (!(snap.tech.cast && snap.tech.cast.id === 'vermelho')) continue; // recusado - tenta de novo.
-      // sign 250 + charge 350 + voo dos 420 px a 560 px/s (~750 ms) ~= 1350 ms até detonar sem tocar ninguém antes.
+      // sign 250 + charge 350 + voo dos 320 px a 760 px/s (~420 ms) ~= 1020 ms até detonar sem tocar ninguém antes.
       for (let i = 0; i < 40 && countOf(snap.events, 'redDetonate') <= detonateBefore; i++)
         snap = await stepAndSnap(50);
       const after = snap.enemies.find((e) => e.id === targetId);

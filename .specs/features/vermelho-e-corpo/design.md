@@ -189,7 +189,11 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
   - `resolveTechStats(input: { id; level; axes: AxisBuild; damageMul; vowDamageMul; costMul; kokusenScale }):
     TechStats`. O Vermelho lê a tabela do eixo, sem `LEVEL_FACTOR`; as outras quatro seguem a regra de hoje
     (`TECHNIQUES` × `LEVEL_FACTOR[level − 1]` × multiplicadores, `cost − 5 × (level − 1)`), com o piso
-    `max(custo, ceil(0,6 × TECHNIQUES[id].cost))` aplicado por último (PRC-05).
+    `max(custo, ceil(0,6 × TECHNIQUES[id].cost))` aplicado por último (PRC-05). No código (T13): `axes?: AxisBuild`
+    opcional (sem ele, o Vermelho sem ponto, até o `Loadout` passar os pontos na T14); `levelFactor(stats)` dá o fator
+    de nível (1 no Vermelho) e o `scaleDamage(base, fator, damageMul, vowDamageMul)` recebe o fator, para o
+    `Loadout.damage` não aplicar o `LEVEL_FACTOR` no Vermelho; `resolveRed(axes, damageMul, vowDamageMul)` monta o `red`
+    e `RED_BASE` é o `red` sem ponto (o fallback do `redGeometry`).
   - `GEOMETRY` (as constantes que hoje moram em `core/redOrb.ts:6-9`, `core/blueOrb.ts:4-9`, `core/cut.ts:21-25`,
     `core/purple.ts:2-11`, `game/tech/red.ts:22-25`, `game/tech/purple.ts:12-15`, `game/tech/blue.ts:12`,
     `game/techFx/redDetonation.ts:26-29`, `game/techFx/CutFx.ts:7-13`, `game/techFx/BlueOrb.ts:32-36`) passa a morar

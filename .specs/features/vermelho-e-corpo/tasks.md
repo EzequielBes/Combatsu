@@ -517,7 +517,11 @@ são o `TECH_RULE` de `data/techRule.ts` (leva 1).
 **What**: Vermelho em `data/techniques.ts:43-56` com `cost 30` e `cooldownMs 4500`, `TECH_GEOMETRY.vermelho.rangePx 320`;
 `resolveTechStats` ganha `axes: AxisBuild` e resolve o Vermelho pela tabela, sem `LEVEL_FACTOR`, preenchendo `red`
 (raio, `orbTexels`, `sensorPx`, força, repulsão, estilhaço, vizinhos, anéis, bônus de hitstop, pós-imagem,
-`killRefundPct`, ramo, Despertar), lendo cada linha por `axisAt`.
+`killRefundPct`, ramo, Despertar), lendo cada linha por `axisAt`. Como ficou: `axes` é opcional na entrada (sem ele, o
+Vermelho sem ponto; o `Loadout` só passa os pontos na T14); `TechStats.level` vira `number` (no Vermelho, o nível dos
+eixos); `levelFactor(stats)` dá o fator de nível (1 no Vermelho) e o `scaleDamage` recebe o fator; `RED_BASE` (o `red`
+sem ponto) é o que o `redGeometry` devolve sem `red`; o `red` mantém `repulse` e `ringPx` da geometria. O
+`ORB_TEX` de `game/tech/red.ts` passa a `Partial` (14/16/18 entram na T22) e cai no 12 enquanto falta a textura.
 **Where**: `src/core/techStats.ts`
 **Depends on**: T12
 **Reuses**: `RED_AXES`, `axisAt` e `killRefundPct` (`core/axisRule.ts`)
@@ -525,15 +529,15 @@ são o `TECH_RULE` de `data/techRule.ts` (leva 1).
 
 **Done when**:
 
-- [ ] `tests/data/techAxes.test.ts`: `resolveTechStats` do Vermelho para cada eixo de 0 a 3 = tabela, com dano ×
+- [x] `tests/data/techAxes.test.ts`: `resolveTechStats` do Vermelho para cada eixo de 0 a 3 = tabela, com dano ×
       `damageMul` × `vowDamageMul` e sem `LEVEL_FACTOR` (VRM-03.5); sem pontos: 30/4500/320 e o resto de hoje (VRM-01)
-- [ ] O caso do Vermelho sai do `techStats.test.ts` (as outras 4 ficam); `tests/data/techniques.test.ts` e
+- [x] O caso do Vermelho sai do `techStats.test.ts` (as outras 4 ficam); `tests/data/techniques.test.ts` e
       `tests/core/loadout.test.ts` com custo 30 e recarga 4500
-- [ ] Smokes `tech`, `techniques` e `red-anime` verdes: além dos números de custo e recarga do Vermelho, o trecho RED-10
+- [x] Smokes `tech`, `techniques` e `red-anime` verdes: além dos números de custo e recarga do Vermelho, o trecho RED-10
       do `techniques.smoke.mjs` (`:111-160`) mira o alcance novo: o player para ~100 px mais à frente, a janela do alvo
       vira `dx` de ~460 a ~510 (detonação a ~358 px da ponta dos dedos, raio 96) e a espera cobre a recarga de 4500 ms;
       os comentários de 420 px e 3000 ms citam o VRM-01
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit + smoke
 **Gate**: full

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { RED_AXES } from '../../src/data/techAxes';
 import { CAST_FX, CE, KOKUSEN, LEVEL_FACTOR, TECHNIQUES } from '../../src/data/techniques';
 
 describe('TECHNIQUES: números de nível 1 contra os ACs (DIV-01, RED-01, BLU-01, CUT-01)', () => {
@@ -13,10 +14,10 @@ describe('TECHNIQUES: números de nível 1 contra os ACs (DIV-01, RED-01, BLU-01
     });
   });
 
-  it('vermelho: custo 45, cooldown 3000, sign 250, charge 350, release 100, recover 250 (RED-01)', () => {
+  it('vermelho: custo 30, cooldown 4500, sign 250, charge 350, release 100, recover 250 (RED-01, VRM-01)', () => {
     expect(TECHNIQUES.vermelho).toMatchObject({
-      cost: 45,
-      cooldownMs: 3000,
+      cost: 30,
+      cooldownMs: 4500,
       signMs: 250,
       chargeMs: 350,
       releaseMs: 100,
@@ -50,10 +51,15 @@ describe('TECHNIQUES: números de nível 1 contra os ACs (DIV-01, RED-01, BLU-01
 describe('TEC-14: custo por nível = baseCost − 5 × (n − 1)', () => {
   const costAtLevel = (baseCost: number, n: number): number => baseCost - 5 * (n - 1);
 
-  it('vermelho: nível 1 → 45, nível 2 → 40, nível 3 → 35', () => {
-    expect(costAtLevel(TECHNIQUES.vermelho.cost, 1)).toBe(45);
-    expect(costAtLevel(TECHNIQUES.vermelho.cost, 2)).toBe(40);
-    expect(costAtLevel(TECHNIQUES.vermelho.cost, 3)).toBe(35);
+  it('azul: nível 1 → 35, nível 2 → 30, nível 3 → 25', () => {
+    expect(costAtLevel(TECHNIQUES.azul.cost, 1)).toBe(35);
+    expect(costAtLevel(TECHNIQUES.azul.cost, 2)).toBe(30);
+    expect(costAtLevel(TECHNIQUES.azul.cost, 3)).toBe(25);
+  });
+
+  it('vermelho: a base é 30 e a Eficiência é a tabela dele (VRM-01, VRM-03), não o −5 por nível', () => {
+    expect(TECHNIQUES.vermelho.cost).toBe(RED_AXES.eficiencia.cost[0]);
+    expect(RED_AXES.eficiencia.cost).toEqual([30, 26, 22, 18]);
   });
 
   it('divergente: nível 1 → 20, nível 3 → 10', () => {

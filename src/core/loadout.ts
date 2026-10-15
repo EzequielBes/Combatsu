@@ -1,5 +1,5 @@
 import { TECHNIQUES, type TechId } from '../data/techniques';
-import { resolveTechStats, scaleDamage, type TechStats } from './techStats';
+import { levelFactor, resolveTechStats, scaleDamage, type TechStats } from './techStats';
 
 export type TechLevel = 1 | 2 | 3;
 
@@ -88,7 +88,9 @@ export class Loadout {
 
   /**
    * O `TechStats` de `id` no nível atual com os multiplicadores deste `Loadout` (TST-01); não equipada trata como
-   * nível 1 (TEC-14). Resolvido a cada chamada: os multiplicadores mudam por quadro no `StatsDirector`.
+   * nível 1 (TEC-14). O Vermelho sai dos eixos e ignora o nível do slot (VRM-03); até a T14 ligar os pontos do
+   * `Loadout`, ele resolve sem ponto nenhum (VRM-01). Resolvido a cada chamada: os multiplicadores mudam por quadro
+   * no `StatsDirector`.
    */
   stats(id: TechId): TechStats {
     return resolveTechStats({
@@ -105,9 +107,12 @@ export class Loadout {
     return this.stats(id).cost;
   }
 
-  /** Dano de `base` no nível do stat de `id`, com os multiplicadores (TEC-06: arredonda meio para cima). */
+  /**
+   * Dano de `base` no nível do stat de `id`, com os multiplicadores (TEC-06: arredonda meio para cima); o Vermelho
+   * não leva o `LEVEL_FACTOR` (VRM-03.5).
+   */
   damage(id: TechId, base: number): number {
-    return scaleDamage(base, this.stats(id).level, this.damageMul, this.vowDamageMul);
+    return scaleDamage(base, levelFactor(this.stats(id)), this.damageMul, this.vowDamageMul);
   }
 
   /** Recarga restante do slot, em ms (CAST-04, CAST-06). */

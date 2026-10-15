@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { AxisBuild } from '../../src/core/axisBuild';
 import { axisAt } from '../../src/core/axisRule';
+import { Loadout, type TechLevel } from '../../src/core/loadout';
+import { RED_BASE, resolveTechStats } from '../../src/core/techStats';
 import {
   AWAKENING_NAMES,
   AXIS_NAMES,
@@ -188,5 +191,135 @@ describe('eixo dominante do Vermelho (ESC-03.9)', () => {
 
   it('Eficiência 2 em cima da Recarga 3 sobe o dano sustentado da Recarga 3 sozinha (o eixo não está morto)', () => {
     expect(sustained({ recarga: 3, eficiencia: 2 })).toBeGreaterThan(sustained({ recarga: 3 }));
+  });
+});
+
+/** `AxisBuild` com `n` pontos em cada eixo pedido, comprados pelo `add` (como a loja compra). */
+function buildWith(points: Partial<Record<RedAxisId, number>>): AxisBuild {
+  const axes = new AxisBuild();
+  for (const [axis, n] of Object.entries(points) as [RedAxisId, number][]) {
+    for (let i = 0; i < n; i++) expect(axes.add('vermelho', axis).ok).toBe(true);
+  }
+  return axes;
+}
+
+const MUL = 1.35;
+const VOW = 1.2;
+const red = (axes: AxisBuild, level: TechLevel = 1, damageMul = 1, vowDamageMul = 1, costMul = 1) =>
+  resolveTechStats({ id: 'vermelho', level, axes, damageMul, vowDamageMul, costMul });
+
+describe('VRM-01: o Vermelho sem ponto de eixo', () => {
+  it('custa 30, recarrega em 4500 ms e voa 320 px; o resto fica como hoje', () => {
+    const s = red(new AxisBuild());
+    expect([s.level, s.cost, s.cooldownMs, s.signMs, s.chargeMs, s.releaseMs, s.recoverMs]).toEqual([
+      1, 30, 4500, 250, 350, 100, 250,
+    ]);
+    expect(s.damage).toEqual({ hit: 30, detonation: 25 });
+    expect(s.red).toEqual({
+      ...TECH_GEOMETRY.vermelho,
+      rangePx: 320,
+      speed: 760,
+      radius: 96,
+      orbTexels: 12,
+      sensorPx: 6,
+      force: 8,
+      rings: 1,
+      repulseDamage: 4,
+      shard: 0,
+      shardNeighbors: 0,
+      hitstopBonusMs: 0,
+      afterimage: false,
+      killRefundPct: 0,
+      branch: null,
+      awakened: false,
+    });
+  });
+
+  it('sem `axes` na entrada resolve igual a um AxisBuild vazio (o RED_BASE)', () => {
+    const bare = resolveTechStats({ id: 'vermelho', level: 1, damageMul: 1, vowDamageMul: 1, costMul: 1 });
+    expect(bare).toEqual(red(new AxisBuild()));
+    expect(bare.red).toEqual(RED_BASE);
+  });
+
+  it.each([1, 2, 3] as const)('o nível %i do slot não muda nada: sem LEVEL_FACTOR nem −5 de custo (VRM-03.5)', (lv) => {
+    expect(red(new AxisBuild(), lv, MUL, VOW)).toEqual(red(new AxisBuild(), 1, MUL, VOW));
+  });
+
+  it.each([1, 2, 3] as const)('Loadout.stats com o Vermelho no Nv %i do slot = o Vermelho sem ponto', (lv) => {
+    const loadout = new Loadout();
+    loadout.equip(0, 'vermelho', lv);
+    loadout.damageMul = MUL;
+    loadout.vowDamageMul = VOW;
+    expect(loadout.stats('vermelho')).toEqual(red(new AxisBuild(), 1, MUL, VOW));
+    expect(loadout.cost('vermelho')).toBe(30);
+    loadout.startCooldown(0);
+    expect(loadout.cooldownOf(0)).toBe(4500);
+    expect(loadout.damage('vermelho', 10)).toBe(Math.round(10 * MUL * VOW));
+  });
+});
+
+/** O que cada eixo muda no stat resolvido com `n` pontos, com dano × 1,35 × 1,2 e custo × 1. */
+function expectedFor(axis: RedAxisId, n: number) {
+  const dmg = (base: number) => Math.round(base * MUL * VOW);
+  /** Pontos do eixo `a` neste caso: `n` no eixo testado, 0 nos outros. */
+  const pts = (a: RedAxisId) => (a === axis ? n : 0);
+  const touch = RED_AXES.potencia.touch[pts('potencia')];
+  return {
+    level: 1 + n,
+    cost: RED_AXES.eficiencia.cost[pts('eficiencia')],
+    cooldownMs: RED_AXES.recarga.cooldownMs[pts('recarga')],
+    signMs: RED_AXES.conjuracao.signMs[pts('conjuracao')],
+    chargeMs: RED_AXES.conjuracao.chargeMs[pts('conjuracao')],
+    damage: { hit: dmg(touch), detonation: dmg(RED_AXES.potencia.detonation[pts('potencia')]) },
+    red: {
+      radius: RED_AXES.escala.radius[pts('escala')],
+      orbTexels: RED_AXES.escala.orbTexels[pts('escala')],
+      sensorPx: RED_AXES.escala.sensorPx[pts('escala')],
+      force: RED_AXES.potencia.force[pts('potencia')],
+      rings: 1 + pts('potencia'),
+      hitstopBonusMs: 10 * pts('potencia'),
+      repulseDamage: dmg((4 * touch) / 30),
+      shard: dmg(RED_AXES.perfuracao.shard[pts('perfuracao')]),
+      shardNeighbors: RED_AXES.perfuracao.shardNeighbors[pts('perfuracao')],
+      afterimage: pts('conjuracao') === 3,
+      killRefundPct: pts('recarga') === 3 ? 0.3 : 0,
+      rangePx: 320,
+      speed: 760,
+    },
+  };
+}
+
+describe('VRM-03.5: resolveTechStats do Vermelho = a tabela, eixo a eixo de 0 a 3 pontos', () => {
+  const cases = RED_AXIS_IDS.flatMap((axis) => [0, 1, 2, 3].map((n) => [axis, n] as const));
+  it.each(cases)('%s com %i pontos', (axis, n) => {
+    const s = red(buildWith({ [axis]: n }), 1, MUL, VOW);
+    expect(s).toMatchObject(expectedFor(axis, n));
+  });
+
+  it('Potência 3 com Rosário e voto: toque round(45 × 1,35 × 1,2) = 73, detonação 60, repulsão 10, estilhaço 0', () => {
+    const s = red(buildWith({ potencia: 3 }), 1, MUL, VOW);
+    expect([s.damage.hit, s.damage.detonation, s.red?.repulseDamage, s.red?.shard]).toEqual([73, 60, 10, 0]);
+  });
+
+  it('repulsão 4/5/5/6 de 0 a 3 pontos de Potência sem multiplicador (VRM-04.7)', () => {
+    const repulse = [0, 1, 2, 3].map((n) => red(buildWith({ potencia: n })).red?.repulseDamage);
+    expect(repulse).toEqual([4, 5, 5, 6]);
+  });
+
+  it('o costMul arredonda o custo da Eficiência no fim: Eficiência 2 com 1,35 = round(22 × 1,35) = 30', () => {
+    expect(red(buildWith({ eficiencia: 2 }), 1, 1, 1, 1.35).cost).toBe(30);
+  });
+
+  it('os eixos somam: Potência 2 + Escala 2 + Recarga 1 = Nv 6, raio 144, toque 40, recarga 3600', () => {
+    const s = red(buildWith({ potencia: 2, escala: 2, recarga: 1 }));
+    expect([s.level, s.red?.radius, s.damage.hit, s.cooldownMs]).toEqual([6, 144, 40, 3600]);
+  });
+
+  it('ramo e Despertar vêm do AxisBuild: Ricochete no Nv 2, Fliperama no Nv 5', () => {
+    const axes = buildWith({ potencia: 1 });
+    expect(axes.setBranch('vermelho', 'ricochete')).toBe(true);
+    expect(red(axes).red).toMatchObject({ branch: 'ricochete', awakened: false });
+    for (const axis of ['escala', 'recarga', 'perfuracao'] as const) axes.add('vermelho', axis);
+    expect(red(axes).red).toMatchObject({ branch: 'ricochete', awakened: true });
   });
 });
