@@ -217,6 +217,8 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 ### `scenes/test/bossDirector.ts` (novo)
 
 - `lineupFor(round)` (lê os overrides `bossArch`, `bossAffix`, `finger` por `debugParam`), `specFor(round)`.
+- `showBar(spec)` / `hideBar()` / `glyphs()`: barra do `Hud` e glifos do `BossReadout` (criado no primeiro chefe,
+  porque a `uiLayer` nasce depois do `RunDirector`) sempre juntos; o snapshot traz `bossGlyphs` (BRD-01/02).
 - `attach(boss)`: liga `fxSink`, `onPhaseChanged` (Invocador), cria `BossAffixFx`, `AffixOutline`, `AdaptWheel` e os
   glifos. `update(dt)` depois do `boss.update` (lava, contorno, roda).
 - `summon(phase)`: `summonCount` → `spawner.spawnSummoned(point, round, index, onGone)`; guarda o conjunto vivo.
@@ -232,7 +234,9 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   loot, nunca armado), aparência `ENEMY_VARIANTS[index % 3]` (não consome `variantRng`), e o callback de morte só
   registra `summonDied:<id>` — sem `combat.onEnemyDied` (não chega à `Run`) e sem drop (INV-03, INV-05).
 - `spawnBoss` (119-146): `spec = s.runDirector.bosses.specFor(round)`, `bosses.attach(boss)`,
-  `hud.showBossBar(bossBarLabel(spec))`. `onBossDefeated` (153): `bosses.onBossDied()`.
+  `bosses.showBar(spec)` (o `hud.showBossBar(bossBarLabel(spec))` e os glifos do `BossReadout`, juntos).
+  `onBossDefeated` (153): `bosses.hideBar()` no lugar do `hud.hideBossBar()`, e `bosses.onBossDied()`; o `startRun`
+  também troca o `hud.hideBossBar()` pelo `bosses.hideBar()`.
 
 ---
 

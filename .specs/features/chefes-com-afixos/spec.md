@@ -280,8 +280,8 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | PDD-03 | P2: Moldura Portador de Dedo | Tasks (T3, T10, T27) | Pending |
 | PDD-04 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Pending |
 | PDD-05 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Pending |
-| BRD-01 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Pending |
-| BRD-02 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Pending |
+| BRD-01 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Implemented |
+| BRD-02 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Implemented |
 | BRD-03 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T29) | Pending |
 | BRD-04 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T14) | Pending |
 | BRD-05 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Pending |

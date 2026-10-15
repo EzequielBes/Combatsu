@@ -375,12 +375,15 @@ overrides), além de `boss.affixes` e `boss.finger`.
 
 **Done when**:
 
-- [ ] `boss-lineup` (2º cenário): texto da barra = `bossBarLabel`; snapshot lista os glifos visíveis; captura olhada
-- [ ] `npm run smoke -- boss-lineup` e `boss` verdes; `Hud.ts` sem linha efetiva nova; gate verde
+- [x] `boss-lineup` (2º cenário): texto da barra = `bossBarLabel`; snapshot lista os glifos visíveis; captura olhada
+- [x] `npm run smoke -- boss-lineup` e `boss` verdes; `Hud.ts` sem linha efetiva nova; gate verde
 
 **Tests**: smoke
 **Gate**: full
 **Commit**: `feat(hud): show the boss affixes on the boss bar`
+**Nota**: a barra e os glifos andam juntos pelo `BossDirector` (`showBar(spec)`, `hideBar()`, `glyphs()`); o
+`spawnBoss`, o `onBossDefeated` e o `startRun` chamam o diretor em vez do `hud` direto. O `BossReadout` nasce no
+primeiro chefe (a `uiLayer` nasce depois do `RunDirector`). O snapshot ganhou `bossGlyphs` (chaves da `PALETTE`).
 
 ---
 

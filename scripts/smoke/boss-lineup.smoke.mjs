@@ -2,8 +2,19 @@
 // 1º cenário: duas seeds na r5 dão chefes diferentes (seed 1: Oni Ígneo; seed 5: Tecelã Invocadora); o snapshot traz
 // `affixes` e `finger` do chefe vivo, iguais à escalação que a área pediu, e o fundo da arena usa o mesmo arquétipo.
 // `bossArch=tecela` na r5 vale e não mexe nos afixos sorteados (o stream é consumido igual).
+// 2º cenário (BRD-01/02/07): a barra lê `bossBarLabel` (nome · afixos no gênero do arquétipo · Portador(a)), o
+// snapshot lista um glifo por afixo ao lado dela, e os glifos somem com a barra quando o chefe cai. Captura em
+// `.fable-out/boss-lineup-bar.png`.
+import { mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.fable-out');
 
 export default async function ({ page, baseUrl, assert }) {
+  mkdirSync(OUT_DIR, { recursive: true });
+  // Viewport do tamanho do canvas HD: a captura sai 1:1.
+  await page.setViewport({ width: 1280, height: 720 });
   /** Abre a URL, começa a run (J) e devolve o snapshot com o chefe da r5 já em cena. */
   const bossAt = async (query) => {
     await page.goto(`${baseUrl}?debug&hd=1&area=modular&enemyGuard=0&round=5&${query}`, { waitUntil: 'load' });
@@ -84,4 +95,42 @@ export default async function ({ page, baseUrl, assert }) {
     JSON.stringify(bare.affixes) === '[]' && bare.finger === true && bare.archetype === a.boss.archetype,
     `BLN-09: bossAffix=none&finger=1: ${JSON.stringify(bare)}`,
   );
+
+  // 2º cenário (BRD-01/02): rótulo da barra e glifos visíveis. A seed 1 sorteia o Oni Ígneo na r5.
+  const barOf = (snap) => ({ name: snap.hud.bossBar.name, visible: snap.hud.bossBar.visible, glyphs: snap.bossGlyphs });
+  const expectBar = (snap, name, glyphs, label) => {
+    const bar = barOf(snap);
+    assert(bar.visible && bar.name === name, `[${label}] BRD-01: rótulo da barra: ${JSON.stringify(bar)}`);
+    assert(JSON.stringify(bar.glyphs) === JSON.stringify(glyphs), `[${label}] BRD-02: glifos: ${JSON.stringify(bar)}`);
+  };
+  expectBar(a, 'Oni do Portão · Ígneo', ['a'], 'seed=1');
+  expectBar(tecela, 'Tecelã de Maldições · Ígnea', ['a'], 'bossArch=tecela');
+  const full = await bossAt('seed=1&bossArch=tecela&bossAffix=sangue,adaptativo&finger=1');
+  expectBar(
+    full,
+    'Tecelã de Maldições · Sangue Convergente · Adaptativa · Portadora de Dedo',
+    ['r', 'A', 'R'],
+    'tecela completa',
+  );
+  await page.evaluate(() => window.__game.render());
+  await page.screenshot({ path: join(OUT_DIR, 'boss-lineup-bar.png') });
+
+  // Os glifos somem com a barra quando o chefe cai (golpes de teste, tecla 2, como no `boss-victory`).
+  let s = await bossAt('seed=1');
+  expectBar(s, 'Oni do Portão · Ígneo', ['a'], 'antes da vitória');
+  for (let i = 0; i < 300 && s.boss && s.boss.state !== 'dead' && s.run.state === 'roundActive'; i++) {
+    await page.keyboard.press('Digit2', { delay: 50 });
+    s = await page.evaluate(() => {
+      window.__game.step(17);
+      return window.__game.snapshot();
+    });
+    if (s.events.includes('bossDefeatedFx')) break;
+    s = await page.evaluate(() => {
+      window.__game.step(80);
+      return window.__game.snapshot();
+    });
+  }
+  assert(s.events.includes('bossDefeatedFx'), `o chefe deveria cair: ${JSON.stringify(s.boss)} player ${s.player.hp}`);
+  const after = barOf(s);
+  assert(!after.visible && after.glyphs.length === 0, `BRD-02: glifos somem com a barra: ${JSON.stringify(after)}`);
 }

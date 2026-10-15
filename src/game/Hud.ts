@@ -12,7 +12,7 @@ import { ART_SCALE, PALETTE } from './art/palette';
 import { TEX } from './textures';
 
 /** Canto da barra de vida e do painel na tela (px da câmera de UI, zoom 1). */
-const MARGIN = 12;
+export const MARGIN = 12;
 /** Espaço reservado para o rótulo "HP" à esquerda da barra. */
 const LABEL_W = 26;
 /** Cor da paleta em CSS (`#rrggbb` ou `#rrggbbaa`), para o texto do Phaser, que não aceita número (ART-01). */
@@ -58,7 +58,7 @@ export const BOSS_BAR_MARK_COLOR = PALETTE.w;
 export const BOSS_BAR_NAME_COLOR = PALETTE.w;
 const BOSS_BAR_NAME_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(BOSS_BAR_NAME_COLOR), ...OUTLINE };
 /** Largura total da barra do chefe (BHUD-01) e marcas de fase, em fração da largura (BAI-01: 66%/33%). */
-const BOSS_BAR_WIDTH = 400;
+export const BOSS_BAR_WIDTH = 400;
 const BOSS_BAR_HEIGHT = 12;
 const BOSS_BAR_MARK_W = 2;
 const BOSS_BAR_MARK_FRACTIONS = [0.66, 0.33] as const;

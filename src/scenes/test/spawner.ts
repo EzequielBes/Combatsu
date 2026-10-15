@@ -147,8 +147,8 @@ export class Spawner {
       (x, y, dir, speed, damage) => this.spawnProjectile('projectile', x, y, dir, speed, BOSS.volley.maxDist, damage),
       (dead, x, y) => this.onBossDefeated(dead, x, y),
     );
-    // Entrada (BHUD-01/05): barra cheia com o nome e a faixa do chefe durante a intro.
-    this.s.hud.showBossBar(spec.name);
+    // Entrada (BHUD-01/05, BRD-01/02): barra cheia com o nome, os afixos e os glifos, e a faixa durante a intro.
+    this.s.runDirector.bosses.showBar(spec);
     this.s.hud.banner(`Chefe: ${spec.name}`, BOSS.introMs);
   }
 
@@ -166,7 +166,7 @@ export class Spawner {
     this.s.fx.shake();
     this.s.fx.curseSmoke(x, y);
     this.s.snapshot.debugEvents.push('bossDefeatedFx');
-    this.s.hud.hideBossBar();
+    this.s.runDirector.bosses.hideBar();
     // BHUD-03: a faixa entra na hora da morte; "Rodada N concluída" vem depois dela (RHUD-03).
     this.s.hud.banner('Chefe derrotado!', BOSS.defeatBannerMs);
     this.s.runDirector.clearedBanner = {

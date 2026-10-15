@@ -135,6 +135,8 @@ export interface GameSnapshot {
   } | null;
   /** Última escalação de chefe pedida na run (BLN-08..11), já com os overrides de debug; `null` antes do 1º chefe. */
   bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;
+  /** Chaves da `PALETTE` dos glifos visíveis ao lado da barra do chefe, na ordem (BRD-02); vazio sem barra. */
+  bossGlyphs: string[];
   /**
    * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
    * `id` é único por instância (nunca reaproveitado) - o smoke usa para contar disparos mesmo que um projétil

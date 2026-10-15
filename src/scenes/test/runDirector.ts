@@ -118,7 +118,7 @@ export class RunDirector {
     if (this.s.shopDirector.shop) this.s.matter.world.resume();
     this.s.shopDirector.shop = null;
     this.s.shopPanel.hide();
-    this.s.hud.hideBossBar();
+    this.bosses.hideBar();
     for (const proj of this.s.projectiles) proj.destroyNow();
     this.s.projectiles = [];
     this.s.player.resetForRun();

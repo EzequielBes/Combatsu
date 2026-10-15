@@ -1,5 +1,7 @@
 import {
+  bossBarLabel,
   BossLineups,
+  glyphKeys,
   parseBossAffixes,
   parseBossArch,
   parseFinger,
@@ -7,6 +9,7 @@ import {
   type LineupOverrides,
 } from '../../core/bossAffix';
 import { bossSpecFor, type BossSpec } from '../../core/bossTier';
+import { BossReadout } from '../../game/boss/BossReadout';
 import type { GameSnapshot } from '../../game/debugApi';
 import { debugParam } from './params';
 import type { TestScene } from '../TestScene';
@@ -20,6 +23,8 @@ export class BossDirector {
   private lineups = new BossLineups();
   /** Última escalação pedida, para o snapshot (BLN-11). */
   private last: { round: number; lineup: BossLineup } | null = null;
+  /** Glifos ao lado da barra, criados no primeiro chefe (a `uiLayer` nasce depois do `RunDirector`). */
+  private readout: BossReadout | null = null;
 
   constructor(readonly s: TestScene) {}
 
@@ -43,6 +48,24 @@ export class BossDirector {
   /** Especificação do chefe da rodada `round` com a escalação dela (BLN-08, PDD-03..05). */
   specFor(round: number): BossSpec {
     return bossSpecFor(round, this.lineupFor(round));
+  }
+
+  /** Barra do chefe com o rótulo da escalação (BRD-01) e um glifo por afixo à direita dela (BRD-02). */
+  showBar(spec: BossSpec): void {
+    this.s.hud.showBossBar(bossBarLabel(spec));
+    this.readout ??= new BossReadout(this.s, this.s.uiLayer);
+    this.readout.showGlyphs(glyphKeys(spec));
+  }
+
+  /** Esconde a barra e os glifos juntos (chefe derrotado ou run nova). */
+  hideBar(): void {
+    this.s.hud.hideBossBar();
+    this.readout?.hideGlyphs();
+  }
+
+  /** Chaves da `PALETTE` dos glifos visíveis ao lado da barra, na ordem (snapshot de debug). */
+  glyphs(): string[] {
+    return this.readout?.visibleGlyphs() ?? [];
   }
 
   /** Run nova: esquece as escalações (o cache também zeraria sozinho com o stream novo) e a última pedida. */
