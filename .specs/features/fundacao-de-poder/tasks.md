@@ -312,12 +312,12 @@ sem `ai.interrupt`, sem limpar `walkVxStep`, sem `pickHitReaction`, sem `trackSt
 
 **Done when**:
 
-- [ ] `tests/core/damageNumber.test.ts`: 12/16/20 px em 14/15 e 39/40 de dano para golpe, técnica, crítico e Kokusen;
+- [x] `tests/core/damageNumber.test.ts`: 12/16/20 px em 14/15 e 39/40 de dano para golpe, técnica, crítico e Kokusen;
       micro e chip sempre 12; cores por tipo (POW-05.2); fusão em 300 ms e número novo em 301 ms; tipo de maior
       prioridade fica; teto 12/13 com fusão no mais recente do alvo e despejo do mais antigo sem número do alvo;
       `promote`; `expire` em 700 ms; `clear`
-- [ ] `tests/data/powerFeel.test.ts` (novo): toda cor de número existe na `PALETTE`
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `tests/data/powerFeel.test.ts` (novo): toda cor de número existe na `PALETTE`
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick

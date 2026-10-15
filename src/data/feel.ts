@@ -70,3 +70,20 @@ export const HIT_BAND_FEEL = {
   micro: { lightMs: 15, heavyMs: 20, capMs: 60, windowMs: 1000, sparkSize: 10 },
   chip: { sparkSize: 6 },
 } as const;
+
+/**
+ * Números de dano (POW-05): vida de 700 ms subindo 18 px; acertos no mesmo alvo a até 300 ms do último somado viram um
+ * número só; no máximo 12 vivos; o Kokusen dá um "pop" de 1,6 a 1,0 em 120 ms. Tamanho do texto em px: `small` abaixo
+ * de `midFrom` de dano, `mid` até `bigFrom` exclusive e `big` dali para cima (micro e chip ficam sempre em `small`).
+ */
+export const DAMAGE_NUMBER_FEEL = {
+  lifeMs: 700,
+  risePx: 18,
+  mergeMs: 300,
+  cap: 12,
+  popScale: 1.6,
+  popMs: 120,
+  sizePx: { small: 12, mid: 16, big: 20 },
+  midFrom: 15,
+  bigFrom: 40,
+} as const;
