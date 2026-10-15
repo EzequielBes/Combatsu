@@ -25,6 +25,8 @@ describe('KIT-01: geometria', () => {
     expect(segmentEntry({ x: 50, y: 10 }, 1, 100, box(40, 0))).toBe(0);
     expect(segmentEntry({ x: 100, y: 10 }, -1, 100, box(40, 0))).toBe(40);
     expect(segmentEntry({ x: 0, y: 21 }, 1, 100, box(40, 0))).toBeNull();
+    expect(segmentEntry({ x: 0, y: 20 }, 1, 100, box(40, 0))).toBe(40); // borda de baixo inclusa
+    expect(segmentEntry({ x: 0, y: 0 }, 1, 100, box(40, 0))).toBe(40); // borda de cima inclusa
     expect(segmentEntry({ x: 0, y: 10 }, 1, 39, box(40, 0))).toBeNull();
     expect(segmentEntry({ x: 0, y: 10 }, -1, 100, box(40, 0))).toBeNull();
   });

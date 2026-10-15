@@ -284,6 +284,10 @@ describe('CNV-10: abate com Recarga no 3', () => {
     const curve = ok(fire(build({ recarga: 3 }, 'curva'), [tgt(1, 320, 100, 'enemy', 5)]));
     expect(curve.bends[0].hit.killed).toBe(true);
     expect(curve.refundMs).toBe(600);
+    const nova = ok(fire(build({ recarga: 3 }, 'supernova'), [tgt(1, 60), tgt(2, 120), tgt(3, 150, 0, 'enemy', 5)]));
+    expect(nova.hits.some((h) => h.killed)).toBe(false);
+    expect(nova.shards?.hits.find((h) => h.targetId === 3)?.killed).toBe(true);
+    expect(nova.refundMs).toBe(600);
   });
 });
 

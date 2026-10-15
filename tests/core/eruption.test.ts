@@ -132,6 +132,12 @@ describe('ERU-04: queima', () => {
     expect(burns.map((b) => b.t)).toEqual([670, 970, 1270, 1570, 1870, 2170]);
   });
 
+  it('os tiques contam do instante do acerto, não do quadro: um passo de 1 s solta os que venceram nele', () => {
+    const c = cast(build({ queima: 1 }));
+    const perStep = [1000, 1000, 1000].map((dt) => c.update(dt, [tgt(1, 80)]).filter((e) => e.type === 'burn').length);
+    expect(perStep).toEqual([2, 3, 1]);
+  });
+
   it('quem morre perde a queima; no fim, a conjuração acaba', () => {
     let alive = [tgt(1, 80)];
     const c = cast(build({ queima: 3 }));
@@ -192,6 +198,19 @@ describe('ERU-06: Lago de Lava', () => {
     expect(lava[0].e.hits.map((h) => h.targetId)).toEqual([1]);
   });
 
+  it('a lava conta do instante do pilar, não do quadro', () => {
+    const c = cast(build({ altura: 1 }, 'lagoDeLava'));
+    const perStep = [1000, 1000, 1000, 1000].map(
+      (dt) => c.update(dt, [tgt(1, 80)]).filter((e) => e.type === 'lava').length,
+    );
+    expect(perStep).toEqual([2, 3, 4, 1]); // tiques em 550, 850, ..., 3250
+  });
+
+  it('com queima 2, a lava ainda tira 3 (o maior dos dois)', () => {
+    const lava = ofType(play(cast(build({ queima: 1 }, 'lagoDeLava')), [tgt(1, 80)], 700), 'lava');
+    expect(lava[0].e.hits[0].damage).toBe(3);
+  });
+
   it('com queima 4, a lava tira 4', () => {
     const lava = ofType(play(cast(build({ queima: 3 }, 'lagoDeLava')), [tgt(1, 80)], 700), 'lava');
     expect(lava[0].e.hits[0].damage).toBe(4);
@@ -211,6 +230,14 @@ describe('ERU-07: Chuva de Meteoros (Despertar)', () => {
     expect(ofType(log, 'shard')).toEqual([
       { t: 850, e: { type: 'shard', x: 32, hits: [{ targetId: 3, damage: 15, band: 'micro' }] } },
       { t: 850, e: { type: 'shard', x: 128, hits: [{ targetId: 2, damage: 15, band: 'micro' }] } },
+    ]);
+  });
+
+  it('o componente sai uma vez por alvo na conjuração, mesmo atingido por dois meteoros', () => {
+    const log = play(cast(build({ altura: 3, erupcoes: 1 }, 'meteoro')), [tgt(1, 108)], 1000);
+    expect(ofType(log, 'meteor').map((m) => [m.t, m.e.hits.map((h) => h.bite)])).toEqual([
+      [650, [4]],
+      [770, [0]],
     ]);
   });
 
@@ -246,6 +273,15 @@ describe('ERU-08: Caldeira (Despertar)', () => {
       },
     ]);
     expect(c.done).toBe(true);
+  });
+
+  it('a Caldeira também acende a queima', () => {
+    const log = play(cast(build({ altura: 3, queima: 1 }, 'lagoDeLava')), [tgt(1, 80)], 5500);
+    expect(
+      ofType(log, 'burn')
+        .filter((b) => b.t > 3250)
+        .map((b) => b.t),
+    ).toEqual([3550, 3850, 4150, 4450, 4750, 5050]);
   });
 });
 

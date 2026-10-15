@@ -159,6 +159,19 @@ describe('CAO-05: prisão', () => {
     const boss = bites(play(summon(build({ prisao: 3 })), [tgt(1, 100, 'boss', 3000)], 400));
     expect(boss.map((b) => b.root)).toEqual([150, 150]);
   });
+
+  it('o lobo e o cão faminto não prendem de novo no alvo seguinte', () => {
+    const wolf = bites(play(summon(build({ prisao: 1 }, 'totalidade')), [tgt(1, 100), tgt(2, 180)], 800));
+    expect(wolf.map((b) => [b.target, b.root])).toEqual([
+      [1, 200],
+      [2, 0],
+    ]);
+    const hungry = bites(play(summon(build({ caes: 3, prisao: 1 }, 'matilha')), [tgt(1, 100), tgt(2, 160)], 1200));
+    expect(hungry.filter((b) => b.dog === 1).map((b) => [b.t, b.target, b.root])).toEqual([
+      [150, 1, 200],
+      [350, 2, 0],
+    ]);
+  });
 });
 
 describe('CAO-06: Totalidade', () => {
@@ -236,6 +249,23 @@ describe('CAO-09: Matilha Faminta (Despertar)', () => {
       [750, 2, 0],
     ]);
     expect(log.filter((b) => b.dog === 2).every((b) => b.bite === 0)).toBe(true);
+  });
+
+  it('o cão cujo alvo morre também pula, depois do intervalo da mordida', () => {
+    let alive = [tgt(1, 100), tgt(2, 160)];
+    const pack = summon(awake);
+    const log = play(pack, () => alive, 200);
+    alive = [tgt(2, 160)];
+    log.push(...play(pack, () => alive, 1000).map(({ t, e }) => ({ t: t + 200, e })));
+    expect(
+      bites(log)
+        .filter((b) => b.dog === 1)
+        .map((b) => [b.t, b.target]),
+    ).toEqual([
+      [150, 1],
+      [350, 2],
+      [550, 2],
+    ]);
   });
 
   it('a 81 px não pula; sem o Despertar (Nv 4) o cão some depois das mordidas', () => {
