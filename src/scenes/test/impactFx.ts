@@ -65,11 +65,11 @@ export class ImpactFx {
   /**
    * Impacto do golpe corpo a corpo do jogador (IMP-06..16): nível, camadas do `CursedFx`, quadro de impacto só no
    * decisivo sem Kokusen e uma vez por golpe (IMP-11, IMP-13, IMP-14), e a rachadura na queda da derrubada. A força do
-   * corpo (POW-08, POW-09) dá a escala e o tom do impacto e a distância do deslize.
+   * corpo (POW-08, POW-09) dá a escala e o tom do impacto e a distância do deslize. `forced` fixa o nível (POW-11.4).
    */
-  onMeleeImpact(hit: Hit, point: Vec2, target?: Hittable): void {
+  onMeleeImpact(hit: Hit, point: Vec2, target?: Hittable, forced?: ImpactTier): void {
     const brokePosture = target instanceof Enemy && target.broken && !this.brokenAtFrameStart.has(target.id);
-    const tier = impactTier(hit, { brokePosture });
+    const tier = impactTier(hit, { brokePosture, forced });
     const power = this.s.stats.power;
     this.s.cursedFx.impact(
       tier,
@@ -94,6 +94,19 @@ export class ImpactFx {
     if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1, power.slideMul);
     if (hit.knockdown && target instanceof Enemy) this.crackWatch.set(target, this.s.clockMs);
     this.reactCamera(tier, hit, point, brokePosture);
+  }
+
+  /**
+   * Golpe de objeto do jogador (POW-11.4): impacto amaldiçoado sempre `heavy`, também no objeto arremessado que derruba.
+   * O golpe de objeto não passa pelo grafo de golpes nem tem fase `active`, então o risco `heavy` sai no acerto, do
+   * centro do jogador ao contato, com o bônus de largura da força; o arremesso (`knockdown`) não ganha risco, porque o
+   * contato fica longe da mão.
+   */
+  onPropImpact(hit: Hit, point: Vec2, target?: Hittable): void {
+    this.onMeleeImpact(hit, point, target, 'heavy');
+    if (hit.knockdown === true) return;
+    const from = this.s.player.renderPos;
+    this.s.cursedFx.trail([{ x: from.x, y: from.y }, point], 'heavy', this.s.stats.power.trailBonusPx);
   }
 
   /**

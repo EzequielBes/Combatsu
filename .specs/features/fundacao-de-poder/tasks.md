@@ -643,10 +643,10 @@ faísca roxa e sem o `fx.shake`; `onPropImpact` chama `onMeleeImpact` com a faix
 
 **Done when**:
 
-- [ ] `power.smoke.mjs` (cenário 6): o golpe com o bastão dispara `impact:heavy` e nenhuma faísca roxa; o objeto
+- [x] `power.smoke.mjs` (cenário 6): o golpe com o bastão dispara `impact:heavy` e nenhuma faísca roxa; o objeto
       arremessado com `knockdown` também passa pelo `ImpactFx`
-- [ ] Smokes `held-item`, `armed` (repetido isolado se falhar), `boss-prop`, `world-`, `drops` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `held-item`, `armed` (repetido isolado se falhar), `boss-prop`, `world-`, `drops` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full

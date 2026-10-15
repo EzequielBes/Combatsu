@@ -78,18 +78,20 @@ export class CombatLinks {
 
   /**
    * Golpe que conectou: faísca no ponto de contato (FX-03), tremida só no forte e hitstop (FX-01/02). Golpe de
-   * objeto é forte (hitstop de 90 ms) e tem a faísca roxa. `target` é quem aceitou o golpe (foco, PST-13).
+   * objeto é forte (hitstop de 90 ms). `target` é quem aceitou o golpe (foco, PST-13).
    */
   onConnect(hit: Hit, point: Vec2, kind: SparkKind, target?: Hittable): void {
-    // IMP-06, CAM-06: o golpe corpo a corpo do jogador troca a faísca e a tremida pelo impacto amaldiçoado.
-    if (hit.ownerId === this.s.player.id && hit.moveName !== undefined)
-      this.s.impactFx.onMeleeImpact(hit, point, target);
+    const mine = hit.ownerId === this.s.player.id;
+    // IMP-06, CAM-06, POW-11.4: o golpe corpo a corpo e o de objeto do jogador trocam a faísca e a tremida pelo
+    // impacto amaldiçoado; a faísca (roxa no objeto) fica para quem bate no jogador e para o objeto de outro dono.
+    if (mine && kind === 'prop') this.s.impactFx.onPropImpact(hit, point, target);
+    else if (mine && hit.moveName !== undefined) this.s.impactFx.onMeleeImpact(hit, point, target);
     else {
       this.s.fx.spark(point.x, point.y, kind);
+      this.s.snapshot.debugEvents.push(`spark:${kind}`);
       if (hit.strength === 'heavy') this.s.fx.shake();
     }
     // POW-08.8: o acerto do jogador (soco ou objeto) congela mais com o patamar de força.
-    const mine = hit.ownerId === this.s.player.id;
     const bonusMs = mine ? this.s.stats.power.hitstopBonusMs[hit.strength] : 0;
     this.s.effects.hitstop.trigger(HITSTOP_MS[hit.strength] + bonusMs);
     this.s.effects.freeze();

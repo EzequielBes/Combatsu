@@ -272,8 +272,8 @@ do `tone(...)` privado de `fx.ts:56-62` (que só aceita 4 chaves; o patamar tem 
 | `src/scenes/test/arsenalDirector.ts` | 52 | `this.s.stats.propDamage` |
 | `src/scenes/test/drops.ts` | 91 | `this.s.stats.propDamage` |
 | `src/scenes/test/world.ts` | 355 | `this.s.stats.propDamage` |
-| `src/scenes/test/combat.ts` | 83-90 | `mine && kind === 'prop'` vai para `impactFx.onPropImpact(hit, point, target)`, sem a faísca roxa e sem o `fx.shake` |
-| `src/scenes/test/impactFx.ts` | novo método | `onPropImpact`: `onMeleeImpact(hit, point, target, 'heavy')` e o risco `heavy` do centro do player ao contato, com o `trailBonusPx` |
+| `src/scenes/test/combat.ts` | 83-90 | `mine && kind === 'prop'` vai para `impactFx.onPropImpact(hit, point, target)`, sem a faísca roxa e sem o `fx.shake`; a faísca que sobra empurra o evento `spark:<tipo>`, para o smoke provar a ausência da roxa |
+| `src/scenes/test/impactFx.ts` | novo método | `onPropImpact`: `onMeleeImpact(hit, point, target, 'heavy')` (que ganha o `forced?: ImpactTier`) e, fora do arremesso, o risco `heavy` do centro do player ao contato, com o `trailBonusPx` |
 
 Só o player pega objeto (`holding.ts:24`, `arsenalDirector.ts:68`), então o `PropDamage` sempre resolve o golpe do
 player. O Passo sombrio fica armado porque o `propDamage` lê `PROP_TRAITS` (`shadow: false`) e não chama
