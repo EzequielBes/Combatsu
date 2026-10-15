@@ -207,7 +207,7 @@ no toque.
 | `src/core/bossBrain.ts` | 6-16, 94 | `chipPoiseMul` no `BossBrainTuning`; `poiseDamage = bandPoiseDamage(hit, t.chipPoiseMul)` |
 | `src/data/tuning.ts` | 330-344 | `BOSS.chipPoiseMul: 0.5` |
 | `src/data/feel.ts` | fim | `HIT_BAND_FEEL` (micro 15/20 ms, teto 60 ms em 1000 ms, faísca 10; chip faísca 6) |
-| `src/scenes/test/effects.ts` | 33-38 | `onTechConnect(hit, point, target?)`: chip sem hitstop, sem `freeze`, faísca 6; micro com `MicroBudget.grant(strength, game.loop.time)` e faísca 10; normal como hoje |
+| `src/scenes/test/effects.ts` | 33-38 | `onTechConnect(hit, point)` (o `target` entra no Passo 3, com o número): chip sem hitstop, sem `freeze`, faísca 6; micro com `MicroBudget.grant(strength, game.loop.time)` e faísca 10; normal como hoje |
 | `src/game/fx.ts` | 112 | `spark(x, y, kind, size?)` |
 | `src/game/tech/blue.ts` | 68, 115-128 | `applyDamage(..., band?)`: o tique (l.68) passa `'chip'`, a implosão (l.71) não passa nada |
 

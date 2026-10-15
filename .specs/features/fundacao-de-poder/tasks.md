@@ -256,7 +256,7 @@ sem `ai.interrupt`, sem limpar `walkVxStep`, sem `pickHitReaction`, sem `trackSt
 
 ### T7: Efeitos das faixas na técnica
 
-**What**: `onTechConnect(hit, point, target?)` trata chip (sem hitstop, sem `freeze`, faísca 6), micro
+**What**: `onTechConnect(hit, point)` (o `target` entra com o número, T11) trata chip (sem hitstop, sem `freeze`, faísca 6), micro
 (`MicroBudget.grant(strength, game.loop.time)`, faísca 10 mesmo com o teto cheio) e normal como hoje; `Fx.spark` ganha
 `size?` opcional.
 **Where**: `src/scenes/test/effects.ts`
@@ -266,11 +266,11 @@ sem `ai.interrupt`, sem limpar `walkVxStep`, sem `pickHitReaction`, sem `trackSt
 
 **Done when**:
 
-- [ ] O relógio do teto é `this.s.game.loop.time` (relógio real; o hitstop congela o de jogo)
-- [ ] Smokes `tech`, `techniques` e `fxlab` verdes e iguais (o caminho normal não muda; o chip é provado pela T8)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] O relógio do teto é `this.s.game.loop.time` (relógio real; o hitstop congela o de jogo)
+- [x] Smokes `tech`, `techniques` e `fxlab` verdes e iguais (o caminho normal não muda; o chip é provado pela T8)
+- [x] Gate verde; contagem de testes sem perda
 
-**Tests**: smoke
+**Tests**: unit (`tests/scenes/effects.test.ts`) + smoke
 **Gate**: full
 **Commit**: `feat(fx): route chip and micro technique hits without the freeze`
 

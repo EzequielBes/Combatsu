@@ -107,11 +107,13 @@ export class Fx {
 
   /**
    * Faísca no ponto de contato, na cor do tipo do golpe (FX-03): lampejo em estrela com agulhas em volta (o mesmo
-   * desenho do impacto amaldiçoado) e pedacinhos voando.
+   * desenho do impacto amaldiçoado) e pedacinhos voando. `size` troca o meio eixo do lampejo do tipo (as faixas de
+   * acerto das técnicas, POW-03: chip 6, micro 10).
    */
-  spark(x: number, y: number, kind: SparkKind): void {
+  spark(x: number, y: number, kind: SparkKind, size?: number): void {
     const s = this.scene;
-    const { size, rays } = sparkSize(kind);
+    const { size: kindSize, rays } = sparkSize(kind);
+    const flash = size ?? kindSize;
     const rng = new Rng(Math.floor(x * 7 + y * 13));
     const list = Array.from({ length: rays }, (_, i) => ({
       angle: ((i + rng.next() * 0.6) / rays) * Math.PI * 2,
@@ -120,14 +122,14 @@ export class Fx {
     // Eixo longo de pé: sem direção de golpe, o lampejo lê como um corte vertical no ponto de contato.
     const shape = { cx: snap(x), cy: snap(y), dirAngle: 0, snap, grid: GRID, tone: SPARK_TONE[kind] };
     const gfx = s.add.graphics().setDepth(FX_DEPTH);
-    drawSpark(gfx, shape, list, size, 0);
+    drawSpark(gfx, shape, list, flash, 0);
     // Tween pausa junto com o hitstop: o lampejo fica aceso durante todo o congelamento e só depois abre e apaga.
     s.tweens.addCounter({
       from: 0,
       to: 1,
       duration: STAR_MS,
       onUpdate: (t) => {
-        if (gfx.active) drawSpark(gfx, shape, list, size, t.getValue() ?? 1);
+        if (gfx.active) drawSpark(gfx, shape, list, flash, t.getValue() ?? 1);
       },
       onComplete: () => gfx.destroy(),
     });

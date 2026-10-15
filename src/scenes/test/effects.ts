@@ -1,6 +1,8 @@
 import { type Hit, type Vec2 } from '../../core/hit';
+import { MicroBudget } from '../../core/hitBand';
 import { Hitstop } from '../../core/hitstop';
 import { SlowMo } from '../../core/slowMo';
+import { HIT_BAND_FEEL } from '../../data/feel';
 import { HITSTOP_MS } from '../../data/fx';
 import { MAX_FRAME_MS } from '../../game/physics';
 import type { TestScene } from '../TestScene';
@@ -10,6 +12,9 @@ export class EffectsDirector {
   constructor(readonly s: TestScene) {}
 
   readonly hitstop = new Hitstop();
+
+  /** Teto do hitstop dos acertos micro (POW-03, POW-14), contado no relógio real do jogo. */
+  readonly microBudget = new MicroBudget();
 
   /** Câmera lenta da esquiva perfeita (DOD-07), em tempo real; a escala vai para o tempo de jogo (`applyTimeScale`). */
   slowMo = new SlowMo();
@@ -28,12 +33,30 @@ export class EffectsDirector {
 
   /**
    * Golpe de técnica que conectou (T22+): mesma faísca + tremida + hitstop de FX-01..03, mas sem o +3 de CE-06
-   * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito).
+   * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito). As faixas (POW-03) aliviam o dano
+   * frequente: o chip só risca a faísca pequena, sem hitstop nem `freeze`; o micro ganha 15/20 ms enquanto o teto
+   * deixa (a faísca média sai mesmo com o teto cheio). Nenhuma das duas treme a câmera.
    */
   onTechConnect(hit: Hit, point: Vec2): void {
+    if (hit.band === 'chip') {
+      this.s.fx.spark(point.x, point.y, hit.strength, HIT_BAND_FEEL.chip.sparkSize);
+      return;
+    }
+    if (hit.band === 'micro') {
+      this.s.fx.spark(point.x, point.y, hit.strength, HIT_BAND_FEEL.micro.sparkSize);
+      // Relógio real: o hitstop congela o tempo de jogo, e a janela do teto precisa andar durante ele.
+      const ms = this.microBudget.grant(hit.strength, this.s.game.loop.time);
+      if (ms > 0) this.stop(ms);
+      return;
+    }
     this.s.fx.spark(point.x, point.y, hit.strength);
     if (hit.strength === 'heavy') this.s.fx.shake();
-    this.hitstop.trigger(HITSTOP_MS[hit.strength]);
+    this.stop(HITSTOP_MS[hit.strength]);
+  }
+
+  /** Dispara o hitstop de `ms` e congela a cena. */
+  private stop(ms: number): void {
+    this.hitstop.trigger(ms);
     this.freeze();
   }
 
