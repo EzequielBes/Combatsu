@@ -614,13 +614,13 @@ escolhem por ele, empate pelo menor id); `RED_BRANCHES`, `RED_AWAKENINGS`
 
 **Done when**:
 
-- [ ] `tests/core/redBranch.test.ts`: estilhaço 1/2/2 vizinhos a 59/60/61 px, o mais perto primeiro, cada um uma vez
+- [x] `tests/core/redBranch.test.ts`: estilhaço 1/2/2 vizinhos a 59/60/61 px, o mais perto primeiro, cada um uma vez
       (VRM-08); rebote só a ≤ 320 px do player (319/320/321) e a ≤ 200 px do ponto (199/200/201), fora dos atingidos
       (VRM-09, VRM-12.3); sem alvo vai ao lado oposto (VRM-12.5); 1ª detonação 1,0 e as seguintes 0,7 (VRM-12.4);
       Fliperama 3 rebotes, +15% por detonação, pct só na 3ª e parede conta como rebote (VRM-13, edge case); chefe
       primeiro conta como 1ª (edge case); `ContidoHold` voa, paira no fim, detona ao soltar e em 1199/1200 ms, nasce
       solto e voa normal (VRM-14); `RedField` 6 tiques de 200 ms em 1200 ms e empurrão de 150 px/s (VRM-15)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

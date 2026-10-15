@@ -224,23 +224,31 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 - **Interfaces**:
   - `redPlan(branch, awakened): RedPlan` = `{ pierce: boolean; maxRebounds: 0 | 1 | 3; reboundAny: boolean;
     holdable: boolean; radiusMul: number; field: boolean; pctOnDetonation: (n: number) => boolean }`
-    (Ricochete: `pierce false`, 1 rebote só a partir de inimigo/parede/chão/chefe; Fliperama: 3; Contido: `holdable`,
-    `radiusMul` 1,4 só na detonação segurada e na parede/chefe do orbe segurado; Máximo: `field`, `pct` em toda
-    detonação; Fliperama: `pct` só na 3ª).
+    (Ricochete: `pierce false`, 1 rebote só a partir de inimigo/parede/chão/chefe; Fliperama: 3 e `reboundAny` (a
+    detonação no fim do voo, no ar, também rebate); Contido: `holdable`, `radiusMul` 1,4 só na detonação segurada e
+    na parede/chefe do orbe segurado; Máximo: `field`, `pct` em toda detonação; Fliperama: `pct` só na 3ª).
+  - `shouldRebound(plan, n, site): boolean` (no código, T16): a detonação `n` (1 na 1ª, seja no inimigo, na parede,
+    no chão ou no chefe) rebate se `n ≤ maxRebounds` e o `site` é contato, ou é `'end'` com `reboundAny`; a parede
+    conta como rebote (edge case).
   - `detonationMul(n): number` (1 na 1ª, 0,7 depois; VRM-12.4) e `speedAfter(n, base): number` (×1,15 por
     detonação no Fliperama; VRM-13).
-  - `pickRebound(point, candidates, hitByLast, playerX, reachPx = 200, maxFromPlayerPx = 320): { targetId; dir } |
-    { targetId: null; dir }` (o mais perto a ≤ 200 px do ponto, fora dos atingidos nessa detonação, a ≤ 320 px do
-    player; sem alvo, direção horizontal oposta; VRM-09, VRM-12.3/5). Escolhe pelo `nearestTarget` do `techKit`, com o
-    `skip` juntando os atingidos e os além de 320 px do player.
-  - `shardTargets(passed, others, count, reachPx = 60, alreadyHit: Set<number>): number[]` (o mais perto primeiro,
-    cada um uma vez por conjuração; VRM-08): `count` chamadas ao `nearestTarget`, cada escolhido entrando no `skip`.
-  - `class RedField` (`update(dtMs): { ticks: number; ended: boolean }`, raio, centro): tique de 200 ms por 1200 ms
-    (VRM-15); `pushVelocity(center, target, speedPxS): Vec2`.
-  - `class ContidoHold` (`update(dtMs, held): 'fly' | 'hover' | 'detonate'`): pairar no fim dos 320 px, detonar ao
-    soltar ou aos 1200 ms desde a saída (VRM-14).
+  - `pickRebound(point, dir, candidates, hitByLast, playerX, reachPx = 200, maxFromPlayerPx = 320): { targetId:
+    number | null; dir: 1 | -1 }` (o comum mais perto a ≤ 200 px do ponto, fora dos atingidos nessa detonação, a ≤
+    320 px do player na horizontal; o chefe nunca é destino; sem alvo, a direção horizontal oposta ao `dir` do voo;
+    VRM-09, VRM-12.3/5). Escolhe pelo `nearestTarget` do `techKit`, com o `skip` juntando os atingidos, o chefe e os
+    além de 320 px do player. No código (T16) o `dir` do voo entra como 2º parâmetro: sem ele não há "oposto".
+  - `shardTargets(passed, others, count, alreadyHit: Set<number>, reachPx = 60): number[]` (o mais perto primeiro,
+    cada um uma vez por conjuração; VRM-08): `count` chamadas ao `nearestTarget`, cada escolhido entrando no `skip` e
+    no `alreadyHit` (o registro da conjuração); o atravessado e o chefe ficam fora. No código o `reachPx` com padrão
+    vem por último.
+  - `class RedField(center, radius, durationMs = 1200, tickMs = 200)` (`update(dtMs): { ticks: number; ended:
+    boolean }`, `covers(box)`): tique a cada 200 ms, o último no fim, 6 em 1200 ms (VRM-15); `pushVelocity(center,
+    target, speedPxS = 150): Vec2`.
+  - `class ContidoHold(armed, speed, rangePx, holdMs = 1200)` (`update(dtMs, held): 'fly' | 'hover' |
+    'detonate'`): com `armed` (tecla segurada na saída), pairar no fim dos 320 px, detonar ao soltar ou aos 1200 ms
+    desde a saída (VRM-14); sem `armed`, sempre `'fly'` (o orbe sem ramo).
 - **Dependencies**: `data/techAxes.ts`, `core/hit.ts` (`normalize`, `Vec2`), `core/techKit.ts` (`nearestTarget`,
-  `dist`, `Box`).
+  `boxInRadius`), `core/axisRule.ts` (`Box`, `boxCenter`, `BodyKind`).
 
 ### `core/redOrb.ts` (muda, 113 → ~125 linhas)
 
