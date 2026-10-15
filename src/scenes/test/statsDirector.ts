@@ -65,12 +65,12 @@ export class StatsDirector {
 
   /**
    * Run nova: chamado depois de modificadores, build, arsenal e votos já zerados, para a folha sair da run nova.
-   * POW-13.2: `?debug&mods=` sobe cada modificador da loja nível a nível pelo `apply`, que para no teto; `vida:N`
-   * sobe a vida máxima no `sync` sem curar.
+   * POW-13.2: `?debug&mods=` sobe cada modificador da loja nível a nível pelo `apply`, e o laço para no primeiro
+   * `false` (o teto): `forca:999999999999` não trava a página. `vida:N` sobe a vida máxima no `sync` sem curar.
    */
   reset(): void {
     for (const [id, levels] of parseModsParam(debugParam('mods'))) {
-      for (let i = 0; i < levels; i++) this.s.modifiers.apply(id);
+      for (let i = 0; i < levels && this.s.modifiers.apply(id); i++);
     }
     this.sync();
     this.power = powerLook(this.points());

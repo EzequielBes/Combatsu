@@ -50,10 +50,11 @@ async function invalidAndCapped(kit, assert) {
     `POW-13.3: entradas inválidas deveriam ser ignoradas: ${JSON.stringify(s.modifiers)} ${JSON.stringify(s.power)}`,
   );
 
-  s = await runWith(kit, 'mods=forca:9');
+  // Nível enorme: o laço para no teto em vez de chamar o `apply` bilhões de vezes (a página travaria).
+  s = await runWith(kit, 'mods=forca:999999999999');
   assert(
     s.modifiers.forca === 5 && s.power.points === 5,
-    `POW-13.2: forca:9 deveria parar no nível 5: ${JSON.stringify(s.modifiers)} ${JSON.stringify(s.power)}`,
+    `POW-13.2: forca:999999999999 deveria parar no nível 5: ${JSON.stringify(s.modifiers)} ${JSON.stringify(s.power)}`,
   );
 
   // README: `vida:N` sobe o teto no `sync` sem curar.
