@@ -1,4 +1,5 @@
 import type { Hit } from './hit';
+import { bandPoiseDamage } from './hitBand';
 import { BOSS } from '../data/tuning';
 
 export type BossBrainState = 'intro' | 'active' | 'roar' | 'stagger' | 'dead';
@@ -13,6 +14,8 @@ export interface BossBrainTuning {
   staggerDamageMult: number;
   /** `hpFraction`: fração do HP máximo que o finalizador tira (BFX-06). */
   finisher: { hpFraction: number };
+  /** Fração do dano que um acerto `chip` tira da postura (POW-03.6). */
+  chipPoiseMul: number;
 }
 
 /** O que causou o `stagger`: postura zerada (restaura a postura ao sair) ou parede (não mexe nela, BFX-02). */
@@ -85,13 +88,14 @@ export class BossBrain {
 
   /**
    * Aplica um golpe (BOSS-08, BAI-01, BAI-04..10, BAI-12): ignorado por completo na intro e no rugido. Fora
-   * disso, tira hp e postura (leve = dano, forte = 2×dano, nunca abaixo de 0); morte tem prioridade sobre
+   * disso, tira hp e postura (leve = dano, forte = 2×dano, chip = dano × `chipPoiseMul`, nunca abaixo de 0); morte tem prioridade sobre
    * qualquer troca de fase ou postura (um único `died`); cruzar um limiar de fase entra em `roar` (mesmo vindo
    * de `stagger`); a postura cruzando de > 0 para <= 0 entra em `stagger`.
    */
   receiveHit(hit: Hit): BossEvent[] {
     if (this._state === 'dead' || this._state === 'intro' || this._state === 'roar') return [];
-    const poiseDamage = hit.strength === 'heavy' ? hit.damage * 2 : hit.damage;
+    // POW-03.6: o chip tira só `dano × chipPoiseMul` da postura; micro e normal seguem leve = dano, forte = 2×.
+    const poiseDamage = bandPoiseDamage(hit, this.t.chipPoiseMul);
     // BFX-05: durante o `stagger` o golpe causa `round(dano × staggerDamageMult)`.
     const damage = this._state === 'stagger' ? Math.round(hit.damage * this.t.staggerDamageMult) : hit.damage;
     return this.applyDamage(damage, poiseDamage);

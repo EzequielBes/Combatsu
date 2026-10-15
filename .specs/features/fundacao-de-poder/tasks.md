@@ -219,9 +219,9 @@ da morte, devolve `[{type: 'chip', hit}]` para acerto com banda, sem mudar estad
 
 **Done when**:
 
-- [ ] `tests/core/bossBrainChip.test.ts` (arquivo novo; `bossBrain.test.ts` está na lista de exceções): chip = dano ×
+- [x] `tests/core/bossBrainChip.test.ts` (arquivo novo; `bossBrain.test.ts` está na lista de exceções): chip = dano ×
       0,5; micro leve = dano; micro forte = 2 × dano; sem banda igual a hoje (POW-03.6)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick

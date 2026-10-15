@@ -344,6 +344,8 @@ export const BOSS = {
   staggerDamageMult: 1.5,
   /** Finalizador (J+K) no `stagger`: fração do HP máximo e alcance até o centro do chefe (BFX-06). */
   finisher: { hpFraction: 0.12, rangePx: 48 },
+  /** Fração do dano que um acerto `chip` (tique de técnica) tira da postura (POW-03.6). */
+  chipPoiseMul: 0.5,
   poise: {
     max: 100,
     /** Por segundo, depois de `regenDelayMs` sem apanhar (BAI-09). */
