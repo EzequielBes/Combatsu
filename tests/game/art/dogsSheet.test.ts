@@ -28,9 +28,9 @@ const cells = (name: string): { x: number; y: number; key: string }[] => {
 const RUN = ['run-0', 'run-1', 'run-2', 'run-3'];
 
 describe('folha HD dos Cães Divinos (DOG-06)', () => {
-  it('tem os 6 quadros de 24x16 (4 de corrida, a mordida e o sumir), com textura própria', () => {
-    expect(sheet.frameW).toBe(24);
-    expect(sheet.frameH).toBe(16);
+  it('tem os 6 quadros de 32x22 (4 de corrida, a mordida e o sumir), com textura própria', () => {
+    expect(sheet.frameW).toBe(32);
+    expect(sheet.frameH).toBe(22);
     expect(Object.keys(sheet.frames)).toEqual([...DOG_FRAMES]);
     expect(DOG_FRAMES).toEqual([...RUN, 'bite', 'vanish']);
     for (const name of DOG_FRAMES) expect(sheet.frames[name], name).toHaveLength(W * H);
@@ -55,18 +55,41 @@ describe('folha HD dos Cães Divinos (DOG-06)', () => {
     }
   });
 
-  it('a corrida só tem o preto, a borda roxa v e o olho W; os dentes w só na mordida', () => {
-    for (const name of RUN) expect(new Set(cells(name).map((c) => c.key)), name).toEqual(new Set(['b', 'v', 'W']));
+  it('a corrida só tem o preto, a borda u, as patas de lá v e o olho W; a boca r e os dentes w só na mordida', () => {
+    for (const name of RUN) expect(new Set(cells(name).map((c) => c.key)), name).toEqual(new Set(['b', 'u', 'v', 'W']));
     expect(count('bite', 'w'), 'dentes').toBeGreaterThan(0);
+    expect(count('bite', 'r'), 'boca').toBeGreaterThan(0);
   });
 
-  it('olha para a direita (o jogo espelha): o olho fica na metade da frente, na cabeça', () => {
-    for (const name of DOG_FRAMES) {
+  it('a borda u fica só em cima (lombo, cabeça, orelha, cauda): nenhum u da linha do peito para baixo', () => {
+    for (const name of [...RUN, 'bite']) {
+      const rim = cells(name).filter((c) => c.key === 'u');
+      expect(rim.length, name).toBeGreaterThan(15);
+      for (const c of rim) expect(c.y, `${name} (${c.x}, ${c.y})`).toBeLessThan(13);
+    }
+  });
+
+  it('olha para a direita (o jogo espelha): o olho fica na metade da frente, na cabeça, e o focinho passa dele', () => {
+    for (const name of [...RUN, 'bite']) {
       const eye = cells(name).filter((c) => c.key === 'W');
       for (const c of eye) {
         expect(c.x, name).toBeGreaterThanOrEqual(W / 2 + 4);
-        expect(c.y, name).toBeLessThan(H / 2 + 2);
+        expect(c.y, name).toBeLessThan(H / 2);
       }
+      const front = Math.max(
+        ...cells(name)
+          .filter((c) => c.y < 12)
+          .map((c) => c.x),
+      );
+      expect(front - Math.max(...eye.map((c) => c.x)), `${name}: focinho depois do olho`).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('tem porte de lobo: a cabeça chega perto do topo e nada sai pela borda de cima', () => {
+    for (const name of [...RUN, 'bite']) {
+      const top = Math.min(...cells(name).map((c) => c.y));
+      expect(top, name).toBeGreaterThanOrEqual(1);
+      expect(top, name).toBeLessThanOrEqual(3);
     }
   });
 
@@ -83,14 +106,20 @@ describe('folha HD dos Cães Divinos (DOG-06)', () => {
         expect(sheet.frames[frames[i]], `${frames[i]} vs ${frames[j]}`).not.toEqual(sheet.frames[frames[j]]);
   });
 
-  it('ao sumir, o corpo afunda: o topo do preto fica bem mais baixo que na corrida', () => {
+  it('ao sumir, o corpo vira uma poça rasa no chão; acima dela só a orelha, o olho e os fiapos', () => {
     const top = (name: string): number =>
       Math.min(
         ...cells(name)
           .filter((c) => c.key === 'b')
           .map((c) => c.y),
       );
-    for (const name of RUN) expect(top('vanish'), name).toBeGreaterThan(top(name) + 3);
+    for (const name of RUN) expect(top('vanish'), name).toBeGreaterThan(top(name) + 10);
+    const pool = cells('vanish').filter((c) => c.y >= H - 3);
+    const width = Math.max(...pool.map((c) => c.x)) - Math.min(...pool.map((c) => c.x)) + 1;
+    expect(width).toBeGreaterThanOrEqual(18);
+    expect(width).toBeLessThanOrEqual(23);
+    expect(cells('vanish').filter((c) => c.y < H - 3).length).toBeLessThan(20);
+    expect(count('vanish', 'W')).toBe(2);
   });
 
   it('a folha é calculada uma vez', () => {

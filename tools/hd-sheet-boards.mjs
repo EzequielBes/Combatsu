@@ -9,6 +9,8 @@
 //   <name>-tela.png     como aparece na tela (câmera com zoom 2: 1 texel = 2 px): com --seq, uma fila de 5 em fases
 //                       diferentes para cada lado e a escala 1,5; sem --seq, os quadros; sobre o céu e sobre a pedra.
 // --bg <rrggbb> troca o fundo das células (arte escura sobre o chão claro).
+// --ruler <texels> põe na prancha de tela uma régua da altura do player (60 para o protagonista) em âmbar, de pé na
+// mesma linha do chão, para conferir a escala da folha ao lado dele.
 // Cada pedaço de --sheet é `<arquivo .ts>:<função que devolve a folha>`.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -157,7 +159,7 @@ function cycle(file, seq) {
 
 /** Na tela: 2 px por texel (3 para a escala 1,5), uma faixa sobre o céu e outra sobre a pedra. */
 function onScreen(file, seq) {
-  const band = FH * 3 + 2 * PAD;
+  const band = Math.max(FH * 3, Number(flag('ruler') ?? 0) * 2) + 2 * PAD;
   const items = seq
     ? [
         ...[0, 1, 2, 3, 0].map((f, i) => ({ key: seq[(f + i) % seq.length], x: i * (FW * 2 - 14), s: 2 })),
@@ -171,7 +173,9 @@ function onScreen(file, seq) {
         { key: seq[2], x: FW * 2 * 12 + FW * 3 + PAD, s: 3, flip: true },
       ]
     : names.map((key, i) => ({ key, x: i * (FW * 2 + PAD), s: 2 }));
-  const w = Math.max(...items.map((it) => it.x + FW * it.s)) + 2 * PAD;
+  const ruler = Number(flag('ruler') ?? 0);
+  const rx = Math.max(...items.map((it) => it.x + FW * it.s)) + PAD;
+  const w = rx + (ruler ? 6 + PAD : 0) + 2 * PAD;
   const img = image(w, 3 * band, SKY);
   fill(img, 0, band, w, band, STONE);
   fill(img, 0, 2 * band, w, band, WALL);
@@ -180,6 +184,7 @@ function onScreen(file, seq) {
       const y0 = b * band + band - PAD - Math.round(FH * it.s);
       blit(img, it.key, PAD + it.x, y0, it.s, { flip: it.flip });
     }
+  for (let b = 0; ruler && b < 3; b++) fill(img, PAD + rx, (b + 1) * band - PAD - ruler * 2, 6, ruler * 2, GHOST);
   savePng(file, img);
 }
 

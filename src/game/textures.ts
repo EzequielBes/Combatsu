@@ -24,7 +24,7 @@ export const TEX = {
   sleeper: 'npc-sleeper',
   /** Estouro desenhado do Kokusen (5 quadros de 88x88, 1 texel = 1 px de mundo); veja `art/hd/atlas/burstSheet`. */
   kokusenBurst: 'fx-kokusen-burst',
-  /** Cães Divinos (6 quadros de 24x16, 1 texel = 1 px de mundo; o lobo é a mesma folha em 1,5); veja `art/hd/fx/dogsSheet`. */
+  /** Cães Divinos (6 quadros de 32x22, 1 texel = 1 px de mundo; o lobo é a mesma folha em 1,5); veja `art/hd/fx/dogsSheet`. */
   dogs: 'fx-dogs',
   /** ドン de mangá do golpe forte no patamar 3 (quadro de 32x20, 1 texel = 1 px); veja `art/hd/onomatopoeia`. */
   onomatopoeia: 'fx-onomatopoeia',
