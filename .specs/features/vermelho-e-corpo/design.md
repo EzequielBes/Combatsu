@@ -207,8 +207,10 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
   `StatsDirector`, F29); campo novo `kokusenScale = { forca: 0, meleeMul: 1, hpMul: 1 }` (também só do `StatsDirector`) e
   `lastSlot: 0 | 1 | null` (gravado em `startCooldown`, lido pelo `EnergyHud`, VRM-20).
 - `levelOf(id)`: Vermelho equipado devolve `axes.level('vermelho')`; os outros, o nível do slot.
-- `slotsView`: o Vermelho aparece com o nível derivado (`level: number`).
-- `equip(slot, id, level)`: o Vermelho grava sempre 1 (o `tech=vermelho:N` não muda o nível; assumption da spec).
+- `slotsView`: o Vermelho aparece com o nível derivado (`level: number`, tipo `LoadoutSlotView`; cópia, não o slot interno).
+- `equip(slot, id, level)`: o Vermelho grava sempre 1 no slot (o `tech=vermelho:N` não muda o nível; assumption da spec).
+  Até a T23 vale a ponte da T14: o `level` do Vermelho vira `level − 1` pontos no eixo-foco; equipar outra técnica por
+  cima do Vermelho também chama `axes.resetItem('vermelho')`.
 - `upgrade(id)`: no Vermelho, `axes.add('vermelho', axes.focusAxis('vermelho'))` (VRM-19); nas outras, como hoje.
 - `clear(slot)`: se o slot tinha o Vermelho, `axes.resetItem('vermelho')`.
 - `stats(id): TechStats` (TST-01); `cost(id)` e `damage(id, base)` passam a ler do `stats` (mesmo número no passo 1).

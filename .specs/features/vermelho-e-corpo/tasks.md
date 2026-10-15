@@ -553,7 +553,11 @@ sem ponto) é o que o `redGeometry` devolve sem `red`; o `red` mantém `repulse`
 gravado em `startCooldown`; `reset()` zera
 `axes` e `lastSlot`. Ponte temporária do debug: `equip(slot, 'vermelho', N)` vira `N − 1` pontos no eixo-foco até a
 T23, para o smoke `evolution` (`tech=azul:3,vermelho:3`) seguir verde. Ajusta os tipos de `level` em
-`scenes/test/snapshot.ts:235-242` e `game/debugApi.ts:383-384`.
+`scenes/test/snapshot.ts:235-242` e `game/debugApi.ts:383-384`. Como ficou: o `slotsView` devolve cópias
+(`LoadoutSlotView`, `level: number`); equipar outra técnica por cima do Vermelho também zera os pontos; o
+`techAxes.test.ts` e o `redOrb.test.ts` leem a ponte (Nv N = N − 1 pontos de Potência); e, para o typecheck, as
+assinaturas de `mastery.threshold`/`registerHit` já passam a `level: number` aqui (com `null` do Nv 3 em diante, o
+mesmo número de hoje no Nv 1 a 3), o que deixa para a T15 só os testes.
 **Where**: `src/core/loadout.ts`
 **Depends on**: T13
 **Reuses**: `AxisBuild`
@@ -561,13 +565,13 @@ T23, para o smoke `evolution` (`tech=azul:3,vermelho:3`) seguir verde. Ajusta os
 
 **Done when**:
 
-- [ ] `tests/core/loadoutAxes.test.ts`: `levelOf` 1 a 6; `upgrade` no eixo-foco e nada com 5 pontos (VRM-19);
+- [x] `tests/core/loadoutAxes.test.ts`: `levelOf` 1 a 6; `upgrade` no eixo-foco e nada com 5 pontos (VRM-19);
       `clear` na evolução zera os pontos; `refundCooldown(slot, 690)` com 2300 de recarga restante tira 690 ms e com
       500 restantes para em 0 (VRM-07);
       `reset`
-- [ ] `tests/core/bossReward.test.ts` (Vermelho Nv 2 recebe ponto) verde
-- [ ] Smokes `evolution`, `tech` e `hud` verdes
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/bossReward.test.ts` (Vermelho Nv 2 recebe ponto) verde
+- [x] Smokes `evolution`, `tech` e `hud` verdes (e o `record-end`, que também usa `tech=vermelho:3`)
+- [x] Gate verde; contagem sem perda (3937 + 23 = 3960)
 
 **Tests**: unit + smoke
 **Gate**: full
@@ -578,7 +582,8 @@ T23, para o smoke `evolution` (`tech=azul:3,vermelho:3`) seguir verde. Ajusta os
 #### T15: Maestria só acumula no Nv 1 e no Nv 2
 
 **What**: `mastery.threshold(level: number)` devolve `null` a partir do Nv 3 e `registerHit(slot, level: number, ...)`
-aceita o nível derivado que o `runDirector.ts:216` passa (`mastery.ts:21-23`, `:32`).
+aceita o nível derivado que o `runDirector.ts:216` passa (`mastery.ts:21-23`, `:32`). As assinaturas entraram na
+T14 (o typecheck pedia); a T15 fica com os testes.
 **Where**: `src/core/mastery.ts`
 **Depends on**: None
 **Reuses**: limiares de hoje

@@ -17,9 +17,12 @@ export class Mastery {
     return this.pts[slot];
   }
 
-  /** Pontos necessários para sair do `level`; `null` no Nv3, que não acumula (MST-05). */
-  threshold(level: 1 | 2 | 3): number | null {
-    return level === 3 ? null : this.t.thresholds[level];
+  /**
+   * Pontos necessários para sair do `level`; `null` do Nv3 em diante, que não acumula (MST-05; VRM-19: o Vermelho, cujo
+   * nível vai a 6, só acumula no Nv 1 e no Nv 2).
+   */
+  threshold(level: number): number | null {
+    return level >= 3 ? null : this.t.thresholds[level as 1 | 2];
   }
 
   /**
@@ -29,7 +32,7 @@ export class Mastery {
    */
   registerHit(
     slot: MasterySlot,
-    level: 1 | 2 | 3,
+    level: number,
     castId: number,
     targetId: number | string,
     isBoss: boolean,

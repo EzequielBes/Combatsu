@@ -1,4 +1,5 @@
 import { TECHNIQUES, type TechId } from '../data/techniques';
+import { AxisBuild } from './axisBuild';
 import { levelFactor, resolveTechStats, scaleDamage, type TechStats } from './techStats';
 
 export type TechLevel = 1 | 2 | 3;
@@ -6,6 +7,12 @@ export type TechLevel = 1 | 2 | 3;
 interface LoadoutSlot {
   id: TechId;
   level: TechLevel;
+}
+
+/** Slot como os leitores veem: o Vermelho com o nível derivado dos eixos (1 a 6, VRM-02); as outras, 1 a 3. */
+export interface LoadoutSlotView {
+  id: TechId;
+  level: number;
 }
 
 /**
@@ -29,6 +36,10 @@ export function parseDebugTech(raw: string): { id: TechId; level: TechLevel }[] 
 export class Loadout {
   private slots: [LoadoutSlot | null, LoadoutSlot | null] = [null, null];
   private cooldowns: [number, number] = [0, 0];
+  /** VRM-02: pontos de eixo do Vermelho (e do Corpo, no passo 3); o nível do Vermelho sai daqui. */
+  readonly axes = new AxisBuild();
+  /** VRM-20: último slot que conjurou (gravado em `startCooldown`); `null` antes da 1ª conjuração. */
+  lastSlot: 0 | 1 | null = null;
   /** ARS-06: multiplicador de dano de toda técnica (a relíquia Rosário); 1 sem ela. */
   damageMul = 1;
   /** VOW-10/12/16/17: multiplicador de dano de técnica dos votos, por cima da relíquia; 1 sem voto. */
@@ -36,14 +47,13 @@ export class Loadout {
   /** VOW-13: multiplicador do custo de energia (Fluxo selado); 1 sem voto. */
   costMul = 1;
 
-  get slotsView(): readonly [LoadoutSlot | null, LoadoutSlot | null] {
-    return [this.slots[0], this.slots[1]];
+  get slotsView(): readonly [LoadoutSlotView | null, LoadoutSlotView | null] {
+    return [this.view(this.slots[0]), this.view(this.slots[1])];
   }
 
-  /** Nível atual de `id`, 0 se não equipada (base para TEC-06, TEC-14, TSH-16). */
+  /** Nível atual de `id`, 0 se não equipada (base para TEC-06, TEC-14, TSH-16); o Vermelho, pelos eixos (VRM-02). */
   levelOf(id: TechId): number {
-    const found = this.slots[0]?.id === id ? this.slots[0] : this.slots[1]?.id === id ? this.slots[1] : null;
-    return found ? found.level : 0;
+    return this.view(this.slotOf(id))?.level ?? 0;
   }
 
   /** Primeiro slot vazio (slot 1 antes do slot 2, TSH-06), `null` se os dois estão ocupados. */
@@ -60,42 +70,56 @@ export class Loadout {
 
   /**
    * Equipa `id` em `slot` no nível `level` (TEC-03). Recusa e não muda nada (TEC-05) se `level` sair de 1–3, e
-   * recusa (TEC-04, TEC-13) se `id` já estiver no outro slot.
+   * recusa (TEC-04, TEC-13) se `id` já estiver no outro slot. O Vermelho grava sempre Nv 1 no slot: o nível dele é o
+   * dos eixos. Ponte da T14 até a T23 (`axes=` no debug): o `level` do Vermelho vira `level − 1` pontos no eixo-foco,
+   * para o `tech=vermelho:3` do smoke `evolution` seguir com o Vermelho no Nv 3.
    */
   equip(slot: 0 | 1, id: TechId, level: TechLevel = 1): boolean {
     if (level < 1 || level > 3) return false;
     const other = slot === 0 ? 1 : 0;
     if (this.slots[other]?.id === id) return false;
-    this.slots[slot] = { id, level };
+    if (this.slots[slot]?.id === 'vermelho') this.axes.resetItem('vermelho');
+    this.slots[slot] = { id, level: id === 'vermelho' ? 1 : level };
+    if (id === 'vermelho') for (let i = 1; i < level; i++) this.upgrade(id);
     return true;
   }
 
-  /** Esvazia `slot` (EVO-03: a segunda técnica da receita sai na fusão), sem recarga pendente. */
+  /**
+   * Esvazia `slot` (EVO-03: a segunda técnica da receita sai na fusão), sem recarga pendente. O Vermelho que sai leva
+   * junto os pontos, o ramo e o Despertar (edge case da evolução).
+   */
   clear(slot: 0 | 1): void {
+    if (this.slots[slot]?.id === 'vermelho') this.axes.resetItem('vermelho');
     this.slots[slot] = null;
     this.cooldowns[slot] = 0;
   }
 
-  /** Sobe 1 nível a técnica `id` já equipada (TSH-07); recusa e não muda nada no nível 3 (TEC-05) ou se não equipada. */
+  /**
+   * Sobe 1 nível a técnica `id` já equipada (TSH-07); recusa e não muda nada no nível 3 (TEC-05) ou se não equipada.
+   * No Vermelho é 1 ponto no eixo-foco (VRM-19: maestria e prêmio do chefe), e nada muda com 5 pontos.
+   */
   upgrade(id: TechId): boolean {
-    const slot = this.slots[0]?.id === id ? 0 : this.slots[1]?.id === id ? 1 : null;
-    if (slot === null) return false;
-    const current = this.slots[slot]!;
+    const current = this.slotOf(id);
+    if (!current) return false;
+    if (id === 'vermelho') {
+      const axis = this.axes.focusAxis('vermelho');
+      return axis !== null && this.axes.add('vermelho', axis).ok;
+    }
     if (current.level >= 3) return false;
-    this.slots[slot] = { id, level: (current.level + 1) as TechLevel };
+    current.level = (current.level + 1) as TechLevel;
     return true;
   }
 
   /**
    * O `TechStats` de `id` no nível atual com os multiplicadores deste `Loadout` (TST-01); não equipada trata como
-   * nível 1 (TEC-14). O Vermelho sai dos eixos e ignora o nível do slot (VRM-03); até a T14 ligar os pontos do
-   * `Loadout`, ele resolve sem ponto nenhum (VRM-01). Resolvido a cada chamada: os multiplicadores mudam por quadro
-   * no `StatsDirector`.
+   * nível 1 (TEC-14). O Vermelho sai dos pontos de `axes` e ignora o nível do slot (VRM-03). Resolvido a cada
+   * chamada: os multiplicadores mudam por quadro no `StatsDirector`.
    */
   stats(id: TechId): TechStats {
     return resolveTechStats({
       id,
-      level: (this.levelOf(id) || 1) as TechLevel,
+      level: this.slotOf(id)?.level ?? 1,
+      axes: this.axes,
       damageMul: this.damageMul,
       vowDamageMul: this.vowDamageMul,
       costMul: this.costMul,
@@ -120,11 +144,17 @@ export class Loadout {
     return this.cooldowns[slot];
   }
 
-  /** Arma a recarga do slot com o cooldown completo da técnica equipada (CAST-04). */
+  /** Arma a recarga do slot com o cooldown completo da técnica (CAST-04) e o marca como o último usado (VRM-20). */
   startCooldown(slot: 0 | 1): void {
     const s = this.slots[slot];
     if (!s) return;
     this.cooldowns[slot] = this.stats(s.id).cooldownMs;
+    this.lastSlot = slot;
+  }
+
+  /** VRM-07: corta `ms` da recarga que resta no slot (o reembolso do abate), sem passar de 0. */
+  refundCooldown(slot: 0 | 1, ms: number): void {
+    this.cooldowns[slot] = Math.max(0, this.cooldowns[slot] - ms);
   }
 
   /** Zera a recarga do slot na hora (FXL-09: o laboratório de efeitos nunca deixa recarga pendente). */
@@ -138,12 +168,23 @@ export class Loadout {
     this.cooldowns[1] = Math.max(0, this.cooldowns[1] - dtMs);
   }
 
-  /** Nova run ou `?tech=` (TEC-01): os dois slots voltam a vazios, sem recarga pendente. */
+  /** Nova run ou `?tech=` (TEC-01): os dois slots voltam a vazios, sem recarga pendente nem ponto de eixo. */
   reset(): void {
     this.slots = [null, null];
     this.cooldowns = [0, 0];
+    this.axes.reset();
+    this.lastSlot = null;
     this.damageMul = 1;
     this.vowDamageMul = 1;
     this.costMul = 1;
+  }
+
+  private slotOf(id: TechId): LoadoutSlot | null {
+    return this.slots[0]?.id === id ? this.slots[0] : this.slots[1]?.id === id ? this.slots[1] : null;
+  }
+
+  private view(slot: LoadoutSlot | null): LoadoutSlotView | null {
+    if (!slot) return null;
+    return { id: slot.id, level: slot.id === 'vermelho' ? this.axes.level('vermelho') : slot.level };
   }
 }

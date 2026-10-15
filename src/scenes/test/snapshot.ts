@@ -233,7 +233,7 @@ export class DebugSnapshot {
   /** `tech` do snapshot (TEC-08): slots do loadout e a conjuração ativa (CAST-*). */
   techSnapshot(): GameSnapshot['tech'] {
     const [s0, s1] = this.s.loadout.slotsView;
-    const slotView = (slot: 0 | 1, s: { id: TechId; level: 1 | 2 | 3 } | null) =>
+    const slotView = (slot: 0 | 1, s: { id: TechId; level: number } | null) =>
       s
         ? {
             id: s.id,

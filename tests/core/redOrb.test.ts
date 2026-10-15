@@ -8,8 +8,10 @@ import {
   repulseTargets,
   repulseTargetsFor,
 } from '../../src/core/redOrb';
+import { axisAt } from '../../src/core/axisRule';
 import { Loadout } from '../../src/core/loadout';
 import { RED_BASE, resolveTechStats } from '../../src/core/techStats';
+import { RED_AXES } from '../../src/data/techAxes';
 import { TECHNIQUES } from '../../src/data/techniques';
 
 /** O orbe do Vermelho Nv 1 sem multiplicadores, como o adaptador o constrói na soltura (TST-02). */
@@ -257,14 +259,14 @@ describe('TST-02: o orbe lê voo, raio e danos do RedOrbConfig tirado do TechSta
     expect(RED_LV1).toEqual({ speed: 760, rangePx: 320, radius: 96, touch: 30, detonation: 25 });
   });
 
-  it('o dano já vem escalado como o Loadout.damage de hoje (Nv 3, Rosário 1,35 e voto 1,35)', () => {
+  it('o dano já vem escalado como o Loadout.damage (Nv 3 = Potência 2 na ponte da T14, Rosário 1,35 e voto 1,35)', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'vermelho', 3);
     loadout.damageMul = 1.35;
     loadout.vowDamageMul = 1.35;
     const config = redOrbConfig(loadout.stats('vermelho'));
-    expect(config.touch).toBe(loadout.damage('vermelho', TECHNIQUES.vermelho.damage.hit));
-    expect(config.detonation).toBe(loadout.damage('vermelho', TECHNIQUES.vermelho.damage.detonation));
+    expect(config.touch).toBe(loadout.damage('vermelho', axisAt(RED_AXES.potencia.touch, 2)));
+    expect(config.detonation).toBe(loadout.damage('vermelho', axisAt(RED_AXES.potencia.detonation, 2)));
     expect(config.touch).toBeGreaterThan(30);
   });
 

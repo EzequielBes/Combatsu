@@ -377,11 +377,11 @@ export interface GameSnapshot {
   }[];
   /** Energia amaldiçoada do player (CE-01..09, TEC-08), lida do estado vivo. */
   ce: { cur: number; max: number; regen: number };
-  /** Loadout de técnicas e a conjuração ativa (TEC-01..06/08, CAST-*), contrato exato da spec. */
+  /** Loadout de técnicas e a conjuração ativa (TEC-01..06/08, CAST-*), contrato exato da spec; o Vermelho com o nível dos eixos (1 a 6, VRM-02). */
   tech: {
     slots: [
-      { id: TechId; level: 1 | 2 | 3; cooldownMs: number; mastery: TechMasteryView } | null,
-      { id: TechId; level: 1 | 2 | 3; cooldownMs: number; mastery: TechMasteryView } | null,
+      { id: TechId; level: number; cooldownMs: number; mastery: TechMasteryView } | null,
+      { id: TechId; level: number; cooldownMs: number; mastery: TechMasteryView } | null,
     ];
     cast: { slot: 0 | 1; id: TechId; state: CastState; elapsedMs: number } | null;
   };
