@@ -743,9 +743,9 @@ lado avisado; `strikeOn` abre um `AttackHitbox` (dono = chefe, `high`, dano `spe
 
 **Done when**:
 
-- [ ] Smoke novo `boss-sangue.smoke.mjs` (`round=10&bossAffix=sangue`): `attack === 'beam'` logo depois do 1º ataque;
+- [x] Smoke novo `boss-sangue.smoke.mjs` (`round=10&bossAffix=sangue`): `attack === 'beam'` logo depois do 1º ataque;
       aviso de ~800 ms; dano `round(16 × mult)` em pé; abaixado não leva
-- [ ] `npm run smoke -- boss-sangue` verde; gate verde
+- [x] `npm run smoke -- boss-sangue` verde; gate verde
 
 **Tests**: smoke
 **Gate**: full

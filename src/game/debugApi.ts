@@ -4,6 +4,7 @@ import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { BossAffixId } from '../data/bossAffixes';
 import type { AffixOutlineView } from './boss/AffixOutline';
+import type { BeamView } from './boss/BeamAttack';
 import type { BossFxEvent } from './boss/BossAffixFx';
 import type { LavaView } from './boss/LavaField';
 import type { ThreadRainView } from './boss/ThreadRain';
@@ -148,6 +149,8 @@ export interface GameSnapshot {
     threads: ThreadRainView | null;
     /** Lava do Ígneo: faixas vivas, tiques do relógio, tiques aceitos pelo player e dano de cada um (IGN-01..05). */
     lava: LavaView | null;
+    /** Feixe do Sangue: momento, lado, trecho, espessura, aviso decorrido, dano e acertos aceitos (SNG-02/03). */
+    beam: BeamView | null;
     /** Contorno do afixo: cor atual, quadro das cópias e o do chefe; `null` sem Ígneo nem Invocador (BRD-03). */
     outline: AffixOutlineView | null;
   } | null;

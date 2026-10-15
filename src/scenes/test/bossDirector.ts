@@ -14,6 +14,7 @@ import type { Hit, Vec2 } from '../../core/hit';
 import { isBossRound } from '../../core/waves';
 import type { Boss } from '../../game/Boss';
 import { AffixOutline } from '../../game/boss/AffixOutline';
+import { BeamAttack } from '../../game/boss/BeamAttack';
 import { BossAffixFx } from '../../game/boss/BossAffixFx';
 import { BossReadout } from '../../game/boss/BossReadout';
 import { LavaField } from '../../game/boss/LavaField';
@@ -65,7 +66,8 @@ export class BossDirector {
   /**
    * Chefe recém-criado com a especificação `spec`: os eventos de vista dele (rastro, aviso, abertura e fechamento) vão
    * para um `BossAffixFx`, com a Chuva de Fios presa aos limites do nível e o dano de projétil do tier (CYC-09/10) e,
-   * só com Ígneo, a lava com o dano de lava do tier (IGN-01..04); com Ígneo ou Invocador, o contorno (BRD-03).
+   * só com Ígneo, a lava com o dano de lava do tier (IGN-01..04); só com Sangue, o feixe com o dano de feixe do tier
+   * (SNG-02/03); com Ígneo ou Invocador, o contorno (BRD-03).
    */
   attach(boss: Boss, spec: BossSpec): void {
     this.fx?.destroy();
@@ -74,7 +76,8 @@ export class BossDirector {
     const onConnect = (hit: Hit, point: Vec2): void => this.s.combat.onConnect(hit, point, hit.strength);
     const threads = new ThreadRain(this.s, boss.id, spec.damage.projectile, this.s.level.widthPx, onConnect);
     const lava = spec.affixes.includes('igneo') ? new LavaField(this.s, boss.id, spec.damage.lava) : null;
-    this.fx = new BossAffixFx(threads, lava);
+    const beam = spec.affixes.includes('sangue') ? new BeamAttack(this.s, boss.id, spec.damage.beam, onConnect) : null;
+    this.fx = new BossAffixFx(threads, lava, beam);
     boss.fxSink = this.fx.route;
   }
 
@@ -84,7 +87,7 @@ export class BossDirector {
     this.outline?.update(dtMs);
   }
 
-  /** Chefe derrotado: fios, marcas, lava e contorno somem na hora (a IA dele não manda mais o fechamento). */
+  /** Chefe derrotado: fios, marcas, lava, feixe e contorno somem na hora (a IA dele não manda mais o fechamento). */
   onBossDied(): void {
     this.fx?.clear();
     this.outline?.destroy();
@@ -92,19 +95,21 @@ export class BossDirector {
   }
 
   /**
-   * Vista do chefe atual para o snapshot de debug: eventos recebidos por tipo, o estado da Chuva de Fios, a lava e o
-   * contorno; vazio e `null` sem chefe ligado.
+   * Vista do chefe atual para o snapshot de debug: eventos recebidos por tipo, o estado da Chuva de Fios, a lava, o
+   * feixe e o contorno; vazio e `null` sem chefe ligado.
    */
   fxView(): {
     fx: ReturnType<BossAffixFx['debug']>;
     threads: ReturnType<BossAffixFx['threadsView']>;
     lava: ReturnType<BossAffixFx['lavaView']>;
+    beam: ReturnType<BossAffixFx['beamView']>;
     outline: ReturnType<AffixOutline['view']>;
   } {
     return {
       fx: this.fx?.debug() ?? {},
       threads: this.fx?.threadsView() ?? null,
       lava: this.fx?.lavaView() ?? null,
+      beam: this.fx?.beamView() ?? null,
       outline: this.outline?.view() ?? null,
     };
   }

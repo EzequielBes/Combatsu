@@ -213,7 +213,10 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   dano), `player.grounded` e `bossLavaStrips` (faixas vivas com ou sem chefe, para a morte dele e a run nova).
 - **`BeamAttack`** — `Graphics` da linha `r` → `R` com `beamThickness`, do chefe até a borda da `worldView` no lado
   avisado; `strikeOn` abre um `AttackHitbox` próprio (dono = chefe) com `height: 'high'`, dano `spec.damage.beam`,
-  por 250 ms; `telegraphCancel` apaga sem abrir (SNG-02/03, edge case).
+  por 250 ms; `telegraphCancel` apaga sem abrir (SNG-02/03, edge case). Nasce no `BossDirector.attach` só com Sangue
+  (como a lava, `null` sem o afixo); a espessura e a borda andam no `BossAffixFx.update`; a hitbox vai do X do chefe
+  à borda da vista no quadro da abertura e fecha no `strikeOff` da IA (golpe `heavy`, força 6, para longe do chefe). O
+  snapshot traz `boss.beam` (`phase`, `dir`, `fromX`, `toX`, `y`, `thickness`, `warnElapsedMs`, `damage`, `hits`).
 - **`ThreadRain`** — 5 marcas `u` no chão em `threadXs(playerX, 0, level.widthPx, offsets)`; `strikeOn` troca cada
   marca por um fio `U` vertical com um `AttackHitbox` por fio (um acerto cada); `strikeOff` fecha (CYC-09/10).
 - **`AffixOutline`** — 4 cópias do sprite do chefe (`fxSprite`) com `tintMode FILL` na cor de `outlineKeyAt`,
@@ -309,7 +312,7 @@ Não tocados (F29 ou teto): `core/hit.ts`, `combat.ts`, `effects.ts`, `impactFx.
 | `boss-lineup` | `seed=N&round=4`, depois duas seeds na r5 | aviso na loja (BRD-04/08), r5 igual ao anunciado e barra com o mesmo texto (BRD-01/06), sem aviso na loja da r1 (BRD-05), glifos (BRD-02), `affixes`/`finger` no snapshot (BLN-11), seeds diferentes dão chefes diferentes (goal 1) |
 | `boss-igneo` | `round=10&bossArch=oni&bossAffix=igneo` | faixa depois da investida, tique de `round(4 × mult)` a 600 ms parado nela, pulo sem dano, some em 2 s, contorno `a` (IGN-01..05, BRD-03) |
 | `boss-invocador` | `round=5&bossAffix=invocador` | tecla 2 até o rugido → 2 invocados; `run.kills` igual ao matar um; morte do chefe → 0 invocados com fumaça (INV-01..05) |
-| `boss-sangue` | `round=10&bossAffix=sangue` | `attack === 'beam'` logo depois do 1º ataque, aviso de 800 ms, dano `round(16 × mult)`; abaixado não leva (SNG-01..03) |
+| `boss-sangue` | `round=10&bossArch=oni&bossAffix=sangue&finger=0&regen=0` | `attack === 'beam'` logo depois do 1º ataque, aviso de 800 ms, dano `round(16 × mult)`; abaixado não leva (SNG-01..03) |
 | `boss-adaptativo` | `round=10&bossAffix=adaptativo` | 5 × tecla 2 → `adapted: ['heavy']`, 6º golpe tira a metade, roda visível; finalizador não reduzido (ADP-01..07) |
 | `boss-attacks` | `round=15&bossArch=oni&bossAffix=none`, `bossArch=tecela`, `round=10&finger=1` | Investida Dupla na fase 2, Chuva de Fios com 5 fios, Portador com `spriteScale` 1,25 e vida × 1,3 (CYC-03..10, PDD-03..05; L-043) |
 
