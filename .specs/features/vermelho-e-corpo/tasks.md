@@ -591,8 +591,8 @@ T14 (o typecheck pedia); a T15 fica com os testes.
 
 **Done when**:
 
-- [ ] `tests/core/mastery.test.ts`: `threshold(1)` e `threshold(2)` de hoje; `threshold(3)`, `(4)` e `(6)` = `null`
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/mastery.test.ts`: `threshold(1)` e `threshold(2)` de hoje; `threshold(3)`, `(4)` e `(6)` = `null`
+- [x] Gate verde; contagem sem perda (3960 + 2 = 3962)
 
 **Tests**: unit
 **Gate**: quick

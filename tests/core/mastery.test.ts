@@ -105,6 +105,22 @@ describe('Mastery: Nv3 não acumula (MST-05)', () => {
   });
 });
 
+describe('Mastery: Vermelho do Nv 3 ao 6 não acumula (VRM-19)', () => {
+  it('threshold: os de hoje no Nv 1 e 2; null no Nv 3, 4 e 6', () => {
+    const m = new Mastery();
+    expect([m.threshold(1), m.threshold(2)]).toEqual([MASTERY.thresholds[1], MASTERY.thresholds[2]]);
+    expect([m.threshold(3), m.threshold(4), m.threshold(6)]).toEqual([null, null, null]);
+  });
+
+  it('registerHit no Nv 4 e no Nv 6 não soma pontos nem sobe, nem com chefe', () => {
+    const m = new Mastery();
+    for (const level of [4, 6]) {
+      for (let i = 0; i < 40; i++) expect(m.registerHit(0, level, level, `v${i}`, i === 0).levelUp).toBe(false);
+    }
+    expect(m.points(0)).toBe(0);
+  });
+});
+
 describe('Mastery: independe da rodada (MST-06)', () => {
   it('a API não recebe rodada: 15 pontos sobem de nível no mesmo estado, em qualquer rodada', () => {
     const m = new Mastery();
