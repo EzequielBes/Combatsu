@@ -59,6 +59,12 @@ describe('FAL-03: o cone', () => {
     expect(inCone(ORIGIN, 1, 140, 60, { x: 100, y: 30 })).toBe(true);
     expect(inCone(ORIGIN, 1, 140, 30, { x: 140, y: 0 })).toBe(true);
     expect(inCone(ORIGIN, 1, 140, 30, { x: 141, y: 0 })).toBe(false);
+    // dentro da abertura (≈24,8°) e com dx no alcance, mas a distância (≈143) passa de 140
+    expect(inCone(ORIGIN, 1, 140, 60, { x: 130, y: 60 })).toBe(false);
+  });
+
+  it('o alvo no mesmo ponto do player (dx = 0) fica de fora', () => {
+    expect(inCone(ORIGIN, 1, 140, 60, ORIGIN)).toBe(false);
   });
 
   it('atrás ou na mesma linha vertical fica de fora; olhando para a esquerda, vale à esquerda', () => {
@@ -174,6 +180,15 @@ describe('FAL-08: Esmague (Despertar do "Volte")', () => {
       { targetId: 9, stunMs: 0, damage: 0, knockdown: true, band: 'micro' },
     ]);
     expect(r.cast.onPushedImpact(tgt(1, 60, 0, 'enemy', 200), 'wall')).toBeNull();
+  });
+
+  it('o empurrado que bate no chefe cai; o chefe não cai nem toma o componente', () => {
+    const r = cast(awake, [tgt(1, 60)]);
+    if (!r.ok) throw new Error('recusou');
+    expect(r.cast.onPushedImpact(tgt(1, 60), tgt(9, 90, 0, 'boss', 3000))).toEqual([
+      { targetId: 1, stunMs: 0, damage: 4, knockdown: true, band: 'micro' },
+      { targetId: 9, stunMs: 0, damage: 0, knockdown: false, band: 'micro' },
+    ]);
   });
 
   it('o chefe na parede toma 1% e não cai', () => {

@@ -110,6 +110,14 @@ describe('BOO-07: choque nos dois pontos', () => {
     expect(r.ok && r.shock[1].damage).toBe(20);
   });
 
+  it('o corpo perto dos dois pontos toma um chip só', () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 30, y: 0 },
+    ];
+    expect(shockHits(points, 8, 40, [enemy(1, 15)])).toEqual([{ targetId: 1, damage: 8, band: 'chip' }]);
+  });
+
   it('choque 0 não atinge ninguém; orbe e projétil nunca levam choque', () => {
     expect(shockHits([{ x: 0, y: 0 }], 0, 40, [enemy(1, 0)])).toEqual([]);
     const orb: SwapCandidate = { id: 2, kind: 'orb', center: { x: 0, y: 0 } };
@@ -149,6 +157,7 @@ describe('BOO-09: Dupla Palma', () => {
     expect(b.charges).toBe(0);
     expect(b.canCast()).toBe(true);
     expect(b.swap(ctx([enemy(2, 100)]))).toMatchObject({ ok: true, usedFollowUp: true, cost: 20 });
+    expect(b.charges).toBe(0);
     expect(b.followUpArmed).toBe(false);
     expect(b.swap(ctx([enemy(2, 100)]))).toMatchObject({ ok: false, reason: 'noCharge' });
   });
@@ -284,6 +293,15 @@ describe('TRL-06: abate com Recarga no 3 corta 30% da recarga da carga em curso'
     expect(b.onTechKill()).toBe(360);
     expect(b.charges).toBe(2);
     expect(b.onTechKill()).toBe(0);
+  });
+
+  it('com a carga ainda vazia depois do corte, o 2º abate da mesma troca não corta de novo', () => {
+    const b = new BoogieState(build({ recarga: 3 }));
+    b.swap(ctx([enemy(1, 100)]));
+    expect(b.onTechKill()).toBe(360);
+    expect(b.charges).toBe(0);
+    expect(b.onTechKill()).toBe(0);
+    expect(b.rechargeLeftMs).toBe(840);
   });
 
   it('a próxima troca arma de novo; sem o teto de Recarga não corta', () => {
