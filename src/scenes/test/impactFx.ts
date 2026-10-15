@@ -77,6 +77,17 @@ export class ImpactFx {
   }
 
   /**
+   * Kokusen acertou (T24, POW-06.8): marca o quadro (o impacto do mesmo frame não ganha o filtro, IMP-13), dispara o
+   * cinema e promove o número do acerto ao tipo Kokusen, com o "pop". O `onTechHit` vem antes (`divergent.ts`), então
+   * o número já existe quando a promoção chega.
+   */
+  onKokusen(target: Hittable, point: Vec2, facing: 1 | -1, streak: number): void {
+    this.kokusenFrame = this.s.game.getFrame();
+    this.s.kokusenFx.trigger(target, point, facing, streak);
+    this.s.ui.damageNumbers.promote(target.id, 'kokusen');
+  }
+
+  /**
    * Câmera que reage ao impacto (CAM-01..05, CAM-07): tranco no forte, micro-zoom no decisivo (nunca durante o zoom
    * do finalizador) e câmera lenta na quebra de postura e no Contra; um novo gatilho reinicia sem empilhar (CAM-04).
    */

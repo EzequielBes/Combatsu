@@ -387,10 +387,10 @@ chama `damageNumbers.promote(target.id, 'kokusen')` (pop de 1,6 a 1,0 em 120 ms)
 
 **Done when**:
 
-- [ ] O smoke `kokusen` lê `damageNumbers.last.kind === 'kokusen'` depois do Kokusen (POW-06.8)
-- [ ] `src/scenes/TestScene.ts` com 390 linhas efetivas (POW-02.7)
-- [ ] Smokes `kokusen`, `tech` e `evolution` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] O smoke `kokusen` lê `damageNumbers.last.kind === 'kokusen'` depois do Kokusen (POW-06.8)
+- [x] `src/scenes/TestScene.ts` com 390 linhas efetivas (POW-02.7)
+- [x] Smokes `kokusen`, `tech` e `evolution` verdes
+- [x] Gate verde; contagem de testes sem perda (2998 em 153 arquivos)
 
 **Tests**: smoke
 **Gate**: full

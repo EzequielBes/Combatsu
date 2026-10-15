@@ -323,10 +323,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
         this.effects.hitstop.trigger(ms);
         this.effects.freeze();
       },
-      (target, point, facing, streak) => {
-        this.impactFx.kokusenFrame = this.game.getFrame();
-        this.kokusenFx.trigger(target, point, facing, streak);
-      },
+      (target, point, facing, streak) => this.impactFx.onKokusen(target, point, facing, streak),
       // MST-01/02: acerto de técnica em alvo real vira ponto de maestria.
       (slot, castId, targetId, isBoss) => this.runDirector.onMasteryHit(slot, castId, targetId, isBoss),
       // Sem run começada (laboratório de efeitos), o meio do sorteio: o tempo do Kokusen fica fixo.

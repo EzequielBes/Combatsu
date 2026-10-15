@@ -260,6 +260,11 @@ export default async function ({ page, baseUrl, assert }) {
     `KOK-28: esperava exatamente um kokusen a mais: ${JSON.stringify(landed.events)}`,
   );
   const enemyAfterKokusen = landed.enemies.find((e) => e.id === target2);
+  // POW-06.8: o número do acerto do Kokusen é promovido ao tipo Kokusen.
+  assert(
+    landed.damageNumbers.last && landed.damageNumbers.last.kind === 'kokusen',
+    `POW-06.8: o último número deveria ser do tipo kokusen: ${JSON.stringify(landed.damageNumbers)}`,
+  );
   assert(
     enemyAfterKokusen.hp === before2 - 12 - 45,
     `KOK-06: Kokusen deveria tirar 45 (2,5×18): ${JSON.stringify(enemyAfterKokusen)}`,
