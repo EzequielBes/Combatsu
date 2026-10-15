@@ -151,9 +151,9 @@ o sprite passa a usar uma `spriteScale` (hoje 1) em `animate` (`setScale(facing 
 
 **Done when**:
 
-- [ ] Nenhum uso de `BODY_W`/`BODY_H` fora do construtor
-- [ ] `npm run smoke -- boss` e `npm run smoke -- boss-prop` verdes (iguais a antes)
-- [ ] Gate verde
+- [x] Nenhum uso de `BODY_W`/`BODY_H` fora do construtor
+- [x] `npm run smoke -- boss` e `npm run smoke -- boss-prop` verdes (iguais a antes)
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full

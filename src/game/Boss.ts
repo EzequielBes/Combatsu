@@ -12,7 +12,7 @@ import { AttackHitbox, type OnConnect } from './hitbox';
 import { BodyRenderPos, PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { TEX } from './textures';
 
-/** Corpo físico do chefe (design: 40x56 px). */
+/** Corpo físico do chefe na escala 1 (design: 40x56 px); cada instância guarda a sua medida em `w`/`h` (PDD-03). */
 const BODY_W = 40;
 const BODY_H = 56;
 /** Arco do salto (design: 120 px de altura). */
@@ -51,6 +51,12 @@ export class Boss implements Hittable {
   private leapGroundY = 0;
   private landingHitboxTicks = 0;
   private _removed = false;
+  /** Largura do corpo físico desta instância (px): `BODY_W` hoje; o Portador a escala (PDD-03). */
+  private readonly w: number;
+  /** Altura do corpo físico desta instância (px): `BODY_H` hoje; o Portador a escala (PDD-03). */
+  private readonly h: number;
+  /** Escala do sprite (1 hoje): acompanha o corpo quando o Portador entrar (PDD-03). */
+  private readonly spriteScale: number;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -71,7 +77,10 @@ export class Boss implements Hittable {
   ) {
     this.brain = new BossBrain(spec.maxHp);
     this.ai = new BossAI();
-    this.body = scene.matter.add.rectangle(spawn.x, spawn.y, BODY_W, BODY_H, {
+    this.w = BODY_W;
+    this.h = BODY_H;
+    this.spriteScale = 1;
+    this.body = scene.matter.add.rectangle(spawn.x, spawn.y, this.w, this.h, {
       friction: 0.8,
       frictionAir: 0.02,
       collisionFilter: { ...Filters.boss },
@@ -82,7 +91,7 @@ export class Boss implements Hittable {
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     const textureKey = spec.archetype === 'tecela' ? TEX.bossTecela : TEX.bossOni;
     this.view = scene.add
-      .sprite(spawn.x, spawn.y + BODY_H / 2, textureKey, 'idle')
+      .sprite(spawn.x, spawn.y + this.h / 2, textureKey, 'idle')
       .setOrigin(BOSS_ORIGIN.x, BOSS_ORIGIN.y);
   }
 
@@ -137,7 +146,7 @@ export class Boss implements Hittable {
 
   /** Onde o sprite visível está de fato, convertido para o centro do corpo (ITP-07), para o snapshot de debug. */
   get spritePos(): Vec2 {
-    return { x: this.view.x, y: this.view.y - BODY_H / 2 };
+    return { x: this.view.x, y: this.view.y - this.h / 2 };
   }
 
   /** KOK-16: sprite visual para a silhueta do negativo do Kokusen. */
@@ -153,7 +162,7 @@ export class Boss implements Hittable {
   /** Posição + tamanho do corpo, nunca `body.bounds` (mesma regra de Enemy/Player). */
   hurtRect(): Rect {
     const { x, y } = this.body.position;
-    return { x, y, width: BODY_W, height: BODY_H };
+    return { x, y, width: this.w, height: this.h };
   }
 
   /**
@@ -259,7 +268,7 @@ export class Boss implements Hittable {
       else if (ev.type === 'fire') {
         const { x, y } = this.body.position;
         // Altura de tronco a partir do chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).
-        this.onFire?.(x, this.groundTopBelow(x, y) - BODY_H / 2, ev.dir, ev.speed, this.spec.damage.projectile);
+        this.onFire?.(x, this.groundTopBelow(x, y) - this.h / 2, ev.dir, ev.speed, this.spec.damage.projectile);
       }
     }
   }
@@ -273,7 +282,7 @@ export class Boss implements Hittable {
       force: 6,
       direction: { x: this.facing, y: -0.3 },
     };
-    const shape = { offsetX: BODY_W / 2 + 15, offsetY: 0, width: 30, height: BODY_H };
+    const shape = { offsetX: this.w / 2 + 15, offsetY: 0, width: 30, height: this.h };
     this.attack.open(shape, hit, this.body.position.x, this.body.position.y, this.facing);
   }
 
@@ -307,7 +316,7 @@ export class Boss implements Hittable {
     const { x } = this.body.position;
     // Ancora no topo real do chão no nível da partida ou abaixo dele (a sonda começa nos pés do chefe): nunca pousa
     // numa plataforma acima, mesmo com o player embaixo dela (edge case da spec).
-    const y = this.groundTopBelow(x, this.leapGroundY + BODY_H / 2 - 4) - BODY_H / 2;
+    const y = this.groundTopBelow(x, this.leapGroundY + this.h / 2 - 4) - this.h / 2;
     this.scene.matter.body.setPosition(this.body, { x, y });
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
     // Sem `height` (HGT-12): o pouso cobre o corpo inteiro, então não dá para abaixar nem pular.
@@ -318,7 +327,7 @@ export class Boss implements Hittable {
       force: 6,
       direction: { x: 0, y: -0.6 },
     };
-    const shape = { offsetX: 0, offsetY: 0, width: BODY_W + LANDING_HITBOX_PAD * 2, height: BODY_H };
+    const shape = { offsetX: 0, offsetY: 0, width: this.w + LANDING_HITBOX_PAD * 2, height: this.h };
     this.attack.open(shape, hit, x, y, this.facing);
     this.landingHitboxTicks = 1;
     // Rente ao chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).
@@ -342,8 +351,8 @@ export class Boss implements Hittable {
   /** Terreno a `WALL_PROBE` px à frente do corpo, na direção `dir` (BAT-01). */
   private isBlockedAhead(dir: 1 | -1): boolean {
     const { x, y } = this.body.position;
-    const halfW = BODY_W / 2;
-    const halfH = BODY_H / 2;
+    const halfW = this.w / 2;
+    const halfH = this.h / 2;
     const x0 = dir > 0 ? x + halfW : x - halfW - WALL_PROBE;
     const region = { min: { x: x0, y: y - halfH + 4 }, max: { x: x0 + WALL_PROBE, y: y + halfH - 4 } };
     return this.scene.matter.query.region(this.terrain, region).length > 0;
@@ -359,8 +368,8 @@ export class Boss implements Hittable {
     else if (attack) name = attack;
     else name = 'idle';
     const draw = this.drawPos.get();
-    this.view.setPosition(draw.x, draw.y + BODY_H / 2);
-    this.view.setScale(this.facing, 1);
+    this.view.setPosition(draw.x, draw.y + this.h / 2);
+    this.view.setScale(this.facing * this.spriteScale, this.spriteScale);
     this.view.anims.play(bossAnimKey(this.spec.archetype, name), true);
   }
 
