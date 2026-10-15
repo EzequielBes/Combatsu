@@ -1,7 +1,8 @@
 import type Phaser from 'phaser';
+import type { Hit } from '../../core/hit';
 import { RecordBook } from '../../core/recordBook';
 import type { RunCommand } from '../../core/run';
-import { DamageLedger, summaryLines } from '../../core/runSummary';
+import { DamageLedger, summaryLines, type DamageSource } from '../../core/runSummary';
 import { serializeSave, type LeveledId, type RunRecord } from '../../core/save';
 import { RecordMarker } from '../../game/RecordMarker';
 import type { RecordSnapshot } from '../../game/recordSnapshot';
@@ -58,6 +59,20 @@ export class RecordDirector {
   /** Texto do banner de começo de rodada (RMK-05/06): `Rodada N · Novo recorde!` uma vez por run, senão `Rodada N`. */
   roundBanner(round: number): string {
     return this.book.roundBanner(round);
+  }
+
+  /**
+   * Golpe do jogador já aceito pelo alvo (DMG-01, DMG-03, DMG-04): com `moveName` é golpe do moveset ou finalizador,
+   * sem é objeto (na mão, arremessado, arma vinculada ou ferramenta).
+   */
+  onPlayerHit(hit: Hit): void {
+    this.addDamage(hit.moveName !== undefined ? 'golpe' : 'objeto', hit.damage);
+  }
+
+  /** Soma dano aceito numa fonte; no laboratório de efeitos (só bonecos) nada conta (DMG-05). */
+  addDamage(source: DamageSource, damage: number): void {
+    if (this.s.fxLab) return;
+    this.ledger.add(source, damage);
   }
 
   /**

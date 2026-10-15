@@ -400,9 +400,9 @@ ignorando tudo com `s.fxLab`. Em `combat.ts`: uma linha dentro do `if (hit.owner
 
 **Done when**:
 
-- [ ] `record-end.smoke.mjs` estendido: um soco num inimigo soma em `golpe` o mesmo dano que o inimigo perdeu; golpe no ar não soma; golpe com o bastão vinculado na mão soma em `objeto`; com `?debug&fxlab` golpe no boneco não soma
-- [ ] Painel cheio (`tech=azul:3,vermelho:3&perks=<6>&vows=<5>&arsenal=manoplas,bastao`): linhas de técnicas, passivas, arsenal e votos presentes e `panel.bounds` dentro de 960x540
-- [ ] Smokes `boss` (finalizador), `arsenal`, `drops`, `fight` verdes; `combat.ts` ganha no máximo 2 linhas efetivas; gate verde
+- [x] `record-end.smoke.mjs` estendido: um soco num inimigo soma em `golpe` o mesmo dano que o inimigo perdeu; golpe no ar não soma; golpe com o bastão vinculado na mão soma em `objeto`; com `?debug&fxlab` golpe no boneco não soma
+- [x] Painel cheio (`tech=azul:3,vermelho:3&perks=<6>&vows=<5>&arsenal=manoplas,bastao`): linhas de técnicas, passivas, arsenal e votos presentes e `panel.bounds` dentro de 960x540
+- [x] Smokes `boss` (finalizador), `arsenal`, `drops`, `fight` verdes; `combat.ts` ganha no máximo 2 linhas efetivas; gate verde
 
 **Tests**: smoke
 **Gate**: full
