@@ -510,6 +510,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: validation.md A3 (scripts/smoke/boss-attacks.smoke.mjs:273, CYC-10) (scripts/smoke)
 - last seen: 2026-10-15T07:18:20Z
 
+### L-084 - Na regra pura, teste cada guarda com um caso em que só ela decide: vizinho já processado mais perto, Rng que muda o resultado, ponto dentro do dx mas fora da distância, segundo evento com o estado ainda aberto.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/core tests/core` · harmful: 0
+- features: regras-tecnicas-leva1
+- evidence: RES-06a, RES-12a, FAL-03c, TRL-06-boo (src/core tests/core)
+- last seen: 2026-10-15T04:05:23Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
