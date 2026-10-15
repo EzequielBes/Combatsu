@@ -18,3 +18,10 @@ export interface PowerSnapshot {
   tone: ToneKeys;
   aura: PowerAura;
 }
+
+/** Atributos da folha (POW-01, POW-13): o forte sem Passo sombrio, o dano das técnicas e o custo de energia. */
+export interface StatsSnapshot {
+  meleeMul: number;
+  techDamageMul: number;
+  costMul: number;
+}

@@ -688,12 +688,12 @@ na tabela de parâmetros do `README.md` (com o aviso de que `vida:N` sobe o teto
 
 **Done when**:
 
-- [ ] `power.smoke.mjs` (cenário 1): `mods=forca:5&arsenal=manoplas,manoplas,manoplas` dá 11 pontos, patamar 3 e escala
+- [x] `power.smoke.mjs` (cenário 1, em `power-mods.mjs` para o `power.smoke` caber no teto): `mods=forca:5&arsenal=manoplas,manoplas,manoplas` dá 11 pontos, patamar 3 e escala
       1,5; `mods=forca:5` dá patamar 2; sem nada, patamar 0; `mods=xx:2,forca:-1` ignorado; `mods=forca:9` para em 5
-- [ ] `stats.meleeMul` = `meleeMul(traitsOf(MOVES.cotovelada, false))` e `stats.techDamageMul` = `relicTechMul ×
+- [x] `stats.meleeMul` = `meleeMul(traitsOf(MOVES.cotovelada, false))` e `stats.techDamageMul` = `relicTechMul ×
       vowTechMul`, lidos com e sem Manoplas
-- [ ] Smokes `boot`, `no-debug` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `boot`, `no-debug` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full

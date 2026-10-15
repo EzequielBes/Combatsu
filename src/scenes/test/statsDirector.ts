@@ -1,13 +1,14 @@
+import { parseModsParam } from '../../core/modsParam';
 import { powerLook, powerPoints, type PowerLook } from '../../core/power';
 import { acceptsPlayerInput } from '../../core/run';
 import { PROP_TRAITS, statSheet, traitsOf, type StatSheet, type StrikeMods } from '../../core/statSheet';
-import type { MoveDef } from '../../data/moves';
+import { MOVES, type MoveDef } from '../../data/moves';
 import type { GameSnapshot } from '../../game/debugApi';
 import type { InputSnapshot } from '../../game/input';
 import type { PropDamage } from '../../game/Prop';
 import type { Player } from '../../game/Player';
 import type { TestScene } from '../TestScene';
-import { NEUTRAL_INPUT } from './params';
+import { debugParam, NEUTRAL_INPUT } from './params';
 import { PowerAuraDirector } from './powerAuraDirector';
 
 /**
@@ -62,8 +63,15 @@ export class StatsDirector {
     this.aura.update(deltaMs, this.power);
   }
 
-  /** Run nova: chamado depois de build, arsenal e votos já zerados, para a folha sair da run nova. */
+  /**
+   * Run nova: chamado depois de modificadores, build, arsenal e votos já zerados, para a folha sair da run nova.
+   * POW-13.2: `?debug&mods=` sobe cada modificador da loja nível a nível pelo `apply`, que para no teto; `vida:N`
+   * sobe a vida máxima no `sync` sem curar.
+   */
   reset(): void {
+    for (const [id, levels] of parseModsParam(debugParam('mods'))) {
+      for (let i = 0; i < levels; i++) this.s.modifiers.apply(id);
+    }
     this.sync();
     this.power = powerLook(this.points());
   }
@@ -101,7 +109,7 @@ export class StatsDirector {
   }
 
   /** Campos do snapshot de debug que nascem aqui; cada passo da feature acrescenta o seu. */
-  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power'> {
+  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power' | 'stats'> {
     const { points, tier, impactScale, hitstopBonusMs, tone } = this.power;
     const power = {
       points,
@@ -111,6 +119,13 @@ export class StatsDirector {
       tone: { ...tone },
       aura: this.aura.view,
     };
-    return { damageNumbers: this.s.ui.damageNumbers.snapshot(), power };
+    const sheet = this.sheet();
+    // POW-13: o forte sem Passo sombrio (o mesmo `traitsOf` do golpe) e as técnicas, relíquia × voto, como no `Loadout`.
+    const stats = {
+      meleeMul: sheet.meleeMul(traitsOf(MOVES.cotovelada, false)),
+      techDamageMul: sheet.relicTechMul * sheet.vowTechMul,
+      costMul: sheet.costMul,
+    };
+    return { damageNumbers: this.s.ui.damageNumbers.snapshot(), power, stats };
   }
 }

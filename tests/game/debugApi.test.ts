@@ -201,6 +201,7 @@ describe('installDebugApi', () => {
         tone: { shadow: 'd', body: 'c', core: 'C', altBody: 'u', altCore: 'U' },
         aura: 'off',
       },
+      stats: { meleeMul: 1, techDamageMul: 1, costMul: 1 },
       worldProps: [
         {
           id: 2,

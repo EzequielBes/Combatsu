@@ -85,6 +85,7 @@ Parâmetros da URL, todos junto de `?debug`:
 | `tech=<id>[,<id>]` | começar com técnicas equipadas (`divergente`, `vermelho`, `azul`, `corte`) |
 | `fragments=N` | começar com N fragmentos |
 | `arsenal=<id>[,<id>]` | começar com itens do arsenal; repetir o id sobe o nível (`manoplas`, `faixas`, `rosario`, `bastao`, `lamina`, `faca`, `porrete`) |
+| `mods=<id>:<n>[,<id>:<n>]` | começar com modificadores da loja já comprados (`vida`, `forca`, `agilidade`, `ima`, `sorte`), parando no nível máximo; id desconhecido ou nível que não é inteiro positivo é ignorado. `vida:N` sobe a vida máxima sem curar |
 | `perks=<id>[,<id>]` | começar com passivas de build (`punhoPesado`, `executor`, `refluxo`, `condutor`, `passoSombrio`, `contraAfiado`) |
 | `noshop=1` | pular a loja entre as rodadas: a saída leva direto à próxima área, sem konbini |
 | `modules=rua,beco,parque` | área de combate montada só com esses módulos, nesta ordem (ids desconhecidos ou especiais são ignorados) |
