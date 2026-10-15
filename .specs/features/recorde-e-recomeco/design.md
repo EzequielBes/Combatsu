@@ -190,6 +190,8 @@ Arquivos novos (estimativa, todos longe do teto): `core/save.ts` ~110, `core/rec
   `show(lines)`, `hide()`, `debug(): { visible; lines: string[]; bounds: { x; y; w; h } }`. Com a build cheia (2
   técnicas, 6 passivas, 5 votos, 7 fontes) são ~19 linhas (~320 px) e a linha mais longa (5 votos) ~95 caracteres
   (~750 px): cabe em 960x540. Listas acima de 100 caracteres quebram em `, ` numa segunda linha.
+  Os `bounds` saem de `panelBounds(lines)` (puro): 8 px por caractere (teto do monospace 13 px) e 16 px de margem;
+  o fundo é uma caixa desse tamanho, não a tela inteira, e os `Text` nascem sob demanda e são reaproveitados.
 - **Cores**: `RECORD_COLORS = { text: 'w', highlight: 'A', bg: 'k' }` (chaves da `PALETTE`).
 
 ### scenes/test/recordDirector.ts

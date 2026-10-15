@@ -301,8 +301,8 @@ caracteres quebram em `, ` numa segunda linha.
 
 **Done when**:
 
-- [ ] Cálculo de `bounds` puro e testado: 19 linhas cabem em 960x540 centradas em (480, 270); a linha `highlight` usa a cor `A`
-- [ ] Gate verde; contagem = anterior + novos
+- [x] Cálculo de `bounds` puro e testado: 19 linhas cabem em 960x540 centradas em (480, 270); a linha `highlight` usa a cor `A`
+- [x] Gate verde; contagem = anterior + novos
 
 **Tests**: unit
 **Gate**: quick
