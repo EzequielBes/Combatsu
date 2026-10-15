@@ -58,6 +58,12 @@ export const TEX = {
   cursedClub: 'cursed-club',
   /** Kanji das técnicas (KOK-29): ícones de slot do HUD (TEC-09) e a chamada da conjuração (CAST-16). */
   kanji: 'kanji',
+  /** Ícones HD das técnicas e dos Domínios (quadros de 48x48, 1 texel = 1 px); veja `art/hd/techIcons`. */
+  techIcons: 'tech-icons',
+  /** Os mesmos ícones desenhados nativamente em 24x24, para a carta da loja. */
+  techIconsSmall: 'tech-icons-24',
+  /** Vistas das técnicas da leva 1 (palma do Boogie, prego, selo, atordoado; 16x16); veja `art/hd/fx/leva1Fx`. */
+  techFxLeva1: 'tech-fx-leva1',
   /** Chama da aura de conjuração (CAST-14), 2 frames por cor. */
   techAura: 'tech-aura',
   /** Chama de energia amaldiçoada em línguas (`CursedFlame`): cor, estágio e tamanho por frame. */
