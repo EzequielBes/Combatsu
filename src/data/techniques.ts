@@ -8,6 +8,8 @@ export type TechId = 'divergente' | 'vermelho' | 'azul' | 'corte' | 'roxo';
 export interface TechDef {
   id: TechId;
   name: string;
+  /** Rótulo curto, sem dois-pontos, para listas como o painel de fim de run (`Vermelho: 46 (31%)`). */
+  short: string;
   /** Kanji da técnica (拳/赫/蒼/解); 黒/閃 só aparecem no card do Kokusen. */
   kanji: 'ken' | 'aka' | 'ao' | 'kai' | 'murasaki';
   /** Chave de `PALETTE` usada na aura da conjuração (CAST-14). */
@@ -27,6 +29,7 @@ export const TECHNIQUES: Record<TechId, TechDef> = {
   divergente: {
     id: 'divergente',
     name: 'Punho Divergente',
+    short: 'Divergente',
     kanji: 'ken', // feat(art): 拳 (de "逕庭拳") - antes usava 黒 (kuro), que é do Kokusen (KOK-22)
     aura: 'c',
     cost: 20,
@@ -40,6 +43,7 @@ export const TECHNIQUES: Record<TechId, TechDef> = {
   vermelho: {
     id: 'vermelho',
     name: 'Reversão de Técnica: Vermelho',
+    short: 'Vermelho',
     kanji: 'aka',
     aura: 'r',
     cost: 45,
@@ -53,6 +57,7 @@ export const TECHNIQUES: Record<TechId, TechDef> = {
   azul: {
     id: 'azul',
     name: 'Azul',
+    short: 'Azul',
     kanji: 'ao',
     aura: 'd',
     cost: 35,
@@ -66,6 +71,7 @@ export const TECHNIQUES: Record<TechId, TechDef> = {
   corte: {
     id: 'corte',
     name: 'Desmantelar',
+    short: 'Desmantelar',
     kanji: 'kai',
     aura: 'u',
     cost: 30,
@@ -79,6 +85,7 @@ export const TECHNIQUES: Record<TechId, TechDef> = {
   roxo: {
     id: 'roxo',
     name: 'Vazio Roxo',
+    short: 'Vazio Roxo',
     kanji: 'murasaki', // 紫
     aura: 'u',
     cost: 70, // EVO-07

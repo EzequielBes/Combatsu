@@ -131,11 +131,11 @@ abre com `Rodada 2 · Novo recorde!` e o marcador muda para a cor de destaque.
 1. END-01: WHEN the run enters `gameOver` THEN the system SHALL show the run summary panel, centered at (480, 270) in the 960x540 UI space, drawn over the HUD on the UI camera.
 2. END-02: WHILE the summary panel is visible the HUD center text SHALL be hidden (`hud.center = null`).
 3. END-03: The panel SHALL show the lines `Rodada alcançada: N`, `Abates: K` and `Fragmentos: F`, with F the wallet balance at death.
-4. END-04: The panel SHALL list each equipped technique as `<nome> Nv <n>`, or `Técnicas: nenhuma` when both slots are empty.
+4. END-04: The panel SHALL list each equipped technique as `<nome> Nv <n>`, with `<nome>` the technique short label (`short` in `data/techniques`, no colon: `Vermelho`, not `Reversão de Técnica: Vermelho`), or `Técnicas: nenhuma` when both slots are empty.
 5. END-05: The panel SHALL list the perks by name, or `Passivas: nenhuma`.
 6. END-06: The panel SHALL show the relic and the bound weapon by name and level, or `Arsenal: nenhum`.
 7. END-07: The panel SHALL list the taken vows by name, or `Votos: nenhum`.
-8. END-08: The panel SHALL list the damage of each source with damage above 0, sorted from highest to lowest, as `<fonte>: <dano inteiro arredondado> (<pct>%)`, with pct the rounded share of the run total.
+8. END-08: The panel SHALL list the damage of each source with damage above 0, sorted from highest to lowest, as `<fonte>: <dano inteiro arredondado> (<pct>%)`, with pct the rounded share of the run total and `<fonte>` `Golpe`, `Objeto` or the technique short label.
 9. END-09: IF the run dealt no damage THEN the panel SHALL show `Dano: nenhum`.
 10. END-10: WHEN the death set a new record THEN the panel SHALL show `Recorde!` in the palette highlight color.
 11. END-11: WHEN the death did not set a new record THEN the panel SHALL show `Recorde: rN` with the stored record round, and SHALL not show `Recorde!`.

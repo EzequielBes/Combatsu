@@ -24,12 +24,17 @@ export interface DamageRow {
   pct: number;
 }
 
-/** Rótulo de cada fonte: `Golpe`, `Objeto` ou o nome da técnica. */
+/** Rótulo de cada fonte: `Golpe`, `Objeto` ou o rótulo curto da técnica (sem os dois-pontos do nome completo). */
 export function sourceLabel(source: DamageSource): string {
   if (source === 'golpe') return 'Golpe';
   if (source === 'objeto') return 'Objeto';
-  return TECHNIQUES[source].name;
+  return TECHNIQUES[source].short;
 }
+
+/** As técnicas pelo rótulo curto, no formato que `nameIn` lê. */
+const TECH_SHORT: Readonly<Record<string, { name: string }>> = Object.fromEntries(
+  Object.values(TECHNIQUES).map((def) => [def.id, { name: def.short }]),
+);
 
 function zeroTotals(): Record<DamageSource, number> {
   const totals = {} as Record<DamageSource, number>;
@@ -139,7 +144,7 @@ function buildLines(build: RecordBuild): string[] {
   return [
     ...listLines(
       'Técnicas',
-      build.techniques.map((t) => leveled(TECHNIQUES, t)),
+      build.techniques.map((t) => leveled(TECH_SHORT, t)),
       'nenhuma',
     ),
     ...listLines(

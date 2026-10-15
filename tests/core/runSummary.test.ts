@@ -20,8 +20,10 @@ describe('DAMAGE_SOURCES', () => {
   it('rótulos: Golpe, Objeto e o nome da técnica', () => {
     expect(sourceLabel('golpe')).toBe('Golpe');
     expect(sourceLabel('objeto')).toBe('Objeto');
-    expect(sourceLabel('azul')).toBe(TECHNIQUES.azul.name);
-    expect(sourceLabel('divergente')).toBe('Punho Divergente');
+    expect(sourceLabel('azul')).toBe('Azul');
+    expect(sourceLabel('divergente')).toBe('Divergente');
+    expect(sourceLabel('vermelho')).toBe('Vermelho');
+    for (const def of Object.values(TECHNIQUES)) expect(def.short).not.toContain(':');
   });
 });
 
@@ -45,7 +47,7 @@ describe('DamageLedger', () => {
     ledger.add('vermelho', 50);
     ledger.add('objeto', 30);
     expect(ledger.rows().map((r) => r.source)).toEqual(['vermelho', 'objeto', 'golpe']);
-    expect(ledger.rows().map((r) => r.label)).toEqual([TECHNIQUES.vermelho.name, 'Objeto', 'Golpe']);
+    expect(ledger.rows().map((r) => r.label)).toEqual(['Vermelho', 'Objeto', 'Golpe']);
     expect(ledger.rows().map((r) => r.pct)).toEqual([50, 30, 20]);
   });
 
@@ -88,7 +90,7 @@ describe('DamageLedger', () => {
     expect(Object.values(ledger.totals()).every((v) => v === 0)).toBe(true);
     expect(ledger.rows()).toEqual([]);
     ledger.add('corte', 3);
-    expect(ledger.rows()).toEqual([{ source: 'corte', label: TECHNIQUES.corte.name, damage: 3, pct: 100 }]);
+    expect(ledger.rows()).toEqual([{ source: 'corte', label: TECHNIQUES.corte.short, damage: 3, pct: 100 }]);
   });
 
   it('totals devolve cópia: mexer nela não altera o registro', () => {
@@ -150,12 +152,12 @@ describe('summaryLines', () => {
       damage: ledger.rows(),
     });
     expect(lines.slice(3, 9)).toEqual([
-      `Técnicas: ${TECHNIQUES.azul.name} Nv 2, Punho Divergente Nv 1`,
+      'Técnicas: Azul Nv 2, Divergente Nv 1',
       'Passivas: Punho pesado, Refluxo',
       'Arsenal: Manoplas de ferro Nv 2, Bastão selado Nv 1',
       `Votos: ${VOWS.furia.name}, ${VOWS.ganancia.name}`,
       'Golpe: 60 (60%)',
-      `${TECHNIQUES.azul.name}: 40 (40%)`,
+      'Azul: 40 (40%)',
     ]);
   });
 
@@ -179,7 +181,7 @@ describe('summaryLines', () => {
       },
     });
     expect(lines.slice(3, 7)).toEqual([
-      `Técnicas: ${TECHNIQUES.roxo.name} Nv 1`,
+      `Técnicas: ${TECHNIQUES.roxo.short} Nv 1`,
       'Passivas: Executor',
       'Arsenal: nenhum',
       'Votos: nenhum',
