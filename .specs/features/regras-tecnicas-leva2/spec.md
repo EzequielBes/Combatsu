@@ -154,15 +154,15 @@ Recarga no 3 (TRL-06).
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| KIT-01..03 | Kit comum | Execute | Implemented |
-| CNV-01..10 | Convergência | Execute | Implemented |
-| CAO-01..10 | Cães Divinos | Execute | Implemented |
-| TRV-01..09 | Punho de Trovão | Execute | Implemented |
-| ERU-01..09 | Erupção | Execute | Implemented |
+| KIT-01..03 | Kit comum | Execute | Verified |
+| CNV-01..10 | Convergência | Execute | Verified |
+| CAO-01..10 | Cães Divinos | Execute | Verified |
+| TRV-01..09 | Punho de Trovão | Execute | Verified |
+| ERU-01..09 | Erupção | Execute | Verified |
 
 **Revisão adversarial:** feita em 2026-10-15 (ver `validation.md`); o verificador de comportamento no jogo segue para a F41.
 
-**Coverage:** 41 total, 41 com teste em `tests/core/{techKit,convergence,divineDogs,thunderFist,eruption}.test.ts`; um commit por técnica (o kit sai com a Convergência). Falta o verificador independente antes da F41.
+**Coverage:** 41 total, 41 com teste em `tests/core/{techKit,convergence,divineDogs,thunderFist,eruption}.test.ts`; um commit por técnica (o kit sai com a Convergência). Verificador independente em 2026-10-15: PASS, 9 testes novos fecharam os mutantes vivos (ver `validation.md`).
 
 ---
 
