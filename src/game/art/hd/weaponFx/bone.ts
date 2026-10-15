@@ -1,10 +1,10 @@
 /*
  * Osso de Dragão imbuído: carrega com o parry e com o dano recebido (1 a 3 cargas) e o golpe forte solta tudo. O
  * rastro é um arco de cima para a frente, em fogo por fora e com a crista de osso serrilhada por dentro, soltando
- * brasas; o impacto é um estouro de brasas que sobe em línguas de fogo; o marcador de cargas são 3 lascas de osso que
+ * brasas; o impacto é um estouro que cospe lascas da crista para a frente e sobe em línguas de fogo; o marcador de cargas são 3 lascas de osso que
  * acendem uma a uma, com a chama tremendo em 2 quadros. Puro, sem `phaser`.
  */
-import { ember, sweep, swingAt, type Swing } from './brush';
+import { ember, shard, sweep, swingAt, type Swing } from './brush';
 import { FxCanvas, deg, lerp, polar, seeded, type Pt } from './canvas';
 import { seq, type WeaponFxArt } from './types';
 
@@ -51,16 +51,29 @@ function trailFrame(i: number): string[] {
 const IMPACT = 36;
 const HIT: Pt = { x: 17, y: 20 };
 
-/** Línguas de fogo do estouro: [ângulo em graus, comprimento]. Mais compridas para cima, onde o fogo sobe. */
-const TONGUES: readonly [number, number][] = [
-  [-90, 13],
-  [-55, 11],
-  [-125, 10],
-  [-15, 10],
-  [-165, 8],
-  [30, 8],
-  [150, 7],
-  [90, 6],
+/**
+ * Línguas de fogo do estouro, por quadro: [ângulo em graus, comprimento]. Só para cima e para a frente, nunca em volta:
+ * o fogo sobe e o golpe empurra, e a estrela radial já é do impacto amaldiçoado que vem por baixo.
+ */
+const TONGUES_HIT: readonly [number, number][] = [
+  [-92, 12],
+  [-64, 10],
+  [-120, 8],
+  [-28, 9],
+  [8, 6],
+];
+const TONGUES_RISE: readonly [number, number][] = [
+  [-90, 15],
+  [-70, 12],
+  [-112, 10],
+  [-44, 9],
+];
+
+/** Lascas da crista de osso que o estouro cospe para a frente: [ângulo, comprimento]. */
+const BONE_SHARDS: readonly [number, number][] = [
+  [-18, 6],
+  [14, 5],
+  [-48, 4],
 ];
 
 /** Língua de fogo de `from` a `from + len` texels do contato, que entorta para cima (o fogo sobe), com o miolo claro. */
@@ -83,12 +96,12 @@ function tongue(c: FxCanvas, ang: number, from: number, len: number, keys: reado
   c.line(base.x, base.y, mid.x, mid.y, keys[0]);
 }
 
-/** Brasas que voam do estouro: na distância `r`, em ângulos fixos, um pouco puxadas para cima. */
+/** Brasas que voam do estouro: para a frente e para cima, um pouco puxadas para cima a cada quadro. */
 function burstEmbers(c: FxCanvas, r: number, lift: number, core: string): void {
   const rnd = seeded(71);
-  for (let i = 0; i < 11; i++) {
-    const ang = deg(i * 33 + lerp(-8, 8, rnd()));
-    const p = polar(HIT.x, HIT.y - lift, r * lerp(0.85, 1.15, rnd()), ang);
+  for (let i = 0; i < 9; i++) {
+    const ang = deg(-165 + i * 24 + lerp(-8, 8, rnd()));
+    const p = polar(HIT.x, HIT.y - lift, r * lerp(0.8, 1.15, rnd()), ang);
     ember(c, p, ang, r > 14 ? 1 : 2, core, 'a');
   }
 }
@@ -96,20 +109,23 @@ function burstEmbers(c: FxCanvas, r: number, lift: number, core: string): void {
 function impactFrame(i: number): string[] {
   const c = new FxCanvas(IMPACT, IMPACT);
   if (i === 0) {
-    for (const [a, len] of TONGUES) tongue(c, deg(a), 3, len, ['A', 'a']);
-    c.disc(HIT.x, HIT.y, 5, (d) => (d < 0.4 ? 'w' : d < 0.75 ? 'A' : 'a'));
+    for (const [a, len] of TONGUES_HIT) tongue(c, deg(a), 2, len, ['A', 'a']);
+    c.ellipse(HIT.x + 1, HIT.y, 5.5, 4, (d) => (d < 0.4 ? 'w' : d < 0.75 ? 'A' : 'a'));
     c.rim('r', 'aA');
+    for (const [a, len] of BONE_SHARDS) shard(c, HIT.x, HIT.y, 6, deg(a), len, 'l', 'w');
   } else if (i === 1) {
-    burstEmbers(c, 12, 1, 'A');
-    for (const [a, len] of TONGUES) tongue(c, deg(a), 5, len * 0.8, ['A', 'R']);
-    c.disc(HIT.x, HIT.y, 4.5, (d) => (d < 0.5 ? 'A' : 'a'));
+    burstEmbers(c, 12, 2, 'A');
+    for (const [a, len] of TONGUES_RISE) tongue(c, deg(a), 4, len, ['A', 'R']);
+    c.ellipse(HIT.x, HIT.y, 4, 3, (d) => (d < 0.5 ? 'A' : 'a'));
+    c.rim('t', 'aR');
+    for (const [a, len] of BONE_SHARDS) shard(c, HIT.x, HIT.y, 11, deg(a + 6), len - 2, 'L', 'l');
   } else if (i === 2) {
-    burstEmbers(c, 15, 4, 'A');
-    for (const [a, len] of TONGUES.slice(0, 3)) tongue(c, deg(a), 4, len * 0.7, ['a', 'R']);
-    c.disc(HIT.x, HIT.y, 3, (d) => (d < 0.5 ? 'a' : 'r'));
+    burstEmbers(c, 15, 5, 'A');
+    for (const [a, len] of TONGUES_RISE.slice(0, 3)) tongue(c, deg(a), 7, len * 0.7, ['a', 'R']);
+    c.ellipse(HIT.x, HIT.y, 2.5, 2, (d) => (d < 0.5 ? 'a' : 'r'));
   } else {
-    burstEmbers(c, 16.5, 8, 'a');
-    tongue(c, deg(-90), 2, 6, ['R', 't']);
+    burstEmbers(c, 16.5, 9, 'a');
+    tongue(c, deg(-90), 9, 5, ['R', 't']);
   }
   return c.rows();
 }

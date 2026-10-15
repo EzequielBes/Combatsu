@@ -7,6 +7,8 @@ import { artMeasure } from './helpers';
 
 const WEAPONS = Object.keys(WEAPON_FX) as ImbuedWeapon[];
 const opaque = (rows: readonly string[]): number => rows.join('').replaceAll('.', '').length;
+/** O risco sem o contorno escuro `K` (que só segura a leitura sobre a pedra clara). */
+const stroke = (rows: readonly string[]): string[] => rows.map((row) => row.replaceAll('K', '.'));
 const framesOf = (weapon: ImbuedWeapon, part: 'trail' | 'impact'): string[][] =>
   Object.values(WEAPON_FX[weapon][part].frames);
 
@@ -72,7 +74,7 @@ describe('efeitos HD das armas imbuídas: a forma e a cor de cada arma', () => {
     new Set(framesOf(weapon, part).flatMap((rows) => [...artMeasure.keysOf(rows)]));
 
   it('Lâmina: o risco do rastro é branco e o impacto tem a gota vermelha com o brilho roxo', () => {
-    const peak = framesOf('lamina', 'trail')[1];
+    const peak = stroke(framesOf('lamina', 'trail')[1]);
     expect(['W', 'w']).toContain(artMeasure.dominant(peak));
     expect(keysOf('lamina', 'trail').has('a')).toBe(false);
     const drop = framesOf('lamina', 'impact')[3];
@@ -84,7 +86,7 @@ describe('efeitos HD das armas imbuídas: a forma e a cor de cada arma', () => {
     for (const key of ['A', 'a', 'M', 's', 'i']) expect(trail.has(key), key).toBe(true);
     const impact = keysOf('bastao', 'impact');
     for (const key of ['s', 'i', 'I']) expect(impact.has(key), key).toBe(true);
-    const lamina = framesOf('lamina', 'trail')[1];
+    const lamina = stroke(framesOf('lamina', 'trail')[1]);
     expect(opaque(framesOf('bastao', 'trail')[1])).toBeGreaterThan(opaque(lamina) * 3);
   });
 
@@ -102,6 +104,19 @@ describe('efeitos HD das armas imbuídas: a forma e a cor de cada arma', () => {
     for (const key of ['A', 'a', 'R', 'l']) expect(trail.has(key), key).toBe(true);
     const impact = keysOf('osso', 'impact');
     for (const key of ['A', 'a', 'w']) expect(impact.has(key), key).toBe(true);
+  });
+
+  it('os impactos não repetem a estrela radial do amaldiçoado: o Bastão sai achatado e o fogo do Osso sobe', () => {
+    const extent = (rows: readonly string[], axis: 'x' | 'y'): number => {
+      const at: number[] = [];
+      rows.forEach((row, y) => [...row].forEach((ch, x) => ch !== '.' && at.push(axis === 'x' ? x : y)));
+      return Math.max(...at) - Math.min(...at) + 1;
+    };
+    const smash = framesOf('bastao', 'impact')[0];
+    expect(extent(smash, 'x')).toBeGreaterThan(extent(smash, 'y') * 1.6);
+    const { frames, anchor } = WEAPON_FX.osso.impact;
+    const burst = frames['impact-0'];
+    expect(opaque(burst.slice(0, anchor.y))).toBeGreaterThan(opaque(burst.slice(anchor.y + 1)) * 2);
   });
 
   it('Osso de Dragão: as cargas acendem de 1 a 3, cada uma com a chama tremendo em 2 quadros', () => {

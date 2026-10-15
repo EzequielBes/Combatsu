@@ -65,17 +65,34 @@ const tipAt = (t: number): Pt => {
   return { x: PIVOT.x + Math.cos(a) * (RADIUS - 1), y: PIVOT.y + Math.sin(a) * (RADIUS - 1) };
 };
 
+/** Vulto do risco: um fio tracejado por dentro da meia-lua, a lâmina que passou um instante antes. */
+function afterimage(c: FxCanvas, from: number, to: number, key: string): void {
+  c.band({
+    cx: PIVOT.x,
+    cy: PIVOT.y,
+    a0: lerp(A0, A1, from),
+    a1: lerp(A0, A1, to),
+    inner: () => RADIUS - 6.6,
+    outer: () => RADIUS - 5.6,
+    paint: (t) => (Math.floor(t * 6) % 2 === 0 ? key : null),
+  });
+}
+
 function trailFrame(i: number): string[] {
   const c = new FxCanvas(TRAIL_W, TRAIL_H);
   if (i === 0) {
     crescent(c, { from: 0, to: 0.5, peak: 1.6, keys: ['W', 'W', 'I'] });
+    c.rim('K', 'WI');
   } else if (i === 1) {
+    afterimage(c, 0.1, 0.8, 'I');
     crescent(c, { from: 0, to: 1, peak: 3.2, keys: ['W', 'w', 'I'] });
     gleam(c, tipAt(0.97), 2, 'W', 'w');
+    c.rim('K', 'Ww');
   } else if (i === 2) {
     crescent(c, { from: 0.4, to: 1, peak: 2.2, keys: ['w', 'I', 'I'] });
+    c.rim('K', 'w');
   } else {
-    crescent(c, { from: 0.62, to: 1, peak: 1, keys: ['I', 'S', 'S'], dash: 6 });
+    crescent(c, { from: 0.62, to: 1, peak: 1, keys: ['I', 'i', 'i'], dash: 6 });
   }
   return c.rows();
 }
@@ -93,17 +110,12 @@ function sliver(c: FxCanvas, from: number, to: number, off: number, key: string)
   c.line(x + CUT.x * from, y + CUT.y * from, x + CUT.x * to, y + CUT.y * to, key);
 }
 
-/** Gota do sangramento amaldiçoado: vermelha, com o brilho roxo e um fio de energia em cima. */
+/** Gota do sangramento amaldiçoado: carmim com a luz magenta, o brilho roxo e um fio de energia em cima. */
+const DROP = ['..t..', '..t..', '.tUt.', 'tTttr', 'tTtrr', '.rrr.'];
+
 function drop(c: FxCanvas, x: number, y: number, wisp: number): void {
-  c.set(x, y - 2, 't');
-  c.set(x - 1, y - 1, 'r');
-  c.set(x, y - 1, 't');
-  c.set(x + 1, y - 1, 'r');
-  c.set(x - 1, y, 'r');
-  c.set(x, y, 'U');
-  c.set(x + 1, y, 'r');
-  c.set(x, y + 1, 'r');
-  for (let i = 0; i < wisp; i++) c.set(x + (i % 2), y - 4 - i, i === 0 ? 'u' : 'v');
+  c.stamp(x - 2, y - 3, DROP);
+  for (let i = 0; i < wisp; i++) c.set(x + (i % 2), y - 5 - i, i === 0 ? 'u' : 'v');
 }
 
 function impactFrame(i: number): string[] {
@@ -111,7 +123,7 @@ function impactFrame(i: number): string[] {
   if (i === 0) {
     sliver(c, -14, 14, 0, 'W');
     sliver(c, -6, 6, 1, 'w');
-    gleam(c, HIT, 4, 'W', 'w');
+    gleam(c, HIT, 3, 'W', 'w');
     c.rim('K', 'Ww');
   } else if (i === 1) {
     sliver(c, -13, 9, -1.6, 'W');
@@ -127,11 +139,14 @@ function impactFrame(i: number): string[] {
     sliver(c, 5, 12, 3.2, 'I');
     sliver(c, -2, 2, -3.2, 'S');
     drop(c, HIT.x + 1, HIT.y + 5, 2);
+    c.rim('v', 'tTU');
     c.set(HIT.x + NORMAL.x * 10, HIT.y + NORMAL.y * 10 + 1, 'r');
+    c.set(HIT.x - NORMAL.x * 5 + 2, HIT.y - NORMAL.y * 5, 't');
   } else {
     c.set(HIT.x - CUT.x * 11 - NORMAL.x * 4, HIT.y - CUT.y * 11 - NORMAL.y * 4, 'S');
     c.set(HIT.x + CUT.x * 11 + NORMAL.x * 4, HIT.y + CUT.y * 11 + NORMAL.y * 4, 'S');
     drop(c, HIT.x + 1, HIT.y + 11, 3);
+    c.rim('v', 'tTU');
   }
   return c.rows();
 }

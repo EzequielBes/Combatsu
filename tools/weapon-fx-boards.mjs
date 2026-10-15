@@ -3,7 +3,10 @@
 //   armas-fx.png       cada folha numa linha, quadro a quadro a 6x, com o texel de ancoragem marcado em vermelho;
 //   armas-fx-tela.png  as mesmas sequências a 2x (como na tela, zoom 2) sobre o céu noturno e sobre a pedra clara;
 //   armas-fx-escala.png o quadro cheio do rastro e o 1º do impacto sobre o player HD num golpe, a 3x, para a escala
-//                       (a posição é aproximada: prender o efeito ao golpe é da F36).
+//                       (a posição é aproximada: prender o efeito ao golpe é da F36);
+//   armas-fx-amaldicoado.png os 3 primeiros quadros do impacto a 3x, sozinhos e por cima de um arremedo do
+//                       lampejo amaldiçoado (a estrela de 4 pontas do cursedImpact, no quadro parado do hitstop),
+//                       para ver se a arma soma ao impacto de hoje sem poluir.
 // Uso, a partir da raiz do repo: node tools/weapon-fx-boards.mjs [--out dir]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { register } from 'node:module';
@@ -162,3 +165,56 @@ function scaleBoard() {
 }
 
 scaleBoard();
+
+/** Losango de `len` no eixo e `half` de largura, em volta de (cx, cy), no ângulo `ang` (a ponta da estrela). */
+function diamond(img, x0, y0, scale, cx, cy, ang, len, half, rgb) {
+  const r = Math.ceil(Math.max(len, half));
+  for (let y = -r; y <= r; y++)
+    for (let x = -r; x <= r; x++) {
+      const along = Math.abs(x * Math.cos(ang) + y * Math.sin(ang));
+      const across = Math.abs(-x * Math.sin(ang) + y * Math.cos(ang));
+      if (along / len + across / half <= 1) fill(img, x0 + (cx + x) * scale, y0 + (cy + y) * scale, scale, scale, rgb);
+    }
+}
+
+/** Arremedo do lampejo amaldiçoado parado do hitstop: o eixo longo atravessa o golpe, com sombra, corpo e miolo. */
+function cursedStar(img, x0, y0, scale, cx, cy) {
+  const size = 11;
+  const half = Math.max(1, size * 0.2);
+  const arms = [
+    [Math.PI / 2, size],
+    [0, size * 0.55],
+  ];
+  const layers = [
+    [2, 2, PALETTE.d],
+    [0, 0, PALETTE.c],
+  ];
+  for (const [dl, dh, rgb] of layers)
+    for (const [ang, len] of arms) diamond(img, x0, y0, scale, cx, cy, ang, len + dl, half + dh, rgb);
+  for (const [ang, len] of arms) diamond(img, x0, y0, scale, cx, cy, ang, len * 0.68, half * 0.5, PALETTE.C);
+}
+
+function cursedBoard() {
+  const scale = 3;
+  const pad = 6;
+  const rowsOf = Object.entries(WEAPON_FX).map(([, art]) => art.impact);
+  const cell = 40 * scale;
+  const img = image(pad + 6 * (cell + pad) + pad, pad + rowsOf.length * (cell + pad), PAPER);
+  rowsOf.forEach((sheet, r) => {
+    const frames = Object.values(sheet.frames).slice(0, 3);
+    const y0 = pad + r * (cell + pad);
+    [false, true].forEach((under, k) =>
+      frames.forEach((rows, f) => {
+        const x0 = pad + (k * 3 + f) * (cell + pad) + k * pad;
+        fill(img, x0, y0, cell, cell, NIGHT);
+        const ox = Math.floor((40 - rows[0].length) / 2);
+        const oy = Math.floor((40 - rows.length) / 2);
+        if (under && f === 0) cursedStar(img, x0, y0, scale, ox + sheet.anchor.x, oy + sheet.anchor.y);
+        blit(img, rows, x0 + ox * scale, y0 + oy * scale, scale);
+      }),
+    );
+  });
+  savePng('armas-fx-amaldicoado.png', img);
+}
+
+cursedBoard();

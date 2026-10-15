@@ -1,8 +1,8 @@
 /*
- * Pincéis comuns aos efeitos das armas imbuídas: a varredura em arco (o rastro de um golpe que gira), o tufo de
- * poeira, a lasca que voa e a brasa. Puro, sem `phaser`.
+ * Pincéis comuns aos efeitos das armas imbuídas: a varredura em arco (o rastro de um golpe que gira), o pó solto
+ * no chão, a lasca que voa e a brasa. Puro, sem `phaser`.
  */
-import { lerp, polar, type BandPaint, type FxCanvas, type Pt } from './canvas';
+import { lerp, polar, seeded, type BandPaint, type FxCanvas, type Pt } from './canvas';
 
 /** Arco inteiro de um golpe: o centro do giro, o raio de fora e os ângulos de saída e de chegada. */
 export interface Swing {
@@ -39,34 +39,49 @@ export function sweep(
 export const swingAt = (swing: Swing, t: number, inset = 0): Pt =>
   polar(swing.pivot.x, swing.pivot.y, swing.radius - inset, lerp(swing.a0, swing.a1, t));
 
-/** Bolhas de um tufo de poeira, em frações do raio: [dx, dy, raio x, raio y]. Mais largo que alto, rente ao chão. */
-const PUFF_BLOBS: readonly [number, number, number, number][] = [
-  [0, 0, 1.1, 0.8],
-  [-0.9, 0.3, 0.65, 0.5],
-  [0.95, 0.25, 0.6, 0.45],
-  [0.15, -0.55, 0.6, 0.55],
-];
+/** Pó levantado no chão: de onde o golpe raspa, para que lado ele espirra, até onde vai e quão alto sobe. */
+export interface Dust {
+  x: number;
+  y: number;
+  dir: 1 | -1;
+  len: number;
+  height: number;
+  /** Semente dos grãos: muda de quadro para quadro, para o pó não parecer carimbado. */
+  seed: number;
+  /** Desfazendo: o pó rente vira xadrez e só sobram grãos soltos, sem a luz de cima. */
+  fading?: boolean;
+}
+
+/** Uma coluna do pó rente, de `h` texels a partir do chão: sombra embaixo, luz no topo e o alto vazando em xadrez. */
+function dustColumn(c: FxCanvas, x: number, y: number, h: number, fading: boolean): void {
+  for (let j = 0; j < h; j++) {
+    const top = j === h - 1;
+    const loose = j >= h / 2 && (x + y - j) % 2 === 0;
+    if (fading ? (x + j) % 2 === 0 || top : loose) continue;
+    c.under(x, y - j, j === 0 ? 's' : top && !fading ? 'I' : 'i');
+  }
+}
 
 /**
- * Tufo de poeira: bolhas juntas, com a sombra `s` embaixo, o corpo `i` e a luz `I` em cima à esquerda, e dois grãos
- * soltos na borda. Vem antes do golpe no quadro, para ficar atrás dele. `fading` desfaz o tufo em xadrez, sem a luz.
+ * Pó solto (não nuvem): colunas de alturas quebradas rente ao chão, mais altas perto de onde o golpe raspou e
+ * baixando para o lado do espirro, com a sombra `s` embaixo, o corpo `i` e a luz `I` só no topo; os texels de cima
+ * vazam em xadrez, e grãos soltos voam acima, inclinados para o lado do espirro. Vem antes do golpe no quadro.
  */
-export function puff(c: FxCanvas, x: number, y: number, r: number, fading = false): void {
-  const layers: [number, number, number, string][] = [
-    [0, 0, 1, 's'],
-    [-0.12, -0.28, 0.72, 'i'],
-    [-0.3, -0.5, 0.36, 'I'],
-  ];
-  for (const [ox, oy, k, key] of layers) {
-    for (const [dx, dy, rx, ry] of PUFF_BLOBS) {
-      c.ellipse(x + (dx + ox) * r, y + (dy + oy) * r, rx * r * k, ry * r * k, (d, px, py) => {
-        if (fading && (key === 'I' || (px + py) % 2 === 1)) return null;
-        return k === 1 || d < 0.9 ? key : null;
-      });
-    }
+export function dust(c: FxCanvas, d: Dust): void {
+  const rnd = seeded(d.seed);
+  for (let k = 0; k <= d.len; k++) {
+    const t = k / Math.max(d.len, 1);
+    const h = Math.round(d.height * (1 - t * 0.75) * lerp(0.55, 1.15, rnd()));
+    dustColumn(c, d.x + d.dir * k, d.y, h, d.fading === true);
   }
-  c.set(x - r * 1.9, y - r * 0.2, 'i');
-  c.set(x + r * 1.7, y - r * 0.6, 's');
+  const grains = d.fading ? 3 : 5;
+  for (let g = 0; g < grains; g++) {
+    const t = lerp(0.15, 1, rnd());
+    const x = d.x + d.dir * t * d.len * 1.1;
+    const y = d.y - d.height * (1 - t * 0.5) - lerp(1, 3.5, rnd());
+    c.under(x, y, g % 2 === 0 && !d.fading ? 'I' : 'i');
+    if (g < 2 && !d.fading) c.under(x - d.dir, y + 1, 'i');
+  }
 }
 
 /** Lasca que voa para fora de (cx, cy): triângulo com a ponta a `r + len` e a base a `r`, ponta clara. */
