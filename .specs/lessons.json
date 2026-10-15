@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 79,
+  "next_id": 80,
   "lessons": [
     {
       "id": "L-001",
@@ -1420,6 +1420,24 @@
       ],
       "created": "2026-10-08T17:51:53Z",
       "last_seen": "2026-10-08T17:51:53Z"
+    },
+    {
+      "id": "L-079",
+      "key": "surviving_mutant::when an adapter feeds a pure rule s number into the engine camera shake flame position ai expose the engine side state in the debug snapshot and assert it in a smoke a snapshot field that only echoes the rule output lets the wiring drop silently",
+      "text": "When an adapter feeds a pure rule's number into the engine (camera, shake, flame position, AI), expose the engine-side state in the debug snapshot and assert it in a smoke; a snapshot field that only echoes the rule output lets the wiring drop silently",
+      "signal": "surviving_mutant",
+      "scope": "scenes/test adapters, smoke",
+      "status": "candidate",
+      "features": [
+        "fundacao-de-poder"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md A1..A5 (impactFx.ts:131-132, powerAuraDirector.ts:75, EnemyDefense.ts:182-185) (scenes/test adapters, smoke)"
+      ],
+      "created": "2026-10-15T06:55:28Z",
+      "last_seen": "2026-10-15T06:55:28Z"
     }
   ]
 }

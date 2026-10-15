@@ -480,6 +480,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: N4 tests/scenes/arena.test.ts:46 (tests edge case)
 - last seen: 2026-10-08T17:51:53Z
 
+### L-079 - When an adapter feeds a pure rule's number into the engine (camera, shake, flame position, AI), expose the engine-side state in the debug snapshot and assert it in a smoke; a snapshot field that only echoes the rule output lets the wiring drop silently
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `scenes/test adapters, smoke` · harmful: 0
+- features: fundacao-de-poder
+- evidence: validation.md A1..A5 (impactFx.ts:131-132, powerAuraDirector.ts:75, EnemyDefense.ts:182-185) (scenes/test adapters, smoke)
+- last seen: 2026-10-15T06:55:28Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
