@@ -30,12 +30,17 @@ Código de hoje que a F31 lê e não reescreve: `EnergyHud` (a barra nova fica e
 
 - [ ] A barra de Domínio vai de 0 a 100, carrega só com acertos do jogador pela tabela da seção 5.6, e no ritmo de
       referência enche entre 40 e 60 s (teste puro).
-- [ ] No fim da r3, todo jogador escolhe 1 de 2 Domínios no Baú do Véu e pode ativá-lo com `P`/`N` na r4.
+- [ ] No fim da r3, todo jogador escolhe 1 de 2 Domínios no Baú do Véu e entra na r4 com a barra cheia, pronto para
+      apertar `P`/`N` pela primeira vez.
 - [ ] A ativação de qualquer Domínio é um acerto decisivo garantido por fração do HP máximo (40% do comum, 6% do chefe
-      no Santuário e no Jackpot; 25% e 4% na Amplificação), com `ImpactFrame`, linhas de foco e o hitstop do
+      no Santuário, a até 320 px, e no Jackpot, a até 96 px; 25% e 4% na Amplificação, a até 96 px), que interrompe o
+      ataque do comum comprometido, com o nome do Domínio na tela, `ImpactFrame`, linhas de foco e o hitstop do
       finalizador.
+- [ ] O Santuário, no ritmo de referência de golpes, mata um grupo de 4 comuns de HP cheio a até 320 px dentro dos 6 s,
+      na r4 e na r19 (teste puro).
 - [ ] Os três Domínios jogam diferente: o Santuário corta em cadeia o que o jogador acerta, o Jackpot aposta num estado
-      de energia infinita com piedade, e a Amplificação troca as técnicas por um corpo a corpo que atravessa guarda.
+      de energia infinita com piedade visível, e a Amplificação troca as técnicas por um corpo a corpo que atravessa
+      guarda e armadura (nenhum comum troca golpe com o lutador).
 - [ ] O Domínio sobe ao Nv 2 e ao Nv 3 pelo baú do chefe e pela loja a partir da r8.
 - [ ] A `TestScene` não ganha nenhuma linha efetiva líquida na F31.
 
@@ -71,24 +76,25 @@ Código de hoje que a F31 lê e não reescreve: `EnergyHud` (a barra nova fica e
 | Parry ou esquiva perfeita | +5 nos eventos de defesa `parry`, `deflect` e `perfectDodge` do `CombatLinks` | São os três eventos que abrem o Contra hoje | n |
 | "Técnica que acerta +1 por conjuração" | +1 no primeiro acerto não chip de cada conjuração; uma conjuração que só acerta tiques chip não carrega | Junta as linhas "técnica" e "chip" da tabela numa regra só | n |
 | Kokusen | +15, somado ao +1 da conjuração do Divergente que o disparou | São dois eventos distintos no jogo de hoje | n |
-| Abate | +1 por inimigo comum ou chefe morto por qualquer fonte do jogador | A tabela não restringe a fonte | n |
+| Abate | +1 por inimigo comum morto, por qualquer fonte (o gancho é o `combat.onEnemyDied`); a morte do chefe não carrega | A tabela não restringe a fonte; o chefe morto fecha a rodada e não passa pelo `onEnemyDied`, e o +1 dele não muda o ritmo | n |
 | Acerto `micro` fora de conjuração (Onda do Punho, estilhaço) | Não carrega | A tabela só lista golpe, técnica por conjuração e as ações; o micro é acessório | n |
-| Barra sem Domínio | Não carrega e fica escondida enquanto o jogador não tem Domínio | A barra é do Domínio; carregar antes da r3 faria a 1ª ativação sair cheia na hora | n |
+| Barra sem Domínio | Não carrega e fica escondida enquanto o jogador não tem Domínio | A barra é do Domínio; a carga de antes da r3 não tem dono | n |
+| Carga inicial do Baú do Véu | O Domínio do Baú do Véu chega com a barra cheia (100, `DOMAIN_CHARGE.veilStart`); o `domain=` do debug e o nível do baú do chefe ou da loja não mexem na carga | "Quem morre cedo também experimenta a ultimate" (seção 3.1): com a barra em 0, quem morre na r4 antes de ~46 s de acertos nunca aperta `P`. A barra cheia piscando com o `P` ensina a tecla na primeira luta, e a decisão continua do jogador (barra cheia não esvazia) | n |
 | Barra durante o Domínio ativo | Não carrega | Evita encadear um Domínio no outro | n |
 | Esvaziamento ("esvazia 10% depois de 8 s sem acertar") | Aos 8000 ms seguidos sem nenhum evento de carga, a barra perde 10 pontos, e perde mais 10 a cada 8000 ms seguintes sem carga, nunca abaixo de 0; o relógio só corre no estado `roundActive`, no tempo de jogo | Uma leitura exata da frase; a travessia e a konbini não têm inimigo para acertar | n |
 | Barra cheia | Com 100 a barra não esvazia | O Domínio é decisão do jogador ("nada automático"); perder a ultimate pronta enquanto ele procura o momento puniria a escolha | n |
 | Carga entre rodadas | A barra fica de uma rodada para a outra dentro da run e zera na run nova | A seção 5.6 diz que a barra não enche com o tempo, não que zera por rodada | n |
-| Quando a tecla vale | Com a mesma porteira do `inputFor` (estado que aceita input do player e área sem transição); na konbini e na transição a tecla é ignorada, sem evento | Mesma regra das outras teclas de combate | n |
+| Quando a tecla vale | Com a mesma porteira do `inputFor` (estado que aceita input do player e área sem transição); na konbini e na transição a tecla é ignorada, sem evento. O `ShopInput` consome a borda de `P` e `N` a cada quadro da loja, para um `P` apertado na konbini não disparar no 1º quadro da rodada seguinte | Mesma regra das outras teclas de combate. Na loja o `updateGameplay` não roda (`TestScene.ts:419-420`), então o `PlayerInput.read()` não lê nada e o `JustDown` de uma tecla que só ele lê fica represado até a loja fechar | n |
 | Recusa da ativação | Barra abaixo de 100: `domainDenied:charge`; Domínio já ativo: `domainDenied:active`; player ocupado (`isBusyForCast()`, conjuração ativa, Reversa canalizando ou morto): `domainDenied:busy`; sem Domínio: `domainDenied:none`. Nenhuma recusa gasta a barra | No molde do `techDenied:<motivo>` do `TechCaster` | n |
 | Golpe em andamento na ativação | Termina na hora (`cancelMelee`), como o CAST-10 | A ativação não pode esperar o fim do golpe | n |
-| Alcance da ativação ("a até 320 px", "64 px") | Distância euclidiana entre o centro do player e o centro do alvo, com a borda inclusa | Com plataformas, o alvo pode estar acima; a borda inclusa segue a regra de hoje (CUT-03) | n |
+| Alcance da ativação ("a até 320 px", "64 px") | Distância euclidiana entre o centro do player e o centro do alvo, com a borda inclusa. O Santuário fica em 320 px; o Jackpot e a Amplificação sobem de 64 para **96 px** | Com plataformas, o alvo pode estar acima; a borda inclusa segue a regra de hoje (CUT-03). Os 64 px do plano caem em cima do 1º comum da fila de espera (`ENEMY_AI.holdBase` 64 com `holdTolerance` 2, `tuning.ts:119-126`): ele entraria ou não por 2 px de tremida, e a ativação pegaria só os 1 ou 2 que estão batendo (`attackRange` 40). Com 96 px (`holdRange`) entram os que batem e os dois primeiros da fila dos dois lados (64 e 88 px), e o raio continua um terço do Santuário. Os números da seção 5.6 são ponto de partida do plano | n |
 | Dano da ativação | `max(1, round(fração × maxHp do alvo))`, sem multiplicador de build nem de voto | A fração já acompanha o HP escalado da F30; somar a build daria mais de 40% | n |
-| Forma do acerto da ativação | Acerto normal (sem `band`), `heavy`, faixa de impacto forçada em `decisive` (`impactTier` com `forced`, F29), aceito com guarda levantada e em alvo no chão; a Amplificação leva `knockdown` | "Acerto garantido e decisivo"; só a Amplificação "derruba" | n |
-| Hitstop, `ImpactFrame` e linhas de foco da ativação | Um só por ativação, com `FINISHER_HITSTOP_MS` (150 ms, `combat.ts:22`), mesmo com vários alvos ou nenhum | O efeito é da ativação, não de cada alvo | n |
-| Fim do Domínio | Pelo tempo, no fim da rodada (`roundCleared`), na morte do player e na run nova; só o fim pelo tempo dispara o Corte do Mundo | O tempo do Domínio é de luta; cura do Jackpot na travessia seria grátis | n |
+| Forma do acerto da ativação | Acerto normal (sem `band`), `heavy`, `tech: true`, `counter: true`, faixa de impacto forçada em `decisive` (`impactTier` com `forced`, F29), aceito com guarda levantada, em alvo no chão e em alvo levantando; a Amplificação leva `knockdown`. Empurrão `DOMAIN_HIT.force` (8) no Santuário e na Amplificação e 0 no Jackpot | "Acerto garantido e decisivo". Sem `counter`, o comum comprometido absorve o acerto como armadura e o ataque dele sai assim mesmo (`enemyBrain.ts:96`, CMT-04): a ultimate levaria o golpe que devia impedir. O `tech: true` passa pelo `refuses` do chão e do levantar (`enemyBrain.ts:111-115`, GND-04). Só a Amplificação "derruba". O Jackpot não empurra para os atordoados ficarem ao alcance do Riichi nos 2 s do giro | n |
+| Hitstop, `ImpactFrame`, linhas de foco e nome da ativação | Um só por ativação, com `FINISHER_HITSTOP_MS` (150 ms, `combat.ts:22`), mesmo com vários alvos ou nenhum; o nome do Domínio sai no `Hud.banner` por `RUN.bannerMs` | O efeito é da ativação, não de cada alvo. Em JJK o Domínio é anunciado; o banner já existe e custa uma linha | n |
+| Fim do Domínio | Pelo tempo, na abertura da konbini (comando `shopOpen`, mesmo com `noshop=1`), na morte do player, na run nova e no `R`; só o fim pelo tempo dispara o Corte do Mundo. A rodada limpa **não** encerra o Domínio: ele segue na travessia (`traverse`) e no intervalo (`intermission`) até o tempo acabar ou a konbini abrir | A ativação que mata os últimos inimigos é o momento épico e o mais comum de apertar `P`; encerrar na rodada limpa jogaria fora o giro inteiro do Jackpot (sem resultado) e os segundos pagos do Santuário. A cura do Jackpot na travessia não é grátis: foram ~46 s de barra. A konbini segue fora do Domínio, porque o efeito do Jackpot (custo 0) mudaria a prévia das cartas | n |
 | Relógio do Domínio | Tempo de jogo (para no hitstop, como o resto do combate) | Mesma regra das conjurações | n |
 | Escala da rodada no corte do Santuário ("6 × escala da rodada") | `round(6 × hpMul)`, com `hpMul` o multiplicador de HP da rodada (`multipliersFor`, o mesmo do piso do Kokusen na F30), sem multiplicador de técnica | O plano fala em escala da rodada; a build já sobe o golpe que dispara o corte | n |
-| Gatilho do corte do Santuário ("cada golpe ou técnica do player que acerta") | Um gatilho por golpe do moveset que acerta (um por golpe) e um por acerto de técnica que não seja chip nem corte do próprio Santuário | Sem recursão; o teto de 4 por segundo segura o resto | n |
+| Gatilho do corte do Santuário ("cada golpe ou técnica do player que acerta") | Um gatilho por golpe do moveset que acerta (um por golpe) e um por conjuração, no primeiro acerto não chip dela (a mesma regra da carga "+1 por conjuração", pelo caminho da maestria). A Onda do Punho (F30), o corte do próprio Santuário e os tiques chip não soltam gatilho, e uma conjuração solta no máximo um, com estilhaços do Vermelho ou não | "Técnica que acerta" lida como na tabela da barra. A Onda e o corte não chamam `masteryHit`, então ficam de fora sem guarda de reentrada; sem isso um golpe com a Onda do Punho soltava 2 gatilhos e um Vermelho com estilhaços gastava o teto de 4 sozinho | n |
 | Teto de 4 por segundo e 4 alvos | Até 4 gatilhos numa janela deslizante de 1000 ms de tempo de jogo; cada gatilho corta até 4 alvos (6 no Nv 2 e 3), os mais próximos do player primeiro, dentro de 320 px | "1 corte em até 4 inimigos (no máximo 4 por segundo)" | n |
 | Corte do Santuário e maestria | Não dá maestria, não carrega a barra e não conta como conjuração | Não é técnica do slot; o Desmantelar pode nem estar equipado | n |
 | Corte do Mundo ("executa os comuns abaixo de 35%") | No fim do Santuário Nv 3 pelo tempo, todo comum a até 320 px com HP de 35% do máximo ou menos morre (acerto decisivo com dano igual ao HP restante), e o chefe a até 320 px leva `round(0,08 × maxHp)` | "Abaixo de 35%" lido com a borda inclusa, testada nos dois lados | n |
@@ -96,18 +102,18 @@ Código de hoje que a F31 lê e não reescreve: `EnergyHud` (a barra nova fica e
 | Chance do Jackpot | `min(0,60, base + 0,05 × jackpots já ganhos na run (só no Nv 3) + 0,04 × golpes no giro)`, com base 0,33 no Nv 1 e 0,40 no Nv 2 e 3; sorteio pelo stream `domainRng` | O teto de 60% vale para a soma, como no texto do Riichi e do Nv 3 | n |
 | Efeito do jackpot | 8 s: a energia fica no máximo em todo quadro e a conjuração não gasta; nenhuma recarga começa e as que estavam correndo zeram; cura de 1 HP a cada 200 ms (5 HP/s) com o teto da vida | "Energia infinita, técnicas sem recarga e cura de 5 HP/s" | n |
 | Falha ("4 s com metade do efeito") | 4 s: custo das técnicas ×0,5, recarga nova ×0,5 e cura de 1 HP a cada 400 ms (2,5 HP/s); o piso de 60% do custo (PRC-05) não vale dentro do Jackpot | Metade de cada um dos três efeitos, com número exato | n |
-| Piedade ("a 3ª falha seguida é jackpot garantido") | Contador de falhas seguidas por run; na ativação com 2 falhas seguidas o resultado é jackpot sem sorteio; zera no jackpot e na run nova | Leitura direta; o sorteio não é consumido no garantido | n |
+| Piedade ("a 3ª falha seguida é jackpot garantido") | Contador de falhas seguidas por run; na ativação com 2 falhas seguidas o resultado é jackpot sem sorteio; zera no jackpot e na run nova. Com a piedade armada, os tambores mostram "GARANTIDO" no lugar da chance e o snapshot lê `chance` 1 e `guaranteed` verdadeiro | Leitura direta; o sorteio não é consumido no garantido. Piedade invisível não tira frustração: o jogador precisa saber, já na 2ª falha, que a próxima é certa | n |
 | Jackpot durante o giro | O efeito começa quando os tambores param, 2000 ms depois da ativação; durante o giro nada do efeito vale | O texto separa o giro do efeito | n |
-| Amplificação: "atravessa guarda" | Golpe do moveset e com objeto do player não é bloqueado nem aparado pela guarda do comum (`guard.resolveHit`) nem do chefe | "O corpo a corpo atravessa guarda" | n |
+| Amplificação: "atravessa guarda" | Golpe do moveset e com objeto do player não é segurado pela guarda do comum (`enemyGuard.resolveHit`, a comum e a de leitura) **nem absorvido pela armadura do comum comprometido** (CMT-04): o golpe interrompe o ataque dele como faria fora do compromisso. O chefe não tem guarda nem armadura de comum; nele valem a anulação de projétil e o +25% do Nv 3 | A guarda do comum só sobe em 10% a 40% dos golpes leves de frente com ele parado (`enemyGuard.ts:53-55`), e projétil só o chefe solta: lido só como guarda, a Amplificação Nv 1 e 2 seria quase só a trava das técnicas na maioria das rodadas. A armadura do compromisso é a defesa que todo comum usa em toda rodada; atravessá-la dá ao lutador a janela de 7 s em que ninguém troca golpe com ele, o sentimento do Sifu que o plano pede | n |
 | Amplificação: "anula projétil" | Projétil inimigo que toca a hitbox ativa de um golpe do player some sem causar dano, com o evento `projectileNullified` | Os projéteis de hoje são do chefe | n |
 | Amplificação: "técnicas travadas" | Pedido de conjuração recusado com `techDenied:domain`, sem gastar energia; não cancela conjuração já em andamento, porque a ativação é recusada com conjuração ativa | No molde das outras recusas da `CastMachine` | n |
 | Amplificação Nv 3 (+25% no corpo a corpo) | ×1,25 no `meleeMul` do `statSheet` enquanto a Amplificação está ativa, entrando pelo `StatsDirector` | Regra da F29: multiplicador novo só pelo agregador | n |
-| Baú do Véu | Fica pendente no `roundCleared` da r3 e abre no `ChoicePanel` da konbini seguinte; sorteia 2 dos 3 Domínios pelo stream `chestRng`; não tem recusa (Enter confirma a opção marcada) | "Fim da r3, sempre"; o `chestRng` é o stream que o plano reserva para os baús (o `bossChest` da F33 reaproveita) | n |
+| Baú do Véu | Fica pendente no `roundCleared` da r3 e abre no `ChoicePanel` da konbini seguinte; sorteia 2 dos 3 Domínios pelo stream `chestRng`; não tem recusa (Enter confirma a opção marcada); o Domínio escolhido chega com a barra cheia | "Fim da r3, sempre"; o `chestRng` é o stream que o plano reserva para os baús (o `bossChest` da F33 reaproveita) | n |
 | Baú do Véu com Domínio já possuído | Não abre | Só há 1 vaga de Domínio; só o debug chega aqui | n |
 | Baú do chefe na F31 ("nível do Domínio no baú") | Na vitória sobre o chefe com Domínio abaixo do Nv 3, o prêmio de técnica do BFX-09 (com a regra da F30 no Vermelho) não é aplicado na hora; a konbini seguinte abre a página "Baú do chefe" com A = "Domínio Nv N+1" e B = o prêmio de técnica adiado. Sem prêmio de técnica possível, o Domínio sobe direto na vitória. Com Domínio no Nv 3 ou sem Domínio, o BFX-09 fica como hoje | O `bossChest` completo é da F33; a página de 2 opções cabe no `ChoicePanel` da F30 e não inventa prêmio novo | n |
 | Ordem dos painéis na konbini | `VowPanel` (rodada de chefe), depois as páginas do `ChoicePanel` na ordem Baú do chefe, Baú do Véu, ramos (Vermelho, Corpo), depois a loja | O Domínio muda o que a loja vende a partir da r8; a ordem dos ramos é a da F30 | n |
 | Carta do Domínio na loja | Entra no fim de `GAME_SHOP_CATALOG` com `kind: 'domain'`, raridade rara, Nv 2 por 40 e Nv 3 por 50 antes da inflação; só no sorteio ponderado (cartas 2 e 3 da F30), nunca na carta 0 nem na 1 | Regra do catálogo (seção 6) e preços da seção 3.2 | n |
-| Parâmetros de debug novos | `domain=<id>[:<nível>]` e `charge=<n>` (inteiro de 0 a 100), lidos no reset da run depois do `statsDirector.reset()`; entrada inválida é ignorada | Os smokes precisam montar o Domínio sem passar pela r3 | n |
+| Parâmetros de debug novos | `domain=<id>[:<nível>]`, `charge=<n>` (inteiro de 0 a 100) e `jackpotMisses=<n>` (inteiro de 0 a 2, as falhas seguidas do Jackpot), lidos no reset da run depois do `statsDirector.reset()`; entrada inválida é ignorada | Os smokes precisam montar o Domínio sem passar pela r3, e provar a piedade e o "GARANTIDO" no jogo sem encher a barra três vezes | n |
 | Smoke novo | `domain.smoke.mjs`, com `?debug&hd=1&area=modular` | Regra de smoke novo do projeto | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -126,7 +132,7 @@ ultimate ser a recompensa de lutar bem e não de esperar.
 **Acceptance Criteria**:
 
 1. DOM-01: The domain charge SHALL be an integer from 0 to 100, kept in a pure module (`core/domain.ts`) with no Phaser import, and SHALL never go below 0 or above 100.
-2. DOM-02: WHILE the player owns a domain and no domain is active, WHEN a charge event happens THEN the charge SHALL grow by: light strike that hits +1, heavy strike that hits +2, prop or bound weapon hit +2, kill +1, `parry`, `deflect` or `perfectDodge` +5, first non-chip hit of a technique cast +1, finisher +5, Kokusen +15.
+2. DOM-02: WHILE the player owns a domain and no domain is active, WHEN a charge event happens THEN the charge SHALL grow by: light strike that hits +1, heavy strike that hits +2, prop or bound weapon hit +2, common enemy kill +1, `parry`, `deflect` or `perfectDodge` +5, first non-chip hit of a technique cast +1, finisher +5, Kokusen +15.
 3. DOM-02: WHEN one moveset strike hits several targets THEN the charge SHALL grow once for that strike, and WHEN the finisher hits THEN the charge SHALL grow by 5 and not also by the heavy strike value.
 4. DOM-02: IF a hit carries `band: 'chip'`, or is a `micro` hit other than the first hit of a technique cast, or is a Sanctuary cut THEN the charge SHALL not grow.
 5. DOM-02: IF the player owns no domain or a domain is active THEN no charge event SHALL change the charge.
@@ -152,20 +158,21 @@ para a ultimate valer os ~46 s de barra em qualquer rodada.
 **Acceptance Criteria**:
 
 1. DOM-06: WHEN `P` or `N` goes down (`JustDown`) while the player accepts input (the same gate as `inputFor`: run state that accepts player input and no area transition), the player owns a domain, the charge is 100, no domain is active and the player is not busy THEN the system SHALL activate the owned domain at its level, SHALL set the charge to 0 and SHALL push the debug event `domain:<id>`.
-2. DOM-06: IF `P` or `N` goes down in the shop or during an area transition THEN the system SHALL ignore it and push no event.
+2. DOM-06: IF `P` or `N` goes down in the shop or during an area transition THEN the system SHALL ignore it and push no event, and a press made in the shop SHALL not activate the domain on the first frame after the shop closes.
 3. DOM-07: IF the activation is refused THEN the charge SHALL be unchanged and the system SHALL push exactly one event: `domainDenied:none` with no domain owned, `domainDenied:charge` below 100, `domainDenied:active` with a domain active, and `domainDenied:busy` when `player.isBusyForCast()` is true, a cast is active, the Reversa is channeling or the player is dead.
 4. DOM-07: WHEN an activation is accepted while a moveset strike is in progress THEN the strike SHALL end at once through `player.cancelMelee()`, as CAST-10 does for a cast.
-5. DOM-08: WHEN a domain activates THEN every live common enemy and the live boss whose center is within the activation radius of the player center (edge included) SHALL take one hit of `max(1, round(fraction × target maxHp))`, with no build or vow multiplier: Sanctuary radius 320 px with fractions 0.40 common and 0.06 boss; Jackpot radius 64 px with 0.40 and 0.06; Amplification radius 64 px with 0.25 and 0.04.
-6. DOM-08: The activation hit SHALL carry no band and `strength: 'heavy'`, SHALL be resolved with the impact tier forced to `decisive`, SHALL be accepted by a target with its guard up and by a target on the ground, and SHALL carry `knockdown: true` only for the Amplification.
-7. DOM-09: WHEN a domain activates THEN the system SHALL trigger one `ImpactFrame`, one `FocusLines` burst at the player and one hitstop of `FINISHER_HITSTOP_MS` (150 ms) for that activation, whether it hits zero, one or many targets.
+5. DOM-08: WHEN a domain activates THEN every live common enemy and the live boss whose center is within the activation radius of the player center (edge included) SHALL take one hit of `max(1, round(fraction × target maxHp))`, with no build or vow multiplier: Sanctuary radius 320 px with fractions 0.40 common and 0.06 boss; Jackpot radius 96 px with 0.40 and 0.06; Amplification radius 96 px with 0.25 and 0.04.
+6. DOM-08: The activation hit SHALL carry no band, `strength: 'heavy'`, `tech: true` and `counter: true`, SHALL be resolved with the impact tier forced to `decisive`, SHALL be accepted by a target with its guard up, on the ground or getting up, SHALL interrupt the attack of a committed common enemy (no `armored` result), SHALL push with `force` 8 in the Sanctuary and the Amplification and 0 in the Jackpot, and SHALL carry `knockdown: true` only for the Amplification.
+7. DOM-09: WHEN a domain activates THEN the system SHALL trigger one `ImpactFrame`, one `FocusLines` burst at the player, one hitstop of `FINISHER_HITSTOP_MS` (150 ms) and one `Hud.banner` with the domain name for that activation, whether it hits zero, one or many targets.
 8. DOM-09: WHEN the activation hits a target THEN the damage number of that hit SHALL show the strike kind with the value dealt, through `ui.damageNumbers`.
-9. DOM-10: WHILE a domain is active its remaining time SHALL fall with game time (stopped during hitstop), and WHEN it reaches 0 THEN the domain SHALL end with the debug event `domainEnd:<id>`.
-10. DOM-10: WHEN the round is cleared, the player dies or the run resets while a domain is active THEN the domain SHALL end at once, with `domainEnd:<id>`, and its end effects SHALL not run.
+9. DOM-10: WHILE a domain is active its remaining time SHALL fall with game time (stopped during hitstop) in `roundActive`, `intermission` and `traverse`, and WHEN it reaches 0 THEN the domain SHALL end with the debug event `domainEnd:<id>`.
+10. DOM-10: WHEN the round is cleared while a domain is active THEN the domain SHALL keep running until its timer ends or the konbini opens; WHEN the konbini opens (`shopOpen`, also with `noshop=1`), the player dies or the run resets while a domain is active THEN the domain SHALL end at once, with `domainEnd:<id>`, and its end effects SHALL not run.
 11. DOM-11: The F31 SHALL add no net effective line to `src/scenes/TestScene.ts`; the domain director SHALL be created and updated by an existing director or by the `UiSetup`.
 
 **Independent Test**: `domain.smoke.mjs` com `?debug&hd=1&area=modular&seed=1&maxAlive=3&domain=santuario&charge=100`:
-`P` dispara `domain:santuario`, a carga vai a 0, os comuns a até 320 px perdem 40% do HP máximo e o snapshot mostra o
-hitstop de 150 ms; um segundo `P` dá `domainDenied:active`.
+`P` dispara `domain:santuario`, a carga vai a 0, os comuns a até 320 px perdem 40% do HP máximo, o comum que estava no
+compromisso do ataque não solta a garra (sem `armored:<id>`) e o snapshot mostra o hitstop de 150 ms; um segundo `P` dá
+`domainDenied:active`; um `P` apertado na konbini não dispara nada na rodada seguinte.
 
 ---
 
@@ -181,7 +188,7 @@ cedo e escolher entre dois estilos.
 1. VEU-01: WHEN round 3 is cleared and the player owns no domain THEN the system SHALL mark the Baú do Véu as pending.
 2. VEU-02: WHEN the konbini opens with the Baú do Véu pending THEN the `ChoicePanel` SHALL show a page with item `veu` and two different domains drawn among `santuario`, `jackpot` and `amplificacao` by the `chestRng` stream, each option with the domain name and a one-line effect.
 3. VEU-02: The `chestRng` SHALL be a stream with its own salt in `core/run.ts`, and the same seed SHALL draw the same two domains.
-4. VEU-03: WHEN the Baú do Véu page is confirmed with `Enter` THEN the player SHALL own the selected domain at level 1 with charge 0, the pending mark SHALL be cleared and the system SHALL push the debug event `veil:<id>`.
+4. VEU-03: WHEN the Baú do Véu page is confirmed with `Enter` THEN the player SHALL own the selected domain at level 1 with the charge full (100), the pending mark SHALL be cleared and the system SHALL push the debug event `veil:<id>`.
 5. VEU-03: The Baú do Véu page SHALL have no decline: `Enter` SHALL always take the marked option, and the shop SHALL take no input until the page is confirmed.
 6. VEU-04: IF the konbini of round 3 is skipped (`noshop=1`) THEN the Baú do Véu SHALL stay pending and SHALL open at the next konbini.
 7. VEU-04: IF the player already owns a domain when round 3 is cleared THEN the Baú do Véu SHALL not become pending.
@@ -189,7 +196,7 @@ cedo e escolher entre dois estilos.
 
 **Independent Test**: `domain.smoke.mjs` com `?debug&hd=1&area=modular&seed=1&round=3&maxAlive=1`: ao limpar a r3, a
 konbini abre o `ChoicePanel` com `choice.page.item === 'veu'` e 2 opções; `D` e `Enter` dão `veil:<id>` e o snapshot
-mostra o Domínio no Nv 1.
+mostra o Domínio no Nv 1 com `charge` 100 e `ready`; o 1º `P` da r4 ativa.
 
 ---
 
@@ -203,15 +210,16 @@ Domínio amplificar o que eu já faço, sem lutar sozinho.
 **Acceptance Criteria**:
 
 1. SAN-01: WHILE the Sanctuary is active the domain SHALL last 6000 ms at level 1 and 8000 ms at levels 2 and 3, counted from the activation.
-2. SAN-02: WHILE the Sanctuary is active, WHEN a moveset strike of the player hits (once per strike) or a technique hit that is neither chip nor a Sanctuary cut lands THEN the system SHALL release one cut trigger, unless 4 triggers were already released in the last 1000 ms of game time.
-3. SAN-02: WHEN a 5th trigger would be released within 1000 ms THEN the system SHALL release no cut and SHALL leave the strike or technique hit unchanged.
+2. SAN-02: WHILE the Sanctuary is active, WHEN a moveset strike of the player hits (once per strike) or a technique cast lands its first non-chip hit (once per cast) THEN the system SHALL release one cut trigger, unless 4 triggers were already released in the last 1000 ms of game time.
+3. SAN-02: WHEN a 5th trigger would be released within 1000 ms THEN the system SHALL release no cut and SHALL leave the strike or technique hit unchanged; IF a hit is a Fist Wave `micro` hit, a chip tick or a Sanctuary cut THEN it SHALL release no trigger, and a cast SHALL release at most one trigger however many hits it lands (Red shards included).
 4. SAN-03: WHEN a cut trigger is released THEN the system SHALL hit up to 4 live targets at level 1 and up to 6 at levels 2 and 3, chosen among the common enemies and the boss within 320 px of the player center, nearest first, each with one hit of `round(6 × hpMul)` where `hpMul` is the HP multiplier of the current round.
-5. SAN-03: The Sanctuary cut hit SHALL carry `band: 'micro'`, `strength: 'light'`, `force` 0, direction `{x: 0, y: -1}` and the technique marks of the Desmantelar hit (`techMarks('light')`), so it follows the micro rules of the F29 (15 ms hitstop within the 60 ms per second budget, no `hitstun`, half structure, normal poise on the boss).
-6. SAN-04: WHEN a Sanctuary cut hits a target THEN the domain director SHALL draw the `CutFx.cut` line crossing that target and the `CutFx.split` on it, without going through the `TechRunner`, the `CastMachine` or the `strikeEmitter`, and SHALL push the debug event `domainCut:<targetId>`.
-7. SAN-04: The Sanctuary cut SHALL give no mastery, SHALL not charge the domain bar and SHALL spend no energy.
-8. SAN-05: WHEN the Sanctuary at level 3 ends by its timer THEN every live common enemy within 320 px whose HP is 35% of its max or less SHALL die from one decisive hit equal to its remaining HP, and the live boss within 320 px SHALL take one decisive hit of `round(0.08 × boss maxHp)`, with the debug event `worldCut`.
-9. SAN-05: IF a common enemy has HP above 35% of its max when the World Cut runs THEN it SHALL take no damage from it.
-10. SAN-06: WHILE the Sanctuary is active the screen SHALL show the Sanctuary vignette of the `DomainFx` (colors from the `PALETTE`), and WHEN it ends THEN the vignette SHALL fade out within 300 ms.
+5. SAN-03: WHEN the Sanctuary level 1 activates at round 4 or round 19 next to 4 common enemies at full HP within 320 px and the reference strikes follow (one light strike every 1000 ms, one heavy every 4000 ms and one cast hit every 5000 ms, from 0 ms after the activation) THEN the activation hit plus the cuts released within the 6000 ms SHALL bring all 4 to 0 HP (pure test, with the round's `hpMul` and enemy max HP).
+6. SAN-03: The Sanctuary cut hit SHALL carry `band: 'micro'`, `strength: 'light'`, `force` 0, direction `{x: 0, y: -1}` and the technique marks of the Desmantelar hit (`techMarks('light')`), so it follows the micro rules of the F29 (15 ms hitstop within the 60 ms per second budget, no `hitstun`, half structure, normal poise on the boss).
+7. SAN-04: WHEN a Sanctuary cut hits a target THEN the domain director SHALL draw the `CutFx.cut` line crossing that target and the `CutFx.split` on it, without going through the `TechRunner`, the `CastMachine` or the `strikeEmitter`, and SHALL push the debug event `domainCut:<targetId>`.
+8. SAN-04: The Sanctuary cut SHALL give no mastery, SHALL not charge the domain bar and SHALL spend no energy.
+9. SAN-05: WHEN the Sanctuary at level 3 ends by its timer THEN every live common enemy within 320 px whose HP is 35% of its max or less SHALL die from one decisive hit equal to its remaining HP, and the live boss within 320 px SHALL take one decisive hit of `round(0.08 × boss maxHp)`, with the debug event `worldCut`.
+10. SAN-05: IF a common enemy has HP above 35% of its max when the World Cut runs THEN it SHALL take no damage from it.
+11. SAN-06: WHILE the Sanctuary is active the screen SHALL show the Sanctuary vignette of the `DomainFx` (colors from the `PALETTE`), and WHEN it ends THEN the vignette SHALL fade out within 300 ms.
 
 **Independent Test**: `tests/core/sanctuary.test.ts` (gatilhos 4 e 5 em 1000 ms, 999/1000/1001 ms, alvos por distância,
 Corte do Mundo em 35% e logo acima); no smoke, com `domain=santuario:3&charge=100`, cada jab durante o Domínio dá
@@ -238,10 +246,11 @@ infinita, com a garantia de que a sorte não me deixa na mão três vezes seguid
 8. JAC-05: WHILE the miss effect lasts (4000 ms from the reel stop) every technique cost SHALL be multiplied by 0.5 without the 60% floor of PRC-05, every cooldown started SHALL be multiplied by 0.5, and the player SHALL heal 1 HP every 400 ms through `player.heal`.
 9. JAC-05: WHEN the jackpot or miss effect ends THEN the costs, cooldowns and energy SHALL return to the values resolved by the `Loadout` and the `StatsDirector`, with no lasting change.
 10. JAC-06: WHILE the reels spin the `DomainFx` SHALL show three reels on the UI layer with the current chance in percent, and WHEN they stop THEN they SHALL show three equal symbols on a jackpot and at least one different symbol on a miss.
+11. JAC-06: WHILE the reels spin with 2 consecutive misses in the run (pity armed) the reels SHALL show the text "GARANTIDO" instead of the chance, and the snapshot SHALL report `chance` 1 and `guaranteed: true`.
 
 **Independent Test**: `tests/core/jackpot.test.ts` (chance com Riichi e teto de 60%, Nv 3 com jackpots ganhos, piedade
-na 3ª ativação com 2 falhas seguidas, sem sorteio no garantido); no smoke, com `domain=jackpot&charge=100`, depois do
-`jackpot:hit` a energia fica cheia e a vida sobe 5 por segundo.
+na 3ª ativação com 2 falhas seguidas, sem sorteio no garantido, e a chance exibida 1 com a piedade armada); no smoke,
+com `domain=jackpot&charge=100`, depois do `jackpot:hit` a energia fica cheia e a vida sobe 5 por segundo.
 
 ---
 
@@ -255,16 +264,19 @@ projéteis, para fechar a luta com o moveset em vez das técnicas.
 **Acceptance Criteria**:
 
 1. AMP-01: WHILE the Amplification is active the domain SHALL last 7000 ms at level 1 and 9000 ms at levels 2 and 3, counted from the activation.
-2. AMP-02: WHILE the Amplification is active, WHEN a moveset strike or a prop hit of the player reaches a common enemy or the boss with its guard up THEN the hit SHALL be applied as an unguarded hit, with no `block`, `parry` or `deflect` result.
-3. AMP-03: WHILE the Amplification is active, WHEN an enemy projectile overlaps the active hitbox of a player strike THEN the projectile SHALL be destroyed without dealing damage and the system SHALL push the debug event `projectileNullified`.
-4. AMP-04: WHILE the Amplification is active, WHEN a technique slot key goes down THEN the cast SHALL be refused with the debug event `techDenied:domain`, spending no energy and starting no cooldown.
-5. AMP-05: WHILE the Amplification at level 3 is active the melee multiplier of the `statSheet` SHALL be multiplied by 1.25 through the `StatsDirector`, and WHEN it ends THEN the multiplier SHALL return to the value without it.
-6. AMP-05: The `StatsDirector` SHALL stay the only writer of `loadout.damageMul`, `loadout.vowDamageMul`, `loadout.costMul`, `player.damageTakenMul` and `player.setMaxHp` (POW-01) with the domain effects on.
-7. AMP-06: WHILE the Amplification is active the `DomainFx` SHALL draw an outline around the player that follows `player.renderPos` on every frame, with colors from the `PALETTE`, and SHALL remove it when the domain ends.
+2. AMP-02: WHILE the Amplification is active, WHEN a moveset strike or a prop hit of the player reaches a common enemy with its guard up (common or reading guard) THEN the hit SHALL be applied as an unguarded hit, with no `enemyBlock` event.
+3. AMP-02: WHILE the Amplification is active, WHEN a moveset strike or a prop hit of the player reaches a committed common enemy (CMT-04) THEN the enemy SHALL not absorb it as armor (no `armored:<id>` event) and its pending attack SHALL be interrupted, as it is for a hit outside the commitment; WHILE the Amplification is off the same hit SHALL keep the armor rule of today.
+4. AMP-03: WHILE the Amplification is active, WHEN an enemy projectile overlaps the active hitbox of a player strike THEN the projectile SHALL be destroyed without dealing damage and the system SHALL push the debug event `projectileNullified`.
+5. AMP-04: WHILE the Amplification is active, WHEN a technique slot key goes down THEN the cast SHALL be refused with the debug event `techDenied:domain`, spending no energy and starting no cooldown.
+6. AMP-05: WHILE the Amplification at level 3 is active the melee multiplier of the `statSheet` SHALL be multiplied by 1.25 through the `StatsDirector`, and WHEN it ends THEN the multiplier SHALL return to the value without it.
+7. AMP-05: The `StatsDirector` SHALL stay the only writer of `loadout.damageMul`, `loadout.vowDamageMul`, `loadout.costMul`, `player.damageTakenMul` and `player.setMaxHp` (POW-01) with the domain effects on.
+8. AMP-06: WHILE the Amplification is active the `DomainFx` SHALL draw an outline around the player that follows `player.renderPos` on every frame, with colors from the `PALETTE`, and SHALL remove it when the domain ends.
 
 **Independent Test**: `tests/core/domainEffects.test.ts` (duração, travas e o ×1,25 no `statSheet` nos dois lados do
-Nv 3); no smoke, com `domain=amplificacao&charge=100&enemyGuard=1`, o golpe no comum de guarda levantada aplica dano e
-a tecla `L` dá `techDenied:domain`.
+Nv 3) e `tests/core/enemyGuard.test.ts` (`armorHolds` com e sem `armorPierce`); no smoke, com
+`domain=amplificacao&charge=100&enemyGuard=1`, o golpe no comum de guarda levantada aplica dano, o `jab` no comum que
+entrou no compromisso do ataque interrompe a garra (sem `armored:<id>`, e com o evento fora do Domínio) e a tecla `L`
+dá `techDenied:domain`.
 
 ---
 
@@ -324,11 +336,11 @@ cada efeito no jogo vivo.
 
 **Acceptance Criteria**:
 
-1. DDB-01: The debug snapshot SHALL report `domain: {owned: {id, level} | null, charge, ready, active: {id, level, remainingMs} | null, jackpot: {spinning, chance, misses, jackpotsWon, effect: 'jackpot' | 'miss' | null, effectMs} | null, triggersLastSecond, veilPending}`, required, typed in the snapshot file apart from `debugApi.ts` and added through `StatsDirector.snapshotFields()`.
+1. DDB-01: The debug snapshot SHALL report `domain: {owned: {id, level} | null, charge, ready, active: {id, level, remainingMs} | null, jackpot: {spinning, chance, guaranteed, misses, jackpotsWon, effect: 'jackpot' | 'miss' | null, effectMs} | null, triggersLastSecond, veilPending}`, required, typed in the snapshot file apart from `debugApi.ts` and added through `StatsDirector.snapshotFields()`.
 2. DDB-01: The `choice.page.item` of the F30 snapshot SHALL accept `veu` and `bauChefe`, and the `energyHud` snapshot SHALL report `domainBar: {visible, fill, blinking}`.
-3. DDB-02: WHEN the run starts with `?debug&domain=<id>[:<level>]` THEN the run reset SHALL give the player that domain at that level (1 when absent), and WHEN it starts with `?debug&charge=<n>` THEN the charge SHALL start at `n`.
-4. DDB-02: IF `domain=` has an unknown id or a level that is not an integer from 1 to 3, or `charge=` is not an integer from 0 to 100, THEN the system SHALL ignore that parameter.
-5. DDB-03: The `README.md` SHALL document `domain=`, `charge=`, the keys `P`/`N` and the new debug events.
+3. DDB-02: WHEN the run starts with `?debug&domain=<id>[:<level>]` THEN the run reset SHALL give the player that domain at that level (1 when absent), WHEN it starts with `?debug&charge=<n>` THEN the charge SHALL start at `n`, and WHEN it starts with `?debug&jackpotMisses=<n>` THEN the Jackpot consecutive miss count SHALL start at `n`.
+4. DDB-02: IF `domain=` has an unknown id or a level that is not an integer from 1 to 3, `charge=` is not an integer from 0 to 100, or `jackpotMisses=` is not an integer from 0 to 2, THEN the system SHALL ignore that parameter.
+5. DDB-03: The `README.md` SHALL document `domain=`, `charge=`, `jackpotMisses=`, the keys `P`/`N` and the new debug events.
 
 **Independent Test**: `domain.smoke.mjs` lê `domain` e os eventos; `tests/game/debugApi.test.ts` tem os campos novos no
 literal do snapshot.
@@ -339,7 +351,9 @@ literal do snapshot.
 
 - IF the player presses `P` and `N` in the same frame THEN the system SHALL try the activation once.
 - WHEN the activation hits a common enemy with 40% of its max HP or less THEN that enemy SHALL die and the kill SHALL not charge the bar (the domain is already active).
-- IF the activation kills the last enemy of the round THEN the round SHALL be cleared and the domain SHALL end at once, as DOM-10 says.
+- IF the activation kills the last enemy of the round THEN the round SHALL be cleared and the domain SHALL keep running in the traverse (or the intermission) until its timer ends or the konbini opens, as DOM-10 says: a Jackpot spin SHALL still stop with a result and its effect SHALL still heal, and a Sanctuary level 3 that ends by its timer SHALL still push `worldCut` with no target.
+- IF `P` goes down in the konbini and the shop closes with the key released THEN the first frame of the next round SHALL not activate the domain.
+- WHILE the Amplification is active, WHEN a strike hits a committed common enemy whose attack hitbox is already open THEN the hit SHALL interrupt it in the same frame; a claw that touched the player before the strike landed SHALL still hurt (the armor pierce stops the attack, not a hit already dealt).
 - WHEN the Sanctuary is active and a strike hits while the micro hitstop budget of the F29 is full THEN the cut SHALL still hit and show its number, with no hitstop.
 - IF a Sanctuary cut trigger finds no target within 320 px THEN it SHALL still count toward the 4 triggers per second.
 - WHEN the player dies during the Jackpot spin THEN the reels SHALL stop with no result, the miss count SHALL not change and no effect SHALL apply.
@@ -430,34 +444,43 @@ literal do snapshot.
 **Testes novos** (arquivo novo para todo sistema novo; nenhum teste da lista de exceções do `max-lines` cresce):
 - `tests/core/domain.test.ts` (DOM-01 a DOM-05, com o ritmo de referência de DOM-04), `tests/core/domainActivation.test.ts`
   (DOM-06 a DOM-10: recusas, raio com a borda inclusa, frações por tipo de alvo), `tests/core/sanctuary.test.ts`
-  (SAN-01 a SAN-05), `tests/core/jackpot.test.ts` (JAC-01 a JAC-05), `tests/core/domainEffects.test.ts` (AMP-01 a
-  AMP-05), `tests/core/veilChest.test.ts` (VEU-01 a VEU-04, mesmo sorteio na mesma seed), `tests/core/domainShop.test.ts`
-  (DNV-01 a DNV-05) e `tests/data/domains.test.ts` (números da seção 5.6 e chaves da `PALETTE`).
-- Cada limiar testado nos dois lados (L-010): esvaziamento em 7999/8000 ms; raio de 320 e 64 px com o alvo na borda e
+  (SAN-01 a SAN-05, com a limpeza de 4 comuns na r4 e na r19 do SAN-03), `tests/core/jackpot.test.ts` (JAC-01 a
+  JAC-06, com a chance exibida da piedade), `tests/core/domainEffects.test.ts` (AMP-01 a AMP-05),
+  `tests/core/veilChest.test.ts` (VEU-01 a VEU-04, mesmo sorteio na mesma seed), `tests/core/domainShop.test.ts`
+  (DNV-01 a DNV-05, inclusive a entrada do catálogo e a compra: o `tests/core/shop.test.ts` tem 368 linhas efetivas e
+  não recebe caso novo) e `tests/data/domains.test.ts` (números da seção 5.6 e chaves da `PALETTE`).
+- Cada limiar testado nos dois lados (L-010): esvaziamento em 7999/8000 ms; raio de 320 e 96 px com o alvo na borda e
   1 px fora; 4 e 5 gatilhos em 1000 ms (999/1000/1001 ms); Corte do Mundo em 35% e logo acima; chance no teto de 60%
-  com e sem Riichi; loja da r7 e da r8; Nv 2 → 3 e o Nv 3 no teto.
+  com e sem Riichi; loja da r7 e da r8; Nv 2 → 3 e o Nv 3 no teto; armadura com e sem `armorPierce`.
 - O adaptador que repassa o número ao motor tem teste próprio, não só o puro (L-043): o raio e a fração que o
   `domainDirector` usa para escolher os alvos, o `FINISHER_HITSTOP_MS` que ele passa ao `EffectsDirector` e a largura
   da barra que o `EnergyHud` desenha a partir da carga.
 
-**Testes atualizados:** `debugApi` (campos novos do snapshot), `shop` e o teste do catálogo (entrada nova no fim),
-`bossReward` (o prêmio adiado de DNV-02), `choicePanel` da F30 (páginas `veu` e `bauChefe`) e `run` (os streams
-`chestRng` e `domainRng`).
+**Testes atualizados:** `debugApi` (campos novos do snapshot), `bossReward` (o prêmio adiado de DNV-02), `choicePanel`
+da F30 (páginas `veu` e `bauChefe`), `cast` (recusa `domain`), `statSheet` (Domínio neutro e ×1,25), `enemyGuard`
+(`armorHolds`) e o teste do `techStats` da F30 (custo sem piso no Jackpot). Os streams `chestRng` e `domainRng` vão para
+`tests/core/domainStreams.test.ts` (novo), porque o `run.test.ts` e o `enemyBrain.test.ts` estão na lista de exceções do
+`max-lines` e não crescem.
 
 **Smoke novo:** `domain.smoke.mjs`, com `?debug&hd=1&area=modular&seed=1`: ativação e recusa (DOM-06 a DOM-09), Baú do
 Véu na r3 (VEU-01 a VEU-03), um cenário por Domínio (SAN, JAC, AMP) e a página `bauChefe` na r5 (DNV-02).
 
 **Smokes que rodam junto:** `fight`, `impact`, `feel`, `tech`, `defense`, `kokusen`, `hud`, `shop`, `run-loop`, `boss`,
-`world-boss`, `power` (F29) e `shop-axes` (F30).
+`world-boss`, `enemy-guard`, `telegraph` (lê o `armored:`), `enemy-react`, `power` (F29) e `shop-axes` (F30).
 
 ---
 
 ## Success Criteria
 
-- [ ] Numa run normal, o usuário ganha o Domínio no fim da r3, enche a barra lutando em cerca de 46 s e ativa com `P`.
-- [ ] Os três Domínios jogam diferente na mesma seed: cortes em cadeia, aposta com piedade e corpo a corpo que atravessa
-      guarda.
-- [ ] A ativação limpa ou quase limpa a tela na r4 e na r19, com o `ImpactFrame`, as linhas de foco e o hitstop do
-      finalizador.
+- [ ] Numa run normal, o usuário ganha o Domínio no fim da r3, ativa com `P` logo na r4 (barra cheia do baú), enche a
+      barra de novo lutando em cerca de 46 s e ativa outra vez.
+- [ ] Os três Domínios jogam diferente na mesma seed: cortes em cadeia, aposta com piedade visível e corpo a corpo que
+      atravessa guarda e armadura.
+- [ ] Na r4 e na r19, a ativação tira a mesma fração do HP máximo de todo alvo no raio (40% do comum no Santuário e no
+      Jackpot, 25% na Amplificação), interrompe o ataque de quem estava no compromisso e mostra o nome do Domínio, o
+      `ImpactFrame`, as linhas de foco e o hitstop do finalizador; o Santuário Nv 1 fecha um grupo de 4 comuns no ritmo
+      de referência (SAN-03).
+- [ ] A ativação que mata os últimos inimigos da rodada não joga o Domínio fora: o giro do Jackpot termina com
+      resultado na travessia.
 - [ ] Gate verde; `domain.smoke.mjs` e os smokes da lista verdes; a `TestScene` sem linha líquida a mais.
 - [ ] A barra e os efeitos dos três Domínios conferidos no jogo em HD, em movimento e nos dois lados.

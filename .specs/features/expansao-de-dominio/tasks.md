@@ -48,7 +48,7 @@ começar; se mudou, segue o código e anota a troca no commit.
 
 | Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
 | --- | --- | --- | --- | --- |
-| Regra pura (`src/core/**`) | unit | 1:1 com os ACs; todo edge case listado; cada limite nos dois lados (L-010): 7999/8000/16000 ms, 320/321 px, 64/65 px, 4/5 gatilhos, 999/1000/1001 ms, 35% e 35% + 1 HP, 60% com e sem Riichi, r7/r8, Nv 2 → 3 e Nv 3 no teto, 40 < t ≤ 60 s | `tests/core/*.test.ts` (teste par por arquivo novo) | `npx vitest run tests/core/<arquivo>` |
+| Regra pura (`src/core/**`) | unit | 1:1 com os ACs; todo edge case listado; cada limite nos dois lados (L-010): 7999/8000/16000 ms, 320/321 px, 96/97 px, 4/5 gatilhos, 999/1000/1001 ms, 35% e 35% + 1 HP, 60% com e sem Riichi, r7/r8, Nv 2 → 3 e Nv 3 no teto, 40 < t ≤ 60 s, `armorHolds` com e sem `armorPierce`, limpeza do Santuário com 10 e com 6 gatilhos | `tests/core/*.test.ts` (teste par por arquivo novo) | `npx vitest run tests/core/<arquivo>` |
 | Números de ajuste (`src/data/**`) | unit | Números da seção 5.6 do plano conferidos um a um; toda chave de cor existe na `PALETTE` (DHD-04) | `tests/data/*.test.ts` | `npx vitest run tests/data/<arquivo>` |
 | Vista testável sem motor (`src/game/ChoicePanel.ts`, tipos de snapshot) | unit | Páginas, seleção e `debug()` no molde do `VowPanel`; literal do snapshot com os campos novos | `tests/game/*.test.ts` | `npx vitest run tests/game/<arquivo>` |
 | Adaptadores (`src/scenes/**`, `src/game/**`) | smoke | Efeito lido do jogo vivo pelo snapshot, medido na saída e não no pedido (L-043, L-076); refatoração com os smokes de antes iguais | `scripts/smoke/domain.smoke.mjs` (novo) e os smokes de cada tarefa | `npm run smoke -- <trecho>` |
@@ -164,8 +164,9 @@ design ("Components", `data/domains.ts`).
 
 **Done when**:
 
-- [ ] `tests/data/domains.test.ts` (novo): raios 320/64/64; frações 0,40/0,06, 0,40/0,06 e 0,25/0,04 (elite 0,20, 0,20 e
-      0,12); durações 6000/8000/8000 e 7000/9000/9000; carga 1/2/2/1/5/1/5/15 com `drainAfterMs` 8000 e `drainStep` 10;
+- [ ] `tests/data/domains.test.ts` (novo): raios 320/96/96; frações 0,40/0,06, 0,40/0,06 e 0,25/0,04 (elite 0,20, 0,20 e
+      0,12); empurrão da ativação 8/0/8; durações 6000/8000/8000 e 7000/9000/9000; carga 1/2/2/1/5/1/5/15 com
+      `drainAfterMs` 8000, `drainStep` 10 e `veilStart` 100;
       Santuário 4 gatilhos em 1000 ms, alvos 4/6/6, corte base 6, Corte do Mundo 0,35 e 0,08; Jackpot 2000 ms, base
       0,33/0,40/0,40, Riichi 0,04, bônus 0,05, teto 0,60, piedade 2, efeito 8000/200 e 4000/400 com 0,5/0,5;
       Amplificação 1,25; loja 40 + 10 por nível a partir da r8
@@ -198,7 +199,8 @@ design ("Components", `data/domains.ts`).
       relógio; carga 100 não esvazia; com `roundActive` falso o relógio não anda
 - [ ] Ritmo de referência (DOM-04): 1 leve/s, 1 forte a cada 4 s, 1 abate a cada 5 s, 1 defesa perfeita a cada 20 s e 1
       acerto de conjuração a cada 5 s, de 0, chega a 100 com `40 < t ≤ 60` s (~46,5 s), simulado em passos de 16 ms
-- [ ] `own` dá Nv 1 e carga 0; `raise` sobe 1 → 2 → 3 e recusa no Nv 3 e sem Domínio (DNV-01); `reset` zera posse,
+- [ ] `own(id)` dá Nv 1 e carga 0, `own(id, 1, 100)` dá a carga cheia (VEU-03); `raise` sobe 1 → 2 → 3 sem mexer na
+      carga e recusa no Nv 3 e sem Domínio (DNV-01); `reset` zera posse,
       carga, ativo, `veilPending` e `bossChestPending` (DOM-05, VEU-04.8); `setCharge` sem dono não faz nada
 - [ ] `domainBarView`: escondida sem dono; `fill = charge / 100` carregando e `remainingMs / totalMs` com ativo;
       `blinking` só com `ready` (DHD-01 a DHD-03)
@@ -212,8 +214,9 @@ design ("Components", `data/domains.ts`).
 
 #### T3: Parâmetros de debug do Domínio
 
-**What**: `src/core/domainParam.ts` com `parseDomainParam(raw)` (`<id>[:<nível>]`) e `parseChargeParam(raw)` (inteiro de
-0 a 100), os dois devolvendo `null` na entrada inválida.
+**What**: `src/core/domainParam.ts` com `parseDomainParam(raw)` (`<id>[:<nível>]`), `parseChargeParam(raw)` (inteiro de
+0 a 100) e `parseMissesParam(raw)` (inteiro de 0 a 2, as falhas seguidas do Jackpot), os três devolvendo `null` na
+entrada inválida.
 **Where**: `src/core/domainParam.ts`
 **Depends on**: T1
 **Reuses**: molde do `core/axisParam.ts` (F30) e do parser do `?mods=` (F29)
@@ -222,7 +225,8 @@ design ("Components", `data/domains.ts`).
 **Done when**:
 
 - [ ] `tests/core/domainParam.test.ts` (novo): `santuario` → Nv 1; `jackpot:3` → Nv 3; `amplificacao:0`, `santuario:4`,
-      `santuario:1.5` e `xx` → `null`; `charge` 0 e 100 aceitos; 101, -1, `5.5`, vazio e `abc` → `null`
+      `santuario:1.5` e `xx` → `null`; `charge` 0 e 100 aceitos; 101, -1, `5.5`, vazio e `abc` → `null`;
+      `jackpotMisses` 0 e 2 aceitos, 3 e -1 → `null`
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -246,7 +250,7 @@ design ("Components", `data/domains.ts`).
 
 - [ ] `tests/core/domainActivation.test.ts` (novo): as quatro recusas na ordem, cada uma sozinha e combinadas (com ativo
       e carga 0 o motivo é `active`); nenhuma recusa muda a carga (DOM-07)
-- [ ] Raio 320 com o alvo a 320 px aceito e a 321 px fora; raio 64 com 64/65 px; alvo acima do player conta pela
+- [ ] Raio 320 com o alvo a 320 px aceito e a 321 px fora; raio 96 com 96/97 px; alvo acima do player conta pela
       distância euclidiana (DOM-08)
 - [ ] Dano `max(1, round(fração × maxHp))`: 0,40/0,06 no Santuário e no Jackpot, 0,25/0,04 na Amplificação; `maxHp` 1
       dá 1; `maxHp` escalado (r35) mantém a fração (edge case)
@@ -298,7 +302,8 @@ F30); `StatsDirector.snapshotFields()` ganha `domain`; `GameSnapshot.domain` no 
 
 **What**: `domainDirector.onMeleeHit(hit)` (um por `swingId` no golpe do moveset, `light` +1 ou `heavy` +2; objeto e
 arma vinculada +2 com dedupe por quadro; pula `FINISHER_MOVE`), `onDefense(kind)` (`parry`, `deflect`,
-`perfectDodge` +5), `onFinisher()` (+5) e `onKill()` (+1); `BuildDirector.onMeleeHit`, `onDefense` e `onFinisher`
+`perfectDodge` +5), `onFinisher()` (+5) e `onKill()` (+1, só comum: o chefe não passa pelo `onEnemyDied`);
+`BuildDirector.onMeleeHit`, `onDefense` e `onFinisher`
 repassam ao `domain`; `combat.onEnemyDied` chama `build.domain.onKill()` e `combat.tryBossFinisher` chama
 `build.domain.onFinisher()` antes do `return true` (sem passar pelo `build.onFinisher`, para o `executor` não curar no
 chefe).
@@ -325,9 +330,9 @@ chefe).
 
 #### T7: Carga por conjuração e Kokusen
 
-**What**: `domainDirector.onTechHit(hit)` (guarda a banda do último acerto de técnica; ignora o corte do próprio
-Santuário pelo guarda de reentrada) e `onCastHit(castId)` (+1 uma vez por `castId` se o acerto que acabou de chegar não
-era chip); `onKokusen()` (+15); `effects.onTechConnect` chama `build.domain.onTechHit(hit)` na 1ª linha;
+**What**: `domainDirector.onTechHit(hit)` (só guarda a banda do último acerto de técnica) e `onCastHit(castId)` (uma
+vez por `castId`, se o acerto que acabou de chegar não era chip: +1 sem Domínio ativo; o gatilho do Santuário entra
+neste mesmo ponto na T18); `onKokusen()` (+15); `effects.onTechConnect` chama `build.domain.onTechHit(hit)` na 1ª linha;
 `runDirector.onMasteryHit` chama `build.domain.onCastHit(castId)` depois do `fxLab`; `impactFx.onKokusen` (F29) chama
 `build.domain.onKokusen()`.
 **Where**: `src/scenes/test/domainDirector.ts`
@@ -352,8 +357,9 @@ era chip); `onKokusen()` (+15); `effects.onTechConnect` chama `build.domain.onTe
 
 #### T8: Tecla P/N, recusas e laço do quadro
 
-**What**: `domainPressed` no `InputSnapshot` (`JustDown` de `P` e de `N`, as duas bordas consumidas por `anyJustDown`) e
-`domainPressed: false` no `NEUTRAL_INPUT` (`params.ts`); a chamada do `techDirector` na `TestScene` passa a
+**What**: `domainPressed` no `InputSnapshot` (`JustDown` de `P` e de `N`, as duas bordas consumidas por `anyJustDown`),
+`domainPressed: false` no `NEUTRAL_INPUT` (`params.ts`) e o consumo descartado das bordas de `P` e `N` no
+`ShopInput.read()` (na loja o `updateGameplay` não roda e o `PlayerInput` não é lido, `TestScene.ts:419-420`); a chamada do `techDirector` na `TestScene` passa a
 `update(dt, input)` (mesma linha); `TechDirector.update(dt, input)` chama primeiro
 `build.domain.update(dt, input.domainPressed)`; `domainDirector.update` sai cedo no `fxLab` e fora de
 `roundActive`/`intermission`/`traverse`, resolve a tecla (`tryActivate`: recusa com um evento `domainDenied:<motivo>`
@@ -373,13 +379,14 @@ sem mexer na carga; aceita: `player.cancelMelee()` se havia golpe, carga 0, `Act
       `N` faz o mesmo numa run nova; segundo `P` dá `domainDenied:active`; sem `charge`, `domainDenied:charge`; sem
       `domain`, `domainDenied:none`; durante uma conjuração (`tech=corte`, `L` e `P` no quadro seguinte),
       `domainDenied:busy`; nenhuma recusa muda a carga e cada uma empurra um evento só (DOM-07)
-- [ ] `P` e `N` no mesmo quadro dão uma tentativa (edge case); `P` apertado na konbini não dá evento nenhum, nem na
-      saída da loja (DOM-06.2)
+- [ ] `P` e `N` no mesmo quadro dão uma tentativa (edge case); `P` apertado e solto na konbini não dá evento nenhum,
+      nem no 1º quadro da rodada seguinte, com `charge=100` (os dois lados: sem o consumo no `ShopInput` o smoke
+      falha) (DOM-06.2)
 - [ ] `P` no meio do `jab` termina o golpe na hora (DOM-07.4); o Domínio acaba pelo tempo com `domainEnd:santuario` em
       6000 ms de jogo (`active.remainingMs` lido no snapshot)
 - [ ] Esvaziamento no jogo: `charge=50` parado 8 s de `roundActive` cai para 40 (DOM-03)
 - [ ] `src/scenes/TestScene.ts` com as mesmas linhas efetivas de antes da tarefa (DOM-11)
-- [ ] Smokes `fight`, `tech`, `hud`, `boot`, `no-debug` e `domain` verdes
+- [ ] Smokes `fight`, `tech`, `hud`, `boot`, `no-debug`, `shop` e `domain` verdes
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
@@ -392,10 +399,11 @@ sem mexer na carga; aceita: `player.cancelMelee()` se havia golpe, carga 0, `Act
 
 **What**: `domainDirector.strikeActivation()`: alvos por `activationTargets` (comuns vivos e chefe vivo, centro do
 `hurtRect`), um `Hit` por alvo (`ownerId: player.id`, dano `activationDamage`, `strength: 'heavy'`, `force`
-`DOMAIN_HIT.force`, `direction` `{x: ±1, y: DOMAIN_HIT.liftY}`, `unblockable: true`, `tech: true`, `knockdown` só na
-Amplificação, sem `band`); acerto aceito → `ui.damageNumbers.show(target, dano, 'strike', ponto)` e
-`cursedFx.impact(impactTier(hit, { brokePosture: false, forced: 'decisive' }), ...)`; depois, uma vez por ativação:
-`impactFrame.trigger(-(++activationSeq))`, `focusLines.show(worldToScreen(centro do player))` e
+`DOMAINS[id].activation.force` (8, 0 no Jackpot), `direction` `{x: ±1, y: DOMAIN_HIT.liftY}`, `unblockable: true`,
+`tech: true`, `counter: true`, `knockdown` só na Amplificação, sem `band`); acerto aceito →
+`ui.damageNumbers.show(target, dano, 'strike', ponto)` e `cursedFx.impact(impactTier(hit, { brokePosture: false, forced:
+'decisive' }), ...)`; depois, uma vez por ativação: `impactFrame.trigger(-(++activationSeq))`,
+`focusLines.show(worldToScreen(centro do player))`, `hud.banner(DOMAINS[id].name, RUN.bannerMs)` e
 `effects.hitstop.trigger(FINISHER_HITSTOP_MS)` com `freeze()`.
 **Where**: `src/scenes/test/domainDirector.ts`
 **Depends on**: T8
@@ -407,11 +415,15 @@ Amplificação, sem `band`); acerto aceito → `ui.damageNumbers.show(target, da
 
 - [ ] `domain.smoke.mjs` (parte 2, acerto) com `domain=santuario&charge=100&maxAlive=3`: os comuns a até 320 px perdem
       `round(0,40 × maxHp)` e um posto a 321 px não perde nada (L-043: o raio e a fração chegam ao motor); com
-      `domain=amplificacao`, 64/65 px e 0,25 com `knockdown` no alvo
+      `domain=amplificacao`, 96/97 px e 0,25 com `knockdown` no alvo
 - [ ] `hitstop.remainingMs` parte de 150 no quadro da ativação, mesmo sem alvo; `damageNumbers.last.kind` é `strike` com
-      o valor aplicado; um comum de guarda levantada (`enemyGuard=1`) leva o acerto (DOM-08.6)
+      o valor aplicado; o banner mostra o nome do Domínio; um comum de guarda levantada (`enemyGuard=1`) leva o acerto
+      (DOM-08.6, DOM-09)
+- [ ] O comum que entrou no compromisso da garra (`ai.committed`) leva o acerto sem `armored:<id>` e a garra não sai (a
+      vida do player não cai por ela); o mesmo comum golpeado por um `jab` comum dá `armored:<id>` (os dois lados,
+      CMT-04); um comum levantando leva o acerto (o `tech` passa pelo `refuses`)
 - [ ] O comum com 40% do HP ou menos morre e a morte não carrega a barra (edge case)
-- [ ] Smokes `fight`, `impact`, `feel`, `boss` e `domain` verdes
+- [ ] Smokes `fight`, `impact`, `feel`, `boss`, `telegraph` e `domain` verdes
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
@@ -420,29 +432,31 @@ Amplificação, sem `band`); acerto aceito → `ui.damageNumbers.show(target, da
 
 ---
 
-#### T10: Fim do Domínio na rodada limpa, na morte e no reinício
+#### T10: Fim do Domínio na konbini, na morte e no reinício
 
-**What**: `runDirector.applyRunCommand('roundCleared')` chama `build.domain.onRoundCleared(cmd.round)` (por enquanto só
-`end('roundCleared')`; o Baú do Véu entra na T15); `domainDirector.update` termina com `end('death')` quando o player
-morre com Domínio ativo; `reset()` termina com `end('reset')`; `uiSetup.addHud` chama `build.domain.onSceneCreate()`
-(o `R` reinicia a cena: encerra sem efeito de fim). Só `end('timer')` roda o efeito de fim (DOM-10.10).
+**What**: `runDirector.applyRunCommand`, no `case 'shopOpen'` e antes do `noshop`, chama `build.domain.onShopOpen()`
+(`end('shop')`); a rodada limpa não encerra o Domínio, que segue em `traverse`/`intermission` até o tempo;
+`domainDirector.update` termina com `end('death')` quando o player morre com Domínio ativo; `reset()` termina com
+`end('reset')`; `uiSetup.addHud` chama `build.domain.onSceneCreate()` (o `R` reinicia a cena: encerra sem efeito de
+fim). Só `end('timer')` roda o efeito de fim (DOM-10.10).
 **Where**: `src/scenes/test/domainDirector.ts`
 **Depends on**: T8
-**Reuses**: `case 'roundCleared'` (`runDirector.ts:71-79`); `UiSetup.addHud` (`uiSetup.ts:68-94`); `DomainEnd` (T4)
+**Reuses**: `case 'shopOpen'` (`runDirector.ts:80-84`); `UiSetup.addHud` (`uiSetup.ts:68-94`); `DomainEnd` (T4)
 **Requirement**: DOM-10
 
 **Done when**:
 
 - [ ] `domain.smoke.mjs` (parte 2, fins): ativar com `maxAlive=1` e o último inimigo morrer pela ativação limpa a
-      rodada e dá `domainEnd:santuario` na hora (edge case); morrer com o Domínio ativo (tecla `4` do debug até 0 HP) dá
-      `domainEnd`; `R` com o Domínio ativo começa sem `domain.active`
-- [ ] Nenhum desses fins empurra evento de efeito de fim (o `worldCut` da T20 só sai no fim pelo tempo)
-- [ ] Smokes `run-loop`, `boss` e `domain` verdes
+      rodada e deixa `domain.active` vivo na travessia, com `remainingMs` caindo; o `domainEnd:santuario` sai no tempo
+      (6000 ms) ou na abertura da konbini, o que vier antes, também com `noshop=1` (edge case); morrer com o Domínio
+      ativo (tecla `4` do debug até 0 HP) dá `domainEnd`; `R` com o Domínio ativo começa sem `domain.active`
+- [ ] Nenhum fim que não seja o tempo empurra evento de efeito de fim (o `worldCut` da T20 só sai no fim pelo tempo)
+- [ ] Smokes `run-loop`, `world-traverse`, `boss` e `domain` verdes
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full
-**Commit**: `feat(scene): end the domain on round clear, death and restart`
+**Commit**: `feat(scene): end the domain at the konbini, on death and on restart`
 
 ---
 
@@ -546,11 +560,12 @@ nenhum stream usa (`0xa54ff53a` no design, conferido por `grep` em `src/`); se a
 
 #### T15: Pendência do Baú do Véu no fim da r3
 
-**What**: `domainDirector.onRoundCleared(round)` passa a marcar `state.markVeil(drawVeil(run.chestRng))` quando a rodada
-limpa é a 3 e o player não tem Domínio; o snapshot mostra `veilPending`; `reset()` limpa a pendência.
+**What**: `runDirector.applyRunCommand('roundCleared')` chama `build.domain.onRoundCleared(cmd.round)` (+1), que marca
+`state.markVeil(drawVeil(run.chestRng))` quando a rodada limpa é a 3 e o player não tem Domínio (o Domínio ativo não
+muda); o snapshot mostra `veilPending`; `reset()` limpa a pendência.
 **Where**: `src/scenes/test/domainDirector.ts`
 **Depends on**: T10, T12, T13
-**Reuses**: `onRoundCleared` (T10); `markVeil`/`takeVeil` (T2)
+**Reuses**: `case 'roundCleared'` (`runDirector.ts:71-79`); `markVeil`/`takeVeil` (T2)
 **Requirement**: VEU-01, VEU-04, DDB-01
 
 **Done when**:
@@ -570,7 +585,8 @@ limpa é a 3 e o player não tem Domínio; o snapshot mostra `veilPending`; `res
 #### T16: Página do Baú do Véu na konbini
 
 **What**: `domainDirector.choicePages()` (página `veu` com o par pendente, título = nome do Domínio e linha = efeito de
-`DOMAINS`) e `confirm(item, option)` (`veu` → `state.own(id)`, `takeVeil()`, evento `veil:<id>`); o
+`DOMAINS`) e `confirm(item, option)` (`veu` → `state.own(id, 1, DOMAIN_CHARGE.veilStart)`, `takeVeil()`, evento
+`veil:<id>`); o
 `shopDirector.openChoiceOrShop()` (F30) monta `[...build.domain.choicePages(), ...build.axes.choicePages()]` e o
 `updateChoicePanel` despacha `veu` e `bauChefe` para `build.domain.confirm`; a página não tem recusa e a loja não lê
 entrada até o `Enter`.
@@ -583,8 +599,9 @@ entrada até o `Enter`.
 
 - [ ] `domain.smoke.mjs` (parte 3) com `round=3&maxAlive=1`: limpar a r3 abre a konbini com
       `choice.page.item === 'veu'` e 2 opções diferentes; a mesma seed mostra o mesmo par em duas runs (VEU-02.3); `D` e
-      `Enter` dão `veil:<id>`, `domain.owned` `{id, level: 1}`, `charge` 0, `veilPending` falso e `hud.domainBar.visible`
-      (VEU-03); antes do `Enter`, as teclas da loja não compram nada (VEU-03.5)
+      `Enter` dão `veil:<id>`, `domain.owned` `{id, level: 1}`, `charge` 100, `ready`, `veilPending` falso,
+      `hud.domainBar.visible` e `blinking` (VEU-03); o 1º `P` da r4 dá `domain:<id>`; antes do `Enter`, as teclas da
+      loja não compram nada (VEU-03.5)
 - [ ] Com `noshop=1` na r3, a página abre na konbini seguinte (VEU-04.6)
 - [ ] Smokes `shop`, `run-loop`, `vows`, `shop-axes` (F30) e `domain` verdes; `shopDirector.ts` abaixo de 400 linhas
 - [ ] Gate verde; contagem de testes sem perda
@@ -614,6 +631,10 @@ max, radiusPx)` (vivos a até 320 px, do mais perto ao mais longe, empate pelo i
       em 1000 e 1001 ms aceito; gatilho sem alvo conta (edge case) (SAN-02)
 - [ ] Até 4 alvos no Nv 1 e 6 no Nv 2/3; ordem por distância e, no empate, pelo id; alvo a 320 px entra e a 321 px
       fica fora; morto fica fora; `round(6 × hpMul)` na r1 e na r19 (SAN-03)
+- [ ] Limpeza (SAN-03.5): golpes de referência a partir de 0 ms (leve a cada 1000, forte a cada 4000, conjuração a cada
+      5000) passados pelo `SanctuaryTriggers` dentro de 6000 ms soltam 10 gatilhos; com a ativação de 40% e esses
+      cortes, 4 comuns de HP cheio chegam a 0 na r4 (HP 71, ativação 28, corte 7) e na r19 (HP 125, ativação 50, corte
+      12); com só 6 gatilhos, na r4 um comum fica vivo (o teste discrimina)
 - [ ] Corte do Mundo: comum com HP = 35% do máximo morre (leva o HP restante); com 35% + 1 HP fica de fora; chefe leva
       `round(0,08 × maxHp)`; o chefe com 8% ou menos morre; alvo a 321 px fica de fora (SAN-05)
 - [ ] Gate verde; contagem de testes sem perda
@@ -627,12 +648,13 @@ max, radiusPx)` (vivos a até 320 px, do mais perto ao mais longe, empate pelo i
 #### T18: Cortes do Santuário nos acertos do jogador
 
 **What**: `src/scenes/test/domainPowers.ts` (campo `powers` do `domainDirector`) com `onActivate`, `onStrike(hit)` e
-`onTechHit(hit)` (Santuário: `triggers.tryRelease(clockMs)` e, aceito, `pendingCuts++`), `update(dtMs)` (solta os
+`onCastTrigger()` (Santuário: `triggers.tryRelease(clockMs)` e, aceito, `pendingCuts++`), `update(dtMs)` (solta os
 cortes pendentes: alvos por `sanctuaryTargets`, `Hit` micro com `strength: 'light'`, `force` 0, `direction`
-`{x: 0, y: -1}`, `...techMarks('light')` e dano `sanctuaryCutDamage(hpMul)`, `receiveHit`, `effects.onTechConnect` com o
-guarda de reentrada ligado, `CutFx.cut` na linha que cruza o alvo e `CutFx.split`, evento `domainCut:<targetId>`),
-`reset` e `snapshot()` (`triggersLastSecond`); `const CUT_MID_PX` vira `export const` no `CutFx.ts`; os ganchos do
-`domainDirector` (T6, T7) repassam ao `powers`.
+`{x: 0, y: -1}`, `...techMarks('light')` e dano `sanctuaryCutDamage(hpMul)`, `receiveHit`, `effects.onTechConnect`,
+`CutFx.cut` na linha que cruza o alvo e `CutFx.split`, evento `domainCut:<targetId>`), `reset` e `snapshot()`
+(`triggersLastSecond`); `const CUT_MID_PX` vira `export const` no `CutFx.ts`; o `onMeleeHit` do `domainDirector` (T6)
+repassa ao `onStrike` e o `onCastHit` (T7), com o Santuário ativo, chama o `onCastTrigger` (uma vez por conjuração, sem
+chip; a Onda do Punho e o próprio corte não têm `masteryHit` e não chegam lá, então não há guarda de reentrada).
 **Where**: `src/scenes/test/domainPowers.ts`
 **Depends on**: T17
 **Reuses**: `CutFx.cut`/`split` (`techFx/CutFx.ts:28`, `:42`), criado na hora com `s.realtimeFx` e `s.fxRegistry`;
@@ -647,7 +669,9 @@ guarda de reentrada ligado, `CutFx.cut` na linha que cruza o alvo e `CutFx.split
       com `domain=santuario:3`, até 6 alvos e o Domínio dura 8000 ms (SAN-01)
 - [ ] O HP do alvo cai `round(6 × hpMul)` por corte, lido no snapshot (L-043); o alvo não entra em `hitstun` pelo
       corte; `damageNumbers.last.kind` é `micro`
-- [ ] O corte não muda `charge`, a maestria nem a energia (SAN-04.7); o corte não vira gatilho de outro corte
+- [ ] O corte não muda `charge`, a maestria nem a energia (SAN-04.7); o corte não vira gatilho de outro corte; uma
+      conjuração do Corte (`tech=corte`) que acerta 3 comuns solta 1 gatilho, e com o ramo Onda do Punho (`ramo=corpo:b`,
+      F30) o `jab` com onda solta 1 gatilho, não 2 (SAN-02.3)
 - [ ] Com o teto do micro cheio, o corte ainda acerta e mostra o número, sem hitstop (edge case)
 - [ ] `fx.live` ≤ 40 durante o Santuário Nv 3 com 6 alvos (teto do POW-14)
 - [ ] Smokes `impact`, `feel`, `tech`, `power` e `domain` verdes
@@ -716,7 +740,8 @@ nada.
 
 **What**: `src/core/jackpot.ts` com `jackpotChance({ level, strikes, jackpotsWon })`, `JackpotState` (`misses`,
 `jackpotsWon`, `phase`, `strikes`, `effectMs`, `startSpin`, `onStrike`, `stop(level, draw)`, `tickEffect(dtMs)`,
-`abort`, `endEffect`, `reset`) e `reelFaces(result, misses)`.
+`abort`, `endEffect`, `reset`), `shownChance`/`guaranteed` (1 e verdadeiro com a piedade armada) e
+`reelFaces(result, misses)`.
 **Where**: `src/core/jackpot.ts`
 **Depends on**: None
 **Reuses**: `JACKPOT` (T1, fase 1)
@@ -734,6 +759,8 @@ nada.
       (JAC-04, JAC-05)
 - [ ] `abort` no giro volta a `idle` sem resultado e sem mudar `misses` (edge case)
 - [ ] `reelFaces`: três iguais no jackpot e pelo menos um diferente na falha, sem `Rng` (JAC-06)
+- [ ] `shownChance` 1 e `guaranteed` verdadeiro com 2 falhas seguidas; com 1 falha, a chance do `jackpotChance` e
+      `guaranteed` falso (JAC-06.11)
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -877,7 +904,8 @@ O ramo com o Jackpot ligado é provado no jogo vivo pela T28 (merge forward: nã
 
 #### T28: Giro, Riichi e efeito do Jackpot
 
-**What**: no `domainPowers`: `onActivate` do Jackpot → `jackpot.startSpin()` (relógio do giro no `ActiveDomain`);
+**What**: no `domainPowers`: o `applyDebug` do `domainDirector` passa o `jackpotMisses=` ao `JackpotState` (DDB-02);
+`onActivate` do Jackpot → `jackpot.startSpin()` (relógio do giro no `ActiveDomain`);
 `onStrike` no giro → `jackpot.onStrike()` (um por `swingId`); `onPhaseEnd()` no giro → `stop(level, () =>
 run.domainRng!.next())`, evento `jackpot:hit` ou `jackpot:miss`, no jackpot `loadout.clearCooldown(0)` e `(1)`,
 `active.restart(effectMs)`, `stats.sync()`; `update` com o efeito (`energyLock` → `energy.gain(energy.max)` em todo
@@ -900,6 +928,9 @@ quadro; `tickEffect` → `player.heal(1)` por tique); `onEnd` → `abort()` no g
       energia voltam aos do `Loadout` e do `StatsDirector` (JAC-05)
 - [ ] Morrer no giro para os tambores sem `jackpot:` e sem mudar `misses`; `R` com o efeito ligado começa com energia,
       custo e recarga de hoje (edge cases)
+- [ ] Com `maxAlive=1`, a ativação que mata o último comum ainda para os tambores com `jackpot:hit` ou `jackpot:miss`
+      na travessia, e a cura do efeito continua até o tempo ou a konbini (DOM-10.10)
+- [ ] O comum atordoado pela ativação fica no lugar (empurrão 0) e o `jab` seguinte acerta dentro do giro (Riichi)
 - [ ] Smokes `tech`, `techniques`, `hud` e `domain` verdes
 - [ ] Gate verde; contagem de testes sem perda
 
@@ -923,7 +954,9 @@ texto `Riichi NN%`; no giro o símbolo troca pelo relógio de jogo, sem `Rng`; n
 
 - [ ] `domain.smoke.mjs` (parte 5, vista): no giro `domainFx.reels.spinning` e o `chance` do texto igual ao do snapshot
       (lido do `Text` vivo, L-076); na parada, três `faces` iguais no `jackpot:hit` e pelo menos uma diferente no
-      `jackpot:miss`; os tambores somem no fim do Domínio
+      `jackpot:miss`; os tambores somem no fim do Domínio; com `jackpotMisses=2`, o texto do giro lido do `Text` vivo é
+      "GARANTIDO", `domain.jackpot.guaranteed` é verdadeiro e a parada dá `jackpot:hit` (JAC-06.11, JAC-03.5); com
+      `jackpotMisses=1` o texto mostra a chance
 - [ ] Conferido no jogo em HD, em movimento e virado para os dois lados (DHD-06)
 - [ ] Smokes `hud` e `domain` verdes
 - [ ] Gate verde; contagem de testes sem perda
@@ -1002,35 +1035,45 @@ inclusas.
 
 ---
 
-#### T33: Golpe amplificado atravessa a guarda
+#### T33: Golpe amplificado atravessa a guarda e a armadura
 
-**What**: `StrikeMods.marks` (F30) passa a aceitar `'unblockable'`; o `StatsDirector.strikeMods` espalha
-`unblockable: true` nas marcas quando `statMods().guardPierce`.
+**What**: `Hit.armorPierce?: boolean` no `core/hit.ts`; `armorHolds(committed, hit)` no fim do `core/enemyGuard.ts`; o
+`EnemyDefense.receiveHit` passa `committed: armorHolds(this.c.ai.committed, hit)` (`EnemyDefense.ts:136`, troca de
+expressão, sem `&&` novo no método da exceção de complexidade); `StrikeMods.marks` (F30) passa a aceitar
+`'unblockable' | 'armorPierce'`; o `StatsDirector.strikeMods` espalha `unblockable: true` e `armorPierce: true` nas
+marcas quando `statMods().guardPierce`.
 **Where**: `src/scenes/test/statsDirector.ts`
 **Depends on**: T30
 **Reuses**: `...mods.marks` no `openHitbox` (F30, `strikes.ts`); `enemyGuard.resolveHit` com `unblockable`
-(`core/enemyGuard.ts:83-96`)
+(`core/enemyGuard.ts:83-96`); o caminho do `armored` (`enemyBrain.ts:96`, `EnemyDefense.ts:141-145`)
 **Requirement**: AMP-02
 
 **Done when**:
 
-- [ ] `tests/core/statSheet.test.ts`: o tipo das marcas aceita `unblockable` (caso de compilação no teste existente)
+- [ ] `tests/core/enemyGuard.test.ts`: `armorHolds` verdadeiro só com `committed` e sem `armorPierce`, falso nos três
+      outros casos (o `enemyBrain.test.ts` está na lista de exceções do `max-lines` e não cresce)
+- [ ] `tests/core/statSheet.test.ts`: o tipo das marcas aceita `unblockable` e `armorPierce` (caso de compilação no
+      teste existente)
 - [ ] `domain.smoke.mjs` (parte 6, guarda) com `domain=amplificacao&charge=100&enemyGuard=1`: depois do `P`, o `jab` de
-      frente no comum de guarda levantada aplica dano, sem evento `block`, `parry` nem `deflect`; sem o Domínio, o mesmo
-      `jab` é bloqueado (os dois lados)
-- [ ] Smokes `fight`, `defense`, `enemy-guard` e `domain` verdes
+      frente no comum de guarda levantada aplica dano, sem evento `enemyBlock:<id>`; sem o Domínio, o mesmo `jab` é
+      bloqueado (os dois lados)
+- [ ] `domain.smoke.mjs` (parte 6, armadura) com `domain=amplificacao&charge=100&enemyGuard=0`: o `jab` no comum que
+      entrou no compromisso da garra não dá `armored:<id>`, a garra não sai e a vida do player não cai; sem o Domínio, o
+      mesmo `jab` dá `armored:<id>` e a garra sai (os dois lados, AMP-02.3)
+- [ ] `oxlint` sem subir a complexidade do `EnemyDefense.receiveHit`
+- [ ] Smokes `fight`, `defense`, `enemy-guard`, `telegraph`, `enemy-react` e `domain` verdes
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full
-**Commit**: `feat(scene): let amplified strikes pierce the guard`
+**Commit**: `feat(scene): let amplified strikes pierce guard and armor`
 
 ---
 
 #### T34: Objeto amplificado atravessa a guarda
 
-**What**: `PropDamage.marks?(): Pick<Hit, 'unblockable'>` no `game/Prop.ts` (F29); o golpe do objeto espalha
-`...this.damage.marks?.()`; o `StatsDirector.propDamage` implementa `marks()` com o `guardPierce`.
+**What**: `PropDamage.marks?(): Pick<Hit, 'unblockable' | 'armorPierce'>` no `game/Prop.ts` (F29); o golpe do objeto
+espalha `...this.damage.marks?.()`; o `StatsDirector.propDamage` implementa `marks()` com o `guardPierce`.
 **Where**: `src/game/Prop.ts`
 **Depends on**: T33
 **Reuses**: `PropDamage` (F29, `Prop.ts:194-195`)
@@ -1157,8 +1200,9 @@ o contorno na Amplificação e o `onEnd` o apaga.
 
 **Done when**:
 
-- [ ] Teste do catálogo (`tests/core/shop.test.ts` ou o teste de catálogo da F30): `dominio` é a última entrada, `kind`
-      `domain`, raridade rara, `maxLevel` 3; a ordem das entradas anteriores igual (o sorteio de hoje não desloca)
+- [ ] `tests/core/domainShop.test.ts` (o `tests/core/shop.test.ts` tem 368 linhas efetivas e não recebe caso novo):
+      `dominio` é a última entrada, `kind` `domain`, raridade rara, `maxLevel` 3; a ordem das entradas anteriores igual
+      (o sorteio de hoje não desloca)
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -1260,7 +1304,7 @@ entra na conta do pool nem no acréscimo de +8 (DNV-05.10).
 
 **Done when**:
 
-- [ ] `tests/core/shop.test.ts` (ou o teste de compra da F30): comprar `dominio` com saldo chama `applyDomain` uma vez e
+- [ ] `tests/core/domainShop.test.ts` (não o `shop.test.ts`, que fica perto do teto): comprar `dominio` com saldo chama `applyDomain` uma vez e
       gasta o preço; sem saldo nada muda (`buyRefused:dominio:funds`); no Nv 3 a carta não aparece; o preço das outras
       cartas não muda com o Domínio
 - [ ] `core/shop.ts` abaixo de 400 linhas efetivas
@@ -1353,7 +1397,8 @@ hoje); o `reset()` larga o prêmio adiado.
 
 #### T48: README do Domínio
 
-**What**: o `README.md` documenta `domain=<id>[:<nível>]`, `charge=<n>`, as teclas `P`/`N` e os eventos de debug novos
+**What**: o `README.md` documenta `domain=<id>[:<nível>]`, `charge=<n>`, `jackpotMisses=<n>`, as teclas `P`/`N` e os
+eventos de debug novos
 (`domain:`, `domainDenied:`, `domainEnd:`, `domainCut:`, `worldCut`, `jackpot:`, `veil:`, `bossChest:`,
 `projectileNullified`, `techDenied:domain`), e onde ajustar os números (`data/domains.ts`).
 **Where**: `README.md`
@@ -1422,7 +1467,7 @@ hoje); o `reset()` larga o prêmio adiado.
 | DHD-05 | T19 |
 | DHD-06 | T11, T19, T29, T36 |
 | DDB-01 | T5, T11, T14, T15, T18, T28, T46 |
-| DDB-02 | T3, T5 |
+| DDB-02 | T3, T5, T28 |
 | DDB-03 | T48 |
 
 **Coverage:** 47 total, 47 mapeados, 0 sem tarefa.
@@ -1431,7 +1476,9 @@ hoje); o `reset()` larga o prêmio adiado.
 | --- | --- |
 | `P` e `N` no mesmo quadro | T8 |
 | Ativação mata o comum com 40% ou menos e a morte não carrega | T9 |
-| Ativação mata o último inimigo e a rodada limpa termina o Domínio | T10 |
+| Ativação mata o último inimigo e o Domínio segue na travessia (o giro do Jackpot termina com resultado) | T10, T28 |
+| `P` apertado na konbini não ativa no 1º quadro da rodada seguinte | T8 |
+| Amplificação contra a garra já aberta: interrompe o ataque, o acerto já dado continua valendo | T33 |
 | Corte do Santuário com o teto do micro cheio | T18 |
 | Gatilho do Santuário sem alvo conta para os 4 por segundo | T17 |
 | Morte no giro do Jackpot | T21, T28 |
@@ -1491,7 +1538,8 @@ forte. As Fases 1, 2 e 4 só dependem da F29: se a ordem de merge pedir, começa
 | T27 | 1 repasse no agregador | ✅ |
 | T28 | 1 parte do ajudante (Jackpot) | ✅ |
 | T32 | 1 campo + a escrita por quadro | ✅ |
-| T33, T34 | 1 marca no golpe / no objeto | ✅ |
+| T33 | 1 marca no golpe (guarda e armadura) + o leitor dela (`armorHolds` e a expressão do `EnemyDefense`) | ⚠️ coeso: a marca sem o leitor não muda nada no jogo, e o leitor sem a marca não tem prova |
+| T34 | 1 marca no objeto | ✅ |
 | T35 | 1 parte do ajudante + 2 getters que ela lê | ⚠️ coeso: os getters não têm outro leitor |
 | T37, T40, T41, T42, T43 | 1 função | ✅ |
 | T44 | 1 classe (3 pontos do `Shop`) | ✅ |
