@@ -3,7 +3,11 @@
 //   linha 1  o ícone de 48 a 4x (para olhar texel por texel);
 //   linha 2  o ícone de 24 a 8x;
 //   linha 3  os dois no tamanho da tela: 48 e 24 a 1x e a 2x, sobre o fundo escuro do HUD e sobre a pedra clara.
-// Uso, a partir da raiz do repo: node tools/icon-boards.mjs [--only id,id] [--out dir] [--name icones-tecnica]
+// Com --fx, a prancha da folha `tech-fx-leva1` (`src/game/art/hd/fx/leva1Fx.ts`) sai junto, em fx-leva1.png:
+//   linha 1  cada quadro a 8x;
+//   linha 2  cada quadro a 1x, 2x e 4x sobre o fundo escuro do HUD, a pedra clara e o corpo do inimigo, o prego
+//            também virado para a esquerda e 3 cabeças de prego lado a lado (a marca cheia).
+// Uso, a partir da raiz do repo: node tools/icon-boards.mjs [--only id,id] [--out dir] [--name icones-tecnica] [--fx]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { register } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
@@ -85,11 +89,11 @@ function savePng(name, img) {
 }
 
 /** Desenha o quadro `id` da folha em (x0, y0), a `scale` px por texel. */
-function blit(img, sheet, id, x0, y0, scale) {
+function blit(img, sheet, id, x0, y0, scale, flip = false) {
   const px = sheet.frames[id];
   for (let y = 0; y < sheet.frameH; y++)
     for (let x = 0; x < sheet.frameW; x++) {
-      const idx = px[y * sheet.frameW + x];
+      const idx = px[y * sheet.frameW + (flip ? sheet.frameW - 1 - x : x)];
       if (idx !== 0) fill(img, x0 + x * scale, y0 + y * scale, scale, scale, sheet.colors[idx]);
     }
 }
@@ -118,3 +122,30 @@ IDS.forEach((id, i) => {
   blit(img, small, id, x0 + 2, y3 + 100 + 54, 2);
 });
 savePng(`${flag('name') ?? 'icones-tecnica'}.png`, img);
+
+if (args.includes('--fx')) {
+  const { LEVA1_FX_FRAMES, leva1FxSheet } = await import(
+    pathToFileURL(join(root, 'src/game/art/hd/fx/leva1Fx.ts')).href
+  );
+  const fx = leva1FxSheet();
+  const n = fx.frameW;
+  const ENEMY = 0x8e7fa6;
+  const fcell = n * 8;
+  const strip = 16 + 32 + 64 + 3 * 8;
+  const fimg = image(LEVA1_FX_FRAMES.length * (fcell + pad) + pad, pad * 3 + fcell + 3 * (64 + 8), BG);
+  LEVA1_FX_FRAMES.forEach((id, i) => {
+    const x0 = pad + i * (fcell + pad);
+    fill(fimg, x0, pad, fcell, fcell, HUD);
+    blit(fimg, fx, id, x0, pad, 8);
+    for (const [k, bg] of [HUD, STONE, ENEMY].entries()) {
+      const y = pad * 2 + fcell + k * (64 + 8);
+      fill(fimg, x0, y, Math.max(fcell, strip), 64 + 4, bg);
+      blit(fimg, fx, id, x0 + 2, y + 2, 1);
+      blit(fimg, fx, id, x0 + 2 + n + 4, y + 2, 2);
+      blit(fimg, fx, id, x0 + 2 + n * 3 + 8, y + 2, 4);
+      if (id === 'nail') blit(fimg, fx, id, x0 + 2, y + 2 + n + 4, 2, true);
+      if (id === 'nailHead') for (let m = 0; m < 3; m++) blit(fimg, fx, id, x0 + 2 + m * 14, y + 2 + n * 2, 1);
+    }
+  });
+  savePng('fx-leva1.png', fimg);
+}

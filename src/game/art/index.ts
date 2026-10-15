@@ -11,6 +11,7 @@ import { burstSheet } from './hd/atlas/burstSheet';
 import { sleeperSheet } from './hd/atlas/sleeperSheet';
 import { playerYutaAnimKey, yutaAnims, yutaSheet } from './hd/atlas/yutaSheet';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
+import { leva1FxSheet } from './hd/fx/leva1Fx';
 import { techIconSheet } from './hd/techIcons';
 import { HD_WEAPONS } from './hd/weapons';
 import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites/enemy';
@@ -151,6 +152,8 @@ function registerHdSheets(scene: Phaser.Scene): void {
   // HUD e a loja trocam o kanji por eles na F34.
   registerIndexedSheet(scene, TEX.techIcons, techIconSheet(48));
   registerIndexedSheet(scene, TEX.techIconsSmall, techIconSheet(24));
+  // Vistas das técnicas da leva 1 (Boogie, Ressonância, Fala). Ainda sem uso: os `techFx/` trocam os quadros na F34.
+  registerIndexedSheet(scene, TEX.techFxLeva1, leva1FxSheet());
 }
 
 /**
