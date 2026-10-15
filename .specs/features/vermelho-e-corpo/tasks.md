@@ -12,9 +12,11 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Design**: `.specs/features/vermelho-e-corpo/design.md`
 **Plano**: `docs/plano-builds-e-habilidades.md` (linha F30 da seção 6; seções 2.1, 2.2, 2.6, 3.2, 3.3, 5.2; "Levado para a F30" da 6.1)
 **Base**: F29 `fundacao-de-poder` mergeada (`statSheet`, `StatsDirector`, `Hit.band`, `hitBand`, `power.ts`,
-`DamageNumbers`, `powerSnapshot.ts`, `Player.strikeMods`, `?mods=`, smoke `power`). Nenhuma tarefa começa antes do merge.
+`DamageNumbers`, `powerSnapshot.ts`, `Player.strikeMods`, `?mods=`, smoke `power`), já integrada em `feat/builds-integracao`
+(`75a22b4`) com a F32 `chefes-com-afixos`, o `recorde-e-recomeco` e as regras puras das levas 1 e 2 (`data/techRule.ts`,
+`core/axisRule.ts`, `core/techKit.ts`), que as tarefas reaproveitam em vez de repetir.
 **Status**: Draft
-**Branch**: `feat/vermelho-e-corpo` (a partir do commit final da F29)
+**Branch**: `feat/vermelho-e-corpo` (a partir de `feat/builds-integracao`, `75a22b4`)
 **Ferramentas**: nenhuma MCP. Skill só o `tlc-spec-driven`. Tarefas com arte (T22, T25, T26, T32, T45, T47, T49) usam
 `tools/sprite-preview.mjs` ou `tools/hd-boards.mjs` e conferem em movimento no jogo, em HD, para os dois lados
 (memória "Conferir animação em movimento"); essas rodam em Opus 5.5 ou Fable, nunca Sonnet.
@@ -23,10 +25,10 @@ Regras que valem para toda tarefa (CLAUDE.md): um commit por tarefa, só os arqu
 gate` verde antes do commit; smoke só do que foi tocado; smoke novo com `?debug&hd=1&area=modular`; tetos de 400 linhas
 efetivas por arquivo, 80 por função e complexidade 15; arquivo novo nunca entra no `.oxlintrc.json`; teste da lista de
 exceções do `max-lines` não cresce (o caso novo vai para arquivo novo). **SHX-02:** a `TestScene` não é tocada por
-nenhuma tarefa e termina com as linhas efetivas do fim da F29 (390 pela estimativa da F29; reconferir no merge).
+nenhuma tarefa e termina com as 388 linhas efetivas que tem na base integrada (`75a22b4`) ou menos.
 **SHX-03:** `ShopPanel.ts` só muda o `CARD_COUNT` e o texto da dica (T56), `Hud.ts`, `moves.ts` e `Player.ts` não mudam. Linha efetiva =
-sem linha em branco e sem comentário, como o `max-lines` do `.oxlintrc.json`. As linhas citadas no design valem para
-`4c0efae`; o que a F29 mexe é reconferido no começo de cada fase.
+sem linha em branco e sem comentário, como o `max-lines` do `.oxlintrc.json`. As linhas citadas no design e aqui foram
+reconferidas em `75a22b4`; cada fase reconfere as do arquivo que toca antes de começar.
 
 **Decisões do usuário que travam tarefas** (o executor para e pergunta antes da tarefa, não durante):
 
@@ -61,7 +63,7 @@ sem linha em branco e sem comentário, como o `max-lines` do `.oxlintrc.json`. A
 | Full | Tarefa de adaptador, arte ou regra que muda o jogo vivo (smoke) | `npm run gate && npm run smoke -- <cada trecho da tarefa>` |
 | Build | Fim de fase | `npm run gate` e os smokes do passo no design ("Smokes por passo") |
 
-Base de testes: a contagem no fim da F29 (2913 em 146 arquivos em `4c0efae`, mais os da F29; anotar no começo da T1).
+Base de testes: 3696 em 192 arquivos em `75a22b4` (gate verde em 15/10).
 Nenhuma tarefa apaga teste sem mover o caso para outro arquivo; cada uma informa a nova contagem. Smokes instáveis:
 `armed` (ARM-12) e timeouts sob carga: repetir isolado antes de suspeitar.
 
@@ -342,7 +344,7 @@ força e dano); `RedOrb.detonate(point, facing, look)` e `redDetonationBurst(sce
 
 #### T7: Azul lê o stat
 
-**What**: `BlueOrbState(config)` (`blueOrb.ts:4-9`, `:80`, `:87`); `game/tech/blue.ts` (`:12`, `:123`) passa o stat;
+**What**: `BlueOrbState(config)` (`blueOrb.ts:4-9`, `:80`, `:87`); `game/tech/blue.ts` (`:12`, `:126`) passa o stat;
 halo e distorção do `BlueOrb.ts:32-36` proporcionais ao `radius` (130 dá os números de hoje).
 **Where**: `src/core/blueOrb.ts`
 **Depends on**: T4
@@ -431,11 +433,12 @@ linha pelo stat.
 
 **What**: `src/data/techAxes.ts` com os tipos (`RedAxisId`, `BodyAxisId`, `AxisItem`, `BranchId`, `AwakeningId`),
 `RED_AXIS_IDS`/`BODY_AXIS_IDS` (a ordem é o desempate), `RED_AXES`, `BODY_AXES`, `RED_BRANCHES`, `RED_AWAKENINGS`,
-`BODY_BRANCHES`, `BODY_AWAKENINGS`, `EMITTER`, `MAX_HP_PCT`, `AXIS_CAP` 3, `ITEM_POINT_CAP` 5, `BRANCH_LEVEL` 2,
-`AWAKEN_LEVEL` 5, `AXIS_NAMES` e `BRANCH_NAMES`, como no design.
+`BODY_BRANCHES`, `BODY_AWAKENINGS`, `EMITTER`, `AXIS_NAMES` e `BRANCH_NAMES`, como no design; cada linha de eixo é uma
+`AxisTable`. Tetos (3 e 5), limiares (Nv 2 e Nv 5), a fração do HP (4 % e 1 %) e o reembolso (0,3) **não** entram:
+são o `TECH_RULE` de `data/techRule.ts` (leva 1).
 **Where**: `src/data/techAxes.ts`
 **Depends on**: None
-**Reuses**: molde de `data/perks.ts`
+**Reuses**: molde de `data/perks.ts`; `AxisTable` e `TECH_RULE` (`data/techRule.ts`)
 **Requirement**: VRM-03, VRM-04, ESC-03
 
 **Done when**:
@@ -458,7 +461,8 @@ linha pelo stat.
 `focusAxis`, `branch`, `setBranch`, `pending`, `awakened`, `announce`, `onRoundStart`, `resetItem`, `reset`).
 **Where**: `src/core/axisBuild.ts`
 **Depends on**: T11
-**Reuses**: `AXIS_CAP`, `ITEM_POINT_CAP`, `BRANCH_LEVEL`, `AWAKEN_LEVEL`
+**Reuses**: `TECH_RULE` (`axisCap`, `pointCap`, `branchLevel`, `awakenLevel`), `axisLevel` e `resolveBuild`
+(`core/axisRule.ts`): o `add` checa o `canAdd` antes de gravar, porque a regra comum lança `RangeError` em estado inválido
 **Requirement**: VRM-02, VRM-11, VRM-17, CRP-01, CRP-08, CRP-13
 
 **Done when**:
@@ -478,13 +482,13 @@ linha pelo stat.
 
 #### T13: Vermelho pelos eixos, com a base nova
 
-**What**: Vermelho em `data/techniques.ts:40-52` com `cost 30` e `cooldownMs 4500`, `TECH_GEOMETRY.vermelho.rangePx 320`;
+**What**: Vermelho em `data/techniques.ts:43-56` com `cost 30` e `cooldownMs 4500`, `TECH_GEOMETRY.vermelho.rangePx 320`;
 `resolveTechStats` ganha `axes: AxisBuild` e resolve o Vermelho pela tabela, sem `LEVEL_FACTOR`, preenchendo `red`
-(raio, `orbTexels`, `sensorPx`, força, repulsão, estilhaço, vizinhos, anéis, bônus de hitstop, pós-imagem, reembolso,
-ramo, Despertar).
+(raio, `orbTexels`, `sensorPx`, força, repulsão, estilhaço, vizinhos, anéis, bônus de hitstop, pós-imagem,
+`killRefundPct`, ramo, Despertar), lendo cada linha por `axisAt`.
 **Where**: `src/core/techStats.ts`
 **Depends on**: T12
-**Reuses**: `RED_AXES`
+**Reuses**: `RED_AXES`, `axisAt` e `killRefundPct` (`core/axisRule.ts`)
 **Requirement**: VRM-01, VRM-03, VRM-09
 
 **Done when**:
@@ -509,10 +513,11 @@ ramo, Despertar).
 
 **What**: `loadout.axes = new AxisBuild()`; `levelOf('vermelho')` e `slotsView` com o nível derivado (`level: number`);
 `upgrade('vermelho')` = `axes.add('vermelho', axes.focusAxis('vermelho'))` (VRM-19); `clear(slot)` chama
-`axes.resetItem('vermelho')`; `refundCooldown(slot, fraction)`; `lastSlot` gravado em `startCooldown`; `reset()` zera
+`axes.resetItem('vermelho')`; `refundCooldown(slot, ms)` (corta `ms` do que resta, sem passar de 0); `lastSlot`
+gravado em `startCooldown`; `reset()` zera
 `axes` e `lastSlot`. Ponte temporária do debug: `equip(slot, 'vermelho', N)` vira `N − 1` pontos no eixo-foco até a
 T23, para o smoke `evolution` (`tech=azul:3,vermelho:3`) seguir verde. Ajusta os tipos de `level` em
-`scenes/test/snapshot.ts:215-221` e `game/debugApi.ts:326-327`.
+`scenes/test/snapshot.ts:235-242` e `game/debugApi.ts:383-384`.
 **Where**: `src/core/loadout.ts`
 **Depends on**: T13
 **Reuses**: `AxisBuild`
@@ -521,7 +526,8 @@ T23, para o smoke `evolution` (`tech=azul:3,vermelho:3`) seguir verde. Ajusta os
 **Done when**:
 
 - [ ] `tests/core/loadoutAxes.test.ts`: `levelOf` 1 a 6; `upgrade` no eixo-foco e nada com 5 pontos (VRM-19);
-      `clear` na evolução zera os pontos; `refundCooldown(slot, 0.3)` com 2300 tira 690 ms e não passa de 0 (VRM-07);
+      `clear` na evolução zera os pontos; `refundCooldown(slot, 690)` com 2300 de recarga restante tira 690 ms e com
+      500 restantes para em 0 (VRM-07);
       `reset`
 - [ ] `tests/core/bossReward.test.ts` (Vermelho Nv 2 recebe ponto) verde
 - [ ] Smokes `evolution`, `tech` e `hud` verdes
@@ -536,7 +542,7 @@ T23, para o smoke `evolution` (`tech=azul:3,vermelho:3`) seguir verde. Ajusta os
 #### T15: Maestria só acumula no Nv 1 e no Nv 2
 
 **What**: `mastery.threshold(level: number)` devolve `null` a partir do Nv 3 e `registerHit(slot, level: number, ...)`
-aceita o nível derivado que o `runDirector.ts:190` passa (`mastery.ts:21-23`, `:32`).
+aceita o nível derivado que o `runDirector.ts:216` passa (`mastery.ts:21-23`, `:32`).
 **Where**: `src/core/mastery.ts`
 **Depends on**: None
 **Reuses**: limiares de hoje
@@ -561,7 +567,8 @@ aceita o nível derivado que o `runDirector.ts:190` passa (`mastery.ts:21-23`, `
 `RedField` + `pushVelocity` e `ContidoHold`, como no design.
 **Where**: `src/core/redBranch.ts`
 **Depends on**: T11
-**Reuses**: `normalize`/`Vec2` de `core/hit.ts`; `RED_BRANCHES`, `RED_AWAKENINGS`
+**Reuses**: `normalize`/`Vec2` de `core/hit.ts`; `nearestTarget`/`dist` de `core/techKit.ts` (o rebote e o estilhaço
+escolhem por ele, empate pelo menor id); `RED_BRANCHES`, `RED_AWAKENINGS`
 **Requirement**: VRM-08, VRM-09, VRM-12, VRM-13, VRM-14, VRM-15
 
 **Done when**:
@@ -605,16 +612,18 @@ aceita o nível derivado que o `runDirector.ts:190` passa (`mastery.ts:21-23`, `
 
 #### T18: Marcas novas do `Hit` e o dano com a fração do HP
 
-**What**: `Hit` ganha `maxHpBonus?: { enemy; boss }`, `hitstopBonusMs?`, `wallStun?` e `decisive?`;
-`dealtDamage(hit, maxHp, isBoss)` = `damage + round(pct × maxHp)`.
+**What**: `Hit` ganha `maxHpBonus?: number` (fração do comum), `hitstopBonusMs?`, `wallStun?` e `decisive?`;
+`dealtDamage(hit, maxHp, kind: BodyKind)` = `hit.damage + maxHpBite(maxHp, kind, hit.maxHpBonus)` (sem bônus =
+`hit.damage`; o chefe fica no teto de 1 % pelo `maxHpBite`).
 **Where**: `src/core/hit.ts`
 **Depends on**: None
-**Reuses**: `MAX_HP_PCT`
+**Reuses**: `maxHpBite` e `BodyKind` (`core/axisRule.ts`), `TECH_RULE.maxHpPct`
 **Requirement**: VRM-13, VRM-15, CRP-09
 
 **Done when**:
 
-- [ ] `tests/core/hitDealt.test.ts`: 4% no comum, 1% no chefe, sem bônus = `hit.damage`; arredondamento nos dois lados
+- [ ] `tests/core/hitDealt.test.ts`: 4% no comum, 1% no chefe mesmo com `maxHpBonus` 0,04, sem bônus = `hit.damage`;
+      arredondamento nos dois lados
 - [ ] Gate verde; contagem sem perda
 
 **Tests**: unit
@@ -625,8 +634,11 @@ aceita o nível derivado que o `runDirector.ts:190` passa (`mastery.ts:21-23`, `
 
 #### T19: Cérebros usam o dano com a fração e seguram o caído
 
-**What**: `enemyBrain.ts:79` e `bossBrain.ts:96` trocam `hit.damage` por `dealtDamage(hit, maxHp, isBoss)` (expressão,
-sem ramo novo); `EnemyBrain.holdDown(ms)` em `ragdollStun` põe `timer = ms`.
+**What**: `enemyBrain.ts:80` e `bossBrain.ts:112` trocam `hit.damage` por `dealtDamage(hit, maxHp, kind)` (expressão,
+sem ramo novo; no chefe antes do `scale` do Adaptativo e do ×1,5 do `stagger`); o `EnemyBrain` grava o dano resolvido
+em `lastDamage` (como o `BossBrain`) e o `Enemy` ganha o getter `lastDamageTaken`, para o número de dano
+(`effects.ts:48`, `combat.ts:110`, que já leem `target.lastDamageTaken ?? hit.damage`) mostrar os 4 % sem mudar;
+`EnemyBrain.holdDown(ms)` em `ragdollStun` põe `timer = ms`.
 **Where**: `src/core/enemyBrain.ts`
 **Depends on**: T18
 **Reuses**: `dealtDamage`
@@ -635,7 +647,8 @@ sem ramo novo); `EnemyBrain.holdDown(ms)` em `ragdollStun` põe `timer = ms`.
 **Done when**:
 
 - [ ] `tests/core/enemyBrainHold.test.ts` (novo): `holdDown(600)` em `ragdollStun` segura 599 e solta em 600; fora do
-      `ragdollStun` não faz nada; acerto com `maxHpBonus` tira `damage + round(0,04 × maxHp)` no comum e 1% no chefe
+      `ragdollStun` não faz nada; acerto com `maxHpBonus` tira `damage + round(0,04 × maxHp)` no comum e 1% no chefe, e o
+      `lastDamage` do comum é esse total
 - [ ] `oxlint`: complexidade do `EnemyBrain.receiveHit` sem subir; `enemyBrain.test.ts` e `bossBrain.test.ts` verdes
 - [ ] Gate verde; contagem sem perda
 
@@ -691,7 +704,7 @@ e nível que não é inteiro positivo somem.
 #### T22: Orbe vermelho nos tamanhos 14, 16 e 18
 
 **What**: `RED_ORB_SIZES` (`art/sprites/techFx.ts:31-49`) ganha 14, 16 e 18 com os mesmos `stops` do 12; texturas
-`techOrbRed14/16/18` em `game/textures.ts:68-70` e o mapa de `art/index.ts:125`.
+`techOrbRed14/16/18` em `game/textures.ts:80-82` e o mapa de `art/index.ts:129-131`.
 **Where**: `src/game/art/sprites/techFx.ts`
 **Depends on**: None
 **Reuses**: gerador do orbe de 12
@@ -711,7 +724,7 @@ e nível que não é inteiro positivo somem.
 #### T23: Eixos pelo debug e no snapshot
 
 **What**: `src/scenes/test/axisDirector.ts` (`applyAxis`, `applyDebug`, `choicePages`, `confirmBranch`, `announce`,
-`onRoundStart`, `snapshot`) como campo `axes` do `BuildDirector`; `runDirector.ts:148-149` chama
+`onRoundStart`, `snapshot`) como campo `axes` do `BuildDirector`; `runDirector.ts:174` chama
 `build.applyDebugAxes()` depois do `equipDebugTech()`; `build.snapshot()` ganha `vermelho` e `corpo` com os tipos de
 `game/axisSnapshot.ts` (novo) e o literal do `tests/game/debugApi.test.ts`; sai a ponte da T14 (`equip` grava Nv 1) e
 o smoke `evolution` passa a `tech=azul:3,vermelho&axes=vermelho.potencia:2`; `README.md` ganha `axes=` e `ramo=` e a
@@ -739,7 +752,7 @@ nota de que `tech=vermelho:N` não muda o nível; nasce `scripts/smoke/red-axes.
 
 #### T24: Voo do orbe em arquivo próprio (refatoração)
 
-**What**: o voo depois do nascimento (`onTouch`, `finishDetonation`, `red.ts:105-117` e `:178-219`) vai para
+**What**: o voo depois do nascimento (`onTouch`, `finishDetonation`, `red.ts:105-117` e `:185-226`) vai para
 `src/game/tech/redFlight.ts`, recebendo o `TechStats` copiado na soltura.
 **Where**: `src/game/tech/redFlight.ts`
 **Depends on**: T17
@@ -763,10 +776,10 @@ nota de que `tech=vermelho:N` não muda o nível; nasce `scripts/smoke/red-axes.
 texturas da carga trocam a cada terço do `chargeMs` resolvido (`RedOrbState.chargeFrame` devolve 4, 8 e o `orbTexels`
 no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3 solta
 `fx.afterimage(player)` na soltura; a entrada `red` de `techObjects` ganha `sensorPx` (`body.circleRadius`) e
-`texture` (`view.texture.key`) no snapshot (`red.ts:58-62`, `debugApi.ts:334`, literal do `debugApi.test.ts`).
+`texture` (`view.texture.key`) no snapshot (`red.ts:58-62`, `debugApi.ts:391`, literal do `debugApi.test.ts`).
 **Where**: `src/game/tech/red.ts`
 **Depends on**: T22, T23, T24
-**Reuses**: `Fx.afterimage` (`game/fx.ts:161`), `repulseTargets`
+**Reuses**: `Fx.afterimage` (`game/fx.ts:163`), `repulseTargets`
 **Requirement**: VRM-04, VRM-05, VRM-06
 
 **Done when**:
@@ -808,7 +821,9 @@ no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3
 #### T27: Estilhaço da Perfuração
 
 **What**: no `redFlight`, ao atravessar um comum, `shardTargets` acerta 1/2/2 vizinhos a 60 px com `Hit` `band:
-'micro'` de `red.shard`, pelo `effects.onTechConnect` (F29), cada um uma vez por conjuração.
+'micro'` de `red.shard` e `techMarks('light', 'vermelho')`, pelo `effects.onTechConnect` (F29), cada um uma vez por
+conjuração. É o 1º emissor `micro` do jogo: o `scripts/smoke/power-load.mjs` (`:139`) deixa de ser conferência vazia e
+passa a exigir `microMs` > 0 e ≤ 60 sob a carga com Perfuração (ressalva do POW-14 na validação da F29).
 **Where**: `src/game/tech/redFlight.ts`
 **Depends on**: T23, T24
 **Reuses**: `shardTargets`, `MicroBudget` e `DamageNumbers` (F29)
@@ -818,7 +833,8 @@ no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3
 
 - [ ] `red-axes.smoke.mjs` (cenário 3) com `axes=vermelho.perfuracao:2` e 3 inimigos juntos: `damageNumbers` com 2
       números `micro` de 9 × multiplicadores; nenhum vizinho leva 2 estilhaços na mesma conjuração
-- [ ] Smokes `red-axes`, `tech` e `power` verdes; gate verde; contagem sem perda
+- [ ] `power-load.mjs` com o comentário de "conferência vazia" trocado pela checagem real do `microMs` (> 0 e ≤ 60)
+- [ ] Smokes `red-axes`, `tech`, `power` e `boss-adaptativo` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full
@@ -828,17 +844,18 @@ no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3
 
 #### T28: Abate devolve a recarga (Recarga 3)
 
-**What**: no `redFlight`, abate por acerto do Vermelho com `red.killRefund > 0` chama
-`loadout.refundCooldown(slot, 0.3)`.
+**What**: na soltura, o `redFlight` cria um `KillRefund(cooldownMs, red.killRefundPct)` por conjuração (leva 2,
+KIT-03); cada abate por acerto do Vermelho chama `loadout.refundCooldown(slot, refund.claim())`, e só o 1º abate da
+conjuração devolve (TRL-06; os seguintes dão 0).
 **Where**: `src/game/tech/redFlight.ts`
 **Depends on**: T23, T24
-**Reuses**: `Loadout.refundCooldown`
+**Reuses**: `Loadout.refundCooldown`, `KillRefund` (`core/techKit.ts`)
 **Requirement**: VRM-07
 
 **Done when**:
 
 - [ ] `red-axes.smoke.mjs` com `axes=vermelho.recarga:3` e inimigo de pouco HP: `tech.slots[n].cooldownMs` cai 690 ms
-      no quadro do abate; sem abate não cai
+      no quadro do abate; sem abate não cai; com 2 abates na mesma detonação cai 690 ms uma vez só
 - [ ] Smokes `red-axes` e `tech` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -853,7 +870,7 @@ no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3
 
 **What**: getter `slotHeld` no `TechCaster` (`isDown` de `L`/`C` e `I`/`V` guardado dentro do `update`, como o
 `framePressed`, `TechCaster.ts:55-57`, `:79-93`); `techDirector.ts:22-29` repassa ao `TechRunner.update`
-(`TechRunner.ts:212-229`), que repassa ao `red.update`.
+(`TechRunner.ts:104-121`), que repassa ao `red.update` (`:117`).
 **Where**: `src/game/TechCaster.ts`
 **Depends on**: None
 **Reuses**: leitura de tecla de hoje
@@ -874,7 +891,8 @@ no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3
 
 **What**: o `redFlight` segue o `redPlan`: Ricochete detona no 1º inimigo e rebate uma vez (`pickRebound`, 70% depois
 da 1ª); Fliperama rebate até 3 vezes em qualquer alvo, +15% de velocidade por detonação e `maxHpBonus` na 3ª;
-`effects.onTechConnect` mostra o número com `dealtDamage(hit, target.maxHp, isBoss)` (troca de valor, 0 linha líquida).
+o número já sai certo pelo `lastDamageTaken` do alvo (T19), sem mudar o `effects.onTechConnect`; todo `Hit` novo leva
+`techMarks(strength, 'vermelho')`.
 **Where**: `src/game/tech/redFlight.ts`
 **Depends on**: T27
 **Reuses**: `redPlan`, `detonationMul`, `speedAfter`, `pickRebound`, `RedOrbState.rebound`
@@ -924,7 +942,7 @@ ao sair ou ao fim; com um orbe Azul vivo o puxão do Azul vale, edge case) e dá
 `FxRegistry` (anel da `RED_FX_COLORS` que esmaece).
 **Where**: `src/game/tech/redField.ts`
 **Depends on**: T24
-**Reuses**: `RedField`, `pushVelocity`, `TechTarget.setPull` (`tech/shared.ts:16`), `Hit.band` (F29)
+**Reuses**: `RedField`, `pushVelocity`, `TechTarget.setPull` (`tech/shared.ts:18`), `Hit.band` (F29), `techMarks`
 **Requirement**: VRM-15
 
 **Done when**:
@@ -948,7 +966,7 @@ normal horizontal (`|n.x| ≥ 0,7`) chama `enemy.wallStun(600)` (→ `holdDown`)
 desarma. A regra `wallStunFrom(normal, armed)` mora em `src/core/wallStun.ts` (puro, AD-001).
 **Where**: `src/scenes/test/wallStun.ts`
 **Depends on**: T32, T19
-**Reuses**: `EnemyBrain.holdDown`, contatos de `combat.ts:292-298`
+**Reuses**: `EnemyBrain.holdDown`, contatos de `combat.ts:304-310`
 **Requirement**: VRM-16
 
 **Done when**:
@@ -1079,7 +1097,8 @@ todos com `pierce`, cada alvo uma vez por onda, no máximo 4 em 1000 ms de tempo
 
 #### T39: Golpe marcado como decisivo
 
-**What**: `impactTier` devolve `'decisive'` para `hit.decisive` (`impactTier.ts:12-18`), abaixo do `forced` da F29.
+**What**: `impactTier` devolve `'decisive'` para `hit.decisive` (`impactTier.ts:12-19`: o `Pick` ganha `'decisive'` e a
+condição da `:17` ganha o termo), abaixo do `forced` da F29.
 **Where**: `src/core/impactTier.ts`
 **Depends on**: T18
 **Reuses**: regra de hoje
@@ -1192,7 +1211,8 @@ do Corpo somam em `lutador` (`core/build.ts`).
 
 **What**: `strikes.ts` guarda o `mods` do `openHitbox` num campo do `PlayerStrikes` (não do `Player`), aplica
 `widenForward(shape, mods.reachPx)` e `...mods.marks` no `Hit`, e no `hitboxOff` chama
-`this.p.moves.scaleRecovery(this.mods.recoveryMul)` (`strikes.ts:177-179`, `:262-282`).
+`this.p.moves.scaleRecovery(this.mods.recoveryMul)` (`strikes.ts:177-182`, `:265-289`; o `NO_MODS` ganha os campos
+neutros).
 **Where**: `src/game/player/strikes.ts`
 **Depends on**: T43, T38
 **Reuses**: `widenForward`, `MoveMachine.scaleRecovery`
@@ -1215,7 +1235,8 @@ do Corpo somam em `lutador` (`core/build.ts`).
 
 #### T45: Rastro mais longo e pós-imagem do Ritmo
 
-**What**: o `ImpactFx` soma `body.reachPx` ao `extraPx` dos dois `trail` (`impactFx.ts:114`, `:122`) e o
+**What**: o `ImpactFx` soma `body.reachPx` ao `extraPx` da `impactFx.ts:160` (que serve os dois `trail`, `:162` e
+`:170`) e o
 `onStrikePhase` chama `this.s.build.body.onStrikePhase(name, phase)`; com Ritmo 3 a `recovery` solta `fx.afterimage`.
 **Where**: `src/scenes/test/impactFx.ts`
 **Depends on**: T44
@@ -1285,8 +1306,10 @@ atualizada pelo `bodyDirector`.
 
 **What**: com `ramo=corpo:a`, o `bodyDirector` marca o 4º golpe seguido que acerta com `decisive: true` e dano × 1,5
 pelo `strikeMods`; `onStrikePhase` zera no fim do `active` sem acerto; com o Martelo Negro o decisivo leva
-`maxHpBonus` e os comuns a 48 px levam um acerto de 4% com `knockdown`; `combat.onConnect` mostra o número com
-`dealtDamage` (troca de valor, 0 linha líquida).
+`maxHpBonus` e os comuns a 48 px levam um acerto de 4% com `knockdown`, sem `tech`, pelo
+`effects.onTechConnect(hit, point, target, 'golpe')`, que para isso troca o tipo do `source` de `TechId` para
+`DamageSource` (`core/runSummary.ts:12`) e chama `record.addDamage(source, hit.damage)` em `effects.ts:47`; o número do decisivo já sai certo pelo `lastDamageTaken` (T19),
+sem mudar o `combat.onConnect`.
 **Where**: `src/scenes/test/bodyDirector.ts`
 **Depends on**: T45, T46, T39
 **Reuses**: `CadenceCounter`, `marteloTargets`, `Hit.decisive`
@@ -1299,7 +1322,7 @@ pelo `strikeMods`; `onStrikePhase` zera no fim do `active` sem acerto; com o Mar
       Peso 2 derrubaria e já seria decisivo pelo `impactTier`, então o smoke não usa Peso); um golpe no ar zera a
       contagem (CRP-08.3)
 - [ ] Com `ramo=corpo:a&axes=` somando 4 pontos e `maxAlive=3`: o vizinho a 48 px cai e leva 4% do HP (CRP-09)
-- [ ] Smokes `cursed-body`, `impact`, `fight` e `fight-integration` verdes; gate verde; contagem sem perda
+- [ ] Smokes `cursed-body`, `impact`, `fight`, `fight-integration` e `record-end` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full
@@ -1310,8 +1333,9 @@ pelo `strikeMods`; `onStrikePhase` zera no fim do `active` sem acerto; com o Mar
 #### T49: Onda do Punho
 
 **What**: com `ramo=corpo:b`, o golpe `heavy` que acerta chama `StrikeEmitter.emit` do ponto do acerto (80 px a
-600 px/s, `round(0,4 × dano)`, fora o alvo do golpe); `body.update` entrega os acertos com `band: 'micro'` pelo
-`effects.onTechConnect`; `src/game/FistWaveFx.ts` desenha um risco por onda viva (`c`/`C`, 1 texel, `FX_DEPTH`,
+600 px/s, `round(0,4 × dano)`, fora o alvo do golpe); `body.update` entrega os acertos com `band: 'micro'`, sem `tech`,
+pelo `effects.onTechConnect(hit, point, target, 'golpe')` (o `source` já é `DamageSource` desde a T48: a onda soma
+em `golpe` no recorde); `src/game/FistWaveFx.ts` desenha um risco por onda viva (`c`/`C`, 1 texel, `FX_DEPTH`,
 `FxRegistry`).
 **Where**: `src/game/FistWaveFx.ts`
 **Depends on**: T46, T37
@@ -1324,7 +1348,7 @@ pelo `strikeMods`; `onStrikePhase` zera no fim do `active` sem acerto; com o Mar
       de `round(0,4 × dano)`; energia e regen iguais com e sem onda (CRP-12)
 - [ ] A 5ª onda em 1000 ms não sai e o dano do golpe não muda (edge case)
 - [ ] Onda conferida em movimento no jogo, dos dois lados
-- [ ] Smokes `cursed-body`, `power`, `fight` e `fxlab` verdes; gate verde; contagem sem perda
+- [ ] Smokes `cursed-body`, `power`, `fight`, `fxlab` e `record-end` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full
@@ -1362,7 +1386,8 @@ igual 100 ms depois; no 1º decisivo (Martelo Negro) ou na 1ª onda (Punho que R
 #### T51: Stream do eixo
 
 **What**: `SHOP.axisSalt` em `data/tuning.ts`; `axisRngValue`, getter `axisRng` e `new Rng(seed ^ SHOP.axisSalt)` em
-`core/run.ts` (`:59-68`, `:133-179`, `:298-308`).
+`core/run.ts` (`:59-69`, `:133-186`, `:304-314`), ao lado do `bossAffixRng` da F32 e com sal diferente de todos os
+de hoje.
 **Where**: `src/core/run.ts`
 **Depends on**: None
 **Reuses**: streams com seed de hoje (AD-006)
@@ -1483,7 +1508,7 @@ inflação nem trava até o passo 5), porque o `costOf` de hoje mandaria o `kind
 
 #### T56: Quatro cartas na tela
 
-**What**: `SHOP.offers: 4` (`tuning.ts:306`); tecla `FOUR` (`buySlot` 0..3) e `A`/`D` nas 4 cartas em `game/input.ts`
+**What**: `SHOP.offers: 4` (`tuning.ts:307`); tecla `FOUR` (`buySlot` 0..3) e `A`/`D` nas 4 cartas em `game/input.ts`
 (`:115-153`); `CARD_COUNT = 4` no `ShopPanel.ts:32` e a dica do `:206` em
 `` `1-${CARD_COUNT} comprar · W/S eixo · R rerolar (${view.rerollCost}) · Enter continuar` `` (SHX-03, CRD-05.9).
 **Where**: `src/game/ShopPanel.ts`
@@ -1509,7 +1534,7 @@ inflação nem trava até o passo 5), porque o `costOf` de hoje mandaria o `kind
 
 **What**: `shopDirector` passa `axisRng` ao `new Shop`, `applyAxis` ao `BuyContext` (→ `axisDirector.applyAxis`), lê
 `moveUp`/`moveDown` (`W`/`↑`, `S`/`↓`, novos em `input.ts`) para `shop.chooseAxis`; `shopSnapshot()` e
-`debugApi.ts:275-282` ganham `axes` e `selectedAxis` (literal do `debugApi.test.ts`); nasce
+`debugApi.ts:323-331` (`offers` na `:326`) ganham `axes` e `selectedAxis` (literal do `debugApi.test.ts`); nasce
 `scripts/smoke/shop-axes.smoke.mjs`.
 **Where**: `src/scenes/test/shopDirector.ts`
 **Depends on**: T56
@@ -1695,7 +1720,7 @@ trava e a inflação da F30, toda carta suposta à venda.
 
 **What**: `kokusenDamage(D, { forca, meleeMul, hpMul })` = `max(round(KOKUSEN.mul × meleeDamageAtLevel(D, forca) ×
 meleeMul), round(KOKUSEN.damage × hpMul))` em `core/kokusen.ts`, com `D` o 2º impacto cru com o fator de nível (sem
-os multiplicadores de técnica); `KOKUSEN.mul 2.5` e `KOKUSEN.mulCap 3.4` em `data/techniques.ts:128` (`damage` 45 fica como piso).
+os multiplicadores de técnica); `KOKUSEN.mul 2.5` e `KOKUSEN.mulCap 3.4` em `data/techniques.ts:135` (`damage` 45 fica como piso).
 **Where**: `src/core/kokusen.ts`
 **Depends on**: None
 **Reuses**: `KOKUSEN`
@@ -1740,7 +1765,7 @@ partir do `stats.damage.second` (que já traz `damageMul` e `vowDamageMul`: o vo
 #### T67: Kokusen escalado no jogo e a dificuldade no snapshot
 
 **What**: o `StatsDirector.sync` grava `loadout.kokusenScale = { forca: modifiers.level('forca'), meleeMul:
-sheet.meleeMul(KOKUSEN_TRAITS), hpMul }`
+sheet.meleeMul(PROP_TRAITS), hpMul }` (os traços do objeto, `statSheet.ts:21-26`, são os do Kokusen)
 com o `hp` do `multipliersFor` da rodada; `divergent.ts:230`, `:238` trocam `KOKUSEN.damage` por
 `loadout.stats('divergente').kokusenDamage` (o `receiveKokusen` segue × `KOKUSEN.poiseMul`); `snapshotFields()` ganha
 `difficulty: { round, hpMul, damageMul }` (campo no `GameSnapshot`, literal do `debugApi.test.ts`).
@@ -1764,7 +1789,7 @@ com o `hp` do `multipliersFor` da rodada; `divergent.ts:230`, `:238` trocam `KOK
 
 #### T68: O inimigo cresce por rodada
 
-**What**: `DIFFICULTY.hpPerRound 0.06` e `damagePerRound 0.05` (`tuning.ts:155`, `:157`), `core/difficulty.ts` sem
+**What**: `DIFFICULTY.hpPerRound 0.06` e `damagePerRound 0.05` (`tuning.ts:156`, `:158`), `core/difficulty.ts` sem
 mudança; `tests/data/tuning.test.ts` (SPN-13/14) e `tests/core/difficulty.test.ts` com os números novos citando a
 AD-025; `run-loop.smoke.mjs` (`:67-83`, `:113-192`) calcula HP e dano do comum por `Math.round(base × (1 + perRound × (r −
 1)))` e a vida do player depois do golpe da r2 como 100 menos esse dano (87, hoje 88, `:185`); nasce
@@ -1781,7 +1806,10 @@ AD-025; `run-loop.smoke.mjs` (`:67-83`, `:113-192`) calcula HP e dano do comum p
 - [ ] `scale.smoke.mjs`, `?debug&hd=1&area=modular`: `round=9` → `enemies[].maxHp` 89; `round=11` → 96; nunca a r10
       (ESC-04.11)
 - [ ] `run-loop` verde com as fórmulas (ESC-04.10); smokes `scale`, `run-loop`, `kokusen`, `boss` e `world-boss` verdes
-- [ ] AD-025 no `.specs/STATE.md` (ESC-01.3); `TestScene.ts` com as linhas do fim da F29 (SHX-02); nenhum arquivo novo
+- [ ] Ressalva R2 da F32 fechada: o `boss-invocador.smoke.mjs` compara o `maxHp` (e o dano) do comum invocado com o do
+      comum da onda na mesma rodada, numa rodada acima da 1ª (antes da escala os dois eram a base e a conferência não
+      discriminava)
+- [ ] AD-025 no `.specs/STATE.md` (ESC-01.3); `TestScene.ts` com no máximo as 388 linhas da base (SHX-02); nenhum arquivo novo
       no `.oxlintrc.json` (SHX-03)
 - [ ] Gate verde; contagem sem perda
 

@@ -20,6 +20,18 @@ A F30 depende da F29 (`fundacao-de-poder`) e usa o que ela entrega:
   `Player`.
 - O tipo de snapshot em arquivo à parte e o parâmetro `mods=` (POW-13).
 
+E usa o que entrou junto com a F29 no código integrado (`feat/builds-integracao`, `75a22b4`):
+- As regras puras das levas 1 e 2 (`regras-tecnicas-leva1`, `regras-tecnicas-leva2`): `data/techRule.ts` (`TECH_RULE`:
+  teto 3 por eixo e 5 por técnica, ramo no Nv 2, Despertar no Nv 5, 4 % e 1 % do HP, reembolso de 30 %),
+  `core/axisRule.ts` (`axisLevel`, `resolveBuild`, `axisAt`, `killRefundPct`, `maxHpBite`) e `core/techKit.ts`
+  (`nearestTarget`, `KillRefund`). As duas specs deixaram para a F30 o `core/axisBuild.ts`, que guarda os pontos e
+  valida a compra; a F30 lê a regra comum e não repete esses números.
+- O recorde (`recorde-e-recomeco`): o `effects.onTechConnect` recebe a fonte do acerto e soma o dano por fonte
+  (`golpe`, cada técnica, `objeto`); o número de dano lê `target.lastDamageTaken` quando o alvo informa.
+- A F32 (`chefes-com-afixos`): o Adaptativo conta os acertos pela técnica de origem (`techMarks(strength, id)`), a
+  escalação dos chefes tem stream próprio na `Run` (`bossAffixRng`), e os comuns invocados pelo chefe já usam o
+  `scaleFor` da rodada, então a escala do passo 6 chega a eles também.
+
 ## Goals
 
 - [ ] O Vermelho sobe do Nv 1 ao Nv 6 por pontos em 6 eixos, com ramo no Nv 2 e Despertar no Nv 5, e o "Canhão"
@@ -90,14 +102,14 @@ A escala de HP e dano é o **último** passo: a dificuldade não sobe antes de o
 | Contido ("segurar prende o orbe no ar por até 1,2 s; soltar detona") | Se a tecla do slot ainda estiver segurada quando o orbe sai, ele voa como hoje, atravessa os comuns e para no ar ao fim dos 320 px; soltar a tecla detona na hora, onde o orbe estiver, com raio ×1,4; aos 1,2 s desde a saída detona sozinho; parede e chefe detonam como hoje, também com ×1,4. Tecla solta antes da saída: voo normal | Detonação a distância sem prender o orbe na ponta dos dedos, já que a tecla fica segurada durante o sinal e a carga | n |
 | Rebote do Ricochete e do Fliperama sem inimigo a 200 px | O orbe volta na direção horizontal oposta e voa até 200 px; detona no primeiro toque ou no fim | O Fliperama rebate "em qualquer alvo", e a rua modular quase não tem parede | n |
 | Dano das detonações depois da 1ª | 70% do dano de toque e de detonação em toda detonação de rebote (Ricochete e Fliperama) | O plano só fixa a 2ª; um valor por rebote evita o 4º rebote dar 100% | n |
-| Componente proporcional ("tira 4% do HP máximo") | Somado ao dano do mesmo acerto, `round(0,04 × maxHp)` no comum e `round(0,01 × maxHp)` no chefe, uma vez por alvo por conjuração (ou por golpe decisivo) | Um acerto só, com um número só; a regra "1 vez por conjuração" da seção 2.1 | n |
+| Componente proporcional ("tira 4% do HP máximo") | Somado ao dano do mesmo acerto, `round(0,04 × maxHp)` no comum e `round(0,01 × maxHp)` no chefe (o `maxHpBite` da leva 1), uma vez por alvo por conjuração (ou por golpe decisivo) | Um acerto só, com um número só; a regra "1 vez por conjuração" da seção 2.1 | n |
 | Campo do Vermelho Máximo | Raio igual ao da detonação, empurra para fora a 150 px/s (a velocidade do puxão do Azul, ao contrário) os comuns em pé dentro dele e dá chip de `round(3 × multiplicadores de técnica)` a cada 200 ms por 1200 ms. Os derrubados pela detonação já voam pela força dela (o corpo do comum fica parado no ragdoll), então o empurrão segura quem entra ou levanta: o campo é negação de área | O plano não dá a velocidade do empurrão; reaproveitar a do Azul mantém a escala que a tela aguenta | n |
 | Campo com o orbe Azul vivo | O Azul reescreve o `setPull` de todo comum a cada quadro (`blue.ts:60-64`, depois do Vermelho no `TechRunner.update`): com um orbe Azul vivo o puxão dele vale e o campo só dá o chip | Um escritor por quadro, sem mexer no Azul (F33) | n |
-| Peso 2 e a faixa do impacto | O `impactTier` de hoje já dá `decisive` a todo `Hit` com `knockdown` (`impactTier.ts:16`): com Peso ≥ 2 todo golpe forte que acerta lê como decisivo. A Cadência continua distinta pelo +50% e por forçar o decisivo também no golpe leve | É a regra da AD-021 (derrubar = decisivo); mudar o `impactTier` mexeria no finalizador | n |
+| Peso 2 e a faixa do impacto | O `impactTier` de hoje já dá `decisive` a todo `Hit` com `knockdown` (`impactTier.ts:17`): com Peso ≥ 2 todo golpe forte que acerta lê como decisivo. A Cadência continua distinta pelo +50% e por forçar o decisivo também no golpe leve | É a regra da AD-021 (derrubar = decisivo); mudar o `impactTier` mexeria no finalizador | n |
 | Parede que atordoa ("inimigo jogado na parede fica atordoado 600 ms") | O comum derrubado pelo Vermelho Máximo ou pelo Peso 3 que encosta numa parede do terreno antes de pousar fica caído (`ragdollStun`) por 600 ms contados do toque | Não existe parede que atordoa comum hoje; o estado caído já é o atordoamento do comum | n |
 | Estilhaço da Perfuração | Dano `round(6, 9 ou 12 × multiplicadores de técnica)`, sem a Potência; vizinhos a até 60 px do alvo atravessado, o mais perto primeiro: 1 com 1 ponto, 2 com 2 e com 3 pontos; com o Ricochete, o alvo do toque conta como atravessado | O plano dá o número cru; a Potência já sobe o toque e a detonação | n |
 | Repulsão com a Potência | `round(4 × toque da Potência / 30 × multiplicadores de técnica)`: 4, 5, 5 e 6 | "A repulsão passa por `loadout.damage` e escala junto" | n |
-| Recarga 3 ("o abate com o Vermelho devolve 30% da recarga") | Cada abate por acerto do Vermelho tira 30% da recarga cheia resolvida (690 ms com 2300) do que resta no slot, sem passar de 0 | Um número por abate, que casa com a horda | n |
+| Recarga 3 ("o abate com o Vermelho devolve 30% da recarga") | O 1º abate por acerto do Vermelho em cada conjuração tira 30% da recarga cheia resolvida (690 ms com 2300) do que resta no slot, sem passar de 0; os abates seguintes da mesma conjuração não devolvem | É a regra comum das técnicas (TRL-06 da leva 1, `KillRefund` da leva 2, já verificadas no código); a primeira versão desta spec devolvia a cada abate, o que zerava a recarga com 4 abates numa detonação e deixava o Vermelho com regra própria | n |
 | Fúria ("golpes seguidos sem levar dano") | Conta golpes do moveset que acertam (um por golpe, mesmo com vários alvos); zera quando o player perde HP | "Sem levar dano" é perder HP; golpe defendido não zera | n |
 | Cadência ("todo 4º golpe seguido que acerta") | Contador de golpes do moveset que acertam; zera quando um golpe termina o `active` sem acertar ou quando o player perde HP; o 4º, o 8º... são decisivos | Um único contador, testável no puro | n |
 | Martelo Negro | O alvo do golpe decisivo leva os 4% (1% no chefe) somados ao golpe; os outros comuns a até 48 px do ponto do acerto levam um acerto normal só com os 4%, com `knockdown` | O plano diz "derruba em área de 48 px e tira 4% de cada atingido" | n |
@@ -135,7 +147,7 @@ cópia do raio 96.
 
 1. SHX-01: WHEN step 0 is committed THEN `eligible` and its helpers SHALL live in `src/core/shopEligibility.ts`, `previewText` and its helpers SHALL live in `src/core/shopPreview.ts`, and `src/core/shop.ts` SHALL keep the `Shop` class, `drawOffers`, the cost and the views.
 2. SHX-01: WHEN step 0 is committed THEN every existing test SHALL pass with only import paths changed, and the smokes `shop`, `shop-progress`, `run-loop` and `evolution` SHALL pass unchanged.
-3. SHX-02: The F30 tasks SHALL add no net effective line to `src/scenes/TestScene.ts`, which SHALL end the feature with the effective line count it had at the end of the F29 or fewer.
+3. SHX-02: The F30 tasks SHALL add no net effective line to `src/scenes/TestScene.ts`, which SHALL end the feature with the effective line count it has in the integrated base the F30 starts from (388 at `75a22b4`, F29 included) or fewer.
 4. SHX-03: The F30 SHALL put no file in the exception lists of `.oxlintrc.json`, SHALL change only `CARD_COUNT` and the hint text (`1-4 comprar · W/S eixo · R rerolar (n) · Enter continuar`) in `src/game/ShopPanel.ts`, SHALL not grow `src/game/Hud.ts` nor `src/data/moves.ts`, and SHALL add no field to `src/game/Player.ts`.
 5. TST-01: The `Loadout.stats(id)` method SHALL return a `TechStats` with cost, cooldown, the four phase times, the damage values and the geometry numbers that today are constants in `core/redOrb.ts`, `game/tech/red.ts`, `core/blueOrb.ts`, `core/cut.ts`, `core/purple.ts` and the views `RedOrb`, `redDetonation`, `BlueOrb`, `CutFx` and `PurpleOrb`.
 6. TST-01: WHEN step 1 is committed THEN, for each of the 5 techniques at each level it can hold today, with `damageMul`, `vowDamageMul` and `costMul` at 1 and at 1.35, the `TechStats` SHALL equal today's `Loadout.cost`, `Loadout.damage`, `TECHNIQUES` times and the module constants.
@@ -166,7 +178,7 @@ o canhão ou a metralhadora.
 7. VRM-04: WHEN the Vermelho releases THEN the repulse damage SHALL be `round(4 × Potência touch / 30 × damageMul × vowDamageMul)` (4, 5, 5 and 6 at 0 to 3 points).
 8. VRM-05: WHEN the Vermelho orb spawns THEN its sprite SHALL use the resolved orb texels, its sensor SHALL use the resolved sensor radius, and the detonation sphere SHALL grow to the resolved damage radius.
 9. VRM-06: WHILE the Vermelho charges the three charge textures SHALL swap at each third of the resolved charge time, the last one at the resolved orb texels (4, 8 and 12, 14, 16 or 18, so the orb does not jump in size at the release), and WHEN it releases with 3 Conjuração points THEN the system SHALL draw a 1-frame afterimage of the player.
-10. VRM-07: WHILE Recarga has 3 points, WHEN a Vermelho hit kills an enemy THEN the remaining cooldown of its slot SHALL drop by 30% of the full resolved cooldown, never below 0.
+10. VRM-07: WHILE Recarga has 3 points, WHEN a Vermelho hit kills an enemy and it is the first kill of that cast THEN the remaining cooldown of its slot SHALL drop by 30% of the full resolved cooldown, never below 0, and later kills of the same cast SHALL give nothing back (the common rule TRL-06).
 11. VRM-08: WHILE Perfuração has 1 or more points, WHEN the orb passes through a common enemy THEN the system SHALL hit the nearest 1, 2 or 2 other enemies within 60 px of it (1, 2 or 3 points) with a `micro` shard of `round(6, 9 or 12 × damageMul × vowDamageMul)`, each enemy at most once per cast.
 12. VRM-09: The Vermelho orb SHALL end its straight flight at 320 px from its spawn point, and no rebound SHALL pick a target farther than 320 px from the player.
 13. VRM-10: WHEN the run starts with `?debug&axes=vermelho.<axis>:<n>[,...]` THEN the system SHALL set those points, capped at 3 per axis and 5 in total, and SHALL ignore entries with an unknown item, an unknown axis or a level that is not a positive integer.
@@ -481,7 +493,10 @@ porque a carta 0 deixa de ser garantida e o Vermelho vira carta de eixo; CRD-02,
 `inflate`, PRC-03), `run-loop` no passo 6 (ESC-04).
 
 **Smokes que rodam junto:** `run-loop` (reescrito, ESC-04), `shop`, `shop-progress`, `tech`, `techniques`, `red-anime`,
-`kokusen`, `evolution`, `fight`, `fight-integration`, `impact`, `feel`, `power` (da F29), `boss` e `world-boss`.
+`kokusen`, `evolution`, `fight`, `fight-integration`, `impact`, `feel`, `power` (da F29; o `power-load.mjs` deixa de ser
+conferência vazia quando o estilhaço vira o 1º emissor `micro`, ressalva do POW-14), `record-end` (dano por fonte),
+`boss-adaptativo` (acertos novos do Vermelho contados pela técnica), `boss-invocador` (ressalva R2 da F32: com a escala
+ligada, o invocado tem o `maxHp` e o dano do comum da onda na mesma rodada), `boss` e `world-boss`.
 
 ---
 
