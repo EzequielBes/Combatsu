@@ -90,7 +90,7 @@ export class RecordDirector {
    * A morte (REC-01..04, REC-09, END-01..12): monta o `RunRecord` com a build daquele instante, deixa o livro decidir
    * se virou recorde e grava uma vez se ele pedir (nunca com `nosave`/`record=` de debug nem sobre um save mais novo).
    * Uma escrita que lança põe a porta em `'memory'` e o recorde em memória fica (SAVE-07). Depois esconde o texto
-   * central e o marcador e mostra o painel.
+   * central, a faixa (uma `Rodada N` ainda na tela pareceria o título do painel) e o marcador, e mostra o painel.
    */
   private onDeath(round: number, kills: number): void {
     const record: RunRecord = { round, kills, build: this.buildAtDeath() };
@@ -100,6 +100,7 @@ export class RecordDirector {
     if (write && loaded && loaded.storage !== 'off' && !loaded.locked)
       this.storage.write(serializeSave(this.book.best));
     this.s.hud.setCenter(null);
+    this.s.hud.hideBanner();
     this.marker.hide();
     const lines = summaryLines({
       round,

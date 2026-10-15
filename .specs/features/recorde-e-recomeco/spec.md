@@ -129,7 +129,7 @@ abre com `Rodada 2 · Novo recorde!` e o marcador muda para a cor de destaque.
 **Acceptance Criteria**:
 
 1. END-01: WHEN the run enters `gameOver` THEN the system SHALL show the run summary panel, centered at (480, 270) in the 960x540 UI space, drawn over the HUD on the UI camera.
-2. END-02: WHILE the summary panel is visible the HUD center text SHALL be hidden (`hud.center = null`).
+2. END-02: WHILE the summary panel is visible the HUD center text SHALL be hidden (`hud.center = null`); WHEN the panel opens THEN the central banner SHALL hide too (`hud.banner = null`), so a `Rodada N` still on screen does not read as the panel title.
 3. END-03: The panel SHALL show the lines `Rodada alcançada: N`, `Abates: K` and `Fragmentos: F`, with F the wallet balance at death.
 4. END-04: The panel SHALL list each equipped technique as `<nome> Nv <n>`, with `<nome>` the technique short label (`short` in `data/techniques`, no colon: `Vermelho`, not `Reversão de Técnica: Vermelho`), or `Técnicas: nenhuma` when both slots are empty.
 5. END-05: The panel SHALL list the perks by name, or `Passivas: nenhuma`.

@@ -48,6 +48,8 @@ export default async function (ctx) {
   const panel = snap.record.panel;
   assert(panel.visible, `END-01: painel deveria abrir na morte: ${JSON.stringify(panel)}`);
   assert(snap.hud.center === null, `END-02: hud.center deveria ser null: ${JSON.stringify(snap.hud.center)}`);
+  // A morte cai ~300 ms depois do J, com a faixa `Rodada 1` (1500 ms) ainda na tela: ela some com o painel.
+  assert(snap.hud.banner === null, `END-02: a faixa deveria sumir com o painel: ${JSON.stringify(snap.hud.banner)}`);
   const expected = [
     `Rodada alcançada: ${snap.run.round}`,
     `Abates: ${snap.run.kills}`,
