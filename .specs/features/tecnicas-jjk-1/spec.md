@@ -138,20 +138,25 @@ smokes que leem o contrato acompanhando; cada passo de técnica termina jogável
 | Portão de conjuração do módulo | O módulo pode decidir a tecla do slot antes da `CastMachine`: conjurar (caminho de hoje), consumir sem conjurar (2º toque da Ressonância) ou negar com motivo (`cooldown` do Boogie sem carga, `hp` da Fala). As 5 técnicas de hoje não declaram portão e seguem o caminho de hoje | O Boogie tem cargas próprias e a Ressonância cobra só o 1º toque; sem isso a `CastMachine` negaria a 2ª carga pela recarga do slot e cobraria energia de novo no 2º toque | n |
 | Recarga do slot das técnicas com estado próprio | O `Loadout` espelha a recarga do estado puro: Boogie `rechargeLeftMs` enquanto não há carga, senão 0; Ressonância `cooldownLeftMs`; a `CastMachine` não inicia recarga na soltura dessas duas | O overlay do `EnergyHud` e o `cooldownOf` continuam a única leitura do HUD e do snapshot | n |
 | Palma Falsa e o tempo de segurar | Com o ramo Palma Falsa, a tecla solta antes de 250 ms troca no instante `max(80 ms, soltura)` desde o aperto; segurada até 250 ms, finge aos 250 ms. A `CastMachine` fica no sinal até a decisão (lida pelo `slotHeld`) | A regra pura só sabe "segurou 250 ms ou mais"; trocar aos 80 ms sem esperar quebraria a finta, e esperar sempre 250 ms atrasaria a troca de quem não segura | n |
+| Leitura da Dupla Palma | Enquanto a 2ª palma está armada o ícone do slot pisca a cada 250 ms, como a Ressonância com marca (RSN-11). Uma tecla na soltura ou na recuperação da 1ª palma (~210 ms) é ignorada como hoje (CAST-08); a janela de 1000 ms conta da troca | Sem o piscar a janela de 1 s é invisível; guardar a tecla mudaria a `CastMachine` de todas as técnicas | n |
 | "Erra o próximo golpe" da Palma Falsa | O comum enganado fica marcado até o fim do próximo golpe dele ou por 3000 ms, o que vier antes; o golpe sai, mas a caixa não dá dano, e quando ele erra abre no player a janela de Contra de 400 ms (`CounterWindow`) | "Os inimigos perto erram o próximo golpe (janela de Contra de 400 ms)"; sem prazo a marca ficaria para sempre no comum que foge | n |
 | Atordoamento do comum (tontura do Boogie e "Pare!" da Fala) | Um estado novo do `enemyBrain`, `stunned`: não anda, não começa golpe e cancela o golpe em preparo (telegrafado, ainda sem caixa ativa); não derruba e não conta em `downHits`; golpe recebido nele não o encerra. Atordoar de novo fica com o maior restante | Não existe atordoamento genérico hoje; reaproveitar `hitstun` encurtaria a tontura no 1º golpe, e o `ragdollStun` derrubaria | n |
-| Atordoamento do chefe | `bossBrain.stun(ms)` de hoje com o `bossStunMs` da Fala; a Finta Total cancela pelo caminho do `canAct` (`bossAI.ts:243`) | Os dois ganchos já existem | n |
-| Candidatos da troca | Comuns vivos e o chefe com a caixa (`hurtRect`), os orbes vivos do `techObjects` com `kind: 'orb'` (Vermelho, Azul, Roxo) e os `Projectile` do chefe com `kind: 'projectile'`. A onda de choque do chefe e os pregos da Ressonância não entram | "O inimigo, o orbe próprio ou o projétil"; a onda corre no chão e prego é marca, não orbe | n |
+| Atordoamento do chefe | `bossBrain.stun(ms, 'tech')`: a causa nova `tech` põe o chefe em `stagger` pelo `bossStunMs` da Fala **sem** armar o finalizador e sem o multiplicador de dano do `stagger`; a causa `wall` da investida segue como hoje. A Finta Total cancela pelo caminho do `canAct` (`bossAI.ts:243`) | O `stun(ms)` de hoje arma o `finisherReady` (`bossBrain.ts:121-126`): toda Fala (150 ms no chefe, a cada 4 s) abriria o finalizador de 12% do HP e o dano × `staggerDamageMult`, e a Fala viraria a melhor arma contra chefe da run. Era desvio pendente no design; a revisão adversarial o trouxe para a spec | n |
+| Candidatos da troca | Comuns vivos e o chefe com a caixa (`hurtRect`), os orbes vivos do `techObjects` com `kind: 'orb'` do Vermelho e do Roxo e os `Projectile` do chefe com `kind: 'projectile'`. A onda de choque do chefe, os pregos da Ressonância e o orbe do Azul não entram | "O inimigo, o orbe próprio ou o projétil"; a onda corre no chão e prego é marca, não orbe. Trocar com o Azul é a Evolução **Vácuo de Troca** (Boogie Nv 4 + Azul, tabela de combos do plano, F37), e a regra de combo proíbe a Evolução repetir o que a peça já faz sozinha | n |
 | O que acontece com o trocado | O orbe e o projétil seguem com a mesma velocidade e a vida que restava; o corpo fica com a velocidade zerada; o player fica com a velocidade zerada e sem perder o estado de golpe | Troca é teleporte; manter a velocidade do orbe deixa a combinação com o Vermelho legível | n |
+| Para onde o player olha depois da troca | Trocando com um corpo (comum ou chefe), o player passa a olhar para o trocado (`Player.face`, o `debugFace` de hoje renomeado, sem campo novo); com orbe ou projétil, mantém o lado | O trocado fica atrás do player e de costas para ele: virar sozinho entrega o golpe nas costas do tonto (a cena do Todo); mantendo o lado, o player ficaria de costas para o único alvo que a troca preparou | n |
 | Teleporte do player | O teleporte do FxLab (`Player.ts:512-515`, só em x) passa a aceitar x e y e serve aos dois; nenhum campo novo no `Player` | Regra do plano para o `Player.ts` ("troca hook por hook, sem campo novo") | n |
 | `fits` da troca | Recusa toda caixa que sobrepõe corpo estático do Matter (terreno) ou módulo sólido do mundo; corpos vivos (inimigos, chefe) não bloqueiam | Seção 2.5; corpo vivo sai do lugar sozinho, e bloquear por ele recusaria quase toda troca na horda | n |
 | Eco da Palma | O evento `echo` troca de volta pelo `swapPlacement` com as posições do momento; se o alvo morreu, sumiu ou não cabe, o eco não troca e não morde (evento `boogieEchoRefused`); trocando, o alvo toma os 4% (chefe 1%) como acerto `micro` | O plano diz "eco"; a seção 4 põe eco na faixa micro | n |
 | Origem da Ressonância e da Fala | O centro da caixa do player (`hurtRect`), como o `boxCenter` que o Boogie já usa | Um ponto só para as três; a mão muda de quadro a quadro | n |
+| Mira da Fala | O ponto de cada alvo passado ao `speak` é o x do centro da caixa com o y do centro do player preso à faixa vertical da caixa do alvo (o ponto da caixa mais perto do eixo do cone); a linha de visão vai até esse ponto. O `onTargetDied` e o `onPushedImpact` recebem o centro de verdade | O `inCone` mede pelo ponto (`cursedSpeech.ts:53-60`): o chefe (40×56) encostado no player (20×36) tem o centro 10 px acima a 30 px, 18° contra os 15° do cone de 30°, e a Fala de base não o travaria; num degrau o comum colado também escaparia. A regra pura não muda, só o ponto que o adaptador entrega | n |
+| Pregos e o grupo | O leque de 36 px cabe num corpo de 36 px: no chão plano os pregos cravam todos no 1º alvo da fila (RES-03). A Ressonância de base é dano concentrado e adiado; o grupo vem da Propagação, do Grampo e da Coroa, e o texto da carta diz "crava no 1º alvo à frente" | Regra pura verificada; prometer "no grupo" faria o jogador achar que os pregos falharam | n |
 | Sorteio do leque de pregos | O `Rng` do stream das técnicas que o `TechRunner` já recebe (`roll`), embrulhado num `Rng` | Mesma seed, mesmos pregos (RES-12); sem stream novo em `run.ts` | n |
 | Eco do Boneco de Palha | Passa pelo `TechEmitter` (fonte `strawDoll`, `micro`, com postura), com o teto de 4 por segundo; o eco não gera eco; só o Boneco (ramo, 250 ms depois da detonação) sai do próprio módulo | "Tudo que dispara efeito de técnica a partir de golpe, parry ou Domínio" passa pelo `TechEmitter` (seção 6); o eco nasce do dano de outra fonte | n |
 | Teto do `TechEmitter` | 4 emissões por 1000 ms de tempo de jogo **por fonte** (`wave`, `sanctuary`, `strawDoll`); uma fonte não come o teto da outra | Os dois emissores de hoje têm cada um o seu teto de 4 (CRP-12, SAN-02); um teto só mudaria o comportamento no passo de refatoração | n |
-| Custo em vida da Fala | Sai na soltura junto com a energia; não é "levar dano": sem reação de golpe, sem cancelar a conjuração (CAST-07), sem invulnerabilidade, sem número de dano vermelho e sem zerar a Fúria e a Cadência do Corpo (F30) | É uma escolha do jogador, não punição; zerar a Fúria tornaria a Fala inimiga da build de lutador | n |
+| Custo em vida da Fala | Sai na soltura junto com a energia; não é "levar dano": sem reação de golpe, sem cancelar a conjuração (CAST-07), sem invulnerabilidade, sem número de dano vermelho, sem zerar a Fúria e a Cadência do Corpo (F30) e sem contar como dano no `updateGameplay` da `TestScene`, onde a queda de `lastPlayerHp` zera o contador de combo (CMB-02) e avisa a recuperação: a comparação passa a somar o `Health.spent`, expressão por expressão, sem linha líquida | É uma escolha do jogador, não punição; zerar a Fúria ou o combo tornaria a Fala inimiga da build de lutador | n |
 | Vida e o portão da Fala | O portão nega o aperto com `techDenied:hp` se a vida não passa do custo em vida; se na soltura ela já não passar (golpe tomado no sinal), a fala é recusada, a energia volta e a vida não muda | A regra pura recusa na soltura (FAL-04); negar no aperto evita o sinal à toa | n |
+| Aviso da recusa por vida | `techDenied:hp` pisca em vermelho o ícone do slot apertado pelo tempo do flash da TEC-10; a barra de energia não pisca | Piscar a barra de energia diria "falta energia" e o jogador esperaria a barra encher; o `Hud.ts` (barra de vida) não pode crescer (JJK-15) | n |
 | Fala que não acerta ninguém | Cobra energia e vida e inicia a recarga, como o Vermelho que erra | Conjuração feita é conjuração paga | n |
 | Fala e a maestria | Cada alvo atordoado conta como acerto da conjuração (MAE: +1 no 1º alvo, +3 uma vez no chefe) mesmo sem dano, e solta o gatilho do Santuário uma vez por conjuração | O atordoamento é o efeito da técnica; sem isso a Fala nunca subiria por maestria | n |
 | Acerto sem dano | Não mostra número de dano; a faísca e o hitstop seguem a faixa | Número "0" na tela é ruído | n |
@@ -165,7 +170,8 @@ smokes que leem o contrato acompanhando; cada passo de técnica termina jogável
 | Smokes novos | `boogie.smoke.mjs`, `resonance.smoke.mjs` e `cursed-speech.smoke.mjs`, todos com `?debug&hd=1&area=modular` | Regra de smoke novo do projeto | y |
 
 **Open questions:** none - all resolved or logged above. A troca do mediano no teste de eixo dominante da Ressonância
-está registrada acima com o default escolhido e espera o aval do usuário na revisão da spec.
+está registrada acima com o default escolhido e espera o aval do usuário na revisão da spec. O atordoamento do chefe com a
+causa `tech` deixou de ser aval pendente: a revisão adversarial o tornou o default (o `stun` de hoje abre o finalizador).
 
 ---
 
@@ -264,13 +270,13 @@ frente, para entrar e sair do cerco quando eu quiser.
 
 **Acceptance Criteria**:
 
-1. BWG-01: WHEN the Boogie cast reaches the swap moment THEN the module SHALL call `BoogieState.swap` with the player box (`hurtRect`), the facing, the candidates (live common enemies and the boss with their `hurtRect`, the live `techObjects` with `kind: 'orb'`, and the boss `Projectile` objects of kind `projectile`) and a `fits` predicate that SHALL reject any box overlapping a static Matter body of the terrain or a solid world module.
-2. BWG-02: WHEN the swap is accepted THEN in the same frame the player SHALL move to the returned box with zero velocity, a body target SHALL move to the returned center with zero velocity, an orb or projectile SHALL move to the returned center keeping its velocity and remaining life, and the system SHALL push the debug event `boogieSwap:<kind>:<targetId>`.
+1. BWG-01: WHEN the Boogie cast reaches the swap moment THEN the module SHALL call `BoogieState.swap` with the player box (`hurtRect`), the facing, the candidates (live common enemies and the boss with their `hurtRect`, the live `techObjects` with `kind: 'orb'` of the Vermelho and the Roxo, never the Azul, and the boss `Projectile` objects of kind `projectile`) and a `fits` predicate that SHALL reject any box overlapping a static Matter body of the terrain or a solid world module.
+2. BWG-02: WHEN the swap is accepted THEN in the same frame the player SHALL move to the returned box with zero velocity, a body target SHALL move to the returned center with zero velocity, an orb or projectile SHALL move to the returned center keeping its velocity and remaining life, after a body swap the player SHALL face the swapped body while after an orb or projectile swap it SHALL keep its facing, and the system SHALL push the debug event `boogieSwap:<kind>:<targetId>`.
 3. BWG-03: IF the swap is refused (`noTarget`, `blockedPlayer`, `blockedTarget`) THEN in the same frame the energy spent at `release` SHALL be given back, no charge SHALL be spent, nobody SHALL move, and the system SHALL push `boogieRefused:<reason>`.
 4. BWG-04: WHEN a common enemy is swapped with a stun above 0 THEN it SHALL enter the `stunned` state for the resolved stun: it SHALL not walk, SHALL not start an attack, SHALL lose an attack still in windup, SHALL not be knocked down, and a hit SHALL not end the state; the boss, the orb and the projectile SHALL not be stunned.
 5. BWG-05: WHEN the resolved shock is above 0 THEN every body in the `shock` list SHALL take one `chip` hit of the shock damage times `damageMul` and `vowDamageMul`, with the technique marks of a light hit.
 6. BWG-06: WHILE the Boogie has at least one charge or the Dupla Palma follow-up is armed, a press of its slot SHALL not be denied for cooldown; WHILE it has no charge and no follow-up, the press SHALL be denied with `techDenied:cooldown`.
-7. BWG-06: WHILE the Boogie is in a slot the slot cooldown read by the `EnergyHud` overlay and by the snapshot SHALL be the recharge left of the next charge when no charge is left and 0 otherwise, and WHILE its max charges are above 1 the icon SHALL show the charges left as a number in its top left corner.
+7. BWG-06: WHILE the Boogie is in a slot the slot cooldown read by the `EnergyHud` overlay and by the snapshot SHALL be the recharge left of the next charge when no charge is left and 0 otherwise, WHILE its max charges are above 1 the icon SHALL show the charges left as a number in its top left corner, and WHILE the Dupla Palma follow-up is armed the icon SHALL blink every 250 ms.
 8. BWG-07: WHILE the branch is Palma Falsa, WHEN the slot key is released before 250 ms from the press THEN the swap SHALL happen at `max(80 ms, release time)` from the press, and WHEN the key is still held at 250 ms THEN the cast SHALL feint at 250 ms through `BoogieState.feint`, spending one charge and the energy.
 9. BWG-08: WHEN a feint lists a common enemy in `misses` THEN that enemy SHALL be marked until its next attack ends or 3000 ms pass, whichever comes first; WHILE marked its next attack hitbox SHALL deal no damage, and WHEN that attack ends without damage near the player THEN the player `CounterWindow` SHALL open for 400 ms.
 10. BWG-09: WHEN the feint returns `bossCancel` THEN the boss attack in windup SHALL be cancelled through the `canAct` path, the boss SHALL take one normal hit of `round(0.01 × maxHp)`, and the system SHALL push `fintaTotal`.
@@ -279,8 +285,8 @@ frente, para entrar e sair do cerco quando eu quiser.
 13. BWG-12: WHEN a swap, a feint or an echo happens THEN the `BoogieFx` view SHALL draw an amber palm flash (`PALETTE` keys `A` and `w`) at the departure and the arrival points for at most 150 ms, registered in the `FxRegistry`, and a feint SHALL draw the flash only at the player.
 14. BWG-13: The Boogie view and the swap SHALL be checked in the game in HD, in motion, with the player facing both sides, against an enemy, the boss, a Red orb and a boss projectile.
 
-**Independent Test**: `boogie.smoke.mjs` com `seed=1&maxAlive=1&tech=boogie`: o player e o comum à frente trocam de x e
-o evento `boogieSwap:enemy:<id>` sai; com uma parede no destino a troca é recusada e a energia volta; com
+**Independent Test**: `boogie.smoke.mjs` com `seed=1&maxAlive=1&tech=boogie`: o player e o comum à frente trocam de x, o
+player passa a olhar para o comum e o evento `boogieSwap:enemy:<id>` sai; com uma parede no destino a troca é recusada e a energia volta; com
 `axes=boogie.cargas:2` duas trocas seguidas saem sem `techDenied:cooldown`; com `ramo=boogie:b` e
 `axes=boogie.alcance:1,boogie.cargas:3` (Nv 5) a 2ª troca volta sozinha em 1 s.
 
@@ -288,8 +294,8 @@ o evento `boogieSwap:enemy:<id>` sai; com uma parede no destino a troca é recus
 
 ### P1: Ressonância no jogo ⭐ MVP
 
-**User Story**: Como jogador, quero cravar pregos no grupo com o 1º toque e detonar todas as marcas com o 2º, para
-escolher o momento da explosão.
+**User Story**: Como jogador, quero cravar pregos no inimigo à frente com o 1º toque e detonar todas as marcas com o 2º,
+para escolher o momento da explosão (e, com Propagação, Grampo ou Coroa, levar o grupo junto).
 
 **Why P1**: É a técnica de dano de área da leva 1 e a única de dois toques.
 
@@ -325,11 +331,11 @@ do grupo à minha frente.
 
 **Acceptance Criteria**:
 
-1. FLA-01: IF the player HP is not above the resolved HP cost when the Fala slot is pressed THEN the press SHALL be denied with `techDenied:hp` and the energy bar SHALL flash as TEC-10 does.
-2. FLA-02: WHEN the Fala cast reaches `release` THEN the module SHALL call `speak` with the player box center, the facing, the player HP, the live common enemies and the boss, and a `lineOfSight` test over the static terrain bodies and the solid world modules.
+1. FLA-01: IF the player HP is not above the resolved HP cost when the Fala slot is pressed THEN the press SHALL be denied with `techDenied:hp`, the pressed slot icon SHALL flash red for the TEC-10 flash duration and the energy bar SHALL not flash.
+2. FLA-02: WHEN the Fala cast reaches `release` THEN the module SHALL call `speak` with the player box center, the facing, the player HP, the live common enemies and the boss, each aimed at the point of its box nearest to the cone axis (box center x, player center y clamped to the box vertical span), and a `lineOfSight` test to that point over the static terrain bodies and the solid world modules.
 3. FLA-03: IF `speak` refuses for HP at `release` THEN the energy SHALL be given back in the same frame, the HP SHALL not change, the cooldown SHALL not start and the system SHALL push `speechRefused:hp`.
-4. FLA-04: WHEN `speak` is accepted THEN the player SHALL lose exactly the HP cost with no hit reaction, no cast cancel, no invulnerability, no damage number and no reset of the Fúria or the Cadência, and the system SHALL push `speech:<hits>`.
-5. FLA-05: WHEN `speak` returns its hits THEN each common target SHALL enter the `stunned` state of BWG-04 for its `stunMs`, the boss SHALL be stunned through `bossBrain.stun` for its `stunMs`, a hit with damage above 0 SHALL deal it times `damageMul` and `vowDamageMul`, and a hit with force above 0 SHALL push along its direction, knocking the common target down when `knockdown` is set.
+4. FLA-04: WHEN `speak` is accepted THEN the player SHALL lose exactly the HP cost with no hit reaction, no cast cancel, no invulnerability, no damage number, no reset of the Fúria, the Cadência or the combo counter (CMB-02) and no damage signal to the recovery, and the system SHALL push `speech:<hits>`.
+5. FLA-05: WHEN `speak` returns its hits THEN each common target SHALL enter the `stunned` state of BWG-04 for its `stunMs`, the boss SHALL be stunned through `bossBrain.stun(ms, 'tech')` for its `stunMs` without arming the finisher or the stagger damage multiplier, a hit with damage above 0 SHALL deal it times `damageMul` and `vowDamageMul`, and a hit with force above 0 SHALL push along its direction, knocking the common target down when `knockdown` is set.
 6. FLA-06: WHILE the cast's `SpeechCast` lives, WHEN a target stunned by it dies THEN the module SHALL call `onTargetDied`, each returned hit SHALL land as a `micro` hit with its stun, and the system SHALL push `speechChain:<deadId>`.
 7. FLA-07: WHILE the cast's `SpeechCast` lives, WHEN a target pushed by it touches a terrain wall, a solid world module or another live common enemy THEN the module SHALL call `onPushedImpact` once, and each returned hit SHALL land as a `micro` hit, knocking down the common targets it marks.
 8. FLA-08: WHEN a hit of the Fala kills THEN the module SHALL call `claimKillRefund` and SHALL cut the returned ms from its slot cooldown.
@@ -340,7 +346,8 @@ do grupo à minha frente.
 
 **Independent Test**: `cursed-speech.smoke.mjs` com `seed=1&maxAlive=2&tech=fala`: a fala gasta 25 de energia e 8 de
 vida, os dois comuns no cone ficam com `stunnedMs` perto de 600 e nenhum ataca nesse tempo; com a vida em 8 o aperto
-sai `techDenied:hp`; com `ramo=fala:b` o comum cai derrubado.
+sai `techDenied:hp` e pisca o ícone do slot; com `ramo=fala:b` o comum cai derrubado; com o chefe da r5 encostado à
+frente, o chefe trava em `stagger` sem `finisherReady`; o contador de combo não zera com a fala.
 
 ---
 
@@ -409,6 +416,10 @@ ultimate eu tenho.
 - WHEN a Volte push sends a common enemy into another one THEN only one Esmague bite SHALL land on the pushed target, and the other SHALL only fall.
 - IF the `strawDoll` source already emitted 4 echoes in the last 1000 ms THEN the 5th echo SHALL not land and the hit that caused it SHALL be unchanged.
 - WHEN the Boogie has 3 charges and spends one THEN the overlay SHALL stay empty (0) and the charge number SHALL read 2.
+- IF the Azul orb is the only candidate ahead THEN the Boogie swap SHALL be refused with `noTarget` and the energy back.
+- WHEN the Dupla Palma follow-up is armed and the slot key is pressed during the release or recover of the first palm THEN the press SHALL be ignored (CAST-08) and the follow-up SHALL stay armed.
+- WHEN the boss touches the player in front at the base 30° cone THEN the Fala SHALL stun it (FLA-02 aim point), and WHEN a common enemy stands one step above or below the player inside the range THEN the Fala SHALL stun it too.
+- WHEN the Fala HP cost is paid THEN the combo counter SHALL keep its count (FLA-04).
 
 ---
 

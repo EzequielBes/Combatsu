@@ -165,7 +165,7 @@ graph TD
 | Konbini e run | `runDirector` no `roundStart` → `techRunner.rebuild()`; no `roundCleared` → `techRunner.roundEnd()` |
 | Emissor | `bodyDirector` (Onda), `domainPowers` (Santuário) e o módulo da Ressonância (Boneco de Palha) chamam `build.emitter`; o módulo enxerga o emissor pela porta `emitter` do `TechPorts` |
 | Loja | `GAME_SHOP_CATALOG` termina com `LEVA1_TECHNIQUE_ENTRIES`; o `shopDirector` passa `iconOf` à vista para a carta mostrar o ícone (técnica pelo `TechDef.icon`, Domínio pelo id possuído) |
-| Corpo (F30) | `bodyDirector` desconta do "perdeu HP" o que foi pago pela Fala (`Health.spent`) |
+| Corpo (F30) e cena | `bodyDirector` desconta do "perdeu HP" o que foi pago pela Fala (`Health.spent`); a `TestScene.updateGameplay` soma o `spent` no `damaged`/`lastPlayerHp` (combo e recuperação), sem linha líquida |
 
 ---
 ## Components
@@ -246,7 +246,8 @@ graph TD
   undefined`; `machine.request(slot, { ...ctx, answer })`; `consumed` marca `slotConsumed[slot]` e não vira evento de
   debug nem `cancelMelee` (REG-02.4). O `holdSign` repassado à máquina é uma função montada uma vez no construtor que
   lê o `gate` e o `slotHeld` do quadro (F30).
-- `get slotConsumed(): readonly [boolean, boolean]` (zerado a cada `update`, como o `framePressed`).
+- `get slotConsumed(): readonly boolean[]` (zerado a cada `update`, como o `framePressed`; lista, não par, para a F35
+  não trocar o tipo de novo).
 - `requestSlot` do FxLab segue sem portão (o FxLab só usa as técnicas de hoje; Out of Scope).
 
 ### `core/techEmitter.ts` (novo no passo 2, ~95 linhas; sai `core/strikeEmitter.ts`)
@@ -329,6 +330,7 @@ graph TD
 
 ### `core/techBoxes.ts` (novo no passo 4, ~30 linhas)
 
+- `aimPoint(box, y): Vec2` (x do centro, `y` preso entre o topo e o pé da caixa; a mira da Fala).
 - `boxOfRect(rect): Box` (o `Rect` da cena é pelo centro, `bodyTags.ts:4`; o `Box` das regras puras é pelo canto,
   `axisRule.ts:86-91`), `centerOfBox(box)`, `shrink(box, px)`, `widen(box, dx, dy)`, `overlaps(a, b)`. Uma conversão
   só, testada ida e volta.
@@ -388,14 +390,15 @@ graph TD
   - `update(f)`: guarda o `elapsedMs` do `sign` do Boogie; `state.update(dt)` e os ecos vencidos vão ao
     `boogieMoves.echo`; no `techCast:boogie`, `palmDecision` com o `slotHeld` do slot decide `swap` ou `feint`; escreve o
     espelho da recarga no slot (`setCooldown(slot, charges === 0 ? rechargeLeftMs : 0)`, BWG-06.7).
-  - `hudHint()` → `{ badge: maxCharges > 1 ? String(charges) : null, blink: false }`.
+  - `hudHint()` → `{ badge: maxCharges > 1 ? String(charges) : null, blink: followUpArmed }` (a janela da 2ª palma
+    fica visível).
   - `state()` → `techState.boogie` (JJK-07). `objects()` → `[]`.
 - **`game/tech/boogieMoves.ts`** (novo, ~120): o que a troca, a finta e o eco fazem no mundo.
   - `candidates(f)`: comuns vivos e fora de ragdoll (`instanceof Enemy`; os bonecos do FxLab ficam de fora, Out of Scope)
-    e o chefe vivo, com `center`/`size` do `hurtRect`; os orbes vivos de `ctx.objects()` com `kind === 'orb'`; os
+    e o chefe vivo, com `center`/`size` do `hurtRect`; os orbes vivos de `ctx.objects()` com `kind === 'orb'` e `tech !== 'azul'` (trocar com o Azul é o Vácuo de Troca da F37); os
     `Projectile` de `ctx.projectiles()` com `kind === 'projectile'` e não removidos (BWG-01).
   - `swap(cast, f)`: `state.swap({ player: boxOfRect(player.hurtRect()), facing, candidates, fits: world.fits })`.
-    Aceita, no mesmo quadro: `player.teleportTo(centro de playerBox)`; corpo → `teleport(targetCenter)` (velocidade
+    Aceita, no mesmo quadro: `player.teleportTo(centro de playerBox)` e, com corpo, `player.face(sinal de targetCenter.x − x novo do player)` (orbe e projétil mantêm o lado); corpo → `teleport(targetCenter)` (velocidade
     zerada); orbe → `ctx.relocate(tech, id, targetCenter)` e projétil → `relocate(x, y)` (velocidade e vida mantidas,
     BWG-02); tontura → `enemy.stun(stunMs)` (BWG-04); choque → um `Hit` `chip` de `scaleTechDamage(shockDamage)` com
     `techMarks('light')` por corpo, `onTechHit`, `castHit` e, no abate, `state.onTechKill()` (BWG-05, BWG-11); evento
@@ -450,9 +453,11 @@ graph TD
 
 - **`game/tech/speech.ts`** (novo, ~140): o módulo.
   - `answerPress` → `speechPress(player.hp, stats.fala.hpCost)` (FLA-01; a `CastMachine` devolve `techDenied:hp` e o
-    `techDirector` pisca a barra).
+    `techDirector` pisca em vermelho o ícone do slot, não a barra de energia).
   - No `techCast:fala`: `speak(speechStats, { origin: centro do player, facing, hp: player.hp, targets, lineOfSight:
-    world.lineOfSight })` (FLA-02). Recusa (vida caiu no sinal): `energy.gain(loadout.cost('fala'))`,
+    world.lineOfSight })` (FLA-02), com o `center` de cada alvo trocado pelo ponto de mira `aimPoint(caixa, origin.y)`
+    (x do centro; y da origem preso entre o topo e o pé da caixa): o chefe colado e o comum num degrau entram no cone de
+    30°. O rastro (`onTargetDied`, `onPushedImpact`) recebe o centro de verdade. Recusa (vida caiu no sinal): `energy.gain(loadout.cost('fala'))`,
     `loadout.clearCooldown(slot)`, evento `speechRefused:hp` (FLA-03). Aceita: `player.health.spend(hpCost)`, evento
     `speech:<n>`, `speechEffects.applyHits`, `SpeechFx.voice` e `seal` (FLA-04, FLA-10).
   - Mantém cada `SpeechCast` viva enquanto houver atordoamento dela ou por 800 ms desde a fala, o maior (FLA-09);
@@ -494,15 +499,17 @@ graph TD
   (`ai.state === 'windup'`), `shove(direction, force)` (uma `setVelocity` em x, porque o `receiveHit` do chefe ignora a
   força, `Boss.ts:163-173`).
 - **`game/Player.ts`** (512-517): `debugTeleportX(x)` vira `teleportTo(x, y)` com `drawPos.snap()`; o FxLab passa o `y`
-  de hoje. Nenhum campo novo.
+  de hoje. `debugFace(dir)` vira `face(dir)` (FxLab e troca do Boogie). Nenhum campo novo.
 - **`game/Projectile.ts`** (100 → ~108): `relocate(x, y)` (`mover.moveTo(x)`, corpo e vista no ponto). **`core/mover.ts`**:
   `moveTo(x)` mantém o `traveled` (vida restante).
-- Orbes: `relocate(id, at)` no módulo do Vermelho (estado de voo da F30 com `moveTo` e o sensor no ponto), do Azul
-  (`BlueOrbState.setPosition` da F33) e do Roxo (`PurpleFlight` da F33 com `moveTo`).
+- Orbes: `relocate(id, at)` no módulo do Vermelho (estado de voo da F30 com `moveTo` e o sensor no ponto) e do Roxo
+  (`PurpleFlight` da F33 com `moveTo`). O Azul não ganha `relocate`: fica fora dos candidatos (Vácuo de Troca, F37).
 - **`core/health.ts`** (98 → ~106, passo 6): `spend(n): boolean` (com `hp > n`, tira `n` sem dar invulnerabilidade nem
   atordoamento e mesmo durante a invulnerabilidade; senão recusa) e `get spent(): number` (soma paga na run, zerada no
   `reset`). O `bodyDirector` (F30) desconta o `spent` do quadro na queda de HP, então a Fúria e a Cadência não zeram pela
-  Fala (FLA-04). O pagamento não passa pelo `Player.takeHit`, então não há reação, não chama `onDamaged` (não cancela a
+  Fala (FLA-04). A `TestScene.updateGameplay` também lê a queda de HP (`damaged = hp < lastPlayerHp`, que zera o
+  combo, CMB-02, e avisa a recuperação): as duas linhas passam a comparar e guardar `hp + health.spent`, troca de
+  expressão sem linha líquida (JJK-15). No `reset` a soma pode cair uma vez; o combo já é 0 nesse quadro. O pagamento não passa pelo `Player.takeHit`, então não há reação, não chama `onDamaged` (não cancela a
   conjuração, CAST-07) e não mostra número.
 
 ### Arte nova das vistas (passos 4 a 6)
@@ -538,7 +545,7 @@ mudam e são reconferidas no começo do passo.
 | `src/game/tech/blue.ts`, `cut.ts`, `purple.ts` | 21-42, 11-24, 21-46 | `id`, `update(f)`, `objects()` (Azul e Roxo, das entradas de hoje); o construtor recebe só o `ctx` (o `fx`, o `registry` e o `terrain` vêm das portas) |
 | `src/core/cast.ts` | 6, 9-15, 74-94, 100-107 | `PressAnswer`, `PressGate`, `DenyReason` `'hp'`, `CastEvent` `consumed`, `CastContext.answer`; ordem do `request` acima; `update(dtMs, holdSign?)` |
 | `src/game/TechCaster.ts` | 79-94, 101-112 | `update(dtMs, gate?)`, `slotConsumed`, o `holdSign` montado no construtor; `mapEvents` ignora `consumed` |
-| `src/scenes/test/techDirector.ts` | 13-15, 22-29, 32, 52-57 | `techCaster.update(dt, this.s.techRunner)`; `techRunner.update({ cast, castEvents, slotPressed, slotHeld, slotConsumed, enemies, boss })`; a barra pisca com `techDenied:energy` ou `techDenied:hp` (FLA-01 sem tocar no diretor no passo 6); `kokusenSnapshot` vira `snapshotFields().kokusen` (2 leituras) |
+| `src/scenes/test/techDirector.ts` | 13-15, 22-29, 32, 52-57 | `techCaster.update(dt, this.s.techRunner)`; `techRunner.update({ cast, castEvents, slotPressed, slotHeld, slotConsumed, enemies, boss })`; a barra pisca com `techDenied:energy` e, com `techDenied:hp`, `energyHud.flashSlot(slot apertado)` pisca o ícone em vermelho (FLA-01 sem tocar no diretor no passo 6; `EnergyHud.flashSlot` +~5 e `icons[i].flashing` no `debugState`); `kokusenSnapshot` vira `snapshotFields().kokusen` (2 leituras) |
 | `src/scenes/test/techPorts.ts` (novo) | — | ver acima |
 | `src/scenes/TestScene.ts` | 310-331 | `this.techRunner = new TechRunner(techPorts(this));` (−20 efetivas; o comentário da l.309 fica) |
 | `src/scenes/test/snapshot.ts` | 180-181, 186 | `...this.s.techRunner.snapshotFields()` e `...this.s.techRunner.fxFields()` |
@@ -621,13 +628,13 @@ Fim do passo 3: `grep -rn "kanji" src --include=*.ts` só acha `sprites/kanji.ts
 | `src/core/techStats.ts` (F33) | `TechStats`, `RESOLVERS` | bloco `boogie?`; `boogie: resolveBoogie` |
 | `src/core/loadout.ts` (F33) | `startCooldown`, `tick` | `setCooldown(slot, ms)`, `cutCooldown(slot, ms)`, `slotOf(id)`; `startCooldown` e `tick` pulam a técnica com `ownCooldown` |
 | `src/core/enemyBrain.ts` (F30) | 3-4, `receiveHit`, `update` | estado `stunned`, `stun(ms)`, `stunnedMs` |
-| `src/core/bossBrain.ts` (F30) | 19, 96, 104-108, 121-126 | causa `tech` no `stun` sem finalizador nem multiplicador do `stagger` (pendente de aval, ver Risks) |
+| `src/core/bossBrain.ts` (F30) | 19, 96, 104-108, 121-126 | causa `tech` no `stun` sem finalizador nem multiplicador do `stagger` (spec, assumption "Atordoamento do chefe") |
 | `src/core/mover.ts` | 20-28 | `moveTo(x)` |
 | `src/game/Enemy.ts`, `enemy/EnemyAttack.ts`, `enemy/context.ts` | 153-200, 352-392; 63-96; 13-25 | ganchos acima |
 | `src/game/Boss.ts` | 89-160, 212-255 | ganchos acima |
-| `src/game/Player.ts`, `src/game/FxLab.ts` | 512-517; chamada do teleporte | `teleportTo(x, y)` |
+| `src/game/Player.ts`, `src/game/FxLab.ts` | 507-517; chamadas do teleporte e da virada | `teleportTo(x, y)`; `debugFace` vira `face` |
 | `src/game/Projectile.ts` | 95-101 | `relocate(x, y)` |
-| `src/game/tech/red.ts`/`redFlight.ts` (F30), `blue.ts`, `purple.ts` | — | `relocate(id, at)` |
+| `src/game/tech/red.ts`/`redFlight.ts` (F30), `purple.ts` | — | `relocate(id, at)` (o Azul fica fora: Vácuo de Troca, F37) |
 | `src/game/tech/techWorld.ts`, `boogie.ts`, `boogieMoves.ts`, `techFx/BoogieFx.ts`, `art/hd/fx/leva1Fx.ts` (novos) | — | ver acima |
 | `src/game/tech/registry.ts` | `TECH_MODULES` | `boogie: (ctx) => new BoogieTech(ctx)` (a linha do REG-04) |
 | `src/game/art/index.ts`, `src/game/textures.ts` | `registerHdSheets`, `TEX` | folha `tech-fx-leva1` (+2, +2) |
@@ -669,6 +676,7 @@ Fim do passo 3: `grep -rn "kanji" src --include=*.ts` só acha `sprites/kanji.ts
 | `src/data/techAxesLeva1.ts`, `src/core/techResolversLeva1.ts`, `src/core/techStats.ts`, `core/leva1Press.ts` | — | Fala |
 | `src/core/health.ts` | 60-110 | `spend(n)`, `spent`, `reset` zera |
 | `src/scenes/test/bodyDirector.ts` (F30) | queda de HP no `update` | desconta o `player.health.spent` do quadro |
+| `src/scenes/TestScene.ts` | `updateGameplay` (`damaged`, `lastPlayerHp`, F29 l.479 e l.483) | compara e guarda `hp + health.spent` (0 efetivas; o combo e a recuperação não leem a Fala como dano) |
 | `src/scenes/test/effects.ts` (F29) | 43-44 | número só com dano aplicado > 0 (JJK-10) |
 | `src/game/tech/speech.ts`, `speechEffects.ts`, `techFx/SpeechFx.ts` (novos) | — | ver acima |
 | `src/game/tech/registry.ts` | `TECH_MODULES` | `fala: ...` |
@@ -707,7 +715,7 @@ export interface TechFrame {
   castEvents: readonly string[];
   slotPressed: readonly [boolean, boolean];
   slotHeld: readonly [boolean, boolean];      // F30
-  slotConsumed: readonly [boolean, boolean];  // F34
+  slotConsumed: readonly boolean[];           // F34, indexado por CastSlot (a F35 troca slotPressed/slotHeld para isto)
   enemies: readonly TechTarget[];
   boss: Boss | null;
 }
@@ -781,7 +789,7 @@ export type SpeechBuildSnapshot = TechBuildSnapshot<SpeechAxisId,
 
 // GameSnapshot (debugApi.ts)
 // techObjects: TechObjectSnapshot[]; techState: TechStateSnapshot; enemies[i].stunnedMs: number;
-// hud.energy.icons[i]: { cooldownOverlayHeight; iconHeight; texture: string | null; frame: string | null; badge: string | null }
+// hud.energy.icons[i]: { cooldownOverlayHeight; iconHeight; texture: string | null; frame: string | null; badge: string | null; flashing: boolean }
 // hud.domainBar.icon: { texture: string; frame: string } | null
 ```
 
@@ -878,7 +886,7 @@ F29 a F33 (reconferir nos merges); "fim da F34" é a estimativa deste design. Te
 | `src/scenes/test/bodyDirector.ts` (F30) | — | ~130 | ~118 | a onda vai ao emissor; desconta o HP pago |
 | `src/scenes/test/shopDirector.ts` | 144 | ~150 | ~153 | `iconOf`, voo com o ícone |
 | `src/core/enemyBrain.ts` | 125 (F29: 128) | ~130 | ~140 | `stunned` |
-| `src/core/bossBrain.ts` | 160 (F29: 162) | ~163 | ~166 | causa `tech` (se aprovada) |
+| `src/core/bossBrain.ts` | 160 (F29: 162) | ~163 | ~166 | causa `tech` |
 | `src/core/loadout.ts` | 86 | ~118 | ~132 | `setCooldown`, `cutCooldown`, `slotOf`, `ownCooldown` |
 | `src/core/cast.ts` | 110 | ~113 | ~122 | portão, `consumed`, `holdSign` |
 | `src/game/TechCaster.ts` | 75 | ~79 | ~90 | portão, `slotConsumed`, `holdSign` |
@@ -933,7 +941,7 @@ ramo novo de topo; `EnemyAnimator.ts`/`EnemyDefense.ts` (complexidade) não são
 | Ressonância: konbini abre com prego ou marca | `roundEnd()` no `roundCleared` limpa a vista; `rebuild()` no `roundStart` deixa a técnica `ready` (JJK-11) | Rodada nova sem resto |
 | Ressonância: detonação mata o chefe | A regra pura não agenda eco nem janela (edge case) | Sem eco póstumo |
 | Boneco de Palha com a fonte `strawDoll` no teto | `strawDoll` devolve 0, o acerto que pediu fica igual (EMI-03) | Eco a menos |
-| Fala com a vida igual ao custo | `speechPress` nega `hp` (FAL-04, borda nos dois lados: custo e custo + 1) | `techDenied:hp` e a barra pisca |
+| Fala com a vida igual ao custo | `speechPress` nega `hp` (FAL-04, borda nos dois lados: custo e custo + 1) | `techDenied:hp` e o ícone do slot pisca em vermelho |
 | Fala com a vida caindo para o custo durante o sinal | `speak` recusa na soltura; energia de volta, `clearCooldown`, vida igual, `speechRefused:hp` (FLA-03) | Nada sai, nada é cobrado |
 | Fala atrás de parede dentro do cone | `lineOfSight` falso: o alvo fica fora (FAL-09) | Não trava quem está atrás do muro |
 | "Volte" empurra um comum para outro | `onPushedImpact` uma vez; só o empurrado leva a mordida e os dois caem (edge case) | Uma mordida só |
@@ -947,7 +955,10 @@ ramo novo de topo; `EnemyAnimator.ts`/`EnemyDefense.ts` (complexidade) não são
 
 | Concern | Location (file:line) | Impact | Mitigation |
 | --- | --- | --- | --- |
-| O `bossBrain.stun(ms)` que a spec escolheu para a Fala entra em `stagger` com `finisherReady = true` e o dano do `stagger` multiplicado | `src/core/bossBrain.ts:96`, `:104-108`, `:121-126` | Toda Fala (150 ms no chefe) abriria o finalizador de 12% do HP e o multiplicador de dano do `stagger`: um combo forte demais e fora do plano | Recomendação: `stun(ms, cause: StaggerCause = 'wall')` com a causa `tech`, que não arma o finalizador nem o multiplicador (+3 linhas, teste novo `tests/core/bossStunTech.test.ts`). É desvio da assumption "Atordoamento do chefe" e vai ao usuário antes do passo 6 (a Finta Total do passo 4 não atordoa) |
+| O `bossBrain.stun(ms)` que a spec escolheu para a Fala entra em `stagger` com `finisherReady = true` e o dano do `stagger` multiplicado | `src/core/bossBrain.ts:96`, `:104-108`, `:121-126` | Toda Fala (150 ms no chefe) abriria o finalizador de 12% do HP e o multiplicador de dano do `stagger`: um combo forte demais e fora do plano | `stun(ms, cause: StaggerCause = 'wall')` com a causa `tech`, que não arma o finalizador nem o multiplicador (+3 linhas, teste novo `tests/core/bossStunTech.test.ts`); adotado pela spec na revisão (assumption "Atordoamento do chefe", FLA-05) |
+| O `inCone` da Fala mede um ponto, e o chefe é 20 px mais alto que o player | `src/core/cursedSpeech.ts:53-60`, `Boss.ts:16-17`, `textures.ts:83-84` | O chefe colado (centro 10 px acima a 30 px = 18°) e o comum num degrau escapariam do cone de base de 30° | Ponto de mira `aimPoint` (`core/techBoxes.ts`, FLA-02); o smoke `cursed-speech` trava o chefe colado |
+| A `TestScene` lê toda queda de HP como dano | F29 `TestScene.ts:479-483` (`damaged`, CMB-02, recuperação) | A Fala zeraria o combo e cortaria a recuperação a cada uso | Soma do `Health.spent` nas duas linhas (0 efetivas); o smoke `cursed-speech` confere o combo |
+| Trocar com o Azul é a Evolução Vácuo de Troca (plano, tabela de combos, F37) | `docs/plano-builds-e-habilidades.md` (Boogie + Azul) | A Evolução repetiria o que a peça já faz, contra a regra de combo | O Azul fica fora dos candidatos e sem `relocate` na F34 |
 | O `Bounds.overlaps` do Matter conta borda tocando | `src/game/tech/blue.ts:104-111` (o mesmo problema com o chão), `query.region` | Sem encolher, toda troca acusaria o chão sob os pés e seria recusada | `fits` encolhe a caixa 1 px; o smoke `boogie` prova a troca no chão plano; o chefe (40×56) junto à parede continua recusado (10 px de sobra) |
 | O `Rect` da cena é pelo centro e o `Box` das regras puras é pelo canto | `src/game/bodyTags.ts:4-10`, `src/core/axisRule.ts:86-91` | Troca, pregos e cone deslocados meia caixa | Uma conversão só (`core/techBoxes.ts`) com teste de ida e volta; os módulos nunca montam `Box` à mão |
 | O TOB-02 lista 3 smokes, mas a F30 e a F33 acrescentam leituras por `kind` | `scripts/smoke/red-axes.smoke.mjs` (F30), `tech-axes.smoke.mjs` (F33) | O passo 1 quebraria smokes fora da lista | `grep -rn "techObjects" scripts/smoke` no começo do passo 1 e troca em todos |
@@ -1021,12 +1032,12 @@ AD-006 (pregos pelo stream com seed), AD-009 (vistas só com a `PALETTE`), AD-01
 | `tests/core/techEmitter.test.ts` | Os casos do `strikeEmitter.test.ts` (F30) com só import e construtor trocados; EMI-03: 4 por fonte, a 5ª a 999 ms cai, a 1000 e a 1001 ms sai; `wave` cheio não muda `sanctuary` nem `strawDoll`; todo `WaveHit` com `band: 'micro'` |
 | `tests/core/techIcon.test.ts` | ICO-01/03/08: técnica → próprio id; `dominio` com Domínio → id dele, sem → `null`; carta comum → `null` |
 | `tests/core/leva1Press.test.ts` | BWG-06 (com e sem carga, 2ª palma armada sem carga passa com `skipCooldown`); BWG-07 (`palmDecision` a 79/80/81 e 249/250/251 ms, com e sem tecla, com e sem o ramo); RSN-04 a RSN-06 (`ready`/`armed`/`cooldown`); FLA-01 (vida = custo nega, custo + 1 passa; L-010) |
-| `tests/core/techBoxes.test.ts` | Ida e volta `Rect` ↔ `Box`; `shrink`, `widen` e `overlaps` com borda tocando |
+| `tests/core/techBoxes.test.ts` | Ida e volta `Rect` ↔ `Box`; `shrink`, `widen` e `overlaps` com borda tocando; `aimPoint` com o `y` acima, dentro e abaixo da caixa |
 | `tests/core/rollRng.test.ts` | O `int` do `RollRng` usa o `roll`; mesmo `roll`, mesmos pregos (RES-12 pelo adaptador) |
 | `tests/core/techStatsLeva1.test.ts` | JJK-02: 3 técnicas × 6 eixos × 0 a 3 pontos, com `damageMul`/`vowDamageMul` 1 e 1,35; o piso de 60% nas bordas (Boogie 12 no 3º ponto de Eficiência, 12 com `costMul` que o leva abaixo, e 13 acima; Ressonância e Fala 15) (L-010); `killRefund` 0 e o 0,3 no bloco com Recarga 3; tempos e `cooldownMs` (Boogie = recarga da carga, com o −20% do Cargas 3) |
 | `tests/data/techAxesLeva1.test.ts` | JJK-12 com a tabela da "Calibração"; JJK-13 (nomes e textos de ramo e Despertar únicos contra todo o `AXIS_ITEMS`; se o teste da F33 já percorre o registro, este só confere que as 3 entraram); ids e ordem iguais aos `*_AXIS_IDS` |
 | `tests/core/enemyStun.test.ts` | BWG-04/FLA-05: `stun` entra em `stunned` e sai em `idle` no prazo (599/600/601 ms); maior restante vence; recusa morto, `ragdollStun` e `gettingUp`; golpe normal não encerra; `knockdown` derruba; `downHits` não muda; com banda, sem troca de estado |
-| `tests/core/bossStunTech.test.ts` | Com a causa `tech` (se aprovada): `stagger` sem `finisherReady` e sem o multiplicador; a causa `wall` continua como hoje |
+| `tests/core/bossStunTech.test.ts` | Com a causa `tech`: `stagger` sem `finisherReady` e sem o multiplicador; a causa `wall` continua como hoje |
 | `tests/core/healthSpend.test.ts` | `spend` com `hp > n` paga (inclusive invulnerável), com `hp <= n` recusa sem mudar; não dá invulnerabilidade nem atordoamento; `spent` soma e zera no `reset` |
 | `tests/core/moverMoveTo.test.ts` | `moveTo` muda o `x` e mantém o `traveled` e a expiração |
 | `tests/core/loadoutOwnCooldown.test.ts` | `startCooldown` e `tick` não mexem na técnica com `ownCooldown`; `setCooldown`; `cutCooldown` nunca abaixo de 0; `slotOf` |
@@ -1061,7 +1072,8 @@ cérebro e `tech.slots[i].cooldownMs` (o espelho que o módulo escreveu).
    volta sozinha em 1 s (BWG-10); com `ramo=boogie:a&axes=boogie.alcance:1`, segurar a tecla 300 ms finge (sem troca,
    uma carga gasta) e o comum a até 120 px erra o golpe seguinte, abrindo a Contra (BWG-07, BWG-08); com o chefe da r5
    e o player encostado na parede, `boogieRefused:blockedTarget`; com `tech=boogie,vermelho`, trocar com o orbe em voo
-   deixa o orbe no lugar antigo do player e ele ainda detona (edge case).
+   deixa o orbe no lugar antigo do player e ele ainda detona (edge case); com `tech=boogie,azul` e só o Azul à frente,
+   `boogieRefused:noTarget`; depois da troca com o comum, `player.facing` aponta para ele (BWG-02).
 2. `resonance.smoke.mjs` (`seed=1&maxAlive=2&tech=ressonancia`): o 1º toque gasta 25 de energia e crava 3 marcas
    (`techState.ressonancia.marks`), com os pregos em `techObjects` (`tech: 'ressonancia'`, `kind: 'nail'`) enquanto voam;
    o 2º toque logo em seguida, com os pregos no ar, não faz nada e não sai evento; o 2º toque depois das marcas detona sem
@@ -1070,7 +1082,8 @@ cérebro e `tech.slots[i].cooldownMs` (o espelho que o módulo escreveu).
    marca viva (`hud.energy.icons[0]` alterna o alpha, RSN-11).
 3. `cursed-speech.smoke.mjs` (`seed=1&maxAlive=2&tech=fala`): a fala gasta 25 de energia e 8 de vida, os dois comuns no
    cone ficam com `stunnedMs` perto de 600 e nenhum ataca nesse tempo (`ai` fora de `windup`/`attack`); com `hp=8` o
-   aperto sai `techDenied:hp` e com `hp=9` a fala sai (FLA-01, borda); com `ramo=fala:b` o comum cai derrubado
+   aperto sai `techDenied:hp`, o ícone do slot pisca (`icons[0].flashing`) e a barra não, e com `hp=9` a fala sai (FLA-01,
+   borda); o contador de combo não zera com a fala (FLA-04); o chefe da r5 colado à frente trava (FLA-02, mira); com `ramo=fala:b` o comum cai derrubado
    (`ragdollStun`); `techState.fala.stunned` lista os ids; nenhum número de dano aparece na fala sem ramo (JJK-10).
 
 **Smoke estendido:** `tech-axes.smoke.mjs` (F33) com `axes=ressonancia.pregos:1` na loja da r4 (carta de 2 eixos, `Nv

@@ -44,9 +44,9 @@ Regras próprias da F34:
   `domainPowers.cutNow`, `DomainBar`, `TechCaster.locked`; F33: `AXIS_ITEMS`, `RESOLVERS`, `castHit`, `awakenCast`,
   `BlueOrbState.setPosition`, `PurpleFlight`, `choiceDirector`): a tarefa que toca uma delas reconfere o nome e a
   assinatura no código mergeado antes de começar; se mudou, segue o código e anota a troca no commit.
-- **Avais pendentes** (spec e design, Risks): a troca da mediana do eixo dominante da Ressonância (T45) e a causa `tech`
-  no atordoamento do chefe (T54). Sem o aval do usuário até a tarefa, ela para e pergunta; a T54 sem aval é marcada
-  `skipped` com o motivo, e a T60 usa o `bossBrain.stun(ms)` de hoje.
+- **Aval pendente** (spec e design, Risks): a troca da mediana do eixo dominante da Ressonância (T45). Sem o aval do
+  usuário até a tarefa, ela para e pergunta. A causa `tech` no atordoamento do chefe (T54) deixou de ser aval: a
+  revisão a tornou o default da spec (o `stun(ms)` de hoje abre o finalizador a cada Fala).
 
 ---
 
@@ -420,8 +420,9 @@ getter e ramo com nome de técnica; ganha `answerPress`, `holdSign`, `hudHint`, 
 passa a resposta no `CastContext.answer`; `consumed` marca `slotConsumed[slot]` (zerado a cada `update`), sem evento de
 debug e sem `cancelMelee` (REG-02.4); o `holdSign` repassado à máquina é montado uma vez no construtor e lê o `gate` e o
 `slotHeld`; `mapEvents` ignora `consumed`; o `techDirector` passa `this.s.techRunner` como portão, põe o
-`slotConsumed` no quadro e pisca a barra com `techDenied:energy` ou `techDenied:hp`. O `requestSlot` do FxLab segue sem
-portão.
+`slotConsumed` no quadro, pisca a barra com `techDenied:energy` e, com `techDenied:hp`, chama `energyHud.flashSlot(slot)`
+(novo: o ícone do slot apertado pisca em vermelho pelo tempo do flash da TEC-10 e `icons[i].flashing` entra no
+`debugState`; a barra de energia não pisca). O `requestSlot` do FxLab segue sem portão.
 **Where**: `src/game/TechCaster.ts`
 **Depends on**: T9
 **Reuses**: `TechCaster.ts:79-94`, `:101-112`; `framePressed` como molde do `slotConsumed`
@@ -805,7 +806,8 @@ acompanham no mesmo commit.
 #### T25: Conversão entre o retângulo da cena e a caixa das regras
 
 **What**: `src/core/techBoxes.ts` com `boxOfRect(rect)` (o `Rect` da cena é pelo centro, o `Box` das regras puras pelo
-canto), `centerOfBox(box)`, `shrink(box, px)`, `widen(box, dx, dy)` e `overlaps(a, b)`.
+canto), `centerOfBox(box)`, `shrink(box, px)`, `widen(box, dx, dy)`, `overlaps(a, b)` e `aimPoint(box, y)` (x do
+centro, `y` preso entre o topo e o pé da caixa: a mira da Fala).
 **Where**: `src/core/techBoxes.ts`
 **Depends on**: None
 **Reuses**: `Rect` (`game/bodyTags.ts:4-10`, só o formato, sem import de Phaser), `Box` (`core/axisRule.ts:86-91`)
@@ -815,7 +817,8 @@ canto), `centerOfBox(box)`, `shrink(box, px)`, `widen(box, dx, dy)` e `overlaps(
 
 - [ ] `tests/core/techBoxes.test.ts` (novo): ida e volta `Rect` → `Box` → centro igual; `shrink(box, 1)` tira 1 px de
       cada lado; `widen` alarga só o pedido; `overlaps` com borda tocando conta (o mesmo do `Bounds.overlaps` do
-      Matter) e com 1 px de folga não conta
+      Matter) e com 1 px de folga não conta; `aimPoint` com o `y` acima, dentro e
+      abaixo da caixa (topo e pé exatos, L-010)
 - [ ] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
@@ -1020,7 +1023,8 @@ aceita, no mesmo quadro, `player.teleportTo(centro)` e `teleport(targetCenter)` 
 `drawPos.snap()`), evento `boogieSwap:<kind>:<id>`; recusada, `energy.gain(loadout.cost('boogie'))`, nenhuma carga
 gasta, ninguém se move, evento `boogieRefused:<motivo>`. Nasce `src/game/tech/techWorld.ts` com `fits(box)`
 (`query.region(terrain, shrink(box, 1))` vazio). Ganchos: `Player.debugTeleportX(x)` vira `teleportTo(x, y)` com
-`snap()` (o FxLab passa o `y` de hoje), `Enemy.teleport(center)` e `Boss.teleport(center)`. O módulo chama o `swap` no
+`snap()` (o FxLab passa o `y` de hoje), `Player.debugFace(dir)` vira `face(dir)` (com corpo, o player passa a olhar para
+o trocado), `Enemy.teleport(center)` e `Boss.teleport(center)`. O módulo chama o `swap` no
 `techCast:boogie` (a T32 só gastava a carga).
 **Where**: `src/game/tech/boogieMoves.ts`
 **Depends on**: T32
@@ -1031,7 +1035,8 @@ gasta, ninguém se move, evento `boogieRefused:<motivo>`. Nasce `src/game/tech/t
 **Done when**:
 
 - [ ] `boogie.smoke.mjs` (parte 1): o player e o comum à frente trocam de x no mesmo quadro, sai
-      `boogieSwap:enemy:<id>`, o player fica com velocidade 0 e o comum também (BWG-02); de costas para o comum, sai
+      `boogieSwap:enemy:<id>`, o player fica com velocidade 0 e o comum também, e o `facing` do player aponta para o comum
+      (BWG-02); de costas para o comum, sai
       `boogieRefused:noTarget`, a energia volta no mesmo quadro e `charges` não cai (BWG-03); com o destino do player
       dentro da parede (comum encostado no limite da área), `boogieRefused:blockedPlayer` ou `blockedTarget` e ninguém
       se move (BWG-01, BWG-03); a troca no chão plano é aceita (o `shrink` de 1 px descarta o chão)
@@ -1053,7 +1058,8 @@ e os `Projectile` de `ctx.projectiles()` com `kind === 'projectile'` e não remo
 `ctx.relocate(tech, id, targetCenter)` e projétil → `relocate(x, y)`, os dois mantendo a velocidade e a vida; um
 `relocate` que devolve `false` vira `blockedTarget` antes de mover o player. Ganchos: `Projectile.relocate(x, y)`
 (`mover.moveTo`, corpo e vista no ponto); `relocate(id, at)` nos módulos do Vermelho (`redFlight` com `moveTo` e o
-sensor no ponto), do Azul (`BlueOrbState.setPosition`) e do Roxo (`PurpleFlight` com `moveTo`); porta
+sensor no ponto) e do Roxo (`PurpleFlight` com `moveTo`); o orbe do Azul fica fora dos candidatos (`tech !== 'azul'`:
+trocar com ele é a Evolução Vácuo de Troca da F37); porta
 `projectiles: () => s.projectiles` em `TechPorts` e `techPorts.ts`.
 **Where**: `src/game/tech/boogieMoves.ts`
 **Depends on**: T33
@@ -1065,8 +1071,9 @@ sensor no ponto), do Azul (`BlueOrbState.setPosition`) e do Roxo (`PurpleFlight`
 - [ ] `boogie.smoke.mjs` (parte 2) com `tech=boogie,vermelho`: com o orbe do Vermelho em voo à frente, a troca leva o
       orbe ao lugar antigo do player com a mesma velocidade (`techObjects`, `tech: 'vermelho'`), sai
       `boogieSwap:orb:<id>` e o orbe ainda detona no 1º toque válido (edge case)
-- [ ] Com o projétil do chefe da r5 à frente, `boogieSwap:projectile:<id>` e o projétil segue com a mesma velocidade;
-      a onda de choque do chefe nunca é candidata
+- [ ] Com o projétil do chefe da r5 à frente, `boogieSwap:projectile:<id>` e o projétil segue com a mesma velocidade e
+      o player mantém o lado; a onda de choque do chefe nunca é candidata
+- [ ] Com `tech=boogie,azul` e só o orbe do Azul à frente, `boogieRefused:noTarget` e a energia volta (edge case)
 - [ ] Smokes `red-anime`, `techniques`, `tech-axes`, `boss` e `evolution` verdes
 - [ ] Gate verde; contagem de testes sem perda
 
@@ -1195,7 +1202,8 @@ alvos da finta passa `windingUp`.
 **What**: o evento `echo` de `state.update` vai a `echo(ev)` em `boogieMoves.ts`: alvo vivo pelo id →
 `swapPlacement(caixa do player agora, candidato agora, fits)`; aceito, troca como a `swap` e morde
 `round(maxHpPct × maxHp)` (4% comum, 1% chefe) como `micro`, com `castHit` para a conjuração da 2ª troca; morto, sumido
-ou sem encaixe → nada se move nem morde, evento `boogieEchoRefused`.
+ou sem encaixe → nada se move nem morde, evento `boogieEchoRefused`. O `hudHint` do módulo pisca o ícone enquanto a
+2ª palma está armada (`blink: followUpArmed`).
 **Where**: `src/game/tech/boogieMoves.ts`
 **Depends on**: T33
 **Reuses**: `swapPlacement` (`core/swap.ts`); `BoogieState.update` (evento `echo`)
@@ -1206,7 +1214,8 @@ ou sem encaixe → nada se move nem morde, evento `boogieEchoRefused`.
 - [ ] `boogie.smoke.mjs` (parte 7) com `ramo=boogie:b&axes=boogie.alcance:1,boogie.cargas:3` (Nv 5): sem carga e com a
       2ª palma armada, o 2º aperto troca sem `techDenied:cooldown` (BWG-06); a 2ª troca volta sozinha em 1 s e o alvo
       perde 4% do HP máximo como `micro` (BWG-10); a 2ª troca recusada mantém a 2ª palma armada até os 1000 ms (edge
-      case)
+      case); com a 2ª palma armada o ícone pisca (`hud.energy.icons[i]` alterna o alpha, BWG-06); uma tecla na
+      recuperação da 1ª palma é ignorada e a 2ª palma segue armada (edge case)
 - [ ] Com o alvo da 2ª troca morto antes do eco, ninguém se move e sai `boogieEchoRefused` (BWG-10, edge case)
 - [ ] O eco não sai sem a 2ª troca feita pelo jogador (JJK-14); a mordida conta na maestria da 2ª troca (JJK-08)
 - [ ] Smokes `tech` e `boss` verdes
@@ -1596,8 +1605,8 @@ zerada no `reset`).
 #### T54: Atordoamento do chefe sem finalizador
 
 **What**: em `src/core/bossBrain.ts`, `stun(ms, cause: StaggerCause = 'wall')` com a causa `tech`, que entra em
-`stagger` sem armar o finalizador nem o multiplicador de dano do `stagger`. **Só com o aval do usuário** (design,
-Risks); sem aval, a tarefa é marcada `skipped` com o motivo e a T60 usa o `stun(ms)` de hoje.
+`stagger` sem armar o finalizador nem o multiplicador de dano do `stagger` (spec, assumption "Atordoamento do chefe";
+antes era aval pendente, a revisão o tornou o default).
 **Where**: `src/core/bossBrain.ts`
 **Depends on**: None
 **Reuses**: `bossBrain.ts:96`, `:104-108`, `:121-126`
@@ -1691,7 +1700,8 @@ Eficiência, Recarga; ramos "Exploda" (`exploda`, `:a`) e "Volte" (`volte`, `:b`
 `aura: 'T'`, custo 25, recarga 4000, 100/0/80/200, `damage: { exploda: 20 }`, sem `ownCooldown`); `Aura.ts`
 `fala: 'purple'`; `AXIS_ITEMS`/uniões/`RESOLVERS`/`TechStats` com a Fala; `src/game/tech/speech.ts` com
 `answerPress` → `speechPress(player.hp, stats.fala.hpCost)`; no `techCast:fala`, `speak(speechStats, { origin: centro
-do player, facing, hp, targets, lineOfSight: world.lineOfSight })`; recusa (vida caiu no sinal):
+do player, facing, hp, targets, lineOfSight: world.lineOfSight })` com o `center` de cada alvo no ponto de mira
+`aimPoint(caixa, origin.y)` (T25); recusa (vida caiu no sinal):
 `energy.gain(loadout.cost('fala'))`, `loadout.clearCooldown(slot)`, vida igual, evento `speechRefused:hp`; aceita:
 `player.health.spend(hpCost)` e evento `speech:<n>` (os efeitos nos alvos entram na T60); `rebuild()` sem rastro;
 `techWorld.lineOfSight(from, to)` (`query.ray(terrain, from, to, 1)` vazio); linha `fala` no `registry.ts`;
@@ -1713,7 +1723,9 @@ do player, facing, hp, targets, lineOfSight: world.lineOfSight })`; recusa (vida
 - [ ] Vida caindo para o custo durante o sinal (golpe tomado com `hp=9` e o sinal em curso, se o golpe não cancelar):
       `speechRefused:hp`, energia de volta, recarga 0 e vida igual (FLA-03); se o golpe cancelar pela CAST-07, a prova
       do FLA-03 fica no cenário com o pagamento de outra fonte, anotada no commit
-- [ ] Comum atrás de parede dentro do cone fica fora (`lineOfSight`) (FLA-02, edge case); 3 s sem apertar, nenhum
+- [ ] Com `hp=8`, o ícone do slot pisca (`icons[0].flashing`) e a barra de energia não (`energy.flashing` falso) (FLA-01)
+- [ ] Comum atrás de parede dentro do cone fica fora (`lineOfSight`) (FLA-02, edge case); comum num degrau acima do
+      player, dentro do alcance, fica dentro (mira, edge case); 3 s sem apertar, nenhum
       evento `speech*` (JJK-14)
 - [ ] Diff sem `TechRunner.ts`, `TechCaster.ts` e `techDirector.ts` (REG-04)
 - [ ] Smokes `tech`, `techniques`, `tech-axes` e `hud` verdes
@@ -1728,7 +1740,9 @@ do player, facing, hp, targets, lineOfSight: world.lineOfSight })`; recusa (vida
 #### T59: Fala não zera a Fúria
 
 **What**: o `bodyDirector` (F30) desconta da queda de HP do quadro o que foi pago pelo `player.health.spent`, para a
-Fúria e a Cadência do Corpo não zerarem pela Fala.
+Fúria e a Cadência do Corpo não zerarem pela Fala; na `TestScene.updateGameplay`, o `damaged` e o `lastPlayerHp`
+passam a usar `hp + health.spent` (troca de expressão, 0 efetivas), para o combo (CMB-02) e a recuperação não lerem a
+Fala como dano (as duas expressões da cena entram no mesmo commit, por serem a mesma regra).
 **Where**: `src/scenes/test/bodyDirector.ts`
 **Depends on**: T58
 **Reuses**: queda de HP no `bodyDirector.update` (F30); `Health.spent` (T53)
@@ -1738,6 +1752,8 @@ Fúria e a Cadência do Corpo não zerarem pela Fala.
 
 - [ ] Smoke `cursed-body` (cenário novo) com `tech=fala` e o Corpo com Fúria acumulada: a fala não zera a Fúria nem a
       Cadência; um golpe tomado de verdade continua zerando (FLA-04)
+- [ ] `cursed-speech.smoke.mjs`: com combo em curso, a fala não zera o `combo` do snapshot; um golpe tomado zera
+      (FLA-04); `TestScene` com as mesmas linhas efetivas (JJK-15)
 - [ ] Smokes `cursed-body` e `cursed-speech` verdes
 - [ ] Gate verde; contagem de testes sem perda
 
@@ -1751,7 +1767,7 @@ Fúria e a Cadência do Corpo não zerarem pela Fala.
 
 **What**: `src/game/tech/speechEffects.ts` aplica `SpeechHit` e `SpeechEffectHit`: comum → `enemy.stun(stunMs)` e, com
 dano ou força, `Hit` `{ damage: scaleTechDamage(damage), force, direction, knockdown, tech: true }` e `receiveHit`;
-chefe → `boss.stun(bossStunMs)` (com a causa `tech` da T54, se aprovada) e, com força, `boss.shove(direction, force)`;
+chefe → `boss.stun(bossStunMs)` com a causa `tech` da T54 e, com força, `boss.shove(direction, force)`;
 todo alvo atingido chama `onTechHit` e `castHit`, mesmo com dano 0; abate → `cast.claimKillRefund()` →
 `loadout.cutCooldown(slot, ms)`. Ganchos: `Boss.stun(ms)` e `Boss.shove(direction, force)`; `effects.onTechConnect`
 (F29) só mostra número com dano aplicado > 0.
@@ -1766,8 +1782,8 @@ todo alvo atingido chama `onTechHit` e `castHit`, mesmo com dano 0; abate → `c
       nesse tempo (`ai` fora de `windup`/`attack`) (FLA-05); nenhum número de dano aparece na fala sem ramo (JJK-10); com
       `ramo=fala:a` ("Exploda") o dano aparece × 1 e × 1,35 com o multiplicador da F29; com `ramo=fala:b` ("Volte") o
       comum cai derrubado (`ragdollStun`) (FLA-05)
-- [ ] No chefe da r5, `boss.stun` com o `bossStunMs` e, se a T54 entrou, sem `finisherReady` (FLA-05); com "Volte" o
-      chefe recua
+- [ ] No chefe da r5, `boss.stun` com o `bossStunMs` e sem `finisherReady` (FLA-05), inclusive com o chefe colado à
+      frente (mira do FLA-02); com "Volte" o chefe recua
 - [ ] Atordoado pelo Boogie e depois pela Fala fica com o maior restante (edge case, com `tech=boogie,fala`)
 - [ ] Com `axes=fala.recarga:3`, o abate pela Fala corta a recarga do slot pelo `claimKillRefund` uma vez por
       conjuração (FLA-08); cada alvo atordoado sobe a maestria (JJK-08); com `domain=santuario`, no máximo um gatilho
