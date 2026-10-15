@@ -1161,12 +1161,12 @@ atravessa segurando D até a rodada 2 (o mundo modular entra em `traverse`). `gi
 
 **Done when**:
 
-- [ ] `tests/core/cursedBody.test.ts`: Impacto 1/1,1/1,2/1,3, Peso 1/1,2/1,4/1,6, Ritmo 1/0,92/0,85/0,78, Alcance
+- [x] `tests/core/cursedBody.test.ts`: Impacto 1/1,1/1,2/1,3, Peso 1/1,2/1,4/1,6, Ritmo 1/0,92/0,85/0,78, Alcance
       0/6/10/14 por ponto; `knockdown` só com Peso ≥ 2 (1 e 2 nos dois lados) e só no `heavy`; `wallStun` só no Peso 3;
       `widenForward` mantém a borda de trás; Fúria 3/4/5% por pilha até 15/24/35%, zera na perda de HP e fica no golpe
       defendido (edge case); Cadência decisiva no 4º e no 8º, zera no golpe sem acerto e na perda de HP (CRP-08.3);
       Martelo a 47/48/49 px, fora o alvo
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
