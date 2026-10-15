@@ -135,7 +135,7 @@ const total = (damage) => Object.values(damage).reduce((sum, d) => sum + d, 0);
  * bastão vinculado na mão soma em `objeto`; no laboratório de efeitos o golpe no boneco não soma.
  */
 async function strikeAndObjectDamage(ctx) {
-  const { assert, snap, tap, boot, nearest, approach } = makeKit(ctx);
+  const { assert, snap, frame, down, up, count, tap, boot, nearest, approach } = makeKit(ctx);
   const base = 'hd=1&area=modular&nosave=1&noshop=1&enemyGuard=0';
 
   // DMG-04: golpe no ar, com o inimigo longe, não conecta e não soma nada.
@@ -157,6 +157,22 @@ async function strikeAndObjectDamage(ctx) {
   assert(
     s.record.damage.golpe === lost && total(s.record.damage) === lost,
     `DMG-01: golpe deveria somar ${lost}: ${JSON.stringify(s.record.damage)}`,
+  );
+
+  // DMG-04: com `enemyGuard=1` o inimigo de frente levanta a guarda contra o jab (molde do smoke `enemy-guard`); o
+  // golpe bloqueado não tira vida e não soma nada.
+  s = await boot('hd=1&area=modular&nosave=1&noshop=1&enemyGuard=1');
+  s = await approach();
+  const guard = nearest(s);
+  const blocks = count(s, `enemyBlock:${guard.id}`);
+  await down('KeyJ');
+  s = await frame();
+  await up('KeyJ');
+  for (let i = 0; i < 30 && count(s, `enemyBlock:${guard.id}`) === blocks; i++) s = await frame();
+  assert(count(s, `enemyBlock:${guard.id}`) === blocks + 1, `pré-condição: o jab deveria ser bloqueado: ${s.events}`);
+  assert(
+    s.enemies.find((e) => e.id === guard.id)?.hp === guard.hp && total(s.record.damage) === 0,
+    `DMG-04: golpe bloqueado não soma: ${JSON.stringify(s.record.damage)}`,
   );
 
   // DMG-03: com o bastão vinculado na mão o golpe é de objeto.

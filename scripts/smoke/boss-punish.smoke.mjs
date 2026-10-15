@@ -213,9 +213,15 @@ export default async function ({ page, baseUrl, assert }) {
   // BFX-06: J+K a <= 48 px tira round(0,12 x 400) = 48, com um único `finisher:boss`.
   const hpBeforeFin = cur.boss.hp;
   const finBefore = finishers(cur);
+  const strikeBefore = cur.record.damage.golpe;
   cur = await both();
   assert(finishers(cur) === finBefore + 1, `BFX-06: esperava um finisher:boss: ${JSON.stringify(cur.events)}`);
   assert(hpBeforeFin - cur.boss.hp === 48, `BFX-06: o finalizador deveria tirar 48: ${hpBeforeFin} -> ${cur.boss.hp}`);
+  // DMG-01: o finalizador no chefe soma os mesmos 48 na fonte `golpe` do registro da run.
+  assert(
+    cur.record.damage.golpe - strikeBefore === 48,
+    `DMG-01: finalizador no chefe soma 48 em golpe: ${JSON.stringify(cur.record.damage)}`,
+  );
   assert(cur.boss.finisherReady === false, 'BFX-07: depois do uso o finalizador não deveria estar pronto');
 
   // BFX-07: um segundo J+K no mesmo stagger não tira nada.
