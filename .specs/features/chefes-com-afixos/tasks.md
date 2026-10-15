@@ -273,16 +273,16 @@ tier, r5 só leves, sem repetidos nem par incompatível, Portador com `next() < 
 
 **What**: `LineupOverrides`, `parseBossArch`, `parseBossAffixes` (`none` → `[]`; id desconhecido invalida o valor
 inteiro), `parseFinger` e `applyOverrides`; `BossLineups.lineupFor(rng, round, overrides)` aplica sobre cópia.
-**Where**: `src/core/bossAffix.ts`
+**Where**: `src/core/bossAffix.ts`; testes em `tests/core/bossLineupOverrides.test.ts` (novo)
 **Depends on**: T8
 **Reuses**: `parseVariant` (`core/enemyVariant.ts:13`) como molde
 **Requirement**: BLN-09, BLN-10
 
 **Done when**:
 
-- [ ] Testes: consumo do stream igual com e sem override (próximo `next()` igual); valor inválido ignorado; `none`
+- [x] Testes (`tests/core/bossLineupOverrides.test.ts`): consumo do stream igual com e sem override (próximo `next()` igual); valor inválido ignorado; `none`
       dá lista vazia; `finger=1` antes da r10 vale (é debug)
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

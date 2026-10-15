@@ -110,13 +110,14 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 ### `core/bossAffix.ts` (novo)
 
 - `BossLineup { archetype: BossArchetype; affixes: readonly BossAffixId[]; finger: boolean }`.
-- `drawLineup(rng, round, rules = AFFIX_RULES): BossLineup` — BLN-04..07, PDD-01/02. Cada vaga sorteia com
+- `drawLineup(rng, round, rules = AFFIX_RULES, finger = BOSS_AFFIX.finger): BossLineup` — BLN-04..07, PDD-01/02. Cada vaga sorteia com
   `rng.int` no pool elegível (sem repetidos, sem par incompatível; r5 só o pool leve).
 - `LineupOverrides { archetype?: BossArchetype; affixes?: readonly BossAffixId[]; finger?: boolean }`;
   `parseBossArch(raw)`, `parseBossAffixes(raw)` (`none` → `[]`; qualquer id desconhecido invalida o valor inteiro →
-  `undefined`), `parseFinger(raw)` (`1`/`0`); `applyOverrides(lineup, o)` (BLN-09, BLN-10).
-- `class BossLineups { lineupFor(rng: Rng, round: number, o?: LineupOverrides): BossLineup }` — cache por rodada,
-  zera quando o `rng` muda (BLN-02, BLN-03).
+  `undefined`; repetidos ficam uma vez; é debug, não confere tier nem par incompatível), `parseFinger(raw)` (`1`/`0`,
+  vale em qualquer rodada); `applyOverrides(lineup, o)` devolve cópia (BLN-09, BLN-10).
+- `class BossLineups { lineupFor(rng: Rng, round: number, o?: LineupOverrides): BossLineup }` — cache por rodada
+  com o sorteio puro, zera quando o `rng` muda (BLN-02, BLN-03); os overrides entram só na saída, numa cópia.
 - `affixName(id, archetype)`, `bossBarLabel(spec)` (BRD-01), `announceText(lineup)` (BRD-04).
 - `cyclesFor(archetype, affixes, t = BOSS)` — Sangue põe `beam` logo depois do 1º ataque de cada fase (SNG-01).
 - `bossTuningFor(spec): { ai: BossAITuning; brain: BossBrainTuning }` (AFX-01). Na leva 1 nenhum afixo mexe no
@@ -275,7 +276,8 @@ Não tocados (F29 ou teto): `core/hit.ts`, `combat.ts`, `effects.ts`, `impactFx.
 | Arquivo | Cobre |
 | --- | --- |
 | `tests/core/bossLineup.test.ts` | BLN-02/03 (cache, mesma seed, `Rng` novo zera), BLN-04 (limiar 0,5 dos dois lados; seeds 1..50 dão os 2 arquétipos), BLN-05/06 (contagem por tier nos limites r5/r10/r15/r20/r25), BLN-07 (sem repetidos; par incompatível injetado nunca sai), PDD-01/02 (nunca antes da r10; limiar 0,10; fora da contagem), consumo do stream igual na r5 e na r10, Success Criteria 1 (20 seeds seguidas na r5). Arquivo à parte para o `bossAffix.test.ts` não passar do teto de 400 linhas |
-| `tests/core/bossAffix.test.ts` | BLN-01 (sequência igual a `new Rng(seed ^ 0x9b05688c)` via `Run`), BLN-09/10 (consumo igual com e sem override; inválido ignorado; `none`), BRD-01/04 (rótulos m/f, Portador/Portadora), SNG-01 e CYC-02..04 (`cyclesFor`), INV-01/02 (`summonCount` com vivos 0..4, r5), BRD-03 (`outlineKeyAt` em 599/600 ms), BRD-02 (`glyphKeys`), AFX-01 (`bossTuningFor`) |
+| `tests/core/bossLineupOverrides.test.ts` | BLN-09/10 (`parseBossArch`, `parseBossAffixes` com `none` e id inválido, `parseFinger`; `applyOverrides` numa cópia; consumo igual com e sem override na r5/r10/r25; inválido ignorado; `finger=1` antes da r10). Arquivo à parte pelo teto de 400 linhas |
+| `tests/core/bossAffix.test.ts` | BLN-01 (sequência igual a `new Rng(seed ^ 0x9b05688c)` via `Run`), BRD-01/04 (rótulos m/f, Portador/Portadora), SNG-01 e CYC-02..04 (`cyclesFor`), INV-01/02 (`summonCount` com vivos 0..4, r5), BRD-03 (`outlineKeyAt` em 599/600 ms), BRD-02 (`glyphKeys`), AFX-01 (`bossTuningFor`) |
 | `tests/core/bossAdapt.test.ts` | ADP-01 (fontes leve/forte/técnica), ADP-02 (`adaptSourceOf` de técnica sem id → `null`), ADP-03 (4 e 5 acertos; idade 19999/20000; teto de 2; empate), ADP-04 (escala só depois de adaptar), ADP-05 (9999/10000 ms; acertos apagados ao esquecer) |
 | `tests/core/bossLava.test.ts` | IGN-02 (1999/2000 ms), IGN-03 (1º contato bate; 599/600 ms entre tiques), IGN-05 (no ar não bate), contato fora da faixa |
 | `tests/core/bossAttacks.test.ts` | CYC-05..08 (`BossAI` com a tuning do Oni e da Tecelã: eventos, 250 ms, parede, 3 pousos, `final`, descanso só no 3º), CYC-09/10 (`threadXs` com limites; `strikeOn`), SNG-02/03 (800 ms fixos, 250 ms, direção presa), IGN-01 (`chargeTrail` em cada investida), edge cases de interrupção (`telegraphCancel`, encadeado parado), CYC-11 (`animBase`), `beamThickness` 0/800 ms |

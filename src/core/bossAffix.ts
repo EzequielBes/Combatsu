@@ -4,7 +4,7 @@
  *
  * O sorteio consome sempre a mesma quantidade do stream, em toda rodada: 1 `next()` do arquétipo, 1 `int()` por vaga
  * de afixo do tier e 1 `next()` do Portador (inclusive antes da r10, comparado com chance 0). Assim a rodada seguinte
- * não depende do que saiu nesta.
+ * não depende do que saiu nesta. Os overrides de debug (BLN-09/10) entram depois do sorteio, sobre uma cópia.
  */
 import { AFFIX_RULES, BOSS_AFFIX, BOSS_AFFIX_IDS, type AffixRules, type BossAffixId } from '../data/bossAffixes';
 import type { BossArchetype } from './bossTier';
@@ -17,6 +17,13 @@ export interface BossLineup {
   affixes: readonly BossAffixId[];
   /** Moldura Portador de Dedo: não ocupa vaga de afixo (PDD-02). */
   finger: boolean;
+}
+
+/** Overrides de debug da escalação (`?debug&bossArch=`, `bossAffix=`, `finger=`); campo ausente = vale o sorteio. */
+export interface LineupOverrides {
+  archetype?: BossArchetype;
+  affixes?: readonly BossAffixId[];
+  finger?: boolean;
 }
 
 /** Parte da tuning do Portador que o sorteio usa. */
@@ -67,13 +74,51 @@ export function drawLineup(
   return { archetype, affixes, finger: rng.next() < chance };
 }
 
+const ARCHETYPES: readonly BossArchetype[] = ['oni', 'tecela'];
+
+/** Arquétipo válido (`oni`, `tecela`) ou `undefined` (BLN-10: inválido é ignorado). Molde: `parseVariant`. */
+export function parseBossArch(raw: string | null | undefined): BossArchetype | undefined {
+  return (ARCHETYPES as readonly string[]).includes(raw ?? '') ? (raw as BossArchetype) : undefined;
+}
+
+/**
+ * Lista de afixos separada por vírgula, ou `none` para lista vazia (BLN-10). Um id desconhecido invalida o valor
+ * inteiro (`undefined`, vale o sorteio); repetidos ficam uma vez só. É debug: não confere tier nem par incompatível.
+ */
+export function parseBossAffixes(raw: string | null | undefined): readonly BossAffixId[] | undefined {
+  const text = raw?.trim() ?? '';
+  if (text === 'none') return [];
+  if (text === '') return undefined;
+  const ids = text.split(',').map((part) => part.trim());
+  const known = BOSS_AFFIX_IDS as readonly string[];
+  if (!ids.every((id) => known.includes(id))) return undefined;
+  return [...new Set(ids)] as BossAffixId[];
+}
+
+/** `1` liga e `0` desliga o Portador; outro valor é `undefined` (BLN-10). Vale em qualquer rodada, por ser debug. */
+export function parseFinger(raw: string | null | undefined): boolean | undefined {
+  if (raw === '1') return true;
+  if (raw === '0') return false;
+  return undefined;
+}
+
+/** Escalação com os overrides por cima, numa cópia: a original (a do cache) não muda (BLN-09). */
+export function applyOverrides(lineup: BossLineup, o: LineupOverrides = {}): BossLineup {
+  return {
+    archetype: o.archetype ?? lineup.archetype,
+    affixes: [...(o.affixes ?? lineup.affixes)],
+    finger: o.finger ?? lineup.finger,
+  };
+}
+
 /**
  * Cache da escalação por rodada (BLN-02, BLN-03): a loja (aviso), a área e o spawn pedem o mesmo chefe em momentos
  * diferentes e veem o mesmo. Quem pede primeiro consome o stream. Guarda o `Rng` que gerou o cache: quando a `Run`
  * cria um stream novo (run nova), a identidade muda e o cache zera sozinho.
  *
  * O resultado depende da ordem dos pedidos (pedir a r10 antes da r5 troca as duas); o jogo pede sempre em ordem de
- * rodada, inclusive quando a run começa direto numa rodada de chefe (`?round=N`).
+ * rodada, inclusive quando a run começa direto numa rodada de chefe (`?round=N`). Os overrides de debug valem só na
+ * saída: o cache guarda o sorteio puro e o consumo do stream é o mesmo com ou sem eles (BLN-09).
  */
 export class BossLineups {
   private source: Rng | null = null;
@@ -84,7 +129,7 @@ export class BossLineups {
     private readonly finger: FingerOdds = BOSS_AFFIX.finger,
   ) {}
 
-  lineupFor(rng: Rng, round: number): BossLineup {
+  lineupFor(rng: Rng, round: number, overrides?: LineupOverrides): BossLineup {
     if (rng !== this.source) {
       this.source = rng;
       this.byRound.clear();
@@ -94,6 +139,6 @@ export class BossLineups {
       lineup = drawLineup(rng, round, this.rules, this.finger);
       this.byRound.set(round, lineup);
     }
-    return lineup;
+    return applyOverrides(lineup, overrides);
   }
 }
