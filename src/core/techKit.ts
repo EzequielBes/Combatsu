@@ -4,6 +4,10 @@ import type { Vec2 } from './hit';
 /**
  * Kit comum das técnicas da leva 2 (spec `regras-tecnicas-leva2`, KIT-01 a KIT-03): as contas de geometria e a
  * devolução de recarga que as quatro técnicas repetem. Puro, sem Phaser.
+ *
+ * Contrato com o adaptador: a lista de alvos de toda técnica traz só os vivos **dentro da tela**. Os saltos,
+ * dobras e estilhaços partem de alvos ou do fim do alcance e não sabem onde a câmera está; é esse filtro que segura o
+ * "alcance travado em 320 px" do plano (seção 2.1) e impede acerto fora da vista.
  */
 
 /**

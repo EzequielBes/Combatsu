@@ -98,6 +98,13 @@ describe('CAO-03: investida e mordida', () => {
     expect(bites(play(summon(build(), -1), [tgt(1, 100), tgt(2, -100)], 300)).map((b) => b.target)).toEqual([2, 2]);
   });
 
+  it('as faixas ficam rentes ao chão: o alvo baixo só cruza a faixa de baixo, e o que flutua acima dos 16 px escapa', () => {
+    const low = { ...tgt(1, 100), box: { x: 90, y: 88, width: 20, height: 12 } };
+    expect(bites(play(summon(build()), [low], 400)).map((b) => b.dog)).toEqual([2]);
+    const floating = { ...tgt(1, 100), box: { x: 90, y: 40, width: 20, height: 43 } };
+    expect(bites(play(summon(build()), [floating], 400))).toEqual([]);
+  });
+
   it('com 2 mordidas, a 2ª sai 200 ms depois da 1ª', () => {
     const log = bites(play(summon(build({ mordidas: 1 })), [tgt(1, 100)], 600));
     expect(log.filter((b) => b.dog === 1).map((b) => b.t)).toEqual([190, 390]);

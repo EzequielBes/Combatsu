@@ -7,6 +7,9 @@ describe('KIT-01: geometria', () => {
   it('caixas se tocam com a borda encostada, e não com 1 px de folga', () => {
     expect(boxesOverlap(box(0, 0), box(20, 0))).toBe(true);
     expect(boxesOverlap(box(0, 0), box(21, 0))).toBe(false);
+    expect(boxesOverlap(box(20, 0), box(0, 0))).toBe(true);
+    expect(boxesOverlap(box(0, 20), box(0, 0))).toBe(true);
+    expect(boxesOverlap(box(21, 0), box(0, 0))).toBe(false);
     expect(boxesOverlap(box(0, 0), box(5, 20))).toBe(true);
     expect(boxesOverlap(box(0, 0), box(5, 21))).toBe(false);
   });
@@ -39,6 +42,8 @@ describe('KIT-02: o mais perto', () => {
     expect(nearestTarget({ x: 0, y: 0 }, 200, ts, (id) => id === 2)?.id).toBe(1);
     expect(nearestTarget({ x: 0, y: 0 }, 49, ts, () => false)).toBeNull();
     expect(nearestTarget({ x: 0, y: 0 }, 50, ts, () => false)?.id).toBe(2);
+    expect(nearestTarget({ x: 0, y: 0 }, 200, ts, (id) => id === 2)?.id).toBe(1); // 1 e 3 a 100 px: menor id
+    expect(nearestTarget({ x: 0, y: 0 }, 200, [...ts].reverse(), (id) => id === 2)?.id).toBe(1);
   });
 });
 

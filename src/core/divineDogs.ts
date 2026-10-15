@@ -275,7 +275,10 @@ export class DogPack {
   }
 }
 
-/** Conjura os cães: devolve o custo e a matilha. A técnica não recusa: sem alvo, os cães correm e somem. */
+/**
+ * Conjura os cães: devolve o custo e a matilha. A técnica não recusa: sem alvo, os cães correm e somem. O adaptador
+ * chama no fim do sinal (`signMs`): o relógio da matilha, e os 1200 ms de vida, começam aqui.
+ */
 export function summonDogs(stats: DogsStats, feet: Vec2, facing: 1 | -1): { cost: number; pack: DogPack } {
   return { cost: stats.cost, pack: new DogPack(stats, feet, facing) };
 }

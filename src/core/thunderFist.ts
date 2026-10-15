@@ -89,10 +89,14 @@ export interface Discharge {
   chargesLeft: number;
 }
 
-/** Golpe do moveset que acertou: o golpeado e a força do golpe. */
+/**
+ * Golpe do moveset que acertou: o golpeado, a força e o `swingId` do golpe (o mesmo do `Hit`, IMP-14). Um golpe que
+ * pega vários alvos é um golpe só: gasta 1 carga, e o raio sai do 1º alvo avisado. Técnica e objeto não carregam.
+ */
 export interface LandedStrike {
   targetId: number;
   strength: Strength;
+  swingId: number;
 }
 
 /**
@@ -106,6 +110,8 @@ export class ThunderFist {
   private readonly stunned = new Map<number, number>();
   private ledger = new BiteLedger();
   private refund: KillRefund;
+  /** Golpe que já gastou carga: os outros alvos dele não gastam de novo. */
+  private lastSwingId: number | null = null;
 
   constructor(readonly stats: ThunderStats) {
     this.refund = new KillRefund(stats.cooldownMs, stats.killRefundPct);
@@ -140,14 +146,15 @@ export class ThunderFist {
   }
 
   /**
-   * TRV-03 a TRV-08: um golpe do moveset acertou. Sem carga, ou com o golpeado fora da lista de vivos, não solta nada
-   * (`null`) e não gasta carga.
+   * TRV-03 a TRV-08: um golpe do moveset acertou. Sem carga, com o golpeado fora da lista de vivos ou com outro alvo de
+   * um golpe que já gastou carga (mesmo `swingId`), não solta nada (`null`) e não gasta carga.
    */
   onStrike(strike: LandedStrike, targets: readonly ThunderTarget[]): Discharge | null {
-    if (this.chargesLeft <= 0) return null;
+    if (this.chargesLeft <= 0 || strike.swingId === this.lastSwingId) return null;
     const struck = targets.find((t) => t.id === strike.targetId);
     if (struck === undefined) return null;
     this.chargesLeft -= 1;
+    this.lastSwingId = strike.swingId;
     const bolt = this.chain(struck, targets);
     const heavyColumn = this.stats.branch === 'tempestade' && strike.strength === 'heavy';
     const column = heavyColumn ? this.column(boxCenter(struck.box).x, targets) : null;

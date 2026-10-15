@@ -150,7 +150,9 @@ class HpBook {
 
 /** CNV-05: faixa do feixe e os atravessados, na ordem da entrada, até a perfuração. */
 function straightBeam(stats: ConvergenceStats, ctx: BeamContext, book: HpBook) {
-  const length = Math.min(ctx.wall?.(ctx.origin, ctx.facing, stats.rangePx) ?? stats.rangePx, stats.rangePx);
+  const probed = ctx.wall?.(ctx.origin, ctx.facing, stats.rangePx) ?? stats.rangePx;
+  // Sonda negativa (boca já dentro da parede) vira 0: a faixa nunca vira para trás.
+  const length = Math.min(Math.max(probed, 0), stats.rangePx);
   const band: Box = {
     x: ctx.facing === 1 ? ctx.origin.x : ctx.origin.x - length,
     y: ctx.origin.y - stats.widthPx / 2,

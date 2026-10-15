@@ -54,6 +54,8 @@ Recarga no 3 (TRL-06).
 | Cães: Despertares | **Totalidade Negra**: o lobo salta por até 5 alvos e cada um toma 4% (chefe 1%); **Matilha Faminta**: o cão que acaba as mordidas (ou perde o alvo) com tempo de sobra pula para o vivo mais perto a até 80 px que ele ainda não mordeu, e todo alvo mordido pela matilha toma 4% (chefe 1%) | Molde da 2.1 | n |
 | Trovão: números | cargas [3,4,5,6]; saltos [2,3,4,4] (no 3, raio do salto 120 → 160); dano [8,11,13,16]; atordoa [0,100,200,300] (chefe 25%); custo [30,25,21,18]; recarga [6000,5000,4200,3500]; janela da carga 8000 ms; hitstop por salto 18 ms | Plano dá as pontas e o 15 a 20 ms | n |
 | Trovão: raio | cada golpe do moveset que acerta gasta 1 carga; o golpeado toma o raio (salto 0) e o raio salta até N vezes para o vivo mais perto do último atingido, dentro do raio do salto, sem repetir alvo, empate pelo id. Golpe que erra não gasta | "não cria golpe" | n |
+| Trovão: golpe com vários alvos | o `LandedStrike` traz o `swingId` do `Hit` (IMP-14): um golpe gasta 1 carga só, e os outros alvos do mesmo golpe não soltam raio | "os próximos 3 golpes", não os próximos 3 alvos (achado da revisão) | n |
+| Alvos na tela | toda técnica recebe só os alvos vivos dentro da tela; saltos, dobras e estilhaços não sabem onde a câmera está | "Alcance travado em 320 px" vale também para o que parte do fim do alcance (achado da revisão) | n |
 | Trovão: reconjurar | repõe as cargas no máximo e a janela, sem somar | Molde de carga | n |
 | Trovão: ramos | Tempestade: o golpe forte com carga também solta um raio vertical: micro de 2× o dano em todos com centro a até 24 px do x do golpeado; Estática: todo acerto do raio atordoa mais 250 ms (chefe 25%) | Plano sem número | n |
 | Trovão: Despertares | **Raio Celeste**: o raio vertical derruba os comuns e tira 4% (chefe 1%) de cada atingido; **Descarga**: o raio que alcança um alvo ainda atordoado por esta carga tira 4% (chefe 1%) dele e ganha +1 salto (uma vez por raio) | Molde da 2.1 | n |
@@ -113,7 +115,7 @@ Recarga no 3 (TRL-06).
 1. TRV-01: The base stats SHALL be 3 charges, 2 jumps, damage 8, stun 0, cost 30, cooldown 6000, window 8000, hop hitstop 18.
 2. TRV-02: Each axis at 3 points SHALL give 6 charges, 4 jumps (radius 160), damage 16, stun 300 (boss 75), cost 18, cooldown 3500.
 3. TRV-03: A landed moveset hit with a charge SHALL spend it and release a micro bolt on the struck target that jumps up to N times to the nearest unvisited living target within the jump radius.
-4. TRV-04: A missed strike, no charge or the end of the window SHALL release nothing; recasting SHALL refill without stacking.
+4. TRV-04: A missed strike, no charge, the end of the window or another target of a swing that already spent a charge SHALL release nothing; recasting SHALL refill without stacking.
 5. TRV-05: WHILE the branch is Tempestade, a charged heavy hit SHALL also release a vertical micro bolt of 2× on every target within 24 px of the struck x.
 6. TRV-06: WHILE the branch is Estática, every bolt hit SHALL stun 250 ms more (boss 25%).
 7. TRV-07: WHEN Raio Celeste is awakened THEN the vertical bolt SHALL knock down commons and bite 4% (boss 1%).
@@ -157,6 +159,8 @@ Recarga no 3 (TRL-06).
 | CAO-01..10 | Cães Divinos | Execute | Implemented |
 | TRV-01..09 | Punho de Trovão | Execute | Implemented |
 | ERU-01..09 | Erupção | Execute | Implemented |
+
+**Revisão adversarial:** feita em 2026-10-15 (ver `validation.md`); o verificador de comportamento no jogo segue para a F41.
 
 **Coverage:** 41 total, 41 com teste em `tests/core/{techKit,convergence,divineDogs,thunderFist,eruption}.test.ts`; um commit por técnica (o kit sai com a Convergência). Falta o verificador independente antes da F41.
 

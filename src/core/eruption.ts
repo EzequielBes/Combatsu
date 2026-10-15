@@ -267,7 +267,10 @@ export class EruptionCast {
   }
 }
 
-/** Conjura a Erupção: devolve o custo e a conjuração. Não recusa: sem alvo, os pilares sobem no vazio. */
+/**
+ * Conjura a Erupção: devolve o custo e a conjuração. Não recusa: sem alvo, os pilares sobem no vazio. O adaptador chama
+ * no aperto da tecla: o sinal (`signMs`) já está no relógio da conjuração, ao contrário dos Cães.
+ */
 export function erupt(stats: EruptionStats, feet: Vec2, facing: 1 | -1): { cost: number; cast: EruptionCast } {
   return { cost: stats.cost, cast: new EruptionCast(stats, feet, facing) };
 }

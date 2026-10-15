@@ -24,8 +24,10 @@ const charged = (b: ThunderBuild): ThunderFist => {
   fist.cast();
   return fist;
 };
-const light = (targetId: number) => ({ targetId, strength: 'light' as const });
-const heavy = (targetId: number) => ({ targetId, strength: 'heavy' as const });
+/** Cada chamada é um golpe novo (`swingId` próprio), salvo quando o teste passa o mesmo. */
+let swing = 0;
+const light = (targetId: number, swingId = ++swing) => ({ targetId, strength: 'light' as const, swingId });
+const heavy = (targetId: number, swingId = ++swing) => ({ targetId, strength: 'heavy' as const, swingId });
 const ROW = [tgt(1, 0), tgt(2, 100), tgt(3, 200), tgt(4, 300)];
 
 describe('TRV-01: números base', () => {
@@ -126,6 +128,14 @@ describe('TRV-04: cargas e janela', () => {
     expect(fist.onStrike(light(1), ROW)).toBeNull();
   });
 
+  it('um golpe que pega vários alvos gasta 1 carga só: o 2º alvo do mesmo golpe não solta raio', () => {
+    const fist = charged(build());
+    expect(fist.onStrike(light(1, 500), ROW)?.chargesLeft).toBe(2);
+    expect(fist.onStrike(light(2, 500), ROW)).toBeNull();
+    expect(fist.charges).toBe(2);
+    expect(fist.onStrike(light(2, 501), ROW)?.chargesLeft).toBe(1);
+  });
+
   it('sem conjurar não há carga; no fim da janela de 8000 ms as cargas se apagam', () => {
     expect(new ThunderFist(thunderStats(build())).onStrike(light(1), ROW)).toBeNull();
     const fist = charged(build());
@@ -197,7 +207,7 @@ describe('TRV-07: Raio Celeste (Despertar da Tempestade)', () => {
 
 describe('TRV-08: Descarga (Despertar da Estática)', () => {
   const awake = build({ cargas: 3, dano: 1 }, 'estatica');
-  const ts = [tgt(1, 0), tgt(2, 100, 0, 'boss', 3000), tgt(3, 200), tgt(4, 300)];
+  const ts = [tgt(1, 0), tgt(2, 100, 0, 'boss', 3000), tgt(3, 200), tgt(4, 300), tgt(5, 400)];
 
   it('o raio que alcança quem esta carga ainda atordoa tira 4% (chefe 1%) e ganha 1 salto, uma vez por raio', () => {
     const fist = charged(awake);
@@ -222,6 +232,19 @@ describe('TRV-08: Descarga (Despertar da Estática)', () => {
     const plain = charged(build({ cargas: 3 }, 'estatica'));
     plain.onStrike(light(1), ts);
     expect(plain.onStrike(light(1), ts)?.bolt.map((h) => h.bite)).toEqual([0, 0, 0]);
+  });
+});
+
+describe('TRV-07, TRV-08: reconjurar abre uma carga nova', () => {
+  it('o atordoamento da carga anterior não descarrega, e o componente volta a sair', () => {
+    const discharge = charged(build({ cargas: 3, dano: 1 }, 'estatica'));
+    discharge.onStrike(light(1), ROW);
+    discharge.cast();
+    expect(discharge.onStrike(light(1), ROW)?.bolt.map((h) => h.bite)).toEqual([0, 0, 0]);
+    const sky = charged(build({ cargas: 3, saltos: 1 }, 'tempestade'));
+    sky.onStrike(heavy(1), ROW);
+    sky.cast();
+    expect(sky.onStrike(heavy(1), ROW)?.column?.hits.map((h) => h.bite)).toEqual([4]);
   });
 });
 

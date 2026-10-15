@@ -135,6 +135,18 @@ describe('CNV-05: o feixe', () => {
     expect(ok(fire(build(), [tgt(1, 60)], { wall: () => 30 })).hits).toEqual([]);
   });
 
+  it('sonda negativa (boca dentro da parede) não vira a faixa para trás', () => {
+    const r = ok(fire(build(), [tgt(1, -30)], { wall: () => -20 }));
+    expect(r.hits).toEqual([]);
+    expect(r.end).toEqual({ x: 0, y: 0 });
+  });
+
+  it('entrada empatada sai pelo menor id', () => {
+    const twin = { ...tgt(2, 60), box: { x: 50, y: -20, width: 30, height: 40 } };
+    const r = ok(fire(build({ perfuracao: 1 }), [tgt(3, 60), twin, tgt(1, 200)]));
+    expect(r.hits.map((h) => h.targetId)).toEqual([2, 3, 1]);
+  });
+
   it('marca o abate e não atinge quem já está morto', () => {
     const r = ok(fire(build(), [tgt(1, 60, 0, 'enemy', 28), tgt(2, 90, 0, 'enemy', 0), tgt(3, 120)]));
     expect(r.hits.map((h) => [h.targetId, h.killed])).toEqual([
@@ -157,6 +169,11 @@ describe('CNV-06: Supernova', () => {
     });
   });
 
+  it('estilhaços à mesma distância saem pelo menor id', () => {
+    const r = ok(fire(build({ vida: 1 }, 'supernova'), [tgt(1, 60), tgt(2, 120), tgt(5, 120, 30), tgt(4, 120, -30)]));
+    expect(r.shards?.hits.map((h) => h.targetId)).toEqual([2, 4, 5]);
+  });
+
   it('o atravessado que o feixe matou não toma estilhaço; o feixe na parede estoura na parede', () => {
     const r = ok(fire(build({ vida: 1 }, 'supernova'), [tgt(1, 60, 0, 'enemy', 10)], { wall: () => 80 }));
     expect(r.end).toEqual({ x: 80, y: 0 });
@@ -172,7 +189,15 @@ describe('CNV-06: Supernova', () => {
 
 describe('CNV-07: Curva', () => {
   it('do fim, dobra 1 vez para o vivo mais perto ainda não atingido a até 160 px, com dano cheio', () => {
-    const r = ok(fire(build({ largura: 1 }, 'curva'), [tgt(1, 60), tgt(2, 120), tgt(3, 120, 100), tgt(4, 120, -150)]));
+    const r = ok(
+      fire(build({ largura: 1 }, 'curva'), [
+        tgt(1, 60),
+        tgt(2, 120),
+        tgt(3, 120, 100),
+        tgt(4, 120, -150),
+        tgt(5, 120, 200),
+      ]),
+    );
     expect(r.bends).toEqual([
       {
         from: { x: 120, y: 0 },
@@ -180,6 +205,13 @@ describe('CNV-07: Curva', () => {
         hit: { targetId: 3, damage: 28, bite: 0, killed: false, band: 'normal' },
       },
     ]);
+  });
+
+  it('o vivo mais perto é o alvo: quem já morreu fica de fora', () => {
+    const r = ok(
+      fire(build({ largura: 1 }, 'curva'), [tgt(1, 60), tgt(2, 120), tgt(3, 120, 50, 'enemy', 0), tgt(4, 120, 90)]),
+    );
+    expect(r.bends.map((b) => b.hit.targetId)).toEqual([4]);
   });
 
   it('sem ninguém atingido, dobra a partir do fim do alcance; a 161 px não dobra', () => {
@@ -231,6 +263,13 @@ describe('CNV-09: Sangue Perfurante (Despertar)', () => {
       [5, 36, 4],
     ]);
     expect(r.bends[1].from).toEqual({ x: 120, y: 100 });
+  });
+
+  it('o componente conta para o abate da dobra', () => {
+    const r = ok(
+      fire(build({ largura: 3, dano: 1 }, 'curva'), [tgt(1, 60), tgt(2, 120), tgt(3, 120, 100, 'enemy', 40, 200)]),
+    );
+    expect(r.bends[0].hit).toMatchObject({ damage: 36, bite: 8, killed: true });
   });
 });
 

@@ -186,6 +186,12 @@ describe('ERU-06: Lago de Lava', () => {
     expect(ofType(log, 'caldeira')).toEqual([]);
   });
 
+  it('a lava é rasa (8 px): quem paira 7 px acima do chão toma, 9 px não', () => {
+    const hover = (id: number, gap: number) => boxed(id, 70, 90, 60 - gap, 100 - gap);
+    const lava = ofType(play(cast(build({ altura: 1 }, 'lagoDeLava')), [hover(1, 7), hover(2, 9)], 700), 'lava');
+    expect(lava[0].e.hits.map((h) => h.targetId)).toEqual([1]);
+  });
+
   it('com queima 4, a lava tira 4', () => {
     const lava = ofType(play(cast(build({ queima: 3 }, 'lagoDeLava')), [tgt(1, 80)], 700), 'lava');
     expect(lava[0].e.hits[0].damage).toBe(4);
@@ -206,6 +212,12 @@ describe('ERU-07: Chuva de Meteoros (Despertar)', () => {
       { t: 850, e: { type: 'shard', x: 32, hits: [{ targetId: 3, damage: 15, band: 'micro' }] } },
       { t: 850, e: { type: 'shard', x: 128, hits: [{ targetId: 2, damage: 15, band: 'micro' }] } },
     ]);
+  });
+
+  it('o estilhaço tem raio 24: a caixa a 24 px do ponto entra, a 25 não', () => {
+    // Estilhaço da frente em x = 128 (chão em y = 100).
+    const log = play(cast(awake), [boxed(1, 152, 172, 60, 100), boxed(2, 153, 173, 60, 100)], 1000);
+    expect(ofType(log, 'shard')[1].e.hits.map((h) => h.targetId)).toEqual([1]);
   });
 
   it('no Nv 4 (sem Despertar), nem estilhaço nem componente', () => {
