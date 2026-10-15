@@ -1,4 +1,5 @@
 import type { Hit } from '../../core/hit';
+import { widenForward } from '../../core/cursedBody';
 import { NO_STRIKE_MODS, type StrikeMods } from '../../core/statSheet';
 import { type CounterKind } from '../../core/counter';
 import { StepIn } from '../../core/stepIn';
@@ -39,6 +40,8 @@ export class PlayerStrikes {
   /** Nome e id do golpe em andamento; `null` sem golpe. */
   strikeName: string | null = null;
   swingId = 0;
+  /** Multiplicadores do golpe em curso, lidos uma vez no `openHitbox`; o `hitboxOff` aplica o ritmo deles (CRP-04, CRP-15). */
+  private mods: StrikeMods = NO_MODS;
 
   constructor(private readonly p: Player) {}
 
@@ -161,6 +164,7 @@ export class PlayerStrikes {
         this.travelDone = { forward: 0, down: 0 };
         this.swingId = nextSwingId++;
         this.strikeName = ev.move.name;
+        this.mods = NO_MODS;
         // POS-07/08: só o golpe de chão dá o passo (o aéreo tem o próprio avanço ou nenhum).
         const groundMove =
           this.p.loco.touchesTerrain('below') && this.p.move.vy >= 0 && !ev.move.travel && !ev.move.slam;
@@ -179,6 +183,8 @@ export class PlayerStrikes {
         this.p.onStrikePhase?.(ev.move.name, 'active');
       } else if (ev.type === 'hitboxOff') {
         this.p.hitbox.close();
+        // CRP-04: o Ritmo encurta a `recovery` recém-aberta (a `whiffRecoveryMs` fica como está).
+        this.p.moves.scaleRecovery(this.mods.recoveryMul);
         this.p.onStrikePhase?.(ev.move.name, 'recovery');
       } else if (ev.type === 'moveEnd') {
         this.p.hitbox.close();
@@ -270,6 +276,7 @@ export class PlayerStrikes {
     if (!shape) return;
     // Lido uma vez por golpe: o gancho gasta o Passo sombrio armado.
     const mods = this.p.strikeMods?.(move) ?? NO_MODS;
+    this.mods = mods;
     const hit: Hit = {
       ownerId: this.p.id,
       // MOD-05: dano do golpe escalado por `forca`, lido na hora.
@@ -287,6 +294,14 @@ export class PlayerStrikes {
       // CRP-03: marcas do Corpo (o Peso derruba e atordoa na parede); só as ligadas vêm, o `knockdown` do golpe fica.
       ...mods.marks,
     };
-    this.p.hitbox.open(shape, hit, this.p.sprite.x, this.p.sprite.y, this.p.facing, move.maxTargets);
+    // CRP-05: o Alcance alarga a caixa para a frente e mantém a borda de trás.
+    this.p.hitbox.open(
+      widenForward(shape, mods.reachPx),
+      hit,
+      this.p.sprite.x,
+      this.p.sprite.y,
+      this.p.facing,
+      move.maxTargets,
+    );
   }
 }

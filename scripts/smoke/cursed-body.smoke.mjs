@@ -85,8 +85,117 @@ async function levelResets(ctx) {
   );
 }
 
+/** Boneco de treino do laboratório (parado, x 392) usado para medir o alcance do `jab` a uma distância exata. */
+const DUMMY_X = 392;
+
+/**
+ * Leva o player do laboratório para a direita do boneco de x 392, de frente para ele, a `dist` px (passos de um quadro
+ * no fim, ~0,3 px), dá um `jab` e devolve se o boneco perdeu vida e a distância real do aperto.
+ */
+async function jabAt(ctx, query, dist) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(`hd=1&fxlab&${query}`);
+  await kit.down('KeyD');
+  for (let i = 0; i < 400 && s.player.x < DUMMY_X + dist + 40; i++) s = await kit.frame();
+  await kit.up('KeyD');
+  await kit.snap(300);
+  await kit.tap('KeyA', 16);
+  s = await kit.snap(300);
+  for (let i = 0; i < 200 && s.player.x - DUMMY_X > dist; i++) {
+    await kit.tap('KeyA', 16);
+    s = await kit.snap(100);
+  }
+  const at = s.player.x - DUMMY_X;
+  ctx.assert(s.player.facing === -1 && Math.abs(at - dist) < 1, `o player deveria parar a ${dist} px: ${at}`);
+  const hp0 = s.fxlab.dummies.find((d) => d.x === DUMMY_X).hp;
+  await kit.tap('KeyJ', 16);
+  let hit = false;
+  for (let f = 0; f < 20 && !hit; f++) hit = (await kit.frame()).fxlab.dummies.find((d) => d.x === DUMMY_X).hp < hp0;
+  return hit;
+}
+
+/**
+ * Distâncias (centro a centro) em volta da borda de hoje do `jab` no boneco: a caixa (22 + 26/2) mais meia largura do
+ * boneco (11) mais o passo à frente (4) dão ~50 px; a 49 acerta e a 52 erra.
+ */
+const JAB_HITS_AT = 49;
+const JAB_MISSES_AT = 52;
+/** CRP-05: o Alcance 3 alarga a caixa 14 px para a frente. */
+const REACH_3_PX = 14;
+
+/**
+ * CRP-05 (laboratório, porque o boneco fica parado e o comum anda): sem o eixo o `jab` acerta a 49 px e erra a 52; com
+ * `alcance:3` a mesma borda anda 14 px, acertando a 63 e errando a 66.
+ */
+async function reachWidens(ctx) {
+  const plainHit = await jabAt(ctx, '', JAB_HITS_AT);
+  const plainMiss = await jabAt(ctx, '', JAB_MISSES_AT);
+  const farHit = await jabAt(ctx, 'axes=corpo.alcance:3', JAB_HITS_AT + REACH_3_PX);
+  const farMiss = await jabAt(ctx, 'axes=corpo.alcance:3', JAB_MISSES_AT + REACH_3_PX);
+  const view = JSON.stringify({ plainHit, plainMiss, farHit, farMiss });
+  ctx.assert(plainHit && !plainMiss, `CRP-05: sem o eixo o jab acerta a 49 e erra a 52: ${view}`);
+  ctx.assert(farHit && !farMiss, `CRP-05: com Alcance 3 o jab acerta 14 px além (63) e erra a 66: ${view}`);
+}
+
+/** Quadros do `move:jab` até `player.move` voltar a `null`, num `jab` que acerta o comum; devolve os ms. */
+async function jabDurationMs(ctx, query) {
+  const kit = makeKit(ctx);
+  await kit.boot(`${BASE}&${query}`);
+  await kit.approach();
+  await kit.waitQuiet();
+  let s = await kit.approach();
+  const seen = s.events.length;
+  await kit.down('KeyJ');
+  s = await kit.frame();
+  await kit.up('KeyJ');
+  ctx.assert(s.events.slice(seen).includes('move:jab'), `o jab deveria começar: ${s.events.slice(seen)}`);
+  const hp0 = new Map(s.enemies.map((e) => [e.id, e.hp]));
+  let frames = 0;
+  let hit = false;
+  for (; frames < 60 && s.player.move !== null; frames++) {
+    s = await kit.frame();
+    hit ||= s.enemies.some((e) => e.hp < (hp0.get(e.id) ?? e.hp));
+  }
+  ctx.assert(hit && s.player.move === null, `o jab deveria acertar e acabar: ${JSON.stringify({ hit, frames })}`);
+  return (frames * 1000) / 60;
+}
+
+/** `recoveryMs` do `jab` (`data/moves.ts`) e o que o Ritmo 3 tira dele: `120 − round(0,78 × 120)` = 26 ms (CRP-04). */
+const JAB_RECOVERY_MS = 120;
+const RHYTHM_3_CUT_MS = JAB_RECOVERY_MS - Math.round(0.78 * JAB_RECOVERY_MS);
+
+/** CRP-04 (L-043): com Ritmo 3 o `jab` que acerta acaba 26 ms antes, medido no jogo, com 1 quadro de folga. */
+async function rhythmShortens(ctx) {
+  const plain = await jabDurationMs(ctx, 'axes=');
+  const quick = await jabDurationMs(ctx, 'axes=corpo.ritmo:3');
+  ctx.assert(
+    Math.abs(plain - quick - RHYTHM_3_CUT_MS) <= 1000 / 60,
+    `CRP-04: o jab com Ritmo 3 deveria durar ${RHYTHM_3_CUT_MS} ms a menos: ${plain.toFixed(1)} contra ${quick.toFixed(1)}`,
+  );
+}
+
+/**
+ * VRM-16 (`modules=beco`): com Peso 3 o forte derruba o comum que vem da boca da direita e o joga contra a parede do
+ * fim do beco, que o atordoa (`wallStun:<id>`).
+ */
+async function weightWallStun(ctx) {
+  const kit = makeKit(ctx);
+  await kit.boot(`${BASE}&modules=beco&axes=corpo.peso:3`);
+  const heavy = await strikeOnce(kit, ctx, 'KeyK', 'Peso 3');
+  let s = heavy.s;
+  const seen = s.events.length;
+  for (let f = 0; f < 120 && !s.events.includes(`wallStun:${heavy.id}`); f++) s = await kit.frame();
+  ctx.assert(
+    s.events.includes(`wallStun:${heavy.id}`),
+    `VRM-16: o comum derrubado pelo Peso 3 deveria bater na parede: ${JSON.stringify({ ev: s.events.slice(seen - 3), en: s.enemies })}`,
+  );
+}
+
 export default async function (ctx) {
   await levelResets(ctx);
   await weightKnockdown(ctx);
   await impactDamage(ctx);
+  await reachWidens(ctx);
+  await rhythmShortens(ctx);
+  await weightWallStun(ctx);
 }

@@ -1347,12 +1347,18 @@ neutros).
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs`: com `axes=corpo.alcance:3` o `jab` acerta um inimigo 14 px além do alcance de hoje e sem
+- [x] `cursed-body.smoke.mjs`: com `axes=corpo.alcance:3` o `jab` acerta um inimigo 14 px além do alcance de hoje e sem
       o eixo erra (CRP-05); o `jab` dura `recoveryMs − round(0,78 × recoveryMs)` a menos com `ritmo:3`, tolerância de 1
       quadro, do evento `move:jab` até `player.move` `null` (CRP-04, L-043)
-- [ ] Com `axes=corpo.peso:3&modules=beco` o forte joga o comum na parede e emite `wallStun:<id>` (VRM-16)
-- [ ] O Passo sombrio é gasto uma vez só por golpe (o hook roda uma vez); `oxlint` sem ramo novo no `openHitbox`
-- [ ] Smokes `cursed-body`, `fight`, `defense`, `player-anim` e `kokusen` verdes; gate verde; contagem sem perda
+- [x] Com `axes=corpo.peso:3&modules=beco` o forte joga o comum na parede e emite `wallStun:<id>` (VRM-16)
+- [x] O Passo sombrio é gasto uma vez só por golpe (o hook roda uma vez); `oxlint` sem ramo novo no `openHitbox`
+- [x] Smokes `cursed-body`, `fight`, `defense`, `player-anim` e `kokusen` verdes; gate verde; contagem sem perda
+
+**Nota (T44)**: o alcance é medido no laboratório (`?debug&hd=1&fxlab`), porque o boneco fica parado e o comum
+anda: sem o eixo o `jab` acerta a 49 px e erra a 52; com `alcance:3` acerta a 63 e erra a 66. O Passo sombrio segue
+gasto uma vez por golpe porque o `strikeMods` continua chamado só no `openHitbox` (o `mods` fica guardado para o
+`hitboxOff`); a complexidade do `onMove` e do `openHitbox` não mudou. `kokusen` falhou uma vez na pré-condição de
+energia (CE-06, instável conhecido) e passou isolado. Testes: 4144.
 
 **Tests**: smoke
 **Gate**: full
