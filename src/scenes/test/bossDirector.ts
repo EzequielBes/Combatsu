@@ -10,10 +10,12 @@ import {
   type LineupOverrides,
 } from '../../core/bossAffix';
 import { bossSpecFor, type BossSpec } from '../../core/bossTier';
+import type { Hit, Vec2 } from '../../core/hit';
 import { isBossRound } from '../../core/waves';
 import type { Boss } from '../../game/Boss';
 import { BossAffixFx } from '../../game/boss/BossAffixFx';
 import { BossReadout } from '../../game/boss/BossReadout';
+import { ThreadRain } from '../../game/boss/ThreadRain';
 import type { GameSnapshot } from '../../game/debugApi';
 import { debugParam } from './params';
 import type { TestScene } from '../TestScene';
@@ -56,15 +58,29 @@ export class BossDirector {
     return bossSpecFor(round, this.lineupFor(round));
   }
 
-  /** Chefe recém-criado: os eventos de vista dele (rastro, aviso, abertura e fechamento) vão para um `BossAffixFx`. */
-  attach(boss: Boss): void {
-    this.fx = new BossAffixFx();
+  /**
+   * Chefe recém-criado com a especificação `spec`: os eventos de vista dele (rastro, aviso, abertura e fechamento) vão
+   * para um `BossAffixFx`, com a Chuva de Fios presa aos limites do nível e o dano de projétil do tier (CYC-09/10).
+   */
+  attach(boss: Boss, spec: BossSpec): void {
+    this.fx?.destroy();
+    const onConnect = (hit: Hit, point: Vec2): void => this.s.combat.onConnect(hit, point, hit.strength);
+    const threads = new ThreadRain(this.s, boss.id, spec.damage.projectile, this.s.level.widthPx, onConnect);
+    this.fx = new BossAffixFx(threads);
     boss.fxSink = this.fx.route;
   }
 
-  /** Eventos de vista recebidos do chefe atual por tipo (snapshot de debug); vazio sem chefe ligado. */
-  fxCounts(): ReturnType<BossAffixFx['debug']> {
-    return this.fx?.debug() ?? {};
+  /** Chefe derrotado: fios e marcas somem na hora (a IA dele não manda mais o fechamento). */
+  onBossDied(): void {
+    this.fx?.clear();
+  }
+
+  /**
+   * Vista do chefe atual para o snapshot de debug: eventos recebidos por tipo e o estado da Chuva de Fios; vazio e
+   * `null` sem chefe ligado.
+   */
+  fxView(): { fx: ReturnType<BossAffixFx['debug']>; threads: ReturnType<BossAffixFx['threadsView']> } {
+    return { fx: this.fx?.debug() ?? {}, threads: this.fx?.threadsView() ?? null };
   }
 
   /** Barra do chefe com o rótulo da escalação (BRD-01) e um glifo por afixo à direita dela (BRD-02). */
@@ -108,6 +124,7 @@ export class BossDirector {
   reset(): void {
     this.lineups = new BossLineups();
     this.last = null;
+    this.fx?.destroy();
     this.fx = null;
   }
 

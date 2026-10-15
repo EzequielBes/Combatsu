@@ -227,7 +227,7 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 - `lineupFor(round)` (lê os overrides `bossArch`, `bossAffix`, `finger` por `debugParam`), `specFor(round)`.
 - `showBar(spec)` / `hideBar()` / `glyphs()`: barra do `Hud` e glifos do `BossReadout` (criado no primeiro chefe,
   porque a `uiLayer` nasce depois do `RunDirector`) sempre juntos; o snapshot traz `bossGlyphs` (BRD-01/02).
-- `attach(boss)`: liga `fxSink`, `onPhaseChanged` (Invocador), cria `BossAffixFx`, `AffixOutline`, `AdaptWheel` e os
+- `attach(boss, spec)` (a `spec` dá o dano de projétil dos fios): liga `fxSink`, `onPhaseChanged` (Invocador), cria `BossAffixFx`, `AffixOutline`, `AdaptWheel` e os
   glifos. `update(dt)` depois do `boss.update` (lava, contorno, roda).
 - `summon(phase)`: `summonCount` → `spawner.spawnSummoned(point, round, index, onGone)`; guarda o conjunto vivo.
 - `onBossDied()`: limpa lava, feixe, fios, contorno, roda, glifos; cada invocado vivo sai com `curseSmoke` +

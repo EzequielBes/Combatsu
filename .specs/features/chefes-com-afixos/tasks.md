@@ -658,9 +658,9 @@ apaga sem abrir.
 
 **Done when**:
 
-- [ ] `boss-attacks` (2º cenário): `bossArch=tecela`, fase 2 → 5 fios no snapshot nas posições esperadas; player sob um
+- [x] `boss-attacks` (2º cenário): `bossArch=tecela`, fase 2 → 5 fios no snapshot nas posições esperadas; player sob um
       fio perde o dano de projétil do tier uma vez; captura olhada em movimento
-- [ ] `npm run smoke -- boss-attacks` verde; gate verde
+- [x] `npm run smoke -- boss-attacks` verde; gate verde
 
 **Tests**: smoke
 **Gate**: full

@@ -4,6 +4,7 @@ import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { BossAffixId } from '../data/bossAffixes';
 import type { BossFxEvent } from './boss/BossAffixFx';
+import type { ThreadRainView } from './boss/ThreadRain';
 import type { CastState } from '../core/cast';
 import type { CounterKind } from '../core/counter';
 import type { EnemyVariant } from '../core/enemyVariant';
@@ -135,6 +136,8 @@ export interface GameSnapshot {
     finisherReady: boolean;
     /** Eventos de vista que o `BossAffixFx` recebeu por tipo, desde que o chefe nasceu (AFX-01). */
     fx: Partial<Record<BossFxEvent['type'], number>>;
+    /** Chuva de Fios: momento, X dos fios, dano de cada um e acertos aceitos desde que o chefe nasceu (CYC-09/10). */
+    threads: ThreadRainView | null;
   } | null;
   /** Última escalação de chefe pedida na run (BLN-08..11), já com os overrides de debug; `null` antes do 1º chefe. */
   bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;
