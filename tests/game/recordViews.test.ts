@@ -5,7 +5,17 @@ import { RUN_TEXT_STYLE } from '../../src/game/Hud';
 import { RECORD_COLORS, RecordMarker } from '../../src/game/RecordMarker';
 import { SUMMARY_LINE_MAX, type SummaryLine } from '../../src/core/runSummary';
 import { UI_SIZE } from '../../src/game/art/hd/screen';
-import { PANEL_CENTER, PANEL_CHAR_W, PANEL_LINE_H, RunSummaryPanel, panelBounds } from '../../src/game/RunSummaryPanel';
+import {
+  PANEL_CENTER,
+  PANEL_CHAR_W,
+  PANEL_GAP_H,
+  PANEL_INDENT,
+  PANEL_LINE_H,
+  PANEL_PAD,
+  RunSummaryPanel,
+  lineTops,
+  panelBounds,
+} from '../../src/game/RunSummaryPanel';
 
 const hex = (key: string): string => `#${PALETTE[key].toString(16).padStart(6, '0')}`;
 
@@ -158,13 +168,27 @@ function makePanel() {
   return { panel: new RunSummaryPanel(scene, layer), texts, styles, bg: rects[0], added };
 }
 
-/** 19 linhas (a build cheia do design) com a pior largura que `listLines` deixa passar: 100 + a vírgula. */
+/** Linhas que abrem bloco na build cheia: números, build, dano, recorde e instrução (END-16). */
+const GAPS = new Set([1, 4, 11, 18, 19]);
+/** Linhas recuadas: continuação de passivas e votos, e as 7 fontes de dano. */
+const INDENTS = new Set([6, 9, 12, 13, 14, 15, 16, 17]);
+
+/**
+ * 20 linhas (título, 3 números, build com passivas e votos quebrados em 2, `Dano` com 7 fontes, recorde e instrução)
+ * com a pior largura que `listLines` deixa passar: 100 + a vírgula, e 100 + o recuo nas continuações.
+ */
 const fullLines = (): SummaryLine[] =>
-  Array.from({ length: 19 }, (_, i) => ({ text: `${i}`.padEnd(SUMMARY_LINE_MAX + 1, 'x'), highlight: i === 17 }));
+  Array.from({ length: 20 }, (_, i) => ({
+    text: `${i}`.padEnd(INDENTS.has(i) ? SUMMARY_LINE_MAX : SUMMARY_LINE_MAX + 1, 'x'),
+    highlight: i === 0 || i === 18,
+    center: i === 0 || i === 19,
+    indent: INDENTS.has(i),
+    gap: GAPS.has(i),
+  }));
 
 describe('panelBounds (END-01, END-14)', () => {
-  it('19 linhas de 101 caracteres cabem em 960x540, centradas em (480, 270)', () => {
-    const b = panelBounds(fullLines().map((l) => l.text));
+  it('a build cheia (20 linhas de até 101 caracteres, 5 blocos) cabe em 960x540, centrada em (480, 270)', () => {
+    const b = panelBounds(fullLines());
     expect(PANEL_CENTER).toEqual({ x: 480, y: 270 });
     expect(b.x).toBeGreaterThanOrEqual(0);
     expect(b.y).toBeGreaterThanOrEqual(0);
@@ -172,20 +196,30 @@ describe('panelBounds (END-01, END-14)', () => {
     expect(b.y + b.h).toBeLessThanOrEqual(UI_SIZE.h);
     expect(b.x + b.w / 2).toBe(480);
     expect(b.y + b.h / 2).toBe(270);
-    expect(b.h).toBeGreaterThanOrEqual(19 * PANEL_LINE_H);
-    expect(b.w).toBeGreaterThanOrEqual((SUMMARY_LINE_MAX + 1) * PANEL_CHAR_W);
+    expect(b.h).toBe(20 * PANEL_LINE_H + 5 * PANEL_GAP_H + 2 * PANEL_PAD);
+    expect(b.w).toBe(SUMMARY_LINE_MAX * PANEL_CHAR_W + PANEL_INDENT + 2 * PANEL_PAD);
   });
 
-  it('a caixa cresce com a linha mais longa e com o número de linhas', () => {
-    const small = panelBounds(['abc']);
-    const wide = panelBounds(['abcdef']);
-    const tall = panelBounds(['abc', 'abc']);
+  it('a caixa cresce com a linha mais longa (com o recuo), com o número de linhas e com as folgas', () => {
+    const small = panelBounds([{ text: 'abc' }]);
+    const wide = panelBounds([{ text: 'abcdef' }]);
+    const indented = panelBounds([{ text: 'abc', indent: true }]);
+    const tall = panelBounds([{ text: 'abc' }, { text: 'abc' }]);
+    const gapped = panelBounds([{ text: 'abc' }, { text: 'abc', gap: true }]);
     expect(wide.w - small.w).toBe(3 * PANEL_CHAR_W);
+    expect(indented.w - small.w).toBe(PANEL_INDENT);
     expect(tall.h - small.h).toBe(PANEL_LINE_H);
+    expect(gapped.h - tall.h).toBe(PANEL_GAP_H);
+  });
+
+  it('lineTops: 16 px por linha, meia linha a mais antes de cada gap; gap na primeira linha não conta', () => {
+    expect(lineTops([{ text: 'a', gap: true }, { text: 'b' }, { text: 'c', gap: true }, { text: 'd' }])).toEqual([
+      0, 16, 40, 56,
+    ]);
   });
 });
 
-describe('RunSummaryPanel (END-01, END-14)', () => {
+describe('RunSummaryPanel (END-01, END-14, END-16)', () => {
   it('nasce escondido, fundo k a 0,85 na camada de UI', () => {
     const { panel, bg, added } = makePanel();
     expect([bg.color, bg.alpha]).toEqual([PALETTE[RECORD_COLORS.bg], 0.85]);
@@ -193,36 +227,48 @@ describe('RunSummaryPanel (END-01, END-14)', () => {
     expect(panel.debug().visible).toBe(false);
   });
 
-  it('show: uma linha por Text, 16 px entre elas, centradas em x = 480; fundo do tamanho dos bounds', () => {
+  it('show: uma linha por Text nos topos de lineTops; fundo do tamanho dos bounds', () => {
     const { panel, texts, styles, bg, added } = makePanel();
     const lines = fullLines();
     panel.show(lines);
     const d = panel.debug();
     expect(d.visible).toBe(true);
     expect(d.lines).toEqual(lines.map((l) => l.text));
-    expect(d.bounds).toEqual(panelBounds(d.lines));
+    expect(d.bounds).toEqual(panelBounds(lines));
     expect([bg.x, bg.y, bg.w, bg.h]).toEqual([d.bounds.x, d.bounds.y, d.bounds.w, d.bounds.h]);
-    expect(texts).toHaveLength(19);
-    expect(added).toHaveLength(20);
-    for (const t of texts) {
-      expect(t.x).toBe(480);
-      expect(t.origin).toEqual([0.5, 0]);
-    }
+    expect(texts).toHaveLength(20);
+    expect(added).toHaveLength(21);
     for (const st of styles) expect(st).toBe(RUN_TEXT_STYLE);
-    for (let i = 1; i < texts.length; i++) expect(texts[i].y - texts[i - 1].y).toBe(16);
+    const tops = lineTops(lines);
+    texts.forEach((t, i) => expect(t.y).toBe(d.bounds.y + PANEL_PAD + tops[i]));
   });
 
-  it('L-043: a linha highlight chega ao setColor com a cor de A; as outras com a de w', () => {
+  it('título e instrução centrados em x = 480; o resto à esquerda da caixa, recuado quando indent', () => {
+    const { panel, texts } = makePanel();
+    const lines = fullLines();
+    panel.show(lines);
+    const left = panel.debug().bounds.x + PANEL_PAD;
+    texts.forEach((t, i) => {
+      const line = lines[i];
+      if (line.center) {
+        expect([t.x, t.origin]).toEqual([480, [0.5, 0]]);
+        return;
+      }
+      expect([t.x, t.origin]).toEqual([line.indent ? left + PANEL_INDENT : left, [0, 0]]);
+    });
+  });
+
+  it('L-043: as linhas highlight chegam ao setColor com a cor de A; as outras com a de w', () => {
     const { panel, texts } = makePanel();
     panel.show(fullLines());
-    texts.forEach((t, i) => expect(t.colors.at(-1)).toBe(i === 17 ? hex('A') : hex('w')));
+    texts.forEach((t, i) => expect(t.colors.at(-1)).toBe(i === 0 || i === 18 ? hex('A') : hex('w')));
   });
 
   it('show menor reaproveita os Text e esconde as sobras; hide esconde tudo', () => {
     const { panel, texts, bg } = makePanel();
     panel.show(fullLines());
     panel.show([{ text: 'Rodada alcançada: 2' }, { text: 'J / Enter para tentar de novo' }]);
-    expect(texts).toHaveLength(19);
+    expect(texts).toHaveLength(20);
     expect(panel.debug().lines).toEqual(['Rodada alcançada: 2', 'J / Enter para tentar de novo']);
     expect(texts[0].colors.at(-1)).toBe(hex('w'));
     panel.hide();

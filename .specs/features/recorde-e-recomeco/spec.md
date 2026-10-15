@@ -135,7 +135,7 @@ abre com `Rodada 2 · Novo recorde!` e o marcador muda para a cor de destaque.
 5. END-05: The panel SHALL list the perks by name, or `Passivas: nenhuma`.
 6. END-06: The panel SHALL show the relic and the bound weapon by name and level, or `Arsenal: nenhum`.
 7. END-07: The panel SHALL list the taken vows by name, or `Votos: nenhum`.
-8. END-08: The panel SHALL list the damage of each source with damage above 0, sorted from highest to lowest, as `<fonte>: <dano inteiro arredondado> (<pct>%)`, with pct the rounded share of the run total and `<fonte>` `Golpe`, `Objeto` or the technique short label.
+8. END-08: Under a header line `Dano`, the panel SHALL list the damage of each source with damage above 0, one indented line per source, sorted from highest to lowest, as `<fonte>: <dano inteiro arredondado> (<pct>%)`, with pct the rounded share of the run total and `<fonte>` `Golpe`, `Objeto` or the technique short label.
 9. END-09: IF the run dealt no damage THEN the panel SHALL show `Dano: nenhum`.
 10. END-10: WHEN the death set a new record THEN the panel SHALL show `Recorde!` in the palette highlight color.
 11. END-11: WHEN the death did not set a new record THEN the panel SHALL show `Recorde: rN` with the stored record round, and SHALL not show `Recorde!`.
@@ -150,6 +150,7 @@ abre com `Rodada 2 · Novo recorde!` e o marcador muda para a cor de destaque.
 20. DMG-05: IF the hit lands on an effects-lab training dummy THEN the run ledger SHALL add nothing.
 21. DMG-06: WHEN a new run starts THEN the run ledger SHALL reset every source to 0.
 22. DMG-07: A Kokusen hit SHALL count under `divergente`.
+23. END-16: The panel SHALL open with the title `Fim da run`, centered, in the palette highlight color; the other lines SHALL be left-aligned inside the box (the last line centered), the continuation of a wrapped list indented, and each block (numbers, build, damage, record, instruction) SHALL start with a half-line gap.
 
 **Independent Test**: `?debug&hd=1&area=modular&nosave=1&tech=azul` → acertar um soco, conjurar o Azul num inimigo,
 morrer → o painel lista `golpe` e `Azul` com os valores do snapshot, e a soma das porcentagens dá 100 ± 1.
@@ -243,6 +244,7 @@ morrer → o painel lista `golpe` e `Azul` com os valores do snapshot, e a soma 
 | END-13 | P1: Tela de fim de run | Tasks: T11 | Pending |
 | END-14 | P1: Tela de fim de run | Tasks: T8, T9, T13 | Pending |
 | END-15 | P1: Tela de fim de run | Tasks: T11, T14 | Pending |
+| END-16 | P1: Tela de fim de run | Correção da revisão (painel em blocos) | Pending |
 | DMG-01 | P1: Tela de fim de run | Tasks: T13 | Pending |
 | DMG-02 | P1: Tela de fim de run | Tasks: T1, T14 | Pending |
 | DMG-03 | P1: Tela de fim de run | Tasks: T13 | Pending |
@@ -256,7 +258,7 @@ morrer → o painel lista `golpe` e `Azul` com os valores do snapshot, e a soma 
 | RST-04 | P1: Recomeço rápido | Tasks: T11 | Pending |
 | RST-05 | P1: Recomeço rápido | Tasks: T12 | Pending |
 
-**Coverage:** 53 total, 53 mapped to tasks, 0 unmapped (fase Tasks).
+**Coverage:** 54 total, 54 mapped (END-16 entrou na correção da revisão), 0 unmapped.
 
 ---
 

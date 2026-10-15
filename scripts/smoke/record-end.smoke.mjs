@@ -60,6 +60,7 @@ export default async function (ctx) {
     panel.lines.at(-1) === 'J / Enter para tentar de novo',
     `END-12: última linha: ${JSON.stringify(panel.lines)}`,
   );
+  assert(panel.lines[0] === 'Fim da run', `END-16: título do painel: ${JSON.stringify(panel.lines)}`);
   const { x, y, w, h } = panel.bounds;
   assert(
     x >= 0 && y >= 0 && x + w <= 960 && y + h <= 540,
@@ -259,6 +260,7 @@ async function techDamage(ctx) {
     `DMG-02: Azul e golpe no registro: ${JSON.stringify(damage)}`,
   );
   const { lines } = dead.record.panel;
+  assert(lines.includes('Dano'), `END-08: cabeçalho Dano antes das fontes: ${JSON.stringify(lines)}`);
   const rows = lines.map((l) => /^(.+): (\d+) \((\d+)%\)$/.exec(l)).filter(Boolean);
   for (const [label, value] of [
     ['Golpe', damage.golpe],

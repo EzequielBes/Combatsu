@@ -81,10 +81,17 @@ export class DamageLedger {
   }
 }
 
-/** Uma linha do painel de fim; `highlight` pinta na cor de destaque (o `Recorde!`). */
+/**
+ * Uma linha do painel de fim. Por padrão alinha à esquerda dentro da caixa; `center` centraliza (título e instrução),
+ * `indent` recua sob o cabeçalho (fontes de dano, continuação de lista), `gap` abre um bloco novo com folga antes e
+ * `highlight` pinta na cor de destaque (o título e o `Recorde!`).
+ */
 export interface SummaryLine {
   text: string;
   highlight?: boolean;
+  center?: boolean;
+  indent?: boolean;
+  gap?: boolean;
 }
 
 /** O que o painel de fim precisa saber da run que acabou. */
@@ -108,6 +115,9 @@ export const SUMMARY_LINE_MAX = 100;
 
 /** Última linha do painel (END-12). */
 export const RETRY_LINE = 'J / Enter para tentar de novo';
+
+/** Título do painel (END-16). */
+export const SUMMARY_TITLE = 'Fim da run';
 
 /** Nome de `id` na tabela, ou `null` se o id não existe nela (id desconhecido some da linha). */
 function nameIn(table: Readonly<Record<string, { name: string }>>, id: string): string | null {
@@ -140,47 +150,67 @@ export function listLines(label: string, items: readonly (string | null)[], empt
   return lines;
 }
 
-function buildLines(build: RecordBuild): string[] {
+/** Uma lista em linhas do painel: a primeira abre bloco se `gap`; as de continuação (depois da quebra) recuam. */
+function listBlock(lines: readonly string[], gap = false): SummaryLine[] {
+  return lines.map((text, i) => (i === 0 ? (gap ? { text, gap } : { text }) : { text, indent: true }));
+}
+
+function buildLines(build: RecordBuild): SummaryLine[] {
   return [
-    ...listLines(
-      'Técnicas',
-      build.techniques.map((t) => leveled(TECH_SHORT, t)),
-      'nenhuma',
+    ...listBlock(
+      listLines(
+        'Técnicas',
+        build.techniques.map((t) => leveled(TECH_SHORT, t)),
+        'nenhuma',
+      ),
+      true,
     ),
-    ...listLines(
-      'Passivas',
-      build.perks.map((id) => nameIn(PERKS, id)),
-      'nenhuma',
+    ...listBlock(
+      listLines(
+        'Passivas',
+        build.perks.map((id) => nameIn(PERKS, id)),
+        'nenhuma',
+      ),
     ),
-    ...listLines('Arsenal', [leveled(ARSENAL, build.relic), leveled(ARSENAL, build.weapon)], 'nenhum'),
-    ...listLines(
-      'Votos',
-      build.vows.map((id) => nameIn(VOWS, id)),
-      'nenhum',
+    ...listBlock(listLines('Arsenal', [leveled(ARSENAL, build.relic), leveled(ARSENAL, build.weapon)], 'nenhum')),
+    ...listBlock(
+      listLines(
+        'Votos',
+        build.vows.map((id) => nameIn(VOWS, id)),
+        'nenhum',
+      ),
     ),
+  ];
+}
+
+/** END-08/09: cabeçalho `Dano` com uma fonte recuada por linha, ou `Dano: nenhum`. */
+function damageLines(rows: readonly DamageRow[]): SummaryLine[] {
+  if (rows.length === 0) return [{ text: 'Dano: nenhum', gap: true }];
+  return [
+    { text: 'Dano', gap: true },
+    ...rows.map((row) => ({ text: `${row.label}: ${row.damage} (${row.pct}%)`, indent: true })),
   ];
 }
 
 function recordLine(input: SummaryInput): SummaryLine[] {
-  if (input.newRecord) return [{ text: 'Recorde!', highlight: true }];
-  return input.bestRound === null ? [] : [{ text: `Recorde: r${input.bestRound}` }];
+  if (input.newRecord) return [{ text: 'Recorde!', highlight: true, gap: true }];
+  return input.bestRound === null ? [] : [{ text: `Recorde: r${input.bestRound}`, gap: true }];
 }
 
 /**
- * END-03..12: rodada, abates e fragmentos; técnicas, passivas, arsenal e votos (uma lista por linha, `nenhuma`/
- * `nenhum` quando vazia); o dano de cada fonte numa linha (ou `Dano: nenhum`); a linha do recorde; e por último
- * `J / Enter para tentar de novo`.
+ * END-03..12, END-16: o título; rodada, abates e fragmentos; técnicas, passivas, arsenal e votos (uma lista por
+ * linha, `nenhuma`/`nenhum` quando vazia); o cabeçalho `Dano` com cada fonte (ou `Dano: nenhum`); a linha do recorde;
+ * e por último `J / Enter para tentar de novo`. Cada bloco abre com folga.
  */
 export function summaryLines(input: SummaryInput): SummaryLine[] {
-  const damage = input.damage.length
-    ? input.damage.map((row) => `${row.label}: ${row.damage} (${row.pct}%)`)
-    : ['Dano: nenhum'];
-  const texts = [
-    `Rodada alcançada: ${input.round}`,
-    `Abates: ${input.kills}`,
-    `Fragmentos: ${input.fragments}`,
+  return [
+    { text: SUMMARY_TITLE, highlight: true, center: true },
+    { text: `Rodada alcançada: ${input.round}`, gap: true },
+    { text: `Abates: ${input.kills}` },
+    { text: `Fragmentos: ${input.fragments}` },
     ...buildLines(input.build),
-    ...damage,
+    ...damageLines(input.damage),
+    ...recordLine(input),
+    { text: RETRY_LINE, center: true, gap: true },
   ];
-  return [...texts.map((text) => ({ text })), ...recordLine(input), { text: RETRY_LINE }];
 }

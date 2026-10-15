@@ -4,6 +4,7 @@ import {
   DamageLedger,
   RETRY_LINE,
   SUMMARY_LINE_MAX,
+  SUMMARY_TITLE,
   type SummaryInput,
   listLines,
   sourceLabel,
@@ -121,6 +122,7 @@ const texts = (over: Partial<SummaryInput> = {}) => summaryLines(input(over)).ma
 describe('summaryLines', () => {
   it('build vazia e sem dano: nenhuma/nenhum em cada lista e Dano: nenhum', () => {
     expect(texts()).toEqual([
+      'Fim da run',
       'Rodada alcançada: 3',
       'Abates: 12',
       'Fragmentos: 40',
@@ -151,11 +153,12 @@ describe('summaryLines', () => {
       },
       damage: ledger.rows(),
     });
-    expect(lines.slice(3, 9)).toEqual([
+    expect(lines.slice(4, 11)).toEqual([
       'Técnicas: Azul Nv 2, Divergente Nv 1',
       'Passivas: Punho pesado, Refluxo',
       'Arsenal: Manoplas de ferro Nv 2, Bastão selado Nv 1',
       `Votos: ${VOWS.furia.name}, ${VOWS.ganancia.name}`,
+      'Dano',
       'Golpe: 60 (60%)',
       'Azul: 40 (40%)',
     ]);
@@ -180,7 +183,7 @@ describe('summaryLines', () => {
         vows: ['inventado'],
       },
     });
-    expect(lines.slice(3, 7)).toEqual([
+    expect(lines.slice(4, 8)).toEqual([
       `Técnicas: ${TECHNIQUES.roxo.short} Nv 1`,
       'Passivas: Executor',
       'Arsenal: nenhum',
@@ -190,12 +193,12 @@ describe('summaryLines', () => {
 
   it('Recorde! com highlight quando bateu; Recorde: rN sem highlight quando não; nada sem recorde', () => {
     const beat = summaryLines(input({ newRecord: true, bestRound: 3 }));
-    expect(beat.at(-2)).toEqual({ text: 'Recorde!', highlight: true });
+    expect(beat.at(-2)).toEqual({ text: 'Recorde!', highlight: true, gap: true });
     expect(beat.filter((l) => l.text.startsWith('Recorde')).length).toBe(1);
 
     const lost = summaryLines(input({ bestRound: 7 }));
-    expect(lost.at(-2)).toEqual({ text: 'Recorde: r7' });
-    expect(lost.some((l) => l.text === 'Recorde!' || l.highlight)).toBe(false);
+    expect(lost.at(-2)).toEqual({ text: 'Recorde: r7', gap: true });
+    expect(lost.slice(1).some((l) => l.text === 'Recorde!' || l.highlight)).toBe(false);
 
     const none = summaryLines(input({ bestRound: null }));
     expect(none.some((l) => l.text.startsWith('Recorde'))).toBe(false);
@@ -203,9 +206,58 @@ describe('summaryLines', () => {
 
   it('a última linha é sempre J / Enter para tentar de novo', () => {
     for (const over of [{}, { newRecord: true }, { bestRound: null }]) {
-      expect(summaryLines(input(over)).at(-1)).toEqual({ text: 'J / Enter para tentar de novo' });
+      expect(summaryLines(input(over)).at(-1)).toEqual({
+        text: 'J / Enter para tentar de novo',
+        center: true,
+        gap: true,
+      });
     }
     expect(RETRY_LINE).toBe('J / Enter para tentar de novo');
+  });
+});
+
+describe('summaryLines: blocos do painel (END-16)', () => {
+  const full = () => {
+    const ledger = new DamageLedger();
+    ledger.add('golpe', 30);
+    ledger.add('vermelho', 70);
+    return summaryLines(
+      input({
+        build: { ...EMPTY_BUILD, perks: ['punhoPesado'], vows: ['furia', 'ganancia'] },
+        damage: ledger.rows(),
+        newRecord: true,
+      }),
+    );
+  };
+
+  it('abre com o título Fim da run, centrado e na cor de destaque', () => {
+    expect(full()[0]).toEqual({ text: SUMMARY_TITLE, highlight: true, center: true });
+    expect(SUMMARY_TITLE).toBe('Fim da run');
+  });
+
+  it('cada bloco abre com folga: números, build, dano, recorde e instrução', () => {
+    const gaps = full()
+      .filter((l) => l.gap)
+      .map((l) => l.text);
+    expect(gaps).toEqual(['Rodada alcançada: 3', 'Técnicas: nenhuma', 'Dano', 'Recorde!', RETRY_LINE]);
+  });
+
+  it('as fontes de dano vêm recuadas sob o cabeçalho Dano; só a instrução e o título centralizam', () => {
+    const lines = full();
+    const header = lines.findIndex((l) => l.text === 'Dano');
+    expect(lines.slice(header + 1, header + 3)).toEqual([
+      { text: 'Vermelho: 70 (70%)', indent: true },
+      { text: 'Golpe: 30 (30%)', indent: true },
+    ]);
+    expect(lines.filter((l) => l.center).map((l) => l.text)).toEqual([SUMMARY_TITLE, RETRY_LINE]);
+  });
+
+  it('a continuação de uma lista quebrada vem recuada', () => {
+    const long = Array.from({ length: 12 }, () => 'ganancia');
+    const lines = summaryLines(input({ build: { ...EMPTY_BUILD, vows: long } }));
+    const first = lines.findIndex((l) => l.text.startsWith('Votos: '));
+    expect(lines[first].indent).toBeUndefined();
+    expect(lines[first + 1]).toMatchObject({ indent: true });
   });
 });
 
