@@ -1185,9 +1185,9 @@ todos com `pierce`, cada alvo uma vez por onda, no máximo 4 em 1000 ms de tempo
 
 **Done when**:
 
-- [ ] `tests/core/strikeEmitter.test.ts`: onda acaba em 80 e em 160 px; 1º alvo só, ou todos com `pierce`; alvo
+- [x] `tests/core/strikeEmitter.test.ts`: onda acaba em 80 e em 160 px; 1º alvo só, ou todos com `pierce`; alvo
       excluído não é acertado; a 4ª onda sai e a 5ª não em 1000 ms, e volta a sair em 999/1000/1001 ms (CRP-12, edge case)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
