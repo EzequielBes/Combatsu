@@ -4,6 +4,7 @@
  */
 import type { RunState } from './run';
 import type { RunRecord } from './save';
+import { isBossRound } from './waves';
 
 /** O que o marcador `Recorde: rN` mostra no HUD. */
 export interface MarkerView {
@@ -68,14 +69,22 @@ export class RecordBook {
 
   /**
    * Texto do banner de começo de rodada (RMK-05/06): `Rodada N · Novo recorde!` só na rodada recorde + 1 e uma vez
-   * por run; senão `Rodada N`. Sem recorde nunca comemora.
+   * por run; senão `Rodada N`. Sem recorde nunca comemora. Na rodada de chefe a faixa do chefe entra logo depois e
+   * cobre esta: a comemoração fica para `bossBanner`, sem gastar a vez da run.
    */
   roundBanner(round: number): string {
     this.see(round);
-    const best = this._best;
-    if (!best || this.bannerShown || round !== best.round + 1) return `Rodada ${round}`;
-    this.bannerShown = true;
+    if (isBossRound(round) || !this.celebrates(round)) return `Rodada ${round}`;
     return `Rodada ${round} · Novo recorde!`;
+  }
+
+  /**
+   * Faixa de entrada do chefe (RMK-05/06): `Chefe: <nome> · Novo recorde!` quando a rodada de chefe é a recorde + 1
+   * e a run ainda não comemorou; senão `Chefe: <nome>`.
+   */
+  bossBanner(name: string, round: number): string {
+    this.see(round);
+    return this.celebrates(round) ? `Chefe: ${name} · Novo recorde!` : `Chefe: ${name}`;
   }
 
   /**
@@ -99,6 +108,14 @@ export class RecordBook {
     if (newRecord) this._best = run;
     this._lastDeathNewRecord = newRecord;
     return { newRecord, write: newRecord };
+  }
+
+  /** A rodada é a recorde + 1 e a run ainda não comemorou: gasta a vez da run (RMK-06) e devolve verdadeiro. */
+  private celebrates(round: number): boolean {
+    const best = this._best;
+    if (!best || this.bannerShown || round !== best.round + 1) return false;
+    this.bannerShown = true;
+    return true;
   }
 
   /** Marca a run como acima do recorde quando a rodada passa dele. */

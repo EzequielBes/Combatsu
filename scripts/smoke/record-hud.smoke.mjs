@@ -83,6 +83,18 @@ export default async function ({ page, baseUrl, assert }) {
   assert(sameMarker(snap, 'Recorde: r3', false), `RST-05: marcador com o recorde recém-batido: ${show(snap)}`);
   assert(snap.hud.banner === 'Rodada 1', `RMK-05: r1 da run nova sem comemoração: ${show(snap)}`);
 
+  // RMK-05/06 na rodada de chefe: com recorde r4 a r5 é de chefe; a faixa do chefe cobre o banner da rodada, então é
+  // ela que comemora, e fica na tela pela intro inteira (BOSS.introMs = RUN.bannerMs = 1500 ms).
+  snap = await open('record=4&nosave=1&round=5');
+  await page.keyboard.press('KeyJ', { delay: 50 });
+  snap = await step(17);
+  for (let i = 0; i < 120 && !String(snap.hud.banner).startsWith('Chefe:'); i++) snap = await step(17);
+  const bossBanner = 'Chefe: Oni do Portão · Novo recorde!';
+  assert(snap.hud.banner === bossBanner, `RMK-05: a faixa do chefe comemora o recorde: ${show(snap)}`);
+  assert(sameMarker(snap, 'Recorde: r5', true), `RMK-07: r5 em destaque: ${show(snap)}`);
+  snap = await step(1400);
+  assert(snap.hud.banner === bossBanner, `RMK-05: a comemoração segue em ~1400 ms: ${show(snap)}`);
+
   // RMK-03: sem recorde (`nosave=1`) o marcador fica escondido e o banner nunca comemora.
   snap = await open('nosave=1');
   await page.keyboard.press('KeyJ', { delay: 50 });

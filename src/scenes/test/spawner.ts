@@ -140,9 +140,10 @@ export class Spawner {
       (x, y, dir, speed, damage) => this.spawnProjectile('projectile', x, y, dir, speed, BOSS.volley.maxDist, damage),
       (dead, x, y) => this.onBossDefeated(dead, x, y),
     );
-    // Entrada (BHUD-01/05): barra cheia com o nome e a faixa do chefe durante a intro.
+    // Entrada (BHUD-01/05): barra cheia com o nome e a faixa do chefe durante a intro; na rodada recorde + 1 a faixa
+    // também comemora o recorde (RMK-05), porque cobre o banner da rodada.
     this.s.hud.showBossBar(spec.name);
-    this.s.hud.banner(`Chefe: ${spec.name}`, BOSS.introMs);
+    this.s.hud.banner(this.s.runDirector.record.bossBanner(spec.name, round), BOSS.introMs);
   }
 
   /**

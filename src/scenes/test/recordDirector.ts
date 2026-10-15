@@ -62,6 +62,11 @@ export class RecordDirector {
     return this.book.roundBanner(round);
   }
 
+  /** Texto da faixa de entrada do chefe: na rodada recorde + 1 é ela que comemora (RMK-05/06). */
+  bossBanner(name: string, round: number): string {
+    return this.book.bossBanner(name, round);
+  }
+
   /**
    * Golpe do jogador já aceito pelo alvo (DMG-01, DMG-03, DMG-04): com `moveName` é golpe do moveset ou finalizador,
    * sem é objeto (na mão, arremessado, arma vinculada ou ferramenta).

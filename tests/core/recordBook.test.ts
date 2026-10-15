@@ -163,3 +163,34 @@ describe('RecordBook.roundBanner (RMK-05, RMK-06)', () => {
     expect(book.roundBanner(6)).toBe('Rodada 6 · Novo recorde!');
   });
 });
+
+describe('RecordBook.bossBanner (RMK-05, RMK-06 na rodada de chefe)', () => {
+  it('a rodada de chefe recorde + 1 não comemora no banner da rodada e deixa a vez para a faixa do chefe', () => {
+    const book = new RecordBook(rec(4, 0));
+    expect(book.roundBanner(5)).toBe('Rodada 5');
+    expect(book.passed).toBe(true);
+    expect(book.bossBanner('Oni do Portão', 5)).toBe('Chefe: Oni do Portão · Novo recorde!');
+  });
+
+  it('a faixa do chefe comemora uma vez por run e volta depois de startRun', () => {
+    const book = new RecordBook(rec(4, 0));
+    book.roundBanner(5);
+    expect(book.bossBanner('Oni do Portão', 5)).toBe('Chefe: Oni do Portão · Novo recorde!');
+    expect(book.bossBanner('Oni do Portão', 5)).toBe('Chefe: Oni do Portão');
+    expect(book.roundBanner(6)).toBe('Rodada 6');
+    book.startRun();
+    expect(book.bossBanner('Oni do Portão', 5)).toBe('Chefe: Oni do Portão · Novo recorde!');
+  });
+
+  it('só a rodada de chefe recorde + 1 comemora; sem recorde nunca', () => {
+    expect(new RecordBook(rec(3, 0)).bossBanner('Oni do Portão', 5)).toBe('Chefe: Oni do Portão');
+    expect(new RecordBook(rec(9, 0)).bossBanner('Oni do Portão', 10)).toBe('Chefe: Oni do Portão · Novo recorde!');
+    expect(new RecordBook(null).bossBanner('Oni do Portão', 5)).toBe('Chefe: Oni do Portão');
+  });
+
+  it('depois de comemorar na rodada comum, a faixa do chefe seguinte não comemora de novo', () => {
+    const book = new RecordBook(rec(3, 0));
+    expect(book.roundBanner(4)).toBe('Rodada 4 · Novo recorde!');
+    expect(book.bossBanner('Oni do Portão', 5)).toBe('Chefe: Oni do Portão');
+  });
+});

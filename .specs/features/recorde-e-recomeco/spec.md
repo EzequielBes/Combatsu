@@ -44,7 +44,7 @@ recomeçar já". Esta feature é só esse núcleo; técnica inicial, conquistas 
 | Quando grava | Só ao morrer (comando `gameOver`), e só se a run bateu o recorde | Pedido: "salvo ao morrer"; R (reiniciar a cena) e fechar a aba não gravam | y (tarefa) |
 | Primeira run sem recorde | Ela vira o recorde e a tela de fim mostra "Recorde!" | Toda run que entra na tabela comemora; a primeira também | n |
 | Marcador sem recorde | Escondido até existir o primeiro recorde | "Recorde: r0" não diz nada | n |
-| Banner ao passar | No começo da rodada recorde+1 o banner da rodada vira `Rodada N · Novo recorde!`, uma vez por run | O `Hud` tem uma faixa só; somar ao texto da rodada evita disputa de banner | n |
+| Banner ao passar | No começo da rodada recorde+1 o banner da rodada vira `Rodada N · Novo recorde!`, uma vez por run; se ela é rodada de chefe, quem comemora é a faixa de entrada do chefe (`Chefe: <nome> · Novo recorde!`), que cobre a da rodada um update depois | O `Hud` tem uma faixa só; somar ao texto da faixa visível evita disputa de banner (achado da revisão: na r5 a comemoração ficava 0 frame na tela) | n |
 | Marcador depois de passar | Mostra a rodada atual (`Recorde: rN`, N = rodada atual) na cor de destaque da paleta | A run já é o novo recorde; a cor diz que está acima | n |
 | Build resumida | Técnicas equipadas com nível, passivas, relíquia e arma vinculada com nível, votos tomados; só ids no save | Ids são estáveis; o nome vem de `data/` na hora de exibir | y (tarefa) |
 | Id desconhecido num save antigo | Some da exibição (não quebra o recorde) | Técnica ou passiva renomeada não pode derrubar o painel | n |
@@ -109,7 +109,7 @@ minha melhor marca.
 2. RMK-02: The marker SHALL be right-aligned at x = 948 and top at y = 44 in the 960x540 UI space (below `Inimigos`, above the combo counter), in the HUD text style.
 3. RMK-03: WHILE no record exists the marker SHALL be hidden.
 4. RMK-04: WHILE the run is in `title` or `gameOver` the marker SHALL be hidden.
-5. RMK-05: WHEN a round with number record + 1 starts THEN the round banner SHALL read `Rodada N · Novo recorde!` for `RUN.bannerMs` (1500 ms).
+5. RMK-05: WHEN a round with number record + 1 starts THEN the round banner SHALL read `Rodada N · Novo recorde!` for `RUN.bannerMs` (1500 ms). IF that round is a boss round THEN the round banner SHALL read `Rodada N` and the boss entry banner SHALL read `Chefe: <nome> · Novo recorde!` for `BOSS.introMs` (1500 ms) instead, because it covers the round banner.
 6. RMK-06: The `Novo recorde!` banner SHALL appear at most once per run.
 7. RMK-07: WHILE the current round is greater than the record round the marker SHALL read `Recorde: rN` with N the current round, in the palette highlight color instead of the default HUD text color.
 8. RMK-08: The marker and the banner SHALL use only `PALETTE` colors.
