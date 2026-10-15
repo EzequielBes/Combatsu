@@ -23,7 +23,9 @@ A F30 depende da F29 (`fundacao-de-poder`) e usa o que ela entrega:
 ## Goals
 
 - [ ] O Vermelho sobe do Nv 1 ao Nv 6 por pontos em 6 eixos, com ramo no Nv 2 e Despertar no Nv 5, e o "Canhão"
-      (Potência 3 + Escala 2) e a "Metralhadora" (Recarga 3 + Conjuração 2) se jogam diferente na mesma seed.
+      (Potência 3 + Escala 2) e a "Metralhadora" (Recarga 3 + Conjuração 2, com o fluxo no teto, como diz a seção 2.2)
+      se jogam diferente na mesma seed. Sem o fluxo, a Metralhadora fica presa à energia (30 a 8/s = 3750 ms, acima dos
+      2690 ms de recarga, sinal e carga): a dupla que cabe na barra sem atributo é Recarga 3 + Eficiência 2.
 - [ ] O soco tem trilha própria: o Corpo Amaldiçoado sobe do Nv 1 ao Nv 6 sem golpe novo, com ramo e Despertar.
 - [ ] A loja mostra 4 cartas, a carta de melhoria oferece 2 eixos à escolha com `W`/`S`, e o ramo é escolhido num
       painel na entrada da konbini.
@@ -43,8 +45,8 @@ A escala de HP e dano é o **último** passo: a dificuldade não sobe antes de o
 | 1. **Refatoração, com os smokes iguais** | `Loadout.stats(id)` devolve `TechStats` com os números de hoje para as 5 técnicas; `CastMachine`, `Loadout`, os adaptadores de `game/tech/` e as vistas `RedOrb`, `redDetonation`, `BlueOrb`, `CutFx` e `PurpleOrb` leem o stat | 0 |
 | 2. **Vermelho Nv 1 a 6** | base nova (custo 30, recarga 4500 ms, alcance 320 px), `data/techAxes.ts` com os 6 eixos, Perfuração, ramo no Nv 2 (Ricochete ou Contido, com `slotHeld` no `TechCaster` e no `TechRunner`), Despertar no Nv 5 (Fliperama ou Vermelho Máximo) e a parede que atordoa | 0 |
 | 3. **Corpo Amaldiçoado** | `core/cursedBody.ts` com os 6 eixos, ramo (Cadência ou Onda do Punho) e Despertar (Martelo Negro ou Punho que Rasga), e o `strikeEmitter` mínimo | 0 |
-| 4. **Carta com 2 eixos** | eixo-foco, `axisRng`, 4 cartas e `buySlot 0..3` (tecla `4`), `ChoicePanel` mínimo (só a página do ramo) | 0 |
-| 5. **Preços** | técnica nova 20/26, ponto 12 + 4 × pontos, trava por rodada (substitui o `techGate`), inflação de 6% e piso de 60% do custo | 0 |
+| 4. **Carta com 2 eixos** | eixo-foco, `axisRng`, 4 cartas e `buySlot 0..3` (tecla `4`), `ChoicePanel` mínimo (só a página do ramo); a carta de eixo já sai com o preço do ponto (12 + 4 × pontos), sem inflação nem trava, para o Corpo não cair no preço de atributo | 0 |
+| 5. **Preços** | técnica nova 20/26, trava por rodada (substitui o `techGate`), inflação de 6% e piso de 60% do custo | 0 |
 | 6. **Escala, por último** | `DIFFICULTY.hpPerRound` 0,06 e `damagePerRound` 0,05 (AD-014 revisado), Kokusen escalado (KOK-06 revisado) e o `expectedIncome` com as metas medíveis da seção 3.3 | 0 |
 
 ## Out of Scope
@@ -89,7 +91,9 @@ A escala de HP e dano é o **último** passo: a dificuldade não sobe antes de o
 | Rebote do Ricochete e do Fliperama sem inimigo a 200 px | O orbe volta na direção horizontal oposta e voa até 200 px; detona no primeiro toque ou no fim | O Fliperama rebate "em qualquer alvo", e a rua modular quase não tem parede | n |
 | Dano das detonações depois da 1ª | 70% do dano de toque e de detonação em toda detonação de rebote (Ricochete e Fliperama) | O plano só fixa a 2ª; um valor por rebote evita o 4º rebote dar 100% | n |
 | Componente proporcional ("tira 4% do HP máximo") | Somado ao dano do mesmo acerto, `round(0,04 × maxHp)` no comum e `round(0,01 × maxHp)` no chefe, uma vez por alvo por conjuração (ou por golpe decisivo) | Um acerto só, com um número só; a regra "1 vez por conjuração" da seção 2.1 | n |
-| Campo do Vermelho Máximo | Raio igual ao da detonação, empurra os comuns para fora a 150 px/s (a velocidade do puxão do Azul, ao contrário) e dá chip de `round(3 × multiplicadores de técnica)` a cada 200 ms por 1200 ms | O plano não dá a velocidade do empurrão; reaproveitar a do Azul mantém a escala que a tela aguenta | n |
+| Campo do Vermelho Máximo | Raio igual ao da detonação, empurra para fora a 150 px/s (a velocidade do puxão do Azul, ao contrário) os comuns em pé dentro dele e dá chip de `round(3 × multiplicadores de técnica)` a cada 200 ms por 1200 ms. Os derrubados pela detonação já voam pela força dela (o corpo do comum fica parado no ragdoll), então o empurrão segura quem entra ou levanta: o campo é negação de área | O plano não dá a velocidade do empurrão; reaproveitar a do Azul mantém a escala que a tela aguenta | n |
+| Campo com o orbe Azul vivo | O Azul reescreve o `setPull` de todo comum a cada quadro (`blue.ts:60-64`, depois do Vermelho no `TechRunner.update`): com um orbe Azul vivo o puxão dele vale e o campo só dá o chip | Um escritor por quadro, sem mexer no Azul (F33) | n |
+| Peso 2 e a faixa do impacto | O `impactTier` de hoje já dá `decisive` a todo `Hit` com `knockdown` (`impactTier.ts:16`): com Peso ≥ 2 todo golpe forte que acerta lê como decisivo. A Cadência continua distinta pelo +50% e por forçar o decisivo também no golpe leve | É a regra da AD-021 (derrubar = decisivo); mudar o `impactTier` mexeria no finalizador | n |
 | Parede que atordoa ("inimigo jogado na parede fica atordoado 600 ms") | O comum derrubado pelo Vermelho Máximo ou pelo Peso 3 que encosta numa parede do terreno antes de pousar fica caído (`ragdollStun`) por 600 ms contados do toque | Não existe parede que atordoa comum hoje; o estado caído já é o atordoamento do comum | n |
 | Estilhaço da Perfuração | Dano `round(6, 9 ou 12 × multiplicadores de técnica)`, sem a Potência; vizinhos a até 60 px do alvo atravessado, o mais perto primeiro: 1 com 1 ponto, 2 com 2 e com 3 pontos; com o Ricochete, o alvo do toque conta como atravessado | O plano dá o número cru; a Potência já sobe o toque e a detonação | n |
 | Repulsão com a Potência | `round(4 × toque da Potência / 30 × multiplicadores de técnica)`: 4, 5, 5 e 6 | "A repulsão passa por `loadout.damage` e escala junto" | n |
@@ -100,14 +104,14 @@ A escala de HP e dano é o **último** passo: a dificuldade não sobe antes de o
 | Onda do Punho | Sai do ponto do acerto do golpe forte, anda 80 px à frente a 600 px/s e acerta o 1º inimigo que tocar, fora o alvo do golpe, com `micro` e `round(0,4 × dano do golpe)`; o Punho que Rasga atravessa todos e anda 160 px; com a Fúria no teto sai uma 2ª onda igual 100 ms depois | O plano dá alcance e dano; velocidade e intervalo são o mínimo para a onda ser vista | n |
 | Despertar sem ramo escolhido | Se o item chega ao Nv 5 com o ramo ainda pendente, o Despertar liga quando o ramo for escolhido | Um reroll pode trazer 2 cartas do mesmo item na mesma visita | n |
 | Banner e câmera lenta do Despertar | Na 1ª soltura do Vermelho de cada rodada com o Despertar ligado (no Corpo, no 1º decisivo ou na 1ª onda da rodada): banner com o nome do Despertar e `timeScale` 0,4 por 350 ms de tempo real | Seção 4 ("na 1ª conjuração da rodada") | n |
-| Texto da carta de eixo | O `preview` da carta leva as duas linhas, "▲ Escala 120 → 144" e "▼ Potência 35 → 40", com `›` na linha escolhida; o `ShopPanel` só troca o `CARD_COUNT` | O `ShopPanel` está na exceção de complexidade e não cresce; a linha de prévia já existe | n |
+| Texto da carta de eixo | O `preview` da carta leva uma linha por eixo, `›` na escolhida e um espaço na outra, sem espaço em volta da seta para caber nos ~20 caracteres da carta (150 px, 11 px monoespaçado): "›Escala 120→144" / " Potência 35→40". Valor mostrado = o número resolvido que o jogo usa (`Loadout.stats` ou o `bodyStrike`): Potência o toque, Escala o raio, Conjuração sinal + carga em ms, Eficiência o custo, Recarga a recarga em ms, Perfuração o estilhaço; Impacto `×1→×1,1`, Peso `+0%→+20%`, Ritmo `-0%→-8%`, Alcance `+0→+6`, Fluxo a energia por golpe, Fúria o teto em %. Se a compra leva o item ao Nv 2 ou ao Nv 5, uma 3ª linha diz `+ ramo` ou `+ Despertar`. A dica do painel passa a `1-4 comprar · W/S eixo · R rerolar (n) · Enter continuar` | O `ShopPanel` está na exceção de complexidade e não cresce: muda o `CARD_COUNT` e o texto da dica (template, sem ramo). Sem a dica, nada diz ao jogador que `W`/`S` trocam o eixo; sem a 3ª linha, o 1º ponto não avisa que abre o ramo | n |
 | Inflação | Vale para o preço de toda carta (atributo, cura, técnica, ponto, passiva, arsenal, evolução), `round(base × (1 + 0,06 × (r − 1)))` com `r` a rodada da loja (a que acabou); o reroll não infla | A conta da seção 3.3 soma o reroll à parte | n |
 | Preço do nível das 4 técnicas sem eixo | O de hoje (`base + step × nível`, com a base e o passo de hoje), com a inflação; só o preço do item novo vira 20 (comum) ou 26 (rara) | Mudar a base mexeria no preço do nível que a F33 vai trocar inteiro | n |
 | Piso do custo | `max(custo, ceil(0,6 × custo do Nv 1 em TECHNIQUES))`, depois de todas as fontes (eixo, nível e `costMul` dos votos) | Seção 2.1; o Divergente Nv 3 sobe de 10 para 12 | n |
 | Modelo do teste de eixo dominante | Dano sustentado = dano por conjuração ÷ período, com período = `max(recarga + sinal + carga, custo ÷ 8 energia/s)`; dano por conjuração = toque + detonação × alvos na detonação + estilhaços; alvos na detonação = `2 × raio / 96` (inimigos em fila no chão); 1 comum atravessado com vizinhos à mão | Jogo de lado: a densidade cresce com o raio, não com a área; com esse modelo os números do plano dão 1,12× | n |
 | Teste de eixo dominante no Corpo | Não se aplica: os eixos do Corpo são utilidade (alcance, recuo, energia), e só 2 dos 6 mexem no dano | Comparar contra a mediana de eixos sem dano mediria nada | n |
 | Cenário "só corpo a corpo" da r19 | Força 5, Manoplas Nv 3 e Impacto 3, sem a Fúria; golpes de referência `jab` (6) e `cotovelada` (14) | É a build mais comum de lutador na F30 e cabe na renda até a r19 com a inflação | n |
-| Kokusen (KOK-06 revisado) | `max(round(2,5 × D), round(45 × hpMul))`, com `D` = dano do 2º impacto do Divergente como hoje (`loadout.damage('divergente', 18)`) × `statSheet.meleeMul` com os traços `{heavy: true, light: false, counter: false, shadow: false}` (o Impacto do Corpo já está dentro do `meleeMul`, CRP-02.2, e conta uma vez), e `hpMul` o multiplicador de HP do `multipliersFor` da rodada | "×2,5 do golpe que o disparou, com Força, Impacto do Corpo e talentos"; sem build na r1 dá 45, como hoje | n |
+| Kokusen (KOK-06 revisado) | O Kokusen conta como golpe corpo a corpo forte: `max(round(2,5 × meleeDamageAtLevel(D, forca) × meleeMul), round(45 × hpMul))`, com `D = round(18 × LEVEL_FACTOR[nível do Divergente − 1])` (o 2º impacto **sem** os multiplicadores de técnica), `meleeDamageAtLevel` a Força de hoje (`modifiers.ts:20`), `meleeMul` = `statSheet.meleeMul` com os traços `{heavy: true, light: false, counter: false, shadow: false}` (passivas, Manoplas, votos e o Impacto do Corpo, CRP-02.2, cada um uma vez) e `hpMul` o multiplicador de HP do `multipliersFor` da rodada | "×2,5 do golpe que o disparou, com Força, Impacto do Corpo e talentos". A Força não mora no `meleeMul` (vem do `modifiers.meleeDamage`), e o `loadout.damage` já traz o `vowDamageMul`, que tem o `vows.damageMul` também presente no `meleeMul`: partir do dano de técnica contaria o voto duas vezes e deixaria a Força de fora. Sem build na r1 dá 45, como hoje; com Força 5, 68 | n |
 | Nome "Fúria" | O eixo do Corpo usa o id `furia` dentro de `corpo` (`corpo.furia`); o voto `furia` não muda | Os dois nomes vêm do plano e vivem em espaços diferentes | n |
 | Parâmetros de debug novos | `axes=<item>.<eixo>:<n>[,...]` e `ramo=<item>:<a\|b>`, com `item` em `vermelho` ou `corpo`; entrada inválida é ignorada; lidos no reset da run, depois do `tech=` | Os smokes precisam montar a build sem comprar | n |
 | Smokes novos | `red-axes.smoke.mjs`, `cursed-body.smoke.mjs`, `shop-axes.smoke.mjs` e `scale.smoke.mjs`, todos com `?debug&hd=1&area=modular` | Regra de smoke novo do projeto | y |
@@ -132,7 +136,7 @@ cópia do raio 96.
 1. SHX-01: WHEN step 0 is committed THEN `eligible` and its helpers SHALL live in `src/core/shopEligibility.ts`, `previewText` and its helpers SHALL live in `src/core/shopPreview.ts`, and `src/core/shop.ts` SHALL keep the `Shop` class, `drawOffers`, the cost and the views.
 2. SHX-01: WHEN step 0 is committed THEN every existing test SHALL pass with only import paths changed, and the smokes `shop`, `shop-progress`, `run-loop` and `evolution` SHALL pass unchanged.
 3. SHX-02: The F30 tasks SHALL add no net effective line to `src/scenes/TestScene.ts`, which SHALL end the feature with the effective line count it had at the end of the F29 or fewer.
-4. SHX-03: The F30 SHALL put no file in the exception lists of `.oxlintrc.json`, SHALL change only `CARD_COUNT` in `src/game/ShopPanel.ts`, SHALL not grow `src/game/Hud.ts` nor `src/data/moves.ts`, and SHALL add no field to `src/game/Player.ts`.
+4. SHX-03: The F30 SHALL put no file in the exception lists of `.oxlintrc.json`, SHALL change only `CARD_COUNT` and the hint text (`1-4 comprar · W/S eixo · R rerolar (n) · Enter continuar`) in `src/game/ShopPanel.ts`, SHALL not grow `src/game/Hud.ts` nor `src/data/moves.ts`, and SHALL add no field to `src/game/Player.ts`.
 5. TST-01: The `Loadout.stats(id)` method SHALL return a `TechStats` with cost, cooldown, the four phase times, the damage values and the geometry numbers that today are constants in `core/redOrb.ts`, `game/tech/red.ts`, `core/blueOrb.ts`, `core/cut.ts`, `core/purple.ts` and the views `RedOrb`, `redDetonation`, `BlueOrb`, `CutFx` and `PurpleOrb`.
 6. TST-01: WHEN step 1 is committed THEN, for each of the 5 techniques at each level it can hold today, with `damageMul`, `vowDamageMul` and `costMul` at 1 and at 1.35, the `TechStats` SHALL equal today's `Loadout.cost`, `Loadout.damage`, `TECHNIQUES` times and the module constants.
 7. TST-02: The `CastMachine` phase times, `Loadout.startCooldown`, `Loadout.cost` and the adapters in `src/game/tech/` SHALL read times, cooldown, cost, damage and geometry from `Loadout.stats()`, and no adapter SHALL read `TECHNIQUES[...]` damage, time or cost fields directly.
@@ -161,7 +165,7 @@ o canhão ou a metralhadora.
 6. VRM-04: WHEN the Vermelho detonates THEN the system SHALL draw 1 plus the Potência points shock rings and SHALL add 10 ms per Potência point to the detonation hitstop.
 7. VRM-04: WHEN the Vermelho releases THEN the repulse damage SHALL be `round(4 × Potência touch / 30 × damageMul × vowDamageMul)` (4, 5, 5 and 6 at 0 to 3 points).
 8. VRM-05: WHEN the Vermelho orb spawns THEN its sprite SHALL use the resolved orb texels, its sensor SHALL use the resolved sensor radius, and the detonation sphere SHALL grow to the resolved damage radius.
-9. VRM-06: WHILE the Vermelho charges the three charge textures SHALL swap at each third of the resolved charge time, and WHEN it releases with 3 Conjuração points THEN the system SHALL draw a 1-frame afterimage of the player.
+9. VRM-06: WHILE the Vermelho charges the three charge textures SHALL swap at each third of the resolved charge time, the last one at the resolved orb texels (4, 8 and 12, 14, 16 or 18, so the orb does not jump in size at the release), and WHEN it releases with 3 Conjuração points THEN the system SHALL draw a 1-frame afterimage of the player.
 10. VRM-07: WHILE Recarga has 3 points, WHEN a Vermelho hit kills an enemy THEN the remaining cooldown of its slot SHALL drop by 30% of the full resolved cooldown, never below 0.
 11. VRM-08: WHILE Perfuração has 1 or more points, WHEN the orb passes through a common enemy THEN the system SHALL hit the nearest 1, 2 or 2 other enemies within 60 px of it (1, 2 or 3 points) with a `micro` shard of `round(6, 9 or 12 × damageMul × vowDamageMul)`, each enemy at most once per cast.
 12. VRM-09: The Vermelho orb SHALL end its straight flight at 320 px from its spawn point, and no rebound SHALL pick a target farther than 320 px from the player.
@@ -194,7 +198,7 @@ dois.
 6. VRM-13: WHILE the Despertar Fliperama is on the orb SHALL rebound up to 3 times on any target (enemy, wall, floor or boss), each detonation SHALL raise the orb speed by 15%, and the 3rd detonation SHALL add 4% of each target max HP (1% on the boss).
 7. VRM-14: WHILE the branch is Contido, WHEN the orb spawns with the slot key held (`slotHeld`) THEN it SHALL fly as today, SHALL hover at the end of its 320 px, and SHALL detonate with 1.4 times the resolved radius when the key is released or 1.2 s after it spawned, whichever comes first.
 8. VRM-14: IF the slot key is released before the orb spawns THEN the Contido orb SHALL fly and detonate as the branchless orb.
-9. VRM-15: WHILE the Despertar Vermelho Máximo is on, WHEN the orb detonates THEN it SHALL knock down every common enemy in the radius, SHALL add 4% of each target max HP (1% on the boss), and SHALL leave a 1200 ms field of the same radius that pushes common enemies outward at 150 px/s and deals a `chip` hit of `round(3 × damageMul × vowDamageMul)` every 200 ms.
+9. VRM-15: WHILE the Despertar Vermelho Máximo is on, WHEN the orb detonates THEN it SHALL knock down every common enemy in the radius, SHALL add 4% of each target max HP (1% on the boss), and SHALL leave a 1200 ms field of the same radius that pushes the standing common enemies inside it outward at 150 px/s and deals a `chip` hit of `round(3 × damageMul × vowDamageMul)` every 200 ms to every enemy inside it.
 10. VRM-16: IF a common enemy knocked down by the Vermelho Máximo or by a Peso 3 strike touches a terrain wall before it lands THEN it SHALL stay in `ragdollStun` for 600 ms from the touch and the system SHALL emit the debug event `wallStun:<id>`.
 11. VRM-17: WHEN the Vermelho reaches level 5 with a branch chosen THEN the Despertar of that branch SHALL turn on, and the Vermelho icon in the `EnergyHud` SHALL get a gold border.
 12. VRM-17: WHEN the first Vermelho cast of a round reaches `release` with the Despertar on THEN the system SHALL show a banner with the Despertar name and SHALL set the time scale to 0.4 for 350 ms of real time.
@@ -254,8 +258,9 @@ o corpo a corpo ter o mesmo salto de comportamento que a técnica.
 8. CRP-13: WHEN the Corpo reaches level 5 with a branch chosen THEN the Despertar of that branch SHALL turn on, and WHEN its first decisive strike or first wave of a round happens THEN the system SHALL show the Despertar banner and SHALL set the time scale to 0.4 for 350 ms of real time.
 9. CRP-14: WHEN the run starts with `?debug&ramo=corpo:a` or `ramo=corpo:b` THEN the Corpo branch SHALL be Cadência or Onda do Punho.
 
-**Independent Test**: `cursed-body.smoke.mjs` com `ramo=corpo:a`: o 4º golpe seguido dispara `impact:decisive`; com
-`ramo=corpo:b`, o golpe forte solta a onda e o 2º inimigo leva um número `micro`.
+**Independent Test**: `cursed-body.smoke.mjs` com `ramo=corpo:a`: o 4º golpe seguido da cadeia `jab → direto → gancho
+→ cotovelada` dispara `impact:decisive`, e a mesma cadeia sem `ramo` (e sem Peso, que derruba e já seria decisivo)
+dispara `impact:heavy` no 4º; com `ramo=corpo:b`, o golpe forte solta a onda e o 2º inimigo leva um número `micro`.
 
 ---
 
@@ -270,18 +275,19 @@ escolher o ramo num painel, para planejar a build sem depender da sorte.
 
 1. CRD-01: The shop SHALL show 4 cards, the keys `1` to `4` SHALL buy cards 0 to 3 (`ShopInput.buySlot` in `0..3`), and `A`/`D` SHALL cycle the selection over the 4 cards.
 2. CRD-02: WHEN a shop opens with an evolution ready THEN card 0 SHALL be the evolution, as EVO-01 does today.
-3. CRD-02: WHEN a shop opens with no evolution ready THEN card 0 SHALL be the upgrade card of the focus item when `axisRng` draws below 0.6 and the focus item can be upgraded, and SHALL otherwise be the upgrade card of another owned item drawn by `axisRng` among those that can be upgraded.
-4. CRD-02: IF no owned item can be upgraded THEN card 0 SHALL come from the weighted draw of today.
-5. CRD-03: WHILE a technique slot is empty and an eligible technique exists card 1 SHALL be a new technique, and cards 2 and 3 SHALL come from the weighted draw of today, with at most one card per item in a shop.
-6. CRD-04: The upgrade card of the Vermelho or of the Corpo SHALL offer the focus axis and one other axis below the cap drawn by `axisRng`, and IF only one axis is below the cap THEN it SHALL offer only that axis.
+3. CRD-02: WHEN a shop opens with no evolution ready THEN card 0 SHALL be the upgrade card of the focus item when `axisRng` draws below 0.6 and the focus item can be upgraded, and SHALL otherwise be the upgrade card of another owned item drawn by `axisRng` among those that can be upgraded, where an owned item is an equipped technique or the Corpo (relics and weapons are not items here) and "can be upgraded" includes the round lock of PRC-04.
+4. CRD-02: IF no owned item other than the focus item can be upgraded and `axisRng` draws 0.6 or more, or no owned item can be upgraded, THEN card 0 SHALL come from the weighted draw of today.
+5. CRD-03: WHILE a technique slot is empty and an eligible technique exists card 1 SHALL be a new technique; otherwise card 1 SHALL come from the weighted draw of today, like cards 2 and 3, with at most one card per item in a shop. An upgrade card drawn by weight in cards 1 to 3 SHALL carry its axes as CRD-04 says.
+6. CRD-04: The upgrade card of the Vermelho or of the Corpo SHALL offer the focus axis and one other axis below the cap drawn by `axisRng`, and IF only one axis is below the cap THEN it SHALL offer only that axis; its level text SHALL be `Nv <level + 1>/6` (the Vermelho entry goes to `maxLevel 6`, and `Shop.levelOf` reads the Corpo level from `loadout.axes`).
 7. CRD-05: WHILE an axis card is selected `W`/`↑` and `S`/`↓` SHALL choose between its two axes, the first being the focus axis, and buying it SHALL add the point to the chosen axis.
-8. CRD-05: The axis card preview SHALL show one line per axis with the current and the next value and a `›` mark on the chosen one, and `OfferView` SHALL report `axes` and `selectedAxis`.
-9. CRD-06: The `axisRng` SHALL be a stream with its own salt in `core/run.ts`, and the same seed SHALL give the same cards and axes.
-10. CRD-07: WHILE the Vermelho is the highest level item and the Corpo and another technique are owned, the focus axis of the Vermelho SHALL appear in at least 60% of the shops over 1000 seeds.
-11. CRD-08: WHEN the konbini opens with pending branch choices THEN, after the `VowPanel` when it opens, the `ChoicePanel` SHALL show one page per pending item (Vermelho before Corpo), `A`/`D` SHALL choose between options A and B, `Enter` SHALL confirm the page, and the shop SHALL take no input until the last page is confirmed.
-12. CRD-08: WHEN a branch page is confirmed THEN the branch SHALL apply at once and the pending choice SHALL be removed.
-13. CRD-09: The `ChoicePanel` SHALL live in `src/game/ChoicePanel.ts`, created by the `UiSetup`, and the debug snapshot SHALL report `choice: {open, page}` with `page` as `{item, options}` or `null`.
-14. CRD-10: The upgrade card of the Azul, Desmantelar, Divergente and Roxo SHALL keep today's "Nv N → N+1" text and effect.
+8. CRD-05: The axis card preview SHALL show one line per axis with the axis name, the current and the next resolved value and a `›` mark on the chosen one, each line at most 20 characters, plus a line `+ ramo` or `+ Despertar` when the purchase takes the item to level 2 or 5, and `OfferView` SHALL report `axes` and `selectedAxis`.
+9. CRD-05: The shop hint SHALL read `1-4 comprar · W/S eixo · R rerolar (n) · Enter continuar`.
+10. CRD-06: The `axisRng` SHALL be a stream with its own salt in `core/run.ts`, and the same seed SHALL give the same cards and axes.
+11. CRD-07: WHILE the Vermelho is the highest level item and the Corpo and another technique are owned, the focus axis of the Vermelho SHALL appear in at least 60% of the shops over 1000 seeds.
+12. CRD-08: WHEN the konbini opens with pending branch choices THEN, after the `VowPanel` when it opens, the `ChoicePanel` SHALL show one page per pending item (Vermelho before Corpo), `A`/`D` SHALL choose between options A and B, `Enter` SHALL confirm the page, and the shop SHALL take no input until the last page is confirmed.
+13. CRD-08: WHEN a branch page is confirmed THEN the branch SHALL apply at once and the pending choice SHALL be removed.
+14. CRD-09: The `ChoicePanel` SHALL live in `src/game/ChoicePanel.ts`, created by the `UiSetup`, and the debug snapshot SHALL report `choice: {open, page}` with `page` as `{item, options}` or `null`.
+15. CRD-10: The upgrade card of the Azul, Desmantelar, Divergente and Roxo SHALL keep today's level text (`Nv N+1/3`), preview (`Dano ×a → ×b`, from `LEVEL_FACTOR`) and effect.
 
 **Independent Test**: `shop-axes.smoke.mjs` com `fragments=200&round=4&axes=vermelho.potencia:1`: a loja tem 4 cartas,
 a carta 0 do Vermelho mostra Potência e outro eixo, `S` e a tecla `1` compram o 2º eixo; com `ramo` pendente, o
@@ -324,13 +330,13 @@ sem ferramenta nova.
 1. ESC-01: The `DIFFICULTY` tuning SHALL have `hpPerRound` 0.06 and `damagePerRound` 0.05, keeping `hpCap` 3.0, `damageCap` 2.5 and the speed values, with `core/difficulty.ts` unchanged.
 2. ESC-01: WHEN a common enemy spawns in rounds 2, 9, 11 and 19 THEN its max HP SHALL be 64, 89, 96 and 125, and WHEN it spawns in round 2 its attack damage SHALL be 13.
 3. ESC-01: WHEN step 6 is committed THEN `.specs/STATE.md` SHALL record the revision of the AD-014 as a new decision.
-4. ESC-02: WHEN a Kokusen lands THEN its damage SHALL be `max(round(2.5 × D), round(45 × hpMul))`, with `D` the second-impact damage of the Divergente times `statSheet.meleeMul` for the traits `{heavy: true, light: false, counter: false, shadow: false}` (which already holds the Impacto, CRP-02.2, counted once), and `hpMul` the HP multiplier of the current round.
-5. ESC-02: WHEN a Kokusen lands in round 1 with no build THEN its damage SHALL be 45, and WHEN it lands on the boss THEN the boss SHALL take that damage and that damage times `KOKUSEN.poiseMul` in poise.
+4. ESC-02: WHEN a Kokusen lands THEN its damage SHALL be `max(round(2.5 × meleeDamageAtLevel(D, forca) × meleeMul), round(45 × hpMul))`, with `D = round(18 × LEVEL_FACTOR[Divergente level − 1])` (the second-impact base without the technique multipliers `damageMul` and `vowDamageMul`), `meleeDamageAtLevel` the Força rule of `core/modifiers.ts`, `meleeMul` the `statSheet.meleeMul` for the traits `{heavy: true, light: false, counter: false, shadow: false}` (perks, relic, vows and the Impacto of CRP-02.2, each counted once), and `hpMul` the HP multiplier of the current round.
+5. ESC-02: WHEN a Kokusen lands in round 1 with no build THEN its damage SHALL be 45, WHEN it lands in round 1 with Força 5 and nothing else THEN its damage SHALL be 68, and WHEN it lands on the boss THEN the boss SHALL take that damage and that damage times `KOKUSEN.poiseMul` in poise.
 6. ESC-02: The `KOKUSEN` tuning SHALL hold the multiplier 2.5 and its cap 3.4.
 7. ESC-03: The build curve tests SHALL buy, on top of `expectedIncome`, with the F30 prices, lock and inflation, and every card assumed on sale: the focused Vermelho build SHALL reach level 2 by the round 3 shop and level 5 by the round 10 shop.
 8. ESC-03: For the melee build of round 19 (Força 5, Manoplas level 3, Impacto 3), the hits to kill a common enemy with `jab` and with `cotovelada` (`ceil(maxHp / damage)`) SHALL be at most the round 1 hits with no build, and its purchases SHALL fit in `expectedIncome(19)`.
-9. ESC-03: In `tests/data/techAxes.test.ts`, no Vermelho axis at 3 points SHALL give more than 1.35 times the sustained damage of the median axis, under the model of the Assumptions table.
-10. ESC-04: The smoke `run-loop` SHALL compute the expected enemy HP, enemy damage and player HP by `Math.round(base × (1 + perRound × (r − 1)))` instead of fixed numbers.
+9. ESC-03: In `tests/data/techAxes.test.ts`, no Vermelho axis at 3 points SHALL give more than 1.35 times the sustained damage of the median axis, under the model of the Assumptions table, and Eficiência 2 on top of Recarga 3 SHALL raise the sustained damage of Recarga 3 alone (Eficiência alone gives nothing in that model, because the Vermelho is bound to its cooldown; the pair proves the axis is not dead).
+10. ESC-04: The smoke `run-loop` SHALL compute the expected enemy HP and enemy damage by `Math.round(base × (1 + perRound × (r − 1)))` and the player HP after the round-2 hit as the player max HP minus that damage (100 − 13 = 87, today 88), instead of fixed numbers.
 11. ESC-04: The smoke `scale.smoke.mjs` SHALL read the enemy max HP at `round=9` (89) and `round=11` (96) and SHALL never use round 10.
 12. ESC-05: The debug snapshot SHALL report `difficulty: {round, hpMul, damageMul}`.
 
@@ -355,6 +361,9 @@ teste novo da curva de build passam; o `run-loop` passa com as fórmulas.
 - WHEN the vow Corpo de vidro lowers the max HP of the player THEN the Fúria and the Cadência SHALL not change.
 - IF the Kokusen floor is above `2.5 × D` THEN the damage SHALL be the floor, and the damage number SHALL show it with the Kokusen kind.
 - WHEN a common enemy spawns past round 34 THEN its HP multiplier SHALL stay at the 3.0 cap.
+- WHILE an Azul orb is alive the Vermelho Máximo field SHALL not push (the Azul pull wins) and SHALL keep its `chip` ticks.
+- WHILE the Peso has 2 or more points every heavy strike that connects SHALL read as `decisive` (`impactTier` rule for `knockdown`), and the Cadência count SHALL not change because of it.
+- WHEN the round 1 shop opens THEN no axis card SHALL be offered (PRC-04 lock, from step 5 on), and card 0 SHALL come from the weighted draw unless an evolution is ready.
 
 ---
 
@@ -464,6 +473,13 @@ revisado), `difficulty`, `kokusen`, `shop`, `bossReward`, `mastery`, `shopPanel`
 
 **Smokes novos:** `red-axes`, `cursed-body`, `shop-axes` e `scale`, todos com `?debug&hd=1&area=modular`.
 
+**Smokes antigos que mudam** (cada um no passo que os quebra, citando o requisito): `techniques` no passo 2 (o trecho
+RED-10 mira a detonação a 320 px, não a 420, e espera a recarga de 4500 ms; VRM-01), `evolution` no passo 2
+(`tech=azul:3,vermelho&axes=vermelho.potencia:2`, VRM-10), `shop` no passo 4 (4 ofertas e a garantia de técnica na
+carta 1; CRD-01, CRD-03), `shop-progress` no passo 4 (o trecho ECN-05/08 passa ao Azul, procurado em qualquer carta,
+porque a carta 0 deixa de ser garantida e o Vermelho vira carta de eixo; CRD-02, CRD-10) e no passo 5 (preço pelo
+`inflate`, PRC-03), `run-loop` no passo 6 (ESC-04).
+
 **Smokes que rodam junto:** `run-loop` (reescrito, ESC-04), `shop`, `shop-progress`, `tech`, `techniques`, `red-anime`,
 `kokusen`, `evolution`, `fight`, `fight-integration`, `impact`, `feel`, `power` (da F29), `boss` e `world-boss`.
 
@@ -472,9 +488,10 @@ revisado), `difficulty`, `kokusen`, `shop`, `bossReward`, `mastery`, `shopPanel`
 ## Success Criteria
 
 - [ ] Na mesma seed, o usuário joga o Vermelho canhão (Potência 3 + Escala 2) e o metralhadora (Recarga 3 + Conjuração
-      2) e sente a diferença; vê o Ricochete rebater e o Contido parar no ar.
+      2 com `mods=fluxo:4`, o fluxo no teto) e sente a diferença; vê o Ricochete rebater e o Contido parar no ar.
 - [ ] O usuário joga uma run só de corpo a corpo e vê o alcance, o recuo, a Fúria e a Cadência mudarem o soco.
-- [ ] Na konbini, escolhe o eixo na carta com `W`/`S` e o ramo no painel, sem painel extra por compra.
+- [ ] Na konbini, escolhe o eixo na carta com `W`/`S` (a dica do painel diz isso) e o ramo no painel, sem painel extra
+      por compra; a carta do 1º ponto avisa `+ ramo` e a do 4º, `+ Despertar`.
 - [ ] Gate verde; os 4 smokes novos e os da lista verdes; a `TestScene` sem linha líquida a mais.
 - [ ] A conferência no jogo, em movimento e nos dois lados, da pós-imagem, da aura da Fúria, da onda e das esferas do
       Vermelho em cada nível de Escala, não só na prancha.

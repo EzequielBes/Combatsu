@@ -89,12 +89,12 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 | `SlowMo.trigger(0.4, 350)` | `src/core/slowMo.ts`; `CAMERA_FEEL.slowScale`/`slowMs` (`data/feel.ts:58-59`) | Câmera lenta do Despertar (VRM-17, CRP-13) sem número novo |
 | `Hud.banner(text, ms)` | `src/game/Hud.ts` | Banner do Despertar e do ramo, sem crescer o `Hud.ts` |
 | `Fx.afterimage(sprite)` | `src/game/fx.ts:161` | Pós-imagem da Conjuração 3 e do Ritmo 3 (VRM-06, CRP-04) |
-| `TechTarget.setPull(velocity)` | `src/game/tech/shared.ts:246` | Empurrão do campo do Vermelho Máximo, com a velocidade do puxão do Azul ao contrário (`PULL_SPEED` 150, `core/blueOrb.ts:7`) |
-| `techMarks(strength)` | `src/game/tech/shared.ts:276` | O golpe pesado de técnica já leva `knockdown: true` (AD-021): toda detonação do Vermelho já derruba hoje, e o VRM-15 não muda isso |
+| `TechTarget.setPull(velocity)` | `src/game/tech/shared.ts:16` | Empurrão do campo do Vermelho Máximo, com a velocidade do puxão do Azul ao contrário (`PULL_SPEED` 150, `core/blueOrb.ts:7`) |
+| `techMarks(strength)` | `src/game/tech/shared.ts:46` | O golpe pesado de técnica já leva `knockdown: true` (AD-021): toda detonação do Vermelho já derruba hoje, e o VRM-15 não muda isso |
 | `VowPanel` (cartas, `show`/`hide`, `debug`) | `src/game/VowPanel.ts` | Molde do `ChoicePanel` (mesma camada, profundidade e cores) |
 | `debugParam` / `debugIntParam` | `src/scenes/test/params.ts` | Lê `axes=` e `ramo=` |
-| `multipliersFor(round, DIFFICULTY)` | `src/core/difficulty.ts:168` | Sem mudança (ESC-01); o `StatsDirector` lê o `hp` da rodada para o piso do Kokusen e para o snapshot |
-| `expectedIncome(round, WAVE, ECONOMY)` | `src/core/economy.ts:119` | Régua do teste da curva de build (ESC-03) |
+| `multipliersFor(round, DIFFICULTY)` | `src/core/difficulty.ts:41` | Sem mudança (ESC-01); o `StatsDirector` lê o `hp` da rodada para o piso do Kokusen e para o snapshot |
+| `expectedIncome(round, WAVE, ECONOMY)` | `src/core/economy.ts:10` | Régua do teste da curva de build (ESC-03) |
 | F29: `statSheet`, `StrikeMods`, `traitsOf`, `PROP_TRAITS` | `core/statSheet.ts` | `StatInput` ganha `impact` (CRP-02); `StrikeMods` ganha campos (CRP-15) |
 | F29: `powerPoints` | `core/power.ts` | Ganha `impacto` (CRP-02.3) |
 | F29: `Hit.band`, `effects.onTechConnect(hit, point, target)`, `MicroBudget` | `core/hit.ts`, `scenes/test/effects.ts` | Estilhaço e onda saem `micro`; o campo do Máximo sai `chip`; o teto de 60 ms do micro já vale |
@@ -183,7 +183,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 ### `core/loadout.ts` (muda, 86 → ~125 linhas)
 
 - `readonly axes = new AxisBuild()`; `damageMul`, `vowDamageMul` e `costMul` continuam (escritos só pelo
-  `StatsDirector`, F29); campo novo `kokusenScale = { meleeMul: 1, hpMul: 1 }` (também só do `StatsDirector`) e
+  `StatsDirector`, F29); campo novo `kokusenScale = { forca: 0, meleeMul: 1, hpMul: 1 }` (também só do `StatsDirector`) e
   `lastSlot: 0 | 1 | null` (gravado em `startCooldown`, lido pelo `EnergyHud`, VRM-20).
 - `levelOf(id)`: Vermelho equipado devolve `axes.level('vermelho')`; os outros, o nível do slot.
 - `slotsView`: o Vermelho aparece com o nível derivado (`level: number`).
@@ -232,7 +232,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
   - `bodyStrike(points, move): BodyStrike` = `{ impactMul, forceMul, recoveryMul, reachPx, knockdown: boolean,
     wallStun: boolean }` (Peso ≥ 2 e `move.strength === 'heavy'` → `knockdown`; Peso 3 → `wallStun`).
   - `widenForward(shape: HitboxShape, px): HitboxShape` = `{ ...shape, width: width + px, offsetX: offsetX + px / 2 }`
-    (a borda de trás fica; o retângulo do `hitbox.ts:83` é centrado no `offsetX`).
+    (a borda de trás fica; o retângulo do `game/hitbox.ts:136` é centrado no `offsetX`).
   - `class FuryCounter` (`onConnect(swingId)`, `onHpLoss()`, `stacks`, `bonus(points)`, `atCap(points)`).
   - `class CadenceCounter` (`onConnect(swingId)`, `onActiveEnd(swingId, connected)`, `onHpLoss()`, `count`,
     `nextIsDecisive(): boolean` = `count % 4 === 3`).
@@ -273,7 +273,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
     couber; CRD-04).
 - `Offer` ganha `axes?: readonly AxisId[]`.
 
-### `core/shopPricing.ts` (novo no passo 5, ~45 linhas)
+### `core/shopPricing.ts` (novo no passo 4 com o preço do ponto; completo no passo 5, ~45 linhas)
 
 - **Purpose**: preço e trava (PRC-01 a PRC-04, PRC-06).
 - **Interfaces**: `inflate(base, round)` = `Math.round(base × (1 + 0,06 × (round − 1)))`; `newTechPrice(rarity)`
@@ -285,8 +285,10 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 
 ### `core/kokusen.ts` (muda, 54 → ~62 linhas)
 
-- `kokusenDamage(D, meleeMul, hpMul): number` = `max(round(KOKUSEN.mul × D × meleeMul), round(KOKUSEN.damage ×
-  hpMul))` (ESC-02); `KOKUSEN.mul` 2,5 e `KOKUSEN.mulCap` 3,4 entram em `data/techniques.ts:128` (ESC-02.6);
+- `kokusenDamage(D, scale: { forca; meleeMul; hpMul }): number` = `max(round(KOKUSEN.mul × meleeDamageAtLevel(D,
+  forca) × meleeMul), round(KOKUSEN.damage × hpMul))` (ESC-02), com `D = round(18 × LEVEL_FACTOR[nível − 1])`, o 2º
+  impacto **sem** `damageMul` nem `vowDamageMul`: o Kokusen conta como golpe corpo a corpo forte (Força, passivas,
+  Manoplas, votos e Impacto, cada um uma vez); `KOKUSEN.mul` 2,5 e `KOKUSEN.mulCap` 3,4 entram em `data/techniques.ts:128` (ESC-02.6);
   `KOKUSEN.damage` (45) vira o piso.
 
 ### `core/axisParam.ts` (novo, ~35 linhas)
@@ -341,8 +343,8 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 - **redFlight**: o voo de um orbe depois de nascer (`onTouch`, `finishDetonation`, rebote, pairar do Contido,
   estilhaços, reembolso da recarga), tirado de `red.ts:105-117` e `:178-219`. Recebe o `TechStats` e o `RedPlan` da
   conjuração (copiados na soltura: um ponto comprado no meio do voo não muda o orbe em voo).
-- **redField**: o campo do Vermelho Máximo: a cada quadro, `setPull(pushVelocity)` nos comuns dentro do raio e
-  `null` ao sair ou ao fim; a cada tique, `Hit` `chip` de `round(3 × damageMul × vowDamageMul)` pelo `strike`
+- **redField**: o campo do Vermelho Máximo: a cada quadro, `setPull(pushVelocity)` nos comuns em pé dentro do
+  raio e `null` uma vez ao sair ou ao fim (com um orbe Azul vivo, o Azul escreve depois e vence: edge case da spec); a cada tique, `Hit` `chip` de `round(3 × damageMul × vowDamageMul)` pelo `strike`
   comum; vista mínima (anel da `RED_FX_COLORS` que esmaece), registrada no `FxRegistry`.
 - `red.ts` fica com a carga, a soltura (repulsão, recuo, pós-imagem da Conjuração 3, banner do Despertar pelo evento
   `awakenCast:vermelho`) e o nascimento do orbe com o sprite do `orbTexels` e o sensor do `sensorPx`.
@@ -407,16 +409,19 @@ O `redOrbFxSource.test.ts` lê o fonte de `RedOrb.ts` e `redDetonation.ts` (`?ra
 | `src/core/axisBuild.ts`, `redBranch.ts`, `axisParam.ts` (novos) | — | ver acima |
 | `src/core/techStats.ts` | Vermelho | lê `RED_AXES` pelos pontos |
 | `src/core/loadout.ts` | 43-86 | `axes`, `levelOf`, `slotsView`, `upgrade`, `clear`, `refundCooldown`, `lastSlot` |
-| `src/core/mastery.ts` | 62-64, 73 | `threshold(level: number)`: `null` a partir do Nv 3 (a maestria só acumula no Nv 1 e 2; VRM-19) |
+| `src/core/mastery.ts` | 21-23, 32 | `threshold(level: number)`: `null` a partir do Nv 3 (a maestria só acumula no Nv 1 e 2; VRM-19); `registerHit(slot, level: number, ...)`, porque o `runDirector.ts:190` passa o `slotsView[slot].level`, que vira `number` |
 | `src/core/hit.ts` | Hit | `maxHpBonus?: { enemy: number; boss: number }`, `hitstopBonusMs?: number`, `wallStun?: boolean`, `decisive?: boolean`; `dealtDamage(hit, maxHp, isBoss)` |
-| `src/core/enemyBrain.ts` | 79 | `this._hp - dealtDamage(hit, this.t.maxHp, false)` (expressão, sem ramo) e `holdDown(ms)` |
+| `src/core/enemyBrain.ts` | 80 | `this._hp - dealtDamage(hit, this.t.maxHp, false)` (expressão, sem ramo) e `holdDown(ms)` |
 | `src/core/bossBrain.ts` | 96 | idem com `true` |
 | `src/game/TechCaster.ts` | 55-57, 79-93 | getter `slotHeld` (`key.isDown` de `L`/`C` e `I`/`V`, lido no `update`) |
 | `src/scenes/test/techDirector.ts` | 22-29 | passa `this.s.techCaster.slotHeld` |
-| `src/game/TechRunner.ts` | 212-229 | `update(..., slotHeld, ...)` repassa ao `red.update` |
+| `src/game/TechRunner.ts` | 99-115 | `update(..., slotHeld, ...)` repassa ao `red.update` |
 | `src/game/tech/red.ts` | 64-219 | voo vai para `redFlight.ts`; repulsão com o dano do VRM-04; pós-imagem; sprite e sensor do `stats` |
 | `src/game/tech/redFlight.ts`, `redField.ts` (novos) | — | ver acima |
 | `src/game/techFx/RedOrb.ts` | 329-337 | `rings` anéis com 40 ms entre eles |
+| `src/game/techFx/RedOrb.ts`, `src/core/redOrb.ts` | 101-111; 115 | a 3ª textura da carga é a do `orbTexels` resolvido (`chargeFrame` devolve 4, 8 ou o tamanho do orbe), para o orbe não pular de tamanho na soltura (VRM-06) |
+| `scripts/smoke/techniques.smoke.mjs` | 111-160 | o trecho RED-10 procura o alvo além do alcance novo (detonação a ~358 px da ponta dos dedos, não ~458): o player para 100 px mais à frente, a janela do alvo vira `dx` de ~460 a ~510, e a espera entre tentativas cobre a recarga de 4500 ms (VRM-01, VRM-09). Sem isso o alvo fica a ~200 px do estouro e o smoke falha no passo 2 |
+| `scripts/smoke/evolution.smoke.mjs` | 35 | `tech=azul:3,vermelho&axes=vermelho.potencia:2` (a ponte da T14 sai na T23) |
 | `src/game/art/sprites/techFx.ts` | 31-49 | `RED_ORB_SIZES` ganha 14, 16 e 18 (mesmos `stops` do 12) |
 | `src/game/textures.ts` | 68-70 | `techOrbRed14/16/18` |
 | `src/game/art/index.ts` | 125 | o mapa de textura ganha os 3 tamanhos |
@@ -454,7 +459,7 @@ O `redOrbFxSource.test.ts` lê o fonte de `RedOrb.ts` e `redDetonation.ts` (`?ra
 | `src/scenes/test/buildDirector.ts` | `onMeleeHit` | repassa ao `body`; campo `body = new BodyDirector(s)`; `reset` zera o `body` |
 | `src/scenes/test/techDirector.ts` | 46 | `this.s.build.body.update(dt)` |
 | `src/scenes/test/bodyDirector.ts`, `game/FistWaveFx.ts`, `game/FuryAura.ts` (novos) | — | ver acima |
-| `src/data/shop.ts` | 243-248 | `BODY_SHOP_ENTRY` (`id 'corpo'`, `kind 'body'`, comum, `maxLevel 6`) em `GAME_SHOP_CATALOG` (a carta só aparece no passo 4: até lá o `eligible` recusa `kind 'body'`) |
+| `src/data/shop.ts` | 10-17, 243-248 | `ShopEntryKind` ganha `'body'`; `BODY_SHOP_ENTRY` (`id 'corpo'`, `kind 'body'`, comum, `maxLevel 6`, `cost { base: 12, step: 4 }`) em `GAME_SHOP_CATALOG` (a carta só aparece no passo 4: até lá o `eligible` recusa `kind 'body'`) |
 | `src/core/build.ts` | `buildOfEntry`, `buildPoints` | `corpo` → `lutador`; pontos do Corpo somam em `lutador` |
 
 `TestScene`: 0. `Player.ts`: 0 (o hook é o da F29; CRP-15).
@@ -470,7 +475,12 @@ O `redOrbFxSource.test.ts` lê o fonte de `RedOrb.ts` e `redDetonation.ts` (`?ra
 | `src/core/shopEligibility.ts` | `eligible` | `kind 'body'` e o Vermelho com eixo por `axisEligible` |
 | `src/core/shopPreview.ts` | `previewText` | `axisPreview` para o Vermelho e o Corpo (CRD-05); as outras quatro técnicas seguem "Dano ×" (CRD-10) |
 | `src/game/input.ts` | 115-153 | tecla `FOUR` (`buySlot` 0..3) e `moveUp`/`moveDown` (`W`/`↑`, `S`/`↓`) |
-| `src/game/ShopPanel.ts` | 32 | `CARD_COUNT = 4` (SHX-03; ver "Risks" para a dica `1-3`) |
+| `src/game/ShopPanel.ts` | 32, 206 | `CARD_COUNT = 4` e a dica `` `1-${CARD_COUNT} comprar · W/S eixo · R rerolar (${view.rerollCost}) · Enter continuar` `` (SHX-03, CRD-05.9) |
+| `src/data/shop.ts` | 149-156 | Vermelho com `maxLevel 6` (o `levelText` mostra `Nv N/6`; a elegibilidade dele passa ao `axisEligible`) |
+| `src/core/shop.ts` | 213-221, 363-369 | `costOf` da carta de eixo = `axisPointPrice(pontos do item)` (PRC-02 adiantado: sem isso a carta do Corpo cairia no `modifiers.cost`, que lê o nível de um atributo que não existe); `levelOf` do `kind 'body'` = `loadout.axes.level('corpo')` |
+| `src/core/shopPricing.ts` (novo no passo 4) | — | só `axisPointPrice` e `PRICING.axisPoint` (`data/tuning.ts`); o resto entra no passo 5 |
+| `scripts/smoke/shop.smoke.mjs` | 86-88, 325-338 | 4 ofertas distintas; a garantia de técnica (TSH-05) passa a `offers[1]` (CRD-03) |
+| `scripts/smoke/shop-progress.smoke.mjs` | 1-62 | o trecho ECN-05/08 passa ao Azul (`tech=azul`): procura a carta do Azul entre as 4 (a carta 0 sai do `axisRng`) e rerola, com `fragments` de sobra, até ela aparecer, `Nv 2/3`, custo 26 + 15 = 41 e `buy:azul:41`; o trecho da maestria segue com o Vermelho (o ponto vai ao eixo-foco e o nível vira 2) |
 | `src/game/ChoicePanel.ts` (novo) | — | ver acima |
 | `src/scenes/test/uiSetup.ts` | 22, 68-71 | campo `choicePanel!: ChoicePanel` criado no `addHud` |
 | `src/scenes/test/shopDirector.ts` | 26-83, 118-140, 146-155 | `axisRng` no `new Shop`; `applyAxis` no `BuyContext`; `moveUp`/`moveDown` → `shop.chooseAxis`; `openShop` e `updateVowPanel` passam pelo `openChoiceOrShop()`; `updateChoicePanel(input)` (A/D, Enter); snapshot com `axes` e `selectedAxis` |
@@ -483,7 +493,7 @@ O `redOrbFxSource.test.ts` lê o fonte de `RedOrb.ts` e `redDetonation.ts` (`?ra
 
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
-| `src/core/shopPricing.ts` (novo) | — | ver acima |
+| `src/core/shopPricing.ts` | — | ganha `inflate`, `newTechPrice`, `axisGate`, `techLevelGate` e `cardCost` (ver acima) |
 | `src/data/tuning.ts` | 305-317 | `PRICING` |
 | `src/data/shop.ts` | 110-157 | `techGate` sai; as técnicas usam `techLevelGate`; o Vermelho e o Corpo usam `axisGate` pelo próximo ponto |
 | `src/core/shop.ts` | 213-221, 339, 375 | `costOf` vira `cardCost(entry, { modifiers, loadout, arsenal, round })` com a inflação (PRC-03); o reroll fica fora (`SHOP.rerollBase`/`rerollStep` sem inflação) |
@@ -499,9 +509,9 @@ O `redOrbFxSource.test.ts` lê o fonte de `RedOrb.ts` e `redDetonation.ts` (`?ra
 | `src/data/tuning.ts` | 155, 157 | `hpPerRound: 0.06`, `damagePerRound: 0.05` |
 | `src/data/techniques.ts` | 128-153 | `KOKUSEN.mul: 2.5`, `KOKUSEN.mulCap: 3.4`; `damage: 45` fica como piso |
 | `src/core/kokusen.ts` | fim | `kokusenDamage` |
-| `src/core/techStats.ts` | Divergente | `kokusenDamage` no `TechStats` (`stats.damage.second`, `kokusenScale`) |
-| `src/scenes/test/statsDirector.ts` (F29) | `sync`, `snapshotFields` | `loadout.kokusenScale = { meleeMul: sheet.meleeMul(KOKUSEN_TRAITS), hpMul }`; campo `difficulty` |
-| `src/game/tech/divergent.ts` | 230, 239 | `KOKUSEN.damage` vira `loadout.stats('divergente').kokusenDamage` (hit e `receiveKokusen`, que segue com `× KOKUSEN.poiseMul`) |
+| `src/core/techStats.ts` | Divergente | `kokusenDamage` no `TechStats`, a partir de `round(18 × LEVEL_FACTOR[nível − 1])` (não do `stats.damage.second`, que já traz os multiplicadores de técnica) e do `kokusenScale` |
+| `src/scenes/test/statsDirector.ts` (F29) | `sync`, `snapshotFields` | `loadout.kokusenScale = { forca: modifiers.level('forca'), meleeMul: sheet.meleeMul(KOKUSEN_TRAITS), hpMul }`; campo `difficulty` |
+| `src/game/tech/divergent.ts` | 230, 238 | `KOKUSEN.damage` vira `loadout.stats('divergente').kokusenDamage` (hit e `receiveKokusen`, que segue com `× KOKUSEN.poiseMul`) |
 | `src/game/debugApi.ts` | — | campo `difficulty` |
 | `scripts/smoke/run-loop.smoke.mjs` | 67-83, 113-192 | 60/12/88 viram `Math.round(base × (1 + perRound × (r − 1)))` (ESC-04) |
 | `.specs/STATE.md` | Decisions | AD-025 revisa a AD-014 (ESC-01.3); a AD-014 passa a `superseded by AD-025` |
@@ -539,6 +549,9 @@ export interface TechStats {
   cut?: { times: readonly number[]; anglesDeg: readonly number[]; nearPx: number; farPx: number; heightPx: number; lineLen: number };
   purple?: { speed: number; lifeMs: number; radius: number; spawnAhead: number; lift: number; force: number };
 }
+
+// core/loadout.ts (escrito só pelo StatsDirector)
+export interface KokusenScale { forca: number; meleeMul: number; hpMul: number } // nível da Força, meleeMul forte, HP da rodada
 
 // core/statSheet.ts (F29, ampliado)
 export interface StrikeMods {
@@ -662,7 +675,7 @@ linha), `debugSnapshot` (não muda: `build` já vem do `build.snapshot()` e os c
 | Contido com a tecla solta antes da saída | `ContidoHold` nasce com `held = false` e voa como o orbe sem ramo | Detonação normal |
 | Orbe do Contido pairando e o player atingido | O `CastMachine.damageTaken` só cancela `sign`/`charge`; o orbe já é do `RedTech` | Orbe continua até soltar ou 1,2 s |
 | Rebote sem alvo a 200 px | `pickRebound` devolve a direção oposta; o orbe voa 200 px e detona no fim | Rebote visível mesmo sem alvo |
-| Kokusen com piso acima de `2,5 × D` | `kokusenDamage` devolve o piso | Número de Kokusen com o piso |
+| Kokusen com piso acima do golpe × 2,5 | `kokusenDamage` devolve o piso | Número de Kokusen com o piso |
 | Vermelho sai do slot (evolução) com pontos | `Loadout.clear` chama `axes.resetItem('vermelho')` | O Roxo nasce no Nv 1; o Vermelho não volta à loja (edge case da F24) |
 | `R` reinicia a cena com a aura da Fúria ou ondas vivas | `FuryAura`/`FistWaveFx` registrados no `FxRegistry` e destruídos no `SHUTDOWN`; o `bodyDirector.reset` zera os contadores | Sem objeto órfão |
 
@@ -672,14 +685,20 @@ linha), `debugSnapshot` (não muda: `build` já vem do `build.snapshot()` e os c
 
 | Concern | Location (file:line) | Impact | Mitigation |
 | --- | --- | --- | --- |
-| A dica do painel diz "1-3 comprar" e o SHX-03 só permite mudar o `CARD_COUNT` | `src/game/ShopPanel.ts:206` | Com 4 cartas a dica mente sobre a tecla 4 | A linha vira `` `1-${CARD_COUNT} comprar · ...` `` no mesmo commit do passo 4 (0 linha, 0 ramo). É desvio do texto do SHX-03 e precisa de aceite do usuário antes do passo 4; registrar como `SPEC_DEVIATION` no `tasks.md` |
-| O ESC-02 multiplica `meleeMul` **e** o Impacto, mas o CRP-02 põe o Impacto dentro do `meleeMul` | spec ESC-02.4 × CRP-02.2 | O Kokusen contaria o Impacto ao quadrado (×1,69 no Impacto 3) | O design conta o Impacto uma vez (o do `meleeMul`). Texto do ESC-02.4 e da assumption do Kokusen corrigidos na spec no passo TASKS |
-| A detonação do Vermelho já derruba hoje (`techMarks('heavy')` dá `knockdown`) | `src/game/tech/shared.ts:276`, `src/game/tech/red.ts:212` | O "derruba" do VRM-15 não é comportamento novo; o que muda é a parede que atordoa e o campo | Teste do `redField` e do `wallStun` cobrem o que é novo; o smoke não usa a derrubada como prova do Despertar (usa `awakened` e `wallStun:<id>`) |
+| A dica do painel diz "1-3 comprar" e nada ensina o `W`/`S` | `src/game/ShopPanel.ts:206` | Com 4 cartas a dica mente sobre a tecla 4, e o jogador não descobre a troca de eixo | Resolvido na revisão: o SHX-03 permite trocar o texto da dica por `` `1-${CARD_COUNT} comprar · W/S eixo · R rerolar (${view.rerollCost}) · Enter continuar` `` (template, 0 linha, 0 ramo), no commit do passo 4 |
+| O ESC-02 da primeira versão partia do dano de técnica (`loadout.damage`, que já traz o `vowDamageMul`) e multiplicava pelo `meleeMul` | spec ESC-02.4; `core/statSheet.ts` (F29) | O `vows.damageMul` (Corpo de vidro, Pele de pedra) entraria duas vezes, o Rosário somaria às Manoplas e a Força (que mora no `modifiers.meleeDamage`, fora do `meleeMul`) ficaria de fora, contra o texto do plano | Corrigido na revisão: o Kokusen parte do 2º impacto cru com o fator de nível e passa pela Força e pelo `meleeMul` uma vez (ESC-02.4) |
+| A detonação do Vermelho já derruba hoje (`techMarks('heavy')` dá `knockdown`) | `src/game/tech/shared.ts:46`, `src/game/tech/red.ts:212` | O "derruba" do VRM-15 não é comportamento novo; o que muda é a parede que atordoa e o campo | Teste do `redField` e do `wallStun` cobrem o que é novo; o smoke não usa a derrubada como prova do Despertar (usa `awakened` e `wallStun:<id>`) |
 | Não existe hoje detecção de ragdoll batendo em parede | `src/game/Ragdoll.ts`, `src/scenes/test/combat.ts:292-298` | O VRM-16 depende da normal do par do Matter (`pair.collision.normal`), que o tipo `ContactEvent` não declara | `wallStun.onContacts` lê a normal com guarda de tipo; o teste puro `wallStunFrom(normal, armed)` prova a regra; o smoke força o caso com `tech=vermelho&axes=...&ramo=vermelho:b` perto da parede do módulo `beco` (`modules=beco`) |
 | `TechCaster` só conhece `JustDown`; o `slotHeld` precisa ser lido no mesmo `update` | `src/game/TechCaster.ts:79-93` | Ler `isDown` fora do `update` daria o estado do quadro anterior | O getter guarda `isDown` dentro do `update`, como o `framePressed` |
 | A recovery escalada perde o "excesso" do quadro | `src/core/moveMachine.ts:159-166` | A máquina já zera o excesso na troca de fase hoje; o `scaleRecovery` só troca o valor cheio | `scaleRecovery` só age com `timer === move.recoveryMs`; teste dos dois lados (Ritmo 0 dá o número de hoje) |
 | O `strikeMods` gasta o Passo sombrio (F29) e o Ritmo precisa do valor no `hitboxOff` | `src/game/player/strikes.ts:177-179`, `:262-282` | Chamar o hook duas vezes gastaria o Passo sombrio no segundo | O `mods` do `openHitbox` fica guardado no `PlayerStrikes` e é lido no `hitboxOff`; nenhum campo novo no `Player` |
-| O piso de 60 % come o voto Fluxo selado (`techCostMul` 0,6, `src/data/vows.ts:31`) | `core/techStats.ts` (piso) | O desconto do voto é igual ao piso: no Nv 1, `custo × 0,6` já é `ceil(0,6 × custo)` nas cinco técnicas (Vermelho 18, Divergente 12, Azul 21, Desmantelar 18, Roxo 42), e acima do Nv 1 o piso segura. O voto deixa de baixar custo nenhum | É o que o PRC-05 pede (o PRC-05.6 fixa os 18); levar ao usuário junto do aceite do design, porque o Fluxo selado vira só desvantagem. Alternativa para ele decidir: aplicar o `costMul` do voto depois do piso |
+| O piso de 60 % encosta no voto Fluxo selado (`techCostMul` 0,6, `src/data/vows.ts:31`) | `core/techStats.ts` (piso) | No Nv 1 o voto continua dando os 40 % inteiros (`custo × 0,6` arredondado é o próprio piso nas cinco técnicas: Vermelho 18, Divergente 12, Azul 21, Desmantelar 18, Roxo 42); o que some é o empilhamento com a Eficiência e com o −5 por nível. O voto não vira só desvantagem | Segue o plano (seção 2.1: os votos contam no piso). Sem pergunta ao usuário; o PRC-05.6 fixa os 18 do Vermelho com Eficiência 3 e o voto |
+| Peso 2 e a faixa decisiva | `src/core/impactTier.ts:16` | Todo `Hit` com `knockdown` já é `decisive`: com Peso ≥ 2 todo golpe forte que acerta lê como decisivo, e um smoke da Cadência que olhe só o `impact:decisive` do 4º golpe passaria sem o ramo se a cadeia tivesse derrubada | Regra mantida (AD-021, assumption da spec). O smoke da Cadência usa a cadeia `jab → direto → gancho → cotovelada` sem Peso e prova os dois lados: `impact:decisive` com `ramo=corpo:a`, `impact:heavy` sem ramo |
+| O Azul e o campo do Vermelho Máximo escrevem o mesmo `setPull` | `src/game/tech/blue.ts:60-64`, `src/game/TechRunner.ts:112-113` | O Azul grava o puxão (ou `null`) em todo comum a cada quadro, depois do Vermelho: com os dois vivos o empurrão some | Edge case da spec: com o Azul vivo o puxão dele vale e o campo só dá o chip; o `redField` só escreve `setPull` em quem está dentro do raio e em pé, e `null` uma vez ao sair ou ao fim. Teste do `redField` com um orbe Azul fingido |
+| O empurrão do campo nos derrubados | `src/game/enemy/EnemyMovement.ts:50` | O `setPull` mexe no corpo principal do comum, que fica parado durante o ragdoll; a detonação do Máximo derruba todos no raio | O campo empurra os comuns em pé (quem entra ou levanta): é negação de área. Os derrubados já voam pela força da detonação (VRM-15 reescrito) |
+| Eficiência sozinha não rende no Vermelho | modelo do ESC-03.9 | O Vermelho vive preso à recarga (5100 ms contra 3750 ms de energia): Eficiência 3 sozinha não muda o dano sustentado, e a carta vira armadilha | O ESC-03.9 prova que a Eficiência rende em cima da Recarga 3 (a dupla vira a metralhadora que cabe na barra sem o fluxo); a marca de "cabe mais uma" do VRM-20 mostra o ganho com 2 técnicas na mesma barra |
+| A Metralhadora do plano pede o fluxo no teto | plano, seção 2.2 | Recarga 3 + Conjuração 2 dá 2690 ms de ciclo, mas 30 de energia a 8/s levam 3750 ms: sem o fluxo, ela fica 28 % mais lenta que o prometido | Goals e Success Criteria pedem `mods=fluxo:4` na conferência; o `red-axes` só lê os tempos do slot |
+| A meta de 60 % do eixo-foco (CRD-07) tem pouca folga | `core/shopDraw.ts`, `tests/core/shopAxes.test.ts` | A carta 0 dá o foco em exatamente 60 % das lojas; o que passa disso vem do Vermelho (raro, peso 1) sorteado nas cartas 1 a 3, ~3 pontos a mais. Em 1000 seeds o desvio é ~1,5 ponto | O teste usa seeds fixas (determinístico). Se ficar abaixo de 60 %, o ajuste é a carta do item-foco nas cartas 1 a 3 sair com peso de comum (decisão registrada), nunca baixar a meta |
 | Inflação × o preço da relíquia/arma (`arsenalCost`) | `src/core/arsenal.ts` | Dupla regra de preço | `cardCost` aplica a inflação por cima de toda fonte (assumption "Inflação"); o `arsenal.test` não muda porque testa o `arsenalCost` cru |
 | `tests/core/run.test.ts` está na lista de exceções do `max-lines` | `.oxlintrc.json` | O teste do `axisRng` faria o arquivo crescer | Teste do stream novo em `tests/core/shopAxes.test.ts` (CRD-06), sem tocar `run.test.ts` |
 | Metas do ESC-03 podem não fechar com os preços do plano | `tests/core/buildCurve.test.ts` | Vermelho Nv 5 até a loja da r10 depende da renda de `expectedIncome` | O teste roda no passo 5 já (sem escala) e no 6; se falhar, o ajuste é de número no `PRICING` com nova decisão do usuário, não no teste |
@@ -722,7 +741,7 @@ segue `player.renderPos`) e AD-021 (`wallStun` e `decisive` são marcas do `Hit`
 | Arquivo | Prova |
 | --- | --- |
 | `tests/core/techStats.test.ts` | TST-01.6: 5 técnicas × níveis de hoje × multiplicadores 1 e 1,35 contra `Loadout.cost`/`damage`, `TECHNIQUES` e as constantes de hoje (escrito no passo 1, com os números antigos do Vermelho; no passo 2 o caso do Vermelho passa para o `techAxes.test`) |
-| `tests/data/techAxes.test.ts` | VRM-03 (tabela linha a linha), VRM-04 (repulsão 4/5/5/6), ESC-03.9 (nenhum eixo no 3 passa de 1,35 × a mediana do dano sustentado, modelo das Assumptions) |
+| `tests/data/techAxes.test.ts` | VRM-03 (tabela linha a linha), VRM-04 (repulsão 4/5/5/6), ESC-03.9 (nenhum eixo no 3 passa de 1,35 × a mediana do dano sustentado, modelo das Assumptions: hoje 23,3 contra 20,85, 1,12×; e Recarga 3 + Eficiência 2 rende mais que a Recarga 3 sozinha, 27,6 contra 21,3 por segundo) |
 | `tests/core/axisBuild.test.ts` | VRM-02 (teto 3/5 nos dois lados), VRM-11/CRP-08.1 (pendente só no 1º Nv 2), VRM-17/CRP-13 (Despertar no Nv 5 com ramo; ramo depois do Nv 5), `focusAxis` com empate, `announce` por rodada, `reset`/`resetItem` |
 | `tests/core/loadoutAxes.test.ts` | `levelOf`, `slotsView`, `upgrade` no eixo-foco (VRM-19), `clear` na evolução, `refundCooldown` (VRM-07: 690 ms com 2300), piso do PRC-05 (Divergente Nv 3 = 12; Vermelho Eficiência 3 + Fluxo selado = 18) |
 | `tests/core/redBranch.test.ts` | VRM-08 (1/2/2 vizinhos a 60 px, 59 e 61), VRM-09 (alvo a 320 px do player, 319/321), VRM-12 (70 % depois da 1ª, rebote a 200 px, sem alvo vai ao lado oposto), VRM-13 (3 rebotes, +15 %, pct na 3ª), VRM-14 (pairar, soltar, 1199/1200 ms), VRM-15 (tiques de 200 ms em 1200 ms, empurrão de 150 px/s) |
@@ -734,7 +753,7 @@ segue `player.renderPos`) e AD-021 (`wallStun` e `decisive` são marcas do `Hit`
 | `tests/core/shopPricing.test.ts` | PRC-01 a PRC-06: 20/26, 12/16/20/24/28, inflação 1,00/1,06/1,54/2,14 (r1/r2/r10/r20), Vermelho novo na r1 = 26, 1º ponto na r2 = 13, trava do 2º/3º/5º ponto na rodada exata e na anterior, reroll sem inflação |
 | `tests/core/buildCurve.test.ts` | ESC-03.7/8: Vermelho focado Nv 2 até a loja da r3 e Nv 5 até a da r10; cenário corpo a corpo da r19 (jab 6 e cotovelada 14 contra 125 de HP) cabe em `expectedIncome(19)` |
 | `tests/core/axisParam.test.ts` | VRM-10, VRM-18, CRP-14: entradas válidas, inválidas e o teto |
-| `tests/core/kokusenDamage.test.ts` | ESC-02: 45 na r1 sem build, piso × `hpMul` (r9 e r11), `2,5 × D × meleeMul` acima do piso, nos dois lados do piso |
+| `tests/core/kokusenDamage.test.ts` | ESC-02: 45 na r1 sem build, 68 com Força 5, piso × `hpMul` (r9 e r11), golpe × 2,5 acima do piso, nos dois lados do piso; `damageMul` e `vowDamageMul` do `Loadout` em 1,35 não mudam o Kokusen (o voto conta uma vez, pelo `meleeMul`) |
 | `tests/core/hitDealt.test.ts` | `dealtDamage` (4 % no comum, 1 % no chefe, sem bônus = `hit.damage`) |
 | `tests/core/energyMarks.test.ts` | VRM-20: `costMarks(cost, cur, max)` (múltiplos que cabem; 0 marca abaixo do custo) |
 | `tests/game/choicePanel.test.ts` | CRD-08/09: páginas, `select`, `debug` (molde de `tests/game/vowPanel.test.ts`) |
@@ -766,8 +785,9 @@ e `evolutionShop.test.ts` (4 cartas; garantia na carta 1; caminho dos imports do
    segurando `L` (orbe para, detona ao soltar, raio ×1,4); `axes` com 4 pontos e `ramo=vermelho:b` (`awakened: true`,
    evento `wallStun:<id>` em `modules=beco`).
 2. `cursed-body.smoke.mjs` (`seed=1&maxAlive=1&enemyGuard=0`): `axes=corpo.alcance:3` (o `jab` acerta a 14 px além),
-   `axes=corpo.peso:2` (o forte derruba), `axes=corpo.impacto:3&mods=forca:5` (`power.points` 8), `ramo=corpo:a` (4º
-   golpe dispara `impact:decisive`), `ramo=corpo:b` (onda: `damageNumbers.last.kind` `micro` no 2º inimigo, com
+   `axes=corpo.peso:2` (o forte derruba), `axes=corpo.impacto:3&mods=forca:5` (`power.points` 8), `ramo=corpo:a` (o 4º
+   golpe da cadeia `jab → direto → gancho → cotovelada` dispara `impact:decisive`; a mesma cadeia sem ramo e sem Peso dá
+   `impact:heavy` no 4º), `ramo=corpo:b` (onda: `damageNumbers.last.kind` `micro` no 2º inimigo, com
    `maxAlive=2`).
 3. `shop-axes.smoke.mjs` (`fragments=200&round=4&tech=vermelho&axes=vermelho.potencia:1`): 4 cartas, carta 0 do
    Vermelho com `axes` `['potencia', x]`, `S` muda `selectedAxis`, tecla `1` compra o 2º eixo; com `ramo` pendente
@@ -780,9 +800,9 @@ e `evolutionShop.test.ts` (4 cartas; garantia na carta 1; caminho dos imports do
 | --- | --- |
 | 0 | `shop`, `shop-progress`, `run-loop`, `evolution` (SHX-01.2) |
 | 1 | `tech`, `techniques`, `red-anime`, `kokusen`, `evolution`, `fight` (TST-04) |
-| 2 | `red-axes`, `tech`, `techniques`, `red-anime`, `hud`, `power` (F29), `fxlab` |
+| 2 | `red-axes`, `tech`, `techniques` (trecho RED-10 refeito), `red-anime`, `evolution`, `hud`, `power` (F29), `fxlab` |
 | 3 | `cursed-body`, `fight`, `fight-integration`, `impact`, `feel`, `power`, `player-anim` |
-| 4 | `shop-axes`, `shop`, `shop-progress`, `vows`, `evolution`, `world-run` |
+| 4 | `shop-axes`, `shop` (4 ofertas, garantia na carta 1), `shop-progress` (reescrito para o Azul), `vows`, `evolution`, `world-run` |
 | 5 | `shop-axes`, `shop`, `shop-progress`, `run-loop` |
 | 6 | `scale`, `run-loop` (reescrito), `kokusen`, `boss`, `world-boss` |
 

@@ -24,7 +24,7 @@ gate` verde antes do commit; smoke só do que foi tocado; smoke novo com `?debug
 efetivas por arquivo, 80 por função e complexidade 15; arquivo novo nunca entra no `.oxlintrc.json`; teste da lista de
 exceções do `max-lines` não cresce (o caso novo vai para arquivo novo). **SHX-02:** a `TestScene` não é tocada por
 nenhuma tarefa e termina com as linhas efetivas do fim da F29 (390 pela estimativa da F29; reconferir no merge).
-**SHX-03:** `ShopPanel.ts` só muda o `CARD_COUNT` (T56), `Hud.ts`, `moves.ts` e `Player.ts` não mudam. Linha efetiva =
+**SHX-03:** `ShopPanel.ts` só muda o `CARD_COUNT` e o texto da dica (T56), `Hud.ts`, `moves.ts` e `Player.ts` não mudam. Linha efetiva =
 sem linha em branco e sem comentário, como o `max-lines` do `.oxlintrc.json`. As linhas citadas no design valem para
 `4c0efae`; o que a F29 mexe é reconferido no começo de cada fase.
 
@@ -32,8 +32,6 @@ sem linha em branco e sem comentário, como o `max-lines` do `.oxlintrc.json`. A
 
 | Antes de | Pergunta | Origem |
 | --- | --- | --- |
-| T56 | A dica `1-3 comprar` (`ShopPanel.ts:206`) vira `` `1-${CARD_COUNT} comprar ...` `` no mesmo commit. É desvio do texto do SHX-03 (só o `CARD_COUNT`); registrar como `SPEC_DEVIATION` se aceito | design, Risks |
-| T63 | O piso de 60% iguala o desconto do voto Fluxo selado (`techCostMul` 0,6): o voto deixa de baixar custo. Manter o PRC-05 como está ou aplicar o `costMul` do voto depois do piso | design, Risks |
 | T64, T69 | Se a curva de build não fechar com os preços do plano, o ajuste é de número no `PRICING` com nova decisão, nunca no teste | design, Risks |
 
 ---
@@ -192,6 +190,7 @@ T55 → T56 (fase 9)
 T60 → T61 → T62 → T64
 T60 → T62
 T63 → T64
+T55 → T60 (fase 9)
 ```
 
 ### Phase 12: Passo 6 — escala, por último
@@ -494,7 +493,10 @@ ramo, Despertar).
       `damageMul` × `vowDamageMul` e sem `LEVEL_FACTOR` (VRM-03.5); sem pontos: 30/4500/320 e o resto de hoje (VRM-01)
 - [ ] O caso do Vermelho sai do `techStats.test.ts` (as outras 4 ficam); `tests/data/techniques.test.ts` e
       `tests/core/loadout.test.ts` com custo 30 e recarga 4500
-- [ ] Smokes `tech`, `techniques` e `red-anime` verdes (ajustar só os números de custo/recarga do Vermelho, citando o VRM-01)
+- [ ] Smokes `tech`, `techniques` e `red-anime` verdes: além dos números de custo e recarga do Vermelho, o trecho RED-10
+      do `techniques.smoke.mjs` (`:111-160`) mira o alcance novo: o player para ~100 px mais à frente, a janela do alvo
+      vira `dx` de ~460 a ~510 (detonação a ~358 px da ponta dos dedos, raio 96) e a espera cobre a recarga de 4500 ms;
+      os comentários de 420 px e 3000 ms citam o VRM-01
 - [ ] Gate verde; contagem sem perda
 
 **Tests**: unit + smoke
@@ -533,7 +535,8 @@ T23, para o smoke `evolution` (`tech=azul:3,vermelho:3`) seguir verde. Ajusta os
 
 #### T15: Maestria só acumula no Nv 1 e no Nv 2
 
-**What**: `mastery.threshold(level: number)` devolve `null` a partir do Nv 3 (`mastery.ts:62-64`, `:73`).
+**What**: `mastery.threshold(level: number)` devolve `null` a partir do Nv 3 e `registerHit(slot, level: number, ...)`
+aceita o nível derivado que o `runDirector.ts:190` passa (`mastery.ts:21-23`, `:32`).
 **Where**: `src/core/mastery.ts`
 **Depends on**: None
 **Reuses**: limiares de hoje
@@ -757,7 +760,8 @@ nota de que `tech=vermelho:N` não muda o nível; nasce `scripts/smoke/red-axes.
 #### T25: Soltura e orbe pelos eixos
 
 **What**: `red.ts` nasce o orbe com o sprite do `orbTexels` e o sensor do `sensorPx`; repulsão com o dano do VRM-04;
-texturas da carga trocam a cada terço do `chargeMs` resolvido (`RedOrbState.chargeFrame`); Conjuração 3 solta
+texturas da carga trocam a cada terço do `chargeMs` resolvido (`RedOrbState.chargeFrame` devolve 4, 8 e o `orbTexels`
+no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3 solta
 `fx.afterimage(player)` na soltura; a entrada `red` de `techObjects` ganha `sensorPx` (`body.circleRadius`) e
 `texture` (`view.texture.key`) no snapshot (`red.ts:58-62`, `debugApi.ts:334`, literal do `debugApi.test.ts`).
 **Where**: `src/game/tech/red.ts`
@@ -914,18 +918,20 @@ dos 320 px, detona com raio × 1,4 ao soltar ou aos 1,2 s; parede e chefe com ×
 #### T32: Campo do Vermelho Máximo
 
 **What**: `src/game/tech/redField.ts`: na detonação com o Despertar Vermelho Máximo, `maxHpBonus` em todo alvo e
-campo de 1200 ms do mesmo raio que empurra os comuns a 150 px/s (`setPull`) e dá `chip` de
+campo de 1200 ms do mesmo raio que empurra os comuns em pé dentro dele a 150 px/s (`setPull` só neles; `null` uma vez
+ao sair ou ao fim; com um orbe Azul vivo o puxão do Azul vale, edge case) e dá `chip` de
 `round(3 × damageMul × vowDamageMul)` a cada 200 ms; a detonação marca `wallStun: true`; vista mínima registrada no
 `FxRegistry` (anel da `RED_FX_COLORS` que esmaece).
 **Where**: `src/game/tech/redField.ts`
 **Depends on**: T24
-**Reuses**: `RedField`, `pushVelocity`, `TechTarget.setPull` (`tech/shared.ts:246`), `Hit.band` (F29)
+**Reuses**: `RedField`, `pushVelocity`, `TechTarget.setPull` (`tech/shared.ts:16`), `Hit.band` (F29)
 **Requirement**: VRM-15
 
 **Done when**:
 
 - [ ] `red-axes.smoke.mjs` (cenário 6) com `ramo=vermelho:b&axes=` somando 4 pontos: `build.vermelho.awakened` true,
-      números `chip` a cada 200 ms por 1200 ms, comuns afastando do centro, nenhum `pull` sobrando depois do fim
+      números `chip` a cada 200 ms por 1200 ms, comuns em pé afastando do centro, nenhum `pull` sobrando depois do fim;
+      com `tech=vermelho,azul` e o Azul vivo, o chip continua e o puxão do Azul não é desfeito
 - [ ] Anel conferido no jogo; smokes `red-axes`, `tech` e `power` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -1133,7 +1139,8 @@ todos com `pierce`, cada alvo uma vez por onda, no máximo 4 em 1000 ms de tempo
 
 #### T42: Corpo no catálogo e na build de lutador
 
-**What**: `BODY_SHOP_ENTRY` (`id 'corpo'`, `kind 'body'`, comum, `maxLevel 6`) em `GAME_SHOP_CATALOG`
+**What**: `ShopEntryKind` ganha `'body'`; `BODY_SHOP_ENTRY` (`id 'corpo'`, `kind 'body'`, comum, `maxLevel 6`,
+`cost { base: 12, step: 4 }`) em `GAME_SHOP_CATALOG`
 (`data/shop.ts:243-248`; o `eligible` recusa `kind 'body'` até a T52); `buildOfEntry('corpo')` = `lutador` e os pontos
 do Corpo somam em `lutador` (`core/build.ts`).
 **Where**: `src/core/build.ts`
@@ -1287,8 +1294,10 @@ pelo `strikeMods`; `onStrikePhase` zera no fim do `active` sem acerto; com o Mar
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs` com `ramo=corpo:a`: o 4º golpe seguido dispara `impact:decisive` e o 3º não (CRP-08.2);
-      um golpe no ar zera a contagem (CRP-08.3)
+- [ ] `cursed-body.smoke.mjs` com `ramo=corpo:a`: o 4º golpe seguido da cadeia `jab → direto → gancho → cotovelada`
+      dispara `impact:decisive` e o 3º não (CRP-08.2); a mesma cadeia sem ramo e sem Peso dá `impact:heavy` no 4º (o
+      Peso 2 derrubaria e já seria decisivo pelo `impactTier`, então o smoke não usa Peso); um golpe no ar zera a
+      contagem (CRP-08.3)
 - [ ] Com `ramo=corpo:a&axes=` somando 4 pontos e `maxAlive=3`: o vizinho a 48 px cai e leva 4% do HP (CRP-09)
 - [ ] Smokes `cursed-body`, `impact`, `fight` e `fight-integration` verdes; gate verde; contagem sem perda
 
@@ -1375,7 +1384,8 @@ igual 100 ms depois; no 1º decisivo (Martelo Negro) ou na 1ª onda (Punho que R
 #### T52: Elegibilidade do item com eixo
 
 **What**: `axisEligible(entry, loadout, round)` em `shopEligibility.ts`: Corpo sempre dono, Vermelho só equipado,
-`canAdd` em algum eixo; `eligible` passa a aceitar `kind 'body'` e o Vermelho por ela (a trava por rodada entra na T61).
+`canAdd` em algum eixo; `eligible` passa a aceitar `kind 'body'` e o Vermelho por ela (a trava por rodada entra na T61);
+a entrada do Vermelho em `data/shop.ts:149-156` vai a `maxLevel 6`.
 **Where**: `src/core/shopEligibility.ts`
 **Depends on**: T42
 **Reuses**: `AxisBuild.canAdd`
@@ -1419,8 +1429,10 @@ igual 100 ms depois; no 1º decisivo (Martelo Negro) ou na 1ª onda (Punho que R
 
 #### T54: Prévia da carta de eixo
 
-**What**: `axisPreview(item, axes, selected, loadout)` em `shopPreview.ts`: uma linha por eixo com o valor atual e o
-próximo (`▲ Escala 120 → 144`) e `›` na escolhida; as outras quatro técnicas seguem "Nv N → N+1".
+**What**: `axisPreview(item, axes, selected, loadout)` em `shopPreview.ts`: uma linha por eixo com o nome, o valor
+resolvido atual e o próximo, sem espaço em volta da seta e com `›` na escolhida (`›Escala 120→144` / ` Potência
+35→40`), cada linha com no máximo 20 caracteres; 3ª linha `+ ramo` ou `+ Despertar` quando a compra leva o item ao Nv 2
+ou ao Nv 5; as outras quatro técnicas seguem a prévia de hoje (`Dano ×a → ×b`, CRD-10).
 **Where**: `src/core/shopPreview.ts`
 **Depends on**: None
 **Reuses**: `AXIS_NAMES`, `Loadout.stats`
@@ -1428,7 +1440,9 @@ próximo (`▲ Escala 120 → 144`) e `›` na escolhida; as outras quatro técn
 
 **Done when**:
 
-- [ ] `tests/core/shopAxes.test.ts`: texto das duas linhas com `›` na escolhida; carta do Azul igual a hoje (CRD-10)
+- [ ] `tests/core/shopAxes.test.ts`: texto das duas linhas com `›` na escolhida; toda linha de todo eixo dos dois itens
+      em 0, 1 e 2 pontos com até 20 caracteres; `+ ramo` só no 1º ponto e `+ Despertar` só no 4º; carta do Azul igual a
+      hoje (CRD-10)
 - [ ] Gate verde; contagem sem perda
 
 **Tests**: unit
@@ -1441,15 +1455,19 @@ próximo (`▲ Escala 120 → 144`) e `›` na escolhida; as outras quatro técn
 
 **What**: `Shop` ganha `axisRng?` (8º parâmetro), `drawFresh` chama `drawCards`, `axisChoice` por carta,
 `chooseAxis(delta)`, `buy` chama `ctx.applyAxis(item, axis)`, `OfferView` com `axes` e `selectedAxis`; o reroll
-sorteia de novo e volta ao eixo-foco; o número de cartas vem de `SHOP.offers` (ainda 3 no jogo até a T56).
+sorteia de novo e volta ao eixo-foco; o número de cartas vem de `SHOP.offers` (ainda 3 no jogo até a T56). O custo da
+carta de eixo já é `axisPointPrice(pontos)` (`core/shopPricing.ts` nasce aqui só com ele e `PRICING.axisPoint`; sem
+inflação nem trava até o passo 5), porque o `costOf` de hoje mandaria o `kind 'body'` ao `modifiers.cost`; o
+`Shop.levelOf` do `kind 'body'` lê `loadout.axes.level('corpo')` (o `levelText` dá `Nv N/6`).
 **Where**: `src/core/shop.ts`
 **Depends on**: T53, T54
 **Reuses**: "checar → gastar → aplicar" (SHOP-10)
-**Requirement**: CRD-01, CRD-05
+**Requirement**: CRD-01, CRD-04, CRD-05, PRC-02
 
 **Done when**:
 
-- [ ] `tests/core/shopAxes.test.ts`: com 4 cartas, `chooseAxis(+1)` troca para o 2º eixo e a compra põe o ponto nele;
+- [ ] `tests/core/shopAxes.test.ts`: carta de eixo custa 12, 16, 20, 24 e 28 pelo ponto (PRC-02) e mostra `Nv N/6`;
+      com 4 cartas, `chooseAxis(+1)` troca para o 2º eixo e a compra põe o ponto nele;
       compra sem saldo não muda nada; reroll volta ao foco (edge case)
 - [ ] Os testes do Vermelho saem do `techShop.test.ts` para o `shopAxes.test.ts`; `shop.test.ts` e
       `evolutionShop.test.ts` com a garantia na carta 1
@@ -1466,17 +1484,19 @@ sorteia de novo e volta ao eixo-foco; o número de cartas vem de `SHOP.offers` (
 #### T56: Quatro cartas na tela
 
 **What**: `SHOP.offers: 4` (`tuning.ts:306`); tecla `FOUR` (`buySlot` 0..3) e `A`/`D` nas 4 cartas em `game/input.ts`
-(`:115-153`); `CARD_COUNT = 4` no `ShopPanel.ts:32` (e a dica, se o usuário aceitar o desvio da tabela do topo).
+(`:115-153`); `CARD_COUNT = 4` no `ShopPanel.ts:32` e a dica do `:206` em
+`` `1-${CARD_COUNT} comprar · W/S eixo · R rerolar (${view.rerollCost}) · Enter continuar` `` (SHX-03, CRD-05.9).
 **Where**: `src/game/ShopPanel.ts`
 **Depends on**: T55
 **Reuses**: layout de hoje do `ShopPanel`
-**Requirement**: CRD-01, SHX-03
+**Requirement**: CRD-01, CRD-03, CRD-05, SHX-03
 
 **Done when**:
 
 - [ ] `tests/game/shopPanel.test.ts` e `tests/data/shop.test.ts` com 4 cartas
-- [ ] Smoke `shop`: 4 ofertas no snapshot e a tecla `4` compra a carta 3
-- [ ] `git diff src/game/ShopPanel.ts` só no `CARD_COUNT` (e na dica, se aceita: `SPEC_DEVIATION` anotado aqui)
+- [ ] Smoke `shop`: 4 ofertas distintas no snapshot (`:86-88`), a tecla `4` compra a carta 3 e a garantia de técnica
+      sem slot ocupado (TSH-05, `:325-338`) passa a `offers[1]` (CRD-03); a dica do painel lida no `panel.hint`
+- [ ] `git diff src/game/ShopPanel.ts` só no `CARD_COUNT` e no texto da dica
 - [ ] Smokes `shop`, `shop-progress`, `evolution` e `vows` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -1501,6 +1521,9 @@ sorteia de novo e volta ao eixo-foco; o número de cartas vem de `SHOP.offers` (
 - [ ] `shop-axes.smoke.mjs`, `?debug&hd=1&area=modular&fragments=200&round=4&tech=vermelho&axes=vermelho.potencia:1`:
       4 cartas; carta 0 do Vermelho com `axes` `['potencia', x]`; `S` muda `selectedAxis`; a tecla `1` compra o 2º eixo
       e o `build.vermelho.axes` mostra o ponto nele
+- [ ] `shop-progress.smoke.mjs` reescrito no trecho ECN-05/08 (`:1-62`): com `tech=azul&round=2&fragments=200` procura a
+      carta do Azul entre as 4 (rerolando até ela aparecer, porque a carta 0 sai do `axisRng`), `Nv 2/3`, custo 41 e
+      `buy:azul:41`; o trecho da maestria segue com o Vermelho (CRD-02, CRD-10)
 - [ ] Smokes `shop-axes`, `shop`, `shop-progress` e `world-run` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -1560,11 +1583,11 @@ painel aberto; `statsDirector.snapshotFields()` ganha `choice: this.s.ui.choiceP
 
 #### T60: Regra de preço
 
-**What**: `src/core/shopPricing.ts` com `inflate`, `newTechPrice`, `axisPointPrice`, `axisGate`, `techLevelGate` e
-`cardCost`; `PRICING` em `data/tuning.ts` (`inflationPerRound 0.06`, `newTech 20/26`, `axisPoint 12/4`,
-`axisGate [2, 2, 4, 4, 6]`).
+**What**: `src/core/shopPricing.ts` (nascido na T55 com o `axisPointPrice`) ganha `inflate`, `newTechPrice`,
+`axisGate`, `techLevelGate` e `cardCost`; `PRICING` em `data/tuning.ts` ganha `inflationPerRound 0.06`, `newTech
+20/26` e `axisGate [2, 2, 4, 4, 6]` (o `axisPoint 12/4` já veio na T55).
 **Where**: `src/core/shopPricing.ts`
-**Depends on**: None
+**Depends on**: T55 (fase 9)
 **Reuses**: `arsenalCost` e o preço de nível de hoje (`base + step × nível`)
 **Requirement**: PRC-01, PRC-02, PRC-03, PRC-04, PRC-06
 
@@ -1605,8 +1628,8 @@ painel aberto; `statsDirector.snapshotFields()` ganha `choice: this.s.ui.choiceP
 #### T62: Inflação no preço de toda carta
 
 **What**: `costOf` (`shop.ts:213-221`) vira `cardCost(entry, { modifiers, loadout, arsenal, round })`; o reroll
-(`SHOP.rerollBase`/`rerollStep`) fica sem inflação; os smokes que leem preço (`shop-progress`, `buy:vermelho:45`)
-passam a calcular pelo `inflate`.
+(`SHOP.rerollBase`/`rerollStep`) fica sem inflação; os smokes que leem preço (`shop-progress`, com o `buy:azul:41` da
+T57 virando `round(41 × 1,06)` = 43 na loja da r2) passam a calcular pelo `inflate`.
 **Where**: `src/core/shop.ts`
 **Depends on**: T60, T61
 **Reuses**: `cardCost`
@@ -1626,7 +1649,7 @@ passam a calcular pelo `inflate`.
 #### T63: Piso de 60% do custo
 
 **What**: `resolveTechStats` aplica `max(custo, ceil(0,6 × TECHNIQUES[id].cost))` depois do eixo, do nível e do
-`costMul` (conforme a decisão do usuário da tabela do topo).
+`costMul` (seção 2.1 do plano: os votos contam no piso; o Fluxo selado continua dando os 40 % no Nv 1).
 **Where**: `src/core/techStats.ts`
 **Depends on**: None
 **Reuses**: `TECHNIQUES`
@@ -1651,7 +1674,7 @@ passam a calcular pelo `inflate`.
 trava e a inflação da F30, toda carta suposta à venda.
 **Where**: `tests/core/buildCurve.test.ts`
 **Depends on**: T62, T63
-**Reuses**: `expectedIncome(round, WAVE, ECONOMY)` (`core/economy.ts:119`), `cardCost`
+**Reuses**: `expectedIncome(round, WAVE, ECONOMY)` (`core/economy.ts:10`), `cardCost`
 **Requirement**: ESC-03
 
 **Done when**:
@@ -1670,8 +1693,9 @@ trava e a inflação da F30, toda carta suposta à venda.
 
 #### T65: Dano do Kokusen com piso
 
-**What**: `kokusenDamage(D, meleeMul, hpMul)` = `max(round(KOKUSEN.mul × D × meleeMul), round(KOKUSEN.damage × hpMul))`
-em `core/kokusen.ts`; `KOKUSEN.mul 2.5` e `KOKUSEN.mulCap 3.4` em `data/techniques.ts:128` (`damage` 45 fica como piso).
+**What**: `kokusenDamage(D, { forca, meleeMul, hpMul })` = `max(round(KOKUSEN.mul × meleeDamageAtLevel(D, forca) ×
+meleeMul), round(KOKUSEN.damage × hpMul))` em `core/kokusen.ts`, com `D` o 2º impacto cru com o fator de nível (sem
+os multiplicadores de técnica); `KOKUSEN.mul 2.5` e `KOKUSEN.mulCap 3.4` em `data/techniques.ts:128` (`damage` 45 fica como piso).
 **Where**: `src/core/kokusen.ts`
 **Depends on**: None
 **Reuses**: `KOKUSEN`
@@ -1679,8 +1703,8 @@ em `core/kokusen.ts`; `KOKUSEN.mul 2.5` e `KOKUSEN.mulCap 3.4` em `data/techniqu
 
 **Done when**:
 
-- [ ] `tests/core/kokusenDamage.test.ts`: 45 na r1 sem build; piso × `hpMul` na r9 e na r11; `2,5 × D × meleeMul` acima
-      do piso; os dois lados do piso (edge case); `tests/data/techniques.test.ts` com `mul` 2,5 e `mulCap` 3,4 (ESC-02.6)
+- [ ] `tests/core/kokusenDamage.test.ts`: 45 na r1 sem build; 68 com Força 5 (`round(2,5 × 27)`); piso × `hpMul` na r9
+      e na r11; golpe × 2,5 × `meleeMul` acima do piso; os dois lados do piso (edge case); `tests/data/techniques.test.ts` com `mul` 2,5 e `mulCap` 3,4 (ESC-02.6)
 - [ ] Gate verde; contagem sem perda
 
 **Tests**: unit
@@ -1691,8 +1715,9 @@ em `core/kokusen.ts`; `KOKUSEN.mul 2.5` e `KOKUSEN.mulCap 3.4` em `data/techniqu
 
 #### T66: Kokusen no stat do Divergente
 
-**What**: `loadout.kokusenScale = { meleeMul: 1, hpMul: 1 }` (zerado no `reset`); `resolveTechStats` do Divergente
-preenche `kokusenDamage` com `kokusenDamage(stats.damage.second, kokusenScale.meleeMul, kokusenScale.hpMul)`.
+**What**: `loadout.kokusenScale = { forca: 0, meleeMul: 1, hpMul: 1 }` (zerado no `reset`); `resolveTechStats` do
+Divergente preenche `kokusenDamage` com `kokusenDamage(round(18 × LEVEL_FACTOR[nível − 1]), kokusenScale)`, nunca a
+partir do `stats.damage.second` (que já traz `damageMul` e `vowDamageMul`: o voto contaria duas vezes).
 **Where**: `src/core/techStats.ts`
 **Depends on**: T65
 **Reuses**: `kokusenDamage`
@@ -1700,7 +1725,8 @@ preenche `kokusenDamage` com `kokusenDamage(stats.damage.second, kokusenScale.me
 
 **Done when**:
 
-- [ ] `tests/core/techStats.test.ts`: Divergente com escala 1 dá 45; com o `meleeMul` da folha (traços `{heavy: true,
+- [ ] `tests/core/techStats.test.ts`: Divergente com escala 1 dá 45; com `damageMul` e `vowDamageMul` em 1,35 continua
+      45; com `forca: 5` dá 68; com o `meleeMul` da folha (traços `{heavy: true,
       light: false, counter: false, shadow: false}`, o Impacto já dentro, contado uma vez) sobe; as outras 4 com
       `kokusenDamage` 0
 - [ ] Gate verde; contagem sem perda
@@ -1713,18 +1739,19 @@ preenche `kokusenDamage` com `kokusenDamage(stats.damage.second, kokusenScale.me
 
 #### T67: Kokusen escalado no jogo e a dificuldade no snapshot
 
-**What**: o `StatsDirector.sync` grava `loadout.kokusenScale = { meleeMul: sheet.meleeMul(KOKUSEN_TRAITS), hpMul }`
-com o `hp` do `multipliersFor` da rodada; `divergent.ts:230`, `:239` trocam `KOKUSEN.damage` por
+**What**: o `StatsDirector.sync` grava `loadout.kokusenScale = { forca: modifiers.level('forca'), meleeMul:
+sheet.meleeMul(KOKUSEN_TRAITS), hpMul }`
+com o `hp` do `multipliersFor` da rodada; `divergent.ts:230`, `:238` trocam `KOKUSEN.damage` por
 `loadout.stats('divergente').kokusenDamage` (o `receiveKokusen` segue × `KOKUSEN.poiseMul`); `snapshotFields()` ganha
 `difficulty: { round, hpMul, damageMul }` (campo no `GameSnapshot`, literal do `debugApi.test.ts`).
 **Where**: `src/scenes/test/statsDirector.ts`
 **Depends on**: T66
-**Reuses**: `multipliersFor(round, DIFFICULTY)` (`core/difficulty.ts:168`)
+**Reuses**: `multipliersFor(round, DIFFICULTY)` (`core/difficulty.ts:41`)
 **Requirement**: ESC-02, ESC-05
 
 **Done when**:
 
-- [ ] Smoke `kokusen`: sem build na r1 o Kokusen tira 45 e o número é do tipo `kokusen`; com `mods=forca:5` sobe; no
+- [ ] Smoke `kokusen`: sem build na r1 o Kokusen tira 45 e o número é do tipo `kokusen`; com `mods=forca:5` tira 68; no
       chefe a postura cai dano × `poiseMul` (ESC-02.5)
 - [ ] Snapshot com `difficulty` na r1 = `{ round: 1, hpMul: 1, damageMul: 1 }`
 - [ ] Smokes `kokusen`, `boss`, `evolution` e `power` verdes; gate verde; contagem sem perda
@@ -1739,7 +1766,8 @@ com o `hp` do `multipliersFor` da rodada; `divergent.ts:230`, `:239` trocam `KOK
 
 **What**: `DIFFICULTY.hpPerRound 0.06` e `damagePerRound 0.05` (`tuning.ts:155`, `:157`), `core/difficulty.ts` sem
 mudança; `tests/data/tuning.test.ts` (SPN-13/14) e `tests/core/difficulty.test.ts` com os números novos citando a
-AD-025; `run-loop.smoke.mjs` (`:67-83`, `:113-192`) calcula por `Math.round(base × (1 + perRound × (r − 1)))`; nasce
+AD-025; `run-loop.smoke.mjs` (`:67-83`, `:113-192`) calcula HP e dano do comum por `Math.round(base × (1 + perRound × (r −
+1)))` e a vida do player depois do golpe da r2 como 100 menos esse dano (87, hoje 88, `:185`); nasce
 `scripts/smoke/scale.smoke.mjs`; `.specs/STATE.md` ganha a AD-025 e a AD-014 vira `superseded by AD-025`.
 **Where**: `src/data/tuning.ts`
 **Depends on**: T67
@@ -1832,16 +1860,16 @@ Fúria) contra o HP escalado.
 | CRP-15 | T40, T44 |
 | CRD-01 | T55, T56, T57 |
 | CRD-02 | T52, T53 |
-| CRD-03 | T53 |
-| CRD-04 | T52, T53 |
-| CRD-05 | T54, T55, T57 |
+| CRD-03 | T53, T56 |
+| CRD-04 | T52, T53, T55 |
+| CRD-05 | T54, T55, T56, T57 |
 | CRD-06 | T51 |
 | CRD-07 | T53 |
 | CRD-08 | T59 |
 | CRD-09 | T58, T59 |
-| CRD-10 | T54 |
+| CRD-10 | T54, T57 |
 | PRC-01 | T60 |
-| PRC-02 | T60 |
+| PRC-02 | T55, T60 |
 | PRC-03 | T60, T62 |
 | PRC-04 | T60, T61 |
 | PRC-05 | T63 |
@@ -1924,7 +1952,7 @@ serve), Fase 3 (5), Fase 4 (6), Fase 5 (7), Fase 6 (7), Fase 7 (7), Fase 8 (8), 
 | T43 | 1 diretor + o smoke que o prova | ⚠️ coeso |
 | T44, T45, T46, T47, T48, T49, T50 | 1 comportamento do Corpo | ✅ |
 | T52, T55, T61, T62 | 1 função / 1 classe | ✅ |
-| T56 | 4 cartas: constante + tecla | ⚠️ coeso: uma sem a outra deixa a loja incoerente |
+| T56 | 4 cartas: constante + tecla + dica | ⚠️ coeso: uma sem a outra deixa a loja incoerente |
 | T57, T59 | 1 fluxo do diretor | ✅ |
 | T58 | 1 vista | ✅ |
 | T64, T69 | 1 teste | ✅ |
@@ -1996,7 +2024,7 @@ serve), Fase 3 (5), Fase 4 (6), Fase 5 (7), Fase 6 (7), Fase 7 (7), Fase 8 (8), 
 | T57 | T56 | T56 → T57 | ✅ Match |
 | T58 | None | — | ✅ Match |
 | T59 | T57, T58 | T57 → T59, T58 → T59 | ✅ Match |
-| T60 | None | — | ✅ Match |
+| T60 | T55 (fase 9) | T55 → T60 | ✅ Match |
 | T61 | T60 | T60 → T61 | ✅ Match |
 | T62 | T60, T61 | T60 → T62, T61 → T62 | ✅ Match |
 | T63 | None | — | ✅ Match |
