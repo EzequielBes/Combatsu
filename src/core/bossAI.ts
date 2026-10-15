@@ -38,7 +38,8 @@ export type BossAIEvent =
   | { type: 'hitboxOn' }
   | { type: 'hitboxOff' }
   | { type: 'fire'; dir: 1 | -1; speed: number }
-  | { type: 'landed' }
+  /** Pouso de um salto: `final` é falso nos dois primeiros pousos do Salto Triplo e verdadeiro nos demais (CYC-08). */
+  | { type: 'landed'; final: boolean }
   /** A investida terminou batendo na parede: quem chama atordoa o chefe (BFX-02). */
   | { type: 'wallStun' }
   /**
@@ -80,6 +81,8 @@ export class BossAI {
   private leapFromX = 0;
   private leapToX = 0;
   private leapProgress = 0;
+  /** Salto atual do Salto Triplo, de 0 a `tripleLeap.hops - 1`; 0 num salto simples (CYC-07). */
+  private leapHop = 0;
 
   private volleyDir: 1 | -1 = 1;
   private volleyFired = 0;
@@ -169,6 +172,7 @@ export class BossAI {
         events.push({ type: 'hitboxOn' });
         return;
       case 'leap':
+      case 'tripleLeap':
         this._state = 'leap';
         this.leapFromX = obs.selfX;
         this.leapToX = obs.playerX;
@@ -224,18 +228,33 @@ export class BossAI {
     this.timer = this.t.doubleCharge.rewindupMs;
   }
 
-  /** Salto (BAT-02/10): `progress` de 0 a 1 em `leap.durationMs`; ao chegar a 1, emite `landed` uma vez. */
+  /**
+   * Salto (BAT-02/10): `progress` de 0 a 1 em `leap.durationMs`; ao chegar a 1, emite `landed` uma vez. No Salto
+   * Triplo (CYC-07/08), os pousos antes do último encadeiam o próximo salto depois de `tripleLeap.gapMs`, sem
+   * descanso; só o último pouso é `final` e leva à recuperação de pouso.
+   */
   private stepLeap(dtMs: number, obs: BossAIObservation, events: BossAIEvent[]): void {
     this.currentVx = 0;
     this.timer -= dtMs;
     this.leapProgress = Math.min(1, Math.max(0, (this.t.leap.durationMs - this.timer) / this.t.leap.durationMs));
-    if (this.timer <= 0) {
-      this.leapProgress = 1;
-      events.push({ type: 'landed' });
-      const overrun = -this.timer;
-      this.enterRestAfterAttack(this.t.leap.recoveryMs);
-      if (overrun > 0) this.step(overrun, obs, events);
-    }
+    if (this.timer > 0) return;
+    this.leapProgress = 1;
+    const overrun = -this.timer;
+    const chained = this.currentAttack === 'tripleLeap' && this.leapHop < this.t.tripleLeap.hops - 1;
+    events.push({ type: 'landed', final: !chained });
+    if (chained) this.enterLeapGap();
+    else this.enterRestAfterAttack(this.t.leap.recoveryMs);
+    if (overrun > 0) this.step(overrun, obs, events);
+  }
+
+  /**
+   * Pouso intermediário do Salto Triplo (CYC-07): parado por `tripleLeap.gapMs` fixos (sem `windupMult`). O
+   * `beginAttackBody` no fim dessa espera mira o próximo salto no X do player daquele frame.
+   */
+  private enterLeapGap(): void {
+    this.leapHop++;
+    this._state = 'windup';
+    this.timer = this.t.tripleLeap.gapMs;
   }
 
   /** Rajada (BAT-04, BTIER-05/07): `spec.volleyCount` disparos a `intervalMs` de intervalo, o primeiro imediato. */
@@ -263,6 +282,7 @@ export class BossAI {
     this.timer = Math.max(this.t.phases[this.currentPhase - 1].restMs, minRestMs);
     this.currentAttack = null;
     this.chargeLeg = 0;
+    this.leapHop = 0;
     this.cycleIndex = (this.cycleIndex + 1) % this.t.cycles[this.currentPhase].length;
   }
 
@@ -275,7 +295,7 @@ export class BossAI {
 
   /**
    * Sem `canAct`: fecha a hitbox da investida se estava aberta, zera `vx` e cancela o ataque (BAI-05). Zera também
-   * o encadeado: a troca de fase (rugido) no meio da Investida Dupla não deixa a 2ª investida pendente.
+   * o encadeado: a troca de fase (rugido) no meio da Investida Dupla ou do Salto Triplo não deixa o resto pendente.
    */
   private interrupt(): BossAIOutput {
     const events: BossAIEvent[] = [];
@@ -284,6 +304,7 @@ export class BossAI {
     this.timer = 0;
     this.currentAttack = null;
     this.chargeLeg = 0;
+    this.leapHop = 0;
     this.currentVx = 0;
     return { vx: 0, leap: null, state: 'rest', attack: null, events };
   }

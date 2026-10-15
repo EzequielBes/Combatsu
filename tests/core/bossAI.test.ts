@@ -263,7 +263,7 @@ describe('BossAI: salto (BAT-02, BAT-10)', () => {
     expect(before.events).toEqual([]);
 
     const landed = ai.update(1, { ...obs, playerX: 9999 }); // total 700 ms exatos; playerX aqui não importa mais
-    expect(landed.events).toEqual([{ type: 'landed' }]);
+    expect(landed.events).toEqual([{ type: 'landed', final: true }]);
     expect(landed.leap).toEqual({ fromX: 100, toX: 777, progress: 1 });
   });
 });

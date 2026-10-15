@@ -510,9 +510,9 @@ ganha `final`, verdadeiro só no 3º; descanso de pouso só depois dele.
 
 **Done when**:
 
-- [ ] Testes: 3 eventos `landed` com `final` só no último; 199/200 ms entre pousos; alvo atualizado a cada saída;
+- [x] Testes: 3 eventos `landed` com `final` só no último; 199/200 ms entre pousos; alvo atualizado a cada saída;
       descanso só depois do 3º; troca de fase no meio para o encadeado
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
