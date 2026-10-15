@@ -240,3 +240,19 @@ export function bossTuningFor(
 ): { ai: BossAITuning; brain: BossBrainTuning } {
   return { ai: { ...t, cycles: cyclesFor(spec.archetype, spec.affixes, t) }, brain: t };
 }
+
+/** Parte da tuning que a contagem de invocados usa. */
+export interface SummonTuning {
+  count: number;
+  firstBossCount: number;
+  maxAlive: number;
+}
+
+/**
+ * Quantos invocados o Invocador chama na troca de fase (INV-01, INV-02): 2 no chefe da r5 e 3 nos outros, sem passar
+ * de `maxAlive` invocados vivos ao mesmo tempo (com o teto cheio, nenhum).
+ */
+export function summonCount(round: number, alive: number, t: SummonTuning = BOSS_AFFIX.summon): number {
+  const wanted = round === 5 ? t.firstBossCount : t.count;
+  return Math.min(wanted, Math.max(0, t.maxAlive - alive));
+}

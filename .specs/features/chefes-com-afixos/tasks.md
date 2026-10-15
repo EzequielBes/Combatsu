@@ -615,8 +615,8 @@ janela de 20 s, mínimo 5, teto 2, esquece em 10 s e apaga os acertos da fonte e
 
 **Done when**:
 
-- [ ] Testes: vivos 0..4 na r5 e na r10 (2/2/2/1/0 e 3/3/2/1/0)
-- [ ] Gate verde
+- [x] Testes: vivos 0..4 na r5 e na r10 (2/2/2/1/0 e 3/3/2/1/0)
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

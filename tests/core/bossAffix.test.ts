@@ -7,6 +7,7 @@ import {
   cyclesFor,
   glyphKeys,
   outlineKeyAt,
+  summonCount,
   type BossLineup,
 } from '../../src/core/bossAffix';
 import { bossSpecFor } from '../../src/core/bossTier';
@@ -213,5 +214,21 @@ describe('Tuning derivada da escalação (AFX-01)', () => {
     const { ai } = bossTuningFor({ archetype: 'oni', affixes: [] });
     expect(ai.cycles).toEqual(cyclesFor('oni', []));
     expect(ai.cycles[2]).not.toEqual(BOSS.cycles[2]);
+  });
+});
+
+describe('Invocados por troca de fase com o teto de vivos (INV-01, INV-02)', () => {
+  const alive = [0, 1, 2, 3, 4];
+
+  it('r5: 2 invocados, cortados pelo teto de 4 vivos', () => {
+    expect(alive.map((n) => summonCount(5, n))).toEqual([2, 2, 2, 1, 0]);
+  });
+
+  it('r10: 3 invocados, cortados pelo teto de 4 vivos', () => {
+    expect(alive.map((n) => summonCount(10, n))).toEqual([3, 3, 2, 1, 0]);
+  });
+
+  it('vivos acima do teto não dão contagem negativa', () => {
+    expect(summonCount(15, 6)).toBe(0);
   });
 });
