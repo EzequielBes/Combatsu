@@ -26,6 +26,10 @@ export const TEX = {
   kokusenBurst: 'fx-kokusen-burst',
   /** Cães Divinos (6 quadros de 24x16, 1 texel = 1 px de mundo; o lobo é a mesma folha em 1,5); veja `art/hd/fx/dogsSheet`. */
   dogs: 'fx-dogs',
+  /** ドン de mangá do golpe forte no patamar 3 (quadro de 32x20, 1 texel = 1 px); veja `art/hd/onomatopoeia`. */
+  onomatopoeia: 'fx-onomatopoeia',
+  /** Rachadura no chão sob o alvo do ドン (2 quadros de 48x6, 1 texel = 1 px); veja `art/hd/onomatopoeia`. */
+  groundCrack: 'fx-ground-crack',
   /** Folha animada do inimigo `corcunda` (o corpo físico é um retângulo Matter, sem textura); veja `enemyTex`. */
   enemy: 'enemy',
   chair: 'chair',

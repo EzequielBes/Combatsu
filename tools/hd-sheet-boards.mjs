@@ -8,6 +8,7 @@
 //                       atrás do atual), para ver a continuidade de cada membro de um quadro para o outro;
 //   <name>-tela.png     como aparece na tela (câmera com zoom 2: 1 texel = 2 px): com --seq, uma fila de 5 em fases
 //                       diferentes para cada lado e a escala 1,5; sem --seq, os quadros; sobre o céu e sobre a pedra.
+// --bg <rrggbb> troca o fundo das células (arte escura sobre o chão claro).
 // Cada pedaço de --sheet é `<arquivo .ts>:<função que devolve a folha>`.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -36,6 +37,8 @@ const STONE = 0x4a5780;
 const WALL = 0x7584ad;
 const GHOST = 0xd9822b;
 const PAD = 8;
+/** Fundo das células (`--bg 7584ad`): claro para arte escura que vai sobre o chão, como a rachadura. */
+const CELL = flag('bg') ? parseInt(flag('bg'), 16) : DEEP;
 
 // ---------------------------------------------------------------- imagem e PNG
 
@@ -106,7 +109,7 @@ function blit(img, key, x0, y0, scale, { flip = false, solid } = {}) {
 
 /** Célula de quadro: o fundo, a linha do chão logo abaixo do quadro e o quadro. */
 function cell(img, x0, y0, w, h, draw) {
-  fill(img, x0, y0, w, h, DEEP);
+  fill(img, x0, y0, w, h, CELL);
   fill(img, x0, y0 + h, w, 2, STONE);
   draw();
 }
@@ -183,6 +186,6 @@ function onScreen(file, seq) {
 const prefix = flag('seq');
 const seq = prefix ? names.filter((k) => k.startsWith(prefix)) : undefined;
 console.log(`${names.length} quadros de ${FW}x${FH}, 6 por linha:\n  ${names.join('\n  ')}`);
-grid(`${name}.png`, names, 8, 6);
+grid(`${name}.png`, names, 8, Math.min(6, names.length));
 if (seq?.length) cycle(`${name}-ciclo.png`, seq);
 onScreen(`${name}-tela.png`, seq?.length ? seq : undefined);

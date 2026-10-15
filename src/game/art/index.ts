@@ -11,6 +11,7 @@ import { burstSheet } from './hd/atlas/burstSheet';
 import { dogsSheet } from './hd/fx/dogsSheet';
 import { sleeperSheet } from './hd/atlas/sleeperSheet';
 import { playerYutaAnimKey, yutaAnims, yutaSheet } from './hd/atlas/yutaSheet';
+import { groundCrackSheet, onomatopoeiaSheet } from './hd/onomatopoeia';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
 import { techIconSheet } from './hd/techIcons';
 import { HD_WEAPONS } from './hd/weapons';
@@ -154,6 +155,9 @@ function registerHdSheets(scene: Phaser.Scene): void {
   registerIndexedSheet(scene, TEX.techIconsSmall, techIconSheet(24));
   // Cães Divinos e o lobo da Totalidade (a mesma folha em escala 1,5). Ainda sem uso: o `DogsFx` liga na F41a.
   registerIndexedSheet(scene, TEX.dogs, dogsSheet());
+  // O ドン e a rachadura do golpe forte no patamar 3. Ainda sem uso: o `DonFx` liga na F41b.
+  registerIndexedSheet(scene, TEX.onomatopoeia, onomatopoeiaSheet());
+  registerIndexedSheet(scene, TEX.groundCrack, groundCrackSheet());
 }
 
 /**
