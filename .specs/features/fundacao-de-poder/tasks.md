@@ -549,11 +549,12 @@ lê `mods` uma vez e aplica `damage × mods.damage` e `force × mods.force`; o `
 
 **Done when**:
 
-- [ ] `power.smoke.mjs` (cenário 2) com 8 pontos: a `cotovelada` deixa `fx.trails[].widthPx` 4 px mais largo, o deslize
-      24 % maior que sem build e `hitstop.remainingMs` partindo de 120; `fx.lastImpact` com o tom do patamar 3
-- [ ] `oxlint`: complexidade do `onMeleeImpact` sem subir (16 hoje)
-- [ ] Smokes `fight`, `impact`, `feel`, `player-anim` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `power.smoke.mjs` (cenário 2) com 8 pontos: a `cotovelada` deixa `fx.trails[].widthPx` 4 px mais largo, o deslize
+      24 % maior que sem build e `hitstop.remainingMs` partindo de 120; `fx.lastImpact` com o tom do patamar 3 (campo novo
+      `tone`, a chave do corpo do tom: `'b'` no patamar 3, `'c'` sem build, `null` no leve)
+- [x] `oxlint`: complexidade do `onMeleeImpact` sem subir (16 hoje)
+- [x] Smokes `fight`, `impact`, `feel`, `player-anim` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full

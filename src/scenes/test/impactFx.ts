@@ -3,6 +3,9 @@ import { FINISHER_MOVE, MOVES } from '../../data/moves';
 import { type Hittable } from '../../game/bodyTags';
 import { Enemy } from '../../game/Enemy';
 import { impactTier, type ImpactTier } from '../../core/impactTier';
+import type { PowerLook } from '../../core/power';
+import type { ImpactLook } from '../../game/CursedFx';
+import { toneFromKeys } from '../../game/cursedImpact';
 import { CAMERA_FEEL } from '../../data/feel';
 import { strikeToWorld } from '../../core/strikePath';
 import { STRIKE_POINTS } from '../../game/art/sprites/strikePoints';
@@ -21,12 +24,25 @@ const HAND_TRAIL_SAMPLES = 8;
 /** Subida (px de mundo) a partir da qual o golpe levanta poeira nos pés: o corpo sai do chão junto com o punho. */
 const RISING_TRAIL_PX = 30;
 
+/** Escala e tom do impacto forte pela força do corpo (POW-08.3, POW-09); o patamar 0 é o desenho de sempre. */
+function lookOf(power: PowerLook): ImpactLook {
+  return { scale: power.impactScale, tone: toneFromKeys(power.tone) };
+}
+
+/** Chave do corpo do tom pintado no impacto, para o snapshot; o leve não usa o tom. */
+function toneKeyOf(tier: ImpactTier, power: PowerLook): string | null {
+  return tier === 'light' ? null : power.tone.body;
+}
+
 /** Efeitos do golpe do jogador: impacto amaldiçoado, reação da câmera, rastro, chama e rachadura. */
 export class ImpactFx {
   constructor(readonly s: TestScene) {}
 
-  /** Último impacto do golpe do jogador, para o snapshot (IMP-16). */
-  lastImpact: { tier: ImpactTier; impactFrame: boolean } | null = null;
+  /**
+   * Último impacto do golpe do jogador, para o snapshot (IMP-16); `tone` é a chave do corpo do tom do patamar de força
+   * (POW-09), `null` no leve, que não pinta com o tom.
+   */
+  lastImpact: { tier: ImpactTier; impactFrame: boolean; tone: string | null } | null = null;
 
   /** `swingId` do último golpe que recebeu o quadro de impacto (IMP-14, IMP-16). */
   framedSwingId: number | null = null;
@@ -48,16 +64,19 @@ export class ImpactFx {
 
   /**
    * Impacto do golpe corpo a corpo do jogador (IMP-06..16): nível, camadas do `CursedFx`, quadro de impacto só no
-   * decisivo sem Kokusen e uma vez por golpe (IMP-11, IMP-13, IMP-14), e a rachadura na queda da derrubada.
+   * decisivo sem Kokusen e uma vez por golpe (IMP-11, IMP-13, IMP-14), e a rachadura na queda da derrubada. A força do
+   * corpo (POW-08, POW-09) dá a escala e o tom do impacto e a distância do deslize.
    */
   onMeleeImpact(hit: Hit, point: Vec2, target?: Hittable): void {
     const brokePosture = target instanceof Enemy && target.broken && !this.brokenAtFrameStart.has(target.id);
     const tier = impactTier(hit, { brokePosture });
+    const power = this.s.stats.power;
     this.s.cursedFx.impact(
       tier,
       point,
       { x: hit.direction.x, y: hit.direction.y },
       hit.swingId ?? Math.floor(this.s.clockMs),
+      lookOf(power),
     );
     const kokusen = this.kokusenFrame === this.s.game.getFrame();
     const framed =
@@ -68,10 +87,11 @@ export class ImpactFx {
       tier,
       impactFrame:
         framed || (this.s.impactFrame.applied && hit.swingId !== undefined && hit.swingId === this.framedSwingId),
+      tone: toneKeyOf(tier, power),
     };
     this.s.snapshot.debugEvents.push(`impact:${tier}`);
     // RCT-01, RCT-02: o inimigo comum que fica de pé desliza para longe do jogador.
-    if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1);
+    if (target instanceof Enemy) target.slideBy(tier, hit.direction.x >= 0 ? 1 : -1, power.slideMul);
     if (hit.knockdown && target instanceof Enemy) this.crackWatch.set(target, this.s.clockMs);
     this.reactCamera(tier, hit, point, brokePosture);
   }
@@ -90,10 +110,13 @@ export class ImpactFx {
   /**
    * Câmera que reage ao impacto (CAM-01..05, CAM-07): tranco no forte, micro-zoom no decisivo (nunca durante o zoom
    * do finalizador) e câmera lenta na quebra de postura e no Contra; um novo gatilho reinicia sem empilhar (CAM-04).
+   * A força do corpo alonga o tranco e, do patamar 2 em diante, treme o mundo no forte e no decisivo (POW-08.4, .9).
    */
   reactCamera(tier: ImpactTier, hit: Hit, point: Vec2, brokePosture: boolean): void {
+    const power = this.s.stats.power;
     if (tier === 'decisive') this.s.focusLines.show(this.s.camera.worldToScreen(point));
-    if (tier === 'heavy') this.s.camera.cameraKick.kick(hit.direction.x, hit.direction.y);
+    if (tier === 'heavy') this.s.camera.cameraKick.kick(hit.direction.x, hit.direction.y, power.kickPx);
+    if (tier !== 'light' && power.shakes) this.s.fx.shake();
     const cam = this.s.cameras.main;
     // O finalizador é decisivo, mas o zoom dele manda (CAM-05); `finisherZoomMs` só liga depois do `onConnect`.
     if (
@@ -121,8 +144,9 @@ export class ImpactFx {
       this.stopFlame();
       this.s.world.sleeper.onPlayerStrike(this.s.player.sprite.x);
       const drawn = this.handTrail(name);
+      const extraPx = this.s.stats.power.trailBonusPx;
       if (drawn) {
-        this.s.cursedFx.trail(drawn, strength);
+        this.s.cursedFx.trail(drawn, strength, extraPx);
         const feet = this.s.player.renderPos;
         if (drawn[0].y - drawn[drawn.length - 1].y >= RISING_TRAIL_PX)
           this.s.fx.dust(feet.x, feet.y + SIZE.player.h / 2);
@@ -130,7 +154,7 @@ export class ImpactFx {
       }
       const from = this.strikeWorld(`${name}-wind`);
       const to = this.strikeWorld(`${name}-hit`);
-      if (from && to) this.s.cursedFx.trail([from, to], strength);
+      if (from && to) this.s.cursedFx.trail([from, to], strength, extraPx);
     } else {
       this.stopFlame();
     }

@@ -88,12 +88,15 @@ export class CombatLinks {
       this.s.fx.spark(point.x, point.y, kind);
       if (hit.strength === 'heavy') this.s.fx.shake();
     }
-    this.s.effects.hitstop.trigger(HITSTOP_MS[hit.strength]);
+    // POW-08.8: o acerto do jogador (soco ou objeto) congela mais com o patamar de força.
+    const mine = hit.ownerId === this.s.player.id;
+    const bonusMs = mine ? this.s.stats.power.hitstopBonusMs[hit.strength] : 0;
+    this.s.effects.hitstop.trigger(HITSTOP_MS[hit.strength] + bonusMs);
     this.s.effects.freeze();
     // CE-06/CE-08: só o golpe corpo a corpo do próprio player (soco do combo ou objeto na mão, `ownerId` é o
     // dele) aplicado a um alvo ganha energia; golpes que o player recebe têm outro dono, e dano de técnica (T22+)
     // não passa por este caminho.
-    if (hit.ownerId === this.s.player.id) {
+    if (mine) {
       this.s.energy.gain(CE.meleeGain);
       this.s.build.onMeleeHit();
       if (hit.moveName) this.s.player.hitLanded();
