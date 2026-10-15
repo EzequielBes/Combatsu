@@ -670,7 +670,7 @@ apaga sem abrir.
 
 ### T27: Portador de Dedo no motor
 
-**What**: `Boss` usa `spec.bodyScale` no corpo e na `spriteScale` (T3); getters `finger` e `spriteScale` no snapshot.
+**What**: `Boss` usa `spec.bodyScale` no corpo e na `spriteScale` (T3); getters `finger`, `spriteScale` (lida do sprite) e `bodySize` (lida dos limites do corpo) no snapshot.
 **Where**: `src/game/Boss.ts`
 **Depends on**: T26
 **Reuses**: medidas por instância (T3)
@@ -678,9 +678,9 @@ apaga sem abrir.
 
 **Done when**:
 
-- [ ] `boss-attacks` (3º cenário): `round=10&finger=1` → `spriteScale` 1,25, corpo 1,25 maior, vida `round(base × 1,3)`
+- [x] `boss-attacks` (3º cenário): `round=10&finger=1` → `spriteScale` 1,25, corpo 1,25 maior, vida `round(base × 1,3)`
       e rajada com um projétil a mais, lidos do jogo vivo (L-043)
-- [ ] `npm run smoke -- boss-attacks` verde; gate verde
+- [x] `npm run smoke -- boss-attacks` verde; gate verde
 
 **Tests**: smoke
 **Gate**: full

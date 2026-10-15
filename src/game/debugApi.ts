@@ -127,6 +127,10 @@ export interface GameSnapshot {
     affixes: BossAffixId[];
     /** Moldura Portador de Dedo (BLN-11). */
     finger: boolean;
+    /** Escala do sprite lida do próprio sprite: 1, ou 1,25 no Portador de Dedo (PDD-03). */
+    spriteScale: number;
+    /** Largura e altura do corpo Matter, lidas dos limites dele (PDD-03). */
+    body: { width: number; height: number };
     x: number;
     /** Centro do corpo; fica dentro da sala (0..544) durante toda a luta. */
     y: number;

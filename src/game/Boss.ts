@@ -54,12 +54,12 @@ export class Boss implements Hittable {
   private leapGroundY = 0;
   private landingHitboxTicks = 0;
   private _removed = false;
-  /** Largura do corpo físico desta instância (px): `BODY_W` hoje; o Portador a escala (PDD-03). */
+  /** Largura do corpo físico desta instância (px): `BODY_W × spec.bodyScale` (PDD-03). */
   private readonly w: number;
-  /** Altura do corpo físico desta instância (px): `BODY_H` hoje; o Portador a escala (PDD-03). */
+  /** Altura do corpo físico desta instância (px): `BODY_H × spec.bodyScale` (PDD-03). */
   private readonly h: number;
-  /** Escala do sprite (1 hoje): acompanha o corpo quando o Portador entrar (PDD-03). */
-  private readonly spriteScale: number;
+  /** Escala do sprite: a mesma do corpo (1, ou 1,25 no Portador de Dedo, PDD-03). */
+  private readonly scale: number;
   /** Eventos de vista dos ataques novos e dos afixos (AFX-01), ligado pelo `BossDirector.attach`. */
   fxSink?: BossFxSink;
   /** Troca de fase (o Invocador chama reforços nela), ligado pelo `BossDirector`. */
@@ -86,9 +86,10 @@ export class Boss implements Hittable {
     const tuning = bossTuningFor(spec);
     this.brain = new BossBrain(spec.maxHp, tuning.brain);
     this.ai = new BossAI(tuning.ai);
-    this.w = BODY_W;
-    this.h = BODY_H;
-    this.spriteScale = 1;
+    // PDD-03: o Portador de Dedo cresce no corpo e no sprite pela mesma escala.
+    this.scale = spec.bodyScale;
+    this.w = Math.round(BODY_W * this.scale);
+    this.h = Math.round(BODY_H * this.scale);
     this.body = scene.matter.add.rectangle(spawn.x, spawn.y, this.w, this.h, {
       friction: 0.8,
       frictionAir: 0.02,
@@ -157,6 +158,17 @@ export class Boss implements Hittable {
   /** Moldura Portador de Dedo (BLN-11, PDD-03..05). */
   get finger(): boolean {
     return this.spec.finger;
+  }
+
+  /** Escala do sprite como a tela a mostra (PDD-03), lida do próprio sprite para o snapshot de debug. */
+  get spriteScale(): number {
+    return Math.abs(this.view.scaleY);
+  }
+
+  /** Largura e altura do corpo Matter de fato (PDD-03), lidas dos limites do corpo para o snapshot de debug. */
+  get bodySize(): { width: number; height: number } {
+    const { min, max } = this.body.bounds;
+    return { width: max.x - min.x, height: max.y - min.y };
   }
 
   get removed(): boolean {
@@ -396,7 +408,7 @@ export class Boss implements Hittable {
     else name = 'idle';
     const draw = this.drawPos.get();
     this.view.setPosition(draw.x, draw.y + this.h / 2);
-    this.view.setScale(this.facing * this.spriteScale, this.spriteScale);
+    this.view.setScale(this.facing * this.scale, this.scale);
     this.view.anims.play(bossAnimKey(this.spec.archetype, name), true);
   }
 

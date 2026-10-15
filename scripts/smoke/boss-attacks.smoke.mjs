@@ -8,6 +8,9 @@
 // `charge, volley, threadRain`: o aviso põe 5 marcas no chão em X do player −96, −48, 0, +48, +96 (presas ao nível), e
 // na abertura cada marca vira um fio; o player parado sob o fio do meio perde o dano de projétil do tier uma vez só.
 // Capturas do aviso e dos fios abertos em `.fable-out/boss-attacks-threads-*.png`.
+// 3º cenário (PDD-03..05, L-043): `round=10&bossArch=oni&bossAffix=none`, primeiro com `finger=0` e depois com
+// `finger=1`. Lido do jogo vivo: o sprite do Portador está na escala 1,25 (lida do próprio sprite), o corpo Matter é
+// 1,25 maior (lido dos limites do corpo), a vida é `round(base × 1,3)` e a rajada da fase 3 solta um projétil a mais.
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +20,10 @@ const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.fabl
 const THREAD_OFFSETS = [-96, -48, 0, 48, 96];
 /** Metade da largura do fio (`BOSS.threadRain.width` = 12). */
 const THREAD_HALF_W = 6;
+/** Portador de Dedo (`BOSS_AFFIX.finger`): escala, multiplicador de vida e projéteis a mais (PDD-03..05). */
+const FINGER = { scale: 1.25, hpMult: 1.3, extraProjectiles: 1 };
+/** Rajada do Oni (`BOSS.volley.count`). */
+const ONI_VOLLEY = 3;
 
 export default async function ({ page, baseUrl, assert }) {
   mkdirSync(OUT_DIR, { recursive: true });
@@ -150,6 +157,53 @@ export default async function ({ page, baseUrl, assert }) {
   assert(missingAnims.length === 0, `animação inexistente pedida: ${JSON.stringify(missingAnims.slice(0, 3))}`);
 
   await threadRainScenario({ page, assert, openBoss, pushToPhase, tick, snap: () => s });
+  await fingerScenario({ assert, openBoss, pushToPhase, tick, snap: () => s });
+}
+
+/**
+ * 3º cenário: Portador de Dedo no motor (PDD-03..05). A medida de base vem do mesmo chefe sem a moldura, na mesma
+ * rodada; a rajada é a primeira da fase 3 do Oni (o ciclo dela abre com `volley`).
+ */
+async function fingerScenario({ assert, openBoss, pushToPhase, tick, snap }) {
+  await openBoss('round=10&bossArch=oni&bossAffix=none&finger=0');
+  const base = snap().boss;
+  assert(!base.finger && base.spriteScale === 1, `chefe comum fora da escala 1: ${JSON.stringify(base)}`);
+  await openBoss('round=10&bossArch=oni&bossAffix=none&finger=1');
+  let s = snap();
+  const b = s.boss;
+  assert(b.finger && b.archetype === 'oni', `o Portador deveria nascer: ${JSON.stringify(b)}`);
+  // PDD-03: sprite e corpo pela mesma escala.
+  assert(Math.abs(b.spriteScale - FINGER.scale) < 1e-6, `sprite do Portador fora de 1,25: ${b.spriteScale}`);
+  const near = (v, want) => Math.abs(v - want) <= 1;
+  assert(
+    near(b.body.width, base.body.width * FINGER.scale) && near(b.body.height, base.body.height * FINGER.scale),
+    `corpo do Portador deveria ser 1,25 maior: ${JSON.stringify({ base: base.body, finger: b.body })}`,
+  );
+  // PDD-04: vida × 1,3, arredondada.
+  assert(
+    b.maxHp === Math.round(base.maxHp * FINGER.hpMult) && b.hp === b.maxHp,
+    `vida do Portador deveria ser round(${base.maxHp} × 1,3): ${b.maxHp}`,
+  );
+  // PDD-05: a primeira rajada da fase 3 solta um projétil a mais que a do Oni.
+  await pushToPhase(3);
+  s = snap();
+  const seen = new Set(s.projectiles.map((p) => p.id));
+  for (let i = 0; i < 400 && s.boss && s.boss.attack !== 'volley'; i++) s = await tick();
+  assert(s.boss?.attack === 'volley', `a fase 3 do Portador deveria abrir com a rajada: ${JSON.stringify(s.boss)}`);
+  let fired = 0;
+  for (let i = 0; i < 400 && s.boss; i++) {
+    for (const p of s.projectiles) {
+      if (p.kind !== 'projectile' || seen.has(p.id)) continue;
+      seen.add(p.id);
+      fired++;
+    }
+    if (s.boss.attack !== 'volley') break;
+    s = await tick();
+  }
+  assert(
+    fired === ONI_VOLLEY + FINGER.extraProjectiles,
+    `a rajada do Portador deveria ter ${ONI_VOLLEY + FINGER.extraProjectiles} projéteis: ${fired}`,
+  );
 }
 
 /**

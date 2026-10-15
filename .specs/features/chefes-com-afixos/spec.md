@@ -277,9 +277,9 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | CYC-11 | P2: Ataques novos e ciclos por arquétipo | Tasks (T16, T25) | Pending |
 | PDD-01 | P2: Moldura Portador de Dedo | Tasks (T8) | Implemented |
 | PDD-02 | P2: Moldura Portador de Dedo | Tasks (T8) | Implemented |
-| PDD-03 | P2: Moldura Portador de Dedo | Tasks (T3, T10, T27) | Pending |
-| PDD-04 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Pending |
-| PDD-05 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Pending |
+| PDD-03 | P2: Moldura Portador de Dedo | Tasks (T3, T10, T27) | Implemented |
+| PDD-04 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Implemented |
+| PDD-05 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Implemented |
 | BRD-01 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Implemented |
 | BRD-02 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Implemented |
 | BRD-03 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T29) | Pending |

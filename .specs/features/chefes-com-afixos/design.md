@@ -199,7 +199,7 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 - `handleAIEvents` (257): eventos novos vão para `fxSink?.(ev, anchor)` com `{ x, groundY, chestY, facing }`;
   `onLand(final)` (310) só chama as ondas de choque no 3º pouso. `animate` usa `animBase` (363-364).
 - `update` (212): `this.adaptation?.update(dtMs)`. Campos públicos novos: `fxSink`, `onPhaseChanged` (atribuídos pelo
-  diretor, como `enemy.onEvent`), getters `affixes`, `finger`, `spriteScale`.
+  diretor, como `enemy.onEvent`), getters `affixes`, `finger`, `spriteScale` (lida do sprite) e `bodySize` (lida dos limites do corpo Matter, L-043).
 
 ### `game/boss/` (novo)
 

@@ -120,6 +120,8 @@ export class DebugSnapshot {
             name: this.s.boss.name,
             affixes: [...this.s.boss.affixes],
             finger: this.s.boss.finger,
+            spriteScale: this.s.boss.spriteScale,
+            body: this.s.boss.bodySize,
             x: this.s.boss.x,
             y: this.s.boss.y,
             view: this.s.boss.spritePos,
