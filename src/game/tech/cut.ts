@@ -1,4 +1,12 @@
-import { CutSchedule, cutAngles, type CutHit, type CutTarget } from '../../core/cut';
+import {
+  CutSchedule,
+  cutAngles,
+  cutConfig,
+  cutGeometry,
+  type CutGeometry,
+  type CutHit,
+  type CutTarget,
+} from '../../core/cut';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
 import type { Hit } from '../../core/hit';
@@ -11,6 +19,8 @@ import { techMarks, type CastRef, type TechContext, type TechTarget } from './sh
 export class CutTech {
   private readonly fx: CutFx;
   private schedule: CutSchedule | null = null;
+  /** Geometria da conjuração em curso (ângulos e linha da vista), fixa no `techCast:corte`. */
+  private geometry: CutGeometry | null = null;
   private cast: CastRef | null = null;
 
   constructor(
@@ -23,23 +33,26 @@ export class CutTech {
 
   update(dtMs: number, castEvents: readonly string[], enemies: readonly TechTarget[], boss: Boss | null): void {
     if (castEvents.includes('techCast:corte')) {
-      this.schedule = new CutSchedule();
+      const stats = this.ctx.loadout.stats('corte'); // TST-02: tempos, retângulo e dano fixos na conjuração
+      this.schedule = new CutSchedule(cutConfig(stats));
+      this.geometry = cutGeometry(stats);
       this.cast = this.ctx.currentCast();
     }
-    if (!this.schedule) return;
+    if (!this.schedule || !this.geometry) return;
     const due = this.schedule.update(dtMs);
     if (due.length === 0) return;
 
     const { player } = this.ctx;
     const facing = player.facing;
-    const angles = cutAngles(facing); // CUT-05
+    const geometry = this.geometry;
+    const angles = cutAngles(facing, geometry.anglesDeg); // CUT-05
     const center = { x: player.sprite.x, y: player.sprite.y };
     const targets: CutTarget[] = [
       ...enemies.map((e) => ({ id: e.id, body: cornerRect(e.hurtRect()) })),
       ...(boss ? [{ id: boss.id, body: cornerRect(boss.hurtRect()) }] : []),
     ];
     for (const i of due) {
-      this.fx.cut(center.x, center.y, facing, angles[i]); // CUT-04
+      this.fx.cut(center.x, center.y, facing, angles[i], geometry); // CUT-04
       this.ctx.emit('cut'); // CUT-08: um evento por corte
       for (const hit of this.schedule.targetsHit(center, facing, targets)) this.applyHit(hit, enemies, boss);
     }
@@ -49,7 +62,7 @@ export class CutTech {
   private applyHit(hit: CutHit, enemies: readonly TechTarget[], boss: Boss | null): void {
     const dealt: Hit = {
       ownerId: this.ctx.player.id,
-      damage: this.ctx.loadout.damage('corte', hit.damage), // CUT-03, TEC-06
+      damage: hit.damage, // CUT-03, TEC-06: já escalado no stat da conjuração
       strength: 'light',
       force: 0,
       direction: { x: 0, y: -1 },

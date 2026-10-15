@@ -382,8 +382,10 @@ tempos e dano); halo e distorção do `BlueOrb.ts:32-36` proporcionais ao `radiu
 
 #### T8: Desmantelar lê o stat
 
-**What**: `CutSchedule(config)` (`cut.ts:21-25`, `:72`); `game/tech/cut.ts:52` passa o stat; `CutFx.ts:7-13` mede a
-linha pelo stat.
+**What**: `CutSchedule(config: CutConfig)` (`cut.ts:21-25`, `:72`; `cutConfig(stats)` e `cutGeometry(stats)` na regra,
+com o dano já escalado; `cutAngles` ganha os ângulos opcionais e `cutLine(geometry)` dá o meio e o comprimento da
+linha); `game/tech/cut.ts` (`:26`, `:52`) guarda `loadout.stats('corte')` na conjuração (tempos, retângulo, ângulos
+e dano); `CutFx.cut(..., geometry)` (`:7-13`) mede a linha pelo `cutLine` do stat.
 **Where**: `src/core/cut.ts`
 **Depends on**: T4
 **Reuses**: `TECH_GEOMETRY.corte`
@@ -391,9 +393,13 @@ linha pelo stat.
 
 **Done when**:
 
-- [ ] Testes do Corte verdes, só a construção muda; `CutFx.ts` sem literal de comprimento
-- [ ] Smokes `tech` e `techniques` verdes e iguais
-- [ ] Gate verde; contagem sem perda
+- [x] Testes do Corte verdes, só a construção muda; `CutFx.ts` sem literal de comprimento. O `cut.test.ts` ganha o
+      `TST-02` (config do Nv 1, dano escalado = `Loadout.damage`, retângulo e tempos de um config diferente, ângulos
+      passados) e o `TST-03` (`cutLine` da tabela = 120/240, outra geometria, queda na tabela), e o `techStats.test.ts`
+      passa a provar que o Corte não tem mais cópia dos números (nem 60/180/240 na vista)
+- [x] Smokes `tech` e `techniques` verdes e iguais
+- [x] Gate verde; contagem sem perda (3862 + 8 = 3870). Como no Azul, o dano dos 3 cortes é o do stat da conjuração
+      (antes era escalado em cada golpe): multiplicadores que mudarem nos 120 ms da agenda não entram nesses cortes
 
 **Tests**: unit + smoke
 **Gate**: full

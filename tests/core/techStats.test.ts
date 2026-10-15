@@ -7,6 +7,7 @@ import { resolveTechStats } from '../../src/core/techStats';
 import { TECH_GEOMETRY, TECHNIQUES, type TechId } from '../../src/data/techniques';
 import blueOrbSrc from '../../src/core/blueOrb.ts?raw';
 import cutSrc from '../../src/core/cut.ts?raw';
+import cutTechSrc from '../../src/game/tech/cut.ts?raw';
 import redOrbSrc from '../../src/core/redOrb.ts?raw';
 import blueTechSrc from '../../src/game/tech/blue.ts?raw';
 import purpleTechSrc from '../../src/game/tech/purple.ts?raw';
@@ -140,15 +141,24 @@ describe('TST-01.6: TECH_GEOMETRY sem número novo (igual às constantes ainda n
     expect(blueFxSrc).not.toMatch(/\b(130|40|58)\b/);
   });
 
-  it('Corte: tempos, ângulos, retângulo de dano e linha da vista', () => {
-    const g = TECH_GEOMETRY.corte;
-    expect([...g.times]).toEqual(constOf(cutSrc, 'CUT_TIMES'));
-    expect([...g.anglesDeg]).toEqual(constOf(cutSrc, 'CUT_ANGLES_DEG'));
-    expect(g.nearPx).toBe(constOf(cutSrc, 'NEAR_PX'));
-    expect(g.farPx).toBe(constOf(cutSrc, 'FAR_PX'));
-    expect(g.heightPx).toBe(constOf(cutSrc, 'HEIGHT_PX'));
-    expect(g.lineLen).toBe(constOf(cutFxSrc, 'CUT_LINE_LEN'));
-    expect((g.nearPx + g.farPx) / 2).toBe(constOf(cutFxSrc, 'CUT_MID_PX'));
+  it('Corte (T8): os números de hoje, lidos pela regra, pelo adaptador e pela vista sem cópia', () => {
+    expect(TECH_GEOMETRY.corte).toEqual({
+      times: [0, 60, 120],
+      anglesDeg: [20, -25, 70],
+      nearPx: 60,
+      farPx: 180,
+      heightPx: 48,
+      lineLen: 240,
+    });
+    // TST-02/03: nenhuma cópia da geometria nem leitura de TECHNIQUES na regra, no adaptador ou na vista do Corte.
+    for (const name of ['CUT_TIMES', 'CUT_ANGLES_DEG', 'NEAR_PX', 'FAR_PX', 'HEIGHT_PX']) {
+      expect(cutSrc).not.toContain(`const ${name} =`);
+    }
+    expect(cutSrc).not.toContain('TECHNIQUES');
+    expect(cutTechSrc).not.toContain('loadout.damage(');
+    expect(cutTechSrc).toContain("this.ctx.loadout.stats('corte')");
+    for (const name of ['CUT_LINE_LEN', 'CUT_MID_PX']) expect(cutFxSrc).not.toContain(name);
+    expect(cutFxSrc).not.toMatch(/(60|180|240)/);
   });
 
   it('Roxo: PURPLE de core/purple.ts mais a altura e a força de game/tech/purple.ts', () => {

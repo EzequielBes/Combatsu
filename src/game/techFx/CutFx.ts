@@ -1,13 +1,11 @@
 import type Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
+import { cutLine, type CutGeometry } from '../../core/cut';
 import type { FxTimeline } from '../../core/fxTimeline';
 import { PALETTE } from '../art/palette';
 
 /** "linha branca fina... por 1 frame cheia e depois some em 120 ms" (Direção de arte, beat 3). */
 const CUT_LINE_MS = 120;
-const CUT_LINE_LEN = 240;
-/** Meio do retângulo de dano (60 a 180 px à frente, CUT-03): onde a linha do corte é centrada. */
-const CUT_MID_PX = 120;
 /** "duas metades deslocadas 2 px por 2 frames" (Direção de arte, beat 3; CUT-06: mínimo 33 ms = 2 frames). */
 const SPLIT_MS = 140;
 const SPLIT_OFFSET = 2;
@@ -24,13 +22,17 @@ export class CutFx {
     private readonly registry: FxRegistry,
   ) {}
 
-  /** CUT-04/05: uma linha no ângulo do corte, centrada na área de dano, à frente do player. */
-  cut(playerX: number, playerY: number, facing: 1 | -1, angleDeg: number): void {
+  /**
+   * CUT-04/05: uma linha no ângulo do corte, centrada no meio do retângulo de dano à frente do player, com o
+   * comprimento da `geometry` do stat da conjuração (TST-03).
+   */
+  cut(playerX: number, playerY: number, facing: 1 | -1, angleDeg: number, geometry: CutGeometry): void {
     this.fx.add('cut.line', CUT_LINE_MS, 'game');
     const rad = (angleDeg * Math.PI) / 180;
-    const originX = playerX + facing * CUT_MID_PX;
-    const dx = (Math.cos(rad) * CUT_LINE_LEN) / 2;
-    const dy = (Math.sin(rad) * CUT_LINE_LEN) / 2;
+    const { midPx, lenPx } = cutLine(geometry);
+    const originX = playerX + facing * midPx;
+    const dx = (Math.cos(rad) * lenPx) / 2;
+    const dy = (Math.sin(rad) * lenPx) / 2;
     const line = this.scene.add.graphics().setDepth(3);
     line.lineStyle(2, PALETTE.W, 1).lineBetween(originX - dx, playerY - dy, originX + dx, playerY + dy);
     this.registry.add(line);

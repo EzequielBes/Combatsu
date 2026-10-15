@@ -170,9 +170,9 @@ export const CAST_FX = {
 
 /**
  * Geometria das técnicas num lugar só (TST-01): os números que hoje são constantes soltas nos módulos de regra, nos
- * adaptadores de `game/tech/` e nas vistas de `game/techFx/`. O Vermelho e o Azul já leem daqui pelo `TechStats` (T6, T7); nas outras
- * os módulos ainda têm a cópia, e o `tests/core/techStats.test.ts` compara cada número com a constante do módulo até
- * eles passarem a ler daqui.
+ * adaptadores de `game/tech/` e nas vistas de `game/techFx/`. O Vermelho, o Azul e o Corte já leem daqui pelo
+ * `TechStats` (T6, T7, T8); no Roxo os módulos ainda têm a cópia, e o `tests/core/techStats.test.ts` compara cada
+ * número com a constante do módulo até eles passarem a ler daqui.
  */
 export const TECH_GEOMETRY = {
   vermelho: {

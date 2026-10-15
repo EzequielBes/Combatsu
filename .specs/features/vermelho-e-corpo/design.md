@@ -401,7 +401,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 | `src/core/cast.ts` | 26-37, 121-124 | `msFor(stats, state)` com `this.loadout.stats(id)` no lugar de `TECHNIQUES[id]` |
 | `src/core/redOrb.ts` | 6-9, 97-99, 127, 141 | `RedOrbConfig` no construtor |
 | `src/core/blueOrb.ts` | 4-9, 80, 87 | geometria e dano por parâmetro do construtor (`BlueOrbState(spawn, config)`, `BlueOrbConfig = { radius, pullSpeed, tickMs, lifeMs, tick, end }`); `blueOrbConfig(stats)` com os danos já escalados e `blueGeometry(stats)`; `blueOrbSpawn(..., geometry)` com a da tabela por padrão (T7) |
-| `src/core/cut.ts` | 21-25, 72 | idem (`CutSchedule(config)`) |
+| `src/core/cut.ts` | 21-25, 72 | idem (`CutSchedule(config)`, `CutConfig = { times, nearPx, farPx, heightPx, damage }`); `cutConfig(stats)` com o dano já escalado e `cutGeometry(stats)`; `cutAngles(facing, anglesDeg)` com os da tabela por padrão; `cutLine(geometry)` dá o meio (`(nearPx + farPx) / 2`) e o comprimento da linha (T8) |
 | `src/core/purple.ts` | 2-11 | `PURPLE` vira reexport de `TECH_GEOMETRY.roxo` (o teste `tests/data/purple.test.ts` lê `PURPLE`) |
 | `src/game/tech/red.ts` | 22-25, 91, 172-179, 200, 207, 217 | `const stats = loadout.stats('vermelho')` na soltura, guardado no `RedOrbEntry`; sensor, sprite, força e dano do `stats` |
 | `src/game/tech/blue.ts` | 12, 126 | idem |
@@ -411,7 +411,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 | `src/game/techFx/RedOrb.ts` | 101-111, 329-337 | `chargeUpdate(..., chargeMs)` já recebe o tempo; `detonate(point, facing, look: { radius, rings })` |
 | `src/game/techFx/redDetonation.ts` | 26-29, 54, 65, 89, 117 | `redDetonationBurst(scene, registry, point, look)`; raio da esfera = `look.radius`, anel = `shockRingRadius(look.radius)` (`radius × ringPx / radius` da tabela, em `techFx/redLook.ts` sem `phaser`, com o tipo `RedDetonationLook`); `TECH_GEOMETRY.vermelho.rings: 1` (T6); sprite pelo `orbTexels` no passo 2 |
 | `src/game/techFx/BlueOrb.ts` | 32-36 | halo e distorção proporcionais ao `radius` do stat (130 dá os números de hoje): `update(dtMs, x, y, radius)` e `blueOrbLook(radius)` de `techFx/blueLook.ts`, sem `phaser` (`radius × haloPx / radius` e `radius × distortPx / radius` da tabela; `TECH_GEOMETRY.azul.haloPx: 40`, `distortPx: 58`) (T7) |
-| `src/game/techFx/CutFx.ts` | 7-13 | comprimento e meio da linha pelo stat |
+| `src/game/techFx/CutFx.ts` | 7-13 | comprimento e meio da linha pelo stat: `cut(x, y, facing, angleDeg, geometry)` com o `cutLine(geometry)` (T8) |
 | `src/game/techFx/PurpleOrb.ts` | — | raio da esfera pelo stat |
 | `src/game/EnergyHud.ts` | 171, 176 | `def.cooldownMs` vira `loadout.stats(s.id).cooldownMs` |
 | `src/scenes/test/camera.ts` | 84 | `TECHNIQUES[...].chargeMs` vira `this.s.loadout.stats(id).chargeMs` |
