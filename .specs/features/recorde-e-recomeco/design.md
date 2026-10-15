@@ -185,7 +185,7 @@ Arquivos novos (estimativa, todos longe do teto): `core/save.ts` ~110, `core/rec
 
 ### game/RecordMarker.ts e game/RunSummaryPanel.ts
 
-- **Marker**: `Text` em (948, 44), origem (1, 0), `RUN_TEXT_STYLE`, na `uiLayer`. `set(view: MarkerView)`, `debug()`.
+- **Marker**: `Text` em (948, 44), origem (1, 0), `RUN_TEXT_STYLE`, na `uiLayer`. `set(view: MarkerView)`, `hide()`, `debug(): MarkerView` (o destaque lido da cor do `Text`).
 - **Panel**: fundo `PALETTE.k` a 0,85 e uma coluna de `Text` (13 px, 16 px por linha) centrada em (480, 270);
   `show(lines)`, `hide()`, `debug(): { visible; lines: string[]; bounds: { x; y; w; h } }`. Com a build cheia (2
   técnicas, 6 passivas, 5 votos, 7 fontes) são ~19 linhas (~320 px) e a linha mais longa (5 votos) ~95 caracteres

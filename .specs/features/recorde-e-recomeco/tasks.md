@@ -273,15 +273,15 @@ caracteres quebram em `, ` numa segunda linha.
 **Where**: `src/game/RecordMarker.ts`
 **Teste par**: `tests/game/recordViews.test.ts`
 **Depends on**: T4
-**Reuses**: `RUN_TEXT_STYLE`, `css` de `game/Hud.ts`; `PALETTE`; molde de `tests/game/vowPanel.test.ts`
+**Reuses**: `RUN_TEXT_STYLE` de `game/Hud.ts` (o `css` do Hud não é exportado: helper local, como no `VowPanel`); `PALETTE`; molde de `tests/game/vowPanel.test.ts`
 **Requirement**: RMK-02, RMK-07, RMK-08
 
 **Done when**:
 
-- [ ] `RECORD_COLORS` só com chaves da `PALETTE`
-- [ ] L-043: com um `Text` falso, `set({ highlight: true })` chama `setColor` com a cor de `A` e `highlight: false` com a de `w`; `visible` e texto repassados
-- [ ] `Hud.ts` intocado
-- [ ] Gate verde; contagem = anterior + novos
+- [x] `RECORD_COLORS` só com chaves da `PALETTE`
+- [x] L-043: com um `Text` falso, `set({ highlight: true })` chama `setColor` com a cor de `A` e `highlight: false` com a de `w`; `visible` e texto repassados
+- [x] `Hud.ts` intocado
+- [x] Gate verde; contagem = anterior + novos
 
 **Tests**: unit
 **Gate**: quick
