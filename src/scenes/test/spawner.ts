@@ -86,6 +86,14 @@ export class Spawner {
       armedRoll,
       variant,
     );
+    this.wireEnemy(enemy, spawnAt);
+  }
+
+  /**
+   * Liga o inimigo recém-criado à cena: eventos de debug, guarda, empurrão, parede, resíduo do deslize, faísca da
+   * defesa; entra na lista da cena com a fumaça de nascimento em `spawnAt`. Base comum da onda e dos invocados.
+   */
+  wireEnemy(enemy: Enemy, spawnAt: Vec2): void {
     enemy.onEvent = (ev) => this.s.snapshot.debugEvents.push(ev);
     enemy.guardRng = this.s.run.guardRng;
     // RDG-23: `?debug&shove=N` fixa a chance do empurrão; RDG-19: o empurrão chega ao jogador pelo `shoved`.

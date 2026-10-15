@@ -226,7 +226,7 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 
 ### `scenes/test/spawner.ts`
 
-- O bloco de ligação do inimigo (linhas 89-103) sai para `wireEnemy(enemy)`, usado por `spawnFromCommand` e pelo novo
+- O bloco de ligação do inimigo (linhas 89-103) sai para `wireEnemy(enemy, spawnAt)`, usado por `spawnFromCommand` e pelo novo
   `spawnSummoned(point, round, index, onGone)`: `scaleFor(round)`, sem `loot.rollArmed` (não consome o stream de
   loot, nunca armado), aparência `ENEMY_VARIANTS[index % 3]` (não consome `variantRng`), e o callback de morte só
   registra `summonDied:<id>` — sem `combat.onEnemyDied` (não chega à `Run`) e sem drop (INV-03, INV-05).

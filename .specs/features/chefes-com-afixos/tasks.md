@@ -163,7 +163,7 @@ o sprite passa a usar uma `spriteScale` (hoje 1) em `animate` (`setScale(facing 
 
 ### T4: `wireEnemy` no spawner
 
-**What**: O bloco de ligação do inimigo em `spawner.ts` (linhas 89-103) sai para `wireEnemy(enemy)`, usado por
+**What**: O bloco de ligação do inimigo em `spawner.ts` (linhas 89-103) sai para `wireEnemy(enemy, spawnAt)`, usado por
 `spawnFromCommand`; comportamento idêntico (base do `spawnSummoned` da T31).
 **Where**: `src/scenes/test/spawner.ts`
 **Depends on**: T3
@@ -172,8 +172,8 @@ o sprite passa a usar uma `spriteScale` (hoje 1) em `animate` (`setScale(facing 
 
 **Done when**:
 
-- [ ] `npm run smoke -- spawn-pressure` e `npm run smoke -- run-loop` verdes (iguais a antes)
-- [ ] Gate verde
+- [x] `npm run smoke -- spawn-pressure` e `npm run smoke -- run-loop` verdes (iguais a antes)
+- [x] Gate verde
 
 **Tests**: smoke
 **Gate**: full
