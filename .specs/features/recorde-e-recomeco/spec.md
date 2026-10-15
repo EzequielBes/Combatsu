@@ -203,60 +203,60 @@ morrer → o painel lista `golpe` e `Azul` com os valores do snapshot, e a soma 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| SAVE-01 | P1: Save e recorde | Tasks: T3, T7 | Pending |
-| SAVE-02 | P1: Save e recorde | Tasks: T3, T11 | Pending |
-| SAVE-03 | P1: Save e recorde | Tasks: T3 | Pending |
-| SAVE-04 | P1: Save e recorde | Tasks: T3, T10 | Pending |
-| SAVE-05 | P1: Save e recorde | Tasks: T3, T10 | Pending |
-| SAVE-06 | P1: Save e recorde | Tasks: T3 | Pending |
-| SAVE-07 | P1: Save e recorde | Tasks: T7, T10, T11 | Pending |
-| REC-01 | P1: Save e recorde | Tasks: T4, T11 | Pending |
-| REC-02 | P1: Save e recorde | Tasks: T4 | Pending |
-| REC-03 | P1: Save e recorde | Tasks: T4, T11 | Pending |
-| REC-04 | P1: Save e recorde | Tasks: T11 | Pending |
-| REC-05 | P1: Save e recorde | Tasks: T11 | Pending |
-| REC-06 | P1: Save e recorde | Tasks: T11 | Pending |
-| REC-07 | P1: Save e recorde | Tasks: T2, T10 | Pending |
-| REC-08 | P1: Save e recorde | Tasks: T10 | Pending |
-| REC-09 | P1: Save e recorde | Tasks: T4, T11 | Pending |
-| REC-10 | P1: Save e recorde | Tasks: T10, T11, T12 | Pending |
-| RMK-01 | P1: Marcador e banner do recorde | Tasks: T4, T12 | Pending |
-| RMK-02 | P1: Marcador e banner do recorde | Tasks: T8, T12 | Pending |
-| RMK-03 | P1: Marcador e banner do recorde | Tasks: T4, T12 | Pending |
-| RMK-04 | P1: Marcador e banner do recorde | Tasks: T4, T11, T12 | Pending |
-| RMK-05 | P1: Marcador e banner do recorde | Tasks: T4, T12 | Pending |
-| RMK-06 | P1: Marcador e banner do recorde | Tasks: T4, T12 | Pending |
-| RMK-07 | P1: Marcador e banner do recorde | Tasks: T4, T8, T12 | Pending |
-| RMK-08 | P1: Marcador e banner do recorde | Tasks: T8 | Pending |
-| RMK-09 | P1: Marcador e banner do recorde | Tasks: T12 | Pending |
-| END-01 | P1: Tela de fim de run | Tasks: T9, T11 | Pending |
-| END-02 | P1: Tela de fim de run | Tasks: T11 | Pending |
-| END-03 | P1: Tela de fim de run | Tasks: T6, T11 | Pending |
-| END-04 | P1: Tela de fim de run | Tasks: T6, T13 | Pending |
-| END-05 | P1: Tela de fim de run | Tasks: T6, T13 | Pending |
-| END-06 | P1: Tela de fim de run | Tasks: T6, T13 | Pending |
-| END-07 | P1: Tela de fim de run | Tasks: T6, T13 | Pending |
-| END-08 | P1: Tela de fim de run | Tasks: T5, T6, T13, T14 | Pending |
-| END-09 | P1: Tela de fim de run | Tasks: T6, T11 | Pending |
-| END-10 | P1: Tela de fim de run | Tasks: T4, T6, T11 | Pending |
-| END-11 | P1: Tela de fim de run | Tasks: T4, T6, T11 | Pending |
-| END-12 | P1: Tela de fim de run | Tasks: T6, T11 | Pending |
-| END-13 | P1: Tela de fim de run | Tasks: T11 | Pending |
-| END-14 | P1: Tela de fim de run | Tasks: T8, T9, T13 | Pending |
-| END-15 | P1: Tela de fim de run | Tasks: T11, T14 | Pending |
-| END-16 | P1: Tela de fim de run | Correção da revisão (painel em blocos) | Pending |
-| DMG-01 | P1: Tela de fim de run | Tasks: T13 | Pending |
-| DMG-02 | P1: Tela de fim de run | Tasks: T1, T14 | Pending |
-| DMG-03 | P1: Tela de fim de run | Tasks: T13 | Pending |
-| DMG-04 | P1: Tela de fim de run | Tasks: T13 | Pending |
-| DMG-05 | P1: Tela de fim de run | Tasks: T13 | Pending |
-| DMG-06 | P1: Tela de fim de run | Tasks: T5, T11 | Pending |
-| DMG-07 | P1: Tela de fim de run | Tasks: T1, T5, T14 | Pending |
-| RST-01 | P1: Recomeço rápido | Tasks: T11 | Pending |
-| RST-02 | P1: Recomeço rápido | Tasks: T11 | Pending |
-| RST-03 | P1: Recomeço rápido | Tasks: T11 | Pending |
-| RST-04 | P1: Recomeço rápido | Tasks: T11 | Pending |
-| RST-05 | P1: Recomeço rápido | Tasks: T12 | Pending |
+| SAVE-01 | P1: Save e recorde | Tasks: T3, T7 | Verified |
+| SAVE-02 | P1: Save e recorde | Tasks: T3, T11 | Verified |
+| SAVE-03 | P1: Save e recorde | Tasks: T3 | Verified |
+| SAVE-04 | P1: Save e recorde | Tasks: T3, T10 | Verified |
+| SAVE-05 | P1: Save e recorde | Tasks: T3, T10 | Verified |
+| SAVE-06 | P1: Save e recorde | Tasks: T3 | Verified |
+| SAVE-07 | P1: Save e recorde | Tasks: T7, T10, T11 | Verified |
+| REC-01 | P1: Save e recorde | Tasks: T4, T11 | Verified |
+| REC-02 | P1: Save e recorde | Tasks: T4 | Verified |
+| REC-03 | P1: Save e recorde | Tasks: T4, T11 | Verified |
+| REC-04 | P1: Save e recorde | Tasks: T11 | Verified |
+| REC-05 | P1: Save e recorde | Tasks: T11 | Verified |
+| REC-06 | P1: Save e recorde | Tasks: T11 | Verified |
+| REC-07 | P1: Save e recorde | Tasks: T2, T10 | Verified |
+| REC-08 | P1: Save e recorde | Tasks: T10 | Verified |
+| REC-09 | P1: Save e recorde | Tasks: T4, T11 | Verified |
+| REC-10 | P1: Save e recorde | Tasks: T10, T11, T12 | Verified |
+| RMK-01 | P1: Marcador e banner do recorde | Tasks: T4, T12 | Verified |
+| RMK-02 | P1: Marcador e banner do recorde | Tasks: T8, T12 | Verified |
+| RMK-03 | P1: Marcador e banner do recorde | Tasks: T4, T12 | Verified |
+| RMK-04 | P1: Marcador e banner do recorde | Tasks: T4, T11, T12 | Verified |
+| RMK-05 | P1: Marcador e banner do recorde | Tasks: T4, T12 | Verified |
+| RMK-06 | P1: Marcador e banner do recorde | Tasks: T4, T12 | Verified |
+| RMK-07 | P1: Marcador e banner do recorde | Tasks: T4, T8, T12 | Verified |
+| RMK-08 | P1: Marcador e banner do recorde | Tasks: T8 | Verified |
+| RMK-09 | P1: Marcador e banner do recorde | Tasks: T12 | Verified |
+| END-01 | P1: Tela de fim de run | Tasks: T9, T11 | Verified |
+| END-02 | P1: Tela de fim de run | Tasks: T11 | Verified |
+| END-03 | P1: Tela de fim de run | Tasks: T6, T11 | Verified |
+| END-04 | P1: Tela de fim de run | Tasks: T6, T13 | Verified |
+| END-05 | P1: Tela de fim de run | Tasks: T6, T13 | Verified |
+| END-06 | P1: Tela de fim de run | Tasks: T6, T13 | Verified |
+| END-07 | P1: Tela de fim de run | Tasks: T6, T13 | Verified |
+| END-08 | P1: Tela de fim de run | Tasks: T5, T6, T13, T14 | Verified |
+| END-09 | P1: Tela de fim de run | Tasks: T6, T11 | Verified |
+| END-10 | P1: Tela de fim de run | Tasks: T4, T6, T11 | Verified |
+| END-11 | P1: Tela de fim de run | Tasks: T4, T6, T11 | Verified |
+| END-12 | P1: Tela de fim de run | Tasks: T6, T11 | Verified |
+| END-13 | P1: Tela de fim de run | Tasks: T11 | Verified |
+| END-14 | P1: Tela de fim de run | Tasks: T8, T9, T13 | Verified |
+| END-15 | P1: Tela de fim de run | Tasks: T11, T14 | Verified |
+| END-16 | P1: Tela de fim de run | Correção da revisão (painel em blocos) | Verified |
+| DMG-01 | P1: Tela de fim de run | Tasks: T13 | Verified |
+| DMG-02 | P1: Tela de fim de run | Tasks: T1, T14 | Verified |
+| DMG-03 | P1: Tela de fim de run | Tasks: T13 | Verified |
+| DMG-04 | P1: Tela de fim de run | Tasks: T13 | Verified |
+| DMG-05 | P1: Tela de fim de run | Tasks: T13 | Verified |
+| DMG-06 | P1: Tela de fim de run | Tasks: T5, T11 | Verified |
+| DMG-07 | P1: Tela de fim de run | Tasks: T1, T5, T14 | Verified |
+| RST-01 | P1: Recomeço rápido | Tasks: T11 | Verified |
+| RST-02 | P1: Recomeço rápido | Tasks: T11 | Verified |
+| RST-03 | P1: Recomeço rápido | Tasks: T11 | Verified |
+| RST-04 | P1: Recomeço rápido | Tasks: T11 | Verified |
+| RST-05 | P1: Recomeço rápido | Tasks: T12 | Verified |
 
 **Coverage:** 54 total, 54 mapped (END-16 entrou na correção da revisão), 0 unmapped.
 

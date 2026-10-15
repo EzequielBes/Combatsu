@@ -480,6 +480,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: N4 tests/scenes/arena.test.ts:46 (tests edge case)
 - last seen: 2026-10-08T17:51:53Z
 
+### L-079 - Quando um efeito tem mais de um ponto de entrada no adaptador (o finalizador do chefe soma por fora do onConnect), o smoke exerce cada ponto: provar um caminho não prova o outro.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `scenes/test` · harmful: 0
+- features: recorde-e-recomeco
+- evidence: DMG-01 src/scenes/test/combat.ts:265 (scenes/test)
+- last seen: 2026-10-15T03:22:30Z
+
+### L-080 - AC de 'recusado ou bloqueado' pede um alvo que recusa de verdade (guarda forçada); golpe no ar sem alvo prova só a ausência de contato.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `scripts/smoke` · harmful: 0
+- features: recorde-e-recomeco
+- evidence: DMG-04 scripts/smoke/record-end.smoke.mjs:147 (scripts/smoke)
+- last seen: 2026-10-15T03:22:30Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

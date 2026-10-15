@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 79,
+  "next_id": 81,
   "lessons": [
     {
       "id": "L-001",
@@ -1420,6 +1420,42 @@
       ],
       "created": "2026-10-08T17:51:53Z",
       "last_seen": "2026-10-08T17:51:53Z"
+    },
+    {
+      "id": "L-079",
+      "key": "ac_gap::quando um efeito tem mais de um ponto de entrada no adaptador o finalizador do chefe soma por fora do onconnect o smoke exerce cada ponto provar um caminho nao prova o outro",
+      "text": "Quando um efeito tem mais de um ponto de entrada no adaptador (o finalizador do chefe soma por fora do onConnect), o smoke exerce cada ponto: provar um caminho não prova o outro.",
+      "signal": "ac_gap",
+      "scope": "scenes/test",
+      "status": "candidate",
+      "features": [
+        "recorde-e-recomeco"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DMG-01 src/scenes/test/combat.ts:265 (scenes/test)"
+      ],
+      "created": "2026-10-15T03:22:30Z",
+      "last_seen": "2026-10-15T03:22:30Z"
+    },
+    {
+      "id": "L-080",
+      "key": "ac_gap::ac de recusado ou bloqueado pede um alvo que recusa de verdade guarda forcada golpe no ar sem alvo prova so a ausencia de contato",
+      "text": "AC de 'recusado ou bloqueado' pede um alvo que recusa de verdade (guarda forçada); golpe no ar sem alvo prova só a ausência de contato.",
+      "signal": "ac_gap",
+      "scope": "scripts/smoke",
+      "status": "candidate",
+      "features": [
+        "recorde-e-recomeco"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DMG-04 scripts/smoke/record-end.smoke.mjs:147 (scripts/smoke)"
+      ],
+      "created": "2026-10-15T03:22:30Z",
+      "last_seen": "2026-10-15T03:22:30Z"
     }
   ]
 }
