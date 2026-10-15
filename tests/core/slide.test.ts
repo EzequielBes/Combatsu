@@ -73,3 +73,27 @@ describe('RCT-05/06: remainingPx e parada na parede', () => {
     expect(run(s, 180)).toBeCloseTo(-24, 10);
   });
 });
+
+describe('POW-08.6: escala da distância do deslize', () => {
+  it('sem escala anda a distância de hoje', () => {
+    const s = new Slide();
+    s.start('heavy', 1);
+    expect(run(s, 180)).toBeCloseTo(24, 10);
+  });
+  it('escala 1,24 anda 1,24 × a distância no mesmo tempo', () => {
+    const heavy = new Slide();
+    heavy.start('heavy', 1, 1.24);
+    expect(heavy.remainingPx).toBeCloseTo(24 * 1.24, 10);
+    expect(run(heavy, 180)).toBeCloseTo(24 * 1.24, 10);
+    expect(run(heavy, 100)).toBe(0);
+    const decisive = new Slide();
+    decisive.start('decisive', -1, 1.24);
+    expect(run(decisive, 240)).toBeCloseTo(-48 * 1.24, 10);
+  });
+  it('light continua parado com escala', () => {
+    const s = new Slide();
+    s.start('light', 1, 1.24);
+    expect(s.remainingPx).toBeNull();
+    expect(run(s, 300)).toBe(0);
+  });
+});

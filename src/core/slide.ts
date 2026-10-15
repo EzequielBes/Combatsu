@@ -12,12 +12,15 @@ export class Slide {
   private dir: -1 | 1 = 1;
   private running = false;
 
-  /** Começa (ou reinicia) o deslizamento; `dir` é o lado para onde o inimigo vai. */
-  start(tier: ImpactTier, dir: -1 | 1): void {
+  /**
+   * Começa (ou reinicia) o deslizamento; `dir` é o lado para onde o inimigo vai e `scale` multiplica a distância (a
+   * força do build, POW-08) sem mudar a duração.
+   */
+  start(tier: ImpactTier, dir: -1 | 1, scale = 1): void {
     this.running = false;
     if (tier === 'light') return;
     const cfg = SLIDE_FEEL[tier];
-    this.totalPx = cfg.px;
+    this.totalPx = cfg.px * scale;
     this.durationMs = cfg.ms;
     this.elapsed = 0;
     this.dir = dir;

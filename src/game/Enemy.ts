@@ -391,8 +391,8 @@ export class Enemy implements Hittable {
   }
 
   /** Começa o deslizamento depois de um golpe `heavy` ou `decisive` (RCT-01, RCT-02); ver `EnemyMovement.slideBy`. */
-  slideBy(tier: ImpactTier, dir: 1 | -1): void {
-    this.move.slideBy(tier, dir);
+  slideBy(tier: ImpactTier, dir: 1 | -1, scale = 1): void {
+    this.move.slideBy(tier, dir, scale);
   }
 
   /** Deslizamento em curso para o snapshot (RCT-06); `null` fora dele. */

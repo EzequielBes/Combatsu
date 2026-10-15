@@ -87,10 +87,10 @@ export class EnemyMovement {
    * Começa o deslizamento do inimigo que ficou de pé depois de um golpe `heavy` ou `decisive` (RCT-01, RCT-02).
    * Derrubado, morto ou comprometido (o golpe foi absorvido) não desliza; `dir` é o lado para onde ele vai.
    */
-  slideBy(tier: ImpactTier, dir: 1 | -1): void {
+  slideBy(tier: ImpactTier, dir: 1 | -1, scale = 1): void {
     const { brain, ai, s } = this.c;
     if (tier === 'light' || s.ragdoll || brain.isDead || ai.committed) return;
-    this.hitSlide.start(tier, dir);
+    this.hitSlide.start(tier, dir, scale);
     this.hitSlideDir = dir;
     this.slideResidueMs = 0;
     this.slideTouched.clear();

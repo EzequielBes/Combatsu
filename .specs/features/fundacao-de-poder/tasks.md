@@ -480,8 +480,8 @@ deslize, rastro, bônus de hitstop, tremor, tom por chaves, aura) e `atRest`; `P
 
 **Done when**:
 
-- [ ] `tests/core/slide.test.ts`: sem escala igual a hoje; escala 1,24 dá 1,24 × a distância
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `tests/core/slide.test.ts`: sem escala igual a hoje; escala 1,24 dá 1,24 × a distância
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick
