@@ -1,7 +1,14 @@
 import { parseModsParam } from '../../core/modsParam';
 import { powerLook, powerPoints, type PowerLook } from '../../core/power';
 import { acceptsPlayerInput } from '../../core/run';
-import { PROP_TRAITS, statSheet, traitsOf, type StatSheet, type StrikeMods } from '../../core/statSheet';
+import {
+  NO_STRIKE_MODS,
+  PROP_TRAITS,
+  statSheet,
+  traitsOf,
+  type StatSheet,
+  type StrikeMods,
+} from '../../core/statSheet';
 import { MOVES, type MoveDef } from '../../data/moves';
 import type { GameSnapshot } from '../../game/debugApi';
 import type { InputSnapshot } from '../../game/input';
@@ -98,7 +105,7 @@ export class StatsDirector {
    */
   strikeMods(move: MoveDef, peek = false): StrikeMods {
     const shadow = this.s.build.consumeShadow(peek);
-    return { damage: this.sheet().meleeMul(traitsOf(move, shadow)), force: this.power.forceMul };
+    return { ...NO_STRIKE_MODS, damage: this.sheet().meleeMul(traitsOf(move, shadow)), force: this.power.forceMul };
   }
 
   /** Input do quadro: neutro fora de `roundActive`/`intermission`/`traverse` (RUN-08) e durante a transição de área (TRV-10). */

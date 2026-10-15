@@ -1,4 +1,7 @@
 import type { MoveDef } from '../data/moves';
+import { BODY_AXES } from '../data/techAxes';
+import { axisAt } from './axisRule';
+import type { Hit } from './hit';
 import { relicStrikeMul, relicTechMul, type Arsenal } from './arsenal';
 import { strikeMultiplier, type Perks } from './build';
 import type { VowEffects } from './vows';
@@ -29,7 +32,22 @@ export const PROP_TRAITS: Readonly<MeleeTraits> = Object.freeze({
 export interface StrikeMods {
   damage: number;
   force: number;
+  /** Px a mais da hitbox para a frente (Alcance do Corpo, CRP-05). */
+  reachPx: number;
+  /** Multiplicador do `recovery` (Ritmo do Corpo, CRP-04). */
+  recoveryMul: number;
+  /** Marcas que o golpe leva no `Hit` (Peso e Cadência do Corpo, CRP-03, CRP-08, CRP-09). */
+  marks: Pick<Hit, 'knockdown' | 'wallStun' | 'decisive' | 'maxHpBonus'>;
 }
+
+/** O golpe do `MOVES` sem nada do Corpo: dano e força 1, hitbox e `recovery` iguais, nenhuma marca. */
+export const NO_STRIKE_MODS: Readonly<StrikeMods> = Object.freeze({
+  damage: 1,
+  force: 1,
+  reachPx: 0,
+  recoveryMul: 1,
+  marks: Object.freeze({}),
+});
 
 export interface StatInput {
   perks: Perks;
@@ -38,6 +56,8 @@ export interface StatInput {
   vows: VowEffects;
   /** Vida máxima pelos modificadores da loja, antes do voto. */
   baseMaxHp: number;
+  /** Pontos do Impacto do Corpo (0 a 3, CRP-02); ausente = 0. */
+  impact?: number;
 }
 
 /** Os números do combate que saem de passivas, arsenal e votos juntos (POW-01). */
@@ -67,9 +87,11 @@ function vowStrikeMul(vows: VowEffects, heavy: boolean): number {
  * POW-01: único lugar que combina passivas, arsenal e votos. A ordem dos fatores é a de antes (build × arsenal ×
  * votos), para o `Math.round` do dano cair no mesmo inteiro.
  */
-export function statSheet({ perks, arsenal, vows, baseMaxHp }: StatInput): StatSheet {
+export function statSheet({ perks, arsenal, vows, baseMaxHp, impact = 0 }: StatInput): StatSheet {
+  const impactMul = axisAt(BODY_AXES.impacto.impactMul, impact);
   return {
-    meleeMul: (t) => strikeMultiplier(perks, t) * relicStrikeMul(arsenal, t.light) * vowStrikeMul(vows, t.heavy),
+    meleeMul: (t) =>
+      strikeMultiplier(perks, t) * relicStrikeMul(arsenal, t.light) * vowStrikeMul(vows, t.heavy) * impactMul,
     relicTechMul: relicTechMul(arsenal),
     vowTechMul: vows.techDamageMul * vows.damageMul,
     costMul: vows.techCostMul,

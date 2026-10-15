@@ -1249,9 +1249,9 @@ condição da `:17` ganha o termo), abaixo do `forced` da F29.
 
 **Done when**:
 
-- [ ] `tests/core/statSheetImpact.test.ts` (novo): Impacto 0 deixa a grade da F29 igual (`toBe`); Impacto 1/2/3
+- [x] `tests/core/statSheetImpact.test.ts` (novo): Impacto 0 deixa a grade da F29 igual (`toBe`); Impacto 1/2/3
       multiplica o `meleeMul` por 1,1/1,2/1,3 em cima da Força; `StrikeMods` padrão não muda o golpe
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

@@ -1,5 +1,5 @@
 import type { Hit } from '../../core/hit';
-import type { StrikeMods } from '../../core/statSheet';
+import { NO_STRIKE_MODS, type StrikeMods } from '../../core/statSheet';
 import { type CounterKind } from '../../core/counter';
 import { StepIn } from '../../core/stepIn';
 import { shouldCancelJumpForUppercut } from '../../core/fightInput';
@@ -18,7 +18,7 @@ const STEP_PROBE_PX = 2;
 /** Id do golpe iniciado; cada golpe novo ganha o seguinte e o `Hit` leva o mesmo (IMP-14). */
 let nextSwingId = 1;
 /** Sem gancho ligado (cena sem diretor de números): o golpe sai com o dano e a força do `MOVES`. */
-const NO_MODS: StrikeMods = { damage: 1, force: 1 };
+const NO_MODS: StrikeMods = NO_STRIKE_MODS;
 
 /** Golpes do player: máquina de golpes, hitboxes, passo à frente, voadora e pedidos do passo de física. */
 export class PlayerStrikes {
