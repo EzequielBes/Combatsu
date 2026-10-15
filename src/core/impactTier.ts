@@ -7,12 +7,13 @@ export type ImpactTier = 'light' | 'heavy' | 'decisive';
 
 /**
  * Classifica o acerto (IMP-01..05): Contra, derrubada ou quebra de postura é `decisive`; senão a força do golpe
- * decide entre `heavy` e `light`.
+ * decide entre `heavy` e `light`. `ctx.forced` vence tudo (POW-11.4: o objeto do jogador bate sempre `heavy`).
  */
 export function impactTier(
   hit: Pick<Hit, 'strength' | 'counter' | 'knockdown'>,
-  ctx: { brokePosture: boolean },
+  ctx: { brokePosture: boolean; forced?: ImpactTier },
 ): ImpactTier {
+  if (ctx.forced !== undefined) return ctx.forced;
   if (hit.counter === true || hit.knockdown === true || ctx.brokePosture) return 'decisive';
   return hit.strength === 'heavy' ? 'heavy' : 'light';
 }

@@ -621,9 +621,9 @@ pontos de criação (`arsenalDirector.ts:52`, `drops.ts:91`, `world.ts:355`) pas
 
 **Done when**:
 
-- [ ] `tests/core/impactTier.test.ts`: `forced: 'heavy'` vence leve, quebra de postura e `knockdown`; sem `forced`
+- [x] `tests/core/impactTier.test.ts`: `forced: 'heavy'` vence leve, quebra de postura e `knockdown`; sem `forced`
       igual a hoje
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick

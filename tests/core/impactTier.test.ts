@@ -30,6 +30,27 @@ describe('impactTier', () => {
   });
 });
 
+describe('impactTier com faixa forçada (POW-11.4)', () => {
+  const HEAVY = { brokePosture: false, forced: 'heavy' as const };
+  it('forced heavy vence o golpe leve', () => {
+    expect(impactTier(hit({ strength: 'light' }), HEAVY)).toBe('heavy');
+  });
+  it('forced heavy vence a quebra de postura', () => {
+    expect(impactTier(hit(), { brokePosture: true, forced: 'heavy' })).toBe('heavy');
+  });
+  it('forced heavy vence o knockdown (objeto arremessado)', () => {
+    expect(impactTier(hit({ strength: 'heavy', knockdown: true }), HEAVY)).toBe('heavy');
+  });
+  it('forced heavy vence o Contra', () => {
+    expect(impactTier(hit({ counter: true }), HEAVY)).toBe('heavy');
+  });
+  it('forced undefined fica igual a hoje', () => {
+    expect(impactTier(hit({ knockdown: true }), { brokePosture: false, forced: undefined })).toBe('decisive');
+    expect(impactTier(hit({ strength: 'heavy' }), { brokePosture: false, forced: undefined })).toBe('heavy');
+    expect(impactTier(hit(), { brokePosture: false, forced: undefined })).toBe('light');
+  });
+});
+
 describe('impactSpikes', () => {
   it('IMP-10: mesma seed e contagem dão a mesma saída', () => {
     expect(impactSpikes(7, 6)).toEqual(impactSpikes(7, 6));
