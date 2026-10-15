@@ -409,6 +409,51 @@ async function wallStun(ctx) {
   );
 }
 
+/** Espera o slot do Vermelho sem recarga, com energia para ele e sem câmera lenta. */
+const readyToCast = (kit, what) =>
+  kit.waitFor((x) => x.tech.slots[0].cooldownMs === 0 && x.ce.cur >= 30 && x.timeScale === 1, 600, what);
+
+/** Solta o Vermelho e devolve se a soltura anunciou o Despertar (banner com o nome e `timeScale` 0,4). */
+async function castAnnounced(kit, ctx, s) {
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s));
+  ctx.assert(
+    s.events.slice(seen).includes('awakenCast:vermelho'),
+    `VRM-17: a soltura com o Despertar emite awakenCast`,
+  );
+  return { s, announced: s.hud.banner === 'Fliperama' && Math.abs(s.timeScale - 0.4) < 1e-9 };
+}
+
+/**
+ * VRM-17: a 1ª soltura da rodada com o Despertar mostra o banner com o nome dele e põe o tempo a 0,4; a 2ª da mesma
+ * rodada não; na rodada seguinte, a 1ª anuncia de novo.
+ */
+async function awakenAnnounce(ctx) {
+  const kit = makeKit(ctx);
+  const q = 'hd=1&area=modular&maxAlive=6&noshop=1&enemyGuard=0&tech=vermelho';
+  let s = await kit.boot(`${q}&axes=vermelho.potencia:2,vermelho.conjuracao:2&ramo=vermelho:a`);
+  let r = await castAnnounced(kit, ctx, s);
+  ctx.assert(
+    r.announced,
+    `VRM-17: a 1ª soltura anuncia: ${JSON.stringify({ banner: r.s.hud.banner, t: r.s.timeScale })}`,
+  );
+  r = await castAnnounced(kit, ctx, await readyToCast(kit, 'o Vermelho deveria recarregar'));
+  ctx.assert(!r.announced && r.s.timeScale === 1, `VRM-17: a 2ª soltura da rodada não anuncia: ${r.s.hud.banner}`);
+  // Limpa a rodada 1 (golpe forte de teste, tecla 2) e atravessa até a área seguinte segurando D.
+  for (let i = 0; i < 300 && !(s.run.state === 'roundActive' && s.run.round === 2); i++) {
+    if (s.run.state === 'roundActive' && s.enemies.some((e) => e.hp > 0)) await ctx.page.keyboard.press('Digit2');
+    if (s.run.state === 'traverse') await kit.down('KeyD');
+    s = await kit.snap(100);
+  }
+  await kit.up('KeyD');
+  ctx.assert(
+    s.run.round === 2 && s.run.state === 'roundActive',
+    `a rodada 2 deveria começar: ${JSON.stringify(s.run)}`,
+  );
+  r = await castAnnounced(kit, ctx, await readyToCast(kit, 'o Vermelho deveria recarregar na rodada 2'));
+  ctx.assert(r.announced, `VRM-17: a 1ª soltura da rodada 2 anuncia de novo: ${r.s.hud.banner} ${r.s.timeScale}`);
+}
+
 /** Cenários dos ramos e Despertares, na ordem das tarefas (T30 em diante). */
 export async function branchScenarios(ctx) {
   await ricochet(ctx);
@@ -421,4 +466,5 @@ export async function branchScenarios(ctx) {
   await fieldPush(ctx);
   await fieldWithBlue(ctx);
   await wallStun(ctx);
+  await awakenAnnounce(ctx);
 }

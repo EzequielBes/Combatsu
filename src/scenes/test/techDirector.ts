@@ -1,3 +1,4 @@
+import { AWAKENING_NAMES, BRANCH_AWAKENING } from '../../data/techAxes';
 import type { TechId } from '../../data/techniques';
 import type { TechTarget } from '../../game/TechRunner';
 import type { TestScene } from '../TestScene';
@@ -30,6 +31,10 @@ export class TechDirector {
       this.s.boss,
     );
     this.s.snapshot.debugEvents.push(...this.s.techRunner.events);
+    // VRM-17: a soltura do Vermelho com o Despertar anuncia o nome dele (banner e câmera lenta, uma vez por rodada).
+    const branch = this.s.loadout.axes.branch('vermelho');
+    if (branch && this.s.techRunner.events.includes('awakenCast:vermelho'))
+      this.s.build.axes.announce('vermelho', AWAKENING_NAMES[BRANCH_AWAKENING[branch]]);
     // TEC-10: a barra pisca quando uma conjuração é recusada por falta de energia.
     if (this.s.techCaster.events.includes('techDenied:energy')) this.s.energyHud.flashDenied();
     // TSH-10/11: níveis de `energia`/`fluxo` lidos na hora, sem cache (mesmo padrão de `modifiers.runSpeed`).

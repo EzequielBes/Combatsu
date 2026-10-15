@@ -1130,11 +1130,18 @@ nome)` mostra `hud.banner` e `slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs`: 1ª soltura da rodada com o Despertar mostra o banner e `timeScale` 0,4; a 2ª não; na
+- [x] `red-axes.smoke.mjs`: 1ª soltura da rodada com o Despertar mostra o banner e `timeScale` 0,4; a 2ª não; na
       rodada seguinte de novo
-- [ ] Fim do passo 2: smokes `red-axes`, `tech`, `techniques`, `red-anime`, `hud`, `power` e `fxlab` verdes;
+- [x] Fim do passo 2: smokes `red-axes`, `tech`, `techniques`, `red-anime`, `hud`, `power` e `fxlab` verdes;
       `TestScene.ts` intocado e `Hud.ts` sem mudança (SHX-02, SHX-03)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda (4073)
+
+Como ficou: o `red.ts` emite `awakenCast:vermelho` em toda soltura com o Despertar; o `TechDirector` chama o
+`axisDirector.announce('vermelho', AWAKENING_NAMES[...])` ao ver o evento (o `AxisBuild.announce` só deixa passar a 1ª
+da rodada) e o `runDirector` chama o `onRoundStart` no `roundStart`. O cenário limpa a rodada com a tecla 2 de debug e
+atravessa segurando D até a rodada 2 (o mundo modular entra em `traverse`). `git diff 75a22b4` de `TestScene.ts`,
+`Hud.ts`, `moves.ts` e `Player.ts`: vazio. Smokes do passo 2 também verdes: `evolution`, `record-end` e
+`boss-adaptativo`.
 
 **Tests**: smoke
 **Gate**: full

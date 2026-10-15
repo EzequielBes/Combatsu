@@ -110,6 +110,7 @@ export class RedTech {
     const red = redGeometry(stats);
     // VRM-06: com 3 pontos de Conjuração, uma pós-imagem do player no quadro da soltura.
     if (red.afterimage) player.fx.afterimage(player.view);
+    if (red.awakened) this.ctx.emit('awakenCast:vermelho'); // VRM-17: banner e câmera lenta, na 1ª soltura da rodada
     // RED-15, EDG-02: recuo só no chão, oposto ao facing; a repulsão acontece no chão ou no ar.
     const effects = redReleaseEffects({ grounded: player.grounded });
     if (effects.pushPx > 0) player.pushHorizontal(player.facing === 1 ? -1 : 1, effects.pushPx);

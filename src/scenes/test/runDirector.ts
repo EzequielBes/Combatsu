@@ -80,6 +80,8 @@ export class RunDirector {
         this.bosses.hideAnnounce();
         // ARS-09/10: a arma vinculada (ou a ferramenta comprada) entra na mão com a área já montada.
         this.s.arsenal.onRoundStart();
+        // VRM-17, CRP-13: o Despertar volta a ser anunciado na 1ª soltura da rodada.
+        this.s.build.axes.onRoundStart();
         break;
       case 'roundCleared':
         // Fica até o próximo `roundStart` (RHUD-03). Na rodada de chefe, ela entra depois de "Chefe derrotado!",
