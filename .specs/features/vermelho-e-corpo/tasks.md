@@ -663,9 +663,9 @@ escolhem por ele, empate pelo menor id); `RED_BRANCHES`, `RED_AWAKENINGS`
 
 **Done when**:
 
-- [ ] `tests/core/hitDealt.test.ts`: 4% no comum, 1% no chefe mesmo com `maxHpBonus` 0,04, sem bônus = `hit.damage`;
+- [x] `tests/core/hitDealt.test.ts`: 4% no comum, 1% no chefe mesmo com `maxHpBonus` 0,04, sem bônus = `hit.damage`;
       arredondamento nos dois lados
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

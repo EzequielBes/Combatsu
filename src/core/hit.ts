@@ -1,3 +1,5 @@
+import { maxHpBite, type BodyKind } from './axisRule';
+
 export type Strength = 'light' | 'heavy';
 
 /** Lado de quem ataca ou é atacado. */
@@ -50,6 +52,25 @@ export interface Hit {
   swingId?: number;
   /** Faixa do acerto de técnica (POW-03); ausente = acerto normal. */
   band?: HitBand;
+  /**
+   * Fração do HP máximo do alvo somada ao dano (VRM-13, CRP-09), com o valor do comum; o chefe fica no teto de 1%
+   * pelo `maxHpBite`. Ausente = só o `damage`.
+   */
+  maxHpBonus?: number;
+  /** Hitstop a mais neste acerto, em ms (Potência da detonação do Vermelho). */
+  hitstopBonusMs?: number;
+  /** O comum derrubado que bater na parede antes de cair fica atordoado (VRM-16). */
+  wallStun?: boolean;
+  /** Força a faixa `decisive` do impacto (Cadência, CRP-08). */
+  decisive?: boolean;
+}
+
+/**
+ * Dano que o alvo toma (VRM-13, VRM-15, CRP-09): o `damage` mais a fração do HP máximo do `maxHpBonus`, com o
+ * chefe no teto de 1% e arredondado como todo dano. Sem bônus, só o `damage`.
+ */
+export function dealtDamage(hit: Hit, maxHp: number, kind: BodyKind): number {
+  return hit.damage + maxHpBite(maxHp, kind, hit.maxHpBonus ?? 0);
 }
 
 /** O alvo conta a quem bateu que segurou o golpe com a guarda (TGT-06). */
