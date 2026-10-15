@@ -815,8 +815,8 @@ novo: `tests/scenes/axisDirector.test.ts` (cena falsa, `debugParam` simulado).
 
 **Done when**:
 
-- [ ] Smokes `tech`, `techniques`, `red-anime`, `kokusen` e `red-axes` verdes e iguais
-- [ ] `red.ts` abaixo de 130 linhas efetivas; gate verde; contagem sem perda
+- [x] Smokes `tech`, `techniques`, `red-anime`, `kokusen` e `red-axes` verdes e iguais
+- [x] `red.ts` abaixo de 130 linhas efetivas; gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full
