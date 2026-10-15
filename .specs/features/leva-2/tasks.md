@@ -60,7 +60,9 @@ os que usa.
 | --- | --- | --- |
 | T1 | Abordagem A do design e as premissas marcadas `n` na spec (Erupção agora, efeito das camadas da Pele, números do Osso, escudo do Sobrecarregado e as demais). Este arquivo segue as escolhas padrão; trocar alguma muda a tarefa que a cita | spec, "Assumptions"; design, "Abordagens" |
 | T1 | A renumeração TLV-01..21 e DUO-01..14 e o evento `evolve:<id>` (no lugar de `evolved:<id>`) aplicados na spec neste passo | design, correções 1 e 8 |
-| T17 | Calibração dos Cães: `caes [2, 3, 4, 5]` com `capBiteDamage 6` (1,20×, recomendada) ou `caes [2, 3, 4, 6]` com o bônus de 8 (1,33×) | design, "Calibração" e risco dos Cães |
+| T17 | Calibração dos Cães: `caes [2, 3, 4, 5]` com `capBiteDamage 6` (1,20×, recomendada) ou `caes [2, 3, 4, 6]` com o bônus de 8 (1,33×); e a prisão base de 200 ms (`prisao [200, 330, 470, 600]`) da revisão adversarial | design, "Calibração", risco dos Cães e correção 9 |
+| T67 | Soltura cheia do Osso (`k` = cargas + 1 no teto, patamar `decisive`) e Dragão Refletido só no teto (revisão adversarial) | spec, "Osso de Dragão: números" e "Dragão Refletido" |
+| T76 | Preço dos Dedos pelo plano (20, 22, 28) no lugar do preço das outras relíquias (20, 32, 44) | spec, "Dedos: loja e drop" |
 | T27 | Calibração da Erupção: `queima [0, 2, 3, 5]` (1,333×, folga pequena) | design, "Calibração" |
 | T40 | O consumo do `chestRng` muda com 4 Domínios (`int(4)`): o par sorteado por seed fixa muda no smoke `domain-veil` | design, risco do Baú do Véu |
 
@@ -766,14 +768,15 @@ widthPx)`, `burst(center, radiusPx)` (anel `T`), todos no `FxRegistry` com prazo
 
 #### T17: Calibração dos Cães
 
-**What**: `data/divineDogs.ts` com `caes: [2, 3, 4, 5]` e `capBiteDamage: 6` (correção 6 do design); o
-`tests/core/divineDogs.test.ts` (CAO-02) troca o número esperado, com o motivo no corpo do commit. A regra não muda.
+**What**: `data/divineDogs.ts` com `caes: [2, 3, 4, 5]`, `capBiteDamage: 6` (correção 6 do design) e `prisao: [200,
+330, 470, 600]` (correção 9: a mordida do Nv 1 já prende); o `tests/core/divineDogs.test.ts` (CAO-02 e a prisão base)
+troca o número esperado, com o motivo no corpo do commit. A regra não muda.
 **Where**: `src/data/divineDogs.ts`
 **Depends on**: None
 **Reuses**: tabela da calibração do design
 **Requirement**: TC2-13
 **Modelo**: Sonnet
-**Escopo**: 2 números de 1 tabela
+**Escopo**: 3 números de 1 tabela
 
 **Done when**:
 
@@ -848,8 +851,8 @@ LVX-05, LVX-07
 
 **Done when**:
 
-- [ ] `scripts/smoke/divine-dogs.smoke.mjs` (novo): custo 24 com `costMul` 1; mordida `micro` sem `hitstun`; os cães
-      somem antes de 1200 ms; `axes=caes.prisao:3` deixa `stunnedMs` perto de 600; `ramo=caes:b` dá um cão com `dir`
+- [ ] `scripts/smoke/divine-dogs.smoke.mjs` (novo): custo 24 com `costMul` 1; mordida `micro` sem `hitstun`, com
+      `stunnedMs` perto de 200 e o ataque em preparo perdido; os cães somem antes de 1200 ms; `axes=caes.prisao:3` deixa `stunnedMs` perto de 600; `ramo=caes:b` dá um cão com `dir`
       oposto; `techObjects` lista os cães vivos
 - [ ] Diff sem `TechRunner.ts`, `TechCaster.ts`, `techDirector.ts`; smokes `divine-dogs`, `tech`, `shop` verdes; gate
       verde
@@ -1072,7 +1075,8 @@ IC2-03, LVX-05, LVX-07
 
 **Done when**:
 
-- [ ] `scripts/smoke/eruption.smoke.mjs` (novo): custo 30; comum a 80 px toma 24 de técnica; `axes=erupcao.queima:3`
+- [ ] `scripts/smoke/eruption.smoke.mjs` (novo): custo 30; comum a 80 px toma 24 de técnica; comum colado (centro a
+      30 px) não toma; `axes=erupcao.queima:3`
       dá números `chip` por até 2 s; `ramo=erupcao:b` põe `lava` no `techObjects`; golpe tomado no sinal: nenhum pilar,
       nada cobrado; dois pilares no mesmo alvo dão dois acertos e a queima renova sem somar
 - [ ] Diff sem runner, caster e diretor; smokes `eruption`, `tech`, `shop` verdes; gate verde
@@ -1961,9 +1965,10 @@ como `'bound-finger'` no `HD_WEAPONS`, para a `BuildBar`.
 
 #### T67: Regra das cargas do Osso
 
-**What**: `class BoneCharges { gain(cap): boolean; release(): number; reset(); charges }` (teto 3/4/5, com 5 continua
-5); `releaseMul(charges, soltura) = 1 + charges × (0,25 + 0,25 × soltura)`; `estopimTargets(center, commons, radiusPx)`;
-`estopimDamage(charges, hpMul) = round(3 × charges × hpMul)`.
+**What**: `class BoneCharges { gain(cap): boolean; release(): number; reset(); charges; full(cap): boolean }` (teto
+3/4/5, com 5 continua 5); `releaseMul(charges, soltura, full) = 1 + k × (0,25 + 0,25 × soltura)` com `k = charges +
+(full ? 1 : 0)`; `estopimTargets(center, commons, radiusPx)`; `estopimDamage(charges, hpMul) = round(3 × charges ×
+hpMul)` (o Estopim conta as cargas gastas, sem o bônus).
 **Where**: `src/core/dragonBone.ts`
 **Depends on**: None
 **Reuses**: nada (regra pura)
@@ -1973,8 +1978,9 @@ como `'bound-finger'` no `HD_WEAPONS`, para a `BuildBar`.
 
 **Done when**:
 
-- [ ] `tests/core/dragonBone.test.ts` (novo): teto 3/4/5; 5 continua 5; `releaseMul` com 0 a 2 de soltura; Estopim 60
-      px dentro e 61 fora, 90/91 com 2 pontos
+- [ ] `tests/core/dragonBone.test.ts` (novo): teto 3/4/5; 5 continua 5; `releaseMul` com 0 a 2 de soltura; no teto 3,
+      2 cargas dão `k` 2 (1,5) e 3 cargas dão `k` 4 (2,0), `full` falso e verdadeiro nos dois lados; Estopim 60 px
+      dentro e 61 fora, 90/91 com 2 pontos
 - [ ] Gate verde
 
 **Tests**: unit
@@ -2019,8 +2025,9 @@ números do design. Sem entrada no catálogo (T73).
 
 **Done when**:
 
-- [ ] `tests/data/weaponBalance.test.ts` (F36): o Osso no WPN-05 com 1 carga a cada 5000 ms; se reprovar, a base
-      `perCharge` é recalibrada e registrada no design no mesmo commit
+- [ ] `tests/data/weaponBalance.test.ts` (F36): o Osso no WPN-05 com 1 carga a cada 5000 ms, gastando cada carga no
+      forte seguinte e juntando até o teto, com 0 a 2 pontos de Cargas; se reprovar, a base `perCharge` (ou o
+      `fullBonus`) é recalibrada e registrada no design no mesmo commit
 - [ ] Gate verde
 
 **Tests**: unit
@@ -2080,8 +2087,8 @@ marcador acima da cabeça alternando `a`/`b` a cada 150 ms pelo `WeaponFx.marker
 
 #### T72: Soltura e Estopim
 
-**What**: o `strikeMods` do Osso, num forte sem `counter` com carga, multiplica o dano pelo `releaseMul` e marca o
-`swingId`; o `onMeleeHit` desse `swingId` zera as cargas uma vez, toca `weapon-fx-osso-impact` e empurra
+**What**: o `strikeMods` do Osso, num forte sem `counter` com carga, multiplica o dano pelo `releaseMul` (cheia com as
+cargas no teto, com o patamar `decisive` forçado pela porta da F29) e marca o `swingId`; o `onMeleeHit` desse `swingId` zera as cargas uma vez, toca `weapon-fx-osso-impact` e empurra
 `ossoRelease:<n>`; golpe que erra não gasta; com Estopim, cada outro comum vivo no raio leva um normal de
 `estopimDamage` com `knockdown` (o chefe não).
 **Where**: `src/scenes/test/ossoCharges.ts`
@@ -2093,7 +2100,8 @@ marcador acima da cabeça alternando `a`/`b` a cada 150 ms pelo `WeaponFx.marker
 
 **Done when**:
 
-- [ ] `dragon-bone.smoke.mjs`: forte com 3 cargas tira `dano × 1,75`; golpe de 2 alvos zera uma vez; erro não gasta;
+- [ ] `dragon-bone.smoke.mjs`: forte com 2 cargas (teto 3) tira `dano × 1,5`; com 3 cargas (cheia) tira `dano × 2,0`
+      com patamar `decisive`; golpe de 2 alvos zera uma vez; erro não gasta;
       Estopim derruba o comum a 60 px e poupa o de 61; rastro e impacto do Osso no golpe do traço
 - [ ] Gate verde
 
@@ -2151,9 +2159,10 @@ marcador acima da cabeça alternando `a`/`b` a cada 150 ms pelo `WeaponFx.marker
 
 #### T75: Dragão Refletido no parry
 
-**What**: com a evolução, `parry`/`deflect` com carga contra atacante vivo (`combat.attackerOf`) → um acerto de
-`MOVES.contra.damage × meleeMul × releaseMul` com o Estopim, cargas a 0, `ossoRelease:<n>`; `evo=dragaoRefletido`
-pelo F37.
+**What**: com a evolução, `parry`/`deflect` com as cargas no teto contra atacante vivo (`combat.attackerOf`) → decide
+antes do `gain` (não soma carga) e solta um acerto de `MOVES.contra.damage × meleeMul × releaseMul(charges, soltura,
+true)` com o Estopim, cargas a 0, `ossoRelease:<n>`; abaixo do teto o parry só carrega; `evo=dragaoRefletido` pelo
+F37.
 **Where**: `src/scenes/test/ossoCharges.ts`
 **Depends on**: T74
 **Reuses**: soltura (T72)
@@ -2163,8 +2172,9 @@ pelo F37.
 
 **Done when**:
 
-- [ ] `dragon-bone.smoke.mjs` com `evo=dragaoRefletido`: parry com 2 cargas tira o dano do Contra × `releaseMul` do
-      atacante e zera; sem carga nada; atacante morto nada
+- [ ] `dragon-bone.smoke.mjs` com `evo=dragaoRefletido`: parry com 2 cargas (teto 3) só carrega (`ossoCharge:3`, sem
+      `ossoRelease`); o parry seguinte, no teto, tira do atacante o dano do Contra × 2,0 e zera, sem `ossoCharge` antes;
+      atacante morto nada
 - [ ] Conferência em HD da soltura no parry, dois lados; gate verde
 
 **Tests**: smoke
@@ -2179,7 +2189,7 @@ pelo F37.
 
 **What**: `RelicId` + `'dedos'` (`Dedos de Sukuna`, `lutador`); `ARSENAL_TUNING.relicMax = { dedos: 5 }` (as outras 3)
 e `shopMax = { dedos: 3 }`; `FINGERS = { dmgStep: 0.06, takenStep: 0.08, bearerBase: 0.10, bearerStep: 0.08, auraFrom:
-3 }`. Sem entrada no catálogo (T83).
+3, price: { first: 20, base: 16, step: 6 } }`. Sem entrada no catálogo (T83).
 **Where**: `src/data/arsenal.ts`
 **Depends on**: None
 **Reuses**: relíquias da F36
@@ -2189,7 +2199,8 @@ e `shopMax = { dedos: 3 }`; `FINGERS = { dmgStep: 0.06, takenStep: 0.08, bearerB
 
 **Done when**:
 
-- [ ] `tests/data/fingers.test.ts` (novo): números linha a linha, preços 20/32/44 e rodadas 2/4/6 da relíquia
+- [ ] `tests/data/fingers.test.ts` (novo): números linha a linha, preço 20 / `16 + 6 × dedos` e rodadas 2/4/6 da
+      relíquia
 - [ ] Gate verde
 
 **Tests**: unit
@@ -2200,8 +2211,9 @@ e `shopMax = { dedos: 3 }`; `FINGERS = { dmgStep: 0.06, takenStep: 0.08, bearerB
 
 #### T77: Nível máximo e oferta da relíquia
 
-**What**: `relicMaxLevel(id)`, `shopMaxLevel(id)`; `buy` sobe até o máximo (o debug chega a 5); `arsenalEligible`
-oferece só abaixo do `shopMaxLevel`; `raise('dedos')` para a vitória.
+**What**: `relicMaxLevel(id)`, `shopMaxLevel(id)`, `relicPrice(id, level)` (Dedos 20, 22, 28; as outras relíquias com
+o `relicCost` de hoje); `buy` sobe até o máximo (o debug chega a 5); `arsenalEligible` oferece só abaixo do
+`shopMaxLevel`; `raise('dedos')` para a vitória.
 **Where**: `src/core/arsenal.ts`
 **Depends on**: T76
 **Reuses**: `Arsenal` (F36)
@@ -2211,8 +2223,9 @@ oferece só abaixo do `shopMaxLevel`; `raise('dedos')` para a vitória.
 
 **Done when**:
 
-- [ ] `tests/core/arsenalFingers.test.ts` (novo; `arsenal.test.ts` não cresce): loja oferece Nv 1 a 3 e nunca 4; `buy`
-      × 6 para no 5; `raise` do 3 vai a 4 e do 5 fica
+- [ ] `tests/core/arsenalFingers.test.ts` (novo; `arsenal.test.ts` não cresce): loja oferece Nv 1 a 3 e nunca 4; preço
+      20, 22, 28 antes da inflação e Manoplas 20, 32, 44 sem mudança; `buy` × 6 para no 5; `raise` do 3 vai a 4 e do 5
+      fica
 - [ ] Gate verde
 
 **Tests**: unit
@@ -2235,6 +2248,8 @@ nenhum `damageMul` escrito à mão fora daqui.
 **Done when**:
 
 - [ ] `buildEffectsLeva2.test.ts`: Dedos 0 a 5 (1,30 e 1,40 no 5)
+- [ ] `tests/data/relicBalance.test.ts` (novo): no Nv 3, modelo misto Dedos 1,18 acima de Manoplas e Rosário (1,15);
+      só golpe abaixo das Manoplas (1,30); só técnica abaixo do Rosário (1,30)
 - [ ] Gate verde
 
 **Tests**: unit
@@ -2314,7 +2329,7 @@ mesmo `next()` com qualquer número; `BossLineups.lineupFor(rng, round, o, finge
 #### T82: Barra da build e carta dos Dedos
 
 **What**: `Relíquia Nv<n>` com 5 pontinhos para os Dedos e o ícone `bound-finger` na `BuildBar`; a carta lê `Dano +6%
-sofre +8%` do nível que dá.
+sofre +8%` do nível que dá e `Portador <p>%` (`0,10 + 0,08 × n` com o nível da carta: 18, 26, 34).
 **Where**: `src/core/buildTray.ts`
 **Depends on**: T77, T66
 **Reuses**: `buildTray`, `BuildBar` (F35)
@@ -2324,7 +2339,7 @@ sofre +8%` do nível que dá.
 
 **Done when**:
 
-- [ ] Teste do `buildTray`: 5 pontinhos e o texto por nível
+- [ ] Teste do `buildTray`: 5 pontinhos e o texto por nível, com a chance do Portador (18, 26, 34)
 - [ ] `sukuna-fingers.smoke.mjs`: quadro vivo `bound-finger` na `BuildBar`; gate verde
 
 **Tests**: unit + smoke
@@ -2347,8 +2362,8 @@ como fontes grátis, multiplicadores e chance do Portador de volta.
 **Done when**:
 
 - [ ] `shopLeva2.test.ts`: os Dedos depois do Osso no fim do catálogo, como relíquia
-- [ ] `sukuna-fingers.smoke.mjs`: a loja oferece Nv 1 a 3 e nunca 4; abandono com 5 devolve só o preço dos 3 comprados
-      e zera os multiplicadores
+- [ ] `sukuna-fingers.smoke.mjs`: a loja oferece Nv 1 a 3 e nunca 4, ao preço 20, 22, 28 com a inflação da rodada;
+      abandono com 5 devolve só o preço dos 3 comprados e zera os multiplicadores
 - [ ] Smoke `shop` verde; gate verde
 
 **Tests**: unit + smoke
@@ -2765,7 +2780,8 @@ solta `cut`. Trovão e Convergência já soltam desde a F41a.
 
 **What**: `mainDamage()` em todos os 12 módulos, do `TechStats` resolvido: Vermelho detonação, Azul implosão, Roxo dano,
 Divergente 2º impacto, Desmantelar corte, Boogie choque ou tontura, Ressonância detonação, Fala "Exploda" ou
-atordoamento, Convergência feixe na carga cheia, Cães mordida × cães, Trovão raio, Erupção pilar.
+atordoamento, Convergência feixe na carga cheia, Cães mordida × mordidas × cães, Trovão raio × cargas, Erupção pilar
+(o dano de uma conjuração num alvo só).
 **Where**: `src/game/tech/` (12 módulos)
 **Depends on**: T99
 **Reuses**: `Loadout.stats(id)` (F30)
@@ -2812,18 +2828,20 @@ atordoamento, Convergência feixe na carga cheia, Cães mordida × cães, Trovã
 #### T103: Regra dos Duos
 
 **What**: `duoOn(recipe, view)` (todas as peças no nível; ignora "feito"), `duoOffer(recipe, view, owned, cardIndex) =
-cardIndex ∈ {2, 3} && duoEligible(...) && !owned.has(id)` (correção 3 do design), `DUO_CAP = 4`.
+cardIndex ∈ {2, 3} && duoEligible(...) && !owned.has(id)` (correção 3 do design), `curseSlot(view)` (o 1º slot 0, 1,
+2 com técnica no Nv 3 ou mais, ou `null`; DUO-09, correção 9), `DUO_CAP = 4`.
 **Where**: `src/core/duos.ts`
 **Depends on**: T102
 **Reuses**: `duoEligible`, `halfHeld` (F37)
-**Requirement**: DUO-02, DUO-03, DUO-05
+**Requirement**: DUO-02, DUO-03, DUO-05, DUO-09
 **Modelo**: Sonnet
-**Escopo**: 2 funções + 1 constante
+**Escopo**: 3 funções + 1 constante
 
 **Done when**:
 
 - [ ] `tests/core/duos.test.ts` (novo): receita pronta; peça faltando desliga; curinga no Nv 3 e não no 2; posições 2 e
-      3 só; 3 Duos ainda oferece e 4 não
+      3 só; 3 Duos ainda oferece e 4 não; `curseSlot` com Nv 1 no slot 0 e Nv 3 no slot 1 dá 1, com Nv 2 em todos dá
+      `null`
 - [ ] Gate verde
 
 **Tests**: unit
@@ -2976,7 +2994,8 @@ max(24, propagação resolvida) })` uma vez por orbe; os dois módulos aceitam o
 #### T110: Contra Amaldiçoado
 
 **What**: `onPerfectCounter` (chamado pelo `talentDirector` no Contra perfeito da F35) com 6000 ms desde o último →
-`emitter.emit('contraAmaldicoado', ...)` `micro` de 50% do `mainDamage` do slot 0, ou o controle por 50% do tempo.
+`emitter.emit('contraAmaldicoado', ...)` `micro` de 50% do `mainDamage` do 1º slot (0, 1, 2) com técnica no Nv 3 ou
+mais (`curseSlot(view)`, T103), ou o controle por 50% do tempo.
 **Where**: `src/scenes/test/duoDirector.ts`
 **Depends on**: T107, T101, T106
 **Reuses**: `mainDamage` (T101), `TechEmitter`
@@ -2986,8 +3005,9 @@ max(24, propagação resolvida) })` uma vez por orbe; os dois módulos aceitam o
 
 **Done when**:
 
-- [ ] `duos.smoke.mjs`: Contra perfeito tira 50% do dano principal do slot 0 sem gastar energia; o 2º em menos de 6 s
-      não solta; com a Fala de controle no slot 0, atordoa por metade do tempo
+- [ ] `duos.smoke.mjs`: Contra perfeito tira 50% do dano principal da técnica Nv 3 sem gastar energia, também com uma
+      técnica Nv 1 no slot 0 e a Nv 3 no slot 1; o 2º em menos de 6 s não solta; com a Fala de controle como técnica
+      Nv 3, atordoa por metade do tempo
 - [ ] Gate verde
 
 **Tests**: smoke
@@ -2998,8 +3018,9 @@ max(24, propagação resolvida) })` uma vez por orbe; os dois módulos aceitam o
 
 #### T111: Sombra no Contra
 
-**What**: `onPerfectCounter` → `emitter.emit('sombra', ...)` `micro` da mordida resolvida dos Cães no mesmo alvo,
-desenhada pelo `DogsFx.shadowBite(target)`.
+**What**: `onPerfectCounter` → `emitter.emit('sombra', ...)` `micro` da mordida resolvida dos Cães no mesmo alvo com
+`stunMs = max(rootMs resolvido, 300)` (comum em `stunned`, chefe por `stun(ms × 0,25, 'tech')`), desenhada pelo
+`DogsFx.shadowBite(target)`.
 **Where**: `src/scenes/test/duoDirector.ts`
 **Depends on**: T110
 **Reuses**: `DogsFx` (T21)
@@ -3009,8 +3030,8 @@ desenhada pelo `DogsFx.shadowBite(target)`.
 
 **Done when**:
 
-- [ ] `duos.smoke.mjs`: Contra perfeito com Cães e Contra Afiado dá um `micro` da mordida e o quadro `bite` vivo na
-      sombra do alvo
+- [ ] `duos.smoke.mjs`: Contra perfeito com Cães e Contra Afiado dá um `micro` da mordida, `stunnedMs` perto de 300 no
+      comum (perto de 600 com `axes=caes.prisao:3`) e o quadro `bite` vivo na sombra do alvo
 - [ ] Conferência em HD; gate verde
 
 **Tests**: smoke
@@ -3117,8 +3138,9 @@ abandonado e empurra `combo:<recipe>` e `evolve:<id>` (F37).
 
 #### T116: Regra das marcas e das poças
 
-**What**: `class CutMarks` (até 8, a mais velha sai, 6000 ms, `marksHit(boxes, 32)`) e `class BloodPools` (32 px, 4000
-ms, vida guardada, `absorb(band)` → `{ mul: 1.5, heal: round(vida / 2) }`).
+**What**: `class CutMarks` (até 8, a mais velha sai, 6000 ms, `marksHit(boxes, 32)`) e `class BloodPools` (32 px sob
+os pés, 4000 ms, vida guardada, `absorb(originX, endX)` → a 1ª poça viva com o centro dentro de `[origem, fim]` →
+`{ mul: 1.5, heal: round(vida / 2) }`).
 **Where**: `src/core/evolutionsLeva2.ts`
 **Depends on**: None
 **Reuses**: nada (regras puras; ajuste 4 deste arquivo)
@@ -3129,7 +3151,8 @@ ms, vida guardada, `absorb(band)` → `{ mul: 1.5, heal: round(vida / 2) }`).
 **Done when**:
 
 - [ ] `tests/core/evolutionsLeva2.test.ts` (novo): a 9ª marca tira a mais velha; 6000 ms; caixa a 32 px acerta e a 33
-      não; poça com custo 0 dá +50% e cura 0, com custo 6 cura 3; poça absorvida some
+      não; poça com custo 0 dá +50% e cura 0, com custo 6 cura 3; poça absorvida some; feixe do mesmo lugar não bebe
+      para nenhum dos lados, feixe de 20 px atrás bebe; centro da poça na origem exata bebe (borda, L-010)
 - [ ] Gate verde
 
 **Tests**: unit
@@ -3164,8 +3187,8 @@ patamar `decisive` forçado; `objects()` com `cutMark`; vista no chão `k`/`W`.
 
 #### T118: Sangue Eterno
 
-**What**: com o combo, cada feixe deixa poça na origem com a vida paga; o feixe seguinte cuja faixa cruza a poça a
-absorve: dano × 1,5 e cura; `objects()` com `blood`; vista no chão `r`/`t`.
+**What**: com o combo, cada feixe deixa poça sob os pés (centro no x do centro da `hurtRect`) com a vida paga; o feixe
+seguinte cujo trecho `[origem, fim]` contém o centro da poça a absorve: dano × 1,5 e cura; `objects()` com `blood`; vista no chão `r`/`t`.
 **Where**: `src/game/tech/convergenceBlood.ts`
 **Depends on**: T115, T116
 **Reuses**: `BloodPools` (T116), módulo da Convergência (T14)
@@ -3175,8 +3198,8 @@ absorve: dano × 1,5 e cura; `objects()` com `blood`; vista no chão `r`/`t`.
 
 **Done when**:
 
-- [ ] `duos.smoke.mjs` com `evo=sangueEterno`: poça no `techObjects`; o 2º feixe sobre ela tira 1,5× e cura
-      `round(vida / 2)`
+- [ ] `duos.smoke.mjs` com `evo=sangueEterno`: poça no `techObjects`; o 2º feixe do mesmo lugar não bebe; recuar 20 px
+      e atirar por cima dela tira 1,5× e cura `round(vida / 2)`
 - [ ] Gate verde
 
 **Tests**: smoke
@@ -3402,7 +3425,7 @@ os sistemas; seção F41e e veredito final no `validation.md` (`validate_state.p
 | DUO-06 | T100, T108 |
 | DUO-07 | T109 |
 | DUO-08 | T99, T101 |
-| DUO-09 | T106, T110 |
+| DUO-09 | T103, T106, T110 |
 | DUO-10 | T106, T111 |
 | DUO-11 | T112 |
 | DUO-12 | T100, T106, T113 |

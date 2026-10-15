@@ -149,13 +149,13 @@ emissões por segundo por fonte no `TechEmitter`, e a regra do maior crítico (T
 | Origem do feixe | O centro da caixa do player (`hurtRect`) mais meia largura da caixa na direção do `facing`, na altura do centro | Molde da origem da F34 (centro da caixa), deslocado para o feixe não nascer dentro do player | n |
 | Alvos na tela | Toda técnica nova, o raio dos Duos e o Vazio recebem só os alvos vivos com o centro dentro da vista da câmera | Contrato do `techKit.ts` (achado 3 da revisão da leva 2): o alcance travado em 320 px vale também para dobras, saltos e estilhaços | y (regra pura) |
 | Custo em vida da Convergência | Igual ao da Fala (FLA-04): sai na soltura, não é "levar dano", sem reação, sem número vermelho, sem zerar Fúria, Cadência nem o combo; o portão nega o aperto com `techDenied:hp` se `vida − custo < 1`; com custo 0 nunca nega | A regra pura recusa na soltura (CNV-04); negar no aperto evita a carga à toa | n |
-| Prisão dos Cães | A prisão é o estado `stunned` do comum (BWG-04) pelo tempo da prisão e, no chefe, `bossBrain.stun(ms, 'tech')` com 25% do tempo | A regra pura fixou "molde do atordoamento da Fala"; um estado novo de "preso que ainda ataca" cresceria o `enemyBrain` sem pedido do plano | n |
+| Prisão dos Cães | A prisão é o estado `stunned` do comum (BWG-04) pelo tempo da prisão e, no chefe, `bossBrain.stun(ms, 'tech')` com 25% do tempo; o eixo Prisão passa de `[0, 200, 400, 600]` a `[200, 330, 470, 600]` (só o dado, a regra não muda) | A regra pura fixou "molde do atordoamento da Fala"; um estado novo de "preso que ainda ataca" cresceria o `enemyBrain` sem pedido do plano. Revisão: com prisão 0 no Nv 1, os Cães eram 2 mordidas micro de 6 (12 de dano por 24 de energia, metade do que qualquer outra técnica rende) que não param nem empurram ninguém, e a técnica não tinha leitura própria antes do 1º ponto; com 200 ms a mordida já corta o ataque em preparo do 1º alvo (BWG-04), e os Cães viram "o corte de ataque à distância". Prisão é utilidade e fica fora do teste de eixo dominante | n |
 | Faixa dos acertos que derrubam | O raio vertical com Raio Celeste e o meteoro (com e sem a Chuva) saem sem faixa (normais), com `knockdown` só no comum; o raio vertical sem Raio Celeste é `micro` | A faixa `micro` não interrompe nem derruba (POW-03); a regra pura manda derrubar | n |
 | Raio do Trovão e o `TechEmitter` | O raio do Trovão é efeito da conjuração (pago com energia), não passa pelo `TechEmitter` e conta na maestria da conjuração; só os raios dos Duos (Impacto Elétrico) passam pelo emissor | Molde da detonação da Ressonância (efeito adiado de uma conjuração do jogador) | n |
 | Golpe do moveset para o Trovão | Todo golpe do moveset que acerta, inclusive Contra, finalizador e golpe com arma imbuída; nunca objeto do mundo, técnica nem emissão | "Os próximos 3 golpes do moveset" | n |
 | Santuário e carga do Domínio | Cada conjuração das 4 solta no máximo 1 gatilho do Santuário e dá +1 de carga do Domínio no 1º acerto não chip; o raio do Trovão nunca solta gatilho (o golpe que o carregou já soltou) | SAN-02 e DOM-02 | n |
 | Teste de eixo dominante | Modelos: Convergência `dano × min(perfuracao, 3)` por conjuração (3 alvos em fila); Cães `caes × mordidas × mordida` (um alvo); Trovão `cargas × min(1 + saltos, 3) × dano` (grupo de 3); Erupção `min(erupcoes, 3) × dano + 6 × queima` (grupo de 3 em fila a 56 px); período `max(recarga + sinal + carga, custo ÷ 8 energia/s)`; o mediano é o dos eixos que mudam o dano sustentado sozinhos no modelo; Vida, Prisão, Atordoa, Altura e Largura ficam fora (utilidade) | Molde do JJK-12; eixos de utilidade valem 0 no modelo | n |
-| Calibração | Se um teste de eixo dominante ou de balanço falhar, o número do dado muda no passo da técnica e o design registra o valor novo e o motivo | "Os números das tabelas de eixo são ponto de partida" (topo do plano) | n |
+| Calibração | Se um teste de eixo dominante ou de balanço falhar, o número do dado muda no passo da técnica e o design registra o valor novo e o motivo. Já calculadas no design ("Calibração do eixo dominante"): Cães `caes [2, 3, 4, 5]` e `capBiteDamage 6` (Mordidas no 3 dava 2,0× a mediana); Erupção `queima [0, 2, 3, 5]` (Erupções no 3 dava 1,5×) | "Os números das tabelas de eixo são ponto de partida" (topo do plano) | n |
 | Ícones novos | `convergencia`, `caes`, `trovao`, `erupcao` e `vazio` entram no `TECH_ICON_IDS`, desenhados em código em `src/game/art/hd/icons/leva2Art.ts` no molde de `jjkArt.ts`, nos dois tamanhos (48 e 24), com placa e paleta das receitas de hoje, e passam pela prancha `tools/icon-boards.mjs` antes do commit | Molde do branch `feat/icones-hd-tecnicas`; o desenho é tarefa de arte, em Opus ou Fable (memória do usuário) | n |
 | Vista dos Cães | Folha HD `dogs` de 6 quadros (silhueta preta de olho branco: 4 de corrida, 1 de mordida, 1 de sumir na sombra) e o lobo da Totalidade na mesma folha em escala 1,5; desenhados em código em `src/game/art/hd/` | Arte M do catálogo (4 a 6 quadros) | n |
 | Raio do Vazio Ilimitado | 320 px em todos os níveis; o Nv 2 só sobe a paralisia dos comuns para 3,5 s e o Nv 3 a do chefe para 0,6 s | O plano repete "320 px (o teto da tela)" no Nv 2; não há raio maior que a tela | n |
@@ -168,23 +168,25 @@ emissões por segundo por fonte no `TechEmitter`, e a regra do maior crítico (T
 | Crítico de técnica | A TAL-16 ("técnica nunca é crítica") passa a ter duas exceções: o ponto fraco do Seis Olhos Nv 3 e a Palavra no Ponto Fraco; o Kokusen continua sem crítico | O plano dá crítico de técnica nesses dois itens | n |
 | "Parry perfeito" | Todo `parry` ou `deflect`, como na F35 (Refluxo Nv 3) | Definição já tomada na F35 | y (F35) |
 | Recuo da Mão de Ferro | O `force` dos golpes do moveset × 1,2 / 1,4 / 1,6, depois do `forceMul` da força e do Peso do Corpo, pelo `Player.strikeMods` | "Recuo" é o empurrão do golpe | n |
-| Osso de Dragão: números | Cargas: teto 3 / 4 / 5 (eixo `cargas`, 0 a 2 pontos); +1 carga a cada `parry` ou `deflect` e a cada golpe recebido que tira vida (sem defesa); a soltura é o próximo golpe forte do moveset sem `counter` que acerta com pelo menos 1 carga: dano × `1 + cargas × (0,25 + 0,25 × soltura)` e o impacto do osso; Estopim: com 1 / 2 pontos, todo outro comum vivo a até 60 / 90 px do golpeado toma um acerto normal de `round(3 × cargas × hpMul)` com `knockdown`; o traço do `meleeMul` (×1,2) é o golpe forte sem `counter` | O plano dá "1 a 3 cargas", "+1 até 5", "+25% por carga" e "60 / 90 px"; a base por carga e o dano do Estopim são escolha, calibrados pelo `weaponBalance.test` (WPN-05) | n |
-| Dragão Refletido | Osso + talento Refluxo em qualquer nível; com pelo menos 1 carga, o parry perfeito solta todas as cargas na hora no atacante, como um acerto do `contra` com o multiplicador da soltura e o Estopim | "O parry perfeito solta a carga na hora como contragolpe" | n |
+| Osso de Dragão: números | Cargas: teto 3 / 4 / 5 (eixo `cargas`, 0 a 2 pontos); +1 carga a cada `parry` ou `deflect` e a cada golpe recebido que tira vida (sem defesa); a soltura é o próximo golpe forte do moveset sem `counter` que acerta com pelo menos 1 carga: dano × `1 + k × (0,25 + 0,25 × soltura)` e o impacto do osso, com `k` = as cargas gastas, ou as cargas + 1 quando elas estão no teto (soltura cheia, que também força o patamar de impacto `decisive`); Estopim: com 1 / 2 pontos, todo outro comum vivo a até 60 / 90 px do golpeado toma um acerto normal de `round(3 × cargas × hpMul)` com `knockdown`; o traço do `meleeMul` (×1,2) é o golpe forte sem `counter` | O plano dá "1 a 3 cargas", "+1 até 5", "+25% por carga" e "60 / 90 px"; a base por carga e o dano do Estopim são escolha, calibrados pelo `weaponBalance.test` (WPN-05). Revisão: com a soltura linear, gastar 1 carga em cada forte rende o mesmo que juntar 5, então o eixo Cargas (teto 3 → 5) não valia nada e a Soltura era o único eixo de dano da arma; a carga extra da soltura cheia paga quem junta e faz do teto maior uma troca (estouro maior, mais raro) | n |
+| Dragão Refletido | Osso + talento Refluxo em qualquer nível; com as cargas **no teto**, o parry perfeito solta todas na hora no atacante, como um acerto do `contra` com o multiplicador da soltura cheia e o Estopim; esse parry não soma carga; abaixo do teto o parry só carrega (OSS-03) | "O parry perfeito solta a carga na hora como contragolpe". Revisão: com "pelo menos 1 carga" e o parry somando antes, todo parry soltaria (carrega 1 e solta 1, alternando), a arma nunca juntaria e o Refletido viraria um Contra +25% a cada dois parries; no teto, a guarda vira o 2º jeito de descontar o que juntou, ao lado do golpe forte | n |
 | Marcador de cargas acima de 3 | O marcador `charge` do Osso passa a ter até 5 lascas (quadros `charge-0a` a `charge-5b`), desenhado no molde de `weaponFx/bone.ts` | O eixo Cargas vai a 5 e o marcador de hoje só tem 3 | n |
 | Ícone do Osso na `BuildBar` | Folha nova `bound-bone` em `src/game/art/hd/weapons.ts`, como a `bound-spear` da Lança (WFX-05) | Molde da F36 | n |
 | Dedos de Sukuna: vaga | Ocupam o slot da relíquia (uma relíquia só por vez) e não ocupam vaga do pool | "Ocupa a vaga" no texto da relíquia; relíquia não ocupa vaga do pool (POL-01) | n |
-| Dedos: loja e drop | Nv 1 a 3 na loja pelo preço e pela trava da relíquia de hoje (20, 32, 44; rodadas 2, 4, 6); o 4º e o 5º só ao vencer um chefe Portador com os Dedos no Nv 3 ou 4, aplicados na vitória com o banner `Dedo de Sukuna N/5`; vencer o Portador sem Dedos ou abaixo do Nv 3 não dá dedo | "O 1º ao 3º saem da loja; o 4º e o 5º só caem do chefe Portador" | n |
+| Dedos: loja e drop | Nv 1 a 3 na loja com o preço do plano: novo 20, depois `16 + 6 × dedos` (22 e 28), antes da inflação, e a trava da relíquia de hoje (rodadas 2, 4, 6); o 4º e o 5º só ao vencer um chefe Portador com os Dedos no Nv 3 ou 4, aplicados na vitória com o banner `Dedo de Sukuna N/5`; vencer o Portador sem Dedos ou abaixo do Nv 3 não dá dedo | "O 1º ao 3º saem da loja; o 4º e o 5º só caem do chefe Portador"; preço da seção 3.2 ("Dedos: 16 + 6 × dedos"). Revisão: a spec cobrava 20/32/44, o preço das outras relíquias, contra o texto do plano | n |
+| Dedos: aposta, não armadilha | No Nv 3 os Dedos dão +18% em golpe **e** técnica (com +24% de dano sofrido), contra +30% só em golpe das Manoplas e +30% só em técnica do Rosário: ganham na build que mistura e perdem na build pura, e o 4º e o 5º dedo (+24% e +30% em tudo) são o prêmio. O teste de relíquia prende essa ordem; a carta mostra a chance do Portador que o próximo dedo dá | Revisão: sem a ordem presa num teste, uma calibração de número deixaria os Dedos dominados em toda build (armadilha) ou à frente em toda build (escolha óbvia); sem a chance na carta, o jogador não vê o risco que está comprando | n |
 | Dedos e o Portador | A chance do Portador passa a `0,10 + 0,08 × dedos` a partir da r10, com os dedos do momento em que o lineup daquela rodada é pedido pela 1ª vez (BLN-02); o sorteio consome o stream igual com qualquer número de dedos | Mesma seed e mesmos dedos dão o mesmo chefe | n |
 | Dedos: afinidade e ícone | Build `lutador`; ícone HD do dedo desenhado em código para a `BuildBar` | O `buildWeight` precisa de uma linha; arte B | n |
 | Duos: oferta | Cada Duo é uma entrada `duo` rara no fim do catálogo, a 40 antes da inflação, sem vaga e sem acréscimo de vaga, só nas cartas 2 e 3, elegível com a receita pronta, sem o Duo e com menos de 4 Duos na run | "Carta rara sem vaga, no máximo 4 por run"; o plano não dá preço nem posição | n |
 | Duo sem peça | Abandonar uma peça desliga o efeito do Duo enquanto ela falta; o Duo continua contado nos 4 da run | O Abandonar da F35 não reembolsa Duo (não é item da `BuildBar`) | n |
 | Troca Explosiva | O orbe do Vermelho trocado pelo Boogie detona na hora no ponto onde ele chega, que é o lugar de onde o player saiu | "Detona na hora, no ponto do orbe": o player sai do cerco e o orbe explode no cerco | n |
 | Prego Rubro | O orbe do Vermelho em voo que toca um alvo com marcas da Ressonância detona as marcas daquele alvo na hora (como a detonação do 2º toque, só naquele alvo) e soma ao raio da sua própria detonação o raio de propagação da Ressonância resolvido, com piso de 24 px | "Herda o raio dela": a marca só tem raio na propagação | n |
-| Contra Amaldiçoado | O Contra perfeito (definição da F35) com Contra Afiado e uma técnica no Nv 3 ou mais solta, pelo `TechEmitter` (fonte `contraAmaldicoado`), um acerto `micro` de 50% do dano principal da técnica do slot 0 no alvo do Contra, 1 vez a cada 6000 ms; técnica sem dano principal (Boogie sem choque, Fala sem "Exploda") aplica o controle dela (tontura ou atordoamento) por 50% do tempo resolvido | "Solta a técnica do slot 1 pelo `TechEmitter` (micro, 50% do dano, sem gastar a conjuração)"; o "slot 1" do plano é o primeiro slot | n |
-| Dano principal | Cada `TechModule` declara o seu dano principal resolvido: Vermelho detonação, Azul implosão, Roxo dano, Divergente 2º impacto, Desmantelar corte, Boogie choque, Ressonância detonação, Fala "Exploda", Convergência feixe na carga cheia, Cães mordida × cães, Trovão raio, Erupção pilar | O Contra Amaldiçoado precisa de um número por técnica | n |
+| Contra Amaldiçoado | O Contra perfeito (definição da F35) com Contra Afiado e uma técnica no Nv 3 ou mais solta, pelo `TechEmitter` (fonte `contraAmaldicoado`), um acerto `micro` de 50% do dano principal da técnica do **primeiro slot (0, 1, 2) que tem técnica no Nv 3 ou mais** no alvo do Contra, 1 vez a cada 6000 ms; técnica sem dano principal (Boogie sem choque, Fala sem "Exploda") aplica o controle dela (tontura ou atordoamento) por 50% do tempo resolvido | "Solta a técnica do slot 1 pelo `TechEmitter` (micro, 50% do dano, sem gastar a conjuração)"; o "slot 1" do plano é o primeiro slot. Revisão: com "slot 0" fixo, a receita pedia uma técnica no Nv 3 e o efeito podia soltar outra no Nv 1 do slot 0; agora a técnica que solta é sempre uma que fecha a receita | n |
+| Dano principal | Cada `TechModule` declara o seu dano principal resolvido, o de uma conjuração num alvo só: Vermelho detonação, Azul implosão, Roxo dano, Divergente 2º impacto, Desmantelar corte, Boogie choque, Ressonância detonação, Fala "Exploda", Convergência feixe na carga cheia, Cães mordida × mordidas × cães, Trovão raio × cargas, Erupção pilar | O Contra Amaldiçoado precisa de um número por técnica. Revisão: "Trovão raio" dava meio raio (4 de micro no Nv 1) e "Cães mordida × cães" esquecia as mordidas: as duas técnicas que mais dividem o dano viravam o pior slot do Duo sem motivo | n |
+| Sombra no Contra | O Contra perfeito com Cães e Contra Afiado solta, pela fonte `sombra`, a mordida `micro` dos Cães no mesmo alvo e o prende por `max(prisão resolvida, 300 ms)` no comum (25% disso no chefe), no molde da DOG-02 | "O Contra perfeito sai com uma mordida micro no mesmo alvo". Revisão: só a mordida era "o mesmo efeito maior" (um micro de 6 somado ao Contra), contra a regra de combo da seção 5.7; o Contra sozinho nunca segura o alvo, e com a prisão ele passa a abrir o golpe seguinte | n |
 | Ordem Elétrica | Com Fala e Trovão, o raio de cada carga salta, depois dos saltos normais, para todo alvo vivo atordoado por uma `SpeechCast` viva, uma vez cada, sem limite de raio dentro da tela | "Os atordoados viram condutores, e o raio salta entre todos eles" | n |
 | Rede de Cortes | Cada corte do Desmantelar deixa uma marca no chão no ponto do corte (até 8, a mais velha sai, por 6000 ms); a ativação do Santuário detona todas: cada marca acerta todo alvo com a caixa a até 32 px dela com o dano do corte resolvido e o patamar de impacto forçado a `decisive` | "Como acertos decisivos"; o plano não dá raio | n |
-| Sangue Eterno | Cada feixe deixa uma poça de 32 px na origem por 4000 ms com a vida paga (0 com custo 0); o próximo feixe cuja faixa cruza uma poça a absorve: dano × 1,5 e cura `round(vida guardada ÷ 2)` | Com custo 0 a evolução continua dando +50% e não fica morta | n |
+| Sangue Eterno | Cada feixe deixa uma poça de 32 px **sob os pés do player** (centro no x do centro da `hurtRect`) por 4000 ms com a vida paga (0 com custo 0); o próximo feixe cujo trecho entre a origem e o fim contém o centro de uma poça a absorve: dano × 1,5 e cura `round(vida guardada ÷ 2)` | Com custo 0 a evolução continua dando +50% e não fica morta. Revisão: com a poça na origem, o feixe seguinte do mesmo lugar sempre a cruzava, e a evolução era "+50% a cada dois feixes" sem mudar nada no jogo (contra a regra de combo); sob os pés, a origem do feixe fica à frente da poça, e beber o sangue pede recuar ou passar por ela e atirar de volta, o vaivém do Choso | n |
 | Palavra no Ponto Fraco | O "Pare!" atordoa o alvo do ponto fraco a até o alcance da Fala mesmo fora do cone e sem linha de visão, e todo acerto não chip num alvo atordoado pela Fala é crítico ×1,5 (técnica inclusive) | "O 'Pare!' acerta o ponto fraco, e o atordoado toma crítico de qualquer fonte" | n |
 | Afixos: nomes | Enfurecido/Enfurecida, Couraçado/Couraçada, Sobrecarregado/Sobrecarregada, Pele de Dragão (igual nos dois) | O BRD-01 pede o nome no gênero do arquétipo | n |
 | Enfurecido | `restMs` de toda fase × 0,8 (respeitando o `minRestMs`); a cada 3ª volta do ciclo da fase, os 2 primeiros ataques da volta saem encadeados, sem descanso entre eles | "Encadeia 2 ataques sem descanso a cada 3º ciclo, e `restMs` ×0,8" | n |
@@ -198,6 +200,22 @@ emissões por segundo por fonte no `TechEmitter`, e a regra do maior crítico (T
 **Open questions:** none - all resolved or logged above. As premissas com "n" esperam o aval do usuário na revisão da
 spec; as de maior impacto no jogo são a Erupção agora, o efeito da camada da Pele de Dragão, os números do Osso e o
 escudo do Sobrecarregado.
+
+**Revisão adversarial (15/10, pelo código e pelo jogador)**, já aplicada acima, no design e nas tarefas:
+- **Identidade das técnicas:** Convergência (linha que fura, paga com vida) e Trovão (o golpe do moveset conduz) têm
+  identidade desde o Nv 1. Os Cães não tinham: prisão 0 deixava 12 de dano micro por 24 de energia, sem parar
+  ninguém; a prisão base vai a 200 ms ("Prisão dos Cães"). A Erupção ficou com a diferença para a Convergência
+  escrita e testada (zona longe do corpo, colado não toma).
+- **Duos:** Troca Explosiva, Prego Rubro, Ordem Elétrica e Impacto Elétrico fazem o que as peças não fazem (detonar
+  pela troca, detonar marcas pelo caminho do orbe, atordoado como condutor, técnica que conduz raio). A Sombra no
+  Contra era só um micro somado ao Contra e ganhou a prisão; o Contra Amaldiçoado podia soltar uma técnica que não
+  fecha a receita; o dano principal do Trovão e dos Cães estava errado. A Evolução Sangue Eterno era um +50%
+  passivo e passou a pedir posição.
+- **Dedos:** o preço volta ao do plano (20, 22, 28) e um teste prende a ordem "ganha na build mista, perde na pura";
+  a carta mostra a chance do Portador.
+- **Dominantes:** o teste de eixo dominante já reprovava os Cães (2,0×) e a Erupção (1,5×), com a calibração no
+  design. No Osso, a soltura linear deixava o eixo Cargas morto e a Soltura dominante; a soltura cheia e o teste de
+  balanço com as duas estratégias corrigem. O Dragão Refletido soltava a cada dois parries e passou a soltar no teto.
 
 ---
 
@@ -284,10 +302,12 @@ com a vida em 6 o aperto sai `techDenied:hp`; tocar e soltar dá metade do dano 
 
 ### P1: Cães Divinos no jogo ⭐ MVP
 
-**User Story**: Como jogador, quero soltar os cães da sombra numa investida rasteira que morde o primeiro inimigo
-de cada faixa e some, para abrir o caminho sem largar o corpo a corpo.
+**User Story**: Como jogador, quero soltar os cães da sombra numa investida rasteira que morde e prende o primeiro
+inimigo do caminho e some, para cortar o ataque de quem vem antes que ele chegue, sem largar o corpo a corpo.
 
-**Why P1**: É a técnica de investida da leva; os cães só correm por 1,2 s depois da tecla e não escolhem alvo.
+**Why P1**: É a técnica de investida da leva; os cães só correm por 1,2 s depois da tecla e não escolhem alvo. A
+identidade dela é a prisão à distância (desde o Nv 1, ver "Prisão dos Cães"), não o dano: a Convergência é a linha
+que fura, o Trovão é o golpe que conduz e a Erupção é a zona longe do corpo.
 
 **Acceptance Criteria**:
 
@@ -300,8 +320,9 @@ de cada faixa e some, para abrir o caminho sem largar o corpo a corpo.
 7. DOG-07: The Cães views SHALL be checked in the game in HD, in motion, facing both sides, with Matilha going both ways and the Totalidade wolf leaping over 3 targets.
 
 **Independent Test**: `divine-dogs.smoke.mjs` com `seed=1&maxAlive=2&tech=caes`: a conjuração gasta 24 de energia, os
-2 cães saem, o comum à frente toma mordida micro (sem `hitstun`) e os cães somem antes de 1200 ms; com
-`axes=caes.prisao:3` o comum fica com `stunnedMs` perto de 600; com `ramo=caes:b` um cão corre para trás.
+2 cães saem, o comum à frente toma mordida micro (sem `hitstun`), fica com `stunnedMs` perto de 200 e perde o ataque
+que preparava, e os cães somem antes de 1200 ms; com `axes=caes.prisao:3` o comum fica com `stunnedMs` perto de 600;
+com `ramo=caes:b` um cão corre para trás.
 
 ---
 
@@ -335,7 +356,10 @@ menos de 120 px o raio salta 2 vezes.
 **User Story**: Como jogador, quero fazer o chão cuspir pilares de fogo à minha frente, para segurar a fila que vem
 na minha direção.
 
-**Why P1**: A regra pura está pronta e a tarefa a pôs na leva; é a técnica de zona à frente.
+**Why P1**: A regra pura está pronta e a tarefa a pôs na leva; é a técnica de zona à frente. O que a separa da
+Convergência (as duas acertam a linha da frente): o 1º pilar nasce a 80 px e não acerta quem está colado, sobe com
+aviso no chão (o jogador posiciona antes, não mira na hora), não custa vida e deixa fogo (queima, lava) onde caiu;
+a Convergência sai na hora, da boca do player, e paga com vida.
 
 **Acceptance Criteria**:
 
@@ -347,8 +371,9 @@ na minha direção.
 6. ERP-06: The Erupção views SHALL be checked in the game in HD, in motion, facing both sides, with 4 eruptions in a row, the Meteoro and the Lago de Lava.
 
 **Independent Test**: `eruption.smoke.mjs` com `seed=1&maxAlive=2&tech=erupcao`: a conjuração gasta 30 de energia e o
-comum a 80 px toma 24 (número de técnica); com `axes=erupcao.queima:3` o mesmo comum toma números chip cinza por até
-2 s; com `ramo=erupcao:b` a lava aparece no `techObjects`.
+comum a 80 px toma 24 (número de técnica) e o comum colado (centro a 30 px) não toma nada; com
+`axes=erupcao.queima:3` o mesmo comum toma números chip cinza por até 2 s; com `ramo=erupcao:b` a lava aparece no
+`techObjects`.
 
 ---
 
@@ -446,21 +471,22 @@ golpe forte, para transformar a defesa em ataque.
 1. OSS-01: `ARSENAL` SHALL gain the weapon `osso` named "Osso de Dragão", build `lutador`, appended at the end of `GAME_SHOP_CATALOG`, sold with the prices, round locks and card of WSH-02 to WSH-04.
 2. OSS-02: The Osso axes SHALL be `cargas`, `soltura` and `estopim`, in this table order, under the caps of WPN-01, and its `meleeMul` trait SHALL be the `heavy` moveset strike without `counter` (×1.2, WPN-03).
 3. OSS-03: WHILE the Osso is equipped, WHEN a `parry` or `deflect` happens or the player loses HP to a hit that was not defended (guard chip and vow costs do not count) THEN the Osso SHALL gain 1 charge up to 3, 4 or 5 for 0, 1 or 2 `cargas` points, and the system SHALL push `ossoCharge:<charges>`.
-4. OSS-04: WHEN a `heavy` moveset strike without `counter` hits with at least 1 charge THEN every target of that strike SHALL take its damage times `1 + charges × (0.25 + 0.25 × soltura)`, the charges SHALL become 0 once for that strike, the Osso impact (`weapon-fx-osso-impact`) SHALL play, and the system SHALL push `ossoRelease:<charges>`.
+4. OSS-04: WHEN a `heavy` moveset strike without `counter` hits with at least 1 charge THEN every target of that strike SHALL take its damage times `1 + k × (0.25 + 0.25 × soltura)`, where `k` is the charges spent, or the charges + 1 WHEN the charges are at the cap (full release, which SHALL also force the impact tier to `decisive`), the charges SHALL become 0 once for that strike, the Osso impact (`weapon-fx-osso-impact`) SHALL play, and the system SHALL push `ossoRelease:<charges>`.
 5. OSS-05: WHILE the Osso has 1 or 2 `estopim` points, WHEN a release hits THEN every other living common enemy whose center is within 60 or 90 px of the struck target center SHALL take one normal hit of `round(3 × charges × hpMul)` with `knockdown: true`, and the boss SHALL take none.
 6. OSS-06: The Osso charges SHALL carry over between rounds and SHALL reset to 0 on a release, on the run reset and when the Osso is abandoned.
 7. OSS-07: WHILE the Osso has charges the marker `weapon-fx-osso-charge` SHALL show the frame `charge-<charges>a` and `charge-<charges>b` alternating every 150 ms above the player's head, and WHILE it has none the marker SHALL be hidden; the marker SHALL have frames for 0 to 5 charges.
 8. OSS-08: WHEN the release strike is the trait strike THEN the Osso trail and impact SHALL follow WFX-01 to WFX-04.
 9. OSS-09: The weapon recipe Osso + talent Refluxo (any level) SHALL give `dragaoRefletido` (Dragão Refletido) under WEV-01 to WEV-04.
-10. OSS-10: WHILE the Dragão Refletido is on, WHEN a `parry` or `deflect` happens with at least 1 charge against a living attacker THEN the attacker SHALL take at once one hit of the `contra` move damage times `meleeMul` times the release multiplier of OSS-04, with the Estopim of OSS-05, the charges SHALL become 0, and the system SHALL push `ossoRelease:<charges>`.
+10. OSS-10: WHILE the Dragão Refletido is on, WHEN a `parry` or `deflect` happens against a living attacker with the charges at the cap THEN that parry SHALL add no charge, the attacker SHALL take at once one hit of the `contra` move damage times `meleeMul` times the full release multiplier of OSS-04, with the Estopim of OSS-05, the charges SHALL become 0, and the system SHALL push `ossoRelease:<charges>`; below the cap the parry SHALL only add its charge (OSS-03).
 11. OSS-11: The `BuildBar` icon of the Osso SHALL be a new sheet `bound-bone` in `src/game/art/hd/weapons.ts`, drawn with `PALETTE` keys only and reviewed on a board.
 12. OSS-12: WHEN the run starts with `?debug&arsenal=osso`, `axes=osso.<axis>:<n>` or `evo=dragaoRefletido` THEN the system SHALL apply them as WDB-01 to WDB-03 say, and the snapshot `arsenal` SHALL report `weaponCharges`.
-13. OSS-13: In `tests/data/weaponBalance.test.ts` the Osso SHALL meet WPN-05 under the reference model with one charge gained every 5000 ms.
+13. OSS-13: In `tests/data/weaponBalance.test.ts` the Osso SHALL meet WPN-05 under the reference model with one charge gained every 5000 ms, both when every charge is spent on the next heavy strike and when the charges are kept until the cap, for each `cargas` point from 0 to 2.
 14. OSS-14: The Osso marker, trail, impact and the Dragão Refletido release SHALL be checked in the game in HD, in motion, facing both sides.
 
 **Independent Test**: `dragon-bone.smoke.mjs` com `arsenal=osso`: 2 parries dão `ossoCharge:2`, o golpe forte seguinte
-sai com `ossoRelease:2` e 1,5 × o dano, e o marcador some; `tests/core/dragonBone.test.ts` com o teto 3/4/5 e o raio
-60/61 px do Estopim.
+sai com `ossoRelease:2` e 1,5 × o dano, e o marcador some; 3 parries (teto 3) e o forte saem com 2 × o dano (soltura
+cheia, `k` = 4) e patamar `decisive`; `tests/core/dragonBone.test.ts` com o teto 3/4/5, a soltura com 2 e com 3
+cargas no teto 3, e o raio 60/61 px do Estopim.
 
 ---
 
@@ -474,16 +500,17 @@ chefe Portador, que é o único que dá o 4º e o 5º.
 **Acceptance Criteria**:
 
 1. DED-01: `ARSENAL` SHALL gain the relic `dedos` named "Dedos de Sukuna", build `lutador`, with max level 5, appended at the end of `GAME_SHOP_CATALOG`, taking the relic slot.
-2. DED-02: The shop SHALL offer the Dedos at levels 1 to 3 with the relic prices and round locks of `ARSENAL_TUNING` (20, 32, 44 before inflation; rounds 2, 4, 6), and SHALL never offer level 4 or 5.
-3. DED-03: WHILE the player holds `n` Dedos, `buildEffects` SHALL multiply the melee damage and the technique damage by `1 + 0.06 × n` and the damage taken by `1 + 0.08 × n` (1.30 and 1.40 at 5), and no code SHALL write `damageMul`, `vowDamageMul` nor `damageTakenMul` for the Dedos directly.
+2. DED-02: The shop SHALL offer the Dedos at levels 1 to 3, priced 20 for the first and `16 + 6 × fingers held` for the next (22 and 28), before inflation, with the relic round locks of `ARSENAL_TUNING` (rounds 2, 4, 6), and SHALL never offer level 4 or 5.
+3. DED-03: WHILE the player holds `n` Dedos, `buildEffects` SHALL multiply the melee damage and the technique damage by `1 + 0.06 × n` and the damage taken by `1 + 0.08 × n` (1.30 and 1.40 at 5), and no code SHALL write `damageMul`, `vowDamageMul` nor `damageTakenMul` for the Dedos directly; and in `tests/data/relicBalance.test.ts`, at level 3, the Dedos damage multiplier on a half-melee half-technique model SHALL be above both the Manoplas and the Rosário, and below the Manoplas on an all-melee model and below the Rosário on an all-technique model.
 4. DED-04: WHEN the lineup of a boss round from r10 on is asked for the first time THEN the Finger Bearer chance SHALL be `0.10 + 0.08 × n` with the Dedos held at that moment, the draw SHALL consume the `bossAffixRng` stream exactly as with no Dedos, and before r10 the chance SHALL stay 0.
 5. DED-05: WHEN a Finger Bearer boss is defeated while the player holds the Dedos at level 3 or 4 THEN the Dedos SHALL rise one level at the victory with the banner `Dedo de Sukuna <n>/5` and the event `finger:<n>`, and IF the player holds no Dedos or holds them below level 3 THEN the victory SHALL give no finger.
 6. DED-06: WHILE the player holds 3 or more Dedos the build aura (AUR-03) SHALL be drawn in red and black palette colors, at stage 1 at least.
-7. DED-07: The `BuildBar` SHALL show `Relíquia Nv<n>` with 5 dots for the Dedos and a finger icon drawn in code in HD, and the Dedos card SHALL read the damage and damage taken change of the level it gives.
+7. DED-07: The `BuildBar` SHALL show `Relíquia Nv<n>` with 5 dots for the Dedos and a finger icon drawn in code in HD, and the Dedos card SHALL read the damage and damage taken change of the level it gives and the Finger Bearer chance from r10 with that level (`0.10 + 0.08 × n`, as a percent).
 8. DED-08: WHEN the Dedos are abandoned THEN the refund SHALL follow ABD-02 with the 4th and 5th fingers as free sources, and the multipliers and the Finger Bearer chance SHALL return to the values without Dedos.
 9. DED-09: WHEN the run starts with `?debug&arsenal=dedos` repeated up to 5 times THEN the Dedos SHALL start at that level, and the snapshot `arsenal.relicLevel` SHALL report 1 to 5.
 
-**Independent Test**: `tests/core/buildEffectsLeva2.test.ts` (Dedos 0 a 5); `tests/core/bossLineupFingers.test.ts`
+**Independent Test**: `tests/core/buildEffectsLeva2.test.ts` (Dedos 0 a 5); `tests/data/relicBalance.test.ts` (Nv 3:
+1,18 contra 1,15 na build mista, contra 1,30 na pura); `tests/core/bossLineupFingers.test.ts`
 (chance com 0 e 3 dedos na r10 e na r9, mesmo consumo do stream); `sukuna-fingers.smoke.mjs` com
 `arsenal=dedos,dedos,dedos&finger=1` na r10: a vitória dá `finger:4`.
 
@@ -541,14 +568,16 @@ sozinha, sem gastar vaga, para caçar combinações como no Vampire Survivors.
 6. DUO-06: WHILE Troca Explosiva is on, WHEN the Boogie swaps the player with a live Vermelho orb THEN the orb SHALL detonate at once at its new position (where the player was), with its resolved detonation.
 7. DUO-07: WHILE Prego Rubro is on, WHEN a live Vermelho orb overlaps a target with Ressonância marks THEN the marks of that target SHALL detonate at once as the second touch detonates them, only on that target, and the orb detonation radius SHALL grow by the resolved Ressonância propagation radius, at least 24 px, once per orb.
 8. DUO-08: Every `TechModule` SHALL declare its main damage resolved from its `TechStats` as listed in the Assumptions table.
-9. DUO-09: WHILE Contra Amaldiçoado is on, WHEN a perfect Contra hits and 6000 ms passed since the last time this rule fired THEN the `TechEmitter` source `contraAmaldicoado` SHALL emit on the Contra target one `micro` hit of 50% of the main damage of the technique in slot 0, or, for a technique with main damage 0, its stun or daze for 50% of its resolved time, with no energy spent and no cast.
-10. DUO-10: WHILE Sombra no Contra is on, WHEN a perfect Contra hits THEN the `TechEmitter` source `sombra` SHALL emit on the same target one `micro` hit of the resolved Cães bite damage, drawn as a dog biting from the target's shadow.
+9. DUO-09: WHILE Contra Amaldiçoado is on, WHEN a perfect Contra hits and 6000 ms passed since the last time this rule fired THEN the `TechEmitter` source `contraAmaldicoado` SHALL emit on the Contra target one `micro` hit of 50% of the main damage of the technique in the first slot (0, 1, 2) holding a technique at level 3 or more, or, for a technique with main damage 0, its stun or daze for 50% of its resolved time, with no energy spent and no cast.
+10. DUO-10: WHILE Sombra no Contra is on, WHEN a perfect Contra hits THEN the `TechEmitter` source `sombra` SHALL emit on the same target one `micro` hit of the resolved Cães bite damage, drawn as a dog biting from the target's shadow, and SHALL root the target for `max(resolved Cães root, 300 ms)`: a common target in the `stunned` state of BWG-04, the boss through `bossBrain.stun(ms × 0.25, 'tech')`.
 11. DUO-11: WHILE Ordem Elétrica is on, WHEN a Trovão discharge happens THEN, after its normal jumps, the bolt SHALL jump once to every living target stunned by a live `SpeechCast` among the targets of TC2-12, with no jump radius, each as a `micro` hit of the bolt damage.
 12. DUO-12: WHILE Impacto Elétrico is on, WHEN the Divergente second impact hits a target THEN the `TechEmitter` source `impactoEletrico` SHALL emit one `micro` hit of the resolved Trovão bolt damage on each of the 2 nearest other living targets within the resolved Trovão jump radius of that target, drawn as blue zigzag lines, spending no Trovão charge.
 13. DUO-13: WHEN the run starts with `?debug&duo=<id>[,<id>...]` THEN the system SHALL give each listed Duo whose recipe is ready after `tech=`, `perks=` and `axes=`, up to 4, and SHALL ignore the others.
 14. DUO-14: The Duo names and texts SHALL enter `tests/data/combos.test.ts` and SHALL be unique against every Despertar, Evolução, União and Duo.
 
-**Independent Test**: `tests/core/duos.test.ts` (receita pronta, teto de 4, peça faltando desliga); `duos.smoke.mjs` com
+**Independent Test**: `tests/core/duos.test.ts` (receita pronta, teto de 4, peça faltando desliga, Contra Amaldiçoado no
+1º slot com técnica no Nv 3); `duos.smoke.mjs` com `tech=caes&perks=contraAfiado&duo=sombraNoContra` (o Contra
+perfeito deixa o alvo com `stunnedMs` perto de 300) e com
 `tech=trovao,divergente&duo=impactoEletrico` (o 2º impacto salta para 2 comuns) e `tech=boogie,vermelho&duo=trocaExplosiva`
 (o orbe detona onde o player estava).
 
@@ -567,13 +596,13 @@ novos também terem para onde ir.
 2. EVL-02: WHEN a technique evolves THEN it SHALL keep its slot, points, branch and Despertar, the evolution SHALL stay while the technique stays even IF the catalyst is abandoned later, and the system SHALL push `evolve:<id>` (with the `combo:<recipe>` of F37 CGL-03).
 3. EVL-03: WHILE the Rede de Cortes is on, WHEN a Desmantelar cut lands THEN it SHALL leave a ground mark at the cut point for 6000 ms, at most 8 at a time with the oldest removed first.
 4. EVL-04: WHILE the Rede de Cortes is on, WHEN the Santuário activates THEN every live mark SHALL detonate, hitting every target whose box is within 32 px of it with one hit of the resolved Desmantelar cut damage and the impact tier forced to `decisive`, and the marks SHALL be removed.
-5. EVL-05: WHILE the Sangue Eterno is on, each beam SHALL leave a blood pool of 32 px at its origin for 4000 ms holding the HP paid, and WHEN a later beam band crosses a live pool THEN that beam SHALL absorb it, deal 1.5 times its damage and heal the player `round(held HP / 2)`.
+5. EVL-05: WHILE the Sangue Eterno is on, each beam SHALL leave a blood pool of 32 px centered under the player (the x of the `hurtRect` center, on the ground) for 4000 ms holding the HP paid, and WHEN the segment of a later beam from its origin to its end contains the center of a live pool THEN that beam SHALL absorb it, deal 1.5 times its damage and heal the player `round(held HP / 2)`; a beam fired from the spot where the pool was left, to either side, SHALL not absorb it.
 6. EVL-06: WHILE the Palavra no Ponto Fraco is on, the Fala SHALL stun the Seis Olhos weak point within its range even outside its cone and its line of sight, and every non-chip hit on a target stunned by the Fala SHALL be a critical hit ×1.5, technique hits included.
 7. EVL-07: The cut marks and the blood pools SHALL be drawn on the ground with `PALETTE` colors, listed in the `techObjects` as `kind: 'cutMark'` and `kind: 'blood'`, and checked in the game in HD.
 8. EVL-08: WHEN the run starts with `?debug&evo=` naming one of the three THEN the technique SHALL evolve IF its recipe is ready after `tech=`, `domain=`, `perks=` and `axes=`, and the parameter SHALL be ignored otherwise.
 
-**Independent Test**: `tests/core/evolutionsLeva2.test.ts` (8 marcas, 32/33 px, poça com custo 0 e 6); `duos.smoke.mjs`
-estendido com `evo=sangueEterno`.
+**Independent Test**: `tests/core/evolutionsLeva2.test.ts` (8 marcas, 32/33 px, poça com custo 0 e 6, feixe do mesmo
+lugar não bebe para nenhum dos lados, feixe de 20 px atrás bebe); `duos.smoke.mjs` estendido com `evo=sangueEterno`.
 
 ---
 
@@ -613,6 +642,9 @@ que derruba solta `don`; com `mods=forca:5` (patamar 2) não solta.
 - WHEN a Contra at power tier 2 hits the Pele de Dragão boss THEN only one layer SHALL break.
 - IF the Dedos are at level 5 when a Finger Bearer is defeated THEN no finger SHALL be given and no banner SHALL show.
 - WHEN the Osso has 5 charges and the player parries THEN the charges SHALL stay 5.
+- WHEN the Osso has 2 charges with the cap at 3 and the heavy strike hits THEN the release SHALL use `k` = 2 (no full bonus), and WHEN it has 3 THEN `k` = 4 and the tier is `decisive` (OSS-04, both sides tested).
+- WHILE the Dragão Refletido is on, WHEN the player parries below the cap THEN the parry SHALL add one charge and release nothing, and WHEN the parry comes at the cap THEN it SHALL release with no charge added first (OSS-10).
+- WHEN the player holds Contra Afiado, a technique at level 1 in slot 0 and one at level 3 in slot 1 THEN the Contra Amaldiçoado SHALL release the slot 1 technique (DUO-09).
 - IF the Seis Olhos weak point dies THEN the mark SHALL move at the next 500 ms pick.
 - WHEN a Duo piece is abandoned and bought again THEN the Duo effect SHALL turn back on with no new Duo counted.
 - WHEN the heavy strike knocks 2 common enemies down at tier 3 THEN only one ドン SHALL be drawn (DON-01).
@@ -777,7 +809,7 @@ que derruba solta `don`; com `mods=forca:5` (patamar 2) não solta.
 | DUO-06 | P2: Duos | Tasks (T100, T108) | Pending |
 | DUO-07 | P2: Duos | Tasks (T109) | Pending |
 | DUO-08 | P2: Duos | Tasks (T99, T101) | Pending |
-| DUO-09 | P2: Duos | Tasks (T106, T110) | Pending |
+| DUO-09 | P2: Duos | Tasks (T103, T106, T110) | Pending |
 | DUO-10 | P2: Duos | Tasks (T106, T111) | Pending |
 | DUO-11 | P2: Duos | Tasks (T112) | Pending |
 | DUO-12 | P2: Duos | Tasks (T100, T106, T113) | Pending |
