@@ -204,19 +204,19 @@ leem `this.t.cycles`; `BOSS.cycles` em `data/tuning.ts` guarda os ciclos de hoje
 
 ### T6: Dados dos afixos
 
-**What**: `src/data/bossAffixes.ts`: `BossAffixId`, `BOSS_AFFIXES` (nomes m/f, leve, contorno, glifo), `AFFIX_RULES`
-(`countByTier`, `incompatible: []`, `lightPool`), números de `lava`, `summon`, `beam`, `adapt`, `finger`,
+**What**: `src/data/bossAffixes.ts`: `BossAffixId`, `BOSS_AFFIX_IDS`, `BOSS_AFFIXES` (nomes m/f, leve, contorno, glifo), `AFFIX_RULES`
+(`countByTier`, `incompatible: []`, `lightPool`), números em `BOSS_AFFIX`: `lava`, `summon`, `beam`, `adapt`, `finger`,
 `outlineSwapMs` e `adaptLabels`, como no design.
 **Where**: `src/data/bossAffixes.ts`
 **Depends on**: None (fase anterior concluída)
-**Reuses**: `PaletteKey` de `art/palette.ts`
+**Reuses**: `PALETTE_KEYS` de `art/palette.ts` (no teste; não existe tipo `PaletteKey`, as cores são `string`)
 **Requirement**: AFX-02, BRD-07
 
 **Done when**:
 
-- [ ] `tests/data/bossAffixes.test.ts`: toda chave de cor existe na `PALETTE`; nomes nas duas formas; leves = Ígneo e
+- [x] `tests/data/bossAffixes.test.ts`: toda chave de cor existe na `PALETTE`; nomes nas duas formas; leves = Ígneo e
       Invocador; incompatíveis vazia; números da spec (2000/600/4, 3/2/4, 800/250/16, 20000/5/2/10000/0,5, Portador)
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
@@ -534,7 +534,7 @@ Se a complexidade passar de 15, o encadeamento sai para `core/bossChain.ts` (des
 **What**: `src/core/bossLava.ts` (novo): `LavaStrips` com `add`, `update`, `tick(rect, grounded)`, `strips` e `clear`.
 **Where**: `src/core/bossLava.ts`
 **Depends on**: None (fase anterior concluída)
-**Reuses**: `BOSS_AFFIXES.lava`
+**Reuses**: `BOSS_AFFIX.lava`
 **Requirement**: IGN-02, IGN-03, IGN-05
 
 **Done when**:
@@ -555,7 +555,7 @@ Se a complexidade passar de 15, o encadeamento sai para `core/bossChain.ts` (des
 janela de 20 s, mínimo 5, teto 2, esquece em 10 s e apaga os acertos da fonte esquecida, empate pela que chegou primeiro).
 **Where**: `src/core/bossAdapt.ts`
 **Depends on**: T21
-**Reuses**: `TechId`, `BOSS_AFFIXES.adapt`
+**Reuses**: `TechId`, `BOSS_AFFIX.adapt`
 **Requirement**: ADP-01, ADP-02, ADP-03, ADP-04, ADP-05
 
 **Done when**:
@@ -597,7 +597,7 @@ janela de 20 s, mínimo 5, teto 2, esquece em 10 s e apaga os acertos da fonte e
 **What**: `summonCount(round, alive, t)` em `core/bossAffix.ts` = `min(r5 ? 2 : 3, max(0, maxAlive − alive))`.
 **Where**: `src/core/bossAffix.ts`
 **Depends on**: T23
-**Reuses**: `BOSS_AFFIXES.summon`
+**Reuses**: `BOSS_AFFIX.summon`
 **Requirement**: INV-01, INV-02
 
 **Done when**:
