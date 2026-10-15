@@ -1,12 +1,18 @@
 // Invocador no jogo vivo, em `?debug&hd=1&area=modular` (INV-01..05).
 // `round=5&bossArch=oni&bossAffix=invocador&finger=0`: golpes de teste (tecla 2) até o rugido da fase 2 trazem 2
 // comuns (r5) desarmados, com a aparência por índice; matar um não conta abate na `Run` nem deixa drop; a fase 3
-// traz mais, sem passar de 4 vivos; na morte do chefe, cada invocado vivo some com a fumaça amaldiçoada.
+// traz mais, sem passar de 4 vivos; na morte do chefe, cada invocado vivo some com a fumaça amaldiçoada. A invocação
+// se lê na tela: a fumaça sai do chefe (`summonFx`), os invocados nascem ao lado dele, dentro da câmera, e entram no
+// contador "Inimigos" do HUD.
 
 const QUERY = 'round=5&bossArch=oni&bossAffix=invocador&finger=0';
 /** Teto de invocados vivos (`BOSS_AFFIX.summon.maxAlive`) e quantos nascem na r5 (`firstBossCount`). */
 const MAX_ALIVE = 4;
 const FIRST_BOSS_COUNT = 2;
+/** Distância máxima (px) entre o invocado e o chefe na invocação: meio corpo do chefe e dois `spotGap` de 28 px. */
+const SUMMON_REACH = 120;
+/** Distância (px) do player ao chefe antes dos golpes de teste. */
+const NEAR_BOSS = 200;
 
 export default async function ({ page, baseUrl, assert }) {
   await page.setViewport({ width: 1280, height: 720 });
@@ -40,6 +46,11 @@ export default async function ({ page, baseUrl, assert }) {
   assert(s.boss?.affixes.includes('invocador'), `o chefe Invocador deveria nascer: ${JSON.stringify(s.boss)}`);
   for (let i = 0; i < 60 && s.boss.state === 'intro'; i++) s = await step(50);
   assert(s.bossSummoned.length === 0, `nenhum invocado antes da fase 2: ${s.bossSummoned}`);
+  // Como na luta, o player vai até o chefe: a invocação acontece com o chefe dentro da câmera.
+  await page.keyboard.down('KeyD');
+  for (let i = 0; i < 400 && Math.abs(s.boss.x - s.player.x) > NEAR_BOSS && !s.player.dead; i++) s = await step(17);
+  await page.keyboard.up('KeyD');
+  assert(Math.abs(s.boss.x - s.player.x) <= NEAR_BOSS, `o player deveria chegar perto do chefe: ${s.player.x}`);
 
   // INV-01, INV-05: tecla 2 até o rugido da fase 2; no mesmo quadro nascem 2 comuns desarmados.
   for (let i = 0; i < 200 && s.boss && s.bossSummoned.length === 0 && !s.player.dead; i++) s = await pressTwo();
@@ -55,6 +66,23 @@ export default async function ({ page, baseUrl, assert }) {
     first.every((id) => s.events.includes(`spawnFx:${id}`)),
     `cada invocado nasce com a fumaça: ${s.events.join(',')}`,
   );
+  assert(
+    s.events.some((e) => e.startsWith('summonFx:')),
+    `a fumaça da invocação sai do chefe: ${s.events.join(',')}`,
+  );
+  // O `step` não atualiza o `worldView` da câmera; o `render` do quadro atual (sem avançar o tempo) atualiza.
+  const view = await page.evaluate(() => {
+    window.__game.render();
+    return window.__game.snapshot().camera.worldView;
+  });
+  const beside = summonedNow().map((e) => ({ id: e.id, x: Math.round(e.x), dx: Math.round(e.x - s.boss.x) }));
+  assert(
+    beside.every((e) => e.x > view.left && e.x < view.right && Math.abs(e.dx) <= SUMMON_REACH),
+    `os invocados nascem ao lado do chefe, dentro da câmera (${Math.round(view.left)}..${Math.round(view.right)}, ` +
+      `chefe em ${Math.round(s.boss.x)}, player em ${Math.round(s.player.x)}): ${JSON.stringify(beside)}`,
+  );
+  const remaining = `Inimigos: ${s.run.alive + s.run.queued + first.length}`;
+  assert(s.hud.remaining === remaining, `os invocados contam no HUD: ${s.hud.remaining} != ${remaining}`);
 
   // INV-03: matar um invocado não conta abate nem cria pickup (o stream de loot fica intocado).
   const kills = s.run.kills;

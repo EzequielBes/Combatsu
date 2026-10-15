@@ -9,6 +9,7 @@ import {
   outlineKeyAt,
   packBarLabel,
   summonCount,
+  summonSpots,
   type BossLineup,
 } from '../../src/core/bossAffix';
 import { bossSpecFor } from '../../src/core/bossTier';
@@ -257,5 +258,22 @@ describe('Invocados por troca de fase com o teto de vivos (INV-01, INV-02)', () 
 
   it('vivos acima do teto não dão contagem negativa', () => {
     expect(summonCount(15, 6)).toBe(0);
+  });
+});
+
+describe('Invocados nascem ao lado do chefe (INV-01)', () => {
+  const base = { bossX: 500, halfW: 20, towardPlayer: 1 as const, minX: 0, maxX: 1000 };
+
+  it('alterna os lados a partir das costas do chefe, a 28 px da borda do corpo e mais 28 a cada um', () => {
+    expect(summonSpots({ ...base, count: 3 })).toEqual([452, 548, 424]);
+    expect(summonSpots({ ...base, towardPlayer: -1, count: 2 })).toEqual([548, 452]);
+  });
+
+  it('encostado na parede, o lado sem espaço fica de fora e o outro recebe os invocados que cabem', () => {
+    expect(summonSpots({ ...base, bossX: 40, minX: 16, count: 3 })).toEqual([88, 116, 144]);
+  });
+
+  it('sem espaço dos dois lados, devolve menos que o pedido', () => {
+    expect(summonSpots({ ...base, minX: 460, maxX: 560, count: 3 })).toEqual([548]);
   });
 });

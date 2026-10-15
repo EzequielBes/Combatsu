@@ -27,7 +27,7 @@ describe('dados dos afixos de chefe (AFX-02)', () => {
 
   it('guarda os números da lava, da invocação, do feixe e do Adaptativo', () => {
     expect(BOSS_AFFIX.lava).toEqual({ durationMs: 2000, tickMs: 600, damage: 4 });
-    expect(BOSS_AFFIX.summon).toEqual({ count: 3, firstBossCount: 2, maxAlive: 4 });
+    expect(BOSS_AFFIX.summon).toEqual({ count: 3, firstBossCount: 2, maxAlive: 4, spotGap: 28 });
     expect(BOSS_AFFIX.beam).toMatchObject({ warnMs: 800, activeMs: 250, damage: 16, thickness: [1, 6] });
     expect(BOSS_AFFIX.adapt).toEqual({ windowMs: 20000, minHits: 5, maxAdapted: 2, forgetMs: 10000, mult: 0.5 });
     expect(BOSS_AFFIX.outlineSwapMs).toBe(600);

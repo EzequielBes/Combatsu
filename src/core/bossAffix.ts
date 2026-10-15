@@ -275,3 +275,33 @@ export function summonCount(round: number, alive: number, t: SummonTuning = BOSS
   const wanted = round === 5 ? t.firstBossCount : t.count;
   return Math.min(wanted, Math.max(0, t.maxAlive - alive));
 }
+
+/** Onde o chefe está e o espaço que os invocados podem ocupar ao lado dele. */
+export interface SummonSpotsInput {
+  bossX: number;
+  /** Metade da largura do corpo do chefe. */
+  halfW: number;
+  /** Lado do player visto do chefe. */
+  towardPlayer: 1 | -1;
+  count: number;
+  /** Limites do X do centro de um invocado (dentro do nível). */
+  minX: number;
+  maxX: number;
+}
+
+/**
+ * X dos invocados ao lado do chefe, para nascerem saindo dele e não das bordas da arena: alterna os lados, começando
+ * pelas costas do chefe (o lado oposto ao player), a `spotGap` px da borda do corpo e mais `spotGap` a cada um do
+ * mesmo lado. Posição fora de `[minX, maxX]` fica de fora; pode devolver menos que `count` (quem chama completa com
+ * outro ponto).
+ */
+export function summonSpots(o: SummonSpotsInput, gap: number = BOSS_AFFIX.summon.spotGap): number[] {
+  const spots: number[] = [];
+  const away = -o.towardPlayer as 1 | -1;
+  for (let i = 0; i < o.count * 2 && spots.length < o.count; i++) {
+    const side = i % 2 === 0 ? away : o.towardPlayer;
+    const x = o.bossX + side * (o.halfW + gap * (Math.floor(i / 2) + 1));
+    if (x >= o.minX && x <= o.maxX) spots.push(x);
+  }
+  return spots;
+}

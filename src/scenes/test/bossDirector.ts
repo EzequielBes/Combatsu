@@ -9,6 +9,7 @@ import {
   type BossLineup,
   type LineupOverrides,
   summonCount,
+  summonSpots,
 } from '../../core/bossAffix';
 import { bossSpecFor, type BossSpec } from '../../core/bossTier';
 import type { Hit, Vec2 } from '../../core/hit';
@@ -25,6 +26,9 @@ import { ThreadRain } from '../../game/boss/ThreadRain';
 import type { GameSnapshot } from '../../game/debugApi';
 import { debugParam } from './params';
 import type { TestScene } from '../TestScene';
+
+/** Folga (px) entre um invocado e a borda do nível, e meia largura da caixa livre que ele pede. */
+const SUMMON_EDGE = 16;
 
 /**
  * Dono da escalação do chefe na cena (BLN-01..03, BLN-08..11): pede ao `BossLineups` o chefe da rodada com o stream
@@ -91,22 +95,42 @@ export class BossDirector {
     const beam = spec.affixes.includes('sangue') ? new BeamAttack(this.s, boss.id, spec.damage.beam, onConnect) : null;
     this.fx = new BossAffixFx(threads, lava, beam);
     boss.fxSink = this.fx.route;
-    boss.onPhaseChanged = spec.affixes.includes('invocador') ? () => this.summon(this.s.run.round) : undefined;
+    boss.onPhaseChanged = spec.affixes.includes('invocador') ? () => this.summon(boss, this.s.run.round) : undefined;
   }
 
   /**
-   * Troca de fase do Invocador (INV-01/02): 3 comuns (2 na r5), sem passar de 4 vivos, cada um num ponto `E` da
-   * escolha da onda; guardados até morrerem ou o chefe cair.
+   * Troca de fase do Invocador (INV-01/02): 3 comuns (2 na r5), sem passar de 4 vivos, guardados até morrerem ou o
+   * chefe cair. A fumaça amaldiçoada sai do próprio chefe e os invocados nascem ao lado dele (na luta, dentro da
+   * câmera), para a tela ligar um ao outro; sem espaço livre ali, o que faltar nasce num ponto `E` da escolha da onda.
    */
-  private summon(round: number): void {
+  private summon(boss: Boss, round: number): void {
     const count = summonCount(round, this.summoned.size);
+    if (count === 0) return;
+    this.s.fx.curseSmoke(boss.x, boss.y);
+    this.s.snapshot.debugEvents.push(`summonFx:${boss.id}`);
+    const spots = this.summonSpotsBeside(boss, count);
     for (let i = 0; i < count; i++) {
-      const point = this.s.spawner.pickEnemySpawnPoint();
-      const enemy = this.s.spawner.spawnSummoned(point, round, this.summonIndex++, (dead) =>
-        this.summoned.delete(dead),
-      );
+      const at = spots[i] ?? this.s.level.enemies[this.s.spawner.pickEnemySpawnPoint()];
+      const enemy = this.s.spawner.spawnSummoned(at, round, this.summonIndex++, (dead) => this.summoned.delete(dead));
       this.summoned.add(enemy);
     }
+  }
+
+  /** Pontos ao lado do chefe (`summonSpots`), dentro do nível, sem terreno no lugar do corpo. */
+  private summonSpotsBeside(boss: Boss, count: number): Vec2[] {
+    const xs = summonSpots({
+      bossX: boss.x,
+      halfW: boss.bodySize.width / 2,
+      towardPlayer: this.s.player.sprite.x >= boss.x ? 1 : -1,
+      count,
+      minX: SUMMON_EDGE,
+      maxX: this.s.level.widthPx - SUMMON_EDGE,
+    });
+    const free = (x: number): boolean => {
+      const box = { min: { x: x - SUMMON_EDGE, y: boss.y - SUMMON_EDGE }, max: { x: x + SUMMON_EDGE, y: boss.y } };
+      return this.s.matter.query.region(this.s.terrain, box).length === 0;
+    };
+    return xs.filter(free).map((x) => ({ x, y: boss.y }));
   }
 
   /** Cada invocado vivo some na hora com a fumaça amaldiçoada e sai da lista da cena (INV-04). */
@@ -122,6 +146,11 @@ export class BossDirector {
     }
     this.s.enemies = this.s.enemies.filter((e) => !this.summoned.has(e));
     this.summoned.clear();
+  }
+
+  /** Invocados vivos agora: entram no contador "Inimigos" do HUD, porque estão na tela (INV-01). */
+  get summonedCount(): number {
+    return this.summoned.size;
   }
 
   /** Ids dos invocados vivos, para o snapshot de debug (INV-01..05). */

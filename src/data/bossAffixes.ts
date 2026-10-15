@@ -56,8 +56,11 @@ export type AdaptLabelKey = 'light' | 'heavy' | TechId;
 export const BOSS_AFFIX = {
   /** Ígneo: faixa de lava no trecho da investida (IGN-02..04); dano × multiplicador do tier, arredondado. */
   lava: { durationMs: 2000, tickMs: 600, damage: 4 },
-  /** Invocador: comuns por troca de fase, na r5, e teto de vivos (INV-01, INV-02). */
-  summon: { count: 3, firstBossCount: 2, maxAlive: 4 },
+  /**
+   * Invocador: comuns por troca de fase, na r5, e teto de vivos (INV-01, INV-02); `spotGap` é a distância (px) entre a
+   * borda do corpo do chefe e o 1º invocado de cada lado, e entre um invocado e o seguinte do mesmo lado.
+   */
+  summon: { count: 3, firstBossCount: 2, maxAlive: 4, spotGap: 28 },
   /**
    * Sangue Convergente (SNG-02, SNG-03): aviso, feixe aberto, dano × multiplicador do tier, espessura da linha de
    * aviso (1 → 6 px) e altura da caixa do feixe (px).

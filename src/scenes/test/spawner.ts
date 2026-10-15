@@ -91,10 +91,10 @@ export class Spawner {
   /**
    * Inimigo comum invocado pelo chefe Invocador (INV-03, INV-05): tuning comum escalado pela rodada, nunca armado
    * (não consome o stream de loot), aparência `ENEMY_VARIANTS[index % 3]` (não consome o `variantRng`). A morte só
-   * registra `summonDied:<id>` e avisa `onGone`: sem `Run` (não conta abate) e sem drop.
+   * registra `summonDied:<id>` e avisa `onGone`: sem `Run` (não conta abate) e sem drop. `at` é o ponto de nascimento
+   * (ao lado do chefe ou um ponto `E`), com o mesmo `SPAWN_LIFT` da onda.
    */
-  spawnSummoned(point: number, round: number, index: number, onGone: (enemy: Enemy) => void): Enemy {
-    const at = this.s.level.enemies[point];
+  spawnSummoned(at: Vec2, round: number, index: number, onGone: (enemy: Enemy) => void): Enemy {
     const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
     const scaled = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
     const variant = ENEMY_VARIANTS[index % ENEMY_VARIANTS.length];

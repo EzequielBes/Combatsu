@@ -106,6 +106,17 @@ export class RunDirector {
   }
 
   /**
+   * Rodada e inimigos na tela para o HUD (RHUD-01); fora de rodada (title), `null` esconde. Os invocados do chefe
+   * contam junto (INV-01), porque estão na tela. T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner
+   * interno da `Run` segue contando como se tivesse nascido - sem isso "Inimigos: N" mentiria na tela do laboratório.
+   */
+  hudRun(): { round: number; remaining: number } | null {
+    const run = this.s.run;
+    if (run.round <= 0 || this.s.fxLab) return null;
+    return { round: run.round, remaining: run.alive + run.queued + this.bosses.summonedCount };
+  }
+
+  /**
    * Nova run (RUN-01/05): remove os inimigos restantes na hora e devolve o player ao spawn com a vida cheia.
    * Também remove o chefe e os projéteis dele, se algum estiver vivo (edge case: game over em plena luta de
    * chefe, com o chefe e/ou projéteis dele ainda em cena).
