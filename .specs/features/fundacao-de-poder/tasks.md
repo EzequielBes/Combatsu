@@ -460,8 +460,8 @@ deslize, rastro, bônus de hitstop, tremor, tom por chaves, aura) e `atRest`; `P
 
 **Done when**:
 
-- [ ] `tests/core/cameraKick.test.ts`: sem `px` anda 4 px como hoje; com `px` 7 anda 7 e volta
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `tests/core/cameraKick.test.ts`: sem `px` anda 4 px como hoje; com `px` 7 anda 7 e volta
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick

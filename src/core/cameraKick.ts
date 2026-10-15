@@ -3,17 +3,23 @@ import { CAMERA_FEEL } from '../data/feel';
 import type { Vec2 } from './hit';
 
 /**
- * Tranco da câmera no golpe forte (CAM-01): desloca 4 px na direção do acerto e volta ao ponto de seguir em 120 ms.
+ * Tranco da câmera no golpe forte (CAM-01): desloca 4 px (ou a distância pedida, POW-08.4) na direção do acerto e
+ * volta ao ponto de seguir em 120 ms.
  * Tempo REAL: quem chama passa o dt não escalado em `update`, para o tranco rodar durante o hitstop.
  */
 export class CameraKick {
   private dir: Vec2 = { x: 0, y: 0 };
   private elapsed = Number.POSITIVE_INFINITY;
+  private px: number = CAMERA_FEEL.kickPx;
 
-  /** Liga (ou reinicia) o tranco; a direção é normalizada (vetor nulo não desloca). */
-  kick(dirX: number, dirY: number): void {
+  /**
+   * Liga (ou reinicia) o tranco; a direção é normalizada (vetor nulo não desloca). `px` é a distância inicial: o
+   * padrão é o `CAMERA_FEEL.kickPx`, e a força do jogador pede mais (POW-08.4).
+   */
+  kick(dirX: number, dirY: number, px: number = CAMERA_FEEL.kickPx): void {
     const len = Math.hypot(dirX, dirY);
     this.dir = len === 0 ? { x: 0, y: 0 } : { x: dirX / len, y: dirY / len };
+    this.px = px;
     this.elapsed = 0;
   }
 
@@ -21,7 +27,7 @@ export class CameraKick {
   update(realDtMs: number): Vec2 {
     if (this.elapsed < CAMERA_FEEL.kickMs) this.elapsed += realDtMs;
     if (this.elapsed >= CAMERA_FEEL.kickMs) return { x: 0, y: 0 };
-    const px = CAMERA_FEEL.kickPx * (1 - this.elapsed / CAMERA_FEEL.kickMs);
+    const px = this.px * (1 - this.elapsed / CAMERA_FEEL.kickMs);
     return { x: this.dir.x * px, y: this.dir.y * px };
   }
 }

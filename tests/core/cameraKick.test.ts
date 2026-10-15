@@ -43,6 +43,27 @@ describe('CAM-01: tranco de 4 px que volta em 120 ms', () => {
   });
 });
 
+describe('POW-08.4: o tranco aceita a distância', () => {
+  it('sem px anda os 4 px de sempre', () => {
+    const k = new CameraKick();
+    k.kick(1, 0);
+    expect(k.update(0).x).toBeCloseTo(4, 10);
+  });
+  it('com px 7 anda 7, passa por 3,5 no meio e volta a zero em 120 ms', () => {
+    const k = new CameraKick();
+    k.kick(0, -2, 7);
+    expect(k.update(0).y).toBeCloseTo(-7, 10);
+    expect(k.update(60).y).toBeCloseTo(-3.5, 10);
+    expect(k.update(60)).toEqual({ x: 0, y: 0 });
+  });
+  it('o kick seguinte sem px volta ao padrão de 4 px', () => {
+    const k = new CameraKick();
+    k.kick(1, 0, 7);
+    k.kick(1, 0);
+    expect(k.update(0).x).toBeCloseTo(4, 10);
+  });
+});
+
 describe('CAM-02: pulso de zoom 1.5 → 1.6 em 60 ms, segura 200, volta em 120', () => {
   const at = (ms: number): number => {
     const z = new ZoomPulse();
