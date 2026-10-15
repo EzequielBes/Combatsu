@@ -8,13 +8,13 @@ import type { TechId } from './techniques';
  * novo (técnicas, upgrades de energia) sem mudar a lógica de elegibilidade, sorteio ou compra.
  */
 export type ShopEntryKind =
-  'modifier' | 'consumable' | 'technique' | 'perk' | 'relic' | 'weapon' | 'tool' | 'evolution';
+  'modifier' | 'consumable' | 'technique' | 'perk' | 'relic' | 'weapon' | 'tool' | 'evolution' | 'body';
 /** Os 5 modificadores da F4 (loja-da-run). */
 export type CoreModifierId = 'vida' | 'forca' | 'agilidade' | 'ima' | 'sorte';
 /** Upgrades de energia amaldiçoada da F5 (TSH-08, TSH-15): rastreados à parte dos 5 da F4 em `Modifiers`. */
 export type EnergyModifierId = 'energia' | 'fluxo';
 export type ModifierId = CoreModifierId | EnergyModifierId;
-export type ShopEntryId = ModifierId | 'cura' | TechId | PerkId | ArsenalId;
+export type ShopEntryId = ModifierId | 'cura' | 'corpo' | TechId | PerkId | ArsenalId;
 
 export interface ShopEntryCost {
   base: number;
@@ -240,8 +240,23 @@ export const EVOLUTION_SHOP_ENTRIES: readonly ShopEntry[] = RECIPES.map((r) => (
   minRound: () => 1,
 }));
 
+/**
+ * O Corpo Amaldiçoado na loja (CRP-01): comum, até o Nv 6 (1 + 5 pontos), preço 12 + 4 por nível. O `eligible` o
+ * recusa até a loja de eixos (T52) oferecê-lo.
+ */
+export const BODY_SHOP_ENTRY: ShopEntry = {
+  id: 'corpo',
+  kind: 'body',
+  rarity: 'common',
+  name: 'Corpo Amaldiçoado',
+  maxLevel: 6,
+  cost: { base: 12, step: 4 },
+  minRound: () => 1,
+};
+
 export const GAME_SHOP_CATALOG: readonly ShopEntry[] = [
   ...FULL_SHOP_CATALOG,
+  BODY_SHOP_ENTRY,
   ...PERK_SHOP_ENTRIES,
   ...ARSENAL_SHOP_ENTRIES,
   ...EVOLUTION_SHOP_ENTRIES,

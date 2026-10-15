@@ -47,6 +47,7 @@ export function eligible(
 ): ShopEntry[] {
   return catalog.filter((entry) => {
     if (entry.kind === 'consumable') return true;
+    if (entry.kind === 'body') return false; // CRP-01: o Corpo só entra na loja de eixos (T52)
     if (entry.id in ARSENAL) return !!arsenal && arsenalEligible(entry.id as ArsenalId, arsenal, round);
     if (entry.kind === 'perk') return !!perks && !perks.has(entry.id as PerkId) && entry.minRound(1) <= round;
     if (entry.kind === 'technique') return !!loadout && techniqueEligible(entry, loadout, round);

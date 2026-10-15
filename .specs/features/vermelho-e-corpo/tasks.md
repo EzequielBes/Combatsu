@@ -1291,9 +1291,9 @@ do Corpo somam em `lutador` (`core/build.ts`).
 
 **Done when**:
 
-- [ ] `tests/core/build.test.ts` e `tests/data/shop.test.ts`: `corpo` em `lutador`; o catálogo do jogo tem `corpo`; a
+- [x] `tests/core/build.test.ts` e `tests/data/shop.test.ts`: `corpo` em `lutador`; o catálogo do jogo tem `corpo`; a
       loja ainda não oferece o Corpo
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

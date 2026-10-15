@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { SHOP_CATALOG, TECHNIQUE_SHOP_ENTRIES, type ShopEntry } from '../../src/data/shop';
+import {
+  BODY_SHOP_ENTRY,
+  GAME_SHOP_CATALOG,
+  SHOP_CATALOG,
+  TECHNIQUE_SHOP_ENTRIES,
+  type ShopEntry,
+} from '../../src/data/shop';
 import { SHOP } from '../../src/data/tuning';
 
 const entry = (id: string): ShopEntry => {
@@ -127,5 +133,18 @@ describe('TECHNIQUE_SHOP_ENTRIES: techGate nos dois lados dos limites (ECN-02, E
       expect(e.minRound(3) <= 3).toBe(false);
       expect(e.minRound(3) <= 4).toBe(true);
     }
+  });
+});
+
+describe('BODY_SHOP_ENTRY: o Corpo Amaldiçoado (CRP-01)', () => {
+  it('id corpo, tipo body, comum, Nv 6 no máximo e custo 12 + 4 por nível', () => {
+    expect(BODY_SHOP_ENTRY).toMatchObject({ id: 'corpo', kind: 'body', rarity: 'common', maxLevel: 6 });
+    expect(BODY_SHOP_ENTRY.cost).toEqual({ base: 12, step: 4 });
+    expect(BODY_SHOP_ENTRY.minRound(1)).toBe(1);
+  });
+
+  it('está no catálogo do jogo e fora do catálogo da F4', () => {
+    expect(GAME_SHOP_CATALOG).toContain(BODY_SHOP_ENTRY);
+    expect(SHOP_CATALOG.some((e) => e.id === 'corpo')).toBe(false);
   });
 });

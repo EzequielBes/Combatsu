@@ -59,7 +59,11 @@ export function buildPoints(modifiers: Modifiers, loadout: Loadout, perks: Perks
       perkPoints(build),
     );
   return {
-    lutador: modifiers.level('forca') + Math.floor(modifiers.level('vida') / 2) + gear('lutador'),
+    lutador:
+      modifiers.level('forca') +
+      Math.floor(modifiers.level('vida') / 2) +
+      loadout.axes.total('corpo') +
+      gear('lutador'),
     feiticeiro: techUpgrades + modifiers.level('energia') + modifiers.level('fluxo') + gear('feiticeiro'),
     veloz: modifiers.level('agilidade') + gear('veloz'),
   };
@@ -80,7 +84,7 @@ export function buildOfEntry(id: ShopEntryId): Build | null {
   if (id in PERKS) return PERKS[id as PerkId].build;
   if (id in ARSENAL) return ARSENAL[id as ArsenalId].build;
   if (id in TECHNIQUES || id === 'energia' || id === 'fluxo') return 'feiticeiro';
-  if (id === 'forca' || id === 'vida') return 'lutador';
+  if (id === 'forca' || id === 'vida' || id === 'corpo') return 'lutador';
   if (id === 'agilidade') return 'veloz';
   return null;
 }

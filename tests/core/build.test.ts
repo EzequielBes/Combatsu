@@ -60,6 +60,18 @@ describe('BLD-02/03: a build sai das compras', () => {
     expect(dominantBuild(points)).toBe('veloz');
   });
 
+  it('CRP-01: cada ponto do Corpo soma em lutador, junto com a Força, e o Nv 1 sozinho não soma', () => {
+    const { modifiers, loadout, perks } = fresh();
+    expect(buildPoints(modifiers, loadout, perks).lutador).toBe(0);
+    loadout.axes.add('corpo', 'impacto');
+    loadout.axes.add('corpo', 'peso');
+    loadout.axes.add('corpo', 'peso');
+    expect(buildPoints(modifiers, loadout, perks)).toEqual({ lutador: 3, feiticeiro: 0, veloz: 0 });
+    levelUp(modifiers, 'forca', 2);
+    expect(buildPoints(modifiers, loadout, perks).lutador).toBe(5);
+    expect(dominantBuild(buildPoints(modifiers, loadout, perks))).toBe('lutador');
+  });
+
   it('um ponto só não define build', () => {
     expect(dominantBuild({ lutador: 1, feiticeiro: 1, veloz: 0 })).toBeNull();
   });
@@ -71,6 +83,7 @@ describe('BLD-04/05: a loja puxa a build do jogador', () => {
     expect(buildOfEntry('azul')).toBe('feiticeiro');
     expect(buildOfEntry('agilidade')).toBe('veloz');
     expect(buildOfEntry('executor')).toBe('lutador');
+    expect(buildOfEntry('corpo')).toBe('lutador');
     expect(buildOfEntry('cura')).toBeNull();
     expect(buildOfEntry('ima')).toBeNull();
   });
@@ -164,5 +177,29 @@ describe('BLD-07: passivas na loja', () => {
     expect(shop.buy(0, ctx)).toEqual({ ok: true, id: 'refluxo', cost: PERK.cost });
     expect(perks.has('refluxo')).toBe(true);
     expect(wallet.fragments).toBe(50 - PERK.cost);
+  });
+});
+
+describe('CRP-01: o Corpo na loja ainda não é oferecido', () => {
+  it('o catálogo do jogo tem o corpo, do tipo body, comum, até o Nv 6 e preço 12 + 4', () => {
+    const corpo = GAME_SHOP_CATALOG.filter((e) => e.id === 'corpo');
+    expect(corpo).toHaveLength(1);
+    expect(corpo[0]).toMatchObject({ kind: 'body', rarity: 'common', maxLevel: 6, cost: { base: 12, step: 4 } });
+  });
+
+  it('o eligible recusa o corpo em qualquer rodada, com ou sem técnica', () => {
+    const { modifiers, loadout, perks } = fresh();
+    loadout.equip(0, 'divergente', 1);
+    for (const round of [1, 2, 6, 999]) {
+      expect(eligible(GAME_SHOP_CATALOG, modifiers, round, loadout, perks).some((e) => e.id === 'corpo')).toBe(false);
+    }
+    expect(eligible(GAME_SHOP_CATALOG, modifiers, 6).some((e) => e.id === 'corpo')).toBe(false);
+  });
+
+  it('o resto do catálogo continua elegível (só o corpo saiu)', () => {
+    const { modifiers, loadout, perks } = fresh();
+    const ids = eligible(GAME_SHOP_CATALOG, modifiers, 1, loadout, perks).map((e) => e.id);
+    expect(ids).toContain('forca');
+    expect(ids).toContain('cura');
   });
 });
