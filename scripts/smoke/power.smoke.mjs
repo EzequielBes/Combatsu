@@ -1,5 +1,5 @@
 // Fundação de poder (POW-*) no mundo modular em HD, com `?debug&hd=1&area=modular&seed=1`. Cada parte abre a sua
-// própria página; as partes 1 a 3, 6 e 7 do design entram com as tarefas que as ligam.
+// própria página; as partes 6 e 7 do design entram com as tarefas que as ligam.
 import { makeKit } from './fight-kit.mjs';
 
 const BASE = 'hd=1&area=modular&enemyGuard=0&noshop=1';
@@ -338,8 +338,100 @@ async function strikeForceScales(ctx) {
   );
 }
 
+/** Build de 6 pontos (patamar 2): Manoplas Nv 2 (4) e Punho Pesado (2). */
+const SIX_POINTS = 'arsenal=manoplas,manoplas&perks=punhoPesado';
+
+/** Espera o player parar no quadro do `idle`; a aura lê o repouso no começo do quadro, então acende no seguinte. */
+async function settleIdle(kit, where) {
+  const s = await kit.waitFor(
+    (x) => x.player.frame.startsWith('idle-'),
+    120,
+    `${where}: o player deveria parar no idle`,
+  );
+  return { idle: s, next: await kit.frame() };
+}
+
+/** Anda `frames` quadros com a tecla `code` segurada; devolve as auras lidas andando (sem os 2 primeiros quadros). */
+async function walk(kit, code, frames) {
+  const seen = new Set();
+  await kit.down(code);
+  let s = null;
+  for (let f = 0; f < frames; f++) {
+    s = await kit.frame();
+    if (f >= 2) seen.add(s.power.aura);
+  }
+  await kit.up(code);
+  return { s, seen };
+}
+
+/**
+ * POW-10: com 8 pontos a chama do punho acende parado, apaga andando, volta virado para o outro lado no quadro
+ * seguinte ao `idle`, apaga lançando técnica e volta depois do `R` sem chama órfã (a cena segue sem erro); com 6
+ * pontos (patamar 2) são as brasas.
+ */
+async function restingHandFlame(ctx) {
+  const { assert, page } = ctx;
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  const kit = makeKit(ctx);
+  await kit.boot(`${BASE}&${EIGHT_POINTS}&tech=vermelho`);
+  let { idle, next } = await settleIdle(kit, 'começo');
+  assert(
+    next.power.aura === 'flame',
+    `POW-10.12: parado com 8 pontos a chama deveria acender: ${JSON.stringify(next.power)} ${next.player.frame}`,
+  );
+  const facing = idle.player.facing;
+
+  // Anda para o lado contrário (para longe do inimigo, que nasce à direita): a chama apaga e o player vira.
+  const away = await walk(kit, facing === 1 ? 'KeyA' : 'KeyD', 20);
+  assert(
+    away.seen.size === 1 && away.seen.has('off'),
+    `POW-10.14: andando a aura deveria ficar apagada: ${JSON.stringify([...away.seen])} ${away.s.player.frame}`,
+  );
+  ({ idle, next } = await settleIdle(kit, 'virado'));
+  assert(idle.player.facing === -facing, `o player deveria ter virado: ${idle.player.facing}`);
+  assert(
+    next.power.aura === 'flame',
+    `POW-10 (virar parado): a chama deveria voltar no quadro seguinte ao idle: ${next.power.aura} ${next.player.frame}`,
+  );
+
+  // Lançando o Vermelho: a chama apaga enquanto a conjuração trava o player.
+  let s = await kit.tap('KeyL');
+  const casting = new Set();
+  for (let f = 0; f < 60 && s.tech.cast !== null; f++) {
+    if (f >= 1) casting.add(s.power.aura);
+    s = await kit.frame();
+  }
+  assert(casting.size > 0, `o Vermelho deveria ter começado: ${JSON.stringify(s.tech)}`);
+  assert(
+    casting.size === 1 && casting.has('off'),
+    `POW-10.14: lançando técnica a aura deveria ficar apagada: ${JSON.stringify([...casting])}`,
+  );
+
+  // R reinicia a cena: a aura nasce de novo com o player novo e volta a acender parada, sem erro na página.
+  await kit.tap('KeyR');
+  s = await kit.snap(50);
+  if (s.run.state === 'title') s = await kit.tap('KeyJ');
+  ({ next } = await settleIdle(kit, 'depois do R'));
+  assert(
+    next.power.tier === 3 && next.power.aura === 'flame',
+    `POW-10 (R): a chama deveria voltar no player novo: ${JSON.stringify(next.power)} ${JSON.stringify(next.run)}`,
+  );
+  for (let f = 0; f < 10; f++) s = await kit.frame();
+  assert(errors.length === 0, `POW-10 (R): erro na página depois do R: ${errors.join(' | ')}`);
+
+  // Patamar 2: as brasas.
+  await kit.boot(`${BASE}&${SIX_POINTS}`);
+  ({ next } = await settleIdle(kit, 'patamar 2'));
+  assert(
+    next.power.tier === 2 && next.power.aura === 'embers',
+    `POW-10.12: parado com 6 pontos deveriam ser as brasas: ${JSON.stringify(next.power)}`,
+  );
+}
+
 export default async function (ctx) {
   await strikeForceScales(ctx);
+  await restingHandFlame(ctx);
   await jabShowsStrikeNumber(ctx);
   await runResetClearsNumbers(ctx);
   await areaChangeClearsNumbers(ctx);

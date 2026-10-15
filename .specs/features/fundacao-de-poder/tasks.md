@@ -574,12 +574,12 @@ lê `mods` uma vez e aplica `damage × mods.damage` e `force × mods.force`; o `
 
 **Done when**:
 
-- [ ] `handOffset` medido com `tools/hd-boards.mjs` no quadro `idle` das duas folhas e conferido em movimento no jogo
+- [x] `handOffset` medido com `tools/hd-boards.mjs` no quadro `idle` das duas folhas e conferido em movimento no jogo
       (repouso, corrida, repouso, dos dois lados), capturas em `.fable-out/` ou no rascunho
-- [ ] `power.smoke.mjs` (cenário 3): parado `power.aura === 'flame'`, andando `'off'`, parado virado para o outro lado
+- [x] `power.smoke.mjs` (cenário 3): parado `power.aura === 'flame'`, andando `'off'`, parado virado para o outro lado
       `'flame'` no quadro seguinte; lançando técnica `'off'`; patamar 2 dá `'embers'`; `R` recria sem chama órfã
-- [ ] Smokes `player-anim`, `world-restart` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `player-anim`, `world-restart` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full

@@ -7,6 +7,7 @@ import type { InputSnapshot } from '../../game/input';
 import type { Player } from '../../game/Player';
 import type { TestScene } from '../TestScene';
 import { NEUTRAL_INPUT } from './params';
+import { PowerAuraDirector } from './powerAuraDirector';
 
 /**
  * Dono dos números do combate (POW-01): monta a folha de atributos a partir de passivas, arsenal e votos e é o único
@@ -15,8 +16,12 @@ import { NEUTRAL_INPUT } from './params';
 export class StatsDirector {
   /** Força do corpo de agora (POW-07, POW-08), recalculada a cada quadro. */
   power: PowerLook = powerLook(0);
+  /** Brasas e chama na mão parada (POW-10), recriada com cada player. */
+  readonly aura: PowerAuraDirector;
 
-  constructor(readonly s: TestScene) {}
+  constructor(readonly s: TestScene) {
+    this.aura = new PowerAuraDirector(s);
+  }
 
   /** A folha de agora, com os abates da rodada atual (Fúria) e a vida máxima comprada na loja. */
   sheet(): StatSheet {
@@ -43,9 +48,10 @@ export class StatsDirector {
   }
 
   /** A cada quadro, antes de tudo: a Fúria muda com os abates, então a folha é refeita todo quadro. */
-  update(_deltaMs: number): void {
+  update(deltaMs: number): void {
     this.sync();
     this.power = powerLook(this.points());
+    this.aura.update(deltaMs, this.power);
   }
 
   /** Run nova: chamado depois de build, arsenal e votos já zerados, para a folha sair da run nova. */
@@ -64,9 +70,10 @@ export class StatsDirector {
     });
   }
 
-  /** Liga o gancho do golpe do player (recriado a cada `create`). */
+  /** Liga o gancho do golpe do player (recriado a cada `create`) e recria a aura dele (edge case do `R`). */
   bindPlayer(p: Player): void {
     p.strikeMods = (move) => this.strikeMods(move);
+    this.aura.bind(p);
   }
 
   /**
@@ -88,14 +95,13 @@ export class StatsDirector {
   /** Campos do snapshot de debug que nascem aqui; cada passo da feature acrescenta o seu. */
   snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power'> {
     const { points, tier, impactScale, hitstopBonusMs, tone } = this.power;
-    // A aura fica apagada até o diretor da chama (POW-10) ligar o estado real.
     const power = {
       points,
       tier,
       impactScale,
       hitstopBonusMs: { ...hitstopBonusMs },
       tone: { ...tone },
-      aura: 'off' as const,
+      aura: this.aura.view,
     };
     return { damageNumbers: this.s.ui.damageNumbers.snapshot(), power };
   }

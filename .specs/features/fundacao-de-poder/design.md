@@ -128,8 +128,11 @@ no toque.
 - **Purpose**: brasas (patamar 2) e chama no punho (patamar 3) na mão parada (POW-10).
 - **Interfaces**: `bind(player)`, `update(deltaMs, look: PowerLook)`, `get view(): 'off' | 'embers' | 'flame'`.
 - **Comportamento**: cria a `CursedFlame('red', ...)` só quando acende; o ponto é
-  `player.renderPos + POWER_FEEL.handOffset[facing]`; sem repouso, `tick(dt, null)` apaga o que resta. O `bind` larga a
-  chama antiga e o `SHUTDOWN` da cena zera a referência (edge case do `R`).
+  `player.renderPos + POWER_FEEL.handOffset[facing]`; sem repouso, `tick(dt, null)` apaga o que resta, com o container
+  andando junto com o corpo (sem isso a corrida que começa deixa a chama boiando onde a mão estava; a chama que andou
+  não volta a nascer, a próxima é nova). O `bind` larga a chama antiga e o `SHUTDOWN` da cena zera a referência (edge
+  case do `R`). O `handOffset` medido é `{ x: ±13, y: -17 }` do centro do corpo: o punho da frente no `idle` fica no
+  mesmo ponto nas duas folhas (13 px à frente e 35 px acima do pé).
 - **Reuses**: `CursedFlame`, `atRest` de `core/power.ts`.
 
 ### `core/power.ts` (novo, ~60 linhas)

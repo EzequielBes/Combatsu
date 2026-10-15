@@ -43,4 +43,9 @@ describe('força: dados (POW-07 a POW-10)', () => {
     expect(POWER_FEEL.tierFrom).toEqual([2, 5, 8]);
     expect(POWER_FEEL.auraPower).toEqual({ embers: 0.3, flame: 0.6 });
   });
+
+  it('a mão da aura é o punho medido no idle, espelhado em volta do pé (POW-10.13)', () => {
+    expect(POWER_FEEL.handOffset[1]).toEqual({ x: 13, y: -17 });
+    expect(POWER_FEEL.handOffset[-1]).toEqual({ x: -13, y: -17 });
+  });
 });

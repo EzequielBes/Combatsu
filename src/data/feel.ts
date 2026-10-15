@@ -93,7 +93,9 @@ export const DAMAGE_NUMBER_FEEL = {
  * (p): impacto +0,05, tranco de câmera +0,3 px sobre o `CAMERA_FEEL.kickPx`, `force` e deslize +0,03, rastro +1 px a
  * cada 2 pontos. Por patamar (0 a 3): bônus de hitstop sobre o `HITSTOP_MS`, tom do impacto forte em chaves da
  * `PALETTE` (sombra, corpo, miolo, corpo e miolo alternados) e o `power` da chama da aura. O tremor entra no patamar
- * `shakeFromTier`. O `handOffset` da aura nasce medido na prancha (T20).
+ * `shakeFromTier`. O `handOffset` é o punho da frente no `idle`, em px a partir do centro do corpo, por `facing`: medido
+ * na prancha das duas folhas (`player-yuta` e `player-hd` põem o punho no mesmo ponto, 13 px à frente e 35 px acima do
+ * pé; o pé fica 18 px abaixo do centro). O sprite espelha em volta do pé, então o lado esquerdo é o direito espelhado.
  */
 export const POWER_FEEL = {
   capPoints: 10,
@@ -112,4 +114,5 @@ export const POWER_FEEL = {
     { shadow: 'R', body: 'b', core: 'R', altBody: 'r', altCore: 'W' },
   ],
   auraPower: { embers: 0.3, flame: 0.6 },
+  handOffset: { 1: { x: 13, y: -17 }, '-1': { x: -13, y: -17 } },
 } as const;
