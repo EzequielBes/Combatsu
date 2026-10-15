@@ -1,4 +1,12 @@
-import { BlueOrbState, blueOrbSpawn, type BlueOrbDamage, type BlueOrbTarget } from '../../core/blueOrb';
+import {
+  BlueOrbState,
+  blueGeometry,
+  blueOrbConfig,
+  blueOrbSpawn,
+  type BlueGeometry,
+  type BlueOrbDamage,
+  type BlueOrbTarget,
+} from '../../core/blueOrb';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
 import type { Hit, HitBand } from '../../core/hit';
@@ -8,12 +16,11 @@ import { bodyOf, PX_PER_S_TO_STEP } from '../physics';
 import { BlueOrbFx } from '../techFx/BlueOrb';
 import { techMarks, type CastRef, type TechContext, type TechTarget } from './shared';
 
-/** BLU-02: alcance da consulta de parede à frente do player (folga acima dos 110 px do orbe). */
-const BLUE_WALL_QUERY_PX = 130;
-
 interface BlueOrbEntry {
   readonly cast: CastRef | null;
   readonly id: number;
+  /** TST-02: a geometria do Azul no nascimento (raio da vista; o `state` leva raio, tempos e danos deste orbe). */
+  readonly blue: BlueGeometry;
   readonly state: BlueOrbState;
 }
 
@@ -45,7 +52,7 @@ export class BlueTech {
     const orb = this.orb;
     if (!orb) return;
     const point = orb.state.position;
-    this.fx.update(dtMs, point.x, point.y); // BLU-08/09
+    this.fx.update(dtMs, point.x, point.y, orb.blue.radius); // BLU-08/09, TST-03
 
     const enemyTargets: BlueOrbTarget[] = enemies.map((e) => ({
       id: e.id,
@@ -85,19 +92,25 @@ export class BlueTech {
     }
     const { sprite } = this.ctx.player;
     const center = { x: sprite.x, y: sprite.y };
-    const point = blueOrbSpawn(center, facing, this.wallDistanceAhead(facing)); // BLU-02
-    this.orb = { cast: this.ctx.currentCast(), id: newEntityId(), state: new BlueOrbState(point) };
+    const stats = this.ctx.loadout.stats('azul'); // TST-02: raio, tempos e danos deste orbe, fixos no nascimento
+    const blue = blueGeometry(stats);
+    const point = blueOrbSpawn(center, facing, this.wallDistanceAhead(facing, blue.wallQueryPx), blue); // BLU-02
+    const state = new BlueOrbState(point, blueOrbConfig(stats));
+    this.orb = { cast: this.ctx.currentCast(), id: newEntityId(), blue, state };
   }
 
-  /** BLU-02: distância (px) até a primeira parede à frente do player, `Infinity` se nenhuma dentro da consulta. */
-  private wallDistanceAhead(facing: 1 | -1): number {
+  /**
+   * BLU-02: distância (px) até a primeira parede à frente do player, `Infinity` se nenhuma dentro dos `queryPx` da
+   * consulta (folga acima da distância de nascimento do orbe).
+   */
+  private wallDistanceAhead(facing: 1 | -1, queryPx: number): number {
     const { sprite } = this.ctx.player;
     const { x, y } = bodyOf(sprite).position;
     const halfH = sprite.displayHeight / 2;
     const region =
       facing === 1
-        ? { min: { x, y: y - halfH }, max: { x: x + BLUE_WALL_QUERY_PX, y: y + halfH } }
-        : { min: { x: x - BLUE_WALL_QUERY_PX, y: y - halfH }, max: { x, y: y + halfH } };
+        ? { min: { x, y: y - halfH }, max: { x: x + queryPx, y: y + halfH } }
+        : { min: { x: x - queryPx, y: y - halfH }, max: { x, y: y + halfH } };
     const hits = this.ctx.scene.matter.query.region(this.terrain, region);
     let closest = Infinity;
     for (const body of hits) {
@@ -123,7 +136,7 @@ export class BlueTech {
   ): void {
     const hit: Hit = {
       ownerId: this.ctx.player.id,
-      damage: this.ctx.loadout.damage('azul', dmg.damage), // BLU-06/07, TEC-06
+      damage: dmg.damage, // BLU-06/07, TEC-06: já escalado no stat do nascimento
       strength: 'light',
       force: 0,
       direction: { x: 0, y: -1 },

@@ -170,7 +170,7 @@ export const CAST_FX = {
 
 /**
  * Geometria das técnicas num lugar só (TST-01): os números que hoje são constantes soltas nos módulos de regra, nos
- * adaptadores de `game/tech/` e nas vistas de `game/techFx/`. O Vermelho já lê daqui pelo `TechStats` (T6); nas outras
+ * adaptadores de `game/tech/` e nas vistas de `game/techFx/`. O Vermelho e o Azul já leem daqui pelo `TechStats` (T6, T7); nas outras
  * os módulos ainda têm a cópia, e o `tests/core/techStats.test.ts` compara cada número com a constante do módulo até
  * eles passarem a ler daqui.
  */
@@ -209,6 +209,9 @@ export const TECH_GEOMETRY = {
     lifeMs: 1400,
     /** BLU-02: alcance da consulta de parede à frente do player (`game/tech/blue.ts`). */
     wallQueryPx: 130,
+    /** Raio do halo e do anel de distorção mais largo da vista (`BlueOrb.ts`): a vista os escala junto com o `radius`. */
+    haloPx: 40,
+    distortPx: 58,
   },
   corte: {
     /** CUT-02: instante de cada corte (ms). */

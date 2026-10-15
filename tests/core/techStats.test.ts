@@ -11,6 +11,7 @@ import redOrbSrc from '../../src/core/redOrb.ts?raw';
 import blueTechSrc from '../../src/game/tech/blue.ts?raw';
 import purpleTechSrc from '../../src/game/tech/purple.ts?raw';
 import redTechSrc from '../../src/game/tech/red.ts?raw';
+import blueFxSrc from '../../src/game/techFx/BlueOrb.ts?raw';
 import cutFxSrc from '../../src/game/techFx/CutFx.ts?raw';
 import redDetonationSrc from '../../src/game/techFx/redDetonation.ts?raw';
 
@@ -115,15 +116,28 @@ describe('TST-01.6: TECH_GEOMETRY sem número novo (igual às constantes ainda n
     });
   });
 
-  it('Azul: nascimento, folga da parede, raio, puxada, tique, vida e consulta de parede', () => {
-    const g = TECH_GEOMETRY.azul;
-    expect(g.aheadPx).toBe(constOf(blueOrbSrc, 'AHEAD_PX'));
-    expect(g.wallMarginPx).toBe(constOf(blueOrbSrc, 'WALL_MARGIN_PX'));
-    expect(g.radius).toBe(constOf(blueOrbSrc, 'RADIUS'));
-    expect(g.pullSpeed).toBe(constOf(blueOrbSrc, 'PULL_SPEED'));
-    expect(g.tickMs).toBe(constOf(blueOrbSrc, 'TICK_MS'));
-    expect(g.lifeMs).toBe(constOf(blueOrbSrc, 'LIFE_MS'));
-    expect(g.wallQueryPx).toBe(constOf(blueTechSrc, 'BLUE_WALL_QUERY_PX'));
+  it('Azul (T7): os números de hoje, lidos pela regra, pelo adaptador e pela vista sem cópia', () => {
+    expect(TECH_GEOMETRY.azul).toEqual({
+      aheadPx: 110,
+      wallMarginPx: 16,
+      radius: 130,
+      pullSpeed: 150,
+      tickMs: 250,
+      lifeMs: 1400,
+      wallQueryPx: 130,
+      haloPx: 40,
+      distortPx: 58,
+    });
+    // TST-02/03: nenhuma cópia da geometria nem leitura de TECHNIQUES na regra, no adaptador ou na vista do Azul.
+    for (const name of ['AHEAD_PX', 'WALL_MARGIN_PX', 'RADIUS', 'PULL_SPEED', 'TICK_MS', 'LIFE_MS']) {
+      expect(blueOrbSrc).not.toContain(`const ${name} =`);
+    }
+    expect(blueOrbSrc).not.toContain('TECHNIQUES');
+    expect(blueTechSrc).not.toContain('BLUE_WALL_QUERY_PX');
+    expect(blueTechSrc).not.toContain('loadout.damage(');
+    expect(blueTechSrc).toContain("this.ctx.loadout.stats('azul')");
+    for (const name of ['HALO_RADIUS', 'DISTORT_RADIUS']) expect(blueFxSrc).not.toContain(name);
+    expect(blueFxSrc).not.toMatch(/\b(130|40|58)\b/);
   });
 
   it('Corte: tempos, ângulos, retângulo de dano e linha da vista', () => {

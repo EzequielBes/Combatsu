@@ -354,8 +354,11 @@ já escalados); `game/tech/red.ts` guarda `loadout.stats('vermelho')` na soltura
 
 #### T7: Azul lê o stat
 
-**What**: `BlueOrbState(config)` (`blueOrb.ts:4-9`, `:80`, `:87`); `game/tech/blue.ts` (`:12`, `:126`) passa o stat;
-halo e distorção do `BlueOrb.ts:32-36` proporcionais ao `radius` (130 dá os números de hoje).
+**What**: `BlueOrbState(spawn, config: BlueOrbConfig)` (`blueOrb.ts:4-9`, `:80`, `:87`; `blueOrbConfig(stats)` e
+`blueGeometry(stats)` na regra, com os danos já escalados; `blueOrbSpawn` ganha a geometria opcional);
+`game/tech/blue.ts` (`:12`, `:126`) guarda `loadout.stats('azul')` no nascimento (consulta de parede, nascimento, raio,
+tempos e dano); halo e distorção do `BlueOrb.ts:32-36` proporcionais ao `radius` pelo `blueOrbLook(radius)` de
+`techFx/blueLook.ts`, sem `phaser` (`TECH_GEOMETRY.azul.haloPx: 40` e `distortPx: 58`; 130 dá os números de hoje).
 **Where**: `src/core/blueOrb.ts`
 **Depends on**: T4
 **Reuses**: `TECH_GEOMETRY.azul`
@@ -363,9 +366,13 @@ halo e distorção do `BlueOrb.ts:32-36` proporcionais ao `radius` (130 dá os n
 
 **Done when**:
 
-- [ ] Testes do Azul verdes, só a construção muda; `BlueOrb.ts` sem literal do raio 130
-- [ ] Smokes `tech`, `techniques` e `power` (cenário do Azul da F29) verdes e iguais
-- [ ] Gate verde; contagem sem perda
+- [x] Testes do Azul verdes, só a construção muda; `BlueOrb.ts` sem literal do raio 130. O `blueOrb.test.ts` ganha o
+      `TST-02` (config do Nv 1, dano escalado = `Loadout.damage`, raio 159/160/161, puxada/intervalo/vida de um config
+      diferente, nascimento com outra geometria), o `tests/game/blueLook.test.ts` prova 130 → 40/58, 195 → 60/87 e
+      65 → 20/29, e o `techStats.test.ts` passa a provar que o Azul não tem mais cópia dos números
+- [x] Smokes `tech`, `techniques` e `power` (cenário do Azul da F29) verdes e iguais
+- [x] Gate verde; contagem sem perda (3855 + 7 = 3862). Como no Vermelho, o dano do tique e da implosão é o do stat do
+      nascimento (antes era escalado em cada golpe): multiplicadores que mudarem nos 1400 ms de vida não entram nesse orbe
 
 **Tests**: unit + smoke
 **Gate**: full

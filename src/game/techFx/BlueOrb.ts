@@ -4,6 +4,7 @@ import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
 import { PALETTE } from '../art/palette';
 import { TEX } from '../textures';
+import { blueOrbLook } from './blueLook';
 
 /**
  * Cores do Azul no anime (BLA-04): azul-profundo `d` por fora, azul `c` no meio, ciano `C` perto do núcleo e branco
@@ -28,12 +29,12 @@ const CORE_RINGS: ReadonlyArray<[number, number]> = [
 ];
 /** Pulso do núcleo e do halo. */
 const PULSE_MS = 360;
-/** Halo (bloom) atrás do vórtice. */
-const HALO_RADIUS = 40;
-/** 3 anéis de espaço dobrando, contraindo para o centro, defasados. */
+/**
+ * 3 anéis de espaço dobrando, contraindo para o centro, defasados. O raio do halo (bloom) e o do anel mais largo vêm
+ * do `radius` do stat pelo `blueOrbLook`.
+ */
 const DISTORT_RING_COUNT = 3;
 const DISTORT_CYCLE_MS = 760;
-const DISTORT_RADIUS = 58;
 const DEBRIS_EVERY_MS = 160;
 const IMPLODE_MS = 200;
 const IMPLODE_FLASH_MS = 160;
@@ -90,8 +91,8 @@ export class BlueOrbFx {
     this.degraded = scene.game.renderer.type !== Phaser.WEBGL;
   }
 
-  /** BLU-08/09: chamado todo frame em que o orbe existe. */
-  update(dtMs: number, x: number, y: number): void {
+  /** BLU-08/09: chamado todo frame em que o orbe existe; `radius` é o raio da puxada do stat (TST-03). */
+  update(dtMs: number, x: number, y: number, radius: number): void {
     this.fx.add('blue.core', Math.max(dtMs, 1), 'game');
     this.fx.add('blue.spiralIn', Math.max(dtMs, 1), 'game');
     this.fx.add('blue.distortRing', Math.max(dtMs, 1), 'game');
@@ -104,8 +105,9 @@ export class BlueOrbFx {
     // Nasce rápido (os primeiros 120 ms crescem do ponto ao tamanho cheio), como o Azul se formando na mão.
     const grow = Math.min(1, t / 120);
 
-    this.drawHalo(x, y, pulse, grow);
-    this.drawDistortion(x, y, grow);
+    const look = blueOrbLook(radius);
+    this.drawHalo(x, y, pulse, grow, look.halo);
+    this.drawDistortion(x, y, grow, look.distort);
     this.drawVortex(x, y, t, grow);
     this.drawCore(x, y, pulse, grow);
     this.spawnDebris(dtMs, x, y);
@@ -183,8 +185,8 @@ export class BlueOrbFx {
   }
 
   /** Bloom azul atrás de tudo (BLA-04): dois discos translúcidos pulsando. */
-  private drawHalo(x: number, y: number, pulse: number, grow: number): void {
-    const r = HALO_RADIUS * grow * (1 + 0.06 * pulse);
+  private drawHalo(x: number, y: number, pulse: number, grow: number, halo: number): void {
+    const r = halo * grow * (1 + 0.06 * pulse);
     this.halo!.clear()
       .fillStyle(C.deep, 0.32)
       .fillCircle(x, y, r)
@@ -193,11 +195,11 @@ export class BlueOrbFx {
   }
 
   /** Anéis de espaço dobrando (BLU-08): finos, do azul-profundo ao azul, contraindo e sumindo no núcleo. */
-  private drawDistortion(x: number, y: number, grow: number): void {
+  private drawDistortion(x: number, y: number, grow: number, distort: number): void {
     const g = this.distortRing!.clear();
     for (let i = 0; i < DISTORT_RING_COUNT; i++) {
       const phase = ((this.elapsedMs / DISTORT_CYCLE_MS + i / DISTORT_RING_COUNT) % 1) as number; // 0 borda -> 1 centro
-      const radius = (DISTORT_RADIUS * (1 - phase) + 14) * grow;
+      const radius = (distort * (1 - phase) + 14) * grow;
       const alpha = 0.55 * Math.sin(Math.PI * phase);
       g.lineStyle(2, i % 2 === 0 ? C.deep : C.mid, alpha).strokeCircle(x, y, radius);
     }

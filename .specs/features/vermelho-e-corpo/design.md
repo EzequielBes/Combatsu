@@ -94,7 +94,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 | `SlowMo.trigger(0.4, 350)` | `src/core/slowMo.ts`; `CAMERA_FEEL.slowScale`/`slowMs` (`data/feel.ts:58-59`) | Câmera lenta do Despertar (VRM-17, CRP-13) sem número novo |
 | `Hud.banner(text, ms)` | `src/game/Hud.ts` | Banner do Despertar e do ramo, sem crescer o `Hud.ts` |
 | `Fx.afterimage(sprite)` | `src/game/fx.ts:163` | Pós-imagem da Conjuração 3 e do Ritmo 3 (VRM-06, CRP-04) |
-| `TechTarget.setPull(velocity)` | `src/game/tech/shared.ts:18` | Empurrão do campo do Vermelho Máximo, com a velocidade do puxão do Azul ao contrário (`PULL_SPEED` 150, `core/blueOrb.ts:7`) |
+| `TechTarget.setPull(velocity)` | `src/game/tech/shared.ts:18` | Empurrão do campo do Vermelho Máximo, com a velocidade do puxão do Azul ao contrário (`TECH_GEOMETRY.azul.pullSpeed` 150, que o `BlueOrbState` lê pelo config desde a T7) |
 | `techMarks(strength, id)` | `src/game/tech/shared.ts:52` | O golpe pesado de técnica já leva `knockdown: true` (AD-021): toda detonação do Vermelho já derruba hoje, e o VRM-15 não muda isso. Todo `Hit` novo do Vermelho (estilhaço, rebote, campo) leva `techMarks(strength, 'vermelho')`, para o Adaptativo do chefe contar pela técnica (`adaptSourceOf`, ADP-01) |
 | `VowPanel` (cartas, `show`/`hide`, `debug`) | `src/game/VowPanel.ts` | Molde do `ChoicePanel` (mesma camada, profundidade e cores) |
 | `debugParam` / `debugIntParam` | `src/scenes/test/params.ts` | Lê `axes=` e `ramo=` |
@@ -400,7 +400,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 | `src/core/loadout.ts` | 88-110 | `stats(id)`; `cost`, `damage` e `startCooldown` leem do `stats` |
 | `src/core/cast.ts` | 26-37, 121-124 | `msFor(stats, state)` com `this.loadout.stats(id)` no lugar de `TECHNIQUES[id]` |
 | `src/core/redOrb.ts` | 6-9, 97-99, 127, 141 | `RedOrbConfig` no construtor |
-| `src/core/blueOrb.ts` | 4-9, 80, 87 | geometria e dano por parâmetro do construtor (`BlueOrbState(config)`) |
+| `src/core/blueOrb.ts` | 4-9, 80, 87 | geometria e dano por parâmetro do construtor (`BlueOrbState(spawn, config)`, `BlueOrbConfig = { radius, pullSpeed, tickMs, lifeMs, tick, end }`); `blueOrbConfig(stats)` com os danos já escalados e `blueGeometry(stats)`; `blueOrbSpawn(..., geometry)` com a da tabela por padrão (T7) |
 | `src/core/cut.ts` | 21-25, 72 | idem (`CutSchedule(config)`) |
 | `src/core/purple.ts` | 2-11 | `PURPLE` vira reexport de `TECH_GEOMETRY.roxo` (o teste `tests/data/purple.test.ts` lê `PURPLE`) |
 | `src/game/tech/red.ts` | 22-25, 91, 172-179, 200, 207, 217 | `const stats = loadout.stats('vermelho')` na soltura, guardado no `RedOrbEntry`; sensor, sprite, força e dano do `stats` |
@@ -410,7 +410,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 | `src/game/tech/divergent.ts` | 167, 201 | `stats.damage.first` / `second` |
 | `src/game/techFx/RedOrb.ts` | 101-111, 329-337 | `chargeUpdate(..., chargeMs)` já recebe o tempo; `detonate(point, facing, look: { radius, rings })` |
 | `src/game/techFx/redDetonation.ts` | 26-29, 54, 65, 89, 117 | `redDetonationBurst(scene, registry, point, look)`; raio da esfera = `look.radius`, anel = `shockRingRadius(look.radius)` (`radius × ringPx / radius` da tabela, em `techFx/redLook.ts` sem `phaser`, com o tipo `RedDetonationLook`); `TECH_GEOMETRY.vermelho.rings: 1` (T6); sprite pelo `orbTexels` no passo 2 |
-| `src/game/techFx/BlueOrb.ts` | 32-36 | halo e distorção proporcionais ao `radius` do stat (130 dá os números de hoje) |
+| `src/game/techFx/BlueOrb.ts` | 32-36 | halo e distorção proporcionais ao `radius` do stat (130 dá os números de hoje): `update(dtMs, x, y, radius)` e `blueOrbLook(radius)` de `techFx/blueLook.ts`, sem `phaser` (`radius × haloPx / radius` e `radius × distortPx / radius` da tabela; `TECH_GEOMETRY.azul.haloPx: 40`, `distortPx: 58`) (T7) |
 | `src/game/techFx/CutFx.ts` | 7-13 | comprimento e meio da linha pelo stat |
 | `src/game/techFx/PurpleOrb.ts` | — | raio da esfera pelo stat |
 | `src/game/EnergyHud.ts` | 171, 176 | `def.cooldownMs` vira `loadout.stats(s.id).cooldownMs` |
