@@ -149,3 +149,46 @@ describe('TST-01: cada técnica leva só a própria geometria', () => {
     expect(at('roxo').purple).toBe(TECH_GEOMETRY.roxo);
   });
 });
+
+describe('TST-01/TST-02: Loadout.stats(id) = resolveTechStats com os multiplicadores do Loadout', () => {
+  for (const id of IDS) {
+    for (const level of LEVELS) {
+      it(`${id} Nv ${level}: stats, custo e recarga saem do mesmo TechStats`, () => {
+        const loadout = new Loadout();
+        loadout.equip(1, id, level);
+        loadout.damageMul = 1.35;
+        loadout.vowDamageMul = 1.35;
+        loadout.costMul = 1.35;
+        const expected = resolveTechStats({ id, level, damageMul: 1.35, vowDamageMul: 1.35, costMul: 1.35 });
+        expect(loadout.stats(id)).toEqual(expected);
+        expect(loadout.cost(id)).toBe(expected.cost);
+        loadout.startCooldown(1);
+        expect(loadout.cooldownOf(1)).toBe(expected.cooldownMs);
+      });
+    }
+  }
+
+  it('não equipada resolve como nível 1 (TEC-14), sem multiplicador', () => {
+    const loadout = new Loadout();
+    expect(loadout.stats('corte')).toEqual(
+      resolveTechStats({ id: 'corte', level: 1, damageMul: 1, vowDamageMul: 1, costMul: 1 }),
+    );
+  });
+
+  it('o stat acompanha o multiplicador escrito depois (resolvido a cada chamada)', () => {
+    const loadout = new Loadout();
+    loadout.equip(0, 'vermelho', 3);
+    const before = loadout.stats('vermelho').cost;
+    loadout.costMul = 1.35;
+    expect(before).toBe(TECHNIQUES.vermelho.cost - 10);
+    expect(loadout.stats('vermelho').cost).toBe(47);
+  });
+
+  it('dano de base fora da tabela usa o nível do stat: 10 no Nv 2 com 1,35 e 1,35 = round(22,78) = 23', () => {
+    const loadout = new Loadout();
+    loadout.equip(0, 'vermelho', 2);
+    loadout.damageMul = 1.35;
+    loadout.vowDamageMul = 1.35;
+    expect(loadout.damage('vermelho', 10)).toBe(23);
+  });
+});

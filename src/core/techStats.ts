@@ -45,16 +45,23 @@ function geometryOf(id: TechId): Pick<TechStats, 'red' | 'blue' | 'cut' | 'purpl
 }
 
 /**
+ * Dano de `base` no `level` com os dois multiplicadores (TEC-06: arredonda meio para cima, só no fim). Compartilhado
+ * com o `Loadout.damage`, que ainda recebe bases fora da tabela (estilhaço e repulsão do Vermelho, tiques do Azul).
+ */
+export function scaleDamage(base: number, level: TechLevel, damageMul: number, vowDamageMul: number): number {
+  return Math.round(base * LEVEL_FACTOR[level - 1] * damageMul * vowDamageMul);
+}
+
+/**
  * Resolve o stat de `id` no `level` (TST-01). O custo e o dano seguem a mesma conta e a mesma ordem de
  * `Loadout.cost`/`Loadout.damage` (`Math.round` no fim), para o número sair idêntico.
  */
 export function resolveTechStats(input: TechStatsInput): TechStats {
   const { id, level, damageMul, vowDamageMul, costMul } = input;
   const def = TECHNIQUES[id];
-  const factor = LEVEL_FACTOR[level - 1];
   const damage: Record<string, number> = {};
   for (const [key, base] of Object.entries(def.damage)) {
-    damage[key] = Math.round(base * factor * damageMul * vowDamageMul);
+    damage[key] = scaleDamage(base, level, damageMul, vowDamageMul);
   }
   return {
     id,

@@ -1,4 +1,5 @@
-import { LEVEL_FACTOR, TECHNIQUES, type TechId } from '../data/techniques';
+import { TECHNIQUES, type TechId } from '../data/techniques';
+import { resolveTechStats, scaleDamage, type TechStats } from './techStats';
 
 export type TechLevel = 1 | 2 | 3;
 
@@ -85,16 +86,28 @@ export class Loadout {
     return true;
   }
 
-  /** Custo de energia para conjurar `id` no nível atual (0 se não equipada trata como nível 1, TEC-14). */
-  cost(id: TechId): number {
-    const level = this.levelOf(id) || 1;
-    return Math.round((TECHNIQUES[id].cost - 5 * (level - 1)) * this.costMul);
+  /**
+   * O `TechStats` de `id` no nível atual com os multiplicadores deste `Loadout` (TST-01); não equipada trata como
+   * nível 1 (TEC-14). Resolvido a cada chamada: os multiplicadores mudam por quadro no `StatsDirector`.
+   */
+  stats(id: TechId): TechStats {
+    return resolveTechStats({
+      id,
+      level: (this.levelOf(id) || 1) as TechLevel,
+      damageMul: this.damageMul,
+      vowDamageMul: this.vowDamageMul,
+      costMul: this.costMul,
+    });
   }
 
-  /** Dano de `base` escalado pelo nível atual de `id` (TEC-06: arredonda meio para cima). */
+  /** Custo de energia para conjurar `id` no nível atual, já com o `costMul` (TEC-14, VOW-13). */
+  cost(id: TechId): number {
+    return this.stats(id).cost;
+  }
+
+  /** Dano de `base` no nível do stat de `id`, com os multiplicadores (TEC-06: arredonda meio para cima). */
   damage(id: TechId, base: number): number {
-    const level = this.levelOf(id) || 1;
-    return Math.round(base * LEVEL_FACTOR[level - 1] * this.damageMul * this.vowDamageMul);
+    return scaleDamage(base, this.stats(id).level, this.damageMul, this.vowDamageMul);
   }
 
   /** Recarga restante do slot, em ms (CAST-04, CAST-06). */
@@ -106,7 +119,7 @@ export class Loadout {
   startCooldown(slot: 0 | 1): void {
     const s = this.slots[slot];
     if (!s) return;
-    this.cooldowns[slot] = TECHNIQUES[s.id].cooldownMs;
+    this.cooldowns[slot] = this.stats(s.id).cooldownMs;
   }
 
   /** Zera a recarga do slot na hora (FXL-09: o laboratório de efeitos nunca deixa recarga pendente). */

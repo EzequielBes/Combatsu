@@ -288,8 +288,11 @@ damageMul, vowDamageMul, costMul })` na regra de hoje (`TECHNIQUES` × `LEVEL_FA
 
 **Done when**:
 
-- [ ] `tests/core/loadout.test.ts` verde sem mudança; `techStats.test.ts` ganha o caso `loadout.stats(id)` = `resolveTechStats`
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/loadout.test.ts` verde sem mudança; `techStats.test.ts` ganha o caso `loadout.stats(id)` = `resolveTechStats`
+      (mais custo, recarga do `startCooldown`, não equipada no nível 1 e base fora da tabela no `damage`)
+- [x] Gate verde; contagem sem perda (3828 + 18 = 3846). O `damage(id, base)` segue recebendo `base` porque o
+      estilhaço, a repulsão e os tiques ainda passam base fora da tabela: lê o nível do `stats` e divide com o
+      `resolveTechStats` o `scaleDamage` de `techStats.ts`
 
 **Tests**: unit
 **Gate**: quick
