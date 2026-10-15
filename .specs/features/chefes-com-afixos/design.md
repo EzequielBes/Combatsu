@@ -92,7 +92,7 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   `null`/`r`, Adaptativo `null`/`A`).
 - `AFFIX_RULES`: `countByTier: [1, 1, 2, 2, 3]` (índice = tier − 1; tier além do fim usa o último), `incompatible: []` (pares; vazia na leva 1), `lightPool`
   derivado de `light`.
-- Números em `BOSS_AFFIX` (padrão `VOW`/`PERK`: singular = números, plural = definições): `lava { durationMs: 2000, tickMs: 600, damage: 4 }`, `summon { count: 3, firstBossCount: 2, maxAlive: 4 }`,
+- Números em `BOSS_AFFIX` (padrão `VOW`/`PERK`: singular = números, plural = definições): `lava { durationMs: 2000, tickMs: 600, damage: 4 }`, `summon { count: 3, firstBossCount: 2, maxAlive: 4, spotGap: 28 }`,
   `beam { warnMs: 800, activeMs: 250, damage: 16, thickness: [1, 6], height: 10 }`, `adapt { windowMs: 20000,
   minHits: 5, maxAdapted: 2, forgetMs: 10000, mult: 0.5 }`, `finger { fromRound: 10, chance: 0.1, scale: 1.25,
   hpMult: 1.3, damageMult: 1.5, extraProjectiles: 1, name: { m: 'Portador de Dedo', f: 'Portadora de Dedo' },

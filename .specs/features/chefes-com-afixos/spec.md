@@ -113,16 +113,18 @@ resposta e não só mais vida.
 10. INV-03: WHEN a summoned enemy dies THEN the system SHALL not report the death to the `Run`, SHALL not drop anything and SHALL not consume the loot stream.
 11. INV-04: WHEN the boss dies THEN the system SHALL remove every summoned enemy still alive, each with the curse smoke effect.
 12. INV-05: The summoned enemies SHALL use the common tuning scaled for the current round and SHALL never be armed.
-13. SNG-01: WHERE the boss has Sangue Convergente the attack cycle of every phase SHALL contain one `beam` attack placed right after the cycle's first attack.
-14. SNG-02: WHEN a `beam` starts THEN the system SHALL show for 800 ms a horizontal warning line at chest height, from the boss to the screen edge on the side it faces, whose thickness grows from 1 px to 6 px.
-15. SNG-03: WHEN the 800 ms warning ends THEN the system SHALL open for 250 ms a beam hitbox on that line that hits the player at most once, with height `high` and `round(16 × tier damage multiplier)` damage.
-16. ADP-01: WHERE the boss has Adaptativo the system SHALL record, per source, the hits the boss accepted in the last 20000 ms, where a source is light melee, heavy melee or one technique id.
-17. ADP-02: The Kokusen, the finisher and the parry SHALL neither be recorded nor reduced by the Adaptativo.
-18. ADP-03: WHEN the boss accepts a recorded hit THEN the not yet adapted source with the most hits in the last 20000 ms SHALL become adapted if it has at least 5 hits and fewer than 2 sources are adapted.
-19. ADP-04: WHILE a source is adapted every hit from it SHALL deal 50% of its damage and 50% of its poise damage, rounded, with damage never below 1.
-20. ADP-05: WHEN an adapted source goes 10000 ms with no hit accepted by the boss THEN the system SHALL forget it.
-21. ADP-06: WHILE at least one source is adapted the system SHALL draw an 8-ray wheel over the boss head with the short label of each adapted source under it.
-22. ADP-07: The debug snapshot SHALL report the adapted sources of the boss.
+13. INV-06: WHEN the boss summons THEN the system SHALL show the curse smoke on the boss and spawn each summoned enemy beside the boss, alternating sides from its back, falling back to an enemy spawn point only when there is no free room there.
+14. INV-07: WHILE summoned enemies are alive the HUD enemy counter SHALL include them.
+15. SNG-01: WHERE the boss has Sangue Convergente the attack cycle of every phase SHALL contain one `beam` attack placed right after the cycle's first attack.
+16. SNG-02: WHEN a `beam` starts THEN the system SHALL show for 800 ms a horizontal warning line at chest height, from the boss to the screen edge on the side it faces, whose thickness grows from 1 px to 6 px.
+17. SNG-03: WHEN the 800 ms warning ends THEN the system SHALL open for 250 ms a beam hitbox on that line that hits the player at most once, with height `high` and `round(16 × tier damage multiplier)` damage.
+18. ADP-01: WHERE the boss has Adaptativo the system SHALL record, per source, the hits the boss accepted in the last 20000 ms, where a source is light melee, heavy melee or one technique id.
+19. ADP-02: The Kokusen, the finisher and the parry SHALL neither be recorded nor reduced by the Adaptativo.
+20. ADP-03: WHEN the boss accepts a recorded hit THEN the not yet adapted source with the most hits in the last 20000 ms SHALL become adapted if it has at least 5 hits and fewer than 2 sources are adapted.
+21. ADP-04: WHILE a source is adapted every hit from it SHALL deal 50% of its damage and 50% of its poise damage, rounded, with damage never below 1.
+22. ADP-05: WHEN an adapted source goes 10000 ms with no hit accepted by the boss THEN the system SHALL forget it.
+23. ADP-06: WHILE at least one source is adapted the system SHALL draw an 8-ray wheel over the boss head with the short label of each adapted source under it.
+24. ADP-07: The debug snapshot SHALL report the adapted sources of the boss.
 
 **Independent Test**: em Node, cada regra pura (lava por tempo e contato, invocação por fase com teto, ciclo com `beam`,
 janela do Adaptativo com o relógio injetado). No jogo, `?debug&hd=1&area=modular&round=10&bossAffix=<id>` mostra cada
@@ -191,6 +193,7 @@ picos de tensão.
 6. BRD-06: The announced lineup SHALL be identical to the boss that spawns in the next round (BLN-02).
 7. BRD-07: Every color used by the outline, glyphs, lava, warning line, beam, threads and wheel SHALL come from `PALETTE`.
 8. BRD-08: The debug snapshot SHALL report the shop announcement text while it is shown.
+9. BRD-09: The boss bar label SHALL be drawn below the bar, fully inside the screen, and SHALL wrap only between its ` · ` parts when it is wider than the bar.
 
 **Independent Test**: `?debug&hd=1&area=modular&seed=N&round=4` → limpar a rodada → a loja mostra "Próximo: …" → a r5
 traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
@@ -231,7 +234,7 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| BLN-01 | P1: Chefe sorteado pela seed | Tasks (T7) | Pending |
+| BLN-01 | P1: Chefe sorteado pela seed | Tasks (T7) | Implemented |
 | BLN-02 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
 | BLN-03 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
 | BLN-04 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
@@ -240,10 +243,10 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | BLN-07 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
 | BLN-08 | P1: Chefe sorteado pela seed | Tasks (T12) | Implemented |
 | BLN-09 | P1: Chefe sorteado pela seed | Tasks (T1, T9, T12) | Implemented |
-| BLN-10 | P1: Chefe sorteado pela seed | Tasks (T9) | Pending |
+| BLN-10 | P1: Chefe sorteado pela seed | Tasks (T9) | Implemented |
 | BLN-11 | P1: Chefe sorteado pela seed | Tasks (T12) | Implemented |
-| AFX-01 | P1: Os 4 afixos da leva 1 | Tasks (T15, T25) | Pending |
-| AFX-02 | P1: Os 4 afixos da leva 1 | Tasks (T6) | Pending |
+| AFX-01 | P1: Os 4 afixos da leva 1 | Tasks (T15, T25) | Implemented |
+| AFX-02 | P1: Os 4 afixos da leva 1 | Tasks (T6) | Implemented |
 | IGN-01 | P1: Os 4 afixos da leva 1 | Tasks (T17, T28) | Implemented |
 | IGN-02 | P1: Os 4 afixos da leva 1 | Tasks (T21, T28) | Implemented |
 | IGN-03 | P1: Os 4 afixos da leva 1 | Tasks (T21, T28) | Implemented |
@@ -254,6 +257,8 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | INV-03 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Implemented |
 | INV-04 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Implemented |
 | INV-05 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Implemented |
+| INV-06 | P1: Os 4 afixos da leva 1 | Correção da revisão | Implemented |
+| INV-07 | P1: Os 4 afixos da leva 1 | Correção da revisão | Implemented |
 | SNG-01 | P1: Os 4 afixos da leva 1 | Tasks (T15, T30) | Implemented |
 | SNG-02 | P1: Os 4 afixos da leva 1 | Tasks (T16, T20, T30) | Implemented |
 | SNG-03 | P1: Os 4 afixos da leva 1 | Tasks (T20, T30) | Implemented |
@@ -264,17 +269,17 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | ADP-05 | P1: Os 4 afixos da leva 1 | Tasks (T22) | Implemented |
 | ADP-06 | P1: Os 4 afixos da leva 1 | Tasks (T33) | Implemented |
 | ADP-07 | P1: Os 4 afixos da leva 1 | Tasks (T33) | Implemented |
-| CYC-01 | P2: Ataques novos e ciclos por arquétipo | Tasks (T5, T15) | Pending |
-| CYC-02 | P2: Ataques novos e ciclos por arquétipo | Tasks (T15) | Pending |
-| CYC-03 | P2: Ataques novos e ciclos por arquétipo | Tasks (T15, T25) | Pending |
-| CYC-04 | P2: Ataques novos e ciclos por arquétipo | Tasks (T15, T26) | Pending |
-| CYC-05 | P2: Ataques novos e ciclos por arquétipo | Tasks (T18, T25) | Pending |
-| CYC-06 | P2: Ataques novos e ciclos por arquétipo | Tasks (T18, T25) | Pending |
-| CYC-07 | P2: Ataques novos e ciclos por arquétipo | Tasks (T19, T25) | Pending |
-| CYC-08 | P2: Ataques novos e ciclos por arquétipo | Tasks (T19, T25) | Pending |
-| CYC-09 | P2: Ataques novos e ciclos por arquétipo | Tasks (T16, T20, T26) | Pending |
-| CYC-10 | P2: Ataques novos e ciclos por arquétipo | Tasks (T20, T26) | Pending |
-| CYC-11 | P2: Ataques novos e ciclos por arquétipo | Tasks (T16, T25) | Pending |
+| CYC-01 | P2: Ataques novos e ciclos por arquétipo | Tasks (T5, T15) | Implemented |
+| CYC-02 | P2: Ataques novos e ciclos por arquétipo | Tasks (T15) | Implemented |
+| CYC-03 | P2: Ataques novos e ciclos por arquétipo | Tasks (T15, T25) | Implemented |
+| CYC-04 | P2: Ataques novos e ciclos por arquétipo | Tasks (T15, T26) | Implemented |
+| CYC-05 | P2: Ataques novos e ciclos por arquétipo | Tasks (T18, T25) | Implemented |
+| CYC-06 | P2: Ataques novos e ciclos por arquétipo | Tasks (T18, T25) | Implemented |
+| CYC-07 | P2: Ataques novos e ciclos por arquétipo | Tasks (T19, T25) | Implemented |
+| CYC-08 | P2: Ataques novos e ciclos por arquétipo | Tasks (T19, T25) | Implemented |
+| CYC-09 | P2: Ataques novos e ciclos por arquétipo | Tasks (T16, T20, T26) | Implemented |
+| CYC-10 | P2: Ataques novos e ciclos por arquétipo | Tasks (T20, T26) | Implemented |
+| CYC-11 | P2: Ataques novos e ciclos por arquétipo | Tasks (T16, T25) | Implemented |
 | PDD-01 | P2: Moldura Portador de Dedo | Tasks (T8) | Implemented |
 | PDD-02 | P2: Moldura Portador de Dedo | Tasks (T8) | Implemented |
 | PDD-03 | P2: Moldura Portador de Dedo | Tasks (T3, T10, T27) | Implemented |
@@ -288,8 +293,9 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | BRD-06 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
 | BRD-07 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T6, T13, T26, T28, T29, T30, T33) | Implemented |
 | BRD-08 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
+| BRD-09 | P1: Leitura: barra, contorno e aviso na loja | Correção da revisão | Implemented |
 
-**Coverage:** 57 total, 57 mapped to tasks, 0 unmapped (fase Tasks).
+**Coverage:** 60 total, 57 mapped to tasks, 3 da correção da revisão (INV-06, INV-07, BRD-09), 0 unmapped.
 
 ---
 

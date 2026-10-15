@@ -11,7 +11,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Spec**: `.specs/features/chefes-com-afixos/spec.md`
 **Design**: `.specs/features/chefes-com-afixos/design.md`
 **Plano**: `docs/plano-builds-e-habilidades.md` (5.8, linha F32)
-**Status**: Draft
+**Status**: Done
 **Branch**: `feat/chefes-com-afixos` (a partir de `4c0efae`)
 **Modelos**: regra pura (fases 2, 4 e 5) pode ir para um executor mais barato; adaptadores com arte em código
 (contorno, feixe, fios, lava, roda, glifos) e o Verifier em Opus 5.5 (memória: "Delegar o leve, qualidade no forte").
