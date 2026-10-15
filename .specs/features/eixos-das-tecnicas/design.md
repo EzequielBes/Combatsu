@@ -4,7 +4,7 @@
 seção 6; seções 2.1, 2.3, 2.4, fim da 2.5, 2.7, 3.1 e 5.7) · **Base**: F29 `fundacao-de-poder`, F30 `vermelho-e-corpo`
 (`.specs/features/vermelho-e-corpo/design.md`) e F31 `expansao-de-dominio` (design na branch
 `docs/spec-expansao-de-dominio`)
-**Status**: Draft, revisado (a Largura 58 do Roxo já está no RXO-04; o modelo do Divergente seguiu a recomendação deste design e está na spec, com a caixa do soco no eixo Alvos; a curva de build continua como decisão do usuário que trava tarefa, na tabela do `tasks.md`)
+**Status**: Draft, revisado (a Largura 58 do Roxo já está no RXO-04; o modelo do Divergente seguiu a recomendação deste design e está na spec, com a caixa do soco no eixo Alvos; a curva de build continua como decisão do usuário que trava tarefa, na tabela do `tasks.md`; a herança de pontos da União, RXO-12, entrou por decisão do diretor no lugar do risco "a União descarta todo o investimento")
 
 Linhas citadas conferidas em 14/10 no código de `f17a6a8` (worktree `docs/spec-vermelho-e-corpo`), que ainda não tem a
 F29, a F30 nem a F31. O que essas três criam ou trocam é citado pelo nome e pela interface dos designs delas: da F30,
@@ -73,10 +73,10 @@ graph TD
     CHD --> CH
     CHD --> CP
     CHD --> BC
-    CHD --> AXD[axisDirector<br/>applyFree, confirmBranch, applyUnion]
+    CHD --> AXD[axisDirector<br/>applyFree, confirmBranch, applyUnion + herança]
     CHD --> DOM[domainDirector F31<br/>veu, raise]
     CHD --> PANEL[game/ChoicePanel.ts<br/>1 a 3 opções]
-    SHD[shopDirector] -->|open?| CHD
+    SHD[shopDirector] -->|open?, openUnion| CHD
     SPW[spawner.onBossDefeated] -->|queueBossChest| CHD
     TD[techDirector] -->|awakenCast, blueImplode:heavy, cutRects| AXD
 ```
@@ -85,7 +85,9 @@ Fluxo por quadro: igual ao da F30 e da F31. O `TechDirector.update` já passa o 
 só repassa também ao Azul e ao Roxo, e lê três sinais novos que o `TechRunner` deixa no quadro: `awakenCast:<id>`
 (banner do Despertar), `blueImplode:heavy` (tremida da Implosão 2+) e `cutRects` (os retângulos dos cortes do quadro,
 para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.openShop` → `VowPanel` (rodada de chefe) →
-`build.choice.openIfPending()` → loja; enquanto `build.choice.open`, a loja não lê entrada.
+`build.choice.openIfPending()` → loja; enquanto `build.choice.open`, a loja não lê entrada. A compra da União na loja
+chama `build.choice.openUnion(into, herdados)` (RXO-12), que reabre o painel na mesma visita só com as páginas
+`heranca` e o ramo da técnica nova.
 
 ---
 
@@ -235,10 +237,11 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
 - `masteryBarWidth(slotW, points, marks = MASTERY.marks): number | null` (MAE-05).
 - Nenhuma chamada a `Loadout.upgrade` (MAE-03).
 
-### `core/choice.ts` (novo, ~85)
+### `core/choice.ts` (novo, ~85; ~92 com o `openNow` do passo 5)
 
 - `type ChoiceRequest = { kind: 'ramo'; item: AxisItem } | { kind: 'ponto'; item: TechId } | { kind: 'livre' } |
-  { kind: 'despertar'; item: AxisItem } | { kind: 'veu' } | { kind: 'bau' }` (no passo 0 também `'bauChefe'` da F31,
+  { kind: 'despertar'; item: AxisItem } | { kind: 'heranca'; item: TechId } | { kind: 'veu' } | { kind: 'bau' }`
+  (`heranca` nasce no passo 5, RXO-12; no passo 0 também `'bauChefe'` da F31,
   que sai no passo 6).
 - `class ChoiceQueue`: `add(req)` (fora do painel, por ordem de chegada; ignora repetido de `ramo`, `veu` e `bau`),
   `open(rank)` (ordena por `(rank(req), chegada)` e abre), `current`, `advance()`, `insertNext(reqs)` (logo depois do
@@ -247,10 +250,13 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
   a do CHC-02, que é a mesma com os pontos no fim: `bau` (`bauChefe` até o passo 6) 0, `veu` 1, ramo 10 + (slot 0 = 0,
   slot 1 = 1, Corpo = 2), `ponto` 20. A União do baú vem antes de qualquer ramo ou ponto do mesmo painel.
 - `defer(req)`: tira a página atual da vez sem confirmar e a guarda para o próximo `open` (CHC-08, trava da PRC-04).
+- `openNow(reqs)` (passo 5, RXO-12): abre o painel só com essas páginas, na ordem dada, para a União comprada na loja;
+  as páginas adiadas continuam na fila para a próxima visita. A `heranca` só entra por `openNow` (loja) ou por
+  `insertNext` (baú), nunca pelo `add`, então não tem rank.
 
-### `core/choicePages.ts` (novo no passo 5, ~100)
+### `core/choicePages.ts` (novo no passo 5, ~108 com a `heranca`)
 
-- `pointOptions(item, axes, rng, max = 3): AxisId[]` (eixo-foco primeiro, os outros `offerable` sorteados pelo `rng`,
+- `pointOptions(item, axes, rng, max = 3, lock = true): AxisId[]` (eixo-foco primeiro, os outros `offerable` sorteados pelo `rng`; `lock: false` na `heranca`, RXO-12,
   CHC-05); `openPointOptions(owned, focusItem, axes, rng): { item; axis }[]` (o eixo-foco do item-foco e 2 pares
   distintos sorteados, CHC-06).
 - Oferecível nas páginas `ponto`/`livre` = `offerable` (teto e eixo morto) e `axisGate(total do item + 1, round)` da F30
@@ -261,6 +267,10 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
   ramo que já não está pendente); `defer` quando há eixo abaixo do teto mas todos travados pela rodada.
 - Página `ponto` de técnica que a União tirou do slot: o `ctx.unionOf` (`azul` → `roxo`, `vermelho` → `roxo`, gravado
   pelo `choiceDirector` ao confirmar a União) troca o item antes de montar (CHC-08).
+- Página `heranca` (RXO-12): monta como a `ponto` com `lock: false`, título `Herança: <técnica>` e as linhas de eixo do
+  `axisPreview`; nunca devolve `defer`; `skip` só sem eixo abaixo do teto (não acontece com até 3 pontos em 6 eixos,
+  mas a regra é a mesma da `ponto`). A opção `uniao` do baú leva a linha `herda <n> pontos`, com o `n` do
+  `unionInheritance`.
 - Puro: recebe `{ loadout, round, rng, chest: ChestOption[] | null, veil: ChoicePage | null, unionOf }`.
 
 ### `core/bossChest.ts` (novo no passo 6, ~45)
@@ -270,14 +280,21 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
 - `chestCandidates({ readyUnions, hasOpenAxis, domainLevel }): ChestOption[]` (BAU-01; "talento" fica para a F35).
 - `drawChest(candidates, rng): ChestOption[]`: até 3, todos numa ordem sorteada; mais de 3, 3 distintos (BAU-01).
 
-### `core/evolution.ts` (muda, 16 → ~15) e `data/evolutions.ts` (10 → ~13)
+### `core/evolution.ts` (muda, 16 → ~19) e `data/evolutions.ts` (10 → ~14)
 
 - `Recipe.from: readonly [RecipePiece, RecipePiece]` com `RecipePiece = { id: TechId; minLevel: number }`; o Roxo fica
   `[{ id: 'azul', minLevel: 1 }, { id: 'vermelho', minLevel: 4 }]` (RXO-01). `EVOLUTION_LEVEL` sai.
 - `recipeReady` = toda peça equipada com `levelOf(id) ≥ minLevel`; `evolve` usa `from[0].id` para o slot (RXO-02).
 - `shopEligibility.ts` (a linha de `shop.ts:33` que a F30 levou para lá) passa a `r.from.some((p) => p.id === ...)`.
+- **Passo 5 (RXO-12)**: `unionInheritance(pointsA, pointsB, branch: BranchId | null): number` =
+  `min(ceil((pointsA + pointsB) / 2), UNION_INHERIT_CAP, branch === null ? AWAKEN_LEVEL − 2 : UNION_INHERIT_CAP)`, com
+  `UNION_INHERIT_CAP = 4` em `data/evolutions.ts` e o `AWAKEN_LEVEL` (5) da F30: sem ramo, no máximo 3 pontos (Nv 4), um
+  ponto abaixo do Despertar. Quem chama passa o `axes.branch(into)` real lido depois do `evolve`, que é sempre `null`
+  (RXO-02), então toda União herda no máximo 3; o ramo fica no parâmetro para a regra estar escrita inteira, sem `if`
+  por técnica, e o teste prova o 4 com ramo num caso sintético. Os pontos das peças (`axes.total(p.id)` de cada
+  `from`) são lidos **antes** do `evolve`, porque o `Loadout.clear` chama o `axes.resetItem`.
 
-### `scenes/test/choiceDirector.ts` (novo, ~140, campo `choice` do `BuildDirector`)
+### `scenes/test/choiceDirector.ts` (novo, ~150 com a `heranca`, campo `choice` do `BuildDirector`)
 
 - **Purpose**: dono do painel entre rodadas (CHC-01 a CHC-11): fila, entrada, despacho e snapshot.
 - **Interfaces**:
@@ -285,12 +302,17 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
     enfileiradas; ordena; mostra a 1ª página que não for pulada; `false` sem página)
   - `update(input: ShopInput): boolean` (`A`/`D` andam entre as opções; `Enter` confirma; `true` enquanto aberto)
   - `addFreePoint(tech: TechId)` (MAE-02), `queueBossChest()` (BAU-03, BAU-07), `applyDebug()` (`chest=1`, BAU-08)
+  - `openUnion(into: TechId, inherited: number): boolean` (passo 5, RXO-12): com `inherited ≥ 1`, `queue.openNow`
+    com `inherited` × `heranca` e mostra a 1ª; `false` com 0. Chamado pela loja depois da compra da União
   - `get open(): boolean`, `reset()`, `snapshot(): ChoiceSnapshot`
   - privado `confirm(req, index): ChoiceRequest[]`: `ramo` → `axes.confirmBranch` (com Despertar ligado, devolve
     `despertar`); `ponto`/`livre` → `axes.applyFree(item, axis)` (com `branchPending` devolve `ramo`, com `awakened`
     devolve `despertar`); `despertar` → nada; `veu` → `domain.confirm('veu', i)` (F31); `bau` → União pelo
-    `axes.applyUnion` (grava as duas peças em `unionOf`), `pontos` devolve 2 × `livre`, `dominio` →
-    `domain.state.raise()`; cada confirmação empurra `choice:<kind>:<idDaOpção>` nos eventos de debug.
+    `axes.applyUnion` (grava as duas peças em `unionOf` e devolve `inherited` × `heranca`, inseridas logo depois do
+    baú), `pontos` devolve 2 × `livre`, `dominio` → `domain.state.raise()`; `heranca` → `axes.applyFree(item, axis)`,
+    e o `ramo` que o 1º ponto deixa pendente só volta na última página do bloco (quando a próxima da fila não é
+    `heranca` do mesmo item), nunca entre duas; com no máximo 3 herdados, a `heranca` nunca devolve `despertar`; cada
+    confirmação empurra `choice:<kind>:<idDaOpção>` nos eventos de debug (`choice:heranca:<eixo>`).
   - `defer` do `buildPage` → `queue.defer(req)`: a página fica na fila para a próxima visita (evento
     `choice:defer:<kind>`).
 - **Dependencies**: `ChoiceQueue`, `buildPage`, `drawChest`, `run.choiceRng`, `run.chestRng`, `ui.choicePanel`,
@@ -299,9 +321,11 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
 ### `scenes/test/axisDirector.ts` (muda, F30 ~110 → ~125)
 
 - Sai `choicePages()` (vai ao `choiceDirector` no passo 0); fica `confirmBranch(item, option): { awakened }`.
-- Novos: `applyFree(item, axis): AddResult` (ponto sem custo e sem trava, CHC-05), `applyUnion(into): boolean` (o que o
-  `applyEvolution` do `shopDirector.ts:64-71` faz hoje: `evolve`, `mastery.resetSlot` nos dois slots, evento
-  `evolve:<id>`; chamado pela loja e pelo baú, BAU-04).
+- Novos: `applyFree(item, axis): AddResult` (ponto sem custo e sem trava, CHC-05), `applyUnion(into): { ok: false } |
+  { ok: true; inherited: number }` (o que o `applyEvolution` do `shopDirector.ts:64-71` faz hoje: `evolve`,
+  `mastery.resetSlot` nos dois slots, evento `evolve:<id>`; mais a herança do RXO-12, que a T82 põe no `applyEvolution`
+  no passo 5 e a T76 move para cá no passo 6: lê `axes.total` das duas peças antes do `evolve` e devolve o
+  `unionInheritance`; chamado pela loja e pelo baú, BAU-04).
 - `snapshot()` passa a montar `build.<item>` para todo item do registro, pelo `techBuildSnapshot(id, loadout)` de
   `game/axisSnapshot.ts` (EIX-08).
 - `announce(item)` fica; quem chama passa a ser o `techDirector` lendo `awakenCast:<id>` (qualquer técnica).
@@ -464,7 +488,7 @@ F33 acrescenta o que ainda tem número solto ou forma nova:
 
 Fim do passo 4: `grep -rnE "LEVEL_FACTOR|EVOLUTION_LEVEL|techGate|techLevelGate" src` vazio (EIX-01.3).
 
-**Passo 5 (painel completo e maestria; CHC-02 a CHC-11, MAE-01 a MAE-07)**
+**Passo 5 (painel completo e maestria; CHC-02 a CHC-11, MAE-01 a MAE-07; RXO-12 na loja)**
 
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
@@ -479,12 +503,16 @@ Fim do passo 4: `grep -rnE "LEVEL_FACTOR|EVOLUTION_LEVEL|techGate|techLevelGate"
 | `src/scenes/test/shopDirector.ts` | `applyTechnique` | `mastery.resetSlot` continua ao equipar (MAE-06) |
 | `src/game/EnergyHud.ts` | 181 | `masteryBarWidth(ICON_SIZE, mastery.points(i as 0 \| 1))` |
 | `src/scenes/test/snapshot.ts` | 221 | `threshold: this.s.mastery.threshold(slot)` (só a expressão; a função está na exceção de tamanho e não cresce) |
-| `src/scenes/test/choiceDirector.ts` | — | páginas `ponto`, `livre`, `despertar`; `choiceRng`; snapshot do CHC-10 |
+| `src/scenes/test/choiceDirector.ts` | — | páginas `ponto`, `livre`, `despertar`, `heranca`; `openUnion`; `choiceRng`; snapshot do CHC-10 |
+| `src/core/evolution.ts`, `src/data/evolutions.ts` | fim | `unionInheritance`, `UNION_INHERIT_CAP = 4` (RXO-12) |
+| `src/core/choice.ts`, `src/core/choicePages.ts` | — | `heranca`, `openNow`, `pointOptions(..., lock)` (RXO-12) |
+| `src/scenes/test/shopDirector.ts` | `applyEvolution` (64-71) | lê `axes.total` das peças antes do `evolve` e chama `build.choice.openUnion(into, herdados)` (RXO-12) |
+| `scripts/smoke/evolution.smoke.mjs` | compra da carta 0 | a compra abre 2 páginas `heranca` e depois o ramo do Roxo; o cenário de 7 pontos nas peças dá 3 (RXO-12) |
 | `src/game/ChoicePanel.ts`, `src/game/axisSnapshot.ts`, `src/game/debugApi.ts` | `debug`, tipos | `{ open, page: { kind, item, options: ids, selected }, pending }` |
 | `scripts/smoke/shop-progress.smoke.mjs` | 70-142 | trecho da maestria: `mastery=24` → um acerto dá 25, banner `maestria 25!`, nível continua 1, barra pelo marco (MAE-02, MAE-04, MAE-05) |
 | `scripts/smoke/choice-panel.smoke.mjs` (novo) | — | ver "Testes e smokes" |
 
-**Passo 6 (baú do chefe; BAU-01 a BAU-08)**
+**Passo 6 (baú do chefe; BAU-01 a BAU-08; RXO-12 no baú)**
 
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
@@ -493,7 +521,8 @@ Fim do passo 4: `grep -rnE "LEVEL_FACTOR|EVOLUTION_LEVEL|techGate|techLevelGate"
 | `src/scenes/test/runDirector.ts` (F31) | 1, 15-16, 26, 196-205, 234-240 | saem `bossRewardUpgrade`, `bossRewardTarget` (F31), `BOSS_UPGRADE_BANNER_MS` e o `upgradeText` do `clearedBanner` |
 | `src/scenes/test/spawner.ts` | 165-169 | `clearedBanner` sem `upgradeText`; `this.s.build.choice.queueBossChest()` |
 | `src/scenes/test/domainDirector.ts` (F31) | `bossPrize`, `confirm('bauChefe')`, `choicePages` | saem os do `bauChefe`; `choicePages` só devolve o `veu` |
-| `src/core/choice.ts`, `choiceDirector.ts`, `choicePages.ts` | `bauChefe` | vira `bau` com as opções do `drawChest` |
+| `src/core/choice.ts`, `choiceDirector.ts`, `choicePages.ts` | `bauChefe` | vira `bau` com as opções do `drawChest`; a `uniao` insere o bloco `heranca` logo depois e leva a linha `herda <n> pontos` (RXO-12) |
+| `src/scenes/test/axisDirector.ts`, `shopDirector.ts` | `applyUnion`, `applyEvolution` | a União e a herança passam ao `applyUnion` (T76); a loja só repassa o `inherited` ao `openUnion` |
 | `scripts/smoke/boss-punish.smoke.mjs` | 233-262 | a vitória não sobe o Vermelho nem mostra banner de prêmio; o baú fica pendente (`choice.pending ≥ 1` antes da konbini) (BAU-03) |
 | `scripts/smoke/domain.smoke.mjs` (F31) | cenário do `bauChefe` | vira a página `bau` com a opção `dominio` (BAU-06) |
 | `scripts/smoke/boss-chest.smoke.mjs` (novo) | — | ver "Testes e smokes" |
@@ -548,6 +577,9 @@ export interface TechStats {
 // data/evolutions.ts
 export interface RecipePiece { id: TechId; minLevel: number }
 export interface Recipe { into: TechId; from: readonly [RecipePiece, RecipePiece]; cost: number; name: string }
+export const UNION_INHERIT_CAP = 4;   // RXO-12; sem ramo o teto efetivo é AWAKEN_LEVEL − 2 = 3
+// core/evolution.ts
+export function unionInheritance(pointsA: number, pointsB: number, branch: BranchId | null): number;
 
 // core/mastery.ts
 export interface CastHit { slot: 0 | 1; castId: number; tech: TechId; targetId: number; isBoss: boolean; killed: boolean }
@@ -555,7 +587,7 @@ export interface CastHit { slot: 0 | 1; castId: number; tech: TechId; targetId: 
 export interface MasteryTuning { marks: readonly number[]; castPoints: number; bossPoints: number; killPoints: number }
 
 // game/ChoicePanel.ts
-export type ChoiceKind = 'ramo' | 'ponto' | 'livre' | 'despertar' | 'veu' | 'bau';
+export type ChoiceKind = 'ramo' | 'ponto' | 'livre' | 'despertar' | 'heranca' | 'veu' | 'bau';
 export type ChoiceItem = AxisItem | 'veu' | 'bau';
 export interface ChoiceOption { id: string; title: string; line: string }
 export interface ChoicePage { kind: ChoiceKind; item: ChoiceItem | null; options: readonly ChoiceOption[] } // 1 a 3
@@ -581,7 +613,7 @@ export type PurpleBuildSnapshot = TechBuildSnapshot<PurpleAxisId,
 ```
 
 `build.<item>.stats` vai além do EIX-08 (superconjunto): é o que o `tech-axes` lê (raio 220 com `azul.gravidade:3`).
-`ChoiceSnapshot.page.kind` traz também `veu` (F31); o CHC-10 lista os cinco tipos da F33, e o `veu` continua.
+`ChoiceSnapshot.page.kind` traz também `veu` (F31); o CHC-10 lista os seis tipos da F33 (com a `heranca` do RXO-12), e o `veu` continua.
 
 ---
 
@@ -669,14 +701,14 @@ da F33" é a estimativa deste design.
 | `src/core/mastery.ts` | 45 | 45 | ~58 | marcos |
 | `src/scenes/test/buildDirector.ts` | 40 | ~58 | ~62 | campo `choice`, reset, debug |
 | `src/scenes/test/techDirector.ts` | 47 | ~51 | ~60 | `awakenCast`, tremida, projéteis do Rei |
-| `src/core/evolution.ts` | 16 | 16 | ~15 | `minLevel` |
-| `src/data/evolutions.ts` | 10 | 10 | ~13 | `RecipePiece` |
+| `src/core/evolution.ts` | 16 | 16 | ~19 | `minLevel`; `unionInheritance` (RXO-12) |
+| `src/data/evolutions.ts` | 10 | 10 | ~14 | `RecipePiece`; `UNION_INHERIT_CAP` |
 | `src/scenes/test/spawner.ts` | 148 | 148 | ~148 | troca a expressão por uma chamada |
 
 Arquivos novos (todos bem abaixo de 400, nenhum na lista de exceções): `data/techAxesTechniques.ts` ~150,
 `core/techResolvers.ts` ~150, `core/blueBranch.ts` ~70, `core/cutBranch.ts` ~45, `core/divergentBranch.ts` ~60,
-`core/purpleBranch.ts` ~110, `core/choice.ts` ~85, `core/choicePages.ts` ~100, `core/bossChest.ts` ~45,
-`scenes/test/choiceDirector.ts` ~140, `game/tech/divergentImpacts.ts` ~130, `scripts/smoke/tech-axes.smoke.mjs` ~340
+`core/purpleBranch.ts` ~110, `core/choice.ts` ~92 (com `openNow`), `core/choicePages.ts` ~108 (com a `heranca`), `core/bossChest.ts` ~45,
+`scenes/test/choiceDirector.ts` ~150 (com `openUnion` e a `heranca`), `game/tech/divergentImpacts.ts` ~130, `scripts/smoke/tech-axes.smoke.mjs` ~340
 (passando de 380, o Roxo sai para `tech-axes-purple.smoke.mjs`), `scripts/smoke/choice-panel.smoke.mjs` ~200,
 `scripts/smoke/boss-chest.smoke.mjs` ~150. Saem: `core/bossReward.ts`, `tests/core/bossReward.test.ts`.
 
@@ -709,6 +741,10 @@ muda: `choice` vem do `snapshotFields()` e `build` do `build.snapshot()`), `Snap
 | Roxo 200% arrastando para a parede | O voo termina no alcance; o golpe de derrubada sai no ponto onde cada comum está | Caem na parede |
 | Run acaba com páginas pendentes | `choice.reset()` no `build.reset()` (CHC-11) | Painel não abre na run nova |
 | Reroll | O `axisRng` sorteia de novo; o `choiceRng` não é lido na loja | Páginas iguais na mesma seed |
+| União com 0 ponto herdado (receita futura com peças sem eixo) | `openUnion` devolve `false`; a `uniao` do baú não insere página (RXO-12) | Sem página |
+| Herança acima do teto (peças com 7 ou mais pontos) | `unionInheritance` corta em 3 sem ramo | O excedente se perde; o Despertar vem do próximo ponto ganho ou comprado |
+| Página `heranca` numa rodada que a PRC-04 travaria (só por parâmetro de debug) | `pointOptions(..., lock: false)`; `buildPage` nunca devolve `defer` para a `heranca` | A página abre mesmo assim |
+| União comprada na loja | `openUnion` reabre o painel na hora; a loja não lê tecla até a última página (CHC-03 com a exceção do RXO-12) | Segundo painel da visita, o único permitido |
 
 ---
 
@@ -717,6 +753,10 @@ muda: `choice` vem do `snapshotFields()` e `build` do `build.snapshot()`), `Snap
 | Concern | Location (file:line) | Impact | Mitigation |
 | --- | --- | --- | --- |
 | O modelo do eixo dominante da spec reprovava o Divergente com qualquer número de alvos ≥ 2, e a caixa de 26 px deixava o 2º e o 3º ponto de Alvos mortos | spec, Assumptions ("Modelo do teste de eixo dominante"), DVG-01, DVG-02; `tests/data/techAxesTechniques.test.ts` | EIX-09 não passaria; ponto comprado sem efeito | Resolvido na revisão: densidade pela caixa no modelo e a caixa 26/30/34/36 px no eixo Alvos (1,346×); a T44 prova os 3 alvos dentro da caixa de 36 px no smoke |
+| A União descartava todo o investimento: o Roxo nascia no Nv 1 e os 3 a 5 pontos do Vermelho (e os do Azul) sumiam no `resetItem` | spec RXO-02; `core/evolution.ts` (`evolve` → `Loadout.clear` → `axes.resetItem`, F30) | A União era perda de poder no meio da run, maior para quem mais investiu | Resolvido por decisão do diretor (RXO-12): a técnica nova herda `ceil((pA + pB) / 2)` pontos, teto 4 pela fórmula e 3 enquanto não tem ramo; os pontos são lidos antes do reset e postos pelo jogador em páginas `heranca` |
+| O 4º ponto herdado ligaria o Despertar de graça | EIX-03, RXO-12 | O ramo escolhido no mesmo painel acenderia o Despertar sem ponto ganho | Teto 3 enquanto a técnica nova não tem ramo, que é sempre ao nascer; a T80 prova 4 → 3 sem ramo e a T82 prova `awakened: false` depois do ramo com 7 pontos nas peças |
+| A União comprada na loja abre um segundo painel na visita | CHC-03; `shopDirector.applyEvolution` (`shopDirector.ts:64-71`) | Quebraria a regra de um painel por visita | Exceção só para a herança e o ramo da técnica nova, escrita no CHC-03 e no RXO-12; sem ela o Roxo jogaria uma rodada inteira no Nv 1 com os pontos parados na fila |
+| A herança chega no passo 5 e o baú no passo 6 | tasks T80 a T82, T76, T77 | Entre o passo 4 e o 5 a União ainda zera tudo | Estado intermediário aceito: nenhum passo fica sem jogar; a regra pura e a loja no passo 5, o baú na T77 |
 | A Largura 60 do Roxo passa do teto (1,38×) | spec RXO-04 | EIX-09 do Roxo falha | Largura 58 no 3º ponto, pela regra de calibração da spec; o RXO-04 é corrigido antes do `tasks.md` |
 | A carta do Azul vira carta de eixo no passo 1, não no 4 | `scripts/smoke/shop-progress.smoke.mjs` (trecho ECN-05/08 que a F30 passou para o Azul) | A spec lista o `shop-progress` só nos passos 4 e 5; ele quebra no passo 1 | O trecho ECN-05/08 muda no passo 1 (carta de eixo `Nv 2/6`, 13 na r2); o passo 5 muda o trecho da maestria |
 | O nível do `tech=azul:3` passa a ser ignorado no passo 1, e a União ainda pede o Nv 3 até o passo 4 | `scripts/smoke/evolution.smoke.mjs:35` | O smoke `evolution` quebra no passo 1 | Ponte com `axes=azul.gravidade:2,vermelho.potencia:2` no passo 1; a forma final (`tech=azul,vermelho&axes=vermelho.potencia:3`) no passo 4 |
@@ -757,6 +797,7 @@ muda: `choice` vem do `snapshotFields()` e `build` do `build.snapshot()`), `Snap
 | Segurar o inimigo (Âncora) | `windupAllowed: false` + `vx` 0 no comum; relógio do `rest` parado no chefe | Não interrompe golpe em curso e não toca na IA do comum (exceção de complexidade) |
 | Prêmio do chefe | Some o texto de prêmio e o `upgradeText` | BAU-03; o prêmio é escolhido no painel |
 | `Loadout.upgrade` | Sai no passo 6 junto do último chamador (`bossRewardUpgrade`) | Nenhuma fonte sobe nível às cegas; os testes que o usavam passam a `axes.add` |
+| Herança da União (RXO-12) | `unionInheritance` puro em `core/evolution.ts`; páginas `heranca` no `choiceDirector` | Nada automático (o jogador escolhe cada eixo); a regra fica escrita uma vez para toda União futura; o ramo depois do bloco para a escolha de eixo não depender da ordem das páginas |
 
 **Decisões de projeto novas (passo 4):** entram no `.specs/STATE.md` no commit do passo 4.
 
@@ -786,12 +827,13 @@ AD-021 (`knockdown` da Implosão 2+, do Azul Máximo e do fim do Roxo 200% decid
 | `tests/core/divergentBranch.test.ts` | DVG-02 (o mais perto primeiro, o tocado sempre, o chefe conta como 1; `punchBox` com 26/30/34/36 px e a borda de trás em 9 px), DVG-05 (eco a 47/48/49 px, nunca em quem leva o próprio 2º impacto), DVG-06 (Concentrado força 1, caixa de 26 e ×2) |
 | `tests/core/purpleBranch.test.ts` | RXO-05 (fim no alcance, nunca além de 320), RXO-06 (raio 1,6× aos 1000 ms, 999 sem `fullHold`), RXO-08 (volta ao centro atual, no máximo 2 toques, 50%), RXO-09 (atravessa e segue o alcance) |
 | `tests/core/divergentState.test.ts` | Vários alvos no `DivergentState` (arquivo novo para não reescrever o `divergent.test.ts`) |
-| `tests/core/choice.test.ts` | CHC-02 (ordem baú → Véu → ramos → pontos), CHC-03 (inserção logo depois), CHC-08 (pulo; `defer` guarda a página para o próximo `open`), CHC-09 (mesma seed e mesmas escolhas = mesmas páginas, com o `choiceRng` testado aqui e não no `run.test.ts`, que está na lista de exceções), CHC-11 (reset) |
-| `tests/core/choicePages.test.ts` | CHC-04 (`anula Alvos (n)` só com pontos em Alvos), CHC-05 (até 3 eixos, foco primeiro quando oferecível, nunca Alvos no Concentrado; trava: 1º ponto `defer` na r1 e página na r2, 3º ponto `defer` na r3 e página na r4), CHC-06 (pares distintos, foco primeiro quando oferecível, item travado fora), CHC-07 (página do Despertar), CHC-08 (`skip` sem eixo abaixo do teto; `unionOf` troca o Vermelho e o Azul pelo Roxo) |
+| `tests/core/choice.test.ts` | CHC-02 (ordem baú → Véu → ramos → pontos), CHC-03 (inserção logo depois), CHC-08 (pulo; `defer` guarda a página para o próximo `open`), CHC-09 (mesma seed e mesmas escolhas = mesmas páginas, com o `choiceRng` testado aqui e não no `run.test.ts`, que está na lista de exceções), CHC-11 (reset), RXO-12 (`openNow` com o bloco `heranca`; as adiadas continuam pendentes) |
+| `tests/core/choicePages.test.ts` | CHC-04 (`anula Alvos (n)` só com pontos em Alvos), CHC-05 (até 3 eixos, foco primeiro quando oferecível, nunca Alvos no Concentrado; trava: 1º ponto `defer` na r1 e página na r2, 3º ponto `defer` na r3 e página na r4), CHC-06 (pares distintos, foco primeiro quando oferecível, item travado fora), CHC-07 (página do Despertar), CHC-08 (`skip` sem eixo abaixo do teto; `unionOf` troca o Vermelho e o Azul pelo Roxo), RXO-12 (`heranca` sem trava na r1, foco primeiro, nunca `defer`; linha `herda <n> pontos` da opção `uniao`) |
 | `tests/core/bossChest.test.ts` | BAU-01 (0, 1, 3 e 4 candidatos, este com lista sintética; 3 ou menos voltam todos), BAU-02 (mesma seed = mesmo baú), BAU-07 |
 | `tests/core/bossAIHold.test.ts` | `held` para o `rest` e não interrompe `windup` nem ataque |
 
-Cada limiar nos dois lados (L-010): Vermelho Nv 3 e Nv 4 na União; marcos 24/25 e 59/60; 3 e 4 candidatos; 999 e
+Cada limiar nos dois lados (L-010): Vermelho Nv 3 e Nv 4 na União; soma 4 e 5 das peças na herança (2 e 3); fórmula 3
+e 4 sem ramo (3 e 3) e com ramo (3 e 4); marcos 24/25 e 59/60; 3 e 4 candidatos; 999 e
 1000 ms da Massa; 219/220/221 px do Lapso; 119/120/121 px da Fenda; 47/48/49 px do Eco; teto de 3 por eixo e de 5 por
 técnica.
 
@@ -807,7 +849,8 @@ técnica.
 - `tests/core/evolution.test.ts` (passo 4): Vermelho Nv 3 com Azul Nv 1 não está pronto e Nv 4 está (RXO-01); Azul em
   qualquer nível; `evolve` deixa o Roxo no Nv 1 com 0 ponto no slot do Azul, o outro slot vazio e os pontos, o ramo e o
   Despertar do Vermelho zerados (RXO-02); receita não pronta não muda nada. `tests/core/evolutionShop.test.ts`: a carta
-  0 é a União com o Vermelho no Nv 4.
+  0 é a União com o Vermelho no Nv 4. No passo 5, `unionInheritance` (RXO-12): sem ramo 3+0 → 2, 3+1 → 2, 3+2 → 3,
+  4+3 → 3, 5+5 → 3, 0+0 → 0; com ramo (caso sintético) 4+3 → 4 e 5+5 → 4.
 - `tests/core/bossReward.test.ts` (passo 6): sai junto com o `core/bossReward.ts`, inclusive os casos do
   `bossPrizePlan` da F31; a prova do prêmio passa ao `bossChest.test.ts` e ao `boss-chest.smoke.mjs`.
 - `tests/data/techniques.test.ts` (Azul 40/2500 no passo 1; sai o bloco do `LEVEL_FACTOR` no passo 4),
@@ -844,7 +887,8 @@ retângulo que o `CutTech` passou ao `CutFx`) e `techObjects[kind='purple'].radi
    (CHC-07); a loja não lê tecla com o painel aberto (CHC-02).
 3. `boss-chest.smoke.mjs` (`tech=azul,vermelho&axes=vermelho.potencia:3&chest=1&round=4`): a 1ª konbini abre o baú com
    `uniao:roxo` e `pontos`; escolher a União deixa o Roxo no slot e os fragmentos iguais (BAU-04); com `pontos`, as duas
-   páginas `livre` vêm logo depois (BAU-05).
+   páginas `livre` vêm logo depois (BAU-05); depois da União, 2 páginas `heranca` e o ramo do Roxo, a opção com a
+   linha `herda 2 pontos` (RXO-12).
 
 **Smokes por passo** (`npm run smoke -- <trecho>`):
 
@@ -855,7 +899,7 @@ retângulo que o `CutTech` passou ao `CutFx`) e `techObjects[kind='purple'].radi
 | 2 | `tech-axes`, `tech`, `techniques`, `boss` (projéteis do Rei), `fxlab` |
 | 3 | `tech-axes`, `kokusen`, `tech`, `techniques`, `fight`, `impact` |
 | 4 | `tech-axes`, `evolution`, `shop`, `shop-axes`, `shop-progress`, `red-anime` |
-| 5 | `choice-panel`, `shop-progress` (trecho da maestria), `shop-axes`, `domain`, `hud`, `run-loop`, `vows` |
+| 5 | `choice-panel`, `shop-progress` (trecho da maestria), `shop-axes`, `domain`, `hud`, `run-loop`, `vows`, `evolution` (herança) |
 | 6 | `boss-chest`, `boss-punish`, `boss-victory`, `world-boss`, `domain`, `boss` |
 
 Fim da F33: os três novos e `red-axes`, `cursed-body`, `shop-axes`, `shop`, `shop-progress`, `run-loop`, `tech`,

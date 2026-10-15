@@ -201,6 +201,10 @@ T57 → T62 (fase 10)
 T66 → T67
 T68
 T10 → T68 (fase 2)
+T67 → T81
+T68 → T81
+T80 → T81
+T51 → T80 (fase 9)
 ```
 
 ### Phase 13: Passo 5 — painel e maestria no jogo
@@ -212,6 +216,9 @@ T11 → T69 (fase 2)
 T68 → T70 (fase 12)
 T7 → T71 (fase 2)
 T67 → T73 (fase 12)
+T74 → T82
+T80 → T82 (fase 12)
+T81 → T82 (fase 12)
 ```
 
 ### Phase 14: Passo 6 — baú do chefe
@@ -220,6 +227,8 @@ T67 → T73 (fase 12)
 T75 → T77
 T76 → T77 → T78 → T79
 T73 → T77 (fase 13)
+T82 → T77 (fase 13)
+T82 → T76 (fase 13)
 ```
 
 ---
@@ -1830,6 +1839,57 @@ outra entra logo depois dela; `ChoiceQueue.defer(req)` guarda a página atual pa
 
 ---
 
+#### T80: Pontos herdados da União
+
+**What**: `unionInheritance(pointsA, pointsB, branch)` em `core/evolution.ts` = `min(ceil((pointsA + pointsB) / 2),
+UNION_INHERIT_CAP, branch === null ? AWAKEN_LEVEL − 2 : UNION_INHERIT_CAP)`; `UNION_INHERIT_CAP = 4` em
+`data/evolutions.ts`; `AWAKEN_LEVEL` (5) da F30. Sem leitor no jogo até a T82.
+**Where**: `src/core/evolution.ts`
+**Depends on**: T51 (fase 9)
+**Reuses**: `AWAKEN_LEVEL` (F30), `Recipe` (T51)
+**Requirement**: RXO-12
+
+**Done when**:
+
+- [ ] `tests/core/evolution.test.ts`, sem ramo: 3+0 → 2; 3+1 → 2 (soma 4) e 3+2 → 3 (soma 5) (L-010); 4+3 → 3 (a
+      fórmula dá 4 e o teto sem ramo corta); 5+5 → 3; 0+0 → 0; com ramo (caso sintético): 3+2 → 3, 4+3 → 4, 5+5 → 4 (teto
+      da fórmula)
+- [ ] Gate verde; contagem = anterior + os novos
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `feat(core): carry half of the union pieces points`
+
+---
+
+#### T81: Página `heranca`
+
+**What**: `ChoiceRequest` ganha `{ kind: 'heranca'; item: TechId }` (entra só por `insertNext` ou `openNow`, sem rank);
+`ChoiceQueue.openNow(reqs)` abre só com essas páginas e deixa as adiadas na fila para a próxima visita;
+`pointOptions(..., lock = true)` aceita `lock: false`; `buildPage` monta a `heranca` como a `ponto` (eixo-foco primeiro,
+os outros pelo `choiceRng`, título `Herança: <técnica>`), sem a trava e nunca com `defer`; a opção `uniao` do baú ganha a
+linha `herda <n> pontos`; `ChoiceKind` (`game/ChoicePanel.ts`) ganha `heranca`, só no tipo.
+**Where**: `src/core/choicePages.ts`
+**Depends on**: T67, T68, T80
+**Reuses**: `pointOptions`, `buildPage` (T67), `ChoiceQueue.insertNext` (T10)
+**Requirement**: RXO-12, CHC-10
+
+**Done when**:
+
+- [ ] `tests/core/choicePages.test.ts`: `heranca` do Roxo com 0 ponto oferece 3 eixos, `largura` primeiro (eixo-foco
+      pelo desempate da tabela); na r1 a `heranca` abre e a `ponto` do mesmo item faz `defer` (sem trava, edge case do
+      debug); nunca `defer`; mesma seed e mesmas escolhas = mesmas opções; a opção `uniao` com Vermelho 3 e Azul 0 traz
+      `herda 2 pontos`
+- [ ] `tests/core/choice.test.ts`: `openNow([heranca, heranca])` mostra as duas na ordem; uma `ponto` adiada antes
+      continua na fila (`pending` conta) e não aparece nesse painel
+- [ ] Gate verde; contagem = anterior + os novos
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `feat(core): add the inherited point page`
+
+---
+
 ### Phase 13: Passo 5 — painel e maestria no jogo
 
 #### T69: Snapshot do painel no formato do CHC-10
@@ -1977,6 +2037,38 @@ página do mesmo painel (ramo escolhido com o item já no Nv 5, ou ponto grátis
 
 ---
 
+#### T82: Herança da União comprada na loja
+
+**What**: `shopDirector.applyEvolution` lê `axes.total` das duas peças da receita antes do `evolve` e, depois dele,
+chama `build.choice.openUnion(recipe.into, unionInheritance(a, b, axes.branch(recipe.into)))`;
+`choiceDirector.openUnion(into, n)` faz `queue.openNow(n × heranca)` e mostra a 1ª (`false` com 0); confirmar `heranca`
+→ `axes.applyFree(item, axis)`, evento `choice:heranca:<eixo>`; o `ramo` que o 1º ponto deixa pendente só volta na
+última página do bloco; a loja não lê tecla enquanto `choice.open` (o que o `shopDirector` já pergunta);
+`evolution.smoke.mjs` muda no trecho da compra.
+**Where**: `src/scenes/test/choiceDirector.ts`
+**Depends on**: T74, T80 (fase 12), T81 (fase 12)
+**Reuses**: `axisDirector.applyFree` (T73), `buildPage` (`heranca`, T81), `queue.openNow` (T81)
+**Requirement**: RXO-12, CHC-03
+
+**Done when**:
+
+- [ ] `evolution.smoke.mjs` (`tech=azul,vermelho&axes=vermelho.potencia:3`): a compra da carta 0 gasta 60 e deixa o
+      Roxo no Nv 1; o painel abre na mesma visita com `heranca` de 3 eixos, `largura` primeiro; dois `Enter` deixam o
+      Roxo no Nv 3 com 2 pontos e só então abrem o `ramo` do Roxo (nunca entre as duas `heranca`); a loja não lê tecla
+      até o `ramo` ser confirmado, e os fragmentos só caem os 60; dois eventos `choice:heranca:<eixo>`
+- [ ] Mesmo smoke com `axes=vermelho.potencia:3,vermelho.escala:2,azul.gravidade:2&ramo=vermelho:a` (7 pontos): 3
+      páginas `heranca`, Roxo no Nv 4, `ramo` depois e `build.roxo.awakened` `false` depois do ramo (edge case dos 7
+      pontos); `build.roxo.level` 4 depois do painel: o preço e a trava do próximo ponto leem o `axes.total` (PRC-02 a
+      PRC-04 da F30), sem caminho próprio para a herança (edge case: herdados contam no preço e na trava)
+- [ ] Cartas e preço do reroll iguais antes e depois do painel (edge case)
+- [ ] Smokes `evolution`, `choice-panel`, `shop` e `shop-axes` verdes; gate verde; contagem sem perda
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `feat(shop): open the inherited point pages after buying a union`
+
+---
+
 ### Phase 14: Passo 6 — baú do chefe
 
 #### T75: Regra do baú do chefe
@@ -2004,15 +2096,17 @@ página do mesmo painel (ramo escolhido com o item já no Nv 5, ou ponto grátis
 #### T76: União num lugar só
 
 **What**: `axisDirector.applyUnion(into)` recebe o que o `applyEvolution` do `shopDirector.ts:64-71` faz (`evolve`,
-`mastery.resetSlot` nos dois slots, evento `evolve:<id>`); a loja passa a chamar por ele.
+`mastery.resetSlot` nos dois slots, evento `evolve:<id>` e a leitura dos pontos das peças antes do `evolve`, da T82) e
+devolve `{ ok: true; inherited } | { ok: false }`; a loja passa a chamar por ele e só repassa o `inherited` ao
+`openUnion`.
 **Where**: `src/scenes/test/axisDirector.ts`
-**Depends on**: None
-**Reuses**: `applyEvolution` de hoje
-**Requirement**: BAU-04
+**Depends on**: T82 (fase 13)
+**Reuses**: `applyEvolution` de hoje, `unionInheritance` (T80)
+**Requirement**: BAU-04, RXO-12
 
 **Done when**:
 
-- [ ] Smokes `evolution`, `shop` e `shop-axes` verdes e iguais
+- [ ] Smokes `evolution` (com as páginas `heranca` da T82), `shop` e `shop-axes` verdes e iguais
 - [ ] Gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -2024,22 +2118,25 @@ página do mesmo painel (ramo escolhido com o item já no Nv 5, ou ponto grátis
 #### T77: Página do baú
 
 **What**: `choiceDirector.queueBossChest()` (só enfileira com candidato), página `bau` com as opções do `drawChest`
-montadas ao mostrar; confirmar: `uniao` → `axes.applyUnion` sem gastar fragmento (as duas peças vão ao `unionOf`),
+montadas ao mostrar; confirmar: `uniao` → `axes.applyUnion` sem gastar fragmento (as duas peças vão ao `unionOf`; o
+`inherited` vira o bloco `heranca` por `insertNext`, logo depois do baú, e a opção leva `herda <n> pontos`),
 `pontos` → 2 páginas `livre` logo depois (`openPointOptions`), `dominio` → `domain.state.raise()`; `chest=1` deixa o baú pendente para a 1ª konbini
 (`applyDebug`); evento `choice:bau:<id>`; nasce `scripts/smoke/boss-chest.smoke.mjs`.
 **Where**: `src/scenes/test/choiceDirector.ts`
-**Depends on**: T75, T76, T73 (fase 13)
-**Reuses**: `drawChest`, `openPointOptions`, `DomainState.raise()` (F31)
-**Requirement**: BAU-04, BAU-05, BAU-06, BAU-08, CHC-03, CHC-06, CHC-08
+**Depends on**: T75, T76, T73 (fase 13), T82 (fase 13)
+**Reuses**: `drawChest`, `openPointOptions`, `DomainState.raise()` (F31), despacho da `heranca` (T82)
+**Requirement**: BAU-04, BAU-05, BAU-06, BAU-08, CHC-03, CHC-06, CHC-08, RXO-12
 
 **Done when**:
 
 - [ ] `boss-chest.smoke.mjs` (`?debug&hd=1&area=modular&tech=azul,vermelho&axes=vermelho.potencia:3&chest=1&round=4`): a 1ª
-      konbini abre `bau` com `uniao:roxo` e `pontos`; a União deixa o Roxo no slot e os fragmentos iguais; com `pontos`,
+      konbini abre `bau` com `uniao:roxo` (linha `herda 2 pontos`) e `pontos`; a União deixa o Roxo no slot e os fragmentos
+iguais, e logo depois vêm 2 páginas `heranca` e o `ramo` do Roxo, nessa ordem (RXO-12); com `pontos`,
       duas páginas `livre` logo depois, cada uma com 3 pares distintos e o foco primeiro; com um Domínio da F31 abaixo do
       Nv 3, a opção `dominio` sobe o nível em 1
 - [ ] Com `mastery=24` e um acerto do Vermelho antes da konbini: o baú vem antes da página `ponto`; escolhida a União, a
-      página `ponto` do Vermelho serve o Roxo (CHC-08, edge case); o ramo pendente do Vermelho é pulado depois da União
+      ordem é baú, `heranca`, `heranca`, `ramo` do Roxo e a página `ponto` do Vermelho servindo o Roxo (CHC-08, edge
+      case); o ramo pendente do Vermelho é pulado depois da União
       (edge case); com 1 candidato só, a página mostra 1 opção (edge case)
 - [ ] Smokes `boss-chest`, `choice-panel`, `domain` e `evolution` verdes; gate verde; contagem sem perda
 
@@ -2153,16 +2250,17 @@ onde ajustar as tabelas (`data/techAxesTechniques.ts`) e o `MASTERY`.
 | RXO-09 | T55, T61 |
 | RXO-10 | T58, T60 |
 | RXO-11 | T64 |
+| RXO-12 | T80, T81, T82, T76, T77 |
 | CHC-01 | T1, T2, T3, T4, T5, T6, T7, T10, T11 |
 | CHC-02 | T68, T70 |
-| CHC-03 | T10, T68, T73, T77 |
+| CHC-03 | T10, T68, T73, T77, T82 |
 | CHC-04 | T9, T11, T67 |
 | CHC-05 | T67, T73 |
 | CHC-06 | T67, T77 |
 | CHC-07 | T67, T74 |
 | CHC-08 | T67, T68, T73, T77 |
 | CHC-09 | T66, T67, T73 |
-| CHC-10 | T69 |
+| CHC-10 | T69, T81 |
 | CHC-11 | T10, T11 |
 | MAE-01 | T71, T72 |
 | MAE-02 | T72, T73 |
@@ -2180,14 +2278,14 @@ onde ajustar as tabelas (`data/techAxesTechniques.ts`) e o `MASTERY`.
 | BAU-07 | T75, T78 |
 | BAU-08 | T77, T79 |
 
-**Coverage:** 75 total, 75 mapeados, 0 sem tarefa.
+**Coverage:** 76 total, 76 mapeados, 0 sem tarefa.
 
 
 | Edge case (spec) | Task |
 | --- | --- |
 | Nv 5 com o ramo pendente liga o Despertar na escolha, e a página `despertar` segue a do ramo | T2, T74 |
 | Ponto grátis que leva ao Nv 2 abre o `ramo` logo depois | T73 |
-| União do baú com página de ponto do Vermelho ou do Azul na fila: o ponto serve o Roxo | T67, T77 |
+| União do baú com página de ponto do Vermelho ou do Azul na fila: o ponto serve o Roxo, depois das `heranca` e do ramo do Roxo | T67, T77 |
 | Marco na r1: a página fica pendente e abre na konbini da r2 | T67, T73 |
 | Baú com 1 candidato mostra 1 opção | T77 |
 | Fenda: sem comum novo a 120 px a cadeia acaba; no máximo 3 por conjuração | T28, T35 |
@@ -2203,6 +2301,11 @@ onde ajustar as tabelas (`data/techAxesTechniques.ts`) e o `MASTERY`.
 | Loja da r1 sem carta de eixo das quatro técnicas | T17 |
 | Reroll sorteia o `axisRng` de novo e não muda o `choiceRng` | T73 |
 | Run que acaba com baú pendente: some no reset | T10, T78 |
+| Peças com 4 e 5 pontos somados: o Roxo herda 2 e 3 | T80 |
+| Peças com 7 ou mais pontos: o Roxo herda 3, o ramo vem depois do bloco e o Despertar só no próximo ponto | T80, T82 |
+| Pontos herdados contam no preço e na trava do próximo ponto | T82 (nível no snapshot; preço e trava pelo `axes.total`, provados na F30) |
+| Herança numa rodada que a PRC-04 travaria (debug): as páginas abrem mesmo assim | T81 |
+| União comprada: cartas e reroll iguais, e a `heranca` não lê o `axisRng` | T82 |
 
 ---
 
@@ -2222,15 +2325,16 @@ Phase 8:   T42, T43, T44, T45, T46, T47, T48, T49, T50
 Phase 9:   T51, T52, T53, T54, T55
 Phase 10:  T56, T57, T58, T59, T60, T61
 Phase 11:  T62, T63, T64, T65
-Phase 12:  T66, T67, T68
-Phase 13:  T69, T70, T71, T72, T73, T74
+Phase 12:  T66, T67, T68, T80, T81
+Phase 13:  T69, T70, T71, T72, T73, T74, T82
 Phase 14:  T75, T76, T77, T78, T79
 ```
 
-Ordem estritamente sequencial (a linha é a ordem de trabalho, não dependência). 79 tarefas em lotes de fases inteiras
+Ordem estritamente sequencial (a linha é a ordem de trabalho, não dependência). 82 tarefas em lotes de fases inteiras
 (~7 por agente, agente novo por lote, memória "Agente novo por lote"): Fases 1+2 (11, refatoração mecânica: Sonnet
 serve), Fase 3 (5), Fase 4 (9, arte), Fases 5+6 (11, arte), Fase 7 (5), Fase 8 (9, arte), Fase 9 (5), Fase 10 (6,
-arte), Fases 11+12 (7), Fase 13 (6), Fase 14 (5): 11 lotes. Lotes com arte em movimento (Fases 4, 6, 8 e 10) em Opus 5.5
+arte), Fases 11+12 (9), Fase 13 (7), Fase 14 (5): 11 lotes. As T80 a T82 (herança da União, RXO-12) têm número fora da
+ordem porque entraram depois; rodam na fase em que estão listadas. Lotes com arte em movimento (Fases 4, 6, 8 e 10) em Opus 5.5
 ou Fable. Fim de cada passo (fases 2, 4, 6, 8, 11, 13 e 14): gate de build com os smokes do passo no design.
 
 ---
@@ -2266,6 +2370,9 @@ ou Fable. Fim de cada passo (fases 2, 4, 6, 8, 11, 13 e 14): gate de build com o
 | T71 | 1 assinatura (`CastHit`) + o texto da lambda na `TestScene` | ⚠️ coeso: o typecheck pede junto |
 | T72 | 1 regra de maestria + a barra, o banner e a expressão do snapshot que leem o `MASTERY` | ⚠️ coeso: o `MASTERY.thresholds` sai e os 4 leitores quebram no typecheck |
 | T76 | 1 extração | ✅ |
+| T80 | 1 função pura | ✅ |
+| T81 | 1 tipo de página nos 2 módulos puros que a montam (`choice.ts`, `choicePages.ts`) | ⚠️ coeso: a fila sem a montagem não tem leitor |
+| T82 | 1 fluxo do diretor + a chamada da loja e o smoke `evolution` que ela muda | ⚠️ coeso: a compra sem as páginas deixa o smoke vermelho |
 | T78 | 1 troca (vitória → baú) + a remoção do prêmio cego que ela deixa sem chamador | ⚠️ coeso: sem a remoção ficaria código morto num commit |
 
 ---
@@ -2348,9 +2455,12 @@ ou Fable. Fim de cada passo (fases 2, 4, 6, 8, 11, 13 e 14): gate de build com o
 | T72 | T71 | T71 → T72 | ✅ Match |
 | T73 | T70, T72, T67 (fase 12) | T70 → T73, T72 → T73, T67 → T73 (fase 12) | ✅ Match |
 | T74 | T73 | T73 → T74 | ✅ Match |
+| T80 | T51 (fase 9) | T51 → T80 (fase 9) | ✅ Match |
+| T81 | T67, T68, T80 | T67 → T81, T68 → T81, T80 → T81 | ✅ Match |
+| T82 | T74, T80 (fase 12), T81 (fase 12) | T74 → T82, T80 → T82 (fase 12), T81 → T82 (fase 12) | ✅ Match |
 | T75 | None | — | ✅ Match |
-| T76 | None | — | ✅ Match |
-| T77 | T75, T76, T73 (fase 13) | T75 → T77, T76 → T77, T73 → T77 (fase 13) | ✅ Match |
+| T76 | T82 (fase 13) | T82 → T76 (fase 13) | ✅ Match |
+| T77 | T75, T76, T73 (fase 13), T82 (fase 13) | T75 → T77, T76 → T77, T73 → T77 (fase 13), T82 → T77 (fase 13) | ✅ Match |
 | T78 | T77 | T77 → T78 | ✅ Match |
 | T79 | T78 | T78 → T79 | ✅ Match |
 
@@ -2365,13 +2475,13 @@ ou Fable. Fim de cada passo (fases 2, 4, 6, 8, 11, 13 e 14): gate de build com o
 | T3, T4, T5 | Regra pura (lida pelo jogo vivo) | unit | unit + smoke | ✅ OK |
 | T7, T8, T11 | Adaptadores | smoke | smoke | ✅ OK |
 | T9 | Vista testável sem motor | unit | unit | ✅ OK |
-| T10, T14, T15, T16, T28, T29, T39, T40, T41, T54, T55, T66, T67, T68, T75 | Regra pura | unit | unit | ✅ OK |
+| T10, T14, T15, T16, T28, T29, T39, T40, T41, T54, T55, T66, T67, T68, T75, T80, T81 | Regra pura | unit | unit | ✅ OK |
 | T12, T26, T37, T52 | Dados | unit | unit | ✅ OK |
 | T13, T27, T38, T53 | Regra pura + dados | unit | unit | ✅ OK |
 | T17, T31, T43, T57 | Dados + regra pura + smokes que mudam | unit, smoke | unit + smoke | ✅ OK |
 | T18, T30, T46, T56 | Adaptador + vista do motor | smoke + conferência | smoke (+ conferência em movimento na T46) | ✅ OK |
 | T19 | Prova do adaptador (só smoke) | smoke | smoke | ✅ OK |
-| T20–T24, T32–T35, T42, T44, T45, T47–T49, T58–T61, T70, T73, T74, T76, T77 | Adaptadores | smoke | smoke | ✅ OK |
+| T20–T24, T32–T35, T42, T44, T45, T47–T49, T58–T61, T70, T73, T74, T76, T77, T82 | Adaptadores | smoke | smoke | ✅ OK |
 | T25, T36, T50, T64 | Teste da regra pura | unit | unit | ✅ OK |
 | T51, T62, T63 | Regra pura + dados (mudam o jogo vivo) | unit, smoke | unit + smoke | ✅ OK |
 | T65, T79 | Documentação | none | none | ✅ OK |

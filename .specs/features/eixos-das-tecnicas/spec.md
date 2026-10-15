@@ -57,6 +57,8 @@ Código conferido em 14/10 no worktree `docs/spec-vermelho-e-corpo` (`f17a6a8`),
       `EVOLUTION_LEVEL` nem o −5 de custo por nível.
 - [ ] Toda carta de melhoria de técnica é a carta de 2 eixos da F30, e o Roxo, que não se compra, ganha carta de nível.
 - [ ] O Roxo sai da União de Vermelho Nv 4 com Azul em qualquer nível, e a build focada chega a ele até a loja da r8.
+- [ ] A União não joga fora o investimento: a técnica nova herda metade dos pontos de eixo das duas peças, arredondada
+      para cima (até 3 enquanto ela não tem ramo), e o jogador põe cada ponto herdado num eixo, no painel.
 - [ ] Um painel só por visita à konbini resolve ramo, ponto grátis, ponto livre, Despertar e o baú do chefe, com a
       lógica num `choiceDirector`.
 - [ ] A maestria conta conjuração, abate e chefe, e dá 1 ponto grátis nos marcos 25 e 60, no máximo 2 por técnica.
@@ -75,8 +77,8 @@ passo de técnica termina jogável (a técnica tem eixos, ramo e Despertar na lo
 | 2. **Desmantelar** | 6 eixos, Para Trás ou Clivar, Desmantelar do Rei ou Fenda; `CutFx` pelo alcance e pela altura | 0 |
 | 3. **Divergente** | 6 eixos (2º impacto, alvos, Zona, energia do Kokusen, eficiência, recarga), Eco ou Concentrado, Eco Negro ou Impacto Único; base do Kokusen pelo eixo | 0 |
 | 4. **Roxo e a União** | União na regra nova (`minLevel`), carta de nível do Roxo, 6 eixos, Massa ou Retorno, Roxo 200% ou Eclipse; saem `LEVEL_FACTOR`, `EVOLUTION_LEVEL`, o −5 por nível, o preço de nível e o `techLevelGate` (a trava de nível que a F30 pôs no lugar do `techGate`) | 0 |
-| 5. **Painel completo e maestria** | páginas de ponto grátis, ponto livre e Despertar, `choiceRng`, maestria por conjuração com marcos 25 e 60 | 0 |
-| 6. **Baú do chefe** | `core/bossChest.ts`, `chestRng`, página do baú; saem `core/bossReward.ts` e o `bossRewardUpgrade` | 0 |
+| 5. **Painel completo e maestria** | páginas de ponto grátis, ponto livre e Despertar, páginas de pontos herdados da União comprada na loja (RXO-12), `choiceRng`, maestria por conjuração com marcos 25 e 60 | 0 |
+| 6. **Baú do chefe** | `core/bossChest.ts`, `chestRng`, página do baú, a União do baú com os pontos herdados (RXO-12); saem `core/bossReward.ts` e o `bossRewardUpgrade` | 0 |
 
 ## Out of Scope
 
@@ -138,9 +140,10 @@ passo de técnica termina jogável (a técnica tem eixos, ramo e Despertar na lo
 | Retorno (ramo B do Roxo) | No fim do alcance a esfera volta na mesma velocidade em direção ao centro atual do player e some ao tocá-lo ou depois de mais um alcance; na volta cada alvo pode ser tocado de novo (no máximo 2 toques por alvo por conjuração), com 50% do dano | Volta com 100% dobraria o dano por conjuração e passaria do teto de eixo dominante | n |
 | Eclipse (Despertar do Retorno) | Na volta a esfera atravessa o player e segue até o alcance resolvido do outro lado; o alvo tocado na ida e na volta leva 4% do HP máximo no 2º toque (chefe 1%) | Cobre as costas (anticerco) e cumpre o componente proporcional | n |
 | Roxo na loja | Não é vendido como técnica nova (continua nascendo da União); com o Roxo equipado, a carta de melhoria dele entra na loja como as outras (2 eixos, preço do ponto, trava) | "Entra na loja como carta de nível" (seção 2.5) e o comentário de `data/techniques.ts:5` | n |
-| Slot do Roxo | A União continua deixando o Roxo no slot de `from[0]` (o Azul) e esvaziando o outro (EVO-03); o Vermelho sai do slot e perde os pontos (`axes.resetItem`, F30) | Mudar o slot quebraria o smoke `evolution` sem ganho para o jogador | n |
+| Slot do Roxo | A União continua deixando o Roxo no slot de `from[0]` (o Azul) e esvaziando o outro (EVO-03); o Vermelho sai do slot e perde os pontos (`axes.resetItem`, F30), depois de a herança do RXO-12 ler os pontos das duas peças | Mudar o slot quebraria o smoke `evolution` sem ganho para o jogador | n |
+| Pontos herdados da União (decisão do diretor, no lugar do risco "a União descarta todo o investimento") | Ao formar o Roxo, e em toda União futura, a técnica nova herda `min(ceil((pA + pB) / 2), 4)` pontos de eixo, com `pA` e `pB` o total de pontos de eixo de cada peça lido antes do reset do RXO-02 (0 para peça sem eixo). Enquanto a técnica nova não tem ramo, o teto efetivo é 3 (`AWAKEN_LEVEL − 2`: Nv 4, um ponto abaixo do Despertar do EIX-03); como toda técnica nasce sem ramo (RXO-02), toda União herda no máximo 3, e o que passa do teto se perde, sem crédito. Exemplos do Roxo: Vermelho 3 + Azul 0 = 2; 3 + 2 = 3; 4 + 3 = 4 → 3; 5 + 5 = 5 → 4 → 3. Os pontos vêm em páginas `heranca` do `ChoicePanel`, uma por ponto, com até 3 eixos da técnica nova (o eixo-foco da F30 primeiro, os outros pelo `choiceRng`), sem custo e sem a trava da PRC-04; a página do ramo dela vem logo depois da última `heranca`. Na União do baú, o bloco vem logo depois da página do baú; na comprada na loja, o painel abre na hora, na mesma visita (a única exceção ao "um painel por visita" do CHC-03). Entra no passo 5 (regra e loja) e no passo 6 (baú); no passo 4 a União ainda deixa o Roxo com 0 ponto | Sem herança, a União zerava os 3 a 5 pontos do Vermelho e os do Azul, e o Roxo recomeçava no Nv 1: a União virava perda de poder no meio da run, maior para quem mais investiu. O 4º ponto ligaria o Despertar assim que o ramo fosse escolhido no mesmo painel, de graça; com o teto 3, quem herdaria 4 escolhe o ramo na mesma visita e o Despertar vem do próximo ponto ganho ou comprado. Sem a trava porque os pontos já passaram por ela nas peças. Nada automático: cada ponto herdado é uma escolha de eixo com `Enter`. Abrir o painel na hora da compra evita uma rodada inteira com o Roxo no Nv 1 e os pontos parados na fila | y |
 | Trava por rodada nos pontos grátis | Vale, pelo total de pontos do item (1º e 2º a partir da r2, 3º e 4º da r4, 5º da r6): a página só oferece eixo de item destravado, e a página que fica sem opção só pela trava continua pendente para a próxima visita à konbini (não some); a que fica sem opção pelo teto é pulada (CHC-08) | A maestria do Divergente chega ao 25 já na r1 (+1 por conjuração que acerta, a cada ~2,5 s, mais os abates) e ao 60 perto da r3: sem a trava, 2 pontos da loja e 2 da maestria davam o Despertar na r3, e a trava da loja (o ritmo da seção 3.2, que põe o Despertar na r5) deixaria de valer. Adiar, em vez de pular, não joga fora o ponto ganho | n |
-| Ordem das páginas no painel | Baú do chefe → baú do Véu da F31 → ramos pendentes (slot 0, slot 1, Corpo) → pontos grátis da maestria (na ordem em que saíram); a página criada ao confirmar outra (ramo novo, Despertar, os 2 pontos livres do baú) entra logo depois dela | A decisão que tira ou põe técnica (União, Domínio) vem antes do ramo e do ponto, para nenhuma escolha do mesmo painel ser jogada fora pela União; é a ordem que a F31 já usa (`bauChefe`, `veu`, ramos), com os pontos no fim | n |
+| Ordem das páginas no painel | Baú do chefe → baú do Véu da F31 → ramos pendentes (slot 0, slot 1, Corpo) → pontos grátis da maestria (na ordem em que saíram); a página criada ao confirmar outra (ramo novo, Despertar, os 2 pontos livres do baú, os pontos herdados da União) entra logo depois dela, e o ramo que a herança deixa pendente vem depois da última página `heranca` do bloco | A decisão que tira ou põe técnica (União, Domínio) vem antes do ramo e do ponto, para nenhuma escolha do mesmo painel ser jogada fora pela União; é a ordem que a F31 já usa (`bauChefe`, `veu`, ramos), com os pontos no fim | n |
 | Ponto da maestria de técnica consumida pela União | Se a União do baú tira do slot a técnica de uma página `ponto` ainda na fila, a página serve a técnica que a União criou (o Roxo) | O jogador ganhou o ponto usando a técnica; perdê-lo por aceitar a União puniria a escolha do baú | n |
 | Página de Despertar | Só aparece quando um Despertar liga por uma página do mesmo painel (ramo escolhido com o item já no Nv 5, ou ponto grátis ou livre que leva ao Nv 5 com ramo); mostra o nome e o efeito e fecha com `Enter`. O Despertar ligado por compra na loja segue a F30 (a carta avisa `+ Despertar`, sem página) | No máximo 1 painel por visita (seção 2.1) e sem página repetindo o que a carta já disse | n |
 | Ponto livre (baú; selo na F38) | 3 opções de par item-eixo: o eixo-foco do item-foco (F30), quando ele é oferecível (abaixo do teto e destravado), e os outros pares distintos sorteados pelo `choiceRng` entre os eixos oferecíveis de todo item possuído (técnicas equipadas e Corpo) | "2 pontos de eixo à escolha" sem item fixo; o lutador escolhe o Corpo e o feiticeiro a técnica | n |
@@ -280,7 +283,7 @@ ramo e Despertar, para a União chegar no meio da run e não ser um beco sem sa�
 
 1. RXO-01: WHILE the Vermelho is equipped at level 4 or more and the Azul is equipped at any level the Roxo União SHALL be ready, and IF the Vermelho is at level 3 or less THEN it SHALL not be ready.
 2. RXO-01: The Roxo recipe in `data/evolutions.ts` SHALL hold the minimum level of each piece (`minLevel`: Azul 1, Vermelho 4), and `recipeReady` SHALL read it instead of `EVOLUTION_LEVEL`.
-3. RXO-02: WHEN the União is applied THEN the Roxo SHALL enter at level 1 with 0 axis points in the slot of the Azul, the other slot SHALL be empty, and the Vermelho axis points, branch and Despertar SHALL be reset.
+3. RXO-02: WHEN the União is applied THEN the Roxo SHALL enter at level 1 with 0 axis points in the slot of the Azul, the other slot SHALL be empty, and the Vermelho axis points, branch and Despertar SHALL be reset (RXO-12 reads the points of both pieces before this reset and places the inherited points only through its pages).
 4. RXO-03: The shop SHALL never offer the Roxo as a new technique, and WHILE the Roxo is equipped and below level 6 its upgrade card SHALL be drawn as EIX-06 says.
 5. RXO-04: The `data/techAxes.ts` table SHALL give, for 0, 1, 2 and 3 points: Largura radius 36/44/51/58 px; Alcance range 288/300/310/320 px and speed 180/210/240/270 px/s; Carga sign 300/240/195/150 ms and charge 400/320/260/200 ms; Potência hit 60/70/80/90; Eficiência cost 70/60/51/42; Recarga 6000/5000/4200/3500 ms.
 6. RXO-05: The Roxo sphere SHALL end its flight at the resolved range from its spawn point, never beyond 320 px, and the `PurpleOrb` sphere SHALL be drawn at the resolved radius.
@@ -290,9 +293,16 @@ ramo e Despertar, para a União chegar no meio da run e não ser um beco sem sa�
 10. RXO-09: WHILE the Despertar Eclipse is on the returning sphere SHALL pass through the player and fly on to the resolved range on the other side, and a target touched on the way out and on the way back SHALL take 4% of its max HP on its second touch (1% on the boss).
 11. RXO-10: WHEN the run starts with `?debug&tech=roxo&ramo=roxo:a` or `ramo=roxo:b` THEN the Roxo branch SHALL be Massa or Retorno.
 12. RXO-11: In `tests/core/buildCurve.test.ts`, the build focused on the Vermelho with the Azul bought, buying with the F30 prices, lock and inflation on top of `expectedIncome`, SHALL have the União ready and its 60-fragment card affordable by the round 8 shop.
+13. RXO-12: WHEN a União is applied (boss chest or shop) THEN the system SHALL compute the inherited points as `min(ceil((pA + pB) / 2), 4)`, with `pA` and `pB` the total axis points of its two pieces read before the RXO-02 reset (0 for a piece without axes).
+14. RXO-12: WHILE the technique the União created has no branch chosen, the inherited points SHALL be capped at 3 (`AWAKEN_LEVEL − 2`, level 4), so that no inherited point turns its Despertar on, and the points above the cap SHALL be lost with no credit.
+15. RXO-12: WHEN the inherited points N are 1 or more THEN the system SHALL queue N `heranca` pages of the new technique as one block, each offering up to 3 of its axes below the cap (the F30 focus axis first, the others drawn by `choiceRng`), with `A`/`D` to cycle and `Enter` to add the point with no fragment cost and no PRC-04 lock, and IF N is 0 THEN no page SHALL be queued.
+16. RXO-12: WHEN the block comes from the boss chest União THEN it SHALL be shown right after the chest page, and the branch page of the new technique SHALL be shown right after the last page of the block, never between two `heranca` pages.
+17. RXO-12: WHEN the União is bought in the shop THEN the `ChoicePanel` SHALL open at once in the same konbini visit with the block followed by the branch page of the new technique, and the shop SHALL take no input until the last page is confirmed.
+18. RXO-12: The União option of the boss chest SHALL show the line `herda <N> pontos`, with N the inherited points after the cap.
 
 **Independent Test**: `evolution.smoke.mjs` com `tech=azul,vermelho&axes=vermelho.potencia:3`: a carta 0 é a União, e a
-compra deixa o Roxo no Nv 1; `tech-axes.smoke.mjs` com `tech=roxo&ramo=roxo:b`: a esfera volta e o mesmo inimigo
+compra deixa o Roxo no Nv 1 e abre na hora 2 páginas `heranca` (Vermelho 3 + Azul 0 → 2); confirmadas, o Roxo fica no
+Nv 3 e a página do ramo dele vem logo depois; `tech-axes.smoke.mjs` com `tech=roxo&ramo=roxo:b`: a esfera volta e o mesmo inimigo
 leva dois números, o segundo com metade.
 
 ---
@@ -308,7 +318,7 @@ novo e o baú do chefe, para escolher a build entre rodadas sem painel a cada co
 
 1. CHC-01: WHEN step 0 is committed THEN the pending-page queue and the branch page logic SHALL live in `src/scenes/test/choiceDirector.ts` with the pure queue in `src/core/choice.ts`, the `shopDirector` SHALL only ask the `choiceDirector` whether it is open, and the smokes `shop-axes`, `shop`, `shop-progress` and `run-loop` SHALL pass unchanged.
 2. CHC-02: WHEN the konbini opens with pending pages THEN, after the `VowPanel` when it opens, the `ChoicePanel` SHALL show one page at a time in the order boss chest, F31 Veil chest, branches (slot 0, slot 1, Corpo), mastery free points (in the order they were earned), and the shop SHALL take no input until the last page is confirmed.
-3. CHC-03: WHEN confirming a page creates a new page (a branch at level 2, a Despertar, the two free points of the chest) THEN the new page SHALL be shown right after it in the same panel, and no second panel SHALL open in that konbini visit.
+3. CHC-03: WHEN confirming a page creates a new page (a branch at level 2, a Despertar, the two free points of the chest) THEN the new page SHALL be shown right after it in the same panel, and no second panel SHALL open in that konbini visit, except the one RXO-12 opens when the União is bought in the shop.
 4. CHC-04: The branch page SHALL serve the Vermelho, the Corpo and the four techniques, with 2 options, `A`/`D` to choose and `Enter` to confirm, as CRD-08 does, and WHILE the axis that an option makes dead (`alvos` for the Concentrado) has points that option SHALL show the line `anula Alvos (<points>)`.
 5. CHC-05: The free point page of an item SHALL offer up to 3 offerable axes (below the cap and allowed by the PRC-04 round lock on the item total points), the focus axis first when it is offerable and the others drawn by `choiceRng`, never the `alvos` axis under the Concentrado, with each option text as the axis card line of CRD-05, `A`/`D` to cycle and `Enter` to add the point with no fragment cost.
 6. CHC-06: The open free point page (chest; selo from F38) SHALL offer up to 3 distinct offerable item-axis pairs: the focus axis of the focus item first when it is offerable, and the others drawn by `choiceRng` among the offerable axes of every owned item (equipped techniques and the Corpo).
@@ -316,7 +326,7 @@ novo e o baú do chefe, para escolher a build entre rodadas sem painel a cada co
 8. CHC-08: IF the item of a free point page or every owned item of an open free point page has no axis below the cap when the page would show THEN the page SHALL be skipped, and IF its axes below the cap are all locked by PRC-04 THEN the page SHALL stay pending for the next konbini visit.
 9. CHC-08: IF a União confirmed in the same panel took the technique of a pending free point page out of its slot THEN that page SHALL serve the technique the União created.
 10. CHC-09: The `choiceRng` SHALL be a stream with its own salt in `core/run.ts`, and the same seed with the same choices SHALL give the same pages and options.
-11. CHC-10: The debug snapshot SHALL report `choice: {open, page, pending}` with `page` as `{kind, item, options, selected}` or `null`, `kind` in `ramo`, `ponto`, `livre`, `despertar` or `bau`, and `pending` the number of pages still queued.
+11. CHC-10: The debug snapshot SHALL report `choice: {open, page, pending}` with `page` as `{kind, item, options, selected}` or `null`, `kind` in `ramo`, `ponto`, `livre`, `despertar`, `heranca` or `bau`, and `pending` the number of pages still queued.
 12. CHC-11: WHEN the run resets THEN every pending page SHALL be dropped.
 
 **Independent Test**: `choice-panel.smoke.mjs` com `tech=vermelho&mastery=24&noshop=0&round=2`: depois de um acerto do
@@ -362,14 +372,14 @@ ou o nível do Domínio, para a vitória sobre o chefe virar decisão.
 1. BAU-01: The pure `core/bossChest.ts` SHALL build the candidates (each ready União, "2 pontos de eixo" when an owned item has an axis below the cap, "nível do Domínio" when a domain below level 3 is owned) and SHALL return all of them in an order drawn by `chestRng` when there are 3 or fewer, or 3 distinct ones drawn by `chestRng` when there are more.
 2. BAU-02: The `chestRng` SHALL be a stream with its own salt in `core/run.ts`, and the same seed SHALL give the same chest.
 3. BAU-03: WHEN the boss is defeated THEN the system SHALL add a pending boss chest page for the next konbini entry, the banner of the cleared round SHALL carry no reward text, and `core/bossReward.ts` and `runDirector.bossRewardUpgrade` SHALL no longer exist.
-4. BAU-04: WHEN the União option is confirmed THEN the system SHALL apply the União as RXO-02 says without spending fragments.
+4. BAU-04: WHEN the União option is confirmed THEN the system SHALL apply the União as RXO-02 says without spending fragments, and SHALL insert its inherited point pages as RXO-12 says.
 5. BAU-05: WHEN the "2 pontos de eixo" option is confirmed THEN the system SHALL insert two open free point pages right after the chest page.
 6. BAU-06: WHERE a F31 domain is owned below level 3, WHEN the domain option is confirmed THEN its level SHALL rise by 1.
 7. BAU-07: IF the chest has no candidate THEN the system SHALL add no page.
 8. BAU-08: WHEN the run starts with `?debug&chest=1` THEN a boss chest page SHALL be pending for the first konbini entry, and the snapshot page SHALL report the chest options by id (`uniao:roxo`, `pontos`, `dominio`).
 
 **Independent Test**: `boss-chest.smoke.mjs` com `tech=azul,vermelho&axes=vermelho.potencia:3&chest=1&round=4`: a 1ª konbini
-abre o baú com a União e "2 pontos de eixo"; escolher a União deixa o Roxo no slot sem gastar fragmento; com `chest=1`
+abre o baú com a União e "2 pontos de eixo"; escolher a União deixa o Roxo no slot sem gastar fragmento e traz logo depois 2 páginas `heranca` e o ramo do Roxo; com `chest=1`
 e "2 pontos", as duas páginas `livre` vêm logo depois.
 
 ---
@@ -378,7 +388,7 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
 
 - IF one of the four techniques reaches level 5 while its branch choice is still pending THEN the Despertar SHALL turn on when the branch is chosen, and a Despertar page SHALL follow the branch page in the same panel.
 - WHEN a free point page takes an item to level 2 THEN the branch page of that item SHALL be shown right after it.
-- IF the boss chest União is chosen while a mastery free point page of the Vermelho or of the Azul is pending in the same panel THEN that page SHALL come after the chest and SHALL serve the Roxo (CHC-08).
+- IF the boss chest União is chosen while a mastery free point page of the Vermelho or of the Azul is pending in the same panel THEN that page SHALL come after the chest, the `heranca` pages and the Roxo branch page, and SHALL serve the Roxo (CHC-08).
 - IF the Roxo is formed by the boss chest and the Vermelho had a pending branch page THEN that page SHALL be skipped, since the chest comes before the branches (CHC-02).
 - WHEN a mastery mark is reached in round 1 THEN its free point page SHALL stay pending at the round 1 konbini and SHALL show at the round 2 konbini (PRC-04 lock on the 1st point).
 - IF the chest has exactly 1 candidate THEN its page SHALL show that single option.
@@ -394,6 +404,11 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
 - WHEN the round 1 shop opens THEN no axis card of the four techniques SHALL be offered (PRC-04 lock).
 - WHEN a reroll draws the cards again THEN the `axisRng` SHALL draw again and the `choiceRng` SHALL not change.
 - IF the run ends with a pending boss chest THEN it SHALL be dropped on the run reset.
+- WHEN the pieces of the União hold 4 axis points in total (Vermelho 3, Azul 1) THEN the Roxo SHALL inherit 2, and WHEN they hold 5 THEN it SHALL inherit 3 (RXO-12).
+- IF the pieces of the União hold 7 or more axis points THEN the formula SHALL give 4, the Roxo SHALL inherit 3 (level 4), its branch page SHALL follow the `heranca` pages in the same panel, and its Despertar SHALL turn on only with the next point earned or bought after that (RXO-12, EIX-03).
+- WHEN the Roxo has inherited points THEN they SHALL count as points already placed for the price of its next axis point (EIX-06) and for the PRC-04 lock of that point.
+- IF the União is applied in a round where the PRC-04 lock would refuse the inherited points (only through debug params) THEN the `heranca` pages SHALL still offer them and SHALL never stay pending.
+- WHEN the União is bought in the shop THEN the shop SHALL keep its cards and its reroll price while the panel is open, and the `heranca` pages SHALL not read the `axisRng`.
 
 ---
 
@@ -401,15 +416,15 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
 
 | Dimension | Resolução |
 | --- | --- |
-| Input validation & bounds | EIX-01 (teto de 3 por eixo e 5 pontos), EIX-07 (`axes=`, `ramo=` e `chest=` inválidos ignorados), CHC-05/CHC-06 (só eixo abaixo do teto), RXO-05 (alcance até 320 px), EIX-02 (piso de 60%) |
+| Input validation & bounds | EIX-01 (teto de 3 por eixo e 5 pontos), EIX-07 (`axes=`, `ramo=` e `chest=` inválidos ignorados), CHC-05/CHC-06 (só eixo abaixo do teto), RXO-05 (alcance até 320 px), EIX-02 (piso de 60%), RXO-12 (herança até 4 pela fórmula e até 3 sem ramo) |
 | Failure / partial-failure states | CHC-08 (página sem alvo válido é pulada), BAU-07 (baú sem candidato), a compra continua "checar → gastar → aplicar" (SHOP-10); sem I/O, o resto é N/A |
 | Idempotency / retry / duplicate handling | MAE-01 (cada conjuração conta uma vez, chefe uma vez), MAE-02/MAE-06 (marco uma vez por `TechId`), EIX-05 (componente proporcional uma vez por alvo por conjuração), DVG-05 e RXO-08 (toques por alvo limitados) |
 | Auth boundaries & rate limits | N/A porque é jogo local; o teto de emissões já é da F30 (CRP-12) |
-| Concurrency / ordering | CHC-02 e CHC-03 (baús antes dos ramos e dos pontos; inserção logo depois), CHC-08 (ponto da técnica consumida pela União vai ao Roxo), edge cases da União com ponto da maestria e do ramo pendente do Vermelho |
+| Concurrency / ordering | CHC-02 e CHC-03 (baús antes dos ramos e dos pontos; inserção logo depois), CHC-08 (ponto da técnica consumida pela União vai ao Roxo), edge cases da União com ponto da maestria e do ramo pendente do Vermelho, RXO-12 (bloco `heranca` logo depois do baú ou aberto pela compra, ramo da técnica nova depois do bloco) |
 | Data lifecycle / expiry | CHC-11 e edge case do baú pendente (somem no reset), CHC-08 (página travada pela PRC-04 fica para a próxima visita), AZL-08 (prisão de 500 ms), RXO-06 (massa de 1000 ms), DSM-07 (até 3 fendas por conjuração) |
 | Observability | EIX-08, CHC-10, MAE-07 e BAU-08 (snapshot), MAE-04 (banner) |
 | External-dependency failure | N/A porque não há dependência externa em jogo |
-| State-transition integrity | EIX-03 (ramo uma vez por run no Nv 2, Despertar só com ramo), RXO-01/RXO-02 (União só com os limiares), CHC-02 (loja trancada até a última página), MAE-03 (maestria nunca muda nível) |
+| State-transition integrity | EIX-03 (ramo uma vez por run no Nv 2, Despertar só com ramo), RXO-01/RXO-02 (União só com os limiares), RXO-12 (pontos das peças lidos antes do reset; nenhum ponto herdado liga Despertar), CHC-02 (loja trancada até a última página), MAE-03 (maestria nunca muda nível) |
 
 ---
 
@@ -466,6 +481,7 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
 | RXO-09 | P1: Roxo pela União nova e com caminho próprio | - | Pending |
 | RXO-10 | P1: Roxo pela União nova e com caminho próprio | - | Pending |
 | RXO-11 | P1: Roxo pela União nova e com caminho próprio | - | Pending |
+| RXO-12 | P1: Roxo pela União nova e com caminho próprio | - | Pending |
 | CHC-01 | P1: Um painel só por visita resolve tudo | - | Pending |
 | CHC-02 | P1: Um painel só por visita resolve tudo | - | Pending |
 | CHC-03 | P1: Um painel só por visita resolve tudo | - | Pending |
@@ -493,7 +509,7 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
 | BAU-07 | P1: Baú do chefe com escolha | - | Pending |
 | BAU-08 | P1: Baú do chefe com escolha | - | Pending |
 
-**Coverage:** 75 total, 75 mapeados para tarefas, 0 sem tarefa (mapa em `tasks.md`, "Requirement Coverage").
+**Coverage:** 76 total, 76 mapeados para tarefas, 0 sem tarefa (mapa em `tasks.md`, "Requirement Coverage").
 
 ---
 
@@ -503,16 +519,18 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
 - `tests/data/techAxesTechniques.test.ts` (tabelas AZL-02, DSM-01, DVG-01, RXO-04, eixo dominante EIX-09 e nomes únicos
   EIX-10), `tests/core/techStatsTechniques.test.ts` (EIX-02 e o piso), `tests/core/blueBranch.test.ts`,
   `cutBranch.test.ts`, `divergentBranch.test.ts` e `purpleBranch.test.ts` (ramos e Despertares),
-  `tests/core/choice.test.ts` (fila, ordem, inserção, pulo; CHC-02 a CHC-09), `tests/core/bossChest.test.ts`
+  `tests/core/choice.test.ts` (fila, ordem, inserção, pulo; CHC-02 a CHC-09; `openNow` e a página `heranca` do RXO-12, com
+  as opções em `tests/core/choicePages.test.ts`), `tests/core/bossChest.test.ts`
   (BAU-01, BAU-02, BAU-07).
-- Cada limiar testado nos dois lados do limite (L-010): Vermelho Nv 3 e Nv 4 na União; marcos 24/25 e 59/60; 3 e 4
+- Cada limiar testado nos dois lados do limite (L-010): Vermelho Nv 3 e Nv 4 na União; soma 4 e 5 das peças na
+  herança (2 e 3 pontos) e fórmula 3 e 4 sem ramo (3 e 3) e com ramo (3 e 4); marcos 24/25 e 59/60; 3 e 4
   candidatos no baú; 1000 ms da Massa e 999 ms; 220 px do Lapso; 120 px da Fenda; 48 px do Eco; 3ª e 4ª fenda da
   cadeia; página de ponto na konbini da r1 (adiada) e da r2 (mostrada), e o 3º ponto grátis na r3 (adiado) e na r4;
   teto de 3 e de 5 pontos.
 - O adaptador que repassa o stat ao motor tem teste próprio, não só o puro (L-043): o raio que o `BlueTech` passa ao
   `BlueOrb`, o retângulo que o `CutTech` passa ao `CutFx` e o raio que o `PurpleTech` passa ao `PurpleOrb`.
 
-**Testes refeitos:** `mastery` e `masteryBar` (marcos), `evolution` e `evolutionShop` (`minLevel`), `techniques`,
+**Testes refeitos:** `mastery` e `masteryBar` (marcos), `evolution` e `evolutionShop` (`minLevel`; `unionInheritance` do RXO-12), `techniques`,
 `techShop`, `loadout`, `techStats`, `shopAxes`, `shopPricing`, `kokusen` (o `D` pelo eixo), `buildCurve` (EIX-12,
 RXO-11) e `debugApi` (campos novos). `bossReward.test.ts` sai junto com o `core/bossReward.ts`.
 
@@ -521,7 +539,7 @@ RXO-11) e `debugApi` (campos novos). `bossReward.test.ts` sai junto com o `core/
 **Smokes antigos que mudam** (cada um no passo que os quebra, citando o requisito): `techniques` e `tech` no passo 1
 (custo 40 e recarga 2500 do Azul; AZL-01) e nos passos 2 e 3 (o nível do `tech=<id>:N` ignorado; EIX-07), `evolution`
 no passo 1 (ponte `axes=azul.gravidade:2,vermelho.potencia:2`, porque o `tech=azul:3` deixa de dar nível; EIX-07) e no
-passo 4 (`tech=azul,vermelho&axes=vermelho.potencia:3`; RXO-01), `shop-progress` no passo 1 (carta de eixo do Azul;
+passo 4 (`tech=azul,vermelho&axes=vermelho.potencia:3`; RXO-01) e no passo 5 (a compra da União abre as páginas `heranca` e o ramo do Roxo; RXO-12), `shop-progress` no passo 1 (carta de eixo do Azul;
 EIX-06) e no passo 5 (maestria por marco no lugar do "Nv 2!"; MAE-02, MAE-04, MAE-07), `kokusen` no passo 3 (DVG-03,
 DVG-04), `shop-axes` e `domain` no passo 5 (opções lidas por id; CHC-10), `domain` no passo 6 (a página `bauChefe` da F31
 vira `bau`; BAU-06) e `boss-punish` no passo 6 (o banner "Vermelho Nv 2!" do prêmio do chefe some; BAU-03).
@@ -536,7 +554,8 @@ vira `bau`; BAU-06) e `boss-punish` no passo 6 (o banner "Vermelho Nv 2!" do pr�
 
 - [ ] Na mesma seed, o usuário joga o Azul Andante e o Azul Lapso, o Desmantelar Para Trás e o Clivar, o Divergente Eco
       e o Concentrado, o Roxo Massa e o Retorno, e sente a diferença de cada par; vê cada Despertar com banner.
-- [ ] Numa run normal, forma o Roxo até a r8 e ainda tem carta para subir o Roxo.
+- [ ] Numa run normal, forma o Roxo até a r8 e ainda tem carta para subir o Roxo; o Roxo nasce com metade dos pontos
+      das peças (até 3), cada um posto por ele numa página, e o Despertar não vem de graça.
 - [ ] Na konbini, resolve ramo, ponto grátis, Despertar e baú numa sequência de páginas, sem painel extra por compra.
 - [ ] A maestria dá o banner no 25 e no 60, e o nível só muda pelo ponto escolhido.
 - [ ] Gate verde; os 3 smokes novos e os da lista verdes; a `TestScene` sem linha líquida a mais.
