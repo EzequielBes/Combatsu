@@ -56,6 +56,8 @@ const JAB_AT_FURY_CAP = 8;
 async function furyStacks(ctx) {
   const kit = makeKit(ctx);
   let s = await walkToDummy(kit, ctx, 'axes=corpo.furia:3', 40);
+  const live0 = s.fx.live;
+  const auras = [s.build.corpo.aura];
   const dmgs = [];
   let fury7 = null;
   for (let k = 0; k < 8; k++) {
@@ -66,12 +68,25 @@ async function furyStacks(ctx) {
     // Espera o golpe e a janela do encadeamento fecharem: o `J` seguinte é outro `jab`, não o `direto`.
     // Golpe (260 ms), hitstop e janela (260 ms) com folga.
     s = await kit.snap(900);
+    auras.push(s.build.corpo.aura);
     if (k === 6) fury7 = s.build.corpo.fury;
   }
   const view = JSON.stringify({ dmgs, fury7, fury8: s.build.corpo.fury });
   ctx.assert(fury7.stacks === 7 && Math.abs(fury7.bonus - 0.35) < 1e-9, `CRP-07: 7 acúmulos dão 0,35: ${view}`);
   ctx.assert(dmgs[0] === FIRST_JAB && dmgs[7] === JAB_AT_FURY_CAP, `CRP-07: o dano sobe com a Fúria: ${view}`);
   ctx.assert(Math.abs(s.build.corpo.fury.bonus - 0.35) < 1e-9, `CRP-07: o bônus para no teto de 35 %: ${view}`);
+  // CRP-07.11: a aura nasce apagada e o raio cresce a cada acúmulo.
+  const grows = auras.slice(1).every((r, k) => r > auras[k]);
+  ctx.assert(auras[0] === 0 && grows, `CRP-07.11: aura apagada sem acúmulo e crescendo com eles: ${auras}`);
+  // O `R` destrói a aura com a cena: nenhuma aura nem objeto de efeito sobra na cena nova.
+  await kit.tap('KeyR');
+  s = await kit.snap(50);
+  if (s.run.state === 'title') s = await kit.tap('KeyJ');
+  s = await kit.snap(100);
+  ctx.assert(
+    s.build.corpo.aura === 0 && s.fx.live === live0,
+    `o R não deixa aura órfã: ${JSON.stringify({ aura: s.build.corpo.aura, live: s.fx.live, live0 })}`,
+  );
 }
 
 const blocks = (s) => s.events.filter((e) => e === 'block' || e === 'parry').length;
@@ -99,7 +114,10 @@ async function furyResets(ctx) {
   // O golpe levado congela o jogo (hitstop); o Corpo confere a vida no 1º quadro de jogo depois dele.
   s = await kit.snap(200);
   ctx.assert(s.player.hp < hp0, `o comum deveria acertar o player: ${s.player.hp}`);
-  ctx.assert(s.build.corpo.fury.stacks === 0, `CRP-07: perder HP zera a Fúria: ${JSON.stringify(s.build.corpo)}`);
+  ctx.assert(
+    s.build.corpo.fury.stacks === 0 && s.build.corpo.aura === 0,
+    `CRP-07: perder HP zera a Fúria e apaga a aura: ${JSON.stringify(s.build.corpo)}`,
+  );
 }
 
 /** Rodada do chefe com o voto `corpoDeVidro` como 2ª oferta do painel na seed 1 (o `vows.smoke` usa a mesma rodada). */

@@ -187,6 +187,7 @@ describe('installDebugApi', () => {
           awakened: false,
           fury: { stacks: 0, bonus: 0 },
           cadence: 0,
+          aura: 0,
         },
       },
       arsenal: { relic: null, relicLevel: 0, weapon: null, weaponLevel: 0, tool: null },

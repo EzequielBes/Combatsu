@@ -1441,9 +1441,16 @@ atualizada pelo `bodyDirector`.
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs`: aura `off` sem pilha e com raio crescente com as pilhas; `R` não deixa aura órfã
-- [ ] Conferida no jogo em HD, parado e correndo, para os dois lados
-- [ ] Smokes `cursed-body`, `world-restart` e `player-anim` verdes; gate verde; contagem sem perda
+- [x] `cursed-body.smoke.mjs`: aura `off` sem pilha e com raio crescente com as pilhas; `R` não deixa aura órfã
+- [x] Conferida no jogo em HD, parado e correndo, para os dois lados
+- [x] Smokes `cursed-body`, `world-restart` e `player-anim` verdes; gate verde; contagem sem perda
+
+**Nota (T47)**: a aura só acende com pontos na Fúria (o `FuryCounter` conta acúmulos mesmo sem eixo) e sai do
+`FxRegistry` quando os acúmulos zeram, para o `fx.live` dos outros smokes não mudar. O raio vai a 14 px com 1
+acúmulo e cresce 2 px por acúmulo até o 8º; o `build.corpo.aura` lê o raio desenhado (0 apagada). Conferida em HD
+no laboratório (`node tools/visual-shots.mjs .fable-out/t47 corpoFuria`), parada e correndo para os dois lados: com
+a elipse e o contorno em soma de luz o laranja lê no fundo escuro, e na corrida o centro vai até 10 px à frente
+(`furyAuraCenter`) para envolver o tronco da pose, que fica à frente da coluna do corpo. Testes: 4149.
 
 **Tests**: smoke
 **Gate**: full

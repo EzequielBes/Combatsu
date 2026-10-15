@@ -5,6 +5,7 @@ import type { StrikeMods } from '../../core/statSheet';
 import type { MoveDef } from '../../data/moves';
 import { BODY_AXES } from '../../data/techAxes';
 import type { Hittable } from '../../game/bodyTags';
+import { FuryAura, furyAuraCenter } from '../../game/FuryAura';
 import type { TestScene } from '../TestScene';
 
 /**
@@ -18,6 +19,8 @@ export class BodyDirector {
   readonly cadence = new CadenceCounter();
   /** Vida e vida máxima do player no último quadro de jogo, para achar a perda de HP; `null` antes do 1º quadro. */
   private lastHp: { hp: number; max: number } | null = null;
+  /** CRP-07.11: aura laranja da Fúria, criada com o 1º acúmulo e largada quando eles zeram (ou no `R`). */
+  private aura: FuryAura | null = null;
 
   constructor(readonly s: TestScene) {}
 
@@ -65,9 +68,33 @@ export class BodyDirector {
     const { hp, maxHp } = this.s.player;
     const last = this.lastHp;
     this.lastHp = { hp, max: maxHp };
-    if (last === null || hp >= Math.min(last.hp, maxHp)) return;
-    this.fury.onHpLoss();
-    this.cadence.onHpLoss();
+    if (last !== null && hp < Math.min(last.hp, maxHp)) {
+      this.fury.onHpLoss();
+      this.cadence.onHpLoss();
+    }
+    this.updateAura();
+  }
+
+  /**
+   * CRP-07.11: com pontos na Fúria e acúmulos a aura acende e cresce com eles; sem acúmulo ela some e sai do
+   * `FxRegistry`. A aura do `R` anterior já foi destruída no `SHUTDOWN` e nasce de novo aqui.
+   */
+  private updateAura(): void {
+    const stacks = this.points.furia > 0 ? this.fury.stacks : 0;
+    if (stacks === 0) {
+      this.dropAura();
+      return;
+    }
+    if (!this.aura || this.aura.destroyed) this.aura = new FuryAura(this.s, this.s.fxRegistry);
+    const p = this.s.player;
+    this.aura.update(furyAuraCenter(p.renderPos, p.facing, p.move.vx), stacks);
+  }
+
+  private dropAura(): void {
+    if (!this.aura) return;
+    this.aura.update(this.s.player.renderPos, 0);
+    this.s.fxRegistry.scheduleDestroy(this.aura, 0);
+    this.aura = null;
   }
 
   /** CRP-05: px do Alcance, que alargam a caixa do golpe e o rastro dele. */
@@ -89,13 +116,12 @@ export class BodyDirector {
     this.fury.reset();
     this.cadence.reset();
     this.lastHp = null;
+    this.dropAura();
   }
 
-  /** Fúria e Cadência para o `build.corpo` do snapshot (CRP-14). */
-  snapshot(): { fury: { stacks: number; bonus: number }; cadence: number } {
-    return {
-      fury: { stacks: this.fury.stacks, bonus: this.fury.bonus(this.points.furia) },
-      cadence: this.cadence.count,
-    };
+  /** Fúria, Cadência e o raio desenhado da aura (0 apagada) para o `build.corpo` do snapshot (CRP-14). */
+  snapshot(): { fury: { stacks: number; bonus: number }; cadence: number; aura: number } {
+    const fury = { stacks: this.fury.stacks, bonus: this.fury.bonus(this.points.furia) };
+    return { fury, cadence: this.cadence.count, aura: this.aura?.view ?? 0 };
   }
 }

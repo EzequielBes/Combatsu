@@ -30,6 +30,8 @@ export interface BodyBuildSnapshot {
   awakened: boolean;
   fury: { stacks: number; bonus: number };
   cadence: number;
+  /** Meia largura desenhada da aura da Fúria (CRP-07.11); 0 com ela apagada. */
+  aura: number;
 }
 
 /** Campo `build` do snapshot: build deduzida, pontos por linha, passivas (BLD-*) e os dois itens com eixo. */

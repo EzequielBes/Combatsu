@@ -128,6 +128,7 @@ export class AxisDirector {
       awakened: this.build.awakened('corpo'),
       fury: { stacks: 0, bonus: 0 },
       cadence: 0,
+      aura: 0,
     };
   }
 }
