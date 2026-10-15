@@ -38,10 +38,11 @@ design valem para `f17a6a8`; o que a F29, a F30 e a F31 mexem é reconferido no 
 
 | Antes de | Pergunta | Origem |
 | --- | --- | --- |
-| T37 | Modelo do eixo dominante do Divergente: nenhum número inteiro de alvos ≥ 2 passa no modelo da spec (Alvos 2 já dá 1,54×). Recomendação do design: contar os alvos pela caixa do `direto` (`alvos efetivos = min(alvos, 1 + 2 × 26 / 96)` = 1,54, dá 1,31×); alternativa: tirar o Divergente do teste como "gargalo não declarado". A linha "Modelo do teste de eixo dominante" das Assumptions da spec muda junto, no commit da T37 | design, "Calibração do eixo dominante" |
 | T25, T36, T50, T64 | Se a curva de build (EIX-12, RXO-11) não fechar com os preços da F30, o ajuste é de número com decisão nova, nunca no teste | design, pendência 2 |
 
-A Largura do Roxo (36/44/51/58) já foi calibrada pela regra da própria spec (o 60 dava 1,38×) e está no RXO-04.
+A Largura do Roxo (36/44/51/58) já foi calibrada pela regra da própria spec (o 60 dava 1,38×) e está no RXO-04. O
+modelo do Divergente foi decidido na revisão pela recomendação do design (alvos pela densidade da caixa do soco, e o eixo
+Alvos alargando a caixa 26/30/34/36 px; 1,346×) e já está na spec: a T37 não espera decisão.
 
 ---
 
@@ -280,8 +281,10 @@ no registro.
 
 #### T3: `Loadout` genérico
 
-**What**: em `levelOf`, `slotsView`, `equip` e `clear`, o `id === 'vermelho'` da F30 vira `axes.has(id)`; `clear(slot)`
-chama `axes.resetItem(id)` para qualquer técnica do registro.
+**What**: em `levelOf`, `slotsView`, `equip`, `clear` e `upgrade`, o `id === 'vermelho'` da F30 vira `axes.has(id)`;
+`clear(slot)` chama `axes.resetItem(id)` para qualquer técnica do registro; `upgrade(id)` dá 1 ponto no eixo-foco de
+todo item do registro (VRM-19 generalizada, EIX-01.4), para a maestria e o prêmio do chefe, que ainda o chamam até as
+T72 e T78, não subirem o nível antigo das técnicas que entram nos passos 1 a 4.
 **Where**: `src/core/loadout.ts`
 **Depends on**: T2
 **Reuses**: `Loadout` da F30
@@ -291,7 +294,9 @@ chama `axes.resetItem(id)` para qualquer técnica do registro.
 
 - [ ] `tests/core/loadout.test.ts` e `tests/core/loadoutAxes.test.ts` (F30) verdes sem mudança de número
 - [ ] Caso novo: `clear` de um slot com técnica do registro zera os pontos, o ramo e o Despertar dela
-- [ ] Smokes `red-axes`, `evolution` e `shop` verdes e iguais
+- [ ] Caso novo (item sintético no registro): `upgrade` põe o ponto no eixo-foco e o nível sobe 1; com 5 pontos devolve
+      `false` e não muda nada; técnica fora do registro sobe o nível antigo como hoje
+- [ ] Smokes `red-axes`, `evolution`, `shop` e `shop-progress` (maestria de hoje) verdes e iguais
 - [ ] Gate verde; contagem sem perda
 
 **Tests**: unit + smoke
@@ -493,7 +498,7 @@ perde o `choicePages()`; `shopDirector.openShop`/`updateShop`/`updateVowPanel` s
 
 **What**: `src/data/techAxesTechniques.ts` com `BLUE_AXES` (`radius [130,160,190,220]`, `pullSpeed [150,190,230,270]`,
 `lifeMs [1400,1800,2200,2600]`, `implosion [10,18,26,34]`, `tick [5,6,7,8]`, `cost [40,34,29,24]`, `cooldownMs
-[2500,2100,1800,1500]`, `knockdownFrom 2`, `pullsElite 3`), `BLUE_BRANCHES` (`andante { aheadPx 80, lifeMul 0.7 }`,
+[2500,2100,1800,1500]`, `knockdownFrom 2`, `pullsElite 3`), `BLUE_BRANCHES` (`andante { aheadPx 80, lifeMul 0.7, followSpeed 600 }`,
 `lapso { speed 200, maxPx 220, wallMarginPx 16 }`) e `BLUE_AWAKENINGS` (`azulMaximo { implosionMul 3, pct }`,
 `ancora { holdMs 500, pct }`, `pct` = `MAX_HP_PCT` da F30), com nomes e textos de efeito; ainda fora do registro.
 **Where**: `src/data/techAxesTechniques.ts`
@@ -505,8 +510,9 @@ perde o `choicePages()`; `shopDirector.openShop`/`updateShop`/`updateVowPanel` s
 
 - [ ] `tests/data/techAxesTechniques.test.ts`: AZL-02 linha a linha (0 a 3 pontos de cada eixo); EIX-09 do Azul com o
       modelo das Assumptions (período preso à energia, Puxão 0; nenhum eixo no 3 acima de 1,35 × a mediana; números
-      da tabela "Calibração" do design como esperados); EIX-10 sobre os ramos e Despertares do Vermelho, do Corpo e do
-      Azul (nome repetido ou texto de efeito repetido falha)
+      da tabela "Calibração" do design como esperados); EIX-09.2: com regeneração de 16/s, Recarga 2 + Eficiência 3 dá
+      mais dano sustentado que a Eficiência 3 sozinha (2250 contra 2950 ms de período); EIX-10 sobre os ramos e
+      Despertares do Vermelho, do Corpo e do Azul (nome repetido ou texto de efeito repetido falha)
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
@@ -543,10 +549,11 @@ com Recarga 3; base sem ponto: custo 40, recarga 2500, sinal 200, carga 250. Ain
 
 #### T14: Regra dos ramos do Azul
 
-**What**: `src/core/blueBranch.ts` com `andantePoint(playerCenter, facing, aheadPx = 80)`, `class LapsoDrive`
-(`update(dtMs, held)` → `{ x, stopped, justStopped }`; anda a 200 px/s enquanto segurado; para ao soltar, a 220 px do
-centro do player no início da conjuração ou a 16 px da parede, o que vier primeiro; nasce parado se a tecla já estava
-solta) e `anchorTargets(center, radius, targets)` (todo comum e o chefe dentro do raio).
+**What**: `src/core/blueBranch.ts` com `andantePoint(playerCenter, facing, aheadPx = 80)`, `andanteStep(orbX, targetX,
+dtMs, maxSpeed = 600)`, `class LapsoDrive` (`constructor(..., heldAtSpawn)`, `update(dtMs, held)` → `{ x, stopped,
+justStopped }`; anda a 200 px/s enquanto segurado; para ao soltar, a 220 px do centro do player no início da conjuração
+ou a 16 px da parede, o que vier primeiro; com a tecla já solta no nascimento nasce parado e o 1º `update` devolve
+`justStopped`) e `anchorTargets(center, radius, targets)` (todo comum e o chefe dentro do raio).
 **Where**: `src/core/blueBranch.ts`
 **Depends on**: T12
 **Reuses**: molde do `redBranch.ts` (F30)
@@ -554,9 +561,10 @@ solta) e `anchorTargets(center, radius, targets)` (todo comum e o chefe dentro d
 
 **Done when**:
 
-- [ ] `tests/core/blueBranch.test.ts`: `andantePoint` a 80 px nos dois sentidos; Lapso para ao soltar, para em 220 px
-      (219 anda, 220 para, nunca 221), para a 16 px da parede antes dos 220; tecla solta antes do nascimento nasce
-      parado; `justStopped` verdadeiro só no quadro da parada; `anchorTargets` com alvo na borda do raio dentro e 1 px
+- [ ] `tests/core/blueBranch.test.ts`: `andantePoint` a 80 px nos dois sentidos; `andanteStep` nunca anda mais de 10 px
+      num quadro de 16 ms, cruza os 160 px da virada em 267 ms e reverte sem pulo numa 2ª virada no meio; Lapso para ao
+      soltar, para em 220 px (219 anda, 220 para, nunca 221), para a 16 px da parede antes dos 220; tecla solta antes do
+      nascimento nasce parado e devolve `justStopped` no 1º quadro; `justStopped` verdadeiro só no quadro da parada; `anchorTargets` com alvo na borda do raio dentro e 1 px
       fora fora, chefe incluso
 - [ ] Gate verde; contagem = anterior + os novos
 
@@ -706,8 +714,9 @@ tique ou implosão tira 30% da recarga cheia resolvida do que resta no slot, sem
 
 #### T21: Andante
 
-**What**: com o ramo Andante, o orbe nasce e fica a 80 px à frente do centro do player (`andantePoint`), acompanha e
-vira com ele a cada quadro (`BlueOrbState.setPosition`) e vive o `lifeMs` resolvido (×0,7).
+**What**: com o ramo Andante, o orbe nasce a 80 px à frente do centro do player (`andantePoint`) e a cada quadro anda
+para esse ponto a até 600 px/s (`andanteStep`, `BlueOrbState.setPosition`), cruzando para o outro lado ao virar, e vive o
+`lifeMs` resolvido (×0,7).
 **Where**: `src/game/tech/blue.ts`
 **Depends on**: T18, T14 (fase 3), T15 (fase 3)
 **Reuses**: `andantePoint`
@@ -716,7 +725,8 @@ vira com ele a cada quadro (`BlueOrbState.setPosition`) e vive o `lifeMs` resolv
 **Done when**:
 
 - [ ] `tech-axes.smoke.mjs`: `tech=azul&ramo=azul:a`: `build.azul.branch` `andante`; o orbe a 80 px do player em dois
-      quadros com o player andando e depois de virar; vida 980 ms
+      quadros com o player andando; depois de virar, o orbe passa pelo meio (nenhum quadro com salto acima de 10 px) e
+      está a 80 px do outro lado em até 300 ms; vida 980 ms
 - [ ] Andante e campo do Vermelho Máximo sobrepostos: o puxão do Azul vence e o campo segue com os tiques `chip`
       (edge case; `tech=azul,vermelho&axes=vermelho.potencia:2,vermelho.escala:2&ramo=azul:a,vermelho:b`, o Vermelho
       Máximo da F30)
@@ -768,7 +778,8 @@ presos 500 ms e levam o acerto proporcional de dano 0 com `maxHpBonus` (4% no co
 
 - [ ] `tech-axes.smoke.mjs`: `tech=azul&axes=azul.duracao:2,azul.gravidade:2&ramo=azul:b`: `awakened: true`; ao soltar,
       os comuns no raio ficam parados (posição e `ai.state` sem ataque novo) por 500 ms e o número de dano de cada um é
-      `round(0,04 × maxHp)`; o chefe (`area=modular&round=5`) não começa ataque nos 500 ms e o golpe em curso segue
+      `round(0,04 × maxHp)`; com a tecla solta antes do nascimento (toque rápido), a prisão vale no ponto de nascimento;
+      o chefe (`area=modular&round=5`) não começa ataque nos 500 ms e o golpe em curso segue
 - [ ] Banner com o nome do Despertar e escala de tempo 0,4 por 350 ms na 1ª conjuração da rodada (EIX-03.6)
 - [ ] Smokes `tech-axes`, `tech`, `boss` e `enemy-` verdes; gate verde; contagem sem perda
 
@@ -827,7 +838,8 @@ toda carta à venda): Nv 2 até a loja da r3 e Nv 5 até a loja da r10.
 **What**: `CUT_AXES` (`cuts [3,4,5,6]`, `farPx [180,220,260,300]`, `heightPx [48,56,64,72]`, `cut [10,13,16,19]`,
 `intervalMs [60,45,35,25]`, `signMs [150,120,100,80]`, `cost [30,25,20,18]`, `cooldownMs [2500,2000,1600,1200]`),
 `CUT_BRANCHES` (`paraTras {}`, `clivar { pct: { enemy 0.02, boss 0.005 } }`) e `CUT_AWAKENINGS`
-(`desmantelarDoRei { lastCutPct }`, `fenda { reachPx 120 }`), com nomes e textos; ainda fora do registro.
+(`desmantelarDoRei { lastCutPct }`, `fenda { reachPx 120, maxChain 3, pct { enemy 0.03 } }`), com nomes e textos;
+ainda fora do registro.
 **Where**: `src/data/techAxesTechniques.ts`
 **Depends on**: T12 (fase 3)
 **Reuses**: molde do `BLUE_*`
@@ -850,7 +862,7 @@ toda carta à venda): Nv 2 até a loja da r3 e Nv 5 até a loja da r10.
 
 **What**: `resolveCut` preenche o bloco `cut` (`times` = `i × intervalo`, `anglesDeg` = `[20, −25, 70][i mod 3]`,
 `mirrored` do Para Trás, `nearPx` 60, `farPx`, `heightPx`, `lineLen`, `cutPct` do Clivar, `lastCutPct` do Rei,
-`clearsProjectiles`, `fendaPx`), o dano `cut`, `branch`, `awakened` e `killRefund`.
+`clearsProjectiles`, `fenda { reachPx, maxChain, pct }`), o dano `cut`, `branch`, `awakened` e `killRefund`.
 **Where**: `src/core/techResolvers.ts`
 **Depends on**: T26, T13 (fase 3)
 **Reuses**: `resolveBlue` como molde, `TECH_GEOMETRY.corte`
@@ -871,8 +883,9 @@ toda carta à venda): Nv 2 até a loja da r3 e Nv 5 até a loja da r10.
 #### T28: Regra dos ramos do Desmantelar
 
 **What**: `src/core/cutBranch.ts` com `cutPlan(stats)` (`times`, `angles`, `mirrored[i] = paraTras && i % 2 === 1`),
-`fendaTarget(deadAt, livingEnemies, reachPx = 120)` (o comum vivo mais perto, `null` sem nenhum) e `rectsTouch(a, b)`
-(o `overlaps` de `cut.ts:14-16`, exportado).
+`fendaTarget(deadAt, livingEnemies, reachPx = 120, exclude)` (o comum vivo mais perto que ainda não levou fenda, `null`
+sem nenhum), `class FendaChain` (`open()` verdadeiro até 3 vezes por conjuração) e `rectsTouch(a, b)` (o `overlaps` de
+`cut.ts:14-16`, exportado).
 **Where**: `src/core/cutBranch.ts`
 **Depends on**: T27
 **Reuses**: `overlaps` de `core/cut.ts`
@@ -881,7 +894,8 @@ toda carta à venda): Nv 2 até a loja da r3 e Nv 5 até a loja da r10.
 **Done when**:
 
 - [ ] `tests/core/cutBranch.test.ts`: instantes e ângulos de 3 a 6 cortes; espelhados 1 de 3, 2 de 4, 2 de 5, 3 de 6,
-      o 1º sempre à frente; `fendaTarget` a 119 e 120 px acha, a 121 não; sem vivo, `null`
+      o 1º sempre à frente; `fendaTarget` a 119 e 120 px acha, a 121 não; sem vivo, `null`; quem está no `exclude` fica
+      de fora; `FendaChain` abre a 3ª fenda e recusa a 4ª
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
@@ -1028,17 +1042,20 @@ soma 4% do HP máximo de cada alvo que acertar (1% no chefe).
 #### T35: Fenda
 
 **What**: com a Fenda, o comum que morre por um corte abre uma fenda: 1 acerto `micro` com o dano do corte resolvido
-(sem o Clivar) no comum vivo mais perto a até 120 px do morto (`fendaTarget`); o abate pela fenda não abre outra.
+(sem o Clivar) mais 3% do HP máximo (`maxHpBonus`) no comum vivo mais perto a até 120 px do morto que ainda não levou
+fenda (`fendaTarget`); o comum morto por uma fenda abre a próxima, até 3 por conjuração (`FendaChain`).
 **Where**: `src/game/tech/cut.ts`
 **Depends on**: T33
 **Reuses**: `fendaTarget` (T28), `Hit.band` (F29)
-**Requirement**: DSM-07, EIX-03
+**Requirement**: DSM-07, EIX-03, EIX-05
 
 **Done when**:
 
 - [ ] `tech-axes.smoke.mjs`: `tech=corte&axes=corte.afiacao:2,corte.cortes:2&ramo=corte:b` com dois comuns a 100 px
-      e o primeiro com 1 HP: o segundo leva um número `micro` igual ao dano do corte; sem vivo a 120 px, nenhum acerto
-      (edge case); a fenda que mata não abre outra
+      e o primeiro com 1 HP: o segundo leva um número `micro` de `16 + round(0,03 × maxHp)`; sem vivo a 120 px, nenhum
+      acerto (edge case); com 5 comuns de 1 HP em fila a 100 px, a cadeia mata 1 pelo corte e mais 3 pelas fendas, e o
+      5º fica vivo
+- [ ] Conferido no jogo em HD, para os dois lados: a fenda lida como risco do morto ao vivo
 - [ ] Smokes `tech-axes` e `tech` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -1070,12 +1087,11 @@ soma 4% do HP máximo de cada alvo que acertar (1% no chefe).
 
 #### T37: Tabela do Divergente
 
-**What**: antes de começar, a decisão do usuário sobre o modelo do eixo dominante do Divergente (tabela no topo); a
-linha "Modelo do teste de eixo dominante" das Assumptions da spec muda no mesmo commit. `DIVERGENT_AXES` (`second
-[18,24,30,36]`, `targets [1,2,2,3]`, `zoneMs [8000,10000,12000,14000]`, `kokusenGain [30,38,46,54]`, `cost
+**What**: `DIVERGENT_AXES` (`second [18,24,30,36]`, `targets [1,2,2,3]`, `boxPx [26,30,34,36]`, `zoneMs
+[8000,10000,12000,14000]`, `kokusenGain [30,38,46,54]`, `cost
 [20,17,14,12]`, `cooldownMs [1200,1000,850,700]`, `first 12`), `DIVERGENT_BRANCHES` (`eco { reachPx 48 }`,
 `concentrado { secondMul 2 }`, `deadAxis: { concentrado: 'alvos' }`) e `DIVERGENT_AWAKENINGS` (`ecoNegro { pct enemy
-0.03 }`, `impactoUnico { pct }`), com nomes e textos; ainda fora do registro.
+0.03 }`, `impactoUnico { pct, unblockable: true, knockdown: true }`), com nomes e textos; ainda fora do registro.
 **Where**: `src/data/techAxesTechniques.ts`
 **Depends on**: T26 (fase 5)
 **Reuses**: molde do `CUT_*`
@@ -1083,8 +1099,9 @@ linha "Modelo do teste de eixo dominante" das Assumptions da spec muda no mesmo 
 
 **Done when**:
 
-- [ ] `tests/data/techAxesTechniques.test.ts`: DVG-01 linha a linha (1º impacto 12); EIX-09 do Divergente pelo modelo
-      decidido; EIX-10 com os ramos e Despertares do Divergente somados
+- [ ] `tests/data/techAxesTechniques.test.ts`: DVG-01 linha a linha (1º impacto 12, caixa 26/30/34/36); EIX-09 do
+      Divergente pelo modelo da spec (`(12 + 2º impacto) × min(alvos, 1 + 2 × caixa / 96)`; Alvos 3 dá 21,0 contra a
+      mediana 15,6, 1,346×); EIX-10 com os ramos e Despertares do Divergente somados
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
@@ -1095,8 +1112,9 @@ linha "Modelo do teste de eixo dominante" das Assumptions da spec muda no mesmo 
 
 #### T38: Resolvedor do Divergente e o Kokusen pelo eixo
 
-**What**: `resolveDivergent` preenche o bloco `divergent` (`targets` 1 no Concentrado, senão o eixo; `zoneMs`,
-`kokusenGain`, `secondMul`, `echoPx`, `secondPct`, `echoKokusenPct`), o dano `first`/`second`, `branch`, `awakened` e
+**What**: `resolveDivergent` preenche o bloco `divergent` (`targets` e `boxPx` 1 e 26 no Concentrado, senão os do eixo;
+`zoneMs`, `kokusenGain`, `secondMul`, `echoPx`, `secondPct`, `breaksGuard`, `echoKokusenPct`), o dano
+`first`/`second`, `branch`, `awakened` e
 `killRefund`; o `kokusenDamage` da F30 passa a usar `D = DIVERGENT_AXES.second[pontos]` (18/24/30/36), sem `damageMul`,
 sem `vowDamageMul` e sem o ×2 do Concentrado.
 **Where**: `src/core/techResolvers.ts`
@@ -1107,7 +1125,8 @@ sem `vowDamageMul` e sem o ×2 do Concentrado.
 **Done when**:
 
 - [ ] `tests/core/techStatsTechniques.test.ts`: cada eixo de 0 a 3 com multiplicadores 1 e 1,35; piso de 60% (12);
-      Concentrado com Alvos 3 dá `targets` 1 e os pontos contam no nível (edge case)
+      Concentrado com Alvos 3 dá `targets` 1, `boxPx` 26 e os pontos contam no nível (edge case); `breaksGuard`
+      só com o Impacto Único
 - [ ] `tests/core/kokusenDamage.test.ts` (F30): `D` 18/24/30/36 pelo eixo, igual com `damageMul` 1,35 e com o
       Concentrado
 - [ ] Gate verde; contagem = anterior + os novos
@@ -1121,8 +1140,9 @@ sem `vowDamageMul` e sem o ×2 do Concentrado.
 #### T39: Regra dos ramos do Divergente
 
 **What**: `src/core/divergentBranch.ts` com `pickTargets(firstId, candidates, n)` (o tocado sempre entra, os outros pelo
-mais perto do player, o chefe conta como um; o principal é o `[0]`, o mais perto), `echoTargets(center, enemies,
-reachPx = 48, exclude)` e `divergentPlan(stats)`.
+mais perto do player, o chefe conta como um; o principal é o `[0]`, o mais perto), `punchBox(boxPx)` (a caixa do
+`direto` com a largura resolvida e a borda de trás no lugar de hoje), `echoTargets(center, enemies, reachPx = 48,
+exclude)` e `divergentPlan(stats)`.
 **Where**: `src/core/divergentBranch.ts`
 **Depends on**: T38
 **Reuses**: molde do `redBranch.ts`
@@ -1130,7 +1150,8 @@ reachPx = 48, exclude)` e `divergentPlan(stats)`.
 
 **Done when**:
 
-- [ ] `tests/core/divergentBranch.test.ts`: o mais perto primeiro; o tocado sempre entra; o chefe conta como 1; eco a
+- [ ] `tests/core/divergentBranch.test.ts`: o mais perto primeiro; o tocado sempre entra; o chefe conta como 1;
+      `punchBox(26)` igual à caixa de hoje e `punchBox(36)` com a mesma borda de trás e 10 px a mais à frente; eco a
       47 e 48 px acerta, a 49 não; nunca em quem leva o próprio 2º impacto; Concentrado força 1 alvo e ×2
 - [ ] Gate verde; contagem = anterior + os novos
 
@@ -1229,9 +1250,9 @@ comportamento.
 
 #### T44: Vários alvos no soco
 
-**What**: a hitbox do Divergente abre com `maxTargets` = alvos resolvidos; no 1º toque escolhe os N pelo `pickTargets`
-sobre o `hitbox.rect` (F31) e a distância ao player; cada alvo leva o próprio 2º impacto no mesmo tempo sorteado; o
-Kokusen vale só no principal.
+**What**: a hitbox do Divergente abre com `punchBox(stats.divergent.boxPx)` e `maxTargets` = alvos resolvidos; no 1º
+toque escolhe os N pelo `pickTargets` entre os comuns dentro do `hitbox.rect` (F31) e a distância ao player; cada alvo
+leva o próprio 2º impacto no mesmo tempo sorteado; o Kokusen vale só no principal.
 **Where**: `src/game/tech/divergent.ts`
 **Depends on**: T43, T39 (fase 7), T40 (fase 7)
 **Reuses**: `AttackHitbox.open(..., maxTargets)` (`hitbox.ts:77`)
@@ -1239,8 +1260,9 @@ Kokusen vale só no principal.
 
 **Done when**:
 
-- [ ] `tech-axes.smoke.mjs`: `tech=divergente&axes=divergente.alvos:3&maxAlive=3` com 3 comuns encostados: 3 números de
-      2º impacto; com `alvos:0`, 1
+- [ ] `tech-axes.smoke.mjs`: `tech=divergente&axes=divergente.alvos:3&maxAlive=3` com 3 comuns encostados dentro da
+      caixa de 36 px: 3 números de 2º impacto; com `alvos:0`, 1; um comum 32 px à frente da borda de trás é tocado com
+      `alvos:3` e não com `alvos:0` (L-043: a caixa chega ao motor)
 - [ ] Smokes `tech-axes`, `kokusen` e `fight` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -1341,7 +1363,8 @@ Kokusen leva só o Kokusen.
 
 #### T49: Impacto Único
 
-**What**: com o Impacto Único, o 2º impacto soma 4% do HP máximo do alvo (1% no chefe).
+**What**: com o Impacto Único, o 1º e o 2º impacto levam `unblockable: true` (`divergent.ts` e `divergentImpacts.ts`), e
+o 2º soma 4% do HP máximo do alvo (1% no chefe) e, no comum, leva `knockdown: true`.
 **Where**: `src/game/tech/divergentImpacts.ts`
 **Depends on**: T47
 **Reuses**: `secondPct` do resolvedor
@@ -1350,7 +1373,9 @@ Kokusen leva só o Kokusen.
 **Done when**:
 
 - [ ] `tech-axes.smoke.mjs`: `tech=divergente&axes=divergente.segundo:2,divergente.zona:2&ramo=divergente:b`: número
-      do 2º impacto `2 × 30 + round(0,04 × maxHp)`; `awakened: true`, banner e câmera lenta
+      do 2º impacto `2 × 30 + round(0,04 × maxHp)`; o comum termina em `ragdollStun`; com `enemyGuard=1` e a guarda levantada
+      por um `jab` logo antes, os dois impactos passam (números cheios, sem `blocked`), e com 3 pontos (sem o Despertar)
+      o 1º impacto é segurado; `awakened: true`, banner e câmera lenta
 - [ ] Smokes `tech-axes` e `kokusen` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -1408,7 +1433,8 @@ Kokusen leva só o Kokusen.
 
 #### T52: Tabela do Roxo
 
-**What**: `PURPLE_AXES` (`radius [36,44,51,58]`, `rangePx [288,300,310,320]`, `signMs [300,240,195,150]`, `chargeMs
+**What**: `PURPLE_AXES` (`radius [36,44,51,58]`, `rangePx [288,300,310,320]`, `speed [180,210,240,270]`, `signMs
+[300,240,195,150]`, `chargeMs
 [400,320,260,200]`, `hit [60,70,80,90]`, `cost [70,60,51,42]`, `cooldownMs [6000,5000,4200,3500]`), `PURPLE_BRANCHES`
 (`massa { holdMs 1000, radiusMul 1.6 }`, `retorno { backMul 0.5, maxTouches 2 }`) e `PURPLE_AWAKENINGS` (`roxo200 {
 pct enemy 0.05 }`, `eclipse { pct }`), com nomes e textos; ainda fora do registro.
@@ -1432,7 +1458,8 @@ pct enemy 0.05 }`, `eclipse { pct }`), com nomes e textos; ainda fora do registr
 
 #### T53: Resolvedor do Roxo
 
-**What**: `resolvePurple` preenche o bloco `purple` (`speed` 180, `rangePx`, `radius`, `spawnAhead` 40, `lift`,
+**What**: `resolvePurple` preenche o bloco `purple` (`speed` do eixo Alcance, 180 na base, `rangePx`, `radius`,
+`spawnAhead` 40, `lift`,
 `force`, `massa`, `fullHoldPct`, `back`, `through`, `secondTouchPct`), o dano `hit`, sinal e carga do eixo, `branch`,
 `awakened` e `killRefund`.
 **Where**: `src/core/techResolvers.ts`
@@ -1751,22 +1778,27 @@ Nv 4 e Azul em qualquer nível, sai do baú do chefe grátis ou da loja por 60);
 
 #### T67: Opções das páginas
 
-**What**: `src/core/choicePages.ts` com `pointOptions(item, axes, rng, max = 3)` (eixo-foco primeiro, os outros
-`offerable` sorteados), `openPointOptions(owned, focusItem, axes, rng)` (eixo-foco do item-foco e 2 pares distintos) e
-`buildPage(req, ctx)` (textos pela linha de eixo do `axisPreview`, nome do ramo e linha do Despertar, nome e efeito do
-Despertar, nomes das opções do baú; `null` quando a página deve ser pulada).
+**What**: `src/core/choicePages.ts` com `pointOptions(item, axes, round, rng, max = 3)` (eixos oferecíveis: `offerable`
+e o `axisGate` da F30 pelo total do item; eixo-foco primeiro quando oferecível, os outros sorteados),
+`openPointOptions(owned, focusItem, axes, round, rng)` (o eixo-foco do item-foco quando oferecível e os outros pares
+distintos sorteados) e `buildPage(req, ctx)` → `{ page } | { skip } | { defer }` (textos pela linha de eixo do
+`axisPreview`, nome do ramo, linha do Despertar e `anula Alvos (n)` pelo `deadPoints`, nome e efeito do Despertar, nomes
+das opções do baú; `skip` sem eixo abaixo do teto ou com o ramo já resolvido; `defer` quando só a trava impede; o
+`ctx.unionOf` troca a técnica consumida pela União pelo Roxo antes de montar a página `ponto`).
 **Where**: `src/core/choicePages.ts`
 **Depends on**: T66
 **Reuses**: `axisPreview`, `focusAxis`, `offerable`
-**Requirement**: CHC-05, CHC-06, CHC-07, CHC-08, CHC-09
+**Requirement**: CHC-04, CHC-05, CHC-06, CHC-07, CHC-08, CHC-09
 
 **Done when**:
 
 - [ ] `tests/core/choicePages.test.ts`: até 3 eixos, foco primeiro, nunca `alvos` no Concentrado; menos de 3 eixos
-      abaixo do teto dão menos opções; 3 pares distintos com o foco primeiro; página `despertar` com nome e texto; `null`
-      para item fora do slot, item com 5 pontos (marco ainda conta, edge case), ramo que já não está pendente (União
-      zerou o Vermelho, edge case) e `livre` sem item com eixo abaixo do teto; mesma seed e mesmas escolhas = mesmas
-      opções
+      abaixo do teto dão menos opções; pares distintos com o foco primeiro; página `despertar` com nome e texto; linha
+      `anula Alvos (1)` na opção Concentrado só com ponto em Alvos; `skip` para item com 5 pontos (marco ainda conta, edge
+      case), ramo que já não está pendente (União zerou o Vermelho, edge case) e `livre` sem item com eixo abaixo do teto;
+      trava (L-010): 1º ponto `defer` na r1 e página na r2, 3º ponto `defer` na r3 e página na r4, 5º ponto `defer` na r5
+      e página na r6; `livre` só com itens destravados, e o foco fora da lista quando travado; `unionOf` faz a página
+      `ponto` do Vermelho e a do Azul servirem o Roxo; mesma seed e mesmas escolhas = mesmas opções
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
@@ -1777,22 +1809,24 @@ Despertar, nomes das opções do baú; `null` quando a página deve ser pulada).
 
 #### T68: Ordem das páginas do CHC-02
 
-**What**: `choiceRank` passa à ordem do CHC-02: ramo (slot 0 = 0, slot 1 = 1, Corpo = 2), `ponto` 10 na ordem de
-chegada, `veu` 20, `bau` 30; a página criada ao confirmar outra entra logo depois dela.
+**What**: `choiceRank` passa à ordem do CHC-02, que é a da F31 com os pontos no fim: `bauChefe` (`bau` a partir da T78)
+0, `veu` 1, ramo 10 + (slot 0 = 0, slot 1 = 1, Corpo = 2), `ponto` 20 na ordem de chegada; a página criada ao confirmar
+outra entra logo depois dela; `ChoiceQueue.defer(req)` guarda a página atual para o próximo `open`.
 **Where**: `src/core/choice.ts`
 **Depends on**: T10 (fase 2)
 **Reuses**: `ChoiceQueue` (T10)
-**Requirement**: CHC-02, CHC-03
+**Requirement**: CHC-02, CHC-03, CHC-08
 
 **Done when**:
 
-- [ ] `tests/core/choice.test.ts`: ordem ramos → pontos (na ordem em que saíram) → véu → baú; ramo do slot 1 antes do
-      Corpo; página inserida logo depois da atual mesmo com rank maior
+- [ ] `tests/core/choice.test.ts`: ordem baú → véu → ramos → pontos (na ordem em que saíram); ramo do slot 1 antes do
+      Corpo; página inserida logo depois da atual mesmo com rank maior; `defer` tira a página do painel aberto, `pending`
+      continua contando e o próximo `open` a mostra na ordem
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `feat(core): order choice pages branches first, chests last`
+**Commit**: `feat(core): order choice pages chests first and free points last`
 
 ---
 
@@ -1821,8 +1855,9 @@ options: ids, selected } | null, pending }`; `choiceDirector.snapshot()` soma o 
 
 #### T70: Diretor na ordem do CHC-02
 
-**What**: `choiceDirector.openIfPending()` usa o `choiceRank` novo: ramos antes do Véu da F31; o `domain.smoke.mjs`
-passa a esperar o ramo antes do Véu onde os dois coincidem.
+**What**: `choiceDirector.openIfPending()` usa o `choiceRank` novo (a ordem da F31 com as páginas `ponto` no fim) e o
+`defer` do `buildPage` (`queue.defer`, evento `choice:defer:<kind>`); o `domain.smoke.mjs` não muda de ordem: o Véu já vem
+antes do ramo na F31.
 **Where**: `src/scenes/test/choiceDirector.ts`
 **Depends on**: T69, T68 (fase 12)
 **Reuses**: `choiceRank` (T68)
@@ -1830,13 +1865,13 @@ passa a esperar o ramo antes do Véu onde os dois coincidem.
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs`: com ramo pendente e Véu na mesma konbini, a 1ª página é `ramo`; em rodada de chefe o
-      `VowPanel` vem antes de todas; a loja não lê tecla até a última página
+- [ ] `domain.smoke.mjs` sem mudança de ordem: com ramo pendente e Véu na mesma konbini, a 1ª página é `veu`; em
+      rodada de chefe o `VowPanel` vem antes de todas; a loja não lê tecla até a última página
 - [ ] Smokes `domain`, `shop-axes`, `vows` e `run-loop` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full
-**Commit**: `feat(shop): show branch pages before the domain pages`
+**Commit**: `feat(shop): queue free point pages after chests and branches`
 
 ---
 
@@ -1906,9 +1941,11 @@ despachado igual (fonte só na T77); nasce `scripts/smoke/choice-panel.smoke.mjs
 **Done when**:
 
 - [ ] `choice-panel.smoke.mjs` (`?debug&hd=1&area=modular&seed=1`): `tech=vermelho&mastery=24&noshop=1`: um acerto dá 25
-      e o banner `maestria 25!`, nível 1; `tech=vermelho&mastery=24&noshop=0`: depois de um acerto e do fim da rodada, a
-      konbini abre `ponto` com 3 eixos, o 1º o eixo-foco; `Enter` põe o ponto sem gastar fragmento; o ponto que leva ao
-      Nv 2 abre o `ramo` logo depois no mesmo painel (edge case); a loja não lê tecla com o painel aberto
+      e o banner `maestria 25!`, nível 1; `tech=vermelho&mastery=24&noshop=0&round=2`: depois de um acerto e do fim da
+      rodada, a konbini abre `ponto` com 3 eixos, o 1º o eixo-foco; `Enter` põe o ponto sem gastar fragmento; o ponto que
+      leva ao Nv 2 abre o `ramo` logo depois no mesmo painel (edge case); a loja não lê tecla com o painel aberto; com
+      `round=1` a konbini não abre a página, `choice.pending` fica 1 e o evento `choice:defer:ponto` aparece (edge case
+      da r1)
 - [ ] Mesma seed e mesmas escolhas dão as mesmas páginas; reroll na loja não muda o `choiceRng` (edge case)
 - [ ] Smokes `choice-panel`, `shop-axes`, `shop-progress` e `run-loop` verdes; gate verde; contagem sem perda
 
@@ -1929,8 +1966,8 @@ página do mesmo painel (ramo escolhido com o item já no Nv 5, ou ponto grátis
 
 **Done when**:
 
-- [ ] `choice-panel.smoke.mjs`: `tech=vermelho&axes=vermelho.potencia:3&ramo=vermelho:b&mastery=24&noshop=0`: o ponto que
-      leva ao Nv 5 abre `despertar` logo depois; `Enter` fecha; Nv 5 com o ramo pendente: `ramo` e depois `despertar`
+- [ ] `choice-panel.smoke.mjs`: `tech=vermelho&axes=vermelho.potencia:3&ramo=vermelho:b&mastery=24&noshop=0&round=4`: o
+      ponto que leva ao Nv 5 abre `despertar` logo depois; `Enter` fecha; Nv 5 com o ramo pendente: `ramo` e depois `despertar`
       (edge case); compra na loja que liga o Despertar não abre página
 - [ ] Smokes `choice-panel` e `shop-axes` verdes; gate verde; contagem sem perda
 
@@ -1987,22 +2024,23 @@ página do mesmo painel (ramo escolhido com o item já no Nv 5, ou ponto grátis
 #### T77: Página do baú
 
 **What**: `choiceDirector.queueBossChest()` (só enfileira com candidato), página `bau` com as opções do `drawChest`
-montadas ao mostrar; confirmar: `uniao` → `axes.applyUnion` sem gastar fragmento, `pontos` → 2 páginas `livre` logo
-depois (`openPointOptions`), `dominio` → `domain.state.raise()`; `chest=1` deixa o baú pendente para a 1ª konbini
+montadas ao mostrar; confirmar: `uniao` → `axes.applyUnion` sem gastar fragmento (as duas peças vão ao `unionOf`),
+`pontos` → 2 páginas `livre` logo depois (`openPointOptions`), `dominio` → `domain.state.raise()`; `chest=1` deixa o baú pendente para a 1ª konbini
 (`applyDebug`); evento `choice:bau:<id>`; nasce `scripts/smoke/boss-chest.smoke.mjs`.
 **Where**: `src/scenes/test/choiceDirector.ts`
 **Depends on**: T75, T76, T73 (fase 13)
 **Reuses**: `drawChest`, `openPointOptions`, `DomainState.raise()` (F31)
-**Requirement**: BAU-04, BAU-05, BAU-06, BAU-08, CHC-03, CHC-06
+**Requirement**: BAU-04, BAU-05, BAU-06, BAU-08, CHC-03, CHC-06, CHC-08
 
 **Done when**:
 
-- [ ] `boss-chest.smoke.mjs` (`?debug&hd=1&area=modular&tech=azul,vermelho&axes=vermelho.potencia:3&chest=1`): a 1ª
+- [ ] `boss-chest.smoke.mjs` (`?debug&hd=1&area=modular&tech=azul,vermelho&axes=vermelho.potencia:3&chest=1&round=4`): a 1ª
       konbini abre `bau` com `uniao:roxo` e `pontos`; a União deixa o Roxo no slot e os fragmentos iguais; com `pontos`,
       duas páginas `livre` logo depois, cada uma com 3 pares distintos e o foco primeiro; com um Domínio da F31 abaixo do
       Nv 3, a opção `dominio` sobe o nível em 1
-- [ ] Ponto da maestria do Vermelho gasto antes da União do baú no mesmo painel: a União zera os pontos (edge case); o
-      ramo pendente do Vermelho é pulado depois da União (edge case)
+- [ ] Com `mastery=24` e um acerto do Vermelho antes da konbini: o baú vem antes da página `ponto`; escolhida a União, a
+      página `ponto` do Vermelho serve o Roxo (CHC-08, edge case); o ramo pendente do Vermelho é pulado depois da União
+      (edge case); com 1 candidato só, a página mostra 1 opção (edge case)
 - [ ] Smokes `boss-chest`, `choice-panel`, `domain` e `evolution` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
@@ -2070,7 +2108,7 @@ onde ajustar as tabelas (`data/techAxesTechniques.ts`) e o `MASTERY`.
 | EIX-02 | T4, T13, T27, T38, T53, T62 |
 | EIX-03 | T2, T7, T8, T23, T24, T34, T35, T48, T49, T59, T61 |
 | EIX-04 | T7, T13, T19, T27, T38, T53 |
-| EIX-05 | T23, T24, T33, T34, T48, T49, T59, T61 |
+| EIX-05 | T23, T24, T33, T34, T35, T48, T49, T59, T61 |
 | EIX-06 | T5, T17, T31, T43, T57, T63 |
 | EIX-07 | T6, T17, T18, T31, T43, T57, T79 |
 | EIX-08 | T18, T31, T43, T57 |
@@ -2118,11 +2156,11 @@ onde ajustar as tabelas (`data/techAxesTechniques.ts`) e o `MASTERY`.
 | CHC-01 | T1, T2, T3, T4, T5, T6, T7, T10, T11 |
 | CHC-02 | T68, T70 |
 | CHC-03 | T10, T68, T73, T77 |
-| CHC-04 | T9, T11 |
+| CHC-04 | T9, T11, T67 |
 | CHC-05 | T67, T73 |
 | CHC-06 | T67, T77 |
 | CHC-07 | T67, T74 |
-| CHC-08 | T67, T73 |
+| CHC-08 | T67, T68, T73, T77 |
 | CHC-09 | T66, T67, T73 |
 | CHC-10 | T69 |
 | CHC-11 | T10, T11 |
@@ -2149,12 +2187,15 @@ onde ajustar as tabelas (`data/techAxesTechniques.ts`) e o `MASTERY`.
 | --- | --- |
 | Nv 5 com o ramo pendente liga o Despertar na escolha, e a página `despertar` segue a do ramo | T2, T74 |
 | Ponto grátis que leva ao Nv 2 abre o `ramo` logo depois | T73 |
-| União do baú depois de um ponto da maestria do Vermelho no mesmo painel zera os pontos | T77 |
+| União do baú com página de ponto do Vermelho ou do Azul na fila: o ponto serve o Roxo | T67, T77 |
+| Marco na r1: a página fica pendente e abre na konbini da r2 | T67, T73 |
+| Baú com 1 candidato mostra 1 opção | T77 |
+| Fenda: sem comum novo a 120 px a cadeia acaba; no máximo 3 por conjuração | T28, T35 |
+| Duas viradas seguidas com o Andante: o orbe reverte sem pulo | T14, T21 |
 | Roxo formado com o ramo do Vermelho pendente: a página é pulada | T67, T77 |
 | Concentrado com pontos em Alvos: contam no nível, sem efeito | T38, T47 |
 | Lapso ou Massa segurados com o player atingido seguem até soltar ou o limite | T22, T58 |
 | Andante e campo do Vermelho Máximo: o puxão vence e o campo segue com tiques `chip` | T21 |
-| Fenda sem comum vivo a 120 px: nenhum acerto | T28, T35 |
 | Retorno vira para o centro atual do player | T55, T60 |
 | Roxo 200% arrastando até a parede: caem no ponto final | T59 |
 | Anel do Eco e Kokusen do Eco Negro no mesmo comum: só o Kokusen | T48 |

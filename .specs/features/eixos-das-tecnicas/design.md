@@ -4,7 +4,7 @@
 seção 6; seções 2.1, 2.3, 2.4, fim da 2.5, 2.7, 3.1 e 5.7) · **Base**: F29 `fundacao-de-poder`, F30 `vermelho-e-corpo`
 (`.specs/features/vermelho-e-corpo/design.md`) e F31 `expansao-de-dominio` (design na branch
 `docs/spec-expansao-de-dominio`)
-**Status**: Draft (a Largura 58 do Roxo já está no RXO-04 da spec; o modelo do Divergente e a curva de build ficam como decisões do usuário que travam tarefas, na tabela do `tasks.md`)
+**Status**: Draft, revisado (a Largura 58 do Roxo já está no RXO-04; o modelo do Divergente seguiu a recomendação deste design e está na spec, com a caixa do soco no eixo Alvos; a curva de build continua como decisão do usuário que trava tarefa, na tabela do `tasks.md`)
 
 Linhas citadas conferidas em 14/10 no código de `f17a6a8` (worktree `docs/spec-vermelho-e-corpo`), que ainda não tem a
 F29, a F30 nem a F31. O que essas três criam ou trocam é citado pelo nome e pela interface dos designs delas: da F30,
@@ -141,18 +141,21 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
 - **`techAxesTechniques.ts`**, uma tabela por técnica, entrando no passo dela (números da spec; ver a calibração):
   - `BLUE_AXES`: `radius [130,160,190,220]`, `pullSpeed [150,190,230,270]`, `lifeMs [1400,1800,2200,2600]`,
     `implosion [10,18,26,34]`, `tick [5,6,7,8]`, `cost [40,34,29,24]`, `cooldownMs [2500,2100,1800,1500]`,
-    `knockdownFrom: 2`, `pullsElite: 3` (só dado até a F38); `BLUE_BRANCHES`: `andante { aheadPx 80, lifeMul 0.7 }`,
+    `knockdownFrom: 2`, `pullsElite: 3` (só dado até a F38); `BLUE_BRANCHES`: `andante { aheadPx 80, lifeMul 0.7,
+    followSpeed 600 }`,
     `lapso { speed 200, maxPx 220, wallMarginPx 16 }`; `BLUE_AWAKENINGS`: `azulMaximo { implosionMul 3, pct }`,
     `ancora { holdMs 500, pct }`.
   - `CUT_AXES`: `cuts [3,4,5,6]`, `farPx [180,220,260,300]`, `heightPx [48,56,64,72]`, `cut [10,13,16,19]`,
     `intervalMs [60,45,35,25]`, `signMs [150,120,100,80]`, `cost [30,25,20,18]`, `cooldownMs [2500,2000,1600,1200]`;
     `CUT_BRANCHES`: `paraTras {}`, `clivar { pct: { enemy 0.02, boss 0.005 } }`; `CUT_AWAKENINGS`:
-    `desmantelarDoRei { lastCutPct }`, `fenda { reachPx 120 }`.
-  - `DIVERGENT_AXES`: `second [18,24,30,36]`, `targets [1,2,2,3]`, `zoneMs [8000,10000,12000,14000]`,
+    `desmantelarDoRei { lastCutPct }`, `fenda { reachPx 120, maxChain 3, pct { enemy 0.03 } }`.
+  - `DIVERGENT_AXES`: `second [18,24,30,36]`, `targets [1,2,2,3]`, `boxPx [26,30,34,36]` (largura da caixa do soco,
+    borda de trás fixa), `zoneMs [8000,10000,12000,14000]`,
     `kokusenGain [30,38,46,54]`, `cost [20,17,14,12]`, `cooldownMs [1200,1000,850,700]`, `first 12`;
     `DIVERGENT_BRANCHES`: `eco { reachPx 48 }`, `concentrado { secondMul 2 }` com `deadAxis: { concentrado: 'alvos' }`;
-    `DIVERGENT_AWAKENINGS`: `ecoNegro { pct enemy 0.03 }`, `impactoUnico { pct }`.
-  - `PURPLE_AXES`: `radius [36,44,51,58]` (calibrado), `rangePx [288,300,310,320]`, `signMs [300,240,195,150]`,
+    `DIVERGENT_AWAKENINGS`: `ecoNegro { pct enemy 0.03 }`, `impactoUnico { pct, unblockable: true, knockdown: true }` (`unblockable` nos dois impactos).
+  - `PURPLE_AXES`: `radius [36,44,51,58]` (calibrado), `rangePx [288,300,310,320]`, `speed [180,210,240,270]` (no
+    mesmo eixo Alcance), `signMs [300,240,195,150]`,
     `chargeMs [400,320,260,200]`, `hit [60,70,80,90]`, `cost [70,60,51,42]`, `cooldownMs [6000,5000,4200,3500]`;
     `PURPLE_BRANCHES`: `massa { holdMs 1000, radiusMul 1.6 }`, `retorno { backMul 0.5, maxTouches 2 }`;
     `PURPLE_AWAKENINGS`: `roxo200 { pct enemy 0.05 }`, `eclipse { pct }`.
@@ -164,7 +167,9 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
 - `has(item): boolean` (o item está no registro), `ids(item)` e o resto da F30 lendo do registro.
 - `offerable(item, axis): boolean` = `canAdd(item, axis)` e o eixo não é o `deadAxis` do ramo escolhido (DVG-06). O
   `focusAxis` e o `axesFor` passam a usar `offerable`; os pontos já postos no eixo morto continuam no `total`
-  (edge case do Concentrado).
+  (edge case do Concentrado). A trava por rodada não mora aqui: a loja usa o `axisGate` da F30 e as páginas de ponto
+  usam o mesmo `axisGate` pelo total do item (`choicePages.ts`).
+- `deadPoints(item, branch): number` (os pontos do eixo que o ramo anularia), para a linha `anula Alvos (n)` (CHC-04).
 - `resetItem(item)` vale para qualquer item (a F30 só zerava o Vermelho): `Loadout.clear` chama com o id do slot.
 - `pending` continua a fila de ramos pendentes; a ordem slot 0, slot 1, Corpo é decidida pelo `choice.ts`, não aqui.
 
@@ -183,23 +188,28 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
 
 ### `core/blueBranch.ts` (novo, ~70)
 
-- `andantePoint(playerCenter, facing, aheadPx = 80): Vec2` (AZL-05).
-- `class LapsoDrive` (`constructor(spawnX, castCenterX, dir, wallLimitX)`, `update(dtMs, held): { x; stopped;
-  justStopped }`): anda a 200 px/s enquanto `held`; para ao soltar, a 220 px do centro do player no início da conjuração
-  ou a 16 px da parede, o que vier primeiro; nasce parado se a tecla já estava solta (AZL-06).
+- `andantePoint(playerCenter, facing, aheadPx = 80): Vec2` e `andanteStep(orbX, targetX, dtMs, maxSpeed = 600): number`
+  (anda para o ponto a no máximo `maxSpeed`; ao virar cruza os 160 px em ~270 ms, sem pulo; AZL-05).
+- `class LapsoDrive` (`constructor(spawnX, castCenterX, dir, wallLimitX, heldAtSpawn)`, `update(dtMs, held): { x;
+  stopped; justStopped }`): anda a 200 px/s enquanto `held`; para ao soltar, a 220 px do centro do player no início da
+  conjuração ou a 16 px da parede, o que vier primeiro; com `heldAtSpawn` falso nasce parado e o 1º `update` devolve
+  `justStopped` (a Âncora vale no toque rápido; AZL-06, AZL-08).
 - `anchorTargets(center, radius, targets): number[]` (todo comum e o chefe dentro do raio no quadro da parada, AZL-08).
 
 ### `core/cutBranch.ts` (novo, ~45)
 
 - `cutPlan(stats): { times: number[]; angles: number[]; mirrored: boolean[] }`: corte `i` em `i × intervalo`, ângulo
   `[20, −25, 70][i mod 3]`, e `mirrored[i] = paraTras && i % 2 === 1` (DSM-02, DSM-04).
-- `fendaTarget(deadAt, livingEnemies, reachPx = 120): number | null` (o comum vivo mais perto, DSM-07).
+- `fendaTarget(deadAt, livingEnemies, reachPx = 120, exclude: Set<number>): number | null` (o comum vivo mais perto que
+  ainda não levou fenda) e `class FendaChain` (`open(): boolean` até `maxChain` 3 por conjuração; DSM-07).
 - `rectsTouch(a, b)`: o mesmo `overlaps` de `cut.ts:14-16`, exportado para o Desmantelar do Rei.
 
 ### `core/divergentBranch.ts` (novo, ~60)
 
-- `pickTargets(firstId, candidates: { id; distToPlayer }[], n): number[]` (o tocado sempre entra; os outros pelo mais
-  perto do player; o chefe conta como um; DVG-02). O alvo principal é o mais perto (`[0]`).
+- `pickTargets(firstId, candidates: { id; distToPlayer }[], n): number[]` (o tocado sempre entra; os outros, dentro da
+  caixa resolvida, pelo mais perto do player; o chefe conta como um; DVG-02). O alvo principal é o mais perto (`[0]`).
+- `punchBox(boxPx, base = CROSS_HITBOX): HitboxShape` (largura resolvida, `offsetX` que mantém a borda de trás de hoje:
+  `22 − 13 + boxPx / 2`; DVG-02).
 - `echoTargets(center, enemies, reachPx = 48, exclude: Set<number>): number[]` (DVG-05).
 - `divergentPlan(stats)`: `{ targets: 1 no Concentrado, senão o eixo; secondMul; echo; ecoNegro; impactoUnico }`.
 
@@ -234,17 +244,24 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
   `open(rank)` (ordena por `(rank(req), chegada)` e abre), `current`, `advance()`, `insertNext(reqs)` (logo depois do
   atual, CHC-03), `pending`, `isOpen`, `reset()` (CHC-11).
 - `choiceRank(req, slotOf)`: no passo 0 a ordem da F31 (`bauChefe`, `veu`, ramos), para os smokes não mudarem; no passo 5
-  a do CHC-02: ramo (slot 0 = 0, slot 1 = 1, Corpo = 2), `ponto` 10, `veu` 20, `bau` 30.
+  a do CHC-02, que é a mesma com os pontos no fim: `bau` (`bauChefe` até o passo 6) 0, `veu` 1, ramo 10 + (slot 0 = 0,
+  slot 1 = 1, Corpo = 2), `ponto` 20. A União do baú vem antes de qualquer ramo ou ponto do mesmo painel.
+- `defer(req)`: tira a página atual da vez sem confirmar e a guarda para o próximo `open` (CHC-08, trava da PRC-04).
 
 ### `core/choicePages.ts` (novo no passo 5, ~100)
 
 - `pointOptions(item, axes, rng, max = 3): AxisId[]` (eixo-foco primeiro, os outros `offerable` sorteados pelo `rng`,
   CHC-05); `openPointOptions(owned, focusItem, axes, rng): { item; axis }[]` (o eixo-foco do item-foco e 2 pares
   distintos sorteados, CHC-06).
-- `buildPage(req, ctx): ChoicePage | null`: monta a página com os textos (linha de eixo do `axisPreview`, nome do ramo e
-  a linha do Despertar que ele abre, nome e efeito do Despertar, nome das opções do baú); devolve `null` quando a página
-  deve ser pulada (CHC-08: item fora do slot, sem eixo abaixo do teto, ramo que já não está pendente).
-- Puro: recebe `{ loadout, rng, chest: ChestOption[] | null, veil: ChoicePage | null }`.
+- Oferecível nas páginas `ponto`/`livre` = `offerable` (teto e eixo morto) e `axisGate(total do item + 1, round)` da F30
+  (1º e 2º ponto na r2, 3º e 4º na r4, 5º na r6). O eixo-foco só abre a lista quando é oferecível.
+- `buildPage(req, ctx): { page } | { skip: true } | { defer: true }`: monta a página com os textos (linha de eixo do
+  `axisPreview`, nome do ramo, a linha do Despertar que ele abre e `anula Alvos (n)` quando o ramo anula pontos, nome e
+  efeito do Despertar, nome das opções do baú); `skip` quando a página deve ser pulada (CHC-08: sem eixo abaixo do teto,
+  ramo que já não está pendente); `defer` quando há eixo abaixo do teto mas todos travados pela rodada.
+- Página `ponto` de técnica que a União tirou do slot: o `ctx.unionOf` (`azul` → `roxo`, `vermelho` → `roxo`, gravado
+  pelo `choiceDirector` ao confirmar a União) troca o item antes de montar (CHC-08).
+- Puro: recebe `{ loadout, round, rng, chest: ChestOption[] | null, veil: ChoicePage | null, unionOf }`.
 
 ### `core/bossChest.ts` (novo no passo 6, ~45)
 
@@ -272,8 +289,10 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
   - privado `confirm(req, index): ChoiceRequest[]`: `ramo` → `axes.confirmBranch` (com Despertar ligado, devolve
     `despertar`); `ponto`/`livre` → `axes.applyFree(item, axis)` (com `branchPending` devolve `ramo`, com `awakened`
     devolve `despertar`); `despertar` → nada; `veu` → `domain.confirm('veu', i)` (F31); `bau` → União pelo
-    `axes.applyUnion`, `pontos` devolve 2 × `livre`, `dominio` → `domain.state.raise()`; cada confirmação empurra
-    `choice:<kind>:<idDaOpção>` nos eventos de debug.
+    `axes.applyUnion` (grava as duas peças em `unionOf`), `pontos` devolve 2 × `livre`, `dominio` →
+    `domain.state.raise()`; cada confirmação empurra `choice:<kind>:<idDaOpção>` nos eventos de debug.
+  - `defer` do `buildPage` → `queue.defer(req)`: a página fica na fila para a próxima visita (evento
+    `choice:defer:<kind>`).
 - **Dependencies**: `ChoiceQueue`, `buildPage`, `drawChest`, `run.choiceRng`, `run.chestRng`, `ui.choicePanel`,
   `build.axes`, `build.domain`, `loadout`.
 
@@ -303,17 +322,18 @@ para o Desmantelar do Rei apagar projétil). Fluxo da konbini: `shopDirector.ope
   > 0` e `killed`, `loadout.refundCooldown(slot, killRefund)` (EIX-04; o reembolso do `redFlight` da F30 vem para cá no
   passo 0); emite `awakenCast:<id>` no `techCast:<id>` com o Despertar ligado (o do `red.ts` vem para cá); repassa o
   `slotHeld` ao Azul e ao Roxo; expõe `cutRects` do quadro.
-- **`game/tech/blue.ts`** (117 → ~165): Andante move o orbe a cada quadro (`BlueOrbState.setPosition`), Lapso pelo
+- **`game/tech/blue.ts`** (117 → ~165): Andante move o orbe a cada quadro pelo `andanteStep` (`BlueOrbState.setPosition`), Lapso pelo
   `LapsoDrive` (consulta de parede até `maxPx + margem`), Âncora no `justStopped` (`hold(500)` em comum e chefe e o
   acerto proporcional de dano 0 com `maxHpBonus`), Azul Máximo e a Implosão 2+ (`knockdown` nos comuns e o evento
   `blueImplode:heavy`, que o `techDirector` troca por `fx.shake()`). Os tiques continuam `chip` (F29).
 - **`game/tech/cut.ts`** (70 → ~115): agenda do `cutPlan`; retângulo espelhado no Para Trás; `maxHpBonus` do Clivar por
-  corte; o último corte do Rei com o `pct` dele e o retângulo de cada corte em `cutRects`; Fenda no abate por corte (a
-  fenda leva `band: 'micro'` e uma marca que impede outra fenda).
+  corte; o último corte do Rei com o `pct` dele e o retângulo de cada corte em `cutRects`; Fenda no abate por corte ou
+  por fenda (`band: 'micro'`, dano do corte + `maxHpBonus` de 3%, `FendaChain` até 3 por conjuração, cada comum uma vez).
 - **`game/tech/divergent.ts`** (F30 ~203 → ~185) e **`game/tech/divergentImpacts.ts`** (novo, ~130): o `divergent.ts`
-  fica com a hitbox (aberta com `maxTargets` = alvos resolvidos; no 1º toque escolhe os N pelo `pickTargets` sobre o
-  `hitbox.rect` da F31), a espera, o anel e a tentativa de Kokusen no alvo principal. O `divergentImpacts.ts` resolve no
-  fim da espera o 2º impacto de cada alvo vivo (×2 no Concentrado, `pct` do Impacto Único), o anel do Eco (`micro`, uma
+  fica com a hitbox (aberta com `punchBox(stats.divergent.boxPx)` e `maxTargets` = alvos resolvidos; no 1º toque escolhe
+  os N pelo `pickTargets` sobre o `hitbox.rect` da F31), a espera, o anel e a tentativa de Kokusen no alvo principal. O `divergentImpacts.ts` resolve no
+  fim da espera o 2º impacto de cada alvo vivo (×2 no Concentrado; no Impacto Único o `pct`, `unblockable` e `knockdown`
+  no comum; o `divergent.ts` põe o `unblockable` também no 1º impacto), o anel do Eco (`micro`, uma
   vez por inimigo, nunca em quem leva o próprio 2º impacto) e o Kokusen (`kokusen.land(energy, gain, zoneMs)` uma vez;
   Eco Negro troca o dano do anel pelo do Kokusen com 3%).
 - **`game/tech/purple.ts`** (F30 ~96 → ~150): carga como hoje; soltura cria o `PurpleFlight` com o stat; Massa e Roxo
@@ -350,7 +370,7 @@ F33 acrescenta o que ainda tem número solto ou forma nova:
 | --- | --- | --- |
 | `src/data/techAxes.ts` (F30) | tipos, nomes | `AxisItem` com 6 ids; `AXIS_ITEMS` com Vermelho e Corpo; `AXIS_NAMES`/`BRANCH_NAMES` viram campos |
 | `src/core/axisBuild.ts` (F30) | todo | lê o registro; `has`, `ids`, `offerable`; `resetItem` genérico |
-| `src/core/loadout.ts` (F30) | `levelOf`, `slotsView`, `equip`, `clear` | `id === 'vermelho'` vira `axes.has(id)`; `clear` chama `axes.resetItem(id)` |
+| `src/core/loadout.ts` (F30) | `levelOf`, `slotsView`, `equip`, `clear`, `upgrade` | `id === 'vermelho'` vira `axes.has(id)`; `clear` chama `axes.resetItem(id)`; `upgrade` dá o ponto no eixo-foco de todo item do registro (VRM-19 generalizada, EIX-01.4), para a maestria e o prêmio do chefe não subirem o nível antigo das técnicas que entram nos passos 1 a 4 |
 | `src/core/techStats.ts` (F30) | `TechStats`, `resolveTechStats` | `branch`, `awakened`, `killRefund` no topo; despacho `RESOLVERS` (só o Vermelho nele) |
 | `src/core/shopEligibility.ts`, `shopDraw.ts`, `shopPreview.ts`, `shopPricing.ts`, `axisParam.ts` (F30) | onde testam o Vermelho | `axes.has(item)` / item do registro; `axesFor` usa `offerable` |
 | `src/game/tech/shared.ts` | 19-40 | `CastRef.tech`; `castHit` |
@@ -451,7 +471,7 @@ Fim do passo 4: `grep -rnE "LEVEL_FACTOR|EVOLUTION_LEVEL|techGate|techLevelGate"
 | `src/data/tuning.ts` | 306-328 | `SHOP.choiceSalt`; `MASTERY = { marks: [25, 60], castPoints: 1, bossPoints: 3, killPoints: 1 }` |
 | `src/core/run.ts` (F31) | 59-68, 133-179, 296-308 | `choiceRng` (campo, getter, `new Rng(seed ^ SHOP.choiceSalt)`) |
 | `src/core/mastery.ts`, `masteryBar.ts` | todo | ver acima |
-| `src/core/choice.ts` | `choiceRank` | ordem do CHC-02 |
+| `src/core/choice.ts` | `choiceRank`, `defer` | ordem do CHC-02 (a da F31 com os pontos no fim); `defer` |
 | `src/core/choicePages.ts` (novo) | — | ver acima |
 | `src/game/TechRunner.ts` | 56 | `onCastHit(hit: CastHit)` |
 | `src/scenes/TestScene.ts` | 329 | `(hit) => this.runDirector.onMasteryHit(hit),` (só o texto; o comentário da l.328 cita MAE-01) |
@@ -512,13 +532,13 @@ export interface TechStats {
   /* ...campos da F30 (id, level, cost, cooldownMs, signMs, chargeMs, releaseMs, recoverMs, damage, kokusenDamage, red?) */
   branch: BranchId | null; awakened: boolean; killRefund: number;   // passo 0: saem de dentro de `red`
   blue?: { aheadPx: number; wallMarginPx: number; radius: number; pullSpeed: number; tickMs: number; lifeMs: number;
-           implosionKnockdown: boolean; follow: { aheadPx: number } | null; lapso: { speed: number; maxPx: number } | null;
+           implosionKnockdown: boolean; follow: { aheadPx: number; speed: number } | null; lapso: { speed: number; maxPx: number } | null;
            implosionPct: Pct | null; anchor: { holdMs: number; pct: Pct } | null };
   cut?: { times: readonly number[]; anglesDeg: readonly number[]; mirrored: readonly boolean[]; nearPx: number;
           farPx: number; heightPx: number; lineLen: number; cutPct: Pct | null; lastCutPct: Pct | null;
-          clearsProjectiles: boolean; fendaPx: number | null };
-  divergent?: { targets: number; zoneMs: number; kokusenGain: number; secondMul: 1 | 2; echoPx: number | null;
-                secondPct: Pct | null; echoKokusenPct: Pct | null };
+          clearsProjectiles: boolean; fenda: { reachPx: number; maxChain: number; pct: Pct } | null };
+  divergent?: { targets: number; boxPx: number; zoneMs: number; kokusenGain: number; secondMul: 1 | 2;
+                echoPx: number | null; secondPct: Pct | null; breaksGuard: boolean; echoKokusenPct: Pct | null };
   purple?: { speed: number; rangePx: number; radius: number; spawnAhead: number; lift: number; force: number;
              massa: { holdMs: number; radiusMul: number } | null; fullHoldPct: Pct | null;
              back: { mul: number } | null; through: boolean; secondTouchPct: Pct | null };
@@ -554,9 +574,9 @@ export type BlueBuildSnapshot = TechBuildSnapshot<BlueAxisId,
 export type CutBuildSnapshot = TechBuildSnapshot<CutAxisId,
   { cost: number; cooldownMs: number; cuts: number; farPx: number; heightPx: number; intervalMs: number; signMs: number; cut: number }>;
 export type DivergentBuildSnapshot = TechBuildSnapshot<DivergentAxisId,
-  { cost: number; cooldownMs: number; second: number; targets: number; zoneMs: number; kokusenGain: number; kokusenDamage: number }>;
+  { cost: number; cooldownMs: number; second: number; targets: number; boxPx: number; zoneMs: number; kokusenGain: number; kokusenDamage: number }>;
 export type PurpleBuildSnapshot = TechBuildSnapshot<PurpleAxisId,
-  { cost: number; cooldownMs: number; radius: number; rangePx: number; signMs: number; chargeMs: number; hit: number }>;
+  { cost: number; cooldownMs: number; radius: number; rangePx: number; speed: number; signMs: number; chargeMs: number; hit: number }>;
 // BuildSnapshot (F30) ganha: azul, corte, divergente, roxo, cada um | null sem a técnica equipada (EIX-08)
 ```
 
@@ -576,17 +596,24 @@ Conta feita com o modelo das Assumptions da spec, cada eixo sozinho no 3 e os ou
 | Roxo com Largura 60 (8750 ms) | 10,3 | Largura 17,1; Alcance 11,4; Carga 10,3; Potência 15,4; Eficiência 13,4; Recarga 10,3 | 12,43 | **Largura 1,38** |
 | Roxo com Largura 58 | 10,3 | Largura 16,6; o resto igual | 12,43 | 1,33 |
 | Divergente, modelo da spec (2500 ms) | 12,0 | 2º impacto 19,2; Alvos 36,0; Zona 12; Energia 12; Eficiência 20,0; Recarga 12 | 15,6 | **Alvos 2,31** |
-| Divergente, alvos pela caixa do soco | 12,0 | Alvos 18,5; o resto igual | 15,25 | Eficiência 1,31 |
+| Divergente, alvos pela caixa de 26 px fixa (proposta da 1ª versão) | 12,0 | Alvos 18,5; o resto igual | 15,25 | Eficiência 1,31 |
+| **Divergente, alvos pela caixa do eixo (26/30/34/36 px), decidido** | 12,0 | Alvos 21,0 (`min(3, 1 + 2 × 36 / 96)` = 1,75); o resto igual | 15,6 | **Alvos 1,346** |
 
 - **Roxo, decisão de número (regra da própria spec):** Largura `36/44/51/58` px. O 60 da spec dá 1,38×; o 58 dá 1,33×.
   O RXO-04 da spec já diz 58 no 3º ponto (e 51 no 2º).
-- **Divergente, pendência para o usuário:** nenhum número inteiro de alvos ≥ 2 passa no modelo da spec, porque três
-  eixos do Divergente valem 0 no modelo (Zona, Energia e a Recarga presa à energia) e puxam a mediana para 15,6; até
-  Alvos 2 já dá 1,54×. A recomendação é corrigir o modelo, não o jogo: contar os alvos do Divergente como as outras
-  áreas, pela densidade da caixa do `direto` (`PLAYER_COMBO` `direto`, largura 26 px, `data/tuning.ts:68`):
-  `alvos efetivos = min(alvos, 1 + 2 × 26 / 96)` = 1,54. Isso descreve o jogo (a caixa de 26 px raramente toca 3
-  comuns sem o Azul puxando) e passa com 1,31×. A outra saída seria tirar o Divergente do teste como o "gargalo não
-  declarado". A linha do modelo nas Assumptions da spec (hoje `n`) muda junto, antes do `tasks.md`.
+- **Divergente, decidido na revisão (recomendação seguida, como o usuário manda nas decisões abertas):** com `alvos`
+  cru nenhum número inteiro ≥ 2 passa, porque três eixos valem 0 no modelo (Zona, Energia e a Recarga presa à energia) e
+  puxam a mediana para 15,6; até Alvos 2 dá 1,54×. O modelo passa a contar os alvos pela densidade da caixa do soco,
+  como as outras áreas contam pelo raio: `alvos efetivos = min(alvos, 1 + 2 × caixa / 96)`. Com a caixa fixa de 26 px
+  (a proposta da 1ª versão) o modelo mostrava o defeito do próprio jogo: 1,54 alvo efetivo com 1, 2 ou 3 pontos, isto é,
+  o 2º e o 3º ponto de Alvos não faziam nada (e o 2º já era 2 → 2 na tabela). Por isso o eixo Alvos também alarga a
+  caixa (26/30/34/36 px, borda de trás fixa): todo ponto muda o soco, e o 3º dá 1,346×, no teto. A caixa não passa de
+  36 px sem estourar o teto (`1 + 2 × w / 96 ≤ 1,755`).
+- **Roxo, Alcance:** o teto de 320 px deixa 32 px de faixa ao eixo; sem a velocidade 180/210/240/270 px/s ele seria
+  "+12 px" por carta. A velocidade não entra no modelo (o voo toca o mesmo caminho), então a conta do Roxo não muda.
+- **Azul, par da Recarga:** preso à energia, a Recarga vale 0 sozinha; com a regeneração no teto do fluxo (16/s), a
+  Eficiência 3 sozinha tem período 2950 ms (32,1/s) e com a Recarga 2 somada, 2250 ms (42,1/s). O EIX-09.2 prova o par,
+  como o ESC-03 da F30 prova a Eficiência do Vermelho.
 - **Pendência 2:** o RXO-11 (União pronta e a carta de 60 inflada, `round(60 × 1,42)` = 85, até a loja da r8) e o EIX-12
   dependem da renda do `expectedIncome`. O teste roda no passo 4 (RXO-11) e nos passos 1 a 3 (EIX-12); se não fechar,
   o passo para e leva ao usuário, como a T64 da F30. Não mexer no número do preço sem decisão.
@@ -665,8 +692,10 @@ muda: `choice` vem do `snapshotFields()` e `build` do `build.snapshot()`), `Snap
 | Error Scenario | Handling | User Impact |
 | --- | --- | --- |
 | Ponto acima de 3 no eixo ou de 5 na técnica (compra, ponto grátis, ponto livre, `axes=`) | `AxisBuild.add` devolve `{ ok: false }` sem mudar nada (EIX-01.2); a carta e a página só oferecem `offerable` | A opção não aparece |
-| Página `ponto` de técnica que saiu do slot ou chegou a 5 pontos | `buildPage` devolve `null`; o diretor pula para a próxima (CHC-08) | A página não aparece; o marco conta mesmo assim |
-| Página `ramo` cujo ramo já não está pendente (União zerou o Vermelho) | `buildPage` devolve `null` | Sem página (edge case) |
+| Página `ponto` de técnica que chegou a 5 pontos | `buildPage` devolve `skip`; o diretor pula para a próxima (CHC-08) | A página não aparece; o marco conta mesmo assim |
+| Página `ponto` de técnica que a União do baú tirou do slot | `unionOf` troca o item pelo Roxo antes de montar (CHC-08) | O ponto vai ao Roxo |
+| Página `ponto`/`livre` só com eixos travados pela rodada | `buildPage` devolve `defer`; `queue.defer` guarda para a próxima visita | A página aparece na konbini em que a trava abre |
+| Página `ramo` cujo ramo já não está pendente (União zerou o Vermelho) | `buildPage` devolve `skip` (o baú vem antes dos ramos) | Sem página (edge case) |
 | Baú sem candidato na vitória | `queueBossChest` não enfileira (BAU-07) | Sem página |
 | Baú enfileirado que perde candidatos até a konbini | `buildPage` recalcula; sem candidato, pula | Sem página |
 | `chest=1` sem nenhum candidato | Igual ao caso anterior: a página é pulada | O smoke monta a build antes (`tech=azul,vermelho&axes=vermelho.potencia:3`) |
@@ -687,11 +716,14 @@ muda: `choice` vem do `snapshotFields()` e `build` do `build.snapshot()`), `Snap
 
 | Concern | Location (file:line) | Impact | Mitigation |
 | --- | --- | --- | --- |
-| O modelo do eixo dominante da spec reprova o Divergente com qualquer número de alvos ≥ 2 | spec, Assumptions ("Modelo do teste de eixo dominante"); `tests/data/techAxesTechniques.test.ts` | EIX-09 não passa sem mudar regra | Pendência para o usuário na seção de calibração, com a recomendação da densidade pela caixa de 26 px; decidir antes do `tasks.md` |
+| O modelo do eixo dominante da spec reprovava o Divergente com qualquer número de alvos ≥ 2, e a caixa de 26 px deixava o 2º e o 3º ponto de Alvos mortos | spec, Assumptions ("Modelo do teste de eixo dominante"), DVG-01, DVG-02; `tests/data/techAxesTechniques.test.ts` | EIX-09 não passaria; ponto comprado sem efeito | Resolvido na revisão: densidade pela caixa no modelo e a caixa 26/30/34/36 px no eixo Alvos (1,346×); a T44 prova os 3 alvos dentro da caixa de 36 px no smoke |
 | A Largura 60 do Roxo passa do teto (1,38×) | spec RXO-04 | EIX-09 do Roxo falha | Largura 58 no 3º ponto, pela regra de calibração da spec; o RXO-04 é corrigido antes do `tasks.md` |
 | A carta do Azul vira carta de eixo no passo 1, não no 4 | `scripts/smoke/shop-progress.smoke.mjs` (trecho ECN-05/08 que a F30 passou para o Azul) | A spec lista o `shop-progress` só nos passos 4 e 5; ele quebra no passo 1 | O trecho ECN-05/08 muda no passo 1 (carta de eixo `Nv 2/6`, 13 na r2); o passo 5 muda o trecho da maestria |
 | O nível do `tech=azul:3` passa a ser ignorado no passo 1, e a União ainda pede o Nv 3 até o passo 4 | `scripts/smoke/evolution.smoke.mjs:35` | O smoke `evolution` quebra no passo 1 | Ponte com `axes=azul.gravidade:2,vermelho.potencia:2` no passo 1; a forma final (`tech=azul,vermelho&axes=vermelho.potencia:3`) no passo 4 |
-| A F31 põe as páginas do Domínio antes dos ramos; o CHC-02 pede o contrário | F31 design (`openChoiceOrShop`), spec CHC-02 | Mudar a ordem no passo 0 quebraria "smokes iguais" | O passo 0 mantém a ordem da F31 por parâmetro (`choiceRank`); o passo 5 troca para a do CHC-02 e roda o `domain` |
+| A 1ª versão do CHC-02 punha ramos e pontos antes do baú: o ponto e o ramo do Vermelho escolhidos no painel eram zerados pela União do baú logo depois, e o edge case do ramo pulado não podia acontecer | spec CHC-02, edge cases; F31 design (`openChoiceOrShop`) | Escolha jogada fora; edge case incoerente; o `domain` mudava de ordem no passo 5 | Resolvido na revisão: baú → Véu → ramos → pontos (a ordem da F31 com os pontos no fim), e a página de ponto da técnica consumida serve o Roxo (CHC-08); o `domain` não muda de ordem |
+| O `upgrade` da F30 só dá ponto de eixo ao Vermelho; a maestria e o prêmio do chefe ainda o chamam até os passos 5 e 6 | F30 `core/loadout.ts` (`upgrade`), `runDirector.ts:190`, `:200-205` | A partir da T17 a maestria subiria o nível antigo do Azul, que o `levelOf` não lê: banner "Azul Nv 1!" sem efeito | A T3 generaliza o `upgrade` pelo registro (EIX-01.4); o `loadoutAxes.test.ts` ganha o caso de um item sintético |
+| Ponto grátis fora da trava da loja dava Despertar na r3 a quem usa muito a técnica | spec CHC-05, `axisGate` (F30) | O ritmo da seção 3.2 (Despertar na r5) deixava de valer | Resolvido na revisão: a página de ponto obedece à trava pelo total do item e fica pendente quando só a trava a impede (CHC-08) |
+| O orbe do Andante pularia 160 px ao virar | spec AZL-05 (1ª versão), T21 ("o orbe não pula ao virar") | Requisito e tarefa em conflito; o grupo puxado se soltaria | Resolvido na revisão: o orbe anda para o ponto a até 600 px/s (`andanteStep`) |
 | O `chestRng` já existe na F31 | F31 `core/run.ts` | Criar outro stream mudaria o sorteio do Baú do Véu da mesma seed | O baú do chefe reaproveita o `chestRng` (BAU-02 fica cumprido); só o `choiceRng` é novo |
 | O sal do `choiceRng` pode colidir com o `axisSalt` da F30, cujo valor ainda não existe no código | `src/data/tuning.ts:306-310` | Dois streams iguais | Proposta `0x71374491` (constante do SHA-256 como os outros sais); conferir com `grep` em `src/` no commit do passo 5 |
 | `divergent.ts` está a 200 linhas e ganha vários alvos, Eco, Concentrado e Eco Negro | `src/game/tech/divergent.ts:163-258` | Passaria de 250 e misturaria hitbox com resolução | A resolução sai para `divergentImpacts.ts` (~130); `divergent.ts` desce a ~185 |
@@ -749,13 +781,13 @@ AD-021 (`knockdown` da Implosão 2+, do Azul Máximo e do fim do Roxo 200% decid
 | --- | --- |
 | `tests/data/techAxesTechniques.test.ts` | AZL-02, DSM-01, DVG-01, RXO-04 (tabela linha a linha), EIX-09 (teto de 1,35× com o modelo decidido; a tabela da calibração acima vira os números esperados), EIX-10 (nome e texto de efeito únicos entre os 12 ramos e os 12 Despertares) |
 | `tests/core/techStatsTechniques.test.ts` | EIX-02: as quatro técnicas, cada eixo de 0 a 3, com `damageMul`/`vowDamageMul` 1 e 1,35 e o piso de 60% (Azul 24, Desmantelar 18, Divergente 12, Roxo 42 com o voto Fluxo selado); AZL-01 (40/2500 e o resto de hoje) |
-| `tests/core/blueBranch.test.ts` | AZL-05 (80 px, vida ×0,7 arredondada), AZL-06 (para ao soltar, aos 219/220/221 px, a 16 px da parede; tecla solta antes nasce parado), AZL-08 (alvos no raio no quadro da parada) |
-| `tests/core/cutBranch.test.ts` | DSM-02 (instantes e ângulos de 3 a 6 cortes), DSM-04 (1 de 3, 2 de 4, 2 de 5, 3 de 6 atrás), DSM-07 (fenda a 119/120/121 px; sem vivo, `null`) |
-| `tests/core/divergentBranch.test.ts` | DVG-02 (o mais perto primeiro, o tocado sempre, o chefe conta como 1), DVG-05 (eco a 47/48/49 px, nunca em quem leva o próprio 2º impacto), DVG-06 (Concentrado força 1 e ×2) |
+| `tests/core/blueBranch.test.ts` | AZL-05 (80 px, vida ×0,7 arredondada; `andanteStep` nunca passa de 10 px num quadro de 16 ms e cruza os 160 px em 267 ms; duas viradas seguidas revertem sem pulo), AZL-06 (para ao soltar, aos 219/220/221 px, a 16 px da parede; tecla solta antes nasce parado e devolve `justStopped` no 1º quadro), AZL-08 (alvos no raio no quadro da parada) |
+| `tests/core/cutBranch.test.ts` | DSM-02 (instantes e ângulos de 3 a 6 cortes), DSM-04 (1 de 3, 2 de 4, 2 de 5, 3 de 6 atrás), DSM-07 (fenda a 119/120/121 px; sem vivo, `null`; quem já levou fenda fica de fora; a 3ª fenda abre e a 4ª não) |
+| `tests/core/divergentBranch.test.ts` | DVG-02 (o mais perto primeiro, o tocado sempre, o chefe conta como 1; `punchBox` com 26/30/34/36 px e a borda de trás em 9 px), DVG-05 (eco a 47/48/49 px, nunca em quem leva o próprio 2º impacto), DVG-06 (Concentrado força 1, caixa de 26 e ×2) |
 | `tests/core/purpleBranch.test.ts` | RXO-05 (fim no alcance, nunca além de 320), RXO-06 (raio 1,6× aos 1000 ms, 999 sem `fullHold`), RXO-08 (volta ao centro atual, no máximo 2 toques, 50%), RXO-09 (atravessa e segue o alcance) |
 | `tests/core/divergentState.test.ts` | Vários alvos no `DivergentState` (arquivo novo para não reescrever o `divergent.test.ts`) |
-| `tests/core/choice.test.ts` | CHC-02 (ordem), CHC-03 (inserção logo depois), CHC-08 (pulo), CHC-09 (mesma seed e mesmas escolhas = mesmas páginas, com o `choiceRng` testado aqui e não no `run.test.ts`, que está na lista de exceções), CHC-11 (reset) |
-| `tests/core/choicePages.test.ts` | CHC-05 (até 3 eixos, foco primeiro, nunca Alvos no Concentrado), CHC-06 (3 pares distintos, foco primeiro), CHC-07 (página do Despertar) |
+| `tests/core/choice.test.ts` | CHC-02 (ordem baú → Véu → ramos → pontos), CHC-03 (inserção logo depois), CHC-08 (pulo; `defer` guarda a página para o próximo `open`), CHC-09 (mesma seed e mesmas escolhas = mesmas páginas, com o `choiceRng` testado aqui e não no `run.test.ts`, que está na lista de exceções), CHC-11 (reset) |
+| `tests/core/choicePages.test.ts` | CHC-04 (`anula Alvos (n)` só com pontos em Alvos), CHC-05 (até 3 eixos, foco primeiro quando oferecível, nunca Alvos no Concentrado; trava: 1º ponto `defer` na r1 e página na r2, 3º ponto `defer` na r3 e página na r4), CHC-06 (pares distintos, foco primeiro quando oferecível, item travado fora), CHC-07 (página do Despertar), CHC-08 (`skip` sem eixo abaixo do teto; `unionOf` troca o Vermelho e o Azul pelo Roxo) |
 | `tests/core/bossChest.test.ts` | BAU-01 (0, 1, 3 e 4 candidatos, este com lista sintética; 3 ou menos voltam todos), BAU-02 (mesma seed = mesmo baú), BAU-07 |
 | `tests/core/bossAIHold.test.ts` | `held` para o `rest` e não interrompe `windup` nem ataque |
 
@@ -806,10 +838,11 @@ retângulo que o `CutTech` passou ao `CutFx`) e `techObjects[kind='purple'].radi
    `ramo=divergente:b`: 1, com o dobro); Roxo (`tech=roxo&ramo=roxo:b`: a esfera volta e o mesmo comum leva dois
    números, o 2º com metade; `ramo=roxo:a` segurando: o `radius` cresce até 1,6×).
 2. `choice-panel.smoke.mjs` (`seed=1`): `tech=vermelho&mastery=24&noshop=1`: um acerto dá 25, banner `maestria 25!`,
-   nível 1 (MAE-02, MAE-04); `tech=vermelho&mastery=24&noshop=0`: na konbini, página `ponto` com 3 eixos, o 1º o
-   eixo-foco; com `axes=vermelho.potencia:3&ramo=vermelho:b` o ponto que leva ao Nv 5 abre a página `despertar` logo
-   depois (CHC-07); a loja não lê tecla com o painel aberto (CHC-02).
-3. `boss-chest.smoke.mjs` (`tech=azul,vermelho&axes=vermelho.potencia:3&chest=1`): a 1ª konbini abre o baú com
+   nível 1 (MAE-02, MAE-04); `tech=vermelho&mastery=24&noshop=0&round=2`: na konbini, página `ponto` com 3 eixos, o 1º
+   o eixo-foco; com `round=1` a página não abre e `choice.pending` continua 1 (CHC-08); com
+   `axes=vermelho.potencia:3&ramo=vermelho:b&round=4` o ponto que leva ao Nv 5 abre a página `despertar` logo depois
+   (CHC-07); a loja não lê tecla com o painel aberto (CHC-02).
+3. `boss-chest.smoke.mjs` (`tech=azul,vermelho&axes=vermelho.potencia:3&chest=1&round=4`): a 1ª konbini abre o baú com
    `uniao:roxo` e `pontos`; escolher a União deixa o Roxo no slot e os fragmentos iguais (BAU-04); com `pontos`, as duas
    páginas `livre` vêm logo depois (BAU-05).
 

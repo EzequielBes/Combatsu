@@ -44,7 +44,11 @@ Código conferido em 14/10 no worktree `docs/spec-vermelho-e-corpo` (`f17a6a8`),
   `KOKUSEN.zoneMs` 8000).
 - `core/purple.ts:2-11` (velocidade 180, vida 1600 = 288 px, raio 36, nasce 40 px à frente).
 - `data/techniques.ts` (`TECHNIQUES`, `LEVEL_FACTOR` na l.95), `data/shop.ts:110-155` (`techGate` das 4 cartas de
-  técnica), `core/run.ts:298-307` (streams com salt).
+  técnica, que a F30 troca pelo `techLevelGate` de `core/shopPricing.ts`), `core/run.ts:298-307` (streams com salt).
+- `core/loadout.ts:79-86` (`upgrade`): a F30 o faz dar ponto no eixo-foco só do Vermelho (VRM-19) e deixa as outras
+  no nível antigo; a maestria (`runDirector.ts:190`) e o prêmio do chefe ainda o chamam até os passos 5 e 6.
+- `game/tech/divergent.ts:20` e `:173` (o soco usa a caixa do `direto`, 26 × 18 px, `data/tuning.ts:68`, e fecha no
+  1º toque); `core/enemyGuard.ts:87-90` (a guarda lida segura um golpe forte sem `unblockable`).
 
 ## Goals
 
@@ -70,7 +74,7 @@ passo de técnica termina jogável (a técnica tem eixos, ramo e Despertar na lo
 | 1. **Azul** | base nova (custo 40, recarga 2500), 6 eixos, Andante ou Lapso, Azul Máximo ou Âncora; halo e distorção pelo raio | 0 |
 | 2. **Desmantelar** | 6 eixos, Para Trás ou Clivar, Desmantelar do Rei ou Fenda; `CutFx` pelo alcance e pela altura | 0 |
 | 3. **Divergente** | 6 eixos (2º impacto, alvos, Zona, energia do Kokusen, eficiência, recarga), Eco ou Concentrado, Eco Negro ou Impacto Único; base do Kokusen pelo eixo | 0 |
-| 4. **Roxo e a União** | União na regra nova (`minLevel`), carta de nível do Roxo, 6 eixos, Massa ou Retorno, Roxo 200% ou Eclipse; saem `LEVEL_FACTOR`, `EVOLUTION_LEVEL`, o −5 por nível e o `techGate` | 0 |
+| 4. **Roxo e a União** | União na regra nova (`minLevel`), carta de nível do Roxo, 6 eixos, Massa ou Retorno, Roxo 200% ou Eclipse; saem `LEVEL_FACTOR`, `EVOLUTION_LEVEL`, o −5 por nível, o preço de nível e o `techLevelGate` (a trava de nível que a F30 pôs no lugar do `techGate`) | 0 |
 | 5. **Painel completo e maestria** | páginas de ponto grátis, ponto livre e Despertar, `choiceRng`, maestria por conjuração com marcos 25 e 60 | 0 |
 | 6. **Baú do chefe** | `core/bossChest.ts`, `chestRng`, página do baú; saem `core/bossReward.ts` e o `bossRewardUpgrade` | 0 |
 
@@ -103,28 +107,30 @@ passo de técnica termina jogável (a técnica tem eixos, ramo e Despertar na lo
 | Prefixos dos requisitos | EIX (regra comum às 4 técnicas), AZL (Azul), DSM (Desmantelar), DVG (Divergente), RXO (Roxo e União), CHC (painel e `choiceDirector`), MAE (maestria), BAU (baú do chefe) | O validador só aceita `CAT-NN`; nenhum desses prefixos existe nas specs | y |
 | Ids de item e de eixo (sem acento, como a F30) | Itens `azul`, `corte` (o `TechId` do Desmantelar), `divergente`, `roxo`. Eixos: Azul `gravidade, puxao, duracao, implosao, eficiencia, recarga`; Desmantelar `cortes, alcance, afiacao, cadencia, eficiencia, recarga`; Divergente `segundo, alvos, zona, energia, eficiencia, recarga`; Roxo `largura, alcance, carga, potencia, eficiencia, recarga`. A ordem é o desempate do eixo-foco | O `axes=` e o snapshot da F30 usam `item.eixo`; o id `segundo` evita ler como o `corpo.impacto` | n |
 | Ids de ramo e Despertar | `andante`/`lapso`, `azulMaximo`/`ancora`; `paraTras`/`clivar`, `desmantelarDoRei`/`fenda`; `eco`/`concentrado`, `ecoNegro`/`impactoUnico`; `massa`/`retorno`, `roxo200`/`eclipse`. O `ramo=<item>:a` é o 1º de cada par | Mesmo molde da F30 | n |
-| Pontos intermediários que o plano não dá | Divergente (o plano só dá os extremos): 2º impacto 18/24/30/36, alvos 1/2/2/3, Zona 8000/10000/12000/14000 ms, energia do Kokusen 30/38/46/54, eficiência 20/17/14/12, recarga 1200/1000/850/700 ms. Roxo (o plano só dá os nomes dos eixos): largura (raio) 36/44/51/58 px (o 60 do passo linear deu 1,38× no eixo dominante; o 58 dá 1,33×, pela linha "Calibração" abaixo; ver o design), alcance 288/300/310/320 px, carga (sinal + carga) 300+400/240+320/195+260/150+200 ms, potência 60/70/80/90, eficiência 70/60/51/42, recarga 6000/5000/4200/3500 ms | Passos lineares até o extremo do plano; a eficiência no 3º ponto é o piso de 60%; a carga segue as frações do Vermelho (0,8, 0,65, 0,5). A seção do plano diz que os números de eixo são ponto de partida, calibrados pelo teste de eixo dominante | n |
+| Pontos intermediários que o plano não dá | Divergente (o plano só dá os extremos): 2º impacto 18/24/30/36, alvos 1/2/2/3 com a caixa do soco 26/30/34/36 px de largura (cresce para a frente, a borda de trás fica), Zona 8000/10000/12000/14000 ms, energia do Kokusen 30/38/46/54, eficiência 20/17/14/12, recarga 1200/1000/850/700 ms. Roxo (o plano só dá os nomes dos eixos): largura (raio) 36/44/51/58 px (o 60 do passo linear deu 1,38× no eixo dominante; o 58 dá 1,33×, pela linha "Calibração" abaixo; ver o design), alcance 288/300/310/320 px com a velocidade 180/210/240/270 px/s, carga (sinal + carga) 300+400/240+320/195+260/150+200 ms, potência 60/70/80/90, eficiência 70/60/51/42, recarga 6000/5000/4200/3500 ms | Passos lineares até o extremo do plano; a eficiência no 3º ponto é o piso de 60%; a carga segue as frações do Vermelho (0,8, 0,65, 0,5). Todo ponto muda algo que o jogador vê: sem a caixa, o 2º ponto de Alvos (2 → 2) seria compra morta, e a caixa de 26 px quase nunca toca 3 comuns; sem a velocidade, o Alcance do Roxo seria +12 px por carta (o teto de 320 deixa só 32 px de faixa). A seção do plano diz que os números de eixo são ponto de partida, calibrados pelo teste de eixo dominante | n |
 | Eficiência 3 do Desmantelar (o plano diz 15) | O dado fica 30/25/20/18: o 3º ponto chega ao piso de 60% (18) | O piso de 60% da seção 2.1 vale para toda técnica e já cortaria o 15; escrever 18 deixa a carta mostrar o número que o jogo usa | n |
 | Calibração pelo teste de eixo dominante | Se um eixo passar de 1,35× o mediano, o número do dado muda no passo da técnica, e o design registra o valor novo e o motivo; o requisito continua o teste, não o número | "Os números das tabelas de eixo são ponto de partida" (topo do plano) | n |
-| Modelo do teste de eixo dominante (o da F30, por técnica) | Dano sustentado = dano por conjuração ÷ período, com período = `max(recarga + sinal + carga, custo ÷ 8 energia/s)` e alvos numa área = `2 × raio / 96` (fila no chão). Azul: `(tiques na vida × tique + implosão) × alvos(raio)`; o Puxão vale 0 no modelo. Desmantelar: `cortes × afiação × alvos(alcance − 60)` com `alvos = 2 × (longe − perto) / 96`, mínimo 1. Divergente: `(12 + 2º impacto) × alvos`, sem o Kokusen; Zona e energia valem 0. Roxo: `potência × alvos(2 × largura) × alcance / 288` | O mesmo jogo de lado da F30; eixo de utilidade conta como 0, como a Eficiência do Vermelho preso à recarga | n |
+| Modelo do teste de eixo dominante (o da F30, por técnica) | Dano sustentado = dano por conjuração ÷ período, com período = `max(recarga + sinal + carga, custo ÷ 8 energia/s)` e alvos numa área = `2 × raio / 96` (fila no chão). Azul: `(tiques na vida × tique + implosão) × alvos(raio)`; o Puxão vale 0 no modelo. Desmantelar: `cortes × afiação × alvos(alcance − 60)` com `alvos = 2 × (longe − perto) / 96`, mínimo 1. Divergente: `(12 + 2º impacto) × min(alvos, 1 + 2 × caixa / 96)`, sem o Kokusen; Zona e energia valem 0. Roxo: `potência × alvos(2 × largura) × alcance / 288`. Azul, preso à energia: com a regeneração no teto do fluxo (16/s), a Recarga 2 somada à Eficiência 3 sobe o dano sustentado da Eficiência 3 sozinha (2950 → 2250 ms de período), para provar que a Recarga não é eixo morto | O mesmo jogo de lado da F30; eixo de utilidade conta como 0, como a Eficiência do Vermelho preso à recarga. No Divergente os alvos contam pela densidade da caixa do soco, como as outras áreas contam pelo raio: com `alvos` cru, três eixos valendo 0 puxam a mediana a 15,6 e até Alvos 2 dá 1,54× (o design mostra a conta); a recomendação do design foi seguida, como manda o usuário nas decisões abertas. Alvos 3 com a caixa de 36 px dá 1,346× (21,0 contra 15,6) | n |
+| Fontes antigas entre o passo 1 e os passos 5 e 6 | Enquanto a maestria (até o passo 5) e o prêmio do chefe (até o passo 6) ainda chamam `Loadout.upgrade`, o `upgrade` de toda técnica do registro dá 1 ponto no eixo-foco dela, como a VRM-19 faz com o Vermelho, e não muda nada com 5 pontos | Sem isso, a partir do passo 1 o `upgrade('azul')` subiria o nível antigo, que o `levelOf` já não lê: a maestria daria o banner "Azul Nv 1!" sem efeito, a cada limiar | n |
 | Gargalo do Divergente e do Roxo | Não declarado (o plano só fixa o do Vermelho, do Azul, do Desmantelar e do Boogie); o teste só confere o teto de 1,35× | Sem número no plano; não inventar regra de recarga para elas | n |
 | Recarga 3 nas quatro técnicas | O abate por acerto da técnica tira 30% da recarga cheia resolvida do que resta no slot, sem passar de 0 (a regra da VRM-07) | Seção 2.1: "Recarga no 3º ponto" vale para toda técnica | n |
 | Componente proporcional dos Despertares | A regra da F30: `round(pct × maxHp)` somado ao dano do mesmo acerto (`Hit.maxHpBonus`), uma vez por alvo por conjuração, `pct` do comum o do texto e do chefe 1% (Clivar: 0,5% no chefe, por corte) | Seção 2.1 ("1 vez por conjuração") e o modelo da F30 | n |
 | Eco Negro sem componente proporcional no plano | O comum atingido pelo anel com Kokusen leva também 3% do HP máximo (chefe 1%) | "Todo Despertar tem um componente proporcional: 3 a 5%" (seção 2.1); 3% porque o Kokusen já é o maior golpe | n |
-| Fenda sem componente proporcional próprio | Não leva: o componente do ramo Clivar (2% por corte) é o proporcional do caminho, e o plano diz "sem o componente proporcional do Clivar" na fenda | Texto da seção 2.4 | n |
-| Lapso ("segurar a tecla move o ponto até 220 px antes de soltar") | Se a tecla do slot ainda estiver segurada quando o orbe nasce (110 px à frente, como hoje), o orbe anda à frente a 200 px/s enquanto ela continuar segurada, até 220 px do centro do player no início da conjuração ou até 16 px antes da parede; soltar para o orbe onde está. Tecla solta antes do nascimento: orbe parado como hoje. A vida do orbe não muda | O mesmo uso do `slotHeld` do Contido (F30); a tecla já fica segurada no sinal e na carga | n |
-| Âncora ("prende até o chefe por 0,5 s") | No instante em que o orbe do Lapso para (tecla solta ou 220 px), todo inimigo e o chefe dentro do raio ficam presos 500 ms: sem andar e sem começar ataque (o ataque já em curso continua); cada comum preso leva 4% do HP máximo e o chefe 1%, uma vez por conjuração | Prender sem interromper o golpe em curso evita travar o chefe no meio da animação; o comum segue a regra do componente proporcional | n |
-| Andante | O orbe nasce e fica a 80 px à frente do centro do player, acompanha o player e vira com ele a cada quadro, e vive 70% da duração resolvida (arredondado ao ms) | Texto da seção 2.3 | n |
+| Componente proporcional da Fenda | A fenda leva 3% do HP máximo do comum que ela corta, no lugar dos 2% do Clivar | "Todo Despertar tem um componente proporcional" (seção 2.1) vale também aqui; o plano só tira o do Clivar da fenda ("sem o componente proporcional do Clivar") | n |
+| Lapso ("segurar a tecla move o ponto até 220 px antes de soltar") | Se a tecla do slot ainda estiver segurada quando o orbe nasce (110 px à frente, como hoje), o orbe anda à frente a 200 px/s enquanto ela continuar segurada, até 220 px do centro do player no início da conjuração ou até 16 px antes da parede; soltar para o orbe onde está. Tecla solta antes do nascimento: orbe parado como hoje, e ele conta como parado no quadro em que nasce. A vida do orbe não muda | O mesmo uso do `slotHeld` do Contido (F30); a tecla já fica segurada no sinal e na carga. O toque rápido também ancora: o Despertar não pode depender de segurar | n |
+| Âncora ("prende até o chefe por 0,5 s") | No instante em que o orbe do Lapso para (tecla solta, 220 px, parede, ou no nascimento quando a tecla já estava solta), todo inimigo e o chefe dentro do raio ficam presos 500 ms: sem andar e sem começar ataque (o ataque já em curso continua); cada comum preso leva 4% do HP máximo e o chefe 1%, uma vez por conjuração | Prender sem interromper o golpe em curso evita travar o chefe no meio da animação; o comum segue a regra do componente proporcional | n |
+| Andante | O orbe nasce a 80 px à frente do centro do player e a cada quadro anda para o ponto a 80 px à frente, no sentido em que o player olha, a até 600 px/s; vive 70% da duração resolvida (arredondado ao ms) | Texto da seção 2.3. Correndo (220 px/s) o orbe fica no ponto; ao virar, ele cruza os 160 px em ~270 ms arrastando o que puxa, em vez de pular de lado num quadro (o pulo largaria o grupo e quebraria a leitura em movimento) | n |
 | Azul Máximo | A implosão dá 3 vezes o dano resolvido da implosão, com `knockdown`, e soma 4% do HP máximo de cada alvo dentro do raio (chefe 1%, sem derrubada) | Texto da seção 2.3 | n |
 | Implosão 2 "derruba" e "tremor a partir de 2" | Com 2 ou mais pontos a implosão leva `knockdown` nos comuns e chama `fx.shake` | Texto da tabela do Azul | n |
 | Puxão 3 "puxa armado e elite (chefe nunca)" | Hoje o Azul já puxa todo comum, armado incluso (`blue.ts:50-64`); a cláusula do elite fica no dado (`pullsElite: true`) sem alvo até a F38 | Conferido no código | n |
 | Cortes além do 3º | Os instantes são `i × intervalo` (i de 0 a cortes − 1) e os ângulos repetem a lista de hoje (20, −25, 70, 20, −25, 70) | O plano não dá ângulo novo | n |
 | Para Trás ("metade dos cortes sai atrás") | Os cortes de posição par na ordem (2º, 4º, 6º) saem atrás, com o retângulo espelhado: 1 de 3, 2 de 4, 2 de 5, 3 de 6 | Metade arredondada para baixo, e o 1º corte continua à frente | n |
 | Desmantelar do Rei ("os cortes partem projéteis") | Todo projétil e onda de choque do chefe que tocar o retângulo de um corte some; o último corte da conjuração soma 4% do HP máximo de cada alvo que acertar (chefe 1%) | Texto da seção 2.4 | n |
-| Fenda | O comum que morre por um corte abre uma fenda que dá 1 acerto `micro` com o dano do corte resolvido (sem o Clivar) no comum vivo mais perto a até 120 px do morto; a fenda que mata não abre outra | Sem cadeia, para o Despertar não limpar a tela sozinho | n |
-| Alvos do Divergente | O 1º impacto registra até N alvos (os primeiros comuns que a caixa do soco tocar, o mais perto do player primeiro; o chefe conta como um alvo) e cada um leva o próprio 2º impacto no mesmo tempo sorteado; o Kokusen vale só no alvo principal (o mais perto) | O Kokusen é um aperto de tecla só por conjuração | n |
+| Fenda | O comum que morre por um corte abre uma fenda que dá 1 acerto `micro` com o dano do corte resolvido (sem o Clivar) mais 3% do HP máximo no comum vivo mais perto a até 120 px do morto, que ainda não levou fenda nessa conjuração; o comum morto por uma fenda abre a próxima, até 3 fendas por conjuração | Sem cadeia, a fenda seria o estilhaço da Perfuração do Vermelho com outro nome (1 acerto micro no vizinho) e o Despertar menos épico das seis técnicas; o teto de 3 impede limpar a tela sozinho | n |
+| Alvos do Divergente | O soco abre com a caixa resolvida (26/30/34/36 px de largura, a borda de trás no lugar da de hoje); o 1º impacto registra até N alvos (os comuns dentro da caixa no quadro do 1º toque, o mais perto do player primeiro; o chefe conta como um alvo) e cada um leva o próprio 2º impacto no mesmo tempo sorteado; o Kokusen vale só no alvo principal (o mais perto) | O Kokusen é um aperto de tecla só por conjuração; a caixa de 26 px de hoje quase nunca tem 3 comuns dentro | n |
 | Eco | No 2º impacto de cada alvo, os outros comuns a até 48 px do centro dele levam um acerto `micro` com o dano do 2º impacto, cada um no máximo uma vez por conjuração e nunca quem já leva o próprio 2º impacto | A seção 4 põe o eco na faixa micro | n |
-| Concentrado | Força 1 alvo e dobra o dano do 2º impacto; enquanto ele vale, a carta e o painel nunca oferecem o eixo `alvos`, e os pontos já postos nele ficam sem efeito | Ponto em eixo morto seria armadilha | n |
+| Concentrado | Força 1 alvo, a caixa de 26 px de hoje e dobra o dano do 2º impacto; enquanto ele vale, a carta e o painel nunca oferecem o eixo `alvos`, e os pontos já postos nele ficam sem efeito. A opção Concentrado da página do ramo avisa numa linha `anula Alvos (n)` quando `alvos` tem pontos | Ponto em eixo morto seria armadilha; o ramo sai no 1º ponto, então quem pôs esse ponto em Alvos precisa saber o que perde antes de confirmar | n |
+| Impacto Único (Despertar do Concentrado) | O 1º e o 2º impacto levam `unblockable: true` (o 1º é `light` e hoje a guarda de frente o zera, `enemyGuard.ts:87`; o 2º é `heavy` e a guarda lida o segura, `:90`); o 2º soma 4% do HP máximo (chefe 1%) e leva `knockdown: true` nos comuns | Só "+4%" seria o mesmo golpe com número maior, o único Despertar sem mudança de comportamento; o soco de uma polegada que fura a guarda e derruba é o par de foco do Eco Negro, que espalha | n |
 | Base do Kokusen com o eixo | A ESC-02 da F30 passa a usar `D = 2º impacto resolvido pelo eixo` (18/24/30/36, sem `damageMul`, sem `vowDamageMul` e sem o ×2 do Concentrado) | O ×2 do Concentrado vale para o 2º impacto comum; somado ao ×2,5 o Kokusen passaria do teto de leitura da seção 5.2 | n |
 | Eco Negro | Quando o Kokusen acerta o alvo principal, cada comum atingido pelo anel do Eco dele leva o dano do Kokusen (no lugar do dano do anel) mais 3% do HP máximo; a energia do Kokusen e a Zona saem uma vez por conjuração | "O anel do 2º impacto também tenta Kokusen, com a janela normal": a janela é a do mesmo aperto | n |
 | Massa (ramo A do Roxo) | Se a tecla do slot ainda estiver segurada quando a esfera nasce, ela fica parada no ponto de nascimento e o raio cresce em linha reta até 1,6 vez o resolvido em 1000 ms, tocando o que alcançar; sai em voo ao soltar ou aos 1000 ms. A vida do voo conta da saída. Tecla solta antes do nascimento: voo normal | O mesmo uso do `slotHeld`; o plano manda os ramos do Roxo para a F33 | n |
@@ -133,10 +139,11 @@ passo de técnica termina jogável (a técnica tem eixos, ramo e Despertar na lo
 | Eclipse (Despertar do Retorno) | Na volta a esfera atravessa o player e segue até o alcance resolvido do outro lado; o alvo tocado na ida e na volta leva 4% do HP máximo no 2º toque (chefe 1%) | Cobre as costas (anticerco) e cumpre o componente proporcional | n |
 | Roxo na loja | Não é vendido como técnica nova (continua nascendo da União); com o Roxo equipado, a carta de melhoria dele entra na loja como as outras (2 eixos, preço do ponto, trava) | "Entra na loja como carta de nível" (seção 2.5) e o comentário de `data/techniques.ts:5` | n |
 | Slot do Roxo | A União continua deixando o Roxo no slot de `from[0]` (o Azul) e esvaziando o outro (EVO-03); o Vermelho sai do slot e perde os pontos (`axes.resetItem`, F30) | Mudar o slot quebraria o smoke `evolution` sem ganho para o jogador | n |
-| Trava por rodada nos pontos grátis | Não vale: a trava da PRC-04 é só da loja; ponto grátis, ponto livre e baú põem ponto em qualquer rodada | A trava é ritmo de compra; as fontes grátis são poucas (2 por técnica e 1 baú a cada 5 rodadas) | n |
-| Ordem das páginas no painel | Ramos pendentes (slot 0, slot 1, Corpo) → pontos grátis da maestria (na ordem em que saíram) → baú do Véu da F31 → baú do chefe; a página criada ao confirmar outra (ramo novo, Despertar, os 2 pontos livres do baú) entra logo depois dela | O ponto da maestria cai antes de uma União do baú consumir a técnica; a consequência aparece na hora | n |
+| Trava por rodada nos pontos grátis | Vale, pelo total de pontos do item (1º e 2º a partir da r2, 3º e 4º da r4, 5º da r6): a página só oferece eixo de item destravado, e a página que fica sem opção só pela trava continua pendente para a próxima visita à konbini (não some); a que fica sem opção pelo teto é pulada (CHC-08) | A maestria do Divergente chega ao 25 já na r1 (+1 por conjuração que acerta, a cada ~2,5 s, mais os abates) e ao 60 perto da r3: sem a trava, 2 pontos da loja e 2 da maestria davam o Despertar na r3, e a trava da loja (o ritmo da seção 3.2, que põe o Despertar na r5) deixaria de valer. Adiar, em vez de pular, não joga fora o ponto ganho | n |
+| Ordem das páginas no painel | Baú do chefe → baú do Véu da F31 → ramos pendentes (slot 0, slot 1, Corpo) → pontos grátis da maestria (na ordem em que saíram); a página criada ao confirmar outra (ramo novo, Despertar, os 2 pontos livres do baú) entra logo depois dela | A decisão que tira ou põe técnica (União, Domínio) vem antes do ramo e do ponto, para nenhuma escolha do mesmo painel ser jogada fora pela União; é a ordem que a F31 já usa (`bauChefe`, `veu`, ramos), com os pontos no fim | n |
+| Ponto da maestria de técnica consumida pela União | Se a União do baú tira do slot a técnica de uma página `ponto` ainda na fila, a página serve a técnica que a União criou (o Roxo) | O jogador ganhou o ponto usando a técnica; perdê-lo por aceitar a União puniria a escolha do baú | n |
 | Página de Despertar | Só aparece quando um Despertar liga por uma página do mesmo painel (ramo escolhido com o item já no Nv 5, ou ponto grátis ou livre que leva ao Nv 5 com ramo); mostra o nome e o efeito e fecha com `Enter`. O Despertar ligado por compra na loja segue a F30 (a carta avisa `+ Despertar`, sem página) | No máximo 1 painel por visita (seção 2.1) e sem página repetindo o que a carta já disse | n |
-| Ponto livre (baú; selo na F38) | 3 opções de par item-eixo: o eixo-foco do item-foco (F30) e 2 pares distintos sorteados pelo `choiceRng` entre os eixos abaixo do teto de todo item possuído (técnicas equipadas e Corpo) | "2 pontos de eixo à escolha" sem item fixo; o lutador escolhe o Corpo e o feiticeiro a técnica | n |
+| Ponto livre (baú; selo na F38) | 3 opções de par item-eixo: o eixo-foco do item-foco (F30), quando ele é oferecível (abaixo do teto e destravado), e os outros pares distintos sorteados pelo `choiceRng` entre os eixos oferecíveis de todo item possuído (técnicas equipadas e Corpo) | "2 pontos de eixo à escolha" sem item fixo; o lutador escolhe o Corpo e o feiticeiro a técnica | n |
 | Pontos da maestria | Por conjuração: +1 quando ela acerta qualquer alvo pela 1ª vez, +3 uma vez quando ela acerta o chefe, +1 por comum morto por acerto dela (tique `chip`, estilhaço e eco inclusos). Os pontos acumulam por slot e não zeram no marco | Seção 2.7; o +3 uma vez por conjuração impede que os tiques do Azul no chefe deem 3 cada | n |
 | Teto de 2 marcos por técnica | Os marcos ficam registrados por `TechId` na run: a técnica que volta ao slot (troca, União) não ganha de novo um marco que já deu | "No máximo 2 por técnica" | n |
 | Banner da maestria | `"{nome}: maestria {25 \| 60}!"` com `RUN.bannerMs` no lugar do `"{nome} Nv {n}!"` | A maestria não sobe nível; o ponto é escolhido na konbini | n |
@@ -164,20 +171,22 @@ como o Vermelho, para toda técnica ter caminho e duas runs com a mesma técnica
 
 1. EIX-01: The level of the Azul, the Desmantelar, the Divergente and the Roxo SHALL be 1 plus the total axis points of that technique, from 1 to 6, and each of their 6 axes SHALL hold 0 to 3 points.
 2. EIX-01: IF a point would take an axis above 3 points or a technique above 5 total points THEN the system SHALL refuse it and change nothing.
-3. EIX-01: WHEN step 4 is committed THEN no file under `src/` SHALL reference `LEVEL_FACTOR`, `EVOLUTION_LEVEL`, the 5-per-level cost discount or the `techGate` of `data/shop.ts`.
-4. EIX-02: For each of the four techniques and each axis at 0 to 3 points, `Loadout.stats(id)` SHALL return the value of the `data/techAxes.ts` table, with every damage value times `damageMul` and `vowDamageMul` (rounded as `loadout.ts` rounds today) and the cost after the PRC-05 floor of 60% of the level 1 cost.
-5. EIX-03: WHEN one of the four techniques reaches level 2 for the first time in the run THEN the system SHALL add a pending branch choice for it, and WHEN it reaches level 5 with a branch chosen THEN its Despertar SHALL turn on and its `EnergyHud` icon SHALL get the gold border of VRM-17.
-6. EIX-03: WHEN the first cast of a round of one of the four techniques reaches `release` with its Despertar on THEN the system SHALL show a banner with the Despertar name and SHALL set the time scale to 0.4 for 350 ms of real time.
-7. EIX-04: WHILE the Recarga axis of one of the four techniques has 3 points, WHEN a hit of that technique kills a common enemy THEN the remaining cooldown of its slot SHALL drop by 30% of the full resolved cooldown, never below 0.
-8. EIX-05: WHEN a Despertar adds a share of the max HP THEN the hit SHALL deal `round(pct × maxHp)` on top of its damage in the same hit and the same damage number, with `pct` the share given for common enemies and 0.01 for the boss (0.005 per cut for the Clivar), at most once per target per cast except where a requirement says per cut.
-9. EIX-06: The shop upgrade card of the Azul, the Desmantelar, the Divergente and the Roxo SHALL be the two-axis card of CRD-04 and CRD-05 (focus axis plus one axis drawn by `axisRng`, `W`/`S` to choose, preview of the resolved values, `+ ramo` or `+ Despertar` line), with the level text `Nv <level + 1>/6`.
-10. EIX-06: The price of an axis point of the four techniques SHALL be `12 + 4 × points already placed` before inflation, with the round lock of PRC-04 (1st and 2nd point from round 2, 3rd and 4th from round 4, 5th from round 6), and the level price of PRC-06 and the old card of CRD-10 SHALL no longer exist.
-11. EIX-07: WHEN the run starts with `?debug&axes=<item>.<axis>:<n>[,...]` or `ramo=<item>:<a|b>` with `item` in `azul`, `corte`, `divergente` or `roxo` THEN the system SHALL apply them as VRM-10 and VRM-18 do for the Vermelho, only to an equipped technique, and the level in `tech=<id>:<n>` SHALL be ignored for the four techniques.
-12. EIX-08: The debug snapshot SHALL report `build.azul`, `build.corte`, `build.divergente` and `build.roxo`, each `{level, axes, branch, awakened, stats}` or `null` when the technique is not equipped.
-13. EIX-09: In `tests/data/techAxesTechniques.test.ts`, for each of the four techniques, no axis at 3 points SHALL give more than 1.35 times the sustained damage of the median axis of the same technique under the model of the Assumptions table.
-14. EIX-10: The names of all branches and Despertares in `data/techAxes.ts` (the Vermelho, the Corpo and the four techniques) SHALL be unique, and the test SHALL fail on a repeated name or a repeated effect text.
-15. EIX-11: The views `BlueOrb`, `CutFx`, `DivergentFx` and `PurpleOrb` SHALL size the halo, the distortion, the slash, the ring and the sphere from the `TechStats` of the cast, with no literal copy of a resolved number.
-16. EIX-12: In `tests/core/buildCurve.test.ts`, for each of the Azul, the Desmantelar and the Divergente as the focused technique (buying with the F30 prices, lock and inflation on top of `expectedIncome`, every card assumed on sale), the technique SHALL reach level 2 by the round 3 shop and level 5 by the round 10 shop.
+3. EIX-01: WHEN step 4 is committed THEN no file under `src/` SHALL reference `LEVEL_FACTOR`, `EVOLUTION_LEVEL`, the 5-per-level cost discount, the technique level price or the `techLevelGate` that the F30 put in place of the `techGate`.
+4. EIX-01: WHILE the mastery (until step 5) and the boss reward (until step 6) still call `Loadout.upgrade`, `upgrade` of a technique in the axis registry SHALL add 1 point to its focus axis as VRM-19 does for the Vermelho, and SHALL change nothing when it has 5 points.
+5. EIX-02: For each of the four techniques and each axis at 0 to 3 points, `Loadout.stats(id)` SHALL return the value of the `data/techAxes.ts` table, with every damage value times `damageMul` and `vowDamageMul` (rounded as `loadout.ts` rounds today) and the cost after the PRC-05 floor of 60% of the level 1 cost.
+6. EIX-03: WHEN one of the four techniques reaches level 2 for the first time in the run THEN the system SHALL add a pending branch choice for it, and WHEN it reaches level 5 with a branch chosen THEN its Despertar SHALL turn on and its `EnergyHud` icon SHALL get the gold border of VRM-17.
+7. EIX-03: WHEN the first cast of a round of one of the four techniques reaches `release` with its Despertar on THEN the system SHALL show a banner with the Despertar name and SHALL set the time scale to 0.4 for 350 ms of real time.
+8. EIX-04: WHILE the Recarga axis of one of the four techniques has 3 points, WHEN a hit of that technique kills a common enemy THEN the remaining cooldown of its slot SHALL drop by 30% of the full resolved cooldown, never below 0.
+9. EIX-05: WHEN a Despertar adds a share of the max HP THEN the hit SHALL deal `round(pct × maxHp)` on top of its damage in the same hit and the same damage number, with `pct` the share given for common enemies and 0.01 for the boss (0.005 per cut for the Clivar), at most once per target per cast except where a requirement says per cut.
+10. EIX-06: The shop upgrade card of the Azul, the Desmantelar, the Divergente and the Roxo SHALL be the two-axis card of CRD-04 and CRD-05 (focus axis plus one axis drawn by `axisRng`, `W`/`S` to choose, preview of the resolved values, `+ ramo` or `+ Despertar` line), with the level text `Nv <level + 1>/6`.
+11. EIX-06: The price of an axis point of the four techniques SHALL be `12 + 4 × points already placed` before inflation, with the round lock of PRC-04 (1st and 2nd point from round 2, 3rd and 4th from round 4, 5th from round 6), and the level price of PRC-06 and the old card of CRD-10 SHALL no longer exist.
+12. EIX-07: WHEN the run starts with `?debug&axes=<item>.<axis>:<n>[,...]` or `ramo=<item>:<a|b>` with `item` in `azul`, `corte`, `divergente` or `roxo` THEN the system SHALL apply them as VRM-10 and VRM-18 do for the Vermelho, only to an equipped technique, and the level in `tech=<id>:<n>` SHALL be ignored for the four techniques.
+13. EIX-08: The debug snapshot SHALL report `build.azul`, `build.corte`, `build.divergente` and `build.roxo`, each `{level, axes, branch, awakened, stats}` or `null` when the technique is not equipped.
+14. EIX-09: In `tests/data/techAxesTechniques.test.ts`, for each of the four techniques, no axis at 3 points SHALL give more than 1.35 times the sustained damage of the median axis of the same technique under the model of the Assumptions table.
+15. EIX-09: In the same test, with the energy regen at 16 per second, the Azul with Recarga 2 and Eficiência 3 SHALL have a higher sustained damage than with Eficiência 3 alone.
+16. EIX-10: The names of all branches and Despertares in `data/techAxes.ts` (the Vermelho, the Corpo and the four techniques) SHALL be unique, and the test SHALL fail on a repeated name or a repeated effect text.
+17. EIX-11: The views `BlueOrb`, `CutFx`, `DivergentFx` and `PurpleOrb` SHALL size the halo, the distortion, the slash, the ring and the sphere from the `TechStats` of the cast, with no literal copy of a resolved number.
+18. EIX-12: In `tests/core/buildCurve.test.ts`, for each of the Azul, the Desmantelar and the Divergente as the focused technique (buying with the F30 prices, lock and inflation on top of `expectedIncome`, every card assumed on sale), the technique SHALL reach level 2 by the round 3 shop and level 5 by the round 10 shop.
 
 **Independent Test**: `npm run gate` com `tests/data/techAxesTechniques.test.ts` (tabelas, eixo dominante e nomes únicos) e o
 teste do `Loadout.stats` das quatro técnicas; `tech-axes.smoke.mjs` com `axes=azul.gravidade:3` lê o raio 220 no
@@ -198,12 +207,13 @@ grupo e prendo até o chefe, para o Azul ter o papel que eu escolhi.
 2. AZL-02: The `data/techAxes.ts` table SHALL give, for 0, 1, 2 and 3 points: Gravidade radius 130/160/190/220 px; Puxão 150/190/230/270 px/s; Duração life 1400/1800/2200/2600 ms; Implosão implosion 10/18/26/34 and tick 5/6/7/8; Eficiência cost 40/34/29/24; Recarga 2500/2100/1800/1500 ms.
 3. AZL-03: WHILE an Azul orb is alive its halo and its distortion SHALL be drawn at the radii that today are 40 and 58 times the resolved radius divided by 130.
 4. AZL-04: WHILE the Implosão has 2 or more points the implosion SHALL carry `knockdown: true` on common enemies and SHALL call the camera shake.
-5. AZL-05: WHILE the branch is Andante the orb SHALL stay 80 px ahead of the player center in the facing direction at every frame and SHALL live 70% of the resolved life, rounded to the ms.
-6. AZL-06: WHILE the branch is Lapso, WHEN the orb spawns with the slot key held THEN it SHALL move forward at 200 px/s while the key stays held and SHALL stop when the key is released, at 220 px from the player center at the cast start, or 16 px before a wall, whichever comes first.
-7. AZL-06: IF the slot key is released before the Lapso orb spawns THEN the orb SHALL stay at its spawn point as the branchless orb.
-8. AZL-07: WHILE the Despertar Azul Máximo is on the implosion SHALL deal 3 times its resolved damage, SHALL carry `knockdown: true` on common enemies, and SHALL add 4% of the max HP of every target in the radius (1% on the boss).
-9. AZL-08: WHILE the Despertar Âncora is on, WHEN the Lapso orb stops THEN every common enemy and the boss inside the radius SHALL neither move nor start an attack for 500 ms, an attack already started SHALL go on, each held common enemy SHALL take 4% of its max HP and the held boss 1%.
-10. AZL-09: WHEN the run starts with `?debug&tech=azul&ramo=azul:a` or `ramo=azul:b` THEN the Azul branch SHALL be Andante or Lapso.
+5. AZL-05: WHILE the branch is Andante the orb SHALL spawn 80 px ahead of the player center, SHALL move every frame toward the point 80 px ahead of the player center in the facing direction at up to 600 px/s, and SHALL live 70% of the resolved life, rounded to the ms.
+6. AZL-05: WHEN the player turns with an Andante orb alive THEN the orb SHALL cross to the new side at 600 px/s and SHALL never move more than 10 px in one 16 ms frame.
+7. AZL-06: WHILE the branch is Lapso, WHEN the orb spawns with the slot key held THEN it SHALL move forward at 200 px/s while the key stays held and SHALL stop when the key is released, at 220 px from the player center at the cast start, or 16 px before a wall, whichever comes first.
+8. AZL-06: IF the slot key is released before the Lapso orb spawns THEN the orb SHALL stay at its spawn point as the branchless orb, and it SHALL count as stopped on its spawn frame.
+9. AZL-07: WHILE the Despertar Azul Máximo is on the implosion SHALL deal 3 times its resolved damage, SHALL carry `knockdown: true` on common enemies, and SHALL add 4% of the max HP of every target in the radius (1% on the boss).
+10. AZL-08: WHILE the Despertar Âncora is on, WHEN the Lapso orb stops (key released, 220 px, wall, or spawn with the key already released) THEN every common enemy and the boss inside the radius SHALL neither move nor start an attack for 500 ms, an attack already started SHALL go on, each held common enemy SHALL take 4% of its max HP and the held boss 1%.
+11. AZL-09: WHEN the run starts with `?debug&tech=azul&ramo=azul:a` or `ramo=azul:b` THEN the Azul branch SHALL be Andante or Lapso.
 
 **Independent Test**: `tech-axes.smoke.mjs` com `seed=1&maxAlive=3&tech=azul`: com `ramo=azul:a` a posição do orbe no
 snapshot segue o player a 80 px; com `ramo=azul:b` e a tecla segurada o orbe para a 220 px; com
@@ -226,8 +236,9 @@ grupo quando foco num alvo, para o Corte ter dois jeitos de jogar.
 4. DSM-04: WHILE the branch is Para Trás the cuts at even positions in the order (2nd, 4th, 6th) SHALL use the rectangle mirrored behind the player.
 5. DSM-05: WHILE the branch is Clivar every cut that hits SHALL add 2% of the target max HP (0.5% on the boss), and no other source SHALL stack a share of the max HP on the same cut.
 6. DSM-06: WHILE the Despertar Desmantelar do Rei is on every boss projectile and shockwave that touches the rectangle of a cut SHALL be removed, and the last cut of the cast SHALL add 4% of the max HP of every target it hits (1% on the boss).
-7. DSM-07: WHILE the Despertar Fenda is on, WHEN a cut kills a common enemy THEN the system SHALL hit the nearest living common enemy within 120 px of the dead one once with a `micro` hit of the resolved cut damage and no Clivar share, and a kill by that hit SHALL open no other fenda.
-8. DSM-08: WHEN the run starts with `?debug&tech=corte&ramo=corte:a` or `ramo=corte:b` THEN the Desmantelar branch SHALL be Para Trás or Clivar.
+7. DSM-07: WHILE the Despertar Fenda is on, WHEN a cut kills a common enemy THEN the system SHALL hit the nearest living common enemy within 120 px of the dead one that took no fenda in that cast with a `micro` hit of the resolved cut damage plus 3% of its max HP and no Clivar share.
+8. DSM-07: WHILE the Despertar Fenda is on, WHEN a fenda hit kills a common enemy THEN it SHALL open the next fenda the same way, and a cast SHALL open at most 3 fendas.
+9. DSM-08: WHEN the run starts with `?debug&tech=corte&ramo=corte:a` or `ramo=corte:b` THEN the Desmantelar branch SHALL be Para Trás or Clivar.
 
 **Independent Test**: `tech-axes.smoke.mjs` com `tech=corte&axes=corte.cortes:3&ramo=corte:a` e um inimigo de cada
 lado: os dois levam corte; com `ramo=corte:b` o número de dano do corte passa do dano resolvido pelos 2% do HP.
@@ -243,14 +254,14 @@ Kokusen cresça com o eixo, para o golpe mais épico do jogo ter build própria.
 
 **Acceptance Criteria**:
 
-1. DVG-01: The `data/techAxes.ts` table SHALL give, for 0, 1, 2 and 3 points: 2º impacto 18/24/30/36; Alvos 1/2/2/3 targets; Zona 8000/10000/12000/14000 ms; Energia (Kokusen gain) 30/38/46/54; Eficiência cost 20/17/14/12; Recarga 1200/1000/850/700 ms; the 1st impact SHALL stay 12.
-2. DVG-02: WHEN the Divergente punch connects THEN the first impact SHALL register up to the resolved number of targets, nearest to the player first, each of them SHALL take its own 2nd impact after the drawn delay, and the Kokusen attempt SHALL apply only to the nearest one.
+1. DVG-01: The `data/techAxes.ts` table SHALL give, for 0, 1, 2 and 3 points: 2º impacto 18/24/30/36; Alvos 1/2/2/3 targets and a punch box 26/30/34/36 px wide; Zona 8000/10000/12000/14000 ms; Energia (Kokusen gain) 30/38/46/54; Eficiência cost 20/17/14/12; Recarga 1200/1000/850/700 ms; the 1st impact SHALL stay 12.
+2. DVG-02: WHEN the Divergente punch opens THEN its box SHALL have the resolved width with its back edge where today's `direto` box has it, and WHEN it connects THEN the first impact SHALL register up to the resolved number of targets among the enemies inside the box, nearest to the player first, each of them SHALL take its own 2nd impact after the drawn delay, and the Kokusen attempt SHALL apply only to the nearest one.
 3. DVG-03: WHEN a Kokusen lands from the Divergente THEN the energy gain SHALL be the resolved Energia value and the Zona SHALL last the resolved Zona time.
 4. DVG-04: WHEN a Kokusen lands THEN the ESC-02 formula SHALL use `D` = the resolved 2nd impact base of the Divergente axis (18, 24, 30 or 36), without `damageMul`, `vowDamageMul` and the Concentrado factor.
 5. DVG-05: WHILE the branch is Eco, WHEN a 2nd impact hits its target THEN every other common enemy within 48 px of that target center that is not taking its own 2nd impact SHALL take a `micro` hit of the 2nd impact damage, each enemy at most once per cast.
-6. DVG-06: WHILE the branch is Concentrado the first impact SHALL register 1 target, its 2nd impact SHALL deal 2 times the resolved damage, and no shop card nor choice page SHALL offer the `alvos` axis.
+6. DVG-06: WHILE the branch is Concentrado the first impact SHALL register 1 target with today's 26 px box, its 2nd impact SHALL deal 2 times the resolved damage, and no shop card nor choice page SHALL offer the `alvos` axis.
 7. DVG-07: WHILE the Despertar Eco Negro is on, WHEN the Kokusen lands on the main target THEN every common enemy hit by its Eco ring SHALL take the Kokusen damage instead of the ring damage plus 3% of its max HP, and the energy gain and the Zona SHALL apply once per cast.
-8. DVG-08: WHILE the Despertar Impacto Único is on the 2nd impact SHALL add 4% of the target max HP (1% on the boss).
+8. DVG-08: WHILE the Despertar Impacto Único is on the 1st and the 2nd impact SHALL carry `unblockable: true`, and the 2nd impact SHALL add 4% of the target max HP (1% on the boss) and SHALL carry `knockdown: true` on a common enemy.
 9. DVG-09: WHEN the run starts with `?debug&tech=divergente&ramo=divergente:a` or `ramo=divergente:b` THEN the Divergente branch SHALL be Eco or Concentrado.
 
 **Independent Test**: `tech-axes.smoke.mjs` com `tech=divergente&axes=divergente.alvos:3&maxAlive=3` e 3 inimigos
@@ -271,7 +282,7 @@ ramo e Despertar, para a União chegar no meio da run e não ser um beco sem sa�
 2. RXO-01: The Roxo recipe in `data/evolutions.ts` SHALL hold the minimum level of each piece (`minLevel`: Azul 1, Vermelho 4), and `recipeReady` SHALL read it instead of `EVOLUTION_LEVEL`.
 3. RXO-02: WHEN the União is applied THEN the Roxo SHALL enter at level 1 with 0 axis points in the slot of the Azul, the other slot SHALL be empty, and the Vermelho axis points, branch and Despertar SHALL be reset.
 4. RXO-03: The shop SHALL never offer the Roxo as a new technique, and WHILE the Roxo is equipped and below level 6 its upgrade card SHALL be drawn as EIX-06 says.
-5. RXO-04: The `data/techAxes.ts` table SHALL give, for 0, 1, 2 and 3 points: Largura radius 36/44/51/58 px; Alcance 288/300/310/320 px at 180 px/s; Carga sign 300/240/195/150 ms and charge 400/320/260/200 ms; Potência hit 60/70/80/90; Eficiência cost 70/60/51/42; Recarga 6000/5000/4200/3500 ms.
+5. RXO-04: The `data/techAxes.ts` table SHALL give, for 0, 1, 2 and 3 points: Largura radius 36/44/51/58 px; Alcance range 288/300/310/320 px and speed 180/210/240/270 px/s; Carga sign 300/240/195/150 ms and charge 400/320/260/200 ms; Potência hit 60/70/80/90; Eficiência cost 70/60/51/42; Recarga 6000/5000/4200/3500 ms.
 6. RXO-05: The Roxo sphere SHALL end its flight at the resolved range from its spawn point, never beyond 320 px, and the `PurpleOrb` sphere SHALL be drawn at the resolved radius.
 7. RXO-06: WHILE the branch is Massa, WHEN the sphere spawns with the slot key held THEN it SHALL stay at its spawn point while its radius grows linearly to 1.6 times the resolved radius over 1000 ms, touching what it reaches, and SHALL start its flight when the key is released or at 1000 ms, with the flight range counted from the start.
 8. RXO-07: WHILE the Despertar Roxo 200% is on, WHEN a sphere starts its flight after a full 1000 ms hold THEN every common enemy it touches SHALL move with it until the flight ends and SHALL be knocked down at the end, and every target it touches SHALL take 5% of its max HP (1% on the boss, which is never dragged).
@@ -296,20 +307,22 @@ novo e o baú do chefe, para escolher a build entre rodadas sem painel a cada co
 **Acceptance Criteria**:
 
 1. CHC-01: WHEN step 0 is committed THEN the pending-page queue and the branch page logic SHALL live in `src/scenes/test/choiceDirector.ts` with the pure queue in `src/core/choice.ts`, the `shopDirector` SHALL only ask the `choiceDirector` whether it is open, and the smokes `shop-axes`, `shop`, `shop-progress` and `run-loop` SHALL pass unchanged.
-2. CHC-02: WHEN the konbini opens with pending pages THEN, after the `VowPanel` when it opens, the `ChoicePanel` SHALL show one page at a time in the order branches (slot 0, slot 1, Corpo), mastery free points (in the order they were earned), the F31 Veil chest, the boss chest, and the shop SHALL take no input until the last page is confirmed.
+2. CHC-02: WHEN the konbini opens with pending pages THEN, after the `VowPanel` when it opens, the `ChoicePanel` SHALL show one page at a time in the order boss chest, F31 Veil chest, branches (slot 0, slot 1, Corpo), mastery free points (in the order they were earned), and the shop SHALL take no input until the last page is confirmed.
 3. CHC-03: WHEN confirming a page creates a new page (a branch at level 2, a Despertar, the two free points of the chest) THEN the new page SHALL be shown right after it in the same panel, and no second panel SHALL open in that konbini visit.
-4. CHC-04: The branch page SHALL serve the Vermelho, the Corpo and the four techniques, with 2 options, `A`/`D` to choose and `Enter` to confirm, as CRD-08 does.
-5. CHC-05: The free point page of an item SHALL offer up to 3 axes below the cap, the focus axis first and the others drawn by `choiceRng`, never the `alvos` axis under the Concentrado, with each option text as the axis card line of CRD-05, `A`/`D` to cycle and `Enter` to add the point with no fragment cost and no round lock.
-6. CHC-06: The open free point page (chest; selo from F38) SHALL offer 3 distinct item-axis pairs: the focus axis of the focus item first and 2 pairs drawn by `choiceRng` among the axes below the cap of every owned item (equipped techniques and the Corpo).
+4. CHC-04: The branch page SHALL serve the Vermelho, the Corpo and the four techniques, with 2 options, `A`/`D` to choose and `Enter` to confirm, as CRD-08 does, and WHILE the axis that an option makes dead (`alvos` for the Concentrado) has points that option SHALL show the line `anula Alvos (<points>)`.
+5. CHC-05: The free point page of an item SHALL offer up to 3 offerable axes (below the cap and allowed by the PRC-04 round lock on the item total points), the focus axis first when it is offerable and the others drawn by `choiceRng`, never the `alvos` axis under the Concentrado, with each option text as the axis card line of CRD-05, `A`/`D` to cycle and `Enter` to add the point with no fragment cost.
+6. CHC-06: The open free point page (chest; selo from F38) SHALL offer up to 3 distinct offerable item-axis pairs: the focus axis of the focus item first when it is offerable, and the others drawn by `choiceRng` among the offerable axes of every owned item (equipped techniques and the Corpo).
 7. CHC-07: WHEN a page of the same panel turns a Despertar on THEN a Despertar page SHALL show the Despertar name and effect text, and `Enter` SHALL close it.
-8. CHC-08: IF the item of a free point page is no longer equipped or has no axis below the cap when the page would show THEN the page SHALL be skipped, and IF no owned item has an axis below the cap THEN an open free point page SHALL be skipped.
-9. CHC-09: The `choiceRng` SHALL be a stream with its own salt in `core/run.ts`, and the same seed with the same choices SHALL give the same pages and options.
-10. CHC-10: The debug snapshot SHALL report `choice: {open, page, pending}` with `page` as `{kind, item, options, selected}` or `null`, `kind` in `ramo`, `ponto`, `livre`, `despertar` or `bau`, and `pending` the number of pages still queued.
-11. CHC-11: WHEN the run resets THEN every pending page SHALL be dropped.
+8. CHC-08: IF the item of a free point page or every owned item of an open free point page has no axis below the cap when the page would show THEN the page SHALL be skipped, and IF its axes below the cap are all locked by PRC-04 THEN the page SHALL stay pending for the next konbini visit.
+9. CHC-08: IF a União confirmed in the same panel took the technique of a pending free point page out of its slot THEN that page SHALL serve the technique the União created.
+10. CHC-09: The `choiceRng` SHALL be a stream with its own salt in `core/run.ts`, and the same seed with the same choices SHALL give the same pages and options.
+11. CHC-10: The debug snapshot SHALL report `choice: {open, page, pending}` with `page` as `{kind, item, options, selected}` or `null`, `kind` in `ramo`, `ponto`, `livre`, `despertar` or `bau`, and `pending` the number of pages still queued.
+12. CHC-11: WHEN the run resets THEN every pending page SHALL be dropped.
 
-**Independent Test**: `choice-panel.smoke.mjs` com `tech=vermelho&mastery=24&noshop=0`: depois de um acerto do Vermelho e
-do fim da rodada, a konbini abre a página `ponto` com 3 eixos, o 1º o eixo-foco; com `axes=vermelho.potencia:3`, o
-ponto que leva ao Nv 5 com `ramo=vermelho:b` mostra a página `despertar` logo depois.
+**Independent Test**: `choice-panel.smoke.mjs` com `tech=vermelho&mastery=24&noshop=0&round=2`: depois de um acerto do
+Vermelho e do fim da rodada, a konbini abre a página `ponto` com 3 eixos, o 1º o eixo-foco; com `round=1` a página não
+abre e continua pendente (PRC-04); com `axes=vermelho.potencia:3&round=4`, o ponto que leva ao Nv 5 com
+`ramo=vermelho:b` mostra a página `despertar` logo depois.
 
 ---
 
@@ -355,7 +368,7 @@ ou o nível do Domínio, para a vitória sobre o chefe virar decisão.
 7. BAU-07: IF the chest has no candidate THEN the system SHALL add no page.
 8. BAU-08: WHEN the run starts with `?debug&chest=1` THEN a boss chest page SHALL be pending for the first konbini entry, and the snapshot page SHALL report the chest options by id (`uniao:roxo`, `pontos`, `dominio`).
 
-**Independent Test**: `boss-chest.smoke.mjs` com `tech=azul,vermelho&axes=vermelho.potencia:3&chest=1`: a 1ª konbini
+**Independent Test**: `boss-chest.smoke.mjs` com `tech=azul,vermelho&axes=vermelho.potencia:3&chest=1&round=4`: a 1ª konbini
 abre o baú com a União e "2 pontos de eixo"; escolher a União deixa o Roxo no slot sem gastar fragmento; com `chest=1`
 e "2 pontos", as duas páginas `livre` vêm logo depois.
 
@@ -365,12 +378,15 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
 
 - IF one of the four techniques reaches level 5 while its branch choice is still pending THEN the Despertar SHALL turn on when the branch is chosen, and a Despertar page SHALL follow the branch page in the same panel.
 - WHEN a free point page takes an item to level 2 THEN the branch page of that item SHALL be shown right after it.
-- IF the boss chest União is chosen after a mastery free point of the Vermelho was spent in the same panel THEN the Vermelho points SHALL be reset by the União as RXO-02 says.
-- IF the Roxo is formed and the Vermelho had a pending branch page THEN that page SHALL be skipped.
+- IF the boss chest União is chosen while a mastery free point page of the Vermelho or of the Azul is pending in the same panel THEN that page SHALL come after the chest and SHALL serve the Roxo (CHC-08).
+- IF the Roxo is formed by the boss chest and the Vermelho had a pending branch page THEN that page SHALL be skipped, since the chest comes before the branches (CHC-02).
+- WHEN a mastery mark is reached in round 1 THEN its free point page SHALL stay pending at the round 1 konbini and SHALL show at the round 2 konbini (PRC-04 lock on the 1st point).
+- IF the chest has exactly 1 candidate THEN its page SHALL show that single option.
 - WHEN the Concentrado is chosen with points already in `alvos` THEN those points SHALL stay counted in the level and SHALL have no effect.
 - IF the Lapso orb or the Massa sphere is still held when the player is hit THEN it SHALL keep its hold until the key is released or its limit ends.
 - WHEN the Andante orb and the Vermelho Máximo field overlap THEN the Azul pull SHALL win and the field SHALL keep its `chip` ticks, as in the F30.
-- IF the Fenda finds no living common enemy within 120 px THEN no hit SHALL happen.
+- IF the Fenda finds no living common enemy within 120 px that took no fenda in the cast THEN no hit SHALL happen and the chain SHALL end.
+- WHEN the player turns twice within 270 ms with an Andante orb alive THEN the orb SHALL reverse toward the current point without jumping.
 - WHEN the Retorno sphere comes back and the player has moved THEN it SHALL steer to the current player center every frame.
 - WHEN the Roxo 200% drags common enemies and the flight ends at a wall THEN they SHALL be knocked down at the end point.
 - IF the Eco ring and an Eco Negro Kokusen would hit the same enemy THEN it SHALL take only the Kokusen hit.
@@ -389,8 +405,8 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
 | Failure / partial-failure states | CHC-08 (página sem alvo válido é pulada), BAU-07 (baú sem candidato), a compra continua "checar → gastar → aplicar" (SHOP-10); sem I/O, o resto é N/A |
 | Idempotency / retry / duplicate handling | MAE-01 (cada conjuração conta uma vez, chefe uma vez), MAE-02/MAE-06 (marco uma vez por `TechId`), EIX-05 (componente proporcional uma vez por alvo por conjuração), DVG-05 e RXO-08 (toques por alvo limitados) |
 | Auth boundaries & rate limits | N/A porque é jogo local; o teto de emissões já é da F30 (CRP-12) |
-| Concurrency / ordering | CHC-02 e CHC-03 (ordem das páginas e inserção logo depois), edge cases da União com ponto da maestria e do ramo pendente do Vermelho |
-| Data lifecycle / expiry | CHC-11 e edge case do baú pendente (somem no reset), AZL-08 (prisão de 500 ms), RXO-06 (massa de 1000 ms) |
+| Concurrency / ordering | CHC-02 e CHC-03 (baús antes dos ramos e dos pontos; inserção logo depois), CHC-08 (ponto da técnica consumida pela União vai ao Roxo), edge cases da União com ponto da maestria e do ramo pendente do Vermelho |
+| Data lifecycle / expiry | CHC-11 e edge case do baú pendente (somem no reset), CHC-08 (página travada pela PRC-04 fica para a próxima visita), AZL-08 (prisão de 500 ms), RXO-06 (massa de 1000 ms), DSM-07 (até 3 fendas por conjuração) |
 | Observability | EIX-08, CHC-10, MAE-07 e BAU-08 (snapshot), MAE-04 (banner) |
 | External-dependency failure | N/A porque não há dependência externa em jogo |
 | State-transition integrity | EIX-03 (ramo uma vez por run no Nv 2, Despertar só com ramo), RXO-01/RXO-02 (União só com os limiares), CHC-02 (loja trancada até a última página), MAE-03 (maestria nunca muda nível) |
@@ -490,8 +506,9 @@ e "2 pontos", as duas páginas `livre` vêm logo depois.
   `tests/core/choice.test.ts` (fila, ordem, inserção, pulo; CHC-02 a CHC-09), `tests/core/bossChest.test.ts`
   (BAU-01, BAU-02, BAU-07).
 - Cada limiar testado nos dois lados do limite (L-010): Vermelho Nv 3 e Nv 4 na União; marcos 24/25 e 59/60; 3 e 4
-  candidatos no baú; 1000 ms da Massa e 999 ms; 220 px do Lapso; 120 px da Fenda; 48 px do Eco; teto de 3 e de 5
-  pontos.
+  candidatos no baú; 1000 ms da Massa e 999 ms; 220 px do Lapso; 120 px da Fenda; 48 px do Eco; 3ª e 4ª fenda da
+  cadeia; página de ponto na konbini da r1 (adiada) e da r2 (mostrada), e o 3º ponto grátis na r3 (adiado) e na r4;
+  teto de 3 e de 5 pontos.
 - O adaptador que repassa o stat ao motor tem teste próprio, não só o puro (L-043): o raio que o `BlueTech` passa ao
   `BlueOrb`, o retângulo que o `CutTech` passa ao `CutFx` e o raio que o `PurpleTech` passa ao `PurpleOrb`.
 
@@ -502,14 +519,16 @@ RXO-11) e `debugApi` (campos novos). `bossReward.test.ts` sai junto com o `core/
 **Smokes novos:** `tech-axes`, `choice-panel` e `boss-chest`, todos com `?debug&hd=1&area=modular`.
 
 **Smokes antigos que mudam** (cada um no passo que os quebra, citando o requisito): `techniques` e `tech` no passo 1
-(custo 40 e recarga 2500 do Azul; AZL-01) e nos passos 2 e 3 (o nível do `tech=<id>:N` ignorado; EIX-07), `kokusen` no
-passo 3 (DVG-03, DVG-04), `evolution` no passo 4 (`tech=azul,vermelho&axes=vermelho.potencia:3`; RXO-01), `shop-progress`
-no passo 4 (carta de eixo do Azul; EIX-06) e no passo 5 (maestria por marco no lugar do "Nv 2!"; MAE-02, MAE-04,
-MAE-07), `boss-punish` no passo 6 (o banner "Vermelho Nv 2!" do prêmio do chefe some; BAU-03).
+(custo 40 e recarga 2500 do Azul; AZL-01) e nos passos 2 e 3 (o nível do `tech=<id>:N` ignorado; EIX-07), `evolution`
+no passo 1 (ponte `axes=azul.gravidade:2,vermelho.potencia:2`, porque o `tech=azul:3` deixa de dar nível; EIX-07) e no
+passo 4 (`tech=azul,vermelho&axes=vermelho.potencia:3`; RXO-01), `shop-progress` no passo 1 (carta de eixo do Azul;
+EIX-06) e no passo 5 (maestria por marco no lugar do "Nv 2!"; MAE-02, MAE-04, MAE-07), `kokusen` no passo 3 (DVG-03,
+DVG-04), `shop-axes` e `domain` no passo 5 (opções lidas por id; CHC-10), `domain` no passo 6 (a página `bauChefe` da F31
+vira `bau`; BAU-06) e `boss-punish` no passo 6 (o banner "Vermelho Nv 2!" do prêmio do chefe some; BAU-03).
 
 **Smokes que rodam junto:** os três novos, `red-axes`, `cursed-body` e `shop-axes` (da F30), `shop`, `shop-progress`,
 `run-loop`, `tech`, `techniques`, `red-anime`, `kokusen`, `evolution`, `fight`, `impact`, `feel`, `power`, `boss`,
-`boss-punish`, `boss-victory`, `world-boss` e `vows`.
+`boss-punish`, `boss-victory`, `world-boss`, `vows` e `domain` (da F31).
 
 ---
 
@@ -521,5 +540,8 @@ MAE-07), `boss-punish` no passo 6 (o banner "Vermelho Nv 2!" do prêmio do chefe
 - [ ] Na konbini, resolve ramo, ponto grátis, Despertar e baú numa sequência de páginas, sem painel extra por compra.
 - [ ] A maestria dá o banner no 25 e no 60, e o nível só muda pelo ponto escolhido.
 - [ ] Gate verde; os 3 smokes novos e os da lista verdes; a `TestScene` sem linha líquida a mais.
-- [ ] A conferência no jogo, em movimento e nos dois lados, do orbe Andante, do Lapso andando, da esfera da Massa
-      crescendo, do Retorno e do Eclipse, e dos cortes Para Trás, não só na prancha.
+- [ ] A conferência no jogo, em movimento e nos dois lados, do orbe Andante (inclusive cruzando ao virar), do Lapso
+      andando, da esfera da Massa crescendo, do Retorno e do Eclipse, dos cortes Para Trás e da cadeia de fendas, não só
+      na prancha.
+- [ ] Todo ponto de eixo muda algo que o jogador vê (nenhum `2 → 2` na carta), e todo Despertar muda o comportamento,
+      não só o número.
