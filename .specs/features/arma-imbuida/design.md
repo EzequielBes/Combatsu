@@ -6,7 +6,10 @@ seção 6; seção 5.4; decisão 5 da seção 7) · **Base**: F29 `fundacao-de-p
 a arte do branch `feat/arte-armas-imbuidas` (worktree `wt-armas`, `ce6e03c`)
 **Status**: Draft. A abordagem A (abaixo) é a recomendada e está detalhada; ela e as três decisões de arte marcadas
 "usuário" em "Risks & Concerns" (escala do arco do Bastão, âncora do rastro da Lâmina, ícone de 24 px) são confirmadas
-com o usuário antes do `tasks.md`.
+com o usuário antes do `tasks.md`. Revisão adversarial de 15/10 (código e jogador) mudou: sangramento com relógio
+próprio a 600 ms e Sangria somando no tique (LMN-02/03), tique e acerto extra `unblockable` (LMN-04, WEV-06), alvo de
+trás empurrado para longe (BST-05), marca do Bastão que só liga a derrubada (BST-02), bloqueio que abre o Contra com a
+Lança (LNC-04), rastro da arma por cima do amaldiçoado (WFX-01) e o teste de equilíbrio entre armas (WPN-05).
 
 Linhas citadas conferidas em 14/10 no `feat/fundacao-de-poder` (HEAD `2bc1102`, F29 ainda em execução: as linhas de
 `impactFx.ts`, `combat.ts`, `statsDirector.ts` e `debugApi.ts` andam a cada passo da F29) e no `wt-armas` (`ce6e03c`).
@@ -46,9 +49,10 @@ com `axisCap 2`, `pointCap 3`, preço `16 + 6 × pontos` e sem ramo. As regras p
 (traço, resolução dos eixos em `WeaponStats`, forma da varredura, derrubada por alvo), `core/bleed.ts` (pilhas e
 tiques), `core/weaponTimers.ts` (acertos extras da Nuvem e janela de anulação), `core/weaponEvolution.ts` (receitas) e
 `core/affixSuppression.ts` (os 3 s do Arsenal de Toji). O `WeaponDirector` lê o `WeaponStats` do quadro e é chamado em
-cinco pontos que já existem: `StatsDirector.strikeMods` (marcas do golpe), `PlayerStrikes.prepare` (marca por alvo,
-via `StrikeMods.targetMarks`), `ImpactFx.onStrikePhase` (rastro e janela da anulação), `combat.onConnect` (impacto,
-sangramento, Nuvem, Toji) e `TechDirector.update` (tiques, acertos extras, anulação, relógio da supressão). A vista é
+seis pontos que já existem: `StatsDirector.strikeMods` (marcas do golpe), `PlayerStrikes.prepare` (marca por alvo,
+via `StrikeMods.targetMarks`: derrubada e lado do alvo de trás), `ImpactFx.onStrikePhase` (rastro e janela da
+anulação), `combat.onConnect` (impacto, sangramento, Nuvem, Toji), `combat.onDefense` (bloqueio que abre o Contra da
+Lança) e `TechDirector.update` (tiques, acertos extras, anulação, relógio da supressão). A vista é
 `game/WeaponFx.ts`, que toca as folhas `weapon-fx-<arma>-trail`/`-impact` do `wt-armas` e conta no `fxCap` pelo
 mesmo conjunto vivo do `CursedFx`.
 
@@ -124,6 +128,7 @@ Lança e anda os 3 s da supressão.
 | `chestCandidates`, `ChestOption`, `choiceDirector.confirm` | F33 `src/core/bossChest.ts`, `scenes/test/choiceDirector.ts` | Opção `arma:<evolução>` do baú (WEV-03) e arma na opção "2 pontos de eixo" (WSH-05) |
 | `BuildTray`, `BuildBar`, `SpentLedger`, `trayDirector.abandon` | F35 `src/core/buildTray.ts`, `src/game/BuildBar.ts`, `src/core/spentLedger.ts`, `scenes/test/trayDirector.ts` | Vaga da arma: 3 pontinhos pelos pontos, `Arma Nv<n>`, ícone da folha HD, livro com pontos e evolução, abandono limpando os pontos (WSH-07, WSH-09) |
 | `CounterWindow.lastTakePerfect` | F35 `src/core/counter.ts` | Contra perfeito do Arsenal de Toji (WEV-07) |
+| `player.counter.open(kind, ms)` e `combat.onDefense(kind, point)` | `src/game/Player.ts:93`, `src/game/player/defense.ts:53`, `:88`, `src/scenes/test/combat.ts:143` | Bloqueio com a Lança abre o `contra` por `COUNTER.windowMs` (LNC-04), do lado da cena, sem campo novo no `Player` |
 | `Hit.band` e `effects.onTechConnect(hit, point, target)` | `src/core/hit.ts:57`, `src/scenes/test/effects.ts` | Tique do sangramento (`chip`, número cinza) e acertos extras da Nuvem (`micro`, teto de hitstop), fora do `combat.onConnect` (LMN-04) |
 | `canSpawnParticle(live)` e o conjunto vivo do `CursedFx` | `src/game/CursedFx.ts:43-45`, `:152`, `:293` | O sprite da arma entra no mesmo conjunto (`track`), conta no `fxCap` 40 e some no `destroyAll` (WFX-04) |
 | `strikeWorld`, `handTrail` | `src/scenes/test/impactFx.ts` | Ponto de partida do rastro da Lâmina e da Lança (WFX-02) |
@@ -141,8 +146,9 @@ Lança e anda os 3 s da supressão.
 | Começo de rodada | `runDirector.applyRunCommand('roundStart')` já chama `arsenal.onRoundStart()` (`runDirector.ts:69`): só entrega a ferramenta pendente de mãos vazias, com ou sem arma (IMB-01, IMB-04) |
 | Golpe do player | `StatsDirector.strikeMods(move)` termina com `this.s.arsenal.weapon.strikeMods(move, mods)`; `PlayerStrikes.openHitbox` usa `strikeShape(shape, mods)` e `targetsFor(move.maxTargets, mods.maxTargets)`; `prepare` aplica `mods.targetMarks?.(target)` depois do crítico |
 | Acerto corpo a corpo | `combat.onConnect`, logo depois do `build.onMeleeHit(hit, point, target)` (F30): `this.s.arsenal.onMeleeHit(hit, point, target)` (+1 linha) |
-| Fase do golpe | `ImpactFx.onStrikePhase` repassa a fase a `arsenal.weapon.onStrikePhase(name, phase)` e, no `active`, desenha o rastro por um `drawTrail(name, strength)` novo que pergunta `arsenal.weapon.trail(name, start)` antes do rastro amaldiçoado |
+| Fase do golpe | `ImpactFx.onStrikePhase` repassa a fase a `arsenal.weapon.onStrikePhase(name, phase)` e, no `active`, desenha o rastro por um `drawTrail(name, strength)` novo: o rastro amaldiçoado como hoje (com o `extraPx` da F29 e o `reachPx` da F30) e, depois dele, `arsenal.weapon.trail(name, start)` por cima (WFX-01) |
 | Por quadro | `TechDirector.update` chama `this.s.arsenal.update(dt)` (+1 linha), no molde do `build.body.update(dt)` da F30 |
+| Defesa | `combat.onDefense`, logo depois do `build.onDefense(kind)`: `this.s.arsenal.onDefense(kind)` (+1 linha); com a Lança e `kind === 'block'`, `player.counter.open('contra', COUNTER.windowMs)` (LNC-04) |
 | Loja | `GAME_SHOP_CATALOG` ganha as 3 evoluções de arma e a Lança no fim; a carta nova usa o `arsenalEligible`; a carta de ponto usa o `axisEligible` (dono = `arsenal.weapon?.id === item`); `BuyContext.applyEvolution` manda a evolução de arma ao `arsenal.weapon.evolve(id)` |
 | Konbini / baú | `choiceDirector` monta a lista de itens donos com eixo com a arma; o baú recebe as receitas de arma prontas |
 | Debug | `ArsenalDirector.reset` lê `arsenal=` (como hoje); `axes=` pelo `applyDebugAxes` (F30, depois do `arsenal.reset`); `evo=` no fim do `BuildDirector.applyDebugAxes`, depois do `perks=` da F35 |
@@ -172,8 +178,8 @@ Lança e anda os 3 s da supressão.
   `Sangria`, `Arco`, `Derrubada`, `Peso`, `Estocada`, `Anulação`, `Perfuração`); `WEAPON_TRAIT = { lamina: 'light',
   bastao: 'heavy', lanca: 'counter' }`.
 - `WEAPON` (números da spec): `mul 1.2`, `axisCap 2`, `pointCap 3`, `newPrice 22`, `newRound 2`, `point { base 16,
-  step 6 }`, `evolutionCost 60`; `lamina { reachBase 10, reachStep 8, bleedMs { base 1500, step 500 }, tickMs 300,
-  tickBase 2 }`; `bastao { sweepBase 60, sweepStep 20, minTargets 3, pesoStep 0.25 }`; `lanca { reachStep 16,
+  step 6 }`, `evolutionCost 60`; `lamina { reachBase 10, reachStep 8, bleedMs { base 1500, step 500 }, tickMs 600,
+  perStack 2 }` (o plano dizia 300 ms; ver a assumption do sangramento); `bastao { sweepBase 60, sweepStep 20, minTargets 3, pesoStep 0.25 }`; `lanca { reachStep 16,
   nullifyStep 100 }`; `nuvem { delaysMs [120, 240], frac 0.5 }`; `toji { ms 3000, glyphAlpha 0.3 }`.
 - `WEAPON_RECIPES: readonly WeaponRecipe[]` (WEV-01, na ordem do catálogo): `laminaDividida` (Lâmina + relíquia
   `faixas`), `nuvemItinerante` (Bastão + relíquia `manoplas`), `arsenalToji` (Lança + talento `contraAfiado`), com
@@ -204,8 +210,8 @@ Lança e anda os 3 s da supressão.
 - `weaponStrikeMul(weapon: { id: WeaponId } | null, t: MeleeTraits): number`: `t.object` → 1; o traço da arma (Lâmina
   `t.light`; Bastão `t.heavy && !t.counter`; Lança `t.counter`) → `WEAPON.mul`; senão 1 (WPN-03, WPN-04).
 - `resolveWeapon(id, points: Readonly<Record<WeaponAxisId, number>>, evolution): WeaponStats` (ver "Data Models"):
-  Lâmina `reachPx = 10 + 8 × fio`, `bleed = { maxStacks: 1 + corte, durationMs: 1500 + 500 × corte, tickMs 300, tick:
-  2 + sangria }`, `unblockable = evolution === 'laminaDividida'`; Bastão `sweepPx = 60 + 20 × arco`, `minTargets 3`,
+  Lâmina `reachPx = 10 + 8 × fio`, `bleed = { maxStacks: 1 + corte, durationMs: 1500 + 500 × corte, tickMs 600, perStack 2,
+  flat: sangria }`, `unblockable = evolution === 'laminaDividida'`; Bastão `sweepPx = 60 + 20 × arco`, `minTargets 3`,
   `knockdown = ['none', 'unarmed', 'armed'][derrubada]`, `forceMul = 1 + 0,25 × peso`, `nuvem`; Lança
   `reachPx = 16 × estocada`, `maxTargets = 1 + perfuracao`, `nullifyMs = 100 × anulacao` (com 0 a janela é só o
   `active`), `toji`.
@@ -221,16 +227,23 @@ Lança e anda os 3 s da supressão.
   `undefined` (golpe sem teto continua sem teto), senão o maior.
 - `knockdownFor(level, target: { isBoss: boolean; armed: boolean }): boolean` (BST-02: chefe nunca; `unarmed` só o
   desarmado; `armed` os dois).
+- `bastaoTargetMarks(stats, playerX, facing, target: { x; isBoss; armed }): Pick<Hit, 'knockdown' | 'direction'>`
+  (BST-02, BST-05): `knockdown: true` só quando o `knockdownFor` liga (nunca `false`: o objeto devolvido não tem a
+  chave, para o espalhamento não apagar o `knockdown` do golpe nem o do Peso do Corpo); `direction: { x: −facing, y }`
+  quando `sign(target.x − playerX) === −facing` (o `y` do golpe de hoje, `strikes.ts:280`).
 - **Reuses**: `widenForward` (F30), `MeleeTraits`, `HitboxShape`. Sem `phaser` (AD-001).
 
 ### `core/bleed.ts` (novo, ~60)
 
 - `class BleedBook` com relógio injetado (`nowMs` do `s.clockMs`, tempo de jogo):
-  - `apply(id, spec: { maxStacks; durationMs; tickMs; tick }, nowMs)`: soma 1 pilha até `maxStacks` e reinicia o
-    relógio (LMN-02); guarda o `spec` da última aplicação, então a arma abandonada não muda o que já sangra (edge case).
-  - `update(nowMs, hpMul): { id: number; damage: number }[]`: a cada `tickMs` desde o último reinício, enquanto
-    `elapsed ≤ durationMs`, devolve `round(stacks × tick × hpMul)` (LMN-03); a entrada sai depois do último tique
-    (Corte 0: tiques em 300, 600, 900, 1200 e 1500 ms; nada em 1501).
+  - `apply(id, spec: { maxStacks; durationMs; tickMs; perStack; flat }, nowMs)`: sem sangramento em curso, abre com
+    `startMs = nowMs` e 1 pilha; em curso, soma 1 pilha até `maxStacks`. Nos dois casos `endMs = nowMs + durationMs`
+    (LMN-02); o `startMs` **não** muda, então leves seguidos não atrasam o tique. Guarda o `spec` da última aplicação,
+    então a arma abandonada não muda o que já sangra (edge case).
+  - `update(nowMs, hpMul): { id: number; damage: number }[]`: um tique em cada `startMs + k × tickMs ≤ endMs` ainda
+    não entregue, de `round((perStack × stacks + flat) × hpMul)` (LMN-03); a entrada sai quando `nowMs > endMs`
+    (Corte 0 e um leve só: tiques em 600 e 1200 ms, fim em 1500, nada em 1800; leves a cada 250 ms: um tique a cada
+    600 ms enquanto durarem).
   - `view(id): { stacks; msLeft }` (`{ 0, 0 }` sem sangramento, WDB-05), `drop(id)`, `prune(liveIds)` (LMN-05: morto
     ou fora da área), `reset()`.
 
@@ -298,11 +311,13 @@ Lança e anda os 3 s da supressão.
 - **Interfaces**:
   - `stats(): WeaponStats | null` (refeito por quadro a partir de `arsenal.weapon` e `loadout.axes`).
   - `strikeMods(move, base): StrikeMods` (chamado pelo `StatsDirector.strikeMods`, por último): `weaponStrike` e, no
-    Bastão com Derrubada, `targetMarks = (t) => ({ knockdown: knockdownFor(stats.knockdown, sideOf(t)) })`.
+    forte do Bastão, `targetMarks = (t) => bastaoTargetMarks(stats, player.x, player.facing, sideOf(t))` (derrubada
+    só ligando e o lado do alvo de trás).
+  - `onDefense(kind)`: com a Lança e `kind === 'block'`, `player.counter.open('contra', COUNTER.windowMs)` (LNC-04).
   - `onStrikePhase(name, phase)`: no `active` do Contra com a Lança abre a `NullifyWindow`; no `recovery`/`end` fecha
     com `nullifyMs`.
-  - `trail(name, start: Vec2 | null): boolean` (`true` quando o golpe é do traço e o rastro da arma saiu, ou foi pulado
-    pelo `fxCap`; o rastro amaldiçoado não sai nesses dois casos, WFX-01, WFX-04).
+  - `trail(name, start: Vec2 | null): void` (no golpe do traço toca o rastro da arma por cima do amaldiçoado, que já
+    saiu; com o `fxCap` cheio só o sprite da arma é pulado, WFX-01, WFX-04).
   - `onMeleeHit(hit, point, target)`: só com `hit.moveName` de um golpe do `MOVES` e do traço (o objeto do mundo não
     tem `moveName`, WPN-04; o finalizador não é do `MOVES`): impacto da arma (WFX-03), pilha de sangramento (LMN-02),
     `ExtraHits.schedule` na Nuvem (WEV-06), `suppressAffixes` no Contra perfeito no chefe com o Toji (WEV-07).
@@ -318,10 +333,12 @@ Lança e anda os 3 s da supressão.
 - **Interfaces**: `update(nowMs, stats)`, `addBleed(id, spec, nowMs)`, `scheduleExtra(id, damage, nowMs)`,
   `bleedOf(id)`, `reset()`.
   - Tique: `target.receiveHit({ ownerId: player.id, damage, strength: 'light', force: 0, direction, band: 'chip',
-    tech: true })`; aceito, `effects.onTechConnect(hit, point, target)` (número cinza `chip`, faísca pequena, sem
+    tech: true, unblockable: true })` (sem `techId`: o `adaptSourceOf` da F32 devolve `null`; o `unblockable` passa a
+    guarda, que o `EnemyDefense.receiveHit` resolve antes da faixa, l.117-127); aceito, `effects.onTechConnect(hit, point, target)` (número cinza `chip`, faísca pequena, sem
     hitstop). Não passa pelo `combat.onConnect`, então não dá energia, combo, Fúria, Cadência, Kokusen nem talento e
     não gasta o Passo sombrio (LMN-04). O `tech: true` deixa o tique valer no comum caído (edge case do POW-15).
-  - Extra da Nuvem: o mesmo caminho com `band: 'micro'`, `strength: 'heavy'` e o dano agendado (WEV-06).
+  - Extra da Nuvem: o mesmo caminho com `band: 'micro'`, `strength: 'heavy'`, `tech: true`, `unblockable: true` e o
+    dano agendado (WEV-06; sem o `unblockable`, a guarda lida, `readGuard`, seguraria o extra pesado).
   - Anulação: com a janela aberta, cada `Projectile` vivo cujo retângulo (`x`, `y`, `width` da F31, `height`) toca a
     área do Contra (`strikeShape` posta no centro do player de agora, virada pelo `facing`) leva `destroyNow()`,
     evento `nullify:<kind>` e o impacto da Lança no ponto do projétil (LNC-02).
@@ -353,8 +370,8 @@ Lança e anda os 3 s da supressão.
 
 - `onStrikePhase` (l.135-162): a 1ª linha passa a fase a `this.s.arsenal.weapon.onStrikePhase(name, phase)`; o corpo do
   ramo `active` (l.146-157) vai para `drawTrail(name, strength)`, que calcula o ponto de partida (`handTrail[0]` ou
-  `strikeWorld('<nome>-wind')`), pergunta `this.s.arsenal.weapon.trail(name, start)` e, com `false`, desenha o rastro
-  amaldiçoado como hoje (com o `extraPx` da F29 e o `reachPx` da F30). A complexidade do `onStrikePhase` (arquivo na
+  `strikeWorld('<nome>-wind')`), desenha o rastro amaldiçoado como hoje (com o `extraPx` da F29 e o `reachPx` da F30)
+  e chama `this.s.arsenal.weapon.trail(name, start)` por cima. A complexidade do `onStrikePhase` (arquivo na
   lista de exceção) desce.
 
 ### `game/player/strikes.ts` (muda, ~229 com a F35 → ~232)
@@ -370,8 +387,8 @@ Lança e anda os 3 s da supressão.
   (l.21-26).
 - `meleeMul`: `... × relicStrikeMul(arsenal, t.light) × weaponStrikeMul(arsenal.weapon, t) × vowStrikeMul(...)`
   (l.72; o Impacto da F30 fica onde a F30 o pôs).
-- `StrikeMods` ganha `sweepPx?: number`, `maxTargets?: number` e `targetMarks?: (target: Hittable) => Pick<Hit,
-  'knockdown'>`.
+- `StrikeMods` ganha `sweepPx?: number`, `maxTargets?: number` e `targetMarks?: (target: Hittable) =>
+  Partial<Pick<Hit, 'knockdown' | 'direction'>>`.
 
 ### `scenes/test/statsDirector.ts` (muda, ~84 com a F35 → ~86)
 
@@ -483,12 +500,13 @@ Lança e anda os 3 s da supressão.
 | `src/game/debugApi.ts` | 55, 114 | `bleed: BleedSnapshot` no comum e no chefe |
 | `scripts/smoke/weapon-imbued.smoke.mjs` (novo) | — | IMB e Lâmina |
 
-**Passo 3 (Bastão; BST-01 a BST-04)**: `weaponStats.ts` (`sweepShape`, `knockdownFor`, Peso), `weaponDirector.ts`
+**Passo 3 (Bastão; BST-01 a BST-05)**: `weaponStats.ts` (`sweepShape`, `knockdownFor`, `bastaoTargetMarks`, Peso), `weaponDirector.ts`
 (`targetMarks` com `Enemy.weapon` e `instanceof Boss`), `tests/core/weaponStrike.test.ts`, cenários do Bastão no
 `weapon-imbued`. Smokes: `weapon-imbued`, `fight`, `impact`, `targets`, `enemy-`.
 
-**Passo 4 (Lança; LNC-01 a LNC-03)**: `weaponStats.ts` (alcance e alvos do Contra), `core/weaponTimers.ts`
-(`NullifyWindow`), `weaponHits.ts` (anulação), `weaponDirector.onStrikePhase`, `impactFx.ts` (repasse da fase, l.135),
+**Passo 4 (Lança; LNC-01 a LNC-04)**: `weaponStats.ts` (alcance e alvos do Contra), `core/weaponTimers.ts`
+(`NullifyWindow`), `weaponHits.ts` (anulação), `weaponDirector.onStrikePhase` e `onDefense`, `arsenalDirector.onDefense`,
+`combat.ts` (`this.s.arsenal.onDefense(kind)` no `onDefense`, +1), `impactFx.ts` (repasse da fase, l.135),
 `tests/core/weaponTimers.test.ts`, cenários da Lança. Smokes: `weapon-imbued`, `defense`, `boss`.
 
 **Passo 5 (rastro e impacto; WFX-01 a WFX-05; depende do merge do `feat/arte-armas-imbuidas`)**
@@ -578,7 +596,7 @@ export interface WeaponStats {
   maxTargets: number | null;                     // Bastão 3; Lança 1 + perfuração
   forceMul: number;                              // Bastão 1/1,25/1,5; os outros 1
   knockdown: 'none' | 'unarmed' | 'armed';
-  bleed: { maxStacks: number; durationMs: number; tickMs: number; tick: number } | null;
+  bleed: { maxStacks: number; durationMs: number; tickMs: number; perStack: number; flat: number } | null;
   nullifyMs: number | null;                      // Lança: 100 × anulação (0 = só o active)
   unblockable: boolean;                          // Lâmina Dividida da Alma
   nuvem: boolean;
@@ -593,7 +611,7 @@ export interface StrikeMods {
   crit?: (target: Hittable) => number;                                            // F35
   sweepPx?: number;                                                               // BST-01
   maxTargets?: number;                                                            // BST-01, LNC-01
-  targetMarks?: (target: Hittable) => Pick<Hit, 'knockdown'>;                     // BST-02
+  targetMarks?: (target: Hittable) => Partial<Pick<Hit, 'knockdown' | 'direction'>>; // BST-02, BST-05
 }
 
 // core/arsenal.ts
@@ -641,7 +659,7 @@ Reconferir nos merges.
 | `src/game/debugApi.ts` | 310 | ~342 (F35 ~327 + F32 ~15) | ~339 | o tipo `arsenal` vira import (−6); `bleed` ×2 e 1 import |
 | `src/game/CursedFx.ts` | 282 | ~282 | ~285 | `track` |
 | `src/scenes/test/impactFx.ts` | 183 | ~186 | ~192 | repasse da fase e `drawTrail` (exceção de complexidade: a função encolhe) |
-| `src/scenes/test/combat.ts` | 226 | ~240 | ~241 | uma chamada |
+| `src/scenes/test/combat.ts` | 226 | ~240 | ~242 | duas chamadas (`onMeleeHit`, `onDefense`) |
 | `src/game/player/strikes.ts` | 214 | ~229 | ~232 | duas expressões e uma linha no `prepare`; nenhum ramo no `updateStrikes`/`onMove` |
 | `src/scenes/test/snapshot.ts` | 210 | ~211 | ~217 | `enemyEntry`/`bossEntry` extraídos; o `debugSnapshot` (151 hoje, na exceção) desce para ~110 |
 | `src/core/shop.ts` | 292 | ~222 | ~226 | `applyEvolution` com a evolução de arma; `DrawContext.arsenal` |
@@ -699,10 +717,12 @@ funções com aviso; nenhum ramo novo no `updateStrikes` nem no `onMove`). O `En
 | Compra de arma com outra no slot | `arsenalEligible` não oferece (troca é pelo Abandonar da F35) | A carta não aparece |
 | Ferramenta pendente e algo na mão no começo da rodada | Não entrega; continua pendente | Recebe na próxima rodada de mãos vazias (IMB-04.5) |
 | Golpe do traço sem ponto de golpe no quadro (rastro da Lâmina/Lança) | `drawTrail` usa a borda de trás da hitbox resolvida no centro do player; o `strikeWorld` avisa uma vez por quadro | O rastro sai preso no corpo |
-| `fxCap` cheio | `WeaponFx.trail`/`impact` devolvem sem criar; o golpe e o dano valem; o rastro amaldiçoado também não sai (WFX-04) | Sem efeito naquele golpe |
+| `fxCap` cheio | `WeaponFx.trail`/`impact` devolvem sem criar; o golpe, o dano e o rastro amaldiçoado valem (WFX-04) | Sem o sprite da arma naquele golpe |
 | Alvo morre ou a área troca com sangramento ou extras pendentes | `prune` pelos ids vivos no quadro seguinte (LMN-05, edge cases) | Nenhum tique a mais |
 | Tique no comum caído ou em ragdoll | `tech: true` e `band: 'chip'`: aplica sem `downHits` nem reação (POW-15) | Número cinza |
 | Dois leves no mesmo quadro no mesmo alvo | Cada `onMeleeHit` chama `apply`; o teto é do `BleedBook` | Até `1 + corte` pilhas |
+| Comum de guarda levantada sangrando | O tique sai `unblockable` (LMN-04) | O número cinza sai igual |
+| Bloqueio com a Lança e a mão ocupada por objeto | A janela abre igual; o `takeCounter` já recusa com objeto na mão (`strikes.ts:141`), então `J` balança o objeto | Sem Contra com objeto, como hoje |
 | Projétil que toca a área do Contra sem nenhum inimigo perto | A anulação não depende de acerto (edge case) | Projétil some |
 | Abandonar a arma com sangramento em curso | O `BleedBook` guarda o `spec` da aplicação | Sangramento segue até o fim |
 | Abandonar o catalisador depois de evoluir | A evolução fica no `Arsenal.weapon` até a arma sair (WEV-04) | Arma continua evoluída |
@@ -732,6 +752,12 @@ funções com aviso; nenhum ramo novo no `updateStrikes` nem no `onMove`). O `En
 | Muitos arquivos citados ainda não existem (F30, F32, F33, F35) | todo o design | Linhas e nomes mudam nos merges | Cada passo começa reconferindo os nomes; os passos 6 e 7 só começam com a F35, a F33 e a F32 na base |
 | O `bossDirector` da F32 está em ~170 e ganha a supressão | F32 `scenes/test/bossDirector.ts` | Arquivo grande, com laço por afixo | A regra do tempo é pura (`affixSuppression.ts`); cada vista lê um `boolean` |
 | O arsenal tinha cobertura só pela regra pura e por um smoke de mão | `src/scenes/test/arsenalDirector.ts`; `.specs/STATE.md` (fracos do arsenal) | Regressão de entrega sem teste | O `arsenal.smoke.mjs` reescrito mede `heldProp` nulo com arma e a ferramenta entregue com arma |
+| **Usuário.** O eixo Derrubada some com o Peso do Corpo ≥ 2: a CRP-03 já põe `knockdown: true` em todo forte que acerta comum (armado incluso), e hoje o armado não resiste a derrubada, então o 2º ponto só muda o armado sem Peso do Corpo | F30 spec CRP-03; `src/game/enemy/EnemyDefense.ts:131-137` | Eixo morto numa build de lutador, a mesma que pega o Bastão | Duas saídas antes da T28: (a) como está, com a carta de ponto avisando `já derruba (Corpo)` no lugar do valor; (b) o 2º ponto troca "também o armado" por "o comum derrubado pelo Bastão fica +400 ms no chão" (campo opcional `Hit.downMs`, lido pelo `EnemyDefense` no `ragdollStunMs`; +1 linha em `hit.ts` e +1 no `EnemyDefense.ts`, que não está na exceção) |
+| O `Shop.levelOf(entry)` lê o nível da arma pelo `arsenal.levelOf` (`src/core/shop.ts:367`), que passa a devolver 0 para a arma | `src/core/shop.ts:364-367`, `:376` | O compilador não acusa (o tipo continua `number`): a moldura e o `Nv a→b` da carta da arma sairiam sempre do Nv 0 | O passo 6 troca a linha para `axes.level(id)` quando o id é arma, com caso no `weaponShop.test.ts` |
+| O Arsenal de Toji só vale em rodada de chefe (1 a cada 5) e pede Contra perfeito no chefe | WEV-07; F32 | Evolução estreita perto da Lâmina Dividida e da Nuvem, que valem em toda onda | Fica como o plano; com o LNC-04 a Lança chega ao Nv 4 jogável sem a evolução, e a F38 decide se os afixos de elite entram na supressão (fora de escopo, como o escudo de afixo) |
+| A varredura vale em todo forte sem contra, inclusive `voadora` (240 ms de `active`, no ar, andando) e `pisao` (300 ms, descendo) | `src/data/moves.ts:280-311` | O arco desenhado no centro do player num golpe aéreo pode não ler como "varrer" | Conferir os dois golpes na T39; se não ler, o usuário decide antes do commit se o traço do Bastão fica só nos fortes de chão (mudança de uma condição no `hasTrait`) |
+| Comparação "sem a Lança o projétil acerta" no smoke da anulação | `src/game/player/defense.ts:96-100` (CNT-11), `src/game/Projectile.ts:103-121` | O Contra em `startup`/`active` já não leva dano e o projétil some no toque: o cenário que compara com e sem a Lança passaria sem a anulação | O smoke usa o projétil que toca a área do Contra no `active` e chegaria ao corpo no `recovery` (o 3º da rajada a 150 ms, ou o 2º com Anulação 1) |
+| Equilíbrio entre armas medido só no papel | WPN-05; `tests/data/weaponBalance.test.ts` | O modelo erra o jogo vivo (ritmo de bloqueio inventado, 0,25/s) | O teste fixa o modelo e a razão; se o jogo mostrar outra arma óbvia, o número que muda é o do traço (`tickMs`, `WEAPON.mul` por arma), nunca o de um eixo, e com o usuário |
 | Arte nova em movimento (rastro de 4 quadros no `active`, arco escalado, impacto por cima) | `game/WeaponFx.ts`; `wt-armas` | Prancha estática não mostra troca de lado nem o arco no corpo | Conferir em HD, parado e correndo, para os dois lados, antes do commit do passo 5; o smoke lê `flipX`, `originX`, `scale` e `depth` do sprite vivo (L-043, L-055, L-070) |
 
 ---
@@ -747,6 +773,8 @@ funções com aviso; nenhum ramo novo no `updateStrikes` nem no `onMove`). O `En
 | Varredura do Bastão | Uma hitbox só, mais larga (`sweepShape`) | O portão de alvos já dá um acerto por golpe (BST-04) |
 | Sangramento e Nuvem | Acertos com faixa (`chip`, `micro`) entregues fora do `combat.onConnect` | Não alimentam a build (LMN-04) e usam o teto de hitstop da F29 |
 | Contagem no `fxCap` | O sprite da arma entra no conjunto vivo do `CursedFx` (`track`) | Um teto só, como pede o WFX-04, e limpeza no `destroyAll` |
+| Rastro da arma | Por cima do rastro amaldiçoado, que continua com o comprimento real (Alcance do Corpo, pontos de poder) | A F29 (`2bc1102`) e a CRP-05 leem o alcance e o poder no rastro; a arte da arma tem tamanho fixo |
+| Contra da Lança no bloqueio | `WeaponDirector.onDefense` abre a janela pelo `player.counter` | Sem campo no `Player`; a postura do bloqueio segura a tartaruga |
 | Diretor da arma | `WeaponDirector` como campo do `ArsenalDirector`; entregas fora do golpe no `WeaponHits` | A `TestScene` não ganha campo; arquivos abaixo de ~160 |
 | Supressão dos afixos | Regra pura `AffixSuppression` no `BossDirector` da F32; cada vista lê um `boolean` | O chefe continua na luta; uma regra de tempo só |
 
@@ -773,14 +801,15 @@ F30 na carta da arma; nenhum sorteio novo), AD-009 (`bound-spear` e as folhas de
 | --- | --- |
 | `tests/core/boundWeaponGone.test.ts` | IMB-05: nenhum `.ts` de `src/` cita `weaponDef`, `WEAPON_KEYS`, `WEAPON_TEXTURES`, `BOUND_NAMES`, `weaponFactor`, `boundClub` ou `boundKnife` (molde do `noMathRandom.test.ts`) |
 | `tests/core/weaponAxes.test.ts` | WPN-01 (nível com 0 a 3 pontos; o 3º ponto num eixo e o 4º no total recusados sem mudar nada; a relíquia continua Nv 1 a 3), WPN-02 (ordem dos eixos), WPN-03 (`meleeMul` do `jab` com a Lâmina = 1,2 × sem arma e da `cotovelada` igual; Bastão o inverso e o `contra` igual; Lança só o `contra` e o `contraGancho`; o fator entre a relíquia e os votos, com Manoplas Nv 3 e um voto de dano, conferido pelo `Math.round`), WPN-03.4 (a grade do POW-01.3 sem arma, `toBe`), WPN-04 (`meleeMul(PROP_TRAITS)` igual com o Bastão); Kokusen com e sem o Bastão |
-| `tests/core/weaponStrike.test.ts` | LMN-01 (alcance 10/18/26 somado ao do Corpo, borda de trás fixa), BST-01 (`sweepShape` com R 60/80/100: borda de trás em −R, frente no maior entre a borda e R; `targetsFor(2, 3)` = 3, `targetsFor(undefined, 3)` = `undefined`), BST-02 (`knockdownFor` nos 3 níveis × armado/desarmado/chefe), BST-03 (força 1/1,25/1,5 sobre o `forceMul` e o Peso do Corpo), LNC-01 (alcance 0/16/32, alvos 1/2/3), LNC-03 (`unblockable` do Contra com e sem a Lança), WEV-05 (`unblockable` no leve só com a Lâmina Dividida); `jab` com o Bastão devolve o `base` igual |
-| `tests/core/bleed.test.ts` | LMN-02 (3 leves com Corte 1 dão 2 pilhas; o reinício da duração), LMN-03 (tiques em 299/300/301 ms; duração 1500/1501 com Corte 0 = 5 tiques; r1 e r9 com `hpMul` 1 e 1,48 dão 2 e 3; Sangria 1 dá 3 por pilha), o `spec` guardado na aplicação (abandono), `prune` (LMN-05), `view` `{0, 0}` sem sangramento |
+| `tests/core/weaponStrike.test.ts` | LMN-01 (alcance 10/18/26 somado ao do Corpo, borda de trás fixa), BST-01 (`sweepShape` com R 60/80/100: borda de trás em −R, frente no maior entre a borda e R; `targetsFor(2, 3)` = 3, `targetsFor(undefined, 3)` = `undefined`), BST-02 (`knockdownFor` nos 3 níveis × armado/desarmado/chefe; `bastaoTargetMarks` sem a chave `knockdown` quando não liga), BST-05 (alvo atrás com `direction.x = −facing`, alvo na frente sem `direction`, nos dois `facing`), BST-03 (força 1/1,25/1,5 sobre o `forceMul` e o Peso do Corpo), LNC-01 (alcance 0/16/32, alvos 1/2/3), LNC-03 (`unblockable` do Contra com e sem a Lança), WEV-05 (`unblockable` no leve só com a Lâmina Dividida); `jab` com o Bastão devolve o `base` igual |
+| `tests/data/weaponBalance.test.ts` | WPN-05: o modelo de referência da spec (ritmo, alvo único e grupo de 3) com os números do `WEAPON`; o ganho no melhor cenário de cada arma no Nv 1 até 1,5× o de cada outra e acima de zero nos dois cenários; o caso dos 300 ms do plano documentado como fora do teto |
+| `tests/core/bleed.test.ts` | LMN-02 (3 leves com Corte 1 dão 2 pilhas; o fim vai para `agora + duração` sem mexer no `startMs`), LMN-03 (tiques em 599/600/601 ms; Corte 0 e um leve: tique em 1200, fim em 1500, nada em 1800; leves a cada 250 ms tiqueando a cada 600 ms; r1 e r9 com `hpMul` 1 e 1,48 dão 2 e 3; Sangria 1 com 2 pilhas dá 5), o `spec` guardado na aplicação (abandono), `prune` (LMN-05), `view` `{0, 0}` sem sangramento |
 | `tests/core/weaponTimers.test.ts` | WEV-06 (`ExtraHits` em 119/120 e 239/240 ms, `round(0,5 × dano)` com dano ímpar, alvo podado não recebe), LNC-02 (`NullifyWindow`: aberta no `active`; com Anulação 1 aberta em 99 e fechada em 100 ms depois do fim; com 0 fecha no fim) |
 | `tests/core/weaponShop.test.ts` | WSH-02 (arma nova na r2 = `round(22 × 1,06)` = 23; pontos 16, 22 e 28 antes da inflação), WSH-03 (arma nova recusada na r1 e com o slot ocupado; o 3º ponto recusado na r3 e aceito na r4), WSH-04 (2 eixos com o foco primeiro, 1 só quando sobra um, nunca eixo com 2 pontos nem arma com 3), WSH-05 (arma com eixo livre e relíquia abaixo do Nv 3 como "outro item dono" da carta 0), WSH-06 (≥ 60% de foco da técnica em 1000 seeds com 2 técnicas, Corpo, arma e relíquia), WSH-09 (livro com arma, pontos e evolução; abandono limpa), IMB-04 (ferramenta elegível com arma; a compra da arma mantém a ferramenta) |
 | `tests/core/weaponPreview.test.ts` | WSH-04 (as 9 linhas de eixo com o valor antes e depois, `—→comum` e `comum→armado`, `+ evolução` só com o catalisador e o Nv 4; todas ≤ 20 caracteres), WSH-08 (moldura cinza, azul, azul, roxo; evolução de arma dourada) |
 | `tests/core/weaponEvolution.test.ts` | WEV-01 (Nv 3 com Faixas: não; Nv 4 sem Faixas: não; Nv 4 com Faixas Nv 1: sim; evoluída: não; as três receitas), WEV-02 (ordem: União de técnica antes, depois a ordem do catálogo), WEV-04 (mantém id, Nv 4 e pontos; catalisador abandonado não desfaz), WEV-07 (`AffixSuppression` ativa em 2999 e não em 3000 ms; novo gatilho reinicia), `ledgerKeyOf` |
 
-Cada limiar nos dois lados (L-010): 299/300/301 ms do tique; 1500/1501 ms da duração; 119/120 e 239/240 ms dos
+Cada limiar nos dois lados (L-010): 599/600/601 ms do tique; 1200 (tique) e 1800 ms (nada) com Corte 0; 119/120 e 239/240 ms dos
 extras; 2999/3000 ms da supressão; 99/100 ms da janela; 2 e 3 pontos no eixo; 3 e 4 no total; r3 e r4 do 3º ponto;
 r1 e r2 da arma nova.
 
@@ -807,14 +836,16 @@ do `nullify:projectile`, e o `bleed` do comum lido do `BleedBook` que o `WeaponH
      `null`; `J J` dá `move:jab` e `move:direto`; `L` conjura o Vermelho; com a cadeira do mapa na mão, `L` dá
      `techDenied:busy` e `J` balança a cadeira (IMB-01 a IMB-03).
    - Lâmina (`arsenal=lamina`): o `jab` deixa o alvo com `bleed.stacks` 1 e o `damageNumbers.last.kind` passa a
-     `chip` no 1º tique; `ce.cur` não sobe no tique (LMN-04, L-036); eventos `weaponFx:lamina:trail` e
+     `chip` no 1º tique; com `enemyGuard=1`, o tique tira HP do comum de guarda levantada; `ce.cur` não sobe no tique (LMN-04, L-036); eventos `weaponFx:lamina:trail` e
      `weaponFx:lamina:impact`; com `arsenal=bastao`, nenhum `weaponFx:*` em toda a janela do `jab` (L-020).
-   - Bastão (`arsenal=bastao&maxAlive=2`): comum atrás a 50 px leva a `cotovelada`; com `axes=bastao.arco:2`, um comum
+   - Bastão (`arsenal=bastao&maxAlive=2`): comum atrás a 50 px leva a `cotovelada` e desliza para longe do player; com `axes=bastao.arco:2`, um comum
      a 95 px atrás leva e um com a borda do corpo 1 px além dos 100 px não leva (L-047); com `axes=bastao.derrubada:1`, o desarmado cai e o armado
      (`armed=club`) não; com 2 pontos os dois caem; o chefe nunca.
    - Lança (`round=5&bossArch=oni&bossAffix=none&arsenal=lanca&axes=lanca.anulacao:1`): parry na rajada, Contra, e o
-     `projectile` seguinte que toca a área some com `nullify:projectile`, o `hp` do player igual e `arsenal.fx.last`
-     com `weapon: 'lanca'`; com `axes=lanca.perfuracao:2`, o Contra acerta 3 comuns em fila.
+     `projectile` que toca a área no `active` e chegaria ao corpo no `recovery` some com `nullify:projectile`, o `hp`
+     do player igual e `arsenal.fx.last` com `weapon: 'lanca'` (sem a Lança, o mesmo projétil tira `hp`); com
+     `axes=lanca.perfuracao:2`, o Contra acerta 3 comuns em fila; com `enemyGuard=1&maxAlive=1`, o bloqueio de frente
+     deixa `player.counter` aberto e `J` dá `move:contra` (sem a Lança, nenhuma janela) (LNC-04).
    - WFX: `arsenal.fx.last.flipX` verdadeiro virado para a esquerda e falso para a direita (L-074); `depth` do impacto
      da arma acima do impacto amaldiçoado (L-070); `scale` do arco do Bastão = `R / 32` (ou a escolha do usuário).
    - WDB-04: `arsenal.weaponAxes` e `arsenal.evolution` depois de

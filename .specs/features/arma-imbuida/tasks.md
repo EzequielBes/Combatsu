@@ -21,7 +21,7 @@ e F35 `vagas-e-talentos` mergeadas antes da T1: o passo 1 já usa o `AXIS_ITEMS`
 **Ferramentas**: nenhuma MCP. Skill só o `tlc-spec-driven`. As tarefas com arte ou efeito em movimento (T35, T36, T37,
 T38, T39, T48) conferem no jogo em HD (`?hd=1`), parado e correndo, para os dois lados (memória "Conferir animação em
 movimento"), e rodam em Opus 5.5 ou Fable, nunca Sonnet. A prancha das folhas de efeito é
-`src/game/art/hd/weaponFx/weapon-fx-boards.mjs` (é ali que o `wt-armas` a pôs; o design cita `tools/`).
+`tools/weapon-fx-boards.mjs` (do `wt-armas`, `143125f`/`ce6e03c`; saída em `.fable-out/`).
 
 Regras que valem para toda tarefa (CLAUDE.md): um commit por tarefa, só os arquivos dela (nunca `git add -A`), `npm run
 gate` verde antes do commit; smoke só do que foi tocado; smoke novo com `?debug&hd=1&area=modular`; tetos de 400 linhas
@@ -38,7 +38,10 @@ são reconferidos no começo de cada fase.
 | Antes de | Pergunta | Origem |
 | --- | --- | --- |
 | T1 | Abordagem A do design e as assumptions marcadas `n` na spec (golpe do traço, ×1,2 fixo, Kokusen com o Bastão, janela de anulação, sangramento, varredura, derrubada, Nuvem, Toji, catalisador, preços). Este arquivo segue as escolhas padrão; trocar alguma muda a tarefa que a cita | design, "Status" |
+| T1 | Sangramento a cada 600 ms com a Sangria somando 1 no tique (spec, achado da revisão: a 300 ms do plano a Lâmina Nv 1 passa de 2× o ganho das outras armas no modelo do WPN-05 e quebra o teste) ou os 300 ms do plano (o WPN-05 cai e a Lâmina vira a escolha óbvia) | spec, assumption do sangramento |
+| T1 | Lança: o bloqueio também abre o Contra (LNC-04, achado da revisão: sem isso a Lança soma ~1% do dano fora do chefe) ou só o texto do plano | spec, assumption "Lança e o bloqueio" |
 | T1 | O cenário 6 do `power.smoke.mjs` (T-POW-11 da F29) já está na base? Se não, a troca do bastão pela cadeira vai à tarefa da F29 que o cria e a T1 vira só conferência | design, risco do `power.smoke` |
+| T28 | Eixo Derrubada com o Peso do Corpo ≥ 2 (que já derruba todo comum): (a) como está, com a carta avisando `já derruba (Corpo)`; (b) o 2º ponto vira "+400 ms no chão" (`Hit.downMs`) | design, risco "Usuário" da Derrubada |
 | T36 | Escala do arco do Bastão: `R / 32` (spec WFX-02; texel torto a 1,875/2,5/3,125), 3 folhas de arco a 1 px por texel no `wt-armas`, ou escala inteira 2 | design, risco "Usuário" 1 |
 | T36 | Âncora do rastro da Lâmina: o centro do giro da arte no ponto de partida (spec) ou o meio do `handTrail` (`t = 0,5`) se o arco descolar do braço | design, risco "Usuário" 2 |
 | T38 | Ícone da `BuildBar` (24 px): o quadro `common` das folhas `bound-*` (spec) ou um quadro `icon` próprio (~20×20, a arma na diagonal) em cada folha; com `icon`, a T38 desenha os 3 quadros e a assumption da spec é trocada no mesmo commit | design, risco "Usuário" 3 |
@@ -57,7 +60,7 @@ são reconferidos no começo de cada fase.
 
 | Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
 | --- | --- | --- | --- | --- |
-| Regra pura (`src/core/**`) | unit | 1:1 com os ACs; todo edge case listado; limites nos dois lados (L-010): 299/300/301 ms do tique; 1500/1501 ms da duração; 119/120 e 239/240 ms dos extras; 2999/3000 ms da supressão; 99/100 ms da janela; 2 e 3 pontos no eixo; 3 e 4 no total; r3 e r4 do 3º ponto; r1 e r2 da arma nova; R 60/80/100 da varredura | `tests/core/*.test.ts` (arquivo novo por sistema novo) | `npm test` |
+| Regra pura (`src/core/**`) | unit | 1:1 com os ACs; todo edge case listado; limites nos dois lados (L-010): 599/600/601 ms do tique; 1200 (tique) e 1800 ms (nada) com Corte 0; leves a cada 250 ms sem atrasar o tique; 119/120 e 239/240 ms dos extras; 2999/3000 ms da supressão; 99/100 ms da janela; 2 e 3 pontos no eixo; 3 e 4 no total; r3 e r4 do 3º ponto; r1 e r2 da arma nova; R 60/80/100 da varredura | `tests/core/*.test.ts` (arquivo novo por sistema novo) | `npm test` |
 | Números e tabelas (`src/data/**`) | unit | Tabelas do WPN-02 e do `WEAPON` linha a linha; catálogo com a Lança por último e as 3 evoluções antes dela; o sorteio das seeds de hoje igual enquanto a Lança fica fora do catálogo | `tests/data/*.test.ts` | `npm test` |
 | Arte em código (`src/game/art/hd/**`) | unit + prancha | `bound-spear` só com chaves da `PALETTE`, ≥ 14 px de largura, mais alta que a lâmina; conferência na prancha (`tools/hd-boards.mjs`) | `tests/game/hdWeapons.test.ts` | `npm test` |
 | Vistas do motor (`src/game/WeaponFx.ts`, `src/game/BuildBar.ts`, `src/game/CursedFx.ts`) | smoke + conferência em movimento | Textura, quadro, `scale`, `flipX`, `originX` e `depth` lidos do `Sprite` vivo (L-043, L-055, L-070, L-074); conferência em HD, parado e correndo, dois lados | `scripts/smoke/weapon-imbued.smoke.mjs` | `npm run smoke -- weapon-imbued` |
@@ -532,18 +535,21 @@ Despertar quando o registro tem `branches`; `level(item)` continua `1 + total`.
 `weaponStrikeMul(weapon, t)` (`t.object` → 1; traço da arma → `WEAPON.mul`; senão 1) e `resolveWeapon(id, points,
 evolution)` com os campos de `WeaponStats` do design (Lâmina `reachPx`, `bleed`; Bastão `sweepPx`, `minTargets`,
 `knockdown`, `forceMul`; Lança `reachPx`, `maxTargets`, `nullifyMs`); `unblockable`, `nuvem` e `toji` ficam `false` até
-a T57. Sem `phaser` (AD-001).
+a T57. Sem `phaser` (AD-001). Mais o teste de equilíbrio entre armas (WPN-05) sobre o modelo de referência da spec.
 **Where**: `src/core/weaponStats.ts`
 **Depends on**: T11
 **Reuses**: `MeleeTraits` (F29), `MoveDef`, `WEAPON`
-**Requirement**: WPN-03, WPN-04
+**Requirement**: WPN-03, WPN-04, WPN-05
 
 **Done when**:
 
 - [ ] `tests/core/weaponAxes.test.ts` (novo): `weaponTraitOf` do `jab`, `cotovelada`, `contra` e `contraGancho`;
       `weaponStrikeMul` das 3 armas × leve/forte/contra/objeto; `resolveWeapon` com 0/1/2 pontos em cada eixo (alcance
-      10/18/26 e 0/16/32, pilhas 1/2/3, duração 1500/2000/2500, tique 2/3/4, R 60/80/100, derrubada none/unarmed/armed,
+      10/18/26 e 0/16/32, pilhas 1/2/3, duração 1500/2000/2500, `flat` da Sangria 0/1/2, `tickMs` 600, R 60/80/100, derrubada none/unarmed/armed,
       força 1/1,25/1,5, alvos 1/2/3, janela 0/100/200)
+- [ ] `tests/data/weaponBalance.test.ts` (novo): o modelo de referência da spec (ritmo da seção 5.6, 0,25 bloqueio/s,
+      alvo único e grupo de 3) com os números do `WEAPON`; ganho no melhor cenário de cada arma no Nv 1 até 1,5× o de
+      cada outra e acima de zero nos dois cenários; o caso com `tickMs` 300 fora do teto, para a escolha ficar visível
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
@@ -741,10 +747,11 @@ varredura entra na T28) e `targetsFor(moveMax, modsMax)`. `StrikeMods` em `core/
 
 #### T22: `BleedBook`
 
-**What**: `core/bleed.ts` (novo) com relógio injetado: `apply(id, spec, nowMs)` (+1 pilha até `maxStacks`, reinicia,
-guarda o `spec`), `update(nowMs, hpMul)` (tique a cada `tickMs` desde o último reinício enquanto `elapsed ≤
-durationMs`, `round(stacks × tick × hpMul)`; sai depois do último), `view(id)` (`{0, 0}` sem sangramento), `drop`,
-`prune(liveIds)`, `reset`.
+**What**: `core/bleed.ts` (novo) com relógio injetado: `apply(id, spec, nowMs)` (abre com `startMs = nowMs` ou soma
+1 pilha até `maxStacks`; nos dois casos `endMs = nowMs + durationMs`, sem mexer no `startMs`; guarda o `spec`),
+`update(nowMs, hpMul)` (um tique em cada `startMs + k × tickMs ≤ endMs` ainda não entregue, `round((perStack × stacks
++ flat) × hpMul)`; sai quando `nowMs > endMs`), `view(id)` (`{0, 0}` sem sangramento), `drop`, `prune(liveIds)`,
+`reset`.
 **Where**: `src/core/bleed.ts`
 **Depends on**: None
 **Reuses**: molde de relógio injetado das regras puras
@@ -752,8 +759,9 @@ durationMs`, `round(stacks × tick × hpMul)`; sai depois do último), `view(id)
 
 **Done when**:
 
-- [ ] `tests/core/bleed.test.ts` (novo): 299/300/301 ms; Corte 0 dá 5 tiques (1500 sim, 1501 não); 3 aplicações com
-      `maxStacks` 2 dão 2 pilhas e reiniciam a duração; `hpMul` 1 e 1,48 dão 2 e 3; Sangria 1 dá 3 por pilha; o `spec`
+- [ ] `tests/core/bleed.test.ts` (novo): 599/600/601 ms; Corte 0 e um leve: tique em 1200, fim em 1500, nada em 1800;
+      aplicações a cada 250 ms: um tique a cada 600 ms (o relógio não reinicia); 3 aplicações com `maxStacks` 2 dão 2
+      pilhas e levam o fim adiante; `hpMul` 1 e 1,48 dão 2 e 3; `flat` 1 com 2 pilhas dá 5; o `spec`
       guardado não muda com outra arma; `prune` tira o id morto sem tique; dois `apply` no mesmo `nowMs` somam 2 até o
       teto
 - [ ] Gate verde; contagem = anterior + os novos
@@ -835,7 +843,8 @@ linhas) para `enemyEntry(e)` e `bossEntry()`; o snapshot fica igual.
 
 #### T26: Sangramento no jogo
 
-**What**: `scenes/test/weaponHits.ts` (novo) com o tique (`receiveHit` com `band: 'chip'`, `tech: true`, `force: 0`;
+**What**: `scenes/test/weaponHits.ts` (novo) com o tique (`receiveHit` com `band: 'chip'`, `tech: true`, sem `techId`,
+`unblockable: true`, `force: 0`;
 aceito, `effects.onTechConnect`; fora do `combat.onConnect`) e o `prune` pelos ids vivos; `WeaponDirector.onMeleeHit`
 (só golpe do `MOVES` e do traço: objeto do mundo não tem `moveName`) põe a pilha e `update(dt)` chama o `WeaponHits`;
 `ArsenalDirector.onMeleeHit`/`update` repassam; `combat.onConnect` chama `this.s.arsenal.onMeleeHit(hit, point,
@@ -849,7 +858,9 @@ Cenário Lâmina-sangramento no `weapon-imbued`.
 **Done when**:
 
 - [ ] Smoke: com `arsenal=lamina`, depois do `jab` o HP do comum desce de novo sem golpe e o `damageNumbers.last.kind`
-      é `chip`; `ce.cur` e o combo não sobem no tique (L-036); com a cadeira do mapa e a Lâmina, nenhum tique
+      é `chip`; `ce.cur` e o combo não sobem no tique (L-036); com a cadeira do mapa e a Lâmina, nenhum tique; com
+      `enemyGuard=1`, o tique tira HP do comum de guarda levantada (a guarda resolve antes da faixa); `J J J` seguidos
+      deixam sair tique durante o combo (o relógio não reinicia)
 - [ ] Smokes `weapon-imbued`, `fight`, `impact` e `hud` verdes; `combat.ts` +1 linha, `techDirector.ts` +1 linha
 - [ ] Gate verde
 
@@ -887,17 +898,20 @@ fim e depois da morte do alvo (LMN-05).
 #### T28: Varredura, derrubada e peso do Bastão
 
 **What**: em `core/weaponStats.ts`: `sweepShape(shape, R)` (borda de trás em −R, frente no maior entre a borda e R,
-altura igual), `strikeShape` aplica a varredura depois do `widenForward`, `knockdownFor(level, {isBoss, armed})`, e o
-`weaponStrike` multiplica a força pelo `1 + 0,25 × peso` e põe `maxTargets ≥ 3` no forte sem contra.
+altura igual), `strikeShape` aplica a varredura depois do `widenForward`, `knockdownFor(level, {isBoss, armed})`,
+`bastaoTargetMarks(stats, playerX, facing, target)` (`knockdown: true` só quando liga, sem a chave quando não liga;
+`direction.x = −facing` no alvo de trás), e o `weaponStrike` multiplica a força pelo `1 + 0,25 × peso` e põe
+`maxTargets ≥ 3` no forte sem contra.
 **Where**: `src/core/weaponStats.ts`
 **Depends on**: T21
 **Reuses**: `widenForward`, `HitboxShape`
-**Requirement**: BST-01, BST-02, BST-03, BST-04
+**Requirement**: BST-01, BST-02, BST-03, BST-04, BST-05
 
 **Done when**:
 
 - [ ] `tests/core/weaponStrike.test.ts`: `sweepShape` com R 60/80/100 (bordas nos dois lados de cada valor, L-010);
-      `knockdownFor` nos 3 níveis × armado/desarmado/chefe; força 1/1,25/1,5 sobre o `forceMul` da F29 e o Peso do
+      `knockdownFor` nos 3 níveis × armado/desarmado/chefe; `bastaoTargetMarks` sem a chave `knockdown` no armado com
+      Derrubada 1 (a `rasteira` continua derrubando) e com `direction.x = −facing` só no alvo de trás, nos dois `facing`; força 1/1,25/1,5 sobre o `forceMul` da F29 e o Peso do
       Corpo; `contra` com o Bastão sem varredura
 - [ ] Gate verde; contagem = anterior + os novos
 
@@ -910,13 +924,13 @@ altura igual), `strikeShape` aplica a varredura depois do `widenForward`, `knock
 #### T29: Smoke da varredura do Bastão
 
 **What**: cenários no `weapon-imbued` com `arsenal=bastao&maxAlive=2&enemyGuard=0`: comum atrás a 50 px leva a
-`cotovelada`; com `axes=bastao.arco:2`, um comum a 95 px atrás leva e um com a borda do corpo 1 px além dos 100 px não
+`cotovelada` e o `x` dele se afasta do player (BST-05); com `axes=bastao.arco:2`, um comum a 95 px atrás leva e um com a borda do corpo 1 px além dos 100 px não
 leva (L-047); o comum na frente e atrás da hitbox leva um acerto só (contagem de `damageNumbers` por id, BST-04); com
 `axes=bastao.peso:2` o deslize do comum é maior que com 0.
 **Where**: `scripts/smoke/weapon-imbued.smoke.mjs`
 **Depends on**: T28, T24
 **Reuses**: posicionamento de comum do `targets.smoke.mjs`
-**Requirement**: BST-01, BST-03, BST-04
+**Requirement**: BST-01, BST-03, BST-04, BST-05
 
 **Done when**:
 
@@ -932,8 +946,8 @@ leva (L-047); o comum na frente e atrás da hitbox leva um acerto só (contagem 
 
 #### T30: Derrubada do Bastão por alvo
 
-**What**: `WeaponDirector.strikeMods` põe `targetMarks = (t) => ({ knockdown: knockdownFor(stats.knockdown,
-sideOf(t)) })` no Bastão com Derrubada (`armed` por `Enemy.weapon`, `isBoss` por `instanceof Boss`). Cenário no
+**What**: `WeaponDirector.strikeMods` põe `targetMarks = (t) => bastaoTargetMarks(stats, player.x, player.facing,
+sideOf(t))` no forte do Bastão (`armed` por `Enemy.weapon`, `isBoss` por `instanceof Boss`). Cenário no
 `weapon-imbued`: com `axes=bastao.derrubada:1` o comum desarmado vai a `ragdoll` e o armado (`armed=club`) não; com 2
 pontos os dois; o chefe nunca.
 **Where**: `src/scenes/test/weaponDirector.ts`
@@ -943,7 +957,8 @@ pontos os dois; o chefe nunca.
 
 **Done when**:
 
-- [ ] Os 4 fatos lidos do `state` do alvo vivo
+- [ ] Os 4 fatos lidos do `state` do alvo vivo; com Derrubada 1, a `rasteira` no armado continua derrubando (a marca
+      não apaga o `knockdown` do golpe)
 - [ ] Smokes `weapon-imbued`, `armed` (isolado se falhar) e `boss` verdes
 - [ ] Gate verde
 
@@ -976,25 +991,29 @@ pontos os dois; o chefe nunca.
 
 ---
 
-#### T32: Smoke do alcance e da perfuração da Lança
+#### T32: Alcance e perfuração da Lança, e o Contra no bloqueio
 
-**What**: cenários no `weapon-imbued` com `arsenal=lanca`: com `axes=lanca.estocada:2` o Contra acerta um comum 30 px
+**What**: `WeaponDirector.onDefense(kind)` (com a Lança e `block`, `player.counter.open('contra',
+COUNTER.windowMs)`), `ArsenalDirector.onDefense` repassa e `combat.onDefense` chama `this.s.arsenal.onDefense(kind)`
+logo depois do `build.onDefense` (+1). Cenários no `weapon-imbued` com `arsenal=lanca`: com `enemyGuard=1&maxAlive=1`
+o bloqueio de frente deixa `player.counter` aberto e `J` dá `move:contra`, sem a Lança nenhuma janela (LNC-04); com `axes=lanca.estocada:2` o Contra acerta um comum 30 px
 além do alcance de hoje e não 33 px; com `axes=lanca.perfuracao:2` o Contra acerta 3 comuns em fila (`maxAlive=3`);
 com `enemyGuard=1` o Contra passa pela guarda com e sem a Lança (LNC-03).
-**Where**: `scripts/smoke/weapon-imbued.smoke.mjs`
+**Where**: `src/scenes/test/weaponDirector.ts`
 **Depends on**: T24
-**Reuses**: parry e Contra do `defense.smoke.mjs`
-**Requirement**: LNC-01, LNC-03
+**Reuses**: parry e Contra do `defense.smoke.mjs`, `player.counter`, `COUNTER.windowMs`
+**Requirement**: LNC-01, LNC-03, LNC-04
 
 **Done when**:
 
-- [ ] Os fatos acima lidos do HP dos comuns vivos
+- [ ] Os fatos acima lidos do HP dos comuns vivos e do `player.counter` do snapshot; `combat.ts` +1 linha; `Player.ts`
+      sem campo novo
 - [ ] Smokes `weapon-imbued` e `defense` verdes
 - [ ] Gate verde
 
 **Tests**: smoke
 **Gate**: full
-**Commit**: `test(smoke): prove the spear counter reach and pierce`
+**Commit**: `feat(weapon): open the counter on block with the spear`
 
 ---
 
@@ -1013,8 +1032,10 @@ na base, expor `width`/`height` no `Projectile.ts` (+2). Cenário no `weapon-imb
 
 **Done when**:
 
-- [ ] Smoke: parry na rajada, Contra, e o `projectile` seguinte que toca a área some com `nullify:projectile` e o `hp`
-      do player igual; sem a Lança o mesmo projétil acerta; Contra sem inimigo perto também anula
+- [ ] Smoke: parry na rajada, Contra, e o `projectile` que toca a área no `active` e chegaria ao corpo no `recovery`
+      some com `nullify:projectile` e o `hp` do player igual; sem a Lança o mesmo projétil tira `hp` (o projétil que
+      chega no `startup`/`active` não serve de prova: o Contra já não leva dano, CNT-11, `defense.ts:96-100`); Contra
+      sem inimigo perto também anula
 - [ ] Smokes `weapon-imbued`, `defense` e `boss` verdes
 - [ ] Gate verde
 
@@ -1075,11 +1096,11 @@ impacto, `FX_DEPTH + 1`, `cursedFx.track`, `false` com o teto cheio) e `debug()`
 
 #### T36: Rastro da arma no golpe do traço
 
-**What**: `ImpactFx.onStrikePhase` passa o corpo do `active` para `drawTrail(name, strength)`, que pergunta
-`this.s.arsenal.weapon.trail(name, start)` antes do rastro amaldiçoado; `WeaponDirector.trail` toca
+**What**: `ImpactFx.onStrikePhase` passa o corpo do `active` para `drawTrail(name, strength)`, que desenha o rastro
+amaldiçoado como hoje e depois chama `this.s.arsenal.weapon.trail(name, start)` por cima; `WeaponDirector.trail` toca
 `WeaponFx.trail` (4 quadros no `active`, `flipX` pelo `facing`, Lâmina e Lança a 1 px por texel na âncora do ponto de
 partida, Bastão na escala decidida pelo usuário com a âncora no centro do player) e emite `weaponFx:<arma>:trail`;
-`true` também quando o teto pulou o sprite (o amaldiçoado não sai).
+com o teto cheio só o sprite da arma é pulado.
 **Where**: `src/scenes/test/impactFx.ts`
 **Depends on**: T35
 **Reuses**: `strikeWorld`, `handTrail`
@@ -1089,7 +1110,8 @@ partida, Bastão na escala decidida pelo usuário com a âncora no centro do pla
 
 - [ ] Smoke: cada arma emite `weaponFx:<arma>:trail` no golpe do traço; o `jab` com o Bastão não emite nenhum
       `weaponFx:*` em toda a janela do golpe (L-020); `arsenal.fx.last.scale` do Bastão = a escala decidida; `originX`
-      e `flipX` corretos nos dois lados
+      e `flipX` corretos nos dois lados; o rastro amaldiçoado do golpe do traço continua saindo com o `extraPx` da F29
+      e o Alcance do Corpo (smokes `impact` e `cursed-body` iguais)
 - [ ] `oxlint` com a complexidade do `onStrikePhase` descendo
 - [ ] Conferência em HD dos 3 rastros, parado e correndo, dois lados
 - [ ] Smokes `weapon-imbued`, `impact`, `feel`, `fxlab` e `fight` verdes
@@ -1792,7 +1814,8 @@ passa a guarda do comum (HP desce com a guarda erguida); sem a evolução, o mes
 #### T69: Nuvem Itinerante
 
 **What**: `WeaponDirector.onMeleeHit` agenda `ExtraHits` no forte sem contra com a Nuvem; `WeaponHits.update` entrega os
-vencidos com `band: 'micro'`, `strength: 'heavy'` e o dano agendado, pulando o alvo morto; troca de área e reset
+vencidos com `band: 'micro'`, `strength: 'heavy'`, `tech: true`, `unblockable: true` e o dano agendado, pulando o
+alvo morto; troca de área e reset
 descartam.
 **Where**: `src/scenes/test/weaponHits.ts`
 **Depends on**: T65, T58
@@ -1980,6 +2003,7 @@ requisito; conferência final do IMB-06 (`git diff --stat` da base: `TestScene.t
 | WPN-02 | T10, T11 |
 | WPN-03 | T13, T14, T20 |
 | WPN-04 | T13, T14, T20, T26 |
+| WPN-05 | T13 |
 | LMN-01 | T21, T23, T24 |
 | LMN-02 | T22, T26 |
 | LMN-03 | T22, T26 |
@@ -1989,9 +2013,11 @@ requisito; conferência final do IMB-06 (`git diff --stat` da base: `TestScene.t
 | BST-02 | T28, T30 |
 | BST-03 | T28, T29 |
 | BST-04 | T28, T29 |
+| BST-05 | T28, T29, T30 |
 | LNC-01 | T21, T32 |
 | LNC-02 | T31, T33, T37 |
 | LNC-03 | T21, T32 |
+| LNC-04 | T32 |
 | WFX-01 | T36, T39 |
 | WFX-02 | T36, T39 |
 | WFX-03 | T35, T39 |
@@ -2019,7 +2045,7 @@ requisito; conferência final do IMB-06 (`git diff --stat` da base: `TestScene.t
 | WDB-04 | T17, T18, T65 |
 | WDB-05 | T25, T27 |
 
-48 de 48 requisitos com tarefa.
+51 de 51 requisitos com tarefa.
 
 ---
 
@@ -2057,7 +2083,8 @@ no design.
 
 | Task | Scope | Status |
 | --- | --- | --- |
-| T1, T7, T20, T29, T32, T53, T68 | 1 smoke ou cenário | ✅ |
+| T1, T7, T20, T29, T53, T68 | 1 smoke ou cenário | ✅ |
+| T32 | 1 comportamento (Contra no bloqueio): 1 método no diretor + o repasse de 1 linha + os cenários da Lança | ⚠️ coeso (merge forward: o método sem chamador não tem prova) |
 | T2 | 1 diretor + o smoke que ele muda (`arsenal`) | ⚠️ coeso: tirar a arma da mão sem reescrever o smoke deixa o gate vermelho |
 | T3 | 1 tipo (`Arsenal.weapon`) + os leitores que o typecheck aponta + os testes que importavam o `weaponDef` | ⚠️ coeso: o tipo sem os leitores não compila |
 | T4, T5, T10, T12, T14, T19 | 1 arquivo, 1 mudança | ✅ |
@@ -2177,8 +2204,8 @@ Nenhuma dependência aponta para fase posterior.
 
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | --- | --- | --- | --- | --- |
-| T1, T7, T20, T29, T32, T53, T68 | Smoke (prova do adaptador) | smoke | smoke | ✅ OK |
-| T2, T18, T23, T24, T25, T26, T30, T33, T50, T51, T52, T65, T66, T67, T69, T70, T71, T73, T74 | Adaptadores | smoke | smoke | ✅ OK |
+| T1, T7, T20, T29, T53, T68 | Smoke (prova do adaptador) | smoke | smoke | ✅ OK |
+| T2, T18, T23, T24, T25, T26, T30, T32, T33, T50, T51, T52, T65, T66, T67, T69, T70, T71, T73, T74 | Adaptadores | smoke | smoke | ✅ OK |
 | T3, T5, T19 | Regra pura lida pelo jogo vivo | unit (+ smoke) | unit + smoke | ✅ OK |
 | T4, T9, T10, T11, T54, T60 | Dados | unit | unit | ✅ OK |
 | T6 | Teste de fonte | unit | unit | ✅ OK |
