@@ -15,6 +15,7 @@ import { CAMERA_FEEL } from '../../data/feel';
 import { debugParam } from './params';
 import { FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, FINISHER_ZOOM_HOLD_MS } from './camera';
 import type { TestScene } from '../TestScene';
+import { WallStun } from './wallStun';
 
 export type ContactEvent = { pairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType }[] };
 
@@ -23,7 +24,12 @@ export const FINISHER_HITSTOP_MS = 150;
 
 /** Ligações de combate: entrega de golpes entre player, inimigos, chefe e objetos, defesa, finalizador e contatos. */
 export class CombatLinks {
-  constructor(readonly s: TestScene) {}
+  /** VRM-16: a parede que atordoa o comum derrubado pelo Vermelho Máximo. */
+  readonly wallStun: WallStun;
+
+  constructor(readonly s: TestScene) {
+    this.wallStun = new WallStun(s);
+  }
 
   /**
    * Inimigos comuns + limitador de atacantes (LIM-01..07, EDG-03). Por inimigo, a cena entrega `granted`,
@@ -304,6 +310,7 @@ export class CombatLinks {
   listenForContacts(): void {
     const onStart = (event: ContactEvent): void => {
       routeContacts(event.pairs);
+      this.wallStun.onContacts(event.pairs);
     };
     this.s.matter.world.on('collisionstart', onStart);
     this.s.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.s.matter.world?.off('collisionstart', onStart));

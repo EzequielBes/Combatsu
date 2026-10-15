@@ -370,6 +370,45 @@ async function fieldWithBlue(ctx) {
   ctx.assert(chips > 0, `VRM-15: o chip do campo continua com o Azul vivo: ${view}`);
 }
 
+/**
+ * VRM-16 (cenário 6, `modules=beco`): o Vermelho Máximo com Escala 2 (raio 144 × 1,4) solto ao pairar joga o comum que
+ * vem da boca da direita contra a parede do fim do beco: `wallStun:<id>` uma vez e o `ragdollStun` dura 600 ms (36
+ * quadros) contados do toque, menos que os 1100 ms da derrubada comum.
+ */
+async function wallStun(ctx) {
+  const kit = makeKit(ctx);
+  const q = 'hd=1&area=modular&modules=beco&maxAlive=1&enemyGuard=0&tech=vermelho';
+  let s = await kit.boot(`${q}&axes=vermelho.potencia:2,vermelho.escala:2&ramo=vermelho:b`);
+  ctx.assert(s.build.vermelho.awakened === true, `VRM-17: Vermelho Máximo ligado: ${JSON.stringify(s.build.vermelho)}`);
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s, true));
+  let orb = s.techObjects.find((o) => o.kind === 'red');
+  for (let i = 0; i < 40 && orb && orb.traveled < 320; i++)
+    orb = (s = await kit.frame()).techObjects.find((o) => o.kind === 'red');
+  await kit.up('KeyL');
+  let touch = null;
+  let id = null;
+  for (let f = 0; f < 150; f++) {
+    s = await kit.frame();
+    const stuns = s.events.slice(seen).filter((e) => e.startsWith('wallStun:'));
+    if (touch === null && stuns.length > 0) {
+      touch = f;
+      id = Number(stuns[0].split(':')[1]);
+    }
+    const e = s.enemies.find((x) => x.id === id);
+    if (touch !== null && e && e.state !== 'ragdollStun') {
+      const view = JSON.stringify({ touch, f, state: e.state, stuns });
+      ctx.assert(new Set(stuns).size === 1 && stuns.length >= 1, `VRM-16: um wallStun só: ${view}`);
+      ctx.assert(Math.abs(f - touch - 36) <= 2, `VRM-16: ragdollStun por 600 ms do toque (36 quadros): ${view}`);
+      return;
+    }
+  }
+  ctx.assert(
+    false,
+    `VRM-16: o comum deveria bater na parede e se levantar: ${JSON.stringify({ touch, en: s.enemies })}`,
+  );
+}
+
 /** Cenários dos ramos e Despertares, na ordem das tarefas (T30 em diante). */
 export async function branchScenarios(ctx) {
   await ricochet(ctx);
@@ -381,4 +420,5 @@ export async function branchScenarios(ctx) {
   await fieldChips(ctx);
   await fieldPush(ctx);
   await fieldWithBlue(ctx);
+  await wallStun(ctx);
 }

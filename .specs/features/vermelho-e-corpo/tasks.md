@@ -1070,10 +1070,19 @@ desarma. A regra `wallStunFrom(normal, armed)` mora em `src/core/wallStun.ts` (p
 
 **Done when**:
 
-- [ ] `tests/core/wallStun.test.ts`: normal 0,69/0,70 nos dois lados; desarmado e normal vertical não atordoam
-- [ ] `red-axes.smoke.mjs` (cenário 6, `modules=beco`): evento `wallStun:<id>` e o inimigo em `ragdollStun` por 600 ms
+- [x] `tests/core/wallStun.test.ts`: normal 0,69/0,70 nos dois lados; desarmado e normal vertical não atordoam
+- [x] `red-axes.smoke.mjs` (cenário 6, `modules=beco`): evento `wallStun:<id>` e o inimigo em `ragdollStun` por 600 ms
       contados do toque
-- [ ] `Enemy.ts` abaixo de 400; smokes `red-axes`, `enemy-`, `targets` e `world-` verdes; gate verde; contagem sem perda
+- [x] `Enemy.ts` abaixo de 400 (324); smokes `red-axes`, `enemy-`, `targets` e `world-` verdes; gate verde; contagem
+      sem perda (4073)
+
+Como ficou (SPEC_DEVIATION): a normal vertical não desarma; o alvo desarma ao se levantar (`EnemyDefense.getUp`) ou no
+1º atordoamento. O empurrão da detonação leva o ragdoll rente ao chão e as partes dele tocam o chão desde o 1º quadro
+(medido no `beco`: 83 contatos de chão armados antes do 1º contato com a parede), então desarmar no chão impedia toda
+parede. A marca mora em `EnemyShared.wallStunArmed` (gravada no `enterRagdoll` pelo `hit.wallStun`); o `Enemy` ganha
+`wallStunArmed` e `wallStun(ms)` (→ `brain.holdDown`). O smoke usa a Escala 2 (raio 144 × 1,4 do orbe segurado) para o
+orbe que paira a 320 px alcançar o comum que sai da boca da direita, a ~110 px da parede do fim do beco; sem o
+`holdDown` o alvo fica 48 quadros no chão depois do toque em vez de 36 (o smoke pega).
 
 **Tests**: unit + smoke
 **Gate**: full

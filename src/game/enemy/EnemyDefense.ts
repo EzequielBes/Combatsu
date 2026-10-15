@@ -338,6 +338,7 @@ export class EnemyDefense {
 
   private enterRagdoll(hit: Hit): void {
     this.peers.anim.clearTint();
+    this.c.s.wallStunArmed = hit.wallStun === true; // VRM-16
     if (!this.c.s.ragdoll) {
       this.c.s.ragdoll = new Ragdoll(this.c.scene, this.c.body.position.x, this.c.body.position.y - 3, this.c.variant);
       for (const b of this.c.s.ragdoll.bodies) tagBody(b, { kind: 'character', target: this.host.target });
@@ -362,6 +363,7 @@ export class EnemyDefense {
 
   /** Levantar: o ragdoll some e o sprite volta tocando a animação `getup` (o cérebro fica em gettingUp). */
   private getUp(): void {
+    this.c.s.wallStunArmed = false;
     if (!this.c.s.ragdoll) return;
     const c = this.c.s.ragdoll.center;
     this.c.s.ragdoll.destroy();

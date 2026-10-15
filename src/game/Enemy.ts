@@ -128,7 +128,7 @@ export class Enemy implements Hittable {
         slideTouch: () => this.slideTouch?.(this) ?? [],
         slideResidue: (at) => this.onSlideResidue?.(at),
       },
-      s: { facing: 1, ragdoll: null, walkVxStep: null, suppressedMs: 0, removed: false },
+      s: { facing: 1, ragdoll: null, walkVxStep: null, suppressedMs: 0, removed: false, wallStunArmed: false },
     };
     scene.matter.world.on('beforeupdate', this.onStep);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.matter.world?.off('beforeupdate', this.onStep));
@@ -240,6 +240,17 @@ export class Enemy implements Hittable {
   /** Ragdoll existe e está visível; `null` fora de ragdoll (debug, HRX-05). */
   get ragdollVisible(): boolean | null {
     return this.c.s.ragdoll ? this.c.s.ragdoll.parts[0].visible : null;
+  }
+
+  /** VRM-16: derrubado por um golpe com `wallStun` e ainda no chão. */
+  get wallStunArmed(): boolean {
+    return this.c.s.wallStunArmed;
+  }
+
+  /** VRM-16: bateu na parede armado: fica em `ragdollStun` por `ms` contados daqui. */
+  wallStun(ms: number): void {
+    this.c.s.wallStunArmed = false;
+    this.brain.holdDown(ms);
   }
 
   /** Corpos das partes do ragdoll; `null` fora de ragdoll (rachadura da queda, IMP-15). */

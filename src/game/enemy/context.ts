@@ -22,6 +22,8 @@ export interface EnemyShared {
   /** Tempo (ms de jogo) sem atacar nem andar depois de um parry (PAR-10). */
   suppressedMs: number;
   removed: boolean;
+  /** VRM-16: derrubado por um golpe com `wallStun`; uma parede atordoa até ele se levantar. */
+  wallStunArmed: boolean;
 }
 
 /** Saídas do inimigo para a cena, lidas na hora da chamada (a cena as liga depois do spawn). */
