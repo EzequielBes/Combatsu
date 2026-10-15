@@ -237,9 +237,12 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   porque a `uiLayer` nasce depois do `RunDirector`) sempre juntos; o snapshot traz `bossGlyphs` (BRD-01/02).
 - `attach(boss, spec)` (a `spec` dá o dano de projétil dos fios): liga `fxSink`, `onPhaseChanged` (Invocador), cria `BossAffixFx`, `AffixOutline`, `AdaptWheel` e os
   glifos. `update(dt)` depois do `boss.update` (lava, contorno, roda).
-- `summon(phase)`: `summonCount` → `spawner.spawnSummoned(point, round, index, onGone)`; guarda o conjunto vivo.
+- `summon(round)` (ligado ao `onPhaseChanged` só com Invocador, rodada do `run.round`): `summonCount` →
+  `spawner.spawnSummoned(point, round, index, onGone)`, com `point` do `pickEnemySpawnPoint` e `index` contado na run;
+  guarda o conjunto vivo (a morte tira dele). O snapshot traz `bossSummoned` (ids vivos).
 - `onBossDied()`: limpa lava, feixe, fios, contorno, roda, glifos; cada invocado vivo sai com `curseSmoke` +
-  `destroyNow` (INV-04, edge case da lava).
+  `destroyNow`, sai da lista da cena e do `attackGate` (o `destroyNow` não chama o `onRemoved`) e registra
+  `summonDismissed:<id>` (INV-04, edge case da lava).
 - `onShopOpen(round)`: se `isBossRound(round + 1)`, mostra `announceText(lineupFor(round + 1))`; `hideAnnounce()` no
   `roundStart`/`startRun`. `reset()` na run nova. `snapshot()`.
 

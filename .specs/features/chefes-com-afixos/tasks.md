@@ -765,9 +765,9 @@ guarda os vivos e, no `onBossDied`/`reset`, remove cada um com `curseSmoke` + `d
 
 **Done when**:
 
-- [ ] Smoke novo `boss-invocador.smoke.mjs` (`round=5&bossAffix=invocador`): tecla 2 até o rugido → 2 invocados
+- [x] Smoke novo `boss-invocador.smoke.mjs` (`round=5&bossAffix=invocador`): tecla 2 até o rugido → 2 invocados
       desarmados; matar um não muda `run.kills` nem cria drop; morte do chefe → 0 invocados
-- [ ] `npm run smoke -- boss-invocador` e `spawn-pressure` verdes; gate verde
+- [x] `npm run smoke -- boss-invocador` e `spawn-pressure` verdes; gate verde
 
 **Tests**: smoke
 **Gate**: full

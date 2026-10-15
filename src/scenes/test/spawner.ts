@@ -2,7 +2,7 @@ import { armFor } from '../../core/armed';
 import { scaleFor, type EnemyBase } from '../../core/difficulty';
 import { type Vec2 } from '../../core/hit';
 import { attackKindFor, parseAttackKind, parseStringLength } from '../../core/attackKind';
-import { parseVariant, pickEnemyVariant } from '../../core/enemyVariant';
+import { ENEMY_VARIANTS, parseVariant, pickEnemyVariant } from '../../core/enemyVariant';
 import { pickSpawnPoint } from '../../core/spawnPoint';
 import { farthestPoint } from '../../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS } from '../../data/fx';
@@ -86,6 +86,38 @@ export class Spawner {
       variant,
     );
     this.wireEnemy(enemy, spawnAt);
+  }
+
+  /**
+   * Inimigo comum invocado pelo chefe Invocador (INV-03, INV-05): tuning comum escalado pela rodada, nunca armado
+   * (não consome o stream de loot), aparência `ENEMY_VARIANTS[index % 3]` (não consome o `variantRng`). A morte só
+   * registra `summonDied:<id>` e avisa `onGone`: sem `Run` (não conta abate) e sem drop.
+   */
+  spawnSummoned(point: number, round: number, index: number, onGone: (enemy: Enemy) => void): Enemy {
+    const at = this.s.level.enemies[point];
+    const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
+    const scaled = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
+    const variant = ENEMY_VARIANTS[index % ENEMY_VARIANTS.length];
+    const kind = attackKindFor({ variant, weapon: null });
+    const enemy = new Enemy(
+      this.s,
+      spawnAt,
+      { ...scaled, attack: { ...scaled.attack, kind } },
+      RUN.spawnGraceMs,
+      (dead) => {
+        this.s.enemies = this.s.enemies.filter((e) => e !== dead);
+        this.s.attackGate.release(dead.id);
+      },
+      (hit, hitPoint) => this.s.combat.onConnect(hit, hitPoint, hit.strength),
+      (dead) => {
+        this.s.snapshot.debugEvents.push(`summonDied:${dead.id}`);
+        onGone(dead);
+      },
+      null,
+      variant,
+    );
+    this.wireEnemy(enemy, spawnAt);
+    return enemy;
   }
 
   /**

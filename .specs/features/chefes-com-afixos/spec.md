@@ -249,11 +249,11 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | IGN-03 | P1: Os 4 afixos da leva 1 | Tasks (T21, T28) | Implemented |
 | IGN-04 | P1: Os 4 afixos da leva 1 | Tasks (T28) | Implemented |
 | IGN-05 | P1: Os 4 afixos da leva 1 | Tasks (T21, T28) | Implemented |
-| INV-01 | P1: Os 4 afixos da leva 1 | Tasks (T24, T31) | Pending |
-| INV-02 | P1: Os 4 afixos da leva 1 | Tasks (T24, T31) | Pending |
-| INV-03 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Pending |
-| INV-04 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Pending |
-| INV-05 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Pending |
+| INV-01 | P1: Os 4 afixos da leva 1 | Tasks (T24, T31) | Implemented |
+| INV-02 | P1: Os 4 afixos da leva 1 | Tasks (T24, T31) | Implemented |
+| INV-03 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Implemented |
+| INV-04 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Implemented |
+| INV-05 | P1: Os 4 afixos da leva 1 | Tasks (T31) | Implemented |
 | SNG-01 | P1: Os 4 afixos da leva 1 | Tasks (T15, T30) | Implemented |
 | SNG-02 | P1: Os 4 afixos da leva 1 | Tasks (T16, T20, T30) | Implemented |
 | SNG-03 | P1: Os 4 afixos da leva 1 | Tasks (T20, T30) | Implemented |

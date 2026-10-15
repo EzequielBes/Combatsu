@@ -92,6 +92,7 @@ describe('installDebugApi', () => {
       bossGlyphs: [],
       bossAnnounce: null,
       bossLavaStrips: 0,
+      bossSummoned: [],
       projectiles: [],
       run: { state: 'roundActive', round: 1, kills: 0, alive: 1, queued: 2, maxAlive: 5 },
       attackers: 0,

@@ -162,6 +162,8 @@ export interface GameSnapshot {
   bossAnnounce: string | null;
   /** Faixas de lava vivas em cena, com ou sem chefe: zero depois da morte dele e na run nova (edge cases da lava). */
   bossLavaStrips: number;
+  /** Ids dos invocados vivos do chefe Invocador (INV-01..05): vazio sem chefe, na morte dele e na run nova. */
+  bossSummoned: number[];
   /**
    * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
    * `id` é único por instância (nunca reaproveitado) - o smoke usa para contar disparos mesmo que um projétil

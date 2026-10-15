@@ -8,11 +8,13 @@ import {
   parseFinger,
   type BossLineup,
   type LineupOverrides,
+  summonCount,
 } from '../../core/bossAffix';
 import { bossSpecFor, type BossSpec } from '../../core/bossTier';
 import type { Hit, Vec2 } from '../../core/hit';
 import { isBossRound } from '../../core/waves';
 import type { Boss } from '../../game/Boss';
+import type { Enemy } from '../../game/Enemy';
 import { AffixOutline } from '../../game/boss/AffixOutline';
 import { BeamAttack } from '../../game/boss/BeamAttack';
 import { BossAffixFx } from '../../game/boss/BossAffixFx';
@@ -38,6 +40,10 @@ export class BossDirector {
   private fx: BossAffixFx | null = null;
   /** Contorno de 1 px na cor do afixo do chefe em cena; `null` sem Ígneo nem Invocador (BRD-03). */
   private outline: AffixOutline | null = null;
+  /** Invocados vivos do chefe em cena (INV-01..05); a morte de cada um o tira daqui. */
+  private summoned = new Set<Enemy>();
+  /** Invocados criados na run, para a aparência por índice (não consome o `variantRng`, INV-05). */
+  private summonIndex = 0;
 
   constructor(readonly s: TestScene) {}
 
@@ -67,7 +73,7 @@ export class BossDirector {
    * Chefe recém-criado com a especificação `spec`: os eventos de vista dele (rastro, aviso, abertura e fechamento) vão
    * para um `BossAffixFx`, com a Chuva de Fios presa aos limites do nível e o dano de projétil do tier (CYC-09/10) e,
    * só com Ígneo, a lava com o dano de lava do tier (IGN-01..04); só com Sangue, o feixe com o dano de feixe do tier
-   * (SNG-02/03); com Ígneo ou Invocador, o contorno (BRD-03).
+   * (SNG-02/03); com Ígneo ou Invocador, o contorno (BRD-03); com Invocador, a invocação na troca de fase (INV-01).
    */
   attach(boss: Boss, spec: BossSpec): void {
     this.fx?.destroy();
@@ -79,6 +85,42 @@ export class BossDirector {
     const beam = spec.affixes.includes('sangue') ? new BeamAttack(this.s, boss.id, spec.damage.beam, onConnect) : null;
     this.fx = new BossAffixFx(threads, lava, beam);
     boss.fxSink = this.fx.route;
+    boss.onPhaseChanged = spec.affixes.includes('invocador') ? () => this.summon(this.s.run.round) : undefined;
+  }
+
+  /**
+   * Troca de fase do Invocador (INV-01/02): 3 comuns (2 na r5), sem passar de 4 vivos, cada um num ponto `E` da
+   * escolha da onda; guardados até morrerem ou o chefe cair.
+   */
+  private summon(round: number): void {
+    const count = summonCount(round, this.summoned.size);
+    for (let i = 0; i < count; i++) {
+      const point = this.s.spawner.pickEnemySpawnPoint();
+      const enemy = this.s.spawner.spawnSummoned(point, round, this.summonIndex++, (dead) =>
+        this.summoned.delete(dead),
+      );
+      this.summoned.add(enemy);
+    }
+  }
+
+  /** Cada invocado vivo some na hora com a fumaça amaldiçoada e sai da lista da cena (INV-04). */
+  private dismissSummoned(): void {
+    for (const e of this.summoned) {
+      if (!e.removed) {
+        const at = e.hurtRect();
+        this.s.fx.curseSmoke(at.x, at.y);
+        this.s.snapshot.debugEvents.push(`summonDismissed:${e.id}`);
+      }
+      e.destroyNow();
+      this.s.attackGate.release(e.id);
+    }
+    this.s.enemies = this.s.enemies.filter((e) => !this.summoned.has(e));
+    this.summoned.clear();
+  }
+
+  /** Ids dos invocados vivos, para o snapshot de debug (INV-01..05). */
+  summonedIds(): number[] {
+    return [...this.summoned].map((e) => e.id);
   }
 
   /** Por quadro, depois do `boss.update`: a lava bate no player que pisa nela (IGN-03..05) e o contorno o segue. */
@@ -87,8 +129,12 @@ export class BossDirector {
     this.outline?.update(dtMs);
   }
 
-  /** Chefe derrotado: fios, marcas, lava, feixe e contorno somem na hora (a IA dele não manda mais o fechamento). */
+  /**
+   * Chefe derrotado: fios, marcas, lava, feixe e contorno somem na hora (a IA dele não manda mais o fechamento), e os
+   * invocados vivos com eles (INV-04).
+   */
   onBossDied(): void {
+    this.dismissSummoned();
     this.fx?.clear();
     this.outline?.destroy();
     this.outline = null;
@@ -160,6 +206,8 @@ export class BossDirector {
   reset(): void {
     this.lineups = new BossLineups();
     this.last = null;
+    this.dismissSummoned();
+    this.summonIndex = 0;
     this.fx?.destroy();
     this.fx = null;
     this.outline?.destroy();
