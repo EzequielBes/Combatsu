@@ -1,6 +1,7 @@
 // Fundação de poder (POW-*) no mundo modular em HD, com `?debug&hd=1&area=modular&seed=1`. Cada parte abre a sua
-// própria página; as partes 6 e 7 do design entram com as tarefas que as ligam.
+// própria página; a parte 7 do design entra com a tarefa que a liga. A parte 6 (o objeto) mora em `power-prop.mjs`.
 import { makeKit } from './fight-kit.mjs';
+import { propDamageScales } from './power-prop.mjs';
 
 const BASE = 'hd=1&area=modular&enemyGuard=0&noshop=1';
 /** Hitstop do golpe forte (90 ms) em quadros de 16 ms, com folga: quadro congelado por golpe no player é explicado. */
@@ -431,6 +432,7 @@ async function restingHandFlame(ctx) {
 
 export default async function (ctx) {
   await strikeForceScales(ctx);
+  await propDamageScales(ctx);
   await restingHandFlame(ctx);
   await jabShowsStrikeNumber(ctx);
   await runResetClearsNumbers(ctx);

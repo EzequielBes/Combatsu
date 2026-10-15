@@ -354,7 +354,7 @@ export class WorldBuilder {
       const def = PROP_DEFS[p.key];
       if (!def) throw new Error(`Objeto sem definição: ${p.key}`);
       this.s.props.push(
-        new Prop(this.s, p.x, p.y, def, this.s.modifiers, (hit, at, target) =>
+        new Prop(this.s, p.x, p.y, def, this.s.stats.propDamage, (hit, at, target) =>
           this.s.combat.onConnect(hit, at, 'prop', target),
         ),
       );

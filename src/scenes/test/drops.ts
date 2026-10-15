@@ -89,7 +89,7 @@ export class Drops {
       x,
       y,
       def,
-      this.s.modifiers,
+      this.s.stats.propDamage,
       (hit, at, target) => this.s.combat.onConnect(hit, at, 'prop', target),
       rare,
     );

@@ -454,8 +454,9 @@ banda não mexe nisso) e AD-023. O AD-014 (HP e dano fixos) continua valendo: a 
 4. POW-05/06: o `jab` traz `damageNumbers.last` com o valor e o tipo `strike`.
 5. POW-04/03b/15: com `tech=azul` e 5 inimigos (`maxAlive=5` no lugar do 1 da base), `hitstop.frozen` falso em todo quadro dos tiques, eventos `chip:<id>`,
    nenhum inimigo em `hitstun`, um chega a `attack`; `damageNumbers.last.kind` é `chip`.
-6. POW-11: com `arsenal=bastao`, o golpe dispara `impact:heavy` e nenhuma faísca roxa; com Manoplas Nv 3 junto, o dano
-   sobe ×1,3.
+6. POW-11 (em `scripts/smoke/power-prop.mjs`, chamado pelo `power.smoke`, para ele caber no teto de linhas): com
+   `arsenal=bastao`, o golpe dispara `impact:heavy` e nenhuma faísca roxa (T23); com Manoplas Nv 3 junto, o dano sobe
+   ×1,3; com o Passo sombrio armado (esquiva perfeita rumo ao inimigo), o golpe do bastão não o gasta (T21).
 7. POW-14: 8 inimigos, Azul, Vermelho e soco juntos: `fx.live` ≤ 40, `damageNumbers.live` ≤ 12, hitstop dos micro
    somado ≤ 60 ms em qualquer janela de 1000 ms.
 

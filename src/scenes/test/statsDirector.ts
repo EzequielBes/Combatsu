@@ -1,9 +1,10 @@
 import { powerLook, powerPoints, type PowerLook } from '../../core/power';
 import { acceptsPlayerInput } from '../../core/run';
-import { statSheet, traitsOf, type StatSheet, type StrikeMods } from '../../core/statSheet';
+import { PROP_TRAITS, statSheet, traitsOf, type StatSheet, type StrikeMods } from '../../core/statSheet';
 import type { MoveDef } from '../../data/moves';
 import type { GameSnapshot } from '../../game/debugApi';
 import type { InputSnapshot } from '../../game/input';
+import type { PropDamage } from '../../game/Prop';
 import type { Player } from '../../game/Player';
 import type { TestScene } from '../TestScene';
 import { NEUTRAL_INPUT } from './params';
@@ -18,6 +19,13 @@ export class StatsDirector {
   power: PowerLook = powerLook(0);
   /** Brasas e chama na mão parada (POW-10), recriada com cada player. */
   readonly aura: PowerAuraDirector;
+  /**
+   * Dano do objeto na mão ou arremessado (POW-11): a `forca` da loja e a build do golpe forte. Lê `PROP_TRAITS`
+   * (`shadow: false`) e não chama `consumeShadow`, então o Passo sombrio armado sobra para o próximo golpe.
+   */
+  readonly propDamage: PropDamage = {
+    damage: (base) => Math.round(this.s.modifiers.meleeDamage(base) * this.sheet().meleeMul(PROP_TRAITS)),
+  };
 
   constructor(readonly s: TestScene) {
     this.aura = new PowerAuraDirector(s);

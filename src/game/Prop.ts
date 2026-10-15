@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { normalize, type HitReport, type Vec2 } from '../core/hit';
-import type { Modifiers } from '../core/modifiers';
 import { PropMachine, propHit, throwOrigin, type PropDef, type PropImpact, type PropState } from '../core/props';
 import { shardsKey } from './art';
 import { ART_SCALE } from './art/palette';
@@ -31,6 +30,11 @@ const SHARD_LIFT = { min: 60, max: 130 };
 /** Alternância do contorno raro (RAR-03): troca entre `common` e `rare` a cada 200 ms. */
 const RARE_BLINK_MS = 200;
 
+/** Dano do golpe ou arremesso de objeto (POW-11): a `forca` da loja e a build, lidos na hora do acerto. */
+export interface PropDamage {
+  damage(base: number): number;
+}
+
 export class Prop {
   readonly id = newEntityId();
   readonly machine: PropMachine;
@@ -48,8 +52,8 @@ export class Prop {
     x: number,
     y: number,
     readonly def: PropDef,
-    /** Modificadores da run (MOD-05): dano do golpe/arremesso escalado por `forca`, lido na hora. */
-    private readonly modifiers: Modifiers,
+    /** Dano do golpe/arremesso (MOD-05, POW-11): `forca` e build, lidos na hora do acerto. */
+    private readonly damage: PropDamage,
     /** Golpe de objeto que conectou (faísca roxa + hitstop do forte), injetado pela cena. */
     private readonly onConnect?: OnConnect,
     /** Ferramenta rara (RAR-02/03/06): sprite alterna `common`/`rare`; sem efeito num objeto comum. */
@@ -191,8 +195,8 @@ export class Prop {
     const ownerId = this.machine.ownerId;
     if (ownerId === null || !this.machine.wants(other.target.id)) return;
     const hit = propHit(this.def, ownerId, this.hitDirection(st), st);
-    // MOD-05: dano do objeto segurado/arremessado escalado por `forca`, lido na hora.
-    hit.damage = this.modifiers.meleeDamage(hit.damage);
+    // MOD-05, POW-11: dano do objeto segurado/arremessado escalado por `forca` e pela build, lido na hora.
+    hit.damage = this.damage.damage(hit.damage);
     // O objeto bate de verdade mesmo se o alvo ignorar o golpe (conta impacto), mas só golpe aceito tem feedback (FX-06).
     const report: HitReport = {};
     const accepted = other.target.receiveHit(hit, report);

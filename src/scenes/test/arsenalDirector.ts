@@ -43,7 +43,7 @@ export class ArsenalDirector {
       if (player.heldProp) return;
       const def = weaponDef(weapon.id, weapon.level);
       const { x, y } = player.sprite;
-      const prop = new Prop(this.s, x, y, def, this.s.modifiers, (hit, at, target) =>
+      const prop = new Prop(this.s, x, y, def, this.s.stats.propDamage, (hit, at, target) =>
         this.s.combat.onConnect(hit, at, 'prop', target),
       );
       this.s.props.push(prop);

@@ -599,10 +599,10 @@ pontos de criação (`arsenalDirector.ts:52`, `drops.ts:91`, `world.ts:355`) pas
 
 **Done when**:
 
-- [ ] `power.smoke.mjs` (cenário 6): com `arsenal=bastao` o dano do golpe é X; com `manoplas,manoplas,manoplas` junto,
+- [x] `power.smoke.mjs` (cenário 6): com `arsenal=bastao` o dano do golpe é X; com `manoplas,manoplas,manoplas` junto,
       `round(X × 1,3)`; com o Passo sombrio armado, o golpe de objeto não o gasta (POW-11.2)
-- [ ] Smokes `held-item`, `armed` (repetido isolado se falhar), `drops`, `arsenal`, `world-` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `held-item`, `armed` (repetido isolado se falhar), `drops`, `arsenal`, `world-` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full
