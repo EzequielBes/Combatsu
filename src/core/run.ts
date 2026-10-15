@@ -66,6 +66,7 @@ export class Run {
   private slotRngValue: Rng | null = null;
   private vowRngValue: Rng | null = null;
   private kokusenRngValue: Rng | null = null;
+  private bossAffixRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -177,6 +178,11 @@ export class Run {
   /** Stream dos slots `p` dos módulos (SLT-01): próprio, `seed ^ 0x5be0cd19`, nunca usado nos módulos (SLT-02). */
   get slotRng(): Rng | null {
     return this.slotRngValue;
+  }
+
+  /** Stream da escalação dos chefes (BLN-01): arquétipo, afixos e Portador; próprio, `seed ^ 0x9b05688c`. */
+  get bossAffixRng(): Rng | null {
+    return this.bossAffixRngValue;
   }
 
   startPressed(): void {
@@ -305,6 +311,7 @@ export class Run {
         this.slotRngValue = new Rng(seed ^ 0x5be0cd19);
         this.vowRngValue = new Rng(seed ^ 0x13198a2e);
         this.kokusenRngValue = new Rng(seed ^ 0x3243f6a8);
+        this.bossAffixRngValue = new Rng(seed ^ 0x9b05688c);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;

@@ -92,7 +92,7 @@ export default async function ({ page, baseUrl, assert }) {
   }
 
   // EVO-06 no chefe: na arena do Oni, de frente para ele e a curta distância, a esfera tira 60 uma vez só.
-  s = await open('area=modular&round=5&tech=roxo&regen=0');
+  s = await open('area=modular&round=5&tech=roxo&regen=0&bossArch=oni&bossAffix=none&finger=0');
   for (let i = 0; i < 200 && !(s.boss && s.boss.state !== 'intro'); i++) s = await step(50);
   assert(s.boss, 'o chefe deveria estar na arena');
   // Tenta até 4 vezes: chega a 140..260 px do chefe, de frente, com ele fora de um ataque, e conjura. Se o chefe cortar

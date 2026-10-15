@@ -3,7 +3,10 @@
 const TILE = 32;
 
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&hd=1&area=modular&enemyGuard=0&seed=5&round=5`, { waitUntil: 'load' });
+  await page.goto(
+    `${baseUrl}?debug&hd=1&area=modular&enemyGuard=0&seed=5&round=5&bossArch=oni&bossAffix=none&finger=0`,
+    { waitUntil: 'load' },
+  );
   await page.waitForFunction(
     () => {
       try {
@@ -131,7 +134,10 @@ export default async function ({ page, baseUrl, assert }) {
   assert(s.boss === null, `o chefe deveria sumir: ${JSON.stringify(s.boss)}`);
 
   // ARN-05: na rodada 15 a arena é da Tecelã, lida do jogo vivo.
-  await page.goto(`${baseUrl}?debug&hd=1&area=modular&enemyGuard=0&seed=5&round=15`, { waitUntil: 'load' });
+  await page.goto(
+    `${baseUrl}?debug&hd=1&area=modular&enemyGuard=0&seed=5&round=15&bossArch=tecela&bossAffix=none&finger=0`,
+    { waitUntil: 'load' },
+  );
   await page.waitForFunction(
     () => {
       try {

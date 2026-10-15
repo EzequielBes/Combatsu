@@ -165,7 +165,7 @@ export default async function ({ page, baseUrl, assert }) {
   const shopCards = (snap) => (snap.shop.panel?.cards ?? []).filter((c) => c.lines.length > 0).length;
 
   // VOW-01/03: depois do chefe (rodada 5) o painel abre com 3 votos distintos antes da loja; 2 toma o segundo.
-  s = await open('area=modular&round=5&regen=0');
+  s = await open('area=modular&round=5&regen=0&bossArch=oni&bossAffix=none&finger=0');
   s = await clearAndReachShop();
   assert(s.run.state === 'shop', `VOW-01: deveria chegar à loja: ${s.run.state}`);
   const offers = s.vows.offers;
@@ -182,7 +182,7 @@ export default async function ({ page, baseUrl, assert }) {
   assert(shopCards(s) > 0, 'VOW-03: a loja deveria abrir depois do voto');
 
   // VOW-04: Enter recusa; nenhum voto e a loja abre.
-  s = await open('area=modular&round=5&regen=0');
+  s = await open('area=modular&round=5&regen=0&bossArch=oni&bossAffix=none&finger=0');
   s = await clearAndReachShop();
   assert(s.vows.panelCards === 3, `VOW-04: o painel deveria abrir: ${JSON.stringify(s.vows)}`);
   s = await tap('Enter');

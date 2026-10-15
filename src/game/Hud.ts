@@ -9,10 +9,11 @@ import {
 } from './art/combatColors';
 import { HUD_BAR_WELL } from './art/hud';
 import { ART_SCALE, PALETTE } from './art/palette';
+import { packBarLabel } from '../core/bossAffix';
 import { TEX } from './textures';
 
 /** Canto da barra de vida e do painel na tela (px da câmera de UI, zoom 1). */
-const MARGIN = 12;
+export const MARGIN = 12;
 /** Espaço reservado para o rótulo "HP" à esquerda da barra. */
 const LABEL_W = 26;
 /** Cor da paleta em CSS (`#rrggbb` ou `#rrggbbaa`), para o texto do Phaser, que não aceita número (ART-01). */
@@ -42,12 +43,7 @@ const RUN_PANEL_STYLE = { ...RUN_TEXT_STYLE, backgroundColor: css(RUN_BG_COLOR, 
 /** Contador de combo (CMB-04/05): à direita, abaixo de "Inimigos"; a nota fica embaixo do texto de hits. */
 const COMBO_Y = MARGIN + 48;
 const COMBO_HITS_STYLE = { fontFamily: 'monospace', fontSize: '22px', fontStyle: 'bold', color: css(COMBO_TEXT_COLOR) };
-const COMBO_GRADE_STYLE = {
-  fontFamily: 'monospace',
-  fontSize: '34px',
-  fontStyle: 'bold',
-  color: css(COMBO_GRADE_COLORS.D),
-};
+const COMBO_GRADE_STYLE = { ...COMBO_HITS_STYLE, fontSize: '34px', color: css(COMBO_GRADE_COLORS.D) };
 /** Nome do jogo, mostrado na tela de título (RHUD-05). */
 export const GAME_NAME = 'Combatsu';
 
@@ -56,12 +52,19 @@ export const BOSS_BAR_FILL_COLOR = PALETTE.a;
 export const BOSS_BAR_BG_COLOR = PALETTE.k;
 export const BOSS_BAR_MARK_COLOR = PALETTE.w;
 export const BOSS_BAR_NAME_COLOR = PALETTE.w;
-const BOSS_BAR_NAME_STYLE = { fontFamily: 'monospace', fontSize: '13px', color: css(BOSS_BAR_NAME_COLOR), ...OUTLINE };
 /** Largura total da barra do chefe (BHUD-01) e marcas de fase, em fração da largura (BAI-01: 66%/33%). */
-const BOSS_BAR_WIDTH = 400;
+export const BOSS_BAR_WIDTH = 400;
 const BOSS_BAR_HEIGHT = 12;
 const BOSS_BAR_MARK_W = 2;
 const BOSS_BAR_MARK_FRACTIONS = [0.66, 0.33] as const;
+/**
+ * Nome do chefe abaixo da barra (acima dela, a fonte passava da borda e cortava acentos e tis), centrado e quebrado
+ * entre as partes (`packBarLabel`) quando passa da largura da barra (BRD-01).
+ */
+const wrapBossName = (text: string, obj: Phaser.GameObjects.Text): string[] =>
+  packBarLabel(text, (part) => obj.context.measureText(part).width, BOSS_BAR_WIDTH);
+const BOSS_BAR_NAME_WRAP = { align: 'center' as const, wordWrap: { callback: wrapBossName } };
+const BOSS_BAR_NAME_STYLE = { ...RUN_TEXT_STYLE, color: css(BOSS_BAR_NAME_COLOR), ...BOSS_BAR_NAME_WRAP };
 
 /**
  * HUD na câmera de UI (AD-003): barra de vida do player com moldura pixel art (HUD-01) e o painel de controles, que
@@ -156,7 +159,7 @@ export class Hud {
       .setOrigin(0.5, 0.5)
       .setVisible(false);
 
-    // Barra do chefe (BHUD-01): 400 px no topo central, nome acima e marcas de fase em 66%/33% da largura.
+    // Barra do chefe (BHUD-01): 400 px no topo central, nome abaixo e marcas de fase em 66%/33% da largura.
     const bossX = w2 / 2 - BOSS_BAR_WIDTH / 2;
     this.bossBarBg = scene.add
       .rectangle(bossX, MARGIN, BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT, BOSS_BAR_BG_COLOR)
@@ -173,8 +176,8 @@ export class Hud {
         .setVisible(false),
     );
     this.bossBarName = scene.add
-      .text(w2 / 2, MARGIN - 2, '', BOSS_BAR_NAME_STYLE)
-      .setOrigin(0.5, 1)
+      .text(w2 / 2, MARGIN + BOSS_BAR_HEIGHT + 3, '', BOSS_BAR_NAME_STYLE)
+      .setOrigin(0.5, 0)
       .setVisible(false);
 
     // Estrutura do jogador: 3 px de altura entre a barra de vida (termina em y=28) e a de energia (começa em y=34).
@@ -397,7 +400,7 @@ export class Hud {
     };
   }
 
-  /** Mostra a barra do chefe cheia, com o nome acima (BHUD-01). */
+  /** Mostra a barra do chefe cheia, com o nome abaixo (BHUD-01). */
   showBossBar(name: string): void {
     this.bossBarVisible = true;
     this.bossBarName.setText(name);

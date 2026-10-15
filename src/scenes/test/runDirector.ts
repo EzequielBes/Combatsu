@@ -9,6 +9,7 @@ import { TECHNIQUES, type TechId } from '../../data/techniques';
 import { ECONOMY, ELIXIR, RUN } from '../../data/tuning';
 import { isDebug } from '../../game/debug';
 import { CAMERA_FEEL } from '../../data/feel';
+import { BossDirector } from './bossDirector';
 import { debugParam, debugIntParam, isDroppedTool } from './params';
 import { RecordDirector } from './recordDirector';
 import type { TestScene } from '../TestScene';
@@ -20,9 +21,12 @@ export const BOSS_UPGRADE_BANNER_MS = 800;
 export class RunDirector {
   /** Recorde da sessão: carga do save, marcador `Recorde: rN` e painel de fim de run (REC-*, RMK-*, END-*). */
   readonly record: RecordDirector;
+  /** Escalação do chefe (BLN-08..11): mora aqui porque o `TestScene` está no teto de linhas. */
+  readonly bosses: BossDirector;
 
   constructor(readonly s: TestScene) {
     this.record = new RecordDirector(s);
+    this.bosses = new BossDirector(s);
   }
 
   /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
@@ -72,6 +76,8 @@ export class RunDirector {
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
         this.s.hud.setCenter(null);
         this.s.hud.banner(this.record.roundBanner(cmd.round), RUN.bannerMs);
+        // BRD-04: a loja fechou, o aviso "Próximo:" sai.
+        this.bosses.hideAnnounce();
         // ARS-09/10: a arma vinculada (ou a ferramenta comprada) entra na mão com a área já montada.
         this.s.arsenal.onRoundStart();
         break;
@@ -87,9 +93,24 @@ export class RunDirector {
       case 'shopOpen':
         // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
         if (debugParam('noshop') === '1') this.s.run.closeShop();
-        else this.s.shopDirector.openShop(cmd.round);
+        else {
+          this.s.shopDirector.openShop(cmd.round);
+          // BRD-04/05: aviso do chefe da próxima rodada, sem tocar na loja (`shopDirector` e `ShopPanel`).
+          this.bosses.onShopOpen(cmd.round);
+        }
         break;
     }
+  }
+
+  /**
+   * Rodada e inimigos na tela para o HUD (RHUD-01); fora de rodada (title), `null` esconde. Os invocados do chefe
+   * contam junto (INV-01), porque estão na tela. T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner
+   * interno da `Run` segue contando como se tivesse nascido - sem isso "Inimigos: N" mentiria na tela do laboratório.
+   */
+  hudRun(): { round: number; remaining: number } | null {
+    const run = this.s.run;
+    if (run.round <= 0 || this.s.fxLab) return null;
+    return { round: run.round, remaining: run.alive + run.queued + this.bosses.summonedCount };
   }
 
   /**
@@ -111,7 +132,8 @@ export class RunDirector {
     if (this.s.shopDirector.shop) this.s.matter.world.resume();
     this.s.shopDirector.shop = null;
     this.s.shopPanel.hide();
-    this.s.hud.hideBossBar();
+    this.bosses.hideBar();
+    this.bosses.hideAnnounce();
     for (const proj of this.s.projectiles) proj.destroyNow();
     this.s.projectiles = [];
     this.s.player.resetForRun();
@@ -148,6 +170,7 @@ export class RunDirector {
     this.s.vows.reset();
     // POW-01: a folha de atributos sai da run nova (build, arsenal e votos já zerados).
     this.s.stats.reset();
+    this.bosses.reset();
     this.equipDebugTech();
     this.applyDebugMastery();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.
@@ -228,6 +251,7 @@ export class RunDirector {
   /** Chefe por quadro (vitória pendente, barra de vida) e a faixa "Rodada N concluída" depois dele. */
   updateBoss(dt: number): void {
     this.s.boss?.update(dt, this.s.player.sprite.x);
+    this.bosses.update(dt);
     if (this.bossDefeatedPending) {
       this.s.boss?.destroyNow();
       this.s.boss = null;

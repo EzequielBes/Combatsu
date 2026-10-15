@@ -1,9 +1,8 @@
 import { armFor } from '../../core/armed';
-import { bossSpecFor } from '../../core/bossTier';
 import { scaleFor, type EnemyBase } from '../../core/difficulty';
 import { type Vec2 } from '../../core/hit';
 import { attackKindFor, parseAttackKind, parseStringLength } from '../../core/attackKind';
-import { parseVariant, pickEnemyVariant } from '../../core/enemyVariant';
+import { ENEMY_VARIANTS, parseVariant, pickEnemyVariant } from '../../core/enemyVariant';
 import { pickSpawnPoint } from '../../core/spawnPoint';
 import { farthestPoint } from '../../core/waves';
 import { BOSS_DEFEAT_HITSTOP_MS } from '../../data/fx';
@@ -86,6 +85,46 @@ export class Spawner {
       armedRoll,
       variant,
     );
+    this.wireEnemy(enemy, spawnAt);
+  }
+
+  /**
+   * Inimigo comum invocado pelo chefe Invocador (INV-03, INV-05): tuning comum escalado pela rodada, nunca armado
+   * (não consome o stream de loot), aparência `ENEMY_VARIANTS[index % 3]` (não consome o `variantRng`). A morte só
+   * registra `summonDied:<id>` e avisa `onGone`: sem `Run` (não conta abate) e sem drop. `at` é o ponto de nascimento
+   * (ao lado do chefe ou um ponto `E`), com o mesmo `SPAWN_LIFT` da onda.
+   */
+  spawnSummoned(at: Vec2, round: number, index: number, onGone: (enemy: Enemy) => void): Enemy {
+    const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
+    const scaled = scaleFor(round, { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK }, DIFFICULTY);
+    const variant = ENEMY_VARIANTS[index % ENEMY_VARIANTS.length];
+    const kind = attackKindFor({ variant, weapon: null });
+    const enemy = new Enemy(
+      this.s,
+      spawnAt,
+      { ...scaled, attack: { ...scaled.attack, kind } },
+      RUN.spawnGraceMs,
+      (dead) => {
+        this.s.enemies = this.s.enemies.filter((e) => e !== dead);
+        this.s.attackGate.release(dead.id);
+      },
+      (hit, hitPoint) => this.s.combat.onConnect(hit, hitPoint, hit.strength),
+      (dead) => {
+        this.s.snapshot.debugEvents.push(`summonDied:${dead.id}`);
+        onGone(dead);
+      },
+      null,
+      variant,
+    );
+    this.wireEnemy(enemy, spawnAt);
+    return enemy;
+  }
+
+  /**
+   * Liga o inimigo recém-criado à cena: eventos de debug, guarda, empurrão, parede, resíduo do deslize, faísca da
+   * defesa; entra na lista da cena com a fumaça de nascimento em `spawnAt`. Base comum da onda e dos invocados.
+   */
+  wireEnemy(enemy: Enemy, spawnAt: Vec2): void {
     enemy.onEvent = (ev) => this.s.snapshot.debugEvents.push(ev);
     enemy.guardRng = this.s.run.guardRng;
     // RDG-23: `?debug&shove=N` fixa a chance do empurrão; RDG-19: o empurrão chega ao jogador pelo `shoved`.
@@ -113,7 +152,7 @@ export class Spawner {
 
   /**
    * Onda de chefe (BOSS-01/03): nasce no ponto `E` mais distante do player no momento do spawn, com o `BossSpec`
-   * escalado pela rodada/tier (T2). Se um chefe anterior ainda estivesse por aqui (não deveria, mas por hygiene),
+   * da escalação sorteada para a rodada (BLN-08), o mesmo chefe que a área já pediu para o fundo da arena. Se um chefe anterior ainda estivesse por aqui (não deveria, mas por hygiene),
    * ele é removido antes - só existe um por vez.
    */
   spawnBoss(round: number): void {
@@ -121,7 +160,7 @@ export class Spawner {
     const point = farthestPoint(this.s.level.enemies, this.s.player.sprite.x);
     const at = this.s.level.enemies[point];
     const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
-    const spec = bossSpecFor(round);
+    const spec = this.s.runDirector.bosses.specFor(round);
     this.s.boss = new Boss(
       this.s,
       spawnAt,
@@ -140,9 +179,10 @@ export class Spawner {
       (x, y, dir, speed, damage) => this.spawnProjectile('projectile', x, y, dir, speed, BOSS.volley.maxDist, damage),
       (dead, x, y) => this.onBossDefeated(dead, x, y),
     );
-    // Entrada (BHUD-01/05): barra cheia com o nome e a faixa do chefe durante a intro; na rodada recorde + 1 a faixa
-    // também comemora o recorde (RMK-05), porque cobre o banner da rodada.
-    this.s.hud.showBossBar(spec.name);
+    this.s.runDirector.bosses.attach(this.s.boss, spec);
+    // Entrada (BHUD-01/05, BRD-01/02): barra cheia com o nome, os afixos e os glifos, e a faixa durante a intro; na
+    // rodada recorde + 1 a faixa também comemora o recorde (RMK-05), porque cobre o banner da rodada.
+    this.s.runDirector.bosses.showBar(spec);
     this.s.hud.banner(this.s.runDirector.record.bossBanner(spec.name, round), BOSS.introMs);
   }
 
@@ -160,7 +200,8 @@ export class Spawner {
     this.s.fx.shake();
     this.s.fx.curseSmoke(x, y);
     this.s.snapshot.debugEvents.push('bossDefeatedFx');
-    this.s.hud.hideBossBar();
+    this.s.runDirector.bosses.onBossDied();
+    this.s.runDirector.bosses.hideBar();
     // BHUD-03: a faixa entra na hora da morte; "Rodada N concluída" vem depois dela (RHUD-03).
     this.s.hud.banner('Chefe derrotado!', BOSS.defeatBannerMs);
     this.s.runDirector.clearedBanner = {

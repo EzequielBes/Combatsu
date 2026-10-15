@@ -83,12 +83,46 @@ describe('tuning do chefe (T1, valores das Assumptions da spec boss-a-cada-5)', 
     expect(BOSS.tier).toEqual({ hpBase: 400, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 });
   });
 
-  it('archetypes: oni só tem nome; tecela tem nome, volleyCount 5 e projectileSpeedMult 1.25 (BTIER-04, BTIER-05, BTIER-07)', () => {
-    expect(BOSS.archetypes.oni).toEqual({ name: 'Oni do Portão' });
+  it('archetypes: oni tem nomes e ciclos; tecela tem nomes, volleyCount 5, projectileSpeedMult 1.25 e ciclos (BTIER-04, BTIER-05, BTIER-07, BRD-04, CYC-01..04)', () => {
+    expect(BOSS.archetypes.oni).toEqual({
+      name: 'Oni do Portão',
+      shortName: 'Oni',
+      cycles: {
+        1: ['charge', 'leap'],
+        2: ['doubleCharge', 'volley', 'leap'],
+        3: ['volley', 'charge', 'tripleLeap', 'doubleCharge'],
+      },
+    });
     expect(BOSS.archetypes.tecela).toEqual({
       name: 'Tecelã de Maldições',
+      shortName: 'Tecelã',
       volleyCount: 5,
       projectileSpeedMult: 1.25,
+      cycles: {
+        1: ['charge', 'leap'],
+        2: ['charge', 'volley', 'threadRain'],
+        3: ['threadRain', 'volley', 'charge', 'tripleLeap'],
+      },
+    });
+  });
+
+  it('ciclos de base do new BossAI() seguem os de antes (BAI-02)', () => {
+    expect(BOSS.cycles).toEqual({
+      1: ['charge', 'leap'],
+      2: ['charge', 'volley', 'leap'],
+      3: ['volley', 'charge', 'leap', 'charge'],
+    });
+  });
+
+  it('Investida Dupla 250 ms; Salto Triplo 3 saltos a 200 ms; Chuva de Fios 600/200 ms, 5 marcas (CYC-05, CYC-07, CYC-09)', () => {
+    expect(BOSS.doubleCharge).toEqual({ rewindupMs: 250 });
+    expect(BOSS.tripleLeap).toEqual({ hops: 3, gapMs: 200 });
+    expect(BOSS.threadRain).toEqual({
+      windupMs: 600,
+      activeMs: 200,
+      offsets: [-96, -48, 0, 48, 96],
+      width: 12,
+      height: 120,
     });
   });
 

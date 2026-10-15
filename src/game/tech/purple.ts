@@ -97,7 +97,7 @@ export class PurpleTech {
       strength: 'heavy',
       force: PURPLE_FORCE,
       direction: { x: facing, y: -0.2 },
-      ...techMarks('heavy'),
+      ...techMarks('heavy', 'roxo'),
     };
     if (!target.receiveHit(dealt)) return;
     const at = { x: target.x, y: target.hurtRect().y };

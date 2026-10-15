@@ -168,7 +168,7 @@ export class DivergentTech {
       strength: 'light',
       force: DIVERGENT_FORCE.first,
       direction: { x: player.facing, y: -0.15 },
-      ...techMarks('light'),
+      ...techMarks('light', 'divergente'),
     };
     this.hitbox.open(CROSS_HITBOX, hit, player.sprite.x, player.sprite.y, player.facing);
   }
@@ -202,7 +202,7 @@ export class DivergentTech {
       strength: 'heavy',
       force: DIVERGENT_FORCE.second,
       direction: { x: player.facing, y: -0.3 },
-      ...techMarks('heavy'),
+      ...techMarks('heavy', 'divergente'),
     };
     if (target.receiveHit(hit)) {
       this.ctx.onTechHit(hit, point, target);
@@ -232,7 +232,7 @@ export class DivergentTech {
       // KOK-07: 2× o impulso do 2º impacto comum; o chefe não é empurrado (a postura dele é que sofre, KOK-08).
       force: target instanceof Boss ? 0 : DIVERGENT_FORCE.second * KOKUSEN.knockbackMul,
       direction: { x: player.facing, y: -0.3 },
-      ...techMarks('heavy'),
+      ...techMarks('heavy', 'divergente'),
     };
     // KOK-08: no chefe, postura própria (3× o dano), não a fórmula 2× de um golpe forte comum.
     if (target instanceof Boss) target.receiveKokusen(KOKUSEN.damage, KOKUSEN.damage * KOKUSEN.poiseMul);

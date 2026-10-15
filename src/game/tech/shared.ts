@@ -1,6 +1,8 @@
 import type Phaser from 'phaser';
+import type { TechHit } from '../../core/bossAdapt';
 import type { Hit, Strength, Vec2 } from '../../core/hit';
 import type { Loadout } from '../../core/loadout';
+import type { TechId } from '../../data/techniques';
 import type { Hittable, Rect } from '../bodyTags';
 import type { Player } from '../Player';
 
@@ -44,7 +46,8 @@ export interface TechContext {
 
 /**
  * Marcas de todo golpe de técnica (PST-09, GND-04, GND-07): `tech` o deixa fora do limite de 1 golpe no chão; o golpe
- * forte também derruba quem sobrevive (`knockdown`, AD-021). Todo `Hit` criado pelas técnicas as leva.
+ * forte também derruba quem sobrevive (`knockdown`, AD-021). Todo `Hit` criado pelas técnicas as leva. `techId` diz de
+ * qual técnica veio o golpe, para o Adaptativo do chefe contar por técnica (ADP-01); o `Hit` do core não muda.
  */
-export const techMarks = (strength: Strength): Pick<Hit, 'tech' | 'knockdown'> =>
-  strength === 'heavy' ? { tech: true, knockdown: true } : { tech: true };
+export const techMarks = (strength: Strength, id: TechId): Pick<TechHit, 'tech' | 'knockdown' | 'techId'> =>
+  strength === 'heavy' ? { tech: true, knockdown: true, techId: id } : { tech: true, techId: id };

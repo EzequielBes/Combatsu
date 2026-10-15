@@ -1,7 +1,15 @@
 import type { AttackKind } from '../core/attackKind';
 import type { BossAIState, BossAttack } from '../core/bossAI';
+import type { AdaptSource } from '../core/bossAdapt';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
+import type { BossAffixId } from '../data/bossAffixes';
+import type { AdaptWheelView } from './boss/AdaptWheel';
+import type { AffixOutlineView } from './boss/AffixOutline';
+import type { BeamView } from './boss/BeamAttack';
+import type { BossFxEvent } from './boss/BossAffixFx';
+import type { LavaView } from './boss/LavaField';
+import type { ThreadRainView } from './boss/ThreadRain';
 import type { CastState } from '../core/cast';
 import type { CounterKind } from '../core/counter';
 import type { EnemyVariant } from '../core/enemyVariant';
@@ -33,6 +41,8 @@ export interface GameSnapshot {
     flash: string | null;
     maxHp: number;
     vy: number;
+    /** No chão agora (a lava do Ígneo só bate assim, IGN-05). */
+    grounded: boolean;
     /** Nome do golpe em curso, `null` sem golpe (MOV-18). */
     move: string | null;
     /** Frame do sprite do jogador em cena, ex.: `guard` (CTL-09). */
@@ -122,6 +132,16 @@ export interface GameSnapshot {
     poise: number;
     archetype: BossArchetype;
     name: string;
+    /** Afixos da escalação, na ordem dela (BLN-11). */
+    affixes: BossAffixId[];
+    /** Moldura Portador de Dedo (BLN-11). */
+    finger: boolean;
+    /** Escala do sprite lida do próprio sprite: 1, ou 1,25 no Portador de Dedo (PDD-03). */
+    spriteScale: number;
+    /** Lado para onde o sprite olha, lido do sinal da escala X dele (SNG-02). */
+    facing: 1 | -1;
+    /** Largura e altura do corpo Matter, lidas dos limites dele (PDD-03). */
+    body: { width: number; height: number };
     x: number;
     /** Centro do corpo; fica dentro da sala (0..544) durante toda a luta. */
     y: number;
@@ -129,7 +149,31 @@ export interface GameSnapshot {
     view: { x: number; y: number };
     /** O finalizador (J+K) ainda pode ser usado neste `stagger` (BFX-06, BFX-07). */
     finisherReady: boolean;
+    /** Eventos de vista que o `BossAffixFx` recebeu por tipo, desde que o chefe nasceu (AFX-01). */
+    fx: Partial<Record<BossFxEvent['type'], number>>;
+    /** Chuva de Fios: momento, X dos fios, dano de cada um e acertos aceitos desde que o chefe nasceu (CYC-09/10). */
+    threads: ThreadRainView | null;
+    /** Lava do Ígneo: faixas vivas, tiques do relógio, tiques aceitos pelo player e dano de cada um (IGN-01..05). */
+    lava: LavaView | null;
+    /** Feixe do Sangue: momento, lado, trecho, espessura, aviso decorrido, dano e acertos aceitos (SNG-02/03). */
+    beam: BeamView | null;
+    /** Contorno do afixo: cor atual, quadro das cópias e o do chefe; `null` sem Ígneo nem Invocador (BRD-03). */
+    outline: AffixOutlineView | null;
+    /** Fontes adaptadas pelo Adaptativo, na ordem em que adaptaram; vazio sem o afixo (ADP-07). */
+    adapted: AdaptSource[];
+    /** Roda do Adaptativo: se aparece, os rótulos e o centro; `null` sem o afixo (ADP-06). */
+    wheel: AdaptWheelView | null;
   } | null;
+  /** Última escalação de chefe pedida na run (BLN-08..11), já com os overrides de debug; `null` antes do 1º chefe. */
+  bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;
+  /** Chaves da `PALETTE` dos glifos visíveis ao lado da barra do chefe, na ordem (BRD-02); vazio sem barra. */
+  bossGlyphs: string[];
+  /** Aviso "Próximo: ..." da loja antes da rodada de chefe (BRD-04/08); `null` quando não está na tela. */
+  bossAnnounce: string | null;
+  /** Faixas de lava vivas em cena, com ou sem chefe: zero depois da morte dele e na run nova (edge cases da lava). */
+  bossLavaStrips: number;
+  /** Ids dos invocados vivos do chefe Invocador (INV-01..05): vazio sem chefe, na morte dele e na run nova. */
+  bossSummoned: number[];
   /**
    * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
    * `id` é único por instância (nunca reaproveitado) - o smoke usa para contar disparos mesmo que um projétil

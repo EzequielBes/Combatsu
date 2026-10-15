@@ -75,7 +75,10 @@ Parâmetros da URL, todos junto de `?debug`:
 | Parâmetro | Efeito |
 | --- | --- |
 | `seed=N` | semente da run (ondas, drops, loja) |
-| `round=N` | começar na rodada N: `round=5` abre o Oni do Portão, `round=15` a Tecelã de Maldições |
+| `round=N` | começar na rodada N: `round=5` abre a primeira rodada de chefe; o arquétipo, os afixos e a moldura saem da seed (`seed=N`) |
+| `bossArch=oni\|tecela` | fixar o arquétipo do chefe (Oni do Portão ou Tecelã de Maldições) |
+| `bossAffix=<id>[,<id>]\|none` | fixar os afixos do chefe, na ordem (`igneo`, `invocador`, `sangue`, `adaptativo`); `none` tira todos; um id desconhecido faz valer o sorteio |
+| `finger=1\|0` | ligar ou desligar a moldura Portador de Dedo (vale em qualquer rodada). Os três parâmetros do chefe não mudam o sorteio das rodadas seguintes |
 | `maxAlive=N` | máximo de inimigos vivos ao mesmo tempo |
 | `enemyVariant=corcunda\|rastejante\|bruto` | forçar a aparência dos inimigos |
 | `enemyGuard=N` | fixar a chance total de o inimigo levantar a guarda (0 = nunca, 1 = sempre); desliga a leitura de repetição |

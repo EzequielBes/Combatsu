@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 82,
+  "next_id": 84,
   "lessons": [
     {
       "id": "L-001",
@@ -429,17 +429,19 @@
       "text": "Assert every clause of a conjunctive acceptance criterion, including positions set alongside the headline values.",
       "signal": "surviving_mutant",
       "scope": "smoke",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "run-e-rodadas"
+        "run-e-rodadas",
+        "chefes-com-afixos"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "validation.md rodada 2 N4 (src/game/Enemy.ts:87, DIF-04 speeds) (smoke)"
+        "validation.md rodada 2 N4 (src/game/Enemy.ts:87, DIF-04 speeds) (smoke)",
+        "validation.md A5 (src/game/boss/BeamAttack.ts:79, SNG-02) (scripts/smoke)"
       ],
       "created": "2026-09-24T18:18:53Z",
-      "last_seen": "2026-09-24T18:18:53Z"
+      "last_seen": "2026-10-15T07:18:20Z"
     },
     {
       "id": "L-025",
@@ -1474,6 +1476,42 @@
       ],
       "created": "2026-10-15T03:22:30Z",
       "last_seen": "2026-10-15T03:22:30Z"
+    },
+    {
+      "id": "L-082",
+      "key": "surviving_mutant::assert every field of a hit an adapter builds height unblockable force owner in a unit test with a fake scene because a live smoke only measures the damage that lands",
+      "text": "Assert every field of a hit an adapter builds (height, unblockable, force, owner) in a unit test with a fake scene, because a live smoke only measures the damage that lands.",
+      "signal": "surviving_mutant",
+      "scope": "game/boss",
+      "status": "candidate",
+      "features": [
+        "chefes-com-afixos"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md A4 (src/game/boss/LavaField.ts:62-63, IGN-04) (game/boss)"
+      ],
+      "created": "2026-10-15T07:18:20Z",
+      "last_seen": "2026-10-15T07:18:20Z"
+    },
+    {
+      "id": "L-083",
+      "key": "ac_gap::assert the exact spec value of a live damage number never only that it is positive",
+      "text": "Assert the exact spec value of a live damage number, never only that it is positive.",
+      "signal": "ac_gap",
+      "scope": "scripts/smoke",
+      "status": "candidate",
+      "features": [
+        "chefes-com-afixos"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md A3 (scripts/smoke/boss-attacks.smoke.mjs:273, CYC-10) (scripts/smoke)"
+      ],
+      "created": "2026-10-15T07:18:20Z",
+      "last_seen": "2026-10-15T07:18:20Z"
     }
   ]
 }

@@ -3,7 +3,9 @@
 // x=48, 624, 1200 e 1232; o player nasce em x=112, então o ponto mais distante (BOSS-03) é o de x=1232 (a parede
 // da direita empurra o corpo para ~1228).
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5&bossArch=oni&bossAffix=none&finger=0`, {
+    waitUntil: 'load',
+  });
   await page.waitForFunction(
     () => {
       try {
@@ -247,7 +249,9 @@ export default async function ({ page, baseUrl, assert }) {
   // HP-02 -> PST-15 (invulnerabilidade de 700 ms para 300 ms): o player parado até aqui perdeu quase toda a vida para o ciclo do chefe e
   // já não anda até o fim do cenário. As seções da parede e do pouso rodam em runs novas (100 de vida), no mesmo URL.
   const freshRun = async () => {
-    await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5`, { waitUntil: 'load' });
+    await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5&bossArch=oni&bossAffix=none&finger=0`, {
+      waitUntil: 'load',
+    });
     await page.waitForFunction(
       () => {
         try {
@@ -362,7 +366,9 @@ export default async function ({ page, baseUrl, assert }) {
   );
 
   // BTIER-05/07: rodada 15 (tier 3) é a Tecelã de Maldições - rajada de 5 projéteis a 325 px/s (260 x 1.25).
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=15`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=15&bossArch=tecela&bossAffix=none&finger=0`, {
+    waitUntil: 'load',
+  });
   await page.waitForFunction(
     () => {
       try {

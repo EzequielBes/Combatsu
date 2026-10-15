@@ -2,7 +2,9 @@
 // com `?debug&seed=1&round=5`. O player pega a garrafa (x=368), anda até x~700 e espera: a investida do chefe sai
 // de x~1228, anda 360 px e para em `rest` a ~170 px, fora do alcance da hitbox dela. Aí a garrafa é arremessada.
 export default async function ({ page, baseUrl, assert }) {
-  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1&round=5&bossArch=oni&bossAffix=none&finger=0`, {
+    waitUntil: 'load',
+  });
   await page.waitForFunction(
     () => {
       try {

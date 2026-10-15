@@ -418,11 +418,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     this.area.update(dt);
     for (const cmd of this.run.update(dt, this.runDirector.seedForNewRun)) this.runDirector.applyRunCommand(cmd);
     // Rodada e restantes (RHUD-01) acompanham o `run` a cada frame; fora de rodada (title) fica escondido.
-    // T28: no fxlab a onda nunca nasce de verdade (FXL-01), mas o spawner interno da `Run` segue contando como se
-    // tivesse nascido - sem isso "Inimigos: N" mentiria na tela do laboratório.
-    this.hud.setRun(
-      this.run.round > 0 && !this.fxLab ? { round: this.run.round, remaining: this.run.alive + this.run.queued } : null,
-    );
+    this.hud.setRun(this.runDirector.hudRun());
     this.hud.setHeldItem(this.drops.heldItemInfo());
     this.hud.update(dt);
     this.energyHud.update(dt, this.energy, this.loadout, this.mastery);

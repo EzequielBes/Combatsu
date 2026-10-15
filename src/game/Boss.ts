@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
+import { Adaptation, adaptSourceOf, type AdaptSource } from '../core/bossAdapt';
+import { bossTuningFor } from '../core/bossAffix';
 import { BossAI, type BossAIEvent, type BossAIState, type BossAttack } from '../core/bossAI';
+import { animBase } from '../core/bossAttacks';
 import { BossBrain, type BossBrainState, type BossEvent } from '../core/bossBrain';
 import type { BossSpec } from '../core/bossTier';
 import { Filters } from '../core/collision';
@@ -7,12 +10,13 @@ import type { Hit, Vec2 } from '../core/hit';
 import { DEFENSE } from '../data/moves';
 import { BOSS } from '../data/tuning';
 import { bossAnimKey, BOSS_ORIGIN } from './art/sprites/boss';
+import type { BossFxAnchor, BossFxSink } from './boss/BossAffixFx';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { BodyRenderPos, PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
 import { TEX } from './textures';
 
-/** Corpo físico do chefe (design: 40x56 px). */
+/** Corpo físico do chefe na escala 1 (design: 40x56 px); cada instância guarda a sua medida em `w`/`h` (PDD-03). */
 const BODY_W = 40;
 const BODY_H = 56;
 /** Arco do salto (design: 120 px de altura). */
@@ -38,6 +42,8 @@ export class Boss implements Hittable {
   readonly team = 'enemy';
   private readonly brain: BossBrain;
   private readonly ai: BossAI;
+  /** Fontes que o Adaptativo conta e reduz (ADP-01..05); `null` sem o afixo. */
+  private readonly adaptation: Adaptation | null;
   private readonly attack: AttackHitbox;
   private readonly body: MatterJS.BodyType;
   /** Posição do corpo como a tela a mostra, entre os dois últimos passos de física (ITP-07). */
@@ -51,6 +57,16 @@ export class Boss implements Hittable {
   private leapGroundY = 0;
   private landingHitboxTicks = 0;
   private _removed = false;
+  /** Largura do corpo físico desta instância (px): `BODY_W × spec.bodyScale` (PDD-03). */
+  private readonly w: number;
+  /** Altura do corpo físico desta instância (px): `BODY_H × spec.bodyScale` (PDD-03). */
+  private readonly h: number;
+  /** Escala do sprite: a mesma do corpo (1, ou 1,25 no Portador de Dedo, PDD-03). */
+  private readonly scale: number;
+  /** Eventos de vista dos ataques novos e dos afixos (AFX-01), ligado pelo `BossDirector.attach`. */
+  fxSink?: BossFxSink;
+  /** Troca de fase (o Invocador chama reforços nela), ligado pelo `BossDirector`. */
+  onPhaseChanged?: (phase: 2 | 3) => void;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -69,9 +85,16 @@ export class Boss implements Hittable {
     /** Morte (BWIN-01..03, T10): a cena aplica a recompensa e os efeitos. */
     private readonly onDied?: (boss: Boss, x: number, y: number) => void,
   ) {
-    this.brain = new BossBrain(spec.maxHp);
-    this.ai = new BossAI();
-    this.body = scene.matter.add.rectangle(spawn.x, spawn.y, BODY_W, BODY_H, {
+    // AFX-01: ciclos do arquétipo e dos afixos da escalação no lugar da tuning padrão.
+    const tuning = bossTuningFor(spec);
+    this.brain = new BossBrain(spec.maxHp, tuning.brain);
+    this.ai = new BossAI(tuning.ai);
+    this.adaptation = spec.affixes.includes('adaptativo') ? new Adaptation() : null;
+    // PDD-03: o Portador de Dedo cresce no corpo e no sprite pela mesma escala.
+    this.scale = spec.bodyScale;
+    this.w = Math.round(BODY_W * this.scale);
+    this.h = Math.round(BODY_H * this.scale);
+    this.body = scene.matter.add.rectangle(spawn.x, spawn.y, this.w, this.h, {
       friction: 0.8,
       frictionAir: 0.02,
       collisionFilter: { ...Filters.boss },
@@ -82,7 +105,7 @@ export class Boss implements Hittable {
     this.attack = new AttackHitbox(scene, this.id, this.team, onConnect);
     const textureKey = spec.archetype === 'tecela' ? TEX.bossTecela : TEX.bossOni;
     this.view = scene.add
-      .sprite(spawn.x, spawn.y + BODY_H / 2, textureKey, 'idle')
+      .sprite(spawn.x, spawn.y + this.h / 2, textureKey, 'idle')
       .setOrigin(BOSS_ORIGIN.x, BOSS_ORIGIN.y);
   }
 
@@ -131,13 +154,44 @@ export class Boss implements Hittable {
     return this.spec.name;
   }
 
+  /** Afixos da escalação, na ordem dela (BLN-11). */
+  get affixes(): BossSpec['affixes'] {
+    return this.spec.affixes;
+  }
+
+  /** Moldura Portador de Dedo (BLN-11, PDD-03..05). */
+  get finger(): boolean {
+    return this.spec.finger;
+  }
+
+  /** Escala do sprite como a tela a mostra (PDD-03), lida do próprio sprite para o snapshot de debug. */
+  get spriteScale(): number {
+    return Math.abs(this.view.scaleY);
+  }
+
+  /** Lado para onde o sprite olha na tela (sinal da escala X), para o smoke conferir o lado do feixe (SNG-02). */
+  get spriteFacing(): 1 | -1 {
+    return this.view.scaleX < 0 ? -1 : 1;
+  }
+
+  /** Largura e altura do corpo Matter de fato (PDD-03), lidas dos limites do corpo para o snapshot de debug. */
+  get bodySize(): { width: number; height: number } {
+    const { min, max } = this.body.bounds;
+    return { width: max.x - min.x, height: max.y - min.y };
+  }
+
+  /** Fontes adaptadas, na ordem em que adaptaram; vazio sem Adaptativo (ADP-06, ADP-07). */
+  get adapted(): readonly AdaptSource[] {
+    return this.adaptation?.adapted ?? [];
+  }
+
   get removed(): boolean {
     return this._removed;
   }
 
   /** Onde o sprite visível está de fato, convertido para o centro do corpo (ITP-07), para o snapshot de debug. */
   get spritePos(): Vec2 {
-    return { x: this.view.x, y: this.view.y - BODY_H / 2 };
+    return { x: this.view.x, y: this.view.y - this.h / 2 };
   }
 
   /** KOK-16: sprite visual para a silhueta do negativo do Kokusen. */
@@ -153,21 +207,19 @@ export class Boss implements Hittable {
   /** Posição + tamanho do corpo, nunca `body.bounds` (mesma regra de Enemy/Player). */
   hurtRect(): Rect {
     const { x, y } = this.body.position;
-    return { x, y, width: BODY_W, height: BODY_H };
+    return { x, y, width: this.w, height: this.h };
   }
 
   /**
    * Golpe recebido (BOSS-08, BAI-04/12): ignorado por completo na intro e no rugido, sem faísca nem hitstop
-   * (`false`). Fora disso é sempre aceito (`true`), mesmo quando não muda de fase nem atordoa.
+   * (`false`). Fora disso é sempre aceito (`true`), mesmo quando não muda de fase nem atordoa. Com Adaptativo, o
+   * golpe aceito conta para a fonte dele e sai pela metade se ela já estava adaptada (ADP-01/04); Kokusen, finalizador
+   * e aparo não passam por aqui (ADP-02).
    */
   receiveHit(hit: Hit): boolean {
     const state = this.brain.state;
     if (state === 'intro' || state === 'roar' || state === 'dead') return false;
-    const events = this.brain.receiveHit(hit);
-    for (const ev of events) {
-      if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
-      else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
-    }
+    this.dispatch(this.brain.receiveHit(hit, this.adaptation?.onHit(adaptSourceOf(hit)) ?? 1));
     return true;
   }
 
@@ -187,12 +239,7 @@ export class Boss implements Hittable {
    * Fora do `stagger`, ou depois do primeiro uso, devolve `[]`.
    */
   receiveFinisher(): BossEvent[] {
-    const events = this.brain.receiveFinisher();
-    for (const ev of events) {
-      if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
-      else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
-    }
-    return events;
+    return this.dispatch(this.brain.receiveFinisher());
   }
 
   /** Golpe do chefe aparado pelo jogador (PAR-07): a postura cai 30, nunca abaixo de 0, sem tirar vida. */
@@ -206,9 +253,17 @@ export class Boss implements Hittable {
    * já decide se o Kokusen pode acontecer neste estado (BOSS-08, BAI-12: nenhum Kokusen na intro/rugido).
    */
   receiveKokusen(damage: number, poiseDamage: number): BossEvent[] {
-    const events = this.brain.receiveKokusen(damage, poiseDamage);
+    return this.dispatch(this.brain.receiveKokusen(damage, poiseDamage));
+  }
+
+  /**
+   * Repassa os eventos do cérebro: o rugido empurra o player para longe do chefe; a troca de fase avisa o diretor;
+   * a morte avisa a cena.
+   */
+  private dispatch(events: BossEvent[]): BossEvent[] {
     for (const ev of events) {
       if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
+      else if (ev.type === 'phaseChanged') this.onPhaseChanged?.(ev.phase);
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
     }
     return events;
@@ -218,10 +273,8 @@ export class Boss implements Hittable {
     if (this._removed) return;
     this.lastPlayerX = playerX;
     this.brain.update(dtMs);
-    if (this.landingHitboxTicks > 0) {
-      this.landingHitboxTicks--;
-      if (this.landingHitboxTicks === 0) this.attack.close();
-    }
+    this.adaptation?.update(dtMs);
+    if (this.landingHitboxTicks > 0 && --this.landingHitboxTicks === 0) this.attack.close();
     if (this.brain.isDead) {
       // Sem IA nem movimento depois de morto, mas a pose "dead" ainda precisa aparecer (o `animate` decide o
       // frame pelo estado do `BossBrain`, não pelos parâmetros abaixo).
@@ -230,19 +283,13 @@ export class Boss implements Hittable {
     }
 
     const canAct = this.brain.state === 'active';
+    const selfX = this.body.position.x;
     // Parado (preparo), a investida que começa neste frame mira o player, não o `facing` antigo: senão um chefe
     // encostado na parede de trás (spawn em x=1232) leria "bloqueado" no primeiro frame e atordoaria sem andar.
-    const towardPlayer: 1 | -1 = playerX >= this.body.position.x ? 1 : -1;
+    const towardPlayer: 1 | -1 = playerX >= selfX ? 1 : -1;
     const chargeDir: 1 | -1 = this.lastVx > 0 ? 1 : this.lastVx < 0 ? -1 : towardPlayer;
     const blocked = canAct ? this.isBlockedAhead(chargeDir) : false;
-    const out = this.ai.update(dtMs, {
-      selfX: this.body.position.x,
-      playerX,
-      blocked,
-      canAct,
-      phase: this.brain.phase,
-      spec: this.spec,
-    });
+    const out = this.ai.update(dtMs, { selfX, playerX, blocked, canAct, phase: this.brain.phase, spec: this.spec });
     this.lastVx = out.vx;
     this.handleAIEvents(out.events);
 
@@ -259,19 +306,31 @@ export class Boss implements Hittable {
     this.animate(out.state, out.attack);
   }
 
+  /**
+   * Eventos do `BossAI`: investida e pouso abrem a hitbox do corpo, a parede atordoa (BFX-02), a rajada pede o
+   * projétil à cena; o rastro da investida e o aviso/abertura/fechamento do feixe e dos fios vão para o `fxSink`.
+   */
   private handleAIEvents(events: BossAIEvent[]): void {
     for (const ev of events) {
+      // O feixe sai no lado preso no aviso (SNG-02): o chefe vira para ele, mesmo parado depois de uma investida
+      // que passou do player, senão a linha sairia pelas costas do sprite.
+      if (ev.type === 'telegraph' || ev.type === 'strikeOn') this.facing = ev.dir;
       if (ev.type === 'hitboxOn') this.openChargeHitbox();
       else if (ev.type === 'hitboxOff') this.attack.close();
-      else if (ev.type === 'landed') this.onLand();
-      else if (ev.type === 'wallStun')
-        this.brain.stun(BOSS.wallStunMs); // BFX-02: bateu na parede, fica atordoado
+      else if (ev.type === 'landed') this.onLand(ev.final);
+      else if (ev.type === 'wallStun') this.brain.stun(BOSS.wallStunMs);
       else if (ev.type === 'fire') {
-        const { x, y } = this.body.position;
-        // Altura de tronco a partir do chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).
-        this.onFire?.(x, this.groundTopBelow(x, y) - BODY_H / 2, ev.dir, ev.speed, this.spec.damage.projectile);
-      }
+        const at = this.fxAnchor();
+        this.onFire?.(at.x, at.chestY, ev.dir, ev.speed, this.spec.damage.projectile);
+      } else this.fxSink?.(ev, this.fxAnchor());
     }
+  }
+
+  /** X do corpo, topo do chão abaixo dele e altura do tronco a partir desse chão (T9: nunca o y ao vivo do corpo). */
+  private fxAnchor(): BossFxAnchor {
+    const { x, y } = this.body.position;
+    const groundY = this.groundTopBelow(x, y);
+    return { x, groundY, chestY: groundY - this.h / 2, facing: this.facing };
   }
 
   private openChargeHitbox(): void {
@@ -283,7 +342,7 @@ export class Boss implements Hittable {
       force: 6,
       direction: { x: this.facing, y: -0.3 },
     };
-    const shape = { offsetX: BODY_W / 2 + 15, offsetY: 0, width: 30, height: BODY_H };
+    const shape = { offsetX: this.w / 2 + 15, offsetY: 0, width: 30, height: this.h };
     this.attack.open(shape, hit, this.body.position.x, this.body.position.y, this.facing);
   }
 
@@ -311,13 +370,16 @@ export class Boss implements Hittable {
     setIgnoreGravity(this.body, false);
   }
 
-  /** Pouso (BAT-03/10): corpo sólido de novo, hitbox de impacto por um frame e aviso para a cena (ondas, T9). */
-  private onLand(): void {
+  /**
+   * Pouso (BAT-03/10): corpo sólido de novo, hitbox de impacto por um frame e aviso para a cena (ondas, T9). No
+   * Salto Triplo todo pouso abre a hitbox, mas só o último (`final`) solta as ondas de choque (CYC-08).
+   */
+  private onLand(final: boolean): void {
     this.exitLeap();
     const { x } = this.body.position;
     // Ancora no topo real do chão no nível da partida ou abaixo dele (a sonda começa nos pés do chefe): nunca pousa
     // numa plataforma acima, mesmo com o player embaixo dela (edge case da spec).
-    const y = this.groundTopBelow(x, this.leapGroundY + BODY_H / 2 - 4) - BODY_H / 2;
+    const y = this.groundTopBelow(x, this.leapGroundY + this.h / 2 - 4) - this.h / 2;
     this.scene.matter.body.setPosition(this.body, { x, y });
     this.scene.matter.body.setVelocity(this.body, { x: 0, y: 0 });
     // Sem `height` (HGT-12): o pouso cobre o corpo inteiro, então não dá para abaixar nem pular.
@@ -328,11 +390,11 @@ export class Boss implements Hittable {
       force: 6,
       direction: { x: 0, y: -0.6 },
     };
-    const shape = { offsetX: 0, offsetY: 0, width: BODY_W + LANDING_HITBOX_PAD * 2, height: BODY_H };
+    const shape = { offsetX: 0, offsetY: 0, width: this.w + LANDING_HITBOX_PAD * 2, height: this.h };
     this.attack.open(shape, hit, x, y, this.facing);
     this.landingHitboxTicks = 1;
     // Rente ao chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).
-    this.onLanded?.(x, this.groundTopBelow(x, y) - SHOCKWAVE_HALF_H, this.spec.damage.shockwave);
+    if (final) this.onLanded?.(x, this.groundTopBelow(x, y) - SHOCKWAVE_HALF_H, this.spec.damage.shockwave);
   }
 
   /**
@@ -352,8 +414,8 @@ export class Boss implements Hittable {
   /** Terreno a `WALL_PROBE` px à frente do corpo, na direção `dir` (BAT-01). */
   private isBlockedAhead(dir: 1 | -1): boolean {
     const { x, y } = this.body.position;
-    const halfW = BODY_W / 2;
-    const halfH = BODY_H / 2;
+    const halfW = this.w / 2;
+    const halfH = this.h / 2;
     const x0 = dir > 0 ? x + halfW : x - halfW - WALL_PROBE;
     const region = { min: { x: x0, y: y - halfH + 4 }, max: { x: x0 + WALL_PROBE, y: y + halfH - 4 } };
     return this.scene.matter.query.region(this.terrain, region).length > 0;
@@ -365,12 +427,13 @@ export class Boss implements Hittable {
     if (brainState === 'dead') name = 'dead';
     else if (brainState === 'roar') name = 'roar';
     else if (brainState === 'stagger') name = 'stagger';
-    else if (attack && aiState === 'windup') name = `windup-${attack}`;
-    else if (attack) name = attack;
+    // CYC-11: os ataques novos tocam os quadros da investida, do salto ou da rajada.
+    else if (attack && aiState === 'windup') name = `windup-${animBase(attack)}`;
+    else if (attack) name = animBase(attack);
     else name = 'idle';
     const draw = this.drawPos.get();
-    this.view.setPosition(draw.x, draw.y + BODY_H / 2);
-    this.view.setScale(this.facing, 1);
+    this.view.setPosition(draw.x, draw.y + this.h / 2);
+    this.view.setScale(this.facing * this.scale, this.scale);
     this.view.anims.play(bossAnimKey(this.spec.archetype, name), true);
   }
 

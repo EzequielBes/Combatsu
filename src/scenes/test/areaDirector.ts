@@ -5,7 +5,7 @@ import { Rng } from '../../core/rng';
 import { type RunCommand } from '../../core/run';
 import { composeArea, konbiniArea, parseModulesParam, Stage, type AreaGrid, type AreaSpan } from '../../core/stage';
 import { isBossRound, requireSpawnPoints } from '../../core/waves';
-import { bossSpecFor, type BossArchetype } from '../../core/bossTier';
+import { type BossArchetype } from '../../core/bossTier';
 import { LEVEL_1 } from '../../data/level1';
 import { COMBAT_IDS, MODULES } from '../../data/modules';
 import { AREA } from '../../data/tuning';
@@ -76,11 +76,11 @@ export class AreaDirector {
         );
         break;
       case 'roundStart':
-        // ARN-05: a área de chefe recebe o arquétipo do chefe da rodada para o fundo da arena.
+        // ARN-05, BLN-08: a área de chefe recebe o arquétipo da escalação da rodada para o fundo da arena.
         if (this.stage)
           this.rebuild(
             this.stage.compose(this.stage.nextArea(cmd.round)),
-            isBossRound(cmd.round) ? bossSpecFor(cmd.round).archetype : null,
+            isBossRound(cmd.round) ? this.s.runDirector.bosses.lineupFor(cmd.round).archetype : null,
           );
         break;
       case 'roundCleared':
