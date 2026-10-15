@@ -255,10 +255,10 @@ caracteres quebram em `, ` numa segunda linha.
 
 **Done when**:
 
-- [ ] Storage falso: leitura e escrita; `getItem`, `setItem` e o getter lançando → `'memory'`, sem exceção, `null`/`false`
-- [ ] Em `'memory'` o storage falso não é mais chamado (contador)
-- [ ] Varredura `import.meta.glob('/src/**/*.ts', { query: '?raw' })`: só `game/saveStorage.ts` diz `localStorage`
-- [ ] Gate verde; contagem = anterior + novos
+- [x] Storage falso: leitura e escrita; `getItem`, `setItem` e o getter lançando → `'memory'`, sem exceção, `null`/`false`
+- [x] Em `'memory'` o storage falso não é mais chamado (contador)
+- [x] Varredura `import.meta.glob('/src/**/*.ts', { query: '?raw' })`: só `game/saveStorage.ts` diz `localStorage`
+- [x] Gate verde; contagem = anterior + novos (2975 + 8 = 2983)
 
 **Tests**: unit
 **Gate**: quick
