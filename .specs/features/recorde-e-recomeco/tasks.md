@@ -229,11 +229,11 @@ caracteres quebram em `, ` numa segunda linha.
 
 **Done when**:
 
-- [ ] Cada lista com itens e vazia (`Técnicas: nenhuma`, `Passivas: nenhuma`, `Arsenal: nenhum`, `Votos: nenhum`, `Dano: nenhum`)
-- [ ] Id desconhecido some da linha sem quebrar as outras (caso de borda)
-- [ ] `Recorde!` com `highlight` quando bateu; `Recorde: rN` sem `highlight` quando não; nenhuma linha sem recorde
-- [ ] Última linha exata; quebra em `, ` acima de 100 caracteres (99, 100 e 101 nos dois lados)
-- [ ] Gate verde; contagem = anterior + novos
+- [x] Cada lista com itens e vazia (`Técnicas: nenhuma`, `Passivas: nenhuma`, `Arsenal: nenhum`, `Votos: nenhum`, `Dano: nenhum`)
+- [x] Id desconhecido some da linha sem quebrar as outras (caso de borda)
+- [x] `Recorde!` com `highlight` quando bateu; `Recorde: rN` sem `highlight` quando não; nenhuma linha sem recorde
+- [x] Última linha exata; quebra em `, ` acima de 100 caracteres (99, 100 e 101 nos dois lados)
+- [x] Gate verde; contagem = anterior + novos
 
 **Tests**: unit
 **Gate**: quick

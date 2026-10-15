@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { DAMAGE_SOURCES, DamageLedger, sourceLabel } from '../../src/core/runSummary';
+import {
+  DAMAGE_SOURCES,
+  DamageLedger,
+  RETRY_LINE,
+  SUMMARY_LINE_MAX,
+  type SummaryInput,
+  listLines,
+  sourceLabel,
+  summaryLines,
+} from '../../src/core/runSummary';
 import { TECHNIQUES } from '../../src/data/techniques';
+import { VOWS } from '../../src/data/vows';
 
 describe('DAMAGE_SOURCES', () => {
   it('golpe primeiro, técnicas na ordem de TechId, objeto por último', () => {
@@ -86,5 +96,146 @@ describe('DamageLedger', () => {
     ledger.add('golpe', 5);
     ledger.totals().golpe = 999;
     expect(ledger.totals().golpe).toBe(5);
+  });
+});
+
+const EMPTY_BUILD = { techniques: [], perks: [], relic: null, weapon: null, vows: [] };
+
+function input(over: Partial<SummaryInput> = {}): SummaryInput {
+  return {
+    round: 3,
+    kills: 12,
+    fragments: 40,
+    build: EMPTY_BUILD,
+    damage: [],
+    newRecord: false,
+    bestRound: 5,
+    ...over,
+  };
+}
+
+const texts = (over: Partial<SummaryInput> = {}) => summaryLines(input(over)).map((l) => l.text);
+
+describe('summaryLines', () => {
+  it('build vazia e sem dano: nenhuma/nenhum em cada lista e Dano: nenhum', () => {
+    expect(texts()).toEqual([
+      'Rodada alcançada: 3',
+      'Abates: 12',
+      'Fragmentos: 40',
+      'Técnicas: nenhuma',
+      'Passivas: nenhuma',
+      'Arsenal: nenhum',
+      'Votos: nenhum',
+      'Dano: nenhum',
+      'Recorde: r5',
+      'J / Enter para tentar de novo',
+    ]);
+  });
+
+  it('lista cada item com nome e nível, e o dano de cada fonte', () => {
+    const ledger = new DamageLedger();
+    ledger.add('golpe', 60.4);
+    ledger.add('azul', 40);
+    const lines = texts({
+      build: {
+        techniques: [
+          { id: 'azul', level: 2 },
+          { id: 'divergente', level: 1 },
+        ],
+        perks: ['punhoPesado', 'refluxo'],
+        relic: { id: 'manoplas', level: 2 },
+        weapon: { id: 'bastao', level: 1 },
+        vows: ['furia', 'ganancia'],
+      },
+      damage: ledger.rows(),
+    });
+    expect(lines.slice(3, 9)).toEqual([
+      `Técnicas: ${TECHNIQUES.azul.name} Nv 2, Punho Divergente Nv 1`,
+      'Passivas: Punho pesado, Refluxo',
+      'Arsenal: Manoplas de ferro Nv 2, Bastão selado Nv 1',
+      `Votos: ${VOWS.furia.name}, ${VOWS.ganancia.name}`,
+      'Golpe: 60 (60%)',
+      `${TECHNIQUES.azul.name}: 40 (40%)`,
+    ]);
+  });
+
+  it('só a arma vinculada, sem relíquia, ainda aparece no arsenal', () => {
+    expect(texts({ build: { ...EMPTY_BUILD, weapon: { id: 'lamina', level: 3 } } })).toContain(
+      'Arsenal: Lâmina vinculada Nv 3',
+    );
+  });
+
+  it('id desconhecido some da linha sem quebrar as outras', () => {
+    const lines = texts({
+      build: {
+        techniques: [
+          { id: 'sumiu', level: 2 },
+          { id: 'roxo', level: 1 },
+        ],
+        perks: ['toString', 'executor'],
+        relic: { id: 'velha', level: 1 },
+        weapon: null,
+        vows: ['inventado'],
+      },
+    });
+    expect(lines.slice(3, 7)).toEqual([
+      `Técnicas: ${TECHNIQUES.roxo.name} Nv 1`,
+      'Passivas: Executor',
+      'Arsenal: nenhum',
+      'Votos: nenhum',
+    ]);
+  });
+
+  it('Recorde! com highlight quando bateu; Recorde: rN sem highlight quando não; nada sem recorde', () => {
+    const beat = summaryLines(input({ newRecord: true, bestRound: 3 }));
+    expect(beat.at(-2)).toEqual({ text: 'Recorde!', highlight: true });
+    expect(beat.filter((l) => l.text.startsWith('Recorde')).length).toBe(1);
+
+    const lost = summaryLines(input({ bestRound: 7 }));
+    expect(lost.at(-2)).toEqual({ text: 'Recorde: r7' });
+    expect(lost.some((l) => l.text === 'Recorde!' || l.highlight)).toBe(false);
+
+    const none = summaryLines(input({ bestRound: null }));
+    expect(none.some((l) => l.text.startsWith('Recorde'))).toBe(false);
+  });
+
+  it('a última linha é sempre J / Enter para tentar de novo', () => {
+    for (const over of [{}, { newRecord: true }, { bestRound: null }]) {
+      expect(summaryLines(input(over)).at(-1)).toEqual({ text: 'J / Enter para tentar de novo' });
+    }
+    expect(RETRY_LINE).toBe('J / Enter para tentar de novo');
+  });
+});
+
+describe('listLines', () => {
+  /** Item de `n` caracteres. */
+  const item = (n: number, ch = 'a') => ch.repeat(n);
+
+  it('linha de 99 e 100 caracteres cabe numa só; 101 quebra em ", " numa segunda linha', () => {
+    expect(SUMMARY_LINE_MAX).toBe(100);
+    // 'X: ' (3) + 40 + ', ' (2) + resto
+    for (const total of [99, 100]) {
+      const lines = listLines('X', [item(40), item(total - 45, 'b')], 'nada');
+      expect(lines).toEqual([`X: ${item(40)}, ${item(total - 45, 'b')}`]);
+      expect(lines[0].length).toBe(total);
+    }
+    const broken = listLines('X', [item(40), item(56, 'b')], 'nada');
+    expect(broken).toEqual([`X: ${item(40)},`, item(56, 'b')]);
+  });
+
+  it('a quebra fica depois do último item que cabe: 99 e 100 na primeira linha, 101 empurra o item', () => {
+    // Primeira parte com 'X: ' + 20 + ', ' + k caracteres, seguida de um item que nunca cabe junto.
+    for (const head of [99, 100]) {
+      const lines = listLines('X', [item(20), item(head - 25, 'b'), item(30, 'c')], 'nada');
+      expect(lines[0]).toBe(`X: ${item(20)}, ${item(head - 25, 'b')},`);
+      expect(lines[1]).toBe(item(30, 'c'));
+    }
+    const pushed = listLines('X', [item(20), item(76, 'b'), item(10, 'c')], 'nada');
+    expect(pushed).toEqual([`X: ${item(20)},`, `${item(76, 'b')}, ${item(10, 'c')}`]);
+  });
+
+  it('lista vazia, ou só com ids desconhecidos, mostra o texto de vazio', () => {
+    expect(listLines('Votos', [], 'nenhum')).toEqual(['Votos: nenhum']);
+    expect(listLines('Votos', [null, null], 'nenhum')).toEqual(['Votos: nenhum']);
   });
 });

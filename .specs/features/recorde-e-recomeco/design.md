@@ -166,11 +166,15 @@ Arquivos novos (estimativa, todos longe do teto): `core/save.ts` ~110, `core/rec
   - `type DamageSource = 'golpe' | TechId | 'objeto'`; `DAMAGE_SOURCES` na ordem golpe, técnicas (ordem de `TechId`), objeto
   - `class DamageLedger { add(source, amount); reset(); totals(): Record<DamageSource, number>; rows(): { source; label; damage; pct }[] }`
   - `summaryLines(input: SummaryInput): SummaryLine[]` com `SummaryLine = { text: string; highlight?: boolean }`
+  - `SummaryInput = { round; kills; fragments; build: RecordBuild; damage: DamageRow[]; newRecord: boolean; bestRound: number | null }`
+    (a build no formato do save, só com ids); `listLines(label, items, empty)` faz a quebra das listas
 - **Regras**: `rows` filtra dano > 0, ordena do maior ao menor (empate: ordem de `DAMAGE_SOURCES`), `damage` e `pct`
   com `Math.round`. Rótulos: `Golpe`, `Objeto` e `TECHNIQUES[id].name`. Listas numa linha cada, separadas por `, `
   (`Técnicas: Azul Nv 2, Punho Divergente Nv 1`, `Arsenal: Manoplas de ferro Nv 2, Bastão selado Nv 1`). Linha de
   recorde: `Recorde!` (highlight) se bateu; `Recorde: rN` se há recorde; nenhuma sem recorde (só com `round=N` de debug).
   Última linha: `J / Enter para tentar de novo`.
+  Quebra: lista com mais de 100 caracteres (`SUMMARY_LINE_MAX`) continua na linha de baixo, cortada em `, ` com a
+  vírgula no fim da linha de cima; o dano vai uma fonte por linha (`Golpe: 60 (60%)`).
 
 ### game/saveStorage.ts
 
