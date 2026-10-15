@@ -552,9 +552,9 @@ Se a complexidade passar de 15, o encadeamento sai para `core/bossChain.ts` (des
 
 **Done when**:
 
-- [ ] `tests/core/bossLava.test.ts` (novo): some em 1999/2000 ms; 1º contato bate na hora; 599/600 ms entre tiques;
+- [x] `tests/core/bossLava.test.ts` (novo): some em 1999/2000 ms; 1º contato bate na hora; 599/600 ms entre tiques;
       no ar não bate; fora da faixa não bate; `clear` esvazia
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

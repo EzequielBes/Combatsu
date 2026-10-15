@@ -141,7 +141,9 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 
 - `class LavaStrips(t = BOSS_AFFIX.lava)`: `add(fromX, toX, groundY)`, `update(dtMs)` (some com idade `>= 2000`,
   IGN-02), `tick(rect, grounded): boolean` (verdadeiro quando há contato, o player está no chão e passaram `>= 600 ms`
-  desde o último tique; o 1º contato bate na hora; IGN-03/05), `strips`, `clear()`.
+  desde o último tique; o 1º contato bate na hora; IGN-03/05), `strips`, `clear()`. O `rect` é pelo centro (como o
+  `hurtRect()`); contato = cruzar `[minX, maxX]` × `[groundY - LAVA_DEPTH (8 px), groundY]`. O relógio do tique é um
+  só para todas as faixas: sair e voltar, ou pisar em duas, não adianta nem dobra o tique.
 
 ### `core/bossAttacks.ts` (novo)
 
