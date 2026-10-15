@@ -7,6 +7,7 @@ import type { Hit, Vec2 } from '../core/hit';
 import type { Loadout } from '../core/loadout';
 import type { TechId } from '../data/techniques';
 import type { Hittable } from './bodyTags';
+import type { TechObjectSnapshot } from './debugApi';
 import { Boss } from './Boss';
 import type { Player } from './Player';
 import { BlueTech } from './tech/blue';
@@ -97,7 +98,7 @@ export class TechRunner {
   }
 
   /** `techObjects` do snapshot (RED-14, BLU-10): os orbes vivos agora. */
-  get techObjectsSnapshot(): { id: number; kind: 'red' | 'blue' | 'purple'; x: number; y: number; traveled: number }[] {
+  get techObjectsSnapshot(): TechObjectSnapshot[] {
     return [this.red.snapshot, this.blue.snapshot, this.purple.snapshot].filter((orb) => orb !== null);
   }
 

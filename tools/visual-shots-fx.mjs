@@ -52,6 +52,40 @@ export const fxScenarios = (BASE) => ({
   },
 });
 
+// Vermelho pelos eixos (VRM-04..06), em HD e para os dois lados: a carga por terço, a pós-imagem da Conjuração 3
+// na soltura, o orbe em voo e a esfera da detonação no maior raio, em cada nível de Escala.
+async function redAxesScenario(t) {
+  const orb = (s) => s.techObjects?.find((o) => o.kind === 'red');
+  for (const escala of [0, 1, 2, 3]) {
+    for (const side of ['dir', 'esq']) {
+      const tag = `95-vermelho-e${escala}-${side}`;
+      // O item para em 5 pontos: com Escala 3 a Conjuração fica em 2 (sem a pós-imagem).
+      const axes = `vermelho.conjuracao:${escala === 3 ? 2 : 3}${escala ? `,vermelho.escala:${escala}` : ''}`;
+      await t.open(`hd=1&enemyGuard=0&noshop=1&maxAlive=0&shove=0&tech=vermelho&axes=${axes}`);
+      if (side === 'esq') await t.press('KeyA');
+      await t.snap(300);
+      await t.press('KeyL');
+      let s = await t.snap(0);
+      for (let i = 0; i < 60 && !orb(s); i++) {
+        if (i % 4 === 0) await t.close(`${tag}-carga-${String(i).padStart(2, '0')}`, 72);
+        s = await t.frame();
+      }
+      t.assert(orb(s), `o Vermelho não nasceu (Escala ${escala}, ${side})`);
+      await t.close(`${tag}-soltura`, 72);
+      s = await t.frame();
+      await t.frame();
+      await t.close(`${tag}-voo`, 72, orb(s));
+      for (let i = 0; i < 200 && !(s.fx.red.sphereR > 0); i++) s = await t.frame();
+      // A esfera cresce por tween: anda até o raio parar de subir (o maior raio desenhado).
+      for (let i = 0, last = -1; i < 60 && s.fx.red.sphereR > last; i++) {
+        last = s.fx.red.sphereR;
+        s = await t.frame();
+      }
+      await t.shot(`${tag}-esfera-r${s.fx.red.sphereR}`);
+    }
+  }
+}
+
 /** Cenários da aura da Energia Reversa e do Azul (RCA-*, BLA-*), recortados em volta do efeito. */
 export const techFxScenarios = () => ({
   // Esquiva cinematográfica (DGA-*): o passo-relâmpago do dash e a imagem residual da esquiva perfeita.
@@ -109,6 +143,7 @@ export const techFxScenarios = () => ({
       await t.close(`90-reversa-${tag}-solta+1`, 80);
     }
   },
+  vermelhoEixos: (t) => redAxesScenario(t),
   // Azul no estilo do anime (BLA-*): recorte em volta do orbe, do nascer à implosão.
   async azul(t) {
     await t.open('enemyGuard=0&noshop=1&fxlab');

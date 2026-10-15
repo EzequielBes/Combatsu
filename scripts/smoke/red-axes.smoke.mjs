@@ -22,7 +22,45 @@ async function cannon(ctx) {
   ctx.assert(s.tech.slots[0]?.level === 6, `VRM-02: o slot mostra o nível dos eixos: ${JSON.stringify(s.tech.slots)}`);
 }
 
-/** VRM-10: Recarga 3 e Conjuração 2 armam 2300 ms de recarga no quadro da soltura (sinal mais carga 390 ms). */
+/** Aperta `L` e passa quadros até o `techCast:vermelho`; devolve o snapshot da soltura e os quadros desde o aperto. */
+async function castRed(kit, ctx, s0) {
+  const seen = s0.events.length;
+  await kit.down('KeyL');
+  let s = await kit.frame();
+  await kit.up('KeyL');
+  let frames = 1;
+  for (; frames < CAST_FRAMES && !s.events.slice(seen).includes('techCast:vermelho'); frames++) s = await kit.frame();
+  ctx.assert(
+    s.events.slice(seen).includes('techCast:vermelho'),
+    `o Vermelho deveria soltar: ${JSON.stringify(s.tech)}`,
+  );
+  return { s, frames };
+}
+
+/**
+ * VRM-05 (cenário 2): com Escala 2 o orbe vivo tem o sensor de 8 px e o sprite de 16 texels, lidos do motor (o raio do
+ * corpo do Matter e a chave do sprite, L-043), e a esfera da detonação cresce até o raio 144.
+ */
+async function scaledOrb(ctx) {
+  const kit = makeKit(ctx);
+  const { s } = await castRed(kit, ctx, await kit.boot(`${BASE}&axes=vermelho.escala:2`));
+  const orb = s.techObjects.find((o) => o.kind === 'red');
+  ctx.assert(
+    orb?.sensorPx === 8 && orb.texture === 'tech-orb-red-16',
+    `VRM-05: sensor 8 e textura tech-orb-red-16 com Escala 2: ${JSON.stringify(s.techObjects)}`,
+  );
+  const done = await kit.waitFor(
+    (x) => x.fx.red.sphereR === 144,
+    120,
+    `VRM-05: a esfera da detonação deveria crescer até 144 (${JSON.stringify(s.fx.red)})`,
+  );
+  ctx.assert(done.events.includes('redDetonate'), `a detonação deveria emitir redDetonate: ${done.events.slice(-5)}`);
+}
+
+/**
+ * VRM-10: Recarga 3 e Conjuração 2 armam 2300 ms de recarga no quadro da soltura; o sinal mais a carga, contados em
+ * quadros do aperto até o `techCast`, dão os 390 ms (com 1 quadro de folga; sem ponto seriam 600).
+ */
 async function machineGun(ctx) {
   const kit = makeKit(ctx);
   let s = await kit.boot(`${BASE}&axes=vermelho.recarga:3,vermelho.conjuracao:2`);
@@ -31,14 +69,11 @@ async function machineGun(ctx) {
     stats.cooldownMs === 2300 && stats.signMs + stats.chargeMs === 390,
     `VRM-03: recarga 2300 e sinal mais carga 390: ${JSON.stringify(stats)}`,
   );
-  const seen = s.events.length;
-  await kit.down('KeyL');
-  s = await kit.frame();
-  await kit.up('KeyL');
-  for (let f = 0; f < CAST_FRAMES && !s.events.slice(seen).includes('techCast:vermelho'); f++) s = await kit.frame();
+  const cast = await castRed(kit, ctx, s);
+  s = cast.s;
   ctx.assert(
-    s.events.slice(seen).includes('techCast:vermelho'),
-    `o Vermelho deveria soltar: ${JSON.stringify(s.tech)}`,
+    Math.abs(cast.frames * 16 - 390) <= 16,
+    `VRM-03: sinal mais carga 390 ms pelos eventos: ${cast.frames} quadros (${cast.frames * 16} ms)`,
   );
   // A recarga nasce cheia na soltura e o mesmo quadro já desconta o seu próprio passo (16 ms).
   const cd = s.tech.slots[0].cooldownMs;
@@ -68,6 +103,7 @@ async function branch(ctx) {
 
 export default async function (ctx) {
   await cannon(ctx);
+  await scaledOrb(ctx);
   await machineGun(ctx);
   await axisCap(ctx);
   await branch(ctx);

@@ -30,6 +30,20 @@ export interface TechMasteryView {
   threshold: number | null;
 }
 
+/** Um orbe vivo de técnica (RED-14, BLU-10); `sensorPx` e `texture` só no `red` (VRM-05). */
+export interface TechObjectSnapshot {
+  id: number;
+  kind: 'red' | 'blue' | 'purple';
+  x: number;
+  y: number;
+  traveled: number;
+  sensorPx?: number;
+  texture?: string;
+}
+
+/** A entrada `red` de `techObjects` (RED-14, VRM-05): o sensor e a textura lidos do motor sempre presentes. */
+export type RedObjectSnapshot = TechObjectSnapshot & { kind: 'red'; sensorPx: number; texture: string };
+
 /** Estado lido pelo smoke headless em `?debug` (FND-09). */
 export interface GameSnapshot {
   /** `facing` e `flash` (cor do flash em andamento, HEAL-10) servem ao smoke da economia. */
@@ -388,8 +402,11 @@ export interface GameSnapshot {
   };
   /** Janela e zona do Kokusen (KOK-01/02/10/11/30/31), lidas do estado vivo. */
   kokusen: { zone: boolean; zoneMs: number; streak: number; windowOpen: boolean };
-  /** Orbes vivos (RED-14, BLU-*); placeholder `[]` até a Fase 5 criar orbes de verdade. */
-  techObjects: { id: number; kind: 'red' | 'blue' | 'purple'; x: number; y: number; traveled: number }[];
+  /**
+   * Orbes vivos (RED-14, BLU-*). Só o `red` traz `sensorPx` (o raio do corpo do Matter) e `texture` (a chave do sprite
+   * vivo), lidos do motor (VRM-05, L-043).
+   */
+  techObjects: TechObjectSnapshot[];
   /** Camadas de efeito de técnica vivas (TFX-*), lidas do `FxTimeline`/`FxRegistry` da cena. */
   fx: {
     live: number;
@@ -412,6 +429,8 @@ export interface GameSnapshot {
       glow: { active: boolean; color: number | null };
       screenFlashColor: number | null;
       orb: { x: number; y: number } | null;
+      /** VRM-05: maior raio que a esfera da última detonação desenhou; `null` antes da 1ª. */
+      sphereR: number | null;
     };
   };
   /**

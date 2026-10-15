@@ -838,11 +838,11 @@ no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs` (cenário 2): com `axes=vermelho.escala:2` o orbe vivo tem `sensorPx` 8 e `texture`
+- [x] `red-axes.smoke.mjs` (cenário 2): com `axes=vermelho.escala:2` o orbe vivo tem `sensorPx` 8 e `texture`
       `tech-orb-red-16` (L-043); a esfera da detonação no `fx` cresce até 144
-- [ ] Sinal + carga de 390 ms lidos pelos eventos com `axes=vermelho.recarga:3,vermelho.conjuracao:2`
-- [ ] Pós-imagem e esferas conferidas em movimento no jogo, nos dois lados, em cada nível de Escala
-- [ ] Smokes `red-axes`, `tech`, `red-anime` e `fxlab` verdes; gate verde; contagem sem perda
+- [x] Sinal + carga de 390 ms lidos pelos eventos com `axes=vermelho.recarga:3,vermelho.conjuracao:2`
+- [x] Pós-imagem e esferas conferidas em movimento no jogo, nos dois lados, em cada nível de Escala
+- [x] Smokes `red-axes`, `tech`, `red-anime` e `fxlab` verdes; gate verde; contagem sem perda (4059 + 3 = 4062)
 
 **Tests**: smoke
 **Gate**: full

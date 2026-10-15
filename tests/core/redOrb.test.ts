@@ -36,6 +36,28 @@ describe('RED-02: o frame do núcleo do orbe segue o terço da carga', () => {
   });
 });
 
+describe('VRM-06: a carga troca de textura no terço do chargeMs resolvido e termina no orbTexels', () => {
+  const chargeMs = axisAt(RED_AXES.conjuracao.chargeMs, 2); // 225 ms: terços em 75 e 150
+
+  it('troca 4 → 8 → orbe nos dois lados de cada terço do chargeMs da Conjuração 2', () => {
+    expect(RedOrbState.chargeFrame(74, chargeMs, 16)).toBe(4);
+    expect(RedOrbState.chargeFrame(75, chargeMs, 16)).toBe(8);
+    expect(RedOrbState.chargeFrame(149, chargeMs, 16)).toBe(8);
+    expect(RedOrbState.chargeFrame(150, chargeMs, 16)).toBe(16);
+  });
+
+  it('o último terço é o orbTexels de cada nível de Escala (12, 14, 16 e 18), o mesmo do orbe em voo', () => {
+    for (const escala of [0, 1, 2, 3] as const) {
+      const orbTexels = axisAt(RED_AXES.escala.orbTexels, escala);
+      expect(RedOrbState.chargeFrame(chargeMs, chargeMs, orbTexels)).toBe([12, 14, 16, 18][escala]);
+    }
+  });
+
+  it('sem orbTexels, o último terço continua no 12 da base', () => {
+    expect(RedOrbState.chargeFrame(chargeMs, chargeMs)).toBe(12);
+  });
+});
+
 describe('RED-05, RDA-11: o orbe avança na direção do lançamento a 760 px/s', () => {
   it('depois de 250 ms (190 px a 760 px/s), x andou 190 px na direção do facing', () => {
     const state = new RedOrbState(0, 1, RED_LV1);

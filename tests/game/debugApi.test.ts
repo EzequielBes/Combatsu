@@ -259,7 +259,13 @@ describe('installDebugApi', () => {
         trails: [],
         focus: null,
         lastImpact: null,
-        red: { glowColor: null, glow: { active: false, color: null }, screenFlashColor: null, orb: null },
+        red: {
+          glowColor: null,
+          glow: { active: false, color: null },
+          screenFlashColor: null,
+          orb: null,
+          sphereR: null,
+        },
       },
       camera: {
         zoom: 1.5,

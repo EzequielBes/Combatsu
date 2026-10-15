@@ -2,7 +2,7 @@ import { UI_SIZE } from '../art/hd/screen';
 import Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
-import { RedOrbState } from '../../core/redOrb';
+import { RedOrbState, type RedChargeSize, type RedGeometry } from '../../core/redOrb';
 import type { Vec2 } from '../../core/hit';
 import { fingertipOffsetPx } from '../art/sprites/playerTech';
 import { HD_ON } from '../art/hd/flag';
@@ -26,8 +26,22 @@ import { TEX } from '../textures';
  */
 const FALLBACK_FINGERTIP_FRAME = 'vermelho-charge';
 
-/** Textura do orbe por tamanho de carga (RED-02). */
-const CHARGE_TEX: Record<4 | 8 | 12, string> = { 4: TEX.techOrbRed4, 8: TEX.techOrbRed8, 12: TEX.techOrbRed12 };
+/** Textura do orbe por tamanho de carga (RED-02); o último terço usa a do `orbTexels` resolvido (VRM-06). */
+const CHARGE_TEX: Record<RedChargeSize, string> = {
+  4: TEX.techOrbRed4,
+  8: TEX.techOrbRed8,
+  12: TEX.techOrbRed12,
+  14: TEX.techOrbRed14,
+  16: TEX.techOrbRed16,
+  18: TEX.techOrbRed18,
+};
+
+/** O momento da carga do Vermelho: tempo decorrido, a carga resolvida e o tamanho do orbe no último terço (VRM-06). */
+export interface RedChargeView {
+  elapsedMs: number;
+  chargeMs: number;
+  orbTexels: RedGeometry['orbTexels'];
+}
 
 const SPARKS_OUT_MAX = 40; // TFX-04: bem abaixo de 64
 const DUST_EVERY_MS = 150;
@@ -47,7 +61,7 @@ const REPULSE_REACH_PX = 80;
  */
 export class RedOrbFx {
   private chargeSprite: Phaser.GameObjects.Sprite | null = null;
-  private chargeSize: 4 | 8 | 12 | null = null;
+  private chargeSize: RedChargeSize | null = null;
   private sparksOut: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private glowRing: Phaser.GameObjects.Graphics | null = null;
   private glowMs = 0;
@@ -61,6 +75,8 @@ export class RedOrbFx {
   private distortRing: Phaser.GameObjects.Graphics | null = null;
   private distortMs = 0;
   private screenFlashColor: number | null = null;
+  /** VRM-05: maior raio que a esfera da última detonação já desenhou (`null` antes da 1ª). */
+  private sphereR: number | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -96,19 +112,18 @@ export class RedOrbFx {
   }
 
   /**
-   * RED-02/03/04, RDA-04..07: orbe crescendo (4→8→12) na ponta dos dedos do frame atual, faíscas expelidas, anel
-   * de brilho `t` pulsando, Glow `t` (só WebGL), dois arcos `T` girando e poeira nos pés.
+   * RED-02/03/04, RDA-04..07, VRM-06: orbe crescendo (4→8→orbe) na ponta dos dedos do frame atual, faíscas expelidas,
+   * anel de brilho `t` pulsando, Glow `t` (só WebGL), dois arcos `T` girando e poeira nos pés.
    */
   chargeUpdate(
     dtMs: number,
     playerX: number,
     playerY: number,
     facing: 1 | -1,
-    elapsedMs: number,
-    chargeMs: number,
+    charge: RedChargeView,
     frameName: string = FALLBACK_FINGERTIP_FRAME,
   ): void {
-    const size = RedOrbState.chargeFrame(elapsedMs, chargeMs);
+    const size = RedOrbState.chargeFrame(charge.elapsedMs, charge.chargeMs, charge.orbTexels);
     const { x, y } = this.fingertip(playerX, playerY, facing, frameName);
     this.fx.add('red.orb', Math.max(dtMs, 1), 'game');
     this.fx.add('red.sparksOut', Math.max(dtMs, 1), 'game');
@@ -122,7 +137,7 @@ export class RedOrbFx {
     this.chargeDust(dtMs, playerX, playerY, facing);
   }
 
-  private chargeOrb(x: number, y: number, size: 4 | 8 | 12): void {
+  private chargeOrb(x: number, y: number, size: RedChargeSize): void {
     if (!this.chargeSprite) {
       this.chargeSprite = this.scene.add.sprite(x, y, CHARGE_TEX[size], 'orb').setDepth(2);
       this.registry.add(this.chargeSprite);
@@ -274,12 +289,14 @@ export class RedOrbFx {
     glow: { active: boolean; color: number | null };
     screenFlashColor: number | null;
     orb: { x: number; y: number } | null;
+    sphereR: number | null;
   } {
     return {
       glowColor: this.glowRing ? C.glow : null,
       glow: { active: this.glowFx !== null, color: this.glowFx ? C.glow : null },
       screenFlashColor: this.screenFlashColor,
       orb: this.chargeSprite ? { x: this.chargeSprite.x, y: this.chargeSprite.y } : null,
+      sphereR: this.sphereR,
     };
   }
 
@@ -333,7 +350,10 @@ export class RedOrbFx {
     this.fx.add('red.shockRing', SHOCK_RING_MS, 'game');
     this.fx.add('red.debris', DEBRIS_MS, 'game');
     this.fx.add('red.screenFlash', SCREEN_FLASH_MS, 'game'); // RED-12
-    redDetonationBurst(this.scene, this.registry, point, look);
+    this.sphereR = 0;
+    redDetonationBurst(this.scene, this.registry, point, look, (r) => {
+      this.sphereR = Math.max(this.sphereR ?? 0, r);
+    });
     this.detonateScreen();
   }
 

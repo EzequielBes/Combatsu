@@ -16,7 +16,8 @@ describe('TST-03: a detonação do Vermelho tem o tamanho do stat da conjuraçã
     expect(orbSource).not.toMatch(/\b96\b/);
     expect(detonationSource).not.toMatch(/\b(96|160)\b/);
     expect(orbSource).toContain('detonate(point: Vec2, _facing: 1 | -1, look: RedDetonationLook)');
-    expect(detonationSource).toContain('detonateSphere(scene, registry, point, look.radius)');
+    // VRM-05: o `onSphere` só devolve ao snapshot o raio que a esfera desenhou; o tamanho continua o do look.
+    expect(detonationSource).toContain('detonateSphere(scene, registry, point, look.radius, onSphere)');
     expect(detonationSource).toContain('shockRingRadius(look.radius)');
   });
 });

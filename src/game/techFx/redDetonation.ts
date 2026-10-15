@@ -54,9 +54,10 @@ export function redDetonationBurst(
   registry: FxRegistry,
   point: Vec2,
   look: RedDetonationLook,
+  onSphere?: (radius: number) => void,
 ): void {
   detonateCore(scene, registry, point);
-  detonateSphere(scene, registry, point, look.radius);
+  detonateSphere(scene, registry, point, look.radius, onSphere);
   detonateShockRing(scene, registry, point, shockRingRadius(look.radius));
   detonateEmbers(scene, registry, point);
   detonateChunks(scene, registry, point);
@@ -79,7 +80,13 @@ function detonateCore(scene: Phaser.Scene, registry: FxRegistry, point: Vec2): v
  * Esfera: 3 camadas concêntricas (fora -> dentro) - borda escura `k`, corpo `R`, núcleo `W` encolhendo (o
  * flash inicial que "vira" o corpo vermelho conforme a esfera cresce até o `maxRadius` do dano real, RED-10).
  */
-function detonateSphere(scene: Phaser.Scene, registry: FxRegistry, point: Vec2, maxRadius: number): void {
+function detonateSphere(
+  scene: Phaser.Scene,
+  registry: FxRegistry,
+  point: Vec2,
+  maxRadius: number,
+  onSphere?: (radius: number) => void,
+): void {
   const sphere = scene.add.graphics().setDepth(4);
   registry.add(sphere);
   registry.scheduleDestroy(sphere, SPHERE_MS);
@@ -91,6 +98,7 @@ function detonateSphere(scene: Phaser.Scene, registry: FxRegistry, point: Vec2, 
       const t = tw.getValue() ?? 0;
       const r = evenPx(8 + t * (maxRadius - 8));
       const coreR = evenPx(Math.max(0, r * 0.5 * (1 - t)));
+      onSphere?.(r); // VRM-05: o raio desenhado de fato, lido pelo snapshot
       sphere
         .clear()
         .fillStyle(C.shadow, 0.85 * (1 - t))

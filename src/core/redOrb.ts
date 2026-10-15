@@ -21,6 +21,9 @@ export interface RedOrbConfig {
 /** Geometria do Vermelho resolvida no `TechStats` (sensor, orbe, força, raio, anéis). */
 export type RedGeometry = NonNullable<TechStats['red']>;
 
+/** Tamanho do núcleo do orbe na carga, em texels (RED-02, VRM-06): 4, 8 e o `orbTexels` resolvido no último terço. */
+export type RedChargeSize = 4 | 8 | RedGeometry['orbTexels'];
+
 /** A geometria de um `TechStats` do Vermelho; sem `red` (não é o Vermelho) cai no Vermelho sem ponto (VRM-01). */
 export function redGeometry(stats: TechStats): RedGeometry {
   return stats.red ?? RED_BASE;
@@ -180,12 +183,16 @@ export class RedOrbState {
     return this.hitIds;
   }
 
-  /** RED-02: o frame do núcleo do orbe (4/8/12 texels) conforme o terço da carga já decorrido. */
-  static chargeFrame(elapsedMs: number, chargeMs: number): 4 | 8 | 12 {
+  /**
+   * RED-02, VRM-06: o frame do núcleo do orbe conforme o terço da carga já decorrido: 4 e 8 texels nos dois primeiros
+   * e, no último, o `orbTexels` resolvido (12, 14, 16 ou 18), o mesmo do orbe em voo, para ele não pular de tamanho na
+   * soltura. `chargeMs` é o resolvido pela Conjuração.
+   */
+  static chargeFrame(elapsedMs: number, chargeMs: number, orbTexels: RedGeometry['orbTexels'] = 12): RedChargeSize {
     const third = chargeMs / 3;
     if (elapsedMs < third) return 4;
     if (elapsedMs < third * 2) return 8;
-    return 12;
+    return orbTexels;
   }
 
   /** RED-06: dano e impulso ao tocar `target` (pela primeira vez); `null` se esse alvo já foi atingido. */
