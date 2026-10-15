@@ -9,6 +9,7 @@ import { setIgnoreGravity } from '../physics';
 import { KillRefund } from '../../core/techKit';
 import type { TechStats } from '../../core/techStats';
 import type { RedObjectSnapshot } from '../debugApi';
+import { redPlan } from '../../core/redBranch';
 import { RedOrbFx } from '../techFx/RedOrb';
 import { TEX } from '../textures';
 import { RedFlight } from './redFlight';
@@ -131,6 +132,7 @@ export class RedTech {
     setIgnoreGravity(body, true);
     const view = scene.add.sprite(point.x, point.y, ORB_TEX[red.orbTexels], 'orb').setDepth(2);
     const cast = this.ctx.currentCast();
-    this.flight.launch({ cast, id: newEntityId(), stats, red, state, body, view, onKill });
+    const plan = redPlan(red.branch, red.awakened); // VRM-12 a VRM-15
+    this.flight.launch({ cast, id: newEntityId(), stats, red, plan, state, body, view, onKill });
   }
 }

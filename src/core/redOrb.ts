@@ -146,6 +146,7 @@ export class RedOrbState {
   private _detonated = false;
   private _hovering = false;
   private _detonations = 0;
+  private _dir: 1 | -1;
 
   constructor(
     x: number,
@@ -153,6 +154,12 @@ export class RedOrbState {
     private readonly config: RedOrbConfig,
   ) {
     this.mover = new Mover(x, dir, config.speed, config.rangePx);
+    this._dir = dir;
+  }
+
+  /** Direção horizontal do voo atual (a do lançamento ou a do último rebote). */
+  get dir(): 1 | -1 {
+    return this._dir;
   }
 
   get x(): number {
@@ -250,6 +257,7 @@ export class RedOrbState {
   rebound(x: number, dir: 1 | -1, rangePx: number, speed: number): void {
     this._detonations++;
     this.mover = new Mover(x, dir, speed, rangePx);
+    this._dir = dir;
     this.hitIds.clear();
     this._detonated = false;
     this._hovering = false;

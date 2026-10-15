@@ -45,6 +45,15 @@ describe('VRM-12, VRM-13: rebound recria o movedor', () => {
     expect(state.traveled).toBeCloseTo(200, 5);
   });
 
+  it('dir é a direção do voo atual: a do lançamento e, depois do rebote, a dele (VRM-12.5 volta pelo oposto)', () => {
+    const state = new RedOrbState(0, -1, CFG);
+    expect(state.dir).toBe(-1);
+    state.rebound(0, 1, 200, 400);
+    expect(state.dir).toBe(1);
+    state.rebound(0, -1, 200, 400);
+    expect(state.dir).toBe(-1);
+  });
+
   it('cada rebote soma uma detonação (Fliperama: até 3)', () => {
     const state = new RedOrbState(0, 1, CFG);
     for (let n = 1; n <= 3; n++) {

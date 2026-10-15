@@ -973,10 +973,20 @@ o número já sai certo pelo `lastDamageTaken` do alvo (T19), sem mudar o `effec
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs` (cenário 4) com `ramo=vermelho:a` e 3 em fila: 2 `redDetonate`, a 2ª com 70% (VRM-12);
+- [x] `red-axes.smoke.mjs` (cenário 4) com `ramo=vermelho:a` e 3 em fila: 2 `redDetonate`, a 2ª com 70% (VRM-12);
       sem inimigo a 200 px o orbe volta e detona no fim (VRM-12.5)
-- [ ] Com `ramo=vermelho:a&axes=` somando 4 pontos: 3 rebotes e o 3º número já com os 4% (VRM-13)
-- [ ] Smokes `red-axes`, `tech`, `boss` e `power` verdes; gate verde; contagem sem perda
+- [x] Com `ramo=vermelho:a&axes=` somando 4 pontos: 3 rebotes e o 3º número já com os 4% (VRM-13)
+- [x] Smokes `red-axes`, `tech`, `boss` e `power` verdes; gate verde; contagem sem perda (4063)
+
+Como ficou: o `RedOrbEntry` leva o `redPlan` da soltura; sem piercing o toque no comum detona (menos em quem a
+detonação atual já pegou) e o `finishDetonation` rebate pelo `shouldRebound`/`pickRebound` (200 px, Fliperama com
+`speedAfter`). O dano do toque e da detonação `n` passa pelo `detonationMul(n)` e leva `maxHpBonus` 0,04 na detonação
+que o plano marca. O adaptador emite `redTouch:<n>:<alvo>:<dano>` e `redBlast:<n>:<alvo>:<dano>` com o dano que o alvo
+levou de fato, e o smoke lê o 70% e os 4% nesses eventos (o número na tela se funde entre toques próximos, como na
+T27). O `RedOrbState` ganha o getter `dir` (o rebote sem alvo volta pelo oposto). O cenário dos 3 em fila roda no
+`fxlab` (bonecos parados em 232/312/392); os cenários novos moram em `scripts/smoke/red-branches.mjs`, chamado pelo
+`red-axes.smoke.mjs`, para ele caber no teto de 400 linhas. O Fliperama reabre a página até 3 vezes só se a 3ª detonação
+não pegar ninguém (três inimigos soltos); as 4 detonações valem em toda tentativa.
 
 **Tests**: smoke
 **Gate**: full

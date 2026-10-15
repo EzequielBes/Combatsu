@@ -1,9 +1,19 @@
 import type Phaser from 'phaser';
 import { canDamage, normalize, type Hit, type HitBand, type Strength, type Vec2 } from '../../core/hit';
-import { shardTargets, type RedTarget } from '../../core/redBranch';
+import {
+  detonationMul,
+  pickRebound,
+  shardTargets,
+  shouldRebound,
+  speedAfter,
+  type DetonationSite,
+  type RedPlan,
+  type RedTarget,
+} from '../../core/redBranch';
 import type { RedGeometry, RedOrbState, RedOrbTarget } from '../../core/redOrb';
 import type { TechStats } from '../../core/techStats';
-import { RED_AXES } from '../../data/techAxes';
+import { RED_AXES, RED_BRANCHES } from '../../data/techAxes';
+import { TECH_RULE } from '../../data/techRule';
 import type { Rect } from '../bodyTags';
 import { tagBody, type BodyTag, type Hittable } from '../bodyTags';
 import { Boss } from '../Boss';
@@ -17,6 +27,8 @@ export interface RedOrbEntry {
   /** TST-02: o stat do Vermelho na soltura (sensor, sprite, força, raio e danos deste orbe). */
   readonly stats: TechStats;
   readonly red: RedGeometry;
+  /** VRM-12 a VRM-15: o que o ramo e o Despertar mudam neste orbe (copiado na soltura). */
+  readonly plan: RedPlan;
   readonly state: RedOrbState;
   readonly body: MatterJS.BodyType;
   readonly view: Phaser.GameObjects.Sprite;
@@ -34,6 +46,20 @@ export interface RedBlow {
   readonly hitstopBonusMs?: number;
   /** Faixa do acerto (POW-03): o estilhaço da Perfuração é `micro` (VRM-08). */
   readonly band?: HitBand;
+  /** VRM-13, VRM-15: fração do HP máximo do alvo somada ao dano (o chefe fica no teto de 1 %). */
+  readonly maxHpBonus?: number;
+}
+
+/** A detonação `n` do orbe (1 na 1ª): o toque do trecho atual conta para ela. */
+const detonationNo = (orb: RedOrbEntry): number => orb.state.detonations + 1;
+
+/**
+ * VRM-12.4, VRM-13: o dano `base` do toque ou da detonação `n`: 70 % depois da 1ª no Ricochete e no Fliperama (o
+ * orbe sem ramo e o Contido nunca passam da 1ª) e o componente proporcional na detonação que o plano marca.
+ */
+function scaled(orb: RedOrbEntry, base: number, n: number): Pick<RedBlow, 'damage' | 'maxHpBonus'> {
+  const damage = Math.round(base * detonationMul(n));
+  return orb.plan.pctOnDetonation(n) ? { damage, maxHpBonus: TECH_RULE.maxHpPct.enemy } : { damage };
 }
 
 /** O alvo do estilhaço (VRM-08): a caixa de acerto do alvo, do centro (`Rect`) para o canto (`Box`). */
@@ -78,6 +104,8 @@ export class RedFlight {
    * de zerá-los no próximo), então saem no começo do `update` seguinte.
    */
   private touchEvents: string[] = [];
+  /** Onde a detonação pendente aconteceu (VRM-12, VRM-13: o fim do voo no ar só rebate no Fliperama). */
+  private site: DetonationSite = 'end';
 
   constructor(
     private readonly ctx: TechContext,
@@ -95,6 +123,7 @@ export class RedFlight {
     tagBody(entry.body, { kind: 'active', onTouch: (other) => this.onTouch(entry, other) });
     this.orb = entry;
     this.shardHit = new Set();
+    this.site = 'end';
   }
 
   /** `_slotHeld`: a tecla de cada slot segurada neste quadro (VRM-14, lida pelo Contido na T31). */
@@ -120,11 +149,14 @@ export class RedFlight {
     if (this.orb === orb) this.orb = null;
   }
 
-  /** RED-06/08/09: toque em parede/chefe detona; toque em inimigo comum acerta e o orbe segue voando (piercing). */
+  /**
+   * RED-06/08/09: toque em parede/chefe detona; toque em inimigo comum acerta e o orbe segue voando (piercing). VRM-12:
+   * sem piercing (Ricochete, Fliperama), o comum também detona, menos quem a detonação atual já pegou.
+   */
   private onTouch(orb: RedOrbEntry, other: BodyTag): void {
     if (orb !== this.orb || orb.state.detonated) return;
     if (other.kind === 'terrain') {
-      orb.state.detonate(); // RED-08
+      this.detonate(orb, 'wall'); // RED-08; VRM-13: a parede e o chão contam como rebote
       return;
     }
     if (other.kind !== 'character') return;
@@ -132,20 +164,33 @@ export class RedFlight {
     if (!canDamage('player', target.team)) return;
     const rect = target.hurtRect?.();
     const center = rect ? { x: rect.x, y: rect.y } : { x: orb.state.x, y: orb.body.position.y };
-    const force = orb.red.force;
+    const n = detonationNo(orb);
     if (target instanceof Boss) {
       const direction = normalize({ x: center.x - orb.state.x, y: center.y - orb.body.position.y });
-      const damage = orb.stats.damage.hit; // RED-09, TEC-06: já escalado no stat da soltura
-      strikeRed(this.ctx, target, () => center, orb.cast, { damage, strength: 'heavy', force, direction }, orb.onKill);
-      orb.state.detonate(); // RED-08: toque no chefe também detona
+      // RED-09, TEC-06: já escalado no stat da soltura
+      this.touch(orb, target, center, { ...scaled(orb, orb.stats.damage.hit, n), direction });
+      this.detonate(orb, 'boss'); // RED-08: toque no chefe também detona
       return;
     }
+    if (!orb.plan.pierce && orb.state.hitByCurrent.has(target.id)) return;
     const result = orb.state.hitTest({ id: target.id, center }, orb.body.position.y);
-    if (!result) return; // já atingido por este orbe antes (edge case: não acerta de novo)
     // RED-06, TEC-06: o dano do toque já vem escalado do `RedOrbConfig`.
-    const blow: RedBlow = { damage: result.damage, strength: 'heavy', force, direction: result.direction };
-    strikeRed(this.ctx, target, () => center, orb.cast, blow, orb.onKill);
-    this.shard(orb, target.id, center);
+    if (result) this.touch(orb, target, center, { ...scaled(orb, result.damage, n), direction: result.direction });
+    if (!orb.plan.pierce)
+      this.detonate(orb, 'enemy'); // VRM-12.2
+    else if (result) this.shard(orb, target.id, center);
+  }
+
+  /** O toque do orbe em `target` (forte, com a força do orbe); emite `redTouch:<n>:<alvo>:<dano levado>`. */
+  private touch(orb: RedOrbEntry, target: Hittable, center: Vec2, part: Omit<RedBlow, 'strength' | 'force'>): void {
+    const blow: RedBlow = { ...part, strength: 'heavy', force: orb.red.force };
+    if (!strikeRed(this.ctx, target, () => center, orb.cast, blow, orb.onKill)) return;
+    this.touchEvents.push(`redTouch:${detonationNo(orb)}:${target.id}:${target.lastDamageTaken ?? blow.damage}`);
+  }
+
+  private detonate(orb: RedOrbEntry, site: DetonationSite): void {
+    this.site = site;
+    orb.state.detonate();
   }
 
   /**
@@ -172,23 +217,42 @@ export class RedFlight {
 
   private finishDetonation(orb: RedOrbEntry, enemies: readonly TechTarget[]): void {
     const point = { x: orb.state.x, y: orb.body.position.y };
+    const n = detonationNo(orb);
     const targets: RedOrbTarget[] = enemies.map((e) => ({ id: e.id, center: { x: e.x, y: e.hurtRect().y } }));
     for (const splash of orb.state.detonationTargets(targets, point)) {
       const enemy = enemies.find((e) => e.id === splash.targetId);
       if (!enemy) continue;
       const at = (): Vec2 => ({ x: enemy.x, y: enemy.hurtRect().y });
-      // RED-10, TEC-06: o dano da detonação já vem escalado do `RedOrbConfig`.
+      // RED-10, TEC-06: o dano da detonação já vem escalado do `RedOrbConfig`; VRM-12.4 e VRM-13 por cima.
       const blow: RedBlow = {
-        damage: splash.damage,
+        ...scaled(orb, splash.damage, n),
         strength: 'heavy',
         force: orb.red.force,
         direction: splash.direction,
         hitstopBonusMs: orb.red.hitstopBonusMs, // VRM-04: 10 ms por ponto de Potência
       };
-      strikeRed(this.ctx, enemy, at, orb.cast, blow, orb.onKill);
+      if (!strikeRed(this.ctx, enemy, at, orb.cast, blow, orb.onKill)) continue;
+      this.ctx.emit(`redBlast:${n}:${enemy.id}:${enemy.lastDamageTaken ?? blow.damage}`);
     }
     this.fx.detonate(point, this.ctx.player.facing, { radius: orb.red.radius, rings: orb.red.rings }); // RED-11/12/17
     this.ctx.emit('redDetonate'); // RED-16
-    this.discard(orb);
+    if (shouldRebound(orb.plan, n, this.site)) this.rebound(orb, point, n);
+    else this.discard(orb);
+  }
+
+  /**
+   * VRM-12.3, VRM-12.5, VRM-13: o orbe rebate do ponto da detonação `n` rumo ao comum mais perto a até 200 px que ela não
+   * pegou (e a até 320 px do player), ou volta pelo lado oposto; voa até 200 px e detona no 1º toque ou no fim. O
+   * Fliperama acelera 15 % por detonação.
+   */
+  private rebound(orb: RedOrbEntry, point: Vec2, n: number): void {
+    const candidates: RedTarget[] = this.targets.map((t) => ({
+      ...shardTarget(t),
+      ...(t instanceof Boss ? { kind: 'boss' as const } : {}),
+    }));
+    const pick = pickRebound(point, orb.state.dir, candidates, orb.state.hitByCurrent, this.ctx.player.sprite.x);
+    const speed = orb.plan.reboundAny ? speedAfter(n, orb.red.speed) : orb.red.speed;
+    orb.state.rebound(point.x, pick.dir, RED_BRANCHES.ricochete.reboundRangePx, speed);
+    this.site = 'end';
   }
 }
