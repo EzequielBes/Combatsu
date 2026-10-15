@@ -1206,10 +1206,10 @@ todos com `pierce`, cada alvo uma vez por onda, no máximo 4 em 1000 ms de tempo
 
 **Done when**:
 
-- [ ] `tests/core/moveMachineRecovery.test.ts` (novo): 1/0,92/0,85/0,78 arredondados; startup, active e
+- [x] `tests/core/moveMachineRecovery.test.ts` (novo): 1/0,92/0,85/0,78 arredondados; startup, active e
       `whiffRecoveryMs` iguais; chamada fora da `recovery` cheia não muda nada; `mul` 1 = hoje
-- [ ] `tests/core/moveMachine.test.ts` verde
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/moveMachine.test.ts` verde
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

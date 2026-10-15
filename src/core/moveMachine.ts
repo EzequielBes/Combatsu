@@ -41,6 +41,8 @@ export class MoveMachine {
   private pendingCharge = false;
   private airUsed = false;
   private _hasHit = false;
+  /** A `recovery` acabou de abrir com o `recoveryMs` cheio (e não com o da `whiff`): só então o Ritmo a escala. */
+  private freshRecovery = false;
 
   constructor(
     private readonly moves: Readonly<Record<string, MoveDef>> = MOVES,
@@ -125,8 +127,19 @@ export class MoveMachine {
     const move = this.move as MoveDef;
     this._phase = 'recovery';
     this.timer = move.recoveryMs;
+    this.freshRecovery = true;
     events.push({ type: 'hitboxOff', move });
     return events;
+  }
+
+  /**
+   * Ritmo do Corpo (CRP-04): multiplica por `mul` a `recovery` recém-aberta com o `recoveryMs` cheio, arredondada ao ms.
+   * Fora dela (startup, active, janela, `whiffRecoveryMs`, `recovery` já andada) não faz nada.
+   */
+  scaleRecovery(mul: number): void {
+    if (!this.freshRecovery || this._phase !== 'recovery') return;
+    this.freshRecovery = false;
+    this.timer = Math.round((this.move as MoveDef).recoveryMs * mul);
   }
 
   /** Soltou `K` depois de `heldMs` desde o aperto: com ≥ 400 ms o carregado sai no fim do golpe atual (MOV-09, MOV-16). */
@@ -141,6 +154,7 @@ export class MoveMachine {
   update(dtMs: number): MoveEvent[] {
     const events: MoveEvent[] = [];
     if (this._phase === 'idle') return events;
+    this.freshRecovery = false;
     if (this._phase === 'window') {
       this.windowElapsed += dtMs;
       if (this.windowElapsed > this.windowMs) this.toIdle();
@@ -163,6 +177,7 @@ export class MoveMachine {
           events.push({ type: 'whiff', move });
         } else {
           this.timer = move.recoveryMs;
+          this.freshRecovery = true;
         }
         break;
       case 'recovery':
@@ -235,6 +250,7 @@ export class MoveMachine {
     this.buffered = null;
     this.pendingCharge = false;
     this._hasHit = false;
+    this.freshRecovery = false;
     events.push({ type: 'moveStart', move });
   }
 
@@ -246,6 +262,7 @@ export class MoveMachine {
     this.buffered = null;
     this.pendingCharge = false;
     this._hasHit = false;
+    this.freshRecovery = false;
   }
 }
 
