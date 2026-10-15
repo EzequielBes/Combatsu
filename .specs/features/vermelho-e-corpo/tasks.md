@@ -640,10 +640,10 @@ escolhem por ele, empate pelo menor id); `RED_BRANCHES`, `RED_AWAKENINGS`
 
 **Done when**:
 
-- [ ] `tests/core/redOrbConfig.test.ts` (novo): alcance 320 encerra o voo; rebote recria o movedor e permite 2ª
+- [x] `tests/core/redOrbConfig.test.ts` (novo): alcance 320 encerra o voo; rebote recria o movedor e permite 2ª
       detonação no mesmo alvo; toque 1 vez por orbe; `hover` não detona; repulsão usa o dano passado
-- [ ] `tests/core/redOrb.test.ts` verde
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/redOrb.test.ts` verde
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

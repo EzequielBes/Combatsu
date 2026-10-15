@@ -60,10 +60,16 @@ const REPULSE_FORCE = 10;
 
 /**
  * RDA-08, RDA-09: alvos à frente de `origin` (sinal de `x − origin.x` igual ao `facing`, `dx = 0` fica de fora)
- * com `|dx| <= 80` e `|dy| <= 48` levam 4 de dano `light` e força 10 para longe do player. Quem está atrás, ou
- * além do alcance, não entra. Cada alvo aparece uma vez.
+ * com `|dx| <= 80` e `|dy| <= 48` levam o `damage` `light` e força 10 para longe do player. Quem está atrás, ou
+ * além do alcance, não entra. Cada alvo aparece uma vez. O dano vem da conjuração (VRM-04: o `repulseDamage`
+ * resolvido); sem ele, os 4 da base.
  */
-export function repulseTargets(origin: Vec2, facing: 1 | -1, targets: readonly RedOrbTarget[]): RepulseHit[] {
+export function repulseTargets(
+  origin: Vec2,
+  facing: 1 | -1,
+  targets: readonly RedOrbTarget[],
+  damage = REPULSE_DAMAGE,
+): RepulseHit[] {
   const hits: RepulseHit[] = [];
   for (const target of targets) {
     const dx = target.center.x - origin.x;
@@ -71,7 +77,7 @@ export function repulseTargets(origin: Vec2, facing: 1 | -1, targets: readonly R
     if (dx * facing <= 0 || Math.abs(dx) > REPULSE_REACH_X || Math.abs(dy) > REPULSE_REACH_Y) continue;
     hits.push({
       targetId: target.id,
-      damage: REPULSE_DAMAGE,
+      damage,
       strength: 'light',
       force: REPULSE_FORCE,
       direction: normalize({ x: dx, y: dy }),
@@ -89,11 +95,17 @@ export interface RepulseCandidate extends RedOrbTarget {
  * EDG-03: seleção de alvos da repulsão a partir de todos os candidatos. O chefe nunca entra (só o orbe o atinge,
  * RED-09), mesmo colado à frente do player; o resto segue as regras de `repulseTargets`.
  */
-export function repulseTargetsFor(origin: Vec2, facing: 1 | -1, candidates: readonly RepulseCandidate[]): RepulseHit[] {
+export function repulseTargetsFor(
+  origin: Vec2,
+  facing: 1 | -1,
+  candidates: readonly RepulseCandidate[],
+  damage = REPULSE_DAMAGE,
+): RepulseHit[] {
   return repulseTargets(
     origin,
     facing,
     candidates.filter((c) => c.kind !== 'boss'),
+    damage,
   );
 }
 
@@ -116,13 +128,21 @@ export interface RedOrbHit {
 
 /**
  * Estado do orbe Vermelho em voo (RED-02, 05, 06, 08, 10, 13, 14): avança horizontalmente por `Mover` na velocidade
- * do `config` (760 px/s) até o alcance dele (420 px), marca quem já foi atingido (uma vez cada) e decide o
- * dano/impulso do toque e da detonação (parede, chefe ou alcance), com os danos e o raio do `config`. A física (sensor Matter, aplicar o impulso) fica para a fase 5. Sem `phaser` aqui.
+ * do `config` até o alcance dele (320 px, VRM-09), marca quem já foi atingido e decide o dano/impulso do toque e da
+ * detonação (parede, chefe ou alcance), com os danos e o raio do `config`. O rebote (VRM-12, VRM-13) recria o voo e
+ * abre uma detonação nova: o toque continua 1 vez por orbe, mas a detonação seguinte pode pegar o mesmo alvo. O
+ * `hover` (Contido, VRM-14) para o voo sem detonar. A física (sensor Matter, aplicar o impulso) fica no adaptador.
+ * Sem `phaser` aqui.
  */
 export class RedOrbState {
-  private readonly mover: Mover;
+  private mover: Mover;
+  /** Quem levou o toque em qualquer trecho do voo: o toque é 1 vez por orbe. */
+  private readonly touchedIds = new Set<number>();
+  /** Quem foi atingido (toque ou explosão) desde a última detonação: zera a cada rebote. */
   private readonly hitIds = new Set<number>();
   private _detonated = false;
+  private _hovering = false;
+  private _detonations = 0;
 
   constructor(
     x: number,
@@ -145,6 +165,21 @@ export class RedOrbState {
     return this._detonated;
   }
 
+  /** VRM-14: o orbe parou no ar sem detonar (Contido). */
+  get hovering(): boolean {
+    return this._hovering;
+  }
+
+  /** VRM-12, VRM-13: quantas detonações já houve (o rebote conta a que o originou). */
+  get detonations(): number {
+    return this._detonations;
+  }
+
+  /** VRM-12.3: quem foi atingido nesta detonação (o `hitByLast` do `pickRebound`), lido antes do `rebound`. */
+  get hitByCurrent(): ReadonlySet<number> {
+    return this.hitIds;
+  }
+
   /** RED-02: o frame do núcleo do orbe (4/8/12 texels) conforme o terço da carga já decorrido. */
   static chargeFrame(elapsedMs: number, chargeMs: number): 4 | 8 | 12 {
     const third = chargeMs / 3;
@@ -155,13 +190,14 @@ export class RedOrbState {
 
   /** RED-06: dano e impulso ao tocar `target` (pela primeira vez); `null` se esse alvo já foi atingido. */
   hitTest(target: RedOrbTarget, orbY: number): RedOrbHit | null {
-    if (this.hitIds.has(target.id)) return null;
+    if (this.touchedIds.has(target.id) || this.hitIds.has(target.id)) return null;
+    this.touchedIds.add(target.id);
     this.hitIds.add(target.id);
     const direction = normalize({ x: target.center.x - this.x, y: target.center.y - orbY });
     return { targetId: target.id, damage: this.config.touch, direction };
   }
 
-  /** RED-10: alvos a até `config.radius` (96 px) do ponto, ainda não atingidos por este orbe, cada um uma vez. */
+  /** RED-10: alvos a até `config.radius` do ponto, ainda não atingidos nesta detonação, cada um uma vez. */
   detonationTargets(targets: readonly RedOrbTarget[], point: Vec2): RedOrbHit[] {
     const hits: RedOrbHit[] = [];
     for (const target of targets) {
@@ -179,9 +215,9 @@ export class RedOrbState {
     return hits;
   }
 
-  /** RED-08: avança o voo; devolve `true` no frame em que o alcance (420 px) se completa (detona por alcance). */
+  /** RED-08: avança o voo; devolve `true` no frame em que o alcance se completa (detona por alcance). */
   update(dtMs: number): boolean {
-    if (this._detonated) return false;
+    if (this._detonated || this._hovering) return false;
     if (this.mover.update(dtMs) === 'expired') {
       this._detonated = true;
       return true;
@@ -192,5 +228,23 @@ export class RedOrbState {
   /** RED-08, RED-13: detona por parede ou chefe (fora do alcance máximo, decidido pelo chamador). */
   detonate(): void {
     this._detonated = true;
+  }
+
+  /** VRM-14: para o voo onde está, sem detonar; o `update` não anda mais até um `detonate` ou `rebound`. */
+  hover(): void {
+    this._hovering = true;
+  }
+
+  /**
+   * VRM-12, VRM-13: conta a detonação que acabou de acontecer e relança o orbe de `x` na direção `dir`, por
+   * `rangePx` a `speed` px/s (o Fliperama acelera a cada rebote). A detonação seguinte pode pegar quem a anterior
+   * pegou; o toque, não.
+   */
+  rebound(x: number, dir: 1 | -1, rangePx: number, speed: number): void {
+    this._detonations++;
+    this.mover = new Mover(x, dir, speed, rangePx);
+    this.hitIds.clear();
+    this._detonated = false;
+    this._hovering = false;
   }
 }

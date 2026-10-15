@@ -258,8 +258,11 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
   o `Loadout.damage` no golpe), e o `redGeometry(stats)` dá o `red` dele (T6).
 - `rebound(x, dir, rangePx, speed)` recria o `Mover`, zera `_detonated` e guarda o número da detonação;
   `hover()` para o `Mover` sem detonar (Contido); `hitIds` vira por detonação no rebote (o mesmo alvo pode levar a 2ª
-  detonação, como o VRM-12 pede) mas o toque continua 1 vez por orbe.
-- `repulseTargets(origin, facing, targets, damage)` ganha o dano (VRM-04).
+  detonação, como o VRM-12 pede) mas o toque continua 1 vez por orbe. No código (T17): `detonations` dá a contagem,
+  `hovering` o estado do Contido e `hitByCurrent` os atingidos da detonação atual (o `hitByLast` do `pickRebound`,
+  lido antes do `rebound`, que o zera).
+- `repulseTargets(origin, facing, targets, damage)` ganha o dano (VRM-04); `repulseTargetsFor` o repassa. No código o
+  `damage` tem padrão 4 (a base) até o adaptador passar o `repulseDamage` resolvido.
 
 ### `core/cursedBody.ts` (novo, ~100 linhas)
 
