@@ -14,6 +14,12 @@ Corroborated across multiple features. Safe to apply as guidance.
 - evidence: M9 src/core/enemyAI.ts:128, M10 src/core/enemyAI.ts:122 vs tests/core/enemyAI.test.ts:255-281 (validation.md rodada 3, lacuna 1) (tests core) (+2 more)
 - last seen: 2026-10-01T12:33:06Z
 
+### L-024 - Assert every clause of a conjunctive acceptance criterion, including positions set alongside the headline values.
+- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `smoke` · harmful: 0
+- features: run-e-rodadas, chefes-com-afixos
+- evidence: validation.md rodada 2 N4 (src/game/Enemy.ts:87, DIF-04 speeds) (smoke) (+1 more)
+- last seen: 2026-10-15T07:18:20Z
+
 ### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
 - signal: `surviving_mutant` · recurrence: 5 feature(s) · scope: `art-adapter` · harmful: 1
 - features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho, cenario-acabamento, arena-do-santuario
@@ -155,12 +161,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: run-e-rodadas
 - evidence: RHUD-02 src/game/Hud.ts:65 (spec hud)
 - last seen: 2026-09-24T16:44:32Z
-
-### L-024 - Assert every clause of a conjunctive acceptance criterion, including positions set alongside the headline values.
-- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `smoke` · harmful: 0
-- features: run-e-rodadas
-- evidence: validation.md rodada 2 N4 (src/game/Enemy.ts:87, DIF-04 speeds) (smoke)
-- last seen: 2026-09-24T18:18:53Z
 
 ### L-025 - Assert a rendered element's layout from its visual bounds, not its anchor coordinates, because the anchor stays in place when the origin changes.
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/game smoke hud` · harmful: 0
@@ -479,6 +479,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: arena-do-santuario
 - evidence: N4 tests/scenes/arena.test.ts:46 (tests edge case)
 - last seen: 2026-10-08T17:51:53Z
+
+### L-079 - Assert every field of a hit an adapter builds (height, unblockable, force, owner) in a unit test with a fake scene, because a live smoke only measures the damage that lands.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `game/boss` · harmful: 0
+- features: chefes-com-afixos
+- evidence: validation.md A4 (src/game/boss/LavaField.ts:62-63, IGN-04) (game/boss)
+- last seen: 2026-10-15T07:18:20Z
+
+### L-080 - Assert the exact spec value of a live damage number, never only that it is positive.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `scripts/smoke` · harmful: 0
+- features: chefes-com-afixos
+- evidence: validation.md A3 (scripts/smoke/boss-attacks.smoke.mjs:273, CYC-10) (scripts/smoke)
+- last seen: 2026-10-15T07:18:20Z
 
 ## Quarantined (failed when applied - ignore)
 
