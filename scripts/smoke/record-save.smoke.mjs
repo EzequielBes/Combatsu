@@ -195,6 +195,13 @@ export default async function ({ page, baseUrl, assert }) {
     r = await open('nosave=0');
     assert(r.best === null && r.storage === 'local' && r.locked === true, `SAVE-04: versão 9: ${show(r)}`);
     assert((await readKey()) === newer, 'SAVE-04: a chave da versão 9 não pode mudar');
+    // SAVE-04: a morte com o save travado vira recorde só em memória; a chave da versão 9 segue intacta.
+    r = await die('nosave=0');
+    assert(
+      r.locked === true && r.lastDeathRecord === true && r.best?.round === 1,
+      `SAVE-04: morte com o save travado: ${JSON.stringify({ ...JSON.parse(show(r)), last: r.lastDeathRecord })}`,
+    );
+    assert((await readKey()) === newer, 'SAVE-04: morrer com o save travado não pode escrever a chave');
 
     // SAVE-07: `getItem` lançando vira `'memory'`, sem recorde e sem erro no console. Fica por último: o script vale
     // para toda navegação seguinte desta página.
