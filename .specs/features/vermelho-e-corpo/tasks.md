@@ -311,9 +311,10 @@ damageMul, vowDamageMul, costMul })` na regra de hoje (`TECHNIQUES` × `LEVEL_FA
 
 **Done when**:
 
-- [ ] `tests/core/cast.test.ts` verde sem mudança de número
-- [ ] Smokes `tech` e `techniques` verdes e iguais
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/cast.test.ts` verde sem mudança de número; ganha o `TST-02` (stat com `signMs` 100 e `recoverMs` 0
+      via `loadout.stats`, que a tabela crua reprovaria)
+- [x] Smokes `tech` e `techniques` verdes e iguais
+- [x] Gate verde; contagem sem perda (3846 + 2 = 3848)
 
 **Tests**: unit + smoke
 **Gate**: full

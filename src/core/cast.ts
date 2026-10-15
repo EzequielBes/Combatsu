@@ -1,6 +1,7 @@
 import type { CursedEnergy } from './energy';
 import type { Loadout } from './loadout';
-import { TECHNIQUES, type TechDef, type TechId } from '../data/techniques';
+import type { TechStats } from './techStats';
+import type { TechId } from '../data/techniques';
 
 export type CastState = 'sign' | 'charge' | 'release' | 'recover';
 export type DenyReason = 'energy' | 'cooldown' | 'busy';
@@ -23,16 +24,17 @@ export interface ActiveCastView {
 
 const STATE_ORDER: readonly CastState[] = ['sign', 'charge', 'release', 'recover'];
 
-function msFor(def: TechDef, state: CastState): number {
+/** Tempo da fase `state` lido do `TechStats` resolvido (TST-02), não da tabela crua. */
+function msFor(stats: TechStats, state: CastState): number {
   switch (state) {
     case 'sign':
-      return def.signMs;
+      return stats.signMs;
     case 'charge':
-      return def.chargeMs;
+      return stats.chargeMs;
     case 'release':
-      return def.releaseMs;
+      return stats.releaseMs;
     case 'recover':
-      return def.recoverMs;
+      return stats.recoverMs;
   }
 }
 
@@ -118,10 +120,10 @@ export class CastMachine {
   /** `overshoot` é o tempo que já passou do fim do estado anterior e conta já dentro do novo estado. */
   private enterState(state: CastState, events: CastEvent[], overshoot: number): void {
     if (!this.active) return;
-    const def = TECHNIQUES[this.active.id];
+    const stats = this.loadout.stats(this.active.id);
     this.active.state = state;
     this.active.elapsedMs = 0;
-    this.active.timer = msFor(def, state) - overshoot;
+    this.active.timer = msFor(stats, state) - overshoot;
     events.push({ type: 'enter', state });
     if (state === 'release') {
       // CAST-03/CAST-04: custo e recarga cobrados exatamente uma vez, só na entrada de `release`.

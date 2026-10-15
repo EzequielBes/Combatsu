@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CastMachine, type CastContext } from '../../src/core/cast';
 import { CursedEnergy } from '../../src/core/energy';
 import { Loadout } from '../../src/core/loadout';
@@ -187,5 +187,30 @@ describe('CAST-10: tecla do slot na fase `recover` do golpe, com energia e sem r
     const events = machine.request(0, { meleePhase: 'recover', busy: false });
     expect(events).toEqual([{ type: 'enter', state: 'sign' }]);
     expect(machine.cast?.state).toBe('sign');
+  });
+});
+
+describe('TST-02: os tempos de fase saem do `loadout.stats(id)`, não da tabela crua', () => {
+  it('sign esticado para 100 ms no stat: 99 ms ainda em sign (a tabela daria charge em 60), 100 ms em charge', () => {
+    const { loadout, machine } = setup();
+    const real = loadout.stats('divergente');
+    vi.spyOn(loadout, 'stats').mockReturnValue({ ...real, signMs: 100 });
+    machine.request(0, FREE);
+    machine.update(99);
+    expect(machine.cast?.state).toBe('sign');
+    machine.update(1);
+    expect(machine.cast?.state).toBe('charge');
+  });
+
+  it('recover zerado no stat: a entrada em recover já termina a conjuração na mesma chamada', () => {
+    const { loadout, machine } = setup();
+    const real = loadout.stats('divergente');
+    vi.spyOn(loadout, 'stats').mockReturnValue({ ...real, recoverMs: 0 });
+    machine.request(0, FREE);
+    machine.update(60); // -> charge
+    machine.update(60); // -> release
+    const events = machine.update(80); // -> recover de 0 ms -> fim
+    expect(events).toContainEqual({ type: 'end' });
+    expect(machine.cast).toBe(null);
   });
 });
