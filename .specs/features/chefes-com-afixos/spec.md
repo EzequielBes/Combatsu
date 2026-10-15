@@ -283,11 +283,11 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | BRD-01 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Implemented |
 | BRD-02 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Implemented |
 | BRD-03 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T29) | Pending |
-| BRD-04 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T14) | Pending |
-| BRD-05 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Pending |
-| BRD-06 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Pending |
+| BRD-04 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T14) | Implemented |
+| BRD-05 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
+| BRD-06 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
 | BRD-07 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T6, T13, T26, T28, T29, T30, T33) | Pending |
-| BRD-08 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Pending |
+| BRD-08 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
 
 **Coverage:** 57 total, 57 mapped to tasks, 0 unmapped (fase Tasks).
 

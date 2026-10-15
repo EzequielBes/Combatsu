@@ -1,4 +1,5 @@
 import {
+  announceText,
   bossBarLabel,
   BossLineups,
   glyphKeys,
@@ -9,6 +10,7 @@ import {
   type LineupOverrides,
 } from '../../core/bossAffix';
 import { bossSpecFor, type BossSpec } from '../../core/bossTier';
+import { isBossRound } from '../../core/waves';
 import { BossReadout } from '../../game/boss/BossReadout';
 import type { GameSnapshot } from '../../game/debugApi';
 import { debugParam } from './params';
@@ -23,7 +25,7 @@ export class BossDirector {
   private lineups = new BossLineups();
   /** Última escalação pedida, para o snapshot (BLN-11). */
   private last: { round: number; lineup: BossLineup } | null = null;
-  /** Glifos ao lado da barra, criados no primeiro chefe (a `uiLayer` nasce depois do `RunDirector`). */
+  /** Glifos e aviso da loja, criados no primeiro uso (a `uiLayer` nasce depois do `RunDirector`). */
   private readout: BossReadout | null = null;
 
   constructor(readonly s: TestScene) {}
@@ -53,8 +55,7 @@ export class BossDirector {
   /** Barra do chefe com o rótulo da escalação (BRD-01) e um glifo por afixo à direita dela (BRD-02). */
   showBar(spec: BossSpec): void {
     this.s.hud.showBossBar(bossBarLabel(spec));
-    this.readout ??= new BossReadout(this.s, this.s.uiLayer);
-    this.readout.showGlyphs(glyphKeys(spec));
+    this.ui().showGlyphs(glyphKeys(spec));
   }
 
   /** Esconde a barra e os glifos juntos (chefe derrotado ou run nova). */
@@ -68,10 +69,35 @@ export class BossDirector {
     return this.readout?.visibleGlyphs() ?? [];
   }
 
+  /**
+   * Loja aberta ao fim da rodada `round` (BRD-04/05/06): se a próxima é de chefe, avisa "Próximo: ..." com a
+   * escalação dela. Pedir aqui primeiro guarda o sorteio no `BossLineups`, então a rodada seguinte nasce com o
+   * mesmo chefe anunciado; fora disso, nenhum aviso.
+   */
+  onShopOpen(round: number): void {
+    if (isBossRound(round + 1)) this.ui().showAnnounce(announceText(this.lineupFor(round + 1)));
+    else this.hideAnnounce();
+  }
+
+  /** Esconde o aviso da loja (rodada nova ou run nova). */
+  hideAnnounce(): void {
+    this.readout?.hideAnnounce();
+  }
+
+  /** Texto do aviso da loja enquanto visível, ou `null` (snapshot de debug, BRD-08). */
+  announce(): string | null {
+    return this.readout?.announced() ?? null;
+  }
+
   /** Run nova: esquece as escalações (o cache também zeraria sozinho com o stream novo) e a última pedida. */
   reset(): void {
     this.lineups = new BossLineups();
     this.last = null;
+  }
+
+  private ui(): BossReadout {
+    this.readout ??= new BossReadout(this.s, this.s.uiLayer);
+    return this.readout;
   }
 
   /** Última escalação pedida (BLN-11), ou `null` antes do primeiro chefe da run. */

@@ -5,6 +5,9 @@
 // 2º cenário (BRD-01/02/07): a barra lê `bossBarLabel` (nome · afixos no gênero do arquétipo · Portador(a)), o
 // snapshot lista um glifo por afixo ao lado dela, e os glifos somem com a barra quando o chefe cai. Captura em
 // `.fable-out/boss-lineup-bar.png`.
+// 3º cenário (BRD-04/05/06/08): `seed=1&round=4`, limpa a rodada e anda até a konbini: a loja mostra "Próximo: Oni ·
+// Ígneo" no snapshot; fechar a loja apaga o aviso e a r5 nasce com o chefe anunciado e a barra com o mesmo arquétipo e
+// afixos. A loja da r1 não tem aviso. Captura em `.fable-out/boss-lineup-shop.png`.
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -133,4 +136,81 @@ export default async function ({ page, baseUrl, assert }) {
   assert(s.events.includes('bossDefeatedFx'), `o chefe deveria cair: ${JSON.stringify(s.boss)} player ${s.player.hp}`);
   const after = barOf(s);
   assert(!after.visible && after.glyphs.length === 0, `BRD-02: glifos somem com a barra: ${JSON.stringify(after)}`);
+
+  // 3º cenário (BRD-04/05/06/08): aviso na loja antes da rodada de chefe.
+  const step = (ms) =>
+    page.evaluate((m) => {
+      window.__game.step(m);
+      return window.__game.snapshot();
+    }, ms);
+  /** Abre a run na rodada pedida, derruba a onda (tecla 2) e anda até a konbini; devolve o snapshot com a loja aberta. */
+  const reachShop = async (query) => {
+    await page.goto(`${baseUrl}?debug&hd=1&area=modular&enemyGuard=0&maxAlive=8&regen=0&${query}`, {
+      waitUntil: 'load',
+    });
+    await page.waitForFunction(
+      () => {
+        try {
+          return !!window.__game.snapshot();
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 15_000 },
+    );
+    await step(20);
+    await page.keyboard.press('KeyJ', { delay: 50 });
+    let snap = await step(50);
+    for (let i = 0; i < 400 && snap.run.state === 'roundActive'; i++) {
+      await page.keyboard.press('Digit2', { delay: 20 });
+      snap = await step(80);
+      assert(!snap.player.dead, `[${query}] o player morreu antes de vencer a rodada`);
+      // BRD-05: nenhum aviso durante a rodada.
+      assert(snap.bossAnnounce === null, `[${query}] aviso fora da loja: ${snap.bossAnnounce}`);
+    }
+    for (let i = 0; i < 200 && snap.run.state !== 'traverse'; i++) snap = await step(50);
+    await page.keyboard.down('KeyD');
+    for (let i = 0; i < 600 && snap.run.state !== 'shop'; i++) {
+      snap = await step(50);
+      if (snap.run.state !== 'shop')
+        assert(snap.bossAnnounce === null, `[${query}] aviso antes da loja: ${snap.bossAnnounce}`);
+    }
+    await page.keyboard.up('KeyD');
+    assert(snap.run.state === 'shop', `[${query}] deveria chegar à loja: ${JSON.stringify(snap.run)}`);
+    return snap;
+  };
+
+  // BRD-05: a loja da r1 (a r2 é comum) não avisa nada.
+  s = await reachShop('seed=1');
+  assert(s.run.round === 1 && s.bossAnnounce === null, `BRD-05: aviso na loja da r1: ${s.bossAnnounce}`);
+
+  // BRD-04/08: a loja da r4 anuncia o chefe da r5. A seed 1 sorteia o Oni Ígneo na r5 (1º cenário).
+  s = await reachShop('seed=1&round=4');
+  assert(
+    s.run.round === 4 && s.bossAnnounce === 'Próximo: Oni · Ígneo',
+    `BRD-04/08: aviso na loja da r4: ${JSON.stringify(s.bossAnnounce)}`,
+  );
+  // O aviso fica na tela enquanto a loja está aberta. A descida do painel (200 ms) anda no relógio de parede dos
+  // tweens: passos curtos com pausa real, para a captura mostrar as cartas no lugar.
+  for (let i = 0; i < 12; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    s = await step(17);
+  }
+  assert(s.bossAnnounce === 'Próximo: Oni · Ígneo', `BRD-04: o aviso sumiu com a loja aberta: ${s.bossAnnounce}`);
+  await page.evaluate(() => window.__game.render());
+  await page.screenshot({ path: join(OUT_DIR, 'boss-lineup-shop.png') });
+
+  // Enter fecha a loja (fade de saída e de entrada no relógio do jogo); a r5 começa sem aviso.
+  await page.keyboard.down('Enter');
+  s = await step(16);
+  await page.keyboard.up('Enter');
+  for (let i = 0; i < 200 && !(s.run.round === 5 && s.boss); i++) s = await step(16);
+  assert(s.run.round === 5 && s.boss, `a r5 deveria nascer com o chefe: ${JSON.stringify(s.run)}`);
+  assert(s.bossAnnounce === null, `BRD-04: o aviso deveria sumir ao fechar a loja: ${s.bossAnnounce}`);
+  // BRD-06: o chefe que nasce é o anunciado, e a barra conta o mesmo arquétipo e afixos.
+  assert(
+    s.boss.archetype === 'oni' && JSON.stringify(s.boss.affixes) === '["igneo"]' && s.boss.finger === false,
+    `BRD-06: chefe da r5 difere do anunciado: ${JSON.stringify(s.boss)}`,
+  );
+  expectBar(s, 'Oni do Portão · Ígneo', ['a'], 'r5 depois do aviso');
 }

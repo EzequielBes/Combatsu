@@ -128,6 +128,7 @@ export class DebugSnapshot {
         : null,
       bossLineup: this.s.runDirector.bosses.snapshot(),
       bossGlyphs: this.s.runDirector.bosses.glyphs(),
+      bossAnnounce: this.s.runDirector.bosses.announce(),
       projectiles: this.s.projectiles.map((p) => ({
         id: p.id,
         x: p.x,

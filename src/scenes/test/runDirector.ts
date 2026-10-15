@@ -71,6 +71,8 @@ export class RunDirector {
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
         this.s.hud.setCenter(null);
         this.s.hud.banner(`Rodada ${cmd.round}`, RUN.bannerMs);
+        // BRD-04: a loja fechou, o aviso "Próximo:" sai.
+        this.bosses.hideAnnounce();
         // ARS-09/10: a arma vinculada (ou a ferramenta comprada) entra na mão com a área já montada.
         this.s.arsenal.onRoundStart();
         break;
@@ -86,7 +88,11 @@ export class RunDirector {
       case 'shopOpen':
         // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
         if (debugParam('noshop') === '1') this.s.run.closeShop();
-        else this.s.shopDirector.openShop(cmd.round);
+        else {
+          this.s.shopDirector.openShop(cmd.round);
+          // BRD-04/05: aviso do chefe da próxima rodada, sem tocar na loja (`shopDirector` e `ShopPanel`).
+          this.bosses.onShopOpen(cmd.round);
+        }
         break;
       case 'gameOver':
         this.s.hud.setCenter([
@@ -119,6 +125,7 @@ export class RunDirector {
     this.s.shopDirector.shop = null;
     this.s.shopPanel.hide();
     this.bosses.hideBar();
+    this.bosses.hideAnnounce();
     for (const proj of this.s.projectiles) proj.destroyNow();
     this.s.projectiles = [];
     this.s.player.resetForRun();

@@ -137,6 +137,8 @@ export interface GameSnapshot {
   bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;
   /** Chaves da `PALETTE` dos glifos visíveis ao lado da barra do chefe, na ordem (BRD-02); vazio sem barra. */
   bossGlyphs: string[];
+  /** Aviso "Próximo: ..." da loja antes da rodada de chefe (BRD-04/08); `null` quando não está na tela. */
+  bossAnnounce: string | null;
   /**
    * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
    * `id` é único por instância (nunca reaproveitado) - o smoke usa para contar disparos mesmo que um projétil

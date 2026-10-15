@@ -399,13 +399,17 @@ próxima rodada é de chefe; some no `roundStart` e no `startRun`. Ligado pelo `
 
 **Done when**:
 
-- [ ] `boss-lineup` (3º cenário): `seed=N&round=4`, limpar a rodada → aviso no snapshot; a r5 nasce com o chefe
+- [x] `boss-lineup` (3º cenário): `seed=N&round=4`, limpar a rodada → aviso no snapshot; a r5 nasce com o chefe
       anunciado e a barra com o mesmo arquétipo e afixos; loja da r1 sem aviso
-- [ ] `npm run smoke -- boss-lineup` e `shop` verdes; gate verde
+- [x] `npm run smoke -- boss-lineup` e `shop` verdes; gate verde
 
 **Tests**: smoke
 **Gate**: full
 **Commit**: `feat(shop): announce the next boss in the shop`
+**Nota**: o aviso é um `Text` do `BossReadout` na `uiLayer`, centrado logo abaixo da área da barra (`MARGIN + 24`) e
+na profundidade 210, acima do painel da loja (200). Só aparece quando a loja abre de verdade (com `noshop=1` não há
+aviso). O snapshot ganhou `bossAnnounce` (`string | null`). No smoke, a seed 1 anuncia "Próximo: Oni · Ígneo" na loja
+da r4; captura em `.fable-out/boss-lineup-shop.png`.
 
 ---
 
