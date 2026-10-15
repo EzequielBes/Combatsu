@@ -745,7 +745,10 @@ e nível que não é inteiro positivo somem.
 #### T22: Orbe vermelho nos tamanhos 14, 16 e 18
 
 **What**: `RED_ORB_SIZES` (`art/sprites/techFx.ts:31-49`) ganha 14, 16 e 18 com os mesmos `stops` do 12; texturas
-`techOrbRed14/16/18` em `game/textures.ts:80-82` e o mapa de `art/index.ts:129-131`.
+`techOrbRed14/16/18` em `game/textures.ts:80-82` e o mapa de `art/index.ts:129-131`. Como ficou: os stops do 8 ao 18
+viram a constante `RED_ORB_STOPS`; o mapa do `art/index.ts` sobe para o escopo do módulo (`RED_ORB_TEX`), porque o
+`createArt` passaria das 80 linhas; o `ORB_TEX` de `game/tech/red.ts` vira `Record` completo e perde o recuo para o
+12; `tools/sprite-preview.mjs` ganha `--only orb` (prancha dos 6 tamanhos e tiras da carga e da Escala).
 **Where**: `src/game/art/sprites/techFx.ts`
 **Depends on**: None
 **Reuses**: gerador do orbe de 12
@@ -753,8 +756,8 @@ e nível que não é inteiro positivo somem.
 
 **Done when**:
 
-- [ ] Prancha dos 4 tamanhos em `tools/sprite-preview.mjs` olhada; testes de paleta e registro verdes
-- [ ] Gate verde; contagem sem perda
+- [x] Prancha dos 4 tamanhos em `tools/sprite-preview.mjs` olhada; testes de paleta e registro verdes
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit + prancha
 **Gate**: quick

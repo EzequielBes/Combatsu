@@ -76,10 +76,16 @@ export const TEX = {
   cursedFlame: 'cursed-flame',
   /** Faíscas de técnica (2x2 texels): Kokusen, expelidas pelo Vermelho, sugadas pelo Azul (KOK-23). */
   techSpark: 'tech-spark',
-  /** Orbe Vermelho (RED-02): um frame por terço da carga, 4/8/12 texels, cada um numa textura própria. */
+  /**
+   * Orbe Vermelho, cada tamanho numa textura própria: 4/8/12 texels por terço da carga (RED-02) e 12/14/16/18 em voo
+   * pela Escala (VRM-05).
+   */
   techOrbRed4: 'tech-orb-red-4',
   techOrbRed8: 'tech-orb-red-8',
   techOrbRed12: 'tech-orb-red-12',
+  techOrbRed14: 'tech-orb-red-14',
+  techOrbRed16: 'tech-orb-red-16',
+  techOrbRed18: 'tech-orb-red-18',
   /** Orbe Azul ativo (BLU-08): um frame só. */
   techOrbBlue: 'tech-orb-blue',
 } as const;

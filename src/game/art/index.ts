@@ -41,6 +41,16 @@ export const enemyAnimKey = (v: EnemyVariant, name: string): string => `enemy-${
 /** Textura dos estilhaços de um objeto, pela textura do próprio objeto (PRP-01). */
 export const shardsKey = (texture: string): string => `${texture}-shards`;
 
+/** Textura de cada tamanho do orbe Vermelho: 4/8/12 da carga (RED-02) e 14/16/18 da Escala em voo (VRM-05). */
+const RED_ORB_TEX = {
+  4: TEX.techOrbRed4,
+  8: TEX.techOrbRed8,
+  12: TEX.techOrbRed12,
+  14: TEX.techOrbRed14,
+  16: TEX.techOrbRed16,
+  18: TEX.techOrbRed18,
+} as const;
+
 /**
  * Registra toda a arte da cena: tileset, folhas do player e do inimigo, partes do ragdoll, objetos com os seus
  * estilhaços, fumaça e as animações. O placeholder do player fica, porque é a textura do corpo físico invisível
@@ -124,11 +134,10 @@ export function createArt(scene: Phaser.Scene): void {
   registerSheet(scene, TEX.cursedFlame, parseSheet('cursed-flame', FLAME_FRAMES, PALETTE_KEYS));
   // Faíscas de técnica (KOK-23): kokusen (preta/vermelha), redOut, blueIn.
   registerSheet(scene, TEX.techSpark, parseSheet('tech-spark', TECH_SPARK_FRAMES, PALETTE_KEYS));
-  // Orbe Vermelho (RED-02): um frame por terço da carga, cada tamanho na sua própria textura (parseSheet exige
-  // frames do mesmo tamanho dentro de uma folha, e os 3 tamanhos são diferentes).
-  const redOrbTex = { 4: TEX.techOrbRed4, 8: TEX.techOrbRed8, 12: TEX.techOrbRed12 } as const;
+  // Orbe Vermelho (RED-02, VRM-05): cada tamanho na sua própria textura (parseSheet exige frames do mesmo tamanho
+  // dentro de uma folha, e os tamanhos são diferentes).
   for (const size of RED_ORB_SIZES) {
-    registerSheet(scene, redOrbTex[size], parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS));
+    registerSheet(scene, RED_ORB_TEX[size], parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS));
   }
   // Orbe Azul ativo (BLU-08): um frame só.
   registerSheet(scene, TEX.techOrbBlue, parseSheet('blue-orb', { orb: BLUE_ORB_FRAME }, PALETTE_KEYS));

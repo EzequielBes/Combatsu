@@ -13,6 +13,10 @@ import {
   TECH_SPARK_FRAMES,
 } from '../../../src/game/art/sprites/techFx';
 import { RED_FX_COLORS } from '../../../src/game/techFx/redPalette';
+import { TEX } from '../../../src/game/textures';
+import { RED_AXES } from '../../../src/data/techAxes';
+import artIndexSrc from '../../../src/game/art/index.ts?raw';
+import redTechSrc from '../../../src/game/tech/red.ts?raw';
 
 describe('frames de conjuração das técnicas (CAST-18, CAST-22)', () => {
   const IDS: Array<'divergente' | 'vermelho' | 'azul' | 'corte'> = ['divergente', 'vermelho', 'azul', 'corte'];
@@ -85,7 +89,7 @@ describe('kanji das técnicas (KOK-29, KOK-34, TFX-01)', () => {
 });
 
 describe('orbes e aura das técnicas (TFX-01)', () => {
-  it('o orbe Vermelho passa no parseSheet nos 3 tamanhos da carga (RED-02), com núcleo W e borda carmim t', () => {
+  it('o orbe Vermelho passa no parseSheet nos 3 tamanhos da carga e nos 3 da Escala (RED-02, VRM-05), com núcleo W e borda carmim t', () => {
     for (const size of RED_ORB_SIZES) {
       const sheet = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS);
       expect(sheet.width).toBe(size);
@@ -96,8 +100,8 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
     }
   });
 
-  it('os orbes de 8 e 12 texels têm W no centro e passam por T, R e t até a borda (RDA-02)', () => {
-    for (const size of [8, 12] as const) {
+  it('os orbes de 8 a 18 texels têm W no centro e passam por T, R e t até a borda (RDA-02, VRM-05)', () => {
+    for (const size of [8, 12, 14, 16, 18] as const) {
       const cells = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells;
       const mid = Math.floor(size / 2);
       // Anda do centro para a direita: W -> T -> R -> t, nessa ordem de aparição.
@@ -108,8 +112,8 @@ describe('orbes e aura das técnicas (TFX-01)', () => {
     }
   });
 
-  it('a rampa do orbe segue os raios W até 0,3, T até 0,55, R até 0,8 e t na borda (RDA-02)', () => {
-    for (const size of [8, 12] as const) {
+  it('a rampa do orbe segue os raios W até 0,3, T até 0,55, R até 0,8 e t na borda (RDA-02, VRM-05)', () => {
+    for (const size of [8, 12, 14, 16, 18] as const) {
       const cells = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS).frames[0].cells;
       const center = (size - 1) / 2;
       const seen = new Set<string>();
@@ -236,5 +240,33 @@ describe('ponta dos dedos do Vermelho por frame (RDA-04)', () => {
 
   it('um frame que não é do Vermelho lança erro', () => {
     expect(() => redFingertip('azul-charge')).toThrow(/azul-charge/);
+  });
+});
+
+describe('orbe Vermelho nos tamanhos da Escala (VRM-05)', () => {
+  it('todo orbTexels da Escala (0 a 3 pontos) tem frame e passa no parseSheet no tamanho certo', () => {
+    expect(RED_AXES.escala.orbTexels).toEqual([12, 14, 16, 18]);
+    for (const size of RED_AXES.escala.orbTexels) {
+      expect(RED_ORB_SIZES, `${size}`).toContain(size);
+      const sheet = parseSheet(`red-orb-${size}`, { orb: RED_ORB_FRAMES[size] }, PALETTE_KEYS);
+      expect([sheet.width, sheet.height], `${size}`).toEqual([size, size]);
+    }
+  });
+
+  it('cada tamanho a mais ganha texels pintados (o orbe cresce de verdade de 12 a 18)', () => {
+    const painted = (size: (typeof RED_ORB_SIZES)[number]) => RED_ORB_FRAMES[size].join('').replaceAll('.', '').length;
+    const counts = RED_AXES.escala.orbTexels.map(painted);
+    for (let i = 1; i < counts.length; i++) expect(counts[i], `${counts}`).toBeGreaterThan(counts[i - 1]);
+  });
+
+  it('cada tamanho tem a sua textura no TEX, registrada no art/index e usada pelo voo do Vermelho', () => {
+    for (const size of RED_ORB_SIZES) {
+      const key = `techOrbRed${size}` as keyof typeof TEX;
+      expect(TEX[key], `${size}`).toBe(`tech-orb-red-${size}`);
+      expect(artIndexSrc, `${size}`).toContain(`${size}: TEX.${key}`);
+    }
+    for (const size of RED_AXES.escala.orbTexels) expect(redTechSrc).toContain(`${size}: TEX.techOrbRed${size}`);
+    // Sem o recuo para o 12 de quando faltava textura (T13): o mapa cobre todo orbTexels.
+    expect(redTechSrc).not.toContain('?? TEX.techOrbRed12');
   });
 });

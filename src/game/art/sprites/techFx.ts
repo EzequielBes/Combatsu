@@ -1,7 +1,7 @@
 /**
- * Arte procedural dos efeitos de técnica (AD-002/AD-009): orbe vermelho (4/8/12 texels, núcleo `W`, borda carmim `t`),
- * orbe azul (núcleo `d`, borda `C`), chama da aura de conjuração (2 frames, por técnica) e faíscas. Dados puros
- * (sem `phaser` como valor): rodam no Vitest.
+ * Arte procedural dos efeitos de técnica (AD-002/AD-009): orbe vermelho (4/8/12 texels da carga, 14/16/18 da Escala;
+ * núcleo `W`, borda carmim `t`), orbe azul (núcleo `d`, borda `C`), chama da aura de conjuração (2 frames, por
+ * técnica) e faíscas. Dados puros (sem `phaser` como valor): rodam no Vitest.
  */
 
 /**
@@ -23,29 +23,31 @@ function disc(size: number, stops: ReadonlyArray<readonly [number, string]>): st
   );
 }
 
+/** Rampa do orbe Vermelho de 8 texels para cima: núcleo branco `W`, magenta `T`, vermelho vivo `R` e borda carmim `t`. */
+const RED_ORB_STOPS = [
+  [0.3, 'W'],
+  [0.55, 'T'],
+  [0.8, 'R'],
+  [1, 't'],
+] as const;
+
 /**
- * Tamanhos do orbe Vermelho por terço da carga (RED-02, RDA-02): 4, 8 e 12 texels, discos (não quadrados) com
- * núcleo branco `W` e borda carmim `t`; os de 8 e 12 passam por magenta `T` e vermelho vivo `R` no caminho. Sem
- * laranja nem âmbar (RDA-03): a técnica é o carmim da Reversão, não fogo.
+ * Tamanhos do orbe Vermelho. Por terço da carga (RED-02, RDA-02): 4, 8 e 12 texels, discos (não quadrados) com
+ * núcleo branco `W` e borda carmim `t`; os de 8 para cima passam por magenta `T` e vermelho vivo `R` no caminho.
+ * Em voo, o tamanho vem da Escala (VRM-05): 12, 14, 16 e 18 texels, todos com a mesma rampa do 12. Sem laranja nem
+ * âmbar (RDA-03): a técnica é o carmim da Reversão, não fogo.
  */
-export const RED_ORB_SIZES = [4, 8, 12] as const;
+export const RED_ORB_SIZES = [4, 8, 12, 14, 16, 18] as const;
 export const RED_ORB_FRAMES: Record<(typeof RED_ORB_SIZES)[number], readonly string[]> = {
   4: disc(4, [
     [0.5, 'W'],
     [1, 't'],
   ]),
-  8: disc(8, [
-    [0.3, 'W'],
-    [0.55, 'T'],
-    [0.8, 'R'],
-    [1, 't'],
-  ]),
-  12: disc(12, [
-    [0.3, 'W'],
-    [0.55, 'T'],
-    [0.8, 'R'],
-    [1, 't'],
-  ]),
+  8: disc(8, RED_ORB_STOPS),
+  12: disc(12, RED_ORB_STOPS),
+  14: disc(14, RED_ORB_STOPS),
+  16: disc(16, RED_ORB_STOPS),
+  18: disc(18, RED_ORB_STOPS),
 };
 
 /**

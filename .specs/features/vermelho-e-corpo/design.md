@@ -466,7 +466,8 @@ O `redOrbFxSource.test.ts` lê o fonte de `RedOrb.ts` e `redDetonation.ts` (`?ra
 | `scripts/smoke/evolution.smoke.mjs` | 35 | `tech=azul:3,vermelho&axes=vermelho.potencia:2` (a ponte da T14 sai na T23) |
 | `src/game/art/sprites/techFx.ts` | 31-49 | `RED_ORB_SIZES` ganha 14, 16 e 18 (mesmos `stops` do 12) |
 | `src/game/textures.ts` | 80-82 | `techOrbRed14/16/18` |
-| `src/game/art/index.ts` | 129-131 | o mapa de textura ganha os 3 tamanhos |
+| `src/game/art/index.ts` | 44-52, 137-141 | o mapa de textura ganha os 3 tamanhos e sobe para o escopo do módulo (`RED_ORB_TEX`): dentro do `createArt` ele passaria das 80 linhas |
+| `src/game/tech/red.ts` | 25-35 | o `ORB_TEX` vira `Record` dos 4 tamanhos da Escala, sem o recuo para o 12 da T13 |
 | `src/scenes/test/effects.ts` | 46-63 (`onTechConnect`) | `:62` vira `HITSTOP_MS[hit.strength] + (hit.hitstopBonusMs ?? 0)`; só os acertos da detonação levam o bônus da Potência (o toque e o estilhaço não) |
 | `src/game/EnergyHud.ts` | 68, 82-84, 154-183 | as 2 marcas viram um conjunto de até `CE.maxCap / 12` marcas (`costMarks(cost, cur, max)` puro em `core/energy.ts`); borda `A` com o Despertar (VRM-17, VRM-20) |
 | `src/scenes/test/combat.ts` | 304-310 | `this.wallStun.onContacts(event.pairs)` e o campo |
