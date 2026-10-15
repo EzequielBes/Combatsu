@@ -4,6 +4,7 @@ import type { BuildSnapshot } from '../../game/axisSnapshot';
 import type { DefenseKind } from '../../game/player/types';
 import type { TestScene } from '../TestScene';
 import { AxisDirector } from './axisDirector';
+import { BodyDirector } from './bodyDirector';
 import { debugParam } from './params';
 
 /** Passivas da run e a build deduzida das compras (BLD-01..08): liga cada passiva ao ponto do combate que ela muda. */
@@ -11,17 +12,21 @@ export class BuildDirector {
   readonly perks = new Perks();
   /** Pontos de eixo do Vermelho e do Corpo: compra, debug, painel de ramo e Despertar (VRM-02, CRP-01). */
   readonly axes: AxisDirector;
+  /** O Corpo Amaldiçoado no golpe do player (CRP-03 a CRP-13). */
+  readonly body: BodyDirector;
   /** Passo sombrio: armado pela esquiva perfeita, gasto no próximo golpe que abre a hitbox (acerte ou não). */
   private shadowArmed = false;
 
   constructor(readonly s: TestScene) {
     this.axes = new AxisDirector(s);
+    this.body = new BodyDirector(s);
   }
 
   /** Run nova: nenhuma passiva sobrevive. `?debug&perks=a,b` começa a run com as passivas listadas. */
   reset(): void {
     this.perks.reset();
     this.shadowArmed = false;
+    this.body.reset();
     for (const id of (debugParam('perks') ?? '').split(',')) if (id in PERKS) this.perks.add(id as PerkId);
   }
 

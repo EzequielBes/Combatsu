@@ -46,6 +46,7 @@ export class StatsDirector {
       arsenal: this.s.arsenal.arsenal,
       vows: this.s.vows.effects,
       baseMaxHp: this.s.modifiers.maxHp,
+      impact: this.s.loadout.axes.points('corpo', 'impacto'),
     });
   }
 
@@ -83,13 +84,14 @@ export class StatsDirector {
     this.power = powerLook(this.points());
   }
 
-  /** POW-07.1: nível de Força, nível das Manoplas (só a relíquia equipada) e o Punho Pesado. */
+  /** POW-07.1, CRP-02: nível de Força, nível das Manoplas (só a relíquia equipada), o Punho Pesado e o Impacto. */
   private points(): number {
     const relic = this.s.arsenal.arsenal.relic;
     return powerPoints({
       forca: this.s.modifiers.level('forca'),
       manoplas: relic?.id === 'manoplas' ? relic.level : 0,
       punhoPesado: this.s.build.perks.has('punhoPesado'),
+      impacto: this.s.loadout.axes.points('corpo', 'impacto'),
     });
   }
 
@@ -101,11 +103,17 @@ export class StatsDirector {
 
   /**
    * Multiplicadores do golpe corpo a corpo que abre a hitbox (BLD-06, ARS-05, VOW-10..12) e a força do empurrão
-   * (POW-08.5). Gasta o Passo sombrio armado; `peek` (snapshot de debug) lê sem gastar.
+   * (POW-08.5), depois o Corpo (`build.body`: Peso, alcance, ritmo e marcas, CRP-03 a CRP-05). Gasta o Passo sombrio
+   * armado; `peek` (snapshot de debug) lê sem gastar.
    */
   strikeMods(move: MoveDef, peek = false): StrikeMods {
     const shadow = this.s.build.consumeShadow(peek);
-    return { ...NO_STRIKE_MODS, damage: this.sheet().meleeMul(traitsOf(move, shadow)), force: this.power.forceMul };
+    const base = {
+      ...NO_STRIKE_MODS,
+      damage: this.sheet().meleeMul(traitsOf(move, shadow)),
+      force: this.power.forceMul,
+    };
+    return this.s.build.body.strikeMods(move, base);
   }
 
   /** Input do quadro: neutro fora de `roundActive`/`intermission`/`traverse` (RUN-08) e durante a transição de área (TRV-10). */

@@ -284,6 +284,8 @@ export class PlayerStrikes {
       counter: move.counter,
       knockdown: move.knockdown,
       swingId: this.swingId,
+      // CRP-03: marcas do Corpo (o Peso derruba e atordoa na parede); só as ligadas vêm, o `knockdown` do golpe fica.
+      ...mods.marks,
     };
     this.p.hitbox.open(shape, hit, this.p.sprite.x, this.p.sprite.y, this.p.facing, move.maxTargets);
   }

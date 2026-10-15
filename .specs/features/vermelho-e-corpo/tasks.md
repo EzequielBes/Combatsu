@@ -1316,12 +1316,17 @@ do Corpo somam em `lutador` (`core/build.ts`).
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs`, `?debug&hd=1&area=modular&seed=1&maxAlive=1&enemyGuard=0`: com `axes=corpo.peso:2` o
+- [x] `cursed-body.smoke.mjs`, `?debug&hd=1&area=modular&seed=1&maxAlive=1&enemyGuard=0`: com `axes=corpo.peso:2` o
       golpe forte derruba o comum (CRP-03.5) e com `peso:1` não; com `axes=corpo.impacto:3&mods=forca:5`
       `power.points` 8 e o dano do `jab` × 1,3 sobre a Força (CRP-02); `build.corpo.level` 1 sem `axes` e de volta a 1
       no `R` (CRP-01)
-- [ ] Smokes `cursed-body`, `fight`, `power` e `vows` verdes; `Player.ts` e `TestScene.ts` intocados
-- [ ] Gate verde; contagem sem perda
+- [x] Smokes `cursed-body`, `fight`, `power` e `vows` verdes; `Player.ts` e `TestScene.ts` intocados
+- [x] Gate verde; contagem sem perda
+
+**Nota (T43)**: o `...mods.marks` no `Hit` do `strikes.ts` entrou já aqui (uma linha): sem ele o `knockdown` do Peso
+não chega ao inimigo e o CRP-03.5 não pode ser provado. A T44 segue com o alcance, o ritmo e o `mods` guardado. O
+`fight-integration` (MOV-15, +3 de energia) já falhava em `89b2a4a`, antes desta tarefa: ver a nota da T48.
+Testes: 4144.
 
 **Tests**: smoke
 **Gate**: full
