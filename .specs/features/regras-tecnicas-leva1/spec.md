@@ -159,45 +159,45 @@ do grupo.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| TRL-01 | P1: Regra comum de eixos | Execute | Implementing |
-| TRL-02 | P1: Regra comum de eixos | Execute | Implementing |
-| TRL-03 | P1: Regra comum de eixos | Execute | Implementing |
-| TRL-04 | P1: Regra comum de eixos | Execute | Implementing |
-| TRL-05 | P1: Regra comum de eixos | Execute | Implementing |
-| BOO-01 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-02 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-03 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-04 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-05 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-06 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-07 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-08 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-09 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-10 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-11 | P1: Boogie Woogie | Execute | Implementing |
-| BOO-12 | P1: Boogie Woogie | Execute | Implementing |
-| RES-01 | P1: Ressonância | Execute | Implementing |
-| RES-02 | P1: Ressonância | Execute | Implementing |
-| RES-03 | P1: Ressonância | Execute | Implementing |
-| RES-04 | P1: Ressonância | Execute | Implementing |
-| RES-05 | P1: Ressonância | Execute | Implementing |
-| RES-06 | P1: Ressonância | Execute | Implementing |
-| RES-07 | P1: Ressonância | Execute | Implementing |
-| RES-08 | P1: Ressonância | Execute | Implementing |
-| RES-09 | P1: Ressonância | Execute | Implementing |
-| RES-10 | P1: Ressonância | Execute | Implementing |
-| RES-11 | P1: Ressonância | Execute | Implementing |
-| RES-12 | P1: Ressonância | Execute | Implementing |
-| FAL-01 | P1: Fala Amaldiçoada | Execute | Implementing |
-| FAL-02 | P1: Fala Amaldiçoada | Execute | Implementing |
-| FAL-03 | P1: Fala Amaldiçoada | Execute | Implementing |
-| FAL-04 | P1: Fala Amaldiçoada | Execute | Implementing |
-| FAL-05 | P1: Fala Amaldiçoada | Execute | Implementing |
-| FAL-06 | P1: Fala Amaldiçoada | Execute | Implementing |
-| FAL-07 | P1: Fala Amaldiçoada | Execute | Implementing |
-| FAL-08 | P1: Fala Amaldiçoada | Execute | Implementing |
+| TRL-01 | P1: Regra comum de eixos | Execute | Verified |
+| TRL-02 | P1: Regra comum de eixos | Execute | Verified |
+| TRL-03 | P1: Regra comum de eixos | Execute | Verified |
+| TRL-04 | P1: Regra comum de eixos | Execute | Verified |
+| TRL-05 | P1: Regra comum de eixos | Execute | Verified |
+| BOO-01 | P1: Boogie Woogie | Execute | Verified |
+| BOO-02 | P1: Boogie Woogie | Execute | Verified |
+| BOO-03 | P1: Boogie Woogie | Execute | Verified |
+| BOO-04 | P1: Boogie Woogie | Execute | Verified |
+| BOO-05 | P1: Boogie Woogie | Execute | Verified |
+| BOO-06 | P1: Boogie Woogie | Execute | Verified |
+| BOO-07 | P1: Boogie Woogie | Execute | Verified |
+| BOO-08 | P1: Boogie Woogie | Execute | Verified |
+| BOO-09 | P1: Boogie Woogie | Execute | Verified |
+| BOO-10 | P1: Boogie Woogie | Execute | Verified |
+| BOO-11 | P1: Boogie Woogie | Execute | Verified |
+| BOO-12 | P1: Boogie Woogie | Execute | Verified |
+| RES-01 | P1: Ressonância | Execute | Verified |
+| RES-02 | P1: Ressonância | Execute | Verified |
+| RES-03 | P1: Ressonância | Execute | Verified |
+| RES-04 | P1: Ressonância | Execute | Verified |
+| RES-05 | P1: Ressonância | Execute | Verified |
+| RES-06 | P1: Ressonância | Execute | Verified |
+| RES-07 | P1: Ressonância | Execute | Verified |
+| RES-08 | P1: Ressonância | Execute | Verified |
+| RES-09 | P1: Ressonância | Execute | Verified |
+| RES-10 | P1: Ressonância | Execute | Verified |
+| RES-11 | P1: Ressonância | Execute | Verified |
+| RES-12 | P1: Ressonância | Execute | Verified |
+| FAL-01 | P1: Fala Amaldiçoada | Execute | Verified |
+| FAL-02 | P1: Fala Amaldiçoada | Execute | Verified |
+| FAL-03 | P1: Fala Amaldiçoada | Execute | Verified |
+| FAL-04 | P1: Fala Amaldiçoada | Execute | Verified |
+| FAL-05 | P1: Fala Amaldiçoada | Execute | Verified |
+| FAL-06 | P1: Fala Amaldiçoada | Execute | Verified |
+| FAL-07 | P1: Fala Amaldiçoada | Execute | Verified |
+| FAL-08 | P1: Fala Amaldiçoada | Execute | Verified |
 
-**Coverage:** 37 total, 37 mapped to commits (um por técnica; a regra comum entra com o Boogie), 0 unmapped.
+**Coverage:** 37 total, 37 mapped to commits (one per technique; the shared rule ships with Boogie), 0 unmapped.
 
 ---
 
