@@ -61,7 +61,8 @@ Recarga no 3 (TRL-06).
 | Erupção: pilar | sobe do chão no instante da ativação e acerta (normal) cada caixa que toca, uma vez por pilar | Molde do corte | n |
 | Erupção: Meteoro | o pilar vira meteoro: cai 400 ms depois, acerta num raio de 56 px em volta do ponto no chão com 1,5× o dano e derruba o comum | Plano só dá o nome | n |
 | Erupção: Lago de Lava | cada pilar deixa lava de 64 px por 3 s: chip de max(3, queima) a cada 300 ms em quem toca a lava | "3 s, chip" | n |
-| Erupção: Despertares | **Chuva de Meteoros**: cada meteoro solta 2 estilhaços (micro, 50% do dano) 48 px para cada lado 200 ms depois, e cada atingido pelo impacto principal toma 4% (chefe 1%); **Caldeira**: quando a lava acaba ela entra em erupção, com o dano do pilar e 4% (chefe 1%) | Molde da 2.1 | n |
+| Erupção: Despertares | **Chuva de Meteoros**: cada meteoro solta 2 estilhaços (micro, 50% do dano, raio de 24 px) 48 px para cada lado 200 ms depois, e cada atingido pelo impacto principal toma 4% (chefe 1%); **Caldeira**: quando a lava acaba ela entra em erupção, com o dano do pilar e 4% (chefe 1%) | Molde da 2.1 | n |
+| Detalhes fixados na implementação | Cães: quem pode pular (lobo, Matilha Faminta) espera o intervalo da mordida antes do salto, e a prisão é só da 1ª mordida de cada cão (o lobo inclusive). Trovão: a Descarga vale também no golpeado (salto 0); quem guarda a recarga é o adaptador, como na Fala. Erupção: os tempos contam no instante agendado, não no do quadro; a lava dá 10 tiques (o do fim incluso) e a Caldeira também acende a queima | Resultado não depende do passo do quadro | n |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -151,13 +152,13 @@ Recarga no 3 (TRL-06).
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| KIT-01..03 | Kit comum | Execute | Pending |
-| CNV-01..10 | Convergência | Execute | Pending |
-| CAO-01..10 | Cães Divinos | Execute | Pending |
-| TRV-01..09 | Punho de Trovão | Execute | Pending |
-| ERU-01..09 | Erupção | Execute | Pending |
+| KIT-01..03 | Kit comum | Execute | Implemented |
+| CNV-01..10 | Convergência | Execute | Implemented |
+| CAO-01..10 | Cães Divinos | Execute | Implemented |
+| TRV-01..09 | Punho de Trovão | Execute | Implemented |
+| ERU-01..09 | Erupção | Execute | Implemented |
 
-**Coverage:** 41 total; um commit por técnica (o kit sai com a Convergência).
+**Coverage:** 41 total, 41 com teste em `tests/core/{techKit,convergence,divineDogs,thunderFist,eruption}.test.ts`; um commit por técnica (o kit sai com a Convergência). Falta o verificador independente antes da F41.
 
 ---
 
