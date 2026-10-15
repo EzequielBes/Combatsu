@@ -595,9 +595,9 @@ janela de 20 s, mínimo 5, teto 2, esquece em 10 s e apaga os acertos da fonte e
 
 **Done when**:
 
-- [ ] `tests/core/bossBrainScale.test.ts` (novo): dano mínimo 1; postura × 0,5; `stagger` aplicado depois; `scale` 1 igual
+- [x] `tests/core/bossBrainScale.test.ts` (novo): dano mínimo 1; postura × 0,5; `stagger` aplicado depois; `scale` 1 igual
       a hoje
-- [ ] `tests/core/bossBrain.test.ts` intacto; gate verde
+- [x] `tests/core/bossBrain.test.ts` intacto; gate verde
 
 **Tests**: unit
 **Gate**: quick

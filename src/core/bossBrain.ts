@@ -87,13 +87,18 @@ export class BossBrain {
    * Aplica um golpe (BOSS-08, BAI-01, BAI-04..10, BAI-12): ignorado por completo na intro e no rugido. Fora
    * disso, tira hp e postura (leve = dano, forte = 2×dano, nunca abaixo de 0); morte tem prioridade sobre
    * qualquer troca de fase ou postura (um único `died`); cruzar um limiar de fase entra em `roar` (mesmo vindo
-   * de `stagger`); a postura cruzando de > 0 para <= 0 entra em `stagger`.
+   * de `stagger`); a postura cruzando de > 0 para <= 0 entra em `stagger`. `scale < 1` (fonte adaptada, ADP-04)
+   * reduz o dano para `max(1, round(dano × scale))` e a postura para `round(postura × scale)`, antes do
+   * multiplicador do `stagger`.
    */
-  receiveHit(hit: Hit): BossEvent[] {
+  receiveHit(hit: Hit, scale = 1): BossEvent[] {
     if (this._state === 'dead' || this._state === 'intro' || this._state === 'roar') return [];
-    const poiseDamage = hit.strength === 'heavy' ? hit.damage * 2 : hit.damage;
+    const rawPoise = hit.strength === 'heavy' ? hit.damage * 2 : hit.damage;
+    const scaled = scale < 1;
+    const baseDamage = scaled ? Math.max(1, Math.round(hit.damage * scale)) : hit.damage;
+    const poiseDamage = scaled ? Math.round(rawPoise * scale) : rawPoise;
     // BFX-05: durante o `stagger` o golpe causa `round(dano × staggerDamageMult)`.
-    const damage = this._state === 'stagger' ? Math.round(hit.damage * this.t.staggerDamageMult) : hit.damage;
+    const damage = this._state === 'stagger' ? Math.round(baseDamage * this.t.staggerDamageMult) : baseDamage;
     return this.applyDamage(damage, poiseDamage);
   }
 
