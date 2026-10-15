@@ -20,6 +20,8 @@ export interface RedOrbEntry {
   readonly state: RedOrbState;
   readonly body: MatterJS.BodyType;
   readonly view: Phaser.GameObjects.Sprite;
+  /** VRM-07: avisa um abate da conjuração (o reembolso dela, criado na soltura; só o 1º abate devolve a recarga). */
+  readonly onKill: () => void;
 }
 
 /** Os números de um golpe do Vermelho (repulsão, toque, detonação). */
@@ -42,7 +44,7 @@ function shardTarget(target: { id: number; hurtRect(): Rect }): RedTarget {
 
 /**
  * Golpe do Vermelho em `target`. `point` só é lido se o golpe for aceito, já com o alvo reagindo a ele. Devolve se o
- * alvo aceitou o golpe.
+ * alvo aceitou o golpe. VRM-07: se o golpe abate o alvo, avisa o `onKill` da conjuração (o `KillRefund` dela).
  */
 export function strikeRed(
   ctx: TechContext,
@@ -50,11 +52,13 @@ export function strikeRed(
   point: () => Vec2,
   cast: CastRef | null,
   blow: RedBlow,
+  onKill: () => void,
 ): boolean {
   const hit: Hit = { ownerId: ctx.player.id, ...blow, ...techMarks(blow.strength, 'vermelho') };
   if (!target.receiveHit(hit)) return false;
   ctx.onTechHit(hit, point(), target);
   ctx.masteryHit(cast, target);
+  if (target.isDead?.()) onKill();
   return true;
 }
 
@@ -131,7 +135,7 @@ export class RedFlight {
     if (target instanceof Boss) {
       const direction = normalize({ x: center.x - orb.state.x, y: center.y - orb.body.position.y });
       const damage = orb.stats.damage.hit; // RED-09, TEC-06: já escalado no stat da soltura
-      strikeRed(this.ctx, target, () => center, orb.cast, { damage, strength: 'heavy', force, direction });
+      strikeRed(this.ctx, target, () => center, orb.cast, { damage, strength: 'heavy', force, direction }, orb.onKill);
       orb.state.detonate(); // RED-08: toque no chefe também detona
       return;
     }
@@ -139,7 +143,7 @@ export class RedFlight {
     if (!result) return; // já atingido por este orbe antes (edge case: não acerta de novo)
     // RED-06, TEC-06: o dano do toque já vem escalado do `RedOrbConfig`.
     const blow: RedBlow = { damage: result.damage, strength: 'heavy', force, direction: result.direction };
-    strikeRed(this.ctx, target, () => center, orb.cast, blow);
+    strikeRed(this.ctx, target, () => center, orb.cast, blow, orb.onKill);
     this.shard(orb, target.id, center);
   }
 
@@ -160,7 +164,7 @@ export class RedFlight {
       const at = (): Vec2 => ({ x: enemy.x, y: enemy.hurtRect().y });
       const direction = normalize({ x: enemy.x - from.x, y: 0 });
       const blow: RedBlow = { damage: orb.red.shard, strength: 'light', force: 0, direction, band: 'micro' };
-      if (!strikeRed(this.ctx, enemy, at, orb.cast, blow)) continue;
+      if (!strikeRed(this.ctx, enemy, at, orb.cast, blow, orb.onKill)) continue;
       this.touchEvents.push(`redShard:${passedId}:${id}:${enemy.lastDamageTaken ?? blow.damage}`);
     }
   }
@@ -180,7 +184,7 @@ export class RedFlight {
         direction: splash.direction,
         hitstopBonusMs: orb.red.hitstopBonusMs, // VRM-04: 10 ms por ponto de Potência
       };
-      strikeRed(this.ctx, enemy, at, orb.cast, blow);
+      strikeRed(this.ctx, enemy, at, orb.cast, blow, orb.onKill);
     }
     this.fx.detonate(point, this.ctx.player.facing, { radius: orb.red.radius, rings: orb.red.rings }); // RED-11/12/17
     this.ctx.emit('redDetonate'); // RED-16

@@ -16,6 +16,7 @@ import {
 import { newEntityId } from '../bodyTags';
 import { Boss } from '../Boss';
 import { setIgnoreGravity } from '../physics';
+import { KillRefund } from '../../core/techKit';
 import type { TechStats } from '../../core/techStats';
 import type { RedObjectSnapshot } from '../debugApi';
 import { RedOrbFx } from '../techFx/RedOrb';
@@ -116,8 +117,14 @@ export class RedTech {
     // RED-15, EDG-02: recuo só no chão, oposto ao facing; a repulsão acontece no chão ou no ar.
     const effects = redReleaseEffects({ grounded: player.grounded });
     if (effects.pushPx > 0) player.pushHorizontal(player.facing === 1 ? -1 : 1, effects.pushPx);
-    if (effects.repulse) this.repulse(enemies, red.repulseDamage); // RDA-08/09, VRM-04
-    this.spawnOrb(player.facing, stats, red);
+    // VRM-07: um reembolso por conjuração, para a repulsão e o orbe; só o 1º abate dela devolve 30% da recarga.
+    const cast = this.ctx.currentCast();
+    const refund = new KillRefund(stats.cooldownMs, red.killRefundPct);
+    const onKill = (): void => {
+      if (cast) this.ctx.loadout.refundCooldown(cast.slot, refund.claim());
+    };
+    if (effects.repulse) this.repulse(enemies, red.repulseDamage, onKill); // RDA-08/09, VRM-04
+    this.spawnOrb(player.facing, stats, red, onKill);
   }
 
   /**
@@ -125,7 +132,7 @@ export class RedTech {
    * `damage` leve e é empurrado; quem está atrás não. O chefe fica de fora (só o orbe o atinge, RED-09). VRM-04: o dano
    * é o `repulseDamage` resolvido (4, 5, 5 e 6 com 0 a 3 pontos de Potência, vezes os multiplicadores).
    */
-  private repulse(enemies: readonly TechTarget[], damage: number): void {
+  private repulse(enemies: readonly TechTarget[], damage: number, onKill: () => void): void {
     const { player } = this.ctx;
     const origin = { x: player.sprite.x, y: player.sprite.y };
     this.fx.repulse(origin, player.facing);
@@ -140,17 +147,13 @@ export class RedTech {
       // MST-01: a repulsão faz parte da mesma conjuração do orbe (mesmo `castId`, então o alvo conta uma vez só).
       const cast = this.ctx.currentCast();
       const at = (): Vec2 => ({ x: enemy.x, y: enemy.hurtRect().y });
-      strikeRed(this.ctx, enemy, at, cast, {
-        damage: r.damage,
-        strength: r.strength,
-        force: r.force,
-        direction: r.direction,
-      });
+      const blow = { damage: r.damage, strength: r.strength, force: r.force, direction: r.direction };
+      strikeRed(this.ctx, enemy, at, cast, blow, onKill);
     }
   }
 
   /** Nascimento do orbe na ponta dos dedos, com o stat copiado na soltura; daí em diante o voo é do `RedFlight`. */
-  private spawnOrb(facing: 1 | -1, stats: TechStats, red: RedGeometry): void {
+  private spawnOrb(facing: 1 | -1, stats: TechStats, red: RedGeometry, onKill: () => void): void {
     const { scene, player } = this.ctx;
     const point = this.fx.fingertip(player.view.x, player.view.y, facing, player.frameName); // RDA-04
     const state = new RedOrbState(point.x, facing, redOrbConfig(stats));
@@ -160,6 +163,7 @@ export class RedTech {
     });
     setIgnoreGravity(body, true);
     const view = scene.add.sprite(point.x, point.y, ORB_TEX[red.orbTexels], 'orb').setDepth(2);
-    this.flight.launch({ cast: this.ctx.currentCast(), id: newEntityId(), stats, red, state, body, view });
+    const cast = this.ctx.currentCast();
+    this.flight.launch({ cast, id: newEntityId(), stats, red, state, body, view, onKill });
   }
 }

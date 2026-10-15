@@ -195,11 +195,61 @@ async function pierceShards(ctx) {
   ctx.assert(micro > 0, `POW-03: o estilhaço é micro e ganha o hitstop dos micro: ${micro}`);
 }
 
+/** VRM-07: 30% da recarga de 2300 ms da Recarga 3. */
+const KILL_REFUND_MS = 690;
+/** Queda por quadro que já não é o tique normal da recarga (16 ms): só um reembolso passa disso. */
+const TICK_SLACK_MS = 20;
+
+/**
+ * Solta o Vermelho com Recarga 3 nos três inimigos juntos e devolve as quedas da recarga do slot por quadro, da soltura
+ * à detonação, mais quantos inimigos o Vermelho abateu. `weaken`: antes, golpes leves de teste (tecla 1) até todos
+ * ficarem com vida que o toque de 30 tira de uma vez.
+ */
+async function refundRun(ctx, weaken) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(`${BASE}&enemyGuard=0&axes=vermelho.recarga:3`);
+  for (let i = 0; i < 40 && s.enemies.length < 3; i++) s = await kit.snap(300);
+  s = await kit.approach(90);
+  for (let i = 0; i < 20 && weaken && s.enemies.some((e) => e.hp > 25); i++) {
+    await ctx.page.keyboard.press('Digit1');
+    s = await kit.snap(300);
+  }
+  if (weaken) s = await kit.approach(90);
+  const alive = s.enemies.filter((e) => e.hp > 0).length;
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s));
+  const drops = [];
+  let last = s.tech.slots[0].cooldownMs;
+  for (let i = 0; i < 120 && !s.events.slice(seen).includes('redDetonate'); i++) {
+    s = await kit.frame();
+    drops.push(Math.round(last - s.tech.slots[0].cooldownMs));
+    last = s.tech.slots[0].cooldownMs;
+  }
+  const kills = alive - s.enemies.filter((e) => e.hp > 0).length;
+  return { drops: drops.filter((d) => d > TICK_SLACK_MS), kills, view: JSON.stringify({ drops, kills }) };
+}
+
+/**
+ * VRM-07 (T28): com Recarga 3, o 1º abate da conjuração corta 690 ms da recarga do slot no quadro do abate e os
+ * seguintes não devolvem nada; sem abate a recarga só anda o tique normal.
+ */
+async function killRefund(ctx) {
+  const none = await refundRun(ctx, false);
+  ctx.assert(none.kills === 0 && none.drops.length === 0, `VRM-07: sem abate a recarga não cai: ${none.view}`);
+  const many = await refundRun(ctx, true);
+  ctx.assert(many.kills >= 2, `VRM-07: o Vermelho deveria abater 2 ou mais dos fracos: ${many.view}`);
+  ctx.assert(
+    many.drops.length === 1 && Math.abs(many.drops[0] - KILL_REFUND_MS) <= TICK_SLACK_MS,
+    `VRM-07: com ${many.kills} abates a recarga cai ${KILL_REFUND_MS} ms uma vez só: ${many.view}`,
+  );
+}
+
 export default async function (ctx) {
   await cannon(ctx);
   await scaledOrb(ctx);
   await powerRings(ctx);
   await pierceShards(ctx);
+  await killRefund(ctx);
   await machineGun(ctx);
   await axisCap(ctx);
   await branch(ctx);

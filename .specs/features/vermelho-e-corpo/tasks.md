@@ -919,9 +919,13 @@ conjuração devolve (TRL-06; os seguintes dão 0).
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs` com `axes=vermelho.recarga:3` e inimigo de pouco HP: `tech.slots[n].cooldownMs` cai 690 ms
+- [x] `red-axes.smoke.mjs` com `axes=vermelho.recarga:3` e inimigo de pouco HP: `tech.slots[n].cooldownMs` cai 690 ms
       no quadro do abate; sem abate não cai; com 2 abates na mesma detonação cai 690 ms uma vez só
-- [ ] Smokes `red-axes` e `tech` verdes; gate verde; contagem sem perda
+- [x] Smokes `red-axes` e `tech` verdes; gate verde; contagem sem perda (4062)
+
+Como ficou: o `KillRefund` nasce na soltura (`red.ts`), um por conjuração, dentro de um `onKill` que corta a recarga
+do slot da conjuração; a repulsão e o orbe recebem o mesmo `onKill`, e o `strikeRed` o chama quando o golpe aceito deixa
+o alvo morto. Assim o `redFlight.ts` segue sem ler o `loadout` (teste da T24) e o abate pela repulsão também conta.
 
 **Tests**: smoke
 **Gate**: full
