@@ -158,8 +158,9 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   `beginAttackBody` cai direto no descanso.
 - Eventos novos: `{ type: 'telegraph'; attack: 'beam' | 'threadRain'; dir; playerX }` ao entrar no preparo;
   `{ type: 'strikeOn' | 'strikeOff'; attack }` no corpo; `{ type: 'telegraphCancel' }` no `interrupt` durante preparo
-  ou corpo desses dois; `{ type: 'chargeTrail'; fromX; toX }` ao fim de toda investida (IGN-01); `landed` ganha
-  `final: boolean`.
+  ou corpo desses dois; `{ type: 'chargeTrail'; fromX; toX }` ao fim de toda investida, por alcance ou parede
+  (IGN-01: `fromX` é o X do chefe ao sair, `toX` o `selfX` observado no frame em que parou, na ordem do movimento;
+  cancelar sem `canAct` não deixa rastro); `landed` ganha `final: boolean`.
 - Preparo: `beam` 800 ms e `threadRain` 600 ms fixos (sem `windupMult`); a direção do feixe fica presa no aviso (o
   `beginAttackBody` de hoje recalcularia pelo player e o feixe sairia fora da linha avisada).
 - `doubleCharge`: 1ª investida; fim por alcance → vira para o player, preparo de 250 ms, 2ª investida, sem descanso

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BossAI, type BossAIObservation, type BossAttack } from '../../src/core/bossAI';
+import { BossAI, type BossAIEvent, type BossAIObservation, type BossAttack } from '../../src/core/bossAI';
 import { BOSS } from '../../src/data/tuning';
 
 const ONI = { volleyCount: 3, projectileSpeed: 260 };
@@ -40,6 +40,11 @@ function timeBeforeIndex(phase: 1 | 2 | 3, idx: number): number {
     total += windupMs(a, phase) + bodyMs(a) + restAfter(a, phase);
   }
   return total;
+}
+
+/** O rastro do fim da investida (IGN-01) tem os próprios testes em `bossAttacks.test.ts`; aqui fica de fora. */
+function semRastro(events: BossAIEvent[]): BossAIEvent[] {
+  return events.filter((e) => e.type !== 'chargeTrail');
 }
 
 function obsFor(phase: 1 | 2 | 3, extra: Partial<BossAIObservation> = {}): BossAIObservation {
@@ -204,7 +209,7 @@ describe('BossAI: investida (BAT-01, BAT-09)', () => {
     expect(last.state).toBe('charge');
     const final = ai.update(125, obs); // 9º passo: total 360 px exatos
     expect(final.state).not.toBe('charge');
-    expect(final.events).toEqual([{ type: 'hitboxOff' }]);
+    expect(semRastro(final.events)).toEqual([{ type: 'hitboxOff' }]);
   });
 
   it('blocked encerra o movimento antes de completar os 360 px', () => {
@@ -215,7 +220,7 @@ describe('BossAI: investida (BAT-01, BAT-09)', () => {
     const out = ai.update(10, { ...obs, blocked: true });
     expect(out.state).not.toBe('charge');
     expect(out.vx).toBe(0);
-    expect(out.events).toEqual([{ type: 'hitboxOff' }, { type: 'wallStun' }]);
+    expect(semRastro(out.events)).toEqual([{ type: 'hitboxOff' }, { type: 'wallStun' }]);
   });
 
   it('player no mesmo x do chefe usa o facing atual, não um valor fixo (edge case)', () => {
@@ -349,7 +354,7 @@ describe('BossAI: atordoamento na parede (BFX-02, BFX-03)', () => {
     const obs = obsFor(1, { selfX: 0, playerX: 500 });
     intoCharge(ai, obs);
     const end = ai.update(bodyMs('charge'), obs);
-    expect(end.events).toEqual([{ type: 'hitboxOff' }]);
+    expect(semRastro(end.events)).toEqual([{ type: 'hitboxOff' }]);
     expect(end.state).toBe('rest');
     expect(ai.update(restMs(1) - 1, obs).state).toBe('rest');
     expect(ai.update(1, obs).state).toBe('windup');

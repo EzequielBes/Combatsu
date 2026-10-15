@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { BossAttack } from '../../src/core/bossAI';
+import { BossAI, type BossAIEvent, type BossAttack } from '../../src/core/bossAI';
 import { animBase, beamThickness, threadXs } from '../../src/core/bossAttacks';
 import { BOSS_ANIMS } from '../../src/game/art/sprites/boss';
 import { BOSS } from '../../src/data/tuning';
@@ -70,5 +70,87 @@ describe('animBase (CYC-11)', () => {
       expect(BOSS_ANIMS[animBase(a)]).toBeDefined();
       expect(BOSS_ANIMS[`windup-${animBase(a)}`]).toBeDefined();
     }
+  });
+});
+
+describe('chargeTrail ao fim da investida (IGN-01)', () => {
+  const DT = 16;
+  /** Passo máximo de um frame da investida: o trecho pode ficar até isso aquém do alcance (o corpo anda depois). */
+  const STEP = (BOSS.charge.speed * DT) / 1000;
+  const ONI_SPEC = { volleyCount: 3, projectileSpeed: 260 };
+  const onlyCharge = { ...BOSS, cycles: { 1: ['charge'], 2: ['charge'], 3: ['charge'] } } as const;
+
+  type Trail = Extract<BossAIEvent, { type: 'chargeTrail' }>;
+
+  /**
+   * Roda o chefe frame a frame como o motor: a observação vê a posição de agora e o corpo anda com o `vx` devolvido;
+   * `wallX` para o corpo na parede e liga `blocked`. Para no fim da 1ª investida (ou em `untilMs`).
+   */
+  function run(opts: { selfX: number; playerX: number; wallX?: number; untilMs?: number; interruptAtMs?: number }) {
+    const ai = new BossAI(onlyCharge);
+    let x = opts.selfX;
+    let blocked = false;
+    const trails: Trail[] = [];
+    let endEvents: BossAIEvent[] = [];
+    let endX = x;
+    for (let ms = 0; ms < (opts.untilMs ?? 5000); ms += DT) {
+      const canAct = opts.interruptAtMs === undefined || ms < opts.interruptAtMs;
+      const out = ai.update(DT, { selfX: x, playerX: opts.playerX, blocked, canAct, phase: 1, spec: ONI_SPEC });
+      for (const e of out.events) if (e.type === 'chargeTrail') trails.push(e);
+      if (trails.length > 0 && opts.untilMs === undefined) {
+        endEvents = out.events;
+        endX = x;
+        break;
+      }
+      const next = x + (out.vx * DT) / 1000;
+      const wall = opts.wallX;
+      blocked = wall !== undefined && (opts.selfX < wall ? next >= wall : next <= wall);
+      x = blocked && wall !== undefined ? wall : next;
+    }
+    return { trails, endEvents, endX };
+  }
+
+  it('por alcance, para a direita: do X de saída até onde o corpo parou, cobrindo o alcance', () => {
+    const { trails, endX } = run({ selfX: 500, playerX: 1000 });
+    expect(trails).toHaveLength(1);
+    const [t] = trails;
+    expect(t.fromX).toBe(500);
+    expect(t.toX).toBe(endX);
+    expect(t.toX).toBeGreaterThan(t.fromX);
+    expect(t.toX - t.fromX).toBeGreaterThanOrEqual(BOSS.charge.maxDist - STEP);
+    expect(t.toX - t.fromX).toBeLessThanOrEqual(BOSS.charge.maxDist);
+  });
+
+  it('por alcance, para a esquerda: toX fica à esquerda de fromX', () => {
+    const { trails } = run({ selfX: 500, playerX: 0 });
+    expect(trails).toHaveLength(1);
+    const [t] = trails;
+    expect(t.fromX).toBe(500);
+    expect(t.toX).toBeLessThan(t.fromX);
+    expect(t.fromX - t.toX).toBeGreaterThanOrEqual(BOSS.charge.maxDist - STEP);
+    expect(t.fromX - t.toX).toBeLessThanOrEqual(BOSS.charge.maxDist);
+  });
+
+  it('pela parede à direita: o trecho acaba na parede, no mesmo frame do wallStun', () => {
+    const { trails, endEvents } = run({ selfX: 500, playerX: 1000, wallX: 600 });
+    expect(trails).toEqual([{ type: 'chargeTrail', fromX: 500, toX: 600 }]);
+    expect(endEvents.map((e) => e.type)).toEqual(['hitboxOff', 'wallStun', 'chargeTrail']);
+  });
+
+  it('pela parede à esquerda: o trecho acaba na parede', () => {
+    const { trails } = run({ selfX: 500, playerX: 0, wallX: 420 });
+    expect(trails).toEqual([{ type: 'chargeTrail', fromX: 500, toX: 420 }]);
+  });
+
+  it('um rastro por investida, cada um saindo de onde a anterior parou', () => {
+    const { trails } = run({ selfX: 100, playerX: 5000, untilMs: 8000 });
+    expect(trails.length).toBeGreaterThanOrEqual(2);
+    for (let i = 1; i < trails.length; i++) expect(trails[i].fromX).toBe(trails[i - 1].toX);
+  });
+
+  it('investida cancelada sem canAct não deixa rastro', () => {
+    const windup = BOSS.charge.windupMs * BOSS.phases[0].windupMult;
+    const { trails } = run({ selfX: 500, playerX: 1000, untilMs: 3000, interruptAtMs: windup + 200 });
+    expect(trails).toEqual([]);
   });
 });

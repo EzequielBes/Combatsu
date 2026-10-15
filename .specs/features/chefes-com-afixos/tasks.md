@@ -467,8 +467,10 @@ e `animBase(attack)`.
 
 **Done when**:
 
-- [ ] `tests/core/bossAttacks.test.ts`: `fromX`/`toX` cobrem o trecho percorrido, nos dois sentidos e com parede
-- [ ] `tests/core/bossAI.test.ts` intacto; gate verde
+- [x] `tests/core/bossAttacks.test.ts`: `fromX`/`toX` cobrem o trecho percorrido, nos dois sentidos e com parede
+- [x] `tests/core/bossAI.test.ts` sem regra nova; gate verde. Desvio: três asserções comparavam a lista inteira de
+      eventos do fim da investida (`toEqual`) e passaram a filtrar o `chargeTrail` (`semRastro`), sem mudar o que
+      checam
 
 **Tests**: unit
 **Gate**: quick

@@ -39,7 +39,13 @@ export type BossAIEvent =
   | { type: 'fire'; dir: 1 | -1; speed: number }
   | { type: 'landed' }
   /** A investida terminou batendo na parede: quem chama atordoa o chefe (BFX-02). */
-  | { type: 'wallStun' };
+  | { type: 'wallStun' }
+  /**
+   * Fim de toda investida, por alcance ou por parede (IGN-01): `fromX` é o X do chefe ao sair e `toX` o X dele no
+   * frame em que parou, na ordem do movimento (`toX < fromX` quando correu para a esquerda). Cancelar a investida
+   * sem `canAct` não deixa rastro.
+   */
+  | { type: 'chargeTrail'; fromX: number; toX: number };
 
 export interface BossAIOutput {
   /** px/s, só horizontal; só != 0 durante a investida. */
@@ -66,6 +72,7 @@ export class BossAI {
 
   private chargeDir: 1 | -1 = 1;
   private chargeTraveled = 0;
+  private chargeFromX = 0;
 
   private leapFromX = 0;
   private leapToX = 0;
@@ -154,6 +161,7 @@ export class BossAI {
         this._state = 'charge';
         this.chargeDir = this.facing;
         this.chargeTraveled = 0;
+        this.chargeFromX = obs.selfX;
         events.push({ type: 'hitboxOn' });
         return;
       case 'leap':
@@ -189,6 +197,8 @@ export class BossAI {
       events.push({ type: 'hitboxOff' });
       // BFX-02/03: só a parede atordoa; chegar ao alcance máximo cai no descanso normal.
       if (obs.blocked) events.push({ type: 'wallStun' });
+      // IGN-01: o trecho vai da saída até onde o corpo está de fato (na parede, onde ela o parou).
+      events.push({ type: 'chargeTrail', fromX: this.chargeFromX, toX: obs.selfX });
       this.currentVx = 0;
       const overrun = reachedMax ? dtMs - (stepDist / this.t.charge.speed) * 1000 : 0;
       this.enterRestAfterAttack();
