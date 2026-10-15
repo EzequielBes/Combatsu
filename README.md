@@ -86,6 +86,8 @@ Parâmetros da URL, todos junto de `?debug`:
 | `fragments=N` | começar com N fragmentos |
 | `arsenal=<id>[,<id>]` | começar com itens do arsenal; repetir o id sobe o nível (`manoplas`, `faixas`, `rosario`, `bastao`, `lamina`, `faca`, `porrete`) |
 | `perks=<id>[,<id>]` | começar com passivas de build (`punhoPesado`, `executor`, `refluxo`, `condutor`, `passoSombrio`, `contraAfiado`) |
+| `nosave=1` | não lê nem grava o save do recorde (`combatsu.save` no `localStorage`): começa sem recorde. Os smokes usam isto por padrão |
+| `record=N` | começar com o recorde `rN` (0 abates, build vazia), sem ler nem gravar o save; ganha de `nosave=1`. N inválido é ignorado |
 | `noshop=1` | pular a loja entre as rodadas: a saída leva direto à próxima área, sem konbini |
 | `modules=rua,beco,parque` | área de combate montada só com esses módulos, nesta ordem (ids desconhecidos ou especiais são ignorados) |
 | `area=sala` | sala de teste de uma tela só (`src/data/level1.ts`), sem selo, travessia nem konbini; a loja abre na própria sala. O `fxlab` também usa a sala |

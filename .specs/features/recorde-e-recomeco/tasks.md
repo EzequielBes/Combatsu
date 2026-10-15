@@ -320,17 +320,18 @@ escondidos) e `snapshot()`; tipo `RecordSnapshot` em `game/recordSnapshot.ts`. L
 `runDirector` constructor (`this.record = new RecordDirector(s)`, linha 20), `uiSetup` (`mountUi`), `snapshot.ts`
 (`record:`), `debugApi.ts` (campo no `GameSnapshot`) + exemplo em `tests/game/debugApi.test.ts`; `README.md` ganha
 `nosave=1` e `record=N`.
-**Where**: `src/scenes/test/recordDirector.ts`
+**Where**: `src/scenes/test/recordDirector.ts` (a tabela de carga, pura, em `src/scenes/test/recordLoad.ts`)
+**Teste par**: `tests/scenes/recordLoad.test.ts`
 **Depends on**: T3, T4, T7, T8, T9
 **Reuses**: `debugParam`, `debugIntParam` (`scenes/test/params.ts`); `firstRoundForDebug`
 **Requirement**: SAVE-04, SAVE-05, SAVE-07, REC-07, REC-08, REC-10
 
 **Done when**:
 
-- [ ] `record-save.smoke.mjs` (novo, `?debug&hd=1&area=modular`), parte de carga: `nosave=0` com chave válida → `best` lido e `storage: 'local'`; `nosave=1` → `best: null`, `storage: 'off'`; `record=4` → `best.round = 4`, `'off'`; `record=4&nosave=1` → `record` ganha; `record=abc` ignorado; chave com `version: 9` → `locked`, chave intacta; `evaluateOnNewDocument` fazendo `getItem` lançar → `storage: 'memory'`, console sem erro; limpa a chave no começo e no fim
-- [ ] Smokes `world-restart` (R recria as vistas sem erro), `hud`, `boot`, `no-debug` verdes
-- [ ] `runDirector.ts` só ganha as linhas do construtor; `TestScene.ts` intocado; nenhum arquivo novo nas exceções do lint
-- [ ] Gate verde; contagem = anterior + novos
+- [x] `record-save.smoke.mjs` (novo, `?debug&hd=1&area=modular`), parte de carga: `nosave=0` com chave válida → `best` lido e `storage: 'local'`; `nosave=1` → `best: null`, `storage: 'off'`; `record=4` → `best.round = 4`, `'off'`; `record=4&nosave=1` → `record` ganha; `record=abc` ignorado; chave com `version: 9` → `locked`, chave intacta; `evaluateOnNewDocument` fazendo `getItem` lançar → `storage: 'memory'`, console sem erro; limpa a chave no começo e no fim; também JSON quebrado → `best: null`, `'local'`
+- [x] Smokes `world-restart`, `hud`, `boot`, `no-debug` verdes; o `world-restart` não aperta R, então o R no meio da run (cena volta ao título, vistas novas escondidas, recorde em memória e chave iguais) ficou no `record-save`
+- [x] `runDirector.ts` só ganha as linhas do construtor; `TestScene.ts` intocado; nenhum arquivo novo nas exceções do lint
+- [x] Gate verde; contagem = anterior + novos (2999 testes, 152 arquivos)
 
 **Tests**: smoke
 **Gate**: full

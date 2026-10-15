@@ -17,6 +17,7 @@ game/RecordMarker.ts  texto "Recorde: rN" na câmera de UI (948, 44), cor normal
 game/RunSummaryPanel.ts  painel de fim de run centrado em (480, 270), uma linha de texto por item
 game/recordSnapshot.ts   tipo RecordSnapshot do snapshot de debug (arquivo próprio, regra do plano)
 scenes/test/recordDirector.ts  liga tudo: lê o save, ouve os comandos da Run, soma o dano, grava ao morrer
+scenes/test/recordLoad.ts      loadRecord: a tabela de carga do save, pura (sem Phaser), com teste em tests/scenes/
 ```
 
 ```mermaid
@@ -37,8 +38,9 @@ graph TD
   dele (o campo depende de `s`). `TestScene.ts` (399/400) não ganha campo nem linha.
 - **Vistas**: criadas por `recordDirector.mountUi(uiLayer)`, chamado uma vez no `UiSetup.addHud`. O `scene.restart()`
   da tecla R reaproveita a instância da cena (`TestScene.ts:397`): o diretor sobrevive, então `mountUi` recria as vistas
-  e relê o save a cada `create` (os objetos antigos já foram destruídos pelo SHUTDOWN). Nada é gravado no restart
-  (REC-06).
+  a cada `create` (os objetos antigos já foram destruídos pelo SHUTDOWN). O save é lido só na primeira montagem:
+  com a porta em `'memory'` reler perderia o recorde da aba, e em `'local'` o recorde em memória já é o gravado. Nada
+  é gravado no restart (REC-06).
 - **Sem atualização por quadro**: o marcador só muda com comando da `Run` (`roundStart` mostra, `gameOver` esconde; o
   estado `title` só existe antes da primeira run e o `mountUi` nasce escondido). Nenhuma linha no `update` da cena.
 - **Recomeço**: nada muda na `Run`; a trava de 1000 ms (`RUN.gameOverLockMs`, `core/run.ts:295`) e o J/Enter
@@ -126,8 +128,8 @@ não são tocados.
 
 Arquivos novos (estimativa, todos longe do teto): `core/save.ts` ~110, `core/recordBook.ts` ~80,
 `core/runSummary.ts` ~110, `game/saveStorage.ts` ~50, `game/RecordMarker.ts` ~45, `game/RunSummaryPanel.ts` ~90,
-`game/recordSnapshot.ts` ~20, `scenes/test/recordDirector.ts` ~150. Função mais longa prevista: `recordDirector.load`
-(~30 linhas, a tabela de carga acima vira um `if` por linha; complexidade < 10).
+`game/recordSnapshot.ts` ~20, `scenes/test/recordDirector.ts` ~150. Função mais longa prevista: `loadRecord`
+(`scenes/test/recordLoad.ts`, ~10 linhas, a tabela de carga acima vira um `if` por linha; complexidade < 10).
 
 ---
 
@@ -250,6 +252,7 @@ interface RecordSnapshot {             // snapshot.record (REC-10, RMK-09, END-1
 | `tests/game/saveStorage.test.ts` | Storage falso: leitura e escrita; `getItem`, `setItem` e o getter lançando → `'memory'` sem exceção; em `'memory'` não chama mais o storage. Varredura `import.meta.glob('src/**/*.ts', { query: '?raw' })`: só `game/saveStorage.ts` diz `localStorage` (SAVE-01) |
 | `tests/game/recordViews.test.ts` | `RECORD_COLORS` só com chaves da `PALETTE` (RMK-08, END-14); L-043: o marcador repassa `highlight` ao `setColor` (teste do adaptador com um `Text` falso) |
 | `tests/game/debugApi.test.ts` | exemplo do snapshot com `record` |
+| `tests/scenes/recordLoad.test.ts` | Tabela de carga: chave válida; ausente, JSON quebrado e recorde inválido; versão 9 → `locked`; `getItem` lançando → `'memory'`; `nosave=1` e `record=N` (com e sem `nosave`) sem ler o armazenamento |
 
 ## Smokes (novos com `?debug&hd=1&area=modular`; `npm run smoke -- record`)
 
@@ -271,7 +274,7 @@ Existentes a rodar: `hud`, `drops` (leem o painel), `run-loop`, `world-restart` 
 | A F29 mexe em paralelo em `combat.ts`, `effects.ts` e `runDirector.ts` | `combat.ts:98,263`, `effects.ts:33`, `runDirector.ts:51,67,85` | conflito de merge | toque de 1 a 2 linhas por arquivo, num commit só de integração, o último da feature |
 | O runner abre uma página por smoke no mesmo navegador: o `localStorage` passa de um smoke para o outro | `scripts/smoke/run.mjs:103-110` | uma morte no `hud` vira recorde e muda o banner de rodada de outros smokes | `withNoSave` acrescenta `nosave=1` em toda URL sem `nosave=`/`record=`; o `record-save` pede `nosave=0` e limpa a chave no começo e no fim |
 | `TestScene.ts` em 399/400 | `TestScene.ts:319` | passar do teto | só a lambda da linha 319 muda (77 colunas, sem quebra do prettier); diretor e vistas fora da cena |
-| `scene.restart()` reaproveita a instância e o `RunDirector` | `TestScene.ts:79,397` | vistas apontando para objetos destruídos | `mountUi` recria as vistas e relê o save a cada `create`; smoke `world-restart` |
+| `scene.restart()` reaproveita a instância e o `RunDirector` | `TestScene.ts:79,397` | vistas apontando para objetos destruídos | `mountUi` recria as vistas a cada `create` (o save é lido uma vez por página); R no `record-save` e smoke `world-restart` |
 | O `Hit` da técnica não diz a origem | `game/tech/shared.ts:33`, `TechRunner.ts:60-76` | dano de técnica sem fonte | contexto por técnica no `TechRunner`; nenhum `tech/*.ts` muda |
 | Finalizador do chefe e Kokusen no chefe não passam por `receiveHit` | `combat.ts:250-273`, `tech/divergent.ts:238-239` | dano fora do registro | `addDamage('golpe', damage)` no finalizador; o Kokusen já chama `onTechHit` |
 | `Hud.ts` na lista de exceções | `game/Hud.ts` | crescer o arquivo | marcador em classe própria; o banner usa o `hud.banner` que existe |

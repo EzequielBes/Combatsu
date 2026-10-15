@@ -10,6 +10,7 @@ import { ECONOMY, ELIXIR, RUN } from '../../data/tuning';
 import { isDebug } from '../../game/debug';
 import { CAMERA_FEEL } from '../../data/feel';
 import { debugParam, debugIntParam, isDroppedTool } from './params';
+import { RecordDirector } from './recordDirector';
 import type { TestScene } from '../TestScene';
 
 /** Duração (ms) do banner do upgrade grátis do chefe: o fim da faixa "Chefe derrotado!", sem atrasar "Rodada N concluída" (BFX-10). */
@@ -17,7 +18,12 @@ export const BOSS_UPGRADE_BANNER_MS = 800;
 
 /** Diretor da run e das rodadas: comandos da `Run`, nova run, banners, maestria e overrides de debug. */
 export class RunDirector {
-  constructor(readonly s: TestScene) {}
+  /** Recorde da sessão: carga do save, marcador `Recorde: rN` e painel de fim de run (REC-*, RMK-*, END-*). */
+  readonly record: RecordDirector;
+
+  constructor(readonly s: TestScene) {
+    this.record = new RecordDirector(s);
+  }
 
   /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
   bossDefeatedPending = false;

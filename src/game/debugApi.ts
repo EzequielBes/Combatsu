@@ -12,6 +12,7 @@ import type { VowEffects } from '../core/vows';
 import type { PropState } from '../core/props';
 import type { RunState } from '../core/run';
 import type { TechId } from '../data/techniques';
+import type { RecordSnapshot } from './recordSnapshot';
 
 /** Maestria do slot (MST-08): pontos atuais e limiar do nível atual (`null` no Nv3, que não acumula). */
 export interface TechMasteryView {
@@ -302,6 +303,8 @@ export interface GameSnapshot {
     /** Cartas visíveis no painel de votos (0 fechado). */
     panelCards: number;
   };
+  /** Recorde da sessão, marcador, painel de fim de run e dano por fonte (REC-10, RMK-09, END-15). */
+  record: RecordSnapshot;
   /** Textos flutuantes de coleta ("+N") ainda na tela (ECO-30, HEAL-07). */
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
