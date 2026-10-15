@@ -325,15 +325,16 @@ smoke, a linha do `README.md` e o caso nos testes comuns (`techStatsLeva2`, eixo
 #### Cães Divinos (passo 3)
 
 - **Arte** (Opus ou Fable, no mesmo passo, antes do módulo): **`src/game/art/hd/fx/dogsSheet.ts`** (novo, ~120), folha
-  `dogs` (`HdSheet`, quadros de 24×16 texels, 1 texel = 1 px): `run-0..3`, `bite`, `vanish`, silhueta `b`/`k` com
-  olho `W` (DOG-06). O lobo da Totalidade é a mesma folha em escala 1,5. Registrada no `registerHdSheets` e em
+  `dogs` (`HdSheet`, quadros de 32×22 texels, 1 texel = 1 px, cernelha a 15): `run-0..3`, `bite`, `vanish`, silhueta `b`/`k`
+  com borda de cima `u` e olho `W` (DOG-06). Feita em `feat/arte-caes-e-don` (`9d547cc`): o 24×16 ficava pequeno demais
+  ao lado do player. O lobo da Totalidade é a mesma folha em escala 1,5. Registrada no `registerHdSheets` e em
   `TEX.dogs`; prancha em `tools/hd-boards.mjs` antes do commit.
 - **`game/tech/dogs.ts`** (novo, ~120): no `techCast:caes`, `summonDogs(stats, feet, facing)` com `feet` = centro x da
   `hurtRect` e o pé (DOG-01); a cada quadro `pack.update(dt, kitTargets)` até `done`. `bite` → `micro` de `dano +
   bite` com `stunMs = rootMs` (o comum entra em `stunned`, o chefe por `stun(ms, 'tech')`, DOG-02); abate →
   `pack.claimKillRefund()` → `refundCooldown`. `leap`/`gone` → vista. `objects()` → um `{ kind: 'dog' | 'wolf' }` por
   cão vivo (DOG-05); `state()` → `{ dogs: { id, state }[] }`.
-- **`game/techFx/DogsFx.ts`** (novo, ~100): pool de até 5 sprites da folha `dogs`, `run-0..3` a 80 ms, `bite` no
+- **`game/techFx/DogsFx.ts`** (novo, ~100): pool de até 5 sprites da folha `dogs`, `run-0..3` a ~9 / velocidade × 1000 ms (a 80 ms fixos a pata patina a 300–400 px/s), `bite` no
   `latched`, `setFlipX(dir < 0)`, escala 1,5 no lobo, na linha do chão; `arc(dogId, from, to, 150)` no salto;
   `vanish(at)` com o quadro `vanish` por 150 ms no `FxRegistry` (DOG-03, DOG-04). Pool da cena, fora do teto de 40.
 - Smoke **`divine-dogs.smoke.mjs`**: Independent Test da spec (custo 24 com o `costMul` 1, mordida micro sem `hitstun`
@@ -485,7 +486,8 @@ smoke, a linha do `README.md` e o caso nos testes comuns (`techStatsLeva2`, eixo
   boolean }` (patamar 3, golpe forte do moveset, comum derrubado ou chefe derrubado pela Osso Duro Nv 3, uma vez por
   `swingId`; DON-01, DON-05).
 - **`src/game/art/hd/onomatopoeia.ts`** (novo, ~90): folha `onomatopoeia` com `don` (ドン, 32×20 texels, `w` com
-  contorno `k` e sombra `r`) e `crack-0`/`crack-1` (48×6 texels, `k`/`K`), só `PALETTE` (DON-03); prancha em
+  contorno `k` e sombra `r`) e, numa folha separada `ground-crack` (`TEX.groundCrack`), `crack-0`/`crack-1` (48×6 texels, `k`/`K`), só `PALETTE`
+  (DON-03); feitas em `feat/arte-caes-e-don` (`0e9e415`); prancha em
   `tools/hd-boards.mjs` (Opus ou Fable).
 - **`game/DonFx.ts`** (novo, ~60): `play(hitPoint, groundY)`: rachadura na linha do chão sob o alvo por 1500 ms (alfa
   cai nos últimos 300, DON-02) e o ドン subindo 12 px em 600 ms apagando (DON-03); os dois por `cursedFx.track` e só

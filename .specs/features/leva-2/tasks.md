@@ -813,7 +813,7 @@ Matilha; Despertares Totalidade Negra e Matilha Faminta.
 
 #### T19: Folha `dogs`
 
-**What**: folha HD `dogs` (`HdSheet`, quadros de 24×16 texels, 1 texel = 1 px): `run-0..3`, `bite`, `vanish`, silhueta
+**What**: folha HD `dogs` (`HdSheet`, quadros de 32×22 texels, 1 texel = 1 px): `run-0..3`, `bite`, `vanish`, silhueta
 `b`/`k` com olho `W`; registrada no `registerHdSheets` e em `TEX.dogs`.
 **Where**: `src/game/art/hd/fx/dogsSheet.ts`
 **Depends on**: None
@@ -824,7 +824,7 @@ Matilha; Despertares Totalidade Negra e Matilha Faminta.
 
 **Done when**:
 
-- [ ] `tests/game/art/dogsSheet.test.ts` (novo): 6 quadros com os nomes, 24×16, só chaves da `PALETTE`
+- [ ] `tests/game/art/dogsSheet.test.ts` (novo): 6 quadros com os nomes, 32×22, só chaves da `PALETTE`
 - [ ] Prancha `tools/hd-boards.mjs` com os 6 quadros e o lobo a 1,5 olhada antes do commit
 - [ ] Gate verde
 
