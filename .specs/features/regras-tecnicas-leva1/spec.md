@@ -176,18 +176,18 @@ do grupo.
 | BOO-10 | P1: Boogie Woogie | Execute | Implementing |
 | BOO-11 | P1: Boogie Woogie | Execute | Implementing |
 | BOO-12 | P1: Boogie Woogie | Execute | Implementing |
-| RES-01 | P1: Ressonância | Execute | Pending |
-| RES-02 | P1: Ressonância | Execute | Pending |
-| RES-03 | P1: Ressonância | Execute | Pending |
-| RES-04 | P1: Ressonância | Execute | Pending |
-| RES-05 | P1: Ressonância | Execute | Pending |
-| RES-06 | P1: Ressonância | Execute | Pending |
-| RES-07 | P1: Ressonância | Execute | Pending |
-| RES-08 | P1: Ressonância | Execute | Pending |
-| RES-09 | P1: Ressonância | Execute | Pending |
-| RES-10 | P1: Ressonância | Execute | Pending |
-| RES-11 | P1: Ressonância | Execute | Pending |
-| RES-12 | P1: Ressonância | Execute | Pending |
+| RES-01 | P1: Ressonância | Execute | Implementing |
+| RES-02 | P1: Ressonância | Execute | Implementing |
+| RES-03 | P1: Ressonância | Execute | Implementing |
+| RES-04 | P1: Ressonância | Execute | Implementing |
+| RES-05 | P1: Ressonância | Execute | Implementing |
+| RES-06 | P1: Ressonância | Execute | Implementing |
+| RES-07 | P1: Ressonância | Execute | Implementing |
+| RES-08 | P1: Ressonância | Execute | Implementing |
+| RES-09 | P1: Ressonância | Execute | Implementing |
+| RES-10 | P1: Ressonância | Execute | Implementing |
+| RES-11 | P1: Ressonância | Execute | Implementing |
+| RES-12 | P1: Ressonância | Execute | Implementing |
 | FAL-01 | P1: Fala Amaldiçoada | Execute | Pending |
 | FAL-02 | P1: Fala Amaldiçoada | Execute | Pending |
 | FAL-03 | P1: Fala Amaldiçoada | Execute | Pending |
