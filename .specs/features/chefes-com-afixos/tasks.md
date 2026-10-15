@@ -319,14 +319,14 @@ inteiro), `parseFinger` e `applyOverrides`; `BossLineups.lineupFor(rng, round, o
 `glyphKeys(spec)` e `outlineKeyAt(affixes, ms)`.
 **Where**: `src/core/bossAffix.ts`
 **Depends on**: T10
-**Reuses**: `BOSS.archetypes` (nome inteiro), `BOSS_AFFIXES`
+**Reuses**: `BOSS.archetypes` (nome inteiro; ganha aqui o `shortName` do aviso), `BOSS_AFFIXES`
 **Requirement**: BRD-01, BRD-02, BRD-03, BRD-04
 
 **Done when**:
 
-- [ ] Testes: "Tecelã · Adaptativa · Portadora de Dedo" e forma masculina do Oni; sem afixo = só o nome; aviso com nome
+- [x] Testes: "Tecelã · Adaptativa · Portadora de Dedo" e forma masculina do Oni; sem afixo = só o nome; aviso com nome
       curto; glifos na ordem da escalação mais o `R` do Portador; contorno nenhum, um, e alternando em 599/600/1200 ms
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
@@ -404,7 +404,7 @@ próxima rodada é de chefe; some no `roundStart` e no `startRun`. Ligado pelo `
 
 ### T15: Ciclos por arquétipo e tuning derivada
 
-**What**: `BOSS.archetypes.oni/tecela` ganham `shortName` e `cycles`; `BOSS` ganha `doubleCharge`, `tripleLeap` e
+**What**: `BOSS.archetypes.oni/tecela` ganham `cycles` (o `shortName` já entrou na T11); `BOSS` ganha `doubleCharge`, `tripleLeap` e
 `threadRain`; `core/bossAffix.ts` ganha `cyclesFor(archetype, affixes)` (Sangue põe `beam` depois do 1º ataque de cada
 fase) e `bossTuningFor(spec)` (`ai` com ciclos e números; `brain` = `BOSS`).
 **Where**: `src/core/bossAffix.ts`
@@ -416,7 +416,7 @@ fase) e `bossTuningFor(spec)` (`ai` com ciclos e números; `brain` = `BOSS`).
 
 - [ ] Testes: fase 1 `charge, leap` nos dois; fases 2 e 3 do Oni e da Tecelã como na spec; com Sangue, `beam` na 2ª
       posição de cada fase; `bossTuningFor` repassa os ciclos e os números da tuning; `tests/data/tuning.test.ts`
-      atualizado para `shortName`/`cycles`
+      atualizado para `cycles`
 - [ ] Gate verde
 
 **Tests**: unit

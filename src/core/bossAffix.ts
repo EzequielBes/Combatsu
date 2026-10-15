@@ -6,8 +6,17 @@
  * de afixo do tier e 1 `next()` do Portador (inclusive antes da r10, comparado com chance 0). Assim a rodada seguinte
  * não depende do que saiu nesta. Os overrides de debug (BLN-09/10) entram depois do sorteio, sobre uma cópia.
  */
-import { AFFIX_RULES, BOSS_AFFIX, BOSS_AFFIX_IDS, type AffixRules, type BossAffixId } from '../data/bossAffixes';
-import type { BossArchetype } from './bossTier';
+import {
+  AFFIX_RULES,
+  BOSS_AFFIX,
+  BOSS_AFFIX_IDS,
+  BOSS_AFFIXES,
+  type AffixRules,
+  type BossAffixId,
+  type GenderedName,
+} from '../data/bossAffixes';
+import { BOSS } from '../data/tuning';
+import type { BossArchetype, BossSpec } from './bossTier';
 import { tierFor } from './bossTier';
 import type { Rng } from './rng';
 
@@ -141,4 +150,52 @@ export class BossLineups {
     }
     return applyOverrides(lineup, overrides);
   }
+}
+
+/** Forma do nome que concorda com o arquétipo: o Oni é masculino, a Tecelã é feminina. */
+function gendered(name: GenderedName, archetype: BossArchetype): string {
+  return archetype === 'tecela' ? name.f : name.m;
+}
+
+/** Nome do afixo na forma do arquétipo ("Adaptativo" no Oni, "Adaptativa" na Tecelã). */
+export function affixName(id: BossAffixId, archetype: BossArchetype): string {
+  return gendered(BOSS_AFFIXES[id].name, archetype);
+}
+
+/** Nome, afixos na ordem da escalação e o Portador(a) de Dedo, separados por ` · `. */
+function joinLabel(head: string, lineup: Pick<BossLineup, 'archetype' | 'affixes' | 'finger'>): string {
+  const parts = [head, ...lineup.affixes.map((id) => affixName(id, lineup.archetype))];
+  if (lineup.finger) parts.push(gendered(BOSS_AFFIX.finger.name, lineup.archetype));
+  return parts.join(' · ');
+}
+
+/** Rótulo da barra do chefe (BRD-01): "Tecelã de Maldições · Adaptativa · Portadora de Dedo"; sem afixo, só o nome. */
+export function bossBarLabel(spec: Pick<BossSpec, 'name' | 'archetype' | 'affixes' | 'finger'>): string {
+  return joinLabel(spec.name, spec);
+}
+
+/** Aviso da loja antes da rodada de chefe (BRD-04): "Próximo: Oni · Ígneo", com o nome curto do arquétipo. */
+export function announceText(lineup: BossLineup): string {
+  return `Próximo: ${joinLabel(BOSS.archetypes[lineup.archetype].shortName, lineup)}`;
+}
+
+/** Cores (chaves da `PALETTE`) dos glifos ao lado da barra (BRD-02): um por afixo, na ordem, e o do Portador. */
+export function glyphKeys(spec: Pick<BossSpec, 'affixes' | 'finger'>): string[] {
+  const keys = spec.affixes.map((id) => BOSS_AFFIXES[id].glyph);
+  if (spec.finger) keys.push(BOSS_AFFIX.finger.glyph);
+  return keys;
+}
+
+/**
+ * Cor do contorno de 1 px no instante `ms` (BRD-03): `null` sem afixo de contorno (Ígneo, Invocador), a cor dele
+ * com um só, e com os dois alterna na ordem da escalação a cada `outlineSwapMs` (599 ms o 1º, 600 ms o 2º).
+ */
+export function outlineKeyAt(
+  affixes: readonly BossAffixId[],
+  ms: number,
+  swapMs: number = BOSS_AFFIX.outlineSwapMs,
+): string | null {
+  const keys = affixes.map((id) => BOSS_AFFIXES[id].outline).filter((key): key is string => key !== null);
+  if (keys.length === 0) return null;
+  return keys[Math.floor(Math.max(ms, 0) / swapMs) % keys.length];
 }

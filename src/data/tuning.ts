@@ -373,10 +373,13 @@ export const BOSS = {
   /** Escala por tier (BTIER-01, BTIER-02): hp = round(hpBase * min(1 + hpPerTier*(tier-1), hpCap)); dano dos
    * ataques = base * min(1 + damagePerTier*(tier-1), damageCap), arredondado. */
   tier: { hpBase: 400, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 },
-  /** Arquétipos (BTIER-04, BTIER-05, BTIER-07): a Tecelã multiplica a velocidade do projétil e troca o volleyCount. */
+  /**
+   * Arquétipos (BTIER-04, BTIER-05, BTIER-07): a Tecelã multiplica a velocidade do projétil e troca o volleyCount.
+   * `name` vai na barra do chefe; `shortName`, no aviso da loja (BRD-01, BRD-04).
+   */
   archetypes: {
-    oni: { name: 'Oni do Portão' },
-    tecela: { name: 'Tecelã de Maldições', volleyCount: 5, projectileSpeedMult: 1.25 },
+    oni: { name: 'Oni do Portão', shortName: 'Oni' },
+    tecela: { name: 'Tecelã de Maldições', shortName: 'Tecelã', volleyCount: 5, projectileSpeedMult: 1.25 },
   },
   /** Cura do player ao derrotar o chefe, fração de maxHp com teto (BWIN-01). */
   healFraction: 0.3,

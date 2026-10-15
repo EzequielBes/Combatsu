@@ -101,7 +101,7 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 
 ### `data/tuning.ts` (`BOSS`, linhas 330-379)
 
-- `archetypes.oni`/`tecela` ganham `shortName` ("Oni", "Tecelã") e `cycles` (CYC-02..04).
+- `archetypes.oni`/`tecela` ganham `shortName` ("Oni", "Tecelã", na T11, para o aviso da loja) e `cycles` (CYC-02..04).
 - `cycles` no topo = os ciclos de hoje: base do `new BossAI()` sem argumento, para `tests/core/bossAI.test.ts`
   (365 linhas, com cópia local da tabela) seguir intacto. O jogo sempre passa a tuning derivada.
 - `doubleCharge { rewindupMs: 250 }`, `tripleLeap { hops: 3, gapMs: 200 }`, `threadRain { windupMs: 600,

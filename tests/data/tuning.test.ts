@@ -83,10 +83,11 @@ describe('tuning do chefe (T1, valores das Assumptions da spec boss-a-cada-5)', 
     expect(BOSS.tier).toEqual({ hpBase: 400, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 });
   });
 
-  it('archetypes: oni só tem nome; tecela tem nome, volleyCount 5 e projectileSpeedMult 1.25 (BTIER-04, BTIER-05, BTIER-07)', () => {
-    expect(BOSS.archetypes.oni).toEqual({ name: 'Oni do Portão' });
+  it('archetypes: oni só tem nomes; tecela tem nomes, volleyCount 5 e projectileSpeedMult 1.25 (BTIER-04, BTIER-05, BTIER-07, BRD-04)', () => {
+    expect(BOSS.archetypes.oni).toEqual({ name: 'Oni do Portão', shortName: 'Oni' });
     expect(BOSS.archetypes.tecela).toEqual({
       name: 'Tecelã de Maldições',
+      shortName: 'Tecelã',
       volleyCount: 5,
       projectileSpeedMult: 1.25,
     });
