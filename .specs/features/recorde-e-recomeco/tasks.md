@@ -378,9 +378,9 @@ escondidos) e `snapshot()`; tipo `RecordSnapshot` em `game/recordSnapshot.ts`. L
 
 **Done when**:
 
-- [ ] `record-hud.smoke.mjs` (novo, `?debug&hd=1&area=modular&record=1&nosave=1&spawn=...`): r1 mostra `Recorde: r1` em (948, 44) sem `highlight`; limpar a r1 → banner `Rodada 2 · Novo recorde!`, marcador `Recorde: r2` com `highlight`, `passed: true`; r3 → banner `Rodada 3`; `nosave=1` sem recorde → marcador escondido
-- [ ] RST-05: depois de morrer com recorde novo e apertar J, o marcador mostra o recorde gravado
-- [ ] Smokes `run-loop`, `hud` verdes; gate verde
+- [x] `record-hud.smoke.mjs` (novo, `?debug&hd=1&area=modular&seed=1&noshop=1&record=1&nosave=1`): r1 mostra `Recorde: r1` sem `highlight` (a posição (948, 44) fica no `tests/game/recordViews.test.ts`, o snapshot não a expõe); limpar a r1 → banner `Rodada 2 · Novo recorde!`, marcador `Recorde: r2` com `highlight`, `passed: true`; r3 → banner `Rodada 3`; `nosave=1` sem recorde → marcador escondido
+- [x] RST-05: depois de morrer com recorde novo e apertar J, o marcador mostra o recorde gravado
+- [x] Smokes `run-loop`, `hud` verdes; gate verde
 
 **Tests**: smoke
 **Gate**: full

@@ -42,13 +42,22 @@ export class RecordDirector {
     this.panel = new RunSummaryPanel(this.s, layer);
   }
 
-  /** Comandos da `Run`: run nova zera o registro e esconde o painel; a morte grava o recorde e abre o painel. */
+  /**
+   * Comandos da `Run`: run nova zera o registro e esconde o painel; começo de rodada mostra o marcador (RMK-01/03/07,
+   * RST-05: depois de uma morte já com o recorde dela); a morte grava o recorde e abre o painel.
+   */
   onCommand(cmd: RunCommand): void {
     if (cmd.type === 'startRun') {
       this.ledger.reset();
       this.book.startRun();
       this.panel.hide();
-    } else if (cmd.type === 'gameOver') this.onDeath(cmd.round, cmd.kills);
+    } else if (cmd.type === 'roundStart') this.marker.set(this.book.marker(cmd.round, this.s.run.state));
+    else if (cmd.type === 'gameOver') this.onDeath(cmd.round, cmd.kills);
+  }
+
+  /** Texto do banner de começo de rodada (RMK-05/06): `Rodada N · Novo recorde!` uma vez por run, senão `Rodada N`. */
+  roundBanner(round: number): string {
+    return this.book.roundBanner(round);
   }
 
   /**

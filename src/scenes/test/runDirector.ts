@@ -71,7 +71,7 @@ export class RunDirector {
       case 'roundStart':
         // Volta da tela de título ou de game over: some com o texto central da rodada anterior.
         this.s.hud.setCenter(null);
-        this.s.hud.banner(`Rodada ${cmd.round}`, RUN.bannerMs);
+        this.s.hud.banner(this.record.roundBanner(cmd.round), RUN.bannerMs);
         // ARS-09/10: a arma vinculada (ou a ferramenta comprada) entra na mão com a área já montada.
         this.s.arsenal.onRoundStart();
         break;
