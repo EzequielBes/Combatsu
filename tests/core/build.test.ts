@@ -3,7 +3,8 @@ import { buildOfEntry, buildPoints, buildWeight, dominantBuild, Perks, strikeMul
 import { Loadout } from '../../src/core/loadout';
 import { Modifiers } from '../../src/core/modifiers';
 import type { Rng } from '../../src/core/rng';
-import { eligible, Shop, type BuyContext } from '../../src/core/shop';
+import { Shop, type BuyContext } from '../../src/core/shop';
+import { eligible } from '../../src/core/shopEligibility';
 import { Wallet } from '../../src/core/wallet';
 import { PERK, PERK_IDS } from '../../src/data/perks';
 import { FULL_SHOP_CATALOG, GAME_SHOP_CATALOG, PERK_SHOP_ENTRIES, type ModifierId } from '../../src/data/shop';

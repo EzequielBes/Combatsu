@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { drawOffers, eligible, previewText, Shop, type BuyContext } from '../../src/core/shop';
+import { drawOffers, previewText, Shop, type BuyContext } from '../../src/core/shop';
+import { eligible } from '../../src/core/shopEligibility';
 import { Modifiers } from '../../src/core/modifiers';
 import { Rng } from '../../src/core/rng';
 import { Wallet } from '../../src/core/wallet';

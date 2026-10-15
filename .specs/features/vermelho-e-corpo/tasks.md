@@ -219,9 +219,9 @@ de lá e não reexporta; os testes que importam `eligible` só trocam o caminho.
 
 **Done when**:
 
-- [ ] `git diff` dos testes (`shop`, `techShop`, `evolutionShop`, `arsenal`, `build`) só muda linhas de `import` (SHX-01.2)
-- [ ] Smokes `shop`, `shop-progress`, `run-loop` e `evolution` verdes e iguais
-- [ ] Gate verde; contagem de testes igual à base
+- [x] `git diff` dos testes (`shop`, `techShop`, `evolutionShop`, `arsenal`, `build`) só muda linhas de `import` (SHX-01.2)
+- [x] Smokes `shop`, `shop-progress`, `run-loop` e `evolution` verdes e iguais
+- [x] Gate verde; contagem de testes igual à base
 
 **Tests**: unit (os existentes, só com o caminho do import) + smoke
 **Gate**: full
