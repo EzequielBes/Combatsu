@@ -706,16 +706,20 @@ na tabela de parâmetros do `README.md` (com o aviso de que `vida:N` sobe o teto
 **What**: cenário 7 do `power.smoke.mjs`: 8 inimigos, Azul, Vermelho e soco ao mesmo tempo; se `fx.live` passar de
 40, o chip deixa de soltar os pedacinhos (`burst`) e fica só com o lampejo de tamanho 6 (mitigação do design, em
 `game/fx.ts`, na mesma tarefa).
-**Where**: `scripts/smoke/power.smoke.mjs`
+**Where**: `scripts/smoke/power-load.mjs` (chamado pelo `power.smoke.mjs`), `src/core/hitBand.ts` (`usedMs`),
+`src/scenes/test/snapshot.ts` e `src/game/debugApi.ts` (`hitstop.microMs`)
 **Depends on**: T25
 **Reuses**: cenários anteriores do `power.smoke.mjs`
 **Requirement**: POW-14
 
 **Done when**:
 
-- [ ] `fx.live` ≤ 40, `damageNumbers.live` ≤ 12 e hitstop dos micro somado ≤ 60 ms em qualquer janela de 1000 ms
-- [ ] `power.smoke.mjs` inteiro verde e os smokes do passo 6 do design (`boot`, `no-debug`) verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `fx.live` ≤ 40, `damageNumbers.live` ≤ 12 e hitstop dos micro somado ≤ 60 ms em qualquer janela de 1000 ms
+      (medido: `fx.live` 14, números 12, micro 0; o chip manteve o `burst`. O micro é lido por `hitstop.microMs`, campo
+      novo do snapshot via `MicroBudget.usedMs`; Azul, soco e Vermelho cabem numa janela de 1000 ms, porque a
+      conjuração trava o player)
+- [x] `power.smoke.mjs` inteiro verde e os smokes do passo 6 do design (`boot`, `no-debug`) verdes
+- [x] Gate verde; contagem de testes sem perda (3062 em 155 arquivos: +1 de `usedMs`)
 
 **Tests**: smoke
 **Gate**: full

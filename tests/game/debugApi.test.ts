@@ -163,7 +163,7 @@ describe('installDebugApi', () => {
       },
       combo: { hits: 0, grade: null },
       timeScale: 1,
-      hitstop: { frozen: false, remainingMs: 0 },
+      hitstop: { frozen: false, remainingMs: 0, microMs: 0 },
       wallet: { fragments: 4 },
       shop: { open: false, offers: [], rerollCost: 0, selected: 0, panel: null },
       modifiers: { vida: 0, forca: 0, agilidade: 0, ima: 0, sorte: 0 },

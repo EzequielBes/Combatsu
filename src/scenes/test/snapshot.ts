@@ -152,7 +152,11 @@ export class DebugSnapshot {
       },
       combo: { hits: this.s.comboCounter.hits, grade: this.s.comboCounter.grade },
       timeScale: this.s.effects.slowMo.timeScale,
-      hitstop: { frozen: this.s.effects.hitstop.frozen, remainingMs: this.s.effects.hitstop.remaining },
+      hitstop: {
+        frozen: this.s.effects.hitstop.frozen,
+        remainingMs: this.s.effects.hitstop.remaining,
+        microMs: this.s.effects.microBudget.usedMs(this.s.game.loop.time),
+      },
       level: { playerSpawn: { x: this.s.level.player.x, y: this.s.level.player.y - SPAWN_LIFT } },
       area: this.areaSnapshot(),
       wallet: { fragments: this.s.wallet.fragments },

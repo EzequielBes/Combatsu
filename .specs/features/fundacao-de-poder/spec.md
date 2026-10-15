@@ -108,7 +108,7 @@ faixas.
 9. POW-15: WHEN the `EnemyDefense.handle` gets a `chip` event THEN it SHALL emit the debug event `chip:<id>` and SHALL apply no body reaction.
 10. POW-04: The Blue tick SHALL carry `band: 'chip'`, and the Blue implosion SHALL carry no band.
 11. POW-04: WHILE 5 enemies are inside the Blue the hitstop SHALL read 0 on every frame of the ticks, no enemy SHALL enter `hitstun` from a tick, and an enemy that was in `windup` SHALL reach `attack`.
-12. POW-14: WHILE 8 enemies are alive and the Blue, the Red and a strike hit at the same time the live effects SHALL stay at 40 or fewer, the live damage numbers at 12 or fewer, and the summed micro hitstop at 60 ms or less in any 1000 ms window.
+12. POW-14: WHILE 8 enemies are alive and the Blue, the Red and a strike hit within the same 1000 ms window (the cast locks the player, so they cannot start on the same frame) the live effects SHALL stay at 40 or fewer, the live damage numbers at 12 or fewer, and the summed micro hitstop at 60 ms or less in any 1000 ms window.
 
 **Independent Test**: `?debug&hd=1&area=modular&seed=1&tech=azul` com 5 inimigos: o snapshot mostra `hitstop.frozen`
 falso em todo quadro dos tiques, eventos `chip:<id>`, nenhum inimigo em `hitstun` e um inimigo chegando a `attack`.

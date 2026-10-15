@@ -396,7 +396,7 @@ argumentos novos (sem ramo: `forced` vai para dentro do `impactTier`); o `debugS
 | `debugSnapshot` com 150 linhas (exceção de `max-lines-per-function`) | `src/scenes/test/snapshot.ts:56` | Três campos novos aumentariam a exceção | Uma linha `...this.s.stats.snapshotFields()`; os campos crescem fora da função |
 | Fields da cena não reiniciam no `scene.restart()` | `TestScene.ts:73-95` | `StatsDirector` e aura sobrevivem ao `R` com referência a objetos destruídos | `bindPlayer` no `createPlayer` recria a aura; o `DamageNumbers` nasce de novo no `addHud` a cada `create` |
 | Relógio do teto do micro | `src/scenes/test/effects.ts` | O hitstop congela o relógio de jogo (`clockMs`, `TestScene.ts:415`), a janela nunca andaria | `MicroBudget` recebe `this.s.game.loop.time` (relógio real do laço) |
-| `Fx.spark` não entra em nenhum teto | `src/game/fx.ts:112` | 8 inimigos no Azul soltam até 32 faíscas de chip por segundo (150 ms de vida cada, `STAR_MS`) | POW-14 mede `fx.live` e `fx.trails`; se o smoke passar de 40, o chip deixa de soltar os pedacinhos (`burst`) e fica só com o lampejo de tamanho 6 |
+| `Fx.spark` não entra em nenhum teto | `src/game/fx.ts:112` | 8 inimigos no Azul soltam até 32 faíscas de chip por segundo (150 ms de vida cada, `STAR_MS`) | POW-14 mede `fx.live` e `fx.trails`; se o smoke passar de 40, o chip deixa de soltar os pedacinhos (`burst`) e fica só com o lampejo de tamanho 6. Na T26 o `fx.live` ficou em 14: a faísca não entra no registro, e o `burst` ficou |
 | `core/cameraKick.ts` importa `game/art/hd/screen` (o `core` não deveria conhecer `game`) | `src/core/cameraKick.ts:1` | Dívida de camada antiga | Fora do escopo; o `px` novo não aumenta a dependência |
 | Equivalência do POW-01 por ponto flutuante | `src/core/statSheet.ts` | Mudar a ordem dos fatores troca o último bit e o `Math.round` pode cair do outro lado | Mesma ordem de `TestScene.ts:516` (build × arsenal × voto); o teste compara com `toBe` contra a fórmula literal de hoje |
 | `?mods=vida:N` sobe o teto sem curar | `statsDirector.reset()` | A run começa com vida abaixo do teto | Só debug; o README avisa. A vida cheia continua vindo do `resetForRun` |
@@ -457,8 +457,13 @@ banda não mexe nisso) e AD-023. O AD-014 (HP e dano fixos) continua valendo: a 
 6. POW-11 (em `scripts/smoke/power-prop.mjs`, chamado pelo `power.smoke`, para ele caber no teto de linhas): com
    `arsenal=bastao`, o golpe dispara `impact:heavy` e nenhuma faísca roxa (T23); com Manoplas Nv 3 junto, o dano sobe
    ×1,3; com o Passo sombrio armado (esquiva perfeita rumo ao inimigo), o golpe do bastão não o gasta (T21).
-7. POW-14: 8 inimigos, Azul, Vermelho e soco juntos: `fx.live` ≤ 40, `damageNumbers.live` ≤ 12, hitstop dos micro
-   somado ≤ 60 ms em qualquer janela de 1000 ms.
+7. POW-14 (em `scripts/smoke/power-load.mjs`): 8 inimigos (`round=2&maxAlive=8`), Azul, Vermelho e soco na mesma
+   janela de 1000 ms: `fx.live` ≤ 40, `damageNumbers.live` ≤ 12 e `hitstop.microMs` ≤ 60 em todo quadro. A conjuração
+   trava o player, então os três não começam no mesmo quadro: Azul, corrida e soco no grupo preso, recuo de 20 quadros
+   (golpe em `sign` cancela, CAST-07) e Vermelho no grupo. `hitstop.microMs` é campo novo do snapshot
+   (`MicroBudget.usedMs` no relógio real); lê 0 até a F30 trazer o primeiro emissor `micro`. Medido na T26: `fx.live`
+   no máximo 14 e `damageNumbers.live` 12 (o teto segura), então a mitigação do chip (só o lampejo, sem `burst`) não
+   entrou.
 
 **Smokes por passo** (`npm run smoke -- <trecho>`):
 

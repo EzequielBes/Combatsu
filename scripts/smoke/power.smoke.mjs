@@ -1,7 +1,8 @@
 // Fundação de poder (POW-*) no mundo modular em HD, com `?debug&hd=1&area=modular&seed=1`. Cada parte abre a sua
-// própria página; a parte 7 do design entra com a tarefa que a liga. A parte 1 (o `?mods=`) mora em `power-mods.mjs` e a
-// parte 6 (o objeto) em `power-prop.mjs`.
+// própria página. A parte 1 (o `?mods=`) mora em `power-mods.mjs`, a parte 6 (o objeto) em `power-prop.mjs` e a parte 7
+// (os tetos sob a carga inteira) em `power-load.mjs`.
 import { makeKit } from './fight-kit.mjs';
+import { fullLoadCaps } from './power-load.mjs';
 import { boughtModifiers } from './power-mods.mjs';
 import { propDamageScales } from './power-prop.mjs';
 
@@ -441,4 +442,5 @@ export default async function (ctx) {
   await runResetClearsNumbers(ctx);
   await areaChangeClearsNumbers(ctx);
   await blueTicksAsChip(ctx);
+  await fullLoadCaps(ctx);
 }

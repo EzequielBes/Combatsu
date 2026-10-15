@@ -31,6 +31,14 @@ export class MicroBudget {
     return ms;
   }
 
+  /**
+   * Hitstop dos micro concedido na janela que termina em `realNowMs` (o `hitstop.microMs` do snapshot, POW-14): conta
+   * quem foi concedido há menos de `windowMs`, pela mesma regra do `grant`. Nunca passa de `capMs`.
+   */
+  usedMs(realNowMs: number): number {
+    return this.granted.filter((g) => realNowMs - g.atMs < this.windowMs).reduce((sum, g) => sum + g.ms, 0);
+  }
+
   /** Esvazia a janela (reinício da cena). */
   reset(): void {
     this.granted = [];

@@ -71,6 +71,22 @@ describe('MicroBudget (POW-03, POW-14)', () => {
     expect(b.grant('heavy', 1)).toBe(20);
   });
 
+  it('usedMs soma o concedido na janela: em 999 ms o primeiro conta, em 1000 já saiu; recusado não entra', () => {
+    const b = new MicroBudget();
+    expect(b.usedMs(0)).toBe(0);
+    b.grant('heavy', 0);
+    b.grant('light', 10);
+    b.grant('heavy', 20);
+    expect(b.grant('heavy', 30)).toBe(0); // seria 75 ms
+    expect(b.usedMs(30)).toBe(55);
+    expect(b.usedMs(999)).toBe(55);
+    expect(b.usedMs(1000)).toBe(35);
+    expect(b.usedMs(1010)).toBe(20);
+    expect(b.usedMs(1020)).toBe(0);
+    b.reset();
+    expect(b.usedMs(30)).toBe(0);
+  });
+
   it('usa o teto e a janela do HIT_BAND_FEEL', () => {
     expect(HIT_BAND_FEEL.micro.capMs).toBe(60);
     expect(HIT_BAND_FEEL.micro.windowMs).toBe(1000);

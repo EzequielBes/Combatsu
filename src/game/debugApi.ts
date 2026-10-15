@@ -258,8 +258,11 @@ export interface GameSnapshot {
   combo: { hits: number; grade: 'D' | 'C' | 'B' | 'A' | 'S' | null };
   /** Escala de tempo da cena: 1, ou 0.3 na câmera lenta da esquiva perfeita (DOD-07). */
   timeScale: number;
-  /** Estado do hitstop (BWIN-02). */
-  hitstop: { frozen: boolean; remainingMs: number };
+  /**
+   * Estado do hitstop (BWIN-02). `microMs`: hitstop dos acertos micro concedido nos últimos 1000 ms de relógio real, o
+   * teto de 60 ms do POW-14.
+   */
+  hitstop: { frozen: boolean; remainingMs: number; microMs: number };
   /** Carteira de fragmentos da run (ECO-19). */
   wallet: { fragments: number };
   /** Um item por pickup vivo (fragmento ou gota de cura), lido do objeto vivo (ECO-19). */
