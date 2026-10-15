@@ -4,7 +4,7 @@ import { impactSpikes, impactTier } from '../../src/core/impactTier';
 import { IMPACT_FEEL } from '../../src/data/feel';
 
 const NONE = { brokePosture: false };
-const hit = (over: Partial<Hit> = {}): Pick<Hit, 'strength' | 'counter' | 'knockdown'> => ({
+const hit = (over: Partial<Hit> = {}): Pick<Hit, 'strength' | 'counter' | 'knockdown' | 'decisive'> => ({
   strength: 'light',
   ...over,
 });
@@ -74,5 +74,23 @@ describe('impactSpikes', () => {
   it('os ângulos cobrem a volta toda (não ficam todos do mesmo lado)', () => {
     const angles = impactSpikes(5, 6).map((s) => s.angle);
     expect(Math.max(...angles) - Math.min(...angles)).toBeGreaterThan(Math.PI);
+  });
+});
+
+describe('impactTier com golpe marcado como decisivo (CRP-08)', () => {
+  it('decisive: true dá decisive num golpe leve', () => {
+    expect(impactTier(hit({ strength: 'light', decisive: true }), NONE)).toBe('decisive');
+  });
+  it('decisive: true dá decisive num golpe forte sem derrubada', () => {
+    expect(impactTier(hit({ strength: 'heavy', decisive: true }), NONE)).toBe('decisive');
+  });
+  it('forced vence o decisive', () => {
+    expect(impactTier(hit({ decisive: true }), { brokePosture: false, forced: 'heavy' })).toBe('heavy');
+    expect(impactTier(hit({ decisive: true }), { brokePosture: false, forced: 'light' })).toBe('light');
+  });
+  it('sem a marca (ausente ou false) fica igual a hoje', () => {
+    expect(impactTier(hit({ strength: 'light' }), NONE)).toBe('light');
+    expect(impactTier(hit({ strength: 'light', decisive: false }), NONE)).toBe('light');
+    expect(impactTier(hit({ strength: 'heavy', decisive: false }), NONE)).toBe('heavy');
   });
 });

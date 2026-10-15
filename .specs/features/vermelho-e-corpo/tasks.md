@@ -1228,9 +1228,9 @@ condição da `:17` ganha o termo), abaixo do `forced` da F29.
 
 **Done when**:
 
-- [ ] `tests/core/impactTier.test.ts`: `decisive: true` dá `decisive` num golpe leve; `forced` vence o `decisive`; sem a
+- [x] `tests/core/impactTier.test.ts`: `decisive: true` dá `decisive` num golpe leve; `forced` vence o `decisive`; sem a
       marca igual a hoje
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
