@@ -232,7 +232,7 @@ de lá e não reexporta; os testes que importam `eligible` só trocam o caminho.
 #### T2: Prévia da carta em arquivo próprio
 
 **What**: mover `previewText`, `techniquePreview`, `factorText` e `oneDecimalComma` (`shop.ts:108-164`) para
-`src/core/shopPreview.ts`; `shop.ts` fica com `Shop`, `drawOffers`, custo e vistas (~205 linhas efetivas).
+`src/core/shopPreview.ts`; `shop.ts` fica com `Shop`, `drawOffers`, custo e vistas (211 linhas efetivas).
 **Where**: `src/core/shopPreview.ts`
 **Depends on**: T1
 **Reuses**: corpo de hoje
@@ -240,9 +240,9 @@ de lá e não reexporta; os testes que importam `eligible` só trocam o caminho.
 
 **Done when**:
 
-- [ ] `src/core/shop.ts` sem `eligible` nem `previewText` definidos ou reexportados; abaixo de 220 linhas efetivas (SHX-01.1)
-- [ ] Testes só com o caminho do import mudado; smokes `shop`, `shop-progress`, `run-loop` e `evolution` verdes e iguais
-- [ ] Gate verde; contagem de testes igual
+- [x] `src/core/shop.ts` sem `eligible` nem `previewText` definidos ou reexportados; abaixo de 220 linhas efetivas (SHX-01.1)
+- [x] Testes só com o caminho do import mudado; smokes `shop`, `shop-progress`, `run-loop` e `evolution` verdes e iguais
+- [x] Gate verde; contagem de testes igual
 
 **Tests**: unit (os existentes) + smoke
 **Gate**: full

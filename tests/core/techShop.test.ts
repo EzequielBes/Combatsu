@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { previewText, Shop, type BuyContext } from '../../src/core/shop';
+import { Shop, type BuyContext } from '../../src/core/shop';
+import { previewText } from '../../src/core/shopPreview';
 import { eligible } from '../../src/core/shopEligibility';
 import { Modifiers } from '../../src/core/modifiers';
 import { Loadout } from '../../src/core/loadout';
