@@ -22,15 +22,14 @@ const playerAtRest = (p: Player): boolean =>
 /**
  * Brasas (patamar 2) e chama no punho (patamar 3) na mão parada (POW-10): uma `CursedFlame` vermelha no punho da
  * frente, no ponto de desenho do corpo mais o `POWER_FEEL.handOffset` do lado para onde o player olha. Fora do repouso
- * a chama para de nascer e as línguas que restam apagam sozinhas; vazia, ela é destruída.
+ * a chama some no mesmo quadro (POW-10.14): as línguas que restassem ficariam no ponto da mão parada, que na corrida ou
+ * no golpe cai sobre o rosto.
  */
 export class PowerAuraDirector {
   private player: Player | null = null;
   private flame: CursedFlame | null = null;
   private lit: PowerAura = 'off';
   private seed = 1;
-  /** Ponto de desenho do corpo na última língua nascida: ao apagar, as que restam andam junto com o corpo. */
-  private litAt = { x: 0, y: 0 };
 
   constructor(private readonly s: TestScene) {}
 
@@ -54,34 +53,19 @@ export class PowerAuraDirector {
     });
   }
 
-  /** A cada quadro, com a força de agora: acende no repouso com aura no patamar, senão deixa a chama apagar. */
+  /** A cada quadro, com a força de agora: acende no repouso com aura no patamar, senão tira a chama. */
   update(deltaMs: number, look: PowerLook): void {
     const p = this.player;
     const lit = p && look.aura !== 'off' && playerAtRest(p) ? look.aura : 'off';
     this.lit = lit;
     if (!p || lit === 'off') {
-      this.fade(deltaMs);
+      this.drop();
       return;
     }
     const draw = p.renderPos;
-    // A chama que apagava andou com o corpo (o container saiu do lugar): as línguas novas nascem numa chama nova.
-    if (this.flame && (this.flame.root.x !== 0 || this.flame.root.y !== 0)) this.drop();
     this.flame ??= new CursedFlame(this.s, 'red', AURA_DEPTH, this.seed++);
-    this.litAt = { x: draw.x, y: draw.y };
     const hand = POWER_FEEL.handOffset[p.facing];
     this.flame.tick(deltaMs, { x: draw.x + hand.x, y: draw.y + hand.y }, POWER_FEEL.auraPower[lit]);
-  }
-
-  /**
-   * Sem fonte: as línguas sobem e apagam acompanhando o corpo (sem isso, a corrida que começa deixa a chama boiando
-   * onde a mão estava); a chama vazia sai da cena.
-   */
-  private fade(deltaMs: number): void {
-    if (!this.flame) return;
-    this.flame.tick(deltaMs, null);
-    if (this.flame.empty) return this.drop();
-    const draw = this.player?.renderPos ?? this.litAt;
-    this.flame.root.setPosition(draw.x - this.litAt.x, draw.y - this.litAt.y);
   }
 
   private drop(): void {
