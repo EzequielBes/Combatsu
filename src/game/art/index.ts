@@ -12,6 +12,7 @@ import { sleeperSheet } from './hd/atlas/sleeperSheet';
 import { playerYutaAnimKey, yutaAnims, yutaSheet } from './hd/atlas/yutaSheet';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
 import { HD_WEAPONS } from './hd/weapons';
+import { weaponFxSheets } from './hd/weaponFx';
 import { ENEMY_ANIMS, ENEMY_RAG_VARIANTS, ENEMY_VARIANT_FRAMES } from './sprites/enemy';
 import { FLAME_FRAMES } from './sprites/flame';
 import { KANJI_FRAMES } from './sprites/kanji';
@@ -113,6 +114,8 @@ export function createArt(scene: Phaser.Scene): void {
   for (const [texture, weapon] of Object.entries(HD_WEAPONS)) {
     registerSheet(scene, texture, parseSheet(texture, weapon.frames, PALETTE_KEYS), 1);
   }
+  // Rastro, impacto e cargas das armas imbuídas (plano de builds, 5.4), a 1 px por texel; ainda sem uso no combate (F36).
+  for (const { key, frames } of weaponFxSheets()) registerSheet(scene, key, parseSheet(key, frames, PALETTE_KEYS), 1);
   registerSheet(scene, TEX.kanji, parseSheet('kanji', KANJI_FRAMES, PALETTE_KEYS));
   // Aura de conjuração (CAST-14): 2 frames de chama por cor (blue-a/b, red-a/b, white-a/b).
   registerSheet(scene, TEX.techAura, parseSheet('tech-aura', AURA_FRAMES, PALETTE_KEYS));
