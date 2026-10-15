@@ -142,6 +142,7 @@ T31
 T32 → T33 → T34 → T35 → T36
 T34 → T37 → T38
 T35 → T38
+T36 → T38
 T37 → T39
 ```
 
@@ -171,7 +172,7 @@ T51 → T52
 T53
 T54
 T55
-T56
+T53 → T56
 ```
 
 ### Phase 10: Passo 3 — `BuildBar` e bandeja no jogo
@@ -969,14 +970,14 @@ tudo (`defense.ts:81-83` já trata `countered` sem dano nem efeito).
 
 **What**: `src/game/TalentStrip.ts` (novo): até 6 ícones a 32×32 px de `x = 14`, 6 px de vão, `y = 164`, 3 pontinhos
 em `y = 200`, `flash(id)` de 250 ms que reinicia (`setTint(PALETTE.w)` com `TintModes.FILL`, como `DodgeFx.ts:152-153`),
-`update(dtMs, levels, overtime)`, `debug()`; `UiSetup.addHud` cria `ui.talentStrip`; `TalentStripSnapshot` em
+`update(dtMs, levels, overtime)` (com `dormant` a 40% de alfa, TAL-19), `debug()`; `UiSetup.addHud` cria `ui.talentStrip`; `TalentStripSnapshot` em
 `buildSnapshot.ts`; `talentStrip` no `GameSnapshot` (+1). `scripts/smoke/talents.smoke.mjs` (novo) com
 `perks=punhoPesado:3,proporcao:2,horaExtra:2,zonaNegra:3&seed=1`: 4 ícones na ordem de compra com os níveis; a faixa
 não cruza o `EnergyHud` (`hud.slots`, `hud.body`) nem as barras do `Hud`.
 **Where**: `src/game/TalentStrip.ts`
 **Depends on**: T32
 **Reuses**: molde de vista na `uiLayer` (`VowPanel`), texturas do T32
-**Requirement**: TSP-01, TSP-02, TSP-03, TSP-06, VGX-03
+**Requirement**: TSP-01, TSP-02, TSP-03, TSP-06, TAL-19, VGX-03
 
 **Done when**:
 
@@ -997,7 +998,8 @@ não cruza o `EnergyHud` (`hud.slots`, `hud.body`) nem as barras do `Hud`.
 **What**: `scenes/test/talentDirector.ts` (novo, campo `talents` do `BuildDirector`): `fire(id)` (evento `talent:<id>`
 e `ui.talentStrip.flash(id)`), `onMeleeHit`, `onDefense`, `onFinisher`, `onKill`, `update(dtMs)` (chama
 `strip.update`), `removeTalent`, `reset`, `snapshot()`; os gatilhos de hoje mudam de dono: Executor cura pelo nível,
-Refluxo dá energia no `parry`/`deflect` pelo nível, Condutor dá energia por golpe pelo nível, todos com `fire`; o
+Refluxo dá energia no `parry`/`deflect` pelo nível, Condutor dá energia por golpe pelo nível; `fire` só nos momentos
+da tabela "Quando pisca" da spec (o Condutor no 3º golpe que acerta, pelo `strikeCountTrigger`); o
 `BuildDirector` repassa, zera no `reset` e o `build.snapshot()` ganha `talents` e `overtime` (`perks` continua a lista
 de ids).
 **Where**: `src/scenes/test/talentDirector.ts`
@@ -1009,7 +1011,8 @@ de ids).
 
 - [ ] `tests/game/debugApi.test.ts`: literal com `build.talents` e `build.overtime`
 - [ ] `build.smoke.mjs`: finalizador cura 12/20/30, parry dá 8/12/18, golpe dá `CE.meleeGain` + 1/2/3, lidos da vida e
-      da energia do jogo vivo; `talent:<id>` no quadro de cada um
+      da energia do jogo vivo; `talent:<id>` no quadro da cura e do parry, e `talent:condutor` só no 3º golpe (o 1º e o 2º
+      não soltam)
 - [ ] `talents.smoke.mjs`: com `perks=refluxo`, o parry deixa `flashing: true` no ícone dele e volta a `false` depois de
       250 ms; dois parries seguidos reiniciam (TSP-03)
 - [ ] `BuildDirector` abaixo de ~80 linhas efetivas; smokes `build`, `talents`, `defense`, `finisher` verdes
@@ -1107,17 +1110,18 @@ o `TalentFx.debug()` preenche `talentFx.world` com os efeitos vivos por nome.
 #### T38: Contra Afiado no Nv 2 e no Nv 3
 
 **What**: no `onMeleeHit` de um Contra com `counter.lastTakePerfect`: Nv 2+ abre o alvo no `OpenTarget` por 1000 ms e o
-`TalentFx` desenha o contorno; a função `crit` dá ×1,25 no alvo aberto; Nv 3 dá +15 de energia e
-`loadout.refundCooldown(lastSlot, 0.3)`; o alvo que morre leva o contorno (`onKill` → `onDeath`).
+`TalentFx` desenha o contorno; a função `crit` dá ×1,25 no alvo aberto; Nv 3 dá +15 de energia com o arco azul de 300 ms do `TalentHudFx` (nasce aqui; o Refluxo Nv 2 do T41 reusa) e
+`loadout.refundCooldown(lastSlot, 0.3)` com `TechSlotsHud.flash(lastSlot)` (250 ms em branco); o alvo que morre leva o contorno (`onKill` → `onDeath`).
 **Where**: `src/scenes/test/talentDirector.ts`
-**Depends on**: T35, T37
-**Reuses**: `OpenTarget`, F30 `refundCooldown`, `lastSlot`
+**Depends on**: T35, T36, T37
+**Reuses**: `OpenTarget`, F30 `refundCooldown`, `lastSlot`, `TalentHudFx` (T36); `TechSlotsHud.flash(slot)` nasce aqui
 **Requirement**: TAL-08, TAL-17
 
 **Done when**:
 
 - [ ] `talents.smoke.mjs`: Contra Nv 1/2/3 com ×1,3/1,5/1,7; Contra perfeito no Nv 2 deixa o alvo aberto e o golpe
-      seguinte sai `crit` com ×1,25; no Nv 3 a energia sobe 15 e a recarga do último slot cai 30% da cheia
+      seguinte sai `crit` com ×1,25; no Nv 3 a energia sobe 15 e a recarga do último slot cai 30% da cheia, com o arco em `talentFx.hud` e
+      `hud.slots[lastSlot].flashing` por 250 ms
 - [ ] Contorno conferido no jogo em HD com o alvo andando para os dois lados
 - [ ] Smokes `talents`, `defense` verdes
 - [ ] Gate verde
@@ -1135,7 +1139,8 @@ do player a alfa 0,4 preso por 1500 ms (como `fx.ts:161`); o `talentDirector.upd
 `aiState`, chefe `state`); `combat.attackerOf` põe `decoyed: build.talents.decoys(ownerId)` no `Attacker`;
 `Attacker.decoyed` em `player/types.ts`; `player/defense.ts` passa `decoyed` ao `resolveIncomingHit` e `hit.ownerId`
 aos `onDefense`; o gancho `onDefense` do `Player.ts:82` ganha o tipo do 3º argumento; Nv 3: `strikeExtras` liga
-`unblockable` no golpe sombrio.
+`unblockable` no golpe sombrio, e o `TalentFx` solta o estilhaço roxo quando ele acerta comum em guarda ou chefe em
+bloqueio.
 **Where**: `src/scenes/test/combat.ts`
 **Depends on**: T37
 **Reuses**: `Afterimage`, `resolveIncomingHit` com `decoyed` (T30), `EnemyGuard` (`enemyGuard.ts:87`, `:90`)
@@ -1145,7 +1150,7 @@ aos `onDefense`; o gancho `onDefense` do `Player.ts:82` ganha o tipo do 3º argu
 
 - [ ] `talents.smoke.mjs`: sombrio Nv 1/2/3 com ×1,3/1,5/1,8 e o passo gasto acertando ou não; no Nv 2 o próximo golpe
       do inimigo esquivado não tira HP e a pós-imagem some; outro inimigo fere normalmente; no Nv 3 o golpe sombrio
-      atravessa a guarda do comum (`enemy-guard`)
+      atravessa a guarda do comum (`enemy-guard`) e deixa `shatter` em `talentFx.world`
 - [ ] `complexity` do `receiveHit` medido no commit (se subir, `IncomingHit` montado em função à parte); `Player.ts` sem
       campo
 - [ ] Pós-imagem conferida no jogo em HD esquivando para os dois lados
@@ -1188,7 +1193,7 @@ aos `onDefense`; o gancho `onDefense` do `Player.ts:82` ganha o tipo do 3º argu
 
 **What**: com Nv 2+, o `TalentHudFx` leva um arco azul de 300 ms do inimigo aparado até a barra de energia (ponto do
 mundo convertido para a tela); com Nv 3, o `parry`/`deflect` zera a recarga de `loadout.lastSlot` com o `Cooldown` de
-8000 ms gasto só quando zerou; sem último slot ou com ele vazio, nada e o relógio não reinicia.
+8000 ms gasto só quando zerou, e `TechSlotsHud.flash(lastSlot)` (do T38) pisca o ícone; o arco é o do T38; sem último slot ou com ele vazio, nada e o relógio não reinicia.
 **Where**: `src/game/TalentHudFx.ts`
 **Depends on**: T36 (fase 6)
 **Reuses**: `Cooldown`, F30 `lastSlot`
@@ -1196,7 +1201,8 @@ mundo convertido para a tela); com Nv 3, o `parry`/`deflect` zera a recarga de `
 
 **Done when**:
 
-- [ ] `talents.smoke.mjs`: parry no Nv 3 com recarga cheia no slot 0 a deixa em 0; segundo parry antes de 8 s não zera;
+- [ ] `talents.smoke.mjs`: parry no Nv 3 com recarga cheia no slot 0 a deixa em 0 e `hud.slots[0].flashing` fica `true` por
+      250 ms; segundo parry antes de 8 s não zera;
       parry sem técnica usada não gasta o relógio
 - [ ] Arco conferido no jogo em HD aparando dos dois lados
 - [ ] Smokes `talents`, `defense` verdes
@@ -1212,7 +1218,8 @@ mundo convertido para a tela); com Nv 3, o `parry`/`deflect` zera a recarga de `
 
 **What**: com Nv 2+, a cada 3º golpe que acerta na rodada o `TalentHudFx` solta as faíscas do alvo à barra; com Nv 3 e a
 energia cheia antes do ganho, um acerto `micro` de `round(6 × kokusenScale.hpMul)` no comum vivo mais perto a até
-160 px do alvo (nunca ele, nunca o chefe), no máximo 2 por 1000 ms; em `combat.onConnect` a linha do `build.onMeleeHit`
+160 px do alvo (nunca ele, nunca o chefe), no máximo 2 por 1000 ms, desenhado pelo `TalentFx` como raio azul em zigue-zague de 120 ms do alvo ao vizinho; em
+`combat.onConnect` a linha do `build.onMeleeHit`
 sobe para antes do `energy.gain` (0 linha líquida).
 **Where**: `src/scenes/test/combat.ts`
 **Depends on**: T36 (fase 6)
@@ -1221,8 +1228,8 @@ sobe para antes do `energy.gain` (0 linha líquida).
 
 **Done when**:
 
-- [ ] `talents.smoke.mjs`: com a energia cheia e 2 comuns a 100 px, o golpe tira `round(6 × hpMul)` do vizinho; o 3º
-      golpe em 1000 ms não salta; sem vizinho a 160 px, nada
+- [ ] `talents.smoke.mjs`: com a energia cheia e 2 comuns a 100 px, o golpe tira `round(6 × hpMul)` do vizinho e deixa `bolt` em
+      `talentFx.world`; o 3º golpe em 1000 ms não salta; sem vizinho a 160 px, nada
 - [ ] Faíscas conferidas no jogo em HD
 - [ ] Smokes `talents`, `fight` verdes
 - [ ] Gate verde
@@ -1237,7 +1244,7 @@ sobe para antes do `energy.gain` (0 linha líquida).
 
 **What**: `combat.onEnemyDied` (`combat.ts:73`) chama `build.onKill(id, x, y)` (comum e chefe); com Nv 2+, o `TalentFx`
 desenha o risco 7:3 por 300 ms no crítico da Proporção; com Nv 3, o abate por crítico marca o comum vivo mais perto a
-até 200 px (`RatioMark`), desenhado pelo `TalentFx`; o próximo golpe nele é crítico ×2 e consome a marca.
+até 200 px (`RatioMark`), com o sinal "7:3" amarelo do `TalentFx` sobre a cabeça dele enquanto a marca dura; o próximo golpe nele é crítico ×2 e consome a marca.
 **Where**: `src/scenes/test/talentDirector.ts`
 **Depends on**: T35 (fase 6)
 **Reuses**: `RatioMark`, `critMul` com `marked`
@@ -1259,7 +1266,8 @@ até 200 px (`RatioMark`), desenhado pelo `TalentFx`; o próximo golpe nele é c
 
 #### T44: Hora Extra no combate
 
-**What**: o `talentDirector` liga o `Overtime` ao `onKill` e à perda de HP (mesmo critério do `bodyDirector` da F30);
+**What**: o `talentDirector` liga o `Overtime` ao `onKill` e à perda de HP (mesmo critério da Fúria no `bodyDirector` da F30:
+golpe defendido, chip da guarda e custo de voto não contam); `fire('horaExtra')` só quando os acúmulos mudam;
 `StatSheet.talentTechMul` (1 exato sem acúmulo); o `StatsDirector` passa `overtimeStacks` ao `buildEffects` e grava
 `loadout.damageMul = relicTechMul × talentTechMul`; a `TalentStrip` mostra os gomos da Hora Extra no Nv 2+ (TSP-04); no
 Nv 3 no teto, o `TalentFx` desenha a aura laranja presa ao `renderPos`; `stats.overtimeMul` no `StatsSnapshot` (F29).
@@ -1272,7 +1280,7 @@ Nv 3 no teto, o `TalentFx` desenha a aura laranja presa ao `renderPos`; `stats.o
 
 - [ ] `tests/core/statSheet.test.ts`: `talentTechMul` 1 com 0 acúmulos não muda o dano da técnica; 1,15 com 3
 - [ ] `talents-kokusen.smoke.mjs` (ou `talents.smoke.mjs` se couber): 12 abates no Nv 2 dão 1 acúmulo e
-      `stats.overtimeMul` 1,05; o golpe e a técnica sobem 5%; levar dano com 1 acúmulo deixa 0; a faixa mostra 5 gomos
+      `stats.overtimeMul` 1,05; o golpe e a técnica sobem 5%; levar dano com 1 acúmulo deixa 0; o chip de um golpe defendido não mexe nos acúmulos; a faixa mostra 5 gomos
       com 1 cheio; o estado passa de rodada
 - [ ] Aura laranja conferida no jogo em HD, parado e correndo, dois lados
 - [ ] Smokes `talents`, `power`, `run-loop` verdes
@@ -1290,7 +1298,8 @@ Nv 3 no teto, o `TalentFx` desenha a aura laranja presa ao `renderPos`; `stats.o
 `windowBonusMs` ao `startAttempt`; o `kokusenSnapshot` ganha `windowMs` e `lastHit: { targetId, x, y, damage }`
 (mesma linha do tipo no `debugApi`); com Nv 2+, o `TalentFx` acende o punho de preto enquanto
 `kokusenSnapshot.windowOpen`; com Nv 3, o evento `kokusen` chega ao `techDirector`, que chama
-`build.talents.onKokusen(...)`: anel `micro` de 48 px com `round(0,3 × dano)` nos outros comuns (nunca o chefe);
+`build.talents.onKokusen(...)`: anel `micro` de 48 px com `round(0,3 × dano)` nos outros comuns (nunca o chefe), desenhado em preto por
+200 ms;
 `stats.kokusenMul` e `stats.kokusenWindowBonusMs` no `StatsSnapshot`.
 **Where**: `src/game/tech/divergent.ts`
 **Depends on**: T29 (fase 5)
@@ -1319,16 +1328,18 @@ Nv 3 no teto, o `TalentFx` desenha a aura laranja presa ao `renderPos`; `stats.o
 **What**: talento abaixo do Nv 3 vira item que sobe na elegibilidade e nos itens possuídos da carta 0 e das cartas 2 e
 3 (`shopEligibility`, `shopDraw`); talento novo a partir da r2 (`PERK.minRound`), níveis sem trava; o preço do nível
 `inflate(TALENT_PRICE.level[nível − 1], round)` no `cardCost`; `maxLevel: 3` na entrada de `PERK_SHOP_ENTRIES`
-(`data/shop.ts:193-201`, mesma linha).
+(`data/shop.ts:193-201`, mesma linha); `talentEligible(id, ctx)`: Zona Negra nova e o nível dela só com o Divergente
+equipado (TAL-19).
 **Where**: `src/core/shopPricing.ts`
 **Depends on**: T24 (fase 5)
 **Reuses**: F30 `cardCost`, `eligible`, `focusItem`
-**Requirement**: TAL-04
+**Requirement**: TAL-04, TAL-19
 
 **Done when**:
 
 - [ ] `tests/core/shopPool.test.ts`: nível 2 custa `round(16 × inflação)` e nível 3 `round(24 × inflação)`; talento no
-      Nv 3 não é oferecido (edge case do baú + carta); talento novo na r1 não aparece e na r2 sim
+      Nv 3 não é oferecido (edge case do baú + carta); talento novo na r1 não aparece e na r2 sim; sem o Divergente, nem a Zona Negra nova nem o nível dela
+      são oferecidos, e com ele são
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
@@ -1365,17 +1376,17 @@ Nv 3 no teto, o `TalentFx` desenha a aura laranja presa ao `renderPos`; `stats.o
 #### T48: Nível de talento no baú do chefe
 
 **What**: `ChestOption` ganha `{ kind: 'talento'; id: PerkId }`; `chestCandidates` inclui um candidato com o talento
-sorteado pelo `chestRng` entre os abaixo do Nv 3; `chestOptionId` → `talento:<id>`; o `choiceDirector` confirma com
+sorteado pelo `chestRng` entre os abaixo do Nv 3 que o `talentEligible` aceita (TAL-19); `chestOptionId` → `talento:<id>`; o `choiceDirector` confirma com
 `perks.levelUp(id)` sem fragmento.
 **Where**: `src/core/bossChest.ts`
 **Depends on**: T34 (fase 6)
 **Reuses**: F33 `chestCandidates`, `drawChest`, `chestRng`
-**Requirement**: TAL-06
+**Requirement**: TAL-06, TAL-19
 
 **Done when**:
 
 - [ ] `tests/core/bossChest.test.ts`: com talento abaixo do Nv 3, a opção existe e nomeia um deles pela seed; sem
-      talento ou com todos no Nv 3, não existe; mesma seed, mesmo talento
+      talento ou com todos no Nv 3, não existe; Zona Negra sem o Divergente não é sorteada; mesma seed, mesmo talento
 - [ ] `boss-chest.smoke.mjs` (F33): `perks=executor`, a opção `talento:executor` aparece e sobe o Nv sem gastar
 - [ ] Smokes `boss-chest`, `choice-panel` e os do passo 2c (`talents`, `build`, `kokusen`, `fight`, `impact`, `feel`,
       `defense`, `power`) verdes (fim do passo 2c); `TestScene` igual
@@ -1413,8 +1424,9 @@ sorteado pelo `chestRng` entre os abaixo do Nv 3; `chestOptionId` → `talento:<
 
 **What**: `src/core/buildTray.ts` (novo): `TrayItem`, `trayItems(src)` (slots ocupados 0 a 2, Corpo, talentos na ordem
 de compra, arma, relíquia, Domínio, só o que existe), `BuildTray` (`toggle`, `close`, `open`, `selected`, `confirm`,
-`step(input, items, hasAxes): TrayAction[]`), `focusCycle(current, axesBelowCap, delta)`, `buildBarText(v)` e
-`shopHint(rerollCost, trayOpen)`.
+`step(input, items, hasAxes, dtMs): TrayAction[]`, com o 2º `Enter` só depois de `TRAY.confirmGuardMs` 300 ms),
+`focusCycle(current, axesBelowCap, delta)`, `buildBarText(v)`, `abandonQuestion(nome, nível, refund)` e
+`shopHint(rerollCost, { open, confirm, hasAxes, abandonable })`.
 **Where**: `src/core/buildTray.ts`
 **Depends on**: T17 (fase 4)
 **Reuses**: `SlotIndex`, `PoolState`
@@ -1425,7 +1437,9 @@ de compra, arma, relíquia, Domínio, só o que existe), `BuildTray` (`toggle`, 
 - [ ] `tests/core/buildTray.test.ts` (novo): ordem dos itens; abre no 1º item; `A`/`D` com volta nas duas pontas;
       `W`/`S` só com eixo, ciclo `automático → eixos abaixo do teto → automático` nos dois sentidos; 1º `Enter`
       pergunta, 2º abandona, `A`/`D`/`W`/`S`/`T` com a pergunta aberta fecham sem abandonar; `Enter` no Corpo e no
-      Domínio dá `denied`; `buildBarText` com `—` sem arma, relíquia e Domínio; as duas dicas exatas do BBR-09
+      Domínio dá `denied`; 2º `Enter` a 299 ms ignorado e a 300 ms abandona; `abandonQuestion` com `Nv` e `+0`;
+      `buildBarText` com `—` sem arma, relíquia e Domínio; as dicas exatas do BBR-09 (sem `W/S foco` no talento, sem
+      `Enter abandonar` no Corpo, e a da pergunta aberta)
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
@@ -1546,16 +1560,18 @@ por `selected ? borderSelected : FRAME_COLOR[offer.frame]` (−3 linhas); `shop.
 #### T56: Compra recusada da carta de item abandonado
 
 **What**: `Shop.buy` recusa sem cobrar a carta de melhoria cujo item saiu da build (`reason: 'item'`) e a carta de item
-novo que deixou de caber no pool (`reason: 'pool'`, já da T23).
+novo que deixou de caber no pool (`reason: 'pool'`, já da T23); o `view()` dá a essas cartas `frame: 'grey'` e a linha
+do nível `FORA DA BUILD` ou `SEM VAGA`.
 **Where**: `src/core/shop.ts`
-**Depends on**: None
-**Reuses**: `buy` com `reason` (T23)
+**Depends on**: T53
+**Reuses**: `buy` com `reason` (T23), `frame` (T53)
 **Requirement**: ABD-07
 
 **Done when**:
 
 - [ ] `tests/core/shopPool.test.ts`: carta de ponto do Vermelho depois de tirar o Vermelho do `Loadout` devolve
-      `reason: 'item'` com a carteira igual; a carta continua em `view().offers`
+      `reason: 'item'` com a carteira igual; a carta continua em `view().offers` com `frame: 'grey'` e `FORA DA BUILD`;
+      a carta de talento novo que perdeu o lugar mostra `SEM VAGA`
 - [ ] Gate verde; contagem = anterior + os novos
 
 **Tests**: unit
@@ -1625,8 +1641,8 @@ linha); `tray.onShopClose()` no `finishClose`.
 #### T59: Abandonar
 
 **What**: `trayDirector.abandon(item)`: soma `ledger.refund` na carteira; técnica → `loadout.clear(slot)` (que chama
-`axes.resetItem`) e `build.choice.removeItem(id)`; talento → `perks.remove(id)` e `talents.removeTalent(id)`; relíquia ou
-arma → `arsenal.clear(kind)` e `stats.sync()` no mesmo quadro; `ledger.clear(item)`; evento
+`axes.resetItem`) e `build.choice.removeItem(id)`; talento → `perks.remove(id)`, `talents.removeTalent(id)` e `stats.sync()`;
+relíquia ou arma → `arsenal.clear(kind)` e `stats.sync()` no mesmo quadro; `ledger.clear(item)`; evento
 `abandon:<item>:<refund>`; `onUnion(from)` limpa o livro das peças; `resolveBuy` emite `buyDenied:item`.
 **Where**: `src/scenes/test/trayDirector.ts`
 **Depends on**: T58
@@ -1637,7 +1653,9 @@ arma → `arsenal.clear(kind)` e `stats.sync()` no mesmo quadro; `ledger.clear(i
 
 - [ ] `build-bar.smoke.mjs`: `T`, `Enter`, `Enter` no Vermelho comprado esvaziam o slot 0 (o slot 1 fica), a carteira
       sobe `floor(0,4 × pago)`, `abandon:vermelho:<n>` no quadro e o preço do talento novo à vista cai
-      `round(8 × inflação)`; `A` com a pergunta aberta não abandona; `Enter` no Corpo mostra `Não sai da build`; a
+      `round(8 × inflação)`; `A` com a pergunta aberta não abandona; dois `Enter` em 100 ms não abandonam; a pergunta diz
+      `Abandonar Vermelho Nv<nível>? +<devolução> fragmentos`; abandonar o Punho Pesado baixa `power.points` em 2 no mesmo quadro;
+      a relíquia abandonada volta a ser oferecida; `Enter` no Corpo mostra `Não sai da build`; a
       carta de ponto do Vermelho é recusada com `buyDenied:item`; abandonar a relíquia baixa `stats`/`power` no mesmo
       quadro; fechar a loja com a pergunta aberta não abandona; abandonar o item marcado volta `buildBar.focus` a `null`
 - [ ] Smokes `build-bar`, `shop`, `arsenal`, `power`, `choice-panel`, `run-loop` verdes
@@ -1824,6 +1842,7 @@ anotadas na T1 (VGX-01), `.oxlintrc.json` sem arquivo novo, `ShopPanel.ts`, `Hud
 | TAL-16 | T25, T31, T35, T43 |
 | TAL-17 | T34, T35, T37, T38, T39, T40, T41, T42, T43, T44, T45 |
 | TAL-18 | T34 |
+| TAL-19 | T33, T46, T48 |
 | TSP-01 | T33 |
 | TSP-02 | T33 |
 | TSP-03 | T33, T34 |
@@ -1863,12 +1882,13 @@ anotadas na T1 (VGX-01), `.oxlintrc.json` sem arquivo novo, `ShopPanel.ts`, `Hud
 | AUR-04 | T63 |
 | AUR-05 | T63 |
 
-**Coverage:** 84 total, 84 mapped to tasks, 0 unmapped. Edge cases: talento no Nv 3 por baú e carta (T46, T48); pool
+**Coverage:** 85 total, 85 mapped to tasks, 0 unmapped. Edge cases: talento no Nv 3 por baú e carta (T46, T48); pool
 cheio e tudo no teto (T19, T20); abandonar a única técnica (T20, T59); União com o pool cheio (T17); abandono na mesma
 visita (T49); loja fecha com a pergunta aberta (T59); `T` com painel aberto (T58); alvo aberto ou marcado que morre
 (T26, T38, T43); pós-imagem e outro inimigo (T26, T39); arco sem vizinho (T26, T42); Hora Extra subindo de nível e com
 1 acúmulo (T27); anel no chefe (T45); soma de janela acima de 30 (T25); reset da run (T22, T34, T51, T57, T63);
-`perks=` repetido (T21); `slotHeld` no 3º slot (T8); ramo pendente do item abandonado (T55, T59).
+`perks=` repetido (T21); `slotHeld` no 3º slot (T8); ramo pendente do item abandonado (T55, T59); item abandonado comprado de novo (T59);
+dois `Enter` em 300 ms (T50, T59); Divergente sai com a Zona Negra (T33, T46).
 
 ---
 
@@ -1976,7 +1996,7 @@ arte), Fase 8 (3), Fase 9 (8), Fases 10+11 (8, arte na T63): 10 lotes. Lotes com
 | T35 | T34 | T34 → T35 | ✅ Match |
 | T36 | T35 | T35 → T36 | ✅ Match |
 | T37 | T34 | T34 → T37 | ✅ Match |
-| T38 | T35, T37 | T35 → T38, T37 → T38 | ✅ Match |
+| T38 | T35, T36, T37 | T35 → T38, T36 → T38, T37 → T38 | ✅ Match |
 | T39 | T37 | T37 → T39 | ✅ Match |
 | T40 | T36 (fase 6) | — (fase anterior) | ✅ Match |
 | T41 | T36 (fase 6) | — (fase anterior) | ✅ Match |
@@ -1994,7 +2014,7 @@ arte), Fase 8 (3), Fase 9 (8), Fases 10+11 (8, arte na T63): 10 lotes. Lotes com
 | T53 | T47 (fase 8) | — (fase anterior) | ✅ Match |
 | T54 | None | — | ✅ Match |
 | T55 | None | — | ✅ Match |
-| T56 | None | — | ✅ Match |
+| T56 | T53 | T53 → T56 | ✅ Match |
 | T57 | T49, T50 (fase 9) | — (fase anterior) | ✅ Match |
 | T58 | T57 | T57 → T58 | ✅ Match |
 | T59 | T58 | T58 → T59 | ✅ Match |

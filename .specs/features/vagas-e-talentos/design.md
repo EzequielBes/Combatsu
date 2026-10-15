@@ -139,7 +139,7 @@ mesmo quadro.
 | F30 `StrikeMods.marks` (`knockdown`, `wallStun`, `decisive`, `maxHpBonus`) | F30 `src/core/statSheet.ts` | Ganha `unblockable` (Passo Sombrio Nv 3) e a função `crit`; o Punho Pesado Nv 3 só liga `wallStun` |
 | F30 `wallStun.ts` e `EnemyDefense.enterRagdoll` (`wallStunArmed`) | F30 `src/scenes/test/wallStun.ts` | A parede do Punho Pesado Nv 3 (TAL-07) sem código novo de parede |
 | F30 `Loadout.lastSlot`, `refundCooldown(slot, fraction)`, `kokusenScale.hpMul` | F30 `src/core/loadout.ts` | Contra Afiado Nv 3 (30%), Refluxo Nv 3 (zerar), arco do Condutor (`6 × hpMul`) |
-| F30 `bodyDirector` (perda de HP fora da loja) | F30 `src/scenes/test/bodyDirector.ts` | Mesmo critério de "perder HP" para a Hora Extra (TAL-14) |
+| F30 `bodyDirector` (perda de HP fora da loja) | F30 `src/scenes/test/bodyDirector.ts` | Mesmo critério de "perder HP" da Fúria para a Hora Extra: golpe defendido, chip da guarda e custo de voto não contam (TAL-14) |
 | F29 `statSheet`, `StatsDirector.sync`/`snapshotFields` | `src/core/statSheet.ts:70-79` (principal) | A parte dos talentos sai do `strikeMultiplier` (l.72) para o `buildEffects`; os campos novos do snapshot entram pelo `snapshotFields` |
 | F29 `DamageNumbers` e `DamageKind` (`crit` amarelo) | `src/core/damageNumber.ts:8` (principal) | O golpe crítico sai com `crit`; o tipo novo `heal` (verde) para o Executor |
 | F29 `powerAuraDirector` e `core/power.ts` (`powerPoints({ forca, manoplas, punhoPesado })`) | F29 | A aura de build é desenhada junto; o POW-07 continua lendo `perks.has('punhoPesado')` (+2 em qualquer nível) |
@@ -260,15 +260,19 @@ mesmo quadro.
     PerkId } | { kind: 'weapon'; id: ArsenalId } | { kind: 'relic'; id: ArsenalId } | { kind: 'dominio' }`.
   - `trayItems(src): TrayItem[]` na ordem slots 0 a 2 (só os ocupados), Corpo, talentos na ordem de compra, arma,
     relíquia, Domínio (só o que o jogador tem).
-  - `class BuildTray`: `toggle()`, `close()`, `get open`, `get selected`, `get confirm`, `step(input, items, hasAxes):
+  - `class BuildTray`: `toggle()`, `close()`, `get open`, `get selected`, `get confirm`, `step(input, items, hasAxes, dtMs):
     TrayAction[]` com `TrayAction = { type: 'select'; index } | { type: 'focus'; delta: 1 | -1 } | { type: 'ask' } |
     { type: 'abandon' } | { type: 'denied' } | { type: 'close' }`. `A`/`D` andam com volta; `W`/`S` pedem foco só com
     eixo; o 1º `Enter` pergunta, o 2º abandona; `A`, `D`, `W`, `S` ou `T` com a pergunta aberta fecham a pergunta sem
-    abandonar; `Enter` no Corpo e no Domínio devolve `denied` (`Não sai da build`).
+    abandonar; `Enter` no Corpo e no Domínio devolve `denied` (`Não sai da build`); o 2º `Enter` só abandona com a pergunta aberta há
+    `TRAY.confirmGuardMs` (300 ms, contados pelo `dtMs`), e antes disso é ignorado (ABD-01). A pergunta é
+    `Abandonar <nome> Nv<nível>? +<n> fragmentos`, com `+0` quando o livro devolve 0.
   - `focusCycle(current, axesBelowCap, delta): AxisId | null` (`automático → eixos abaixo do teto na ordem da tabela →
     automático`; `null` é automático, BBR-07).
   - `buildBarText(v: { pool; corpo; weapon; relic; domain }): string` (BBR-02, `—` no que falta).
-  - `shopHint(rerollCost, trayOpen): string` (BBR-09: as duas frases da spec).
+  - `shopHint(rerollCost, tray: { open; confirm; hasAxes; abandonable }): string` (BBR-09: a frase da loja, a da
+    bandeja sem `W/S foco` no item sem eixo e sem `Enter abandonar` no Corpo e no Domínio, e `Enter confirmar ·
+    A/D/W/S/T cancelar` com a pergunta aberta).
 
 ### `core/spentLedger.ts` (novo no passo 3, ~35)
 
@@ -295,7 +299,7 @@ mesmo quadro.
   readonly [TalentText, TalentText, TalentText] }` com `TalentText = { card: string; next: string }` (texto da carta
   e a linha do sinal ou gatilho do próximo nível, cada um com até 20 caracteres, TAL-05).
 - `TALENT` com um valor por nível (ver "Data Models"); `POOL`; `TALENT_PRICE = { new: 18, level: [16, 24] }`;
-  `REFUND = 0.4`; `PERK.minRound` 2 fica. A afinidade nova: `proporcao` → `lutador`, `horaExtra` → `veloz`,
+  `REFUND = 0.4`; `TRAY = { confirmGuardMs: 300 }` (ABD-01); `PERK.minRound` 2 fica. A afinidade nova: `proporcao` → `lutador`, `horaExtra` → `veloz`,
   `zonaNegra` → `feiticeiro`.
 - No passo 2a o arquivo só ganha `TalentLevel` e o `TALENT` com os números de hoje no Nv 1 (os Nv 2 e 3 iguais ao Nv 1
   até o passo 2c, para o `buildEffects` já ler por nível).
@@ -312,8 +316,10 @@ mesmo quadro.
     Extra, Proporção Nv 3), `onKokusen(targetId, point, damage)` (anel da Zona Negra Nv 3), `decoys(ownerId)` (lido
     pelo `combat.attackerOf`), `update(dtMs)` (relógios, perda de HP, pós-imagem pelo `ai.state` do dono, desenho),
     `removeTalent(id)` (abandono: limpa o estado do talento), `reset()`, `snapshot()`.
-  - Todo gatilho que age chama `fire(id)`: `debugEvents.push('talent:<id>')` e `ui.talentStrip.flash(id)` (TAL-17,
-    TSP-03).
+  - Só o momento da tabela "Quando pisca" da spec chama `fire(id)`: `debugEvents.push('talent:<id>')` e
+    `ui.talentStrip.flash(id)` (TAL-17, TSP-03). O Condutor dá a energia em todo golpe, mas só chama `fire` no 3º
+    (`strikeCountTrigger`, o mesmo das faíscas) e no raio do Nv 3; a Hora Extra chama `fire` quando `Overtime.stacks`
+    muda, não em todo acerto com bônus.
 - **Dependencies**: `TestScene` (player, enemies, boss, loadout, energy, ui, fx, build.domain, techRunner), `core/talents`,
   `core/overtime`, `buildEffects`.
 - **Por que diretor próprio**: o `BuildDirector` está em ~62 linhas no fim da F33 e os 9 talentos dariam ~230 nele.
@@ -328,8 +334,9 @@ mesmo quadro.
   - `recordBuy(id, cost)` (chamado pelo `resolveBuy`), `onUnion(from)` (limpa o livro das peças), `onShopClose()`
     (fecha a bandeja e a pergunta, edge case), `applyDebug()` (`focus=`), `reset()`, `snapshot(): BuildBarSnapshot`.
   - `abandon(item)`: soma `ledger.refund` na carteira; técnica → `loadout.clear(slot)` (que já chama
-    `axes.resetItem`, F33) e `build.choice.dropItem(id)`; talento → `perks.remove(id)` e `talents.removeTalent(id)`;
-    relíquia ou arma → `arsenal.clear(kind)` e `stats.sync()` no mesmo quadro (ABD-05); `ledger.clear(item)`; evento
+    `axes.resetItem`, F33) e `build.choice.dropItem(id)`; talento → `perks.remove(id)`, `talents.removeTalent(id)` e
+    `stats.sync()` (a força do Punho Pesado sai junto); relíquia ou arma → `arsenal.clear(kind)` e `stats.sync()` no
+    mesmo quadro, e o `arsenalEligible` volta a oferecer a vaga vazia (ABD-05); `ledger.clear(item)`; evento
     `abandon:<item>:<refund>` (ABD-09). As cartas abertas ficam; o preço e a etiqueta se refazem no próximo
     `shop.view` porque o `cardCost` lê o pool na hora (ABD-07).
 - **Dependencies**: `BuildTray`, `SpentLedger`, `AxisBuild` (marca), `game/BuildBar.ts`.
@@ -347,14 +354,18 @@ mesmo quadro.
   `PALETTE.w` a 50%) e a letra quando vazia (EHD-02); 5 pontinhos de 3×3 px sob a vaga ocupada e sob o Corpo, os
   primeiros `axes.total(item)` cheios (EHD-03); o ícone do Corpo na 4ª posição, com a borda dourada (`A`) enquanto
   `axes.awakened('corpo')` (EHD-04); `debug()` devolve `slots: { x, y, w, h, empty, dots }[]` e `body` (EHD-05).
+- **Passo 2c**: `flash(slot: SlotIndex)` pinta o ícone do slot de branco por 250 ms (mesmo `TintModes.FILL` da
+  `TalentStrip`), chamado pelo `talentDirector` quando o Contra Afiado Nv 3 devolve recarga ou o Refluxo Nv 3 a zera
+  (TAL-08, TAL-11); o `debug()` ganha `flashing` por vaga.
 - **Layout**: vagas em `x = 14 + i × 58`, `y = 92` (como hoje), o Corpo em `x = 188`; barra de maestria em `y = 144`;
   pontinhos em `y = 149`. O retângulo inteiro vai de `y = 90` a `y = 152`.
 
 ### `game/TalentStrip.ts` (novo no passo 2c, ~80)
 
 - **Purpose**: a faixa de talentos do combate (TSP-01 a TSP-06), criada em `UiSetup.addHud` como `ui.talentStrip`.
-- **Interfaces**: `update(dtMs, levels: { id; level }[], overtime: { stacks; cap } | null)`, `flash(id)` (250 ms,
-  reinicia), `debug(): TalentStripSnapshot`.
+- **Interfaces**: `update(dtMs, levels: { id; level; dormant }[], overtime: { stacks; cap } | null)`, `flash(id)` (250 ms,
+  reinicia), `debug(): TalentStripSnapshot`. `dormant` (Zona Negra sem o Divergente equipado, TAL-19) desenha o ícone a
+  40% de alfa.
 - **Layout**: até 6 ícones de 16×16 texels mostrados a 32×32 px, de `x = 14` com 6 px de vão, `y = 164`; 3 pontinhos sob
   cada ícone (`y = 200`); os gomos da Hora Extra numa linha de 2 px sob os pontinhos do ícone dela (TSP-04). O flash é
   o ícone em branco (`setTint(PALETTE.w).setTintMode(Phaser.TintModes.FILL)`, como o `DodgeFx.ts:152-153`) por 250 ms.
@@ -373,10 +384,12 @@ mesmo quadro.
 
 - **TalentFx** (mundo, `FX_DEPTH`, registrado no `FxRegistry`): poeira e anel no chão do Punho Pesado Nv 2, contorno
   "aberto" do Contra Afiado Nv 2, pós-imagem do Passo Sombrio Nv 2 (o quadro atual do player com alfa 0,4, como o
-  `Fx.afterimage` de `fx.ts:161`, mas preso por 1500 ms), risco 7:3 por 300 ms, marca da Proporção Nv 3, punho preto na
+  `Fx.afterimage` de `fx.ts:161`, mas preso por 1500 ms), estilhaço roxo do golpe sombrio que passou por guarda ou
+  bloqueio (Passo Sombrio Nv 3), risco 7:3 por 300 ms, marca da Proporção Nv 3 (o sinal "7:3" amarelo sobre a cabeça
+  do marcado, preso a ele enquanto a marca dura), raio azul em zigue-zague de 120 ms do alvo ao vizinho (Condutor Nv 3), punho preto na
   janela do Kokusen (Zona Negra Nv 2, lida de `techRunner.kokusenSnapshot.windowOpen`), aura laranja da Hora Extra Nv 3
-  no teto, anel da Zona Negra Nv 3. Toda cor sai da `PALETTE` (AD-009).
-- **TalentHudFx** (`uiLayer`): arco azul de 300 ms do alvo até a barra de energia (Refluxo Nv 2; o ponto do mundo
+  no teto, anel preto de 48 px por 200 ms da Zona Negra Nv 3. Toda cor sai da `PALETTE` (AD-009).
+- **TalentHudFx** (`uiLayer`): arco azul de 300 ms do alvo até a barra de energia (Refluxo Nv 2 e Contra Afiado Nv 3; o ponto do mundo
   passa por `camera.getWorldPoint` ao contrário), faíscas do Condutor Nv 2, brilho de 400 ms na barra de vida do
   player (Executor Nv 2) e a linha amarela a 30% da barra do chefe (Proporção). A posição das barras vem de constantes
   exportadas pelo `Hud.ts` (ver "Mudanças por passo"), sem linha nova nele.
@@ -512,6 +525,7 @@ sai na F33.
 | `src/core/skillSlots.ts` | — | `poolOf`, `canAddTechnique`, `canAddTalent`, `poolSurcharge`, `vacancyTag` |
 | `src/core/shopPricing.ts` (F30) | `cardCost` | `inflate(newTechPrice(rarity) + poolSurcharge(pool), round)` para técnica nova e `inflate(18 + poolSurcharge(pool), round)` para talento novo (POL-02, POL-03: os outros `kind` não leem o pool) |
 | `src/core/shopEligibility.ts` (F30) | `techniqueEligible`, perk | técnica nova só com `canAddTechnique`; talento novo só com `canAddTalent` (POL-04) |
+| `src/core/shopEligibility.ts` (F30) | perk, no passo 2c | Zona Negra nova e o nível dela só com o Divergente equipado (`talentEligible(id, ctx)` lê `hasTech('divergente')`, TAL-19) |
 | `src/core/shopDraw.ts` (F30) | carta 1 | sem técnica: técnica nova (a garantia de hoje); com técnica e item novo elegível: `drawOffers` com o peso de hoje só sobre técnicas e talentos novos; senão o sorteio de hoje (POL-06) |
 | `src/core/shop.ts` (F30) | `buy`, `view`, `levelText` | `buy` confere `canAdd*` antes de cobrar e devolve `{ ok: false, reason: 'pool' }` (POL-05); a carta de item novo mostra `vacancyTag(pool)` na linha do nível (POL-07); `ShopContext` ganha `perks` (já tem) e lê o pool na hora |
 | `src/scenes/test/shopDirector.ts` | `resolveBuy` | `reason === 'pool'` → `buyDenied:pool` |
@@ -561,7 +575,7 @@ sai na F33.
 | `src/game/Enemy.ts` / `src/game/enemy/EnemyHud.ts` | `EnemyHud` 27-66 | linha amarela (`PALETTE.A`) de 1 px de largura e a altura do poço, a 30% da largura do poço, visível com `setRatioLine(true)` (o `talentDirector` liga em todo comum vivo enquanto tem a Proporção); `Enemy.setRatioLine(on)` repassa (+3) |
 | `src/game/Hud.ts` | 15, 17, 61-62 | `export` nas constantes `MARGIN`, `LABEL_W`, `BOSS_BAR_WIDTH`, `BOSS_BAR_HEIGHT` (0 linha) |
 | F31 `src/data/` (`DOMAIN_CHARGE`) | tabela | evento `executor: 20` (TAL-10) |
-| F33 `src/core/bossChest.ts` | `ChestOption`, `chestCandidates` | `{ kind: 'talento'; id: PerkId }`, um candidato com o talento sorteado pelo `chestRng` entre os abaixo do Nv 3 (TAL-06); `chestOptionId` → `talento:<id>` |
+| F33 `src/core/bossChest.ts` | `ChestOption`, `chestCandidates` | `{ kind: 'talento'; id: PerkId }`, um candidato com o talento sorteado pelo `chestRng` entre os abaixo do Nv 3 que o `talentEligible` aceita (TAL-06, TAL-19); `chestOptionId` → `talento:<id>` |
 | F33 `src/scenes/test/choiceDirector.ts` | confirmação do baú | `talento` → `perks.levelUp(id)` sem fragmento |
 | `src/scenes/test/buildDirector.ts` | campos, repasses | `readonly talents = new TalentDirector(s)`; `onMeleeHit/onDefense/onFinisher/onKill` repassam; `reset` zera; `snapshot` com `talents` e `overtime` (TAL-18) |
 | `src/scenes/test/uiSetup.ts` | `addHud` | `ui.talentStrip = new TalentStrip(...)`; `TalentFx`/`TalentHudFx` criados pelo `talentDirector.onSceneCreate()` (+2) |
@@ -795,7 +809,9 @@ vêm do `snapshotFields()` e do `build.snapshot()`).
 | `L` e `O` no mesmo quadro | `pressed.indexOf(true)`: só o slot mais baixo vai à `CastMachine` (TRS-03) | Conjura o slot 0 |
 | `tech=` com 4 ids | O laço para em `SLOT_COUNT` (TRS-04) | A 4ª é ignorada |
 | Compra de item novo além do pool ou da categoria | `Shop.buy` confere antes de cobrar e devolve `reason: 'pool'` (POL-05) | `buyDenied:pool`, carteira igual |
-| Carta de melhoria de item abandonado na mesma visita | `Shop.buy` devolve `reason: 'item'` sem cobrar (ABD-07) | `buyDenied:item`, a carta continua à vista |
+| Carta de melhoria de item abandonado na mesma visita | `Shop.buy` devolve `reason: 'item'` sem cobrar (ABD-07); o `view()` dá `frame: 'grey'` e a linha do nível `FORA DA BUILD` | `buyDenied:item`, a carta continua à vista e já parece morta |
+| Carta de item novo que perdeu o lugar depois de um abandono | O `view()` dá `frame: 'grey'` e a linha `SEM VAGA` no lugar do `OCUPA VAGA` (ABD-07) | `buyDenied:pool` se comprada |
+| Dois `Enter` em menos de 300 ms na bandeja | O `BuildTray` ignora o 2º (ABD-01) | A pergunta fica aberta, nada abandonado |
 | `levelUp` no Nv 3 ou sem o talento | `false`, nada muda (TAL-01); a carta não é oferecida (elegibilidade) | — |
 | `perks=` com id desconhecido, repetido, nível fora de 1..3, ou acima do pool | O parser tira os inválidos e repetidos; nível inválido vira 1; o `applyDebugBuild` para na 1ª entrada que passaria do pool ou da categoria (POL-10) | O smoke monta a build sem erro |
 | `focus=` com item ou eixo desconhecido, ou item que o jogador não tem | Ignorado (BBR-11) | Foco automático |

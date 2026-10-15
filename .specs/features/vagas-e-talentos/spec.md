@@ -124,7 +124,7 @@ Cada passo de comportamento termina jogável.
 | Afinidade dos talentos novos | Proporção 7:3 → `lutador`, Hora Extra → `veloz`, Zona Negra → `feiticeiro` (o Kokusen vem do Divergente) | O `buildWeight` precisa de uma linha para cada carta | n |
 | Pontos de afinidade de talento com nível | `PERK_POINTS + (nível − 1)`: 2, 3 e 4 | Como a técnica, que conta os níveis acima do 1º | n |
 | Pontos de força do Punho Pesado (POW-07) | +2 em qualquer nível | O nível já sobe o multiplicador do golpe forte; somar força por nível mexeria no patamar da F29 | n |
-| Crítico | O dano do golpe crítico é o dano resolvido × o maior multiplicador de crítico entre as fontes que valem naquele acerto (não se multiplicam), arredondado; o número sai com o tipo `crit` | Duas fontes de crítico no mesmo golpe (Proporção e alvo "aberto") passariam de ×2,5 | n |
+| Crítico | O dano do golpe crítico é o dano resolvido × o maior multiplicador de crítico entre as fontes que valem naquele acerto (não se multiplicam), arredondado; o número sai com o tipo `crit`. Técnica e Kokusen nunca são crítico (o Kokusen tem multiplicador e número próprios) | Duas fontes de crítico no mesmo golpe (Proporção e alvo "aberto") passariam de ×2,5; Kokusen ×3,1 com crítico ×2 daria ×6,2, acima do teto 3,4 do `KOKUSEN` | n |
 | "Golpe" nos talentos | Golpe do moveset que acerta (não técnica, não objeto, não arma vinculada), salvo quando a linha diz outra coisa | Os talentos da leva 1 reagem ao golpe (seção 5.2) | n |
 | Contra perfeito | O Contra que acerta e cujo aperto (`J`/`K`, ou o aperto guardado no `buffer`) chegou nos primeiros 150 ms da janela aberta | O jogo não tem Contra "perfeito"; o tempo da janela já está no `CounterWindow` e dá leitura de habilidade | n |
 | Parry perfeito do Refluxo Nv 3 | Todo `parry` ou `deflect`, limitado a 1 vez a cada 8000 ms | O parry já é a defesa de tempo justo; o limite de 8 s do plano mostra que o gatilho é frequente | n |
@@ -136,12 +136,14 @@ Cada passo de comportamento termina jogável.
 | Arco do Condutor Nv 3 | Com a energia cheia antes do ganho do golpe, um acerto `micro` de `round(6 × hpMul)` no comum vivo mais perto do alvo, a até 160 px dele, nunca o próprio alvo; no máximo 2 a cada 1000 ms | "Escala da rodada" = `hpMul` (F30); 160 px fica dentro da tela | n |
 | Linha 7:3 | Linha amarela na barra de vida do comum (`EnemyHud`) e na do chefe, a 30% da largura; "abaixo da linha" = HP atual ≤ 30% do máximo antes do acerto | Seção 5.3 | n |
 | Marca da Proporção Nv 3 | O abate por crítico marca o comum vivo mais perto a até 200 px do morto; a marca dura 5000 ms ou até o próximo golpe nele, que é crítico ×2 | O plano não dá alcance nem duração | n |
-| Hora Extra | Contador de abates (comum e chefe) desde o último acúmulo ou dano; ao chegar ao limiar do nível (15, 12, 10) ganha 1 acúmulo de +5% e zera; teto de 3, 5 e 7 acúmulos (+15, +25, +35%); perder HP deixa `floor(acúmulos / 2)` e zera o contador; o bônus vale para golpe e técnica; o estado dura a run inteira | Seção 5.3 ("a cada 15 abates... até +15%"); o passo de 5% é o do Nv 1 | n |
+| Hora Extra | Contador de abates (comum e chefe) desde o último acúmulo ou dano; ao chegar ao limiar do nível (15, 12, 10) ganha 1 acúmulo de +5% e zera; teto de 3, 5 e 7 acúmulos (+15, +25, +35%); perder HP deixa `floor(acúmulos / 2)` e zera o contador, com o critério da Fúria da F30: golpe defendido (o chip da guarda incluído) e custo de voto não contam; o bônus vale para golpe e técnica; o estado dura a run inteira | Seção 5.3 ("a cada 15 abates... até +15%"); o passo de 5% é o do Nv 1; cortar o bônus no bloqueio puniria a defesa certa sem o jogador ver por quê | n |
 | Zona Negra Nv 3 sem gatilho novo no plano | Além de +30 ms e ×3,1, o Kokusen solta um anel `micro` de 48 px em volta do alvo com 30% do dano do Kokusen nos outros comuns | A regra da seção 5.3 pede gatilho novo em todo nível; 48 px é o raio do Martelo Negro da F30 | n |
 | Barra de Domínio do Executor Nv 3 | +20 de carga pelas regras da F31 (sem Domínio ou com Domínio ativo, não carrega) | "Enche 20% da barra de Domínio" | n |
 | Número de cura | O `DamageNumbers` ganha o tipo `heal`, verde, sobre o player; é o número da cura do Executor Nv 2 e Nv 3 | Seção 5.3 ("número verde") | n |
 | Brilho na barra de vida e linha na barra do chefe | Desenhados por objeto próprio sobre a posição exportada pelo `Hud`, sem crescer o `Hud.ts` | O `Hud.ts` está na exceção de `max-lines` e não cresce (seção 6) | n |
-| Aviso do gatilho | Todo gatilho de talento solta o evento de debug `talent:<id>` e pisca o ícone por 250 ms (gatilho repetido reinicia os 250 ms) | Seção 1.2 ("piscam quando o gatilho dispara") | n |
+| Aviso do gatilho | Só o momento da tabela "Quando pisca" solta o evento de debug `talent:<id>` e pisca o ícone por 250 ms (gatilho repetido reinicia os 250 ms); o Condutor pisca a cada 3º golpe que acerta, não em todo golpe, e a Hora Extra só quando ganha ou perde acúmulo | Seção 1.2 ("piscam quando o gatilho dispara"); um ícone que pisca a cada golpe do combo fica aceso o tempo todo e não diz quem agiu | n |
+| Zona Negra sem Divergente | Só o Divergente tem Kokusen (as técnicas da F34 não têm); sem ele equipado a loja não oferece Zona Negra nova nem o nível dela, e o baú não a sorteia; a Zona Negra que fica sem o Divergente (abandonado ou trocado pela União) mantém o nível e aparece a 40% de alfa na `TalentStrip` | Uma carta que não faz nada ocuparia uma vaga do pool às cegas; o lutador sem Divergente nunca a vê | n |
+| Sinal do Nv 3 que o plano não desenha | Contra Afiado Nv 3: o arco azul do alvo à barra (o do Refluxo Nv 2) e o ícone do último slot pisca em branco 250 ms; Refluxo Nv 3: o ícone do último slot pisca em branco 250 ms quando a recarga zera; Passo Sombrio Nv 3: estilhaço roxo no ponto do golpe sombrio que passou por guarda ou bloqueio; Condutor Nv 3: raio azul em zigue-zague de 120 ms do alvo ao vizinho; Proporção Nv 3: o sinal "7:3" amarelo sobre a cabeça do marcado enquanto a marca dura; Zona Negra Nv 3: anel preto de 48 px por 200 ms | A regra da seção 5.3 ("um sinal visível e um gatilho novo") e o Goal "todo nível muda algo que se vê"; energia e recarga que mudam sem desenho não se notam no meio da luta | n |
 | Bandeja: itens e ordem | Slots 0, 1 e 2 (os ocupados), Corpo, talentos na ordem de compra, arma, relíquia, Domínio; só aparece o que o jogador tem | A mesma ordem da `BuildBar` | n |
 | Eixo-foco marcado | `W`/`S` no item selecionado percorre `automático → eixos abaixo do teto na ordem da tabela → automático`; marcar um eixo torna aquele item o item-foco (só um por vez); com todos em automático vale a regra automática da F30 | A seção 2.1 diz que o jogador marca o foco na bandeja; um item-foco só simplifica a carta 0 | n |
 | Eixo marcado que chega ao teto | Volta a automático no item, e o item continua sendo o item-foco | O eixo-foco só vale abaixo do teto (seção 2.1) | n |
@@ -149,7 +151,9 @@ Cada passo de comportamento termina jogável.
 | Quanto devolve | `floor(0,4 × gasto)`, com gasto = soma do que o jogador pagou de fato (com inflação) pela compra do item e pelos níveis ou pontos dele nesta posse; fonte grátis (técnica inicial, debug, baú, maestria, painel) vale 0 | Seção 1.2 ("devolve 40% do que foi gasto no item") | n |
 | Gasto do Roxo | Começa no preço pago pela União (60, ou 0 pelo baú) e soma os pontos do Roxo; não herda o gasto do Azul nem do Vermelho | A União já consome as duas peças | n |
 | Slot que fica vazio | Abandonar a técnica do slot 0 ou 1 deixa o buraco; as outras não mudam de tecla, e a próxima técnica entra no 1º slot vazio | Mudar a tecla de uma técnica sob o dedo do jogador é pior que o buraco | n |
-| Cartas abertas depois de abandonar | As mesmas cartas ficam; o preço e a etiqueta das cartas de item novo se refazem com a ocupação nova, e a carta que deixou de ser elegível (categoria ou pool cheio) continua à vista e é recusada na compra sem gastar | Não sortear de novo evita reroll grátis; refazer o preço mantém a carta honesta | n |
+| Cartas abertas depois de abandonar | As mesmas cartas ficam; o preço e a etiqueta das cartas de item novo se refazem com a ocupação nova; a carta que deixou de ser elegível continua à vista com a moldura cinza e a linha do nível trocada por `SEM VAGA` (item novo sem lugar) ou `FORA DA BUILD` (melhoria do item abandonado), e é recusada na compra sem gastar | Não sortear de novo evita reroll grátis; refazer o preço mantém a carta honesta; a carta morta precisa parecer morta antes do aperto | n |
+| Pergunta do Abandonar | `Abandonar <nome> Nv<nível>? +<devolução> fragmentos` (o nível mostra o que se perde; `+0` aparece na técnica inicial); o 2º `Enter` só vale 300 ms depois de a pergunta abrir; com a pergunta aberta a dica vira `Enter confirmar · A/D/W/S/T cancelar` | Na loja o `Enter` é "continuar": quem aperta duas vezes por hábito com a bandeja aberta abandonaria sem ler | n |
+| Item abandonado comprado de novo | Volta no Nv 1, sem pontos, ramo nem Despertar, e o livro de gastos começa do preço da compra nova | O abandono limpa o item (ABD-03, ABD-04) | n |
 | Denominador da aura | Níveis de vaga = soma dos níveis das técnicas equipadas (1 a 6), dos níveis de talento (1 a 3), dos pontos do Corpo (0 a 5), dos níveis da arma, da relíquia e do Domínio; fração = níveis ÷ 45, com teto 1 | 45 é a build cheia do feiticeiro (seção 3.3); o lutador cheio dá 39/45 (87%) e também chega ao estágio 4 | n |
 | Forma da aura | Estágio 0 sem aura; 1 fiapos azuis nos pés até 8 px de altura; 2 até 20 px; 3 até 36 px; 4 chama no corpo inteiro (até 60 px), sempre em cores da paleta, junto com o tom da força da F29 | Seção 4 ("de fiapos azuis nos pés a chama inteira"); o player HD tem ~60 px | n |
 | Parâmetros de debug | `perks=<id>[:<nível>][,...]` (nível 1 a 3, padrão 1; fora disso vira 1); `tech=` aceita até 3 técnicas; `focus=<item>.<eixo>` marca o eixo-foco; entradas que passariam do pool ou da categoria são ignoradas na ordem; lidos no reset da run | Os smokes montam a build sem comprar | n |
@@ -250,57 +254,72 @@ Tabela dos talentos da leva 1 (números do plano, seção 5.3; o texto do nível
 | Talento (`PerkId`) | Nv 1 | Nv 2 (sinal novo) | Nv 3 (gatilho novo) |
 | --- | --- | --- | --- |
 | Punho Pesado (`punhoPesado`) | golpe forte ×1,15 | ×1,30; poeira e anel no chão no golpe forte que acerta | ×1,45; a derrubada do golpe forte atordoa na parede (600 ms) |
-| Contra Afiado (`contraAfiado`) | Contra ×1,3 | ×1,5; o Contra perfeito deixa o alvo "aberto" 1000 ms (crítico ×1,25) | ×1,7; o Contra perfeito dá +15 de energia e 30% da recarga do último slot |
-| Passo Sombrio (`passoSombrio`) | golpe depois da esquiva perfeita ×1,3 | ×1,5; pós-imagem que faz o inimigo errar o próximo golpe | ×1,8; o golpe sombrio atravessa a guarda |
+| Contra Afiado (`contraAfiado`) | Contra ×1,3 | ×1,5; o Contra perfeito deixa o alvo "aberto" 1000 ms (crítico ×1,25) | ×1,7; o Contra perfeito dá +15 de energia (arco azul até a barra) e 30% da recarga do último slot (o ícone pisca) |
+| Passo Sombrio (`passoSombrio`) | golpe depois da esquiva perfeita ×1,3 | ×1,5; pós-imagem que faz o inimigo errar o próximo golpe | ×1,8; o golpe sombrio atravessa a guarda, com estilhaço roxo |
 | Executor (`executor`) | finalizador cura 12 | cura 20, número verde e brilho na barra de vida | cura 30 e +20 de carga de Domínio |
-| Refluxo (`refluxo`) | parry +8 de energia | +12 e arco azul do alvo até a barra | +18 e o parry zera a recarga do último slot (1 vez a cada 8000 ms) |
-| Condutor (`condutor`) | +1 de energia por golpe | +2 e faíscas azuis do alvo à barra a cada 3º golpe | +3; com a energia cheia, arco `micro` de `round(6 × hpMul)` no comum mais perto (até 2 por segundo) |
-| Proporção 7:3 (`proporcao`) | linha a 30% da barra; golpe abaixo dela é crítico ×1,5 | ×1,75 e o risco 7:3 no alvo | ×2; o abate por crítico marca o comum mais perto (próximo golpe nele é crítico) |
+| Refluxo (`refluxo`) | parry +8 de energia | +12 e arco azul do alvo até a barra | +18 e o parry zera a recarga do último slot, cujo ícone pisca (1 vez a cada 8000 ms) |
+| Condutor (`condutor`) | +1 de energia por golpe | +2 e faíscas azuis do alvo à barra a cada 3º golpe | +3; com a energia cheia, raio azul `micro` de `round(6 × hpMul)` até o comum mais perto (até 2 por segundo) |
+| Proporção 7:3 (`proporcao`) | linha a 30% da barra; golpe abaixo dela é crítico ×1,5 | ×1,75 e o risco 7:3 no alvo | ×2; o abate por crítico marca o comum mais perto com "7:3" na cabeça (próximo golpe nele é crítico) |
 | Hora Extra (`horaExtra`) | a cada 15 abates sem perder HP, +5% de dano, até +15% | a cada 12, até +25%, com o relógio em gomos | a cada 10, até +35%, com aura laranja no teto |
-| Zona Negra (`zonaNegra`) | janela do Kokusen +10 ms | +20 ms, Kokusen ×2,8 e o punho acende de preto na janela | +30 ms, Kokusen ×3,1 e anel `micro` de 48 px com 30% do Kokusen |
+| Zona Negra (`zonaNegra`) | janela do Kokusen +10 ms | +20 ms, Kokusen ×2,8 e o punho acende de preto na janela | +30 ms, Kokusen ×3,1 e anel preto `micro` de 48 px com 30% do Kokusen (só com o Divergente na mão) |
+
+Quando pisca (TAL-17): só estes momentos soltam `talent:<id>` e piscam o ícone.
+
+| Talento | Pisca quando |
+| --- | --- |
+| Punho Pesado | o golpe forte acerta |
+| Contra Afiado | o Contra acerta |
+| Passo Sombrio | o golpe sombrio abre a hitbox; no Nv 2 também quando a pós-imagem faz o inimigo errar |
+| Executor | a cura acontece |
+| Refluxo | o parry ou a Deflexão dá a energia |
+| Condutor | todo 3º golpe que acerta na rodada; no Nv 3 também quando o raio salta |
+| Proporção 7:3 | o crítico dela acerta; no Nv 3 também quando a marca é posta |
+| Hora Extra | ganha ou perde acúmulo |
+| Zona Negra | o Kokusen acerta |
 
 **Acceptance Criteria**:
 
 1. TAL-01: WHEN step 2a is committed THEN `Perks` SHALL keep a level from 1 to 3 per talent in acquisition order, with `levelOf(id)` (0 if not owned), `add(id)` (level 1, `false` if already owned), `levelUp(id)` (`false` at level 3 or if not owned), `list` as `{id, level}[]` in acquisition order, and `has(id)` true for any level.
 2. TAL-02: WHEN step 2a is committed THEN, with every owned talent at level 1, the strike multipliers, energy gains and heals SHALL equal today's numbers, and the smokes `build`, `shop`, `power`, `vows` and `arsenal` SHALL pass unchanged.
 3. TAL-03: WHEN step 2c is committed THEN `src/data/perks.ts` SHALL hold the 9 talents of the table above, each with its build affinity, one value per level and one card text per level, and the shop SHALL offer the 3 new talents from the round 2 shop like the other 6.
-4. TAL-04: WHILE a talent is owned below level 3 the shop SHALL be able to offer its level card at 16 (to level 2) or 24 (to level 3) times the inflation, and buying it SHALL raise that talent by one level.
+4. TAL-04: WHILE a talent is owned below level 3 the shop SHALL be able to offer its level card at `round(16 × inflation)` (to level 2) or `round(24 × inflation)` (to level 3), and buying it SHALL raise that talent by one level.
 5. TAL-05: The talent level card preview SHALL show one line with the number change (`Forte +15%→+30%` style) and one line naming the new sign or trigger of the next level, each at most 20 characters.
-6. TAL-06: WHILE a talent is owned below level 3 the option "nível de talento" SHALL be a candidate of the F33 boss chest, naming one talent drawn by `chestRng` among those below level 3, and choosing it SHALL raise that talent by one level with no fragment spent.
+6. TAL-06: WHILE a talent is owned below level 3 the option "nível de talento" SHALL be a candidate of the F33 boss chest, naming one talent drawn by `chestRng` among those below level 3 that the shop could offer a level card of (TAL-19), and choosing it SHALL raise that talent by one level with no fragment spent.
 7. TAL-07: WHEN a heavy strike hits THEN its damage SHALL be multiplied by 1.15, 1.30 or 1.45 for Punho Pesado at level 1, 2 or 3.
 8. TAL-07: WHILE Punho Pesado is at level 2 or more, WHEN a heavy strike hits THEN a dust puff and a ground ring SHALL appear at the hit point.
 9. TAL-07: WHILE Punho Pesado is at level 3, WHEN a heavy strike knocks a common enemy down THEN that enemy SHALL follow the F30 wall rule (600 ms on the ground from the wall touch).
 10. TAL-08: WHEN a Contra hits THEN its damage SHALL be multiplied by 1.3, 1.5 or 1.7 for Contra Afiado at level 1, 2 or 3.
 11. TAL-08: WHILE Contra Afiado is at level 2 or more, WHEN a perfect Contra hits THEN its target SHALL show the "aberto" outline for 1000 ms and every player strike on it in that time SHALL be a critical hit ×1.25.
-12. TAL-08: WHILE Contra Afiado is at level 3, WHEN a perfect Contra hits THEN the player SHALL gain 15 energy and the slot `loadout.lastSlot` SHALL have 30% of its full resolved cooldown refunded.
+12. TAL-08: WHILE Contra Afiado is at level 3, WHEN a perfect Contra hits THEN the player SHALL gain 15 energy, shown by the blue arc of TAL-11 from the target to the energy bar, and the slot `loadout.lastSlot` SHALL have 30% of its full resolved cooldown refunded, with its `EnergyHud` icon flashing white for 250 ms.
 13. TAL-09: WHEN the first strike after a perfect dodge opens its hitbox THEN its damage SHALL be multiplied by 1.3, 1.5 or 1.8 for Passo Sombrio at level 1, 2 or 3, and the shadow step SHALL be spent whether it hits or not, as today.
 14. TAL-09: WHILE Passo Sombrio is at level 2 or more, WHEN a perfect dodge happens THEN an afterimage SHALL stay 1500 ms at the dodge point, and the next attack of the dodged enemy started in that time SHALL deal no damage to the player and remove the afterimage.
-15. TAL-09: WHILE Passo Sombrio is at level 3 the shadow strike SHALL ignore the guard of a common enemy and the block of the boss.
+15. TAL-09: WHILE Passo Sombrio is at level 3 the shadow strike SHALL ignore the guard of a common enemy and the block of the boss, and WHEN it hits a guarding common or a blocking boss THEN a purple shatter burst SHALL appear at the hit point.
 16. TAL-10: WHEN a finisher hits THEN Executor SHALL heal 12, 20 or 30 at level 1, 2 or 3.
 17. TAL-10: WHILE Executor is at level 2 or more, WHEN it heals THEN a green `heal` number with the healed value SHALL appear over the player and the player HP bar SHALL glow for 400 ms.
 18. TAL-10: WHILE Executor is at level 3, WHEN a finisher hits THEN the domain charge SHALL grow by 20 under the F31 charge rules.
 19. TAL-11: WHEN a `parry` or `deflect` happens THEN Refluxo SHALL give 8, 12 or 18 energy at level 1, 2 or 3.
 20. TAL-11: WHILE Refluxo is at level 2 or more, WHEN it gives energy THEN a blue arc SHALL travel in 300 ms from the parried enemy to the energy bar.
-21. TAL-11: WHILE Refluxo is at level 3, WHEN a `parry` or `deflect` happens and 8000 ms passed since the last time this rule fired THEN the cooldown of `loadout.lastSlot` SHALL become 0, and IF there is no last slot or it is empty THEN nothing SHALL change and the 8000 ms SHALL not restart.
+21. TAL-11: WHILE Refluxo is at level 3, WHEN a `parry` or `deflect` happens and 8000 ms passed since the last time this rule fired THEN the cooldown of `loadout.lastSlot` SHALL become 0 with its `EnergyHud` icon flashing white for 250 ms, and IF there is no last slot or it is empty THEN nothing SHALL change and the 8000 ms SHALL not restart.
 22. TAL-12: WHEN a strike hits THEN Condutor SHALL give 1, 2 or 3 energy at level 1, 2 or 3, on top of `CE.meleeGain`.
 23. TAL-12: WHILE Condutor is at level 2 or more, WHEN every 3rd strike hit of the round lands THEN blue sparks SHALL travel from the target to the energy bar.
-24. TAL-12: WHILE Condutor is at level 3, WHEN a strike hits with the energy full before its gain THEN a `micro` hit of `round(6 × hpMul)` SHALL jump to the nearest living common enemy within 160 px of the target other than the target, at most 2 times per 1000 ms.
+24. TAL-12: WHILE Condutor is at level 3, WHEN a strike hits with the energy full before its gain THEN a `micro` hit of `round(6 × hpMul)` SHALL jump to the nearest living common enemy within 160 px of the target other than the target, drawn as a blue zigzag line from the target to it for 120 ms, at most 2 times per 1000 ms.
 25. TAL-13: WHILE Proporção 7:3 is owned the HP bar of every common enemy and of the boss SHALL show a yellow line at 30% of its width, and a strike on a target whose HP before the hit is at most 30% of its max SHALL be a critical hit ×1.5, ×1.75 or ×2 at level 1, 2 or 3.
 26. TAL-13: WHILE Proporção 7:3 is at level 2 or more, WHEN its critical hit lands THEN a 7:3 slash mark SHALL be drawn on the target for 300 ms.
-27. TAL-13: WHILE Proporção 7:3 is at level 3, WHEN a critical hit kills THEN the nearest living common enemy within 200 px of the dead one SHALL be marked for 5000 ms, and the next player strike on it SHALL be a critical hit ×2 and remove the mark.
+27. TAL-13: WHILE Proporção 7:3 is at level 3, WHEN a critical hit kills THEN the nearest living common enemy within 200 px of the dead one SHALL be marked for 5000 ms with a yellow "7:3" sign over its head, and the next player strike on it SHALL be a critical hit ×2 and remove the mark and the sign.
 28. TAL-14: WHILE Hora Extra is owned each kill SHALL add 1 to its counter, and WHEN the counter reaches 15, 12 or 10 at level 1, 2 or 3 THEN it SHALL add one stack of +5% damage up to 3, 5 or 7 stacks and reset the counter to 0.
-29. TAL-14: WHEN the player loses HP THEN the Hora Extra stacks SHALL become `floor(stacks / 2)` and the counter SHALL reset to 0, and the stacks and counter SHALL carry over between rounds and reset only on a new run.
+29. TAL-14: WHEN the player loses HP to a hit that was not defended (guard chip and vow costs do not count, as the F30 Fúria) THEN the Hora Extra stacks SHALL become `floor(stacks / 2)` and the counter SHALL reset to 0, and the stacks and counter SHALL carry over between rounds and reset only on a new run.
 30. TAL-14: WHILE Hora Extra is at level 3 and at its stack cap an orange aura SHALL show around the player.
 31. TAL-15: WHEN a Kokusen window is rolled THEN its width SHALL grow by 10, 20 or 30 ms for Zona Negra at level 1, 2 or 3, and the Kokusen multiplier SHALL be 2.5, 2.8 or 3.1 at level 1, 2 or 3.
 32. TAL-15: WHILE Zona Negra is at level 2 or more the fist of the player SHALL glow black while the Kokusen window is open.
-33. TAL-15: WHILE Zona Negra is at level 3, WHEN a Kokusen lands THEN every other common enemy within 48 px of the target SHALL take a `micro` hit of 30% of the Kokusen damage, rounded.
-34. TAL-16: WHEN two or more critical sources apply to one hit THEN the damage SHALL be the resolved damage times the largest critical multiplier only, rounded, and the damage number SHALL show the `crit` kind.
-35. TAL-17: WHEN a talent effect applies THEN the event `talent:<id>` SHALL be emitted in that frame.
+33. TAL-15: WHILE Zona Negra is at level 3, WHEN a Kokusen lands THEN every other common enemy within 48 px of the target SHALL take a `micro` hit of 30% of the Kokusen damage, rounded, and a black ring of 48 px SHALL be drawn around the target for 200 ms.
+34. TAL-16: WHEN two or more critical sources apply to one hit THEN the damage SHALL be the resolved damage times the largest critical multiplier only, rounded, and the damage number SHALL show the `crit` kind; a technique hit and the Kokusen SHALL never be critical.
+35. TAL-17: WHEN the moment listed for a talent in the table "Quando pisca" happens THEN the event `talent:<id>` SHALL be emitted in that frame, and no other moment SHALL emit it (the Condutor SHALL not emit on the 1st and 2nd hits of each 3).
 36. TAL-18: The debug snapshot SHALL report `build.talents` as `{id, level}[]` and `build.overtime` as `{stacks, kills}`, keeping `build.perks` as the list of ids.
+37. TAL-19: WHILE the Divergente is not equipped the shop SHALL offer no new Zona Negra card and no Zona Negra level card, and WHILE an owned Zona Negra has no Divergente equipped its `TalentStrip` icon SHALL be drawn at 40% alpha and it SHALL keep its level.
 
 **Independent Test**: `talents.smoke.mjs` com `perks=punhoPesado:3,proporcao:2,horaExtra:2,zonaNegra:3`: golpe forte
 derruba e atordoa na parede; o comum abaixo de 30% leva crítico amarelo; os abates enchem os gomos; a janela do Kokusen
-fica 30 ms mais larga; testes puros por talento nos dois lados de cada limiar.
+fica 30 ms mais larga (com o Divergente; sem ele, o ícone da Zona Negra fica apagado); o Condutor pisca só no 3º golpe; testes puros por talento nos dois lados de cada limiar.
 
 ---
 
@@ -345,7 +364,7 @@ para a loja me oferecer o que eu estou montando.
 9. BBR-07: WHEN an axis is marked on an item THEN that item SHALL become the focus item and any focus mark on another item SHALL return to `automático`.
 10. BBR-08: WHILE a focus item is marked, card 0 SHALL use it as the F30 focus item, its axis card SHALL offer the marked axis as the focus axis, and the F33 free point and free axis pages SHALL use it as their focus option; WHILE no item is marked the F30 automatic rule SHALL hold, with ties broken slot 0, slot 1, slot 2, Corpo.
 11. BBR-08: IF the marked axis reaches its cap THEN that item SHALL return to `automático` and stay the focus item.
-12. BBR-09: The shop hint SHALL read `1-4 comprar · W/S eixo · T build · R rerolar (n) · Enter continuar` with the tray closed and `A/D item · W/S foco · Enter abandonar · T fechar` with it open.
+12. BBR-09: The shop hint SHALL read `1-4 comprar · W/S eixo · T build · R rerolar (n) · Enter continuar` with the tray closed and `A/D item · W/S foco · Enter abandonar · T fechar` with it open, leaving out `W/S foco` WHILE the selected item has no axis and `Enter abandonar` WHILE it cannot be abandoned, and SHALL read `Enter confirmar · A/D/W/S/T cancelar` WHILE the abandon question is open.
 13. BBR-10: WHILE 3 techniques, the Corpo and 1 talent are owned and the highest level technique has no mark, the focus axis of that technique SHALL appear in at least 60% of the shops over 1000 seeds.
 14. BBR-11: The focus marks SHALL reset on a new run, and the debug parameter `focus=<item>.<axis>` SHALL mark that axis at the run reset, ignoring an unknown item or axis.
 15. BBR-12: The debug snapshot SHALL report `buildBar: {open, selected, confirm, focus}` with `focus` as `{item, axis}` or `null`.
@@ -365,20 +384,20 @@ trocar de rumo sem ficar preso ao erro até morrer.
 
 **Acceptance Criteria**:
 
-1. ABD-01: WHILE the tray is open, WHEN `Enter` is pressed on an abandonable item THEN the tray SHALL ask `Abandonar <nome>? +<n> fragmentos`, WHEN `Enter` is pressed again THEN the item SHALL be abandoned, and WHEN `A`, `D`, `W`, `S` or `T` is pressed instead THEN the question SHALL close with nothing abandoned.
+1. ABD-01: WHILE the tray is open, WHEN `Enter` is pressed on an abandonable item THEN the tray SHALL ask `Abandonar <nome> Nv<level>? +<n> fragmentos` (with `+0` when the refund is 0), WHEN `Enter` is pressed again at least 300 ms after the question opened THEN the item SHALL be abandoned, an earlier `Enter` SHALL be ignored, and WHEN `A`, `D`, `W`, `S` or `T` is pressed instead THEN the question SHALL close with nothing abandoned.
 2. ABD-02: WHEN an item is abandoned THEN the wallet SHALL gain `floor(0.4 × spent)`, with `spent` the fragments actually paid (inflation included) for buying that item and for its levels or points since it was last acquired, and fragments of free sources (starting technique, debug, chest, mastery, choice panel) SHALL count 0.
 3. ABD-02: The spent ledger of the Roxo SHALL start at the price paid for the União (60, or 0 from the chest) and SHALL not inherit the ledger of the Azul nor of the Vermelho.
 4. ABD-03: WHEN a technique is abandoned THEN its slot SHALL become empty with the other slots unchanged, its axis points, branch and Despertar SHALL be cleared (`axes.resetItem`), its cooldown SHALL become 0, and its pending choices SHALL leave the choice queue, while its mastery milestones per `TechId` SHALL stay.
 5. ABD-04: WHEN a talent is abandoned THEN it SHALL leave `Perks` and its run state (Hora Extra stacks and counter, marks, afterimage, Refluxo timer) SHALL be cleared.
-6. ABD-05: WHEN the relic or the weapon is abandoned THEN that arsenal slot SHALL become empty and the `StatsDirector` SHALL recompute the multipliers and the power points in the same frame.
+6. ABD-05: WHEN the relic or the weapon is abandoned THEN that arsenal slot SHALL become empty and the shop SHALL be able to offer a new one from the next draw; WHEN the relic, the weapon or a talent is abandoned THEN the `StatsDirector` SHALL recompute the multipliers and the power points in the same frame (Punho Pesado takes its 2 force points with it).
 7. ABD-06: IF `Enter` is pressed on the Corpo or on the Domain THEN the tray SHALL show `Não sai da build` and nothing SHALL change.
-8. ABD-07: WHEN an item is abandoned THEN the open cards SHALL stay the same cards, the price and the `OCUPA VAGA` line of every new item card SHALL be recomputed from the new occupancy, and a card that stopped being eligible SHALL stay visible and be refused on purchase with no fragment spent.
+8. ABD-07: WHEN an item is abandoned THEN the open cards SHALL stay the same cards, the price and the `OCUPA VAGA` line of every new item card SHALL be recomputed from the new occupancy, and a card that stopped being eligible SHALL stay visible with a grey frame and its level line reading `SEM VAGA` (a new item with no room) or `FORA DA BUILD` (an upgrade of the abandoned item), and SHALL be refused on purchase with no fragment spent.
 9. ABD-08: WHEN the focus item is abandoned THEN the focus mark SHALL clear and the automatic rule SHALL hold.
 10. ABD-09: WHEN an item is abandoned THEN the event `abandon:<item>:<refund>` SHALL be emitted.
 
 **Independent Test**: teste puro do livro de gastos (Vermelho comprado por 34 na r1 e com um ponto de 13 na r2:
 abandonar devolve `floor(0,4 × 47)` = 18; técnica inicial devolve 0); `build-bar.smoke.mjs`: `T`, `Enter`, `Enter` no
-Vermelho esvazia o slot 0, a carteira sobe o devolvido e o preço do talento novo à vista cai `round(8 × inflação)`.
+Vermelho (o 2º depois de 300 ms; dois `Enter` em 100 ms não abandonam) esvazia o slot 0, a carteira sobe o devolvido e o preço do talento novo à vista cai `round(8 × inflação)`.
 
 ---
 
@@ -447,6 +466,9 @@ build enche, para sentir na tela que fiquei mais forte desde a r1.
 - IF the debug `perks=` lists a talent twice THEN the second entry SHALL be ignored.
 - WHEN the third slot holds a technique with a `slotHeld` branch (Contido, Lapso, Massa) THEN holding `O` or `B` SHALL work as holding `L` or `I`.
 - IF an item is abandoned while it has a pending branch from a purchase in this visit THEN the pending branch SHALL be dropped and the next `ChoicePanel` SHALL not show it.
+- WHEN an abandoned item is bought again THEN it SHALL come back at level 1 with no points, branch or Despertar, and its spent ledger SHALL start at the new price.
+- WHEN `Enter` is pressed twice within 300 ms on an abandonable item THEN the question SHALL stay open and nothing SHALL be abandoned.
+- IF the Divergente leaves the build (abandoned or consumed) while Zona Negra is owned THEN Zona Negra SHALL stay with its level, its icon SHALL dim (TAL-19), and no Zona Negra level card SHALL be offered until a Divergente is equipped again.
 
 ---
 
@@ -454,9 +476,9 @@ build enche, para sentir na tela que fiquei mais forte desde a r1.
 
 | Dimension | Resolução |
 | --- | --- |
-| Input validation & bounds | POL-01 (7, 3 e 6), POL-05 (compra recusada sem gasto), POL-10 e BBR-11 (`perks=` e `focus=` inválidos ignorados), TRS-04 (4ª técnica ignorada), TAL-01 (nível 1 a 3), BEF-03 e BEF-04 (tetos de 30 ms e ×3,4), AUR-01 (teto 1) |
+| Input validation & bounds | POL-01 (7, 3 e 6), TAL-19 (Zona Negra só com o Divergente), POL-05 (compra recusada sem gasto), POL-10 e BBR-11 (`perks=` e `focus=` inválidos ignorados), TRS-04 (4ª técnica ignorada), TAL-01 (nível 1 a 3), BEF-03 e BEF-04 (tetos de 30 ms e ×3,4), AUR-01 (teto 1) |
 | Failure / partial-failure states | A compra continua "checar → gastar → aplicar" (SHOP-10); o abandono devolve e remove no mesmo passo (ABD-02 a ABD-05); sem I/O, o resto é N/A |
-| Idempotency / retry / duplicate handling | TAL-01 (`add` devolve `false` se já tinha), ABD-01 (dois `Enter` para confirmar), edge case do `perks=` repetido, TSP-03 (o piscar reinicia, não empilha) |
+| Idempotency / retry / duplicate handling | TAL-01 (`add` devolve `false` se já tinha), ABD-01 (dois `Enter` para confirmar, o 2º só depois de 300 ms), edge case do `perks=` repetido, TSP-03 (o piscar reinicia, não empilha) |
 | Auth boundaries & rate limits | TAL-12 (2 arcos por segundo), TAL-11 (1 vez a cada 8000 ms); auth N/A porque é jogo local |
 | Concurrency / ordering | TRS-02 (o slot mais baixo vence no mesmo quadro), BBR-05 (bandeja só sem `VowPanel` e `ChoicePanel`), TAL-16 (só o maior crítico) |
 | Data lifecycle / expiry | TAL-14 (Hora Extra dura a run), TAL-08 (1000 ms do "aberto"), TAL-09 (1500 ms da pós-imagem), TAL-13 (5000 ms da marca), edge case do reset da run |
@@ -516,6 +538,7 @@ build enche, para sentir na tela que fiquei mais forte desde a r1.
 | TAL-16 | P1: Talentos que mudam a cada nível | Tasks | Pending |
 | TAL-17 | P1: Talentos que mudam a cada nível | Tasks | Pending |
 | TAL-18 | P1: Talentos que mudam a cada nível | Tasks | Pending |
+| TAL-19 | P1: Talentos que mudam a cada nível | Tasks | Pending |
 | TSP-01 | P1: A faixa de talentos mostra quem agiu | Tasks | Pending |
 | TSP-02 | P1: A faixa de talentos mostra quem agiu | Tasks | Pending |
 | TSP-03 | P1: A faixa de talentos mostra quem agiu | Tasks | Pending |
@@ -555,7 +578,7 @@ build enche, para sentir na tela que fiquei mais forte desde a r1.
 | AUR-04 | P2: A aura conta quanto da build está cheia | Tasks | Pending |
 | AUR-05 | P2: A aura conta quanto da build está cheia | Tasks | Pending |
 
-**Coverage:** 84 total, 84 mapped to tasks, 0 unmapped (mapa em `tasks.md`, seção "Requirement Coverage").
+**Coverage:** 85 total, 85 mapped to tasks, 0 unmapped (mapa em `tasks.md`, seção "Requirement Coverage").
 
 ---
 
@@ -563,7 +586,7 @@ build enche, para sentir na tela que fiquei mais forte desde a r1.
 
 **Testes novos** (arquivo novo para todo sistema novo; nenhum teste da lista de exceções do `max-lines` cresce):
 - `tests/core/skillSlots.test.ts` (SIX-01, TRS-01, POL-01 a POL-08), `tests/core/perksLevel.test.ts` (TAL-01, TAL-04),
-  `tests/core/talents.test.ts` (TAL-07 a TAL-16, regras puras por talento), `tests/core/overtime.test.ts` (TAL-14),
+  `tests/core/talents.test.ts` (TAL-07 a TAL-17, regras puras por talento, com o momento que pisca), `tests/core/overtime.test.ts` (TAL-14),
   `tests/core/buildEffects.test.ts` (BEF-01 a BEF-05), `tests/core/buildTray.test.ts` (BBR-05 a BBR-08, ABD-01),
   `tests/core/spentLedger.test.ts` (ABD-02, ABD-03), `tests/core/buildAura.test.ts` (AUR-01, AUR-02) e
   `tests/core/shopFocus.test.ts` (BBR-10, a meta de 1000 seeds).
@@ -575,7 +598,7 @@ build enche, para sentir na tela que fiquei mais forte desde a r1.
 
 **Testes refeitos:** `build` (Perks com nível, `buildPoints` por nível), `statSheet` (talentos pelo agregador; os
 números de Nv 1 mudam no passo 2c), `loadout` e `loadoutAxes` (3 slots; o piso sai no passo 4), `cast`, `mastery`,
-`evolution` (3 slots), `shop`, `shopAxes` (texto `Nv a→b`, carta 1 do pool), `shopPricing` (acréscimo do pool),
+`evolution` (3 slots), `shop`, `shopAxes` (texto `Nv a→b`, carta 1 do pool, `SEM VAGA` e `FORA DA BUILD`), a elegibilidade da loja (Zona Negra só com o Divergente, TAL-19), `shopPricing` (acréscimo do pool),
 `bossChest` (opção de talento), `damageNumber` (tipo `heal`), `kokusen` (janela e multiplicador pelo agregador) e
 `debugApi` (campos novos).
 
