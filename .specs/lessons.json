@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 79,
+  "next_id": 80,
   "lessons": [
     {
       "id": "L-001",
@@ -1420,6 +1420,24 @@
       ],
       "created": "2026-10-08T17:51:53Z",
       "last_seen": "2026-10-08T17:51:53Z"
+    },
+    {
+      "id": "L-079",
+      "key": "surviving_mutant::na regra pura teste cada guarda com um caso em que so ela decide vizinho ja processado mais perto rng que muda o resultado ponto dentro do dx mas fora da distancia segundo evento com o estado ainda aberto",
+      "text": "Na regra pura, teste cada guarda com um caso em que só ela decide: vizinho já processado mais perto, Rng que muda o resultado, ponto dentro do dx mas fora da distância, segundo evento com o estado ainda aberto.",
+      "signal": "surviving_mutant",
+      "scope": "src/core tests/core",
+      "status": "candidate",
+      "features": [
+        "regras-tecnicas-leva1"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "RES-06a, RES-12a, FAL-03c, TRL-06-boo (src/core tests/core)"
+      ],
+      "created": "2026-10-15T04:05:23Z",
+      "last_seen": "2026-10-15T04:05:23Z"
     }
   ]
 }
