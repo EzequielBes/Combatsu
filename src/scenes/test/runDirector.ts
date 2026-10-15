@@ -55,6 +55,7 @@ export class RunDirector {
   applyRunCommand(cmd: RunCommand): void {
     // Mundo modular (ARE-09..11, TRV-03, KON-01/03): o `AreaDirector` reconstrói a área antes do tratamento de hoje; na sala é inerte.
     this.s.area.onCommand(cmd);
+    this.record.onCommand(cmd);
     switch (cmd.type) {
       case 'startRun':
         this.onStartRun();
@@ -87,14 +88,6 @@ export class RunDirector {
         // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
         if (debugParam('noshop') === '1') this.s.run.closeShop();
         else this.s.shopDirector.openShop(cmd.round);
-        break;
-      case 'gameOver':
-        this.s.hud.setCenter([
-          `Rodada alcançada: ${cmd.round}`,
-          `Abates: ${cmd.kills}`,
-          `Fragmentos: ${this.s.wallet.fragments}`,
-          'J / Enter para tentar de novo',
-        ]);
         break;
     }
   }

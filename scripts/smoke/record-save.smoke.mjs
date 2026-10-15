@@ -1,5 +1,5 @@
 // Save do recorde (SAVE-*, REC-*) em HD no mundo modular. Parte de carga: cada bloco grava a chave à mão, abre a
-// página com a sua query e confere `snapshot().record`. O runner acrescenta `nosave=1` a toda URL sem `nosave=` nem
+// página com a sua query e confere `snapshot().record`. Parte de morte: morre sem inimigos (`spawn=0`) e lê a chave. O runner acrescenta `nosave=1` a toda URL sem `nosave=` nem
 // `record=`; aqui cada URL diz o que quer. A chave é limpa no começo e no fim para não vazar para outro cenário.
 const KEY = 'combatsu.save';
 const RECORD = {
@@ -38,6 +38,25 @@ export default async function ({ page, baseUrl, assert }) {
   const writeKey = (value) =>
     page.evaluate((k, v) => (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v)), KEY, value);
   const show = (r) => JSON.stringify({ best: r.best, storage: r.storage, locked: r.locked });
+  /** Começa a run sem inimigos (0 abates) e mata o player pela tecla 3; devolve `record` no `gameOver`. */
+  const die = async (query) => {
+    await open(`spawn=0&${query}`);
+    await page.keyboard.press('KeyJ', { delay: 50 });
+    let snap = await page.evaluate(() => {
+      window.__game.step(300);
+      return window.__game.snapshot();
+    });
+    await page.keyboard.press('Digit3', { delay: 50 });
+    for (let i = 0; i < 30 && snap.run.state !== 'gameOver'; i++) {
+      snap = await page.evaluate(() => {
+        window.__game.step(50);
+        return window.__game.snapshot();
+      });
+    }
+    if (snap.run.state !== 'gameOver')
+      throw new Error(`o player deveria morrer (${query}): ${JSON.stringify(snap.run)}`);
+    return snap.record;
+  };
 
   // A origem precisa estar aberta para mexer no `localStorage`.
   await open('nosave=1');
@@ -96,6 +115,79 @@ export default async function ({ page, baseUrl, assert }) {
     assert(JSON.stringify(r.best) === JSON.stringify(RECORD), `R: o recorde deveria continuar: ${show(r)}`);
     assert(r.marker.visible === false && r.panel.visible === false, `R: vistas novas escondidas: ${JSON.stringify(r)}`);
     assert((await readKey()) === VALID, 'R: a chave não pode mudar');
+
+    // REC-01/04, SAVE-02: sem recorde, a morte na r1 vira o recorde com a build daquele instante e grava a chave.
+    await writeKey(null);
+    const buildQuery = 'tech=azul:2&perks=executor&arsenal=manoplas,manoplas,bastao&vows=semGuarda';
+    r = await die(`nosave=0&${buildQuery}`);
+    const firstKey = await readKey();
+    const expected = {
+      version: 1,
+      record: {
+        round: 1,
+        kills: 0,
+        build: {
+          techniques: [{ id: 'azul', level: 2 }],
+          perks: ['executor'],
+          relic: { id: 'manoplas', level: 2 },
+          weapon: { id: 'bastao', level: 1 },
+          vows: ['semGuarda'],
+        },
+      },
+    };
+    assert(
+      firstKey !== null && JSON.stringify(JSON.parse(firstKey)) === JSON.stringify(expected),
+      `REC-01/04: chave gravada na morte: ${firstKey}`,
+    );
+    assert(r.lastDeathRecord === true, `REC-10: a morte deveria marcar recorde novo: ${JSON.stringify(r)}`);
+    assert(r.panel.lines.includes('Recorde!'), `END-10: painel com Recorde!: ${JSON.stringify(r.panel.lines)}`);
+
+    // REC-05: recarregar traz o mesmo recorde.
+    r = await open('nosave=0');
+    assert(
+      JSON.stringify(r.best) === JSON.stringify(expected.record) && r.storage === 'local',
+      `REC-05: recarregar deveria trazer o recorde gravado: ${show(r)}`,
+    );
+
+    // REC-03: morrer de novo na r1 com 0 abates empata; a chave fica igual byte a byte e o painel mostra o recorde.
+    r = await die('nosave=0');
+    assert((await readKey()) === firstKey, 'REC-03: empate não pode reescrever a chave');
+    assert(r.lastDeathRecord === false, `REC-03: empate não é recorde novo: ${JSON.stringify(r)}`);
+    assert(
+      r.panel.lines.includes('Recorde: r1') && !r.panel.lines.includes('Recorde!'),
+      `END-11: painel com Recorde: r1: ${JSON.stringify(r.panel.lines)}`,
+    );
+
+    // REC-09: com `round=3` a morte na r3 seria melhor, mas não grava nem troca o recorde.
+    r = await die('nosave=0&round=3');
+    assert((await readKey()) === firstKey, 'REC-09: round=3 não pode gravar');
+    assert(r.lastDeathRecord === false && r.best.round === 1, `REC-09: round=3 não troca o recorde: ${show(r)}`);
+
+    // REC-06: R no meio da run (sem chave) não grava nada.
+    await writeKey(null);
+    await open('nosave=0&spawn=0');
+    await page.keyboard.press('KeyJ', { delay: 50 });
+    await page.evaluate(() => window.__game.step(300));
+    await page.keyboard.press('KeyR', { delay: 50 });
+    await page.evaluate(() => window.__game.step(100));
+    assert((await readKey()) === null, 'REC-06: R durante a run não pode gravar');
+
+    // SAVE-07 na escrita: `setItem` lançando (só nas páginas com `failset=1`) cai para `'memory'`, o painel comemora e
+    // o recorde em memória é atualizado.
+    await page.evaluateOnNewDocument(() => {
+      if (!location.search.includes('failset=1')) return;
+      Storage.prototype.setItem = () => {
+        throw new Error('armazenamento cheio');
+      };
+    });
+    r = await die('nosave=0&failset=1');
+    assert(
+      r.storage === 'memory' && r.best?.round === 1 && r.lastDeathRecord === true,
+      `SAVE-07: setItem lançando: ${show(r)}`,
+    );
+    assert(r.panel.lines.includes('Recorde!'), `SAVE-07: painel com Recorde!: ${JSON.stringify(r.panel.lines)}`);
+    await open('nosave=1');
+    assert((await readKey()) === null, 'SAVE-07: setItem lançando não grava');
 
     // SAVE-04: save de versão mais nova trava a escrita, começa sem recorde e a chave fica intacta.
     const newer = JSON.stringify({ version: 9, record: RECORD });

@@ -356,10 +356,10 @@ escondidos) e `snapshot()`; tipo `RecordSnapshot` em `game/recordSnapshot.ts`. L
 
 **Done when**:
 
-- [ ] `record-save.smoke.mjs`, parte de morte: morrer na r1 → chave `{ version: 1, record }` escrita, `lastDeathRecord`; recarregar → `best.round = 1`; morrer de novo na r1 com 0 abates → chave igual byte a byte (empate); `round=3&nosave=0` → não grava; R durante a run não grava; `setItem` lançando → painel com `Recorde!`, `storage: 'memory'`, `best` atualizado
-- [ ] `record-end.smoke.mjs` (novo): morrer sem dano → painel visível com `Rodada alcançada`, `Abates`, `Fragmentos`, `Dano: nenhum`, última linha; `hud.center === null`; J em 999 ms fica em `gameOver`; J em 1000 ms → `roundActive` na r1, `player.dead = false`, vida cheia antes de 3000 ms da morte (tempo de jogo), painel escondido, `damage` zerado, sem recarregar a página
-- [ ] Smokes `hud`, `drops`, `run-loop`, `world-restart`, `vows`, `build` verdes
-- [ ] `runDirector.ts` termina com menos linhas efetivas que antes; gate verde
+- [x] `record-save.smoke.mjs`, parte de morte: morrer na r1 → chave `{ version: 1, record }` escrita (com a build da URL: técnica, passiva, relíquia e arma com nível, voto), `lastDeathRecord`; recarregar → `best.round = 1`; morrer de novo na r1 com 0 abates → chave igual byte a byte (empate); `round=3&nosave=0` → não grava; R durante a run não grava; `setItem` lançando → painel com `Recorde!`, `storage: 'memory'`, `best` atualizado
+- [x] `record-end.smoke.mjs` (novo): morrer sem dano → painel visível com `Rodada alcançada`, `Abates`, `Fragmentos`, `Dano: nenhum`, última linha; `hud.center === null`; J antes de 1000 ms fica em `gameOver`; J em 1000 ms → `roundActive` na r1, `player.dead = false`, vida cheia antes de 3000 ms da morte (tempo de jogo), painel escondido, `damage` zerado, sem recarregar a página. O jogo anda em passos de 1000/60 ms: o "999 ms" vira o J aos 966,7 ms (58 passos), o último cujo update seguinte ainda cai antes de 1000 ms; aos 983,3 ms o update seguinte já é o de 1000 ms. Sem inimigos nada soma no registro antes da T13, então o `damage` zerado só vira prova de reset com a T13/T14 (o reset em si é teste de unidade da T5)
+- [x] Smokes `hud`, `drops`, `run-loop`, `world-restart`, `vows`, `build` verdes
+- [x] `runDirector.ts` termina com menos linhas efetivas que antes (7 a menos: sai o `case 'gameOver'`, entra a chamada ao diretor); gate verde
 
 **Tests**: smoke
 **Gate**: full

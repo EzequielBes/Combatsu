@@ -1,6 +1,8 @@
 import type Phaser from 'phaser';
 import { RecordBook } from '../../core/recordBook';
-import { DamageLedger } from '../../core/runSummary';
+import type { RunCommand } from '../../core/run';
+import { DamageLedger, summaryLines } from '../../core/runSummary';
+import { serializeSave, type LeveledId, type RunRecord } from '../../core/save';
 import { RecordMarker } from '../../game/RecordMarker';
 import type { RecordSnapshot } from '../../game/recordSnapshot';
 import { RunSummaryPanel } from '../../game/RunSummaryPanel';
@@ -38,6 +40,55 @@ export class RecordDirector {
     }
     this.marker = new RecordMarker(this.s, layer);
     this.panel = new RunSummaryPanel(this.s, layer);
+  }
+
+  /** Comandos da `Run`: run nova zera o registro e esconde o painel; a morte grava o recorde e abre o painel. */
+  onCommand(cmd: RunCommand): void {
+    if (cmd.type === 'startRun') {
+      this.ledger.reset();
+      this.book.startRun();
+      this.panel.hide();
+    } else if (cmd.type === 'gameOver') this.onDeath(cmd.round, cmd.kills);
+  }
+
+  /**
+   * A morte (REC-01..04, REC-09, END-01..12): monta o `RunRecord` com a build daquele instante, deixa o livro decidir
+   * se virou recorde e grava uma vez se ele pedir (nunca com `nosave`/`record=` de debug nem sobre um save mais novo).
+   * Uma escrita que lança põe a porta em `'memory'` e o recorde em memória fica (SAVE-07). Depois esconde o texto
+   * central e o marcador e mostra o painel.
+   */
+  private onDeath(round: number, kills: number): void {
+    const record: RunRecord = { round, kills, build: this.buildAtDeath() };
+    const firstRound = this.s.runDirector.firstRoundForDebug();
+    const { newRecord, write } = this.book.death(record, { canRecord: firstRound === undefined || firstRound <= 1 });
+    const loaded = this.loaded;
+    if (write && loaded && loaded.storage !== 'off' && !loaded.locked)
+      this.storage.write(serializeSave(this.book.best));
+    this.s.hud.setCenter(null);
+    this.marker.hide();
+    const lines = summaryLines({
+      round,
+      kills,
+      fragments: this.s.wallet.fragments,
+      build: record.build,
+      damage: this.ledger.rows(),
+      newRecord,
+      bestRound: this.book.best?.round ?? null,
+    });
+    this.panel.show(lines);
+  }
+
+  /** A build resumida (REC-04): técnicas equipadas com nível, passivas, relíquia e arma com nível, votos. */
+  private buildAtDeath(): RunRecord['build'] {
+    const arsenal = this.s.arsenal.snapshot();
+    const leveled = (id: string | null, level: number): LeveledId | null => (id ? { id, level } : null);
+    return {
+      techniques: this.s.loadout.slotsView.flatMap((slot) => (slot ? [{ id: slot.id, level: slot.level }] : [])),
+      perks: [...this.s.build.perks.list],
+      relic: leveled(arsenal.relic, arsenal.relicLevel),
+      weapon: leveled(arsenal.weapon, arsenal.weaponLevel),
+      vows: [...this.s.vows.snapshot().taken],
+    };
   }
 
   /** `record` do snapshot de debug (REC-10, RMK-09, END-15), lido das vistas vivas. */
