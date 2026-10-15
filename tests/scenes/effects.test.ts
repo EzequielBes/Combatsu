@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import type { DamageKind } from '../../src/core/damageNumber';
 import type { Hit, HitBand, Strength } from '../../src/core/hit';
 import { HIT_BAND_FEEL } from '../../src/data/feel';
 import { HITSTOP_MS } from '../../src/data/fx';
+import type { Hittable } from '../../src/game/bodyTags';
 import { EffectsDirector } from '../../src/scenes/test/effects';
 import type { TestScene } from '../../src/scenes/TestScene';
 
-/** Cena falsa com o mínimo que o diretor usa: guarda as faíscas, as tremidas e as pausas, e expõe o relógio real. */
+/**
+ * Cena falsa com o mínimo que o diretor usa: guarda as faíscas, as tremidas, as pausas e os números de dano, e expõe o
+ * relógio real.
+ */
 function rig() {
   const sparks: { kind: string; size?: number }[] = [];
+  const numbers: { targetId: number; value: number; kind: DamageKind }[] = [];
   const log = { shakes: 0, pauses: 0 };
   const loop = { time: 0 };
   const scene = {
@@ -16,17 +22,23 @@ function rig() {
       shake: () => log.shakes++,
     },
     game: { loop },
+    ui: {
+      damageNumbers: {
+        show: (target: { id: number }, value: number, kind: DamageKind) =>
+          numbers.push({ targetId: target.id, value, kind }),
+      },
+    },
     matter: { world: { pause: () => log.pauses++, resume: () => undefined } },
     anims: { pauseAll: () => undefined, resumeAll: () => undefined },
     tweens: { pauseAll: () => undefined, resumeAll: () => undefined },
     time: { paused: false },
   } as unknown as TestScene;
-  return { fx: new EffectsDirector(scene), sparks, log, loop };
+  return { fx: new EffectsDirector(scene), sparks, numbers, log, loop };
 }
 
-const hit = (strength: Strength, band?: HitBand): Hit => ({
+const hit = (strength: Strength, band?: HitBand, damage = 1): Hit => ({
   ownerId: 1,
-  damage: 1,
+  damage,
   strength,
   direction: { x: 0, y: 0 },
   force: 0,
@@ -34,6 +46,7 @@ const hit = (strength: Strength, band?: HitBand): Hit => ({
   band,
 });
 const at = { x: 10, y: 20 };
+const target = { id: 7, team: 'enemy' } as unknown as Hittable;
 /** Anda `ms` de hitstop em passos de 10 ms (o diretor corta o quadro em `MAX_FRAME_MS`). */
 const tick = (fx: EffectsDirector, ms: number) => {
   for (let left = ms; left > 0; left -= 10) fx.tickHitstop(0, Math.min(10, left));
@@ -42,7 +55,7 @@ const tick = (fx: EffectsDirector, ms: number) => {
 describe('EffectsDirector.onTechConnect (POW-03)', () => {
   it('acerto normal segue igual: faísca do tipo, tremida no forte, hitstop e freeze', () => {
     const r = rig();
-    r.fx.onTechConnect(hit('heavy'), at);
+    r.fx.onTechConnect(hit('heavy'), at, target);
     expect(r.sparks).toEqual([{ kind: 'heavy', size: undefined }]);
     expect(r.log.shakes).toBe(1);
     expect(r.fx.hitstop.frozen).toBe(true);
@@ -53,7 +66,7 @@ describe('EffectsDirector.onTechConnect (POW-03)', () => {
 
   it('chip: faísca 6, sem hitstop, sem freeze e sem tremida', () => {
     const r = rig();
-    r.fx.onTechConnect(hit('heavy', 'chip'), at);
+    r.fx.onTechConnect(hit('heavy', 'chip'), at, target);
     expect(r.sparks).toEqual([{ kind: 'heavy', size: HIT_BAND_FEEL.chip.sparkSize }]);
     expect(r.fx.hitstop.frozen).toBe(false);
     expect(r.fx.frozen).toBe(false);
@@ -62,7 +75,7 @@ describe('EffectsDirector.onTechConnect (POW-03)', () => {
 
   it('micro: faísca 10 e hitstop de 15 ms no leve, que acaba nos 15 ms', () => {
     const r = rig();
-    r.fx.onTechConnect(hit('light', 'micro'), at);
+    r.fx.onTechConnect(hit('light', 'micro'), at, target);
     expect(r.sparks).toEqual([{ kind: 'light', size: HIT_BAND_FEEL.micro.sparkSize }]);
     expect(r.fx.frozen).toBe(true);
     expect(r.log.shakes).toBe(0);
@@ -76,18 +89,43 @@ describe('EffectsDirector.onTechConnect (POW-03)', () => {
     const r = rig();
     // 3 × 20 ms = 60 ms, o teto inteiro.
     for (let i = 0; i < 3; i++) {
-      r.fx.onTechConnect(hit('heavy', 'micro'), at);
+      r.fx.onTechConnect(hit('heavy', 'micro'), at, target);
       tick(r.fx, HIT_BAND_FEEL.micro.heavyMs);
     }
     expect(r.log.pauses).toBe(3);
     r.loop.time = HIT_BAND_FEEL.micro.windowMs - 1;
-    r.fx.onTechConnect(hit('light', 'micro'), at);
+    r.fx.onTechConnect(hit('light', 'micro'), at, target);
     expect(r.sparks).toHaveLength(4);
     expect(r.sparks[3]).toEqual({ kind: 'light', size: HIT_BAND_FEEL.micro.sparkSize });
     expect(r.fx.frozen).toBe(false);
     expect(r.log.pauses).toBe(3);
     r.loop.time = HIT_BAND_FEEL.micro.windowMs;
-    r.fx.onTechConnect(hit('light', 'micro'), at);
+    r.fx.onTechConnect(hit('light', 'micro'), at, target);
     expect(r.fx.frozen).toBe(true);
+  });
+});
+
+describe('EffectsDirector.onTechConnect: número de dano (POW-06.7)', () => {
+  it('mostra no alvo o dano do golpe com o tipo da faixa: tech sem faixa, micro e chip', () => {
+    const r = rig();
+    r.fx.onTechConnect(hit('heavy', undefined, 18), at, target);
+    r.fx.onTechConnect(hit('light', 'micro', 4), at, target);
+    r.fx.onTechConnect(hit('light', 'chip', 2), at, target);
+    expect(r.numbers).toEqual([
+      { targetId: 7, value: 18, kind: 'tech' },
+      { targetId: 7, value: 4, kind: 'micro' },
+      { targetId: 7, value: 2, kind: 'chip' },
+    ]);
+  });
+
+  it('micro com o teto cheio ainda mostra o número (edge case)', () => {
+    const r = rig();
+    for (let i = 0; i < 4; i++) {
+      r.fx.onTechConnect(hit('heavy', 'micro', 3), at, target);
+      tick(r.fx, HIT_BAND_FEEL.micro.heavyMs);
+    }
+    expect(r.log.pauses).toBe(3);
+    expect(r.sparks).toHaveLength(4);
+    expect(r.numbers.map((n) => n.kind)).toEqual(['micro', 'micro', 'micro', 'micro']);
   });
 });

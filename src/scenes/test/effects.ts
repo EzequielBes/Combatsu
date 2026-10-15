@@ -1,9 +1,11 @@
+import { techKind } from '../../core/damageNumber';
 import { type Hit, type Vec2 } from '../../core/hit';
 import { MicroBudget } from '../../core/hitBand';
 import { Hitstop } from '../../core/hitstop';
 import { SlowMo } from '../../core/slowMo';
 import { HIT_BAND_FEEL } from '../../data/feel';
 import { HITSTOP_MS } from '../../data/fx';
+import type { Hittable } from '../../game/bodyTags';
 import { MAX_FRAME_MS } from '../../game/physics';
 import type { TestScene } from '../TestScene';
 
@@ -35,9 +37,11 @@ export class EffectsDirector {
    * Golpe de técnica que conectou (T22+): mesma faísca + tremida + hitstop de FX-01..03, mas sem o +3 de CE-06
    * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito). As faixas (POW-03) aliviam o dano
    * frequente: o chip só risca a faísca pequena, sem hitstop nem `freeze`; o micro ganha 15/20 ms enquanto o teto
-   * deixa (a faísca média sai mesmo com o teto cheio). Nenhuma das duas treme a câmera.
+   * deixa (a faísca média sai mesmo com o teto cheio). Nenhuma das duas treme a câmera. Todo acerto, de qualquer
+   * faixa, mostra o número no alvo com o tipo da faixa (`tech`, `micro` ou `chip`, POW-06.7).
    */
-  onTechConnect(hit: Hit, point: Vec2): void {
+  onTechConnect(hit: Hit, point: Vec2, target: Hittable): void {
+    this.s.ui.damageNumbers.show(target, hit.damage, techKind(hit.band), point);
     if (hit.band === 'chip') {
       this.s.fx.spark(point.x, point.y, hit.strength, HIT_BAND_FEEL.chip.sparkSize);
       return;

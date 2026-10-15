@@ -58,14 +58,14 @@ export class CutTech {
     const enemy = enemies.find((e) => e.id === hit.targetId);
     if (enemy) {
       if (enemy.receiveHit(dealt)) {
-        this.ctx.onTechHit(dealt, { x: enemy.x, y: enemy.hurtRect().y });
+        this.ctx.onTechHit(dealt, { x: enemy.x, y: enemy.hurtRect().y }, enemy);
         this.ctx.masteryHit(this.cast, enemy);
         this.fx.split(enemy.x, enemy.hurtRect().y); // CUT-06
       }
       return;
     }
     if (boss && boss.id === hit.targetId && boss.receiveHit(dealt)) {
-      this.ctx.onTechHit(dealt, { x: boss.x, y: boss.hurtRect().y });
+      this.ctx.onTechHit(dealt, { x: boss.x, y: boss.hurtRect().y }, boss);
       this.ctx.masteryHit(this.cast, boss);
       this.fx.split(boss.x, boss.hurtRect().y); // CUT-06
     }

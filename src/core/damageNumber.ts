@@ -3,6 +3,7 @@
  * ou abre um novo. Sem Phaser: a vista (`game/DamageNumbers.ts`) só desenha o que o livro devolve.
  */
 import { DAMAGE_NUMBER_FEEL } from '../data/feel';
+import type { HitBand } from './hit';
 
 export type DamageKind = 'kokusen' | 'crit' | 'tech' | 'strike' | 'micro' | 'chip';
 
@@ -34,6 +35,11 @@ export function sizeFor(value: number, kind: DamageKind): number {
 /** Cores do tipo (POW-05.2), em chaves da paleta. */
 export function colorsFor(kind: DamageKind): DamageColors {
   return COLORS[kind];
+}
+
+/** Tipo do número de um golpe de técnica (POW-06.7): a faixa do acerto decide; sem faixa, `tech`. */
+export function techKind(band: HitBand | undefined): DamageKind {
+  return band ?? 'tech';
 }
 
 /** O tipo de maior prioridade entre os dois. */

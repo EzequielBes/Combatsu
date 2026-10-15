@@ -13,7 +13,7 @@ const living = (s) => s.enemies.filter((e) => e.hp > 0 && e.state !== 'deadRagdo
 /**
  * Um Azul do toque ao fim da implosão, quadro a quadro. Devolve o que os tiques fizeram: ids com `chip:<id>`, quadros
  * de tique conferidos, quadros congelados sem golpe no player por perto, inimigos em `hitstun`, quem foi de `windup` a
- * `attack` e se a implosão congelou.
+ * `attack`, o tipo do último número de dano em cada quadro de tique e se a implosão congelou.
  */
 async function castBlue(kit, start) {
   let s = await kit.tap('KeyL');
@@ -24,6 +24,7 @@ async function castBlue(kit, start) {
     strayFrozen: [],
     hitstun: [],
     windupToAttack: new Set(),
+    chipKinds: new Set(),
     implosionFrozen: null,
     implosionHit: false,
   };
@@ -59,6 +60,7 @@ async function castBlue(kit, start) {
     const playerHitNear = f - lastPlayerHitFrame <= PLAYER_HIT_FRAMES;
     const chips = fresh.filter((e) => e.startsWith('chip:'));
     for (const c of chips) out.chipIds.add(c.slice('chip:'.length));
+    if (chips.length > 0) out.chipKinds.add(s.damageNumbers.last?.kind ?? null);
     if (chips.length > 0 && !playerHitNear) out.tickFrames++;
     if (s.hitstop.frozen && !playerHitNear) out.strayFrozen.push({ f, hitstop: s.hitstop, events: fresh });
     for (const e of s.enemies) {
@@ -86,6 +88,7 @@ async function blueTicksAsChip(ctx) {
 
   const chipIds = new Set();
   const windupToAttack = new Set();
+  const chipKinds = new Set();
   let tickFrames = 0;
   let implosions = 0;
   for (let attempt = 0; attempt < BLUE_TRIES && windupToAttack.size === 0; attempt++) {
@@ -111,10 +114,15 @@ async function blueTicksAsChip(ctx) {
     }
     for (const id of o.chipIds) chipIds.add(id);
     for (const id of o.windupToAttack) windupToAttack.add(id);
+    for (const k of o.chipKinds) chipKinds.add(k);
     tickFrames += o.tickFrames;
     assert(!s.player.dead, 'o player morreu durante o Azul');
   }
   assert(chipIds.size >= 2, `POW-15.9: esperava eventos chip:<id> de vários inimigos: ${[...chipIds].join(',')}`);
+  assert(
+    chipKinds.size === 1 && chipKinds.has('chip'),
+    `POW-06.7: o tique do Azul deveria mostrar o número chip: ${JSON.stringify([...chipKinds])}`,
+  );
   assert(tickFrames >= 3, `POW-04.11: poucos quadros de tique conferidos: ${tickFrames}`);
   assert(implosions >= 1, 'POW-04.10: nenhuma implosão acertou um inimigo');
   assert(windupToAttack.size >= 1, `POW-04.11: nenhum inimigo foi de windup a attack em ${BLUE_TRIES} Azuis`);

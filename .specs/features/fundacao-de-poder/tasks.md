@@ -363,11 +363,11 @@ têm; `effects.onTechConnect` mostra `tech`, `micro` ou `chip` pela banda.
 
 **Done when**:
 
-- [ ] `power.smoke.mjs` (cenário 5) lê `damageNumbers.last.kind === 'chip'` com `tech=azul`; o micro com o teto cheio
+- [x] `power.smoke.mjs` (cenário 5) lê `damageNumbers.last.kind === 'chip'` com `tech=azul`; o micro com o teto cheio
       ainda mostra faísca e número (edge case)
-- [ ] `src/scenes/TestScene.ts` continua com 393 linhas efetivas
-- [ ] Smokes `tech`, `techniques`, `evolution` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `src/scenes/TestScene.ts` continua com 393 linhas efetivas
+- [x] Smokes `tech`, `techniques`, `evolution` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full

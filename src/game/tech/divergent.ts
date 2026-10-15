@@ -180,7 +180,7 @@ export class DivergentTech {
     this.state.firstImpact(target.id);
     this.target = target;
     this.kokusen.armFirstImpact(); // KOK-05: só a partir do 1º impacto a tecla do slot conta para o Kokusen.
-    this.ctx.onTechHit(hit, point);
+    this.ctx.onTechHit(hit, point, target);
     this.ctx.masteryHit(this.cast, target);
   }
 
@@ -205,7 +205,7 @@ export class DivergentTech {
       ...techMarks('heavy'),
     };
     if (target.receiveHit(hit)) {
-      this.ctx.onTechHit(hit, point);
+      this.ctx.onTechHit(hit, point, target);
       this.ctx.masteryHit(this.cast, target);
     }
     // DIV-12: desenhado no centro ATUAL do alvo (`point`, lido agora, não no ponto do 1º impacto).
@@ -237,7 +237,7 @@ export class DivergentTech {
     // KOK-08: no chefe, postura própria (3× o dano), não a fórmula 2× de um golpe forte comum.
     if (target instanceof Boss) target.receiveKokusen(KOKUSEN.damage, KOKUSEN.damage * KOKUSEN.poiseMul);
     if (target instanceof Boss || target.receiveHit(hit)) {
-      this.ctx.onTechHit(hit, point);
+      this.ctx.onTechHit(hit, point, target);
       this.ctx.masteryHit(this.cast, target);
     }
     this.kokusen.land(this.energy); // KOK-09/10/30

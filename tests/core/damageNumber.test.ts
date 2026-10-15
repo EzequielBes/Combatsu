@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { colorsFor, DamageBook, sizeFor, type DamageKind } from '../../src/core/damageNumber';
+import { colorsFor, DamageBook, sizeFor, techKind, type DamageKind } from '../../src/core/damageNumber';
 
 const SCALED: DamageKind[] = ['strike', 'tech', 'crit', 'kokusen'];
 
@@ -16,6 +16,14 @@ describe('sizeFor (POW-05.1)', () => {
     expect(sizeFor(15, kind)).toBe(12);
     expect(sizeFor(40, kind)).toBe(12);
     expect(sizeFor(999, kind)).toBe(12);
+  });
+});
+
+describe('techKind (POW-06.7)', () => {
+  it('a faixa do golpe de técnica vira o tipo; sem faixa, tech', () => {
+    expect(techKind(undefined)).toBe('tech');
+    expect(techKind('micro')).toBe('micro');
+    expect(techKind('chip')).toBe('chip');
   });
 });
 

@@ -29,8 +29,11 @@ export interface TechContext {
   readonly loadout: Loadout;
   /** Conjuração mais recente; as técnicas que vivem além do cast (orbes, cortes) guardam a própria cópia. */
   currentCast(): CastRef | null;
-  /** Golpe de técnica que conectou: faísca + hitstop, sem o +3 de CE-06 (CE-08 - a cena decide isso). */
-  onTechHit(hit: Hit, point: Vec2): void;
+  /**
+   * Golpe de técnica que conectou em `target`: faísca + hitstop + número de dano pela faixa (POW-06), sem o +3 de
+   * CE-06 (CE-08 - a cena decide isso).
+   */
+  onTechHit(hit: Hit, point: Vec2, target: Hittable): void;
   /** MST-01/02: avisa a cena que `target` aceitou um golpe da conjuração `cast`; sem conjuração conhecida, ignora. */
   masteryHit(cast: CastRef | null, target: Hittable): void;
   /** Evento deste frame (`divergent2`, `kokusen`, `kokusenMiss`, `redDetonate`, `blueImplode`, `cut`). */

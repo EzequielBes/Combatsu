@@ -133,13 +133,13 @@ export class BlueTech {
     const enemy = enemies.find((e) => e.id === dmg.targetId);
     if (enemy) {
       if (enemy.receiveHit(hit)) {
-        this.ctx.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y });
+        this.ctx.onTechHit(hit, { x: enemy.x, y: enemy.hurtRect().y }, enemy);
         this.ctx.masteryHit(cast, enemy);
       }
       return;
     }
     if (boss && boss.id === dmg.targetId && boss.receiveHit(hit)) {
-      this.ctx.onTechHit(hit, { x: boss.x, y: boss.hurtRect().y });
+      this.ctx.onTechHit(hit, { x: boss.x, y: boss.hurtRect().y }, boss);
       this.ctx.masteryHit(cast, boss);
     }
   }

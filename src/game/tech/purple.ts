@@ -101,7 +101,7 @@ export class PurpleTech {
     };
     if (!target.receiveHit(dealt)) return;
     const at = { x: target.x, y: target.hurtRect().y };
-    this.ctx.onTechHit(dealt, at);
+    this.ctx.onTechHit(dealt, at, target);
     this.ctx.masteryHit(this.cast, target);
     this.ctx.emit('purpleHit');
     this.fx.hit(at.x, at.y);

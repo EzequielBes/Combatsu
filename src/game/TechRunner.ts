@@ -46,8 +46,8 @@ export class TechRunner {
     uiLayer: Phaser.GameObjects.Layer,
     /** BAT-06/terreno: mesma lista do `Player`, para achar a distância até a parede à frente (BLU-02). */
     terrain: MatterJS.BodyType[],
-    /** Golpe de técnica que conectou: faísca + hitstop, sem o +3 de CE-06 (CE-08 - a cena decide isso). */
-    onTechHit: (hit: Hit, point: Vec2) => void,
+    /** Golpe de técnica que conectou em `target`: faísca + hitstop + número, sem o +3 de CE-06 (CE-08). */
+    onTechHit: (hit: Hit, point: Vec2, target: Hittable) => void,
     /** KOK-13: hitstop de 220 ms do Kokusen (FX-02 já garante que o maior pendente vence). */
     triggerHitstop: (ms: number) => void,
     /** T24: cinema do Kokusen (negativo/duotom/raios/faíscas/zoom/cartão), chamado uma vez por acerto. */
