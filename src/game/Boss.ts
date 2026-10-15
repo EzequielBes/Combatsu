@@ -169,6 +169,11 @@ export class Boss implements Hittable {
     return Math.abs(this.view.scaleY);
   }
 
+  /** Lado para onde o sprite olha na tela (sinal da escala X), para o smoke conferir o lado do feixe (SNG-02). */
+  get spriteFacing(): 1 | -1 {
+    return this.view.scaleX < 0 ? -1 : 1;
+  }
+
   /** Largura e altura do corpo Matter de fato (PDD-03), lidas dos limites do corpo para o snapshot de debug. */
   get bodySize(): { width: number; height: number } {
     const { min, max } = this.body.bounds;
@@ -302,6 +307,9 @@ export class Boss implements Hittable {
    */
   private handleAIEvents(events: BossAIEvent[]): void {
     for (const ev of events) {
+      // O feixe sai no lado preso no aviso (SNG-02): o chefe vira para ele, mesmo parado depois de uma investida
+      // que passou do player, senão a linha sairia pelas costas do sprite.
+      if (ev.type === 'telegraph' || ev.type === 'strikeOn') this.facing = ev.dir;
       if (ev.type === 'hitboxOn') this.openChargeHitbox();
       else if (ev.type === 'hitboxOff') this.attack.close();
       else if (ev.type === 'landed') this.onLand(ev.final);

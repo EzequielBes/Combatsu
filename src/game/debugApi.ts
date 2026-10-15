@@ -136,6 +136,8 @@ export interface GameSnapshot {
     finger: boolean;
     /** Escala do sprite lida do próprio sprite: 1, ou 1,25 no Portador de Dedo (PDD-03). */
     spriteScale: number;
+    /** Lado para onde o sprite olha, lido do sinal da escala X dele (SNG-02). */
+    facing: 1 | -1;
     /** Largura e altura do corpo Matter, lidas dos limites dele (PDD-03). */
     body: { width: number; height: number };
     x: number;

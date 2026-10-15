@@ -122,6 +122,7 @@ export class DebugSnapshot {
             affixes: [...this.s.boss.affixes],
             finger: this.s.boss.finger,
             spriteScale: this.s.boss.spriteScale,
+            facing: this.s.boss.spriteFacing,
             body: this.s.boss.bodySize,
             x: this.s.boss.x,
             y: this.s.boss.y,

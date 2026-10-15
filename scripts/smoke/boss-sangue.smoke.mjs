@@ -2,8 +2,9 @@
 // `round=10&bossArch=oni&bossAffix=sangue&finger=0&regen=0`. Um piloto reativo pula a investida e foge do salto; no
 // feixe o player fica parado. O cenário mede: o 1º ataque da fase 1 é a investida e o 2º é o `beam` (SNG-01); o aviso
 // dura ~800 ms com a linha engrossando de 1 a 6 px, na altura do peito do chefe, dele até a borda da tela no lado do
-// player (SNG-02); em pé, o feixe aberto tira `round(16 × 1,15) = 18` uma vez só (SNG-03); no feixe seguinte, abaixado
-// na hora da abertura, nada, e o feixe fica aberto ~250 ms. `regen=0`: a recuperação passiva não mexe na vida entre um
+// player (SNG-02), com o sprite do chefe olhando para esse lado em todo aviso e feixe medidos, inclusive depois de
+// uma investida que passou do player; em pé, o feixe aberto tira `round(16 × 1,15) = 18` uma vez só (SNG-03); no
+// feixe seguinte, abaixado na hora da abertura, nada, e o feixe fica aberto ~250 ms. `regen=0`: a recuperação passiva não mexe na vida entre um
 // quadro e outro. Capturas do aviso e do feixe em `.fable-out/boss-sangue-*.png`.
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -30,7 +31,7 @@ export default async function ({ page, baseUrl, assert }) {
     s.boss.affixes.join() === 'sangue' && s.boss.beam?.phase === 'idle' && s.boss.beam.damage === BEAM_DAMAGE,
     `o chefe com Sangue nasce com o feixe parado e o dano do tier: ${JSON.stringify(s.boss)}`,
   );
-  const ctx = { attacks: [], mem: { jumpLeft: 0, jumpDir: null, leapTo: 0 }, prev: null };
+  const ctx = { attacks: [], mem: { jumpLeft: 0, jumpDir: null, leapTo: 0 }, prev: null, facing: [] };
   if (s.boss.state === 'windup') ctx.attacks.push({ phase: s.boss.phase, attack: s.boss.attack });
   // Em pé: o 1º feixe em que o player está limpo (sem invulnerabilidade da investida) mede o golpe cheio.
   let standing = null;
@@ -55,6 +56,9 @@ export default async function ({ page, baseUrl, assert }) {
   );
   assert(Math.abs(ducked.active.length - ACTIVE_FRAMES) <= 1, `o feixe fica aberto ~250 ms: ${ducked.active.length}`);
   checkCycle(ctx.attacks, assert);
+  const backward = ctx.facing.filter((f) => f.facing !== f.dir);
+  assert(ctx.facing.length > 0, 'nenhum quadro de feixe registrou o lado do sprite');
+  assert(backward.length === 0, `o feixe sai pelas costas do chefe: ${JSON.stringify(backward.slice(0, 5))}`);
 }
 
 function makeGame(page, baseUrl, assert) {
@@ -162,6 +166,7 @@ async function measureBeam(g, page, s, ctx, { duck, shots }) {
   let duckedAtOpen = false;
   for (let i = 0; i < 200 && s.boss && s.boss.beam.phase !== 'idle'; i++) {
     const b = s.boss.beam;
+    ctx.facing.push({ phase: b.phase, dir: b.dir, facing: s.boss.facing, side: Math.sign(s.player.x - s.boss.x) });
     if (b.phase === 'warn') warn.push(warnFrame(s));
     if (shots && b.phase === 'warn' && warn.length === 24) await shoot(page, 'boss-sangue-warn.png');
     if (shots && b.phase === 'active' && active.length === 3) await shoot(page, 'boss-sangue-beam.png');
