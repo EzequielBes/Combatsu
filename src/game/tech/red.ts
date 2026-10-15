@@ -3,25 +3,16 @@ import type { ActiveCastView } from '../../core/cast';
 import { Filters } from '../../core/collision';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
-import type { Vec2 } from '../../core/hit';
-import {
-  RedOrbState,
-  redGeometry,
-  redOrbConfig,
-  redReleaseEffects,
-  repulseTargetsFor,
-  type RedGeometry,
-  type RepulseCandidate,
-} from '../../core/redOrb';
+import { RedOrbState, redGeometry, redOrbConfig, redReleaseEffects, type RedGeometry } from '../../core/redOrb';
 import { newEntityId } from '../bodyTags';
-import { Boss } from '../Boss';
 import { setIgnoreGravity } from '../physics';
 import { KillRefund } from '../../core/techKit';
 import type { TechStats } from '../../core/techStats';
 import type { RedObjectSnapshot } from '../debugApi';
 import { RedOrbFx } from '../techFx/RedOrb';
 import { TEX } from '../textures';
-import { RedFlight, strikeRed } from './redFlight';
+import { RedFlight } from './redFlight';
+import { redRepulse } from './redRepulse';
 import type { TechContext, TechTarget } from './shared';
 
 /**
@@ -82,10 +73,11 @@ export class RedTech {
     cast: ActiveCastView | null,
     castEvents: readonly string[],
     enemies: readonly TechTarget[],
+    slotHeld: readonly [boolean, boolean],
   ): void {
     this.updateCharge(dtMs, cast);
     if (castEvents.includes('techCast:vermelho')) this.release(enemies);
-    this.flight.update(dtMs, enemies);
+    this.flight.update(dtMs, enemies, slotHeld);
   }
 
   private updateCharge(dtMs: number, cast: ActiveCastView | null): void {
@@ -123,33 +115,8 @@ export class RedTech {
     const onKill = (): void => {
       if (cast) this.ctx.loadout.refundCooldown(cast.slot, refund.claim());
     };
-    if (effects.repulse) this.repulse(enemies, red.repulseDamage, onKill); // RDA-08/09, VRM-04
+    if (effects.repulse) redRepulse(this.ctx, this.fx, enemies, red.repulseDamage, onKill); // RDA-08/09, VRM-04
     this.spawnOrb(player.facing, stats, red, onKill);
-  }
-
-  /**
-   * RDA-08/09/10, EDG-03: na soltura, quem está à frente (até 80 px em x e 48 px em y do centro do player) leva o
-   * `damage` leve e é empurrado; quem está atrás não. O chefe fica de fora (só o orbe o atinge, RED-09). VRM-04: o dano
-   * é o `repulseDamage` resolvido (4, 5, 5 e 6 com 0 a 3 pontos de Potência, vezes os multiplicadores).
-   */
-  private repulse(enemies: readonly TechTarget[], damage: number, onKill: () => void): void {
-    const { player } = this.ctx;
-    const origin = { x: player.sprite.x, y: player.sprite.y };
-    this.fx.repulse(origin, player.facing);
-    const candidates: RepulseCandidate[] = enemies.map((e) => ({
-      id: e.id,
-      kind: e instanceof Boss ? 'boss' : 'enemy',
-      center: { x: e.x, y: e.hurtRect().y },
-    }));
-    for (const r of repulseTargetsFor(origin, player.facing, candidates, damage)) {
-      const enemy = enemies.find((e) => e.id === r.targetId);
-      if (!enemy) continue;
-      // MST-01: a repulsão faz parte da mesma conjuração do orbe (mesmo `castId`, então o alvo conta uma vez só).
-      const cast = this.ctx.currentCast();
-      const at = (): Vec2 => ({ x: enemy.x, y: enemy.hurtRect().y });
-      const blow = { damage: r.damage, strength: r.strength, force: r.force, direction: r.direction };
-      strikeRed(this.ctx, enemy, at, cast, blow, onKill);
-    }
   }
 
   /** Nascimento do orbe na ponta dos dedos, com o stat copiado na soltura; daí em diante o voo é do `RedFlight`. */

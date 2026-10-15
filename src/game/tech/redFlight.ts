@@ -97,7 +97,8 @@ export class RedFlight {
     this.shardHit = new Set();
   }
 
-  update(dtMs: number, enemies: readonly TechTarget[]): void {
+  /** `_slotHeld`: a tecla de cada slot segurada neste quadro (VRM-14, lida pelo Contido na T31). */
+  update(dtMs: number, enemies: readonly TechTarget[], _slotHeld: readonly [boolean, boolean]): void {
     this.targets = enemies;
     for (const event of this.touchEvents.splice(0)) this.ctx.emit(event);
     const orb = this.orb;

@@ -107,6 +107,8 @@ export class TechRunner {
     cast: ActiveCastView | null,
     castEvents: readonly string[],
     slotPressed: readonly [boolean, boolean],
+    /** VRM-14: a tecla de cada slot segurada neste frame (o orbe do Contido detona ao soltar). */
+    slotHeld: readonly [boolean, boolean],
     enemies: readonly TechTarget[],
     boss: Boss | null,
   ): void {
@@ -115,7 +117,7 @@ export class TechRunner {
       this.currentCast = cast ? { id: ++this.castSeq, slot: cast.slot } : null;
     }
     this.divergent.update(dtMs, cast, castEvents, slotPressed);
-    this.red.update(dtMs, cast, castEvents, enemies);
+    this.red.update(dtMs, cast, castEvents, enemies, slotHeld);
     this.blue.update(dtMs, castEvents, enemies, boss);
     this.cut.update(dtMs, castEvents, enemies, boss);
     this.purple.update(dtMs, cast, castEvents, enemies, boss);

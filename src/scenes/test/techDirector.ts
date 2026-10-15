@@ -18,12 +18,14 @@ export class TechDirector {
     const techTargets: readonly TechTarget[] = this.s.fxLab
       ? [...this.s.enemies, ...this.s.fxLab.dummies]
       : this.s.enemies;
-    // T22+: executa a técnica a partir do estado de conjuração, dos eventos deste frame e do slot apertado (Kokusen).
+    // T22+: executa a técnica a partir do estado de conjuração, dos eventos deste frame e do slot apertado (Kokusen);
+    // VRM-14: e da tecla do slot segurada (o orbe do Contido).
     this.s.techRunner.update(
       dt,
       this.s.techCaster.cast,
       this.s.techCaster.events,
       this.s.techCaster.slotPressed,
+      this.s.techCaster.slotHeld,
       techTargets,
       this.s.boss,
     );

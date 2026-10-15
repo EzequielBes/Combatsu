@@ -947,8 +947,12 @@ o alvo morto. Assim o `redFlight.ts` segue sem ler o `loadout` (teste da T24) e 
 
 **Done when**:
 
-- [ ] Smokes `tech`, `techniques` e `red-axes` verdes e iguais (o valor só é lido na T31)
-- [ ] Gate verde; contagem sem perda
+- [x] Smokes `tech`, `techniques` e `red-axes` verdes e iguais (o valor só é lido na T31)
+- [x] Gate verde; contagem sem perda (4062)
+
+Como ficou: `TechCaster.slotHeld` guarda o `isDown` das duas teclas de cada slot dentro do `update`; o `TechRunner`
+repassa ao `red.update`, que repassa ao `RedFlight.update` (lido na T31). A repulsão da soltura sai do `red.ts` para
+`tech/redRepulse.ts` (mesmo comportamento) para o `red.ts` ter folga abaixo das 130 linhas efetivas da T24 (103 agora).
 
 **Tests**: smoke
 **Gate**: full

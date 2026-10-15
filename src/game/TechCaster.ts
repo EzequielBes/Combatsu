@@ -21,6 +21,7 @@ export class TechCaster {
   private pendingEvents: string[] = [];
   private frameEvents: string[] = [];
   private framePressed: [boolean, boolean] = [false, false];
+  private frameHeld: [boolean, boolean] = [false, false];
 
   constructor(
     scene: Phaser.Scene,
@@ -57,6 +58,14 @@ export class TechCaster {
   }
 
   /**
+   * VRM-14: a tecla de cada slot está segurada neste frame (`isDown` de `L`/`C` e `I`/`V`). Guardado dentro do `update`,
+   * como o `slotPressed`: lido fora dele daria o estado do frame anterior.
+   */
+  get slotHeld(): readonly [boolean, boolean] {
+    return this.frameHeld;
+  }
+
+  /**
    * FxLab (T28): pede a conjuração do `slot` sem depender do teclado - mesmo caminho de `request` que uma tecla
    * real usaria (CAST-01/09/10), incluindo o cancelamento do golpe em andamento. Os eventos entram no próximo
    * `update` (mesmo canal de `onDamaged`), então deve ser chamado antes dele no mesmo frame.
@@ -83,6 +92,7 @@ export class TechCaster {
     const slot1 = anyJustDown(this.slot1Keys);
     const slot2 = anyJustDown(this.slot2Keys);
     this.framePressed = [slot1, slot2 && !slot1];
+    this.frameHeld = [this.slot1Keys.some((k) => k.isDown), this.slot2Keys.some((k) => k.isDown)];
     const ctx: CastContext = { meleePhase: this.player.meleePhase(), busy: this.player.isBusyForCast() };
     const reqEvents = slot1 ? this.machine.request(0, ctx) : slot2 ? this.machine.request(1, ctx) : [];
     // CAST-10: um pedido que de fato inicia a conjuração encerra o golpe corpo a corpo em andamento (recover).
