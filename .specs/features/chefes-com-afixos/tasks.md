@@ -447,9 +447,9 @@ e `animBase(attack)`.
 
 **Done when**:
 
-- [ ] `tests/core/bossAttacks.test.ts` (novo): fios presos aos limites nas duas pontas; espessura 1 em 0 ms e 6 em 800 ms;
+- [x] `tests/core/bossAttacks.test.ts` (novo): fios presos aos limites nas duas pontas; espessura 1 em 0 ms e 6 em 800 ms;
       `animBase` de cada ataque novo cai num quadro que existe (`charge`, `leap`, `volley`)
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
