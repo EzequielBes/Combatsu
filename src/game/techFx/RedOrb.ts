@@ -11,6 +11,7 @@ import {
   DEBRIS_MS,
   FLASH_CORE_MS,
   RED_COLORS as C,
+  RING_GAP_MS,
   SHOCK_RING_MS,
   SPHERE_MS,
   evenPx,
@@ -77,6 +78,8 @@ export class RedOrbFx {
   private screenFlashColor: number | null = null;
   /** VRM-05: maior raio que a esfera da última detonação já desenhou (`null` antes da 1ª). */
   private sphereR: number | null = null;
+  /** VRM-04: anéis de choque da última detonação que já começaram a ser desenhados (0 antes da 1ª). */
+  private ringsDrawn = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -290,6 +293,7 @@ export class RedOrbFx {
     screenFlashColor: number | null;
     orb: { x: number; y: number } | null;
     sphereR: number | null;
+    rings: number;
   } {
     return {
       glowColor: this.glowRing ? C.glow : null,
@@ -297,6 +301,7 @@ export class RedOrbFx {
       screenFlashColor: this.screenFlashColor,
       orb: this.chargeSprite ? { x: this.chargeSprite.x, y: this.chargeSprite.y } : null,
       sphereR: this.sphereR,
+      rings: this.ringsDrawn,
     };
   }
 
@@ -347,13 +352,21 @@ export class RedOrbFx {
   detonate(point: Vec2, _facing: 1 | -1, look: RedDetonationLook): void {
     this.fx.add('red.flashCore', FLASH_CORE_MS, 'game');
     this.fx.add('red.sphere', SPHERE_MS, 'game');
-    this.fx.add('red.shockRing', SHOCK_RING_MS, 'game');
+    this.fx.add('red.shockRing', SHOCK_RING_MS + (look.rings - 1) * RING_GAP_MS, 'game'); // VRM-04
     this.fx.add('red.debris', DEBRIS_MS, 'game');
     this.fx.add('red.screenFlash', SCREEN_FLASH_MS, 'game'); // RED-12
     this.sphereR = 0;
-    redDetonationBurst(this.scene, this.registry, point, look, (r) => {
-      this.sphereR = Math.max(this.sphereR ?? 0, r);
-    });
+    this.ringsDrawn = 0;
+    redDetonationBurst(
+      this.scene,
+      this.registry,
+      point,
+      look,
+      (r) => {
+        this.sphereR = Math.max(this.sphereR ?? 0, r);
+      },
+      () => this.ringsDrawn++,
+    );
     this.detonateScreen();
   }
 

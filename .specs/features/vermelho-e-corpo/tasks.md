@@ -862,9 +862,14 @@ no último terço, para o orbe não pular de tamanho na soltura); Conjuração 3
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs`: com `axes=vermelho.potencia:3`, 4 anéis no `fx` e `hitstop.remainingMs` partindo de
+- [x] `red-axes.smoke.mjs`: com `axes=vermelho.potencia:3`, 4 anéis no `fx` e `hitstop.remainingMs` partindo de
       `HITSTOP_MS.heavy + 30` na detonação; o toque sem bônus
-- [ ] Anéis conferidos no jogo; smokes `red-axes`, `red-anime`, `fxlab` e `power` verdes; gate verde; contagem sem perda
+- [x] Anéis conferidos no jogo; smokes `red-axes`, `red-anime`, `fxlab` e `power` verdes; gate verde; contagem sem perda (4062)
+
+Como ficou: os anéis saem de um tween só no mesmo Graphics (`detonateShockRings`), o i-ésimo `i × 40 ms` depois,
+porque os tweens com `delay` de 80 e 120 ms não chegavam a começar; `fx.red.rings` conta os anéis que começaram a ser
+desenhados. O cenário do smoke roda no `fxlab` (sala), porque os bonecos parados garantem um alvo intocado no raio da
+detonação; `tools/visual-shots-fx.mjs` ganha `vermelhoEixos` e `vermelhoAneis` para a conferência em movimento.
 
 **Tests**: smoke
 **Gate**: full

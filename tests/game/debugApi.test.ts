@@ -265,6 +265,7 @@ describe('installDebugApi', () => {
           screenFlashColor: null,
           orb: null,
           sphereR: null,
+          rings: 0,
         },
       },
       camera: {

@@ -431,6 +431,8 @@ export interface GameSnapshot {
       orb: { x: number; y: number } | null;
       /** VRM-05: maior raio que a esfera da última detonação desenhou; `null` antes da 1ª. */
       sphereR: number | null;
+      /** VRM-04: anéis de choque da última detonação que já começaram (1 mais 1 por ponto de Potência); 0 antes. */
+      rings: number;
     };
   };
   /**

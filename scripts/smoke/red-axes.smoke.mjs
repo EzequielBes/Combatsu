@@ -101,9 +101,62 @@ async function branch(ctx) {
   ctx.assert(s.build.vermelho.awakened === false, `VRM-17: sem Despertar no Nv 2: ${JSON.stringify(s.build.vermelho)}`);
 }
 
+/** `HITSTOP_MS.heavy` (`src/data/fx.ts`): o hitstop de um acerto forte de técnica sem bônus. */
+const HEAVY_HITSTOP_MS = 90;
+/**
+ * De onde o player solta o Vermelho para a esquerda no laboratório (bonecos parados em x 232, 312 e 392): o orbe
+ * detona pelo alcance ~335 px à esquerda do player, perto de x 370, depois de atravessar o boneco de 392 (o toque) e
+ * sem tocar o de 312, que fica no raio de 96 da detonação.
+ */
+const RING_SPOT_X = 690;
+
+/**
+ * VRM-04 (T26): com Potência 3 a detonação desenha 4 anéis (1 mais 3) e o hitstop parte de `HITSTOP_MS.heavy + 30`;
+ * o toque não leva bônus. Roda no laboratório (`fxlab`, que usa a sala) porque os bonecos de treino ficam parados: um
+ * inimigo comum anda durante a carga e não dá para garantir um alvo intocado no raio da detonação.
+ */
+async function powerRings(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot('hd=1&fxlab&tech=vermelho&axes=vermelho.potencia:3');
+  await kit.down('KeyD');
+  for (let i = 0; i < 400 && s.player.x < RING_SPOT_X; i++) s = await kit.frame();
+  await kit.up('KeyD');
+  await kit.down('KeyA');
+  await kit.frame();
+  await kit.up('KeyA');
+  s = await kit.snap(200);
+  ctx.assert(s.player.facing === -1, `o player deveria olhar para os bonecos: ${JSON.stringify(s.player)}`);
+  ({ s } = await castRed(kit, ctx, s));
+  const seen = s.events.length;
+  let touch = null;
+  let last = s.hitstop.remainingMs;
+  for (let i = 0; i < 120 && !s.events.slice(seen).includes('redDetonate'); i++) {
+    s = await kit.frame();
+    const detonated = s.events.slice(seen).includes('redDetonate');
+    if (!detonated && touch === null && s.hitstop.remainingMs > last) touch = s.hitstop.remainingMs;
+    last = s.hitstop.remainingMs;
+  }
+  ctx.assert(touch === HEAVY_HITSTOP_MS, `VRM-04: o toque fica no hitstop forte, sem bônus: ${touch}`);
+  ctx.assert(s.events.slice(seen).includes('redDetonate'), `o orbe deveria detonar: ${JSON.stringify(s.techObjects)}`);
+  const far = s.fxlab.dummies.find((d) => d.x === 312);
+  ctx.assert(far.hp < far.maxHp, `a detonação deveria acertar o boneco intocado: ${JSON.stringify(s.fxlab.dummies)}`);
+  ctx.assert(
+    s.hitstop.remainingMs === HEAVY_HITSTOP_MS + 30,
+    `VRM-04: hitstop da detonação ${HEAVY_HITSTOP_MS} + 30 com Potência 3: ${JSON.stringify(s.hitstop)}`,
+  );
+  let maxRings = s.fx.red.rings;
+  for (let i = 0; i < 60 && maxRings < 4; i++) {
+    s = await kit.frame();
+    maxRings = Math.max(maxRings, s.fx.red.rings);
+  }
+  for (let i = 0; i < 20; i++) maxRings = Math.max(maxRings, (s = await kit.frame()).fx.red.rings);
+  ctx.assert(maxRings === 4, `VRM-04: 4 anéis de choque com Potência 3: ${maxRings}`);
+}
+
 export default async function (ctx) {
   await cannon(ctx);
   await scaledOrb(ctx);
+  await powerRings(ctx);
   await machineGun(ctx);
   await axisCap(ctx);
   await branch(ctx);

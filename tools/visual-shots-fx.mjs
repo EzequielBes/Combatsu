@@ -86,6 +86,33 @@ async function redAxesScenario(t) {
   }
 }
 
+// Anéis da Potência (VRM-04), em HD e para os dois lados: a detonação pelo alcance, quadro a quadro em volta do ponto,
+// com 0 e 3 pontos (1 e 4 anéis, 40 ms entre eles).
+async function redRingsScenario(t) {
+  const orb = (s) => s.techObjects?.find((o) => o.kind === 'red');
+  for (const potencia of [0, 3]) {
+    for (const side of ['dir', 'esq']) {
+      const axes = potencia ? `&axes=vermelho.potencia:${potencia}` : '';
+      await t.open(`hd=1&enemyGuard=0&noshop=1&maxAlive=0&shove=0&tech=vermelho${axes}`);
+      if (side === 'esq') await t.press('KeyA');
+      await t.snap(300);
+      await t.press('KeyL');
+      let s = await t.snap(0);
+      let at = null;
+      for (let i = 0; i < 200 && (at === null || orb(s)); i++) {
+        if (orb(s)) at = { x: orb(s).x, y: orb(s).y };
+        s = await t.frame();
+      }
+      t.assert(at, `o Vermelho não nasceu (Potência ${potencia}, ${side})`);
+      for (let i = 0; i <= 24; i += 2) {
+        await t.close(`96-aneis-p${potencia}-${side}-${String(i).padStart(2, '0')}-r${s.fx.red.rings}`, 150, at);
+        s = await t.frame();
+        s = await t.frame();
+      }
+    }
+  }
+}
+
 /** Cenários da aura da Energia Reversa e do Azul (RCA-*, BLA-*), recortados em volta do efeito. */
 export const techFxScenarios = () => ({
   // Esquiva cinematográfica (DGA-*): o passo-relâmpago do dash e a imagem residual da esquiva perfeita.
@@ -144,6 +171,7 @@ export const techFxScenarios = () => ({
     }
   },
   vermelhoEixos: (t) => redAxesScenario(t),
+  vermelhoAneis: (t) => redRingsScenario(t),
   // Azul no estilo do anime (BLA-*): recorte em volta do orbe, do nascer à implosão.
   async azul(t) {
     await t.open('enemyGuard=0&noshop=1&fxlab');

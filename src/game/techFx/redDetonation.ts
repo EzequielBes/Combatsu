@@ -25,6 +25,8 @@ export const FLASH_CORE_MS = FRAME_MS * 2;
 export const SPHERE_MS = FRAME_MS * 3;
 /** Polimento: onda de choque GROSSA (Direção de arte) e mais demorada, passando bem além do raio de dano. */
 export const SHOCK_RING_MS = 280;
+/** VRM-04: intervalo entre um anel de choque e o seguinte (1 anel mais 1 por ponto de Potência). */
+export const RING_GAP_MS = 40;
 const SHOCK_RING_THICK_OUT = 6;
 const SHOCK_RING_THICK_IN = 4;
 const EMBER_DEBRIS_COUNT = 22; // TFX-04: bem abaixo de 64
@@ -55,10 +57,11 @@ export function redDetonationBurst(
   point: Vec2,
   look: RedDetonationLook,
   onSphere?: (radius: number) => void,
+  onRing?: () => void,
 ): void {
   detonateCore(scene, registry, point);
   detonateSphere(scene, registry, point, look.radius, onSphere);
-  detonateShockRing(scene, registry, point, shockRingRadius(look.radius));
+  detonateShockRings(scene, registry, point, shockRingRadius(look.radius), look.rings, onRing); // VRM-04
   detonateEmbers(scene, registry, point);
   detonateChunks(scene, registry, point);
   detonateSmoke(scene, registry, point);
@@ -112,27 +115,42 @@ function detonateSphere(
 }
 
 /**
- * Onda de choque: anel GROSSO (4-6 px, Direção de arte) - branco por baixo, vermelho por cima e mais fino,
- * deixando 1-2 px de borda branca visível nos dois lados (mesma técnica de "contorno" das outras vistas).
+ * Ondas de choque: anel GROSSO (4-6 px, Direção de arte) - branco por baixo, vermelho por cima e mais fino,
+ * deixando 1-2 px de borda branca visível nos dois lados (mesma técnica de "contorno" das outras vistas). VRM-04:
+ * `rings` anéis no mesmo Graphics, o i-ésimo começando `i × 40 ms` depois, num tween só (o relógio dos tweens, que o
+ * hitstop pausa junto com o resto); `onRing` avisa cada anel no quadro em que ele começa a ser desenhado.
  */
-function detonateShockRing(scene: Phaser.Scene, registry: FxRegistry, point: Vec2, maxRadius: number): void {
+function detonateShockRings(
+  scene: Phaser.Scene,
+  registry: FxRegistry,
+  point: Vec2,
+  maxRadius: number,
+  rings: number,
+  onRing?: () => void,
+): void {
   const shock = scene.add.graphics().setDepth(4);
   registry.add(shock);
-  registry.scheduleDestroy(shock, SHOCK_RING_MS);
+  const totalMs = SHOCK_RING_MS + (rings - 1) * RING_GAP_MS;
+  registry.scheduleDestroy(shock, totalMs);
+  let started = 0;
   scene.tweens.addCounter({
     from: 0,
-    to: 1,
-    duration: SHOCK_RING_MS,
+    to: totalMs,
+    duration: totalMs,
     onUpdate: (tw) => {
-      const t = tw.getValue() ?? 0;
-      const r = evenPx(20 + t * (maxRadius - 20));
-      const a = 1 - t;
-      shock
-        .clear()
-        .lineStyle(SHOCK_RING_THICK_OUT, C.ring, a)
-        .strokeCircle(point.x, point.y, r)
-        .lineStyle(SHOCK_RING_THICK_IN, C.glow, a)
-        .strokeCircle(point.x, point.y, r);
+      const ms = tw.getValue() ?? 0;
+      shock.clear();
+      for (let i = 0; i < rings; i++) {
+        const t = (ms - i * RING_GAP_MS) / SHOCK_RING_MS;
+        if (t < 0 || t > 1) continue;
+        for (; started <= i; started++) onRing?.();
+        const r = evenPx(20 + t * (maxRadius - 20));
+        shock
+          .lineStyle(SHOCK_RING_THICK_OUT, C.ring, 1 - t)
+          .strokeCircle(point.x, point.y, r)
+          .lineStyle(SHOCK_RING_THICK_IN, C.glow, 1 - t)
+          .strokeCircle(point.x, point.y, r);
+      }
     },
   });
 }

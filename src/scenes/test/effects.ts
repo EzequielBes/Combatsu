@@ -59,7 +59,8 @@ export class EffectsDirector {
     }
     this.s.fx.spark(point.x, point.y, hit.strength);
     if (hit.strength === 'heavy') this.s.fx.shake();
-    this.stop(HITSTOP_MS[hit.strength]);
+    // VRM-04: a detonação do Vermelho soma o hitstop da Potência (o toque e o estilhaço não trazem bônus).
+    this.stop(HITSTOP_MS[hit.strength] + (hit.hitstopBonusMs ?? 0));
   }
 
   /** Dispara o hitstop de `ms` e congela a cena. */

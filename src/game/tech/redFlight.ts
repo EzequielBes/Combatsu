@@ -25,6 +25,8 @@ export interface RedBlow {
   readonly strength: Strength;
   readonly force: number;
   readonly direction: Vec2;
+  /** Hitstop a mais (VRM-04): só a detonação leva o da Potência; o toque e a repulsão não. */
+  readonly hitstopBonusMs?: number;
 }
 
 /** Golpe do Vermelho em `target`. `point` só é lido se o golpe for aceito, já com o alvo reagindo a ele. */
@@ -126,6 +128,7 @@ export class RedFlight {
         strength: 'heavy',
         force: orb.red.force,
         direction: splash.direction,
+        hitstopBonusMs: orb.red.hitstopBonusMs, // VRM-04: 10 ms por ponto de Potência
       };
       strikeRed(this.ctx, enemy, at, orb.cast, blow);
     }
