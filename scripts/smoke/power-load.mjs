@@ -5,7 +5,9 @@
 import { makeKit } from './fight-kit.mjs';
 
 /** Rodada 2: a onda tem 8 inimigos (6 + 2 por rodada) e o `maxAlive=8` deixa todos vivos ao mesmo tempo. */
-const QUERY = 'hd=1&area=modular&enemyGuard=0&noshop=1&round=2&maxAlive=8&tech=azul,vermelho';
+/** VRM-08: a Perfuração 2 faz do Vermelho o 1º emissor `micro` do jogo, e o teto dos micro deixa de ser vazio. */
+const QUERY =
+  'hd=1&area=modular&enemyGuard=0&noshop=1&round=2&maxAlive=8&tech=azul,vermelho&axes=vermelho.perfuracao:2';
 const FX_CAP = 40;
 const NUMBERS_CAP = 12;
 const MICRO_CAP_MS = 60;
@@ -136,8 +138,8 @@ export async function fullLoadCaps(ctx) {
   );
   assert(m.fx <= FX_CAP, `POW-14: fx.live passou de ${FX_CAP}: ${view}`);
   assert(m.numbers <= NUMBERS_CAP, `POW-14: damageNumbers.live passou de ${NUMBERS_CAP}: ${view}`);
-  // Conferência vazia por ora: nenhuma técnica emite acerto `micro` antes da F30, então `microMs` fica em 0. O teto de
-  // 60 ms só está provado no teste do `MicroBudget` (tests/core/hitBand.test.ts) até o primeiro emissor entrar.
+  // VRM-08: os estilhaços da Perfuração são acertos `micro`, então o hitstop dos micro tem de aparecer e ficar no teto.
+  assert(m.micro > 0, `POW-14: os estilhaços da Perfuração deveriam dar hitstop micro: ${view}`);
   assert(m.micro <= MICRO_CAP_MS, `POW-14: o hitstop dos micro passou de ${MICRO_CAP_MS} ms em 1000 ms: ${view}`);
   console.log(`      POW-14 sob a carga: ${view}`);
 }

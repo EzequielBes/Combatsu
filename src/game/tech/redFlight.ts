@@ -1,7 +1,10 @@
 import type Phaser from 'phaser';
-import { canDamage, normalize, type Hit, type Strength, type Vec2 } from '../../core/hit';
+import { canDamage, normalize, type Hit, type HitBand, type Strength, type Vec2 } from '../../core/hit';
+import { shardTargets, type RedTarget } from '../../core/redBranch';
 import type { RedGeometry, RedOrbState, RedOrbTarget } from '../../core/redOrb';
 import type { TechStats } from '../../core/techStats';
+import { RED_AXES } from '../../data/techAxes';
+import type { Rect } from '../bodyTags';
 import { tagBody, type BodyTag, type Hittable } from '../bodyTags';
 import { Boss } from '../Boss';
 import type { RedOrbFx } from '../techFx/RedOrb';
@@ -27,20 +30,32 @@ export interface RedBlow {
   readonly direction: Vec2;
   /** Hitstop a mais (VRM-04): só a detonação leva o da Potência; o toque e a repulsão não. */
   readonly hitstopBonusMs?: number;
+  /** Faixa do acerto (POW-03): o estilhaço da Perfuração é `micro` (VRM-08). */
+  readonly band?: HitBand;
 }
 
-/** Golpe do Vermelho em `target`. `point` só é lido se o golpe for aceito, já com o alvo reagindo a ele. */
+/** O alvo do estilhaço (VRM-08): a caixa de acerto do alvo, do centro (`Rect`) para o canto (`Box`). */
+function shardTarget(target: { id: number; hurtRect(): Rect }): RedTarget {
+  const r = target.hurtRect();
+  return { id: target.id, box: { x: r.x - r.width / 2, y: r.y - r.height / 2, width: r.width, height: r.height } };
+}
+
+/**
+ * Golpe do Vermelho em `target`. `point` só é lido se o golpe for aceito, já com o alvo reagindo a ele. Devolve se o
+ * alvo aceitou o golpe.
+ */
 export function strikeRed(
   ctx: TechContext,
   target: Hittable,
   point: () => Vec2,
   cast: CastRef | null,
   blow: RedBlow,
-): void {
+): boolean {
   const hit: Hit = { ownerId: ctx.player.id, ...blow, ...techMarks(blow.strength, 'vermelho') };
-  if (!target.receiveHit(hit)) return;
+  if (!target.receiveHit(hit)) return false;
   ctx.onTechHit(hit, point(), target);
   ctx.masteryHit(cast, target);
+  return true;
 }
 
 /**
@@ -50,6 +65,15 @@ export function strikeRed(
  */
 export class RedFlight {
   private orb: RedOrbEntry | null = null;
+  /** Os alvos do último quadro: o toque vem do Matter, que não traz a lista, e o estilhaço procura os vizinhos nela. */
+  private targets: readonly TechTarget[] = [];
+  /** VRM-08: quem já levou estilhaço nesta conjuração (um orbe por conjuração); cada um leva no máximo um. */
+  private shardHit = new Set<number>();
+  /**
+   * Eventos do toque: o toque vem do passo do Matter, depois de o `TechRunner` já ter lido os eventos do quadro (e antes
+   * de zerá-los no próximo), então saem no começo do `update` seguinte.
+   */
+  private touchEvents: string[] = [];
 
   constructor(
     private readonly ctx: TechContext,
@@ -66,9 +90,12 @@ export class RedFlight {
     if (this.orb) this.discard(this.orb);
     tagBody(entry.body, { kind: 'active', onTouch: (other) => this.onTouch(entry, other) });
     this.orb = entry;
+    this.shardHit = new Set();
   }
 
   update(dtMs: number, enemies: readonly TechTarget[]): void {
+    this.targets = enemies;
+    for (const event of this.touchEvents.splice(0)) this.ctx.emit(event);
     const orb = this.orb;
     if (!orb) return;
     if (!orb.state.detonated) {
@@ -113,6 +140,29 @@ export class RedFlight {
     // RED-06, TEC-06: o dano do toque já vem escalado do `RedOrbConfig`.
     const blow: RedBlow = { damage: result.damage, strength: 'heavy', force, direction: result.direction };
     strikeRed(this.ctx, target, () => center, orb.cast, blow);
+    this.shard(orb, target.id, center);
+  }
+
+  /**
+   * VRM-08: ao atravessar um comum, a Perfuração acerta os 1/2/2 comuns mais perto dele (a até 60 px) com um estilhaço
+   * `micro` do `red.shard`, cada um no máximo uma vez por conjuração. Emite `redShard:<atravessado>:<alvo>:<dano>` com
+   * o dano que o alvo levou de fato (o número na tela se funde com o do toque quando o orbe chega nele depois).
+   */
+  private shard(orb: RedOrbEntry, passedId: number, from: Vec2): void {
+    const count = orb.red.shardNeighbors;
+    const passed = this.targets.find((e) => e.id === passedId);
+    if (count === 0 || !passed) return;
+    const others = this.targets.map(shardTarget);
+    const reach = RED_AXES.perfuracao.shardReachPx;
+    for (const id of shardTargets(shardTarget(passed), others, count, this.shardHit, reach)) {
+      const enemy = this.targets.find((e) => e.id === id);
+      if (!enemy) continue;
+      const at = (): Vec2 => ({ x: enemy.x, y: enemy.hurtRect().y });
+      const direction = normalize({ x: enemy.x - from.x, y: 0 });
+      const blow: RedBlow = { damage: orb.red.shard, strength: 'light', force: 0, direction, band: 'micro' };
+      if (!strikeRed(this.ctx, enemy, at, orb.cast, blow)) continue;
+      this.touchEvents.push(`redShard:${passedId}:${id}:${enemy.lastDamageTaken ?? blow.damage}`);
+    }
   }
 
   private finishDetonation(orb: RedOrbEntry, enemies: readonly TechTarget[]): void {

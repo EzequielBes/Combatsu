@@ -890,10 +890,16 @@ passa a exigir `microMs` > 0 e ≤ 60 sob a carga com Perfuração (ressalva do 
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs` (cenário 3) com `axes=vermelho.perfuracao:2` e 3 inimigos juntos: `damageNumbers` com 2
+- [x] `red-axes.smoke.mjs` (cenário 3) com `axes=vermelho.perfuracao:2` e 3 inimigos juntos: `damageNumbers` com 2
       números `micro` de 9 × multiplicadores; nenhum vizinho leva 2 estilhaços na mesma conjuração
-- [ ] `power-load.mjs` com o comentário de "conferência vazia" trocado pela checagem real do `microMs` (> 0 e ≤ 60)
-- [ ] Smokes `red-axes`, `tech`, `power` e `boss-adaptativo` verdes; gate verde; contagem sem perda
+- [x] `power-load.mjs` com o comentário de "conferência vazia" trocado pela checagem real do `microMs` (> 0 e ≤ 60)
+- [x] Smokes `red-axes`, `tech`, `power` e `boss-adaptativo` verdes; gate verde; contagem sem perda (4062)
+
+Como ficou (SPEC_DEVIATION): o vizinho do estilhaço fica no caminho do orbe, e o número `micro` dele se funde com o
+do toque (300 ms, vence o tipo mais forte), então o `damageNumbers` não mostra 2 números `micro` separados. O
+adaptador emite `redShard:<atravessado>:<alvo>:<dano>` com o dano que o alvo levou de fato (enfileirado no toque, que
+vem do passo do Matter, e emitido no `update` seguinte), e o smoke lê 2 estilhaços de 9 no 1º atravessado, nenhum
+alvo repetido e o `hitstop.microMs` > 0. O `strikeRed` passa a devolver se o alvo aceitou o golpe.
 
 **Tests**: smoke
 **Gate**: full

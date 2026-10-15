@@ -153,10 +153,53 @@ async function powerRings(ctx) {
   ctx.assert(maxRings === 4, `VRM-04: 4 anéis de choque com Potência 3: ${maxRings}`);
 }
 
+/**
+ * VRM-08 (cenário 3): com Perfuração 2 e 3 inimigos juntos, o 1º comum atravessado solta 2 estilhaços `micro` de 9
+ * (os multiplicadores valem 1 na rodada 1) nos vizinhos, e nenhum inimigo leva 2 estilhaços na mesma conjuração. O
+ * número na tela do vizinho se funde com o do toque quando o orbe chega nele, então o dano vem do evento
+ * `redShard:<atravessado>:<alvo>:<dano>` (o que o alvo levou de fato) e a faixa, do `hitstop.microMs`.
+ */
+// SPEC_DEVIATION: a T27 pedia 2 números `micro` no `damageNumbers`; o dano sai do evento `redShard:`.
+// Reason: o número do vizinho se funde com o do toque do orbe (300 ms, o tipo mais forte vence), e o snapshot só traz o
+// último número tocado.
+async function pierceShards(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(`${BASE}&enemyGuard=0&axes=vermelho.perfuracao:2`);
+  for (let i = 0; i < 40 && s.enemies.length < 3; i++) s = await kit.snap(300);
+  ctx.assert(s.enemies.length === 3, `três inimigos vivos: ${JSON.stringify(s.enemies.map((e) => e.x))}`);
+  s = await kit.approach(90);
+  const xs = s.enemies.map((e) => e.x);
+  ctx.assert(Math.max(...xs) - Math.min(...xs) <= 60, `os três deveriam estar juntos: ${JSON.stringify(xs)}`);
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s));
+  let micro = 0;
+  for (let i = 0; i < 120 && !s.events.slice(seen).includes('redDetonate'); i++) {
+    s = await kit.frame();
+    micro = Math.max(micro, s.hitstop.microMs);
+  }
+  const shards = s.events
+    .slice(seen)
+    .filter((e) => e.startsWith('redShard:'))
+    .map((e) => e.split(':').slice(1).map(Number));
+  const view = JSON.stringify(shards);
+  ctx.assert(shards.length >= 2, `VRM-08: o Vermelho deveria soltar estilhaços: ${view}`);
+  ctx.assert(
+    shards.filter(([from]) => from === shards[0][0]).length === 2,
+    `VRM-08: 2 vizinhos no 1º atravessado: ${view}`,
+  );
+  ctx.assert(
+    shards.every(([, , dmg]) => dmg === 9),
+    `VRM-08: cada estilhaço tira 9: ${view}`,
+  );
+  ctx.assert(new Set(shards.map(([, to]) => to)).size === shards.length, `VRM-08: ninguém leva 2 estilhaços: ${view}`);
+  ctx.assert(micro > 0, `POW-03: o estilhaço é micro e ganha o hitstop dos micro: ${micro}`);
+}
+
 export default async function (ctx) {
   await cannon(ctx);
   await scaledOrb(ctx);
   await powerRings(ctx);
+  await pierceShards(ctx);
   await machineGun(ctx);
   await axisCap(ctx);
   await branch(ctx);
