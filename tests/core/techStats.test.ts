@@ -86,16 +86,27 @@ describe('TST-01.6: os tempos saem de TECHNIQUES em todo nível', () => {
 });
 
 describe('TST-01.6: TECH_GEOMETRY sem número novo (igual às constantes ainda nos módulos)', () => {
-  it('Vermelho: raio, orbe, sensor, velocidade, alcance, força, repulsão e anel', () => {
+  it('Vermelho (T6): os números de hoje, lidos pela regra, pelo adaptador e pela vista sem cópia', () => {
     const g = TECH_GEOMETRY.vermelho;
-    expect(g.radius).toBe(constOf(redOrbSrc, 'DETONATION_RADIUS'));
-    expect(g.radius).toBe(constOf(redDetonationSrc, 'SPHERE_MAX_RADIUS'));
-    expect(g.ringPx).toBe(constOf(redDetonationSrc, 'SHOCK_RING_MAX_RADIUS'));
-    expect(redTechSrc).toContain(`TEX.techOrbRed${g.orbTexels}, 'orb'`);
-    expect(g.sensorPx).toBe(constOf(redTechSrc, 'RED_ORB_RADIUS'));
-    expect(g.force).toBe(constOf(redTechSrc, 'RED_FORCE'));
-    expect(g.speed).toBe(RED_ORB_SPEED);
-    expect(g.rangePx).toBe(constOf(redOrbSrc, 'RANGE'));
+    const { radius, orbTexels, sensorPx, speed, rangePx, force, ringPx, rings } = g;
+    expect({ radius, orbTexels, sensorPx, speed, rangePx, force, ringPx, rings }).toEqual({
+      radius: 96,
+      orbTexels: 12,
+      sensorPx: 6,
+      speed: 760,
+      rangePx: 420,
+      force: 8,
+      ringPx: 160,
+      rings: 1,
+    });
+    expect(RED_ORB_SPEED).toBe(g.speed);
+    // TST-03: nenhuma cópia do raio, do anel, do voo, do sensor ou da força nos módulos que agora leem do stat.
+    for (const name of ['DETONATION_RADIUS', 'RANGE', 'SPEED']) expect(redOrbSrc).not.toContain(`const ${name} =`);
+    for (const name of ['SPHERE_MAX_RADIUS', 'SHOCK_RING_MAX_RADIUS']) expect(redDetonationSrc).not.toContain(name);
+    expect(redDetonationSrc).not.toMatch(/\b(96|160)\b/);
+    for (const name of ['RED_ORB_RADIUS', 'RED_FORCE']) expect(redTechSrc).not.toContain(`const ${name}`);
+    expect(redTechSrc).toContain(`${g.orbTexels}: TEX.techOrbRed${g.orbTexels}`);
+    expect(redTechSrc).toContain('ORB_TEX[red.orbTexels]');
     expect(g.repulse).toEqual({
       damage: constOf(redOrbSrc, 'REPULSE_DAMAGE'),
       force: constOf(redOrbSrc, 'REPULSE_FORCE'),

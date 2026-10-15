@@ -16,6 +16,7 @@ import {
   evenPx,
   redDetonationBurst,
 } from './redDetonation';
+import type { RedDetonationLook } from './redLook';
 import { DISTORT_PERIOD_MS, REPULSE_MS, TRAIL_EVERY_MS, TRAIL_FADE_MS } from './redTiming';
 import { TEX } from '../textures';
 
@@ -323,16 +324,16 @@ export class RedOrbFx {
 
   /**
    * RED-11/12/17: flash do núcleo → esfera (núcleo branco, corpo vermelho, borda escura) expandindo até o raio
-   * real do dano (96 px, RED-10) → onda de choque grossa (branca por dentro do vermelho) indo além → detritos do
-   * chão (`k`/`s`) mais fumaça → tela vermelha por 80 ms → tremida de 200 ms (Direção de arte, beat 6).
+   * real do dano (`look.radius`, RED-10) → onda de choque grossa (branca por dentro do vermelho) indo além →
+   * detritos do chão (`k`/`s`) mais fumaça → tela vermelha por 80 ms → tremida de 200 ms (Direção de arte, beat 6).
    */
-  detonate(point: Vec2, _facing: 1 | -1): void {
+  detonate(point: Vec2, _facing: 1 | -1, look: RedDetonationLook): void {
     this.fx.add('red.flashCore', FLASH_CORE_MS, 'game');
     this.fx.add('red.sphere', SPHERE_MS, 'game');
     this.fx.add('red.shockRing', SHOCK_RING_MS, 'game');
     this.fx.add('red.debris', DEBRIS_MS, 'game');
     this.fx.add('red.screenFlash', SCREEN_FLASH_MS, 'game'); // RED-12
-    redDetonationBurst(this.scene, this.registry, point);
+    redDetonationBurst(this.scene, this.registry, point, look);
     this.detonateScreen();
   }
 

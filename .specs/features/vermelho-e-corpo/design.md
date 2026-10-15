@@ -233,8 +233,10 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 
 ### `core/redOrb.ts` (muda, 113 → ~125 linhas)
 
-- `RedOrbState` recebe `RedOrbConfig = { speed, rangePx, radius, touch, detonation }` no construtor no lugar das
-  constantes de `redOrb.ts:6-9` (o `RED_ORB_SPEED` exportado continua, lido de `TECH_GEOMETRY`).
+- `RedOrbState(x, dir, config)` recebe `RedOrbConfig = { speed, rangePx, radius, touch, detonation }` no construtor no
+  lugar das constantes de `redOrb.ts:6-9` (o `RED_ORB_SPEED` exportado continua, lido de `TECH_GEOMETRY`); o
+  `redOrbConfig(stats)` monta o config do `TechStats` da soltura, com os danos já escalados (o adaptador não chama mais
+  o `Loadout.damage` no golpe), e o `redGeometry(stats)` dá o `red` dele (T6).
 - `rebound(x, dir, rangePx, speed)` recria o `Mover`, zera `_detonated` e guarda o número da detonação;
   `hover()` para o `Mover` sem detonar (Contido); `hitIds` vira por detonação no rebote (o mesmo alvo pode levar a 2ª
   detonação, como o VRM-12 pede) mas o toque continua 1 vez por orbe.
@@ -407,7 +409,7 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 | `src/game/tech/purple.ts` | 12-15, 53, 96 | idem |
 | `src/game/tech/divergent.ts` | 167, 201 | `stats.damage.first` / `second` |
 | `src/game/techFx/RedOrb.ts` | 101-111, 329-337 | `chargeUpdate(..., chargeMs)` já recebe o tempo; `detonate(point, facing, look: { radius, rings })` |
-| `src/game/techFx/redDetonation.ts` | 26-29, 54, 65, 89, 117 | `redDetonationBurst(scene, registry, point, look)`; raio da esfera = `look.radius`, anel = `look.radius × 160 / 96`; sprite pelo `orbTexels` |
+| `src/game/techFx/redDetonation.ts` | 26-29, 54, 65, 89, 117 | `redDetonationBurst(scene, registry, point, look)`; raio da esfera = `look.radius`, anel = `shockRingRadius(look.radius)` (`radius × ringPx / radius` da tabela, em `techFx/redLook.ts` sem `phaser`, com o tipo `RedDetonationLook`); `TECH_GEOMETRY.vermelho.rings: 1` (T6); sprite pelo `orbTexels` no passo 2 |
 | `src/game/techFx/BlueOrb.ts` | 32-36 | halo e distorção proporcionais ao `radius` do stat (130 dá os números de hoje) |
 | `src/game/techFx/CutFx.ts` | 7-13 | comprimento e meio da linha pelo stat |
 | `src/game/techFx/PurpleOrb.ts` | — | raio da esfera pelo stat |

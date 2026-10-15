@@ -6,12 +6,15 @@ import type { FxTimeline } from '../../core/fxTimeline';
 import { canDamage, normalize, type Hit, type Strength, type Vec2 } from '../../core/hit';
 import {
   RedOrbState,
+  redGeometry,
+  redOrbConfig,
   redReleaseEffects,
   repulseTargetsFor,
+  type RedGeometry,
   type RedOrbTarget,
   type RepulseCandidate,
 } from '../../core/redOrb';
-import { TECHNIQUES } from '../../data/techniques';
+import type { TechStats } from '../../core/techStats';
 import { newEntityId, tagBody, type BodyTag, type Hittable } from '../bodyTags';
 import { Boss } from '../Boss';
 import { setIgnoreGravity } from '../physics';
@@ -19,14 +22,15 @@ import { RedOrbFx } from '../techFx/RedOrb';
 import { TEX } from '../textures';
 import { techMarks, type CastRef, type TechContext, type TechTarget } from './shared';
 
-/** Raio do sensor de voo do orbe Vermelho (px de mundo); pequeno, o orbe visual é que dá o tamanho percebido. */
-const RED_ORB_RADIUS = 6;
-/** RED-06/09/10: força (px/step) dos impactos do Vermelho - mesma escala do 2º impacto do Divergente. */
-const RED_FORCE = 8;
+/** Textura do orbe em voo pelo `orbTexels` do stat (o sensor é pequeno; o orbe visual dá o tamanho percebido). */
+const ORB_TEX: Record<RedGeometry['orbTexels'], string> = { 12: TEX.techOrbRed12 };
 
 interface RedOrbEntry {
   readonly cast: CastRef | null;
   readonly id: number;
+  /** TST-02: o stat do Vermelho na soltura (sensor, sprite, força, raio e danos deste orbe). */
+  readonly stats: TechStats;
+  readonly red: RedGeometry;
   readonly state: RedOrbState;
   readonly body: MatterJS.BodyType;
   readonly view: Phaser.GameObjects.Sprite;
@@ -88,7 +92,7 @@ export class RedTech {
       view.y,
       player.facing,
       cast.elapsedMs,
-      TECHNIQUES.vermelho.chargeMs,
+      this.ctx.loadout.stats('vermelho').chargeMs,
       player.frameName,
     );
   }
@@ -170,14 +174,16 @@ export class RedTech {
       this.orb = null;
     }
     const point = this.fx.fingertip(player.view.x, player.view.y, facing, player.frameName); // RDA-04
-    const state = new RedOrbState(point.x, facing);
-    const body = scene.matter.add.circle(point.x, point.y, RED_ORB_RADIUS, {
+    const stats = this.ctx.loadout.stats('vermelho');
+    const red = redGeometry(stats);
+    const state = new RedOrbState(point.x, facing, redOrbConfig(stats));
+    const body = scene.matter.add.circle(point.x, point.y, red.sensorPx, {
       isSensor: true,
       collisionFilter: { ...Filters.techOrb },
     });
     setIgnoreGravity(body, true);
-    const view = scene.add.sprite(point.x, point.y, TEX.techOrbRed12, 'orb').setDepth(2);
-    const entry: RedOrbEntry = { cast: this.ctx.currentCast(), id: newEntityId(), state, body, view };
+    const view = scene.add.sprite(point.x, point.y, ORB_TEX[red.orbTexels], 'orb').setDepth(2);
+    const entry: RedOrbEntry = { cast: this.ctx.currentCast(), id: newEntityId(), stats, red, state, body, view };
     tagBody(body, { kind: 'active', onTouch: (other) => this.onTouch(entry, other) });
     this.orb = entry;
   }
@@ -194,18 +200,17 @@ export class RedTech {
     if (!canDamage('player', target.team)) return;
     const rect = target.hurtRect?.();
     const center = rect ? { x: rect.x, y: rect.y } : { x: orb.state.x, y: orb.body.position.y };
-    const { loadout } = this.ctx;
     if (target instanceof Boss) {
       const direction = normalize({ x: center.x - orb.state.x, y: center.y - orb.body.position.y });
-      const damage = loadout.damage('vermelho', TECHNIQUES.vermelho.damage.hit); // RED-09, TEC-06
-      this.strike(target, () => center, orb.cast, damage, 'heavy', RED_FORCE, direction);
+      const damage = orb.stats.damage.hit; // RED-09, TEC-06: já escalado no stat da soltura
+      this.strike(target, () => center, orb.cast, damage, 'heavy', orb.red.force, direction);
       orb.state.detonate(); // RED-08: toque no chefe também detona
       return;
     }
     const result = orb.state.hitTest({ id: target.id, center }, orb.body.position.y);
     if (!result) return; // já atingido por este orbe antes (edge case: não acerta de novo)
-    const damage = loadout.damage('vermelho', result.damage); // RED-06, TEC-06
-    this.strike(target, () => center, orb.cast, damage, 'heavy', RED_FORCE, result.direction);
+    // RED-06, TEC-06: o dano do toque já vem escalado do `RedOrbConfig`.
+    this.strike(target, () => center, orb.cast, result.damage, 'heavy', orb.red.force, result.direction);
   }
 
   private finishDetonation(orb: RedOrbEntry, enemies: readonly TechTarget[]): void {
@@ -214,11 +219,11 @@ export class RedTech {
     for (const splash of orb.state.detonationTargets(targets, point)) {
       const enemy = enemies.find((e) => e.id === splash.targetId);
       if (!enemy) continue;
-      const damage = this.ctx.loadout.damage('vermelho', splash.damage); // RED-10, TEC-06
       const at = (): Vec2 => ({ x: enemy.x, y: enemy.hurtRect().y });
-      this.strike(enemy, at, orb.cast, damage, 'heavy', RED_FORCE, splash.direction);
+      // RED-10, TEC-06: o dano da detonação já vem escalado do `RedOrbConfig`.
+      this.strike(enemy, at, orb.cast, splash.damage, 'heavy', orb.red.force, splash.direction);
     }
-    this.fx.detonate(point, this.ctx.player.facing); // RED-11/12/17
+    this.fx.detonate(point, this.ctx.player.facing, { radius: orb.red.radius, rings: orb.red.rings }); // RED-11/12/17
     this.ctx.emit('redDetonate'); // RED-16
     this.ctx.scene.matter.world.remove(orb.body);
     orb.view.destroy();

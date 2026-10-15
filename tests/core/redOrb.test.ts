@@ -2,11 +2,18 @@ import { describe, expect, it } from 'vitest';
 import {
   RED_ORB_SPEED,
   RedOrbState,
+  redGeometry,
+  redOrbConfig,
   redReleaseEffects,
   repulseTargets,
   repulseTargetsFor,
 } from '../../src/core/redOrb';
-import { TECHNIQUES } from '../../src/data/techniques';
+import { Loadout } from '../../src/core/loadout';
+import { resolveTechStats } from '../../src/core/techStats';
+import { TECH_GEOMETRY, TECHNIQUES } from '../../src/data/techniques';
+
+/** O orbe do Vermelho Nv 1 sem multiplicadores, como o adaptador o constrói na soltura (TST-02). */
+const RED_LV1 = redOrbConfig(resolveTechStats({ id: 'vermelho', level: 1, damageMul: 1, vowDamageMul: 1, costMul: 1 }));
 
 describe('RED-02: o frame do núcleo do orbe segue o terço da carga', () => {
   const chargeMs = TECHNIQUES.vermelho.chargeMs; // 350 ms
@@ -28,13 +35,13 @@ describe('RED-02: o frame do núcleo do orbe segue o terço da carga', () => {
 
 describe('RED-05, RDA-11: o orbe avança na direção do lançamento a 760 px/s', () => {
   it('depois de 250 ms (190 px a 760 px/s), x andou 190 px na direção do facing', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     state.update(250);
     expect(state.x).toBeCloseTo(190, 1);
   });
 
   it('com facing -1, x anda para trás', () => {
-    const state = new RedOrbState(0, -1);
+    const state = new RedOrbState(0, -1, RED_LV1);
     state.update(250);
     expect(state.x).toBeCloseTo(-190, 1);
   });
@@ -42,7 +49,7 @@ describe('RED-05, RDA-11: o orbe avança na direção do lançamento a 760 px/s'
 
 describe('RED-06: o toque em um inimigo comum dá 30 de dano forte e impulso para longe do orbe', () => {
   it('primeiro toque devolve o dano e uma direção que se afasta do orbe', () => {
-    const state = new RedOrbState(100, 1);
+    const state = new RedOrbState(100, 1, RED_LV1);
     const hit = state.hitTest({ id: 1, center: { x: 150, y: 0 } }, 0);
     expect(hit).not.toBeNull();
     expect(hit!.damage).toBe(TECHNIQUES.vermelho.damage.hit);
@@ -51,14 +58,14 @@ describe('RED-06: o toque em um inimigo comum dá 30 de dano forte e impulso par
   });
 
   it('o mesmo alvo não é atingido de novo pelo mesmo orbe', () => {
-    const state = new RedOrbState(100, 1);
+    const state = new RedOrbState(100, 1, RED_LV1);
     state.hitTest({ id: 1, center: { x: 150, y: 0 } }, 0);
     const second = state.hitTest({ id: 1, center: { x: 150, y: 0 } }, 0);
     expect(second).toBeNull();
   });
 
   it('um alvo diferente ainda pode ser atingido', () => {
-    const state = new RedOrbState(100, 1);
+    const state = new RedOrbState(100, 1, RED_LV1);
     state.hitTest({ id: 1, center: { x: 150, y: 0 } }, 0);
     const other = state.hitTest({ id: 2, center: { x: 150, y: 10 } }, 0);
     expect(other).not.toBeNull();
@@ -67,7 +74,7 @@ describe('RED-06: o toque em um inimigo comum dá 30 de dano forte e impulso par
 
 describe('RED-08: o orbe detona ao completar o alcance de 420 px (L-010: 419/420 px)', () => {
   it('a 419 px o orbe ainda não detonou', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     const detonatedNow = state.update((419 / 760) * 1000);
     expect(detonatedNow).toBe(false);
     expect(state.detonated).toBe(false);
@@ -75,7 +82,7 @@ describe('RED-08: o orbe detona ao completar o alcance de 420 px (L-010: 419/420
   });
 
   it('ao completar 420 px o orbe detona nesse frame', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     state.update((419 / 760) * 1000);
     const detonatedNow = state.update((1 / 760) * 1000);
     expect(detonatedNow).toBe(true);
@@ -84,7 +91,7 @@ describe('RED-08: o orbe detona ao completar o alcance de 420 px (L-010: 419/420
   });
 
   it('detonate() também marca o orbe como detonado (parede ou chefe)', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     expect(state.detonated).toBe(false);
     state.detonate();
     expect(state.detonated).toBe(true);
@@ -95,7 +102,7 @@ describe('RED-10: a detonação atinge quem está a até 96 px do ponto (L-010: 
   const point = { x: 0, y: 0 };
 
   it('a 95 px do ponto: atingido', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     const hits = state.detonationTargets([{ id: 1, center: { x: 95, y: 0 } }], point);
     expect(hits).toHaveLength(1);
     expect(hits[0].damage).toBe(TECHNIQUES.vermelho.damage.detonation);
@@ -103,26 +110,26 @@ describe('RED-10: a detonação atinge quem está a até 96 px do ponto (L-010: 
   });
 
   it('a exatamente 96 px do ponto: ainda atingido (raio inclusivo)', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     const hits = state.detonationTargets([{ id: 1, center: { x: 96, y: 0 } }], point);
     expect(hits).toHaveLength(1);
   });
 
   it('a 97 px do ponto: fora do raio, não atingido', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     const hits = state.detonationTargets([{ id: 1, center: { x: 97, y: 0 } }], point);
     expect(hits).toHaveLength(0);
   });
 
   it('quem já foi atingido em voo não recebe o dano da detonação de novo', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     state.hitTest({ id: 1, center: { x: 10, y: 0 } }, 0);
     const hits = state.detonationTargets([{ id: 1, center: { x: 10, y: 0 } }], point);
     expect(hits).toHaveLength(0);
   });
 
   it('o impulso radial aponta para longe do ponto de detonação', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     const hits = state.detonationTargets([{ id: 1, center: { x: -50, y: 0 } }], point);
     expect(hits[0].direction.x).toBeLessThan(0);
   });
@@ -130,7 +137,7 @@ describe('RED-10: a detonação atinge quem está a até 96 px do ponto (L-010: 
 
 describe('RED-13: a detonação remove o orbe (marcado detonado) no frame em que acontece', () => {
   it('depois de detonationTargets ou update de alcance, `detonated` reflete o estado do frame', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     state.detonate();
     expect(state.detonated).toBe(true);
   });
@@ -138,7 +145,7 @@ describe('RED-13: a detonação remove o orbe (marcado detonado) no frame em que
 
 describe('RED-14: em voo, o orbe expõe a distância percorrida', () => {
   it('traveled começa em 0 e cresce com o voo', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     expect(state.traveled).toBe(0);
     state.update(100);
     expect(state.traveled).toBeCloseTo(76, 1); // 760 px/s * 0,1 s (RDA-11)
@@ -151,14 +158,14 @@ describe('RDA-11: o orbe percorre 760 px em 1000 ms de voo livre', () => {
   });
 
   it('com um alcance maior que o do orbe, 1000 ms rendem 760 px (a 100 ms: 76 px)', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     state.update(100);
     expect(state.traveled).toBeCloseTo(76, 5);
     expect(state.traveled / 0.1).toBeCloseTo(760, 3);
   });
 
   it('os 420 px de alcance terminam em ~553 ms', () => {
-    const state = new RedOrbState(0, 1);
+    const state = new RedOrbState(0, 1, RED_LV1);
     expect(state.update(552)).toBe(false);
     expect(state.update(2)).toBe(true);
   });
@@ -242,5 +249,49 @@ describe('EDG-02, RED-15: redReleaseEffects', () => {
 
   it('no ar repele igual e não recua', () => {
     expect(redReleaseEffects({ grounded: false })).toEqual({ repulse: true, pushPx: 0 });
+  });
+});
+
+describe('TST-02: o orbe lê voo, raio e danos do RedOrbConfig tirado do TechStats', () => {
+  it('Nv 1 sem multiplicadores dá os números de hoje: 760 px/s, 420 px, raio 96, toque 30, detonação 25', () => {
+    expect(RED_LV1).toEqual({ speed: 760, rangePx: 420, radius: 96, touch: 30, detonation: 25 });
+  });
+
+  it('o dano já vem escalado como o Loadout.damage de hoje (Nv 3, Rosário 1,35 e voto 1,35)', () => {
+    const loadout = new Loadout();
+    loadout.equip(0, 'vermelho', 3);
+    loadout.damageMul = 1.35;
+    loadout.vowDamageMul = 1.35;
+    const config = redOrbConfig(loadout.stats('vermelho'));
+    expect(config.touch).toBe(loadout.damage('vermelho', TECHNIQUES.vermelho.damage.hit));
+    expect(config.detonation).toBe(loadout.damage('vermelho', TECHNIQUES.vermelho.damage.detonation));
+    expect(config.touch).toBeGreaterThan(30);
+  });
+
+  it('redGeometry devolve o red do stat e, sem ele, a geometria da tabela', () => {
+    const red = resolveTechStats({ id: 'vermelho', level: 1, damageMul: 1, vowDamageMul: 1, costMul: 1 });
+    expect(redGeometry(red)).toBe(red.red);
+    const blue = resolveTechStats({ id: 'azul', level: 1, damageMul: 1, vowDamageMul: 1, costMul: 1 });
+    expect(redGeometry(blue)).toBe(TECH_GEOMETRY.vermelho);
+  });
+
+  const wide = { speed: 380, rangePx: 320, radius: 120, touch: 40, detonation: 33 };
+
+  it('raio 120 do config: 119 e 120 px entram, 121 não (L-010), com a detonação 33 do config', () => {
+    const at = (x: number) =>
+      new RedOrbState(0, 1, wide).detonationTargets([{ id: 1, center: { x, y: 0 } }], { x: 0, y: 0 });
+    expect(at(119).map((h) => h.damage)).toEqual([33]);
+    expect(at(120)).toHaveLength(1);
+    expect(at(121)).toEqual([]);
+  });
+
+  it('toque com o dano do config (40) e voo na velocidade e no alcance dele (380 px/s, 320 px)', () => {
+    const state = new RedOrbState(0, 1, wide);
+    expect(state.hitTest({ id: 1, center: { x: 10, y: 0 } }, 0)?.damage).toBe(40);
+    state.update(250);
+    expect(state.x).toBeCloseTo(95, 5);
+    expect(state.update((224 / 380) * 1000)).toBe(false);
+    expect(state.update((2 / 380) * 1000)).toBe(true);
+    expect(state.traveled).toBeCloseTo(320, 5);
   });
 });

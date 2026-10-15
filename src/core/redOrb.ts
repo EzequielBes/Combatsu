@@ -1,12 +1,42 @@
 import { normalize, type Vec2 } from './hit';
 import { Mover } from './mover';
-import { TECHNIQUES } from '../data/techniques';
+import { TECH_GEOMETRY } from '../data/techniques';
+import type { TechStats } from './techStats';
 
-/** Velocidade do orbe em px/s (RDA-11, supersede RED-05: era 560). */
-export const RED_ORB_SPEED = 760;
-const SPEED = RED_ORB_SPEED;
-const RANGE = 420; // RED-08
-const DETONATION_RADIUS = 96; // RED-10
+/** Velocidade do orbe em px/s (RDA-11, supersede RED-05: era 560), lida de `TECH_GEOMETRY`. */
+export const RED_ORB_SPEED = TECH_GEOMETRY.vermelho.speed;
+
+/**
+ * O que o orbe precisa da conjuração (TST-02): velocidade e alcance do voo (RDA-11, RED-08), raio da detonação
+ * (RED-10) e os danos já escalados do toque (RED-06) e da detonação (RED-10), tirados do `TechStats` da soltura.
+ */
+export interface RedOrbConfig {
+  speed: number;
+  rangePx: number;
+  radius: number;
+  touch: number;
+  detonation: number;
+}
+
+/** Geometria do Vermelho resolvida no `TechStats` (sensor, orbe, força, raio, anéis). */
+export type RedGeometry = NonNullable<TechStats['red']>;
+
+/** A geometria de um `TechStats` do Vermelho; sem `red` (não é o Vermelho) cai na da tabela. */
+export function redGeometry(stats: TechStats): RedGeometry {
+  return stats.red ?? TECH_GEOMETRY.vermelho;
+}
+
+/** O `RedOrbConfig` de um `TechStats` do Vermelho. */
+export function redOrbConfig(stats: TechStats): RedOrbConfig {
+  const red = redGeometry(stats);
+  return {
+    speed: red.speed,
+    rangePx: red.rangePx,
+    radius: red.radius,
+    touch: stats.damage.hit,
+    detonation: stats.damage.detonation,
+  };
+}
 
 export interface RedOrbTarget {
   id: number;
@@ -85,17 +115,21 @@ export interface RedOrbHit {
 }
 
 /**
- * Estado do orbe Vermelho em voo (RED-02, 05, 06, 08, 10, 13, 14): avança horizontalmente por `Mover` a 760 px/s
- * até 420 px, marca quem já foi atingido (uma vez cada) e decide o dano/impulso do toque e da detonação (parede,
- * chefe ou alcance). A física (sensor Matter, aplicar o impulso) fica para a fase 5. Sem `phaser` aqui.
+ * Estado do orbe Vermelho em voo (RED-02, 05, 06, 08, 10, 13, 14): avança horizontalmente por `Mover` na velocidade
+ * do `config` (760 px/s) até o alcance dele (420 px), marca quem já foi atingido (uma vez cada) e decide o
+ * dano/impulso do toque e da detonação (parede, chefe ou alcance), com os danos e o raio do `config`. A física (sensor Matter, aplicar o impulso) fica para a fase 5. Sem `phaser` aqui.
  */
 export class RedOrbState {
   private readonly mover: Mover;
   private readonly hitIds = new Set<number>();
   private _detonated = false;
 
-  constructor(x: number, dir: 1 | -1) {
-    this.mover = new Mover(x, dir, SPEED, RANGE);
+  constructor(
+    x: number,
+    dir: 1 | -1,
+    private readonly config: RedOrbConfig,
+  ) {
+    this.mover = new Mover(x, dir, config.speed, config.rangePx);
   }
 
   get x(): number {
@@ -124,28 +158,28 @@ export class RedOrbState {
     if (this.hitIds.has(target.id)) return null;
     this.hitIds.add(target.id);
     const direction = normalize({ x: target.center.x - this.x, y: target.center.y - orbY });
-    return { targetId: target.id, damage: TECHNIQUES.vermelho.damage.hit, direction };
+    return { targetId: target.id, damage: this.config.touch, direction };
   }
 
-  /** RED-10: alvos a até 96 px do ponto de detonação, ainda não atingidos por este orbe, cada um uma vez. */
+  /** RED-10: alvos a até `config.radius` (96 px) do ponto, ainda não atingidos por este orbe, cada um uma vez. */
   detonationTargets(targets: readonly RedOrbTarget[], point: Vec2): RedOrbHit[] {
     const hits: RedOrbHit[] = [];
     for (const target of targets) {
       if (this.hitIds.has(target.id)) continue;
       const dx = target.center.x - point.x;
       const dy = target.center.y - point.y;
-      if (Math.hypot(dx, dy) > DETONATION_RADIUS) continue;
+      if (Math.hypot(dx, dy) > this.config.radius) continue;
       this.hitIds.add(target.id);
       hits.push({
         targetId: target.id,
-        damage: TECHNIQUES.vermelho.damage.detonation,
+        damage: this.config.detonation,
         direction: normalize({ x: dx, y: dy }),
       });
     }
     return hits;
   }
 
-  /** RED-08: avança o voo; devolve `true` no frame em que os 420 px se completam (detona por alcance). */
+  /** RED-08: avança o voo; devolve `true` no frame em que o alcance (420 px) se completa (detona por alcance). */
   update(dtMs: number): boolean {
     if (this._detonated) return false;
     if (this.mover.update(dtMs) === 'expired') {

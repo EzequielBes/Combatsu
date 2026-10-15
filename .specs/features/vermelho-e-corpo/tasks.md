@@ -324,10 +324,12 @@ damageMul, vowDamageMul, costMul })` na regra de hoje (`TECHNIQUES` × `LEVEL_FA
 
 #### T6: Vermelho lê o stat (regra, adaptador e vista)
 
-**What**: `RedOrbState(config: RedOrbConfig)` no lugar das constantes (`redOrb.ts:6-9`, `:97-99`; `RED_ORB_SPEED`
-exportado lido de `TECH_GEOMETRY`); `game/tech/red.ts` guarda `loadout.stats('vermelho')` na soltura (sensor, sprite,
-força e dano); `RedOrb.detonate(point, facing, look)` e `redDetonationBurst(scene, registry, point, look)` com
-`look = { radius, rings }` (esfera = `look.radius`, anel = `look.radius × 160 / 96`).
+**What**: `RedOrbState(x, dir, config: RedOrbConfig)` no lugar das constantes (`redOrb.ts:6-9`, `:97-99`;
+`RED_ORB_SPEED` exportado lido de `TECH_GEOMETRY`; `redOrbConfig(stats)` e `redGeometry(stats)` na regra, com os danos
+já escalados); `game/tech/red.ts` guarda `loadout.stats('vermelho')` na soltura (sensor, sprite, força e dano);
+`RedOrb.detonate(point, facing, look)` e `redDetonationBurst(scene, registry, point, look)` com
+`look = { radius, rings }` (esfera = `look.radius`, anel = `shockRingRadius(look.radius)` = `radius × ringPx / radius` da tabela, em
+`techFx/redLook.ts`, sem `phaser`; `TECH_GEOMETRY.vermelho.rings: 1`, que a T de anéis da Potência passa a desenhar).
 **Where**: `src/core/redOrb.ts`
 **Depends on**: T4
 **Reuses**: `TECH_GEOMETRY.vermelho`; `redOrbFxSource.test.ts` (o `look` só traz números, cores seguem em `RED_FX_COLORS`)
@@ -335,10 +337,14 @@ força e dano); `RedOrb.detonate(point, facing, look)` e `redDetonationBurst(sce
 
 **Done when**:
 
-- [ ] `tests/core/redOrb.test.ts` e `redOrbFxSource.test.ts` verdes (só a construção do `RedOrbState` muda nos testes)
-- [ ] `grep -n "96" src/game/techFx/RedOrb.ts src/game/techFx/redDetonation.ts` sem cópia do raio de dano (TST-03)
-- [ ] Smokes `tech`, `techniques`, `red-anime` e `kokusen` verdes e iguais
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/redOrb.test.ts` e `redOrbFxSource.test.ts` verdes (só a construção do `RedOrbState` muda nos testes);
+      `redOrb.test.ts` ganha o `TST-02` (config do Nv 1, dano escalado = `Loadout.damage`, raio 119/120/121 e voo de
+      um config diferente) e o `techStats.test.ts` passa a provar que o Vermelho não tem mais cópia dos números
+- [x] `grep -n "96" src/game/techFx/RedOrb.ts src/game/techFx/redDetonation.ts` sem cópia do raio de dano (TST-03),
+      também em `tests/game/redLook.test.ts` (anel 96 → 160, 120 → 200, 168 → 280)
+- [x] Smokes `tech`, `techniques`, `red-anime` e `kokusen` verdes e iguais
+- [x] Gate verde; contagem sem perda (3848 + 7 = 3855). O dano do orbe agora é o do stat da soltura (antes era
+      escalado no golpe): os multiplicadores que mudarem durante os ~550 ms de voo não entram mais nesse orbe
 
 **Tests**: unit + smoke
 **Gate**: full

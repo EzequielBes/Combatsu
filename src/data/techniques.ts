@@ -170,8 +170,9 @@ export const CAST_FX = {
 
 /**
  * Geometria das técnicas num lugar só (TST-01): os números que hoje são constantes soltas nos módulos de regra, nos
- * adaptadores de `game/tech/` e nas vistas de `game/techFx/`. Nesta etapa os módulos ainda têm a cópia deles; o
- * `tests/core/techStats.test.ts` compara cada número com a constante do módulo até os módulos passarem a ler daqui.
+ * adaptadores de `game/tech/` e nas vistas de `game/techFx/`. O Vermelho já lê daqui pelo `TechStats` (T6); nas outras
+ * os módulos ainda têm a cópia, e o `tests/core/techStats.test.ts` compara cada número com a constante do módulo até
+ * eles passarem a ler daqui.
  */
 export const TECH_GEOMETRY = {
   vermelho: {
@@ -189,8 +190,10 @@ export const TECH_GEOMETRY = {
     force: 8,
     /** Repulsão da soltura (RDA-08): dano, força e alcance horizontal e vertical a partir do centro do player. */
     repulse: { damage: 4, force: 10, reachX: 80, reachY: 48 },
-    /** Raio máximo da onda de choque da detonação (`redDetonation.ts`). */
+    /** Raio máximo da onda de choque da detonação (`redDetonation.ts`): a vista o escala junto com o `radius`. */
     ringPx: 160,
+    /** Anéis da onda de choque na detonação (a vista recebe pelo `look`; a Potência soma anéis no passo 2). */
+    rings: 1,
   },
   azul: {
     /** BLU-02: o orbe nasce a esta distância à frente do player, recuando até esta folga da parede. */

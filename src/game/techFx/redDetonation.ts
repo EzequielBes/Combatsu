@@ -3,6 +3,7 @@ import type { FxRegistry } from '../../core/fxRegistry';
 import type { Vec2 } from '../../core/hit';
 import { PALETTE } from '../art/palette';
 import { TEX } from '../textures';
+import { shockRingRadius, type RedDetonationLook } from './redLook';
 import { RED_FX_COLORS } from './redPalette';
 import { FRAME_MS } from './redTiming';
 
@@ -22,11 +23,8 @@ const C = RED_COLORS;
 export const FLASH_CORE_MS = FRAME_MS * 2;
 /** "esfera vermelha expandindo em 3 frames" (Direção de arte, beat 6): mesma convenção do SHOCK_MS de KokusenFx. */
 export const SPHERE_MS = FRAME_MS * 3;
-/** Polimento: a esfera cresce até o raio real do dano (RED-10, redOrb.ts DETONATION_RADIUS) - antes parava em 30 px. */
-const SPHERE_MAX_RADIUS = 96;
 /** Polimento: onda de choque GROSSA (Direção de arte) e mais demorada, passando bem além do raio de dano. */
 export const SHOCK_RING_MS = 280;
-const SHOCK_RING_MAX_RADIUS = 160;
 const SHOCK_RING_THICK_OUT = 6;
 const SHOCK_RING_THICK_IN = 4;
 const EMBER_DEBRIS_COUNT = 22; // TFX-04: bem abaixo de 64
@@ -51,10 +49,15 @@ interface ChunkDebris {
  * Parte de mundo da detonação do Vermelho (RED-11): flash do núcleo, esfera, onda de choque, detritos e fumaça,
  * nesta ordem. A tela vermelha e a tremida ficam no `RedOrbFx`, que é dono do retângulo de flash.
  */
-export function redDetonationBurst(scene: Phaser.Scene, registry: FxRegistry, point: Vec2): void {
+export function redDetonationBurst(
+  scene: Phaser.Scene,
+  registry: FxRegistry,
+  point: Vec2,
+  look: RedDetonationLook,
+): void {
   detonateCore(scene, registry, point);
-  detonateSphere(scene, registry, point);
-  detonateShockRing(scene, registry, point);
+  detonateSphere(scene, registry, point, look.radius);
+  detonateShockRing(scene, registry, point, shockRingRadius(look.radius));
   detonateEmbers(scene, registry, point);
   detonateChunks(scene, registry, point);
   detonateSmoke(scene, registry, point);
@@ -74,9 +77,9 @@ function detonateCore(scene: Phaser.Scene, registry: FxRegistry, point: Vec2): v
 
 /**
  * Esfera: 3 camadas concêntricas (fora -> dentro) - borda escura `k`, corpo `R`, núcleo `W` encolhendo (o
- * flash inicial que "vira" o corpo vermelho conforme a esfera cresce até os 96 px do dano real, RED-10).
+ * flash inicial que "vira" o corpo vermelho conforme a esfera cresce até o `maxRadius` do dano real, RED-10).
  */
-function detonateSphere(scene: Phaser.Scene, registry: FxRegistry, point: Vec2): void {
+function detonateSphere(scene: Phaser.Scene, registry: FxRegistry, point: Vec2, maxRadius: number): void {
   const sphere = scene.add.graphics().setDepth(4);
   registry.add(sphere);
   registry.scheduleDestroy(sphere, SPHERE_MS);
@@ -86,7 +89,7 @@ function detonateSphere(scene: Phaser.Scene, registry: FxRegistry, point: Vec2):
     duration: SPHERE_MS,
     onUpdate: (tw) => {
       const t = tw.getValue() ?? 0;
-      const r = evenPx(8 + t * (SPHERE_MAX_RADIUS - 8));
+      const r = evenPx(8 + t * (maxRadius - 8));
       const coreR = evenPx(Math.max(0, r * 0.5 * (1 - t)));
       sphere
         .clear()
@@ -104,7 +107,7 @@ function detonateSphere(scene: Phaser.Scene, registry: FxRegistry, point: Vec2):
  * Onda de choque: anel GROSSO (4-6 px, Direção de arte) - branco por baixo, vermelho por cima e mais fino,
  * deixando 1-2 px de borda branca visível nos dois lados (mesma técnica de "contorno" das outras vistas).
  */
-function detonateShockRing(scene: Phaser.Scene, registry: FxRegistry, point: Vec2): void {
+function detonateShockRing(scene: Phaser.Scene, registry: FxRegistry, point: Vec2, maxRadius: number): void {
   const shock = scene.add.graphics().setDepth(4);
   registry.add(shock);
   registry.scheduleDestroy(shock, SHOCK_RING_MS);
@@ -114,7 +117,7 @@ function detonateShockRing(scene: Phaser.Scene, registry: FxRegistry, point: Vec
     duration: SHOCK_RING_MS,
     onUpdate: (tw) => {
       const t = tw.getValue() ?? 0;
-      const r = evenPx(20 + t * (SHOCK_RING_MAX_RADIUS - 20));
+      const r = evenPx(20 + t * (maxRadius - 20));
       const a = 1 - t;
       shock
         .clear()
