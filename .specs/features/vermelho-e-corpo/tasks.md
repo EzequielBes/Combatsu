@@ -710,10 +710,10 @@ e nível que não é inteiro positivo somem.
 
 **Done when**:
 
-- [ ] `tests/core/axisParam.test.ts`: `vermelho.potencia:3,corpo.alcance:2`; `null` e vazio dão `[]`; `xx.potencia:1`,
+- [x] `tests/core/axisParam.test.ts`: `vermelho.potencia:3,corpo.alcance:2`; `null` e vazio dão `[]`; `xx.potencia:1`,
       `vermelho.xx:1`, `vermelho.potencia:0`, `:-1`, `:1.5` e `:` somem e o resto vale; `ramo=vermelho:a,corpo:b`;
       `ramo=vermelho:c` some
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
