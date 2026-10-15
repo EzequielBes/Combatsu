@@ -8,7 +8,7 @@ import { trailStyle } from '../core/strikePath';
 import { IMPACT_FEEL, SLIDE_FEEL } from '../data/feel';
 import { HD_ON } from './art/hd/flag';
 import { PALETTE, PALETTE_KEYS } from './art/palette';
-import { drawHeavyImpact, drawLightImpact, type ImpactShape } from './cursedImpact';
+import { drawHeavyImpact, drawLightImpact, type ImpactShape, type ImpactTone } from './cursedImpact';
 import { registerSheet } from './art/render';
 import { TEX } from './textures';
 
@@ -32,6 +32,12 @@ const FLAME_SCALE = 0.7;
 const TRAIL_SAMPLES = 10;
 /** Quanto a espinha do rastro entorta para cima, em fração do comprimento: dá o arco do golpe de anime. */
 const TRAIL_BULGE = 0.14;
+
+/** Escala e tom do impacto forte e decisivo do jogador (POW-08, POW-09); o leve não muda. */
+export interface ImpactLook {
+  scale: number;
+  tone: ImpactTone;
+}
 
 /** Teto de objetos vivos (EDG-03): com `live` já no teto, estilhaços e resíduos novos são pulados. */
 export function canSpawnParticle(live: number): boolean {
@@ -155,9 +161,12 @@ export class CursedFx {
   /**
    * Rastro do golpe (TRL-03..06): lente de energia entre o ponto de golpe do `-wind` e o do `-hit`, em coordenadas
    * de mundo. Sombra `d`, corpo `c`, núcleo `C` e fagulhas `u`/`U` caindo na lateral; apaga em `fadeMs` de jogo.
+   * `extraPx` alarga o rastro (a força do corpo, POW-08).
    */
-  trail(path: readonly Vec2[], strength: Strength): void {
-    const { widthPx, fadeMs } = trailStyle(strength);
+  trail(path: readonly Vec2[], strength: Strength, extraPx = 0): void {
+    const style = trailStyle(strength);
+    const widthPx = style.widthPx + extraPx;
+    const fadeMs = style.fadeMs;
     const body = trailPolygon(path, widthPx);
     if (body.length < 3) return;
     const gfx = this.add(this.scene.add.graphics().setDepth(FX_DEPTH));
@@ -217,14 +226,15 @@ export class CursedFx {
   /**
    * Impacto em camadas (IMP-07..09). `light`: lampejo pequeno e 6 agulhas num cone de ±35° em volta de `dir`.
    * `heavy` e `decisive`: lampejo em estrela, onda de choque fina de 6 a 28 px, riscos em raio (os de
-   * `impactSpikes(seed, 6)`) e um jato na direção do golpe. `seed` fixa o desenho (AD-006).
+   * `impactSpikes(seed, 6)`) e um jato na direção do golpe. `seed` fixa o desenho (AD-006). `look` (escala e tom da
+   * força do corpo) só vale no forte e no decisivo.
    */
-  impact(tier: ImpactTier, at: Vec2, dir: Vec2, seed: number): void {
+  impact(tier: ImpactTier, at: Vec2, dir: Vec2, seed: number, look?: ImpactLook): void {
     if (tier === 'light') {
       this.shards(at, dir, seed);
       return;
     }
-    this.ringAndSpikes(at, dir, seed, tier === 'decisive');
+    this.ringAndSpikes(at, dir, seed, tier === 'decisive', look);
   }
 
   /** Rachadura no chão do pouso da derrubada (IMP-15): linhas finas que somem em `crackMs`. */
@@ -310,8 +320,9 @@ export class CursedFx {
     });
   }
 
-  private shapeAt(at: Vec2, dir: Vec2): ImpactShape {
-    return { cx: snap(at.x), cy: snap(at.y), dirAngle: Math.atan2(dir.y, dir.x), snap, grid: GRID };
+  private shapeAt(at: Vec2, dir: Vec2, look?: ImpactLook): ImpactShape {
+    const shape: ImpactShape = { cx: snap(at.x), cy: snap(at.y), dirAngle: Math.atan2(dir.y, dir.x), snap, grid: GRID };
+    return look ? { ...shape, scale: look.scale, tone: look.tone } : shape;
   }
 
   /** Toca um desenho de impacto de `p = 0` a 1 em `ms` de jogo (parado em 0 durante o hitstop) e o destrói no fim. */
@@ -341,9 +352,9 @@ export class CursedFx {
     this.play(IMPACT_FEEL.shardLifeMs, (gfx, p) => drawLightImpact(gfx, shape, list, p));
   }
 
-  private ringAndSpikes(at: Vec2, dir: Vec2, seed: number, decisive: boolean): void {
+  private ringAndSpikes(at: Vec2, dir: Vec2, seed: number, decisive: boolean, look?: ImpactLook): void {
     const spikes = impactSpikes(seed, IMPACT_FEEL.spikeCount);
-    const shape = this.shapeAt(at, dir);
+    const shape = this.shapeAt(at, dir, look);
     this.play(IMPACT_FEEL.ringMs, (gfx, p) => drawHeavyImpact(gfx, shape, spikes, decisive, p));
   }
 }

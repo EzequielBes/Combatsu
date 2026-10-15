@@ -7,6 +7,7 @@
 import type Phaser from 'phaser';
 import type { Vec2 } from '../core/hit';
 import type { Spike } from '../core/impactTier';
+import type { ToneKeys } from '../core/power';
 import { IMPACT_FEEL } from '../data/feel';
 import { PALETTE } from './art/palette';
 import { pts } from './points';
@@ -25,6 +26,8 @@ export interface ImpactShape {
   grid: number;
   /** Cores do desenho; sem isto, as da energia amaldiçoada. */
   tone?: ImpactTone;
+  /** Escala do impacto forte e decisivo (POW-08): agulhas, jato, ondas e estrela; sem isto, 1. */
+  scale?: number;
 }
 
 /** Cores de um impacto: sombra por baixo, corpo e miolo claro, e o par alternado de alguns riscos. */
@@ -46,6 +49,17 @@ export const CURSED_TONE: ImpactTone = {
 };
 
 const toneOf = (s: ImpactShape): ImpactTone => s.tone ?? CURSED_TONE;
+
+/** Tom em chaves da `PALETTE` (o do patamar de força, POW-09) virado nas cores do desenho. */
+export function toneFromKeys(keys: ToneKeys): ImpactTone {
+  return {
+    shadow: PALETTE[keys.shadow]!,
+    body: PALETTE[keys.body]!,
+    core: PALETTE[keys.core]!,
+    altBody: PALETTE[keys.altBody]!,
+    altCore: PALETTE[keys.altCore]!,
+  };
+}
 
 const easeOut = (p: number): number => 1 - (1 - p) * (1 - p);
 
@@ -126,10 +140,13 @@ function shockwave(g: Gfx, s: ImpactShape, r: number, p: number, color: number, 
 /**
  * Impacto forte e decisivo no progresso `p` (0 a 1). Lampejo grande no contato, riscos radiais (os `spikes` do seed)
  * que se soltam do centro, jato de três riscos longos na direção do golpe e a onda de choque de `ringFromPx` a
- * `ringToPx`. O decisivo é maior e ganha uma segunda onda roxa atrasada.
+ * `ringToPx`. O decisivo é maior e ganha uma segunda onda atrasada no tom alternado. `s.scale` aumenta tudo (POW-08) e
+ * `s.tone` pinta tudo, ondas inclusive (POW-09).
  */
 export function drawHeavyImpact(g: Gfx, s: ImpactShape, spikes: readonly Spike[], decisive: boolean, p: number): void {
-  const k = decisive ? 1.35 : 1;
+  const scale = s.scale ?? 1;
+  const k = (decisive ? 1.35 : 1) * scale;
+  const tone = toneOf(s);
   const e = easeOut(p);
   g.clear();
   // Riscos radiais: a ponta corre até o comprimento sorteado e a cauda vem atrás, soltando o risco do centro.
@@ -145,11 +162,11 @@ export function drawHeavyImpact(g: Gfx, s: ImpactShape, spikes: readonly Spike[]
   });
   if (p > 0.06) {
     const r = (IMPACT_FEEL.ringFromPx + (IMPACT_FEEL.ringToPx - IMPACT_FEEL.ringFromPx) * e) * k;
-    shockwave(g, s, r, p, p < 0.35 ? CURSED_TONE.core : CURSED_TONE.body, s.dirAngle);
-    if (decisive && p > 0.25) shockwave(g, s, r * 0.62, p, CURSED_TONE.altBody, s.dirAngle + 1);
+    shockwave(g, s, r, p, p < 0.35 ? tone.core : tone.body, s.dirAngle);
+    if (decisive && p > 0.25) shockwave(g, s, r * 0.62, p, tone.altBody, s.dirAngle + 1);
   }
   // O lampejo nasce cheio (é ele que fica parado no hitstop) e fecha rápido.
-  starFlash(g, s, (decisive ? 26 : 18) * Math.max(0, 1 - p * 2.2));
+  starFlash(g, s, (decisive ? 26 : 18) * scale * Math.max(0, 1 - p * 2.2));
   g.setAlpha(p < 0.55 ? 1 : 1 - (p - 0.55) / 0.45);
 }
 

@@ -525,11 +525,11 @@ lê `mods` uma vez e aplica `damage × mods.damage` e `force × mods.force`; o `
 
 **Done when**:
 
-- [ ] `tests/game/cursedFx.test.ts`: sem `look` a forma é a de hoje; `scale` 1,5 aumenta agulhas, estrela e ondas;
+- [x] `tests/game/cursedFx.test.ts`: sem `look` a forma é a de hoje; `scale` 1,5 aumenta agulhas, estrela e ondas;
       agulhas, estrela e as duas ondas usam o tom dado; o leve ignora o `look`; `extraPx` soma no `widthPx`;
       `toneFromKeys` resolve as 5 chaves da paleta
-- [ ] Smokes `impact`, `fxlab` e `feel` verdes e iguais
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `impact`, `fxlab` e `feel` verdes e iguais
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick

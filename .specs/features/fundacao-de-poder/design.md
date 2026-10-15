@@ -251,7 +251,7 @@ no toque.
 | `src/game/Enemy.ts` | 394-395 | `slideBy(tier, dir, scale = 1)` repassa |
 | `src/core/impactTier.ts` | 12-18 | `ctx.forced?: ImpactTier` vence tudo (usado no passo 5; o teste entra aqui) |
 | `src/game/cursedImpact.ts` | 16-28, 131-153 | `ImpactShape.scale?` multiplica o `k`; as ondas (l.148-149) usam `toneOf(s)` |
-| `src/game/CursedFx.ts` | 159-160, 222, 313, 344-347 | `trail(path, strength, extraPx = 0)`; `impact(tier, at, dir, seed, look?)` com `look = { scale, tone }` levado pelo `shapeAt` só ao forte e decisivo |
+| `src/game/CursedFx.ts` | 159-160, 222, 313, 344-347 | `trail(path, strength, extraPx = 0)`; `impact(tier, at, dir, seed, look?)` com `look: ImpactLook = { scale, tone }` (`tone` já em `ImpactTone`, via `toneFromKeys`) levado pelo `shapeAt` só ao forte e decisivo |
 | `src/scenes/test/impactFx.ts` | 56, 74, 85, 114, 122 | `look` do `stats.power` no `impact`, `slideMul` no `slideBy`, `kickPx` no `kick`, `trailBonusPx` nos dois `trail`; `reactCamera` ganha o `shake` do patamar 2 (`tier !== 'light' && power.shakes`) |
 | `src/scenes/test/combat.ts` | 91 | `HITSTOP_MS[strength] + (mine ? stats.power.hitstopBonusMs[strength] : 0)` |
 | `src/scenes/test/statsDirector.ts` | — | `power` no `update`, `aura.update`, campo `power` no snapshot |
