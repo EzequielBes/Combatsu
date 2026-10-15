@@ -7,6 +7,7 @@ import {
   cyclesFor,
   glyphKeys,
   outlineKeyAt,
+  packBarLabel,
   summonCount,
   type BossLineup,
 } from '../../src/core/bossAffix';
@@ -113,6 +114,32 @@ describe('Rótulos do chefe: barra e aviso da loja (BRD-01, BRD-04)', () => {
 
   it('sem afixo e sem Portador, a barra mostra só o nome', () => {
     expect(bossBarLabel(bossSpecFor(5, lineup('oni', [])))).toBe('Oni do Portão');
+  });
+
+  describe('quebra do rótulo da barra (BRD-01)', () => {
+    /** Largura de fonte monoespaçada: 7 px por caractere. */
+    const mono = (text: string): number => text.length * 7;
+
+    it('cabe na largura: uma linha só, igual ao rótulo', () => {
+      expect(packBarLabel('Oni do Portão · Ígneo', mono, 400)).toEqual(['Oni do Portão · Ígneo']);
+    });
+
+    it('passa da largura: quebra entre as partes, sem o separador na ponta e sem partir um nome', () => {
+      const label = 'Tecelã de Maldições · Sangue Convergente · Adaptativa · Portadora de Dedo';
+      expect(packBarLabel(label, mono, 400)).toEqual([
+        'Tecelã de Maldições · Sangue Convergente · Adaptativa',
+        'Portadora de Dedo',
+      ]);
+      expect(packBarLabel(label, mono, 210)).toEqual([
+        'Tecelã de Maldições',
+        'Sangue Convergente',
+        'Adaptativa · Portadora de Dedo',
+      ]);
+    });
+
+    it('uma parte mais larga que o limite fica inteira na sua linha', () => {
+      expect(packBarLabel('Tecelã de Maldições · Ígnea', mono, 70)).toEqual(['Tecelã de Maldições', 'Ígnea']);
+    });
   });
 
   it('o aviso usa o nome curto, os afixos e o Portador(a)', () => {

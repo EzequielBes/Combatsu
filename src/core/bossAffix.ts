@@ -164,11 +164,30 @@ export function affixName(id: BossAffixId, archetype: BossArchetype): string {
   return gendered(BOSS_AFFIXES[id].name, archetype);
 }
 
+/** Separador das partes do rótulo da barra e do aviso da loja. */
+const LABEL_SEP = ' · ';
+
 /** Nome, afixos na ordem da escalação e o Portador(a) de Dedo, separados por ` · `. */
 function joinLabel(head: string, lineup: Pick<BossLineup, 'archetype' | 'affixes' | 'finger'>): string {
   const parts = [head, ...lineup.affixes.map((id) => affixName(id, lineup.archetype))];
   if (lineup.finger) parts.push(gendered(BOSS_AFFIX.finger.name, lineup.archetype));
-  return parts.join(' · ');
+  return parts.join(LABEL_SEP);
+}
+
+/**
+ * Linhas do rótulo da barra que cabem em `maxWidth` (BRD-01): quebra só entre as partes, nunca no meio de um nome, e
+ * sem o separador na ponta da linha; uma parte sozinha mais larga que o limite fica inteira na sua linha. `measure`
+ * dá a largura de um trecho na fonte da tela.
+ */
+export function packBarLabel(label: string, measure: (text: string) => number, maxWidth: number): string[] {
+  const lines: string[] = [];
+  for (const part of label.split(LABEL_SEP)) {
+    const last = lines.length - 1;
+    const joined = last >= 0 ? `${lines[last]}${LABEL_SEP}${part}` : part;
+    if (last >= 0 && measure(joined) <= maxWidth) lines[last] = joined;
+    else lines.push(part);
+  }
+  return lines;
 }
 
 /** Rótulo da barra do chefe (BRD-01): "Tecelã de Maldições · Adaptativa · Portadora de Dedo"; sem afixo, só o nome. */
