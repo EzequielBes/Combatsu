@@ -34,9 +34,9 @@ export class ShopDirector {
       maxHp: this.s.player.maxHp,
       applyModifier: (id) => {
         const applied = this.s.modifiers.apply(id);
-        // MOD-04/MOD-11: `vida` sobe o teto real do player e cura os mesmos 15.
+        // MOD-04/MOD-11/POW-01: `vida` sobe o teto real (pela folha, já com o voto) antes de curar os mesmos 15.
         if (applied && id === 'vida') {
-          this.s.player.setMaxHp(this.s.modifiers.maxHp);
+          this.s.stats.sync();
           this.s.player.heal(SHOP.vidaPerLevel);
         }
         return applied;

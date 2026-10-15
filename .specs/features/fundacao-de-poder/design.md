@@ -188,7 +188,7 @@ no toque.
 | | 504-509 | sai `inputFor` (−4) |
 | | 511-517 | sai `strikeMul` (−3) |
 | `src/scenes/test/vowDirector.ts` | 26-44 | saem `sync` e `strikeMul`; l.89 lê `this.s.stats.strikeMods(MOVES.jab, true).damage` (L-076: o mesmo número do hook) |
-| `src/scenes/test/arsenalDirector.ts` | 24, 31, 35-37, 79-82 | saem as chamadas e o `syncTechBonus`, e o `strikeMul` |
+| `src/scenes/test/arsenalDirector.ts` | 24, 31, 35-37, 79-82 | saem o `syncTechBonus` e o `strikeMul`; o `reset` perde a chamada (o `stats.reset()` do `runDirector` cobre) e o `buy` chama `this.s.stats.sync()`, para o Rosário valer no mesmo quadro da compra, como antes |
 | `src/scenes/test/buildDirector.ts` | 31-37 | `strikeMul` vira `consumeShadow(peek): boolean` (só o estado do Passo sombrio fica aqui) |
 | `src/scenes/test/shopDirector.ts` | 39 | `setMaxHp(modifiers.maxHp)` vira `this.s.stats.sync()` (POW-01.4) |
 | `src/scenes/test/runDirector.ts` | 147 | `this.s.stats.reset()` depois do `this.s.vows.reset()` |

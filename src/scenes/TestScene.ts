@@ -15,7 +15,7 @@ import { Mastery } from '../core/mastery';
 import { ElixirRoll, Loot } from '../core/loot';
 import { Modifiers } from '../core/modifiers';
 import { type Rng } from '../core/rng';
-import { acceptsPlayerInput, Run } from '../core/run';
+import { Run } from '../core/run';
 import { SlowMo } from '../core/slowMo';
 import { CameraKick, ZoomPulse } from '../core/cameraKick';
 import { Wallet } from '../core/wallet';
@@ -33,7 +33,7 @@ import { EnergyHud } from '../game/EnergyHud';
 import { Fx } from '../game/fx';
 import { FxLab } from '../game/FxLab';
 import { Hud } from '../game/Hud';
-import { PlayerInput, ShopInput, type InputSnapshot } from '../game/input';
+import { PlayerInput, ShopInput } from '../game/input';
 import { FloatTexts } from '../game/FloatTexts';
 import { MAX_FRAME_MS } from '../game/physics';
 import { Pickups } from '../game/Pickups';
@@ -49,7 +49,7 @@ import { KokusenFx } from '../game/techFx/KokusenFx';
 import { CursedFx } from '../game/CursedFx';
 import { ImpactFrame } from '../game/ImpactFrame';
 import { FocusLines } from '../game/FocusLines';
-import { debugParam, debugIntParam, NEUTRAL_INPUT, SPAWN_LIFT } from './test/params';
+import { debugParam, debugIntParam, SPAWN_LIFT } from './test/params';
 import { WORLD_ZOOM, FINISHER_ZOOM_OUT_MS, CameraRig } from './test/camera';
 import { EffectsDirector } from './test/effects';
 import { ImpactFx } from './test/impactFx';
@@ -67,8 +67,8 @@ import { Recovery } from './test/recovery';
 import { BuildDirector } from './test/buildDirector';
 import { ArsenalDirector } from './test/arsenalDirector';
 import { VowDirector } from './test/vowDirector';
+import { StatsDirector } from './test/statsDirector';
 import { VowPanel } from '../game/VowPanel';
-import type { MoveDef } from '../data/moves';
 
 export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly techDirector = new TechDirector(this);
@@ -89,6 +89,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   readonly arsenal = new ArsenalDirector(this);
   /** Votos Vinculativos da run (VOW-*). */
   readonly vows = new VowDirector(this);
+  /** Dono dos multiplicadores do combate: folha de atributos de passivas, arsenal e votos (POW-01). */
+  readonly stats = new StatsDirector(this);
   readonly combat = new CombatLinks(this);
   readonly impactFx = new ImpactFx(this);
   readonly effects = new EffectsDirector(this);
@@ -281,7 +283,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     };
     this.player.attackerOf = (ownerId) => this.combat.attackerOf(ownerId);
     this.player.onDefense = (kind, point) => this.combat.onDefense(kind, point);
-    this.player.damageMul = (move) => this.strikeMul(move);
+    this.stats.bindPlayer(this.player);
     this.lastPlayerHp = this.player.hp;
   }
 
@@ -399,8 +401,8 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   }
 
   update(_time: number, delta: number): void {
-    // VOW-*: os efeitos dos votos (a Fúria muda com os abates) chegam ao loadout e ao player antes de tudo.
-    this.vows.sync();
+    // POW-01: a folha de atributos (a Fúria muda com os abates) chega ao loadout e ao player antes de tudo.
+    this.stats.update(delta);
     // A barra acompanha o golpe na hora, mesmo durante o hitstop que ele disparou.
     this.hud.setPlayerHp(this.player.hp, this.player.maxHp);
     this.hud.setPlayerStructure(this.player.structureView);
@@ -469,7 +471,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
   private updateGameplay(dt: number): void {
     // Lê sempre (para não represar um `JustDown`), mas fora de roundActive/intermission o player recebe neutro (RUN-08).
     const raw = this.controls.read();
-    const input = this.inputFor(raw);
+    const input = this.stats.inputFor(raw);
     this.impactFx.brokenAtFrameStart = new Set(this.enemies.filter((e) => e.broken).map((e) => e.id));
     this.player.update(dt, input);
     this.impactFx.updateCursedFx();
@@ -499,21 +501,6 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     for (const prop of this.props) prop.update(dt);
     this.drops.updateDroppedTools(dt);
     this.props = this.props.filter((prop) => !prop.isGone);
-  }
-
-  /** Input do quadro: neutro fora de `roundActive`/`intermission`/`traverse` (RUN-08) e durante a transição de área (TRV-10). */
-  private inputFor(raw: InputSnapshot): InputSnapshot {
-    if (!acceptsPlayerInput(this.run.state) || this.area.transitioning) return NEUTRAL_INPUT;
-    // VOW-11: com Sem guarda a guarda e o parry nunca sobem (e a guarda segurada cai no quadro seguinte).
-    return this.vows.effects.guardOff ? { ...raw, guardHeld: false, guardPressed: false } : raw;
-  }
-
-  /**
-   * Multiplicador do golpe corpo a corpo do player: build × arsenal × votos (BLD-06, ARS-05, VOW-10..12). `peek` lê
-   * sem gastar estado da build (o snapshot de debug usa).
-   */
-  strikeMul(move: MoveDef, peek = false): number {
-    return this.build.strikeMul(move, peek) * this.arsenal.strikeMul(move) * this.vows.strikeMul(move);
   }
 
   onKey(key: string, fn: () => void): void {

@@ -199,6 +199,44 @@ export default async function ({ page, baseUrl, assert }) {
     `VOW-02: loja sem painel: ${JSON.stringify(s.vows)} loja ${shopCards(s)}`,
   );
 
+  // POW-01.4/5: a compra de `vida` refaz a folha de atributos antes da cura de 15. Limpa a rodada 1 sem levar dano,
+  // para perto da saída leva os 50 de dano de teste e regenera até `pre` (a regeneração anda 1 HP a cada 30 quadros),
+  // entra na konbini antes do próximo HP, compra `cura` (+30) e depois `vida`.
+  const buyVidaAt = async (vows, pre) => {
+    s = await open(`area=modular&round=1&fragments=400${vows ? `&vows=${vows}` : ''}`);
+    for (let i = 0; i < 400 && s.run.state === 'roundActive'; i++) {
+      await page.keyboard.press('Digit2', { delay: 20 });
+      s = await step(80);
+    }
+    for (let i = 0; i < 200 && s.run.state !== 'traverse'; i++) s = await step(50);
+    await page.keyboard.down('KeyD');
+    for (let i = 0; i < 600 && s.player.x < s.area.exitX - 40; i++) s = await step(16);
+    await page.keyboard.up('KeyD');
+    s = await step(600);
+    await page.keyboard.press('Digit4', { delay: 20 });
+    s = await step(16);
+    for (let i = 0; i < 1200 && s.player.hp < pre; i++) s = await step(16);
+    await page.keyboard.down('KeyD');
+    for (let i = 0; i < 120 && s.run.state !== 'shop'; i++) s = await step(16);
+    await page.keyboard.up('KeyD');
+    for (let i = 0; i < 20 && shopCards(s) === 0; i++) s = await step(50);
+    const buy = async (id) => {
+      for (let i = 0; i < 12 && !s.shop.offers.some((o) => o.id === id && !o.sold); i++) s = await tap('KeyR');
+      const slot = s.shop.offers.findIndex((o) => o.id === id && !o.sold);
+      assert(slot >= 0, `POW-01: ${id} não apareceu na loja: ${JSON.stringify(s.shop.offers)}`);
+      s = await tap(`Digit${slot + 1}`);
+    };
+    assert(s.run.state === 'shop' && s.player.hp === pre, `POW-01: pré-condição ${s.run.state} hp ${s.player.hp}`);
+    await buy('cura');
+    const before = `${s.player.hp}/${s.player.maxHp}`;
+    await buy('vida');
+    return { before, after: `${s.player.hp}/${s.player.maxHp}` };
+  };
+  const glass = await buyVidaAt('corpoDeVidro', 20);
+  assert(glass.before === '50/60' && glass.after === '65/69', `POW-01.5: Corpo de vidro ${JSON.stringify(glass)}`);
+  const plainBuy = await buyVidaAt('', 50);
+  assert(plainBuy.before === '80/100' && plainBuy.after === '95/115', `POW-01.5: sem voto ${JSON.stringify(plainBuy)}`);
+
   // VOW-10/12/18: o Desmantelar nos três bonecos do laboratório. Cada corte tira 10 sem voto, 15 com Pacto do feiticeiro
   // (×1,5) e 20 com Pacto + Corpo de vidro (10 × 1,5 × 1,35 = 20,25, arredondado): o total segue a mesma razão.
   const cutDamage = async (vows) => {

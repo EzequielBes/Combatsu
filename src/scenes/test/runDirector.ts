@@ -145,6 +145,8 @@ export class RunDirector {
     this.s.build.reset();
     this.s.arsenal.reset();
     this.s.vows.reset();
+    // POW-01: a folha de atributos sai da run nova (build, arsenal e votos já zerados).
+    this.s.stats.reset();
     this.equipDebugTech();
     this.applyDebugMastery();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.

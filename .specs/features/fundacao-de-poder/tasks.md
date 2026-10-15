@@ -145,14 +145,14 @@ cura (`shopDirector.ts:39`) e põe `stats.reset()` depois do `vows.reset()` (`ru
 
 **Done when**:
 
-- [ ] `grep` em `src/` mostra o `StatsDirector` como único escritor de `loadout.damageMul`, `loadout.vowDamageMul`,
+- [x] `grep` em `src/` mostra o `StatsDirector` como único escritor de `loadout.damageMul`, `loadout.vowDamageMul`,
       `loadout.costMul`, `player.damageTakenMul` e `player.setMaxHp` (POW-01.2)
-- [ ] `vowDirector.ts:89` lê `this.s.stats.strikeMods(MOVES.jab, true).damage` (mesmo número do gancho, L-076)
-- [ ] `src/scenes/TestScene.ts` com 393 linhas efetivas (POW-02.6)
-- [ ] Compra de `vida` a 50/60 com "Corpo de vidro" deixa 65/69, e a 80/100 sem voto deixa 95/115, lido no snapshot
+- [x] `vowDirector.ts:89` lê `this.s.stats.strikeMods(MOVES.jab, true).damage` (mesmo número do gancho, L-076)
+- [x] `src/scenes/TestScene.ts` com 393 linhas efetivas (POW-02.6)
+- [x] Compra de `vida` a 50/60 com "Corpo de vidro" deixa 65/69, e a 80/100 sem voto deixa 95/115, lido no snapshot
       num cenário do smoke `vows` ou `shop` (POW-01.4, POW-01.5; edge case do teto abaixo da vida)
-- [ ] Smokes `vows`, `arsenal`, `build`, `shop`, `fight`, `defense`, `run-loop` e `world-traverse` verdes e iguais
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `vows`, `arsenal`, `build`, `shop`, `fight`, `defense`, `run-loop` e `world-traverse` verdes e iguais
+- [x] Gate verde; contagem de testes sem perda (2930 em 147 arquivos, igual à T1)
 
 **Tests**: smoke
 **Gate**: full

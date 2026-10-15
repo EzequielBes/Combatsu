@@ -1,5 +1,4 @@
-import { buildPoints, dominantBuild, Perks, strikeMultiplier, type BuildPoints } from '../../core/build';
-import type { MoveDef } from '../../data/moves';
+import { buildPoints, dominantBuild, Perks, type BuildPoints } from '../../core/build';
 import { PERK, PERKS, type Build, type PerkId } from '../../data/perks';
 import type { DefenseKind } from '../../game/player/types';
 import type { TestScene } from '../TestScene';
@@ -28,12 +27,14 @@ export class BuildDirector {
     return dominantBuild(this.points);
   }
 
-  /** BLD-06: multiplicador de dano do golpe que está abrindo a hitbox. */
-  strikeMul(move: MoveDef, peek = false): number {
+  /**
+   * BLD-06: o golpe que está abrindo a hitbox gasta o Passo sombrio armado; devolve se ele estava armado. `peek`
+   * (snapshot de debug) lê sem gastar. O multiplicador sai da folha de atributos (`StatsDirector.strikeMods`).
+   */
+  consumeShadow(peek = false): boolean {
     const shadow = this.shadowArmed;
-    // `peek` (snapshot de debug) lê sem gastar o Passo sombrio armado.
     if (!peek) this.shadowArmed = false;
-    return strikeMultiplier(this.perks, { heavy: move.strength === 'heavy', counter: !!move.counter, shadow });
+    return shadow;
   }
 
   onDefense(kind: DefenseKind): void {

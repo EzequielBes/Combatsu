@@ -1,6 +1,5 @@
-import { Arsenal, relicStrikeMul, relicTechMul, weaponDef } from '../../core/arsenal';
+import { Arsenal, weaponDef } from '../../core/arsenal';
 import { ARSENAL, type ArsenalId } from '../../data/arsenal';
-import type { MoveDef } from '../../data/moves';
 import { Prop } from '../../game/Prop';
 import type { TestScene } from '../TestScene';
 import { debugParam } from './params';
@@ -21,19 +20,14 @@ export class ArsenalDirector {
     this.discardBound();
     this.arsenal.reset();
     for (const id of (debugParam('arsenal') ?? '').split(',')) if (id in ARSENAL) this.arsenal.buy(id as ArsenalId);
-    this.syncTechBonus();
   }
 
   /** Compra na loja (ARS-02). Arma nova ou de nível novo: a que está na mão sai, e a próxima rodada entrega a atual. */
   buy(id: ArsenalId): void {
     this.arsenal.buy(id);
     if (ARSENAL[id].kind === 'weapon') this.discardBound();
-    this.syncTechBonus();
-  }
-
-  /** ARS-05: multiplicador de dano do golpe corpo a corpo pela relíquia. */
-  strikeMul(move: MoveDef): number {
-    return relicStrikeMul(this.arsenal, move.strength === 'light');
+    // ARS-05/ARS-06: os bônus da relíquia chegam ao combate pela folha de atributos.
+    this.s.stats.sync();
   }
 
   /**
@@ -74,11 +68,6 @@ export class ArsenalDirector {
     if (!bound) return;
     if (this.s.player.heldProp === bound) this.s.player.held = null;
     bound.destroyNow();
-  }
-
-  /** ARS-06: o Rosário multiplica o dano de toda técnica, lido pelo `Loadout`. */
-  private syncTechBonus(): void {
-    this.s.loadout.damageMul = relicTechMul(this.arsenal);
   }
 
   /** Campo `arsenal` do snapshot de debug. */

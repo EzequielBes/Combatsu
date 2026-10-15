@@ -1,6 +1,6 @@
 import { drawVows, vowEffects, Vows, type VowEffects } from '../../core/vows';
 import { VOWS, type VowId } from '../../data/vows';
-import { MOVES, type MoveDef } from '../../data/moves';
+import { MOVES } from '../../data/moves';
 import type { TestScene } from '../TestScene';
 import { debugParam } from './params';
 
@@ -21,26 +21,6 @@ export class VowDirector {
     this.offersValue = null;
     this.s.vowPanel?.hide();
     for (const id of (debugParam('vows') ?? '').split(',')) if (id in VOWS) this.vows.take(id as VowId);
-  }
-
-  /**
-   * A cada quadro (VOW-12, VOW-13, VOW-15..17): repassa os efeitos aos números que o combate lê. A Fúria muda com os
-   * abates, então isto roda todo quadro, não só ao tomar o voto.
-   */
-  sync(): void {
-    const fx = this.effects;
-    this.s.loadout.vowDamageMul = fx.techDamageMul * fx.damageMul;
-    this.s.loadout.costMul = fx.techCostMul;
-    this.s.player.damageTakenMul = fx.damageTakenMul;
-    // VOW-10: vida máxima dos modificadores × o voto; também vale depois de comprar `vida`.
-    const maxHp = Math.round(this.s.modifiers.maxHp * fx.maxHpMul);
-    if (this.s.player.maxHp !== maxHp) this.s.player.setMaxHp(maxHp);
-  }
-
-  /** Multiplicador do golpe corpo a corpo que abre a hitbox (VOW-10..12, VOW-16, VOW-17). */
-  strikeMul(move: MoveDef): number {
-    const fx = this.effects;
-    return fx.damageMul * fx.meleeMul * (move.strength === 'heavy' ? fx.heavyMul : 1);
   }
 
   /** Efeitos dos votos tomados agora, com os abates da rodada atual (Fúria). */
@@ -85,8 +65,12 @@ export class VowDirector {
     strike: { light: number; heavy: number };
     panelCards: number;
   } {
-    // L-076: o multiplicador lido da composição da cena (a mesma do `player.damageMul`), não do efeito daqui.
-    const strike = { light: this.s.strikeMul(MOVES.jab, true), heavy: this.s.strikeMul(MOVES.cotovelada, true) };
+    // L-076: o multiplicador lido da folha de atributos (o mesmo do `player.damageMul`), não do efeito daqui.
+    const { stats } = this.s;
+    const strike = {
+      light: stats.strikeMods(MOVES.jab, true).damage,
+      heavy: stats.strikeMods(MOVES.cotovelada, true).damage,
+    };
     return {
       taken: this.vows.list,
       offers: this.offersValue ? [...this.offersValue] : null,
