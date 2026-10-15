@@ -687,11 +687,11 @@ em `lastDamage` (como o `BossBrain`) e o `Enemy` ganha o getter `lastDamageTaken
 
 **Done when**:
 
-- [ ] `tests/core/enemyBrainHold.test.ts` (novo): `holdDown(600)` em `ragdollStun` segura 599 e solta em 600; fora do
+- [x] `tests/core/enemyBrainHold.test.ts` (novo): `holdDown(600)` em `ragdollStun` segura 599 e solta em 600; fora do
       `ragdollStun` não faz nada; acerto com `maxHpBonus` tira `damage + round(0,04 × maxHp)` no comum e 1% no chefe, e o
       `lastDamage` do comum é esse total
-- [ ] `oxlint`: complexidade do `EnemyBrain.receiveHit` sem subir; `enemyBrain.test.ts` e `bossBrain.test.ts` verdes
-- [ ] Gate verde; contagem sem perda
+- [x] `oxlint`: complexidade do `EnemyBrain.receiveHit` sem subir; `enemyBrain.test.ts` e `bossBrain.test.ts` verdes
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

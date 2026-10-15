@@ -1,4 +1,4 @@
-import type { Hit } from './hit';
+import { dealtDamage, type Hit } from './hit';
 
 export type EnemyState =
   'idle' | 'hitstun' | 'stagger' | 'ragdollStun' | 'gettingUp' | 'deadRagdoll' | 'dissolving' | 'gone';
@@ -43,6 +43,7 @@ export class EnemyBrain {
   private _hp: number;
   private timer = 0;
   private _downHits = 0;
+  private _lastDamage = 0;
 
   constructor(private readonly t: EnemyTuning) {
     this._hp = t.maxHp;
@@ -70,14 +71,22 @@ export class EnemyBrain {
     return this._downHits;
   }
 
+  /** Vida que o último golpe tirou de fato, já com o componente proporcional (VRM-16): o número de dano lê daqui. */
+  get lastDamage(): number {
+    return this._lastDamage;
+  }
+
   /**
    * Devolve `[]` quando o golpe é recusado (`refuses`). Um acerto com banda (`chip`, `micro`) que não mata só tira vida:
    * devolve `chip` sem mudar o estado nem o `downHits` (POW-03.4); o letal morre como qualquer outro (POW-03.5).
+   * O dano soma a fração da vida máxima do golpe (`maxHpBonus`, VRM-16) e fica em `lastDamage`.
    */
   receiveHit(hit: Hit, ctx: HitContext = {}): EnemyEvent[] {
+    this._lastDamage = 0;
     if (this.refuses(hit)) return [];
     const grounded = this._state === 'ragdollStun';
-    this._hp = Math.max(0, this._hp - hit.damage);
+    this._lastDamage = dealtDamage(hit, this.t.maxHp, 'enemy');
+    this._hp = Math.max(0, this._hp - this._lastDamage);
     if (grounded && !hit.tech && !hit.band) this._downHits = 1;
     if (this._hp === 0) {
       this.enter('deadRagdoll', this.t.deathRagdollMs);
@@ -119,6 +128,14 @@ export class EnemyBrain {
     if (this.isDead || this._state === 'ragdollStun' || this._state === 'gettingUp') return false;
     this.enter('stagger', ms);
     return true;
+  }
+
+  /**
+   * Segura o caído por `ms` contados de agora (VRM-13, VRM-15: o comum jogado na parede). Só vale em `ragdollStun`;
+   * fora dele não faz nada.
+   */
+  holdDown(ms: number): void {
+    if (this._state === 'ragdollStun') this.timer = ms;
   }
 
   /** Sai de `hitstun` ou `stagger` para `idle` (guarda de leitura, empurrão: RDG-09, RDG-22). Devolve se mudou. */

@@ -197,6 +197,11 @@ export class Enemy implements Hittable {
     return this.brain.maxHp;
   }
 
+  /** Vida que o último golpe tirou de fato, com a fração da vida máxima (VRM-16): o número de dano lê daqui. */
+  get lastDamageTaken(): number {
+    return this.brain.lastDamage;
+  }
+
   /** Dano do golpe realmente usado da última garra aberta (DIF-04), para o snapshot de debug. */
   get damage(): number {
     return this.atk.lastDamage;

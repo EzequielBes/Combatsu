@@ -1,4 +1,4 @@
-import type { Hit } from './hit';
+import { dealtDamage, type Hit } from './hit';
 import { bandPoiseDamage } from './hitBand';
 import { BOSS } from '../data/tuning';
 
@@ -109,7 +109,9 @@ export class BossBrain {
     // POW-03.6: o chip tira só `dano × chipPoiseMul` da postura; micro e normal seguem leve = dano, forte = 2×.
     const rawPoise = bandPoiseDamage(hit, this.t.chipPoiseMul);
     const scaled = scale < 1;
-    const baseDamage = scaled ? Math.max(1, Math.round(hit.damage * scale)) : hit.damage;
+    // VRM-16: a fração da vida máxima (teto de 1 % no chefe) entra antes do Adaptativo e do ×1,5 do `stagger`.
+    const dealt = dealtDamage(hit, this.maxHp, 'boss');
+    const baseDamage = scaled ? Math.max(1, Math.round(dealt * scale)) : dealt;
     const poiseDamage = scaled ? Math.round(rawPoise * scale) : rawPoise;
     // BFX-05: durante o `stagger` o golpe causa `round(dano × staggerDamageMult)`.
     const damage = this._state === 'stagger' ? Math.round(baseDamage * this.t.staggerDamageMult) : baseDamage;
