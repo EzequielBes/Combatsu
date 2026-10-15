@@ -4,7 +4,8 @@
 F40 da seção 6) · **Base**: F29 `fundacao-de-poder` (`.specs/features/fundacao-de-poder/design.md` no repositório
 principal; código em `feat/fundacao-de-poder`), F30 `vermelho-e-corpo`, F33 `eixos-das-tecnicas` e F36 `arma-imbuida`
 (worktree `wt-f30spec`), F31 `expansao-de-dominio` (worktree `wt-f31spec`), F34 `tecnicas-jjk-1` (worktree `wt-leva1`),
-F35 `vagas-e-talentos` (worktree `wt-f35spec`) e F39 `meta-minima` (aqui, `.specs/features/meta-minima/`)
+F35 `vagas-e-talentos` (worktree `wt-f35spec`), F38 `hordas-em-atos` (worktree `wt-f31spec`) e F39 `meta-minima`
+(aqui, `.specs/features/meta-minima/`)
 **Status**: Draft
 
 Linhas citadas conferidas em 15/10 no código de `74e2817` (worktree `docs/spec-meta-e-votos`), que ainda não tem a F29
@@ -18,13 +19,16 @@ da F34, o registro `TechId → TechModule` e o `kokusenSnapshot` como contribui�
 (`POOL`, `poolOf`, `canAddTechnique`, `canAddTalent`, `vacancyTag`), `core/buildEffects.ts`
 (`kokusenWindowBonusMs`), `core/spentLedger.ts`, `scenes/test/trayDirector.ts` (`abandon`), `core/buildTray.ts`
 (`buildBarText`), `Loadout.slotOf`, `PoolSnapshot`; da F36, `AxisBuild.pointCap(item)` lido do registro
-(`WEAPON_AXIS_ITEMS`, `pointCap: 3`) e o `frameFor` da arma; da F39, `meta.gate.lockedIds('vow')`. Essas linhas valem
+(`WEAPON_AXIS_ITEMS`, `pointCap: 3`) e o `frameFor` da arma; da F38, a cota (`run.roundKills` = abates da cota, chefe
+com cota 1) e o `hordeDirector.counterText()`; da F39, `meta.gate.lockedIds('vow')` e a lista em memória
+`freshTechniques`/`markOffered` do `MetaDirector`. Essas linhas valem
 depois dos merges e são reconferidas no começo de cada passo. Linhas efetivas contadas como o `max-lines` do
 `.oxlintrc.json` (sem linha em branco e sem comentário).
 
 **Reconferência obrigatória no começo do passo 0**: a assinatura do `drawVows` depois da F39, a ordem dos aplicadores
 de debug no `runDirector.resetRun` (`tech=`, `perks=`, `arsenal=`, `domain=`) e o nome real dos campos da F35
-(`POOL`, `PoolState`, `KokusenScale.windowBonusMs`) e da F36 (`pointCap`).
+(`POOL`, `PoolState`, `KokusenScale.windowBonusMs`), da F36 (`pointCap`), da F38 (`counterText`) e da F39
+(`freshTechniques`, `markOffered`).
 
 ---
 
@@ -63,6 +67,12 @@ repassa. Cada número chega ao jogo pelo dono que a F29 a F36 já criaram:
   `this.s.vows.effects` (`recovery.ts:63`) e passa `held`/`locked` ao `ReverseCursed` (VRC-05, VSI-05).
 - **Arma** (Restrição): `VowEffects.weaponPointBonus` → `StatSheet` → `StatsDirector` grava
   `loadout.axes.weaponPointBonus` → `AxisBuild.pointCap(item)` soma na arma (VRC-06).
+- **Texto da carta** (VRV-08, VRC-11, nota): `core/vowCards.ts` monta `VowCard` (nome, ganho, custo, nota, `fresh`)
+  do `VOWS` e de um `CardContext` (nome da técnica do slot 0, devolução que a Restrição daria agora, Domínio possuído,
+  técnica de Kokusen equipada); o `VowDirector` monta o contexto e o `VowPanel` só desenha.
+- **Contador do Expediente** (VEX-05): `hordeDirector.counterText()` (F38) acrescenta `vows.counterSuffix()`.
+- **Voto recém-liberado** (VEL-13): o `MetaDirector` (F39) guarda o voto liberado em `freshVows`; o `openPanel` passa
+  `meta.freshVow()` ao `drawVows` e chama `meta.markVowOffered(offers)`.
 - **Tomar a Restrição** (VRC-01, VRC-02, VRC-07): `VowDirector.take(id)` → `VowTake.apply(id)`: tira as técnicas pelo
   caminho do abandono da F35 sem devolução própria, devolve `floor(0,5 × gasto)` numa entrada só, converte o Domínio e
   chama `stats.sync()` no mesmo quadro.
@@ -178,6 +188,10 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
   - `corpoEmprestado: { pool: 8, talents: 7, maxHpMul: 0.75 }`
   - `votoDeSilencio: { chargeMul: 1.5 }`
 - `VOW_BANNER = { domainConvert: 'Domínio → Amplificação' }` (VRC-07).
+- `VowDef` ganha `note?: string` (só o texto fixo: `expediente` → `'não vale no chefe'`). Os textos que dependem da
+  build são moldes com marcadores: `revelacao.boon = '{tech}: +40% dano e +20% raio'`, `restricaoCelestial.cost =
+  'sem técnicas nem Reversa; devolve {refund}'`; quem troca o marcador é o `core/vowCards.ts`.
+- `VOW_NOTES = { domainConvert: '{domain} → Amplificação', silenceKokusen: 'Kokusen não carrega' }`.
 - Os 8 de hoje não mudam (Out of Scope).
 
 ### `core/vowEligibility.ts` (novo, ~40)
@@ -187,8 +201,8 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
   - `interface VowContext { slot0Tech: boolean; kokusenTech: boolean; ownsDomain: boolean; amplificationExists:
     boolean }` (montado pelo `VowDirector`, ver abaixo).
   - `isEligible(id, taken: readonly VowId[], ctx): boolean`:
-    - com `restricaoCelestial` em `taken`: `corpoEmprestado`, `pactoDoFeiticeiro`, `fluxoSelado`, `curaProibida`
-      → `false` (VEL-07);
+    - com `restricaoCelestial` em `taken`: `corpoEmprestado`, `pactoDoFeiticeiro`, `fluxoSelado`, `curaProibida`,
+      `votoDeSilencio` → `false` (VEL-07; o Silêncio sairia sem custo);
     - `revelacao` → `ctx.slot0Tech && techCap(taken) > 0` (VEL-03; `techCap` = 0 com a Restrição, 3 sem ela);
     - `restricaoCelestial` → `ctx.amplificationExists` (VEL-04);
     - `votoBlackFlash` → `ctx.kokusenTech` (VEL-05);
@@ -202,14 +216,17 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
 
 ### `core/vows.ts` (muda, 102 → ~150 efetivas)
 
-- `drawVows(rng, pool: { taken: readonly VowId[]; locked: readonly VowId[]; ctx: VowContext }, count = VOW.offers)`:
-  `const list = eligibleVows(pool)` e o mesmo laço de `:35-37` (VEL-02, VEL-09, VEL-10). Só consome o `rng` dado.
-  Com os 8 de hoje sempre elegíveis e sem trava, a lista é a de hoje e o `rng` é consumido igual (passo 0).
+- `drawVows(rng, pool: { taken: readonly VowId[]; locked: readonly VowId[]; ctx: VowContext }, count = VOW.offers,
+  fresh: VowId | null = null)`: `const list = eligibleVows(pool)`; com `fresh` na lista, ele sai da lista e entra
+  como 1ª oferta, e o mesmo laço de `:35-37` sorteia as `count − 1` restantes (VEL-13, no molde do `drawStarter` da
+  F39); sem `fresh` (ou com ele fora da lista), o laço de hoje (VEL-02, VEL-09, VEL-10). Só consome o `rng` dado.
+  Com os 8 de hoje sempre elegíveis, sem trava e sem `fresh`, a lista é a de hoje e o `rng` é consumido igual (passo 0).
 - `VowEffects` ganha (ver "Data Models"; neutro quando o voto não está tomado): `pool`, `reveal`, `kokusenWindowMs`,
   `kokusenEnergy`, `domainChargeMul`, `techChargeOff`, `rctGone`, `rctLockedInDomain`, `weaponPointBonus`.
-- `vowEffects(taken, ctx: { kills: number; activeKills: number; zone: boolean })`: os 8 blocos de hoje sem mudança
-  (a Fúria continua lendo `ctx.kills`), e no fim:
-  - `expediente`: `damageMul *= ctx.activeKills < threshold ? before : after` (VEX-01 a VEX-03);
+- `vowEffects(taken, ctx: { kills: number; activeKills: number | null; zone: boolean })`: os 8 blocos de hoje sem
+  mudança (a Fúria continua lendo `ctx.kills`), e no fim:
+  - `expediente`: com `activeKills === null` (rodada de chefe ou nenhuma rodada ativa) fator 1 (VEX-04); senão
+    `damageMul *= activeKills < threshold ? before : after` (VEX-01 a VEX-03);
   - `corpoEmprestado`: `maxHpMul *= 0.75`; `pool.total = max(pool.total, 8)`; `pool.talents = max(pool.talents, 7)`
     (VCE-02, VCE-03);
   - `restricaoCelestial`: `meleeMul *= 1.4`; `pool.total = max(..., 8)`; `pool.talents = max(..., 8)`;
@@ -217,8 +234,10 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
   - `revelacao`: `reveal = { damageMul: 1.4, radiusMul: 1.2, signMsBonus: 150 }` (VRV-01 a VRV-03);
   - `votoBlackFlash`: `kokusenWindowMs += 20`; `kokusenEnergy += 15`; `if (!ctx.zone) meleeMul *= 0.8` (VBF-01 a
     VBF-05);
-  - `votoDeSilencio`: `domainChargeMul *= 1.5`; `techChargeOff = true`; `rctLockedInDomain = true` (VSI-01, VSI-03,
-    VSI-05).
+  - `votoDeSilencio`: `domainChargeMul *= 1.5`; `techChargeOff = true` (corta a conjuração e o Kokusen);
+    `rctLockedInDomain = true` (VSI-01, VSI-03, VSI-05).
+- `expedienteFactor(activeKills: number | null): number` exportado (o bloco acima e o `counterSuffix` leem a mesma
+  regra).
 - Os blocos novos ficam **depois** dos 8 de hoje, para a ordem dos fatores de `damageMul`, `maxHpMul` e `meleeMul` ser
   a de hoje quando nenhum voto novo está tomado (o `Math.round` cai no mesmo inteiro, VQA-03).
 - `vowEffects` passa de 50 linhas de função: os blocos novos vão para `applyNewVows(fx, has, ctx)` no mesmo arquivo
@@ -287,7 +306,8 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
 - `DomainState`:
   - `chargeMods: ChargeMods = NEUTRAL_CHARGE` (escrito só pelo `StatsDirector`) e `carry` (0 a < 1, privado, lido no
     snapshot como `chargeCarry`).
-  - `addCharge(ev)`: com `techOff` e `ev === 'techCast'` sai sem mudar carga nem resto (VSI-03); senão
+  - `addCharge(ev)`: com `techOff` e `ev` em `TECH_CHARGE_EVENTS = ['techCast', 'kokusen']` sai sem mudar carga nem
+    resto (VSI-03; o Kokusen é o acerto do Divergente, e a F31 já o trata como evento à parte do `techCast`); senão
     `chargeGain(DOMAIN_CHARGE[ev], mul, carry)`; com `charge + add ≥ 100`, carga 100 e resto 0 (edge case); as
     guardas da F31 (Domínio possuído, nenhum ativo) ficam antes de tudo.
   - O resto zera na ativação (o `domainDirector.tryActivate` já zera a carga pelo `state`; o mesmo ponto zera o resto)
@@ -321,11 +341,20 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
   - `context(): VowContext`: `slot0Tech = loadout.slotsView[0] !== null`; `kokusenTech` = alguma técnica equipada
     com `loadout.stats(id).kokusenDamage > 0`; `ownsDomain = build.domain.state.owned !== null`;
     `amplificationExists = 'amplificacao' in DOMAINS`.
-  - `get effects(): VowEffects` = `vowEffects(list, { kills: run.roundKills, activeKills: run.state ===
-    'roundActive' ? run.roundKills : 0, zone: this.zoneActive() })` (ver Risks para o `activeKills`).
+  - `get effects(): VowEffects` = `vowEffects(list, { kills: run.roundKills, activeKills: this.activeKills(), zone:
+    this.zoneActive() })`, com `activeKills()` = `run.roundKills` numa rodada comum em `roundActive` e `null` na
+    rodada de chefe (`isBossRound(run.round)`) ou fora de rodada (ver Risks).
+  - `counterSuffix(): string`: `''` sem o Expediente ou com `activeKills()` `null`; senão ` · -25%` ou ` · +40%` pelo
+    `expedienteFactor` (VEX-05). Na 1ª leitura com fator 1,4 numa rodada, empurra `expediente:on` (um campo
+    `expedienteRound` guarda a rodada em que já avisou).
+  - `get cards(): VowCard[]`: `vowCard(id, cardContext(), id === this.freshOffered)` para cada oferta aberta (o
+    `freshOffered` é o `fresh` que o `openPanel` passou e saiu na 1ª oferta); `cardContext()` lê o nome
+    da técnica do slot 0 (`TECHNIQUES[id].name`), a devolução que a Restrição daria agora (soma do `ledger.spent` das
+    técnicas equipadas, F35), o Domínio possuído e o `kokusenTech` do `context()`.
   - `private zoneActive()`: `context().kokusenTech && techRunner.kokusenSnapshot.zone` (VBF-03 a VBF-05: Zona de
     técnica **equipada**).
-  - `openPanel()`: `drawVows(rng, { taken: list, locked: meta?.gate.lockedIds('vow') ?? [], ctx: context() })`.
+  - `openPanel()`: `drawVows(rng, { taken: list, locked: meta?.gate.lockedIds('vow') ?? [], ctx: context() },
+    VOW.offers, meta?.freshVow() ?? null)`; com ofertas, `meta?.markVowOffered(offers)` (VEL-13).
   - `choose(slot)`: como hoje; o voto escolhido passa por `take(id)`.
   - `private take(id)`: `vows.take(id)`; `this.taker.apply(id)`; `this.s.stats.sync()` (a vida, o pool e o dano do
     voto valem no quadro em que o painel fecha; VCE-04 pelo `setMaxHp`, que já recorta a vida no teto).
@@ -336,6 +365,19 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
 - **Dependencies**: `TestScene` (loadout, run, build.domain, techRunner, player, stats, meta), `VowTake`,
   `RevealMark`.
 
+### `core/vowCards.ts` (novo, ~40)
+
+- **Purpose**: o texto da carta de voto nesta build (VRV-08, VRC-11, notas, VEL-13). Puro, sem `phaser`.
+- **Interfaces**:
+  - `interface CardContext { slot0Name: string | null; restrictionRefund: number; domainName: string | null;
+    domainIsAmplification: boolean; kokusenTech: boolean }`.
+  - `interface VowCard { name: string; boon: string; cost: string; note: string | null; fresh: boolean }`.
+  - `vowCard(id, ctx, fresh): VowCard`: troca `{tech}` por `ctx.slot0Name` e `{refund}` por
+    `ctx.restrictionRefund`; nota: `VOWS[id].note` quando existe; na Restrição, `{domain} → Amplificação` com
+    `domainName` e sem `domainIsAmplification`; no Silêncio, `Kokusen não carrega` com `kokusenTech`; senão `null`.
+  - A devolução usa a mesma conta do `VowTake` (`Math.floor(VOW.restricaoCelestial.refund × spent)`), exportada
+    daqui como `restrictionRefund(spent)` para os dois lerem a mesma regra (o número da carta é o que entra na carteira).
+
 ### `scenes/test/vowTake.ts` (novo, ~60)
 
 - **Purpose**: o que tomar um voto muda na build na hora (só a Restrição hoje; a F41 acrescenta caso aqui).
@@ -345,12 +387,20 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
   - `private restrict()`:
     1. `spent` = soma do `build.tray.dropTechnique(slot)` de cada slot ocupado, do 0 ao 2 (VRC-01: a limpeza do
        ABD-03 e a remoção das páginas pendentes vêm do mesmo método do abandono; a maestria por `TechId` fica);
-    2. `refund = Math.floor(VOW.restricaoCelestial.refund × spent)`; `wallet.add(refund)` uma vez; evento
+    2. `refund = restrictionRefund(spent)` (`core/vowCards.ts`); `wallet.add(refund)` uma vez; evento
        `restriction:<refund>` (VRC-02, com `0` quando nada volta, VRC-10);
     3. `from = build.domain.convertTo('amplificacao')`; com `from`, `hud.banner(VOW_BANNER.domainConvert,
        RUN.bannerMs)` e evento `domainConvert:<from>` (VRC-07).
 - **Fonte grátis vale 0** sem ramo próprio: o livro da F35 nunca grava técnica inicial, debug, baú nem maestria, então
   o `vows=restricaoCelestial` com `tech=` devolve 0 pelo mesmo caminho (VDB-03).
+
+### `scenes/test/hordeDirector.ts` (F38, muda, +1) e `scenes/test/metaDirector.ts` (F39, muda, ~+6)
+
+- `hordeDirector.counterText()`: o `Abates: k/q` de rodada comum ganha `+ this.s.vows.counterSuffix()` (VEX-05); o
+  `Chefe` não muda.
+- `MetaDirector`: no desbloqueio de conteúdo `kind: 'vow'`, o id vai para o fim de `freshVows` (ao lado do
+  `freshTechniques`, CNQ-02); `freshVow(): VowId | null` (o 1º da lista) e `markVowOffered(ids)` (tira os oferecidos).
+  Só memória, como a F39 (STA-18).
 
 ### `game/RevealMark.ts` (novo, ~45)
 
@@ -368,13 +418,20 @@ Restrição) e depois para a loja. Sem painel de votos, o `openShop` chama o mes
   `TEX.revealKanji`. O teste de paleta (`tests/game/art/`) cobre a tabela. Conferido na prancha
   (`tools/hd-boards.mjs`) e no jogo, parado e correndo, para os dois lados (memória "conferir animação em movimento").
 
-### `game/VowPanel.ts` (muda, 110 → ~120)
+### `game/VowPanel.ts` (muda, 110 → ~130)
 
+- `show(cards: readonly VowCard[])` no lugar de `VowDef[]` (o `VowCard` dos 8 de hoje tem os mesmos textos e nota
+  `null`, então o painel deles não muda).
 - `show`: nome que passa de uma linha na largura `CARD_W − 14` cai para 12 px (o tamanho do texto do subtítulo); os
   nomes de hoje que cabem não mudam (VQA-05).
-- `get lines(): { name: number; boon: number; cost: number }[]`: linhas de cada carta visível, lidas do `Text` vivo
+- Nota: um `Text` de 11 px na cor `hint` (`S`) por carta, em `CARD_TOP + CARD_H + 4`, centrado, visível só com
+  `note`; a dica desce de `CARD_H + 20` para `CARD_H + 24`. `Novo`: a linha da tecla vira `1 · Novo` com
+  `fresh` (o rótulo da F39 no painel da Técnica inicial).
+- `get lines(): { name: number; boon: number; cost: number; note: number }[]`: linhas de cada carta visível, lidas do `Text` vivo
   (`getWrappedText`), para o snapshot `vows.panelLines` e o smoke provarem 1 linha no nome e até 2 no ganho e no custo
   em HD (L-076).
+- `get texts(): { key: string; boon: string; cost: string; note: string | null }[]`: o texto vivo de cada carta
+  visível, para o snapshot `vows.panelText` (VRV-08, VRC-11, VEL-13 provados no que foi desenhado, L-076).
 
 ---
 
@@ -462,7 +519,7 @@ A multiplicação, o resto e a trava da Reversa já estão ligados desde o passo
 
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
-| `src/data/vows.ts`, `src/core/vows.ts`, `src/core/vowEligibility.ts` | — | `restricaoCelestial`; os 4 votos cortados pela Restrição (VEL-07) |
+| `src/data/vows.ts`, `src/core/vows.ts`, `src/core/vowEligibility.ts` | — | `restricaoCelestial`; os 5 votos cortados pela Restrição (VEL-07, o Silêncio incluído) |
 | `src/scenes/test/vowTake.ts` (novo) | — | `restrict()` |
 | `src/scenes/test/vowDirector.ts` | `take` | `this.taker.apply(id)` |
 | `src/scenes/test/trayDirector.ts` (F35) | `abandon` | a limpeza do ABD-03 sai para `dropTechnique(slot): number` (devolve o `ledger.spent` antes de limpar o livro); o `abandon` chama ele e aplica os 40% (0 linha líquida) |
@@ -471,8 +528,26 @@ A multiplicação, o resto e a trava da Reversa já estão ligados desde o passo
 | `src/core/shopDraw.ts` (F30/F35) | carta 1 | a garantia "sem técnica → técnica nova" só vale com `canAddTechnique(pool, limits)` (ver Risks) |
 | `src/core/shopPreview.ts` (F35/F36) | `frameFor` da arma | Nv 4 **ou mais** roxo (o Nv 5 usa a moldura do Nv 4) |
 | `src/core/weaponEvolution.ts` (F36) | receita pronta | arma no Nv 4 **ou mais** (ver Risks) |
-| `README.md` | `vows=`, eventos | os 6 ids e os eventos `restriction:<refund>` e `domainConvert:<from>` (VDB-04) |
+| `README.md` | `vows=`, eventos | os 6 ids e os eventos `restriction:<refund>`, `domainConvert:<from>` e `expediente:on` (VDB-04) |
 | `scripts/smoke/vows-new.smoke.mjs` | — | cenário da Restrição |
+
+`TestScene`: 0.
+
+**Passo 6 (Legibilidade; VRV-08, VRC-11, VEL-13, VEX-05).**
+
+| Arquivo | Linha | Mudança |
+| --- | --- | --- |
+| `src/data/vows.ts` | `VowDef`, `VOWS`, `VOW_NOTES` | `note?`; moldes `{tech}` e `{refund}` (os textos das Assumptions da spec) |
+| `src/core/vowCards.ts` (novo) | — | `CardContext`, `VowCard`, `vowCard`, `restrictionRefund` |
+| `src/core/vows.ts` | `drawVows` | parâmetro `fresh` (VEL-13) |
+| `src/scenes/test/vowTake.ts` | `restrict` | `restrictionRefund(spent)` |
+| `src/game/VowPanel.ts` | `buildCard`, `show`, `hide` | `show(VowCard[])`, nota sob a carta, `1 · Novo`, dica 4 px abaixo, `texts` |
+| `src/scenes/test/vowDirector.ts` | `openPanel`, novos `cards`, `cardContext`, `counterSuffix` | cartas montadas, `fresh`, sufixo e `expediente:on` |
+| `src/scenes/test/shopDirector.ts` | `openShop` | `vowPanel.show(this.s.vows.cards)` no lugar do `map` de `VOWS` |
+| `src/scenes/test/hordeDirector.ts` (F38) | `counterText` | `+ this.s.vows.counterSuffix()` (+0 líquido: mesma linha) |
+| `src/scenes/test/metaDirector.ts` (F39) | desbloqueio, novos `freshVow`, `markVowOffered` | `freshVows` em memória |
+| `src/game/debugApi.ts` | `vows` | `panelText` |
+| `scripts/smoke/vows-new.smoke.mjs` | — | cenário 9 (legibilidade) |
 
 `TestScene`: 0.
 
@@ -525,7 +600,12 @@ export interface VowEffects {
   rctLockedInDomain: boolean;     // Silêncio: a Reversa recusa com Domínio ativo
   weaponPointBonus: number;       // 0; 1 Restrição
 }
-export interface VowCtx { kills: number; activeKills: number; zone: boolean }
+export interface VowCtx { kills: number; activeKills: number | null; zone: boolean }   // null: chefe ou fora de rodada
+
+// core/vowCards.ts
+export interface CardContext { slot0Name: string | null; restrictionRefund: number; domainName: string | null;
+  domainIsAmplification: boolean; kokusenTech: boolean }
+export interface VowCard { name: string; boon: string; cost: string; note: string | null; fresh: boolean }
 
 // core/statSheet.ts (F29, ampliado)
 // StatSheet ganha: reveal: RevealMods; domainChargeMul: number; techChargeOff: boolean; weaponPointBonus: number
@@ -545,7 +625,10 @@ export function chargeGain(base: number, mul: number, carry: number): { add: num
 
 // game/debugApi.ts (VDB-01, VDB-02)
 // vows: { taken; offers; effects: VowEffects; strike; panelCards; eligible: VowId[];
-//         panelLines: { name: number; boon: number; cost: number }[]; reveal: { visible: boolean; x: number; y: number } }
+//         panelLines: { name: number; boon: number; cost: number; note: number }[];
+//         panelText: { key: string; boon: string; cost: string; note: string | null }[];
+//         reveal: { visible: boolean; x: number; y: number } }
+// meta (F39): + freshVows: VowId[]
 // stats (F29/F35): + domainChargeMul: number
 // domain (F31): + chargeCarry: number
 ```
@@ -579,7 +662,7 @@ a loja leem o `VowEffects` direto pelo `vows.effects`, como a Reversa já faz ho
 | `src/core/axisBuild.ts` | ~146 (F36) | ~149 | |
 | `src/core/domain.ts` | ~120 (F31) | ~138 | |
 | `src/core/reverseCursed.ts` | 92 | ~95 | |
-| `src/scenes/test/vowDirector.ts` | ~86 (F29/F39) | ~130 | |
+| `src/scenes/test/vowDirector.ts` | ~86 (F29/F39) | ~150 | `cards`, `cardContext`, `counterSuffix` |
 | `src/scenes/test/vowTake.ts` | — | ~60 | novo |
 | `src/scenes/test/shopDirector.ts` | ~230 (F35) | ~236 | |
 | `src/scenes/test/recovery.ts` | 115 | ~117 | |
@@ -587,7 +670,10 @@ a loja leem o `VowEffects` direto pelo `vows.effects`, como a Reversa já faz ho
 | `src/scenes/test/trayDirector.ts` | ~140 (F35) | ~144 | |
 | `src/scenes/test/techDirector.ts` | 52 | 53 | |
 | `src/scenes/test/runDirector.ts` | ~205 | ~206 | |
-| `src/game/VowPanel.ts` | 100 | ~110 | |
+| `src/game/VowPanel.ts` | 100 | ~130 | nota, `Novo`, `texts` |
+| `src/core/vowCards.ts` | — | ~40 | novo |
+| `src/scenes/test/hordeDirector.ts` | (F38) | +0 | sufixo na mesma linha |
+| `src/scenes/test/metaDirector.ts` | (F39) | ~+6 | |
 | `src/game/RevealMark.ts` | — | ~45 | novo |
 | `src/game/art/hd/revealKanji.ts` | — | ~35 | novo |
 | `src/scenes/TestScene.ts` | — | +0 | VQA-04 |
@@ -609,6 +695,8 @@ Nenhum arquivo passa de 400 e nenhum entra na lista de exceções do `.oxlintrc.
 | Restrição com o Domínio já Amplificação | `convert` devolve `null`; sem faixa nem evento | Nada muda no Domínio |
 | Restrição com o Véu pendente | O par sorteado na r3 fica; a página mostra só `amplificacao` (VRC-08) | Uma carta, `Enter` toma |
 | Carga com o Silêncio passaria de 100 | Carga 100 e resto 0 (edge case) | Barra cheia |
+| Voto recém-liberado inelegível ou já tomado | `drawVows` ignora o `fresh` fora da lista; ele continua na `freshVows` até um painel oferecê-lo (VEL-13) | Painel sorteado como sempre |
+| Expediente na rodada de chefe ou fora de rodada | `activeKills` `null`, fator 1, sem sufixo (VEX-04, VEX-05) | O chefe sai com o dano de sempre |
 | Kanji com o slot 0 vazio ou técnica de outro slot no sinal | `revealUpdate` esconde (VRV-05) | Sem kanji |
 | Cena reiniciada (`R`) com o kanji visível | O `RevealMark` renasce no próximo `revealUpdate` (padrão do `reverseAura`) | Kanji na cena nova |
 | Corpo emprestado com a vida acima do novo máximo | `setMaxHp` recorta (VCE-04) | Vida cai ao teto |
@@ -621,8 +709,10 @@ Nenhum arquivo passa de 400 e nenhum entra na lista de exceções do `.oxlintrc.
 
 | Concern | Location (file:line) | Impact | Mitigation |
 | --- | --- | --- | --- |
-| A F39 manda os votos trancados ao `drawVows` **como tomados**; com a elegibilidade nova, uma Restrição trancada leria "tomada" e cortaria `corpoEmprestado`, `pactoDoFeiticeiro`, `fluxoSelado` e `curaProibida` (VEL-07) sem o jogador ter o voto | F39 `meta-minima/design.md:151` (`drawVows(rng, [...list, ...lockedIds])`), `src/core/vows.ts:33` | Quatro votos somem do sorteio de quem ainda não liberou a Restrição | `drawVows` recebe `taken` e `locked` separados; a elegibilidade só lê `taken`; o trancado só sai da lista. Teste: `locked: ['restricaoCelestial']` mantém os 4 elegíveis |
-| `run.roundKills` não zera fora da onda: o `spawner` só é trocado no começo da rodada, nunca anulado | `src/core/run.ts:58`, `:115-117`, `:286`, `:311` | Na travessia e na konbini o Expediente leria os abates da rodada anterior e daria +40%, contra o edge case da spec | O Expediente lê `activeKills` (`roundKills` só em `roundActive`, 0 fora); a Fúria continua no `kills` de hoje (VQA-03). Teste do `vowEffects` com `activeKills` 0 e `kills` 15 |
+| A F39 manda os votos trancados ao `drawVows` **como tomados**; com a elegibilidade nova, uma Restrição trancada leria "tomada" e cortaria `corpoEmprestado`, `pactoDoFeiticeiro`, `fluxoSelado`, `curaProibida` e `votoDeSilencio` (VEL-07) sem o jogador ter o voto | F39 `meta-minima/design.md:151` (`drawVows(rng, [...list, ...lockedIds])`), `src/core/vows.ts:33` | Cinco votos somem do sorteio de quem ainda não liberou a Restrição | `drawVows` recebe `taken` e `locked` separados; a elegibilidade só lê `taken`; o trancado só sai da lista. Teste: `locked: ['restricaoCelestial']` mantém os 5 elegíveis |
+| `run.roundKills` não zera fora da onda: o `spawner` só é trocado no começo da rodada, nunca anulado | `src/core/run.ts:58`, `:115-117`, `:286`, `:311` | Na travessia e na konbini o Expediente leria os abates da rodada anterior e daria +40%, contra o edge case da spec | O Expediente lê `activeKills` (`roundKills` só numa rodada comum em `roundActive`, `null` fora e no chefe, fator 1, VEX-04); a Fúria continua no `kills` de hoje (VQA-03). Teste do `vowEffects` com `activeKills` `null` e `kills` 15 → fator 1 |
+| A carta mostra uma devolução e a Restrição credita outra | `core/vowCards.ts`, `scenes/test/vowTake.ts` | O jogador confia no número da carta (VRC-11) | Uma função só (`restrictionRefund`) e a mesma soma de livros; o smoke da Restrição lê `vows.panelText` antes de tomar e compara com o `restriction:<n>` |
+| A nota sob a carta encosta na dica do painel | `src/game/VowPanel.ts` (dica em `CARD_H + 20`) | Texto sobreposto em HD | A dica desce 4 px; conferido na captura em HD do cenário 9 |
 | A garantia da carta 1 da loja ("sem técnica → técnica nova", F30 TSH-05 e F35 POL-06) não lê o pool | F35 design `shopDraw.ts` (carta 1) | Com a Restrição (0 técnicas), toda loja forçaria uma carta de técnica, contra o VRC-03 | O passo 5 condiciona a garantia ao `canAddTechnique(pool, limits)`; caso no teste da loja com a Restrição: nenhuma carta de técnica em 1000 seeds |
 | A receita de evolução da arma e a moldura podem comparar o nível com `=== 4` | F36 `core/weaponEvolution.ts` (WEV-01), `core/shopPreview.ts` (`frameFor`) | Com o 4º ponto a arma vai ao Nv 5 e perderia a evolução e a moldura roxa | O passo 5 troca por `>= 4` onde for `===`; caso no `weaponShop.test.ts` com `weaponPointBonus` 1 |
 | A Revelação arredonda sobre o dano já arredondado (`round(round(base × muls) × 1,4)`) | `core/vowStats.ts` | Pode diferir em 1 de `round(base × muls × 1,4)` | Escolha consciente (Tech Decisions): o pós-passe genérico serve às 8 técnicas e às da F41 sem mexer em 8 resolvedores; o VRV-01 diz "multiplicado por cima e arredondado"; o teste fixa os números por esta regra |
@@ -676,14 +766,15 @@ só pelo `vowRng`; o Véu pelo `chestRng` de sempre), AD-009 (toda cor da `PALET
 
 | Arquivo | Prova |
 | --- | --- |
-| `tests/core/vowEligibility.test.ts` | VEL-03 (Revelação com e sem slot 0; com slot 0 e a Restrição tomada, fora), VEL-04 (com e sem `amplificationExists`), VEL-05 (com e sem `kokusenTech`), VEL-06 (com e sem Domínio), VEL-07 (os 4 fora com a Restrição; `locked: ['restricaoCelestial']` não corta nenhum), VEL-08 (os 8 de hoje, Expediente e Corpo emprestado sempre), VEL-11 (trancado fora da lista), ordem do catálogo |
-| `tests/core/vowsDraw.test.ts` | VEL-02 e o Independent Test: 1000 seeds sem Divergente nunca dão `votoBlackFlash` e com ele dão; sem Domínio nunca dão Silêncio; com a Restrição os 4 nunca saem; VEL-09 (2 elegíveis → 2 ofertas; 0 → `[]`); VEL-10 (mesma seed, mesmos tomados e mesmo contexto → mesmo sorteio); passo 0: sorteio igual ao do código de hoje para 50 seeds (lista gravada antes da mudança) |
-| `tests/core/vowsNew.test.ts` | VEX-01/02 (`activeKills` 9 → ×0,75; 10 → ×1,4, L-010), VEX-03 (Fúria + 10 abates = 1,3 × 1,4; `activeKills` 0 com `kills` 15 → ×0,75), VCE-02 (8/7/3), VCE-03 (Corpo de vidro + Corpo emprestado = 0,45), Restrição (8/8/0, `meleeMul` ×1,4, `rctGone`, `weaponPointBonus` 1), Restrição + Corpo emprestado (8/8/0), VBF (`zone` falso → `meleeMul` ×0,8; verdadeiro → sem o fator; janela 20, energia 15), VSI (1,5, `techChargeOff`, `rctLockedInDomain`), VRV (`reveal` 1,4/1,2/150) |
+| `tests/core/vowEligibility.test.ts` | VEL-03 (Revelação com e sem slot 0; com slot 0 e a Restrição tomada, fora), VEL-04 (com e sem `amplificationExists`), VEL-05 (com e sem `kokusenTech`), VEL-06 (com e sem Domínio), VEL-07 (os 5 fora com a Restrição, o Silêncio incluído; `locked: ['restricaoCelestial']` não corta nenhum), VEL-08 (os 8 de hoje, Expediente e Corpo emprestado sempre), VEL-11 (trancado fora da lista), ordem do catálogo |
+| `tests/core/vowsDraw.test.ts` | VEL-02 e o Independent Test: 1000 seeds sem Divergente nunca dão `votoBlackFlash` e com ele dão; sem Domínio nunca dão Silêncio; com a Restrição os 5 nunca saem; VEL-13 (`fresh` elegível → 1ª oferta em toda seed e nunca repetido nas outras; `fresh` inelegível ou tomado → sorteio igual ao sem `fresh`); VEL-09 (2 elegíveis → 2 ofertas; 0 → `[]`); VEL-10 (mesma seed, mesmos tomados e mesmo contexto → mesmo sorteio); passo 0: sorteio igual ao do código de hoje para 50 seeds (lista gravada antes da mudança) |
+| `tests/core/vowsNew.test.ts` | VEX-01/02 (`activeKills` 9 → ×0,75; 10 → ×1,4, L-010), VEX-03 (Fúria + 10 abates = 1,3 × 1,4), VEX-04 (`activeKills` `null` com `kills` 15 → fator 1; `expedienteFactor(null)` 1, `(9)` 0,75, `(10)` 1,4), VCE-02 (8/7/3), VCE-03 (Corpo de vidro + Corpo emprestado = 0,45), Restrição (8/8/0, `meleeMul` ×1,4, `rctGone`, `weaponPointBonus` 1), Restrição + Corpo emprestado (8/8/0), VBF (`zone` falso → `meleeMul` ×0,8; verdadeiro → sem o fator; janela 20, energia 15), VSI (1,5, `techChargeOff`, `rctLockedInDomain`), Restrição + Silêncio fora do sorteio (VEL-07), VRV (`reveal` 1,4/1,2/150) |
 | `tests/core/vowStats.test.ts` | VRV-01 (Vermelho Nv 1: toque 42, `kokusenDamage` igual), VRV-02 (raio 96 → 115; Azul e Roxo pelo mesmo caminho; `rangePx`/`farPx` iguais), VRV-03 (`signMs` 400), `NEUTRAL_REVEAL` devolve o mesmo objeto |
 | `tests/core/loadoutReveal.test.ts` | VRV-04 (o mesmo Vermelho no slot 1 fica igual), VRV-05 (slot 0 vazio: nada; equipar no slot 0 aplica na próxima chamada), `kokusenScale.energyBonus` somado ao `kokusenGain` do Divergente (VBF-02) |
-| `tests/core/domainCharge.test.ts` | VSI-01/02 (2 leves = 3; 1 forte = 3; Kokusen = 22 com resto 0,5), VSI-03 (`techCast` com `techOff` não muda carga nem resto), VSI-04 (ativação e `reset` zeram o resto), teto 100 com resto 0, `mul` 1 = números de hoje, VSI-07 (esvaziamento igual), `convert` (Santuário Nv 2 com carga 40 → Amplificação Nv 2 com 40; mesmo id → `null`; sem Domínio → `null`) |
+| `tests/core/domainCharge.test.ts` | VSI-01/02 (2 leves = 3; 1 forte = 3; 1 abate + 1 leve = 3; `chargeGain(15, 1,5, 0)` = 22 com resto 0,5), VSI-03 (`techCast` **e** `kokusen` com `techOff` não mudam carga nem resto; sem `techOff`, o Kokusen dá 15 como na F31), VSI-04 (ativação e `reset` zeram o resto), teto 100 com resto 0, `mul` 1 = números de hoje, VSI-07 (esvaziamento igual), `convert` (Santuário Nv 2 com carga 40 → Amplificação Nv 2 com 40; mesmo id → `null`; sem Domínio → `null`) |
 | `tests/core/reverseLock.test.ts` | VSI-05 (`locked` + aperto → `rctDenied` uma vez por aperto, nenhum `rctStart`), VSI-06 (sem `locked` como hoje), `held: false` não emite nada (VRC-05) |
 | `tests/core/statSheetVows.test.ts` | VQA-03 contra o fixture do passo 0 (8 votos × 3 relíquias × talentos, `statSheet` e `buildEffects`); VBF-01 (voto 20; voto + Zona Negra Nv 1 = 30; voto + Nv 3 = 30) |
+| `tests/core/vowCards.test.ts` | VRV-08 (`{tech}` → `Boogie Woogie: +40% dano e +20% raio`), VRC-11 (`devolve 23` com gasto 47; nota `Santuário → Amplificação` com Santuário; sem nota com Amplificação ou sem Domínio), nota fixa do Expediente, nota do Silêncio só com `kokusenTech`, os 8 de hoje com o texto de hoje e nota `null`, `restrictionRefund(47)` 23 e `(0)` 0 |
 | `tests/core/veilOptions.test.ts` | VRC-08 (com a Restrição só `amplificacao`; sem ela o par) |
 | `tests/data/vows.test.ts` | VEL-01 (ordem dos ids), VQA-01 (todo número novo em `VOW`; `core/vows.ts?raw` sem `phaser`), textos da carta presentes |
 
@@ -693,7 +784,7 @@ talento recusado), `tests/core/buildTray.test.ts` (F35; `Habilidades 1/8 (Técni
 `tests/core/shopDraw*.test.ts` (F30/F35; garantia da carta 1 com técnicas 0), `tests/core/axisBuild*.test.ts` e
 `weaponShop.test.ts` (F36; 4º ponto com o bônus, teto de 2 por eixo, Nv 5 com `Nv 4→5`, moldura roxa, receita pronta
 no Nv 5), `tests/core/buildEffects.test.ts` (F35; input com `vows` neutro), `tests/game/vowPanel.test.ts` (cores
-continuam chaves da `PALETTE`) e `tests/game/debugApi.test.ts` (literal com `vows.eligible`, `vows.panelLines`,
+continuam chaves da `PALETTE`; nota visível só com `note`, `1 · Novo` só com `fresh`, `texts` lido do objeto) e `tests/game/debugApi.test.ts` (literal com `vows.eligible`, `vows.panelLines`,
 `vows.reveal`, `vows.effects` com os campos novos, `stats.domainChargeMul`, `domain.chargeCarry`).
 
 **Adaptador (L-043).** Sem `vi.mock('phaser')` na base (AD-001), a prova de que o número chega ao motor fica no smoke,
@@ -706,8 +797,10 @@ voto):
 
 1. **Elegibilidade** (passo 1 em diante): `tech=divergente` com a r5 vencida → `vows.eligible` contém
    `votoBlackFlash` (a partir do passo 3); sem técnica não contém; sem Domínio não contém `votoDeSilencio`.
-2. **Expediente** (passo 1): `vows=expediente&round=2`: o golpe forte no comum antes do 10º abate tira
-   `round(base × 0,75)`; depois do 10º, `round(base × 1,4)`; `stats.meleeMul` acompanha.
+2. **Expediente** (passo 1): `vows=expediente&round=4` (cota 12 no ato I; a r2 tem cota 8 e fecha antes do 11º
+   abate): o golpe forte no comum antes do 10º abate tira `round(base × 0,75)`; depois do 10º, `round(base × 1,4)`.
+   `vows=expediente&round=5`: no chefe o golpe forte tira `round(base × 1)` (VEX-04). No passo 6, o mesmo cenário lê
+   o HUD `Abates: 9/12 · -25%`, depois `Abates: 10/12 · +40%` e um só `expediente:on`; na r5, `Chefe` sem sufixo.
 3. **Corpo emprestado** (passo 1): `vows=corpoEmprestado&tech=vermelho`: `build.pool.total` 8, a carta de item novo
    com `OCUPA VAGA 1/8→2/8`, a vida máxima 75% da de hoje.
 4. **Revelação** (passo 2): `vows=revelacao&tech=vermelho,azul`: `build.vermelho.stats.radius` 115 e `touch` 42; o
@@ -722,13 +815,20 @@ voto):
    konbini da r3 (para o livro ter gasto), vence o chefe e toma a Restrição no painel: slots vazios, carteira com
    `floor(0,5 × gasto)` a mais e o evento `restriction:<n>`, `domain.owned` `{ amplificacao, 2 }` e
    `domainConvert:santuario`, a loja aberta em seguida sem carta de técnica, `build.pool.total` 8, segurar a Reversa
-   sem nenhum `rct*`.
+   sem nenhum `rct*`. No passo 6, antes de tomar: a carta da Restrição em `vows.panelText` diz `devolve <n>` com o
+   mesmo `n` do `restriction:<n>` e a nota `Santuário → Amplificação`.
 8. **Cartas do painel** (passo 5), duas runs com `tech=divergente&domain=amplificacao` e os 8 de hoje tomados pelo
    `vows=`: (a) tomando também Expediente, Corpo emprestado e Revelação, sobram exatamente Restrição, Black Flash e
    Silêncio; (b) tomando Black Flash e Silêncio, sobram 4 (Revelação, Restrição, Expediente, Corpo emprestado) e o
    smoke fixa uma seed cujas 3 ofertas são as três que a run (a) não mostrou (achada uma vez com a lógica do
    `vowsDraw.test.ts` e escrita no smoke). A Restrição não pode estar entre os tomados: ela tira o Divergente e corta o
-   Corpo emprestado. No painel do chefe, `vows.panelLines` com nome 1 e ganho/custo ≤ 2 nas 3 cartas (VQA-05).
+   Corpo emprestado. No painel do chefe, `vows.panelLines` com nome 1, ganho/custo ≤ 2 e nota ≤ 1 nas 3 cartas
+   (VQA-05).
+9. **Legibilidade** (passo 6): (a) `vows=` com os 8 de hoje e `tech=vermelho`: a carta da Revelação em
+   `vows.panelText` diz `Vermelho: +40% dano e +20% raio`; (b) voto recém-liberado: `nosave=1&unlock=none`, sem
+   técnica, limpar até a r5 e vencer o chefe sem técnica (a conquista `chefeSemTecnica` se cumpre; run que conta, sem
+   `round=`): o painel de votos abre com `vows.offers[0]` `restricaoCelestial`, `panelText[0].key` `1 · Novo` e
+   `meta.freshVows` vazio; captura em HD com a nota e o `Novo` olhada.
 
 **Smokes por passo** (`npm run smoke -- <trecho>`):
 
@@ -740,9 +840,11 @@ voto):
 | 3 | `vows-new`, `kokusen`, `talents`, `fight` |
 | 4 | `vows-new`, `domain`, `defense` (Reversa) |
 | 5 | `vows-new`, `vows`, `shop`, `shop-axes`, `build-bar`, `choice-panel`, `domain`, `weapon-imbued` (F36), `run-loop` |
+| 6 | `vows-new`, `vows`, `hud`, `horde` (F38), `meta` (F39) |
 
 Fim da F40: o novo e `vows`, `shop`, `shop-axes`, `build`, `build-bar`, `power`, `kokusen`, `talents`, `tech`,
-`techniques`, `tech-axes`, `red-anime`, `fxlab`, `fight`, `defense`, `domain`, `choice-panel`, `weapon-imbued`, `run-loop`.
+`techniques`, `tech-axes`, `red-anime`, `fxlab`, `fight`, `defense`, `domain`, `choice-panel`, `weapon-imbued`, `run-loop`,
+`hud`, `horde`, `meta`.
 Antes de cada commit de código: `npm run gate`.
 
 ---
@@ -754,7 +856,10 @@ Antes de cada commit de código: `npm run gate`.
 | VEL-01 | `data/vows.ts` |
 | VEL-02 a VEL-11 | `core/vowEligibility.ts`, `core/vows.ts` (`drawVows`), `VowDirector.context`/`openPanel` |
 | VEL-12 | `shopDirector.startShop` |
-| VEX-01 a VEX-03 | `core/vows.ts` (`activeKills`), `VowDirector.effects` |
+| VEL-13 | `core/vows.ts` (`drawVows` com `fresh`), `MetaDirector.freshVows`, `VowDirector.openPanel`, `VowPanel` (`Novo`) |
+| VEX-01 a VEX-04 | `core/vows.ts` (`activeKills`, `expedienteFactor`), `VowDirector.effects`/`activeKills` |
+| VEX-05 | `VowDirector.counterSuffix`, `hordeDirector.counterText` (F38) |
+| VRV-08, VRC-11 | `core/vowCards.ts`, `VowDirector.cards`/`cardContext`, `VowPanel` (nota, `texts`) |
 | VCE-01 a VCE-05 | `core/vows.ts` (`pool`, `maxHpMul`), `core/skillSlots.ts`, `ShopContext.poolLimits`, `buildTray.buildBarText`, `StatsDirector.sync` (`setMaxHp`) |
 | VRV-01 a VRV-05 | `core/vowStats.ts`, `Loadout.stats`, `StatsDirector.sync` (`loadout.reveal`) |
 | VRV-06 | `VowDirector.revealUpdate`, `game/RevealMark.ts`, `art/hd/revealKanji.ts`, `techDirector` |

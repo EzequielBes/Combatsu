@@ -15,7 +15,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Branch**: `docs/spec-meta-e-votos` (spec). A implementação abre o próprio branch a partir de onde a F29 a F36 e a
 F39 estiverem mergeadas: a F40 usa o `statSheet`/`StatsDirector` (F29), o `TechStats` (F30), o `core/domain.ts` e o
 Baú do Véu (F31), o `ChoicePanel` e os resolvedores (F33), o registro de técnicas e o `kokusenSnapshot` (F34), o pool,
-o livro de gastos, o `buildEffects` e a bandeja (F35), o `pointCap` da arma (F36) e o `meta.gate` (F39).
+o livro de gastos, o `buildEffects` e a bandeja (F35), o `pointCap` da arma (F36), a cota e o `counterText` (F38) e o
+`meta.gate` e a lista `freshTechniques` (F39).
 
 ---
 
@@ -166,6 +167,14 @@ T44
 T45 → T48 → T49
 T46 → T49
 T47
+```
+
+### Phase 11: Legibilidade dos votos (passo 6)
+
+```
+T50 → T51 → T52 → T54 → T56
+T53 → T54
+T55 → T56
 ```
 
 ---
@@ -329,14 +338,15 @@ devolve o mesmo objeto; senão uma cópia com cada `damage` × `damageMul` arred
 **What**: `VowEffects` ganha `pool`, `reveal`, `kokusenWindowMs`, `kokusenEnergy`, `domainChargeMul`,
 `techChargeOff`, `rctGone`, `rctLockedInDomain` e `weaponPointBonus` com valor neutro; `vowEffects(taken, { kills,
 activeKills, zone })` com o `applyNewVows(fx, has, ctx)` vazio depois dos 8 blocos de hoje; o `VowDirector.effects`
-passa `activeKills` (`run.roundKills` só em `roundActive`, 0 fora) e `zone` (`zoneActive()`, só resolvido com o Black
+passa `activeKills` (`run.roundKills` numa rodada comum em `roundActive`; `null` na rodada de chefe e fora de rodada)
+e `zone` (`zoneActive()`, só resolvido com o Black
 Flash tomado, design "Risks").
 **Where**: `src/core/vows.ts`
 **Também**: `src/scenes/test/vowDirector.ts` (`effects`, `zoneActive`)
 **Teste par**: `tests/core/vows.test.ts`, `tests/core/statSheetVows.test.ts`
 **Depends on**: T2, T6
 **Reuses**: molde `if (has(id))` de `src/core/vows.ts:74-124`; `POOL` (F35); `NEUTRAL_REVEAL` (T6)
-**Requirement**: VEX-01 (contador), VBF-03, VBF-04, VBF-05 (Zona), VDB-01 (campos), VQA-03
+**Requirement**: VEX-01 (contador), VEX-04 (`null`), VBF-03, VBF-04, VBF-05 (Zona), VDB-01 (campos), VQA-03
 
 **Done when**:
 
@@ -508,8 +518,9 @@ ativação e no `reset`, e `convert(id)`.
 **Done when**:
 
 - [ ] `mul` 1 e resto 0 → números da F31 iguais (testes da F31 verdes sem mudança)
-- [ ] VSI-01/02: com 1,5, 2 leves de 0 → 3; 1 forte → 3; 1 Kokusen → 22 com resto 0,5; carga sempre inteira
-- [ ] VSI-03: `techCast` com `techOff` não muda carga nem resto
+- [ ] VSI-01/02: com 1,5, 2 leves de 0 → 3; 1 forte → 3; 1 abate + 1 leve → 3; `chargeGain(15, 1,5, 0)` → 22 com
+      resto 0,5; carga sempre inteira
+- [ ] VSI-03: `techCast` **e** `kokusen` com `techOff` não mudam carga nem resto; sem `techOff` o Kokusen dá 15 (F31)
 - [ ] Borda: carga 99 + ganho 3 → 100 com resto 0
 - [ ] VSI-04: ativação e `reset()` zeram o resto
 - [ ] VSI-07: o esvaziamento do `tick` igual com e sem `chargeMods`
@@ -650,19 +661,20 @@ teste.
 ### T20: Expediente
 
 **What**: `expediente` no catálogo (depois dos 8; nome, ganho e custo das Assumptions; `VOW.expediente = { threshold:
-10, before: 0.75, after: 1.4 }`), o bloco no `applyNewVows` (`damageMul *= activeKills < threshold ? before : after`)
-e sempre elegível.
+10, before: 0.75, after: 1.4 }`), `expedienteFactor(activeKills)` exportado (1 com `null`, VEX-04), o bloco no
+`applyNewVows` (`damageMul *= expedienteFactor(activeKills)`) e sempre elegível.
 **Where**: `src/core/vows.ts`
 **Também**: `src/data/vows.ts`, `src/core/vowEligibility.ts`
 **Teste par**: `tests/core/vowsNew.test.ts` (novo), `tests/data/vows.test.ts` (novo), `tests/core/vowEligibility.test.ts`
 **Depends on**: T19
 **Reuses**: bloco da Fúria em `src/core/vows.ts`
-**Requirement**: VEX-01, VEX-02, VEX-03, VEL-01, VEL-08, VQA-01
+**Requirement**: VEX-01, VEX-02, VEX-03, VEX-04, VEL-01, VEL-08, VQA-01
 
 **Done when**:
 
 - [ ] VEX-01/02 nos dois lados: `activeKills` 9 → ×0,75; 10 → ×1,4
-- [ ] VEX-03: Fúria + 10 abates → `damageMul` 1,3 × 1,4; `activeKills` 0 com `kills` 15 → ×0,75 (travessia e konbini)
+- [ ] VEX-03: Fúria + 10 abates → `damageMul` 1,3 × 1,4
+- [ ] VEX-04: `activeKills` `null` com `kills` 15 → fator 1 (chefe, travessia e konbini)
 - [ ] VEL-01: ids presentes na ordem do VEL-01 filtrada; VQA-01: números só em `VOW`; textos da carta iguais às
       Assumptions
 - [ ] O fixture da T2 igual (sem o voto)
@@ -791,12 +803,13 @@ técnica, `vows.eligible` sem `votoDeSilencio`; com a r5 vencida, o painel abre 
 **Where**: `scripts/smoke/vows-new.smoke.mjs`
 **Depends on**: T24, T25
 **Reuses**: `scripts/smoke/fight-kit.mjs`, `lib.ts`, `vows.smoke.mjs`
-**Requirement**: VEX-01, VEX-02, VCE-03, VCE-04, VCE-05
+**Requirement**: VEX-01, VEX-02, VEX-04, VCE-03, VCE-04, VCE-05
 
 **Done when**:
 
-- [ ] Expediente (`vows=expediente&round=2`): golpe forte antes do 10º abate tira `round(base × 0,75)`; depois do
-      10º, `round(base × 1,4)`; `stats.meleeMul` acompanha
+- [ ] Expediente (`vows=expediente&round=4`, cota 12; a r2 tem cota 8 e fecha antes do 11º abate): golpe forte antes
+      do 10º abate tira `round(base × 0,75)`; depois do 10º, `round(base × 1,4)`
+- [ ] VEX-04 (`vows=expediente&round=5`): o golpe forte no chefe tira `round(base × 1)`
 - [ ] Corpo emprestado (`vows=corpoEmprestado&tech=vermelho`): `build.pool.total` 8; carta de item novo com
       `OCUPA VAGA 1/8→2/8`; vida máxima 75% da sem voto; vida acima do novo teto cai ao teto (VCE-04)
 - [ ] Smokes `vows-new`, `vows`, `shop`, `build-bar`, `build` verdes
@@ -1078,7 +1091,7 @@ Azul; o passo confere o Roxo e as da F34). Uma linha por vista; a lista do `grep
 **What**: `restricaoCelestial` no catálogo (depois da `revelacao`; `VOW.restricaoCelestial = { meleeMul: 1.4, pool:
 8, talents: 8, techniques: 0, refund: 0.5, weaponPoints: 1 }` e `VOW_BANNER`), o bloco (`meleeMul *= 1.4`, pool
 8/0/8 pelo maior valor e técnicas 0, `rctGone`, `weaponPointBonus += 1`) e a elegibilidade (`ctx.amplificationExists`;
-com ela tomada saem `corpoEmprestado`, `pactoDoFeiticeiro`, `fluxoSelado` e `curaProibida`; a `revelacao` sai pelo
+com ela tomada saem `corpoEmprestado`, `pactoDoFeiticeiro`, `fluxoSelado`, `curaProibida` e `votoDeSilencio`; a `revelacao` sai pelo
 VEL-03, com o teto de técnicas 0).
 **Where**: `src/core/vows.ts`
 **Também**: `src/data/vows.ts`, `src/core/vowEligibility.ts`
@@ -1091,7 +1104,7 @@ VEL-03, com o teto de técnicas 0).
 **Done when**:
 
 - [ ] VEL-04 nos dois lados (`amplificationExists` falso → nunca; verdadeiro → sai)
-- [ ] VEL-07: com a Restrição tomada os 4 nunca saem em 1000 seeds; `locked: ['restricaoCelestial']` não corta
+- [ ] VEL-07: com a Restrição tomada os 5 nunca saem em 1000 seeds (o Silêncio incluído); `locked: ['restricaoCelestial']` não corta
       nenhum; VEL-03 com a Restrição tomada → Revelação fora
 - [ ] Restrição → pool 8/0/8, `meleeMul` × 1,4, `rctGone`, `weaponPointBonus` 1; com o Corpo emprestado → 8/0/8
 - [ ] VEL-01: os 14 ids na ordem final
@@ -1281,7 +1294,8 @@ do `debugApi`).
 
 ### T47: README dos votos novos
 
-**What**: o `README.md` lista os 6 ids novos em `vows=` e os eventos `restriction:<refund>` e `domainConvert:<from>`.
+**What**: o `README.md` lista os 6 ids novos em `vows=` e os eventos `restriction:<refund>`, `domainConvert:<from>` e
+`expediente:on` (este último emitido a partir da T55).
 **Where**: `README.md`
 **Depends on**: None
 **Reuses**: seção de parâmetros de debug
@@ -1334,7 +1348,8 @@ do fim da F40.
 **Done when**:
 
 - [ ] Run (a): sobram exatamente Restrição, Black Flash e Silêncio; run (b): a seed fixa mostra Revelação, Expediente
-      e Corpo emprestado; `panelLines` 1/≤2/≤2 nas 6 cartas; captura em HD olhada
+      e Corpo emprestado; `panelLines` 1/≤2/≤2 nas 6 cartas (a nota entra na T51 e é conferida na T56); captura em HD
+      olhada
 - [ ] VQA-02: `grep` de `damageMul =`, `vowDamageMul =`, `costMul =`, `damageTakenMul =` e `setMaxHp(` em
       `src/scenes/` só no `StatsDirector`
 - [ ] VQA-04: `TestScene.ts` com as mesmas linhas efetivas da T1; `.oxlintrc.json` sem exceção nova
@@ -1349,10 +1364,188 @@ do fim da F40.
 
 ---
 
+## Phase 11: Legibilidade dos votos (passo 6)
+
+### T50: Texto das cartas de voto
+
+**What**: `src/core/vowCards.ts` (novo) com `CardContext`, `VowCard`, `vowCard(id, ctx, fresh)` e
+`restrictionRefund(spent)`; em `data/vows.ts`, `VowDef.note?`, a nota fixa do Expediente (`não vale no chefe`), os
+moldes `{tech}` (ganho da Revelação) e `{refund}` (custo da Restrição) e `VOW_NOTES` (`{domain} → Amplificação`,
+`Kokusen não carrega`).
+**Where**: `src/core/vowCards.ts`
+**Também**: `src/data/vows.ts`
+**Teste par**: `tests/core/vowCards.test.ts` (novo), `tests/data/vows.test.ts`
+**Depends on**: T27, T38
+**Reuses**: `VOWS` (`data/vows.ts`), a conta da devolução do VRC-02
+**Requirement**: VRV-08, VRC-11, VQA-05
+
+**Done when**:
+
+- [ ] VRV-08: `{tech}` com `Boogie Woogie` → `Boogie Woogie: +40% dano e +20% raio`
+- [ ] VRC-11: gasto 47 → `devolve 23`; nota `Santuário → Amplificação` com Santuário; sem nota com Amplificação e sem
+      Domínio
+- [ ] Nota do Expediente sempre; nota do Silêncio só com `kokusenTech`; os 8 de hoje com o texto de hoje e nota `null`
+- [ ] `restrictionRefund(47)` 23, `(0)` 0; `?raw` sem `phaser`
+- [ ] Gate verde; contagem anotada
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `feat(vows): build the vow card text from the build`
+
+---
+
+### T51: Nota e Novo no painel de votos
+
+**What**: `VowPanel.show(cards: readonly VowCard[])`; um `Text` de nota por carta (11 px, cor `hint`, em
+`CARD_TOP + CARD_H + 4`, visível só com `note`); a dica desce para `CARD_H + 24`; a linha da tecla vira `n · Novo` com
+`fresh`; `lines` ganha `note`; `get texts()` lido do `Text` vivo; o snapshot `vows.panelText` (tipo e literal do
+`debugApi`).
+**Where**: `src/game/VowPanel.ts`
+**Também**: `src/game/debugApi.ts`, `tests/game/debugApi.test.ts`
+**Teste par**: `tests/game/vowPanel.test.ts`
+**Depends on**: T46, T50
+**Reuses**: `buildCard`, `show`, `lines` (T46)
+**Requirement**: VQA-05, VEL-13, VRV-08, VRC-11
+
+**Done when**:
+
+- [ ] Com `Text` falso: nota visível só com `note`; `1 · Novo` só com `fresh`; `texts` e `lines.note` lidos do objeto
+- [ ] Os 8 de hoje desenham o mesmo texto de antes (nota escondida)
+- [ ] Cores continuam chaves da `PALETTE`
+- [ ] Gate verde; contagem anotada
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `feat(vows): show the card note and the new tag on the vow panel`
+
+---
+
+### T52: Cartas montadas pela build
+
+**What**: `VowDirector.get cards()` e `cardContext()` (nome da técnica do slot 0, devolução que a Restrição daria
+agora pela soma dos livros das técnicas equipadas, Domínio possuído, `kokusenTech`); o `shopDirector.openShop` passa
+`this.s.vows.cards` ao `vowPanel.show` no lugar do `map` de `VOWS`; o `VowTake.restrict` usa `restrictionRefund`.
+**Where**: `src/scenes/test/vowDirector.ts`
+**Também**: `src/scenes/test/shopDirector.ts`, `src/scenes/test/vowTake.ts`
+**Depends on**: T45, T51
+**Reuses**: `context()` (T19), livro de gastos da F35
+**Requirement**: VRV-08, VRC-11
+
+**Done when**:
+
+- [ ] `vows=` com os 8 de hoje e `tech=vermelho` na r5: a carta da Revelação em `vows.panelText` diz
+      `Vermelho: +40% dano e +20% raio`
+- [ ] A carta da Restrição diz `devolve <n>` com o mesmo `n` que o `restriction:<n>` dá ao tomar
+- [ ] Smokes `vows`, `vows-new`, `shop` verdes
+- [ ] TestScene sem linha efetiva nova
+- [ ] Gate verde; contagem anotada
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `feat(vows): fill the vow cards from the current build`
+
+---
+
+### T53: Sorteio com o voto recém-liberado
+
+**What**: `drawVows(rng, pool, count, fresh = null)`: com `fresh` na lista de elegíveis, ele é a 1ª oferta e o laço de
+hoje sorteia as `count − 1` restantes sem ele; fora da lista, o sorteio de sempre.
+**Where**: `src/core/vows.ts`
+**Teste par**: `tests/core/vowsDraw.test.ts`
+**Depends on**: T5
+**Reuses**: molde do `drawStarter` da F39
+**Requirement**: VEL-13, VEL-10
+
+**Done when**:
+
+- [ ] `fresh` elegível → 1ª oferta em 1000 seeds, nunca repetido nas outras 2
+- [ ] `fresh` tomado, trancado ou inelegível → ofertas iguais às do sorteio sem `fresh` (mesma seed)
+- [ ] `fresh` `null` → a lista da T3 igual
+- [ ] Gate verde; contagem anotada
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `feat(core): put the freshly unlocked vow first in the draw`
+
+---
+
+### T54: Lista de votos recém-liberados
+
+**What**: no `MetaDirector` (F39), o conteúdo liberado `kind: 'vow'` vai para o fim de `freshVows` (memória);
+`freshVow()` e `markVowOffered(ids)`; snapshot `meta.freshVows`; o `VowDirector.openPanel` passa `meta.freshVow()` ao
+`drawVows`, marca as ofertas e guarda o `freshOffered` que as `cards` leem.
+**Where**: `src/scenes/test/metaDirector.ts`
+**Também**: `src/scenes/test/vowDirector.ts`, `src/game/debugApi.ts` (ou o tipo à parte da F39), `tests/game/debugApi.test.ts`
+**Depends on**: T52, T53
+**Reuses**: `freshTechniques`/`markOffered` da F39
+**Requirement**: VEL-13
+
+**Done when**:
+
+- [ ] `nosave=1&unlock=none`, sem técnica, vencer o chefe da r5 sem técnica: o painel abre com `vows.offers[0]`
+      `restricaoCelestial`, `panelText[0].key` `1 · Novo`, e `meta.freshVows` fica vazio
+- [ ] R e J mantêm a lista; recarregar a página a apaga
+- [ ] Smokes `vows`, `meta` verdes
+- [ ] Gate verde; contagem anotada
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `feat(meta): offer the freshly unlocked vow on the next panel`
+
+---
+
+### T55: Expediente no contador de abates
+
+**What**: `VowDirector.counterSuffix()` (` · -25%` ou ` · +40%` pelo `expedienteFactor`; `''` sem o voto, no chefe e
+fora de rodada) e o evento `expediente:on` uma vez por rodada; o `hordeDirector.counterText()` (F38) acrescenta o
+sufixo ao `Abates: k/q`.
+**Where**: `src/scenes/test/vowDirector.ts`
+**Também**: `src/scenes/test/hordeDirector.ts`
+**Depends on**: T20
+**Reuses**: `expedienteFactor` (T20), `counterText` (F38)
+**Requirement**: VEX-05
+
+**Done when**:
+
+- [ ] `vows=expediente&round=4`: HUD `Abates: 9/12 · -25%`, depois `Abates: 10/12 · +40%`, um só `expediente:on`
+- [ ] `round=5`: `Chefe` sem sufixo; sem o voto, `Abates: k/q` como na F38
+- [ ] Smokes `hud`, `horde` verdes
+- [ ] Gate verde; contagem anotada
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `feat(vows): show the Expediente factor on the kill counter`
+
+---
+
+### T56: Smoke da legibilidade e fechamento
+
+**What**: cenário 9 do design no `vows-new.smoke.mjs`, o trecho do passo 6 nos cenários 2 (contador) e 7 (carta da
+Restrição antes de tomar) e o fechamento da F40 de novo (a Phase 11 vem depois da T49).
+**Where**: `scripts/smoke/vows-new.smoke.mjs`
+**Depends on**: T54, T55
+**Reuses**: cenários 2, 7 e 8 (T26, T48, T49)
+**Requirement**: VRV-08, VRC-11, VEL-13, VEX-05, VQA-05
+
+**Done when**:
+
+- [ ] Cenário 9 (a) e (b) verdes; cenário 2 lê o sufixo; cenário 7 lê `devolve <n>` e `Santuário → Amplificação`
+      antes de tomar
+- [ ] `vows.panelLines` com nota ≤ 1 nas cartas que têm nota; captura em HD com a nota e o `Novo` olhada
+- [ ] VQA-02 e VQA-04 conferidos de novo como na T49
+- [ ] Smokes do fim da F40 verdes (a lista da T49 mais `hud`, `horde` e `meta`)
+- [ ] Gate verde; contagem anotada
+
+**Tests**: smoke
+**Gate**: full
+**Commit**: `test(smoke): check the vow cards and counters the player reads`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11
 
 Phase 1:  T1
 Phase 1:  T2
@@ -1389,10 +1582,14 @@ Phase 9:  T44
 Phase 10: T45 ─→ T48 ─→ T49
 Phase 10: T46 ─→ T49
 Phase 10: T47
+Phase 11: T50 ─→ T51 ─→ T52 ─→ T54 ─→ T56
+Phase 11: T53 ─→ T54
+Phase 11: T55 ─→ T56
 ```
 
-Execução estritamente sequencial, na ordem T1 a T49. São 49 tasks; em lotes de ~7 a 10 sem cortar phase: Phases 1-2
-(10), Phases 3-4 (9), Phase 5 (7), Phases 6-7 (8), Phases 8-9 (10), Phase 10 (5). Um agente novo por lote.
+Execução estritamente sequencial, na ordem T1 a T56. São 56 tasks; em lotes de ~7 a 10 sem cortar phase: Phases 1-2
+(10), Phases 3-4 (9), Phase 5 (7), Phases 6-7 (8), Phases 8-9 (10), Phase 10 (5), Phase 11 (7). Um agente novo por
+lote.
 
 As dependências de phases anteriores estão no `Depends on` de cada task e não têm seta no diagrama (os diagramas
 são por phase); todas apontam para trás.
@@ -1452,6 +1649,13 @@ são por phase); todas apontam para trás.
 | T47 | 1 doc | ✅ Granular |
 | T48 | 1 cenário de smoke | ✅ Granular |
 | T49 | 1 cenário de smoke + conferências de fechamento | ✅ Granular |
+| T50 | 1 módulo puro novo + 3 textos do catálogo | ✅ Granular |
+| T51 | 1 vista (nota, rótulo, getter) + 1 campo de snapshot | ⚠️ OK, coeso |
+| T52 | 1 getter do diretor + 1 linha em cada chamador | ⚠️ OK, coeso |
+| T53 | 1 parâmetro de 1 função | ✅ Granular |
+| T54 | 1 lista do `MetaDirector` + 2 linhas do `openPanel` | ⚠️ OK, coeso |
+| T55 | 1 método do diretor + 1 linha do `counterText` | ✅ Granular |
+| T56 | 1 cenário de smoke + conferências de fechamento | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
@@ -1506,6 +1710,13 @@ são por phase); todas apontam para trás.
 | T47 | None | sem seta de entrada na Phase 10 | ✅ Match |
 | T48 | T45 | T45 → T48 | ✅ Match |
 | T49 | T46, T48 | T46 → T49, T48 → T49 | ✅ Match |
+| T50 | T27, T38 | sem seta de entrada na Phase 11 (de phase anterior: T27, T38) | ✅ Match |
+| T51 | T46, T50 | T50 → T51 (de phase anterior: T46) | ✅ Match |
+| T52 | T45, T51 | T51 → T52 (de phase anterior: T45) | ✅ Match |
+| T53 | T5 | sem seta de entrada na Phase 11 (de phase anterior: T5) | ✅ Match |
+| T54 | T52, T53 | T52 → T54, T53 → T54 | ✅ Match |
+| T55 | T20 | sem seta de entrada na Phase 11 (de phase anterior: T20) | ✅ Match |
+| T56 | T54, T55 | T54 → T56, T55 → T56 | ✅ Match |
 
 Todas as dependências apontam para a mesma phase ou para trás.
 
@@ -1562,3 +1773,10 @@ Todas as dependências apontam para a mesma phase ou para trás.
 | T47 | Docs | none | none | ✅ OK |
 | T48 | Smoke | smoke | smoke | ✅ OK |
 | T49 | Smoke | smoke | smoke | ✅ OK |
+| T50 | Dados + regra pura | unit | unit | ✅ OK |
+| T51 | Vista sem cena + tipo do snapshot | unit | unit | ✅ OK |
+| T52 | Adaptador de cena | smoke | smoke | ✅ OK |
+| T53 | Regra pura | unit | unit | ✅ OK |
+| T54 | Adaptador de cena + tipo do snapshot | smoke (+ unit do `debugApi`) | smoke | ✅ OK |
+| T55 | Adaptador de cena | smoke | smoke | ✅ OK |
+| T56 | Smoke | smoke | smoke | ✅ OK |
