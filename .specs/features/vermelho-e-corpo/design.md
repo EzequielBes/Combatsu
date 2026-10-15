@@ -608,6 +608,11 @@ export interface DifficultySnapshot { round: number; hpMul: number; damageMul: n
 // BuyContext ganha: applyAxis?: (item: AxisItem, axis: AxisId) => void
 ```
 
+No passo 1 (T3) o `TechStats` é o subconjunto de hoje: sem `kokusenDamage` e sem os campos de eixo do `red`, e os
+blocos `red`/`blue`/`cut`/`purple` são os próprios `TECH_GEOMETRY.vermelho`/`azul`/`corte`/`roxo`, que guardam também
+números que o modelo acima não lista (`red.repulse` com dano, força e alcance 80/48, `red.ringPx` 160 do anel da vista,
+`blue.wallQueryPx` 130). Os campos resolvidos pelos eixos (`repulseDamage`, `shard` e o resto) entram com o VRM-03.
+
 `build.vermelho.stats` vai além do VRM-10 (superconjunto, nenhum AC muda): é o que o `red-axes.smoke.mjs` lê para o
 raio 144, o toque 45, a recarga 2300 e o sinal mais carga 390 do Independent Test.
 

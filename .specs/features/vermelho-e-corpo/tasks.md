@@ -266,10 +266,10 @@ damageMul, vowDamageMul, costMul })` na regra de hoje (`TECHNIQUES` × `LEVEL_FA
 
 **Done when**:
 
-- [ ] `tests/core/techStats.test.ts`: 5 técnicas × cada nível de hoje × multiplicadores 1 e 1,35, comparados com `toBe`
+- [x] `tests/core/techStats.test.ts`: 5 técnicas × cada nível de hoje × multiplicadores 1 e 1,35, comparados com `toBe`
       contra `Loadout.cost`/`Loadout.damage` de hoje, os tempos de `TECHNIQUES` e as constantes dos módulos (TST-01.6)
-- [ ] `TECH_GEOMETRY` sem número novo (o teste compara com as constantes ainda nos módulos)
-- [ ] Gate verde; contagem = base + os novos
+- [x] `TECH_GEOMETRY` sem número novo (o teste compara com as constantes ainda nos módulos)
+- [x] Gate verde; contagem = base + os novos (3696 + 132 = 3828)
 
 **Tests**: unit
 **Gate**: quick

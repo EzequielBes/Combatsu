@@ -167,3 +167,67 @@ export const CAST_FX = {
   calloutMs: 900,
   airGravity: 0.3,
 };
+
+/**
+ * Geometria das técnicas num lugar só (TST-01): os números que hoje são constantes soltas nos módulos de regra, nos
+ * adaptadores de `game/tech/` e nas vistas de `game/techFx/`. Nesta etapa os módulos ainda têm a cópia deles; o
+ * `tests/core/techStats.test.ts` compara cada número com a constante do módulo até os módulos passarem a ler daqui.
+ */
+export const TECH_GEOMETRY = {
+  vermelho: {
+    /** Raio da detonação (RED-10, `core/redOrb.ts`), também o raio máximo da esfera da vista (`redDetonation.ts`). */
+    radius: 96,
+    /** Tamanho em texels da textura do orbe em voo (`TEX.techOrbRed12`). */
+    orbTexels: 12,
+    /** Raio do sensor de voo do orbe (px de mundo, `game/tech/red.ts`). */
+    sensorPx: 6,
+    /** Velocidade do orbe em px/s (RDA-11). */
+    speed: 760,
+    /** Alcance do voo em px (RED-08). */
+    rangePx: 420,
+    /** Força (px/step) do toque e da detonação (RED-06/09/10). */
+    force: 8,
+    /** Repulsão da soltura (RDA-08): dano, força e alcance horizontal e vertical a partir do centro do player. */
+    repulse: { damage: 4, force: 10, reachX: 80, reachY: 48 },
+    /** Raio máximo da onda de choque da detonação (`redDetonation.ts`). */
+    ringPx: 160,
+  },
+  azul: {
+    /** BLU-02: o orbe nasce a esta distância à frente do player, recuando até esta folga da parede. */
+    aheadPx: 110,
+    wallMarginPx: 16,
+    /** BLU-04, BLU-06, BLU-07: raio da puxada, do tique e da implosão. */
+    radius: 130,
+    /** BLU-04: velocidade da puxada (px/s). */
+    pullSpeed: 150,
+    /** BLU-06: intervalo entre tiques (ms). */
+    tickMs: 250,
+    /** BLU-03: duração do orbe (ms). */
+    lifeMs: 1400,
+    /** BLU-02: alcance da consulta de parede à frente do player (`game/tech/blue.ts`). */
+    wallQueryPx: 130,
+  },
+  corte: {
+    /** CUT-02: instante de cada corte (ms). */
+    times: [0, 60, 120],
+    /** CUT-05: ângulo de cada corte, na ordem. */
+    anglesDeg: [20, -25, 70],
+    /** CUT-03: retângulo de dano de 60 a 180 px à frente, com 48 px de altura. */
+    nearPx: 60,
+    farPx: 180,
+    heightPx: 48,
+    /** Comprimento da linha branca da vista (`CutFx.ts`). */
+    lineLen: 240,
+  },
+  roxo: {
+    /** EVO-05/06: velocidade (px/s), duração do voo (ms), raio e distância de nascimento à frente do player. */
+    speed: 180,
+    lifeMs: 1600,
+    radius: 36,
+    spawnAhead: 40,
+    /** A esfera voa esta altura acima do centro do corpo (`game/tech/purple.ts`). */
+    lift: 14,
+    /** Empurrão do golpe (px/step), na direção do voo. */
+    force: 9,
+  },
+} as const;
