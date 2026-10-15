@@ -174,7 +174,87 @@ async function jabShowsStrikeNumber(ctx) {
   );
 }
 
+/** O jab que acerta deixa um número `strike` no livro; devolve o snapshot com ele vivo. */
+async function jabNumber(kit, assert, where) {
+  let s = await kit.approach();
+  const hpBefore = new Map(s.enemies.map((e) => [e.id, e.hp]));
+  await kit.down('KeyJ');
+  for (let f = 0; f < 40 && s.damageNumbers.live === 0; f++) {
+    s = await kit.frame();
+    if (f === 3) await kit.up('KeyJ');
+  }
+  await kit.up('KeyJ');
+  const hit = s.enemies.some((e) => e.hp < (hpBefore.get(e.id) ?? e.hp));
+  assert(
+    hit && s.damageNumbers.live >= 1 && s.damageNumbers.last?.kind === 'strike',
+    `${where}: o jab deveria deixar um número vivo: ${JSON.stringify(s.damageNumbers)}`,
+  );
+  return s;
+}
+
+/**
+ * POW-06.9 (edge case do reset): com o número do jab vivo o player morre (tecla 3) e começa a run nova; o primeiro
+ * snapshot dela já não tem número vivo nem o último tocado (o `clear` zera o livro; sem ele o `last` sobreviveria).
+ */
+async function runResetClearsNumbers(ctx) {
+  const { assert } = ctx;
+  const kit = makeKit(ctx);
+  await kit.boot(BASE);
+  let s = await jabNumber(kit, assert, 'reset');
+  await kit.tap('Digit3');
+  for (let i = 0; i < 40 && s.run.state !== 'gameOver'; i++) s = await kit.snap(100);
+  assert(s.run.state === 'gameOver', `esperava gameOver: ${JSON.stringify(s.run)}`);
+  s = await kit.snap(1200);
+  assert(
+    s.damageNumbers.last !== null,
+    `o último número deveria seguir no livro até a run nova: ${JSON.stringify(s.damageNumbers)}`,
+  );
+  await kit.down('KeyJ');
+  for (let f = 0; f < 20 && s.run.state !== 'roundActive'; f++) s = await kit.frame();
+  await kit.up('KeyJ');
+  assert(s.run.state === 'roundActive' && s.run.round === 1, `a run nova deveria começar: ${JSON.stringify(s.run)}`);
+  assert(
+    s.damageNumbers.live === 0 && s.damageNumbers.last === null,
+    `POW-06.9: a run nova começou com números da anterior: ${JSON.stringify(s.damageNumbers)}`,
+  );
+}
+
+/**
+ * POW-06.9: o número do jab fica no livro até a saída da área; a tecla 2 fecha a onda (sem número), o player cruza o
+ * selo aberto e o primeiro snapshot da rodada 2, na área nova, já não tem número vivo nem o último tocado.
+ */
+async function areaChangeClearsNumbers(ctx) {
+  const { assert } = ctx;
+  const kit = makeKit(ctx);
+  await kit.boot(`${BASE}&modules=beco,parque`);
+  let s = await jabNumber(kit, assert, 'troca de área');
+  for (let i = 0; i < 600 && s.run.state === 'roundActive'; i++) {
+    if (s.enemies.some((e) => e.hp > 0)) await kit.tap('Digit2', 20);
+    s = await kit.snap(50);
+  }
+  assert(s.run.state === 'traverse', `a onda deveria fechar: ${JSON.stringify(s.run)}`);
+  assert(
+    s.damageNumbers.last !== null,
+    `o último número deveria seguir no livro até a saída: ${JSON.stringify(s.damageNumbers)}`,
+  );
+  const firstArea = s.area.modules.join(',');
+  await kit.down('KeyD');
+  for (let i = 0; i < 1200 && s.run.round === 1; i++) s = await kit.frame();
+  await kit.up('KeyD');
+  assert(s.run.round === 2, `a saída deveria levar à rodada 2: ${JSON.stringify(s.run)} x=${s.player.x}`);
+  assert(
+    s.events.filter((e) => e.startsWith('areaBuilt:')).length === 2,
+    `esperava a área nova construída depois de ${firstArea}: ${JSON.stringify(s.events)}`,
+  );
+  assert(
+    s.damageNumbers.live === 0 && s.damageNumbers.last === null,
+    `POW-06.9: a área nova começou com números da anterior: ${JSON.stringify(s.damageNumbers)}`,
+  );
+}
+
 export default async function (ctx) {
   await jabShowsStrikeNumber(ctx);
+  await runResetClearsNumbers(ctx);
+  await areaChangeClearsNumbers(ctx);
   await blueTicksAsChip(ctx);
 }

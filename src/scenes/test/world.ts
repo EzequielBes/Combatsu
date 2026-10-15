@@ -162,6 +162,8 @@ export class WorldBuilder {
     s.props.length = 0;
     s.pickups.clear();
     s.floatTexts.clear();
+    // POW-06.9: nenhum número de dano atravessa a troca de área.
+    s.ui.damageNumbers.clear();
     s.droppedTools.clear();
     this.resetState();
   }

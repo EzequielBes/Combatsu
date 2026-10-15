@@ -402,17 +402,21 @@ chama `damageNumbers.promote(target.id, 'kokusen')` (pop de 1,6 a 1,0 em 120 ms)
 
 **What**: `this.s.ui.damageNumbers.clear()` no reset da run (`runDirector.ts:134`) e no `teardown` da área
 (`world.ts:164`).
-**Where**: `src/scenes/test/runDirector.ts`
+**Where**: `src/scenes/test/runDirector.ts`, `src/scenes/test/world.ts`, `scripts/smoke/power.smoke.mjs`
 **Depends on**: T10
 **Reuses**: `DamageNumbers.clear`
 **Requirement**: POW-06
 
 **Done when**:
 
-- [ ] `power.smoke.mjs`: com números vivos, a run nova começa com `damageNumbers.live === 0` no primeiro snapshot
+- [x] `power.smoke.mjs`: com números vivos, a run nova começa com `damageNumbers.live === 0` no primeiro snapshot
       (edge case do reset); a troca de área também zera
-- [ ] Smokes `world-restart`, `run-loop`, `world-traverse` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `world-restart`, `run-loop`, `world-traverse` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
+
+O número vive 700 ms e a trava do `gameOver` dura 1000 ms, então o do jab já expirou quando a run nova começa: o
+smoke prova o `clear` pelo `damageNumbers.last`, que só ele zera (sem o `clear` o último número sobrevive à run e à
+área; conferido tirando cada chamada).
 
 **Tests**: smoke
 **Gate**: full

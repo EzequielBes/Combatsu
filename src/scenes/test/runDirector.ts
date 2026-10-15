@@ -132,6 +132,8 @@ export class RunDirector {
     if (debugParam('fragments') !== null && Number.isInteger(startFragments)) this.s.wallet.add(startFragments);
     this.s.pickups.clear();
     this.s.floatTexts.clear();
+    // POW-06.9: os números de dano da run anterior somem antes do primeiro quadro da nova.
+    this.s.ui.damageNumbers.clear();
     // ARM-18: nenhuma ferramenta largada sobrevive à run anterior (a cadeira/garrafa do mapa não são drops).
     for (const prop of this.s.props) if (isDroppedTool(prop.def.key)) prop.destroyNow();
     this.s.props = this.s.props.filter((prop) => !prop.isGone);
