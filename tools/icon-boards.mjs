@@ -6,7 +6,8 @@
 // Com --fx, a prancha da folha `tech-fx-leva1` (`src/game/art/hd/fx/leva1Fx.ts`) sai junto, em fx-leva1.png:
 //   linha 1  cada quadro a 8x;
 //   linha 2  cada quadro a 1x, 2x e 4x sobre o fundo escuro do HUD, a pedra clara e o corpo do inimigo, o prego
-//            também virado para a esquerda e 3 cabeças de prego lado a lado (a marca cheia).
+//            também virado para a esquerda e 3 cabeças de prego lado a lado (a marca cheia);
+//   e, para olhar em movimento, a tira fx-leva1-giro.png e o loop animado fx-leva1-anim.png (APNG).
 // Uso, a partir da raiz do repo: node tools/icon-boards.mjs [--only id,id] [--out dir] [--name icones-tecnica] [--fx]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { register } from 'node:module';
@@ -63,25 +64,36 @@ function chunk(type, body) {
   return Buffer.concat([head, body, crc]);
 }
 
-function savePng(name, img) {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(img.w, 0);
-  ihdr.writeUInt32BE(img.h, 4);
-  ihdr[8] = 8;
-  ihdr[9] = 2;
+/** Linhas do RGB com o byte de filtro na frente, comprimidas (o miolo do IDAT). */
+function encode(img) {
   const raw = Buffer.alloc((img.w * 3 + 1) * img.h);
   for (let y = 0; y < img.h; y++)
     Buffer.from(img.data.buffer, y * img.w * 3, img.w * 3).copy(raw, y * (img.w * 3 + 1) + 1);
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  return deflateSync(raw);
+}
+
+/** Grava o PNG; com mais de uma imagem em `frames`, um APNG em loop com `ms` por quadro (o navegador anima). */
+function savePng(name, img, frames = [img], ms = 125) {
+  const u32 = (...v) => {
+    const b = Buffer.alloc(v.length * 4);
+    v.forEach((x, i) => b.writeUInt32BE(x, i * 4));
+    return b;
+  };
+  const ihdr = Buffer.concat([u32(img.w, img.h), Buffer.from([8, 2, 0, 0, 0])]);
+  const parts = [Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr)];
+  if (frames.length > 1) {
+    parts.push(chunk('acTL', u32(frames.length, 0)));
+    let seq = 0;
+    frames.forEach((f, i) => {
+      const delay = Buffer.from([ms >> 8, ms & 255, 3, 232, 0, 0]);
+      parts.push(chunk('fcTL', Buffer.concat([u32(seq++, img.w, img.h, 0, 0), delay])));
+      parts.push(i === 0 ? chunk('IDAT', encode(f)) : chunk('fdAT', Buffer.concat([u32(seq++), encode(f)])));
+    });
+  } else parts.push(chunk('IDAT', encode(img)));
+  parts.push(chunk('IEND', Buffer.alloc(0)));
   const file = join(outDir, name);
-  const png = Buffer.concat([
-    sig,
-    chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw)),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
   try {
-    writeFileSync(file, png);
+    writeFileSync(file, Buffer.concat(parts));
     console.log(file);
   } catch (e) {
     console.error(`Não foi possível gravar ${file} (arquivo aberto em outro programa?): ${e.code}`);
@@ -148,4 +160,39 @@ if (args.includes('--fx')) {
     }
   });
   savePng('fx-leva1.png', fimg);
+  motionBoards(fx);
+}
+
+/**
+ * O que só se julga em movimento: a tira do giro do atordoado (8 quadros seguidos, 2 voltas, a 8x e a 2x sobre o
+ * inimigo) e da palma (palm-0, palm-1, vazio) em fx-leva1-giro.png, e o mesmo em loop animado (APNG, 125 ms por
+ * quadro, abrir no navegador) em fx-leva1-anim.png.
+ */
+function motionBoards(fx) {
+  const n = fx.frameW;
+  const ENEMY = 0x8e7fa6;
+  const stun = (t) => `stun-${t % 4}`;
+  const palm = (t) => [null, 'palm-0', 'palm-0', 'palm-1', 'palm-1', null, null, null][t % 8];
+  const strip = image(pad + 8 * (n * 8 + 4), pad * 3 + n * 8 * 2 + n * 2, BG);
+  for (let t = 0; t < 8; t++) {
+    const x = pad + t * (n * 8 + 4);
+    fill(strip, x, pad, n * 8, n * 8, HUD);
+    blit(strip, fx, stun(t), x, pad, 8);
+    fill(strip, x, pad * 2 + n * 8, n * 8, n * 2, ENEMY);
+    blit(strip, fx, stun(t), x + n * 3, pad * 2 + n * 8, 2);
+    const y = pad * 3 + n * 10;
+    fill(strip, x, y, n * 8, n * 8, HUD);
+    if (palm(t)) blit(strip, fx, palm(t), x, y, 8);
+  }
+  savePng('fx-leva1-giro.png', strip);
+  const frames = [];
+  for (let t = 0; t < 16; t++) {
+    const f = image(pad * 4 + n * 4 * 2 + n * 2, pad * 2 + n * 4, HUD);
+    blit(f, fx, stun(t), pad, pad, 4);
+    fill(f, pad * 2 + n * 4, pad, n * 2, n * 2, ENEMY);
+    blit(f, fx, stun(t), pad * 2 + n * 4, pad, 2);
+    if (palm(t)) blit(f, fx, palm(t), pad * 3 + n * 6, pad, 4);
+    frames.push(f);
+  }
+  savePng('fx-leva1-anim.png', frames[0], frames);
 }

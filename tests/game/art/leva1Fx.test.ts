@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 // Importar no Vitest (Node, sem window) já prova que a folha não carrega o `phaser` como valor.
 import { PALETTE } from '../../../src/game/art/palette';
-import { LEVA1_FX_FRAMES, LEVA1_FX_SIZE, leva1FxSheet } from '../../../src/game/art/hd/fx/leva1Fx';
+import {
+  LEVA1_FX_FRAMES,
+  LEVA1_FX_SIZE,
+  STUN_STEPS,
+  leva1FxSheet,
+  stunFrame,
+} from '../../../src/game/art/hd/fx/leva1Fx';
 import { TEX } from '../../../src/game/textures';
 
 const keyOf = (color: number): string | undefined => Object.keys(PALETTE).find((k) => PALETTE[k] === color);
@@ -37,10 +43,20 @@ describe('folha tech-fx-leva1 (F34, BWG-12, RSN-13, FLA-10)', () => {
     expect(Object.values(TEX).filter((v) => v === TEX.techFxLeva1)).toHaveLength(1);
   });
 
-  it('tem os 7 quadros de 16x16, 1 texel = 1 px', () => {
+  it('tem os 9 quadros de 16x16, 1 texel = 1 px', () => {
     expect(sheet.frameW).toBe(16);
     expect(sheet.frameH).toBe(16);
-    expect(Object.keys(sheet.frames)).toEqual(['palm-0', 'palm-1', 'nail', 'nailHead', 'seal', 'stun-0', 'stun-1']);
+    expect(Object.keys(sheet.frames)).toEqual([
+      'palm-0',
+      'palm-1',
+      'nail',
+      'nailHead',
+      'seal',
+      'stun-0',
+      'stun-1',
+      'stun-2',
+      'stun-3',
+    ]);
     for (const name of LEVA1_FX_FRAMES) expect(sheet.frames[name], name).toHaveLength(n * n);
   });
 
@@ -59,7 +75,8 @@ describe('folha tech-fx-leva1 (F34, BWG-12, RSN-13, FLA-10)', () => {
   });
 
   it('o prego em voo é de aço, 8x3 no meio do quadro, com a cabeça à esquerda (RSN-13)', () => {
-    expect([...keysIn('nail')].sort()).toEqual(['S', 'W', 'n']);
+    // Sem o marinho n, que some no cenário noturno; a ponta tem o brilho ciano.
+    expect([...keysIn('nail')].sort()).toEqual(['C', 'S', 'W']);
     const b = bounds('nail');
     expect(b.x1 - b.x0 + 1).toBe(8);
     expect(b.y1 - b.y0 + 1).toBe(3);
@@ -78,11 +95,27 @@ describe('folha tech-fx-leva1 (F34, BWG-12, RSN-13, FLA-10)', () => {
     expect(keysIn('nailHead')).toContain('k');
   });
 
-  it('o selo é roxo com a pupila preta e o atordoado alterna as estrelas sobre a órbita', () => {
-    for (const key of ['v', 'u', 'U', 'b']) expect(keysIn('seal'), key).toContain(key);
-    for (const name of ['stun-0', 'stun-1']) {
-      for (const key of ['u', 'A', 'w']) expect(keysIn(name), `${name}: ${key}`).toContain(key);
+  it('o selo é o anel roxo vazado com o ponto claro e as presas brancas, sem a pupila preta', () => {
+    for (const key of ['v', 'u', 'U', 'w', 'W']) expect(keysIn('seal'), key).toContain(key);
+    expect(keysIn('seal')).not.toContain('b');
+    // O miolo do anel é vazado em volta do ponto: o fundo aparece entre o anel e o ponto.
+    const px = sheet.frames.seal;
+    expect(px[4 * n + 7]).toBe(0);
+    expect(px[5 * n + 7]).not.toBe(0);
+    const b = bounds('seal');
+    expect(b.x1 - b.x0 + 1).toBeLessThanOrEqual(10);
+  });
+
+  it('o atordoado gira em 4 passos de 30 graus que fecham o loop sem emenda', () => {
+    expect(STUN_STEPS).toBe(4);
+    for (let k = 0; k < STUN_STEPS; k++) {
+      expect(sheet.frames[`stun-${k}`]).toEqual(stunFrame(k));
+      for (const key of ['u', 'A', 'w']) expect(keysIn(`stun-${k}`), `stun-${k}: ${key}`).toContain(key);
     }
+    // O passo seguinte ao último é o primeiro: 4 x 30 = 120 graus, o vão entre as estrelas.
+    expect(stunFrame(STUN_STEPS)).toEqual(stunFrame(0));
+    // E andar para a frente não é o mesmo que voltar (o defeito do passo de meio período).
+    expect(stunFrame(1)).not.toEqual(stunFrame(-1));
   });
 
   it('a folha é calculada uma vez', () => {
