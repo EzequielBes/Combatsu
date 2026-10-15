@@ -242,10 +242,11 @@ sem `ai.interrupt`, sem limpar `walkVxStep`, sem `pickHitReaction`, sem `trackSt
 
 **Done when**:
 
-- [ ] `oxlint` mostra a complexidade do `EnemyDefense.receiveHit` sem subir (21 hoje); arquivo abaixo de 400
-- [ ] Smokes `enemy-`, `telegraph` e `targets` verdes e iguais (provam a extração do `reactionFor`); o ramo da banda é
+- [x] `oxlint` mostra a complexidade do `EnemyDefense.receiveHit` sem subir (21 hoje); arquivo abaixo de 400 (feito:
+      caiu para 15 ou menos, sem aviso; arquivo com 377 linhas)
+- [x] Smokes `enemy-`, `telegraph` e `targets` verdes e iguais (provam a extração do `reactionFor`); o ramo da banda é
       provado no jogo vivo pela T8, que liga o primeiro emissor (não há emissor de banda antes dela)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full

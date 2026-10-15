@@ -2,12 +2,22 @@ import { Filters } from '../../core/collision';
 import type { ParryInfo } from '../../core/defense';
 import type { EnemyEvent } from '../../core/enemyBrain';
 import type { GuardRoll } from '../../core/enemyGuard';
-import { normalize, type Hit, type HitReport } from '../../core/hit';
+import { normalize, type Hit, type HitBand, type HitReport } from '../../core/hit';
+import { bandStructureGain } from '../../core/hitBand';
 import { pickHitReaction, type HitReaction } from '../../core/hitReaction';
 import { LightStreak, baseConditionsHold, guardChance, readingBonus, shoveRoll } from '../../core/moveReading';
 import { EnemyGuard } from '../../core/enemyGuard';
 import { enemyStructureGain } from '../../core/structure';
-import { COUNTER, DEFENSE, FINISHER_MOVE, MOVES, READING, STRUCTURE, type MoveDef } from '../../data/moves';
+import {
+  COUNTER,
+  DEFENSE,
+  FINISHER_MOVE,
+  MOVES,
+  READING,
+  STRUCTURE,
+  type MoveDef,
+  type MoveEffect,
+} from '../../data/moves';
 import { tagBody, type Hittable } from '../bodyTags';
 import { applyFilter, setIgnoreGravity } from '../physics';
 import { Ragdoll } from '../Ragdoll';
@@ -116,13 +126,8 @@ export class EnemyDefense {
       if (report) report.blocked = true;
       return this.onBlocked(res.structureGain);
     }
-    const isFinisher = hit.moveName === FINISHER_MOVE;
-    const effect = !wasBroken && hit.moveName ? MOVES[hit.moveName]?.effect : undefined;
-    // Quebrado e atordoado: o golpe tira vida mas não derruba nem empurra, para o finalizador ainda alcançar (FIN-01, EDG-11).
-    let reaction: Hit = hit;
-    if (wasBroken && !isFinisher) reaction = { ...hit, strength: 'light', force: 0, knockdown: false };
-    // Empurrão (SPC-02): sai rente ao chão, para o deslocamento horizontal não esbarrar em plataformas.
-    else if (effect?.type === 'push') reaction = { ...hit, direction: { x: hit.direction.x, y: PUSH_LIFT } };
+    if (hit.band) return this.receiveBand(hit, hit.band);
+    const { effect, reaction } = this.reactionFor(hit, wasBroken);
     this.pickedReaction = pickHitReaction(
       { strength: reaction.strength, moveName: hit.moveName },
       this.peers.anim.lastReaction,
@@ -145,6 +150,39 @@ export class EnemyDefense {
     if (survived && this.c.structure.add(enemyStructureGain(hit))) this.onBreak();
     if (survived && effect && !armored) this.applyEffect(effect, hit);
     if (survived) this.trackStreak(hit);
+    this.peers.hud.updateBar();
+    return true;
+  }
+
+  /**
+   * O efeito do golpe e o golpe que o corpo sente. Quebrado e atordoado, o golpe tira vida mas não derruba nem empurra,
+   * para o finalizador ainda alcançar (FIN-01, EDG-11); o empurrão (SPC-02) sai rente ao chão, para o deslocamento
+   * horizontal não esbarrar em plataformas.
+   */
+  private reactionFor(hit: Hit, wasBroken: boolean): { effect: MoveEffect | undefined; reaction: Hit } {
+    const effect = !wasBroken && hit.moveName ? MOVES[hit.moveName]?.effect : undefined;
+    if (wasBroken && hit.moveName !== FINISHER_MOVE) {
+      return { effect, reaction: { ...hit, strength: 'light', force: 0, knockdown: false } };
+    }
+    if (effect?.type === 'push') {
+      return { effect, reaction: { ...hit, direction: { x: hit.direction.x, y: PUSH_LIFT } } };
+    }
+    return { effect, reaction: hit };
+  }
+
+  /**
+   * Acerto com banda (POW-15): só o dano, sem reação de corpo. A IA segue (sem `interrupt` nem limpar o `walkVxStep`),
+   * sem `pickHitReaction`, sem leves seguidos e sem efeito do golpe; o micro soma metade da estrutura, o chip nada. O
+   * letal morre como qualquer outro (POW-03.5) e aí, como no caminho comum, a IA para.
+   */
+  private receiveBand(hit: Hit, band: HitBand): boolean {
+    const events = this.c.brain.receiveHit(hit);
+    if (events.length === 0) return false;
+    this.handle(events);
+    if (this.c.brain.isDead) {
+      this.c.s.walkVxStep = null;
+      this.peers.atk.onAI(this.c.ai.interrupt());
+    } else if (this.c.structure.add(bandStructureGain(band, enemyStructureGain(hit)))) this.onBreak();
     this.peers.hud.updateBar();
     return true;
   }
@@ -182,7 +220,7 @@ export class EnemyDefense {
   }
 
   /** Reação de golpe que sobrevive (MOV-11, MOV-10 pelo `ragdollStunMs`, SPC-02): lançar e empurrar. */
-  private applyEffect(effect: NonNullable<(typeof MOVES)[string]['effect']>, hit: Hit): void {
+  private applyEffect(effect: MoveEffect, hit: Hit): void {
     if (effect.type === 'launch') this.c.s.ragdoll?.launch(LAUNCH_VY);
     else if (effect.type === 'push') this.peers.move.startSlide(hit.direction.x >= 0 ? 1 : -1, effect.px);
   }
@@ -263,6 +301,8 @@ export class EnemyDefense {
     for (const ev of events) {
       if (ev.type === 'hitReaction') this.playHitReaction(ev.hit);
       else if (ev.type === 'armored') this.onArmored();
+      // Acerto com banda: só dano, sem reação de corpo (POW-15).
+      else if (ev.type === 'chip') this.c.hooks.event(`chip:${this.c.id}`);
       else if (ev.type === 'stagger') this.playStagger(ev.hit);
       else if (ev.type === 'died') this.host.died(this.c.body.position.x, this.c.body.position.y);
       else if (ev.type === 'ragdoll') this.enterRagdoll(ev.hit);
