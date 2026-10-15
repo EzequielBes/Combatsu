@@ -159,10 +159,13 @@ export class Fx {
     });
   }
 
-  /** Cópia do sprite que some aos poucos; chamar todo frame enquanto o chute ou o arremesso está ativo (FX-05). */
-  afterimage(sprite: Phaser.GameObjects.Sprite): void {
+  /**
+   * Cópia do sprite que some aos poucos; chamar todo frame enquanto o chute ou o arremesso está ativo (FX-05). `force`
+   * ignora o intervalo mínimo (a pós-imagem única da `recovery` com Ritmo 3, CRP-04). Devolve se a cópia nasceu.
+   */
+  afterimage(sprite: Phaser.GameObjects.Sprite, force = false): boolean {
     const now = this.scene.time.now;
-    if (now - this.lastAfterimage < AFTERIMAGE_EVERY_MS) return;
+    if (!force && now - this.lastAfterimage < AFTERIMAGE_EVERY_MS) return false;
     this.lastAfterimage = now;
     const ghost = this.scene.add
       .image(sprite.x, sprite.y, sprite.texture.key, sprite.frame.name)
@@ -179,6 +182,7 @@ export class Fx {
       duration: AFTERIMAGE_FADE_MS,
       onComplete: () => ghost.destroy(),
     });
+    return true;
   }
 
   /** Tremida curta da câmera do mundo; a cena chama só no golpe forte. */

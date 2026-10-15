@@ -1378,10 +1378,19 @@ energia (CE-06, instável conhecido) e passou isolado. Testes: 4144.
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs`: com `alcance:3` o rastro do golpe em `fx.trails` cresce 14 px; com `ritmo:3` uma
+- [x] `cursed-body.smoke.mjs`: com `alcance:3` o rastro do golpe em `fx.trails` cresce 14 px; com `ritmo:3` uma
       pós-imagem por golpe na `recovery`
-- [ ] Pós-imagem conferida em movimento no jogo, dos dois lados; `oxlint` sem ramo novo no `onStrikePhase`
-- [ ] Smokes `cursed-body`, `impact`, `feel` e `fight` verdes; gate verde; contagem sem perda
+- [x] Pós-imagem conferida em movimento no jogo, dos dois lados; `oxlint` sem ramo novo no `onStrikePhase`
+- [x] Smokes `cursed-body`, `impact`, `feel` e `fight` verdes; gate verde; contagem sem perda
+
+**Nota (T45)**: SPEC_DEVIATION: o Alcance não entra no `extraPx` (a largura do rastro): o `extendPath`
+(`core/strikePath.ts`) alonga a ponta do caminho os mesmos 14 px, e o `fx.trails` ganhou `lengthPx`. O CRP-05 pede o
+rastro alongado, e somado à largura o rastro do leve virou um borrão em cima do braço (prancha olhada em
+`.fable-out/t45-alcance.png`; a versão alongada em `.fable-out/t45-alcance2.png`). A pós-imagem usa o
+`Fx.afterimage(sprite, force)`, que agora devolve se a cópia nasceu; o evento `bodyEcho:<golpe>` só sai nesse caso.
+Conferido em HD, leve e forte, para os dois lados (`node tools/visual-shots.mjs .fable-out/t45 corpoGolpe`): a cópia
+nasce no 1º quadro da `recovery` e escorrega para trás do player nos dois lados. Testes: 4149 (+5 do `extendPath` e
+`pathLength`).
 
 **Tests**: smoke
 **Gate**: full

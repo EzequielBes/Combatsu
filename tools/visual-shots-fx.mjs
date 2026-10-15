@@ -1,3 +1,5 @@
+import { bodyScenarios } from './visual-shots-body.mjs';
+
 // Cenários dos efeitos de contato com o corpo HD (`?hd=1`) para `tools/visual-shots.mjs`: recortes ampliados em volta
 // do player, do contato até o efeito apagar.
 
@@ -219,6 +221,7 @@ export const techFxScenarios = () => ({
   vermelhoAneis: (t) => redRingsScenario(t),
   vermelhoCampo: (t) => redFieldScenario(t),
   hudMarcas: (t) => hudMarksScenario(t),
+  ...bodyScenarios(),
   // Azul no estilo do anime (BLA-*): recorte em volta do orbe, do nascer à implosão.
   async azul(t) {
     await t.open('enemyGuard=0&noshop=1&fxlab');

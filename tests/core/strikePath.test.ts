@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { strikeToBody, strikeToWorld, trailStyle } from '../../src/core/strikePath';
+import { extendPath, pathLength, strikeToBody, strikeToWorld, trailStyle } from '../../src/core/strikePath';
 
 // Frame de 30 linhas, origem na coluna 12 e no pé (base do frame). Texel = 2 px.
 const FRAME = { originCol: 12, rows: 30 };
@@ -52,5 +52,73 @@ describe('trailStyle (TRL-04, TRL-05)', () => {
   });
   it('forte: 8 px e 220 ms', () => {
     expect(trailStyle('heavy')).toEqual({ widthPx: 8, fadeMs: 220 });
+  });
+});
+
+describe('extendPath e pathLength (CRP-05: o Alcance alonga o rastro)', () => {
+  it('soma os segmentos do caminho', () => {
+    expect(
+      pathLength([
+        { x: 0, y: 0 },
+        { x: 3, y: 4 },
+        { x: 3, y: 10 },
+      ]),
+    ).toBe(11);
+    expect(pathLength([{ x: 5, y: 5 }])).toBe(0);
+  });
+
+  it('alonga a ponta 14 px na direção do último trecho, para a direita e para a esquerda', () => {
+    const right = extendPath(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      14,
+    );
+    expect(right).toEqual([
+      { x: 0, y: 0 },
+      { x: 24, y: 0 },
+    ]);
+    const left = extendPath(
+      [
+        { x: 0, y: 0 },
+        { x: -3, y: -4 },
+      ],
+      10,
+    );
+    expect(left[1]!.x).toBeCloseTo(-9);
+    expect(left[1]!.y).toBeCloseTo(-12);
+    expect(pathLength(left)).toBeCloseTo(15);
+  });
+
+  it('mantém o começo e o meio e cresce exatamente os px pedidos', () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 4, y: 3 },
+      { x: 10, y: 3 },
+    ];
+    const out = extendPath(path, 6);
+    expect(out.slice(0, 2)).toEqual(path.slice(0, 2));
+    expect(pathLength(out)).toBeCloseTo(pathLength(path) + 6);
+  });
+
+  it('sem alcance (0 px) devolve o caminho igual', () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ];
+    expect(extendPath(path, 0)).toEqual(path);
+  });
+
+  it('com a ponta repetida usa o último trecho que anda', () => {
+    const out = extendPath(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      14,
+    );
+    expect(out[out.length - 1]).toEqual({ x: 24, y: 0 });
   });
 });

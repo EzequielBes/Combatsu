@@ -4,7 +4,7 @@ import { parseSheet } from '../core/pixelGrid';
 import type { Strength, Vec2 } from '../core/hit';
 import { impactSpikes, type ImpactTier } from '../core/impactTier';
 import { Rng } from '../core/rng';
-import { trailStyle } from '../core/strikePath';
+import { pathLength, trailStyle } from '../core/strikePath';
 import { IMPACT_FEEL, SLIDE_FEEL } from '../data/feel';
 import { HD_ON } from './art/hd/flag';
 import { PALETTE, PALETTE_KEYS } from './art/palette';
@@ -119,6 +119,8 @@ interface TrailEntry {
   tween: Phaser.Tweens.Tween | null;
   tier: 'light' | 'heavy';
   widthPx: number;
+  /** Comprimento do caminho do rastro (o Alcance do Corpo o alonga, CRP-05). */
+  lengthPx: number;
   fadeMs: number;
 }
 
@@ -139,11 +141,12 @@ export class CursedFx {
     registerSheet(scene, TEX.cursedBit, parseSheet('cursed-bit', BIT_FRAMES, PALETTE_KEYS));
   }
 
-  /** Rastros vivos, para o snapshot de debug (TRL-10): nível, largura e idade em ms de jogo. */
-  get trails(): { tier: 'light' | 'heavy'; widthPx: number; ageMs: number }[] {
+  /** Rastros vivos, para o snapshot de debug (TRL-10, CRP-05): nível, largura, comprimento e idade em ms de jogo. */
+  get trails(): { tier: 'light' | 'heavy'; widthPx: number; lengthPx: number; ageMs: number }[] {
     return this.trailList.map((t) => ({
       tier: t.tier,
       widthPx: t.widthPx,
+      lengthPx: t.lengthPx,
       ageMs: Math.round((t.tween?.progress ?? 0) * t.fadeMs),
     }));
   }
@@ -189,7 +192,8 @@ export class CursedFx {
       const sy = snap(a.y + (b.y - a.y) * t - widthPx - 2 + side);
       gfx.fillStyle(PALETTE[i % 2 === 0 ? 'U' : 'u']!, 1).fillRect(sx, sy, GRID, GRID);
     }
-    const entry: TrailEntry = { gfx, tween: null, tier: strength === 'heavy' ? 'heavy' : 'light', widthPx, fadeMs };
+    const tier = strength === 'heavy' ? 'heavy' : 'light';
+    const entry: TrailEntry = { gfx, tween: null, tier, widthPx, lengthPx: pathLength(path), fadeMs };
     entry.tween = this.scene.tweens.add({
       targets: gfx,
       alpha: 0,

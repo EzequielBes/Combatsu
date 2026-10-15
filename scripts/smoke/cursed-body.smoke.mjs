@@ -191,6 +191,46 @@ async function weightWallStun(ctx) {
   );
 }
 
+/**
+ * Dá um `jab` no ar (sem alvo) e devolve a largura e o comprimento do rastro em `fx.trails` e as pós-imagens do golpe.
+ */
+async function jabTrail(ctx, query) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(`${BASE}&${query}`);
+  const seen = s.events.length;
+  await kit.down('KeyJ');
+  s = await kit.frame();
+  await kit.up('KeyJ');
+  let widthPx = 0;
+  let lengthPx = 0;
+  for (let f = 0; f < 30; f++) {
+    s = await kit.frame();
+    for (const t of s.fx.trails) widthPx = Math.max(widthPx, t.widthPx);
+    for (const t of s.fx.trails) lengthPx = Math.max(lengthPx, t.lengthPx);
+  }
+  ctx.assert(s.events.slice(seen).includes('move:jab'), `o jab deveria sair: ${s.events.slice(seen)}`);
+  return { widthPx, lengthPx, echoes: s.events.slice(seen).filter((e) => e === 'bodyEcho:jab').length };
+}
+
+/**
+ * CRP-05: com Alcance 3 o rastro do `jab` em `fx.trails` fica 14 px mais longo, com a mesma largura; CRP-04: com Ritmo 3 a `recovery` deixa uma
+ * pós-imagem por golpe (o evento sai só quando a cópia nasce) e sem o eixo nenhuma.
+ */
+async function trailAndEcho(ctx) {
+  const plain = await jabTrail(ctx, 'axes=');
+  const far = await jabTrail(ctx, 'axes=corpo.alcance:3');
+  const quick = await jabTrail(ctx, 'axes=corpo.ritmo:3');
+  const view = JSON.stringify({ plain, far, quick });
+  // SPEC_DEVIATION: a T45 somava os 14 px ao `extraPx` (a largura do rastro); aqui o rastro fica 14 px mais longo.
+  // Reason: o CRP-05 pede o rastro alongado ("lengthen"); somado à largura, o rastro do leve virou um borrão em cima do
+  // braço (prancha `.fable-out/t45-alcance.png`).
+  ctx.assert(
+    plain.lengthPx > 0 && Math.abs(far.lengthPx - plain.lengthPx - REACH_3_PX) < 0.01 && far.widthPx === plain.widthPx,
+    `CRP-05: rastro 14 px mais longo e da mesma largura: ${view}`,
+  );
+  ctx.assert(plain.echoes === 0 && quick.echoes === 1, `CRP-04: uma pós-imagem na recovery com Ritmo 3: ${view}`);
+}
+
 export default async function (ctx) {
   await levelResets(ctx);
   await weightKnockdown(ctx);
@@ -198,4 +238,5 @@ export default async function (ctx) {
   await reachWidens(ctx);
   await rhythmShortens(ctx);
   await weightWallStun(ctx);
+  await trailAndEcho(ctx);
 }

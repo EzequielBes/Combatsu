@@ -44,3 +44,23 @@ export function trailStyle(strength: Strength): { widthPx: number; fadeMs: numbe
   const t = TRAIL_FEEL[strength];
   return { widthPx: t.widthPx, fadeMs: t.fadeMs };
 }
+
+/** Comprimento do caminho: a soma dos trechos. */
+export function pathLength(path: readonly Vec2[]): number {
+  let total = 0;
+  for (let i = 1; i < path.length; i++) total += Math.hypot(path[i]!.x - path[i - 1]!.x, path[i]!.y - path[i - 1]!.y);
+  return total;
+}
+
+/**
+ * CRP-05: alonga a ponta do caminho `px` na direção do último trecho que anda (o rastro do golpe com o Alcance do
+ * Corpo); começo e meio ficam. Sem trecho que ande, ou com `px` 0, devolve o caminho igual.
+ */
+export function extendPath(path: readonly Vec2[], px: number): Vec2[] {
+  const last = path[path.length - 1];
+  const from = [...path].reverse().find((p) => p.x !== last?.x || p.y !== last?.y);
+  if (px <= 0 || !last || !from) return [...path];
+  const len = Math.hypot(last.x - from.x, last.y - from.y);
+  const tip = { x: last.x + ((last.x - from.x) / len) * px, y: last.y + ((last.y - from.y) / len) * px };
+  return [...path.slice(0, -1), tip];
+}

@@ -419,7 +419,7 @@ export interface GameSnapshot {
     /** Centro da aura de conjuração enquanto visível (ITP-10); `null` sem aura. */
     aura: { x: number; y: number } | null;
     /** Rastros de energia vivos (TRL-10). */
-    trails: { tier: 'light' | 'heavy'; widthPx: number; ageMs: number }[];
+    trails: { tier: 'light' | 'heavy'; widthPx: number; lengthPx: number; ageMs: number }[];
     /** Linhas de foco do golpe decisivo (FOC-01); `null` fora dos 180 ms reais. */
     focus: { lines: number; ageMs: number } | null;
     /**

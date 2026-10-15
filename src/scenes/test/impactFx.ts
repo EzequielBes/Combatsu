@@ -7,7 +7,7 @@ import type { PowerLook } from '../../core/power';
 import type { ImpactLook } from '../../game/CursedFx';
 import { toneFromKeys } from '../../game/cursedImpact';
 import { CAMERA_FEEL } from '../../data/feel';
-import { strikeToWorld } from '../../core/strikePath';
+import { extendPath, strikeToWorld } from '../../core/strikePath';
 import { STRIKE_POINTS } from '../../game/art/sprites/strikePoints';
 import { yutaAnchors, yutaPhaseFrames } from '../../game/art/hd/atlas/yutaSheet';
 import { HD_ON, YUTA_ON } from '../../game/art/hd/flag';
@@ -144,8 +144,13 @@ export class ImpactFx {
     if (brokePosture || hit.counter) this.s.effects.slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.slowMs);
   }
 
-  /** Fase do golpe do jogador: rastro no `active` e chama no startup do forte (TRL-03, TRL-07, TRL-08, EDG-01). */
+  /**
+   * Fase do golpe do jogador: rastro no `active` e chama no startup do forte (TRL-03, TRL-07, TRL-08, EDG-01); o Corpo
+   * recebe a fase antes (CRP-04).
+   */
   onStrikePhase(name: string, phase: 'startup' | 'active' | 'recovery' | 'end'): void {
+    // CRP-04: o Corpo vê toda fase (a pós-imagem do Ritmo 3 na `recovery`).
+    this.s.build.body.onStrikePhase(name, phase);
     const strength = MOVES[name]?.strength ?? 'light';
     if (phase === 'startup') {
       if (strength !== 'heavy') return;
@@ -158,8 +163,12 @@ export class ImpactFx {
       this.s.world.sleeper.onPlayerStrike(this.s.player.sprite.x);
       const drawn = this.handTrail(name);
       const extraPx = this.s.stats.power.trailBonusPx;
+      // CRP-05: o Alcance do Corpo alonga a ponta dos dois rastros abaixo os mesmos px da caixa do golpe.
+      // SPEC_DEVIATION: o design somava o Alcance ao `extraPx` (largura); aqui ele alonga o caminho.
+      // Reason: o CRP-05 pede o rastro mais longo, e na largura o rastro do leve virava um borrão sobre o braço.
+      const reachPx = this.s.build.body.reachPx;
       if (drawn) {
-        this.s.cursedFx.trail(drawn, strength, extraPx);
+        this.s.cursedFx.trail(extendPath(drawn, reachPx), strength, extraPx);
         const feet = this.s.player.renderPos;
         if (drawn[0].y - drawn[drawn.length - 1].y >= RISING_TRAIL_PX)
           this.s.fx.dust(feet.x, feet.y + SIZE.player.h / 2);
@@ -167,7 +176,7 @@ export class ImpactFx {
       }
       const from = this.strikeWorld(`${name}-wind`);
       const to = this.strikeWorld(`${name}-hit`);
-      if (from && to) this.s.cursedFx.trail([from, to], strength, extraPx);
+      if (from && to) this.s.cursedFx.trail(extendPath([from, to], reachPx), strength, extraPx);
     } else {
       this.stopFlame();
     }
