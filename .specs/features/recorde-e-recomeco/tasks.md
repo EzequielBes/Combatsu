@@ -421,9 +421,9 @@ ignorando tudo com `s.fxLab`. Em `combat.ts`: uma linha dentro do `if (hit.owner
 
 **Done when**:
 
-- [ ] `record-end.smoke.mjs` estendido (`tech=azul`): um soco e um Azul num inimigo → painel lista `Golpe` e `Azul` com os valores de `record.damage`, soma das porcentagens 100 ± 1
-- [ ] Kokusen forçado (molde do smoke `kokusen`) num inimigo soma em `divergente`
-- [ ] Smokes `tech`, `kokusen`, `fxlab` verdes; `TestScene.ts` continua em 399 linhas efetivas; gate verde
+- [x] `record-end.smoke.mjs` estendido (`tech=azul`): um soco e um Azul num inimigo → painel lista `Golpe` e `Azul` com os valores de `record.damage`, soma das porcentagens 100 ± 1
+- [x] Kokusen forçado (molde do smoke `kokusen`) num inimigo soma em `divergente`
+- [x] Smokes `tech`, `kokusen`, `fxlab` verdes; `TestScene.ts` continua em 399 linhas efetivas; gate verde
 
 **Tests**: smoke
 **Gate**: full

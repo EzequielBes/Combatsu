@@ -4,6 +4,7 @@ import { RecordBook } from '../../core/recordBook';
 import type { RunCommand } from '../../core/run';
 import { DamageLedger, summaryLines, type DamageSource } from '../../core/runSummary';
 import { serializeSave, type LeveledId, type RunRecord } from '../../core/save';
+import type { TechId } from '../../data/techniques';
 import { RecordMarker } from '../../game/RecordMarker';
 import type { RecordSnapshot } from '../../game/recordSnapshot';
 import { RunSummaryPanel } from '../../game/RunSummaryPanel';
@@ -67,6 +68,11 @@ export class RecordDirector {
    */
   onPlayerHit(hit: Hit): void {
     this.addDamage(hit.moveName !== undefined ? 'golpe' : 'objeto', hit.damage);
+  }
+
+  /** Golpe de técnica já aceito pelo alvo (DMG-02, DMG-04): soma na técnica de origem; o Kokusen vem como `divergente`. */
+  onTechHit(source: TechId, damage: number): void {
+    this.addDamage(source, damage);
   }
 
   /** Soma dano aceito numa fonte; no laboratório de efeitos (só bonecos) nada conta (DMG-05). */

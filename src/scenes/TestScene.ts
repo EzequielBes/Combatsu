@@ -316,7 +316,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
       this.fxRegistry,
       this.uiLayer,
       this.terrain,
-      (hit, point) => this.effects.onTechConnect(hit, point),
+      (hit, point, source) => this.effects.onTechConnect(hit, point, source),
       (ms) => {
         this.effects.hitstop.trigger(ms);
         this.effects.freeze();

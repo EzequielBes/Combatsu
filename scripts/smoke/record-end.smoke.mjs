@@ -119,6 +119,8 @@ export default async function (ctx) {
   );
 
   await strikeAndObjectDamage(ctx);
+  await techDamage(ctx);
+  await kokusenDamage(ctx);
   await fullBuildPanel(ctx, startAndDie);
   assert(errors.length === 0, `erros na página: ${errors.join(' | ')}`);
 }
@@ -185,6 +187,141 @@ async function strikeAndObjectDamage(ctx) {
     `pré-condição: o soco deveria acertar o boneco: ${JSON.stringify(s.fxlab.dummies)}`,
   );
   assert(total(s.record.damage) === 0, `DMG-05: boneco não soma: ${JSON.stringify(s.record.damage)}`);
+}
+
+const TECH_BASE = 'hd=1&area=modular&nosave=1&noshop=1&enemyGuard=0';
+
+/** Espera o slot 1 ficar livre (sem conjuração e sem recarga); devolve o snapshot. */
+async function waitSlotReady({ snap }) {
+  let s = await snap(20);
+  for (let i = 0; i < 60 && (s.tech.cast !== null || s.tech.slots[0].cooldownMs > 0); i++) s = await snap(100);
+  return s;
+}
+
+/** Espera um inimigo vivo nascer (intervalo de spawn) e devolve o snapshot. */
+async function waitEnemy({ snap, nearest, assert }) {
+  let s = await snap(20);
+  for (let i = 0; i < 20 && !nearest(s); i++) s = await snap(300);
+  assert(nearest(s), `nenhum inimigo nasceu: ${JSON.stringify(s.enemies)}`);
+  return s;
+}
+
+/**
+ * Conjura o Azul (slot 1, tecla L) a ~100 px do inimigo: a esfera nasce 110 px à frente (BLU-02) com o alvo dentro do
+ * raio de puxão, e os tiques e a implosão somam em `azul`. O golpe do inimigo pode cancelar a conjuração (CAST-07):
+ * até 3 tentativas. Devolve o snapshot depois da esfera sumir.
+ */
+async function castBlue(kit) {
+  const { snap, tap, approach, assert } = kit;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await waitSlotReady(kit);
+    await waitEnemy(kit);
+    await approach(100);
+    let s = await tap('KeyL');
+    if (s.tech.cast?.id !== 'azul') continue;
+    for (let i = 0; i < 60 && (s.tech.cast !== null || s.techObjects.some((o) => o.kind === 'blue')); i++)
+      s = await snap(50);
+    if (s.record.damage.azul > 0) return s;
+  }
+  assert(false, 'pré-condição: o Azul deveria acertar o inimigo em 3 tentativas');
+  return null;
+}
+
+/** Mata o player pela tecla 3 e devolve o snapshot do `gameOver`. */
+async function die({ page, snap, frame, assert }) {
+  await page.keyboard.press('Digit3', { delay: 50 });
+  let s = await snap(20);
+  for (let i = 0; i < 120 && s.run.state !== 'gameOver'; i++) s = await frame();
+  assert(s.run.state === 'gameOver', `o player deveria morrer: ${JSON.stringify(s.run)}`);
+  return s;
+}
+
+/**
+ * DMG-02, END-08, END-15: um Azul e um soco num inimigo somam em `azul` e `golpe`; na morte o painel lista `Golpe` e
+ * `Azul` com os valores de `record.damage`, e as porcentagens somam 100 ± 1.
+ */
+async function techDamage(ctx) {
+  const kit = { ...makeKit(ctx), page: ctx.page };
+  const { assert, snap, tap, boot, nearest, approach } = kit;
+  await boot(`${TECH_BASE}&tech=azul`);
+  let s = await castBlue(kit);
+  const blue = s.record.damage.azul;
+  await approach();
+  const target = nearest(await snap(0));
+  await tap('KeyJ');
+  s = await snap(300);
+  const after = s.enemies.find((e) => e.id === target.id);
+  assert(target.hp > (after?.hp ?? 0), `pré-condição: o soco deveria acertar: ${JSON.stringify({ target, after })}`);
+  const dead = await die(kit);
+  const { damage } = dead.record;
+  assert(
+    damage.azul === blue && damage.golpe > 0 && total(damage) === damage.azul + damage.golpe,
+    `DMG-02: Azul e golpe no registro: ${JSON.stringify(damage)}`,
+  );
+  const { lines } = dead.record.panel;
+  const rows = lines.map((l) => /^(.+): (\d+) \((\d+)%\)$/.exec(l)).filter(Boolean);
+  for (const [label, value] of [
+    ['Golpe', damage.golpe],
+    ['Azul', damage.azul],
+  ])
+    assert(
+      rows.some((r) => r[1] === label && Number(r[2]) === Math.round(value)),
+      `END-08: falta "${label}: ${Math.round(value)}": ${JSON.stringify(lines)}`,
+    );
+  const pct = rows.reduce((sum, r) => sum + Number(r[3]), 0);
+  assert(rows.length === 2 && Math.abs(pct - 100) <= 1, `END-08: % somam ${pct}: ${JSON.stringify(lines)}`);
+}
+
+/**
+ * Espera o 1º impacto do Divergente em `targetId` (hp cai) ou o fim da conjuração; devolve o snapshot do impacto ou
+ * `null` se a conjuração acabou sem acertar.
+ */
+async function firstImpact({ frame }, targetId, hp) {
+  for (let i = 0; i < 40; i++) {
+    const s = await frame();
+    const t = s.enemies.find((e) => e.id === targetId);
+    if (t && t.hp < hp) return s;
+    if (s.tech.cast === null) return null;
+  }
+  return null;
+}
+
+/**
+ * DMG-07: Kokusen forçado (molde do smoke `kokusen`): Divergente a ~40 px, tecla do slot de novo quando a janela abre;
+ * o 1º impacto e o Kokusen somam em `divergente` o que o inimigo perdeu, e nada mais soma.
+ */
+async function kokusenDamage(ctx) {
+  const kit = makeKit(ctx);
+  const { assert, frame, down, up, boot, nearest, approach, count } = kit;
+  await boot(`${TECH_BASE}&tech=divergente`);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await waitSlotReady(kit);
+    await waitEnemy(kit);
+    const target = nearest(await approach(40));
+    await down('KeyL');
+    let s = await frame();
+    await up('KeyL');
+    const hit = s.tech.cast?.state === 'sign' ? await firstImpact(kit, target.id, target.hp) : null;
+    if (!hit) continue;
+    s = hit;
+    for (let i = 0; i < 20 && !s.kokusen.windowOpen; i++) s = await frame();
+    if (!s.kokusen.windowOpen) continue;
+    const before = count(s, 'kokusen');
+    await down('KeyL');
+    s = await frame();
+    await up('KeyL');
+    for (let i = 0; i < 20 && count(s, 'kokusen') === before; i++) s = await frame();
+    if (count(s, 'kokusen') === before) continue;
+    const after = s.enemies.find((e) => e.id === target.id);
+    const lost = target.hp - (after?.hp ?? 0);
+    const { damage } = s.record;
+    assert(
+      after && damage.divergente === lost && total(damage) === lost,
+      `DMG-07: Kokusen soma em divergente ${lost}: ${JSON.stringify({ damage, after })}`,
+    );
+    return;
+  }
+  assert(false, 'pré-condição: o Kokusen forçado deveria acertar em 3 tentativas');
 }
 
 /** END-04..07: com a build cheia o painel lista técnicas, passivas, arsenal e votos e cabe em 960x540. */

@@ -2,6 +2,7 @@ import { type Hit, type Vec2 } from '../../core/hit';
 import { Hitstop } from '../../core/hitstop';
 import { SlowMo } from '../../core/slowMo';
 import { HITSTOP_MS } from '../../data/fx';
+import type { TechId } from '../../data/techniques';
 import { MAX_FRAME_MS } from '../../game/physics';
 import type { TestScene } from '../TestScene';
 
@@ -28,9 +29,11 @@ export class EffectsDirector {
 
   /**
    * Golpe de técnica que conectou (T22+): mesma faísca + tremida + hitstop de FX-01..03, mas sem o +3 de CE-06
-   * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito).
+   * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito). O dano entra no registro da run pela
+   * técnica de origem (DMG-02; o Kokusen chega como `divergente`, DMG-07).
    */
-  onTechConnect(hit: Hit, point: Vec2): void {
+  onTechConnect(hit: Hit, point: Vec2, source: TechId): void {
+    this.s.runDirector.record.onTechHit(source, hit.damage);
     this.s.fx.spark(point.x, point.y, hit.strength);
     if (hit.strength === 'heavy') this.s.fx.shake();
     this.hitstop.trigger(HITSTOP_MS[hit.strength]);
