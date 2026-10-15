@@ -807,9 +807,9 @@ atualiza o relógio; `game/boss/AdaptWheel.ts` (novo) desenha a roda de 8 raios 
 
 **Done when**:
 
-- [ ] Smoke novo `boss-adaptativo.smoke.mjs` (`round=10&bossAffix=adaptativo`): 5 × tecla 2 → `adapted: ['heavy']`;
+- [x] Smoke novo `boss-adaptativo.smoke.mjs` (`round=10&bossAffix=adaptativo`): 5 × tecla 2 → `adapted: ['heavy']`;
       6º golpe forte tira a metade (lido da vida do chefe); roda visível; finalizador não reduzido
-- [ ] `npm run smoke -- boss-` verde (toda a família nova e os antigos); gate verde
+- [x] `npm run smoke -- boss-` verde (toda a família nova e os antigos); gate verde
 
 **Tests**: smoke
 **Gate**: full

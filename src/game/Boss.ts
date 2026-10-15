@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { Adaptation, adaptSourceOf, type AdaptSource } from '../core/bossAdapt';
 import { bossTuningFor } from '../core/bossAffix';
 import { BossAI, type BossAIEvent, type BossAIState, type BossAttack } from '../core/bossAI';
 import { animBase } from '../core/bossAttacks';
@@ -41,6 +42,8 @@ export class Boss implements Hittable {
   readonly team = 'enemy';
   private readonly brain: BossBrain;
   private readonly ai: BossAI;
+  /** Fontes que o Adaptativo conta e reduz (ADP-01..05); `null` sem o afixo. */
+  private readonly adaptation: Adaptation | null;
   private readonly attack: AttackHitbox;
   private readonly body: MatterJS.BodyType;
   /** Posição do corpo como a tela a mostra, entre os dois últimos passos de física (ITP-07). */
@@ -86,6 +89,7 @@ export class Boss implements Hittable {
     const tuning = bossTuningFor(spec);
     this.brain = new BossBrain(spec.maxHp, tuning.brain);
     this.ai = new BossAI(tuning.ai);
+    this.adaptation = spec.affixes.includes('adaptativo') ? new Adaptation() : null;
     // PDD-03: o Portador de Dedo cresce no corpo e no sprite pela mesma escala.
     this.scale = spec.bodyScale;
     this.w = Math.round(BODY_W * this.scale);
@@ -171,6 +175,11 @@ export class Boss implements Hittable {
     return { width: max.x - min.x, height: max.y - min.y };
   }
 
+  /** Fontes adaptadas, na ordem em que adaptaram; vazio sem Adaptativo (ADP-06, ADP-07). */
+  get adapted(): readonly AdaptSource[] {
+    return this.adaptation?.adapted ?? [];
+  }
+
   get removed(): boolean {
     return this._removed;
   }
@@ -198,12 +207,14 @@ export class Boss implements Hittable {
 
   /**
    * Golpe recebido (BOSS-08, BAI-04/12): ignorado por completo na intro e no rugido, sem faísca nem hitstop
-   * (`false`). Fora disso é sempre aceito (`true`), mesmo quando não muda de fase nem atordoa.
+   * (`false`). Fora disso é sempre aceito (`true`), mesmo quando não muda de fase nem atordoa. Com Adaptativo, o
+   * golpe aceito conta para a fonte dele e sai pela metade se ela já estava adaptada (ADP-01/04); Kokusen, finalizador
+   * e aparo não passam por aqui (ADP-02).
    */
   receiveHit(hit: Hit): boolean {
     const state = this.brain.state;
     if (state === 'intro' || state === 'roar' || state === 'dead') return false;
-    this.dispatch(this.brain.receiveHit(hit));
+    this.dispatch(this.brain.receiveHit(hit, this.adaptation?.onHit(adaptSourceOf(hit)) ?? 1));
     return true;
   }
 
@@ -252,6 +263,7 @@ export class Boss implements Hittable {
     if (this._removed) return;
     this.lastPlayerX = playerX;
     this.brain.update(dtMs);
+    this.adaptation?.update(dtMs);
     if (this.landingHitboxTicks > 0 && --this.landingHitboxTicks === 0) this.attack.close();
     if (this.brain.isDead) {
       // Sem IA nem movimento depois de morto, mas a pose "dead" ainda precisa aparecer (o `animate` decide o

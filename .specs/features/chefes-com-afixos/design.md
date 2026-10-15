@@ -224,8 +224,11 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   `BossDirector.attach` (`AffixOutline.create` devolve `null` sem Ígneo nem Invocador), segue o chefe no
   `BossDirector.update`, depois do `boss.update`, e sai no `onBossDied` e no `reset`; o relógio da troca de cor conta
   desde o nascimento. O snapshot traz `boss.outline` (`key`, `frame` das cópias, `sourceFrame` do chefe, `visible`).
-- **`AdaptWheel`** — `Graphics` de 8 raios `A` sobre a cabeça + `Text` com os rótulos curtos; some sem adaptação
-  (ADP-06).
+- **`AdaptWheel`** — `Graphics` de 8 raios `A` (aro e um quadradinho na ponta de cada raio) sobre a cabeça + `Text`
+  com os rótulos curtos (`adaptLabels`, juntos por " · "); some sem adaptação e com o chefe morto; gira um raio (45°)
+  em 300 ms a cada fonte nova (ADP-06). Nasce no `BossDirector.attach` só com Adaptativo, segue o topo do corpo no
+  `BossDirector.update` e sai no `onBossDied` e no `reset`. O snapshot traz `boss.adapted` (ADP-07) e `boss.wheel`
+  (`visible`, `labels`, centro `x`/`y`).
 - **`BossReadout`** — na `uiLayer`: um quadrado de 6 px por chave de `glyphKeys`, à direita da barra
   (`BOSS_BAR_WIDTH` e `MARGIN` passam a `export` em `Hud.ts`, sem linha nova), e o texto do aviso abaixo da área da
   barra (BRD-02/04/05).

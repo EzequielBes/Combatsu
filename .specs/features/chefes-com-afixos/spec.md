@@ -257,13 +257,13 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | SNG-01 | P1: Os 4 afixos da leva 1 | Tasks (T15, T30) | Implemented |
 | SNG-02 | P1: Os 4 afixos da leva 1 | Tasks (T16, T20, T30) | Implemented |
 | SNG-03 | P1: Os 4 afixos da leva 1 | Tasks (T20, T30) | Implemented |
-| ADP-01 | P1: Os 4 afixos da leva 1 | Tasks (T22, T32, T33) | Pending |
-| ADP-02 | P1: Os 4 afixos da leva 1 | Tasks (T22, T33) | Pending |
-| ADP-03 | P1: Os 4 afixos da leva 1 | Tasks (T22) | Pending |
-| ADP-04 | P1: Os 4 afixos da leva 1 | Tasks (T22, T23, T33) | Pending |
-| ADP-05 | P1: Os 4 afixos da leva 1 | Tasks (T22) | Pending |
-| ADP-06 | P1: Os 4 afixos da leva 1 | Tasks (T33) | Pending |
-| ADP-07 | P1: Os 4 afixos da leva 1 | Tasks (T33) | Pending |
+| ADP-01 | P1: Os 4 afixos da leva 1 | Tasks (T22, T32, T33) | Implemented |
+| ADP-02 | P1: Os 4 afixos da leva 1 | Tasks (T22, T33) | Implemented |
+| ADP-03 | P1: Os 4 afixos da leva 1 | Tasks (T22) | Implemented |
+| ADP-04 | P1: Os 4 afixos da leva 1 | Tasks (T22, T23, T33) | Implemented |
+| ADP-05 | P1: Os 4 afixos da leva 1 | Tasks (T22) | Implemented |
+| ADP-06 | P1: Os 4 afixos da leva 1 | Tasks (T33) | Implemented |
+| ADP-07 | P1: Os 4 afixos da leva 1 | Tasks (T33) | Implemented |
 | CYC-01 | P2: Ataques novos e ciclos por arquétipo | Tasks (T5, T15) | Pending |
 | CYC-02 | P2: Ataques novos e ciclos por arquétipo | Tasks (T15) | Pending |
 | CYC-03 | P2: Ataques novos e ciclos por arquétipo | Tasks (T15, T25) | Pending |
@@ -286,7 +286,7 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | BRD-04 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T14) | Implemented |
 | BRD-05 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
 | BRD-06 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
-| BRD-07 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T6, T13, T26, T28, T29, T30, T33) | Pending |
+| BRD-07 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T6, T13, T26, T28, T29, T30, T33) | Implemented |
 | BRD-08 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
 
 **Coverage:** 57 total, 57 mapped to tasks, 0 unmapped (fase Tasks).

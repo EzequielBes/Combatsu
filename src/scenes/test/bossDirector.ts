@@ -15,6 +15,7 @@ import type { Hit, Vec2 } from '../../core/hit';
 import { isBossRound } from '../../core/waves';
 import type { Boss } from '../../game/Boss';
 import type { Enemy } from '../../game/Enemy';
+import { AdaptWheel } from '../../game/boss/AdaptWheel';
 import { AffixOutline } from '../../game/boss/AffixOutline';
 import { BeamAttack } from '../../game/boss/BeamAttack';
 import { BossAffixFx } from '../../game/boss/BossAffixFx';
@@ -40,6 +41,8 @@ export class BossDirector {
   private fx: BossAffixFx | null = null;
   /** Contorno de 1 px na cor do afixo do chefe em cena; `null` sem Ígneo nem Invocador (BRD-03). */
   private outline: AffixOutline | null = null;
+  /** Roda do Adaptativo sobre a cabeça do chefe em cena; `null` sem o afixo (ADP-06). */
+  private wheel: { view: AdaptWheel; boss: Boss } | null = null;
   /** Invocados vivos do chefe em cena (INV-01..05); a morte de cada um o tira daqui. */
   private summoned = new Set<Enemy>();
   /** Invocados criados na run, para a aparência por índice (não consome o `variantRng`, INV-05). */
@@ -73,12 +76,15 @@ export class BossDirector {
    * Chefe recém-criado com a especificação `spec`: os eventos de vista dele (rastro, aviso, abertura e fechamento) vão
    * para um `BossAffixFx`, com a Chuva de Fios presa aos limites do nível e o dano de projétil do tier (CYC-09/10) e,
    * só com Ígneo, a lava com o dano de lava do tier (IGN-01..04); só com Sangue, o feixe com o dano de feixe do tier
-   * (SNG-02/03); com Ígneo ou Invocador, o contorno (BRD-03); com Invocador, a invocação na troca de fase (INV-01).
+   * (SNG-02/03); com Ígneo ou Invocador, o contorno (BRD-03); com Invocador, a invocação na troca de fase (INV-01);
+   * com Adaptativo, a roda (ADP-06).
    */
   attach(boss: Boss, spec: BossSpec): void {
     this.fx?.destroy();
     this.outline?.destroy();
+    this.wheel?.view.destroy();
     this.outline = AffixOutline.create(this.s, boss.fxSprite, spec.affixes);
+    this.wheel = spec.affixes.includes('adaptativo') ? { view: new AdaptWheel(this.s), boss } : null;
     const onConnect = (hit: Hit, point: Vec2): void => this.s.combat.onConnect(hit, point, hit.strength);
     const threads = new ThreadRain(this.s, boss.id, spec.damage.projectile, this.s.level.widthPx, onConnect);
     const lava = spec.affixes.includes('igneo') ? new LavaField(this.s, boss.id, spec.damage.lava) : null;
@@ -123,14 +129,22 @@ export class BossDirector {
     return [...this.summoned].map((e) => e.id);
   }
 
-  /** Por quadro, depois do `boss.update`: a lava bate no player que pisa nela (IGN-03..05) e o contorno o segue. */
+  /**
+   * Por quadro, depois do `boss.update`: a lava bate no player que pisa nela (IGN-03..05), o contorno o segue e a roda
+   * mostra as fontes adaptadas sobre a cabeça dele (ADP-06).
+   */
   update(dtMs: number): void {
     this.fx?.update(dtMs, this.s.player);
     this.outline?.update(dtMs);
+    if (this.wheel) {
+      const { view, boss } = this.wheel;
+      const r = boss.hurtRect();
+      view.update(dtMs, boss.adapted, r.x, r.y - r.height / 2, !boss.removed && !boss.isDead());
+    }
   }
 
   /**
-   * Chefe derrotado: fios, marcas, lava, feixe e contorno somem na hora (a IA dele não manda mais o fechamento), e os
+   * Chefe derrotado: fios, marcas, lava, feixe, contorno e roda somem na hora (a IA dele não manda mais o fechamento), e os
    * invocados vivos com eles (INV-04).
    */
   onBossDied(): void {
@@ -138,11 +152,17 @@ export class BossDirector {
     this.fx?.clear();
     this.outline?.destroy();
     this.outline = null;
+    this.dropWheel();
+  }
+
+  private dropWheel(): void {
+    this.wheel?.view.destroy();
+    this.wheel = null;
   }
 
   /**
    * Vista do chefe atual para o snapshot de debug: eventos recebidos por tipo, o estado da Chuva de Fios, a lava, o
-   * feixe e o contorno; vazio e `null` sem chefe ligado.
+   * feixe, o contorno e a roda; vazio e `null` sem chefe ligado.
    */
   fxView(): {
     fx: ReturnType<BossAffixFx['debug']>;
@@ -150,6 +170,7 @@ export class BossDirector {
     lava: ReturnType<BossAffixFx['lavaView']>;
     beam: ReturnType<BossAffixFx['beamView']>;
     outline: ReturnType<AffixOutline['view']>;
+    wheel: ReturnType<AdaptWheel['view']> | null;
   } {
     return {
       fx: this.fx?.debug() ?? {},
@@ -157,6 +178,7 @@ export class BossDirector {
       lava: this.fx?.lavaView() ?? null,
       beam: this.fx?.beamView() ?? null,
       outline: this.outline?.view() ?? null,
+      wheel: this.wheel?.view.view() ?? null,
     };
   }
 
@@ -212,6 +234,7 @@ export class BossDirector {
     this.fx = null;
     this.outline?.destroy();
     this.outline = null;
+    this.dropWheel();
   }
 
   private ui(): BossReadout {

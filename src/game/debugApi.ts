@@ -1,8 +1,10 @@
 import type { AttackKind } from '../core/attackKind';
 import type { BossAIState, BossAttack } from '../core/bossAI';
+import type { AdaptSource } from '../core/bossAdapt';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { BossAffixId } from '../data/bossAffixes';
+import type { AdaptWheelView } from './boss/AdaptWheel';
 import type { AffixOutlineView } from './boss/AffixOutline';
 import type { BeamView } from './boss/BeamAttack';
 import type { BossFxEvent } from './boss/BossAffixFx';
@@ -153,6 +155,10 @@ export interface GameSnapshot {
     beam: BeamView | null;
     /** Contorno do afixo: cor atual, quadro das cópias e o do chefe; `null` sem Ígneo nem Invocador (BRD-03). */
     outline: AffixOutlineView | null;
+    /** Fontes adaptadas pelo Adaptativo, na ordem em que adaptaram; vazio sem o afixo (ADP-07). */
+    adapted: AdaptSource[];
+    /** Roda do Adaptativo: se aparece, os rótulos e o centro; `null` sem o afixo (ADP-06). */
+    wheel: AdaptWheelView | null;
   } | null;
   /** Última escalação de chefe pedida na run (BLN-08..11), já com os overrides de debug; `null` antes do 1º chefe. */
   bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;

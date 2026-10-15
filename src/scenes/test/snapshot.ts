@@ -127,6 +127,7 @@ export class DebugSnapshot {
             y: this.s.boss.y,
             view: this.s.boss.spritePos,
             finisherReady: this.s.boss.finisherReady,
+            adapted: [...this.s.boss.adapted],
             ...this.s.runDirector.bosses.fxView(),
           }
         : null,
