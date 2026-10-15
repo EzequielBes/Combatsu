@@ -208,7 +208,9 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   `destroy()`, `debug()`.
 - **`LavaField`** — `LavaStrips` + um retângulo `a`/`A` por faixa no chão; por quadro, `tick(player.hurtRect(),
   player.grounded)` → `player.receiveHit({ ownerId: boss.id, damage: spec.damage.lava, strength: 'light', force: 0,
-  height: 'low', unblockable: true, direction: { x: 0, y: -1 } })` (IGN-03/04).
+  height: 'low', unblockable: true, direction: { x: 0, y: -1 } })` (IGN-03/04). O `BossDirector.update(dt)` roda no
+  `RunDirector.updateBoss`, logo depois do `boss.update`; o snapshot traz `boss.lava` (faixas, tiques, tiques aceitos,
+  dano), `player.grounded` e `bossLavaStrips` (faixas vivas com ou sem chefe, para a morte dele e a run nova).
 - **`BeamAttack`** — `Graphics` da linha `r` → `R` com `beamThickness`, do chefe até a borda da `worldView` no lado
   avisado; `strikeOn` abre um `AttackHitbox` próprio (dono = chefe) com `height: 'high'`, dano `spec.damage.beam`,
   por 250 ms; `telegraphCancel` apaga sem abrir (SNG-02/03, edge case).

@@ -700,9 +700,9 @@ dono = chefe, dano `spec.damage.lava`. `BossDirector.onBossDied` e `reset` limpa
 
 **Done when**:
 
-- [ ] Smoke novo `boss-igneo.smoke.mjs` (`round=10&bossArch=oni&bossAffix=igneo`): faixa depois da investida; parado
+- [x] Smoke novo `boss-igneo.smoke.mjs` (`round=10&bossArch=oni&bossAffix=igneo`): faixa depois da investida; parado
       nela perde `round(4 × mult)` a cada ~600 ms; pulando não perde; some em 2 s; morte do chefe e run nova sem lava
-- [ ] `npm run smoke -- boss-igneo` verde; gate verde
+- [x] `npm run smoke -- boss-igneo` verde; gate verde
 
 **Tests**: smoke
 **Gate**: full

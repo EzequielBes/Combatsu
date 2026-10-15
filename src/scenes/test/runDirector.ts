@@ -239,6 +239,7 @@ export class RunDirector {
   /** Chefe por quadro (vitória pendente, barra de vida) e a faixa "Rodada N concluída" depois dele. */
   updateBoss(dt: number): void {
     this.s.boss?.update(dt, this.s.player.sprite.x);
+    this.bosses.update(dt);
     if (this.bossDefeatedPending) {
       this.s.boss?.destroyNow();
       this.s.boss = null;

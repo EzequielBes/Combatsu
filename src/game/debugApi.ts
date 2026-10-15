@@ -4,6 +4,7 @@ import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { BossAffixId } from '../data/bossAffixes';
 import type { BossFxEvent } from './boss/BossAffixFx';
+import type { LavaView } from './boss/LavaField';
 import type { ThreadRainView } from './boss/ThreadRain';
 import type { CastState } from '../core/cast';
 import type { CounterKind } from '../core/counter';
@@ -34,6 +35,8 @@ export interface GameSnapshot {
     flash: string | null;
     maxHp: number;
     vy: number;
+    /** No chão agora (a lava do Ígneo só bate assim, IGN-05). */
+    grounded: boolean;
     /** Nome do golpe em curso, `null` sem golpe (MOV-18). */
     move: string | null;
     /** Frame do sprite do jogador em cena, ex.: `guard` (CTL-09). */
@@ -142,6 +145,8 @@ export interface GameSnapshot {
     fx: Partial<Record<BossFxEvent['type'], number>>;
     /** Chuva de Fios: momento, X dos fios, dano de cada um e acertos aceitos desde que o chefe nasceu (CYC-09/10). */
     threads: ThreadRainView | null;
+    /** Lava do Ígneo: faixas vivas, tiques do relógio, tiques aceitos pelo player e dano de cada um (IGN-01..05). */
+    lava: LavaView | null;
   } | null;
   /** Última escalação de chefe pedida na run (BLN-08..11), já com os overrides de debug; `null` antes do 1º chefe. */
   bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;
@@ -149,6 +154,8 @@ export interface GameSnapshot {
   bossGlyphs: string[];
   /** Aviso "Próximo: ..." da loja antes da rodada de chefe (BRD-04/08); `null` quando não está na tela. */
   bossAnnounce: string | null;
+  /** Faixas de lava vivas em cena, com ou sem chefe: zero depois da morte dele e na run nova (edge cases da lava). */
+  bossLavaStrips: number;
   /**
    * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
    * `id` é único por instância (nunca reaproveitado) - o smoke usa para contar disparos mesmo que um projétil

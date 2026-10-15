@@ -15,6 +15,7 @@ import { isBossRound } from '../../core/waves';
 import type { Boss } from '../../game/Boss';
 import { BossAffixFx } from '../../game/boss/BossAffixFx';
 import { BossReadout } from '../../game/boss/BossReadout';
+import { LavaField } from '../../game/boss/LavaField';
 import { ThreadRain } from '../../game/boss/ThreadRain';
 import type { GameSnapshot } from '../../game/debugApi';
 import { debugParam } from './params';
@@ -60,27 +61,43 @@ export class BossDirector {
 
   /**
    * Chefe recém-criado com a especificação `spec`: os eventos de vista dele (rastro, aviso, abertura e fechamento) vão
-   * para um `BossAffixFx`, com a Chuva de Fios presa aos limites do nível e o dano de projétil do tier (CYC-09/10).
+   * para um `BossAffixFx`, com a Chuva de Fios presa aos limites do nível e o dano de projétil do tier (CYC-09/10) e,
+   * só com Ígneo, a lava com o dano de lava do tier (IGN-01..04).
    */
   attach(boss: Boss, spec: BossSpec): void {
     this.fx?.destroy();
     const onConnect = (hit: Hit, point: Vec2): void => this.s.combat.onConnect(hit, point, hit.strength);
     const threads = new ThreadRain(this.s, boss.id, spec.damage.projectile, this.s.level.widthPx, onConnect);
-    this.fx = new BossAffixFx(threads);
+    const lava = spec.affixes.includes('igneo') ? new LavaField(this.s, boss.id, spec.damage.lava) : null;
+    this.fx = new BossAffixFx(threads, lava);
     boss.fxSink = this.fx.route;
   }
 
-  /** Chefe derrotado: fios e marcas somem na hora (a IA dele não manda mais o fechamento). */
+  /** Por quadro, depois do `boss.update`: a lava bate no player que pisa nela (IGN-03..05). */
+  update(dtMs: number): void {
+    this.fx?.update(dtMs, this.s.player);
+  }
+
+  /** Chefe derrotado: fios, marcas e lava somem na hora (a IA dele não manda mais o fechamento). */
   onBossDied(): void {
     this.fx?.clear();
   }
 
   /**
-   * Vista do chefe atual para o snapshot de debug: eventos recebidos por tipo e o estado da Chuva de Fios; vazio e
-   * `null` sem chefe ligado.
+   * Vista do chefe atual para o snapshot de debug: eventos recebidos por tipo, o estado da Chuva de Fios e a lava;
+   * vazio e `null` sem chefe ligado.
    */
-  fxView(): { fx: ReturnType<BossAffixFx['debug']>; threads: ReturnType<BossAffixFx['threadsView']> } {
-    return { fx: this.fx?.debug() ?? {}, threads: this.fx?.threadsView() ?? null };
+  fxView(): {
+    fx: ReturnType<BossAffixFx['debug']>;
+    threads: ReturnType<BossAffixFx['threadsView']>;
+    lava: ReturnType<BossAffixFx['lavaView']>;
+  } {
+    return { fx: this.fx?.debug() ?? {}, threads: this.fx?.threadsView() ?? null, lava: this.fx?.lavaView() ?? null };
+  }
+
+  /** Faixas de lava vivas, com ou sem chefe em cena (snapshot de debug; edge cases da lava). */
+  lavaStrips(): number {
+    return this.fx?.lavaView()?.strips.length ?? 0;
   }
 
   /** Barra do chefe com o rótulo da escalação (BRD-01) e um glifo por afixo à direita dela (BRD-02). */

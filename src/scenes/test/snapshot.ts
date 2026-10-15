@@ -64,6 +64,7 @@ export class DebugSnapshot {
         flash: this.s.player.activeFlash,
         maxHp: this.s.player.maxHp,
         vy: this.s.player.verticalSpeed,
+        grounded: this.s.player.grounded,
         move: this.s.player.moveName,
         frame: this.s.player.frameName,
         sheet: this.s.player.sheetKey,
@@ -132,6 +133,7 @@ export class DebugSnapshot {
       bossLineup: this.s.runDirector.bosses.snapshot(),
       bossGlyphs: this.s.runDirector.bosses.glyphs(),
       bossAnnounce: this.s.runDirector.bosses.announce(),
+      bossLavaStrips: this.s.runDirector.bosses.lavaStrips(),
       projectiles: this.s.projectiles.map((p) => ({
         id: p.id,
         x: p.x,
