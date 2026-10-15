@@ -5,6 +5,8 @@ export type BossAttack = 'charge' | 'leap' | 'volley';
 export type BossAIState = 'rest' | 'windup' | 'charge' | 'leap' | 'volley';
 
 export interface BossAITuning {
+  /** Ciclo de ataques por fase (BAI-02, CYC-01): recomeça do primeiro ao trocar de fase. */
+  cycles: Readonly<Record<1 | 2 | 3, readonly BossAttack[]>>;
   phases: readonly { windupMult: number; restMs: number }[];
   charge: { windupMs: number; speed: number; maxDist: number };
   /** `recoveryMs`: descanso mínimo depois do pouso (BFX-04). */
@@ -40,13 +42,6 @@ export interface BossAIOutput {
   attack: BossAttack | null;
   events: BossAIEvent[];
 }
-
-/** Ciclo de ataques por fase (BAI-02): recomeça do primeiro ao trocar de fase. */
-const CYCLES: Readonly<Record<1 | 2 | 3, readonly BossAttack[]>> = {
-  1: ['charge', 'leap'],
-  2: ['charge', 'volley', 'leap'],
-  3: ['volley', 'charge', 'leap', 'charge'],
-};
 
 /**
  * Ciclo de ataques do chefe (BAI-02/03/11, BAT-01/02/04/05/09/10/11): puro, sem `phaser` (AD-001). `update`
@@ -113,7 +108,7 @@ export class BossAI {
         this.timer -= dtMs;
         if (this.timer > 0) return;
         const overrun = -this.timer;
-        this.currentAttack = CYCLES[this.currentPhase][this.cycleIndex];
+        this.currentAttack = this.t.cycles[this.currentPhase][this.cycleIndex];
         this._state = 'windup';
         this.timer = this.windupDurationFor(this.currentAttack);
         this.step(overrun, obs, events);
@@ -230,7 +225,7 @@ export class BossAI {
     this._state = 'rest';
     this.timer = Math.max(this.t.phases[this.currentPhase - 1].restMs, minRestMs);
     this.currentAttack = null;
-    this.cycleIndex = (this.cycleIndex + 1) % CYCLES[this.currentPhase].length;
+    this.cycleIndex = (this.cycleIndex + 1) % this.t.cycles[this.currentPhase].length;
   }
 
   private windupDurationFor(attack: BossAttack): number {

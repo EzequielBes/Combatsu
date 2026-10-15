@@ -350,6 +350,12 @@ export const BOSS = {
     regenPerSec: 15,
     regenDelayMs: 2000,
   },
+  /** Ciclo de ataques por fase (BAI-02, CYC-01): base do `new BossAI()` sem argumento. */
+  cycles: {
+    1: ['charge', 'leap'],
+    2: ['charge', 'volley', 'leap'],
+    3: ['volley', 'charge', 'leap', 'charge'],
+  },
   /** windupMult multiplica o preparo base de cada ataque (BAI-03); restMs = descanso depois de um ataque (BAI-11). */
   phases: [
     { windupMult: 1.0, restMs: 900 },

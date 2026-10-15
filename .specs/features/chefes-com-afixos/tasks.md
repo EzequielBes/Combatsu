@@ -192,9 +192,9 @@ leem `this.t.cycles`; `BOSS.cycles` em `data/tuning.ts` guarda os ciclos de hoje
 
 **Done when**:
 
-- [ ] `tests/core/bossAI.test.ts` passa sem mudança
-- [ ] `npm run smoke -- boss` verde (igual a antes)
-- [ ] Gate verde, contagem de testes igual
+- [x] `tests/core/bossAI.test.ts` passa sem mudança
+- [x] `npm run smoke -- boss` verde (igual a antes)
+- [x] Gate verde, contagem de testes igual
 
 **Tests**: unit
 **Gate**: full
