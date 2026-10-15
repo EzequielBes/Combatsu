@@ -489,9 +489,9 @@ descanso; parede na 1ª → atordoamento e fim; troca de fase no meio para o enc
 
 **Done when**:
 
-- [ ] Testes: 249/250 ms de preparo; direção da 2ª para o player; parede cancela a 2ª; `interrupt` zera o encadeado e o
+- [x] Testes: 249/250 ms de preparo; direção da 2ª para o player; parede cancela a 2ª; `interrupt` zera o encadeado e o
       ciclo novo começa do 1º ataque (edge case); complexidade do arquivo dentro do teto
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

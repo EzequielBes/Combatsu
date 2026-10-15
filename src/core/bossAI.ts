@@ -1,4 +1,5 @@
 import { BOSS } from '../data/tuning';
+import { animBase } from './bossAttacks';
 import type { BossSpec } from './bossTier';
 
 /** Os 3 ataques de base e os encadeados/afixos dos ciclos por arquétipo (CYC-03/04, SNG-01). */
@@ -73,6 +74,8 @@ export class BossAI {
   private chargeDir: 1 | -1 = 1;
   private chargeTraveled = 0;
   private chargeFromX = 0;
+  /** Perna da Investida Dupla: 0 na 1ª investida (ou numa investida simples), 1 na 2ª (CYC-05). */
+  private chargeLeg: 0 | 1 = 0;
 
   private leapFromX = 0;
   private leapToX = 0;
@@ -158,6 +161,7 @@ export class BossAI {
 
     switch (this.currentAttack) {
       case 'charge':
+      case 'doubleCharge':
         this._state = 'charge';
         this.chargeDir = this.facing;
         this.chargeTraveled = 0;
@@ -193,17 +197,31 @@ export class BossAI {
     this.currentVx = this.chargeDir * this.t.charge.speed;
 
     const reachedMax = this.chargeTraveled >= this.t.charge.maxDist;
-    if (reachedMax || obs.blocked) {
-      events.push({ type: 'hitboxOff' });
-      // BFX-02/03: só a parede atordoa; chegar ao alcance máximo cai no descanso normal.
-      if (obs.blocked) events.push({ type: 'wallStun' });
-      // IGN-01: o trecho vai da saída até onde o corpo está de fato (na parede, onde ela o parou).
-      events.push({ type: 'chargeTrail', fromX: this.chargeFromX, toX: obs.selfX });
-      this.currentVx = 0;
-      const overrun = reachedMax ? dtMs - (stepDist / this.t.charge.speed) * 1000 : 0;
-      this.enterRestAfterAttack();
-      if (overrun > 0) this.step(overrun, obs, events);
-    }
+    if (!reachedMax && !obs.blocked) return;
+    events.push({ type: 'hitboxOff' });
+    // BFX-02/03: só a parede atordoa; chegar ao alcance máximo cai no descanso normal.
+    if (obs.blocked) events.push({ type: 'wallStun' });
+    // IGN-01: o trecho vai da saída até onde o corpo está de fato (na parede, onde ela o parou).
+    events.push({ type: 'chargeTrail', fromX: this.chargeFromX, toX: obs.selfX });
+    this.currentVx = 0;
+    const overrun = reachedMax ? dtMs - (stepDist / this.t.charge.speed) * 1000 : 0;
+    // CYC-05/06: a 1ª perna da Investida Dupla encadeia a 2ª só quando acabou pelo alcance, sem parede.
+    if (this.currentAttack === 'doubleCharge' && this.chargeLeg === 0 && !obs.blocked) this.enterRewindup(obs);
+    else this.enterRestAfterAttack();
+    if (overrun > 0) this.step(overrun, obs, events);
+  }
+
+  /**
+   * Fim da 1ª investida da Investida Dupla pelo alcance (CYC-05): vira para o player e prepara a 2ª por
+   * `doubleCharge.rewindupMs` fixos (sem `windupMult`), sem descanso. O `beginAttackBody` no fim do preparo fixa
+   * a direção da 2ª pelo player daquele frame, como numa investida comum.
+   */
+  private enterRewindup(obs: BossAIObservation): void {
+    const dx = obs.playerX - obs.selfX;
+    if (dx !== 0) this.facing = dx > 0 ? 1 : -1;
+    this.chargeLeg = 1;
+    this._state = 'windup';
+    this.timer = this.t.doubleCharge.rewindupMs;
   }
 
   /** Salto (BAT-02/10): `progress` de 0 a 1 em `leap.durationMs`; ao chegar a 1, emite `landed` uma vez. */
@@ -244,23 +262,28 @@ export class BossAI {
     this._state = 'rest';
     this.timer = Math.max(this.t.phases[this.currentPhase - 1].restMs, minRestMs);
     this.currentAttack = null;
+    this.chargeLeg = 0;
     this.cycleIndex = (this.cycleIndex + 1) % this.t.cycles[this.currentPhase].length;
   }
 
   private windupDurationFor(attack: BossAttack): number {
     const m = this.t.phases[this.currentPhase - 1].windupMult;
-    const base =
-      attack === 'charge' ? this.t.charge.windupMs : attack === 'leap' ? this.t.leap.windupMs : this.t.volley.windupMs;
-    return base * m;
+    // O preparo de abertura segue o ataque de base (a Investida Dupla abre como a investida; CYC-11).
+    const base = animBase(attack);
+    return this.t[base].windupMs * m;
   }
 
-  /** Sem `canAct`: fecha a hitbox da investida se estava aberta, zera `vx` e cancela o ataque (BAI-05). */
+  /**
+   * Sem `canAct`: fecha a hitbox da investida se estava aberta, zera `vx` e cancela o ataque (BAI-05). Zera também
+   * o encadeado: a troca de fase (rugido) no meio da Investida Dupla não deixa a 2ª investida pendente.
+   */
   private interrupt(): BossAIOutput {
     const events: BossAIEvent[] = [];
     if (this._state === 'charge') events.push({ type: 'hitboxOff' });
     this._state = 'rest';
     this.timer = 0;
     this.currentAttack = null;
+    this.chargeLeg = 0;
     this.currentVx = 0;
     return { vx: 0, leap: null, state: 'rest', attack: null, events };
   }
