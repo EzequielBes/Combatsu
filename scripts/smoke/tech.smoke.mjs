@@ -59,20 +59,18 @@ export default async function ({ page, baseUrl, assert }) {
   );
   assert(snap.tech.slots[1] === null, `TEC-02: slot 2 deveria continuar vazio: ${JSON.stringify(snap.tech.slots)}`);
 
-  // TEC-07/12: com 100/100 a barra fica cheia (fill = largura) e a marca do custo 20 fica em largura × 20/100.
+  // TEC-07: com 100/100 a barra fica cheia (fill = largura). VRM-20 (supersede a marca por slot do TEC-12): uma marca
+  // em cada múltiplo do custo 20 do Divergente que cabe nos 100, em largura × 20k/100.
   const barW = snap.hud.energy.width;
   assert(barW > 0, `TEC-07: barra sem largura: ${barW}`);
   assert(
     Math.abs(snap.hud.energy.fillWidth - barW) < 0.01,
     `TEC-07: barra cheia deveria preencher ${barW}: ${snap.hud.energy.fillWidth}`,
   );
+  const marks = snap.hud.energy.marks;
   assert(
-    snap.hud.energy.marks[0] !== null && Math.abs(snap.hud.energy.marks[0] - (barW * 20) / 100) <= 1,
-    `TEC-12: marca do custo do slot 1 deveria ficar em largura × 20/100: ${JSON.stringify(snap.hud.energy.marks)}`,
-  );
-  assert(
-    snap.hud.energy.marks[1] === null,
-    `TEC-12: slot 2 vazio não deveria ter marca: ${JSON.stringify(snap.hud.energy.marks)}`,
+    marks.length === 5 && marks.every((m, k) => Math.abs(m - (barW * 20 * (k + 1)) / 100) <= 1),
+    `VRM-20: 5 marcas do custo 20 em largura × 20k/100: ${JSON.stringify(marks)}`,
   );
   assert(
     snap.hud.energy.icons[0].cooldownOverlayHeight === 0,

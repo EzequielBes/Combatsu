@@ -203,6 +203,20 @@ export const techFxScenarios = () => ({
   vermelhoEixos: (t) => redAxesScenario(t),
   vermelhoAneis: (t) => redRingsScenario(t),
   vermelhoCampo: (t) => redFieldScenario(t),
+  // Marcas de custo da barra de energia e borda dourada do Despertar (VRM-17, VRM-20).
+  async hudMarcas(t) {
+    await t.open('hd=1&enemyGuard=0&noshop=1&maxAlive=0&tech=vermelho,azul');
+    await t.snap(300);
+    await t.shot('98-hud-marcas-vermelho-100');
+    await t.press('KeyI');
+    await t.snap(600);
+    await t.shot('98-hud-marcas-azul');
+    await t.open(
+      'hd=1&enemyGuard=0&noshop=1&maxAlive=0&tech=vermelho&axes=vermelho.potencia:2,vermelho.conjuracao:2&ramo=vermelho:a',
+    );
+    await t.snap(300);
+    await t.shot('98-hud-despertar');
+  },
   // Azul no estilo do anime (BLA-*): recorte em volta do orbe, do nascer à implosão.
   async azul(t) {
     await t.open('enemyGuard=0&noshop=1&fxlab');

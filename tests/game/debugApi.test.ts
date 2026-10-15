@@ -157,11 +157,11 @@ describe('installDebugApi', () => {
         energy: {
           width: 104,
           fillWidth: 104,
-          marks: [null, null],
+          marks: [],
           masteryBars: [null, null],
           icons: [
-            { cooldownOverlayHeight: 0, iconHeight: 48 },
-            { cooldownOverlayHeight: 0, iconHeight: 48 },
+            { cooldownOverlayHeight: 0, iconHeight: 48, border: 'w' },
+            { cooldownOverlayHeight: 0, iconHeight: 48, border: 'w' },
           ],
           flashing: false,
         },

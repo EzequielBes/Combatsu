@@ -1,6 +1,6 @@
 import { HUD_TEXT_STYLE } from './Hud';
 import type Phaser from 'phaser';
-import type { CursedEnergy } from '../core/energy';
+import { COST_MARKS_MAX, costMarks, type CursedEnergy } from '../core/energy';
 import type { Loadout } from '../core/loadout';
 import type { Mastery } from '../core/mastery';
 import { masteryBarWidth } from '../core/masteryBar';
@@ -65,7 +65,8 @@ export class EnergyHud {
   private readonly ceLabel: Phaser.GameObjects.Text;
   private readonly bg: Phaser.GameObjects.Rectangle;
   private readonly fill: Phaser.GameObjects.Rectangle;
-  private readonly marks: [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
+  /** VRM-20: até `COST_MARKS_MAX` marcas, uma por múltiplo do custo do último slot usado que cabe na energia. */
+  private readonly marks: Phaser.GameObjects.Rectangle[];
   private readonly slots: [SlotIcon, SlotIcon];
   private readonly masteryBars: [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
   private flashMs = 0;
@@ -79,9 +80,9 @@ export class EnergyHud {
     const frame = scene.add.image(FRAME_X, FRAME_Y, TEX.hudBar).setOrigin(0, 0);
     this.bg = scene.add.rectangle(BAR_X, BAR_Y, BAR_W, BAR_H, ENERGY_BAR_BG_COLOR).setOrigin(0, 0);
     this.fill = scene.add.rectangle(BAR_X, BAR_Y, 0, BAR_H, ENERGY_BAR_FILL_COLOR).setOrigin(0, 0);
-    this.marks = [0, 1].map(() =>
+    this.marks = Array.from({ length: COST_MARKS_MAX }, () =>
       scene.add.rectangle(BAR_X, BAR_Y, MARK_W, BAR_H, ENERGY_BAR_MARK_COLOR).setOrigin(0, 0).setVisible(false),
-    ) as [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
+    );
     this.slots = [0, 1].map((i) => {
       const x = ICON_X + i * (ICON_SIZE + ICON_GAP);
       // Borda do ícone quadrado (polimento): moldura simples, não a pixel art da barra de HP.
@@ -154,14 +155,13 @@ export class EnergyHud {
   update(dtMs: number, energy: CursedEnergy, loadout: Loadout, mastery: Mastery): void {
     const frac = Math.max(0, Math.min(1, energy.cur / energy.max));
     this.fill.width = BAR_W * frac; // TEC-07
+    this.updateMarks(energy, loadout);
 
     loadout.slotsView.forEach((s, i) => {
-      const mark = this.marks[i];
       const slot = this.slots[i];
       const bar = this.masteryBars[i];
       if (!s) {
         bar.setVisible(false);
-        mark.setVisible(false);
         slot.icon.setVisible(false);
         slot.border.setVisible(false);
         slot.overlay.setVisible(false);
@@ -169,11 +169,10 @@ export class EnergyHud {
         return;
       }
       const def = TECHNIQUES[s.id];
-      const stats = loadout.stats(s.id); // TST-02: custo e recarga do mesmo stat
-      const cost = stats.cost;
-      mark.setPosition(BAR_X + (BAR_W * cost) / energy.max, BAR_Y).setVisible(true); // TEC-12
+      const stats = loadout.stats(s.id); // TST-02: recarga do mesmo stat
       slot.icon.setFrame(def.kanji).setVisible(true);
-      slot.border.setVisible(true);
+      // VRM-17: o ícone do Vermelho com o Despertar ligado ganha a borda dourada `A`.
+      slot.border.setStrokeStyle(ICON_BORDER_W, stats.red?.awakened ? PALETTE.A : PALETTE.w, 1).setVisible(true);
       slot.label.setVisible(true);
       const cdFrac = Math.max(0, Math.min(1, loadout.cooldownOf(i as 0 | 1) / stats.cooldownMs));
       slot.overlay.height = ICON_SIZE * cdFrac; // TEC-09
@@ -192,6 +191,22 @@ export class EnergyHud {
     this.fill.setFillStyle(this.flashMs > 0 ? ENERGY_BAR_FLASH_COLOR : ENERGY_BAR_FILL_COLOR);
   }
 
+  /**
+   * VRM-20 (supersede a marca por slot do TEC-12): uma marca em cada múltiplo do custo da técnica do último slot usado
+   * (o 1º slot equipado antes da 1ª conjuração) que cabe na energia atual, a `barLeft + barWidth × valor / max`.
+   */
+  private updateMarks(energy: CursedEnergy, loadout: Loadout): void {
+    const view = loadout.slotsView;
+    const slot = loadout.lastSlot ?? (view[0] ? 0 : 1);
+    const s = view[slot];
+    const values = s ? costMarks(loadout.stats(s.id).cost, energy.cur, energy.max) : [];
+    this.marks.forEach((mark, i) => {
+      const v = values[i];
+      if (v === undefined) mark.setVisible(false);
+      else mark.setPosition(BAR_X + (BAR_W * v) / energy.max, BAR_Y).setVisible(true);
+    });
+  }
+
   /** `hud.energy`/`hud.techIgnoredByMain` do snapshot (TEC-08/11). */
   debugState(): {
     techIgnoredByMain: boolean;
@@ -200,8 +215,10 @@ export class EnergyHud {
     energy: {
       width: number;
       fillWidth: number;
-      marks: (number | null)[];
-      icons: { cooldownOverlayHeight: number; iconHeight: number }[];
+      /** VRM-20: posição (px desde o começo da barra) de cada marca visível. */
+      marks: number[];
+      /** `border`: chave da `PALETTE` da borda do ícone (`A` com o Despertar, VRM-17). */
+      icons: { cooldownOverlayHeight: number; iconHeight: number; border: string }[];
       /** MST-08: largura (px) da barra de maestria de cada slot, `null` se não está desenhada (vazio ou Nv3). */
       masteryBars: (number | null)[];
       flashing: boolean;
@@ -223,10 +240,11 @@ export class EnergyHud {
       energy: {
         width: BAR_W,
         fillWidth: this.fill.width,
-        marks: this.marks.map((m) => (m.visible ? m.x - BAR_X : null)),
+        marks: this.marks.filter((m) => m.visible).map((m) => m.x - BAR_X),
         icons: this.slots.map((s) => ({
           cooldownOverlayHeight: s.overlay.visible ? s.overlay.height : 0,
           iconHeight: ICON_SIZE,
+          border: s.border.strokeColor === PALETTE.A ? 'A' : 'w',
         })),
         masteryBars: this.masteryBars.map((b) => (b.visible ? b.width : null)),
         flashing: this.flashMs > 0,

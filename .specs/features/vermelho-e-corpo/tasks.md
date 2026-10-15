@@ -1102,8 +1102,15 @@ orbe que paira a 320 px alcançar o comum que sai da boca da direita, a ~110 px 
 
 **Done when**:
 
-- [ ] Smoke `hud`: com Vermelho de custo 30 e 90 de energia, 3 marcas; com o Despertar ligado, borda dourada no snapshot
-- [ ] `EnergyHud.ts` abaixo de 400; smokes `hud`, `red-axes` e `tech` verdes; gate verde; contagem sem perda
+- [x] Smoke `hud`: com Vermelho de custo 30 e 90 de energia, 3 marcas; com o Despertar ligado, borda dourada no snapshot
+- [x] `EnergyHud.ts` abaixo de 400 (206); smokes `hud`, `red-axes` e `tech` verdes; gate verde; contagem sem perda (4073)
+
+Como ficou: as marcas seguem o `loadout.lastSlot` e, antes da 1ª conjuração, o 1º slot equipado. O snapshot
+`hud.energy.marks` passa a listar só as marcas visíveis (`number[]`) e cada `icons[i]` ganha `border` (`A`/`w`, lido do
+traço vivo do ícone); o literal do `debugApi.test.ts` acompanha. O `tech.smoke.mjs` trocou a checagem do TEC-12 (uma
+marca por slot, a do slot 2 vazia) pela do VRM-20 (5 marcas do custo 20 do Divergente com 100 de energia), que a
+supersede. O smoke `hud` confere também que, depois de conjurar o Azul (35), as marcas passam a ser as do Azul.
+Conferido em `tools/visual-shots-fx.mjs` (`hudMarcas`).
 
 **Tests**: smoke
 **Gate**: full

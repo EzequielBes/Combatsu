@@ -309,8 +309,10 @@ export interface GameSnapshot {
       width: number;
       fillWidth: number;
       /** Offset (px) da marca de custo a partir do início da barra; `null` sem técnica no slot (TEC-12). */
-      marks: (number | null)[];
-      icons: { cooldownOverlayHeight: number; iconHeight: number }[];
+      /** VRM-20: posição (px desde o começo da barra) de cada marca visível, um múltiplo do custo do último slot. */
+      marks: number[];
+      /** `border`: chave da `PALETTE` da borda do ícone (`A` com o Despertar do Vermelho, VRM-17). */
+      icons: { cooldownOverlayHeight: number; iconHeight: number; border: string }[];
       /** MST-08: largura (px) da barra de maestria de cada slot, `null` se não está desenhada (vazio ou Nv3). */
       masteryBars: (number | null)[];
       flashing: boolean;

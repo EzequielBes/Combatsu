@@ -1,6 +1,49 @@
 // HUD da run (RHUD-01..07) com `?debug&seed=1`: rodada e restantes, faixa temporária, "rodada concluída", telas
-// de título e de game over, e a checagem de que o HUD está fora da câmera principal (AD-003).
-export default async function ({ page, baseUrl, assert }) {
+// de título e de game over, e a checagem de que o HUD está fora da câmera principal (AD-003). No fim, as marcas de
+// custo e a borda do Despertar no `EnergyHud` (VRM-17, VRM-20), em HD no mundo modular.
+import { makeKit } from './fight-kit.mjs';
+
+/** As marcas da barra batem com os múltiplos de `cost` que cabem na energia atual, em largura × valor / max. */
+function expectMarks(assert, s, cost, what) {
+  const { width, marks } = s.hud.energy;
+  const n = Math.floor(s.ce.cur / cost);
+  assert(
+    marks.length === n && marks.every((m, k) => Math.abs(m - (width * cost * (k + 1)) / s.ce.max) <= 1),
+    `VRM-20: ${what}: ${n} marcas do custo ${cost} com ${s.ce.cur} de energia: ${JSON.stringify(marks)}`,
+  );
+}
+
+/**
+ * VRM-20: com o Vermelho (custo 30) e 90 de energia, 3 marcas; depois de conjurar o Azul (custo 35), as marcas seguem o
+ * último slot usado. VRM-17: o ícone do Vermelho ganha a borda dourada `A` com o Despertar ligado e fica `w` sem ele.
+ */
+async function energyMarks(ctx) {
+  const { assert } = ctx;
+  const kit = makeKit(ctx);
+  let s = await kit.boot('hd=1&area=modular&maxAlive=0&tech=vermelho,azul');
+  ctx.assert(s.ce.cur >= 90, `a run começa com energia cheia: ${JSON.stringify(s.ce)}`);
+  expectMarks(assert, s, 30, 'antes da 1ª conjuração, o 1º slot (Vermelho)');
+  assert(s.hud.energy.marks.length === 3, `VRM-20: 3 marcas com 90 ou mais: ${JSON.stringify(s.hud.energy.marks)}`);
+  assert(s.hud.energy.icons[0].border === 'w', `VRM-17: sem Despertar, borda w: ${JSON.stringify(s.hud.energy.icons)}`);
+  const seen = s.events.length;
+  await kit.down('KeyI');
+  await kit.frame();
+  await kit.up('KeyI');
+  s = await kit.waitFor((x) => x.events.slice(seen).includes('techCast:azul'), 60, 'o Azul deveria soltar');
+  s = await kit.frame();
+  expectMarks(assert, s, 35, 'depois do Azul, o último slot usado');
+  s = await kit.boot(
+    'hd=1&area=modular&maxAlive=0&tech=vermelho&axes=vermelho.potencia:2,vermelho.conjuracao:2&ramo=vermelho:a',
+  );
+  assert(s.build.vermelho.awakened, `o Despertar deveria ligar: ${JSON.stringify(s.build.vermelho)}`);
+  assert(
+    s.hud.energy.icons[0].border === 'A',
+    `VRM-17: com o Despertar, borda A: ${JSON.stringify(s.hud.energy.icons)}`,
+  );
+}
+
+export default async function (ctx) {
+  const { page, baseUrl, assert } = ctx;
   await page.goto(`${baseUrl}?debug&enemyGuard=0&seed=1`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => {
@@ -118,4 +161,6 @@ export default async function ({ page, baseUrl, assert }) {
     center.at(-1) === 'J / Enter para tentar de novo',
     `game over sem a chamada para tentar de novo: ${JSON.stringify(center)}`,
   );
+
+  await energyMarks(ctx);
 }
