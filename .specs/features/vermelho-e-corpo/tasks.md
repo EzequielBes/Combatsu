@@ -409,8 +409,10 @@ e dano); `CutFx.cut(..., geometry)` (`:7-13`) mede a linha pelo `cutLine` do sta
 
 #### T9: Roxo lê o stat
 
-**What**: `PURPLE` em `core/purple.ts` vira reexport de `TECH_GEOMETRY.roxo` (o `tests/data/purple.test.ts` lê `PURPLE`);
-`game/tech/purple.ts` (`:12-15`, `:53`, `:96`) e `PurpleOrb` leem raio, força e dano do stat.
+**What**: `PURPLE` em `core/purple.ts` vira reexport de `TECH_GEOMETRY.roxo` (quem lê `PURPLE` é o
+`tests/core/purple.test.ts`; o `tests/data/purple.test.ts` lê `TECHNIQUES.roxo`); `PurpleSphere` ganha a geometria
+opcional (`PurpleFlight`, a da tabela por padrão) e `purpleGeometry(stats)`; `game/tech/purple.ts` (`:12-15`, `:53`,
+`:96`) guarda `loadout.stats('roxo')` no disparo e `PurpleOrb.charge`/`flight` recebem o raio do stat.
 **Where**: `src/game/tech/purple.ts`
 **Depends on**: T4
 **Reuses**: `TECH_GEOMETRY.roxo`
@@ -418,9 +420,12 @@ e dano); `CutFx.cut(..., geometry)` (`:7-13`) mede a linha pelo `cutLine` do sta
 
 **Done when**:
 
-- [ ] `tests/data/purple.test.ts` verde sem mudança
-- [ ] Smokes `evolution`, `tech` e `techniques` verdes e iguais
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/data/purple.test.ts` verde sem mudança; o `tests/core/purple.test.ts` também, só com 2 casos novos
+      (`TST-02`: voo, vida e raio de outra geometria; `purpleGeometry` com queda na tabela), e o `techStats.test.ts`
+      passa a provar `PURPLE === TECH_GEOMETRY.roxo` e que adaptador e vista não têm mais cópia (nem 36 na vista)
+- [x] Smokes `evolution`, `tech` e `techniques` verdes e iguais
+- [x] Gate verde; contagem sem perda (3870 + 2 = 3872). Como no Azul e no Corte, o dano do Roxo é o do stat do
+      disparo (antes era escalado em cada toque)
 
 **Tests**: smoke
 **Gate**: full

@@ -1,7 +1,6 @@
 import type Phaser from 'phaser';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
-import { PURPLE } from '../../core/purple';
 import { Brush, type Key } from '../art/scenery/brush';
 
 /** Cores do Vazio Roxo (EVO-08): só chaves da `PALETTE`, do contorno escuro ao núcleo branco. */
@@ -34,19 +33,19 @@ export class PurpleOrbFx {
     return this.g;
   }
 
-  /** Carga (sign/charge): esfera crescendo de 4 px até 1/3 do raio na mão, `t` de 0 a 1. */
-  charge(x: number, y: number, t: number): void {
+  /** Carga (sign/charge): esfera crescendo de 4 px até 1/3 do `radius` do stat (TST-03) na mão, `t` de 0 a 1. */
+  charge(x: number, y: number, t: number, radius: number): void {
     const g = this.graphics().clear();
     const b = new Brush(g);
-    const r = 4 + Math.round((PURPLE.radius / 3) * Math.min(1, Math.max(0, t)));
+    const r = 4 + Math.round((radius / 3) * Math.min(1, Math.max(0, t)));
     b.disc(x, y, r + 2, 'v');
     b.disc(x, y, r, 'u');
     b.disc(x, y, Math.max(2, r - 4), 'U');
     this.fx.add('purple.charge', 50, 'game');
   }
 
-  /** Esfera em voo no centro (`x`, `y`), com a idade em ms para o pulso e o giro das faíscas. */
-  flight(x: number, y: number, ageMs: number): void {
+  /** Esfera em voo no centro (`x`, `y`) com o `radius` do stat (TST-03); a idade em ms dá o pulso e o giro das faíscas. */
+  flight(x: number, y: number, ageMs: number, radius: number): void {
     this.trail.push({ x, y });
     if (this.trail.length > TRAIL) this.trail.shift();
     const g = this.graphics().clear();
@@ -54,10 +53,10 @@ export class PurpleOrbFx {
     // Rastro: discos escuros diminuindo para trás, o "vazio" que a esfera deixa.
     this.trail.forEach((p, i) => {
       const k = (i + 1) / this.trail.length;
-      b.disc(p.x, p.y, Math.round((PURPLE.radius * 0.8 * k) / 2) * 2, i % 2 === 0 ? 'k' : 'v');
+      b.disc(p.x, p.y, Math.round((radius * 0.8 * k) / 2) * 2, i % 2 === 0 ? 'k' : 'v');
     });
     const pulse = Math.round(Math.sin(ageMs / 60) * 2) * 2;
-    const R = PURPLE.radius;
+    const R = radius;
     b.disc(x, y, R + 4 + pulse, 'v');
     b.disc(x, y, R, 'u');
     b.disc(x, y, R - 8, 'U');

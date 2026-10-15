@@ -8,12 +8,14 @@ import { TECH_GEOMETRY, TECHNIQUES, type TechId } from '../../src/data/technique
 import blueOrbSrc from '../../src/core/blueOrb.ts?raw';
 import cutSrc from '../../src/core/cut.ts?raw';
 import cutTechSrc from '../../src/game/tech/cut.ts?raw';
+import purpleSrc from '../../src/core/purple.ts?raw';
 import redOrbSrc from '../../src/core/redOrb.ts?raw';
 import blueTechSrc from '../../src/game/tech/blue.ts?raw';
 import purpleTechSrc from '../../src/game/tech/purple.ts?raw';
 import redTechSrc from '../../src/game/tech/red.ts?raw';
 import blueFxSrc from '../../src/game/techFx/BlueOrb.ts?raw';
 import cutFxSrc from '../../src/game/techFx/CutFx.ts?raw';
+import purpleFxSrc from '../../src/game/techFx/PurpleOrb.ts?raw';
 import redDetonationSrc from '../../src/game/techFx/redDetonation.ts?raw';
 
 const IDS: readonly TechId[] = ['divergente', 'vermelho', 'azul', 'corte', 'roxo'];
@@ -161,11 +163,18 @@ describe('TST-01.6: TECH_GEOMETRY sem número novo (igual às constantes ainda n
     expect(cutFxSrc).not.toMatch(/(60|180|240)/);
   });
 
-  it('Roxo: PURPLE de core/purple.ts mais a altura e a força de game/tech/purple.ts', () => {
-    const { lift, force, ...sphere } = TECH_GEOMETRY.roxo;
-    expect(sphere).toEqual(PURPLE);
-    expect(lift).toBe(constOf(purpleTechSrc, 'SPHERE_LIFT'));
-    expect(force).toBe(constOf(purpleTechSrc, 'PURPLE_FORCE'));
+  it('Roxo (T9): os números de hoje, lidos pela regra, pelo adaptador e pela vista sem cópia', () => {
+    expect(TECH_GEOMETRY.roxo).toEqual({ speed: 180, lifeMs: 1600, radius: 36, spawnAhead: 40, lift: 14, force: 9 });
+    // TST-02: PURPLE é a própria entrada da tabela, não uma cópia.
+    expect(PURPLE).toBe(TECH_GEOMETRY.roxo);
+    expect(purpleSrc).not.toContain('TECHNIQUES');
+    for (const name of ['SPHERE_LIFT', 'PURPLE_FORCE']) expect(purpleTechSrc).not.toContain(`const ${name}`);
+    expect(purpleTechSrc).not.toContain('TECHNIQUES');
+    expect(purpleTechSrc).not.toContain('loadout.damage(');
+    expect(purpleTechSrc).toContain("this.ctx.loadout.stats('roxo')");
+    // TST-03: a vista mede a esfera pelo raio que recebe, sem importar PURPLE nem repetir o 36.
+    expect(purpleFxSrc).not.toContain('PURPLE.');
+    expect(purpleFxSrc).not.toMatch(/\b36\b/);
   });
 });
 
