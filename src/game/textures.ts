@@ -24,6 +24,8 @@ export const TEX = {
   sleeper: 'npc-sleeper',
   /** Estouro desenhado do Kokusen (5 quadros de 88x88, 1 texel = 1 px de mundo); veja `art/hd/atlas/burstSheet`. */
   kokusenBurst: 'fx-kokusen-burst',
+  /** Cães Divinos (6 quadros de 24x16, 1 texel = 1 px de mundo; o lobo é a mesma folha em 1,5); veja `art/hd/fx/dogsSheet`. */
+  dogs: 'fx-dogs',
   /** Folha animada do inimigo `corcunda` (o corpo físico é um retângulo Matter, sem textura); veja `enemyTex`. */
   enemy: 'enemy',
   chair: 'chair',

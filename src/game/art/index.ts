@@ -8,6 +8,7 @@ import { PALETTE_KEYS } from './palette';
 import { registerIndexedSheet, registerSheet } from './render';
 import { HD_ON, YUTA_ON } from './hd/flag';
 import { burstSheet } from './hd/atlas/burstSheet';
+import { dogsSheet } from './hd/fx/dogsSheet';
 import { sleeperSheet } from './hd/atlas/sleeperSheet';
 import { playerYutaAnimKey, yutaAnims, yutaSheet } from './hd/atlas/yutaSheet';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
@@ -151,6 +152,8 @@ function registerHdSheets(scene: Phaser.Scene): void {
   // HUD e a loja trocam o kanji por eles na F34.
   registerIndexedSheet(scene, TEX.techIcons, techIconSheet(48));
   registerIndexedSheet(scene, TEX.techIconsSmall, techIconSheet(24));
+  // Cães Divinos e o lobo da Totalidade (a mesma folha em escala 1,5). Ainda sem uso: o `DogsFx` liga na F41a.
+  registerIndexedSheet(scene, TEX.dogs, dogsSheet());
 }
 
 /**
