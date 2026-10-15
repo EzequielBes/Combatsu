@@ -8,8 +8,10 @@ import { PALETTE_KEYS } from './palette';
 import { registerIndexedSheet, registerSheet } from './render';
 import { HD_ON, YUTA_ON } from './hd/flag';
 import { burstSheet } from './hd/atlas/burstSheet';
+import { dogsSheet } from './hd/fx/dogsSheet';
 import { sleeperSheet } from './hd/atlas/sleeperSheet';
 import { playerYutaAnimKey, yutaAnims, yutaSheet } from './hd/atlas/yutaSheet';
+import { groundCrackSheet, onomatopoeiaSheet } from './hd/onomatopoeia';
 import { hdAnims, hdPlayerSheet, playerHdAnimKey } from './hd/sheet';
 import { leva1FxSheet } from './hd/fx/leva1Fx';
 import { techIconSheet } from './hd/techIcons';
@@ -157,6 +159,11 @@ function registerHdSheets(scene: Phaser.Scene): void {
   registerIndexedSheet(scene, TEX.techIconsSmall, techIconSheet(24));
   // Vistas das técnicas da leva 1 (Boogie, Ressonância, Fala). Ainda sem uso: os `techFx/` trocam os quadros na F34.
   registerIndexedSheet(scene, TEX.techFxLeva1, leva1FxSheet());
+  // Cães Divinos e o lobo da Totalidade (a mesma folha em escala 1,5). Ainda sem uso: o `DogsFx` liga na F41a.
+  registerIndexedSheet(scene, TEX.dogs, dogsSheet());
+  // O ドン e a rachadura do golpe forte no patamar 3. Ainda sem uso: o `DonFx` liga na F41b.
+  registerIndexedSheet(scene, TEX.onomatopoeia, onomatopoeiaSheet());
+  registerIndexedSheet(scene, TEX.groundCrack, groundCrackSheet());
 }
 
 /**

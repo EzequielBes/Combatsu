@@ -14,6 +14,9 @@
 //   <name>-tela.png      os 8 primeiros a 2x sobre o céu e sobre a pedra;
 //   <name>-detalhe.png   os quadros de --detail (até 4) a 8x.
 // Cada item de --frames é um nome exato ou um prefixo (`jab@` pega a sequência inteira do golpe).
+//
+// Com --sheet, grava as pranchas de outra folha HD (efeitos, cães, onomatopeias): veja `tools/hd-sheet-boards.mjs`.
+//   node tools/hd-boards.mjs --sheet src/game/art/hd/fx/dogsSheet.ts:dogsSheet --name caes --seq run-
 // Uso, a partir da raiz do repo.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { register } from 'node:module';
@@ -37,6 +40,11 @@ const hookSrc = `export async function resolve(spec, ctx, next) {
   }
 }`;
 register('data:text/javascript,' + encodeURIComponent(hookSrc));
+
+if (flag('sheet')) {
+  await import(pathToFileURL(join(root, 'tools/hd-sheet-boards.mjs')).href);
+  process.exit(0);
+}
 
 const { renderHdPlayer, HD_STAGE } = await import(pathToFileURL(join(root, 'src/game/art/hd/player.ts')).href);
 const { colors, frames, strikes } = renderHdPlayer();
