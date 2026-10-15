@@ -250,18 +250,18 @@ leem `this.t.cycles`; `BOSS.cycles` em `data/tuning.ts` guarda os ciclos de hoje
 **What**: Em `src/core/bossAffix.ts` (novo): `BossLineup`, `drawLineup(rng, round, rules)` (arquétipo 50/50, vagas pelo
 tier, r5 só leves, sem repetidos nem par incompatível, Portador com `next() < p` sempre consumido) e `BossLineups`
 (cache por rodada que zera quando o `Rng` muda).
-**Where**: `src/core/bossAffix.ts`
+**Where**: `src/core/bossAffix.ts`; testes em `tests/core/bossLineup.test.ts` (novo)
 **Depends on**: T7
 **Reuses**: `Rng.next`, `Rng.int`, `tierFor`
 **Requirement**: BLN-02, BLN-03, BLN-04, BLN-05, BLN-06, BLN-07, PDD-01, PDD-02
 
 **Done when**:
 
-- [ ] Testes: seeds 1..50 na r5 dão os 2 arquétipos e os 2 leves, sempre 1 afixo; contagem em r5/r10/r15/r20/r25;
+- [x] Testes (`tests/core/bossLineup.test.ts`): seeds 1..50 na r5 dão os 2 arquétipos e os 2 leves, sempre 1 afixo; contagem em r5/r10/r15/r20/r25;
       par incompatível injetado nunca sai; pedir a mesma rodada 2 vezes não consome; mesma seed dá a mesma escalação;
       Portador nunca na r5, sai na r10 com alguma seed; consumo do stream igual na r5 e na r10; 20 seeds seguidas
       cobrem arquétipos e leves (Success Criteria 1)
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

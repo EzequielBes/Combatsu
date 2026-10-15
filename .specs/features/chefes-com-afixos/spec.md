@@ -232,12 +232,12 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | BLN-01 | P1: Chefe sorteado pela seed | Tasks (T7) | Pending |
-| BLN-02 | P1: Chefe sorteado pela seed | Tasks (T8) | Pending |
-| BLN-03 | P1: Chefe sorteado pela seed | Tasks (T8) | Pending |
-| BLN-04 | P1: Chefe sorteado pela seed | Tasks (T8) | Pending |
-| BLN-05 | P1: Chefe sorteado pela seed | Tasks (T8) | Pending |
-| BLN-06 | P1: Chefe sorteado pela seed | Tasks (T8) | Pending |
-| BLN-07 | P1: Chefe sorteado pela seed | Tasks (T8) | Pending |
+| BLN-02 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
+| BLN-03 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
+| BLN-04 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
+| BLN-05 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
+| BLN-06 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
+| BLN-07 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
 | BLN-08 | P1: Chefe sorteado pela seed | Tasks (T12) | Pending |
 | BLN-09 | P1: Chefe sorteado pela seed | Tasks (T1, T9, T12) | Pending |
 | BLN-10 | P1: Chefe sorteado pela seed | Tasks (T9) | Pending |
@@ -275,8 +275,8 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | CYC-09 | P2: Ataques novos e ciclos por arquétipo | Tasks (T16, T20, T26) | Pending |
 | CYC-10 | P2: Ataques novos e ciclos por arquétipo | Tasks (T20, T26) | Pending |
 | CYC-11 | P2: Ataques novos e ciclos por arquétipo | Tasks (T16, T25) | Pending |
-| PDD-01 | P2: Moldura Portador de Dedo | Tasks (T8) | Pending |
-| PDD-02 | P2: Moldura Portador de Dedo | Tasks (T8) | Pending |
+| PDD-01 | P2: Moldura Portador de Dedo | Tasks (T8) | Implemented |
+| PDD-02 | P2: Moldura Portador de Dedo | Tasks (T8) | Implemented |
 | PDD-03 | P2: Moldura Portador de Dedo | Tasks (T3, T10, T27) | Pending |
 | PDD-04 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Pending |
 | PDD-05 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Pending |
