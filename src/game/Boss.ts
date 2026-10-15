@@ -140,6 +140,16 @@ export class Boss implements Hittable {
     return this.spec.name;
   }
 
+  /** Afixos da escalação, na ordem dela (BLN-11). */
+  get affixes(): BossSpec['affixes'] {
+    return this.spec.affixes;
+  }
+
+  /** Moldura Portador de Dedo (BLN-11, PDD-03..05). */
+  get finger(): boolean {
+    return this.spec.finger;
+  }
+
   get removed(): boolean {
     return this._removed;
   }

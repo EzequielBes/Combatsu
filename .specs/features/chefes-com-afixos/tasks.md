@@ -347,15 +347,19 @@ e `debugApi` ganham `affixes` e `finger`; README documenta `bossArch`, `bossAffi
 
 **Done when**:
 
-- [ ] Smoke novo `boss-lineup.smoke.mjs` (1º cenário): duas seeds na r5 (`hd=1&area=modular`) dão chefes diferentes
+- [x] Smoke novo `boss-lineup.smoke.mjs` (1º cenário): duas seeds na r5 (`hd=1&area=modular`) dão chefes diferentes
       em arquétipo ou afixo; snapshot traz `affixes` e `finger`; fundo da arena bate com o arquétipo; `bossArch=tecela`
       na r5 vale
-- [ ] `npm run smoke -- boss-lineup`, `boss` e `world-boss` verdes
-- [ ] `TestScene.ts` sem linha nova; gate verde
+- [x] `npm run smoke -- boss-lineup`, `boss` e `world-boss` verdes
+- [x] `TestScene.ts` sem linha nova; gate verde
 
-**Tests**: smoke
+**Tests**: smoke (e `tests/core/bossTier.test.ts` atualizado: saem os 5 casos do `archetypeFor` e o "sem escalação",
+6 testes a menos, porque `bossSpecFor` passa a exigir a escalação)
 **Gate**: full
 **Commit**: `feat(boss): spawn the boss drawn from the seed`
+**Nota**: além das 8 URLs da T1, `defense-extra`, `evolution` e `vows` também abriam a r5 supondo o Oni e passaram a
+fixar `bossArch=oni&bossAffix=none&finger=0`. O snapshot ganhou `bossLineup` (última escalação pedida, com os
+overrides), além de `boss.affixes` e `boss.finger`.
 
 ---
 

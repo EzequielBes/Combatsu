@@ -12,7 +12,7 @@ export interface BossSpec {
   damage: { charge: number; leap: number; shockwave: number; projectile: number; lava: number; beam: number };
   projectileSpeed: number;
   volleyCount: number;
-  /** Afixos na ordem da escalação (vazio sem escalação). */
+  /** Afixos na ordem da escalação (vazio quando ela não tem nenhum). */
   affixes: readonly BossAffixId[];
   /** Moldura Portador de Dedo (PDD-03..05). */
   finger: boolean;
@@ -43,15 +43,6 @@ export function bossDamageMultFor(tier: number, t = BOSS.tier): number {
 }
 
 /**
- * Arquétipo por tier (BTIER-04): "Oni do Portão" nos tiers 1 e 2; a partir do tier 3, alterna por paridade
- * (ímpar = Tecelã de Maldições, par = Oni do Portão).
- */
-export function archetypeFor(tier: number): BossArchetype {
-  if (tier <= 2) return 'oni';
-  return tier % 2 === 1 ? 'tecela' : 'oni';
-}
-
-/**
  * Dano base × multiplicador do tier (BTIER-02) × multiplicador do Portador (PDD-04), arredondado uma vez só no fim:
  * `round(base × multTier × 1,5)`, nunca o dano do tier já arredondado vezes 1,5.
  */
@@ -63,18 +54,16 @@ function scaledDamage(base: number, mult: number, fingerMult = 1): number {
  * Especificação completa do chefe da rodada `r` (BTIER-01, 02, 05, 07; BLN-08; PDD-03..05): vida, dano de cada
  * ataque, de lava e do feixe, velocidade e contagem de projéteis, escala do corpo, afixos e moldura.
  *
- * Com escalação, o arquétipo, os afixos e o Portador vêm dela. Sem escalação vale a paridade por tier
- * (`archetypeFor`), sem afixos nem Portador, até os chamadores passarem a escalação.
+ * O arquétipo, os afixos e o Portador vêm da escalação sorteada (BLN-08 substitui a paridade por tier do BTIER-04).
  */
 export function bossSpecFor(
   round: number,
-  lineup?: BossLineup,
+  lineup: BossLineup,
   t = BOSS,
   a: BossSpecAffixTuning = BOSS_AFFIX,
 ): BossSpec {
   const tier = tierFor(round);
-  const archetype = lineup?.archetype ?? archetypeFor(tier);
-  const finger = lineup?.finger ?? false;
+  const { archetype, finger } = lineup;
   const mult = bossDamageMultFor(tier, t.tier);
   const fm = finger ? a.finger.damageMult : 1;
   const isTecela = archetype === 'tecela';
@@ -94,7 +83,7 @@ export function bossSpecFor(
     projectileSpeed: isTecela ? t.volley.speed * t.archetypes.tecela.projectileSpeedMult : t.volley.speed,
     volleyCount:
       (isTecela ? t.archetypes.tecela.volleyCount : t.volley.count) + (finger ? a.finger.extraProjectiles : 0),
-    affixes: lineup?.affixes ?? [],
+    affixes: lineup.affixes,
     finger,
     bodyScale: finger ? a.finger.scale : 1,
   };

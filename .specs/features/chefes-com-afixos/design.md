@@ -244,7 +244,7 @@ Linhas efetivas medidas agora (sem brancos e comentários, regra do `max-lines`)
 | --- | --- | --- | --- | --- |
 | `src/scenes/TestScene.ts` | — | 399 | 399 | não muda (diretor vive no `RunDirector`) |
 | `src/game/Hud.ts` | 15, 61-62 (`export`) | 336 | 336 | exceção do lint; não cresce |
-| `src/game/debugApi.ts` | 113-131 (tipo `boss`), + `bossAffix` | 307 | ~322 | |
+| `src/game/debugApi.ts` | 113-131 (tipo `boss` + `affixes`, `finger`), + `bossLineup` (última escalação pedida, do `BossDirector.snapshot()`) | 307 | ~322 | |
 | `src/game/Boss.ts` | 16-17, 72-73, 83-86, 163-210, 212, 257-270, 310-331, 357-370 | 276 | ~285 | `dispatch` compensa as linhas novas |
 | `src/core/bossAI.ts` | 4-13, 27-33, 45-49, 116, 146-173, 176-193, 196-207, 229-252 | 200 | ~290 | `switch` de `step` vai a 8 casos; `windupDurationFor` vira tabela |
 | `src/data/tuning.ts` | 330-379 | 272 | ~290 | |
@@ -298,7 +298,9 @@ Não tocados (F29 ou teto): `core/hit.ts`, `combat.ts`, `effects.ts`, `impactFx.
 
 Smokes antigos que passam a fixar o chefe (`bossArch=oni&bossAffix=none&finger=0`, ou `tecela` onde hoje esperam a
 Tecelã): `boss.smoke.mjs:6,250,365`, `boss-prop.smoke.mjs:5`, `boss-punish.smoke.mjs:28`,
-`boss-victory.smoke.mjs:3`, `world-boss.smoke.mjs:6,134`.
+`boss-victory.smoke.mjs:3`, `world-boss.smoke.mjs:6,134`. Na T12 apareceram mais três cenários com `round=5` que
+supõem o Oni (investida e pouso, "arena do Oni") ou só atravessam o chefe, e também passaram a fixá-lo:
+`defense-extra.smoke.mjs:167`, `evolution.smoke.mjs:95` e `vows.smoke.mjs:168,185`.
 
 ---
 

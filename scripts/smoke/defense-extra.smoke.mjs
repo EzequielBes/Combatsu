@@ -164,7 +164,7 @@ export default async function (ctx) {
   // --- Chefe: bloqueio (GRD-06) e parry (PAR-07) de golpe real ---------------------------------------------------------------
   /** Rodada de chefe com o jogador andando 90 frames para a direita (x ~447), virado para o chefe. */
   const bossFight = async () => {
-    await boot('round=5&enemyGuard=0');
+    await boot('round=5&enemyGuard=0&bossArch=oni&bossAffix=none&finger=0');
     await walk(['KeyD'], 90);
     return snap(20);
   };

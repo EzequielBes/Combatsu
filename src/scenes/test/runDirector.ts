@@ -9,6 +9,7 @@ import { TECHNIQUES, type TechId } from '../../data/techniques';
 import { ECONOMY, ELIXIR, RUN } from '../../data/tuning';
 import { isDebug } from '../../game/debug';
 import { CAMERA_FEEL } from '../../data/feel';
+import { BossDirector } from './bossDirector';
 import { debugParam, debugIntParam, isDroppedTool } from './params';
 import type { TestScene } from '../TestScene';
 
@@ -17,7 +18,12 @@ export const BOSS_UPGRADE_BANNER_MS = 800;
 
 /** Diretor da run e das rodadas: comandos da `Run`, nova run, banners, maestria e overrides de debug. */
 export class RunDirector {
-  constructor(readonly s: TestScene) {}
+  /** Escalação do chefe (BLN-08..11): mora aqui porque o `TestScene` está no teto de linhas. */
+  readonly bosses: BossDirector;
+
+  constructor(readonly s: TestScene) {
+    this.bosses = new BossDirector(s);
+  }
 
   /** Chefe derrotado espera o fim do hitstop da vitória para sumir (não é destruído dentro do próprio golpe). */
   bossDefeatedPending = false;
@@ -145,6 +151,7 @@ export class RunDirector {
     this.s.build.reset();
     this.s.arsenal.reset();
     this.s.vows.reset();
+    this.bosses.reset();
     this.equipDebugTech();
     this.applyDebugMastery();
     // ECO-17: o stream de loot nasce com a seed desta run, já criado pelo `Run.update` que despachou este comando.

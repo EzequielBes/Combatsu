@@ -118,12 +118,15 @@ export class DebugSnapshot {
             poise: this.s.boss.poise,
             archetype: this.s.boss.archetype,
             name: this.s.boss.name,
+            affixes: [...this.s.boss.affixes],
+            finger: this.s.boss.finger,
             x: this.s.boss.x,
             y: this.s.boss.y,
             view: this.s.boss.spritePos,
             finisherReady: this.s.boss.finisherReady,
           }
         : null,
+      bossLineup: this.s.runDirector.bosses.snapshot(),
       projectiles: this.s.projectiles.map((p) => ({
         id: p.id,
         x: p.x,

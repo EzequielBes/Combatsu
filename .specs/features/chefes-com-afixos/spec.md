@@ -238,10 +238,10 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | BLN-05 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
 | BLN-06 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
 | BLN-07 | P1: Chefe sorteado pela seed | Tasks (T8) | Implemented |
-| BLN-08 | P1: Chefe sorteado pela seed | Tasks (T12) | Pending |
-| BLN-09 | P1: Chefe sorteado pela seed | Tasks (T1, T9, T12) | Pending |
+| BLN-08 | P1: Chefe sorteado pela seed | Tasks (T12) | Implemented |
+| BLN-09 | P1: Chefe sorteado pela seed | Tasks (T1, T9, T12) | Implemented |
 | BLN-10 | P1: Chefe sorteado pela seed | Tasks (T9) | Pending |
-| BLN-11 | P1: Chefe sorteado pela seed | Tasks (T12) | Pending |
+| BLN-11 | P1: Chefe sorteado pela seed | Tasks (T12) | Implemented |
 | AFX-01 | P1: Os 4 afixos da leva 1 | Tasks (T15, T25) | Pending |
 | AFX-02 | P1: Os 4 afixos da leva 1 | Tasks (T6) | Pending |
 | IGN-01 | P1: Os 4 afixos da leva 1 | Tasks (T17, T28) | Pending |

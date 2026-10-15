@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { archetypeFor, bossDamageMultFor, bossHpFor, bossSpecFor, tierFor } from '../../src/core/bossTier';
+import { bossDamageMultFor, bossHpFor, bossSpecFor, tierFor } from '../../src/core/bossTier';
 import type { BossLineup } from '../../src/core/bossAffix';
+
+const lineup = (over: Partial<BossLineup> = {}): BossLineup => ({
+  archetype: 'oni',
+  affixes: [],
+  finger: false,
+  ...over,
+});
 
 describe('tierFor: tier = round / 5', () => {
   it.each([
@@ -16,7 +23,7 @@ describe('tierFor: tier = round / 5', () => {
 describe('bossHpFor: vida por tier (BTIER-01, BFX-01)', () => {
   it('o chefe do tier 1 tem 400 de HP (BFX-01)', () => {
     expect(bossHpFor(1)).toBe(400);
-    expect(bossSpecFor(5).maxHp).toBe(400);
+    expect(bossSpecFor(5, lineup()).maxHp).toBe(400);
   });
 
   it.each([
@@ -39,7 +46,7 @@ describe('bossDamageMultFor e dano dos ataques por tier (BTIER-02)', () => {
     [8, 36],
     [20, 36],
   ])('tier %i => dano da investida %i', (tier, expected) => {
-    const spec = bossSpecFor(tier * 5);
+    const spec = bossSpecFor(tier * 5, lineup());
     expect(spec.damage.charge).toBe(expected);
   });
 
@@ -50,7 +57,7 @@ describe('bossDamageMultFor e dano dos ataques por tier (BTIER-02)', () => {
     [8, 40],
     [20, 40],
   ])('tier %i => dano do pouso %i (mesma regra do BTIER-02)', (tier, expected) => {
-    const spec = bossSpecFor(tier * 5);
+    const spec = bossSpecFor(tier * 5, lineup());
     expect(spec.damage.leap).toBe(expected);
   });
 
@@ -61,7 +68,7 @@ describe('bossDamageMultFor e dano dos ataques por tier (BTIER-02)', () => {
     [8, 24],
     [20, 24],
   ])('tier %i => dano da onda %i (mesma regra do BTIER-02)', (tier, expected) => {
-    const spec = bossSpecFor(tier * 5);
+    const spec = bossSpecFor(tier * 5, lineup());
     expect(spec.damage.shockwave).toBe(expected);
   });
 
@@ -72,7 +79,7 @@ describe('bossDamageMultFor e dano dos ataques por tier (BTIER-02)', () => {
     [8, 20],
     [20, 20],
   ])('tier %i => dano do projétil %i (mesma regra do BTIER-02)', (tier, expected) => {
-    const spec = bossSpecFor(tier * 5);
+    const spec = bossSpecFor(tier * 5, lineup());
     expect(spec.damage.projectile).toBe(expected);
   });
 });
@@ -86,48 +93,29 @@ describe('BTIER-03: monotonicidade de t = 2 a 50', () => {
   });
 });
 
-describe('archetypeFor: arquétipo por tier (BTIER-04)', () => {
-  it.each<[number, 'oni' | 'tecela']>([
-    [1, 'oni'],
-    [2, 'oni'],
-    [3, 'tecela'],
-    [4, 'oni'],
-    [5, 'tecela'],
-  ])('tier %i => %s', (tier, expected) => {
-    expect(archetypeFor(tier)).toBe(expected);
-  });
-});
-
-describe('bossSpecFor: nome e rajada por arquétipo (BTIER-04, BTIER-05, BTIER-07)', () => {
-  it('tier 1 (round 5): Oni do Portão, volleyCount 3, projectileSpeed 260', () => {
-    const spec = bossSpecFor(5);
+describe('bossSpecFor: nome e rajada por arquétipo (BTIER-05, BTIER-07)', () => {
+  it('Oni na r5: Oni do Portão, volleyCount 3, projectileSpeed 260', () => {
+    const spec = bossSpecFor(5, lineup());
     expect(spec.name).toBe('Oni do Portão');
     expect(spec.archetype).toBe('oni');
     expect(spec.volleyCount).toBe(3);
     expect(spec.projectileSpeed).toBe(260);
   });
 
-  it('tier 3 (round 15): Tecelã de Maldições, volleyCount 5, projectileSpeed 325', () => {
-    const spec = bossSpecFor(15);
+  it('Tecelã na r15: Tecelã de Maldições, volleyCount 5, projectileSpeed 325', () => {
+    const spec = bossSpecFor(15, lineup({ archetype: 'tecela' }));
     expect(spec.name).toBe('Tecelã de Maldições');
     expect(spec.archetype).toBe('tecela');
     expect(spec.volleyCount).toBe(5);
     expect(spec.projectileSpeed).toBe(325);
   });
 
-  it('tier 4 (round 20): volta a ser Oni do Portão, volleyCount 3, projectileSpeed 260', () => {
-    const spec = bossSpecFor(20);
+  it('Oni na r20: Oni do Portão, volleyCount 3, projectileSpeed 260', () => {
+    const spec = bossSpecFor(20, lineup());
     expect(spec.name).toBe('Oni do Portão');
     expect(spec.volleyCount).toBe(3);
     expect(spec.projectileSpeed).toBe(260);
   });
-});
-
-const lineup = (over: Partial<BossLineup> = {}): BossLineup => ({
-  archetype: 'oni',
-  affixes: [],
-  finger: false,
-  ...over,
 });
 
 describe('bossSpecFor com escalação (BLN-08)', () => {
@@ -141,14 +129,6 @@ describe('bossSpecFor com escalação (BLN-08)', () => {
   it('os afixos da escalação passam para a especificação, na mesma ordem', () => {
     const spec = bossSpecFor(15, lineup({ affixes: ['sangue', 'igneo'] }));
     expect(spec.affixes).toEqual(['sangue', 'igneo']);
-  });
-
-  it('sem escalação: paridade de hoje, sem afixos, sem Portador e corpo em escala 1', () => {
-    const spec = bossSpecFor(15);
-    expect(spec.archetype).toBe('tecela');
-    expect(spec.affixes).toEqual([]);
-    expect(spec.finger).toBe(false);
-    expect(spec.bodyScale).toBe(1);
   });
 });
 

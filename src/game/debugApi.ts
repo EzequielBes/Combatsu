@@ -2,6 +2,7 @@ import type { AttackKind } from '../core/attackKind';
 import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
+import type { BossAffixId } from '../data/bossAffixes';
 import type { CastState } from '../core/cast';
 import type { CounterKind } from '../core/counter';
 import type { EnemyVariant } from '../core/enemyVariant';
@@ -120,6 +121,10 @@ export interface GameSnapshot {
     poise: number;
     archetype: BossArchetype;
     name: string;
+    /** Afixos da escalação, na ordem dela (BLN-11). */
+    affixes: BossAffixId[];
+    /** Moldura Portador de Dedo (BLN-11). */
+    finger: boolean;
     x: number;
     /** Centro do corpo; fica dentro da sala (0..544) durante toda a luta. */
     y: number;
@@ -128,6 +133,8 @@ export interface GameSnapshot {
     /** O finalizador (J+K) ainda pode ser usado neste `stagger` (BFX-06, BFX-07). */
     finisherReady: boolean;
   } | null;
+  /** Última escalação de chefe pedida na run (BLN-08..11), já com os overrides de debug; `null` antes do 1º chefe. */
+  bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;
   /**
    * Projéteis da rajada e ondas de choque do pouso do chefe, lidos do objeto vivo (BAT-03/04/06/12, BTIER-05/07).
    * `id` é único por instância (nunca reaproveitado) - o smoke usa para contar disparos mesmo que um projétil

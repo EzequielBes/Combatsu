@@ -1,5 +1,4 @@
 import { armFor } from '../../core/armed';
-import { bossSpecFor } from '../../core/bossTier';
 import { scaleFor, type EnemyBase } from '../../core/difficulty';
 import { type Vec2 } from '../../core/hit';
 import { attackKindFor, parseAttackKind, parseStringLength } from '../../core/attackKind';
@@ -121,7 +120,7 @@ export class Spawner {
 
   /**
    * Onda de chefe (BOSS-01/03): nasce no ponto `E` mais distante do player no momento do spawn, com o `BossSpec`
-   * escalado pela rodada/tier (T2). Se um chefe anterior ainda estivesse por aqui (não deveria, mas por hygiene),
+   * da escalação sorteada para a rodada (BLN-08), o mesmo chefe que a área já pediu para o fundo da arena. Se um chefe anterior ainda estivesse por aqui (não deveria, mas por hygiene),
    * ele é removido antes - só existe um por vez.
    */
   spawnBoss(round: number): void {
@@ -129,7 +128,7 @@ export class Spawner {
     const point = farthestPoint(this.s.level.enemies, this.s.player.sprite.x);
     const at = this.s.level.enemies[point];
     const spawnAt: Vec2 = { x: at.x, y: at.y - SPAWN_LIFT };
-    const spec = bossSpecFor(round);
+    const spec = this.s.runDirector.bosses.specFor(round);
     this.s.boss = new Boss(
       this.s,
       spawnAt,
