@@ -6,7 +6,7 @@
 import { makeKit } from './fight-kit.mjs';
 
 export default async function (ctx) {
-  const { assert, snap, frame, down, up, tap, count, boot, nearest, approach, startDuel } = makeKit(ctx);
+  const { assert, snap, frame, down, up, tap, count, boot, nearest, approach, startDuel, waitQuiet } = makeKit(ctx);
   const tapFrame = async (code) => {
     await down(code);
     const s = await frame();
@@ -63,12 +63,20 @@ export default async function (ctx) {
   s = await tap('Enter');
   assert(s.run.state === 'roundActive' && s.run.round === 2, `rodada 2 deveria começar: ${JSON.stringify(s.run)}`);
   for (let i = 0; i < 40 && s.enemies.length === 0; i++) s = await snap(300);
-  // A energia nasce no teto (100): conjura o Vermelho no vazio para gastar energia e deixar espaço para os +3.
-  s = await tap('KeyL');
-  for (let i = 0; i < 120 && s.tech.cast !== null; i++) s = await frame();
-  assert(s.ce.cur <= s.ce.max - 3, `MOV-15: pré-condição, energia abaixo do teto: ${s.ce.cur}/${s.ce.max}`);
-  s = await snap(300);
+  // A energia nasce no teto (100): conjura o Vermelho no vazio, de costas para o inimigo e já perto dele, para gastar
+  // energia e deixar espaço para os +3 (a regeneração de 8/s enche os 30 do Vermelho em ~4 s: longe, ela voltava ao
+  // teto antes do jab).
+  await approach();
+  s = await waitQuiet();
+  await tapFrame(s.player.facing === 1 ? 'KeyA' : 'KeyD');
+  s = await snap(20);
+  const castSeen = s.events.length;
+  s = await tapFrame('KeyL');
+  for (let i = 0; i < 60 && !s.events.slice(castSeen).includes('techCast:vermelho'); i++) s = await frame();
+  assert(s.events.slice(castSeen).includes('techCast:vermelho'), `MOV-15: o Vermelho deveria soltar: ${s.tech.cast}`);
+  await snap(300);
   s = await approach();
+  assert(s.ce.cur <= s.ce.max - 3, `MOV-15: pré-condição, energia abaixo do teto: ${s.ce.cur}/${s.ce.max}`);
   const target = nearest(s);
   const hpE = target.hp;
   await down('KeyJ');

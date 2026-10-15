@@ -1,10 +1,12 @@
 import { axisAt } from '../../core/axisRule';
-import { bodyStrike, CadenceCounter, FuryCounter, type BodyPoints } from '../../core/cursedBody';
+import { bodyStrike, CadenceCounter, FuryCounter, marteloTargets, type BodyPoints } from '../../core/cursedBody';
 import type { Hit, Vec2 } from '../../core/hit';
 import type { StrikeMods } from '../../core/statSheet';
 import type { MoveDef } from '../../data/moves';
-import { BODY_AXES } from '../../data/techAxes';
+import { TECH_RULE } from '../../data/techRule';
+import { BODY_AXES, BODY_BRANCHES } from '../../data/techAxes';
 import type { Hittable } from '../../game/bodyTags';
+import { Enemy } from '../../game/Enemy';
 import { FuryAura, furyAuraCenter } from '../../game/FuryAura';
 import type { TestScene } from '../TestScene';
 
@@ -21,6 +23,8 @@ export class BodyDirector {
   private lastHp: { hp: number; max: number } | null = null;
   /** CRP-07.11: aura laranja da Fúria, criada com o 1º acúmulo e largada quando eles zeram (ou no `R`). */
   private aura: FuryAura | null = null;
+  /** O golpe em curso já acertou alguém (o fim do `active` sem acerto zera a Cadência, CRP-08.3). */
+  private swingConnected = false;
 
   constructor(readonly s: TestScene) {}
 
@@ -39,9 +43,25 @@ export class BodyDirector {
     const marks = { ...base.marks };
     if (b.knockdown) marks.knockdown = true;
     if (b.wallStun) marks.wallStun = true;
-    // CRP-07: a Fúria soma a fração dos acúmulos ao dano do golpe.
-    const damage = base.damage * (1 + this.fury.bonus(this.points.furia));
+    // CRP-07: a Fúria soma a fração dos acúmulos ao dano do golpe; CRP-08: o 4º da Cadência dá +50 %.
+    let damage = base.damage * (1 + this.fury.bonus(this.points.furia));
+    if (this.cadenceDecisive()) {
+      damage *= BODY_BRANCHES.cadencia.damageMul;
+      marks.decisive = true;
+      // CRP-09: com o Martelo Negro o alvo do decisivo leva a fração da vida máxima (o chefe fica no teto de 1 %).
+      if (this.awakened) marks.maxHpBonus = TECH_RULE.maxHpPct.enemy;
+    }
     return { ...base, damage, force: base.force * b.forceMul, reachPx: b.reachPx, recoveryMul: b.recoveryMul, marks };
+  }
+
+  /** O próximo golpe que acertar fecha a Cadência (o 4º, o 8º...) e o ramo é a Cadência (CRP-08.2). */
+  private cadenceDecisive(): boolean {
+    return this.s.loadout.axes.branch('corpo') === 'cadencia' && this.cadence.nextIsDecisive();
+  }
+
+  /** O Despertar do ramo escolhido está ligado (Nv 5 com ramo, CRP-13). */
+  private get awakened(): boolean {
+    return this.s.loadout.axes.awakened('corpo');
   }
 
   /** CRP-06: energia a mais por golpe corpo a corpo que acerta (os pontos do Fluxo). */
@@ -54,10 +74,41 @@ export class BodyDirector {
    * soma um acúmulo da Fúria e um da Cadência, uma vez por golpe (vários alvos do mesmo golpe contam um); o objeto na
    * mão não é golpe do moveset.
    */
-  onMeleeHit(hit: Hit, _point: Vec2, _target?: Hittable): void {
+  onMeleeHit(hit: Hit, point: Vec2, target?: Hittable): void {
     if (hit.moveName === undefined || hit.swingId === undefined) return;
+    this.swingConnected = true;
     this.fury.onConnect(hit.swingId);
     this.cadence.onConnect(hit.swingId);
+    if (hit.decisive && this.awakened && this.s.loadout.axes.branch('corpo') === 'cadencia') this.hammer(point, target);
+  }
+
+  /**
+   * CRP-09 (Martelo Negro): os comuns a até 48 px do ponto do decisivo, menos o alvo dele, levam um acerto de 4 % da
+   * vida máxima com `knockdown`, sem `tech`, pelo caminho dos acertos de técnica (somam em `golpe` no registro). Evento
+   * `martelo:<id>:<dano levado>`.
+   */
+  private hammer(point: Vec2, target?: Hittable): void {
+    const alive = this.s.enemies.filter((e) => !e.isDead());
+    const boxes = alive.map((e) => {
+      const r = e.hurtRect();
+      return { id: e.id, box: { x: r.x - r.width / 2, y: r.y - r.height / 2, width: r.width, height: r.height } };
+    });
+    const exceptId = target instanceof Enemy ? target.id : -1;
+    for (const id of marteloTargets(point, boxes, exceptId)) {
+      const e = alive.find((x) => x.id === id)!;
+      const r = e.hurtRect();
+      const hit: Hit = {
+        ownerId: this.s.player.id,
+        damage: Math.round(TECH_RULE.maxHpPct.enemy * e.maxHp),
+        strength: 'heavy',
+        force: 6,
+        direction: { x: r.x >= point.x ? 1 : -1, y: -0.6 },
+        knockdown: true,
+      };
+      if (!e.receiveHit(hit)) continue;
+      this.s.effects.onTechConnect(hit, { x: r.x, y: r.y }, e, 'golpe');
+      this.s.snapshot.debugEvents.push(`martelo:${id}:${e.lastDamageTaken}`);
+    }
   }
 
   /**
@@ -107,7 +158,11 @@ export class BodyDirector {
    * pós-imagem do player, uma por golpe, e o evento `bodyEcho:<golpe>` só quando a cópia nasce de fato.
    */
   onStrikePhase(name: string, phase: 'startup' | 'active' | 'recovery' | 'end'): void {
-    if (phase !== 'recovery' || this.points.ritmo < BODY_AXES.ritmo.afterimageAt) return;
+    if (phase === 'startup') this.swingConnected = false;
+    if (phase !== 'recovery') return;
+    // CRP-08.3: o fim do `active` sem acerto zera a Cadência.
+    this.cadence.onActiveEnd(0, this.swingConnected);
+    if (this.points.ritmo < BODY_AXES.ritmo.afterimageAt) return;
     if (this.s.player.fx.afterimage(this.s.player.view, true)) this.s.snapshot.debugEvents.push(`bodyEcho:${name}`);
   }
 

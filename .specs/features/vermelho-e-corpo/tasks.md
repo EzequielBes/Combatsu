@@ -1473,12 +1473,22 @@ sem mudar o `combat.onConnect`.
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs` com `ramo=corpo:a`: o 4º golpe seguido da cadeia `jab → direto → gancho → cotovelada`
+- [x] `cursed-body.smoke.mjs` com `ramo=corpo:a`: o 4º golpe seguido da cadeia `jab → direto → gancho → cotovelada`
       dispara `impact:decisive` e o 3º não (CRP-08.2); a mesma cadeia sem ramo e sem Peso dá `impact:heavy` no 4º (o
       Peso 2 derrubaria e já seria decisivo pelo `impactTier`, então o smoke não usa Peso); um golpe no ar zera a
       contagem (CRP-08.3)
-- [ ] Com `ramo=corpo:a&axes=` somando 4 pontos e `maxAlive=3`: o vizinho a 48 px cai e leva 4% do HP (CRP-09)
-- [ ] Smokes `cursed-body`, `impact`, `fight`, `fight-integration` e `record-end` verdes; gate verde; contagem sem perda
+- [x] Com `ramo=corpo:a&axes=` somando 4 pontos e `maxAlive=3`: o vizinho a 48 px cai e leva 4% do HP (CRP-09)
+- [x] Smokes `cursed-body`, `impact`, `fight`, `fight-integration` e `record-end` verdes; gate verde; contagem sem perda
+
+**Nota (T48)**: o `effects.onTechConnect` passou a receber `DamageSource` e o `record.onTechHit` também (em vez de
+chamar o `addDamage`, que dá no mesmo: o `tests/scenes/effects.test.ts` lê o `onTechHit` da cena falsa). O Martelo
+Negro entrega um acerto de `round(0,04 × maxHp)` com `knockdown` e emite `martelo:<id>:<dano levado>`, porque o
+número na tela se funde em 300 ms. O fim do `active` sem acerto vem da fase `recovery` do `onStrikePhase`, com o
+acerto do golpe guardado desde o `startup`. O golpe no ar é medido no laboratório (o boneco não revida; um golpe
+levado também zeraria a Cadência). `ramo=` pede o Nv 2, então o cenário leva 1 ponto no Fluxo (fora do dano e da
+força); o Martelo, 4 pontos (Fluxo 3 e Alcance 1). O `fight-integration` (MOV-15), que já falhava em `89b2a4a`, teve
+a pré-condição corrigida: a regeneração de 8/s enchia os 30 do Vermelho antes do jab, então o Vermelho agora sai de
+costas para o inimigo, já perto dele (a asserção dos +3 por alvo não mudou). Testes: 4149.
 
 **Tests**: smoke
 **Gate**: full

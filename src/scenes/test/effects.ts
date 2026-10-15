@@ -5,7 +5,7 @@ import { Hitstop } from '../../core/hitstop';
 import { SlowMo } from '../../core/slowMo';
 import { HIT_BAND_FEEL } from '../../data/feel';
 import { HITSTOP_MS } from '../../data/fx';
-import type { TechId } from '../../data/techniques';
+import type { DamageSource } from '../../core/runSummary';
 import type { Hittable } from '../../game/bodyTags';
 import { MAX_FRAME_MS } from '../../game/physics';
 import type { TestScene } from '../TestScene';
@@ -43,7 +43,8 @@ export class EffectsDirector {
    * `micro` ou `chip`, POW-06.7). O dano entra no registro da run pela técnica de origem, antes da faixa (DMG-02; o
    * Kokusen chega como `divergente`, DMG-07).
    */
-  onTechConnect(hit: Hit, point: Vec2, target: Hittable, source: TechId): void {
+  onTechConnect(hit: Hit, point: Vec2, target: Hittable, source: DamageSource): void {
+    // CRP-09, CRP-10: a onda do punho e o Martelo Negro chegam como `golpe`.
     this.s.runDirector.record.onTechHit(source, hit.damage);
     this.s.ui.damageNumbers.show(target, target.lastDamageTaken ?? hit.damage, techKind(hit.band), point);
     if (hit.band === 'chip') {

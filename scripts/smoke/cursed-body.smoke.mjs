@@ -3,6 +3,7 @@
 // efeito dos pontos do Corpo (a vida e o estado do inimigo, a duração do golpe), não só o `build.corpo` do snapshot.
 import { makeKit } from './fight-kit.mjs';
 import { BASE, DUMMY_X, strikeOnce, walkToDummy } from './cursed-body-kit.mjs';
+import { branchScenarios } from './cursed-body-branches.mjs';
 import { furyScenarios } from './cursed-body-fury.mjs';
 
 /** Estado do inimigo `id` ao longo de `frames` quadros: devolve se ele chegou a `ragdollStun`. */
@@ -205,4 +206,5 @@ export default async function (ctx) {
   await weightWallStun(ctx);
   await trailAndEcho(ctx);
   await furyScenarios(ctx);
+  await branchScenarios(ctx);
 }
