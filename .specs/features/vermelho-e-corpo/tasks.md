@@ -731,8 +731,8 @@ e nível que não é inteiro positivo somem.
 
 **Done when**:
 
-- [ ] `tests/core/energyMarks.test.ts`: custo 30 com 29/30/59/60/90 de energia dá 0/1/1/2/3 marcas; custo 0 não gera marca
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/energyMarks.test.ts`: custo 30 com 29/30/59/60/90 de energia dá 0/1/1/2/3 marcas; custo 0 não gera marca
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

@@ -6,6 +6,19 @@ export const cursedEnergyMaxAtLevel = (n: number): number => Math.min(CE.max + C
 /** Regen por segundo no nível `n` do upgrade `fluxo` (CE-09, TSH-11). */
 export const cursedEnergyRegenAtLevel = (n: number): number => Math.min(CE.regen + CE.regenPerLevel * n, CE.regenCap);
 
+/** Teto de marcas na barra: o menor custo depois do piso (12, o Divergente no Nv 3) cabe no teto da energia (`CE.maxCap`) no máximo tantas vezes. */
+export const COST_MARKS_MAX = Math.floor(CE.maxCap / 12);
+
+/**
+ * VRM-20: cada múltiplo do custo que cabe na energia atual, em unidades de energia (a vista divide por `max` para
+ * achar a posição na barra). Custo 30 com 59 de energia dá `[30]`; custo zero ou negativo não gera marca.
+ */
+export const costMarks = (cost: number, cur: number, max: number): number[] => {
+  if (cost <= 0) return [];
+  const n = Math.min(Math.floor(Math.min(cur, max) / cost), COST_MARKS_MAX);
+  return Array.from({ length: Math.max(0, n) }, (_, i) => cost * (i + 1));
+};
+
 /**
  * Energia amaldiçoada do player (CE-01..09): regenera com o tempo de jogo enquanto nenhuma conjuração está em
  * andamento, nunca sai de [0, max] e não regenera durante a conjuração (CE-05).
