@@ -11,6 +11,8 @@ import {
 } from '../../core/bossAffix';
 import { bossSpecFor, type BossSpec } from '../../core/bossTier';
 import { isBossRound } from '../../core/waves';
+import type { Boss } from '../../game/Boss';
+import { BossAffixFx } from '../../game/boss/BossAffixFx';
 import { BossReadout } from '../../game/boss/BossReadout';
 import type { GameSnapshot } from '../../game/debugApi';
 import { debugParam } from './params';
@@ -27,6 +29,8 @@ export class BossDirector {
   private last: { round: number; lineup: BossLineup } | null = null;
   /** Glifos e aviso da loja, criados no primeiro uso (a `uiLayer` nasce depois do `RunDirector`). */
   private readout: BossReadout | null = null;
+  /** Vista dos ataques novos e dos afixos do chefe em cena (um por chefe, AFX-01). */
+  private fx: BossAffixFx | null = null;
 
   constructor(readonly s: TestScene) {}
 
@@ -50,6 +54,17 @@ export class BossDirector {
   /** Especificação do chefe da rodada `round` com a escalação dela (BLN-08, PDD-03..05). */
   specFor(round: number): BossSpec {
     return bossSpecFor(round, this.lineupFor(round));
+  }
+
+  /** Chefe recém-criado: os eventos de vista dele (rastro, aviso, abertura e fechamento) vão para um `BossAffixFx`. */
+  attach(boss: Boss): void {
+    this.fx = new BossAffixFx();
+    boss.fxSink = this.fx.route;
+  }
+
+  /** Eventos de vista recebidos do chefe atual por tipo (snapshot de debug); vazio sem chefe ligado. */
+  fxCounts(): ReturnType<BossAffixFx['debug']> {
+    return this.fx?.debug() ?? {};
   }
 
   /** Barra do chefe com o rótulo da escalação (BRD-01) e um glifo por afixo à direita dela (BRD-02). */
@@ -93,6 +108,7 @@ export class BossDirector {
   reset(): void {
     this.lineups = new BossLineups();
     this.last = null;
+    this.fx = null;
   }
 
   private ui(): BossReadout {

@@ -3,6 +3,7 @@ import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { BossAffixId } from '../data/bossAffixes';
+import type { BossFxEvent } from './boss/BossAffixFx';
 import type { CastState } from '../core/cast';
 import type { CounterKind } from '../core/counter';
 import type { EnemyVariant } from '../core/enemyVariant';
@@ -132,6 +133,8 @@ export interface GameSnapshot {
     view: { x: number; y: number };
     /** O finalizador (J+K) ainda pode ser usado neste `stagger` (BFX-06, BFX-07). */
     finisherReady: boolean;
+    /** Eventos de vista que o `BossAffixFx` recebeu por tipo, desde que o chefe nasceu (AFX-01). */
+    fx: Partial<Record<BossFxEvent['type'], number>>;
   } | null;
   /** Última escalação de chefe pedida na run (BLN-08..11), já com os overrides de debug; `null` antes do 1º chefe. */
   bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;

@@ -636,9 +636,9 @@ ondas de choque no 3º pouso; eventos novos vão para `fxSink?.(ev, anchor)`; `o
 
 **Done when**:
 
-- [ ] Smoke novo `boss-attacks.smoke.mjs` (1º cenário): `round=15&bossArch=oni&bossAffix=none` mostra `doubleCharge`
+- [x] Smoke novo `boss-attacks.smoke.mjs` (1º cenário): `round=15&bossArch=oni&bossAffix=none` mostra `doubleCharge`
       na fase 2 e `tripleLeap` na fase 3 pelo snapshot (`attack`), com 3 pousos e ondas só no último
-- [ ] `npm run smoke -- boss-attacks` e `boss` verdes; `Boss.ts` abaixo de ~285 linhas efetivas; gate verde
+- [x] `npm run smoke -- boss-attacks` e `boss` verdes; `Boss.ts` abaixo de ~285 linhas efetivas; gate verde
 
 **Tests**: smoke
 **Gate**: full

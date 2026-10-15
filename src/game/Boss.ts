@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
+import { bossTuningFor } from '../core/bossAffix';
 import { BossAI, type BossAIEvent, type BossAIState, type BossAttack } from '../core/bossAI';
+import { animBase } from '../core/bossAttacks';
 import { BossBrain, type BossBrainState, type BossEvent } from '../core/bossBrain';
 import type { BossSpec } from '../core/bossTier';
 import { Filters } from '../core/collision';
@@ -7,6 +9,7 @@ import type { Hit, Vec2 } from '../core/hit';
 import { DEFENSE } from '../data/moves';
 import { BOSS } from '../data/tuning';
 import { bossAnimKey, BOSS_ORIGIN } from './art/sprites/boss';
+import type { BossFxAnchor, BossFxSink } from './boss/BossAffixFx';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
 import { AttackHitbox, type OnConnect } from './hitbox';
 import { BodyRenderPos, PX_PER_S_TO_STEP, applyFilter, setIgnoreGravity } from './physics';
@@ -57,6 +60,10 @@ export class Boss implements Hittable {
   private readonly h: number;
   /** Escala do sprite (1 hoje): acompanha o corpo quando o Portador entrar (PDD-03). */
   private readonly spriteScale: number;
+  /** Eventos de vista dos ataques novos e dos afixos (AFX-01), ligado pelo `BossDirector.attach`. */
+  fxSink?: BossFxSink;
+  /** Troca de fase (o Invocador chama reforços nela), ligado pelo `BossDirector`. */
+  onPhaseChanged?: (phase: 2 | 3) => void;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -75,8 +82,10 @@ export class Boss implements Hittable {
     /** Morte (BWIN-01..03, T10): a cena aplica a recompensa e os efeitos. */
     private readonly onDied?: (boss: Boss, x: number, y: number) => void,
   ) {
-    this.brain = new BossBrain(spec.maxHp);
-    this.ai = new BossAI();
+    // AFX-01: ciclos do arquétipo e dos afixos da escalação no lugar da tuning padrão.
+    const tuning = bossTuningFor(spec);
+    this.brain = new BossBrain(spec.maxHp, tuning.brain);
+    this.ai = new BossAI(tuning.ai);
     this.w = BODY_W;
     this.h = BODY_H;
     this.spriteScale = 1;
@@ -214,10 +223,14 @@ export class Boss implements Hittable {
     return this.dispatch(this.brain.receiveKokusen(damage, poiseDamage));
   }
 
-  /** Repassa os eventos do cérebro: o rugido empurra o player para longe do chefe; a morte avisa a cena. */
+  /**
+   * Repassa os eventos do cérebro: o rugido empurra o player para longe do chefe; a troca de fase avisa o diretor;
+   * a morte avisa a cena.
+   */
   private dispatch(events: BossEvent[]): BossEvent[] {
     for (const ev of events) {
       if (ev.type === 'roarStart') this.onRoarPush?.(this.lastPlayerX >= this.body.position.x ? 1 : -1);
+      else if (ev.type === 'phaseChanged') this.onPhaseChanged?.(ev.phase);
       else if (ev.type === 'died') this.onDied?.(this, this.body.position.x, this.body.position.y);
     }
     return events;
@@ -227,10 +240,7 @@ export class Boss implements Hittable {
     if (this._removed) return;
     this.lastPlayerX = playerX;
     this.brain.update(dtMs);
-    if (this.landingHitboxTicks > 0) {
-      this.landingHitboxTicks--;
-      if (this.landingHitboxTicks === 0) this.attack.close();
-    }
+    if (this.landingHitboxTicks > 0 && --this.landingHitboxTicks === 0) this.attack.close();
     if (this.brain.isDead) {
       // Sem IA nem movimento depois de morto, mas a pose "dead" ainda precisa aparecer (o `animate` decide o
       // frame pelo estado do `BossBrain`, não pelos parâmetros abaixo).
@@ -239,19 +249,13 @@ export class Boss implements Hittable {
     }
 
     const canAct = this.brain.state === 'active';
+    const selfX = this.body.position.x;
     // Parado (preparo), a investida que começa neste frame mira o player, não o `facing` antigo: senão um chefe
     // encostado na parede de trás (spawn em x=1232) leria "bloqueado" no primeiro frame e atordoaria sem andar.
-    const towardPlayer: 1 | -1 = playerX >= this.body.position.x ? 1 : -1;
+    const towardPlayer: 1 | -1 = playerX >= selfX ? 1 : -1;
     const chargeDir: 1 | -1 = this.lastVx > 0 ? 1 : this.lastVx < 0 ? -1 : towardPlayer;
     const blocked = canAct ? this.isBlockedAhead(chargeDir) : false;
-    const out = this.ai.update(dtMs, {
-      selfX: this.body.position.x,
-      playerX,
-      blocked,
-      canAct,
-      phase: this.brain.phase,
-      spec: this.spec,
-    });
+    const out = this.ai.update(dtMs, { selfX, playerX, blocked, canAct, phase: this.brain.phase, spec: this.spec });
     this.lastVx = out.vx;
     this.handleAIEvents(out.events);
 
@@ -268,19 +272,28 @@ export class Boss implements Hittable {
     this.animate(out.state, out.attack);
   }
 
+  /**
+   * Eventos do `BossAI`: investida e pouso abrem a hitbox do corpo, a parede atordoa (BFX-02), a rajada pede o
+   * projétil à cena; o rastro da investida e o aviso/abertura/fechamento do feixe e dos fios vão para o `fxSink`.
+   */
   private handleAIEvents(events: BossAIEvent[]): void {
     for (const ev of events) {
       if (ev.type === 'hitboxOn') this.openChargeHitbox();
       else if (ev.type === 'hitboxOff') this.attack.close();
-      else if (ev.type === 'landed') this.onLand();
-      else if (ev.type === 'wallStun')
-        this.brain.stun(BOSS.wallStunMs); // BFX-02: bateu na parede, fica atordoado
+      else if (ev.type === 'landed') this.onLand(ev.final);
+      else if (ev.type === 'wallStun') this.brain.stun(BOSS.wallStunMs);
       else if (ev.type === 'fire') {
-        const { x, y } = this.body.position;
-        // Altura de tronco a partir do chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).
-        this.onFire?.(x, this.groundTopBelow(x, y) - this.h / 2, ev.dir, ev.speed, this.spec.damage.projectile);
-      }
+        const at = this.fxAnchor();
+        this.onFire?.(at.x, at.chestY, ev.dir, ev.speed, this.spec.damage.projectile);
+      } else this.fxSink?.(ev, this.fxAnchor());
     }
+  }
+
+  /** X do corpo, topo do chão abaixo dele e altura do tronco a partir desse chão (T9: nunca o y ao vivo do corpo). */
+  private fxAnchor(): BossFxAnchor {
+    const { x, y } = this.body.position;
+    const groundY = this.groundTopBelow(x, y);
+    return { x, groundY, chestY: groundY - this.h / 2, facing: this.facing };
   }
 
   private openChargeHitbox(): void {
@@ -320,8 +333,11 @@ export class Boss implements Hittable {
     setIgnoreGravity(this.body, false);
   }
 
-  /** Pouso (BAT-03/10): corpo sólido de novo, hitbox de impacto por um frame e aviso para a cena (ondas, T9). */
-  private onLand(): void {
+  /**
+   * Pouso (BAT-03/10): corpo sólido de novo, hitbox de impacto por um frame e aviso para a cena (ondas, T9). No
+   * Salto Triplo todo pouso abre a hitbox, mas só o último (`final`) solta as ondas de choque (CYC-08).
+   */
+  private onLand(final: boolean): void {
     this.exitLeap();
     const { x } = this.body.position;
     // Ancora no topo real do chão no nível da partida ou abaixo dele (a sonda começa nos pés do chefe): nunca pousa
@@ -341,7 +357,7 @@ export class Boss implements Hittable {
     this.attack.open(shape, hit, x, y, this.facing);
     this.landingHitboxTicks = 1;
     // Rente ao chão de verdade (T9: nunca o y ao vivo do corpo - ver `groundTopBelow`).
-    this.onLanded?.(x, this.groundTopBelow(x, y) - SHOCKWAVE_HALF_H, this.spec.damage.shockwave);
+    if (final) this.onLanded?.(x, this.groundTopBelow(x, y) - SHOCKWAVE_HALF_H, this.spec.damage.shockwave);
   }
 
   /**
@@ -374,8 +390,9 @@ export class Boss implements Hittable {
     if (brainState === 'dead') name = 'dead';
     else if (brainState === 'roar') name = 'roar';
     else if (brainState === 'stagger') name = 'stagger';
-    else if (attack && aiState === 'windup') name = `windup-${attack}`;
-    else if (attack) name = attack;
+    // CYC-11: os ataques novos tocam os quadros da investida, do salto ou da rajada.
+    else if (attack && aiState === 'windup') name = `windup-${animBase(attack)}`;
+    else if (attack) name = animBase(attack);
     else name = 'idle';
     const draw = this.drawPos.get();
     this.view.setPosition(draw.x, draw.y + this.h / 2);
