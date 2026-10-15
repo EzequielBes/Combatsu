@@ -10,9 +10,9 @@ fica para o Altar, depois da F41); **emenda a AD-005** (ver "Decisão de projeto
 ## Arquitetura
 
 ```
-data/unlocks.ts            ACHIEVEMENTS (as 8 da CNQ-01), TEST_ACHIEVEMENTS (debug), CONTENT_NAMES por tipo, STARTER, META_TOAST
+data/unlocks.ts            ACHIEVEMENTS (as 8 da CNQ-01), TEST_ACHIEVEMENTS (debug), CONTENT_NAMES e KIND_LABELS por tipo, STARTER, STARTER_ROLES, META_TOAST
 core/unlocks.ts            tipos do registro; isActive; Achievements (progresso, desbloqueio, mais perto); UnlockGate  ← puro
-core/starter.ts            starterPool (cartas de técnica liberadas, sem resultado de receita) e drawStarter (3 sem repetir) ← puro
+core/starter.ts            starterPool (cartas de técnica liberadas, sem resultado de receita), drawStarter (3 sem repetir, a recém-liberada na frente), refusalFragments ← puro
 core/grimoire.ts           RecipeView, recipeViews(RECIPES), Grimoire (conjunto de chaves), grimoireHint                  ← puro
 core/save.ts               SaveData v2 { version, record, meta }, validateMeta, MIGRATIONS[1], serializeSave(record, meta) ← puro
 core/runSummary.ts         summaryLines ganha o bloco da meta (Liberado / Falta pouco) antes da linha do recomeço         ← puro
@@ -96,8 +96,9 @@ tick(dt: number): void {
    controles (drena o J); o `run.update` despacha `startRun` e `roundStart` (r1). No `startRun`, o `onStartRun` de hoje
    reseta tudo, equipa o `tech=` de debug e por último chama `starter.onStartRun()`, que decide se abre:
    - fora do `?debug` abre sempre; com `?debug` só com `starter=1` e sem `tech=` (STA-14); nunca no `fxlab`;
-   - `offers = drawStarter(starterPool(GAME_SHOP_CATALOG, RECIPES, gate), run.startRng!, STARTER.offers)`; pool
-     vazio não abre (caso de borda);
+   - `offers = drawStarter(starterPool(GAME_SHOP_CATALOG, RECIPES, gate), run.startRng!, STARTER.offers,
+     meta.freshTechnique())`; pool vazio não abre (caso de borda); ao abrir, `meta.markOffered(offers)` tira as
+     oferecidas da lista de recém-liberadas (STA-18);
    - abrindo: `matter.world.pause()`, `StarterPanel.show(...)`, e **drena o `ShopInput`** com uma leitura descartada
      (STA-10: o Enter que começou a run ficou com `_justDown` ligado, porque ninguém lê Enter na luta).
    No `roundStart` do mesmo quadro, o banner `Rodada 1` não sai: `applyRunCommand` só chama `hud.banner` quando o
@@ -109,7 +110,8 @@ tick(dt: number): void {
    `matter.world.pause()` se alguém retomou a física (o `effects.unfreeze` retoma sem saber do painel). HUD, câmera e
    efeitos em tempo real seguem como na loja. Sem tecla, nada muda e não há tempo limite (STA-11).
 3. **Escolha**: 1/2/3 com carta existente → `loadout.equip(0, id, 1)` (o nível que a 1ª compra dá, sem tocar na
-   carteira), evento `starter:<id>`; Enter → evento `starterRefused`; tecla de carta inexistente não faz nada (STA-09).
+   carteira), evento `starter:<id>`; Enter → `wallet.add(refusalFragments(offers, GAME_SHOP_CATALOG))` (o mesmo número do
+   rodapé) e evento `starterRefused`; tecla de carta inexistente não faz nada (STA-09).
    Fechar: esconde o painel, `matter.world.resume()`, mostra o banner do `record.roundBanner(run.round)` por
    `RUN.bannerMs`. O quadro do fechamento ainda devolve `true`; a luta volta no quadro seguinte (STA-12).
 4. **R com o painel aberto**: a cena recomeça como hoje (o estado é `roundActive`, não `shop`). O `starter.mountUi`
@@ -127,16 +129,16 @@ painel, e não atrasa a escolha.
 | `kokusenRodada` | `round` | `bump(id)` a cada Kokusen; `startRound()` zera no `roundStart` | `effects.onKokusen` (a lambda da `TestScene.ts:323-327` passa para lá) → `meta.onKokusen()` |
 | `chefeSemTecnica` | `milestone` | `meet(id)` na vitória sobre o chefe se nenhum slot esteve ocupado | `meta.update()` acompanha `s.boss` (chefe novo pelo `id` → limpo; slot ocupado com chefe vivo → sujo); `spawner.onBossDefeated` → `meta.onBossDefeated()` confere de novo `loadout.hasAny()` |
 | `jackpots` | `total` | `bump(id)` no `jackpot:hit` | `meta.onJackpot()`, chamado pelo diretor do Domínio da F31 (ligado por quem chegar depois; dormente até existir `jackpotTambor4`) |
-| `chefeR10` | `milestone` | `meet(id)` na vitória com `run.round === 10` | `meta.onBossDefeated()` |
+| `chefeR10` | `run` | `reach(id, run.round)` em toda vitória sobre chefe (r5 → 5/10; r10 cumpre) | `meta.onBossDefeated()` |
 | `contras` | `run` | `bump(id)` quando o golpe aceito tem `hit.counter` e `MOVES[hit.moveName]?.counter` | `combat.onConnect` → `runDirector.onConnect(hit)` → `meta.onPlayerStrike(hit)`; o golpe de ativação do Domínio não tem `moveName` de Contra e não conta |
 | `semDano` | `milestone` | `meet(id)` no `roundCleared` com `round >= 3` e nenhum golpe aceito pelo player desde o `roundStart` | `combat.onConnect` com `hit.ownerId !== player.id` → `meta.onPlayerHurt()`; bloqueio, parry e esquiva não chegam ao `onConnect` (`Player.receiveHit` só devolve `true` no golpe cheio, `hitbox.ts:93`) |
-| `finalizadorChefe` | `milestone` | `meet(id)` quando o finalizador zera a vida do chefe | `combat.tryBossFinisher` → `runDirector.onBossFinisher(damage, boss.hp <= 0)` (a linha que hoje soma o dano no `record` vira esta chamada, que soma e avisa a meta) |
+| `finalizadorChefe` | `milestone` | `meet(id)` quando o finalizador zera a vida do chefe (o `finisher:boss` que deixa o chefe vivo não conta) | `combat.tryBossFinisher` → `runDirector.onBossFinisher(damage, boss.hp <= 0)` (a linha que hoje soma o dano no `record` vira esta chamada, que soma e avisa a meta) |
 
 - **Run que não conta** (CNQ-13): `meta.counting` é decidido no `startRun`: falso com `s.fxLab` ou com
   `firstRoundForDebug() > 1`. Com ele falso, nenhum evento soma, desbloqueia nem registra receita.
 - **Desbloqueio**: `bump`, `reach` e `meet` devolvem os ids que acabaram de se cumprir, na ordem do registro. O
-  `MetaDirector` empurra `unlock:<id>`, enfileira `Liberado: <nome>`, guarda em `unlockedThisRun` e pede escrita
-  (CNQ-02, MSV-06). Já liberada, a conquista continua guardando progresso mas não devolve nada (CNQ-14).
+  `MetaDirector` empurra `unlock:<id>`, enfileira `Liberado: <nome> (<tipo>)`, guarda em `unlockedThisRun`, põe a
+  técnica liberada no fim de `freshTechniques` (STA-18) e pede escrita (CNQ-02, MSV-06). Já liberada, a conquista continua guardando progresso mas não devolve nada (CNQ-14).
 - **Liberado aparece no próximo sorteio** (UNL-07): o `UnlockGate` lê o conjunto vivo de desbloqueios. A loja recebe o
   catálogo filtrado ao abrir (`openShop`), então uma loja aberta e o reroll dela não mudam; a próxima loja já vê.
 
@@ -173,18 +175,21 @@ registro e não mexe na carga.
 ## Fim de run (FAL-*)
 
 O `RecordDirector.onDeath` passa a montar `summaryLines({ ..., meta: this.s.runDirector.meta.summary() })`, com
-`MetaSummary = { unlocked: string[]; nearest: { name; label; progress; target } | null }`. O progresso já está guardado
+`MetaSummary = { unlocked: string[]; nearest: { name; label; progress; target } | null; challenge: { name; label } | null }`,
+com os nomes já levando o tipo (`Boogie Woogie (técnica)`) e o `challenge` vindo de `challenge(run.round)`. O progresso já está guardado
 no instante da morte (cada evento grava no `Achievements` na hora), então o "mais perto" lê o valor depois desta morte.
 O bloco entra depois da linha do recorde e antes de `J / Enter para tentar de novo`:
 
 ```
-Liberado: Boogie Woogie, Zona Negra        ← highlight, quebra com listLines (FAL-04), abre o bloco com gap
-Falta pouco para: Fala Amaldiçoada · 10 Contras numa run (3/10)   ← sem gap se o Liberado veio antes
+Liberado: Boogie Woogie (técnica), Zona Negra (talento)   ← highlight, quebra com listLines (FAL-04), abre o bloco com gap
+Falta pouco para: Fala Amaldiçoada (técnica) · 10 Contras numa run (J após defender) (3/10)   ← sem gap se o Liberado veio antes
+Desafio: Hora Extra (talento) · limpar uma rodada da r3 em diante sem levar golpe   ← marco de índice (rodada - 1) mod n (FAL-08)
 ```
 
-Sem desbloqueio na run e sem conquista ativa trancada, o bloco não existe (FAL-03). A linha mais longa possível hoje
-tem ~86 caracteres (`semDano`), abaixo do `SUMMARY_LINE_MAX` (100). Com a carga do END-14 (~19 linhas, ~320 px) mais
-três linhas e uma folga, o painel fica em ~380 px de 540 (FAL-06, conferido pelo `panelBounds` no teste).
+Sem desbloqueio na run e sem conquista ativa trancada, o bloco não existe (FAL-03). As linhas mais longas possíveis têm
+~91 caracteres (`contras` com 9/10 e `kokusenRodada` com 2/3), abaixo do `SUMMARY_LINE_MAX` (100); um teste monta a
+linha de cada entrada do registro com o progresso máximo. Com a carga do END-14 (~19 linhas, ~320 px) mais quatro
+linhas e uma folga, o painel fica em ~396 px de 540 (FAL-06, conferido pelo `panelBounds` no teste).
 
 ---
 
@@ -203,7 +208,7 @@ três linhas e uma folga, o painel fica em ~380 px de 540 (FAL-06, conferido pel
 | `drawVows` (uniforme sem repetir com `rng.int`) | `core/vows.ts:33` | `drawStarter` no mesmo molde; o painel de votos recebe os trancados como tomados |
 | `ShopInput.read()` (1, 2, 3, J, Enter) | `game/input.ts:115-153` | teclas do painel da Técnica inicial, como o painel de votos (`shopDirector.ts:146-155`) |
 | `VowPanel` (3 cartas, título, rodapé, `VOW_PANEL_COLORS`) | `game/VowPanel.ts` | molde do `StarterPanel` |
-| `previewText`, `levelText` da carta | `core/shop.ts:129, 224` | texto da carta da técnica no nível 1 (STA-05): a mesma função da loja |
+| `TECHNIQUES[id].cost`, `cooldownMs`; `maxLevel` e `cost.base` da carta | `data/techniques.ts`, `data/shop.ts` | números do Nv 1 e `Nv 1/<máx>` na carta (STA-05; com a F30, `Loadout.stats` no Nv 1) e o valor da recusa (STA-08) |
 | `loadout.equip(slot, id, level)` | `core/loadout.ts:64` | equipar a técnica inicial no slot 0, nível 1 |
 | Congelamento da loja (`matter.world.pause/resume`, gameplay pulado) | `shopDirector.ts:120,169`, `TestScene.ts:416` | mesmo congelamento com o painel aberto (STA-06) |
 | `debugParam`, `debugIntParam`, `isDebug` | `scenes/test/params.ts:5,10` | `starter=1`, `unlock=`, `grimoire=`, `achievements=test` |
@@ -237,8 +242,13 @@ três linhas e uma folga, o painel fica em ~380 px de 540 (FAL-06, conferido pel
 - **Interfaces**:
   - `ACHIEVEMENTS: readonly AchievementDef[]`: as 8 da tabela CNQ-01, na ordem, com os rótulos exatos da spec.
   - `TEST_ACHIEVEMENTS: readonly AchievementDef[]`: só para `?debug&achievements=test` e para os smokes:
-    `testeR2` (`começar a r2 numa run`, 2, `run`, técnica `corte`) e `testeContra` (`1 Contra numa run`, 1, `run`,
-    talento `contraAfiado`). Conteúdo que já existe, para exercitar trava, aviso, save e "falta pouco" hoje.
+    `testeR2` (`começar a r2 numa run`, 2, `run`, técnica `corte`), `testeContra` (`1 Contra numa run`, 1, `run`,
+    talento `contraAfiado`) e `testeChefe` (`vencer um chefe`, 1, `milestone`, voto `semGuarda`). Conteúdo que já
+    existe, para exercitar trava, aviso, save, "falta pouco", "Desafio" e a carta `Novo` hoje.
+  - `KIND_LABELS: Record<ContentKind, string>`: `técnica`, `talento`, `voto`, `Domínio`.
+  - `STARTER_ROLES: Partial<Record<TechId, string>>` (até 20 caracteres): `divergente` `soco em dois tempos`,
+    `corte` `cortes à distância`, `azul` `orbe que puxa`, `vermelho` `disparo que explode`. Técnica nova (F34) traz a
+    sua linha; sem ela a carta só omite o papel.
   - `CONTENT_NAMES: Record<ContentKind, Readonly<Record<string, string>>>`: `technique` de `TECHNIQUES` (`name`),
     `talent` de `PERKS` (`name`), `vow` de `VOWS` (`name`), `domainUpgrade` `{}` até a fase do Domínio declarar a
     lista dela (a F31 ou quem criar `jackpotTambor4` acrescenta a fonte aqui). Existência = id presente na tabela.
@@ -259,7 +269,8 @@ três linhas e uma folga, o painel fica em ~380 px de 540 (FAL-06, conferido pel
     - `startRun(): void` (zera os contadores `run` e `round` da run); `startRound(): void` (zera os `round`)
     - `bump(id, n = 1): string[]` (soma no contador da run/rodada, ou no total); `reach(id, value): string[]`
       (contador da run = maior valor); `meet(id): string[]` (marco). Cada um devolve os ids cumpridos agora.
-    - `isUnlocked(id)`, `active(): AchievementDef[]`, `dormant(): AchievementDef[]`, `nearest(): Nearest | null`
+    - `isUnlocked(id)`, `active(): AchievementDef[]`, `dormant(): AchievementDef[]`, `nearest(): Nearest | null` (só
+      contagem), `challenge(endRound: number): AchievementDef | null` (marco)
     - `data(): MetaSave` (`unlocks` e `progress`, com os ids desconhecidos do save intactos, MSV-05)
   - `class UnlockGate { constructor(ach: Achievements); allows(kind, id): boolean; lockedIds(kind): string[];
     filterCatalog(catalog: readonly ShopEntry[]): ShopEntry[] }`
@@ -268,8 +279,9 @@ três linhas e uma folga, o painel fica em ~380 px de 540 (FAL-06, conferido pel
 - **Regras**: dormente (`!isActive`) ignora `bump/reach/meet` e não entra em `active`, `nearest` nem na trava. Progresso
   guardado: `run`/`round` = `max(guardado, contador)`; `total` = guardado + n; `milestone` = 1. Cumpre quando o valor
   do escopo (`contador` para `run`/`round`, guardado para `total`, 1 para marco) `>= target` e o id ainda não está em
-  `unlocks`. `nearest`: maior `guardado / target` entre ativas não liberadas; empate fica com a primeira do registro
-  (o `>` estrito na varredura em ordem). `allows` é falso só para conteúdo de conquista ativa e não liberada.
+  `unlocks`. `nearest`: maior `guardado / target` entre ativas não liberadas de escopo `run`, `round` ou `total`; empate fica
+  com a primeira do registro (o `>` estrito na varredura em ordem). `challenge(endRound)`: marcos ativos não liberados
+  na ordem do registro, o de índice `(endRound - 1) mod n`; nenhum → `null`. `allows` é falso só para conteúdo de conquista ativa e não liberada.
 
 ### core/starter.ts
 
@@ -278,25 +290,29 @@ três linhas e uma folga, o painel fica em ~380 px de 540 (FAL-06, conferido pel
   - `starterPool(catalog: readonly ShopEntry[], recipes: readonly { into: string }[], allows: (id: TechId) => boolean): TechId[]`:
     ids com carta `kind: 'technique'`, fora de qualquer `into` de receita, liberados, **na ordem de `TECHNIQUES`**
     (não na do catálogo).
-  - `drawStarter(pool: readonly TechId[], rng: Rng, n: number): TechId[]`: embaralhamento parcial
-    (`pool.splice(rng.int(0, pool.length - 1), 1)`), `min(n, pool.length)` itens, na ordem do sorteio.
+  - `drawStarter(pool: readonly TechId[], rng: Rng, n: number, fresh: TechId | null = null): TechId[]`: com `fresh` no
+    pool, ele é o 1º item e sai do pool antes do sorteio (fora do pool, é ignorado); o resto por embaralhamento parcial
+    (`pool.splice(rng.int(0, pool.length - 1), 1)`), até `min(n, pool.length)` itens, na ordem do sorteio.
+  - `refusalFragments(offers: readonly TechId[], catalog: readonly ShopEntry[]): number`: o menor `cost.base` entre as
+    cartas `technique` das ofertas (STA-08); sem oferta, 0.
 - **Reuses**: o molde do `drawVows`.
 
 ### core/grimoire.ts
 
 - **Purpose**: receitas vistas e a dica da loja (GRI-01..08).
 - **Interfaces**:
-  - `interface RecipePiece { kind: 'technique' | 'talent' | 'weapon'; id: string; label: string }`
+  - `interface RecipePiece { kind: 'technique' | 'talent' | 'weapon'; id: string; label: string; minLevel: number }`
   - `interface RecipeView { key: string; name: string; result: string; pieces: readonly RecipePiece[] }`
   - `recipeViews(recipes: readonly Recipe[]): RecipeView[]`: hoje `key = into`, `name = Recipe.name`,
-    `result = TECHNIQUES[into].short`, peças = `from` com `TECHNIQUES[id].short`. A F37 troca só esta função pelo
+    `result = TECHNIQUES[into].short`, peças = `from` com `TECHNIQUES[id].short` e `minLevel = EVOLUTION_LEVEL`. A F37 troca só esta função pelo
     formato `{kind, id, minLevel}[]`.
   - `class Grimoire { constructor(keys: readonly string[]); has(key); add(key): boolean; list(): string[] }`
     (`add` devolve `false` se já tinha, GRI-03; chaves desconhecidas ficam, MSV-05)
-  - `grimoireHint(views, inHand: (p: RecipePiece) => boolean, known: (key) => boolean): string | null`
-- **Regras**: elegível = peças na mão `>= ceil(total / 2)` e `< total`; a primeira elegível na ordem dos dados.
-  Revelada: `Grimório: <na mão, ' + '> + <as outras, ' + '> → <result>`; não revelada:
-  `Grimório: <na mão, ' + '> + ? → ?`. Com 2 peças dá exatamente o texto da spec.
+  - `grimoireHint(views, levelOf: (p: RecipePiece) => number, known: (key) => boolean): string | null` (0 = fora da mão)
+- **Regras**: elegível = peças na mão (`levelOf > 0`) `>= ceil(total / 2)` e receita não pronta (alguma peça com
+  `levelOf < minLevel`); a primeira elegível na ordem dos dados. Revelada: `Grimório: <na mão, ' + '> + <as outras,
+  ' + '> → <result>`, cada peça como `<label> Nv <minLevel>`; não revelada: `Grimório: <na mão, ' + '> + ? → ?`, ou
+  `Grimório: <na mão, ' + '> → ?` com todas na mão. Com 2 peças dá exatamente o texto da spec.
 
 ### core/save.ts (v2)
 
@@ -317,7 +333,8 @@ três linhas e uma folga, o painel fica em ~380 px de 540 (FAL-06, conferido pel
 - **Interfaces**: `SummaryInput.meta?: MetaSummary`; `metaLines(meta?: MetaSummary): SummaryLine[]`, chamado em
   `summaryLines` entre `recordLine` e a linha do recomeço.
 - **Regras**: `Liberado:` usa `listLines('Liberado', nomes, '')` com `highlight` em todas as linhas da lista; a primeira
-  linha do bloco leva `gap`; `Falta pouco para: <name> · <label> (<progress>/<target>)`.
+  linha do bloco leva `gap`; `Falta pouco para: <name> · <label> (<progress>/<target>)` e, logo depois, `Desafio: <name> · <label>` (FAL-08); o
+  `name` já vem com o tipo.
 
 ### scenes/test/saveLoad.ts e scenes/test/saveSession.ts
 
@@ -351,23 +368,28 @@ três linhas e uma folga, o painel fica em ~380 px de 540 (FAL-06, conferido pel
   - `onKokusen()`, `onPlayerStrike(hit)`, `onPlayerHurt()`, `onBossDefeated()`, `onBossFinisher(killed)`, `onJackpot()`
   - `onShopFrame(view: ShopView)`: registra a receita de toda carta `evolution` na tela e atualiza a dica
   - `onRecipeSeen(key)`: fusão (e, na F33, a oferta do baú)
-  - `summary(): MetaSummary`, `snapshot(): MetaSnapshot`
-- **Regras**: todo evento passa por `if (!this.counting) return`. Peça na mão para a dica: técnica com
-  `loadout.levelOf(id) > 0`, talento com `build.perks.has(id)`, arma com `arsenal.snapshot().weapon === id`.
+  - `freshTechnique(): TechId | null` e `markOffered(ids)`: a lista em memória `freshTechniques` (STA-18); o diretor
+    sobrevive ao R e ao J, e a lista com ele
+  - `summary(): MetaSummary` (com `challenge(run.round)`), `snapshot(): MetaSnapshot`
+- **Regras**: todo evento passa por `if (!this.counting) return`. Nível da peça para a dica: técnica
+  `loadout.levelOf(id)`, talento 1 com `build.perks.has(id)` (a F35 troca pelo nível do talento), arma 1 com
+  `arsenal.snapshot().weapon === id`; 0 fora da mão.
 
 ### scenes/test/starterDirector.ts
 
 - **Purpose**: o painel da Técnica inicial (STA-05..14, STA-17).
 - **Interfaces**: `mountUi(layer)` (recria o `StarterPanel`, zera o estado), `get open()`, `onStartRun()`,
   `update(): boolean` (`true` enquanto consumiu o quadro), `snapshot(): MetaSnapshot['starter']`.
-- **Dependencies**: `meta.gate`, `run.startRng`, `loadout`, `shopInput`, `controls`, `hud`, `record.roundBanner`.
+- **Dependencies**: `meta.gate`, `meta.freshTechnique`/`markOffered`, `run.startRng`, `loadout`, `wallet`, `shopInput`,
+  `controls`, `hud`, `record.roundBanner`.
 
 ### game/StarterPanel.ts, game/MetaToast.ts, game/GrimoireHint.ts
 
 - **StarterPanel**: molde do `VowPanel`, profundidade 210, na `uiLayer`. Título `Técnica inicial` em (480, 130); três
-  cartas 170x130 a partir de y 170 com folga 18 (546 px, centradas); em cada uma a tecla (`1`..`3`), o nome
-  (`TECHNIQUES[id].name`, quebra na largura da carta), `Nv 1/3` e o texto da carta da loja; rodapé
-  `1-3 escolhe · Enter: sem técnica` em y 320. `show(cards: { key; name; level; text }[])`, `hide()`,
+  cartas 170x130 a partir de y 170 com folga 18 (546 px, centradas); em cada uma a tecla (`1`..`3`), `Novo` na carta
+  recém-liberada, o nome (`TECHNIQUES[id].name`, quebra na largura da carta), `Nv 1/<maxLevel da carta>`, o papel
+  (`STARTER_ROLES[id]`, se houver) e `<custo> CE · <recarga> s` do Nv 1; rodapé
+  `1-3 escolhe · Enter: sem técnica (+<n>)` em y 320. `show(cards: { key; name; level; role; numbers; fresh }[], refusal)`, `hide()`,
   `debug(): { visible; title; cards: string[][]; footer }`. Cores `STARTER_PANEL_COLORS = { bg: 'k', cardBg: 'K',
   border: 'c', title: 'C', text: 'w', key: 'A', effect: 'S', hint: 'S' }`.
 - **MetaToast**: `Text` em (480, 172), origem (0.5, 0.5), cor `META_COLORS.toast` (`'A'`), estilo do banner do HUD.
@@ -402,11 +424,12 @@ interface Nearest { def: AchievementDef; name: string; progress: number }
 interface MetaSummary {
   unlocked: string[]; // nomes, na ordem de desbloqueio da run
   nearest: { name: string; label: string; progress: number; target: number } | null;
+  challenge: { name: string; label: string } | null;
 }
 
 // game/metaSnapshot.ts — snapshot.meta (STA-17, CNQ-16, GRI-10, FAL-07)
 interface MetaSnapshot {
-  starter: { open: boolean; offers: string[]; chosen: string | null };
+  starter: { open: boolean; offers: string[]; chosen: string | null; refusal: number; fresh: string[] };
   registry: 'game' | 'test';
   unlocks: string[];
   progress: Record<string, number>;
@@ -418,6 +441,7 @@ interface MetaSnapshot {
   grimoire: string[];
   hint: string | null;
   nearest: string | null;
+  challenge: string | null;
 }
 ```
 
@@ -467,8 +491,8 @@ com `unlock=`/`grimoire=` (nenhum lê o armazenamento).
 | `src/scenes/test/snapshot.ts` | 210 | 211 | 400 |
 | `src/scenes/test/runDirector.ts` | 180 | ~205 | 400 |
 
-Arquivos novos (estimativa): `data/unlocks.ts` ~70, `core/unlocks.ts` ~130, `core/starter.ts` ~30,
-`core/grimoire.ts` ~70, `scenes/test/saveSession.ts` ~60, `scenes/test/metaDirector.ts` ~190,
+Arquivos novos (estimativa): `data/unlocks.ts` ~70, `core/unlocks.ts` ~130, `core/starter.ts` ~40,
+`core/grimoire.ts` ~70, `scenes/test/saveSession.ts` ~60, `scenes/test/metaDirector.ts` ~200,
 `scenes/test/starterDirector.ts` ~90, `game/StarterPanel.ts` ~110, `game/MetaToast.ts` ~55, `game/GrimoireHint.ts`
 ~30, `game/metaSnapshot.ts` ~25. Função mais longa prevista: `StarterPanel` construtor (~35 linhas); complexidade
 máxima em `loadSave` (~9) e `Achievements.evaluate` (~6). Nenhum arquivo novo entra nas exceções.
@@ -503,7 +527,7 @@ máxima em `loadSave` (~9) e `Achievements.evaluate` (~6). Nenhum arquivo novo e
 | `scene.restart()` reaproveita o `RunDirector` | `src/scenes/TestScene.ts:79`, tecla R em `:396` | `starter.open` velho deixaria a cena nova sem gameplay; escrita pendente perdida | `starter.mountUi` zera o estado; `save.remount()` faz o `flush` pendente; smoke `world-restart` e R com o painel aberto no `meta-starter` |
 | A escrita pedida num quadro de hitstop | `TestScene.ts:414` (`if (this.effects.frozen) return`) | um `flush` dentro do `update` da cena esperaria o fim do hitstop | o `flush` roda no `POST_UPDATE` da cena, que o Phaser emite em todo quadro, congelado ou não |
 | Sorteios das outras fases (baú do chefe F33, Baú do Véu F31, cartas da F30, talentos da F35) não existem aqui | F30 `core/shopDraw.ts`, F33 `core/bossChest.ts`, F31 `domainDirector` | conteúdo trancado oferecido depois do merge | gate genérico (`allows`, `lockedIds`, `filterCatalog`); a tarefa de integração confere com `grep` os sorteios presentes no código na hora; testes de unidade por sorteio (200 seeds sem o trancado) |
-| O texto de técnica na carta da loja hoje é só `Nova · slot 1` | `src/core/shop.ts:114-121` | a carta da Técnica inicial diz pouco sobre a técnica | a carta usa a mesma função da loja; quando a F30 trouxer os textos por nível, a carta melhora sem mudança aqui |
+| O texto de técnica na carta da loja hoje é só `Nova · slot 1` | `src/core/shop.ts:114-121` | a carta da Técnica inicial diria pouco sobre a técnica | a carta não usa o texto da loja: mostra o papel (`STARTER_ROLES`) e os números do Nv 1 (STA-05); com a F30, os números saem do `Loadout.stats` |
 | A F30 pode mudar a loja (4 cartas, linhas novas) | `src/game/ShopPanel.ts:29-48` | a dica do Grimório em y 368 cobrir algo | teste lê `ShopPanel.ts?raw` (`CARD_TOP`, `CARD_H`) e exige a dica abaixo de `CARD_TOP + CARD_H + 16 + 14`; ao mergear a F30, o teste aponta o conflito |
 | `combat.ts` e `impactFx.ts` estão modificados no worktree principal (F29) | `src/scenes/test/combat.ts:83,98,265` | conflito de merge | o Kokusen fica no `effects.ts` (não no `impactFx`); o `combat.ts` só troca duas linhas, num commit de integração separado, o último da feature |
 | Sal do `startRng` precisa ser único entre os streams de hoje e os reservados | `src/core/run.ts:297-307`; specs F31 (`0xa54ff53a`, `0x9b05688c`), F32 (`0x9b05688c`), F33 (`0x71374491`), F38 (`0xc2b2ae35`); F30 `axisSalt` ainda sem valor | dois sorteios correlacionados | `0xb5c0fbcf` (constante do SHA-256, como os outros), conferido por `grep` em `src/` e `.specs/` dos worktrees em 15/10; o teste compara com todos os sais literais do `run.ts` e com `SHOP.rngSalt` |
@@ -537,7 +561,7 @@ acrescentam):
 
 - **Decision**: Toda run fora do debug começa com o painel `Técnica inicial`: 3 técnicas liberadas sorteadas pelo
   `startRng`; a escolhida entra grátis no slot 0, no nível 1, e daí em diante segue as regras da loja; Enter começa sem
-  técnica. Emenda a AD-005: a loja continua sendo o único lugar de comprar e evoluir técnicas; só a primeira pode vir
+  técnica e com o preço de Nv 1 da carta mais barata oferecida; a técnica recém-liberada vem na 1ª carta. Emenda a AD-005: a loja continua sendo o único lugar de comprar e evoluir técnicas; só a primeira pode vir
   do painel.
 - **Reason**: Plano de builds, seção 5.10 e linha F39 (decisões do usuário de 15/10): a run seguinte começa diferente.
 - **Trade-off**: A r1 fica mais fácil com técnica; a garantia de técnica no slot 0 da 1ª loja (TSH-05) passa a valer
@@ -553,12 +577,12 @@ Altar, fora daqui) são seguidas sem mudança.
 
 | Arquivo | Cobre |
 | --- | --- |
-| `tests/core/unlocks.test.ts` | CNQ-01 (as 8, ordem, rótulo, alvo, escopo, conteúdo, iguais à tabela da spec); UNL-02 (forma, alvo inteiro >= 1); UNL-03 com tabelas injetadas (ativa × dormente); UNL-04 (dormente não soma, não aparece em `active`/`nearest`, não tranca); UNL-05/06 (`allows` falso só para ativa não liberada; conteúdo sem conquista sempre livre); CNQ-03 nos dois lados do alvo (L-010: `target - 1` fica trancada, `target` libera no mesmo `bump`); CNQ-04 por escopo (`run` maior valor entre duas runs, `round` zera no `startRound`, `total` soma entre runs, marco 0/1); CNQ-05/06; CNQ-14 (segunda vez devolve `[]`); FAL-02 com empate nos dois sentidos e razão 0 em todas; ids desconhecidos preservados em `data()`; CNQ-10 (`isContraStrike`: Contra do moveset conta, `counter: true` sem `moveName` de Contra não) e CNQ-11 (`isPlayerHurt`: só golpe de outro dono); UNL-01 lendo `src/core/unlocks.ts?raw` (sem `phaser`, sem `localStorage`) |
-| `tests/core/starter.test.ts` | STA-01 (só `kind: 'technique'`, nunca `roxo` nem `into` de receita, trancado fora, ordem de `TECHNIQUES`); STA-02 (3 distintas; pool de 2 → 2; vazio → `[]`); STA-04 (mesma seed e conjunto → mesmas cartas na mesma ordem); uniformidade em 3000 seeds (cada uma das 4 aparece em 75% ± 3%) |
+| `tests/core/unlocks.test.ts` | CNQ-01 (as 8, ordem, rótulo, alvo, escopo, conteúdo, iguais à tabela da spec); UNL-02 (forma, alvo inteiro >= 1); UNL-03 com tabelas injetadas (ativa × dormente); UNL-04 (dormente não soma, não aparece em `active`/`nearest`, não tranca); UNL-05/06 (`allows` falso só para ativa não liberada; conteúdo sem conquista sempre livre); CNQ-03 nos dois lados do alvo (L-010: `target - 1` fica trancada, `target` libera no mesmo `bump`); CNQ-04 por escopo (`run` maior valor entre duas runs, `round` zera no `startRound`, `total` soma entre runs, marco 0/1); CNQ-05/06; CNQ-14 (segunda vez devolve `[]`); FAL-02 com empate nos dois sentidos, razão 0 em todas e marco nunca escolhido; FAL-08 (`challenge` com 2 marcos trancados nas rodadas 1, 2, 3 → índices 0, 1, 0; marco liberado sai da roda; nenhum → `null`); CNQ-09 (`reach('chefeR10', 5)` fica em 5/10, `10` libera); ids desconhecidos preservados em `data()`; CNQ-10 (`isContraStrike`: Contra do moveset conta, `counter: true` sem `moveName` de Contra não) e CNQ-11 (`isPlayerHurt`: só golpe de outro dono); UNL-01 lendo `src/core/unlocks.ts?raw` (sem `phaser`, sem `localStorage`) |
+| `tests/core/starter.test.ts` | STA-01 (só `kind: 'technique'`, nunca `roxo` nem `into` de receita, trancado fora, ordem de `TECHNIQUES`); STA-02 (3 distintas; pool de 2 → 2; vazio → `[]`); STA-04 (mesma seed, conjunto e recém-liberada → mesmas cartas na mesma ordem); STA-18 (recém-liberada na frente e fora do resto do sorteio; fora do pool, ignorada); STA-08 (`refusalFragments` de `divergente,azul,vermelho` → 15, o menor `cost.base`; sem oferta → 0); uniformidade em 3000 seeds (cada uma das 4 aparece em 75% ± 3%) |
 | `tests/core/runStartRng.test.ts` | STA-03: `run.startRng` igual a `new Rng(seed ^ 0xb5c0fbcf)` depois do start; o sal difere de todo sal literal do `run.ts?raw` e de `SHOP.rngSalt`; consumir o `startRng` não muda os outros streams (arquivo novo: o `run.test.ts` está na exceção de tamanho) |
-| `tests/core/grimoire.test.ts` | GRI-01 (chave = `into`); GRI-03 (`add` repetido → `false`); GRI-04 com 2 peças (0, 1, 2 na mão) e com uma receita falsa de 3 e de 4 peças (limiar `ceil(n/2)` nos dois lados, L-010); GRI-05/06 (textos exatos, `Vermelho + Azul → Vazio Roxo` e `Vermelho + ? → ?`); GRI-07 (primeira na ordem) |
+| `tests/core/grimoire.test.ts` | GRI-01 (chave = `into`); GRI-03 (`add` repetido → `false`); GRI-04 com 2 peças (0 na mão, 1, 2 com uma abaixo do nível, 2 no nível) e com uma receita falsa de 3 e de 4 peças (limiar `ceil(n/2)` e "pronta" nos dois lados, L-010); GRI-05/06 (textos exatos, `Vermelho Nv 3 + Azul Nv 3 → Vazio Roxo`, `Vermelho + ? → ?` e `Azul + Vermelho → ?`); GRI-07 (primeira na ordem) |
 | `tests/core/save.test.ts` | MSV-01 (ida e volta v2); MSV-02 (v1 com recorde r7 → v2 com r7 e meta vazia); MSV-04 (meta ausente; `unlocks` com número; `progress` -1, 1,5 e `'2'`; `grimoire` não lista; `progress` 0 válido); MSV-05 (ids desconhecidos voltam iguais); versão 3 → `newer`; os testes de migração injetada de hoje |
-| `tests/core/runSummary.test.ts` | FAL-01/03/04/05 (bloco antes do recomeço, `gap` só na primeira linha, `highlight` no `Liberado`, quebra de lista longa); FAL-06 com a build cheia do END-14 + 2 liberados + a linha: `panelBounds` dentro de 960x540 |
+| `tests/core/runSummary.test.ts` | FAL-01/03/04/05 (bloco antes do recomeço, `gap` só na primeira linha, `highlight` no `Liberado`, quebra de lista longa); FAL-08 (`Desafio` logo depois do `Falta pouco`); a linha de cada entrada do registro do jogo com o progresso máximo cabe em `SUMMARY_LINE_MAX`; FAL-06 com a build cheia do END-14 + 2 liberados + as duas linhas: `panelBounds` dentro de 960x540 |
 | `tests/scenes/saveLoad.test.ts` (ex-`recordLoad`) | a tabela da "Carga do save" linha a linha; `unlock=all/none/a,b,x` (x desconhecido some); `grimoire=`; nenhum parâmetro de debug chama `read` |
 | `tests/scenes/saveSession.test.ts` | MSV-06 (dois `requestWrite` no mesmo quadro → uma escrita no `flush`); MSV-07 (sem mudança → nenhuma escrita; mudança no progresso → uma); MSV-03 (v1 carregado e escrito → `version: 2`); MSV-08 (recorde antigo mantido); MSV-10 (`off`, `locked` nunca escrevem); MSV-11 (`write` lançando → `'memory'`, sem escrita depois); `remount` com pendência faz o `flush` |
 | `tests/game/metaViews.test.ts` | STA-15, CNQ-15, GRI-09: `STARTER_PANEL_COLORS` e `META_COLORS` só com chaves da `PALETTE`; L-043: o `MetaToast` repassa texto, posição (480, 172) e cor ao `Text` falso e tira o item depois de 2500 ms de `POST_UPDATE` (2499 ainda na tela, 2500 o próximo); a dica abaixo do rodapé da loja lendo `ShopPanel.ts?raw`; o `StarterPanel` cabe em 960x540 |
@@ -568,10 +592,10 @@ Altar, fora daqui) são seguidas sem mudança.
 
 | Smoke | Passos | Cobre |
 | --- | --- | --- |
-| `meta-starter.smoke.mjs` | `nosave=1&starter=1&seed=7`: Enter começa a run → painel aberto (STA-10 com Enter), 3 ofertas, `run.state` `roundActive`, `enemies` 0 e a vida do player igual por 2000 ms, banner escondido; apertar 2 → slot 0 = `offers[1]` no nível 1, fragmentos iguais, `starter:<id>`, banner `Rodada 1`, inimigos nascem; recarregar com a mesma seed → mesmas cartas; Enter → slots vazios, `starterRefused`; 4 → nada muda; `tech=azul&starter=1` e sem `starter=1` → painel fechado; R com o painel aberto → cena nova jogável; morrer, J em 1000 ms → painel aberto; 1 antes de 3000 ms da morte → aceito | STA-02, 04..12, 14, 16, 17 |
-| `meta-unlock.smoke.mjs` | sem `achievements=` → `meta.active` vazio, `dormant` com as 8, `nearest` `null`, sem linha `Falta pouco`; `achievements=test&nosave=1&unlock=none&starter=1&seed=7` → as ofertas nunca têm `corte`, a 1ª loja nunca tem `corte`; limpar a r1 → no `roundStart` da r2 `unlock:testeR2`, aviso `Liberado: Desmantelar` em (480, 172) e a próxima loja pode ter `corte` (seed escolhida para ter); morrer → painel com `Liberado: Desmantelar` e `Falta pouco para: Contra afiado · 1 Contra numa run (0/1)`; `unlock=all` → nada trancado, `storage: 'off'`; `round=3&achievements=test` → `counting: false`, nada libera | UNL-03..07, CNQ-02, 13, 15, 16, FAL-01..07 |
+| `meta-starter.smoke.mjs` | `nosave=1&starter=1&seed=7`: Enter começa a run → painel aberto (STA-10 com Enter), 3 ofertas, `run.state` `roundActive`, `enemies` 0 e a vida do player igual por 2000 ms, banner escondido; apertar 2 → slot 0 = `offers[1]` no nível 1, fragmentos iguais, `starter:<id>`, banner `Rodada 1`, inimigos nascem; recarregar com a mesma seed → mesmas cartas; Enter → slots vazios, carteira + o menor `cost.base` das 3 ofertas (o número do rodapé), `starterRefused`; 4 → nada muda; `tech=azul&starter=1` e sem `starter=1` → painel fechado; R com o painel aberto → cena nova jogável; morrer, J em 1000 ms → painel aberto; 1 antes de 3000 ms da morte → aceito | STA-02, 04..12, 14, 16, 17 |
+| `meta-unlock.smoke.mjs` | sem `achievements=` → `meta.active` vazio, `dormant` com as 8, `nearest` e `challenge` `null`, sem linha `Falta pouco` nem `Desafio`; `achievements=test&nosave=1&unlock=none&starter=1&seed=7` → as ofertas nunca têm `corte`, a 1ª loja nunca tem `corte`; limpar a r1 → no `roundStart` da r2 `unlock:testeR2`, aviso `Liberado: Desmantelar (técnica)` em (480, 172) e a próxima loja pode ter `corte` (seed escolhida para ter); morrer → painel com `Liberado: Desmantelar (técnica)`, `Falta pouco para: Contra afiado (talento) · 1 Contra numa run (0/1)` e `Desafio: Sem guarda (voto) · vencer um chefe`; J com `starter=1` → a 1ª carta é `corte` com `Novo`; `unlock=all` → nada trancado, `storage: 'off'`; `round=3&achievements=test` → `counting: false`, nada libera | UNL-03..07, CNQ-02, 13, 15, 16, FAL-01..08, STA-18 |
 | `meta-save.smoke.mjs` | `nosave=0`, chave limpa; grava à mão um v1 com recorde r7; carregar → `best.round` 7, meta vazia; morrer na r1 → chave igual (MSV-07); `achievements=test` → chegar à r2 → chave v2 escrita no meio da run com `unlocks: ['testeR2']` e recorde r7; recarregar → `testeR2` liberado (MSV-12); chave com `progress: { testeR2: -1 }` → save inválido, recorde vazio; `Storage.prototype.setItem` lançando → `storage: 'memory'`, aviso igual; limpa a chave no fim | MSV-02, 03, 04, 06, 07, 11, 12 |
-| `meta-grimoire.smoke.mjs` | `nosave=1&tech=vermelho` → loja → dica `Grimório: Vermelho + ? → ?`; `grimoire=roxo` → `Grimório: Vermelho + Azul → Vazio Roxo`; `tech=vermelho,azul` → sem dica; `tech=azul:3,vermelho:3` → carta do Roxo na loja → `grimoire:roxo` uma vez, aviso `Grimório: Vazio Roxo (Azul + Vermelho)`; reroll → sem segundo evento; painel de votos aberto → dica escondida; fechar a loja → dica escondida | GRI-02..10 |
+| `meta-grimoire.smoke.mjs` | `nosave=1&tech=vermelho` → loja → dica `Grimório: Vermelho + ? → ?`; `grimoire=roxo` → `Grimório: Vermelho Nv 3 + Azul Nv 3 → Vazio Roxo`; `tech=vermelho,azul` → `Grimório: Azul + Vermelho → ?`; `tech=azul:3,vermelho:3` → carta do Roxo na loja e dica escondida (receita pronta) → `grimoire:roxo` uma vez, aviso `Grimório: Vazio Roxo (Azul + Vermelho)`; reroll → sem segundo evento; painel de votos aberto → dica escondida; fechar a loja → dica escondida | GRI-02..10 |
 
 Existentes a rodar: `record-save`, `record-end`, `record-hud` (escrita pela sessão, painel com o bloco da meta),
 `shop`, `shop-progress`, `evolution`, `vows`, `run-loop`, `world-restart` (R recria as vistas), `kokusen` (o Kokusen
@@ -583,10 +607,10 @@ passa pelo `effects`), `boss-victory`, `finisher`, `no-debug` (fora do debug o p
 
 | Requisitos | Onde |
 | --- | --- |
-| STA-01, 02, 04 | `core/starter.ts` |
+| STA-01, 02, 04, 08 (valor), 18 (ordem) | `core/starter.ts` |
 | STA-03 | `core/run.ts` |
 | STA-05, 15 | `game/StarterPanel.ts`, `scenes/test/starterDirector.ts` |
-| STA-06..14, 16, 17 | `scenes/test/starterDirector.ts`, `runDirector.tick`, `TestScene.ts:416-420` |
+| STA-06..14, 16, 17, 18 | `scenes/test/starterDirector.ts`, `metaDirector` (`freshTechniques`), `runDirector.tick`, `TestScene.ts:416-420` |
 | CNQ-01, UNL-02, UNL-03 | `data/unlocks.ts`, `core/unlocks.ts` |
 | UNL-01, 04..07, CNQ-02..04, CNQ-14 | `core/unlocks.ts` |
 | UNL-05 (sorteios), UNL-08 | `starterPool`, `shopDirector.openShop`, `vowDirector.openPanel`; debug sem mudança |

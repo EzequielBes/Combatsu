@@ -58,7 +58,8 @@ Smokes instáveis conhecidos: `armed` (ARM-12) e timeouts sob carga; repetir iso
 - `core/run.ts` (exceção de complexidade) só ganha o stream `startRng` (T10): nenhum estado, nenhum ramo.
 - Nenhum arquivo novo entra nas exceções do `.oxlintrc.json`.
 - Hoje as 8 conquistas são dormentes (F31, F34, F35 e F40 ainda não estão no código). A prova no navegador de trava,
-  aviso, escrita e "falta pouco" usa `?debug&achievements=test` (`testeR2`, `testeContra`). As conquistas sem par no
+  aviso, escrita, "falta pouco", "Desafio" e carta `Novo` usa `?debug&achievements=test` (`testeR2`, `testeContra`,
+  `testeChefe`). As conquistas sem par no
   registro de teste (`kokusenRodada`, `chefeSemTecnica`, `jackpots`, `chefeR10`, `semDano`, `finalizadorChefe`) têm a
   regra provada em unidade (`Achievements`) e a ligação provada no navegador só se o conteúdo dela existir no código
   quando a task rodar; senão, a task prova que nada regrediu e deixa a citação da linha de ligação para o Verifier.
@@ -230,12 +231,12 @@ o `record`, cria `meta` vazia) e `serializeSave(record, meta)`. O único chamado
 
 **What**: Em `core/unlocks.ts` (novo): `ContentKind`, `AchievementScope`, `AchievementDef`, `ContentTables`,
 `Nearest`, `isActive(def, tables)` e a classe `Achievements` (`startRun`, `startRound`, `bump`, `reach`, `meet`,
-`isUnlocked`, `active`, `dormant`, `nearest`, `data`) com as regras da seção "core/unlocks.ts" do design.
+`isUnlocked`, `active`, `dormant`, `nearest`, `challenge`, `data`) com as regras da seção "core/unlocks.ts" do design.
 **Where**: `src/core/unlocks.ts`
 **Teste par**: `tests/core/unlocks.test.ts`
 **Depends on**: T4
 **Reuses**: `MetaSave` de `core/save`
-**Requirement**: UNL-01, UNL-02, UNL-03, UNL-04, CNQ-02, CNQ-03, CNQ-04, CNQ-05, CNQ-06, CNQ-14, FAL-02
+**Requirement**: UNL-01, UNL-02, UNL-03, UNL-04, CNQ-02, CNQ-03, CNQ-04, CNQ-05, CNQ-06, CNQ-09, CNQ-14, FAL-02, FAL-08
 
 **Done when**:
 
@@ -243,10 +244,11 @@ o `record`, cria `meta` vazia) e `serializeSave(record, meta)`. O único chamado
 - [ ] UNL-03/04: dormente não soma, não guarda progresso, fica fora de `active` e de `nearest`; ativa × dormente pela tabela
 - [ ] CNQ-03 nos dois lados (L-010): `target - 1` fica trancada; `target` libera no mesmo `bump`/`reach`, e a chamada devolve o id
 - [ ] CNQ-04 por escopo: `run` guarda o maior entre duas runs; `round` zera no `startRound` e guarda o maior; `total` soma entre runs; marco 0/1
-- [ ] CNQ-05 (`reach` com a rodada) e CNQ-06 (`bump` por Kokusen, zera no `startRound`)
+- [ ] CNQ-05 (`reach` com a rodada), CNQ-06 (`bump` por Kokusen, zera no `startRound`) e CNQ-09 (`reach('chefeR10', 5)` fica em 5/10; `10` libera)
 - [ ] CNQ-14: cumprir de novo devolve `[]`, e o progresso continua guardado
 - [ ] Duas conquistas no mesmo evento: ids devolvidos na ordem do registro (caso de borda)
-- [ ] FAL-02: maior razão; empate nos dois sentidos fica com a primeira do registro; razão 0 em todas → a 1ª ativa; nenhuma ativa trancada → `null`
+- [ ] FAL-02: maior razão entre as de contagem; empate nos dois sentidos fica com a primeira do registro; razão 0 em todas → a 1ª de contagem; marco nunca é o `nearest`; nenhuma de contagem trancada → `null`
+- [ ] FAL-08: `challenge(endRound)` com 2 marcos trancados → índices 0, 1, 0 nas rodadas 1, 2, 3; marco liberado sai da roda; nenhum marco trancado → `null`
 - [ ] `data()` preserva ids desconhecidos do save (MSV-05)
 - [ ] UNL-01: `src/core/unlocks.ts?raw` sem `phaser` e sem `localStorage`
 - [ ] Gate verde; contagem anotada
@@ -260,8 +262,9 @@ o `record`, cria `meta` vazia) e `serializeSave(record, meta)`. O único chamado
 ### T6: Registro das conquistas e tabelas de conteúdo
 
 **What**: `data/unlocks.ts` (novo) com `ACHIEVEMENTS` (as 8 da CNQ-01, na ordem e com os rótulos exatos da spec),
-`TEST_ACHIEVEMENTS` (`testeR2` → técnica `corte`; `testeContra` → talento `contraAfiado`), `CONTENT_NAMES` montado de
-`TECHNIQUES`, `PERKS` e `VOWS` (`domainUpgrade` vazio), `STARTER = { offers: 3 }`,
+`TEST_ACHIEVEMENTS` (`testeR2` → técnica `corte`; `testeContra` → talento `contraAfiado`; `testeChefe`, marco → voto
+`semGuarda`), `CONTENT_NAMES` montado de `TECHNIQUES`, `PERKS` e `VOWS` (`domainUpgrade` vazio), `KIND_LABELS`,
+`STARTER_ROLES` (as 4 técnicas base), `STARTER = { offers: 3 }`,
 `META_TOAST = { x: 480, y: 172, ms: 2500 }` e `GRIMOIRE_HINT_Y = 368`.
 **Where**: `src/data/unlocks.ts`
 **Teste par**: `tests/data/unlocks.test.ts`
@@ -273,8 +276,9 @@ o `record`, cria `meta` vazia) e `serializeSave(record, meta)`. O único chamado
 
 - [ ] CNQ-01: id, rótulo, alvo, escopo e conteúdo das 8 iguais à tabela da spec, na ordem
 - [ ] UNL-02: todo registro (jogo e teste) com alvo inteiro >= 1, escopo e tipo válidos, ids únicos
-- [ ] UNL-03: com as tabelas reais de hoje, as 8 do jogo são dormentes e as 2 de teste são ativas (o teste falha de propósito quando uma fase trouxer o conteúdo, e a task dessa fase troca a expectativa)
+- [ ] UNL-03: com as tabelas reais de hoje, as 8 do jogo são dormentes e as 3 de teste são ativas (o teste falha de propósito quando uma fase trouxer o conteúdo, e a task dessa fase troca a expectativa)
 - [ ] `CONTENT_NAMES.technique.corte === TECHNIQUES.corte.name` e o mesmo para talento e voto
+- [ ] Para cada entrada dos dois registros, `Falta pouco para: <nome ou id> (<tipo>) · <rótulo> (<alvo>/<alvo>)` e `Desafio: <nome ou id> (<tipo>) · <rótulo>` têm no máximo 100 caracteres (`SUMMARY_LINE_MAX`); cada `STARTER_ROLES` tem no máximo 20
 - [ ] Gate verde; contagem anotada
 
 **Tests**: unit
@@ -331,19 +335,22 @@ os outros tipos passam), lendo o conjunto vivo do `Achievements`.
 
 ### T9: Pool e sorteio da Técnica inicial
 
-**What**: `core/starter.ts` (novo) com `starterPool(catalog, recipes, allows)` e `drawStarter(pool, rng, n)`, regras
+**What**: `core/starter.ts` (novo) com `starterPool(catalog, recipes, allows)`, `drawStarter(pool, rng, n, fresh)` e
+`refusalFragments(offers, catalog)`, regras
 da seção "core/starter.ts" do design.
 **Where**: `src/core/starter.ts`
 **Teste par**: `tests/core/starter.test.ts`
 **Depends on**: None
 **Reuses**: molde do `drawVows` (`core/vows.ts:33`); `GAME_SHOP_CATALOG`, `RECIPES`, `TECHNIQUES`
-**Requirement**: STA-01, STA-02, STA-04
+**Requirement**: STA-01, STA-02, STA-04, STA-08, STA-18
 
 **Done when**:
 
 - [ ] STA-01: só `kind: 'technique'`; nunca `roxo` nem qualquer `into` de receita; trancado fora; ordem de `TECHNIQUES`, não a do catálogo
 - [ ] STA-02: 3 distintas; pool de 2 → as 2; pool vazio → `[]`
-- [ ] STA-04: mesma seed e mesmo conjunto → mesmas cartas na mesma ordem
+- [ ] STA-04: mesma seed, mesmo conjunto e mesma recém-liberada → mesmas cartas na mesma ordem
+- [ ] STA-18: recém-liberada no pool é a 1ª carta e não se repete no resto; recém-liberada fora do pool é ignorada e o sorteio fica igual ao sem ela
+- [ ] STA-08: `refusalFragments(['divergente', 'azul', 'vermelho'])` = 15 (o menor `cost.base`); uma oferta só → o preço dela; sem oferta → 0
 - [ ] Uniformidade: em 3000 seeds cada uma das 4 técnicas base aparece em 75% ± 3% dos sorteios
 - [ ] Gate verde; contagem anotada
 
@@ -385,15 +392,15 @@ conferir de novo por `grep` em `src/` e nas `.specs/` dos worktrees que o sal n�
 **Where**: `src/core/grimoire.ts`
 **Teste par**: `tests/core/grimoire.test.ts`
 **Depends on**: None
-**Reuses**: `RECIPES` (`into`, `from`, `name`), `TECHNIQUES[id].short`
+**Reuses**: `RECIPES` (`into`, `from`, `name`), `TECHNIQUES[id].short`, `EVOLUTION_LEVEL` (`core/evolution`)
 **Requirement**: GRI-01, GRI-03, GRI-04, GRI-05, GRI-06, GRI-07
 
 **Done when**:
 
 - [ ] GRI-01: chave = `into` (`roxo`)
 - [ ] GRI-03: `add` repetido devolve `false`; chave desconhecida fica na lista
-- [ ] GRI-04 com 2 peças (0, 1 e 2 na mão) e com receitas falsas de 3 e 4 peças (limiar `ceil(n/2)` e "não todas" nos dois lados, L-010)
-- [ ] GRI-05/06: textos exatos `Grimório: Vermelho + Azul → Vazio Roxo` (com os `short` reais) e `Grimório: Vermelho + ? → ?`
+- [ ] GRI-04 com 2 peças (0 na mão → sem dica; 1 → dica; 2 com uma abaixo do nível → dica; 2 no nível → sem dica) e com receitas falsas de 3 e 4 peças (limiar `ceil(n/2)` e "pronta" nos dois lados, L-010)
+- [ ] GRI-05/06: textos exatos `Grimório: Vermelho Nv 3 + Azul Nv 3 → Vazio Roxo` (com os `short` reais e `EVOLUTION_LEVEL`), `Grimório: Vermelho + ? → ?` e, com as duas no Nv 1, `Grimório: Azul + Vermelho → ?`
 - [ ] GRI-07: duas receitas falsas elegíveis → a primeira da ordem
 - [ ] Gate verde; contagem anotada
 
@@ -411,15 +418,16 @@ entre a linha do recorde e `J / Enter para tentar de novo`.
 **Teste par**: `tests/core/runSummary.test.ts`
 **Depends on**: None
 **Reuses**: `listLines`, `SummaryLine.gap/highlight`, `panelBounds` (`game/RunSummaryPanel.ts`)
-**Requirement**: FAL-01, FAL-03, FAL-04, FAL-05, FAL-06
+**Requirement**: FAL-01, FAL-03, FAL-04, FAL-05, FAL-06, FAL-08
 
 **Done when**:
 
-- [ ] FAL-01: `Falta pouco para: <nome> · <rótulo> (<progresso>/<alvo>)` exato
+- [ ] FAL-01: `Falta pouco para: <nome> (<tipo>) · <rótulo> (<progresso>/<alvo>)` exato
+- [ ] FAL-08: `Desafio: <nome> (<tipo>) · <rótulo>` logo depois do `Falta pouco`; sem `challenge`, sem a linha; só `challenge` (sem `nearest`) → a linha abre o bloco com o `gap`
 - [ ] FAL-03: `nearest: null` → sem a linha; sem liberados e sem `nearest` → sem bloco; `meta` ausente → linhas iguais às de hoje
 - [ ] FAL-04: `Liberado: A, B` com `highlight` em toda linha da lista, quebra de lista longa como as outras
 - [ ] FAL-05: bloco depois do recorde e antes do recomeço; `gap` só na primeira linha do bloco
-- [ ] FAL-06: build cheia do END-14 + 2 liberados + a linha → `panelBounds` dentro de 960x540
+- [ ] FAL-06: build cheia do END-14 + 2 liberados + as duas linhas → `panelBounds` dentro de 960x540
 - [ ] Gate verde; contagem anotada
 
 **Tests**: unit
@@ -530,19 +538,20 @@ entre a linha do recorde e `J / Enter para tentar de novo`.
 ### T17: Painel da Técnica inicial
 
 **What**: `StarterPanel` no molde do `VowPanel` (profundidade 210, `uiLayer`, título `Técnica inicial` em (480, 130),
-três cartas 170x130 a partir de y 170 com folga 18, rodapé `1-3 escolhe · Enter: sem técnica` em y 320, `show`,
+três cartas 170x130 a partir de y 170 com folga 18 (tecla, `Novo`, nome, `Nv 1/<máx>`, papel, `<custo> CE · <recarga> s`),
+rodapé `1-3 escolhe · Enter: sem técnica (+<n>)` em y 320, `show`,
 `hide`, `debug`) e `STARTER_PANEL_COLORS`.
 **Where**: `src/game/StarterPanel.ts`
 **Teste par**: `tests/game/metaViews.test.ts`
 **Depends on**: None
 **Reuses**: `VowPanel` (estrutura, `css` local), `PALETTE`
-**Requirement**: STA-05, STA-15
+**Requirement**: STA-05, STA-15, STA-18
 
 **Done when**:
 
 - [ ] `STARTER_PANEL_COLORS` só com chaves da `PALETTE`
 - [ ] Cálculo puro das caixas: as três cartas, o título e o rodapé dentro de 960x540 e centrados em x 480
-- [ ] L-043: com `Text` falso, `show` repassa tecla, nome, `Nv 1/3` e texto de cada carta; `debug()` devolve título, cartas e rodapé exatos
+- [ ] L-043: com `Text` falso, `show` repassa tecla, `Novo` (só na carta marcada), nome, `Nv 1/<máx>`, papel (omitido sem `STARTER_ROLES`) e números de cada carta, e o rodapé com o valor da recusa; `debug()` devolve título, cartas e rodapé exatos
 - [ ] Gate verde; contagem anotada
 
 **Tests**: unit
@@ -592,10 +601,10 @@ Ligação: `runDirector` (campo `meta`, `meta.onCommand` e `meta.update` no `tic
 
 **Done when**:
 
-- [ ] `meta-unlock.smoke.mjs` (novo, `?debug&hd=1&area=modular&nosave=1`), parte 1: sem `achievements=` → `meta.registry` `'game'`, `active` vazio, `dormant` com os 8 ids na ordem, nenhum aviso; `achievements=test&unlock=none` → `active` `['testeR2', 'testeContra']`, `progress.testeR2` 1 na r1; limpar a r1 → no `roundStart` da r2 `unlock:testeR2` uma vez nos eventos, `meta.toast` `Liberado: Desmantelar` (nome lido de `TECHNIQUES.corte.name`), `unlockedThisRun` `['testeR2']`; o aviso some depois de 2500 ms reais
+- [ ] `meta-unlock.smoke.mjs` (novo, `?debug&hd=1&area=modular&nosave=1`), parte 1: sem `achievements=` → `meta.registry` `'game'`, `active` vazio, `dormant` com os 8 ids na ordem, nenhum aviso; `achievements=test&unlock=none` → `active` `['testeR2', 'testeContra', 'testeChefe']`, `progress.testeR2` 1 na r1; limpar a r1 → no `roundStart` da r2 `unlock:testeR2` uma vez nos eventos, `meta.toast` `Liberado: Desmantelar (técnica)` (nome lido de `TECHNIQUES.corte.name`), `unlockedThisRun` `['testeR2']`; o aviso some depois de 2500 ms reais
 - [ ] CNQ-14: a r3 da mesma run não empurra outro `unlock:testeR2`
 - [ ] CNQ-13: `round=3&achievements=test&unlock=none` → `counting: false`, nada soma nem libera ao começar a r4
-- [ ] `unlock=all&achievements=test` → `unlocks` com os 2 ids, `storage: 'off'`
+- [ ] `unlock=all&achievements=test` → `unlocks` com os 3 ids, `storage: 'off'`
 - [ ] Smokes `run-loop`, `world-restart`, `hud`, `boot`, `no-debug` verdes; `runDirector.ts` abaixo de 400 efetivas
 - [ ] Gate verde; contagem anotada (debugApi)
 
@@ -651,24 +660,25 @@ pede escrita a cada desbloqueio (MSV-06) e no `gameOver` (MSV-07); o `RecordDire
 
 ### T22: Liberados e "falta pouco" no fim da run
 
-**What**: `MetaDirector.summary()` (nomes liberados na run e o `nearest` com nome, rótulo, progresso e alvo);
-`RecordDirector.onDeath` passa `meta: runDirector.meta.summary()` ao `summaryLines`; o snapshot ganha `nearest`.
+**What**: `MetaDirector.summary()` (nomes liberados na run com o tipo, o `nearest` com nome, rótulo, progresso e alvo, e
+o `challenge(run.round)`); `RecordDirector.onDeath` passa `meta: runDirector.meta.summary()` ao `summaryLines`; o
+snapshot ganha `nearest` e `challenge`.
 **Where**: `src/scenes/test/recordDirector.ts`
 **Depends on**: T19, T12
-**Reuses**: `Achievements.nearest`, `metaLines`
-**Requirement**: FAL-01, FAL-02, FAL-03, FAL-04, FAL-05, FAL-07
+**Reuses**: `Achievements.nearest`, `Achievements.challenge`, `KIND_LABELS`, `metaLines`
+**Requirement**: FAL-01, FAL-02, FAL-03, FAL-04, FAL-05, FAL-07, FAL-08
 
 **Done when**:
 
-- [ ] `meta-unlock.smoke.mjs`, parte 3: `achievements=test&unlock=none`, morrer na r2 → `record.panel.lines` com `Liberado: Desmantelar` e `Falta pouco para: <nome de contraAfiado> · 1 Contra numa run (0/1)` antes de `J / Enter para tentar de novo`; `meta.nearest` `'testeContra'`
-- [ ] Morrer na r1 com `unlock=none` → `Falta pouco para: Desmantelar · começar a r2 numa run (1/2)` e sem `Liberado:`
-- [ ] FAL-03: sem `achievements=` → nenhuma linha do bloco, `nearest: null`; `unlock=all&achievements=test` → sem `Falta pouco`
+- [ ] `meta-unlock.smoke.mjs`, parte 3: `achievements=test&unlock=none`, morrer na r2 → `record.panel.lines` com `Liberado: Desmantelar (técnica)`, `Falta pouco para: <nome de contraAfiado> (talento) · 1 Contra numa run (0/1)` e `Desafio: <nome de semGuarda> (voto) · vencer um chefe` antes de `J / Enter para tentar de novo`; `meta.nearest` `'testeContra'`, `meta.challenge` `'testeChefe'`
+- [ ] Morrer na r1 com `unlock=none` → `Falta pouco para: Desmantelar (técnica) · começar a r2 numa run (1/2)` e sem `Liberado:`
+- [ ] FAL-03: sem `achievements=` → nenhuma linha do bloco, `nearest` e `challenge` `null`; `unlock=all&achievements=test` → sem `Falta pouco` nem `Desafio`
 - [ ] Smokes `record-end`, `hud`, `drops` verdes
 - [ ] Gate verde; contagem anotada
 
 **Tests**: smoke
 **Gate**: full
-**Commit**: `feat(meta): show unlocks and the nearest goal in the run summary`
+**Commit**: `feat(meta): show unlocks, the nearest goal and a challenge in the run summary`
 
 ---
 
@@ -680,12 +690,12 @@ painel de votos aberto) e `onRecipeSeen(key)` (fusão); registrar empurra `grimo
 `gameOver` e ao fechar a loja.
 **Where**: `src/scenes/test/metaDirector.ts`
 **Depends on**: T19, T21
-**Reuses**: `recipeViews`, `Grimoire`, `grimoireHint`, `loadout.levelOf`, `build.perks`, `arsenal.snapshot().weapon`
+**Reuses**: `recipeViews`, `Grimoire`, `grimoireHint` (com o nível de cada peça), `loadout.levelOf`, `build.perks`, `arsenal.snapshot().weapon`
 **Requirement**: GRI-02, GRI-03, GRI-04, GRI-05, GRI-06, GRI-07, GRI-08, GRI-10, MSV-06
 
 **Done when**:
 
-- [ ] `meta-grimoire.smoke.mjs` (novo, `?debug&hd=1&area=modular&nosave=1`): `tech=vermelho` → loja → `meta.hint` `Grimório: Vermelho + ? → ?`; `grimoire=roxo` → `Grimório: Vermelho + Azul → Vazio Roxo`; `tech=vermelho,azul` → `hint: null`; `tech=azul:3,vermelho:3` → carta do Roxo na loja → `grimoire:roxo` uma vez e aviso `Grimório: <RECIPES[0].name>`; reroll → sem segundo evento (GRI-03); painel de votos aberto → `hint: null`; loja fechada → `hint: null`
+- [ ] `meta-grimoire.smoke.mjs` (novo, `?debug&hd=1&area=modular&nosave=1`): `tech=vermelho` → loja → `meta.hint` `Grimório: Vermelho + ? → ?`; `grimoire=roxo` → `Grimório: Vermelho Nv 3 + Azul Nv 3 → Vazio Roxo`; `tech=vermelho,azul` → `Grimório: Azul + Vermelho → ?`; `tech=azul:3,vermelho:3` → carta do Roxo na loja e `hint: null` (receita pronta) → `grimoire:roxo` uma vez e aviso `Grimório: <RECIPES[0].name>`; reroll → sem segundo evento (GRI-03); painel de votos aberto → `hint: null`; loja fechada → `hint: null`
 - [ ] Fusão com a receita já vista não empurra evento
 - [ ] Smokes `shop`, `evolution`, `vows` verdes
 - [ ] Gate verde; contagem anotada
@@ -702,22 +712,27 @@ painel de votos aberto) e `onRecipeSeen(key)` (fusão); registrar empurra `grimo
 
 **What**: `StarterDirector` (novo) com `mountUi` (recria o painel, zera `open`, `offers`, `chosen`), `open`,
 `onStartRun` (abre fora do `?debug`; com `?debug` só com `starter=1` e sem `tech=`; nunca no `fxlab`; pool vazio não
-abre; pausa o Matter e descarta uma leitura do `ShopInput`), `update()` (lê 1-3/Enter, descarta um `controls.read()`,
-reafirma a pausa; equipa com `loadout.equip(0, id, 1)`, eventos `starter:<id>` e `starterRefused`) e `snapshot()`.
+abre; sorteia com a recém-liberada de `meta.freshTechnique()` e chama `meta.markOffered(offers)`; pausa o Matter e
+descarta uma leitura do `ShopInput`), `update()` (lê 1-3/Enter, descarta um `controls.read()`, reafirma a pausa; equipa
+com `loadout.equip(0, id, 1)`; na recusa, `wallet.add(refusalFragments(offers, GAME_SHOP_CATALOG))`; eventos
+`starter:<id>` e `starterRefused`) e `snapshot()`. O `MetaDirector` ganha `freshTechniques` (em memória, a técnica de
+todo desbloqueio entra no fim), `freshTechnique()` e `markOffered(ids)`.
 Ligação: `runDirector` (campo `starter`, `starter.onStartRun()` no fim do `onStartRun`, `if (this.starter.update())
 return;` no `tick`), `uiSetup` (`starter.mountUi`), `TestScene.ts` (`else if (!this.runDirector.starter.open)` antes do
 `updateGameplay`), `meta.snapshot().starter`.
 **Where**: `src/scenes/test/starterDirector.ts`
 **Depends on**: T3, T9, T10, T17, T19
-**Reuses**: `ShopInput.read`, `drawStarter`, `starterPool`, `meta.gate`, `previewText` da carta da loja, congelamento da loja
-**Requirement**: STA-01, STA-02, STA-04, STA-05, STA-06, STA-07, STA-08, STA-09, STA-10, STA-11, STA-13, STA-14, STA-17
+**Reuses**: `ShopInput.read`, `drawStarter`, `starterPool`, `refusalFragments`, `meta.gate`, `STARTER_ROLES`, `TECHNIQUES[id].cost`/`cooldownMs` e `maxLevel` da carta, congelamento da loja
+**Requirement**: STA-01, STA-02, STA-04, STA-05, STA-06, STA-07, STA-08, STA-09, STA-10, STA-11, STA-13, STA-14, STA-17, STA-18
 
 **Done when**:
 
 - [ ] `meta-starter.smoke.mjs` (novo, `?debug&hd=1&area=modular&nosave=1&starter=1&seed=7`): Enter começa a run → painel aberto (STA-10), 3 ofertas distintas entre as 4 base, `run.state` `roundActive`, `run.round` 1, `enemies` 0, vida e energia do player iguais e o temporizador da run parado por 2000 ms (STA-06); 4 → nada muda (STA-09); nenhuma tecla por 5000 ms → painel aberto (STA-11)
 - [ ] 2 → slot 0 = `offers[1]` no nível da 1ª compra, fragmentos iguais, `starter:<id>`, `meta.starter.chosen` igual, inimigos nascem (STA-07); a 1ª loja precifica o nível 2 dessa técnica (STA-13)
 - [ ] Recarregar com a mesma seed → mesmas cartas na mesma ordem (STA-04); J no lugar do Enter também não fecha o painel (STA-10)
-- [ ] Enter no painel → slots vazios, `starterRefused`, `chosen: null` (STA-08)
+- [ ] Enter no painel → slots vazios, carteira + o menor `cost.base` das 3 ofertas (igual ao `+<n>` do rodapé e a `meta.starter.refusal`), `starterRefused`, `chosen: null` (STA-08)
+- [ ] STA-18: `achievements=test&unlock=none&starter=1` (o `corte` está trancado e não sai no 1º painel), escolher a 1ª carta, liberar `testeR2` no `roundStart` da r2, morrer, J → a 1ª carta é `corte` com `Novo` e `meta.starter.fresh` fica vazio; a run seguinte volta ao sorteio comum
+- [ ] As cartas mostram `Nv 1/<maxLevel>`, o papel e `<custo> CE · <recarga> s` lidos dos dados (STA-05)
 - [ ] Sem `starter=1` e com `tech=azul&starter=1` → painel fechado e a luta começa como hoje (STA-14)
 - [ ] R com o painel aberto → cena nova jogável, painel fechado
 - [ ] `TestScene.ts` em no máximo 395 linhas efetivas
@@ -783,8 +798,8 @@ levado) e `onBossFinisher(damage, killed)`; em `combat.ts` a linha do `record.on
 ### T27: Chefe derrotado na meta
 
 **What**: `spawner.onBossDefeated` chama `this.s.runDirector.meta.onBossDefeated();` (1 linha); o `MetaDirector`
-acompanha o chefe no `update` (chefe novo pelo `id` → limpo; slot ocupado com chefe vivo → sujo) e cumpre
-`chefeSemTecnica` e `chefeR10`.
+acompanha o chefe no `update` (chefe novo pelo `id` → limpo; slot ocupado com chefe vivo → sujo), cumpre
+`chefeSemTecnica` e leva o `chefeR10` à rodada do chefe vencido (`reach`).
 **Where**: `src/scenes/test/spawner.ts`
 **Depends on**: T19
 **Reuses**: `loadout.hasAny()`
@@ -883,7 +898,7 @@ inicial)" na tabela "Onde mexer" (`core/unlocks`, `starter`, `grimoire`, `save`;
 | STA-05 | T1, T17, T24 |
 | STA-06 | T3, T24 |
 | STA-07 | T1, T24 |
-| STA-08 | T24 |
+| STA-08 | T9, T24 |
 | STA-09 | T24 |
 | STA-10 | T24 |
 | STA-11 | T24 |
@@ -893,6 +908,7 @@ inicial)" na tabela "Onde mexer" (`core/unlocks`, `starter`, `grimoire`, `save`;
 | STA-15 | T17 |
 | STA-16 | T25 |
 | STA-17 | T24 |
+| STA-18 | T9, T17, T24 |
 | CNQ-01 | T6 |
 | UNL-01 | T5 |
 | UNL-02 | T5, T6 |
@@ -909,7 +925,7 @@ inicial)" na tabela "Onde mexer" (`core/unlocks`, `starter`, `grimoire`, `save`;
 | CNQ-06 | T5, T28 |
 | CNQ-07 | T27 |
 | CNQ-08 | T29 |
-| CNQ-09 | T27 |
+| CNQ-09 | T5, T27 |
 | CNQ-10 | T8, T26 |
 | CNQ-11 | T8, T19, T26 |
 | CNQ-12 | T26 |
@@ -946,12 +962,14 @@ inicial)" na tabela "Onde mexer" (`core/unlocks`, `starter`, `grimoire`, `save`;
 | FAL-05 | T12, T22 |
 | FAL-06 | T12 |
 | FAL-07 | T22 |
+| FAL-08 | T5, T12, T22 |
 
-**Coverage:** 70 de 70 requisitos mapeados.
+**Coverage:** 72 de 72 requisitos mapeados.
 
 Casos de borda da spec: pool vazio (T9, T24); duas conquistas no mesmo update (T5, T14); morte no update de uma
 conquista (T22, conferido no smoke ao morrer no `roundStart` da r2 com `testeR2`); Restrição sem Amplificação (T29,
-regra da F40); `techGate` não vale para a Técnica inicial (T9: o pool ignora o `techGate`); id removido no save (T4,
+regra da F40); `techGate` não vale para a Técnica inicial (T9: o pool ignora o `techGate`); duas técnicas liberadas na mesma run e
+recusa com a carta mais barata (T9, T24); id removido no save (T4,
 T5); `unlock=` com id desconhecido (T13); R com o painel aberto (T24).
 
 ---
