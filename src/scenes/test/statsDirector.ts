@@ -1,6 +1,7 @@
 import { acceptsPlayerInput } from '../../core/run';
 import { statSheet, traitsOf, type StatSheet, type StrikeMods } from '../../core/statSheet';
 import type { MoveDef } from '../../data/moves';
+import type { GameSnapshot } from '../../game/debugApi';
 import type { InputSnapshot } from '../../game/input';
 import type { Player } from '../../game/Player';
 import type { TestScene } from '../TestScene';
@@ -69,7 +70,7 @@ export class StatsDirector {
   }
 
   /** Campos do snapshot de debug que nascem aqui; cada passo da feature acrescenta o seu. */
-  snapshotFields(): Record<string, never> {
-    return {};
+  snapshotFields(): Pick<GameSnapshot, 'damageNumbers'> {
+    return { damageNumbers: this.s.ui.damageNumbers.snapshot() };
   }
 }

@@ -1,5 +1,5 @@
 // Fundação de poder (POW-*) no mundo modular em HD, com `?debug&hd=1&area=modular&seed=1`. Cada parte abre a sua
-// própria página; as partes 1 a 4, 6 e 7 do design entram com as tarefas que as ligam.
+// própria página; as partes 1 a 3, 6 e 7 do design entram com as tarefas que as ligam.
 import { makeKit } from './fight-kit.mjs';
 
 const BASE = 'hd=1&area=modular&enemyGuard=0&noshop=1';
@@ -120,6 +120,53 @@ async function blueTicksAsChip(ctx) {
   assert(windupToAttack.size >= 1, `POW-04.11: nenhum inimigo foi de windup a attack em ${BLUE_TRIES} Azuis`);
 }
 
+/**
+ * POW-05/06: o jab que acerta deixa no snapshot um número `strike` com o dano que o inimigo perdeu; o golpe que o
+ * inimigo dá no player não abre número.
+ */
+async function jabShowsStrikeNumber(ctx) {
+  const { assert } = ctx;
+  const kit = makeKit(ctx);
+  await kit.boot(BASE);
+  let s = await kit.approach();
+  assert(
+    s.damageNumbers.live === 0 && s.damageNumbers.last === null,
+    `números antes do jab: ${JSON.stringify(s.damageNumbers)}`,
+  );
+  const hpBefore = new Map(s.enemies.map((e) => [e.id, e.hp]));
+  await kit.down('KeyJ');
+  let lost = 0;
+  for (let f = 0; f < 40 && lost === 0; f++) {
+    s = await kit.frame();
+    if (f === 3) await kit.up('KeyJ');
+    lost = s.enemies.reduce((sum, e) => sum + Math.max(0, (hpBefore.get(e.id) ?? e.hp) - e.hp), 0);
+  }
+  await kit.up('KeyJ');
+  assert(lost > 0, `o jab deveria acertar: ${JSON.stringify(s.enemies.map((e) => [e.id, e.hp, e.state]))}`);
+  const last = s.damageNumbers.last;
+  assert(
+    last !== null && last.value === lost && last.kind === 'strike' && s.damageNumbers.live === 1,
+    `POW-06.7: esperava o número strike de ${lost}: ${JSON.stringify(s.damageNumbers)}`,
+  );
+
+  // O número some em 700 ms; depois disso, o golpe do inimigo no player não pode abrir outro.
+  s = await kit.waitFor((x) => x.damageNumbers.live === 0, 120, 'o número do jab deveria sumir');
+  let prevHp = s.player.hp;
+  let playerHit = false;
+  for (let f = 0; f < 600 && !playerHit; f++) {
+    s = await kit.frame();
+    playerHit = s.player.hp < prevHp;
+    prevHp = s.player.hp;
+  }
+  assert(playerHit, `o inimigo deveria acertar o player parado: hp=${s.player.hp}`);
+  for (let f = 0; f < 5; f++) s = await kit.frame();
+  assert(
+    s.damageNumbers.live === 0 && s.damageNumbers.last?.value === lost && s.damageNumbers.last?.kind === 'strike',
+    `POW-06.7: golpe de inimigo no player não mostra número: ${JSON.stringify(s.damageNumbers)}`,
+  );
+}
+
 export default async function (ctx) {
+  await jabShowsStrikeNumber(ctx);
   await blueTicksAsChip(ctx);
 }

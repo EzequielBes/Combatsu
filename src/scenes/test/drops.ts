@@ -31,6 +31,7 @@ export class Drops {
     for (const p of collected) this.onPickupCollected(p);
     for (let i = 0; i < expired.length; i++) this.s.snapshot.debugEvents.push('pickupExpired');
     this.s.floatTexts.update(dtMs);
+    this.s.ui.damageNumbers.update(dtMs);
     // ECO-16: o contador do HUD acompanha a carteira no mesmo frame da coleta.
     this.s.hud.setFragments(this.s.wallet.fragments);
   }

@@ -4,9 +4,9 @@ import { PALETTE } from './art/palette';
 /** Sobe (px) e duração (ms) do texto flutuante de coleta (ECO-30, HEAL-07). */
 const RISE_PX = 16;
 const LIFE_MS = 400;
-const FX_DEPTH = 3;
+export const FX_DEPTH = 3;
 
-const css = (color: number): string => `#${color.toString(16).padStart(6, '0')}`;
+export const css = (color: number): string => `#${color.toString(16).padStart(6, '0')}`;
 
 interface FloatTextEntry {
   text: string;

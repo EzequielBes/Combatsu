@@ -163,6 +163,7 @@ export class DebugSnapshot {
       vows: this.s.vows.snapshot(),
       pickups: this.s.pickups.debug(),
       floatTexts: this.s.floatTexts.debug(),
+      ...this.s.stats.snapshotFields(),
       worldProps: this.s.props.map((p) => ({
         id: p.id,
         key: p.def.key,

@@ -339,11 +339,11 @@ número `strike` só quando `hit.ownerId === player.id`; campo `damageNumbers` n
 
 **Done when**:
 
-- [ ] `power.smoke.mjs` (cenário 4), `?debug&hd=1&area=modular&seed=1&maxAlive=1&enemyGuard=0`: o `jab` traz
+- [x] `power.smoke.mjs` (cenário 4), `?debug&hd=1&area=modular&seed=1&maxAlive=1&enemyGuard=0`: o `jab` traz
       `damageNumbers.last` com o valor do acerto e o tipo `strike`; golpe de inimigo no jogador não mostra número
-- [ ] Sem campo novo na `TestScene`; `fxCap` e `FloatTexts.debug` iguais (POW-06.6, POW-06.9)
-- [ ] Smokes `hud`, `drops`, `fight` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Sem campo novo na `TestScene`; `fxCap` e `FloatTexts.debug` iguais (POW-06.6, POW-06.9)
+- [x] Smokes `hud`, `drops`, `fight` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full

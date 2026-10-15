@@ -99,6 +99,8 @@ export class CombatLinks {
       if (hit.moveName) this.s.player.hitLanded();
       // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
       this.s.comboCounter.hit(hit.moveName ?? 'objeto');
+      // POW-06.7: todo acerto do jogador que conecta mostra o número no alvo; golpe que o player leva não mostra.
+      if (target) this.s.ui.damageNumbers.show(target, hit.damage, 'strike', point);
       // PST-13: o foco é o último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (não o chefe).
       if (target instanceof Enemy) this.s.focusId = target.id;
     }

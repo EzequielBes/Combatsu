@@ -220,7 +220,7 @@ no toque.
 | Arquivo | Linha | Mudança |
 | --- | --- | --- |
 | `src/scenes/test/uiSetup.ts` | 22, 68-71 | campo `damageNumbers!: DamageNumbers` criado em `addHud` |
-| `src/scenes/test/combat.ts` | 96-104 | no bloco `hit.ownerId === player.id`: `ui.damageNumbers.show(target, hit.damage, 'strike', point)` |
+| `src/scenes/test/combat.ts` | 96-104 | no bloco `hit.ownerId === player.id`: `ui.damageNumbers.show(target, hit.damage, 'strike', point)` (o `target` é opcional na assinatura: sem alvo, sem número; todo acerto do jogador hoje o passa) |
 | `src/scenes/test/effects.ts` | 33 | número `tech`, `micro` ou `chip` pela banda |
 | `src/game/tech/shared.ts` | 33 | `onTechHit(hit, point, target: Hittable)` |
 | `src/game/TechRunner.ts` | 50 | assinatura do repasse |
@@ -229,6 +229,7 @@ no toque.
 | | 324-327 | vira `(target, point, facing, streak) => this.impactFx.onKokusen(target, point, facing, streak),` (−3) |
 | `src/scenes/test/impactFx.ts` | novo método | `onKokusen`: marca `kokusenFrame`, dispara `kokusenFx.trigger` e `damageNumbers.promote(target.id, 'kokusen')` (o Kokusen chama `onTechHit` antes, `divergent.ts:240-246`) |
 | `src/scenes/test/drops.ts` | 33 | `this.s.ui.damageNumbers.update(dtMs)` |
+| `src/game/FloatTexts.ts` | 7, 9 | exporta `FX_DEPTH` e `css` para o `DamageNumbers` reusar |
 | `src/scenes/test/runDirector.ts` | 134 | `this.s.ui.damageNumbers.clear()` |
 | `src/scenes/test/world.ts` | 164 | `s.ui.damageNumbers.clear()` |
 | `src/game/powerSnapshot.ts` (novo) | — | `DamageNumbersSnapshot` (e, nos passos 4 e 6, `PowerSnapshot` e `StatsSnapshot`) |
