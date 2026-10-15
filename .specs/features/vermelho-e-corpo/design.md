@@ -165,13 +165,13 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
   - `type AxisItem = 'vermelho' | 'corpo'`; `type AxisId = RedAxisId | BodyAxisId`; `type BranchId =
     'ricochete' | 'contido' | 'cadencia' | 'ondaDoPunho'`.
   - `class AxisBuild`:
-    - `points(item, axis): number`, `total(item): number`, `level(item): number` (`1 + total`)
+    - `points(item, axis): number`, `axesOf(item)` (cópia dos pontos por eixo, para o `resolveTechStats`), `total(item): number`, `level(item): number` (`1 + total`)
     - `canAdd(item, axis): boolean` (eixo < 3 e item < 5)
     - `add(item, axis): AddResult` com `AddResult = { ok: false } | { ok: true; branchPending: boolean; awakened:
       boolean }`: recusa sem mudar nada (VRM-02.3); no 1º Nv 2 da run põe o item na fila `pending` (VRM-11,
       CRP-08.1); no Nv 5 com ramo escolhido liga o Despertar (VRM-17, CRP-13)
     - `focusAxis(item): AxisId | null` (mais pontos abaixo do teto; empate pela ordem da tabela; `null` no teto)
-    - `branch(item): BranchId | null`, `setBranch(item, branch): boolean` (liga o Despertar se o nível já for ≥ 5:
+    - `branch(item): BranchId | null`, `setBranch(item, branch): boolean` (recusa ramo de outro item, 2º ramo e Nv 1; liga o Despertar se o nível já for ≥ 5:
       edge case do ramo pendente), `get pending(): readonly AxisItem[]` (sempre Vermelho antes do Corpo),
       `awakened(item): boolean`
     - `announce(item): boolean` (devolve `true` só na 1ª vez da rodada com o Despertar ligado) e `onRoundStart()`

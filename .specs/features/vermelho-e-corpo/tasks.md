@@ -499,12 +499,12 @@ são o `TECH_RULE` de `data/techRule.ts` (leva 1).
 
 **Done when**:
 
-- [ ] `tests/core/axisBuild.test.ts`: eixo 2→3 aceito e 3→4 recusado sem mudar nada; item 4→5 aceito e 5→6 recusado
+- [x] `tests/core/axisBuild.test.ts`: eixo 2→3 aceito e 3→4 recusado sem mudar nada; item 4→5 aceito e 5→6 recusado
       (VRM-02.3); nível = 1 + pontos; pendente só no 1º Nv 2 da run, Vermelho antes do Corpo (VRM-11, CRP-08.1); Despertar
       no Nv 5 com ramo e ao escolher o ramo depois do Nv 5 (edge case); `focusAxis` com empate pela ordem e `null` no
       teto; `announce` só uma vez por rodada; `reset` limpa a fila e volta o Corpo ao Nv 1 (CRP-01, edge case do reset);
       `resetItem('vermelho')`
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
