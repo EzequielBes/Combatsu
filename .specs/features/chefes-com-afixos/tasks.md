@@ -425,10 +425,10 @@ fase) e `bossTuningFor(spec)` (`ai` com ciclos e números; `brain` = `BOSS`).
 
 **Done when**:
 
-- [ ] Testes: fase 1 `charge, leap` nos dois; fases 2 e 3 do Oni e da Tecelã como na spec; com Sangue, `beam` na 2ª
+- [x] Testes: fase 1 `charge, leap` nos dois; fases 2 e 3 do Oni e da Tecelã como na spec; com Sangue, `beam` na 2ª
       posição de cada fase; `bossTuningFor` repassa os ciclos e os números da tuning; `tests/data/tuning.test.ts`
       atualizado para `cycles`
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

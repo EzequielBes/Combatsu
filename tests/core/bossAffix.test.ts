@@ -3,6 +3,8 @@ import {
   affixName,
   announceText,
   bossBarLabel,
+  bossTuningFor,
+  cyclesFor,
   glyphKeys,
   outlineKeyAt,
   type BossLineup,
@@ -10,7 +12,7 @@ import {
 import { bossSpecFor } from '../../src/core/bossTier';
 import { Run } from '../../src/core/run';
 import { Rng } from '../../src/core/rng';
-import { RUN, SHOP, WAVE } from '../../src/data/tuning';
+import { BOSS, RUN, SHOP, WAVE } from '../../src/data/tuning';
 
 /** Salt do stream da escalação dos chefes (BLN-01). */
 const BOSS_AFFIX_SALT = 0x9b05688c;
@@ -151,5 +153,65 @@ describe('Contorno do sprite (BRD-03)', () => {
     expect(outlineKeyAt(both, 1200)).toBe('a');
     expect(outlineKeyAt(['invocador', 'sangue', 'igneo'], 599)).toBe('u');
     expect(outlineKeyAt(['invocador', 'sangue', 'igneo'], 600)).toBe('a');
+  });
+});
+
+describe('Ciclos por arquétipo (CYC-01..04) e o feixe do Sangue (SNG-01)', () => {
+  it('fase 1 é charge, leap nos dois arquétipos (CYC-02)', () => {
+    expect(cyclesFor('oni', [])[1]).toEqual(['charge', 'leap']);
+    expect(cyclesFor('tecela', [])[1]).toEqual(['charge', 'leap']);
+  });
+
+  it('Oni: fase 2 doubleCharge, volley, leap; fase 3 volley, charge, tripleLeap, doubleCharge (CYC-03)', () => {
+    const c = cyclesFor('oni', []);
+    expect(c[2]).toEqual(['doubleCharge', 'volley', 'leap']);
+    expect(c[3]).toEqual(['volley', 'charge', 'tripleLeap', 'doubleCharge']);
+  });
+
+  it('Tecelã: fase 2 charge, volley, threadRain; fase 3 threadRain, volley, charge, tripleLeap (CYC-04)', () => {
+    const c = cyclesFor('tecela', []);
+    expect(c[2]).toEqual(['charge', 'volley', 'threadRain']);
+    expect(c[3]).toEqual(['threadRain', 'volley', 'charge', 'tripleLeap']);
+  });
+
+  it('com Sangue, beam na 2ª posição de cada fase, nos dois arquétipos (SNG-01)', () => {
+    expect(cyclesFor('oni', ['sangue'])).toEqual({
+      1: ['charge', 'beam', 'leap'],
+      2: ['doubleCharge', 'beam', 'volley', 'leap'],
+      3: ['volley', 'beam', 'charge', 'tripleLeap', 'doubleCharge'],
+    });
+    expect(cyclesFor('tecela', ['adaptativo', 'sangue'])).toEqual({
+      1: ['charge', 'beam', 'leap'],
+      2: ['charge', 'beam', 'volley', 'threadRain'],
+      3: ['threadRain', 'beam', 'volley', 'charge', 'tripleLeap'],
+    });
+  });
+
+  it('afixos sem ataque não mexem no ciclo e a tabela da tuning não muda', () => {
+    expect(cyclesFor('oni', ['igneo', 'invocador', 'adaptativo'])).toEqual(cyclesFor('oni', []));
+    cyclesFor('oni', ['sangue']);
+    expect(BOSS.archetypes.oni.cycles[1]).toEqual(['charge', 'leap']);
+  });
+});
+
+describe('Tuning derivada da escalação (AFX-01)', () => {
+  it('a IA leva os ciclos do arquétipo e dos afixos e os números do BOSS; o cérebro é o BOSS', () => {
+    const spec = bossSpecFor(10, { archetype: 'tecela', affixes: ['sangue'], finger: false });
+    const { ai, brain } = bossTuningFor(spec);
+    expect(ai.cycles).toEqual(cyclesFor('tecela', ['sangue']));
+    expect(ai.phases).toEqual(BOSS.phases);
+    expect(ai.charge).toEqual(BOSS.charge);
+    expect(ai.leap).toEqual(BOSS.leap);
+    expect(ai.volley).toEqual(BOSS.volley);
+    expect(ai.doubleCharge).toEqual(BOSS.doubleCharge);
+    expect(ai.tripleLeap).toEqual(BOSS.tripleLeap);
+    expect(ai.threadRain).toEqual(BOSS.threadRain);
+    expect(brain).toBe(BOSS);
+  });
+
+  it('Oni sem afixo: ciclos do Oni, não os de base do BOSS', () => {
+    const { ai } = bossTuningFor({ archetype: 'oni', affixes: [] });
+    expect(ai.cycles).toEqual(cyclesFor('oni', []));
+    expect(ai.cycles[2]).not.toEqual(BOSS.cycles[2]);
   });
 });

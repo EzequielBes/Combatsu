@@ -350,7 +350,10 @@ export const BOSS = {
     regenPerSec: 15,
     regenDelayMs: 2000,
   },
-  /** Ciclo de ataques por fase (BAI-02, CYC-01): base do `new BossAI()` sem argumento. */
+  /**
+   * Ciclo de ataques por fase (BAI-02): base do `new BossAI()` sem argumento. O jogo usa os ciclos do arquétipo
+   * (`archetypes.*.cycles`, CYC-01), via `bossTuningFor`.
+   */
   cycles: {
     1: ['charge', 'leap'],
     2: ['charge', 'volley', 'leap'],
@@ -366,6 +369,12 @@ export const BOSS = {
   charge: { windupMs: 600, speed: 320, maxDist: 360, damage: 18 },
   /** Salto: preparo base, duração do salto, dano forte do pouso e descanso mínimo depois do pouso (BAT-02, BAT-10, BFX-04). */
   leap: { windupMs: 500, durationMs: 700, recoveryMs: 800, damage: 20 },
+  /** Investida Dupla: preparo da 2ª investida, sem `windupMult` (CYC-05). */
+  doubleCharge: { rewindupMs: 250 },
+  /** Salto Triplo: saltos seguidos e intervalo entre um pouso e a próxima saída (CYC-07). */
+  tripleLeap: { hops: 3, gapMs: 200 },
+  /** Chuva de Fios: preparo fixo, fio ativo, deslocamentos das marcas a partir do player e tamanho do fio (CYC-09/10). */
+  threadRain: { windupMs: 600, activeMs: 200, offsets: [-96, -48, 0, 48, 96], width: 12, height: 120 },
   /** Onda de choque do pouso: velocidade, alcance, altura e dano leve (BAT-03). */
   shockwave: { speed: 240, maxDist: 600, height: 20, damage: 12 },
   /** Rajada: preparo base, quantidade padrão, intervalo, velocidade, dano leve e alcance do projétil (BAT-04). */
@@ -375,11 +384,30 @@ export const BOSS = {
   tier: { hpBase: 400, hpPerTier: 0.5, hpCap: 4.0, damagePerTier: 0.15, damageCap: 2.0 },
   /**
    * Arquétipos (BTIER-04, BTIER-05, BTIER-07): a Tecelã multiplica a velocidade do projétil e troca o volleyCount.
-   * `name` vai na barra do chefe; `shortName`, no aviso da loja (BRD-01, BRD-04).
+   * `name` vai na barra do chefe; `shortName`, no aviso da loja (BRD-01, BRD-04); `cycles`, os ataques por fase
+   * (CYC-02..04).
    */
   archetypes: {
-    oni: { name: 'Oni do Portão', shortName: 'Oni' },
-    tecela: { name: 'Tecelã de Maldições', shortName: 'Tecelã', volleyCount: 5, projectileSpeedMult: 1.25 },
+    oni: {
+      name: 'Oni do Portão',
+      shortName: 'Oni',
+      cycles: {
+        1: ['charge', 'leap'],
+        2: ['doubleCharge', 'volley', 'leap'],
+        3: ['volley', 'charge', 'tripleLeap', 'doubleCharge'],
+      },
+    },
+    tecela: {
+      name: 'Tecelã de Maldições',
+      shortName: 'Tecelã',
+      volleyCount: 5,
+      projectileSpeedMult: 1.25,
+      cycles: {
+        1: ['charge', 'leap'],
+        2: ['charge', 'volley', 'threadRain'],
+        3: ['threadRain', 'volley', 'charge', 'tripleLeap'],
+      },
+    },
   },
   /** Cura do player ao derrotar o chefe, fração de maxHp com teto (BWIN-01). */
   healFraction: 0.3,

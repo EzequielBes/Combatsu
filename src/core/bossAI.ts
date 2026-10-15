@@ -1,7 +1,8 @@
 import { BOSS } from '../data/tuning';
 import type { BossSpec } from './bossTier';
 
-export type BossAttack = 'charge' | 'leap' | 'volley';
+/** Os 3 ataques de base e os encadeados/afixos dos ciclos por arquétipo (CYC-03/04, SNG-01). */
+export type BossAttack = 'charge' | 'leap' | 'volley' | 'doubleCharge' | 'tripleLeap' | 'threadRain' | 'beam';
 export type BossAIState = 'rest' | 'windup' | 'charge' | 'leap' | 'volley';
 
 export interface BossAITuning {
@@ -12,6 +13,12 @@ export interface BossAITuning {
   /** `recoveryMs`: descanso mínimo depois do pouso (BFX-04). */
   leap: { windupMs: number; durationMs: number; recoveryMs: number };
   volley: { windupMs: number; intervalMs: number };
+  /** Preparo da 2ª investida da Investida Dupla (CYC-05). */
+  doubleCharge: { rewindupMs: number };
+  /** Saltos do Salto Triplo e intervalo entre pouso e saída (CYC-07). */
+  tripleLeap: { hops: number; gapMs: number };
+  /** Preparo fixo e tempo ativo da Chuva de Fios (CYC-09/10). */
+  threadRain: { windupMs: number; activeMs: number };
 }
 
 export interface BossAIObservation {
@@ -163,6 +170,8 @@ export class BossAI {
         this.timer = 0;
         return;
       default:
+        // Ataque sem corpo neste BossAI: pula para o descanso, sem prender o preparo num laço.
+        this.enterRestAfterAttack();
         return;
     }
   }

@@ -152,7 +152,10 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 
 - `BossAttack` + `'doubleCharge' | 'tripleLeap' | 'threadRain' | 'beam'`; `BossAIState` + `'threadRain' | 'beam'`.
 - `BossAITuning` + `cycles`, `doubleCharge`, `tripleLeap`, `threadRain`, `beam` (os números do feixe vêm de
-  `data/bossAffixes`); `CYCLES` (linha 45) sai, `step` e `enterRestAfterAttack` leem `this.t.cycles`.
+  `data/bossAffixes`); `CYCLES` (linha 45) sai, `step` e `enterRestAfterAttack` leem `this.t.cycles`. Os tipos
+  dos ataques novos e os números de `doubleCharge`, `tripleLeap` e `threadRain` entram já na T15 (para a
+  `bossTuningFor` ter tipo); o `beam` da tuning entra com o ataque, na T20. Até lá, um ataque sem corpo no
+  `beginAttackBody` cai direto no descanso.
 - Eventos novos: `{ type: 'telegraph'; attack: 'beam' | 'threadRain'; dir; playerX }` ao entrar no preparo;
   `{ type: 'strikeOn' | 'strikeOff'; attack }` no corpo; `{ type: 'telegraphCancel' }` no `interrupt` durante preparo
   ou corpo desses dois; `{ type: 'chargeTrail'; fromX; toX }` ao fim de toda investida (IGN-01); `landed` ganha

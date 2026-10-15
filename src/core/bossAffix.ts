@@ -16,6 +16,8 @@ import {
   type GenderedName,
 } from '../data/bossAffixes';
 import { BOSS } from '../data/tuning';
+import type { BossAITuning, BossAttack } from './bossAI';
+import type { BossBrainTuning } from './bossBrain';
 import type { BossArchetype, BossSpec } from './bossTier';
 import { tierFor } from './bossTier';
 import type { Rng } from './rng';
@@ -198,4 +200,43 @@ export function outlineKeyAt(
   const keys = affixes.map((id) => BOSS_AFFIXES[id].outline).filter((key): key is string => key !== null);
   if (keys.length === 0) return null;
   return keys[Math.floor(Math.max(ms, 0) / swapMs) % keys.length];
+}
+
+export type BossCycles = Readonly<Record<1 | 2 | 3, readonly BossAttack[]>>;
+
+/** Parte da tuning que os ciclos usam: os ciclos de cada arquétipo. */
+export interface ArchetypeCycles {
+  archetypes: Readonly<Record<BossArchetype, { cycles: BossCycles }>>;
+}
+
+const PHASES = [1, 2, 3] as const;
+
+/**
+ * Ciclos de ataque do chefe por fase (CYC-01..04): os do arquétipo e, com Sangue Convergente, um `beam` logo depois
+ * do 1º ataque de cada fase (SNG-01). Devolve cópias: a tabela da tuning não muda.
+ */
+export function cyclesFor(
+  archetype: BossArchetype,
+  affixes: readonly BossAffixId[],
+  t: ArchetypeCycles = BOSS,
+): BossCycles {
+  const base = t.archetypes[archetype].cycles;
+  const blood = affixes.includes('sangue');
+  const out = {} as Record<1 | 2 | 3, BossAttack[]>;
+  for (const phase of PHASES) {
+    const [first, ...rest] = base[phase];
+    out[phase] = blood ? [first, 'beam', ...rest] : [first, ...rest];
+  }
+  return out;
+}
+
+/**
+ * Tuning do `BossAI` e do `BossBrain` derivada da escalação (AFX-01): a IA leva os ciclos do arquétipo e dos afixos
+ * e os números do `BOSS`; o cérebro é o `BOSS` (na leva 1 nenhum afixo mexe nele; a vida já vem do `spec.maxHp`).
+ */
+export function bossTuningFor(
+  spec: Pick<BossSpec, 'archetype' | 'affixes'>,
+  t: typeof BOSS = BOSS,
+): { ai: BossAITuning; brain: BossBrainTuning } {
+  return { ai: { ...t, cycles: cyclesFor(spec.archetype, spec.affixes, t) }, brain: t };
 }
