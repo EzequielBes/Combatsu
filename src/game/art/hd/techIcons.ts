@@ -9,11 +9,12 @@ import { IconCanvas, ICON_COLORS } from './icons/canvas';
 import { drawPlate } from './icons/plate';
 import { AMPLIFICACAO, JACKPOT, SANTUARIO } from './icons/domainArt';
 import { BOOGIE, FALA, RESSONANCIA } from './icons/jjkArt';
+import { CAES, CONVERGENCIA, ERUPCAO, TROVAO, VAZIO } from './icons/leva2Art';
 import type { IconRecipe } from './icons/plate';
 import { AZUL, CORTE, DIVERGENTE, ROXO, VERMELHO } from './icons/techArt';
 import type { HdSheet } from './sheet';
 
-/** Ícones das técnicas (as 5 de hoje e as 3 da leva 1) e dos 3 Domínios da leva 1. */
+/** Ícones das técnicas (as 5 de hoje, as 3 da leva 1 e as 4 da leva 2) e dos Domínios (3 da leva 1, 1 da leva 2). */
 export const TECH_ICON_IDS = [
   'vermelho',
   'azul',
@@ -26,6 +27,11 @@ export const TECH_ICON_IDS = [
   'santuario',
   'jackpot',
   'amplificacao',
+  'convergencia',
+  'caes',
+  'trovao',
+  'erupcao',
+  'vazio',
 ] as const;
 export type TechIconId = (typeof TECH_ICON_IDS)[number];
 
@@ -45,6 +51,11 @@ const RECIPES: Record<TechIconId, IconRecipe> = {
   santuario: SANTUARIO,
   jackpot: JACKPOT,
   amplificacao: AMPLIFICACAO,
+  convergencia: CONVERGENCIA,
+  caes: CAES,
+  trovao: TROVAO,
+  erupcao: ERUPCAO,
+  vazio: VAZIO,
 };
 
 /** Um ícone no tamanho pedido: índices em `ICON_COLORS`, linha a linha. */

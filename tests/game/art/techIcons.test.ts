@@ -5,14 +5,15 @@ import { PALETTE } from '../../../src/game/art/palette';
 import { TECH_ICON_IDS, TECH_ICON_SIZES, techIconSheet } from '../../../src/game/art/hd/techIcons';
 import { TEX } from '../../../src/game/textures';
 
-const DOMAINS = ['santuario', 'jackpot', 'amplificacao'] as const;
+const DOMAINS = ['santuario', 'jackpot', 'amplificacao', 'vazio'] as const;
+const LEVA2 = ['convergencia', 'caes', 'trovao', 'erupcao'] as const;
 const keyOf = (color: number): string | undefined => Object.keys(PALETTE).find((k) => PALETTE[k] === color);
 
 describe('ícones HD de técnica (decisão 4, F34)', () => {
-  it('cobrem as técnicas do jogo, as 3 da leva 1 e os 3 Domínios', () => {
+  it('cobrem as técnicas do jogo, as 3 da leva 1, as 4 da leva 2 e os 4 Domínios (IC2-01)', () => {
     for (const id of Object.keys(TECHNIQUES)) expect(TECH_ICON_IDS, id).toContain(id);
-    for (const id of ['boogie', 'ressonancia', 'fala', ...DOMAINS]) expect(TECH_ICON_IDS, id).toContain(id);
-    expect(TECH_ICON_IDS).toHaveLength(11);
+    for (const id of ['boogie', 'ressonancia', 'fala', ...LEVA2, ...DOMAINS]) expect(TECH_ICON_IDS, id).toContain(id);
+    expect(TECH_ICON_IDS).toHaveLength(16);
   });
 
   it('as folhas têm texturas próprias, uma por tamanho', () => {
