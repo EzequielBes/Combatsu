@@ -302,10 +302,10 @@ inteiro), `parseFinger` e `applyOverrides`; `BossLineups.lineupFor(rng, round, o
 
 **Done when**:
 
-- [ ] `tests/core/bossTier.test.ts`: arquétipo da escalação; Portador na r10 com vida e danos esperados (um
+- [x] `tests/core/bossTier.test.ts`: arquétipo da escalação; Portador na r10 com vida e danos esperados (um
       arredondamento só) e rajada + 1; `bodyScale` 1 e 1,25; lava `round(4 × mult)` e feixe `round(16 × mult)` por tier;
       lava do Portador × 1,5 (edge case)
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick

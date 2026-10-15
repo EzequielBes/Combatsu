@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { archetypeFor, bossDamageMultFor, bossHpFor, bossSpecFor, tierFor } from '../../src/core/bossTier';
+import type { BossLineup } from '../../src/core/bossAffix';
 
 describe('tierFor: tier = round / 5', () => {
   it.each([
@@ -119,5 +120,79 @@ describe('bossSpecFor: nome e rajada por arquétipo (BTIER-04, BTIER-05, BTIER-0
     expect(spec.name).toBe('Oni do Portão');
     expect(spec.volleyCount).toBe(3);
     expect(spec.projectileSpeed).toBe(260);
+  });
+});
+
+const lineup = (over: Partial<BossLineup> = {}): BossLineup => ({
+  archetype: 'oni',
+  affixes: [],
+  finger: false,
+  ...over,
+});
+
+describe('bossSpecFor com escalação (BLN-08)', () => {
+  it('o arquétipo vem da escalação, não da paridade do tier', () => {
+    expect(bossSpecFor(5, lineup({ archetype: 'tecela' })).archetype).toBe('tecela');
+    expect(bossSpecFor(5, lineup({ archetype: 'tecela' })).name).toBe('Tecelã de Maldições');
+    expect(bossSpecFor(15, lineup({ archetype: 'oni' })).archetype).toBe('oni');
+    expect(bossSpecFor(15, lineup({ archetype: 'oni' })).volleyCount).toBe(3);
+  });
+
+  it('os afixos da escalação passam para a especificação, na mesma ordem', () => {
+    const spec = bossSpecFor(15, lineup({ affixes: ['sangue', 'igneo'] }));
+    expect(spec.affixes).toEqual(['sangue', 'igneo']);
+  });
+
+  it('sem escalação: paridade de hoje, sem afixos, sem Portador e corpo em escala 1', () => {
+    const spec = bossSpecFor(15);
+    expect(spec.archetype).toBe('tecela');
+    expect(spec.affixes).toEqual([]);
+    expect(spec.finger).toBe(false);
+    expect(spec.bodyScale).toBe(1);
+  });
+});
+
+describe('dano de lava e do feixe por tier (IGN-03, SNG-03)', () => {
+  it.each([
+    [1, 4, 16],
+    [2, 5, 18],
+    [7, 8, 30],
+    [8, 8, 32],
+    [20, 8, 32],
+  ])('tier %i => lava round(4 × mult) = %i, feixe round(16 × mult) = %i', (tier, lava, beam) => {
+    const spec = bossSpecFor(tier * 5, lineup());
+    expect(spec.damage.lava).toBe(lava);
+    expect(spec.damage.beam).toBe(beam);
+  });
+});
+
+describe('Portador de Dedo (PDD-03..05)', () => {
+  it('corpo em escala 1,25 com a moldura e 1 sem ela (PDD-03)', () => {
+    expect(bossSpecFor(10, lineup({ finger: true })).bodyScale).toBe(1.25);
+    expect(bossSpecFor(10, lineup()).bodyScale).toBe(1);
+  });
+
+  it('r10: vida 600 × 1,3 = 780 e cada dano round(base × 1,15 × 1,5), um arredondamento só (PDD-04)', () => {
+    const spec = bossSpecFor(10, lineup({ finger: true }));
+    expect(spec.finger).toBe(true);
+    expect(spec.maxHp).toBe(780);
+    // Arredondar duas vezes daria investida 32, projétil 18 e feixe 27.
+    expect(spec.damage).toEqual({ charge: 31, leap: 35, shockwave: 21, projectile: 17, lava: 7, beam: 28 });
+  });
+
+  it('a lava do Portador também leva × 1,5: 7 na r10, não round(5 × 1,5) = 8 (edge case)', () => {
+    expect(bossSpecFor(10, lineup()).damage.lava).toBe(5);
+    expect(bossSpecFor(10, lineup({ finger: true })).damage.lava).toBe(7);
+  });
+
+  it('a rajada sai com um projétil a mais que o arquétipo (PDD-05)', () => {
+    expect(bossSpecFor(10, lineup({ finger: true })).volleyCount).toBe(4);
+    expect(bossSpecFor(15, lineup({ archetype: 'tecela', finger: true })).volleyCount).toBe(6);
+  });
+
+  it('o Portador não muda a velocidade do projétil nem o nome do arquétipo', () => {
+    const spec = bossSpecFor(15, lineup({ archetype: 'tecela', finger: true }));
+    expect(spec.projectileSpeed).toBe(325);
+    expect(spec.name).toBe('Tecelã de Maldições');
   });
 });
