@@ -65,7 +65,7 @@ export class VowDirector {
     strike: { light: number; heavy: number };
     panelCards: number;
   } {
-    // L-076: o multiplicador lido da folha de atributos (o mesmo do `player.damageMul`), não do efeito daqui.
+    // L-076: o multiplicador lido da folha de atributos (o mesmo do `player.strikeMods`), não do efeito daqui.
     const { stats } = this.s;
     const strike = {
       light: stats.strikeMods(MOVES.jab, true).damage,

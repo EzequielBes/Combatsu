@@ -10,7 +10,7 @@ import type { EnemyState } from '../core/enemyBrain';
 import type { ToolKey } from '../core/loot';
 import type { VowEffects } from '../core/vows';
 import type { PropState } from '../core/props';
-import type { DamageNumbersSnapshot } from './powerSnapshot';
+import type { DamageNumbersSnapshot, PowerSnapshot } from './powerSnapshot';
 import type { RunState } from '../core/run';
 import type { TechId } from '../data/techniques';
 
@@ -307,6 +307,8 @@ export interface GameSnapshot {
   floatTexts: { text: string; color: string; x: number; y: number }[];
   /** Números de dano no mundo (POW-13). */
   damageNumbers: DamageNumbersSnapshot;
+  /** Força do corpo (POW-13). */
+  power: PowerSnapshot;
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
   worldProps: {
     id: number;

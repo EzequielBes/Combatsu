@@ -502,10 +502,10 @@ lê `mods` uma vez e aplica `damage × mods.damage` e `force × mods.force`; o `
 
 **Done when**:
 
-- [ ] `power.smoke.mjs` com `arsenal=manoplas,manoplas,manoplas&perks=punhoPesado`: `power.points` 8, `tier` 3,
+- [x] `power.smoke.mjs` com `arsenal=manoplas,manoplas,manoplas&perks=punhoPesado`: `power.points` 8, `tier` 3,
       `impactScale` 1,4; o empurrão do inimigo no golpe forte é maior que sem build (lido no snapshot)
-- [ ] Dano de hoje igual com 0 pontos: smokes `fight`, `defense`, `vows` e `player-anim` verdes e iguais
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Dano de hoje igual com 0 pontos: smokes `fight`, `defense`, `vows` e `player-anim` verdes e iguais
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full

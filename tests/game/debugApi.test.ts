@@ -193,6 +193,14 @@ describe('installDebugApi', () => {
       pickups: [{ id: 1, kind: 'fragment', value: 1, x: 70, y: 80, ageMs: 100, magnet: false }],
       floatTexts: [{ text: '+1', color: 'U', x: 70, y: 76 }],
       damageNumbers: { live: 1, last: { value: 7, kind: 'strike' } },
+      power: {
+        points: 0,
+        tier: 0,
+        impactScale: 1,
+        hitstopBonusMs: { light: 0, heavy: 0 },
+        tone: { shadow: 'd', body: 'c', core: 'C', altBody: 'u', altCore: 'U' },
+        aura: 'off',
+      },
       worldProps: [
         {
           id: 2,

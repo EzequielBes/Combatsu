@@ -1,4 +1,5 @@
 import type { Hit } from '../../core/hit';
+import type { StrikeMods } from '../../core/statSheet';
 import { type CounterKind } from '../../core/counter';
 import { StepIn } from '../../core/stepIn';
 import { shouldCancelJumpForUppercut } from '../../core/fightInput';
@@ -16,6 +17,8 @@ import type { Player } from '../Player';
 const STEP_PROBE_PX = 2;
 /** Id do golpe iniciado; cada golpe novo ganha o seguinte e o `Hit` leva o mesmo (IMP-14). */
 let nextSwingId = 1;
+/** Sem gancho ligado (cena sem diretor de números): o golpe sai com o dano e a força do `MOVES`. */
+const NO_MODS: StrikeMods = { damage: 1, force: 1 };
 
 /** Golpes do player: máquina de golpes, hitboxes, passo à frente, voadora e pedidos do passo de física. */
 export class PlayerStrikes {
@@ -265,12 +268,15 @@ export class PlayerStrikes {
     const hdShape = HD_ON && move.name === 'ganchoAscendente' ? RIG_UPPERCUT_HITBOX : undefined;
     const shape = hdShape ?? (RIG_ON ? rigHitbox(move.name, currentSearch()) : undefined) ?? move.hitbox;
     if (!shape) return;
+    // Lido uma vez por golpe: o gancho gasta o Passo sombrio armado.
+    const mods = this.p.strikeMods?.(move) ?? NO_MODS;
     const hit: Hit = {
       ownerId: this.p.id,
       // MOD-05: dano do golpe escalado por `forca`, lido na hora.
-      damage: Math.round(this.p.modifiers.meleeDamage(move.damage) * (this.p.damageMul?.(move) ?? 1)),
+      damage: Math.round(this.p.modifiers.meleeDamage(move.damage) * mods.damage),
       strength: move.strength,
-      force: move.force,
+      // POW-08.5: o empurrão cresce com os pontos de força.
+      force: move.force * mods.force,
       direction: { x: this.p.facing, y: move.strength === 'heavy' ? -0.6 : -0.15 },
       moveName: move.name,
       unblockable: move.unblockable,

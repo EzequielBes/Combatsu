@@ -12,6 +12,7 @@ import { MoveMachine } from '../core/moveMachine';
 import { initialMoveState, type MoveState } from '../core/movement';
 import type { Modifiers } from '../core/modifiers';
 import type { MoveDef } from '../data/moves';
+import type { StrikeMods } from '../core/statSheet';
 import { PLAYER_STRUCTURE, Structure } from '../core/structure';
 import { COMBO_WINDOW_MS, PLAYER_HEALTH, PROP_SWING_COMBO } from '../data/tuning';
 import { newEntityId, tagBody, type Hittable, type Rect } from './bodyTags';
@@ -80,8 +81,8 @@ export class Player implements Hittable {
   attackerOf: ((ownerId: number) => Attacker | null) | null = null;
   /** Bloqueio, parry ou esquiva perfeita aconteceram, no ponto de contato (efeitos ficam com a cena). */
   onDefense: ((kind: DefenseKind, point: Vec2) => void) | null = null;
-  /** BLD-06: multiplicador de dano do golpe pelas passivas da run; lido quando a hitbox abre. */
-  damageMul: ((move: MoveDef) => number) | null = null;
+  /** BLD-06, POW-08: multiplicadores de dano e de força do golpe; lido quando a hitbox abre. */
+  strikeMods: ((move: MoveDef) => StrikeMods) | null = null;
   /** Multiplicador do dano sofrido pelos votos (VOW-15, VOW-17); 1 sem voto. */
   damageTakenMul = 1;
   guard = new Guard();

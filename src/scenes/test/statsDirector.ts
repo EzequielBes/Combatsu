@@ -1,3 +1,4 @@
+import { powerLook, powerPoints, type PowerLook } from '../../core/power';
 import { acceptsPlayerInput } from '../../core/run';
 import { statSheet, traitsOf, type StatSheet, type StrikeMods } from '../../core/statSheet';
 import type { MoveDef } from '../../data/moves';
@@ -12,6 +13,9 @@ import { NEUTRAL_INPUT } from './params';
  * que grava os multiplicadores do `Loadout`, o dano sofrido e a vida máxima do player. Também filtra o input do quadro.
  */
 export class StatsDirector {
+  /** Força do corpo de agora (POW-07, POW-08), recalculada a cada quadro. */
+  power: PowerLook = powerLook(0);
+
   constructor(readonly s: TestScene) {}
 
   /** A folha de agora, com os abates da rodada atual (Fúria) e a vida máxima comprada na loja. */
@@ -41,25 +45,37 @@ export class StatsDirector {
   /** A cada quadro, antes de tudo: a Fúria muda com os abates, então a folha é refeita todo quadro. */
   update(_deltaMs: number): void {
     this.sync();
+    this.power = powerLook(this.points());
   }
 
   /** Run nova: chamado depois de build, arsenal e votos já zerados, para a folha sair da run nova. */
   reset(): void {
     this.sync();
+    this.power = powerLook(this.points());
+  }
+
+  /** POW-07.1: nível de Força, nível das Manoplas (só a relíquia equipada) e o Punho Pesado. */
+  private points(): number {
+    const relic = this.s.arsenal.arsenal.relic;
+    return powerPoints({
+      forca: this.s.modifiers.level('forca'),
+      manoplas: relic?.id === 'manoplas' ? relic.level : 0,
+      punhoPesado: this.s.build.perks.has('punhoPesado'),
+    });
   }
 
   /** Liga o gancho do golpe do player (recriado a cada `create`). */
   bindPlayer(p: Player): void {
-    p.damageMul = (move) => this.strikeMods(move).damage;
+    p.strikeMods = (move) => this.strikeMods(move);
   }
 
   /**
-   * Multiplicadores do golpe corpo a corpo que abre a hitbox (BLD-06, ARS-05, VOW-10..12). Gasta o Passo sombrio
-   * armado; `peek` (snapshot de debug) lê sem gastar. A força fica em 1 até o passo da força contínua.
+   * Multiplicadores do golpe corpo a corpo que abre a hitbox (BLD-06, ARS-05, VOW-10..12) e a força do empurrão
+   * (POW-08.5). Gasta o Passo sombrio armado; `peek` (snapshot de debug) lê sem gastar.
    */
   strikeMods(move: MoveDef, peek = false): StrikeMods {
     const shadow = this.s.build.consumeShadow(peek);
-    return { damage: this.sheet().meleeMul(traitsOf(move, shadow)), force: 1 };
+    return { damage: this.sheet().meleeMul(traitsOf(move, shadow)), force: this.power.forceMul };
   }
 
   /** Input do quadro: neutro fora de `roundActive`/`intermission`/`traverse` (RUN-08) e durante a transição de área (TRV-10). */
@@ -70,7 +86,17 @@ export class StatsDirector {
   }
 
   /** Campos do snapshot de debug que nascem aqui; cada passo da feature acrescenta o seu. */
-  snapshotFields(): Pick<GameSnapshot, 'damageNumbers'> {
-    return { damageNumbers: this.s.ui.damageNumbers.snapshot() };
+  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power'> {
+    const { points, tier, impactScale, hitstopBonusMs, tone } = this.power;
+    // A aura fica apagada até o diretor da chama (POW-10) ligar o estado real.
+    const power = {
+      points,
+      tier,
+      impactScale,
+      hitstopBonusMs: { ...hitstopBonusMs },
+      tone: { ...tone },
+      aura: 'off' as const,
+    };
+    return { damageNumbers: this.s.ui.damageNumbers.snapshot(), power };
   }
 }

@@ -252,7 +252,64 @@ async function areaChangeClearsNumbers(ctx) {
   );
 }
 
+/** Build de 8 pontos sem `forca` (POW-07.1): Manoplas Nv 3 (6) e Punho Pesado (2). */
+const EIGHT_POINTS = 'arsenal=manoplas,manoplas,manoplas&perks=punhoPesado';
+/** Quadros lidos depois do acerto do forte, com o hitstop de 90 ms e o deslize inteiros dentro. */
+const PUSH_FRAMES = 40;
+
+/**
+ * Encosta no inimigo, dá a cotovelada (forte) e devolve o maior deslocamento do inimigo atingido nos quadros depois
+ * do acerto, medido a partir de onde ele estava no quadro do acerto.
+ */
+async function heavyPush(kit, assert, query, label) {
+  await kit.boot(`${BASE}&${query}`);
+  let s = await kit.approach();
+  const hpBefore = new Map(s.enemies.map((e) => [e.id, e.hp]));
+  await kit.down('KeyK');
+  let hit = null;
+  for (let f = 0; f < 60 && hit === null; f++) {
+    s = await kit.frame();
+    if (f === 1) await kit.up('KeyK');
+    hit = s.enemies.find((e) => e.hp < (hpBefore.get(e.id) ?? e.hp)) ?? null;
+  }
+  await kit.up('KeyK');
+  assert(hit !== null, `${label}: a cotovelada deveria acertar: ${JSON.stringify(s.enemies.map((e) => [e.x, e.hp]))}`);
+  const x0 = hit.x;
+  let push = 0;
+  for (let f = 0; f < PUSH_FRAMES; f++) {
+    s = await kit.frame();
+    const e = s.enemies.find((x) => x.id === hit.id);
+    if (e) push = Math.max(push, Math.abs(e.x - x0));
+  }
+  return { power: s.power, push, state: hit.state };
+}
+
+/**
+ * POW-07/08/13: Manoplas Nv 3 e Punho Pesado são 8 pontos, patamar 3 e escala 1,4 no snapshot, e o forte empurra o
+ * inimigo mais longe que sem build (a força do golpe ×1,24 pelo `strikeMods`).
+ */
+async function strikeForceScales(ctx) {
+  const { assert } = ctx;
+  const kit = makeKit(ctx);
+  const plain = await heavyPush(kit, assert, 'perks=', 'sem build');
+  assert(
+    plain.power.points === 0 && plain.power.tier === 0 && plain.power.impactScale === 1 && plain.power.aura === 'off',
+    `POW-13: sem build o snapshot deveria ler 0 pontos: ${JSON.stringify(plain.power)}`,
+  );
+  const built = await heavyPush(kit, assert, EIGHT_POINTS, '8 pontos');
+  const p = built.power;
+  assert(
+    p.points === 8 && p.tier === 3 && Math.abs(p.impactScale - 1.4) < 1e-9 && p.hitstopBonusMs.heavy === 30,
+    `POW-07/13: esperava 8 pontos, patamar 3 e escala 1,4: ${JSON.stringify(p)}`,
+  );
+  assert(
+    built.push > plain.push + 0.5,
+    `POW-08.5: o forte deveria empurrar mais com 8 pontos: ${built.push.toFixed(2)} px (${built.state}) contra ${plain.push.toFixed(2)} px (${plain.state})`,
+  );
+}
+
 export default async function (ctx) {
+  await strikeForceScales(ctx);
   await jabShowsStrikeNumber(ctx);
   await runResetClearsNumbers(ctx);
   await areaChangeClearsNumbers(ctx);
