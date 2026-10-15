@@ -4,7 +4,9 @@ import type { BossSpec } from './bossTier';
 
 /** Os 3 ataques de base e os encadeados/afixos dos ciclos por arquétipo (CYC-03/04, SNG-01). */
 export type BossAttack = 'charge' | 'leap' | 'volley' | 'doubleCharge' | 'tripleLeap' | 'threadRain' | 'beam';
-export type BossAIState = 'rest' | 'windup' | 'charge' | 'leap' | 'volley';
+export type BossAIState = 'rest' | 'windup' | 'charge' | 'leap' | 'volley' | 'threadRain' | 'beam';
+/** Ataques com aviso no chão ou na tela: preparo fixo, sem `windupMult` (SNG-02, CYC-09). */
+export type BossStrike = 'beam' | 'threadRain';
 
 export interface BossAITuning {
   /** Ciclo de ataques por fase (BAI-02, CYC-01): recomeça do primeiro ao trocar de fase. */
@@ -20,6 +22,8 @@ export interface BossAITuning {
   tripleLeap: { hops: number; gapMs: number };
   /** Preparo fixo e tempo ativo da Chuva de Fios (CYC-09/10). */
   threadRain: { windupMs: number; activeMs: number };
+  /** Aviso fixo e tempo ativo do feixe do Sangue Convergente (SNG-02/03); os números vêm de `BOSS_AFFIX.beam`. */
+  beam: { warnMs: number; activeMs: number };
 }
 
 export interface BossAIObservation {
@@ -47,7 +51,17 @@ export type BossAIEvent =
    * frame em que parou, na ordem do movimento (`toX < fromX` quando correu para a esquerda). Cancelar a investida
    * sem `canAct` não deixa rastro.
    */
-  | { type: 'chargeTrail'; fromX: number; toX: number };
+  | { type: 'chargeTrail'; fromX: number; toX: number }
+  /**
+   * Início do preparo do feixe ou da chuva (SNG-02, CYC-09): `dir` é o lado do player nesse frame (o feixe fica preso
+   * nele) e `playerX` o centro das marcas da chuva.
+   */
+  | { type: 'telegraph'; attack: BossStrike; dir: 1 | -1; playerX: number }
+  /** Fim do preparo: o feixe (no `dir` avisado) ou os fios abrem; `strikeOff` fecha (SNG-03, CYC-10). */
+  | { type: 'strikeOn'; attack: BossStrike; dir: 1 | -1 }
+  | { type: 'strikeOff'; attack: BossStrike }
+  /** Interrompido no preparo ou no corpo do feixe/chuva: apaga o aviso; no preparo, nada chegou a abrir (edge case). */
+  | { type: 'telegraphCancel' };
 
 export interface BossAIOutput {
   /** px/s, só horizontal; só != 0 durante a investida. */
@@ -86,6 +100,9 @@ export class BossAI {
 
   private volleyDir: 1 | -1 = 1;
   private volleyFired = 0;
+
+  /** Lado do feixe, preso no início do aviso (SNG-02). */
+  private strikeDir: 1 | -1 = 1;
 
   private currentVx = 0;
 
@@ -128,9 +145,7 @@ export class BossAI {
         this.timer -= dtMs;
         if (this.timer > 0) return;
         const overrun = -this.timer;
-        this.currentAttack = this.t.cycles[this.currentPhase][this.cycleIndex];
-        this._state = 'windup';
-        this.timer = this.windupDurationFor(this.currentAttack);
+        this.enterWindup(obs, events);
         this.step(overrun, obs, events);
         return;
       }
@@ -152,13 +167,37 @@ export class BossAI {
       case 'volley':
         this.stepVolley(dtMs, obs, events);
         return;
+      case 'beam':
+      case 'threadRain':
+        this.stepStrike(dtMs, obs, events);
+        return;
       default:
         return;
     }
   }
 
+  /**
+   * Sai do descanso para o preparo do próximo ataque do ciclo. O feixe e a chuva avisam aqui (`telegraph`), com o
+   * lado do player desse frame: é o lado em que o feixe sai, mesmo que o player troque de lado no aviso (SNG-02).
+   */
+  private enterWindup(obs: BossAIObservation, events: BossAIEvent[]): void {
+    const attack = this.t.cycles[this.currentPhase][this.cycleIndex];
+    this.currentAttack = attack;
+    this._state = 'windup';
+    this.timer = this.windupDurationFor(attack);
+    if (!isStrike(attack)) return;
+    const dx = obs.playerX - obs.selfX;
+    if (dx !== 0) this.facing = dx > 0 ? 1 : -1;
+    this.strikeDir = this.facing;
+    events.push({ type: 'telegraph', attack, dir: this.strikeDir, playerX: obs.playerX });
+  }
+
   /** Fixa a direção para o player e entra no corpo do ataque escolhido (BAT-01, BAT-02, BAT-04). */
   private beginAttackBody(obs: BossAIObservation, events: BossAIEvent[]): void {
+    if (isStrike(this.currentAttack)) {
+      this.beginStrike(this.currentAttack, events);
+      return;
+    }
     const dx = obs.playerX - obs.selfX;
     if (dx !== 0) this.facing = dx > 0 ? 1 : -1;
 
@@ -190,6 +229,25 @@ export class BossAI {
         this.enterRestAfterAttack();
         return;
     }
+  }
+
+  /** Corpo do feixe ou da chuva (SNG-03, CYC-10): abre no lado preso no aviso, sem olhar o player de novo. */
+  private beginStrike(attack: BossStrike, events: BossAIEvent[]): void {
+    this.facing = this.strikeDir;
+    this._state = attack;
+    this.timer = this.t[attack].activeMs;
+    events.push({ type: 'strikeOn', attack, dir: this.strikeDir });
+  }
+
+  /** Feixe ou fios abertos por `activeMs`; ao fechar, descansa como depois de qualquer ataque. */
+  private stepStrike(dtMs: number, obs: BossAIObservation, events: BossAIEvent[]): void {
+    this.currentVx = 0;
+    this.timer -= dtMs;
+    if (this.timer > 0 || !isStrike(this.currentAttack)) return;
+    const overrun = -this.timer;
+    events.push({ type: 'strikeOff', attack: this.currentAttack });
+    this.enterRestAfterAttack();
+    if (overrun > 0) this.step(overrun, obs, events);
   }
 
   /** Investida (BAT-01/09): anda até `maxDist` ou até `blocked`, com a hitbox aberta durante o movimento. */
@@ -286,20 +344,28 @@ export class BossAI {
     this.cycleIndex = (this.cycleIndex + 1) % this.t.cycles[this.currentPhase].length;
   }
 
+  /**
+   * Preparo de abertura: o feixe e a chuva têm preparo fixo, sem `windupMult` (SNG-02, CYC-09); os demais seguem o
+   * ataque de base com o multiplicador da fase (a Investida Dupla abre como a investida; CYC-11).
+   */
   private windupDurationFor(attack: BossAttack): number {
-    const m = this.t.phases[this.currentPhase - 1].windupMult;
-    // O preparo de abertura segue o ataque de base (a Investida Dupla abre como a investida; CYC-11).
-    const base = animBase(attack);
-    return this.t[base].windupMs * m;
+    const fixed = FIXED_WINDUP[attack];
+    if (fixed) return fixed(this.t);
+    return this.t[animBase(attack)].windupMs * this.t.phases[this.currentPhase - 1].windupMult;
   }
 
   /**
    * Sem `canAct`: fecha a hitbox da investida se estava aberta, zera `vx` e cancela o ataque (BAI-05). Zera também
    * o encadeado: a troca de fase (rugido) no meio da Investida Dupla ou do Salto Triplo não deixa o resto pendente.
+   * No feixe ou na chuva: no corpo fecha (`strikeOff`) e apaga o aviso; no preparo só apaga, sem abrir (edge case).
    */
   private interrupt(): BossAIOutput {
     const events: BossAIEvent[] = [];
     if (this._state === 'charge') events.push({ type: 'hitboxOff' });
+    if (isStrike(this.currentAttack)) {
+      if (this._state === this.currentAttack) events.push({ type: 'strikeOff', attack: this.currentAttack });
+      events.push({ type: 'telegraphCancel' });
+    }
     this._state = 'rest';
     this.timer = 0;
     this.currentAttack = null;
@@ -308,4 +374,14 @@ export class BossAI {
     this.currentVx = 0;
     return { vx: 0, leap: null, state: 'rest', attack: null, events };
   }
+}
+
+/** Preparos fixos, sem `windupMult` (SNG-02, CYC-09). */
+const FIXED_WINDUP: Partial<Record<BossAttack, (t: BossAITuning) => number>> = {
+  beam: (t) => t.beam.warnMs,
+  threadRain: (t) => t.threadRain.windupMs,
+};
+
+function isStrike(attack: BossAttack | null): attack is BossStrike {
+  return attack === 'beam' || attack === 'threadRain';
 }

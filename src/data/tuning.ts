@@ -7,6 +7,7 @@ import type { DifficultyTuning, EnemyAttackDef } from '../core/difficulty';
 import type { WaveTuning } from '../core/waves';
 import type { AttackGateTuning } from '../core/attackGate';
 import type { RunTuning } from '../core/run';
+import { BOSS_AFFIX } from './bossAffixes';
 
 /** Pulo máximo ≈ 130 px (4 tiles); toque ≈ 30 px. Ajustar jogando. */
 export const PLAYER_MOVE: MoveTuning = {
@@ -375,6 +376,8 @@ export const BOSS = {
   tripleLeap: { hops: 3, gapMs: 200 },
   /** Chuva de Fios: preparo fixo, fio ativo, deslocamentos das marcas a partir do player e tamanho do fio (CYC-09/10). */
   threadRain: { windupMs: 600, activeMs: 200, offsets: [-96, -48, 0, 48, 96], width: 12, height: 120 },
+  /** Feixe do Sangue Convergente: aviso e tempo ativo moram com os números do afixo (SNG-02/03). */
+  beam: BOSS_AFFIX.beam,
   /** Onda de choque do pouso: velocidade, alcance, altura e dano leve (BAT-03). */
   shockwave: { speed: 240, maxDist: 600, height: 20, damage: 12 },
   /** Rajada: preparo base, quantidade padrão, intervalo, velocidade, dano leve e alcance do projétil (BAT-04). */

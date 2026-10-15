@@ -532,9 +532,9 @@ Se a complexidade passar de 15, o encadeamento sai para `core/bossChain.ts` (des
 
 **Done when**:
 
-- [ ] Testes: 799/800 e 599/600 ms; `windupMult` da fase 3 não encurta; direção do feixe não muda se o player troca de
+- [x] Testes: 799/800 e 599/600 ms; `windupMult` da fase 3 não encurta; direção do feixe não muda se o player troca de
       lado no aviso; `telegraphCancel` sem `strikeOn` ao ser interrompido (edge case)
-- [ ] Lint dentro dos tetos; gate verde
+- [x] Lint dentro dos tetos; gate verde
 
 **Tests**: unit
 **Gate**: quick

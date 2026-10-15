@@ -154,11 +154,13 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 - `BossAITuning` + `cycles`, `doubleCharge`, `tripleLeap`, `threadRain`, `beam` (os números do feixe vêm de
   `data/bossAffixes`); `CYCLES` (linha 45) sai, `step` e `enterRestAfterAttack` leem `this.t.cycles`. Os tipos
   dos ataques novos e os números de `doubleCharge`, `tripleLeap` e `threadRain` entram já na T15 (para a
-  `bossTuningFor` ter tipo); o `beam` da tuning entra com o ataque, na T20. Até lá, um ataque sem corpo no
+  `bossTuningFor` ter tipo); o `beam` da tuning entra com o ataque, na T20, como `BOSS.beam = BOSS_AFFIX.beam`
+  (`data/tuning` importa `data/bossAffixes`), e a IA lê dele só `warnMs` e `activeMs`. Um ataque sem corpo no
   `beginAttackBody` cai direto no descanso.
-- Eventos novos: `{ type: 'telegraph'; attack: 'beam' | 'threadRain'; dir; playerX }` ao entrar no preparo;
-  `{ type: 'strikeOn' | 'strikeOff'; attack }` no corpo; `{ type: 'telegraphCancel' }` no `interrupt` durante preparo
-  ou corpo desses dois; `{ type: 'chargeTrail'; fromX; toX }` ao fim de toda investida, por alcance ou parede
+- Eventos novos (`BossStrike = 'beam' | 'threadRain'`): `{ type: 'telegraph'; attack; dir; playerX }` ao sair do
+  descanso para o preparo; `{ type: 'strikeOn'; attack; dir }` (o `dir` preso no aviso) e `{ type: 'strikeOff';
+  attack }` no corpo; `{ type: 'telegraphCancel' }` no `interrupt` durante preparo ou corpo desses dois (no corpo,
+  precedido de `strikeOff`, para todo `strikeOn` ter o seu fechamento); `{ type: 'chargeTrail'; fromX; toX }` ao fim de toda investida, por alcance ou parede
   (IGN-01: `fromX` é o X do chefe ao sair, `toX` o `selfX` observado no frame em que parou, na ordem do movimento;
   cancelar sem `canAct` não deixa rastro); `landed` ganha `final: boolean`.
 - Preparo: `beam` 800 ms e `threadRain` 600 ms fixos (sem `windupMult`); a direção do feixe fica presa no aviso (o
