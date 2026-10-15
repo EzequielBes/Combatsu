@@ -3,7 +3,7 @@ import { type CastState } from '../../core/cast';
 import { type Vec2 } from '../../core/hit';
 import { CameraKick, ZoomPulse } from '../../core/cameraKick';
 import { UI_SCALE, zoom } from '../../game/art/hd/screen';
-import { CAST_FX, TECHNIQUES } from '../../data/techniques';
+import { CAST_FX } from '../../data/techniques';
 import type { TestScene } from '../TestScene';
 
 /** Zoom da câmera do mundo (RES-01): 960x540 de tela mostram 640x360 px de mundo. */
@@ -81,7 +81,12 @@ export class CameraRig {
     if (state === this.lastCastState) return;
     const cam = this.s.cameras.main;
     if (state === 'charge' && this.s.techCaster.cast) {
-      cam.zoomTo(zoom(CAST_FX.zoomCharge), Math.max(1, TECHNIQUES[this.s.techCaster.cast.id].chargeMs), 'Linear', true);
+      cam.zoomTo(
+        zoom(CAST_FX.zoomCharge),
+        Math.max(1, this.s.loadout.stats(this.s.techCaster.cast.id).chargeMs),
+        'Linear',
+        true,
+      );
     } else if (state === 'release') {
       cam.zoomTo(zoom(CAST_FX.zoomBase), CAST_FX.zoomBackMs, 'Linear', true);
     } else if (state === null && (this.lastCastState === 'sign' || this.lastCastState === 'charge')) {

@@ -407,13 +407,13 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
 | `src/game/tech/blue.ts` | 12, 126 | idem |
 | `src/game/tech/cut.ts` | 52 | idem |
 | `src/game/tech/purple.ts` | 12-15, 53, 96 | `loadout.stats('roxo')` no disparo, guardado com a esfera (geometria e dano já escalado); nascimento, altura, força e dano do stat; a carga lê `signMs + chargeMs` e o raio do stat (T9) |
-| `src/game/tech/divergent.ts` | 167, 201 | `stats.damage.first` / `second` |
+| `src/game/tech/divergent.ts` | 167, 201 | `loadout.stats('divergente').damage.first` / `second`, lidos em cada impacto (T10) |
 | `src/game/techFx/RedOrb.ts` | 101-111, 329-337 | `chargeUpdate(..., chargeMs)` já recebe o tempo; `detonate(point, facing, look: { radius, rings })` |
 | `src/game/techFx/redDetonation.ts` | 26-29, 54, 65, 89, 117 | `redDetonationBurst(scene, registry, point, look)`; raio da esfera = `look.radius`, anel = `shockRingRadius(look.radius)` (`radius × ringPx / radius` da tabela, em `techFx/redLook.ts` sem `phaser`, com o tipo `RedDetonationLook`); `TECH_GEOMETRY.vermelho.rings: 1` (T6); sprite pelo `orbTexels` no passo 2 |
 | `src/game/techFx/BlueOrb.ts` | 32-36 | halo e distorção proporcionais ao `radius` do stat (130 dá os números de hoje): `update(dtMs, x, y, radius)` e `blueOrbLook(radius)` de `techFx/blueLook.ts`, sem `phaser` (`radius × haloPx / radius` e `radius × distortPx / radius` da tabela; `TECH_GEOMETRY.azul.haloPx: 40`, `distortPx: 58`) (T7) |
 | `src/game/techFx/CutFx.ts` | 7-13 | comprimento e meio da linha pelo stat: `cut(x, y, facing, angleDeg, geometry)` com o `cutLine(geometry)` (T8) |
 | `src/game/techFx/PurpleOrb.ts` | — | raio da esfera pelo stat: `charge(x, y, t, radius)` e `flight(x, y, ageMs, radius)` (T9) |
-| `src/game/EnergyHud.ts` | 171, 176 | `def.cooldownMs` vira `loadout.stats(s.id).cooldownMs` |
+| `src/game/EnergyHud.ts` | 171, 176 | `const stats = loadout.stats(s.id)`: custo e recarga (`stats.cooldownMs`) do mesmo stat; o kanji segue do `TECHNIQUES` (T10) |
 | `src/scenes/test/camera.ts` | 84 | `TECHNIQUES[...].chargeMs` vira `this.s.loadout.stats(id).chargeMs` |
 | `tests/core/techStats.test.ts` (novo) | — | equivalência TST-01.6 |
 

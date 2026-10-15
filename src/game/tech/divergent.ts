@@ -5,7 +5,7 @@ import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
 import type { Hit, Vec2 } from '../../core/hit';
 import { Kokusen } from '../../core/kokusen';
-import { KOKUSEN, TECHNIQUES } from '../../data/techniques';
+import { KOKUSEN } from '../../data/techniques';
 import { PLAYER_COMBO } from '../../data/tuning';
 import { HD_ON } from '../art/hd/flag';
 import { playerAnchors } from '../art/hd/anchors';
@@ -164,7 +164,7 @@ export class DivergentTech {
     const { player, loadout } = this.ctx;
     const hit: Hit = {
       ownerId: player.id,
-      damage: loadout.damage('divergente', TECHNIQUES.divergente.damage.first), // DIV-03, TEC-06
+      damage: loadout.stats('divergente').damage.first, // DIV-03, TEC-06, TST-02
       strength: 'light',
       force: DIVERGENT_FORCE.first,
       direction: { x: player.facing, y: -0.15 },
@@ -198,7 +198,7 @@ export class DivergentTech {
     const point = this.impactPoint(target);
     const hit: Hit = {
       ownerId: player.id,
-      damage: loadout.damage('divergente', TECHNIQUES.divergente.damage.second), // DIV-04, TEC-06
+      damage: loadout.stats('divergente').damage.second, // DIV-04, TEC-06, TST-02
       strength: 'heavy',
       force: DIVERGENT_FORCE.second,
       direction: { x: player.facing, y: -0.3 },

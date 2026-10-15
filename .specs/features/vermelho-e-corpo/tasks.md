@@ -438,16 +438,20 @@ opcional (`PurpleFlight`, a da tabela por padrão) e `purpleGeometry(stats)`; `g
 **What**: `divergent.ts:167`, `:201` usam `stats.damage.first`/`second`; `EnergyHud.ts:171`, `:176` trocam
 `def.cooldownMs` por `loadout.stats(s.id).cooldownMs`; `camera.ts:84` troca o `chargeMs` de `TECHNIQUES` por
 `this.s.loadout.stats(id).chargeMs`.
-**Where**: `src/game/tech/divergent.ts`
+**Where**: `src/game/tech/divergent.ts`, `src/game/EnergyHud.ts`, `src/scenes/test/camera.ts`
 **Depends on**: T5, T6, T7, T8, T9
 **Reuses**: `Loadout.stats`
 **Requirement**: TST-02, TST-04
 
 **Done when**:
 
-- [ ] `grep -rnE "TECHNIQUES\[[^]]+\]\.(cost|cooldownMs|signMs|chargeMs|releaseMs|recoverMs|damage)" src/game src/scenes` vazio (TST-02)
-- [ ] Smokes `tech`, `techniques`, `red-anime`, `kokusen`, `evolution` e `fight` verdes e iguais (TST-04)
-- [ ] `TestScene.ts` intocado (SHX-02); gate verde; contagem sem perda
+- [x] `grep -rnE "TECHNIQUES\[[^]]+\]\.(cost|cooldownMs|signMs|chargeMs|releaseMs|recoverMs|damage)" src/game src/scenes` vazio (TST-02);
+      o `techStats.test.ts` faz a mesma varredura (também na forma `TECHNIQUES.id.campo`) em todo `src/game` e
+      `src/scenes` e confere os três leitores (falha com o `camera.ts` antigo)
+- [x] Smokes `tech`, `techniques`, `red-anime`, `kokusen`, `evolution` e `fight` verdes e iguais (TST-04)
+- [x] `TestScene.ts` intocado (SHX-02); gate verde; contagem sem perda (3872 + 1 = 3873). O dano do Divergente
+      segue lido em cada impacto (`loadout.stats('divergente').damage.first`/`second`), como antes; o kanji do HUD
+      continua do `TECHNIQUES` (não é número de ajuste)
 
 **Tests**: smoke
 **Gate**: full

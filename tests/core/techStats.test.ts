@@ -17,6 +17,9 @@ import blueFxSrc from '../../src/game/techFx/BlueOrb.ts?raw';
 import cutFxSrc from '../../src/game/techFx/CutFx.ts?raw';
 import purpleFxSrc from '../../src/game/techFx/PurpleOrb.ts?raw';
 import redDetonationSrc from '../../src/game/techFx/redDetonation.ts?raw';
+import divergentSrc from '../../src/game/tech/divergent.ts?raw';
+import hudSrc from '../../src/game/EnergyHud.ts?raw';
+import cameraSrc from '../../src/scenes/test/camera.ts?raw';
 
 const IDS: readonly TechId[] = ['divergente', 'vermelho', 'azul', 'corte', 'roxo'];
 const LEVELS: readonly TechLevel[] = [1, 2, 3];
@@ -175,6 +178,23 @@ describe('TST-01.6: TECH_GEOMETRY sem número novo (igual às constantes ainda n
     // TST-03: a vista mede a esfera pelo raio que recebe, sem importar PURPLE nem repetir o 36.
     expect(purpleFxSrc).not.toContain('PURPLE.');
     expect(purpleFxSrc).not.toMatch(/\b36\b/);
+  });
+});
+
+describe('TST-02: o jogo lê cada número de técnica do TechStats', () => {
+  it('últimos leitores (T10): nenhum arquivo de game/ ou scenes/ lê número de técnica direto do TECHNIQUES', () => {
+    const sources = import.meta.glob<string>('../../src/{game,scenes}/**/*.ts', {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    });
+    const field = /TECHNIQUES(\[[^\]]+\]|\.[a-z]+)\.(cost|cooldownMs|signMs|chargeMs|releaseMs|recoverMs|damage)\b/;
+    const readers = Object.entries(sources).filter(([, src]) => field.test(src));
+    expect(readers.map(([path]) => path)).toEqual([]);
+    expect(divergentSrc).toContain("loadout.stats('divergente').damage.first");
+    expect(divergentSrc).toContain("loadout.stats('divergente').damage.second");
+    expect(hudSrc).toContain('stats.cooldownMs');
+    expect(cameraSrc).toContain('this.s.loadout.stats(this.s.techCaster.cast.id).chargeMs');
   });
 });
 

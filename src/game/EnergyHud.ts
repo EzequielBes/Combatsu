@@ -169,12 +169,13 @@ export class EnergyHud {
         return;
       }
       const def = TECHNIQUES[s.id];
-      const cost = loadout.cost(s.id);
+      const stats = loadout.stats(s.id); // TST-02: custo e recarga do mesmo stat
+      const cost = stats.cost;
       mark.setPosition(BAR_X + (BAR_W * cost) / energy.max, BAR_Y).setVisible(true); // TEC-12
       slot.icon.setFrame(def.kanji).setVisible(true);
       slot.border.setVisible(true);
       slot.label.setVisible(true);
-      const cdFrac = Math.max(0, Math.min(1, loadout.cooldownOf(i as 0 | 1) / def.cooldownMs));
+      const cdFrac = Math.max(0, Math.min(1, loadout.cooldownOf(i as 0 | 1) / stats.cooldownMs));
       slot.overlay.height = ICON_SIZE * cdFrac; // TEC-09
       slot.overlay.setVisible(cdFrac > 0);
       // MST-08: sob o slot ocupado abaixo do Nv3, largura = round(largura do slot × pontos / limiar).
