@@ -53,7 +53,7 @@ export class CutTech {
       strength: 'light',
       force: 0,
       direction: { x: 0, y: -1 },
-      ...techMarks('light'),
+      ...techMarks('light', 'corte'),
     };
     const enemy = enemies.find((e) => e.id === hit.targetId);
     if (enemy) {

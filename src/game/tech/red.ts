@@ -126,7 +126,14 @@ export class RedTech {
     force: number,
     direction: Vec2,
   ): void {
-    const hit: Hit = { ownerId: this.ctx.player.id, damage, strength, force, direction, ...techMarks(strength) };
+    const hit: Hit = {
+      ownerId: this.ctx.player.id,
+      damage,
+      strength,
+      force,
+      direction,
+      ...techMarks(strength, 'vermelho'),
+    };
     if (!target.receiveHit(hit)) return;
     this.ctx.onTechHit(hit, point());
     this.ctx.masteryHit(cast, target);

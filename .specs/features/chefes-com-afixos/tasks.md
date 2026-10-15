@@ -786,10 +786,10 @@ guarda os vivos e, no `onBossDied`/`reset`, remove cada um com `curseSmoke` + `d
 
 **Done when**:
 
-- [ ] `npm run smoke -- tech` verde (dano e efeito das técnicas iguais)
-- [ ] Gate verde
+- [x] `npm run smoke -- tech` verde (dano e efeito das técnicas iguais)
+- [x] Gate verde
 
-**Tests**: smoke
+**Tests**: unit (`tests/game/techMarks.test.ts`) + smoke
 **Gate**: full
 **Commit**: `feat(tech): tag technique hits with their id`
 

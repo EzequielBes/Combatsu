@@ -124,7 +124,7 @@ export class BlueTech {
       strength: 'light',
       force: 0,
       direction: { x: 0, y: -1 },
-      ...techMarks('light'),
+      ...techMarks('light', 'azul'),
     };
     const enemy = enemies.find((e) => e.id === dmg.targetId);
     if (enemy) {
