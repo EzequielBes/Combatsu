@@ -4,9 +4,11 @@
  *
  * O ドン (32x20) é desenhado em código como pincelada: cada traço é uma linha grossa entre pontos, com a espessura
  * afinando do começo ao fim; o texto inteiro inclina para a frente (itálico de impacto), ganha o contorno `k` de
- * 1 texel em volta e a sombra `r` deslocada para baixo e para a direita. O miolo é o branco quente `w`.
- * A rachadura (48x6, `crack-0` no instante do golpe e `crack-1` espalhada) é a fenda em cunha no ponto do impacto e
- * os galhos tortos para os lados, em `k`, com a borda funda `K` logo abaixo de cada texel da fenda.
+ * 1 texel em volta e a sombra `r` deslocada para baixo e para a direita, só por fora do desenho fechado (nada de
+ * vermelho nos vãos da letra). O miolo é o branco quente `w`.
+ * A rachadura (48x6, `crack-0` no instante do golpe e `crack-1` espalhada) é vista de lado: quebra a borda do chão e
+ * desce pela face do piso. A cunha em V no ponto do impacto ocupa as 6 linhas (borda `k`, fundo `K` por dentro), os
+ * galhos `k` descem em zigue-zague afinando até 1 texel e lascas claras (`y`) soltam na borda, ao lado da cunha.
  */
 import type { HdSheet } from './sheet';
 import { PALETTE_COLORS, paletteIndex } from './paletteGrid';
@@ -26,18 +28,19 @@ interface Stroke {
   r1?: number;
 }
 
-// ド: a haste da ト, o galho para a direita e as duas marcas do dakuten; ン: o pingo e a varrida de baixo para cima.
+// ド: a haste da ト, o galho para a direita e as duas marcas finas do dakuten (゛, caídas para a direita, com 1 texel
+// vazio entre elas); ン: o pingo e a varrida de baixo para cima. Entre o ド e o ン ficam 2 texels vazios.
 // prettier-ignore
 const DON_STROKES: readonly Stroke[] = [
-  { pts: [[3.5, 2.5], [3.5, 15.5]], r0: 2, r1: 1.6 },
-  { pts: [[5, 6.5], [11, 10.5]], r0: 1.8, r1: 1.2 },
-  { pts: [[9.5, 2.3], [10.5, 5]], r0: 1.1 },
-  { pts: [[13, 2.3], [14, 5]], r0: 1.1 },
-  { pts: [[16.5, 3.5], [20, 6.5]], r0: 1.8, r1: 1.3 },
-  { pts: [[16.5, 15.5], [20.5, 14], [24, 10.8], [26.3, 7], [27.5, 3]], r0: 2.2, r1: 1.1 },
+  { pts: [[2.2, 2.5], [2.2, 15.5]], r0: 1.6, r1: 1.4 },
+  { pts: [[3.6, 7.2], [8.5, 10.6]], r0: 1.6, r1: 1.1 },
+  { pts: [[7.2, 1.2], [8, 3.5]], r0: 0.75 },
+  { pts: [[12.2, 1.2], [13, 3.5]], r0: 0.75 },
+  { pts: [[18.9, 3.4], [20.6, 5.3]], r0: 1, r1: 0.8 },
+  { pts: [[17.5, 15.5], [21, 14.2], [24.1, 11], [26.1, 7.2], [27, 3.4]], r0: 2.1, r1: 1 },
 ];
-/** Inclinação do itálico: texels para a direita por texel para cima. */
-const DON_SLANT = 0.12;
+/** Inclinação do itálico: texels para a direita por texel para cima (a ponta da varrida não chega na borda). */
+const DON_SLANT = 0.09;
 
 const W = paletteIndex('w');
 const K = paletteIndex('k');
@@ -73,6 +76,35 @@ function* around(x: number, y: number, w: number, h: number): Generator<number> 
       if ((i !== x || j !== y) && i >= 0 && j >= 0 && i < w && j < h) yield j * w + i;
 }
 
+/** A máscara `m` (1 = cheio) dilatada (`grow`) ou erodida pelos 8 vizinhos. */
+function morph(m: Uint8Array, w: number, h: number, grow: boolean): Uint8Array {
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const n = [...around(x, y, w, h)];
+      const hit = grow ? m[y * w + x] || n.some((i) => m[i]) : m[y * w + x] && n.length === 8 && n.every((i) => m[i]);
+      out[y * w + x] = hit ? 1 : 0;
+    }
+  return out;
+}
+
+/** Raio do fechamento: tapa os vãos de até o dobro disso. */
+const CLOSE = 5;
+
+/**
+ * O desenho fechado: a tinta dilatada `CLOSE` texels e erodida outros tantos, numa margem vazia em volta do quadro
+ * (para a borda não contar como tinta). Tapa os vãos de dentro das letras e entre elas.
+ */
+function closed(ink: Uint8Array, w: number, h: number): Uint8Array {
+  const [pw, ph] = [w + 2 * CLOSE, h + 2 * CLOSE];
+  let m: Uint8Array = new Uint8Array(pw * ph);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m[(y + CLOSE) * pw + x + CLOSE] = ink[y * w + x];
+  for (let i = 0; i < 2 * CLOSE; i++) m = morph(m, pw, ph, i < CLOSE);
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[y * w + x] = m[(y + CLOSE) * pw + x + CLOSE];
+  return out;
+}
+
 function drawDon(): Uint8Array {
   const { w, h } = DON_FRAME;
   const out = new Uint8Array(w * h);
@@ -83,40 +115,59 @@ function drawDon(): Uint8Array {
       if (DON_STROKES.some((s) => inStroke(s, ux, y + 0.5))) out[y * w + x] = W;
     }
   // Contorno de 1 texel em volta do miolo (8 vizinhos, para o traço ficar grosso nas diagonais).
-  const outline = (): void => {
-    const fill = Uint8Array.from(out);
-    for (let y = 0; y < h; y++)
-      for (let x = 0; x < w; x++)
-        if (fill[y * w + x] === 0 && [...around(x, y, w, h)].some((i) => fill[i] === W)) out[y * w + x] = K;
-  };
-  outline();
-  // Sombra: o desenho todo deslocado 1 texel para baixo e para a direita, só onde está vazio.
-  const ink = Uint8Array.from(out);
+  const fill = Uint8Array.from(out);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++)
+      if (fill[y * w + x] === 0 && [...around(x, y, w, h)].some((i) => fill[i] === W)) out[y * w + x] = K;
+  // Sombra: o desenho todo deslocado 1 texel para baixo e para a direita, só no vazio de fora do desenho fechado
+  // (nada de pontos vermelhos dentro dos vãos da letra nem entre o ド e o ン).
+  const ink = out.map((c) => (c ? 1 : 0));
+  const inside = closed(ink, w, h);
   for (let y = 1; y < h; y++)
-    for (let x = 1; x < w; x++) if (out[y * w + x] === 0 && ink[(y - 1) * w + x - 1]) out[y * w + x] = R;
+    for (let x = 1; x < w; x++)
+      if (out[y * w + x] === 0 && !inside[y * w + x] && ink[(y - 1) * w + x - 1]) out[y * w + x] = R;
   return out;
 }
 
-// Galhos da rachadura a partir da cunha do meio (coluna 23/24): o direito e o esquerdo, com um galho menor cada.
+type CrackName = (typeof CRACK_FRAMES)[number];
+
+/**
+ * Galhos da rachadura vista de lado: saem da cunha descendo pela face do piso entre 30° e 45° e seguem em zigue-zague
+ * (cada trecho subindo ou descendo de 27° a 45°), com galhos menores nas quinas; o primeiro trecho dos que saem da
+ * cunha tem 2 texels e a ponta afina para 1. Todos terminam 2 texels antes da borda do quadro.
+ */
 // prettier-ignore
-const CRACK_BRANCHES: Record<(typeof CRACK_FRAMES)[number], readonly (readonly Pt[])[]> = {
+const CRACK_BRANCHES: Record<CrackName, readonly (readonly Pt[])[]> = {
   'crack-0': [
-    [[25, 1], [28, 2], [31, 1]],
-    [[22, 1], [19, 2], [16, 1]],
+    [[26, 1], [29, 3], [30, 4]],
+    [[21, 1], [18, 3], [17, 4]],
   ],
   'crack-1': [
-    [[25, 1], [28, 2], [31, 1], [35, 2], [39, 2], [43, 3], [47, 3]],
-    [[31, 1], [33, 3], [34, 4]],
-    [[22, 1], [19, 2], [16, 1], [12, 2], [8, 2], [4, 3], [0, 4]],
-    [[16, 1], [14, 3], [13, 4]],
+    [[27, 1], [30, 3], [32, 4], [35, 2], [38, 4], [40, 5]],
+    [[20, 1], [17, 3], [16, 4], [13, 2], [11, 3], [8, 5]],
+    [[38, 4], [41, 2], [43, 3]],
+    [[11, 3], [8, 1], [5, 3], [4, 4]],
+    [[32, 4], [33, 5]],
+    [[16, 4], [15, 5]],
   ],
 };
-/** A cunha do impacto, linha a linha: [primeira coluna, última]. */
+/** Os 2 primeiros galhos de cada quadro saem colados na cunha (os outros nascem nas quinas deles). */
+const ROOTED = 2;
+/** A cunha do impacto, linha a linha: [primeira coluna, última]; borda `k` e o fundo `K` só por dentro. */
 // prettier-ignore
-const CRACK_WEDGE: Record<(typeof CRACK_FRAMES)[number], readonly Pt[]> = {
-  'crack-0': [[23, 24], [23, 24], [23, 23]],
-  'crack-1': [[22, 25], [22, 25], [23, 24], [23, 24], [24, 24]],
+const CRACK_WEDGE: Record<CrackName, readonly Pt[]> = {
+  'crack-0': [[21, 26], [22, 25], [22, 25], [23, 24], [23, 24], [23, 23]],
+  'crack-1': [[20, 27], [21, 26], [21, 26], [22, 25], [22, 25], [23, 24]],
 };
+/** Lascas claras de pedra soltas na borda do chão, ao lado da cunha. */
+const CRACK_CHIPS: Record<CrackName, readonly Pt[]> = {
+  'crack-0': [[20, 0]],
+  'crack-1': [
+    [19, 0],
+    [29, 0],
+  ],
+};
+const CHIP = paletteIndex('y');
 
 function bresenham([x0, y0]: Pt, [x1, y1]: Pt, put: (x: number, y: number) => void): void {
   const [dx, dy] = [Math.abs(x1 - x0), -Math.abs(y1 - y0)];
@@ -131,20 +182,23 @@ function bresenham([x0, y0]: Pt, [x1, y1]: Pt, put: (x: number, y: number) => vo
   }
 }
 
-function drawCrack(name: (typeof CRACK_FRAMES)[number]): Uint8Array {
+function drawCrack(name: CrackName): Uint8Array {
   const { w, h } = CRACK_FRAME;
   const out = new Uint8Array(w * h);
-  const put = (x: number, y: number): void => {
-    if (x >= 0 && y >= 0 && x < w && y < h) out[y * w + x] = K;
+  const put = (c: number) => (x: number, y: number) => {
+    if (x >= 0 && y >= 0 && x < w && y < h) out[y * w + x] = c;
   };
-  CRACK_WEDGE[name].forEach(([a, b], y) => {
-    for (let x = a; x <= b; x++) put(x, y);
+  CRACK_BRANCHES[name].forEach((branch, i) => {
+    for (let j = 0; j + 1 < branch.length; j++) {
+      bresenham(branch[j], branch[j + 1], put(K));
+      // Perto da cunha o galho é mais grosso: um segundo texel logo abaixo.
+      if (i < ROOTED && j === 0) bresenham(branch[j], branch[j + 1], (x, y) => put(K)(x, y + 1));
+    }
   });
-  for (const branch of CRACK_BRANCHES[name])
-    for (let i = 0; i + 1 < branch.length; i++) bresenham(branch[i], branch[i + 1], put);
-  // A borda funda embaixo de cada texel da fenda: a rachadura ganha profundidade no chão.
-  for (let y = h - 2; y >= 0; y--)
-    for (let x = 0; x < w; x++) if (out[y * w + x] === K && out[(y + 1) * w + x] === 0) out[(y + 1) * w + x] = DEEP;
+  CRACK_WEDGE[name].forEach(([a, b], y) => {
+    for (let x = a; x <= b; x++) put(x === a || x === b ? K : DEEP)(x, y);
+  });
+  for (const [x, y] of CRACK_CHIPS[name]) put(CHIP)(x, y);
   return out;
 }
 
