@@ -154,9 +154,87 @@ async function pinball(ctx) {
   ctx.assert(false, 'VRM-13: a 3ª detonação não pegou ninguém em 3 tentativas');
 }
 
+/** Raio da detonação sem Escala (96) e o do orbe segurado do Contido (× 1,4, VRM-14). */
+const RADIUS = 96;
+const HELD_RADIUS = RADIUS * 1.4;
+const CONTIDO = `${BASE}&maxAlive=1&axes=vermelho.potencia:1&ramo=vermelho:b`;
+
+/** Maior `fx.red.sphereR` (a esfera da detonação crescendo) nos próximos quadros. */
+async function maxSphere(kit, s, frames = 40) {
+  let max = s.fx.red.sphereR ?? 0;
+  for (let i = 0; i < frames; i++) max = Math.max(max, (s = await kit.frame()).fx.red.sphereR ?? 0);
+  return max;
+}
+
+/**
+ * VRM-14 (cenário 5): com o Contido e `L` segurado desde antes da saída, o orbe voa, paira no fim dos 320 px e só
+ * detona ao soltar, com o raio × 1,4 lido no `fx`; levar golpe (tecla 4 de debug) com ele pairando não o cancela.
+ */
+async function containedRelease(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(CONTIDO);
+  ctx.assert(s.build.vermelho.branch === 'contido', `VRM-18: ramo Contido: ${JSON.stringify(s.build.vermelho)}`);
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s, true));
+  let orb = null;
+  for (let i = 0; i < 40 && !(orb?.traveled >= 320); i++)
+    orb = (s = await kit.frame()).techObjects.find((o) => o.kind === 'red');
+  ctx.assert(orb?.traveled === 320, `VRM-14: o orbe segurado chega aos 320 px: ${JSON.stringify(s.techObjects)}`);
+  const hp = s.player.hp;
+  await ctx.page.keyboard.press('Digit4');
+  for (let i = 0; i < 10; i++) s = await kit.frame();
+  const still = s.techObjects.find((o) => o.kind === 'red');
+  ctx.assert(s.player.hp < hp, `o golpe de teste deveria ferir o player: ${hp} -> ${s.player.hp}`);
+  ctx.assert(
+    still?.x === orb.x && !s.events.slice(seen).includes('redDetonate'),
+    `VRM-14, edge case: o orbe segue pairando parado depois do golpe: ${JSON.stringify({ orb, still })}`,
+  );
+  await kit.up('KeyL');
+  s = await kit.frame();
+  ctx.assert(
+    s.events.slice(seen).includes('redDetonate'),
+    `VRM-14: soltar a tecla detona: ${JSON.stringify(s.techObjects)}`,
+  );
+  const r = await maxSphere(kit, s);
+  ctx.assert(Math.abs(r - HELD_RADIUS) < 0.5, `VRM-14: raio × 1,4 (${HELD_RADIUS}) na detonação segurada: ${r}`);
+}
+
+/** VRM-14: segurando sem soltar, o orbe detona aos 1,2 s da saída (72 quadros: o `step(16)` anda um passo fixo de 1000/60 ms), com o raio × 1,4. */
+async function containedTimeout(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(CONTIDO);
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s, true));
+  let frames = 0;
+  for (; frames < 120 && !s.events.slice(seen).includes('redDetonate'); frames++) s = await kit.frame();
+  await kit.up('KeyL');
+  ctx.assert(
+    Math.abs(frames - 72) <= 1,
+    `VRM-14: detona aos 1,2 s segurando: ${frames} quadros (${Math.round((frames * 1000) / 60)} ms)`,
+  );
+  const r = await maxSphere(kit, s);
+  ctx.assert(Math.abs(r - HELD_RADIUS) < 0.5, `VRM-14: raio × 1,4 (${HELD_RADIUS}) aos 1,2 s: ${r}`);
+}
+
+/** VRM-14.8: soltando antes da saída, o orbe do Contido voa e detona como o sem ramo, com o raio normal. */
+async function containedEarly(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(CONTIDO);
+  const seen = s.events.length;
+  ({ s } = await castRed(kit, ctx, s));
+  let frames = 0;
+  for (; frames < 120 && !s.events.slice(seen).includes('redDetonate'); frames++) s = await kit.frame();
+  ctx.assert(frames < 40, `VRM-14.8: solto antes da saída, detona no fim do voo (~420 ms): ${frames} quadros`);
+  const r = await maxSphere(kit, s);
+  ctx.assert(Math.abs(r - RADIUS) < 0.5, `VRM-14.8: raio normal (${RADIUS}) sem segurar: ${r}`);
+}
+
 /** Cenários dos ramos e Despertares, na ordem das tarefas (T30 em diante). */
 export async function branchScenarios(ctx) {
   await ricochet(ctx);
   await ricochetBack(ctx);
   await pinball(ctx);
+  await containedRelease(ctx);
+  await containedTimeout(ctx);
+  await containedEarly(ctx);
 }

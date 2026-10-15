@@ -102,6 +102,31 @@ describe('VRM-12: o toque continua 1 vez por orbe', () => {
   });
 });
 
+describe('VRM-14: o orbe segurado do Contido paira no fim dos 320 px e detona com o raio × 1,4', () => {
+  it('com holdAtEnd, chegar ao alcance vira pairar no 320º px, não detonação; sem ele, detona', () => {
+    const held = new RedOrbState(0, 1, CFG);
+    expect(held.update(799, true)).toBe(false);
+    expect(held.update(100, true)).toBe(false);
+    expect(held.detonated).toBe(false);
+    expect(held.hovering).toBe(true);
+    expect(held.x).toBe(320);
+    expect(held.update(5000, true)).toBe(false);
+    expect(held.x).toBe(320);
+
+    const free = new RedOrbState(0, 1, CFG);
+    free.update(799);
+    expect(free.update(100)).toBe(true);
+    expect(free.detonated).toBe(true);
+  });
+
+  it('detonationTargets aceita o raio da detonação: 140 (100 × 1,4) pega o alvo a 140 e não o de 141', () => {
+    const state = new RedOrbState(0, 1, CFG);
+    const hits = state.detonationTargets([at(1, 140), at(2, 141)], { x: 0, y: 0 }, 140);
+    expect(hits.map((h) => h.targetId)).toEqual([1]);
+    expect(new RedOrbState(0, 1, CFG).detonationTargets([at(1, 140)], { x: 0, y: 0 })).toEqual([]);
+  });
+});
+
 describe('VRM-14: hover para o voo sem detonar', () => {
   it('parado no ar, o update não anda nem detona, até o detonate', () => {
     const state = new RedOrbState(0, 1, CFG);

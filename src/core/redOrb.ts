@@ -211,14 +211,17 @@ export class RedOrbState {
     return { targetId: target.id, damage: this.config.touch, direction };
   }
 
-  /** RED-10: alvos a até `config.radius` do ponto, ainda não atingidos nesta detonação, cada um uma vez. */
-  detonationTargets(targets: readonly RedOrbTarget[], point: Vec2): RedOrbHit[] {
+  /**
+   * RED-10: alvos a até `radius` do ponto (o `config.radius`; VRM-14: o orbe segurado do Contido passa o raio × 1,4),
+   * ainda não atingidos nesta detonação, cada um uma vez.
+   */
+  detonationTargets(targets: readonly RedOrbTarget[], point: Vec2, radius: number = this.config.radius): RedOrbHit[] {
     const hits: RedOrbHit[] = [];
     for (const target of targets) {
       if (this.hitIds.has(target.id)) continue;
       const dx = target.center.x - point.x;
       const dy = target.center.y - point.y;
-      if (Math.hypot(dx, dy) > this.config.radius) continue;
+      if (Math.hypot(dx, dy) > radius) continue;
       this.hitIds.add(target.id);
       hits.push({
         targetId: target.id,
@@ -229,12 +232,16 @@ export class RedOrbState {
     return hits;
   }
 
-  /** RED-08: avança o voo; devolve `true` no frame em que o alcance se completa (detona por alcance). */
-  update(dtMs: number): boolean {
+  /**
+   * RED-08: avança o voo; devolve `true` no frame em que o alcance se completa (detona por alcance). VRM-14: com
+   * `holdAtEnd` (o orbe segurado do Contido), chegar ao alcance faz o orbe pairar ali em vez de detonar.
+   */
+  update(dtMs: number, holdAtEnd = false): boolean {
     if (this._detonated || this._hovering) return false;
     if (this.mover.update(dtMs) === 'expired') {
-      this._detonated = true;
-      return true;
+      if (holdAtEnd) this._hovering = true;
+      else this._detonated = true;
+      return !holdAtEnd;
     }
     return false;
   }

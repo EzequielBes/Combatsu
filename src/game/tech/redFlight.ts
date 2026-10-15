@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { canDamage, normalize, type Hit, type HitBand, type Strength, type Vec2 } from '../../core/hit';
 import {
+  ContidoHold,
   detonationMul,
   pickRebound,
   shardTargets,
@@ -106,6 +107,12 @@ export class RedFlight {
   private touchEvents: string[] = [];
   /** Onde a detonação pendente aconteceu (VRM-12, VRM-13: o fim do voo no ar só rebate no Fliperama). */
   private site: DetonationSite = 'end';
+  /**
+   * VRM-14: o orbe do Contido, armado no 1º quadro do voo com a tecla do slot daquele quadro (o da soltura: o `red.ts`
+   * lança antes de chamar o `update`); `null` fora do Contido.
+   */
+  private hold: ContidoHold | null = null;
+  private armPending = false;
 
   constructor(
     private readonly ctx: TechContext,
@@ -124,16 +131,26 @@ export class RedFlight {
     this.orb = entry;
     this.shardHit = new Set();
     this.site = 'end';
+    this.hold = null;
+    this.armPending = entry.plan.holdable;
   }
 
-  /** `_slotHeld`: a tecla de cada slot segurada neste quadro (VRM-14, lida pelo Contido na T31). */
-  update(dtMs: number, enemies: readonly TechTarget[], _slotHeld: readonly [boolean, boolean]): void {
+  /** `slotHeld`: a tecla de cada slot segurada neste quadro (VRM-14: o orbe do Contido detona ao soltar). */
+  update(dtMs: number, enemies: readonly TechTarget[], slotHeld: readonly [boolean, boolean]): void {
     this.targets = enemies;
     for (const event of this.touchEvents.splice(0)) this.ctx.emit(event);
     const orb = this.orb;
     if (!orb) return;
+    const held = orb.cast !== null && slotHeld[orb.cast.slot];
+    if (this.armPending) {
+      this.armPending = false;
+      this.hold = new ContidoHold(held, orb.red.speed, orb.red.rangePx);
+    }
+    // VRM-14: soltar a tecla ou passar 1,2 s detona o orbe segurado onde estiver (voando ou pairando).
+    if (!orb.state.detonated && this.hold?.update(dtMs, held) === 'detonate') this.detonate(orb, 'end');
     if (!orb.state.detonated) {
-      const expired = orb.state.update(dtMs); // RED-08: alcance máximo (420 px)
+      // RED-08: alcance máximo (320 px); o orbe segurado paira ali em vez de detonar.
+      const expired = orb.state.update(dtMs, this.hold?.armed ?? false);
       if (!expired) {
         this.ctx.scene.matter.body.setPosition(orb.body, { x: orb.state.x, y: orb.body.position.y });
         orb.view.setPosition(orb.state.x, orb.body.position.y);
@@ -218,8 +235,10 @@ export class RedFlight {
   private finishDetonation(orb: RedOrbEntry, enemies: readonly TechTarget[]): void {
     const point = { x: orb.state.x, y: orb.body.position.y };
     const n = detonationNo(orb);
+    // VRM-14: o orbe segurado do Contido detona com o raio × 1,4, seja ao soltar, aos 1,2 s, na parede ou no chefe.
+    const radius = orb.red.radius * (this.hold?.armed ? orb.plan.radiusMul : 1);
     const targets: RedOrbTarget[] = enemies.map((e) => ({ id: e.id, center: { x: e.x, y: e.hurtRect().y } }));
-    for (const splash of orb.state.detonationTargets(targets, point)) {
+    for (const splash of orb.state.detonationTargets(targets, point, radius)) {
       const enemy = enemies.find((e) => e.id === splash.targetId);
       if (!enemy) continue;
       const at = (): Vec2 => ({ x: enemy.x, y: enemy.hurtRect().y });
@@ -234,7 +253,7 @@ export class RedFlight {
       if (!strikeRed(this.ctx, enemy, at, orb.cast, blow, orb.onKill)) continue;
       this.ctx.emit(`redBlast:${n}:${enemy.id}:${enemy.lastDamageTaken ?? blow.damage}`);
     }
-    this.fx.detonate(point, this.ctx.player.facing, { radius: orb.red.radius, rings: orb.red.rings }); // RED-11/12/17
+    this.fx.detonate(point, this.ctx.player.facing, { radius, rings: orb.red.rings }); // RED-11/12/17
     this.ctx.emit('redDetonate'); // RED-16
     if (shouldRebound(orb.plan, n, this.site)) this.rebound(orb, point, n);
     else this.discard(orb);

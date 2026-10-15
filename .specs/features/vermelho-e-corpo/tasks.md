@@ -1005,10 +1005,16 @@ dos 320 px, detona com raio × 1,4 ao soltar ou aos 1,2 s; parede e chefe com ×
 
 **Done when**:
 
-- [ ] `red-axes.smoke.mjs` (cenário 5) com `ramo=vermelho:b` segurando `L`: o orbe para, detona ao soltar com o raio
+- [x] `red-axes.smoke.mjs` (cenário 5) com `ramo=vermelho:b` segurando `L`: o orbe para, detona ao soltar com o raio
       × 1,4 lido no `fx`; segurando sem soltar detona aos 1,2 s; soltando antes da saída o raio é o normal (VRM-14.8)
-- [ ] Levar golpe com o orbe pairando não o cancela (edge case)
-- [ ] Smokes `red-axes` e `tech` verdes; gate verde; contagem sem perda
+- [x] Levar golpe com o orbe pairando não o cancela (edge case)
+- [x] Smokes `red-axes` e `tech` verdes; gate verde; contagem sem perda (4065)
+
+Como ficou: o `RedFlight` arma o `ContidoHold` no 1º quadro do voo com a tecla do slot daquele quadro (o da soltura,
+porque o `red.ts` lança antes do `update`), sem tocar o `red.ts`. O `RedOrbState.update(dt, holdAtEnd)` faz o orbe
+segurado pairar no 320º px em vez de detonar, e o `detonationTargets` recebe o raio (× 1,4 em toda detonação do orbe
+segurado, inclusive na parede e no chefe); a vista recebe o mesmo raio. O smoke conta os 1,2 s em 72 quadros (o
+`step(16)` anda um passo fixo de 1000/60 ms) e fere o player com a tecla 4 de debug durante o pairar.
 
 **Tests**: smoke
 **Gate**: full
