@@ -1,7 +1,7 @@
 import { BlueOrbState, blueOrbSpawn, type BlueOrbDamage, type BlueOrbTarget } from '../../core/blueOrb';
 import type { FxRegistry } from '../../core/fxRegistry';
 import type { FxTimeline } from '../../core/fxTimeline';
-import type { Hit } from '../../core/hit';
+import type { Hit, HitBand } from '../../core/hit';
 import { newEntityId } from '../bodyTags';
 import type { Boss } from '../Boss';
 import { bodyOf, PX_PER_S_TO_STEP } from '../physics';
@@ -65,10 +65,12 @@ export class BlueTech {
 
     const { ticksCrossed, ended } = orb.state.update(dtMs);
     for (let i = 0; i < ticksCrossed; i++) {
-      for (const dmg of orb.state.tickTargets(allTargets)) this.applyDamage(dmg, enemies, boss, orb.cast); // BLU-06
+      // BLU-06, POW-04: o tique é chip (só dano, sem hitstop nem reação), para a luta seguir enquanto o orbe puxa.
+      for (const dmg of orb.state.tickTargets(allTargets)) this.applyDamage(dmg, enemies, boss, orb.cast, 'chip');
     }
     if (ended) {
-      for (const dmg of orb.state.implosionTargets(allTargets)) this.applyDamage(dmg, enemies, boss, orb.cast); // BLU-07
+      // BLU-07, POW-04: a implosão é o golpe que fecha a técnica, sem banda (hitstop e reação de sempre).
+      for (const dmg of orb.state.implosionTargets(allTargets)) this.applyDamage(dmg, enemies, boss, orb.cast);
       this.fx.implode(point.x, point.y); // BLU-11
       this.ctx.emit('blueImplode'); // BLU-11
       for (const e of enemies) e.setPull(null);
@@ -117,6 +119,7 @@ export class BlueTech {
     enemies: readonly TechTarget[],
     boss: Boss | null,
     cast: CastRef | null,
+    band?: HitBand,
   ): void {
     const hit: Hit = {
       ownerId: this.ctx.player.id,
@@ -125,6 +128,7 @@ export class BlueTech {
       force: 0,
       direction: { x: 0, y: -1 },
       ...techMarks('light'),
+      ...(band ? { band } : {}),
     };
     const enemy = enemies.find((e) => e.id === dmg.targetId);
     if (enemy) {

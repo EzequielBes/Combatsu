@@ -448,7 +448,7 @@ banda não mexe nisso) e AD-023. O AD-014 (HP e dano fixos) continua valendo: a 
    mais largo, o deslize 24 % maior que sem build e `hitstop.remainingMs` partindo de 120.
 3. POW-10: parado, `power.aura` é `flame`; andando, `off`; parado de novo virado para o outro lado, `flame`.
 4. POW-05/06: o `jab` traz `damageNumbers.last` com o valor e o tipo `strike`.
-5. POW-04/03b/15: com `tech=azul` e 5 inimigos, `hitstop.frozen` falso em todo quadro dos tiques, eventos `chip:<id>`,
+5. POW-04/03b/15: com `tech=azul` e 5 inimigos (`maxAlive=5` no lugar do 1 da base), `hitstop.frozen` falso em todo quadro dos tiques, eventos `chip:<id>`,
    nenhum inimigo em `hitstun`, um chega a `attack`; `damageNumbers.last.kind` é `chip`.
 6. POW-11: com `arsenal=bastao`, o golpe dispara `impact:heavy` e nenhuma faísca roxa; com Manoplas Nv 3 junto, o dano
    sobe ×1,3.

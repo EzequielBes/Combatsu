@@ -287,12 +287,12 @@ sem `ai.interrupt`, sem limpar `walkVxStep`, sem `pickHitReaction`, sem `trackSt
 
 **Done when**:
 
-- [ ] `power.smoke.mjs` (cenário 5), `?debug&hd=1&area=modular&seed=1&tech=azul` com 5 inimigos: `hitstop.frozen`
+- [x] `power.smoke.mjs` (cenário 5), `?debug&hd=1&area=modular&seed=1&tech=azul` com 5 inimigos (`maxAlive=5`): `hitstop.frozen`
       falso em todo quadro dos tiques, eventos `chip:<id>`, nenhum inimigo em `hitstun` por tique, um inimigo em
       `windup` chega a `attack` (POW-04.11, POW-15.9)
-- [ ] A implosão continua com hitstop (sem banda, POW-04.10)
-- [ ] Smokes `tech`, `techniques`, `boss`, `fxlab` e `power` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] A implosão continua com hitstop (sem banda, POW-04.10)
+- [x] Smokes `tech`, `techniques`, `boss`, `fxlab` e `power` verdes
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: smoke
 **Gate**: full
