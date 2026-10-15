@@ -8,6 +8,9 @@
 // passiva não mexe na vida entre um quadro e outro. Captura da faixa em `.fable-out/boss-igneo-lava.png`.
 // 2º cenário: o chefe morre (golpes de teste, tecla 2) com uma faixa viva, e a lava some no mesmo quadro.
 // 3º cenário: o player morre (tecla 3) com uma faixa viva; a run nova começa sem lava.
+// 4º cenário: o contorno de 1 px (BRD-03): `a` só com Ígneo, alternando `a`/`u` a cada 600 ms com Ígneo + Invocador,
+// ausente com Sangue; as cópias mostram o quadro do chefe em todo quadro em que ele troca. Capturas do chefe em
+// movimento em `.fable-out/boss-igneo-outline-<n>.png`.
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +28,8 @@ const PLAYER = { w: 20, h: 36 };
 const JUMP_HOLD = 11;
 const JUMP_AFTER_TICK = 20;
 const QUERY = 'round=10&bossArch=oni&bossAffix=igneo&finger=0&regen=0';
+/** Quadros de 1000/60 ms entre trocas de cor do contorno com dois afixos (`BOSS_AFFIX.outlineSwapMs` = 600). */
+const SWAP_FRAMES = 36;
 
 export default async function ({ page, baseUrl, assert }) {
   mkdirSync(OUT_DIR, { recursive: true });
@@ -33,6 +38,7 @@ export default async function ({ page, baseUrl, assert }) {
   await measureScenario(g, assert, page);
   await bossDeathScenario(g, assert);
   await restartScenario(g, assert, page);
+  await outlineScenario(g, assert, page);
 }
 
 function makeGame(page, baseUrl, assert) {
@@ -74,8 +80,9 @@ function makeGame(page, baseUrl, assert) {
     let s = await step(50);
     for (let i = 0; i < 20 && !s.boss; i++) s = await step(50);
     assert(s.boss, `o chefe deveria nascer (${query}): ${JSON.stringify(s.run)}`);
+    const igneo = s.boss.affixes.includes('igneo');
     assert(
-      s.boss.affixes.includes('igneo') && s.boss.lava && s.boss.lava.strips.length === 0,
+      igneo === query.includes('igneo') && (!igneo || s.boss.lava?.strips.length === 0),
       `o chefe Ígneo nasce com a lava vazia: ${JSON.stringify(s.boss)}`,
     );
     for (let i = 0; i < 60 && s.boss.state === 'intro'; i++) s = await step(50);
@@ -280,6 +287,7 @@ async function bossDeathScenario(g, assert) {
   assert(!s.boss || s.boss.hp <= 0, `o chefe deveria morrer: ${JSON.stringify(s.boss)}`);
   assert(s.bossLavaStrips === 0, `a lava some na morte do chefe: ${s.bossLavaStrips}`);
   assert(!s.boss || s.boss.lava.strips.length === 0, `faixas no chefe morto: ${JSON.stringify(s.boss?.lava)}`);
+  assert(!s.boss || s.boss.outline === null, `contorno no chefe morto: ${JSON.stringify(s.boss?.outline)}`);
 }
 
 async function pressTwo(g) {
@@ -308,4 +316,58 @@ async function restartScenario(g, assert, page) {
   assert(s.run.state === 'roundActive' && s.run.kills === 0, `a run nova deveria começar: ${JSON.stringify(s.run)}`);
   assert(s.bossLavaStrips === 0, `a run nova começa sem lava: ${s.bossLavaStrips}`);
   assert(!s.boss || s.boss.lava.strips.length === 0, `faixa no chefe da run nova: ${JSON.stringify(s.boss?.lava)}`);
+}
+
+/**
+ * 4º cenário (BRD-03, BRD-07). Ígneo: contorno `a` em todo quadro, com o quadro das cópias igual ao do chefe mesmo nos
+ * quadros em que ele troca (capturas no meio do movimento). Ígneo + Invocador: `a` e `u` em trechos de 600 ms. Sangue:
+ * sem contorno.
+ */
+async function outlineScenario(g, assert, page) {
+  let s = await g.open();
+  let changes = 0;
+  let shots = 0;
+  for (let i = 0; i < 900 && s.boss && (i < 240 || shots < 3); i++) {
+    const prev = s;
+    s = await g.tick();
+    const o = s.boss?.outline;
+    assert(o && o.key === 'a' && o.visible, `contorno laranja com Ígneo: ${JSON.stringify(o)}`);
+    assert(o.frame === o.sourceFrame, `o contorno deveria mostrar o quadro do chefe: ${JSON.stringify(o)}`);
+    if (prev.boss?.outline && prev.boss.outline.sourceFrame !== o.sourceFrame) {
+      changes++;
+      // Captura só com o chefe perto do player (a câmera segue o player), no quadro em que ele acabou de trocar.
+      if (shots < 3 && changes % 4 === 1 && Math.abs(s.boss.x - s.player.x) < 260) {
+        await page.evaluate(() => window.__game.render());
+        await page.screenshot({ path: join(OUT_DIR, `boss-igneo-outline-${++shots}.png`) });
+      }
+    }
+  }
+  assert(changes >= 4, `o chefe deveria trocar de quadro durante o cenário (${changes})`);
+
+  s = await g.open(QUERY.replace('bossAffix=igneo', 'bossAffix=igneo,invocador'));
+  const keys = [];
+  for (let i = 0; i < 200 && s.boss; i++) {
+    s = await g.tick();
+    keys.push(s.boss?.outline?.key ?? null);
+  }
+  const runs = [];
+  for (const k of keys) {
+    if (runs.length && runs[runs.length - 1].k === k) runs[runs.length - 1].n++;
+    else runs.push({ k, n: 1 });
+  }
+  const inner = runs.slice(1, -1);
+  const ctx = JSON.stringify(runs);
+  assert(
+    runs.every((r) => r.k === 'a' || r.k === 'u'),
+    `só as cores dos dois afixos: ${ctx}`,
+  );
+  assert(inner.length >= 3, `o contorno deveria alternar com Ígneo + Invocador: ${ctx}`);
+  assert(
+    inner.every((r) => Math.abs(r.n - SWAP_FRAMES) <= 1),
+    `troca a cada 600 ms: ${ctx}`,
+  );
+
+  s = await g.open(QUERY.replace('bossAffix=igneo', 'bossAffix=sangue'));
+  s = await g.step(500);
+  assert(s.boss && s.boss.outline === null, `sem contorno com Sangue: ${JSON.stringify(s.boss?.outline)}`);
 }

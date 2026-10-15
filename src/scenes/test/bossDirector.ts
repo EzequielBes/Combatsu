@@ -13,6 +13,7 @@ import { bossSpecFor, type BossSpec } from '../../core/bossTier';
 import type { Hit, Vec2 } from '../../core/hit';
 import { isBossRound } from '../../core/waves';
 import type { Boss } from '../../game/Boss';
+import { AffixOutline } from '../../game/boss/AffixOutline';
 import { BossAffixFx } from '../../game/boss/BossAffixFx';
 import { BossReadout } from '../../game/boss/BossReadout';
 import { LavaField } from '../../game/boss/LavaField';
@@ -34,6 +35,8 @@ export class BossDirector {
   private readout: BossReadout | null = null;
   /** Vista dos ataques novos e dos afixos do chefe em cena (um por chefe, AFX-01). */
   private fx: BossAffixFx | null = null;
+  /** Contorno de 1 px na cor do afixo do chefe em cena; `null` sem Ígneo nem Invocador (BRD-03). */
+  private outline: AffixOutline | null = null;
 
   constructor(readonly s: TestScene) {}
 
@@ -62,10 +65,12 @@ export class BossDirector {
   /**
    * Chefe recém-criado com a especificação `spec`: os eventos de vista dele (rastro, aviso, abertura e fechamento) vão
    * para um `BossAffixFx`, com a Chuva de Fios presa aos limites do nível e o dano de projétil do tier (CYC-09/10) e,
-   * só com Ígneo, a lava com o dano de lava do tier (IGN-01..04).
+   * só com Ígneo, a lava com o dano de lava do tier (IGN-01..04); com Ígneo ou Invocador, o contorno (BRD-03).
    */
   attach(boss: Boss, spec: BossSpec): void {
     this.fx?.destroy();
+    this.outline?.destroy();
+    this.outline = AffixOutline.create(this.s, boss.fxSprite, spec.affixes);
     const onConnect = (hit: Hit, point: Vec2): void => this.s.combat.onConnect(hit, point, hit.strength);
     const threads = new ThreadRain(this.s, boss.id, spec.damage.projectile, this.s.level.widthPx, onConnect);
     const lava = spec.affixes.includes('igneo') ? new LavaField(this.s, boss.id, spec.damage.lava) : null;
@@ -73,26 +78,35 @@ export class BossDirector {
     boss.fxSink = this.fx.route;
   }
 
-  /** Por quadro, depois do `boss.update`: a lava bate no player que pisa nela (IGN-03..05). */
+  /** Por quadro, depois do `boss.update`: a lava bate no player que pisa nela (IGN-03..05) e o contorno o segue. */
   update(dtMs: number): void {
     this.fx?.update(dtMs, this.s.player);
+    this.outline?.update(dtMs);
   }
 
-  /** Chefe derrotado: fios, marcas e lava somem na hora (a IA dele não manda mais o fechamento). */
+  /** Chefe derrotado: fios, marcas, lava e contorno somem na hora (a IA dele não manda mais o fechamento). */
   onBossDied(): void {
     this.fx?.clear();
+    this.outline?.destroy();
+    this.outline = null;
   }
 
   /**
-   * Vista do chefe atual para o snapshot de debug: eventos recebidos por tipo, o estado da Chuva de Fios e a lava;
-   * vazio e `null` sem chefe ligado.
+   * Vista do chefe atual para o snapshot de debug: eventos recebidos por tipo, o estado da Chuva de Fios, a lava e o
+   * contorno; vazio e `null` sem chefe ligado.
    */
   fxView(): {
     fx: ReturnType<BossAffixFx['debug']>;
     threads: ReturnType<BossAffixFx['threadsView']>;
     lava: ReturnType<BossAffixFx['lavaView']>;
+    outline: ReturnType<AffixOutline['view']>;
   } {
-    return { fx: this.fx?.debug() ?? {}, threads: this.fx?.threadsView() ?? null, lava: this.fx?.lavaView() ?? null };
+    return {
+      fx: this.fx?.debug() ?? {},
+      threads: this.fx?.threadsView() ?? null,
+      lava: this.fx?.lavaView() ?? null,
+      outline: this.outline?.view() ?? null,
+    };
   }
 
   /** Faixas de lava vivas, com ou sem chefe em cena (snapshot de debug; edge cases da lava). */
@@ -143,6 +157,8 @@ export class BossDirector {
     this.last = null;
     this.fx?.destroy();
     this.fx = null;
+    this.outline?.destroy();
+    this.outline = null;
   }
 
   private ui(): BossReadout {

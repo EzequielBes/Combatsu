@@ -282,7 +282,7 @@ traz o chefe anunciado, com o mesmo texto na barra e o contorno do afixo.
 | PDD-05 | P2: Moldura Portador de Dedo | Tasks (T10, T27) | Implemented |
 | BRD-01 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Implemented |
 | BRD-02 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T13) | Implemented |
-| BRD-03 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T29) | Pending |
+| BRD-03 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T29) | Implemented |
 | BRD-04 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T11, T14) | Implemented |
 | BRD-05 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |
 | BRD-06 | P1: Leitura: barra, contorno e aviso na loja | Tasks (T14) | Implemented |

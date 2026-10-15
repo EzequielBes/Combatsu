@@ -217,7 +217,10 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
 - **`ThreadRain`** — 5 marcas `u` no chão em `threadXs(playerX, 0, level.widthPx, offsets)`; `strikeOn` troca cada
   marca por um fio `U` vertical com um `AttackHitbox` por fio (um acerto cada); `strikeOff` fecha (CYC-09/10).
 - **`AffixOutline`** — 4 cópias do sprite do chefe (`fxSprite`) com `tintMode FILL` na cor de `outlineKeyAt`,
-  deslocadas ±1 px e atrás dele; copia textura, quadro, posição e escala a cada quadro (BRD-03).
+  deslocadas ±1 px e atrás dele; copia textura, quadro, posição e escala a cada quadro (BRD-03). Nasce no
+  `BossDirector.attach` (`AffixOutline.create` devolve `null` sem Ígneo nem Invocador), segue o chefe no
+  `BossDirector.update`, depois do `boss.update`, e sai no `onBossDied` e no `reset`; o relógio da troca de cor conta
+  desde o nascimento. O snapshot traz `boss.outline` (`key`, `frame` das cópias, `sourceFrame` do chefe, `visible`).
 - **`AdaptWheel`** — `Graphics` de 8 raios `A` sobre a cabeça + `Text` com os rótulos curtos; some sem adaptação
   (ADP-06).
 - **`BossReadout`** — na `uiLayer`: um quadrado de 6 px por chave de `glyphKeys`, à direita da barra

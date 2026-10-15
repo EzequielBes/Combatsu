@@ -3,6 +3,7 @@ import type { BossAIState, BossAttack } from '../core/bossAI';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { BossAffixId } from '../data/bossAffixes';
+import type { AffixOutlineView } from './boss/AffixOutline';
 import type { BossFxEvent } from './boss/BossAffixFx';
 import type { LavaView } from './boss/LavaField';
 import type { ThreadRainView } from './boss/ThreadRain';
@@ -147,6 +148,8 @@ export interface GameSnapshot {
     threads: ThreadRainView | null;
     /** Lava do Ígneo: faixas vivas, tiques do relógio, tiques aceitos pelo player e dano de cada um (IGN-01..05). */
     lava: LavaView | null;
+    /** Contorno do afixo: cor atual, quadro das cópias e o do chefe; `null` sem Ígneo nem Invocador (BRD-03). */
+    outline: AffixOutlineView | null;
   } | null;
   /** Última escalação de chefe pedida na run (BLN-08..11), já com os overrides de debug; `null` antes do 1º chefe. */
   bossLineup: { round: number; archetype: BossArchetype; affixes: BossAffixId[]; finger: boolean } | null;

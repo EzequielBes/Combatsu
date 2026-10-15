@@ -721,9 +721,9 @@ dono = chefe, dano `spec.damage.lava`. `BossDirector.onBossDied` e `reset` limpa
 
 **Done when**:
 
-- [ ] `boss-igneo`: snapshot traz o contorno com a cor `a`; com `bossAffix=igneo,invocador` alterna; sem afixo de
+- [x] `boss-igneo`: snapshot traz o contorno com a cor `a`; com `bossAffix=igneo,invocador` alterna; sem afixo de
       contorno não existe; captura olhada em movimento (quadro trocando acompanha)
-- [ ] `npm run smoke -- boss-igneo` verde; gate verde
+- [x] `npm run smoke -- boss-igneo` verde; gate verde
 
 **Tests**: smoke
 **Gate**: full
