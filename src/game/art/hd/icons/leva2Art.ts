@@ -1,44 +1,39 @@
 /*
- * Símbolos da leva 2 (F41): Convergência (a gota de sangue comprimida que vira o feixe fino), Cães Divinos (a cabeça
- * do cão de sombra com o olho branco), Punho de Trovão (o punho atravessado pelo raio em zigue-zague), Erupção (o
- * pilar de fogo que rompe o chão) e o Domínio Vazio Ilimitado (o disco do vazio com o círculo de estrelas). Puro, sem
- * `phaser`.
+ * Símbolos da leva 2 (F41): Convergência (o núcleo de sangue comprimido que dispara o feixe fino), Cães Divinos (a
+ * cabeça do cão de sombra com o olho branco), Punho de Trovão (o raio em zigue-zague cortando na frente do punho
+ * girado), Erupção (a chama que afina e rompe o chão rachado) e o Domínio Vazio Ilimitado (o disco do céu infinito,
+ * azul, com a faixa de galáxia e as estrelas soltas). Puro, sem `phaser`.
  */
-import { bandsInk, bevelInk, sphereInk, type IconCanvas } from './canvas';
+import { bevelInk, sphereInk, type IconCanvas } from './canvas';
 import { fist } from './hands';
 import type { IconRecipe } from './plate';
-import { arc, box, circle, poly, rotate, star, stroke, union, type Sdf } from './sdf';
+import { box, circle, poly, rotate, star, stroke, union, type Sdf } from './sdf';
 
-const TAU = Math.PI * 2;
-
-/** Gota de raio `r` em (cx, cy) com a ponta a `2r` do centro, no ângulo `ang`. */
-function drop(cx: number, cy: number, r: number, ang: number): Sdf {
-  const [ux, uy] = [Math.cos(ang), Math.sin(ang)];
-  const [nx, ny] = [-uy, ux];
-  const side = (k: number): [number, number] => [
-    cx + nx * r * 0.86 * k + ux * r * 0.5,
-    cy + ny * r * 0.86 * k + uy * r * 0.5,
-  ];
-  return union(circle(cx, cy, r), poly([side(1), [cx + ux * r * 2.1, cy + uy * r * 2.1], side(-1)]));
-}
+/** Direção do feixe da Convergência: para cima e para a direita. */
+const BEAM = -Math.PI / 4;
 
 export const CONVERGENCIA: IconRecipe = {
   plate: {
     halo: [
-      [0.26, 'r'],
-      [0.42, 'v'],
+      [0.24, 'r'],
+      [0.4, 'v'],
     ],
-    at: [0.34, 0.64],
+    at: [0.3, 0.7],
   },
   draw: (c) => {
     const small = c.size < 32;
-    // Os anéis da compressão em volta da gota, abertos do lado do feixe.
-    for (const r of small ? [0.27] : [0.26, 0.33])
-      c.fill(arc(0.34, 0.64, r, -0.2, 4.5, small ? 0.03 : 0.022), 't', { line: small ? undefined : 'r' });
-    c.fill(stroke(0.42, 0.56, 0.92, 0.08, small ? 0.05 : 0.04, small ? 0.03 : 0.015), 'R', { line: 't' });
-    if (!small) c.fill(stroke(0.44, 0.54, 0.88, 0.12, 0.012, 0.004), 'W');
-    const blood = drop(0.34, 0.64, 0.17, -Math.PI / 4);
-    c.fill(blood, sphereInk(0.32, 0.66, 0.2, ['t', 'R', 'R', 'T', 'W']), { line: small ? undefined : 'r' });
+    const [cx, cy] = [0.3, 0.7];
+    const r = small ? 0.14 : 0.12;
+    // O feixe sai do lampejo com um vão visível até o núcleo e atravessa a placa até a borda.
+    const [ux, uy] = [Math.cos(BEAM), Math.sin(BEAM)];
+    const from = r + (small ? 0.11 : 0.1);
+    const beam = stroke(cx + ux * from, cy + uy * from, 1.02, -0.02, small ? 0.06 : 0.035, small ? 0.045 : 0.022);
+    c.fill(beam, 'R', { line: 't' });
+    if (!small) c.fill(stroke(cx + ux * (from + 0.02), cy + uy * (from + 0.02), 1, 0, 0.01, 0.006), 'W');
+    // O lampejo em estrela atrás do núcleo, chapado e um pouco torto (em cruz reta, com a bola, lia como mira), sem
+    // ponta na direção do feixe, para o vão aparecer.
+    c.fill(star(cx, cy, 4, r * 1.9, r * 0.6, 0.22), 'T');
+    c.fill(circle(cx, cy, r), sphereInk(cx - 0.01, cy - 0.01, r, ['t', 'R', 'T', 'W', 'W']), { line: 't' });
   },
 };
 
@@ -85,13 +80,6 @@ export const CAES: IconRecipe = {
           'W',
         );
     c.fill(stroke(0.52, 0.4, 0.64, 0.44, small ? 0.035 : 0.025, small ? 0.03 : 0.012), 'W');
-    // A sombra que escorre do pescoço, em línguas.
-    for (const [x, h] of [
-      [0.28, 0.1],
-      [0.4, 0.06],
-      [0.52, 0.09],
-    ])
-      c.fill(stroke(x, 0.9, x - 0.03, 0.9 + h, small ? 0.05 : 0.04, 0.005), 'b');
   },
 };
 
@@ -106,14 +94,14 @@ function bolt(pts: readonly (readonly [number, number])[], w0: number, w1: numbe
   return union(...parts);
 }
 
-/** O raio grande do Trovão, de cima à direita até embaixo à esquerda, passando atrás do punho. */
+/** O raio grande do Trovão, de cima à direita até embaixo à esquerda, cortando na frente do punho. */
 const BOLT = [
-  [0.92, 0.04],
-  [0.6, 0.34],
-  [0.76, 0.4],
-  [0.36, 0.72],
-  [0.52, 0.76],
-  [0.08, 0.97],
+  [0.94, 0.04],
+  [0.58, 0.4],
+  [0.74, 0.46],
+  [0.3, 0.8],
+  [0.44, 0.83],
+  [0.06, 0.98],
 ] as const;
 
 export const TROVAO: IconRecipe = {
@@ -126,32 +114,46 @@ export const TROVAO: IconRecipe = {
   },
   draw: (c) => {
     const small = c.size < 32;
-    c.fill(bolt(BOLT, small ? 0.075 : 0.065, small ? 0.03 : 0.02), 'C', { line: 'c' });
-    if (!small) c.fill(bolt(BOLT, 0.02, 0.006), 'W');
-    fist(c, 0.48, 0.56, small ? 0.46 : 0.42, ['q', 'P', 'p', 'w']);
+    // O punho menor, girado socando para cima e à direita (a direção do raio), e o raio por cima cortando a forma
+    // dele: a silhueta é o zigue-zague, não o punho de frente do Divergente.
+    fist(c, 0.4, 0.5, small ? 0.42 : 0.36, ['q', 'P', 'p', 'w'], small ? 0.3 : 0.62);
+    c.fill(bolt(BOLT, small ? 0.08 : 0.07, small ? 0.035 : 0.02), 'C', { line: 'c' });
+    if (!small) c.fill(bolt(BOLT, 0.022, 0.006), 'W');
     // As faíscas que saltam do punho carregado.
     if (small) return;
     for (const [x, y, r] of [
-      [0.17, 0.27, 0.09],
-      [0.86, 0.68, 0.07],
-      [0.22, 0.84, 0.05],
+      [0.84, 0.66, 0.08],
+      [0.16, 0.2, 0.06],
     ] as const)
       c.fill(star(x, y, 4, r, r * 0.28), 'W');
   },
 };
 
-/** Pilar de fogo de (cx, base) até `top`, com a meia largura `w`, o leque na base e as línguas da ponta. */
-function pillar(cx: number, base: number, top: number, w: number): Sdf {
-  const tongues = [-0.85, -0.4, 0.05, 0.5, 0.9].map((t, k) =>
-    stroke(cx + t * w * 0.7, top + 0.1, cx + t * w, top - (k % 2 === 0 ? 0.08 : 0.02), w * 0.34, 0.004),
+/**
+ * Chama de (cx, base) até `top`: afina para cima, com as línguas na borda dos dois lados (dentes virados para cima e
+ * para fora, desencontrados entre os lados) e a ponta torta. Os vãos entre as línguas ficam abertos para fora: língua
+ * solta por cima do corpo deixava fenda estreita, que o contorno escurecia no meio da chama.
+ */
+function flame(cx: number, base: number, top: number, w: number): Sdf {
+  const n = 7;
+  const side = (dir: number, lick: number): [number, number][] =>
+    Array.from({ length: n }, (_, i) => {
+      const t = i / n;
+      const hw = w * (1 - 0.74 * t);
+      const tooth = i > 0 && i % 2 === lick;
+      return [cx + dir * (tooth ? hw + w * 0.3 : hw * 0.82), base - (base - top) * t - (tooth ? 0.05 : 0)];
+    });
+  return poly([...side(1, 1), [cx + w * 0.18, top], ...side(-1, 0).reverse()]);
+}
+
+/** A rachadura escura de uma laje do chão (`k` = -1 à esquerda, 1 à direita). */
+function crack(k: number, px: number, small: boolean): Sdf {
+  if (small) return stroke(0.5 + k * 0.2, 0.79, 0.5 + k * 0.36, 0.86, px * 0.5);
+  return union(
+    stroke(0.5 + k * 0.17, 0.78, 0.5 + k * 0.26, 0.83, px * 0.6),
+    stroke(0.5 + k * 0.26, 0.83, 0.5 + k * 0.32, 0.81, px * 0.6),
+    stroke(0.5 + k * 0.32, 0.81, 0.5 + k * 0.42, 0.9, px * 0.6),
   );
-  const flare = poly([
-    [cx - w * 1.5, base],
-    [cx + w * 1.5, base],
-    [cx + w, base - 0.14],
-    [cx - w, base - 0.14],
-  ]);
-  return union(box(cx, (base + top) / 2 + 0.05, w, (base - top) / 2 - 0.05, w * 0.3), flare, ...tongues);
 }
 
 export const ERUPCAO: IconRecipe = {
@@ -160,75 +162,100 @@ export const ERUPCAO: IconRecipe = {
       [0.28, 'a'],
       [0.44, 'r'],
     ],
-    at: [0.5, 0.4],
+    at: [0.5, 0.42],
   },
   draw: (c) => {
     const small = c.size < 32;
-    c.fill(pillar(0.5, 0.86, 0.16, 0.19), 'a', { line: small ? undefined : 'r' });
-    c.fill(pillar(0.5, 0.86, 0.26, 0.1), 'A');
-    if (!small) c.fill(box(0.5, 0.6, 0.035, 0.22, 0.03), 'w');
-    // O chão que racha: duas lajes erguidas em V de cada lado da boca do fogo, e as lascas que voam.
+    c.fill(flame(0.5, 0.86, 0.08, 0.22), 'a', { line: small ? undefined : 'r' });
+    c.fill(flame(0.5, 0.86, 0.32, 0.11), 'A');
+    // O núcleo mais claro na base, onde o fogo sai do chão.
+    c.fill(union(circle(0.5, 0.8, small ? 0.09 : 0.08), stroke(0.5, 0.8, 0.5, 0.6, 0.035, 0.008)), 'w');
+    // O chão que racha: duas lajes erguidas em V de cada lado da boca do fogo, com a rachadura escura.
     for (const k of [-1, 1]) {
       const slab = poly([
-        [0.5 + k * 0.48, 0.84],
-        [0.5 + k * 0.16, 0.76],
-        [0.5 + k * 0.12, 0.86],
-        [0.5 + k * 0.48, 0.98],
+        [0.5 + k * 0.5, 0.8],
+        [0.5 + k * 0.14, 0.7],
+        [0.5 + k * 0.1, 0.86],
+        [0.5 + k * 0.5, 0.98],
       ]);
       c.fill(slab, bevelInk(slab, c.px, 's', 'S', 'n', 1), { line: small ? undefined : 'n' });
-      const [rx, ry] = [0.5 + k * (small ? 0.34 : 0.33), small ? 0.5 : 0.44 - k * 0.1];
-      const chip = rotate(box(rx, ry, small ? 0.07 : 0.06, small ? 0.055 : 0.045, 0.01), rx, ry, k * 0.6);
-      c.fill(chip, bevelInk(chip, c.px, 'S', 'I', 's', 1), { line: small ? undefined : 'n' });
+      c.fill(crack(k, c.px, small), 'k');
+      // As lascas que voam, só no grande: pequenas e soltas, no alto.
+      if (small) continue;
+      const [rx, ry] = [0.5 + k * 0.3, k < 0 ? 0.2 : 0.3];
+      const chip = rotate(box(rx, ry, 0.035, 0.026, 0.006), rx, ry, k * 0.6);
+      c.fill(chip, bevelInk(chip, c.px, 'S', 'I', 's', 1), { line: 'n' });
     }
   },
 };
 
-/** Círculo de `n` estrelas de 4 pontas de raio `r` em volta do meio, a primeira em cima; as ímpares, pontos roxos. */
-function starRing(c: IconCanvas, r: number, n: number, size: number): void {
-  for (let k = 0; k < n; k++) {
-    const a = -Math.PI / 2 + (k * TAU) / n;
-    const s = k % 2 === 1 ? size * 0.55 : size;
-    c.fill(star(0.5 + r * Math.cos(a), 0.5 + r * Math.sin(a), 4, s, s * 0.3), k % 2 === 1 ? 'U' : 'W');
-  }
+/** Tom do céu do Vazio: a faixa de galáxia em diagonal (ciano pontilhado no eixo, azul em volta) sobre o fundo. */
+function skyInk(px: number, small: boolean): (x: number, y: number) => string {
+  const [sn, cs] = [Math.sin(-0.62), Math.cos(-0.62)];
+  const k = small ? 1.6 : 1;
+  return (x, y) => {
+    const t = Math.abs(-(x - 0.5) * sn + (y - 0.52) * cs);
+    const odd = (Math.floor(x / px) + Math.floor(y / px)) % 2 === 1;
+    if (t < 0.03 * k) return odd ? 'c' : 'd';
+    if (t < 0.075 * k) return 'd';
+    if (t < 0.11 * k) return odd ? 'd' : 'E';
+    return Math.hypot(x - 0.5, y - 0.5) < 0.27 ? 'E' : 'e';
+  };
 }
 
-/**
- * O céu do Vazio no ícone pequeno, texel a texel: a estrela do meio em cruz fina de 2 texels com o miolo roxo e 6 estrelas de 1 texel no
- * círculo, presas ao centro do texel (a estrela em campo de distância vira risco ou quadrado nesse tamanho).
- */
-function smallSky(c: IconCanvas): void {
+/** Estrelas soltas do Vazio no ícone grande, fora de qualquer anel e de tamanhos diferentes: `[x, y, raio, cor]`. */
+const SKY_STARS = [
+  [0.64, 0.64, 0.07, 'C'],
+  [0.66, 0.3, 0.045, 'C'],
+  [0.28, 0.62, 0.035, 'W'],
+] as const;
+
+/** Pontos de 1 texel do céu no ícone grande: `[x, y, cor]`. */
+const SKY_DOTS = [
+  [0.48, 0.74, 'W'],
+  [0.76, 0.48, 'W'],
+  [0.54, 0.46, 'C'],
+  [0.4, 0.24, 'W'],
+  [0.3, 0.46, 'C'],
+  [0.7, 0.76, 'W'],
+] as const;
+
+/** Pontos do céu no ícone pequeno. */
+const SMALL_DOTS = [
+  [0.66, 0.64, 'C'],
+  [0.64, 0.3, 'W'],
+  [0.3, 0.64, 'C'],
+  [0.5, 0.74, 'W'],
+  [0.74, 0.46, 'W'],
+] as const;
+
+/** Pontos de 1 texel, presos ao centro do texel (a estrela em campo de distância vira risco nesse tamanho). */
+function dots(c: IconCanvas, pts: readonly (readonly [number, number, string])[]): void {
   const p = c.px;
-  c.fill(union(box(0.5, 0.5, p, 4 * p), box(0.5, 0.5, 4 * p, p)), 'W');
-  c.fill(box(0.5, 0.5, p, p), 'U');
   const snap = (v: number): number => (Math.floor(v / p) + 0.5) * p;
-  for (let k = 0; k < 6; k++) {
-    const a = -Math.PI / 2 + (k * TAU) / 6;
-    c.fill(circle(snap(0.5 + 0.24 * Math.cos(a)), snap(0.5 + 0.24 * Math.sin(a)), p * 0.6), k % 2 ? 'U' : 'W');
-  }
+  for (const [x, y, key] of pts) c.fill(box(snap(x), snap(y), p * 0.4, p * 0.4), key);
 }
 
 export const VAZIO: IconRecipe = {
   plate: {
     halo: [
-      [0.3, 'v'],
-      [0.44, 'n'],
+      [0.38, 'd'],
+      [0.46, 'n'],
     ],
     domain: true,
   },
   draw: (c) => {
     const small = c.size < 32;
-    c.fill(
-      circle(0.5, 0.5, 0.35),
-      bandsInk(0.5, 0.5, [
-        [0.14, 'k'],
-        [0.26, 'e'],
-        [0.4, 'E'],
-      ]),
-      { line: 'U' },
-    );
-    if (!small) for (const a0 of [0.3, 3.44]) c.fill(arc(0.5, 0.5, 0.3, a0, a0 + 1.6, 0.012), 'u');
-    if (small) return smallSky(c);
-    starRing(c, 0.235, 8, 0.085);
-    c.fill(star(0.5, 0.5, 4, 0.16, 0.045), 'W', { line: 'U' });
+    const p = c.px;
+    c.fill(circle(0.5, 0.5, 0.36), skyInk(p, small), { line: 'd' });
+    if (small) {
+      // No pequeno, texel a texel: a estrela grande em cruz fora do centro e os pontos soltos.
+      const s = (Math.floor(0.36 / p) + 0.5) * p;
+      c.fill(union(box(s, s, p * 0.4, p * 1.4), box(s, s, p * 1.4, p * 0.4)), 'W');
+      return dots(c, SMALL_DOTS);
+    }
+    for (const [x, y, r, key] of SKY_STARS) c.fill(star(x, y, 4, r, r * 0.3), key);
+    dots(c, SKY_DOTS);
+    c.fill(star(0.37, 0.37, 4, 0.13, 0.032), 'W', { line: 'C' });
   },
 };

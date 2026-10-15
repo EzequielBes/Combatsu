@@ -8,29 +8,33 @@ import { box, circle, rotate, stroke, union, type Sdf } from './sdf';
 /**
  * Punho fechado visto de frente, com os quatro dedos dobrados em cima e o polegar atravessado embaixo; centro em
  * (cx, cy), largura `s`. A pele é `[linha, sombra, base, luz]`. No ícone pequeno os dedos são só três riscos.
+ * `ang` gira o punho em volta do centro (radianos, horário na tela); a luz continua de cima e da esquerda.
  */
-export function fist(c: IconCanvas, cx: number, cy: number, s: number, skin: readonly string[]): void {
+export function fist(c: IconCanvas, cx: number, cy: number, s: number, skin: readonly string[], ang = 0): void {
   const [line, lo, base, hi] = skin;
   const p = c.px;
+  const turn = (shape: Sdf): Sdf => (ang ? rotate(shape, cx, cy, ang) : shape);
   const fw = s / 4;
   const small = c.size < 32;
   // No pequeno, os nós dos dedos saem na silhueta (quatro calombos em cima): o risco interno sozinho lia como pão.
   const knuckles = [0, 1, 2, 3].map((k) => circle(cx - s * 0.5 + fw * (k + 0.5), cy - s * 0.36, fw * 0.55));
-  const hand = union(
-    box(cx, cy, s * 0.5, s * 0.42, s * 0.18),
-    circle(cx - s * 0.48, cy + s * 0.08, s * 0.14),
-    ...(small ? knuckles : []),
+  const hand = turn(
+    union(
+      box(cx, cy, s * 0.5, s * 0.42, s * 0.18),
+      circle(cx - s * 0.48, cy + s * 0.08, s * 0.14),
+      ...(small ? knuckles : []),
+    ),
   );
   c.fill(hand, bevelInk(hand, p, base, hi, lo), { line });
   if (small) {
-    for (let k = 1; k < 4; k++) c.fill(box(cx - s * 0.5 + fw * k, cy - s * 0.26, p * 0.5, s * 0.14), line);
+    for (let k = 1; k < 4; k++) c.fill(turn(box(cx - s * 0.5 + fw * k, cy - s * 0.26, p * 0.5, s * 0.14)), line);
   } else {
     for (let k = 0; k < 4; k++) {
-      const finger = box(cx - s * 0.5 + fw * (k + 0.5), cy - s * 0.17, fw / 2, s * 0.25, fw * 0.45);
+      const finger = turn(box(cx - s * 0.5 + fw * (k + 0.5), cy - s * 0.17, fw / 2, s * 0.25, fw * 0.45));
       c.fill(finger, bevelInk(finger, p, base, hi, lo), { line });
     }
   }
-  const thumb = box(cx - s * 0.1, cy + s * 0.2, s * 0.38, s * 0.11, s * 0.11);
+  const thumb = turn(box(cx - s * 0.1, cy + s * 0.2, s * 0.38, s * 0.11, s * 0.11));
   c.fill(thumb, bevelInk(thumb, p, base, hi, lo), { line });
 }
 
