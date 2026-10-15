@@ -1411,10 +1411,17 @@ jogo; a Fúria entra no `damage` do `strikeMods`.
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs`: com `fluxo:3` o ganho de energia por acerto é 6 (CRP-06); com `furia:3` 7 acertos dão
+- [x] `cursed-body.smoke.mjs`: com `fluxo:3` o ganho de energia por acerto é 6 (CRP-06); com `furia:3` 7 acertos dão
       `fury.bonus` 0,35 e o dano sobe; levar dano zera; golpe defendido sem perder HP não zera (edge case)
-- [ ] Voto "Corpo de vidro" tomado na loja não zera a Fúria (edge case)
-- [ ] Smokes `cursed-body`, `fight`, `vows` e `defense` verdes; gate verde; contagem sem perda
+- [x] Voto "Corpo de vidro" tomado na loja não zera a Fúria (edge case)
+- [x] Smokes `cursed-body`, `fight`, `vows` e `defense` verdes; gate verde; contagem sem perda
+
+**Nota (T46)**: a Fúria dos 7 acúmulos é medida no laboratório (`fxlab`), porque o boneco não revida (um golpe
+levado zeraria a Fúria); o ganho de energia, a guarda e o golpe levado, no mundo modular. O Corpo de vidro usa a
+rodada do chefe da seed 1 (2ª oferta do painel); a Energia Reversa sobe a vida acima de 60 % antes da konbini para o
+voto recortar a vida de fato. A perda de HP desconta o recorte da vida máxima menor. O `fury` e o `cadence` do
+`build.corpo` entram pelo `BuildDirector.snapshot` (o `AxisDirector` segue sem depender do Corpo). Os cenários do
+smoke a partir daqui moram em `cursed-body-fury.mjs`, com os ajudantes em `cursed-body-kit.mjs`. Testes: 4149.
 
 **Tests**: smoke
 **Gate**: full

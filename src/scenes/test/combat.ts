@@ -105,9 +105,10 @@ export class CombatLinks {
     // dele) aplicado a um alvo ganha energia; golpes que o player recebe têm outro dono, e dano de técnica (T22+)
     // não passa por este caminho.
     if (mine) {
-      this.s.energy.gain(CE.meleeGain);
+      // CRP-06: o Fluxo do Corpo soma energia a cada acerto.
+      this.s.energy.gain(CE.meleeGain + this.s.build.body.flowBonus);
       this.s.runDirector.record.onPlayerHit(hit);
-      this.s.build.onMeleeHit();
+      this.s.build.onMeleeHit(hit, point, target);
       if (hit.moveName) this.s.player.hitLanded();
       // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
       this.s.comboCounter.hit(hit.moveName ?? 'objeto');

@@ -40,6 +40,8 @@ export class TechDirector {
     // TSH-10/11: níveis de `energia`/`fluxo` lidos na hora, sem cache (mesmo padrão de `modifiers.runSpeed`).
     this.s.energy.setLevels(this.s.modifiers.level('energia'), this.s.modifiers.level('fluxo'));
     this.s.loadout.tick(dt);
+    // CRP-07, CRP-08, CRP-10: o Corpo vê a perda de HP e anda as ondas no tempo de jogo.
+    this.s.build.body.update(dt);
     // CE-04/05: sem regen enquanto há uma conjuração em andamento.
     // RCT-06: nem enquanto a Energia Reversa canaliza.
     this.s.energy.update(dt, this.s.techCaster.cast !== null || this.s.recovery.reverse.active);

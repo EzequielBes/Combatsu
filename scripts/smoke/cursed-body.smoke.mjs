@@ -2,27 +2,8 @@
 // `?debug&hd=1&area=modular&seed=1&maxAlive=1&enemyGuard=0`. Cada cenário abre a sua própria página e lê do motor o
 // efeito dos pontos do Corpo (a vida e o estado do inimigo, a duração do golpe), não só o `build.corpo` do snapshot.
 import { makeKit } from './fight-kit.mjs';
-
-export const BASE = 'hd=1&area=modular&enemyGuard=0';
-
-/**
- * Encosta no inimigo, aperta `key` e passa quadros até ele perder vida; devolve o dano levado, o estado dele logo
- * depois do acerto e o snapshot desse quadro.
- */
-export async function strikeOnce(kit, ctx, key, label) {
-  let s = await kit.approach();
-  const before = new Map(s.enemies.map((e) => [e.id, e.hp]));
-  await kit.down(key);
-  let hit = null;
-  for (let f = 0; f < 60 && hit === null; f++) {
-    s = await kit.frame();
-    if (f === 1) await kit.up(key);
-    hit = s.enemies.find((e) => e.hp < (before.get(e.id) ?? e.hp)) ?? null;
-  }
-  await kit.up(key);
-  ctx.assert(hit !== null, `${label}: o golpe deveria acertar: ${JSON.stringify(s.enemies.map((e) => [e.x, e.hp]))}`);
-  return { damage: before.get(hit.id) - hit.hp, id: hit.id, s };
-}
+import { BASE, DUMMY_X, strikeOnce, walkToDummy } from './cursed-body-kit.mjs';
+import { furyScenarios } from './cursed-body-fury.mjs';
 
 /** Estado do inimigo `id` ao longo de `frames` quadros: devolve se ele chegou a `ragdollStun`. */
 async function fellWithin(kit, id, frames) {
@@ -85,28 +66,12 @@ async function levelResets(ctx) {
   );
 }
 
-/** Boneco de treino do laboratório (parado, x 392) usado para medir o alcance do `jab` a uma distância exata. */
-const DUMMY_X = 392;
-
 /**
- * Leva o player do laboratório para a direita do boneco de x 392, de frente para ele, a `dist` px (passos de um quadro
- * no fim, ~0,3 px), dá um `jab` e devolve se o boneco perdeu vida e a distância real do aperto.
+ * Leva o player do laboratório a `dist` px do boneco de x 392, dá um `jab` e devolve se o boneco perdeu vida.
  */
 async function jabAt(ctx, query, dist) {
   const kit = makeKit(ctx);
-  let s = await kit.boot(`hd=1&fxlab&${query}`);
-  await kit.down('KeyD');
-  for (let i = 0; i < 400 && s.player.x < DUMMY_X + dist + 40; i++) s = await kit.frame();
-  await kit.up('KeyD');
-  await kit.snap(300);
-  await kit.tap('KeyA', 16);
-  s = await kit.snap(300);
-  for (let i = 0; i < 200 && s.player.x - DUMMY_X > dist; i++) {
-    await kit.tap('KeyA', 16);
-    s = await kit.snap(100);
-  }
-  const at = s.player.x - DUMMY_X;
-  ctx.assert(s.player.facing === -1 && Math.abs(at - dist) < 1, `o player deveria parar a ${dist} px: ${at}`);
+  let s = await walkToDummy(kit, ctx, query, dist);
   const hp0 = s.fxlab.dummies.find((d) => d.x === DUMMY_X).hp;
   await kit.tap('KeyJ', 16);
   let hit = false;
@@ -239,4 +204,5 @@ export default async function (ctx) {
   await rhythmShortens(ctx);
   await weightWallStun(ctx);
   await trailAndEcho(ctx);
+  await furyScenarios(ctx);
 }

@@ -1,5 +1,7 @@
 import { buildPoints, dominantBuild, Perks, type BuildPoints } from '../../core/build';
+import type { Hit, Vec2 } from '../../core/hit';
 import { PERK, PERKS, type Build, type PerkId } from '../../data/perks';
+import type { Hittable } from '../../game/bodyTags';
 import type { BuildSnapshot } from '../../game/axisSnapshot';
 import type { DefenseKind } from '../../game/player/types';
 import type { TestScene } from '../TestScene';
@@ -58,9 +60,10 @@ export class BuildDirector {
     if (kind === 'perfectDodge' && this.perks.has('passoSombrio')) this.shadowArmed = true;
   }
 
-  /** Golpe corpo a corpo do jogador que acertou (junto do ganho normal de energia, CE-06). */
-  onMeleeHit(): void {
+  /** Golpe corpo a corpo do jogador que acertou (junto do ganho normal de energia, CE-06); o Corpo conta a Fúria. */
+  onMeleeHit(hit: Hit, point: Vec2, target?: Hittable): void {
     if (this.perks.has('condutor')) this.s.energy.gain(PERK.meleeEnergy);
+    this.body.onMeleeHit(hit, point, target);
   }
 
   onFinisher(): void {
@@ -69,12 +72,15 @@ export class BuildDirector {
 
   /** Campo `build` do snapshot de debug, com o Vermelho e o Corpo (VRM-10, CRP-14). */
   snapshot(): BuildSnapshot {
+    const { vermelho, corpo } = this.axes.snapshot();
     return {
       build: this.build,
       points: this.points,
       perks: this.perks.list,
       shadowArmed: this.shadowArmed,
-      ...this.axes.snapshot(),
+      vermelho,
+      // CRP-14: a Fúria e a Cadência vêm do Corpo no combate.
+      corpo: { ...corpo, ...this.body.snapshot() },
     };
   }
 }
