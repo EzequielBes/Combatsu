@@ -134,12 +134,14 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
   - `RED_AXIS_IDS = ['potencia', 'escala', 'conjuracao', 'eficiencia', 'recarga', 'perfuracao'] as const` (a ordem é o
     desempate do eixo-foco) e `BODY_AXIS_IDS = ['impacto', 'peso', 'ritmo', 'alcance', 'fluxo', 'furia'] as const`.
   - `RED_AXES`: por eixo, as quatro linhas da tabela do VRM-03 (`touch [30,35,40,45]`, `detonation [25,29,33,37]`,
-    `force [8,9,10,11]`, `radius [96,120,144,168]`, `orbTexels [12,14,16,18]`, `sensor [6,7,8,9]`, `signMs
+    `force [8,9,10,11]`, `radius [96,120,144,168]`, `orbTexels [12,14,16,18]`, `sensorPx [6,7,8,9]`, `signMs
     [250,200,165,125]`, `chargeMs [350,280,225,175]`, `cost [30,26,22,18]`, `cooldownMs [4500,3600,2900,2300]`,
-    `shard [0,6,9,12]`, `shardNeighbors [0,1,2,2]`) e os extras (`rings = 1 + potência`, `hitstopPerPotenciaMs: 10`,
-    `afterimageAt: 3` na Conjuração; o reembolso da Recarga 3 é o `killRefundPct` da leva 1).
+    `shard [0,6,9,12]`, `shardNeighbors [0,1,2,2]`) e os extras (`ringsPerPoint: 1`, anéis = 1 + Potência; `hitstopPerPointMs: 10`;
+    `afterimageAt: 3` na Conjuração; `shardReachPx: 60` na Perfuração; o reembolso da Recarga 3 é o `killRefundPct` da
+    leva 1).
   - `BODY_AXES`: `impactMul [1,1.1,1.2,1.3]`, `forceMul [1,1.2,1.4,1.6]`, `knockdownFrom: 2`, `wallStunAt: 3`,
-    `recoveryMul [1,0.92,0.85,0.78]`, `afterimageAt: 3`, `reachPx [0,6,10,14]`, `furyStep [0,0.03,0.04,0.05]`,
+    `recoveryMul [1,0.92,0.85,0.78]`, `afterimageAt: 3`, `reachPx [0,6,10,14]`, `energyBonus [0,1,2,3]` (Fluxo, somado
+    ao `CE.meleeGain`, CRP-06), `furyStep [0,0.03,0.04,0.05]`,
     `furyCap [0,0.15,0.24,0.35]`.
   - `RED_BRANCHES`: `ricochete` (`reboundRangePx 200`, `rebounds 1`, `afterFirstMul 0.7`) e `contido`
     (`holdMs 1200`, `radiusMul 1.4`); `RED_AWAKENINGS`: `fliperama` (`rebounds 3`, `speedStep 0.15`, `pctAt 3`) e
@@ -147,7 +149,10 @@ Impacto do Corpo, grava `loadout.kokusenScale` e o multiplicador de HP da rodada
   - `BODY_BRANCHES`: `cadencia` (`every 4`, `damageMul 1.5`) e `ondaDoPunho` (`rangePx 80`, `speed 600`,
     `damageFrac 0.4`); `BODY_AWAKENINGS`: `marteloNegro` (`areaPx 48`) e `punhoQueRasga` (`rangePx 160`,
     `secondWaveMs 100`); `EMITTER = { maxPerWindow: 4, windowMs: 1000 }`.
-  - `AXIS_NAMES` e `BRANCH_NAMES` (texto da carta e do painel). Os tetos (3 por eixo, 5 por item), os limiares (ramo
+  - `ITEM_AXES` (eixos de cada item na ordem do desempate), `ITEM_BRANCHES` (ramos `a`/`b` de cada item, a ordem do
+    painel e do `ramo=`), `BRANCH_AWAKENING` (o Despertar que cada ramo abre) e os tipos `AxisId`, `RedBranchId`,
+    `BodyBranchId`, `RedAwakeningId` e `BodyAwakeningId`.
+  - `AXIS_NAMES`, `BRANCH_NAMES` e `AWAKENING_NAMES` (texto da carta, do painel e do banner). Os tetos (3 por eixo, 5 por item), os limiares (ramo
     no Nv 2, Despertar no Nv 5), a fração do HP (4 % e 1 %) e o reembolso da Recarga 3 (0,3) **não** entram aqui: são
     o `TECH_RULE` de `data/techRule.ts` (leva 1), lido também pelas técnicas das levas 1 e 2.
   - Cada linha de eixo é uma `AxisTable` (`readonly [T, T, T, T]`, `data/techRule.ts`), lida por `axisAt`.

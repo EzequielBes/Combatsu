@@ -475,11 +475,11 @@ são o `TECH_RULE` de `data/techRule.ts` (leva 1).
 
 **Done when**:
 
-- [ ] `tests/data/techAxes.test.ts`: cada linha do VRM-03 em 0/1/2/3 pontos; repulsão `round(4 × toque / 30)` dá 4/5/5/6
+- [x] `tests/data/techAxes.test.ts`: cada linha do VRM-03 em 0/1/2/3 pontos; repulsão `round(4 × toque / 30)` dá 4/5/5/6
       (VRM-04.7); `BODY_AXES` com os números do CRP-02 a CRP-07
-- [ ] Mesmo arquivo: nenhum eixo do Vermelho no 3 passa de 1,35 × o dano sustentado do eixo mediano, no modelo da tabela
+- [x] Mesmo arquivo: nenhum eixo do Vermelho no 3 passa de 1,35 × o dano sustentado do eixo mediano, no modelo da tabela
       de Assumptions da spec (período = `max(recarga + sinal + carga, custo ÷ 8)`, alvos = `2 × raio / 96`) (ESC-03.9)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda (3873 + 28 = 3901)
 
 **Tests**: unit
 **Gate**: quick
