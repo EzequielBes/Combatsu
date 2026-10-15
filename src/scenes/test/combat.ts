@@ -104,8 +104,9 @@ export class CombatLinks {
       if (hit.moveName) this.s.player.hitLanded();
       // CMB-01: todo golpe do jogador que acerta conta; objeto na mão entra como um golpe "objeto" para a nota.
       this.s.comboCounter.hit(hit.moveName ?? 'objeto');
-      // POW-06.7: todo acerto do jogador que conecta mostra o número no alvo; golpe que o player leva não mostra.
-      if (target) this.s.ui.damageNumbers.show(target, hit.damage, 'strike', point);
+      // POW-06.7: todo acerto do jogador que conecta mostra no alvo o dano que ele levou (o chefe em `stagger` leva
+      // ×1,5, BFX-05); golpe que o player leva não mostra.
+      if (target) this.s.ui.damageNumbers.show(target, target.lastDamageTaken ?? hit.damage, 'strike', point);
       // PST-13: o foco é o último inimigo comum que aceitou golpe corpo a corpo, de objeto ou o finalizador (não o chefe).
       if (target instanceof Enemy) this.s.focusId = target.id;
     }
@@ -270,6 +271,8 @@ export class CombatLinks {
     boss.receiveFinisher();
     this.s.snapshot.debugEvents.push('finisher:boss');
     const at = boss.hurtRect();
+    // POW-06.7: o finalizador também mostra o número, com os 12% da vida que ele tirou.
+    this.s.ui.damageNumbers.show(boss, boss.lastDamageTaken, 'strike', { x: at.x, y: at.y });
     this.s.fx.spark(at.x, at.y, 'heavy');
     this.s.fx.shake();
     this.s.effects.hitstop.trigger(FINISHER_HITSTOP_MS);

@@ -52,6 +52,19 @@ const tick = (fx: EffectsDirector, ms: number) => {
   for (let left = ms; left > 0; left -= 10) fx.tickHitstop(0, Math.min(10, left));
 };
 
+describe('EffectsDirector.onTechConnect: número do dano levado (POW-06.7)', () => {
+  it('o alvo que informa o dano levado (chefe em stagger, BFX-05) mostra esse valor, não o do golpe', () => {
+    const r = rig();
+    const boss = { id: 9, team: 'enemy', lastDamageTaken: 27 } as unknown as Hittable;
+    r.fx.onTechConnect(hit('heavy', undefined, 18), at, boss);
+    r.fx.onTechConnect(hit('heavy', undefined, 18), at, target);
+    expect(r.numbers).toEqual([
+      { targetId: 9, value: 27, kind: 'tech' },
+      { targetId: 7, value: 18, kind: 'tech' },
+    ]);
+  });
+});
+
 describe('EffectsDirector.onTechConnect (POW-03)', () => {
   it('acerto normal segue igual: faísca do tipo, tremida no forte, hitstop e freeze', () => {
     const r = rig();

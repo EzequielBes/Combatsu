@@ -24,6 +24,11 @@ export interface Hittable {
    * de `body.bounds` (o Matter alarga o AABB pela velocidade). Sem ela, a faísca sai no centro de quem bate.
    */
   hurtRect?(): Rect;
+  /**
+   * Vida que o último golpe aceito tirou de fato, quando difere do `hit.damage` (o chefe em `stagger` leva ×1,5,
+   * BFX-05). O número de dano mostra este valor; sem ele, mostra o `hit.damage` (POW-06.7).
+   */
+  readonly lastDamageTaken?: number;
   /** `true` se o alvo já morreu (DIV-06: sem isso, o Punho Divergente não sabe cancelar o 2º impacto). */
   isDead?(): boolean;
   /** Sprite visual do alvo (KOK-16: silhueta `b` durante o negativo do Kokusen); ausente sem um sprite próprio. */

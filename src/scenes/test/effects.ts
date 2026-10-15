@@ -38,10 +38,11 @@ export class EffectsDirector {
    * (CE-08 - dano de técnica não passa pelo `onConnect` normal, de propósito). As faixas (POW-03) aliviam o dano
    * frequente: o chip só risca a faísca pequena, sem hitstop nem `freeze`; o micro ganha 15/20 ms enquanto o teto
    * deixa (a faísca média sai mesmo com o teto cheio). Nenhuma das duas treme a câmera. Todo acerto, de qualquer
-   * faixa, mostra o número no alvo com o tipo da faixa (`tech`, `micro` ou `chip`, POW-06.7).
+   * faixa, mostra no alvo o dano que ele levou (o chefe em `stagger` leva ×1,5, BFX-05), com o tipo da faixa (`tech`,
+   * `micro` ou `chip`, POW-06.7).
    */
   onTechConnect(hit: Hit, point: Vec2, target: Hittable): void {
-    this.s.ui.damageNumbers.show(target, hit.damage, techKind(hit.band), point);
+    this.s.ui.damageNumbers.show(target, target.lastDamageTaken ?? hit.damage, techKind(hit.band), point);
     if (hit.band === 'chip') {
       this.s.fx.spark(point.x, point.y, hit.strength, HIT_BAND_FEEL.chip.sparkSize);
       return;

@@ -216,6 +216,11 @@ export default async function ({ page, baseUrl, assert }) {
   cur = await both();
   assert(finishers(cur) === finBefore + 1, `BFX-06: esperava um finisher:boss: ${JSON.stringify(cur.events)}`);
   assert(hpBeforeFin - cur.boss.hp === 48, `BFX-06: o finalizador deveria tirar 48: ${hpBeforeFin} -> ${cur.boss.hp}`);
+  // POW-06.7: o finalizador mostra o número com a vida que tirou.
+  assert(
+    cur.damageNumbers.last?.value === hpBeforeFin - cur.boss.hp && cur.damageNumbers.last?.kind === 'strike',
+    `POW-06.7: o finalizador deveria mostrar o número de 48: ${JSON.stringify(cur.damageNumbers)}`,
+  );
   assert(cur.boss.finisherReady === false, 'BFX-07: depois do uso o finalizador não deveria estar pronto');
 
   // BFX-07: um segundo J+K no mesmo stagger não tira nada.

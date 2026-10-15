@@ -46,6 +46,7 @@ export class BossBrain {
   private sinceHit = 0;
   private _staggerCause: StaggerCause | null = null;
   private _finisherReady = false;
+  private _lastDamage = 0;
 
   constructor(
     public readonly maxHp: number,
@@ -82,6 +83,14 @@ export class BossBrain {
     return this._finisherReady;
   }
 
+  /**
+   * Vida que a última chamada de `receiveHit`, `receiveKokusen` ou `receiveFinisher` tirou de fato, já com o ×1,5 do
+   * `stagger` (BFX-05); 0 quando o golpe foi ignorado. É o valor que o número de dano mostra (POW-06.7).
+   */
+  get lastDamage(): number {
+    return this._lastDamage;
+  }
+
   get isDead(): boolean {
     return this._state === 'dead';
   }
@@ -93,6 +102,7 @@ export class BossBrain {
    * de `stagger`); a postura cruzando de > 0 para <= 0 entra em `stagger`.
    */
   receiveHit(hit: Hit): BossEvent[] {
+    this._lastDamage = 0;
     if (this._state === 'dead' || this._state === 'intro' || this._state === 'roar') return [];
     // POW-03.6: o chip tira só `dano × chipPoiseMul` da postura; micro e normal seguem leve = dano, forte = 2×.
     const poiseDamage = bandPoiseDamage(hit, this.t.chipPoiseMul);
@@ -117,6 +127,7 @@ export class BossBrain {
    * `stagger`, ou depois do primeiro uso, devolve `[]` e não muda nada.
    */
   receiveFinisher(): BossEvent[] {
+    this._lastDamage = 0;
     if (this._state !== 'stagger' || !this._finisherReady) return [];
     this._finisherReady = false;
     return this.applyDamage(Math.round(this.t.finisher.hpFraction * this.maxHp), 0);
@@ -142,6 +153,7 @@ export class BossBrain {
    * o Kokusen pode acontecer nesse estado; ver o edge case do Punho Divergente contra o chefe em `roar`/`intro`).
    */
   receiveKokusen(damage: number, poiseDamage: number): BossEvent[] {
+    this._lastDamage = 0;
     if (this._state === 'dead' || this._state === 'intro' || this._state === 'roar') return [];
     return this.applyDamage(damage, poiseDamage);
   }
@@ -149,6 +161,7 @@ export class BossBrain {
   /** Núcleo comum de `receiveHit`/`receiveKokusen`: hp e postura (nunca abaixo de 0), fase/rugido/morte/stagger. */
   private applyDamage(damage: number, poiseDamage: number): BossEvent[] {
     this.sinceHit = 0;
+    this._lastDamage = damage;
     this._hp = Math.max(0, this._hp - damage);
     const poiseBefore = this._poise;
     // Em `stagger` a postura não muda: ou já está em 0 (causa postura) ou foi preservada pela parede (BFX-02).

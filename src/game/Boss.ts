@@ -171,6 +171,11 @@ export class Boss implements Hittable {
     return true;
   }
 
+  /** Vida que o último golpe tirou de fato, já com o ×1,5 do `stagger` (BFX-05): o número de dano lê daqui. */
+  get lastDamageTaken(): number {
+    return this.brain.lastDamage;
+  }
+
   /** O finalizador (J+K) ainda pode ser usado neste `stagger` (BFX-06, BFX-07). */
   get finisherReady(): boolean {
     return this.brain.finisherReady;
