@@ -173,10 +173,10 @@ faísca 6).
 
 **Done when**:
 
-- [ ] `tests/core/hitBand.test.ts`: 15 ms leve e 20 ms forte; 20+20+20 concedidos e o próximo recusado (60/61 ms);
+- [x] `tests/core/hitBand.test.ts`: 15 ms leve e 20 ms forte; 20+20+20 concedidos e o próximo recusado (60/61 ms);
       janela em 999/1000/1001 ms; `reset` libera; `bandPoiseDamage` do chip = dano × `chipMul`, do micro = dano (leve)
       e 2 × dano (forte); `bandStructureGain` 0 no chip e metade no micro
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda
 
 **Tests**: unit
 **Gate**: quick

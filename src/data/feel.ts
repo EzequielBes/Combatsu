@@ -61,3 +61,12 @@ export const CAMERA_FEEL = {
 
 /** Linhas de foco no golpe decisivo (FOC-01, FOC-02). */
 export const FOCUS_FEEL = { lines: 24, ms: 180, clearRadiusPx: 120 } as const;
+
+/**
+ * Faixas de acerto das técnicas (POW-03, POW-14): o micro congela 15 ms no leve e 20 ms no forte, com teto de 60 ms
+ * somados numa janela deslizante de 1000 ms de relógio real; o chip nunca congela. `sparkSize` é o tamanho da faísca.
+ */
+export const HIT_BAND_FEEL = {
+  micro: { lightMs: 15, heavyMs: 20, capMs: 60, windowMs: 1000, sparkSize: 10 },
+  chip: { sparkSize: 6 },
+} as const;

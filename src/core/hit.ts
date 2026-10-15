@@ -18,6 +18,12 @@ export interface HitString {
   length: number;
 }
 
+/**
+ * Faixa de acerto de técnica (POW-03): `chip` é o dano de desgaste (sem hitstop nem reação), `micro` é o acerto
+ * pequeno (hitstop curto com teto). Ausente = acerto normal.
+ */
+export type HitBand = 'chip' | 'micro';
+
 /** Um golpe, agnóstico da origem (soco, objeto, e no futuro técnica). */
 export interface Hit {
   ownerId: number;
@@ -42,6 +48,8 @@ export interface Hit {
   string?: HitString;
   /** Um id por golpe iniciado do jogador: agrupa os alvos de um mesmo golpe (IMP-14). */
   swingId?: number;
+  /** Faixa do acerto de técnica (POW-03); ausente = acerto normal. */
+  band?: HitBand;
 }
 
 /** O alvo conta a quem bateu que segurou o golpe com a guarda (TGT-06). */
