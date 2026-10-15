@@ -1269,8 +1269,8 @@ condição da `:17` ganha o termo), abaixo do `forced` da F29.
 
 **Done when**:
 
-- [ ] `tests/core/power.test.ts`: Força 5 + Impacto 3 = 8 pontos; Impacto 0 igual à F29
-- [ ] Gate verde; contagem sem perda
+- [x] `tests/core/power.test.ts`: Força 5 + Impacto 3 = 8 pontos; Impacto 0 igual à F29
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

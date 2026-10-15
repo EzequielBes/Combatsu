@@ -1,6 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { atRest, powerLook, powerPoints, powerTier, type RestState } from '../../src/core/power';
 
+describe('powerPoints com o Impacto (CRP-02)', () => {
+  it('Força 5 + Impacto 3 = 8 pontos', () => {
+    expect(powerPoints({ forca: 5, manoplas: 0, punhoPesado: false, impacto: 3 })).toBe(8);
+  });
+  it('cada ponto do Impacto vale 1, de 0 a 3', () => {
+    const at = (impacto: number) => powerPoints({ forca: 0, manoplas: 0, punhoPesado: false, impacto });
+    expect([0, 1, 2, 3].map(at)).toEqual([0, 1, 2, 3]);
+  });
+  it('Impacto 0 ou ausente é igual à F29', () => {
+    const src = { forca: 5, manoplas: 3, punhoPesado: true };
+    expect(powerPoints({ ...src, impacto: 0 })).toBe(13);
+    expect(powerPoints(src)).toBe(13);
+  });
+  it('soma com Manoplas e Punho Pesado e cruza os patamares de 2, 5 e 8', () => {
+    expect(powerTier(powerPoints({ forca: 1, manoplas: 0, punhoPesado: false, impacto: 0 }))).toBe(0);
+    expect(powerTier(powerPoints({ forca: 1, manoplas: 0, punhoPesado: false, impacto: 1 }))).toBe(1);
+    expect(powerTier(powerPoints({ forca: 4, manoplas: 0, punhoPesado: false, impacto: 1 }))).toBe(2);
+    expect(powerTier(powerPoints({ forca: 5, manoplas: 0, punhoPesado: false, impacto: 3 }))).toBe(3);
+    expect(powerTier(powerPoints({ forca: 5, manoplas: 0, punhoPesado: false, impacto: 2 }))).toBe(2);
+  });
+});
+
 describe('powerPoints (POW-07.1)', () => {
   it('soma Força + 2 × Manoplas + 2 com o Punho Pesado', () => {
     expect(powerPoints({ forca: 0, manoplas: 0, punhoPesado: false })).toBe(0);

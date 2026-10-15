@@ -38,9 +38,9 @@ export interface PowerLook {
   aura: PowerAura;
 }
 
-/** POW-07.1: Força (0 a 5) + 2 × Manoplas (0 a 3) + 2 com o Punho Pesado. */
-export function powerPoints(src: { forca: number; manoplas: number; punhoPesado: boolean }): number {
-  return src.forca + 2 * src.manoplas + (src.punhoPesado ? 2 : 0);
+/** POW-07.1, CRP-02: Força (0 a 5) + 2 × Manoplas (0 a 3) + 2 com o Punho Pesado + os pontos do Impacto (0 a 3). */
+export function powerPoints(src: { forca: number; manoplas: number; punhoPesado: boolean; impacto?: number }): number {
+  return src.forca + 2 * src.manoplas + (src.punhoPesado ? 2 : 0) + (src.impacto ?? 0);
 }
 
 /** POW-07.2: 0 abaixo de 2 pontos, 1 a partir de 2, 2 a partir de 5 e 3 a partir de 8. */
