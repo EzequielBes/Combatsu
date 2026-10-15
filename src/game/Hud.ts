@@ -43,12 +43,7 @@ const RUN_PANEL_STYLE = { ...RUN_TEXT_STYLE, backgroundColor: css(RUN_BG_COLOR, 
 /** Contador de combo (CMB-04/05): à direita, abaixo de "Inimigos"; a nota fica embaixo do texto de hits. */
 const COMBO_Y = MARGIN + 48;
 const COMBO_HITS_STYLE = { fontFamily: 'monospace', fontSize: '22px', fontStyle: 'bold', color: css(COMBO_TEXT_COLOR) };
-const COMBO_GRADE_STYLE = {
-  fontFamily: 'monospace',
-  fontSize: '34px',
-  fontStyle: 'bold',
-  color: css(COMBO_GRADE_COLORS.D),
-};
+const COMBO_GRADE_STYLE = { ...COMBO_HITS_STYLE, fontSize: '34px', color: css(COMBO_GRADE_COLORS.D) };
 /** Nome do jogo, mostrado na tela de título (RHUD-05). */
 export const GAME_NAME = 'Combatsu';
 
@@ -62,20 +57,14 @@ export const BOSS_BAR_WIDTH = 400;
 const BOSS_BAR_HEIGHT = 12;
 const BOSS_BAR_MARK_W = 2;
 const BOSS_BAR_MARK_FRACTIONS = [0.66, 0.33] as const;
-/** Topo do nome do chefe: abaixo da barra, porque acima dela a fonte passava da borda e cortava acentos e tis. */
-const BOSS_BAR_NAME_Y = MARGIN + BOSS_BAR_HEIGHT + 3;
-/** Nome centrado e quebrado entre as partes (`packBarLabel`) quando passa da largura da barra (BRD-01). */
-const BOSS_BAR_NAME_STYLE = {
-  fontFamily: 'monospace',
-  fontSize: '13px',
-  color: css(BOSS_BAR_NAME_COLOR),
-  ...OUTLINE,
-  align: 'center' as const,
-  wordWrap: {
-    callback: (text: string, obj: Phaser.GameObjects.Text): string[] =>
-      packBarLabel(text, (part) => obj.context.measureText(part).width, BOSS_BAR_WIDTH),
-  },
-};
+/**
+ * Nome do chefe abaixo da barra (acima dela, a fonte passava da borda e cortava acentos e tis), centrado e quebrado
+ * entre as partes (`packBarLabel`) quando passa da largura da barra (BRD-01).
+ */
+const wrapBossName = (text: string, obj: Phaser.GameObjects.Text): string[] =>
+  packBarLabel(text, (part) => obj.context.measureText(part).width, BOSS_BAR_WIDTH);
+const BOSS_BAR_NAME_WRAP = { align: 'center' as const, wordWrap: { callback: wrapBossName } };
+const BOSS_BAR_NAME_STYLE = { ...RUN_TEXT_STYLE, color: css(BOSS_BAR_NAME_COLOR), ...BOSS_BAR_NAME_WRAP };
 
 /**
  * HUD na câmera de UI (AD-003): barra de vida do player com moldura pixel art (HUD-01) e o painel de controles, que
@@ -187,7 +176,7 @@ export class Hud {
         .setVisible(false),
     );
     this.bossBarName = scene.add
-      .text(w2 / 2, BOSS_BAR_NAME_Y, '', BOSS_BAR_NAME_STYLE)
+      .text(w2 / 2, MARGIN + BOSS_BAR_HEIGHT + 3, '', BOSS_BAR_NAME_STYLE)
       .setOrigin(0.5, 0)
       .setVisible(false);
 
