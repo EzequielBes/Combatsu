@@ -131,7 +131,7 @@ fora do Adaptativo por construção (ADP-02); golpe com `tech: true` sem `techId
   `techId` → `null`).
 - `class Adaptation` — relógio próprio (`update(dtMs)`), sem `Date.now`:
   - `onHit(source): number` — devolve a escala deste golpe (0,5 se a fonte **já** estava adaptada, senão 1), registra
-    o acerto e reavalia (ADP-03: fonte com mais acertos na janela, `>= minHits`, não adaptada, menos de 2 adaptadas;
+    o acerto e reavalia (ADP-03: a fonte não adaptada com mais acertos na janela, `>= minHits`, menos de 2 adaptadas;
     empate: a fonte cujo último acerto é mais antigo, isto é, a que chegou ao número primeiro).
   - `update(dtMs)` — descarta acertos com idade `>= windowMs`; esquece a fonte adaptada com `>= forgetMs` sem acerto
     e **apaga os acertos dela da janela** (senão o próximo golpe de qualquer fonte a readaptaria na hora).

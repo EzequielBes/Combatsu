@@ -573,10 +573,10 @@ janela de 20 s, mínimo 5, teto 2, esquece em 10 s e apaga os acertos da fonte e
 
 **Done when**:
 
-- [ ] `tests/core/bossAdapt.test.ts` (novo): leve/forte/técnica; técnica sem `techId` → `null`; 4 e 5 acertos;
+- [x] `tests/core/bossAdapt.test.ts` (novo): leve/forte/técnica; técnica sem `techId` → `null`; 4 e 5 acertos;
       idade 19999/20000; teto de 2; empate; escala 0,5 só a partir do golpe seguinte à adaptação; 9999/10000 ms;
       depois de esquecer, 1 golpe não readapta
-- [ ] Gate verde
+- [x] Gate verde
 
 **Tests**: unit
 **Gate**: quick
