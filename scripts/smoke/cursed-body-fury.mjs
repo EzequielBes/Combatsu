@@ -5,7 +5,22 @@ import { castRed } from './red-branches.mjs';
 import { BASE, DUMMY_X, strikeOnce, walkToDummy } from './cursed-body-kit.mjs';
 
 /** Regeneração de energia num quadro (8 por segundo, `CE.regen`), a folga da medida do ganho no quadro do acerto. */
-const REGEN_PER_FRAME = 8 / 60;
+export const REGEN_PER_FRAME = 8 / 60;
+
+/**
+ * Encosta no inimigo mais perto, solta o Vermelho de costas para ele (a barra nasce no teto) e encosta de novo;
+ * devolve o snapshot com a energia longe do teto. Pede o `tech=vermelho` na query.
+ */
+export async function spendRed(kit, ctx) {
+  await kit.approach();
+  let s = await kit.waitQuiet();
+  await kit.tap(s.player.facing === 1 ? 'KeyA' : 'KeyD', 16);
+  ({ s } = await castRed(kit, ctx, await kit.snap(0)));
+  for (let i = 0; i < 60 && s.tech.cast !== null; i++) s = await kit.frame();
+  s = await kit.approach();
+  ctx.assert(s.ce.cur <= s.ce.max - 10, `pré-condição: energia longe do teto: ${s.ce.cur}/${s.ce.max}`);
+  return s;
+}
 
 /**
  * Gasta energia com o Vermelho solto de costas para o inimigo (a barra nasce no teto) e mede o ganho de energia no
@@ -14,13 +29,7 @@ const REGEN_PER_FRAME = 8 / 60;
 async function meleeGain(ctx, axes) {
   const kit = makeKit(ctx);
   await kit.boot(`${BASE}&tech=vermelho&axes=${axes}`);
-  await kit.approach();
-  let s = await kit.waitQuiet();
-  await kit.tap(s.player.facing === 1 ? 'KeyA' : 'KeyD', 16);
-  ({ s } = await castRed(kit, ctx, await kit.snap(0)));
-  for (let i = 0; i < 60 && s.tech.cast !== null; i++) s = await kit.frame();
-  s = await kit.approach();
-  ctx.assert(s.ce.cur <= s.ce.max - 10, `pré-condição: energia longe do teto: ${s.ce.cur}/${s.ce.max}`);
+  let s = await spendRed(kit, ctx);
   const hp0 = new Map(s.enemies.map((e) => [e.id, e.hp]));
   await kit.down('KeyJ');
   let prev = await kit.frame();

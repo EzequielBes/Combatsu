@@ -64,7 +64,77 @@ async function furyAuraScenario(t) {
   await t.close('99-furia-parado-esq', 64);
 }
 
+// Onda do Punho (CRP-10) no mundo modular: a rasteira no comum mais perto solta a onda. Na rua os dois comuns vêm da
+// direita (a onda vai à direita, até o 2º); no beco o player corre até a boca da esquerda e bate no comum que nasce
+// lá (a onda vai à esquerda).
+async function fistWaveScenario(t) {
+  for (const [tag, extra] of [
+    ['rua', ''],
+    ['beco', '&modules=beco'],
+  ]) {
+    const q = `hd=1&area=modular&maxAlive=2&enemyGuard=0&noshop=1&shove=0&axes=corpo.fluxo:1&ramo=corpo:b${extra}`;
+    let s = await t.open(q);
+    if (extra) {
+      await t.down('KeyA');
+      for (let i = 0; i < 200 && s.player.x > 90; i++) s = await t.frame();
+      await t.up('KeyA');
+    }
+    for (let i = 0; i < 40 && s.enemies.length < 2; i++) s = await t.snap(300);
+    for (let tries = 0; tries < 6; tries++) {
+      await t.waitQuiet();
+      s = await t.approach();
+      const seen = s.events.length;
+      // O chute frontal acerta na altura do tronco: a onda anda acima da faixa de dicas do pé da tela.
+      await t.press('KeyK');
+      const side = s.player.facing === 1 ? 'dir' : 'esq';
+      let n = 0;
+      for (let i = 0; i < 40; i++) {
+        s = await t.frame();
+        if (!s.events.slice(seen).includes('fistWave:emit') || s.hitstop.frozen || n >= 16) continue;
+        n += 1;
+        const at = { x: s.player.x + s.player.facing * 50, y: s.player.y };
+        await t.close(`99-onda-${tag}-${side}-${String(n).padStart(2, '0')}`, 100, at);
+      }
+      if (n > 0) break;
+    }
+  }
+}
+
+// Onda do Punho para a esquerda (CRP-10): na rua o player pula por cima do comum que vem da direita e bate nele de
+// costas para a direita, e o chute frontal solta a onda para a esquerda.
+async function fistWaveLeftScenario(t) {
+  let s = await t.open('hd=1&area=modular&maxAlive=1&enemyGuard=0&noshop=1&shove=0&axes=corpo.fluxo:1&ramo=corpo:b');
+  for (let i = 0; i < 40 && s.enemies.length < 1; i++) s = await t.snap(300);
+  for (let tries = 0; tries < 8; tries++) {
+    s = await t.approach(60);
+    await t.down('KeyD');
+    for (let i = 0; i < 40 && s.player.x < t.nearest(s).x + 50; i++) {
+      if (i % 12 === 0) await t.press('KeyW');
+      s = await t.frame();
+    }
+    await t.up('KeyD');
+    s = await t.snap(200);
+    if (s.player.x <= t.nearest(s).x) continue;
+    await t.waitQuiet();
+    s = await t.approach();
+    if (s.player.facing !== -1) continue;
+    const seen = s.events.length;
+    await t.press('KeyK');
+    let n = 0;
+    for (let i = 0; i < 40 && n < 16; i++) {
+      s = await t.frame();
+      if (!s.events.slice(seen).includes('fistWave:emit') || s.hitstop.frozen) continue;
+      n += 1;
+      await t.close(`99-onda-esq-${String(n).padStart(2, '0')}`, 100, { x: s.player.x - 50, y: s.player.y });
+    }
+    if (n > 0) return;
+  }
+  t.assert(false, 'a onda para a esquerda não saiu');
+}
+
 export const bodyScenarios = () => ({
   corpoGolpe: (t) => bodyStrikeScenario(t),
   corpoFuria: (t) => furyAuraScenario(t),
+  corpoOnda: (t) => fistWaveScenario(t),
+  corpoOndaEsq: (t) => fistWaveLeftScenario(t),
 });

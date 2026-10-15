@@ -9,6 +9,7 @@ import type { Hittable } from '../../game/bodyTags';
 import { Enemy } from '../../game/Enemy';
 import { FuryAura, furyAuraCenter } from '../../game/FuryAura';
 import type { TestScene } from '../TestScene';
+import { boxOf, FistWaves } from './fistWaves';
 
 /**
  * O Corpo Amaldiçoado no combate (CRP-03 a CRP-13): lê os pontos do `loadout.axes` e muda o golpe do player pelo
@@ -25,8 +26,14 @@ export class BodyDirector {
   private aura: FuryAura | null = null;
   /** O golpe em curso já acertou alguém (o fim do `active` sem acerto zera a Cadência, CRP-08.3). */
   private swingConnected = false;
+  /** CRP-10: as ondas do punho (ramo Onda do Punho). */
+  readonly waves: FistWaves;
+  /** Último golpe que soltou onda: uma onda por golpe, mesmo com 2 alvos. */
+  private waveSwing: number | null = null;
 
-  constructor(readonly s: TestScene) {}
+  constructor(readonly s: TestScene) {
+    this.waves = new FistWaves(s);
+  }
 
   /** Pontos do Corpo por eixo, lidos na hora (o `loadout.reset` da run nova os zera). */
   private get points(): BodyPoints {
@@ -79,7 +86,25 @@ export class BodyDirector {
     this.swingConnected = true;
     this.fury.onConnect(hit.swingId);
     this.cadence.onConnect(hit.swingId);
-    if (hit.decisive && this.awakened && this.s.loadout.axes.branch('corpo') === 'cadencia') this.hammer(point, target);
+    const branch = this.s.loadout.axes.branch('corpo');
+    if (hit.decisive && this.awakened && branch === 'cadencia') this.hammer(point, target);
+    if (branch !== 'ondaDoPunho' || hit.strength !== 'heavy') return;
+    if (this.waveSwing === hit.swingId) this.waves.skip(this.idOf(target));
+    else {
+      this.waveSwing = hit.swingId;
+      this.throwWave(hit, point, target);
+    }
+  }
+
+  /** CRP-10: a onda sai do ponto do acerto com `round(0,4 × dano)` e anda 80 px, passando pelo alvo do golpe. */
+  private throwWave(hit: Hit, point: Vec2, target?: Hittable): void {
+    const { damageFrac, rangePx } = BODY_BRANCHES.ondaDoPunho;
+    this.waves.emit(point, Math.round(damageFrac * hit.damage), { pierce: false, rangePx }, this.idOf(target));
+  }
+
+  /** Id do alvo do golpe (comum ou chefe); -1 sem alvo com id. */
+  private idOf(target?: Hittable): number {
+    return target && 'id' in target ? Number(target.id) : -1;
   }
 
   /**
@@ -89,10 +114,7 @@ export class BodyDirector {
    */
   private hammer(point: Vec2, target?: Hittable): void {
     const alive = this.s.enemies.filter((e) => !e.isDead());
-    const boxes = alive.map((e) => {
-      const r = e.hurtRect();
-      return { id: e.id, box: { x: r.x - r.width / 2, y: r.y - r.height / 2, width: r.width, height: r.height } };
-    });
+    const boxes = alive.map((e) => ({ id: e.id, box: boxOf(e) }));
     const exceptId = target instanceof Enemy ? target.id : -1;
     for (const id of marteloTargets(point, boxes, exceptId)) {
       const e = alive.find((x) => x.id === id)!;
@@ -115,7 +137,7 @@ export class BodyDirector {
    * A cada quadro de jogo (fora do hitstop e da loja, pelo `TechDirector`). CRP-07, CRP-08.3: a perda de HP zera a
    * Fúria e a Cadência. A vida que a vida máxima menor recorta (o voto Corpo de vidro tomado na loja) não é perda.
    */
-  update(_dtMs: number): void {
+  update(dtMs: number): void {
     const { hp, maxHp } = this.s.player;
     const last = this.lastHp;
     this.lastHp = { hp, max: maxHp };
@@ -124,6 +146,7 @@ export class BodyDirector {
       this.cadence.onHpLoss();
     }
     this.updateAura();
+    this.waves.update(dtMs);
   }
 
   /**
@@ -171,6 +194,8 @@ export class BodyDirector {
     this.fury.reset();
     this.cadence.reset();
     this.lastHp = null;
+    this.waveSwing = null;
+    this.waves.reset();
     this.dropAura();
   }
 

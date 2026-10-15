@@ -2,6 +2,7 @@
 // próprio (o runner só roda `*.smoke.mjs`): existe para o smoke caber no teto de 400 linhas.
 import { makeKit } from './fight-kit.mjs';
 import { BASE, walkToDummy } from './cursed-body-kit.mjs';
+import { REGEN_PER_FRAME, spendRed } from './cursed-body-fury.mjs';
 
 /** Um ponto fora do dano e da força (Fluxo) leva o Corpo ao Nv 2, onde o `ramo=` é aceito. */
 const LEVEL_2 = 'axes=corpo.fluxo:1';
@@ -16,7 +17,8 @@ const impacts = (s, seen) => s.events.slice(seen).filter((e) => e.startsWith('im
  */
 export async function chain(kit, ctx, strict = true) {
   await kit.approach();
-  await kit.waitQuiet();
+  // Com um comum só espera ele sair do ataque; com 3 algum quase sempre está no preparo, e a espera não acaba.
+  if (strict) await kit.waitQuiet();
   let s = await kit.approach();
   const seen = s.events.length;
   for (let k = 0; k < 4; k++) {
@@ -76,7 +78,8 @@ async function cadenceWhiffResets(ctx) {
  */
 async function blackHammer(ctx) {
   const kit = makeKit(ctx);
-  let s = await kit.boot(`${BASE}&maxAlive=3&${LEVEL_5}&ramo=corpo:a`);
+  // `mods=vida:5`: a vida a mais segura o player vivo entre os 3 comuns pelas tentativas da cadeia.
+  let s = await kit.boot(`${BASE}&maxAlive=3&mods=vida:5&${LEVEL_5}&ramo=corpo:a`);
   ctx.assert(s.build.corpo.awakened === true, `CRP-13: Martelo Negro ligado: ${JSON.stringify(s.build.corpo)}`);
   for (let i = 0; i < 40 && s.enemies.length < 3; i++) s = await kit.snap(300);
   for (let tries = 0; tries < 6; tries++) {
@@ -99,8 +102,82 @@ async function blackHammer(ctx) {
   ctx.assert(false, `CRP-09: nenhum vizinho a 48 px em 6 cadeias: ${JSON.stringify(s.enemies.map((e) => e.x))}`);
 }
 
+const waveHits = (s, seen) =>
+  s.events
+    .slice(seen)
+    .filter((e) => /^fistWave:\d+:/.test(e))
+    .map((e) => e.split(':').slice(1).map(Number));
+
+/**
+ * Dá o forte de um alvo (rasteira) no comum mais perto e segue a onda por 30 quadros; devolve o dano do golpe no alvo, os acertos da
+ * onda, o `damageNumbers.last` do quadro do acerto da onda e as variações de energia dos quadros sem hitstop.
+ */
+async function heavyWithWave(kit) {
+  let s = await kit.approach();
+  const hp0 = new Map(s.enemies.map((e) => [e.id, e.hp]));
+  const seen = s.events.length;
+  // A rasteira (S+K) é o forte de um alvo só: o chute frontal pegaria os dois comuns juntos e não sobraria alvo à onda.
+  await kit.down('KeyS');
+  await kit.tap('KeyK', 16);
+  await kit.up('KeyS');
+  let strike = null;
+  let number = null;
+  let waveCe = null;
+  const ce = [];
+  for (let f = 0; f < 40; f++) {
+    const prev = s;
+    s = await kit.frame();
+    ce.push(s.ce.cur - prev.ce.cur);
+    const struck = s.enemies.filter((e) => e.hp < (hp0.get(e.id) ?? e.hp));
+    if (strike === null && struck.length > 0)
+      strike = { ids: struck.map((e) => e.id), damage: hp0.get(struck[0].id) - struck[0].hp };
+    if (number === null && waveHits(s, seen).length > 0) {
+      number = s.damageNumbers.last;
+      waveCe = s.ce.cur - prev.ce.cur;
+    }
+  }
+  return { strike, waves: waveHits(s, seen), number, waveCe, tail: ce.slice(-10), events: s.events.slice(seen) };
+}
+
+/**
+ * CRP-10, CRP-12: com a Onda do Punho o forte que acerta solta a onda, e o 2º comum, atrás do alvo, leva um número
+ * `micro` de `round(0,4 × dano do golpe)`; a onda não gasta energia nem para a regeneração (todo quadro sem hitstop do
+ * voo sobe a barra só pela regeneração).
+ */
+async function fistWave(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(`${BASE}&maxAlive=2&tech=vermelho&${LEVEL_2}&ramo=corpo:b`);
+  ctx.assert(s.build.corpo.branch === 'ondaDoPunho', `CRP-14: ramo Onda do Punho: ${JSON.stringify(s.build.corpo)}`);
+  for (let i = 0; i < 40 && s.enemies.length < 2; i++) s = await kit.snap(300);
+  await spendRed(kit, ctx);
+  for (let tries = 0; tries < 8; tries++) {
+    await kit.waitQuiet();
+    const r = await heavyWithWave(kit);
+    const view = JSON.stringify(r);
+    ctx.assert(r.events.includes('fistWave:emit'), `CRP-10: o forte que acerta solta a onda: ${view}`);
+    const other = r.waves[0];
+    if (!r.strike || !other) continue;
+    const want = Math.round(0.4 * r.strike.damage);
+    ctx.assert(other[1] === want, `CRP-10: o 2º comum leva round(0,4 × ${r.strike.damage}) = ${want}: ${view}`);
+    ctx.assert(r.number?.kind === 'micro' && r.number.value === want, `CRP-10: número micro de ${want}: ${view}`);
+    ctx.assert(
+      r.waves.every(([id]) => !r.strike.ids.includes(id)),
+      `CRP-10: a onda não acerta o alvo do golpe: ${view}`,
+    );
+    const regen = (d) => d > 0 && d <= REGEN_PER_FRAME + 0.01;
+    ctx.assert(
+      r.waveCe >= 0 && r.waveCe <= REGEN_PER_FRAME + 0.01,
+      `CRP-12: o acerto da onda não rende energia: ${view}`,
+    );
+    ctx.assert(r.tail.every(regen), `CRP-12: a regeneração segue depois da onda: ${view}`);
+    return;
+  }
+  ctx.assert(false, `CRP-10: a onda não chegou ao 2º comum em 8 fortes: ${JSON.stringify(s.enemies.map((e) => e.x))}`);
+}
+
 export async function branchScenarios(ctx) {
   await cadenceDecisive(ctx);
   await cadenceWhiffResets(ctx);
   await blackHammer(ctx);
+  await fistWave(ctx);
 }

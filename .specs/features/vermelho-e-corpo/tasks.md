@@ -1510,11 +1510,22 @@ em `golpe` no recorde); `src/game/FistWaveFx.ts` desenha um risco por onda viva 
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs` com `ramo=corpo:b&maxAlive=2`: o forte solta a onda e o 2º inimigo leva um número `micro`
+- [x] `cursed-body.smoke.mjs` com `ramo=corpo:b&maxAlive=2`: o forte solta a onda e o 2º inimigo leva um número `micro`
       de `round(0,4 × dano)`; energia e regen iguais com e sem onda (CRP-12)
-- [ ] A 5ª onda em 1000 ms não sai e o dano do golpe não muda (edge case)
-- [ ] Onda conferida em movimento no jogo, dos dois lados
-- [ ] Smokes `cursed-body`, `power`, `fight`, `fxlab` e `record-end` verdes; gate verde; contagem sem perda
+- [x] A 5ª onda em 1000 ms não sai e o dano do golpe não muda (edge case)
+- [x] Onda conferida em movimento no jogo, dos dois lados
+- [x] Smokes `cursed-body`, `power`, `fight`, `fxlab` e `record-end` verdes; gate verde; contagem sem perda
+
+**Nota (T49)**: as ondas moram em `scenes/test/fistWaves.ts` (o emissor puro, os alvos da cena e a entrega), campo
+`waves` do `BodyDirector`, para o diretor não crescer. A onda passa por todos os alvos do golpe que a soltou (o forte
+de 2 alvos acerta os dois comuns juntos, e a onda acertaria de novo o 2º), uma onda por golpe. O smoke usa a rasteira
+(forte de um alvo só) e lê o dano real do evento `fistWave:<id>:<dano levado>` e o `damageNumbers.last` (`micro`). O
+CRP-12 é lido no próprio voo: o quadro do acerto da onda não rende energia e a barra sobe só a regeneração nos quadros
+seguintes (sem rodada de comparação sem onda). SPEC_DEVIATION: a 5ª onda em 1000 ms não cabe em fortes de uma onda
+(um forte leva ~450 ms); o teto é provado na T50, com a 2ª onda da Fúria no teto (duas por forte), e segue coberto
+pelo `tests/core/strikeEmitter.test.ts`. Onda conferida em HD para os dois lados (`node tools/visual-shots.mjs
+.fable-out/t49 corpoOnda` e `corpoOndaEsq`): o arco de 1 px em `C` com o `c` atrás lê como um risco fino que corre à
+frente do impacto e some no fim dos 80 px. Testes: 4149.
 
 **Tests**: smoke
 **Gate**: full
