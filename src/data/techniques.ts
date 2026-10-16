@@ -139,7 +139,11 @@ export const KOKUSEN = {
   delayMs: { min: 170, max: 290 },
   windowMs: { min: 50, max: 90 },
   zoneMs: 8000,
+  /** ESC-02: piso do dano (rodada 1, sem build); acima dele vale `mul` vezes o 2º impacto. */
   damage: 45,
+  /** ESC-02: multiplicador do 2º impacto cru no dano do Kokusen, e o teto dele (a Zona Negra e o Punho Negro vêm depois). */
+  mul: 2.5,
+  mulCap: 3.4,
   hitstopMs: 220,
   knockbackMul: 2,
   poiseMul: 3,

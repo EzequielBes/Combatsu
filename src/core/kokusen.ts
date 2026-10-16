@@ -1,7 +1,24 @@
 import type { CursedEnergy } from './energy';
 import { CE, KOKUSEN } from '../data/techniques';
+import { meleeDamageAtLevel } from './modifiers';
 
 export type KokusenPressResult = 'hit' | 'miss' | 'ignored';
+
+/** O que escala o Kokusen: nível de Força, multiplicador de golpe pesado da folha e multiplicador de HP da rodada. */
+export interface KokusenScale {
+  forca: number;
+  meleeMul: number;
+  hpMul: number;
+}
+
+/**
+ * ESC-02: dano do Kokusen, `max(round(2,5 × meleeDamageAtLevel(D, forca) × meleeMul), round(45 × hpMul))`. `D` é o 2º
+ * impacto cru com o fator de nível, sem os multiplicadores de técnica; o piso acompanha o HP do inimigo da rodada.
+ */
+export function kokusenDamage(secondImpact: number, scale: KokusenScale): number {
+  const hit = Math.round(KOKUSEN.mul * meleeDamageAtLevel(secondImpact, scale.forca) * scale.meleeMul);
+  return Math.max(hit, Math.round(KOKUSEN.damage * scale.hpMul));
+}
 
 /**
  * Kokusen / Black Flash (KOK-01..05, 09..11, 30, 31): a janela do 2º impacto do Punho Divergente, a tentativa por

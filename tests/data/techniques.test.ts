@@ -92,6 +92,12 @@ describe('CE, KOKUSEN, CAST_FX: presentes com os campos usados pelas ACs', () =>
     expect(KOKUSEN).toMatchObject({ windowFrom: 120, windowTo: 200, zoneFrom: 60, zoneMs: 8000, damage: 45 });
   });
 
+  it('KOKUSEN tem o multiplicador 2,5 e o teto 3,4, e o dano 45 fica como piso (ESC-02.6)', () => {
+    expect(KOKUSEN.mul).toBe(2.5);
+    expect(KOKUSEN.mulCap).toBe(3.4);
+    expect(KOKUSEN.damage).toBe(45);
+  });
+
   it('CAST_FX tem zoom base 1.5 e de carga 1.6 (CAST-15, CAST-19)', () => {
     expect(CAST_FX).toMatchObject({ zoomBase: 1.5, zoomCharge: 1.6, zoomBackMs: 250, calloutMs: 900, airGravity: 0.3 });
   });

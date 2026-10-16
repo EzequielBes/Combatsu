@@ -1926,9 +1926,9 @@ os multiplicadores de técnica); `KOKUSEN.mul 2.5` e `KOKUSEN.mulCap 3.4` em `da
 
 **Done when**:
 
-- [ ] `tests/core/kokusenDamage.test.ts`: 45 na r1 sem build; 68 com Força 5 (`round(2,5 × 27)`); piso × `hpMul` na r9
+- [x] `tests/core/kokusenDamage.test.ts`: 45 na r1 sem build; 68 com Força 5 (`round(2,5 × 27)`); piso × `hpMul` na r9
       e na r11; golpe × 2,5 × `meleeMul` acima do piso; os dois lados do piso (edge case); `tests/data/techniques.test.ts` com `mul` 2,5 e `mulCap` 3,4 (ESC-02.6)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
