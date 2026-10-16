@@ -44,6 +44,7 @@ export class EffectsDirector {
    * Kokusen chega como `divergente`, DMG-07).
    */
   onTechConnect(hit: Hit, point: Vec2, target: Hittable, source: DamageSource): void {
+    this.s.build.domain.onTechHit(hit);
     // CRP-09, CRP-10: a onda do punho e o Martelo Negro chegam como `golpe`.
     this.s.runDirector.record.onTechHit(source, hit.damage);
     this.s.ui.damageNumbers.show(target, target.lastDamageTaken ?? hit.damage, techKind(hit.band), point);

@@ -19,6 +19,8 @@ function rig() {
   const recorded: { source: string; damage: number }[] = [];
   const scene = {
     runDirector: { record: { onTechHit: (source: string, damage: number) => recorded.push({ source, damage }) } },
+    // DOM-02: o diretor do Domínio só guarda a banda do acerto de técnica.
+    build: { domain: { onTechHit: () => undefined } },
     fx: {
       spark: (_x: number, _y: number, kind: string, size?: number) => sparks.push({ kind, size }),
       shake: () => log.shakes++,

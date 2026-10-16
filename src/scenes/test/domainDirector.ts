@@ -1,6 +1,6 @@
 import { DomainState } from '../../core/domain';
 import { parseChargeParam, parseDomainParam } from '../../core/domainParam';
-import type { Hit } from '../../core/hit';
+import type { Hit, HitBand } from '../../core/hit';
 import { FINISHER_MOVE } from '../../data/moves';
 import type { DomainSnapshot } from '../../game/domainSnapshot';
 import type { DefenseKind } from '../../game/player/types';
@@ -41,6 +41,10 @@ export class DomainDirector {
   private lastSwingId: number | null = null;
   /** Relógio de jogo do último acerto de objeto que carregou: um por quadro. */
   private lastPropAtMs: number | null = null;
+  /** Banda do último acerto de técnica que chegou pelo `onTechHit` (o `onCastHit` vem logo depois dele). */
+  private lastTechBand: HitBand | undefined;
+  /** Conjurações que já carregaram (uma vez por `castId`, DOM-02). */
+  private readonly chargedCasts = new Set<number>();
 
   constructor(readonly s: TestScene) {}
 
@@ -49,6 +53,8 @@ export class DomainDirector {
     this.state.reset();
     this.lastSwingId = null;
     this.lastPropAtMs = null;
+    this.lastTechBand = undefined;
+    this.chargedCasts.clear();
   }
 
   /**
@@ -79,6 +85,26 @@ export class DomainDirector {
   /** Finalizador do comum ou do chefe: +5 (DOM-02.3). */
   onFinisher(): void {
     this.state.addCharge('finisher');
+  }
+
+  /** Acerto de técnica (antes do `onCastHit` do mesmo acerto): só guarda a banda. */
+  onTechHit(hit: Hit): void {
+    this.lastTechBand = hit.band;
+  }
+
+  /**
+   * O alvo aceitou um acerto da conjuração `castId` (DOM-02.4): carrega +1 uma vez por conjuração, no primeiro acerto
+   * que não é chip. Acertos sem conjuração (a Onda do Punho, o corte do Santuário) nunca chegam aqui.
+   */
+  onCastHit(castId: number): void {
+    if (this.lastTechBand === 'chip' || this.chargedCasts.has(castId)) return;
+    this.chargedCasts.add(castId);
+    this.state.addCharge('techCast');
+  }
+
+  /** Kokusen: +15 (DOM-02). */
+  onKokusen(): void {
+    this.state.addCharge('kokusen');
   }
 
   /** Abate de inimigo comum: +1 (DOM-02). */

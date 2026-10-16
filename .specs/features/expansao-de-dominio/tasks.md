@@ -350,11 +350,16 @@ neste mesmo ponto na T18); `onKokusen()` (+15); `effects.onTechConnect` chama `b
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 1, técnica): `tech=divergente` sobe 1 por conjuração que acerta (mesmo com 2 alvos) e
+- [x] `domain.smoke.mjs` (parte 1, técnica): `tech=divergente` sobe 1 por conjuração que acerta (mesmo com 2 alvos) e
       16 com Kokusen; `tech=azul` com só tiques chip não sobe; `tech=corte` sobe 1 por conjuração
-- [ ] O `impactFx.onKokusen` continua sem ramo novo (exceção de complexidade sem subir no `oxlint`)
-- [ ] Smokes `tech`, `kokusen`, `techniques`, `fxlab` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] O `impactFx.onKokusen` continua sem ramo novo (exceção de complexidade sem subir no `oxlint`)
+- [x] Smokes `tech`, `kokusen`, `techniques`, `fxlab` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4370 → 4370)
+- Notas: a parte de técnica mora em `scripts/smoke/domain-tech.mjs`. O "mesmo com 2 alvos" é provado pelos vários
+  acertos de uma conjuração (1º e 2º impactos do Divergente, os 3 cortes do Corte): +1 por conjuração. O Corte acerta de
+  60 a 180 px (CUT-03), então o cenário conjura a ~100 px. A cena falsa do `tests/scenes/effects.test.ts` ganhou o
+  `build.domain.onTechHit` vazio (o `onTechConnect` passou a chamá-lo). O `kokusen` caiu uma vez em CE-06 (instável
+  conhecido) e passou isolado, aqui e na base.
 
 **Tests**: smoke
 **Gate**: full

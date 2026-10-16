@@ -216,6 +216,8 @@ export class RunDirector {
    */
   onMasteryHit(slot: MasterySlot, castId: number, targetId: number, isBoss: boolean): void {
     if (this.s.fxLab) return;
+    // DOM-02: o 1º acerto não chip de cada conjuração carrega a barra do Domínio.
+    this.s.build.domain.onCastHit(castId);
     const equipped = this.s.loadout.slotsView[slot];
     if (!equipped) return;
     const { levelUp } = this.s.mastery.registerHit(slot, equipped.level, castId, targetId, isBoss);

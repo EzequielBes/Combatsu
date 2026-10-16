@@ -118,6 +118,7 @@ export class ImpactFx {
     this.kokusenFrame = this.s.game.getFrame();
     this.s.kokusenFx.trigger(target, point, facing, streak);
     this.s.ui.damageNumbers.promote(target.id, 'kokusen');
+    this.s.build.domain.onKokusen();
   }
 
   /**
