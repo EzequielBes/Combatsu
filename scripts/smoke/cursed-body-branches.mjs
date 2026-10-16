@@ -98,13 +98,22 @@ async function blackHammer(ctx) {
   for (let i = 0; i < 40 && s.enemies.length < 3; i++) s = await kit.snap(300);
   for (let tries = 0; tries < 6; tries++) {
     // Com 3 comuns um deles pode bater no meio da cadeia e cortá-la: tenta de novo.
-    const { s: end, seen } = await chain(kit, ctx, false);
+    const { s: end, seen, elbow } = await chain(kit, ctx, false);
     const hits = end.events
       .slice(seen)
       .filter((e) => e.startsWith('martelo:'))
       .map((e) => e.split(':').slice(1).map(Number));
     if (hits.length === 0) continue;
     for (let f = 0; f < 4; f++) s = await kit.frame();
+    // CRP-09: o alvo do decisivo leva o golpe com os 50 % da Cadência mais 4 % da própria vida máxima.
+    for (const [id, dmg] of elbow) {
+      const t = s.enemies.find((x) => x.id === id);
+      const want = ELBOW_DECISIVE + Math.round(0.04 * t.maxHp);
+      ctx.assert(
+        dmg === want,
+        `CRP-09: o alvo leva 21 + 4 % de ${t.maxHp} = ${want}: ${JSON.stringify({ elbow, hits })}`,
+      );
+    }
     const view = JSON.stringify({ hits, en: s.enemies.map((e) => [e.id, e.state, e.hp, e.maxHp]) });
     for (const [id, dmg] of hits) {
       const e = s.enemies.find((x) => x.id === id);
