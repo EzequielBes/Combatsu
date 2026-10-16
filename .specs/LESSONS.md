@@ -21,10 +21,16 @@ Corroborated across multiple features. Safe to apply as guidance.
 - last seen: 2026-10-15T07:18:20Z
 
 ### L-043 - Test the adapter call that forwards a config field to the engine, not only the pure helper that builds it
-- signal: `surviving_mutant` · recurrence: 5 feature(s) · scope: `art-adapter` · harmful: 1
-- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho, cenario-acabamento, arena-do-santuario
-- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+4 more)
-- last seen: 2026-10-08T17:35:38Z
+- signal: `surviving_mutant` · recurrence: 6 feature(s) · scope: `art-adapter` · harmful: 1
+- features: sprite-player-polish, enemy-sprite-variety, personagem-e-vermelho, cenario-acabamento, arena-do-santuario, vermelho-e-corpo
+- evidence: M7 src/game/art/index.ts:128 (art-adapter) (+5 more)
+- last seen: 2026-10-16T14:52:00Z
+
+### L-082 - Assert every field of a hit an adapter builds (height, unblockable, force, owner) in a unit test with a fake scene, because a live smoke only measures the damage that lands.
+- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `game/boss` · harmful: 0
+- features: chefes-com-afixos, vermelho-e-corpo
+- evidence: validation.md A4 (src/game/boss/LavaField.ts:62-63, IGN-04) (game/boss) (+3 more)
+- last seen: 2026-10-16T14:52:00Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -498,12 +504,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: DMG-04 scripts/smoke/record-end.smoke.mjs:147 (scripts/smoke)
 - last seen: 2026-10-15T03:22:30Z
 
-### L-082 - Assert every field of a hit an adapter builds (height, unblockable, force, owner) in a unit test with a fake scene, because a live smoke only measures the damage that lands.
-- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `game/boss` · harmful: 0
-- features: chefes-com-afixos
-- evidence: validation.md A4 (src/game/boss/LavaField.ts:62-63, IGN-04) (game/boss)
-- last seen: 2026-10-15T07:18:20Z
-
 ### L-083 - Assert the exact spec value of a live damage number, never only that it is positive.
 - signal: `ac_gap` · recurrence: 1 feature(s) · scope: `scripts/smoke` · harmful: 0
 - features: chefes-com-afixos
@@ -515,6 +515,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: regras-tecnicas-leva1
 - evidence: RES-06a, RES-12a, FAL-03c, TRL-06-boo (src/core tests/core)
 - last seen: 2026-10-15T04:05:23Z
+
+### L-085 - When a callback AC names payload values such as a position, make the adapter expose them to the debug snapshot and assert them in the smoke, not only the call count.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `scenes/test director` · harmful: 0
+- features: vermelho-e-corpo
+- evidence: VRM-17.12, CRP-13 tests/scenes/axisDirector.test.ts:108 (scenes/test director)
+- last seen: 2026-10-16T14:52:00Z
 
 ## Quarantined (failed when applied - ignore)
 

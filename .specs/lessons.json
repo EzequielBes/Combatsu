@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 85,
+  "next_id": 86,
   "lessons": [
     {
       "id": "L-001",
@@ -779,19 +779,21 @@
         "enemy-sprite-variety",
         "personagem-e-vermelho",
         "cenario-acabamento",
-        "arena-do-santuario"
+        "arena-do-santuario",
+        "vermelho-e-corpo"
       ],
-      "recurrence": 5,
+      "recurrence": 6,
       "harmful": 1,
       "evidence": [
         "M7 src/game/art/index.ts:128 (art-adapter)",
         "M2b src/scenes/TestScene.ts:843 (art-adapter) (art-adapter)",
         "M11-adapt TechRunner.ts:350 (art-adapter)",
         "M10 src/game/Hud.ts:134 vs tests/game/hudText.test.ts:10 (art-adapter)",
-        "U15 src/game/art/background.ts:57 (ARN-01) (art-adapter)"
+        "U15 src/game/art/background.ts:57 (ARN-01) (art-adapter)",
+        "A4 src/game/tech/red.ts:112 (VRM-06) (game/tech adapter)"
       ],
       "created": "2026-10-01T14:45:04Z",
-      "last_seen": "2026-10-08T17:35:38Z"
+      "last_seen": "2026-10-16T14:52:00Z"
     },
     {
       "id": "L-044",
@@ -1483,17 +1485,21 @@
       "text": "Assert every field of a hit an adapter builds (height, unblockable, force, owner) in a unit test with a fake scene, because a live smoke only measures the damage that lands.",
       "signal": "surviving_mutant",
       "scope": "game/boss",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "chefes-com-afixos"
+        "chefes-com-afixos",
+        "vermelho-e-corpo"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "validation.md A4 (src/game/boss/LavaField.ts:62-63, IGN-04) (game/boss)"
+        "validation.md A4 (src/game/boss/LavaField.ts:62-63, IGN-04) (game/boss)",
+        "A1 src/scenes/test/bodyDirector.ts:56 (CRP-08.2) (scenes/test director strikeMods)",
+        "A2 src/scenes/test/bodyDirector.ts:59 (CRP-09) (scenes/test director strikeMods)",
+        "A3 src/scenes/test/bodyDirector.ts:61 (CRP-03.4) (scenes/test director strikeMods)"
       ],
       "created": "2026-10-15T07:18:20Z",
-      "last_seen": "2026-10-15T07:18:20Z"
+      "last_seen": "2026-10-16T14:52:00Z"
     },
     {
       "id": "L-083",
@@ -1530,6 +1536,24 @@
       ],
       "created": "2026-10-15T04:05:23Z",
       "last_seen": "2026-10-15T04:05:23Z"
+    },
+    {
+      "id": "L-085",
+      "key": "spec_precision_gap::when a callback ac names payload values such as a position make the adapter expose them to the debug snapshot and assert them in the smoke not only the call count",
+      "text": "When a callback AC names payload values such as a position, make the adapter expose them to the debug snapshot and assert them in the smoke, not only the call count.",
+      "signal": "spec_precision_gap",
+      "scope": "scenes/test director",
+      "status": "candidate",
+      "features": [
+        "vermelho-e-corpo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "VRM-17.12, CRP-13 tests/scenes/axisDirector.test.ts:108 (scenes/test director)"
+      ],
+      "created": "2026-10-16T14:52:00Z",
+      "last_seen": "2026-10-16T14:52:00Z"
     }
   ]
 }
