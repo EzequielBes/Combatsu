@@ -206,16 +206,27 @@
 
 Só o estado atual; o histórico de cada sessão está no `git log`. Reescrever esta seção ao fechar a sessão, não empilhar.
 
-- **Onde está** (08/10/2026): o `master` tem o `feat/builds-e-arsenal`, o plano do pedido de 08/10 (`docs/plano-cenario-rejogabilidade-hordas.md`), a F22 `cenario-acabamento` e a F23 `arena-do-santuario`, ambas com Verifier PASS na rodada 3 (`validation.md` de cada uma). F22: muro e horizonte por tema (`src/game/art/scenery/`, um arquivo por tema), pilar nas emendas, borda esquerda de pedra, decoração, primeiro plano, contorno em todo texto do HUD. F23: céu do Véu (`santuarioSky.ts`), santuário com torii, escadaria e árvore sagrada (`santuarioMid.ts`) com variante por chefe (Oni: torii rachado e correntes; Tecelã: fios e casulos), selo dos dois lados e véu vermelho da fase 2 (`scenes/test/arena.ts`), arena de 48 colunas (teto de `MODULE_MAX_COLS`). Gate verde com 2814 testes; smokes `world-` (7), `boss` e `hud` verdes.
-- **Defeito antigo corrigido na F23**: `toLayerX` usava meia vista de 320 px; o Phaser amplia em volta do centro do canvas (640 em HD), então faixas de tema e pilares das emendas estavam deslocados desde a F18 (`src/game/art/scenery/layers.ts`, `CANVAS_CX`).
-- **Pedido em andamento** (usuário, 08/10): (1) cenário, (2) rejogabilidade, (3) hordas contínuas e Energia Reversa no estilo do anime. Ordem e escopo no plano: F22 → F23 `arena-do-santuario` → F24 `votos-e-evolucoes` → F25 `meta-progressao` → F26 `graus-e-eventos` → F27 `hordas` → F28 `reversa-anime`. O usuário mandou seguir o fluxo sem responder às decisões em aberto do plano; valem as recomendações dele (paredes verdes = faixa chapada do parque; rodada de horda termina por cota de abates; meta-progressão libera conteúdo e um pouco de poder base com teto; inimigo de enxame novo; run sem fim por enquanto). Confirmar quando ele voltar.
-- **Em andamento (08/10)**: F24 `votos-e-evolucoes` no branch `feat/votos-e-evolucoes` (sem push). Feitos: spec, design e tasks; T1 (`core/vows.ts`, `data/vows.ts`: 8 votos e sorteio), T2 (`vowEffects`) e a parte da T3 que mexe na `Run` (`vowRng`, `roundKills`, commit `5d7849b`). Gate verde com 2831 testes.
-- **Next step**: terminar a T3 (`src/scenes/test/vowDirector.ts`: votos da run, reset em `runDirector` junto de `build.reset()`, `?debug&vows=`, campo `vows` no snapshot e `vows.smoke.mjs`), depois T4 a T15 de `.specs/features/votos-e-evolucoes/tasks.md`, o Verifier e o merge. O usuário ainda não jogou a F22/F23 para aprovar.
-- **Fracos conhecidos da F22**: a konbini lê como loja nas gôndolas, mas as geladeiras ainda lembram estantes; as árvores do parque são claras para a noite; `terrainDepth` do snapshot lê só o primeiro tile.
-- **Builds e arsenal (no `master`)**: os fracos registrados antes continuam (efeito das passivas e relíquias só coberto pela regra pura, relíquia fora do HUD, armas vinculadas com a arte da faca e do porrete, finalizador do chefe sem Executor, preços sem teste em run real). Requisitos `BLD-*` e `ARS-*` só nos comentários e testes.
-- **HD é a base** (decisão do usuário, 08/10): trabalho novo é feito e conferido em HD. Smokes antigos ainda rodam em `hd=0` (o runner acrescenta); smoke novo pede `hd=1`. Folha de textura com menos de 14 px de largura não é desenhada pelo Phaser 4.
-- **Como conferir arte e efeitos**: `node tools/hd-boards.mjs --frames <lista> --name <nome> --out <pasta>`; `node tools/visual-shots.mjs <pasta> [cenário] --random=0.8 [--gpu]`. O usuário julga jogando.
-- **Smoke `armed` instável** (visto em 07/10): falha às vezes em `ARM-12`; acontece também sem mudanças, então repetir antes de suspeitar de regressão.
-- **Restrição**: toda arte é feita pelo Claude em código; nada manual nem pago. Arte e revisão em Opus 5.5 ou Fable, Sonnet só no mecânico. Subagentes em paralelo: proibir `stash`/`checkout` no prompt e não pôr dois agentes no mesmo arquivo.
+- **Onde está** (16/10/2026): a F30 `vermelho-e-corpo` está pronta no branch `feat/vermelho-e-corpo` (worktree `wt-f30` no scratchpad), com as 69 tarefas e o Verifier PASS na rodada 2 (`.specs/features/vermelho-e-corpo/validation.md`, faixa `75a22b4..9abcef3`, 21 de 21 mutantes mortos). Gate verde com 4278 testes. Tudo está no GitHub, mas nada foi mergeado no `master`.
+- **Cadeia de branches**: `master` (`a6e609a`, 08/10) ← `feat/fundacao-de-poder` (F29, PASS) ← `feat/builds-integracao` (F29 + F32 `chefes-com-afixos`, `recorde-e-recomeco`, regras das levas 1 e 2, arte paralela, specs F30–F41) ← `feat/vermelho-e-corpo` (F30).
+- **O que a F30 entregou**:
+  - `TechStats` único para as 5 técnicas.
+  - Vermelho com eixos Nv 1 a 6, ramos (Ricochete, Fliperama, Contido), Despertar, campo e atordoamento na parede.
+  - Corpo Amaldiçoado com eixos, Fúria e aura, Cadência, Martelo Negro, Onda do Punho e Punho que Rasga.
+  - Loja com 4 cartas, carta de 2 eixos e painel do ramo.
+  - Preço com trava a partir da r2, inflação e piso de 60%.
+  - Kokusen escalado e HP e dano do inimigo crescendo por rodada (AD-025 substitui a AD-014).
+- **Desvios aceitos pelo Verifier**:
+  - T27: o estilhaço é lido pelo evento `redShard:`.
+  - T33: a parede desarma quando o inimigo se levanta, não ao tocar o chão; o VRM-16 foi atualizado.
+  - T45: o Alcance alonga o rastro.
+  - T49: o teto de ondas é provado na T50.
+  - Alguns smokes rodam no `fxlab`, onde o boneco parado é condição.
+- **A conferir jogando**: a curva do Vermelho focado fecha com folga grande (Nv 5 na loja da r4, contra a meta da r10), então ele pode estar evoluindo rápido demais. O nome "Reversão de Técnica: Vermelho" passa da largura da carta (o `ShopPanel` estava travado pela spec).
+- **Next step**: o usuário decide entre mergear a cadeia no `master` e seguir o plano (`docs/plano-builds-e-habilidades.md`, seção 6): F31 `expansao-de-dominio` (48 tarefas), depois F33 a F41. A spec da F34 `tecnicas-jjk-1` só existe em `feat/regras-tecnicas-leva1` e precisa ser trazida para o trilho. A F39 (meta) só depende da F33 e pode ser adiantada.
+- **Regra nova do usuário (15/10)**: arte do protagonista (Yuta) não se gera mais em código. Pedido de quadro novo vira `docs/sprites-protagonista/<Tnn>-<nome>.md` e o código usa o quadro existente mais próximo. Cenário, inimigos e efeitos seguem em código.
+- **Processo que funcionou**: lotes sequenciais de fases inteiras por subagente, Sonnet no código e Opus na arte e no Verifier, push do branch ao fim de cada lote (pedido do usuário). Com o limite de uso estourado, o worker é retomado do mesmo ponto.
+- **Instáveis conhecidos**: o smoke `kokusen` (pré-condição de energia CE-06) falha mais ou menos a metade das vezes; o `armed` às vezes falha em ARM-12; há timeouts de navegação com a máquina ocupada. Repetir isolado antes de suspeitar.
+- **HD é a base**: smoke novo pede `?debug&hd=1&area=modular`. Teto de 400 linhas por arquivo; smoke grande ganha módulo próprio.
+- `src/core/mastery.ts` aparece modificado no `wt-f30` só por fim de linha e fica fora dos commits.
 
-Pendências antigas que continuam: silhueta própria para a Tecelã; alcance do arremesso (garrafa ~260 px, cadeira ~140 px); taxa de atualização do monitor do usuário; worktrees antigas e branches já mergeadas para limpar se ele quiser. Os fracos de arte registrados em 04/10 (corrida, gancho, giratório, borrão, rosto, lampejo do impacto, HUD) continuam no histórico do `git log` desta seção.
+Pendências antigas que continuam: silhueta própria para a Tecelã; alcance do arremesso; fracos da F22 (geladeiras da konbini, árvores claras do parque); efeitos das passivas e relíquias só cobertos pela regra pura; worktrees antigas e branches já mergeadas para limpar se o usuário quiser.

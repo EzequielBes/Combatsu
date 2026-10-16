@@ -1,21 +1,44 @@
 # Vermelho e corpo — Validation
 
-**Date**: 2026-10-16 (rodada 1)
+**Date**: 2026-10-16 (rodada 2; a rodada 1 deu FAIL em `75a22b4..fcbe549`)
 **Spec**: `.specs/features/vermelho-e-corpo/spec.md` (63 requisitos: SHX, TST, VRM, CRP, CRD, PRC, ESC; 17 casos de borda)
-**Diff range**: `75a22b4..fcbe549`, branch `feat/vermelho-e-corpo`, 71 commits (69 tarefas, o `e86cf6a` de
-reconciliação da spec e o conserto `cbfdbdf`), 169 arquivos (+12202/−1490).
-**Verifier**: sub-agente independente (autor ≠ verificador). O sensor rodou em worktrees temporários destacados em
-`fcbe549` (`git worktree add --detach`, `node_modules` por junção), já removidos; o worktree real ficou só com
-` M src/core/mastery.ts` antes e depois (diferença só de fim de linha, sem conteúdo).
+**Diff range**: `75a22b4..9abcef3`, branch `feat/vermelho-e-corpo`, 78 commits (69 tarefas, o `e86cf6a` de
+reconciliação da spec, o conserto `cbfdbdf`, o relatório da rodada 1 `6c95c4f` e os 6 consertos `6538b25..9abcef3`),
+173 arquivos (+12679/−1511). Consertos da rodada 1: `fcbe549..9abcef3`.
+**Verifier**: sub-agente independente (autor ≠ verificador; não escreveu código nem consertos). Rodada 2: o sensor
+rodou num worktree temporário destacado em `9abcef3` (`git worktree add --detach`, `node_modules` por junção), já
+removido; o worktree real ficou só com ` M src/core/mastery.ts` antes e depois (diferença só de fim de linha).
 
 ## Validation
 
-**Result**: FAIL
+**Result**: PASS
 
-Em uma linha: as regras puras estão bem cobertas (10 de 10 mutantes mortos) e o gate passa com 4272 testes, mas 4
-mutantes de adaptador sobreviveram: o +50 % da Cadência, os 4 % no alvo do Martelo Negro, a força do Peso e a
-pós-imagem da Conjuração 3 chegam ao motor sem nenhum smoke ou teste que leia o valor. São 4 ACs com evidência só do
-número na regra pura ou da marca de evento, não do efeito no jogo (L-043, L-082).
+Em uma linha: as 6 lacunas da rodada 1 fecharam com evidência do efeito no motor, os 4 mutantes que viveram (A1 a A4)
+agora morrem pela asserção certa, os 2 mutantes novos nos caminhos dos consertos também morrem, e o gate passa com 4278
+testes. Os consertos só acrescentaram asserções (a única linha trocada, `toHaveLength(1)` → `toEqual([[0.4, 350]])`,
+ficou mais forte) e não tocaram arquivo travado nem o `.oxlintrc.json`.
+
+### Lacunas da rodada 1, revistas na rodada 2
+
+| # | Lacuna | Conserto | Evidência (`arquivo:linha` + asserção + valor da spec) | Raso? | Result |
+| --- | --- | --- | --- | --- | --- |
+| 1 | CRP-08.2, +50 % da Cadência | `6538b25` | `scripts/smoke/cursed-body-branches.mjs:67` `on.elbow.every(([, d]) => d === ELBOW_DECISIVE)` (21 = round(14 × 1,5)) e `:68` `off.elbow.every(... d === ELBOW_DAMAGE)` (14), ambos com `length > 0`; o dano vem do evento `bodyHit:cotovelada:<alvo>:<dano levado>` (`:19-24`) | Não: A1 (sem o ×1,5) cai em `:67` com `{"on":[[12,14]],"off":[[12,14]]}` | ✅ PASS |
+| 2 | CRP-09, alvo do decisivo do Martelo | `fd90381` | `cursed-body-branches.mjs:111-115` `dmg === ELBOW_DECISIVE + Math.round(0.04 * t.maxHp)` (21 + round(0,04 × 60) = 23) para cada alvo da cotovelada decisiva; vizinhos seguem em `:120-121` | Não: A2 (sem `maxHpBonus`) e N2 (`bodyHit` com `hit.damage`) caem em `:113` com `{"elbow":[[13,21],[12,21]]}` | ✅ PASS |
+| 3 | CRP-03.4, força do Peso | `02e3a70` | `tests/scenes/bodyDirector.test.ts:23-30` `expect(mods.force).toBeCloseTo(force, 10)` com 6 → 6/7,2/8,4/9,6 (Peso 0..3 = ×1/1,2/1,4/1,6) no `BodyDirector.strikeMods` real; `:33-37` marcas `knockdown`/`wallStun` | Não: A3 (sem `* forceMul`) falha 3 de 4 casos (`expected 6 to be close to 9.6`) | ✅ PASS |
+| 4 | VRM-06, pós-imagem da Conjuração 3 | `37074e3` | `src/game/tech/red.ts:112` emite `redEcho` só se `player.fx.afterimage(...)` devolve que a cópia nasceu (`src/game/fx.ts:166`); `scripts/smoke/red-axes.smoke.mjs:78` `three === 1` e `:79` `two === 0` | Não: A4 (pós-imagem desligada) cai em `:78` (0); N1 (`redEcho` sempre) cai em `:79` (1) | ✅ PASS |
+| 5 | VRM-17.12 / CRP-13, payload | `01eab27` | `tests/scenes/axisDirector.test.ts:109` `expect(r.slow).toEqual([[0.4, 350]])` (Vermelho, uma vez na rodada); `:115-124` o mesmo `[[0.4, 350]]` para o Martelo Negro do Corpo | Não: 1050 ms ou 2 chamadas quebram o `toEqual` | ✅ PASS |
+| 6 | Texto do VRM-16 x desvio da T33 | `9abcef3` | `.specs/features/vermelho-e-corpo/spec.md:214` agora diz "while it is still down from that same knockdown ... disarms when the enemy gets up or at its first stun", com o motivo do chão | - | ✅ PASS |
+
+**`bodyHit` carrega o dano levado, não o calculado**: `src/scenes/test/bodyDirector.ts:90-91` grava
+`target.lastDamageTaken`, que é `brain.lastDamage` (`src/game/Enemy.ts:201-202`), o dano aplicado com a fração da vida
+máxima (`src/core/hit.ts:69-73`). O evento sai do `onMeleeHit`, chamado por `combat.onConnect`
+(`src/scenes/test/combat.ts:110`) depois do golpe aplicado: é o mesmo valor que o número de dano mostra (`:117`). O
+mutante N2 (troca por `hit.damage`) morre, porque com o Martelo o calculado é 21 e o levado 23.
+
+**Ressalva menor, sem efeito no veredito**: o laço do CRP-09 (`cursed-body-branches.mjs:109`) passaria vazio se
+`elbow` viesse sem itens com `hits` cheio; na prática o `martelo:` só sai do decisivo da cotovelada, que empurra o
+`bodyHit` antes (`bodyDirector.ts:90-97`), e os mutantes A2/N2 provam que o laço roda. Um `elbow.length > 0` deixaria
+isso explícito.
 
 ---
 
@@ -57,7 +80,7 @@ número na regra pura ou da marca de evento, não do efeito no jogo (L-043, L-08
 | VRM-04.7 | repulsão 4/5/5/6 | `tests/data/techAxes.test.ts:307-310` `toEqual([4, 5, 5, 6])`; `tests/core/redOrbConfig.test.ts:162` | ✅ PASS |
 | VRM-05 | sprite com o orbe resolvido, sensor resolvido, esfera até o raio | `red-axes.smoke.mjs:32` `orb.sensorPx === 8 && orb.texture === 'tech-orb-red-16'` (corpo do Matter e chave do sprite), `:36` `fx.red.sphereR === 144` | ✅ PASS |
 | VRM-06 (texturas) | troca nos terços do `chargeMs` resolvido, a última no `orbTexels` | `tests/core/redOrb.test.ts:42-47` 74/75/149/150 ms, `:49-` 12/14/16/18 | ✅ PASS |
-| VRM-06 (pós-imagem) | soltura com Conjuração 3 desenha 1 quadro de pós-imagem do player | Só o stat: `tests/data/techAxes.test.ts:287` `afterimage: pts('conjuracao') === 3`. Nenhum teste ou smoke lê a pós-imagem no jogo (`src/game/tech/red.ts:112`). **Mutante A4 vivo** | ❌ GAP |
+| VRM-06 (pós-imagem) | soltura com Conjuração 3 desenha 1 quadro de pós-imagem do player | Stat: `tests/data/techAxes.test.ts:287`. Jogo (rodada 2): `scripts/smoke/red-axes.smoke.mjs:78` `three === 1` e `:79` `two === 0`, com `redEcho` só quando a cópia nasce (`src/game/tech/red.ts:112`). A4 e N1 mortos | ✅ PASS |
 | VRM-07 | 1º abate da conjuração tira 30 % da recarga cheia (690), nunca abaixo de 0; os seguintes nada | `tests/core/loadoutAxes.test.ts:150` 690 de 2300, `:156` para em 0; `red-axes.smoke.mjs:221` sem abate não cai, `:224-226` com ≥ 2 abates cai 690 uma vez. Mutante A6 morto | ✅ PASS |
 | VRM-08 | estilhaço `micro` de round(6/9/12 × mul) em 1/2/2 vizinhos a 60 px, cada um uma vez | `tests/core/redBranch.test.ts:29-44` (59/60/61 px, mais perto primeiro, uma vez); `red-axes.smoke.mjs:170-178` 2 vizinhos, dano 9 lido do alvo, ninguém repetido, `hitstop.microMs > 0` | ✅ PASS |
 | VRM-09 | voo acaba aos 320 px; rebote não passa de 320 px do player | `tests/core/redOrbConfig.test.ts:13-27`; `tests/core/redBranch.test.ts:60-64` 319/320/321. Mutante P10 morto | ✅ PASS |
@@ -79,9 +102,9 @@ número na regra pura ou da marca de evento, não do efeito no jogo (L-043, L-08
 | VRM-14.7 | Contido segurado: voa, paira aos 320, detona com ×1,4 ao soltar ou aos 1,2 s | `tests/core/redBranch.test.ts:141-157` (1199/1200 ms); `red-branches.mjs:182` `traveled === 320`, `:199` e `:216` raio 134,4 | ✅ PASS |
 | VRM-14.8 | solta antes da saída: orbe sem ramo | `tests/core/redBranch.test.ts:159-164`; `red-branches.mjs:227-229` raio 96. Mutante A5 morto | ✅ PASS |
 | VRM-15 | Máximo derruba os comuns do raio, 4 % (1 % chefe), campo de 1200 ms que empurra a 150 px/s e dá chip de round(3 × mul) a cada 200 ms | Derrubada: todo `Hit` forte de técnica leva `knockdown` (`src/game/tech/shared.ts:52-53`, AD-021). 4 %: `tests/core/redBranch.test.ts:133-135` + `scaled()` (`src/game/tech/redFlight.ts:67-69`), o mesmo caminho que o smoke do Fliperama prova. Campo: `tests/core/redBranch.test.ts:168-198`; `red-branches.mjs:266` 6 chips de 3, `:268-272` a cada 12 quadros, `:314-327` `pull` 2,5 px/passo para fora e nenhum sobrando | ✅ PASS |
-| VRM-16 | derrubado pelo Máximo ou Peso 3 que bate na parede: `ragdollStun` 600 ms do toque e `wallStun:<id>` | `tests/core/wallStun.test.ts:8-18` 0,69/0,70; `tests/core/enemyBrainHold.test.ts:34` 599/600; `red-branches.mjs:401-402` um evento e 36 quadros; Peso 3 em `scripts/smoke/cursed-body.smoke.mjs:154` | ✅ PASS (mutante A8 morto) |
+| VRM-16 | derrubado pelo Máximo ou Peso 3 que bate na parede ainda caído pela mesma derrubada (texto alinhado à T33, `spec.md:214`): `ragdollStun` 600 ms do toque e `wallStun:<id>` | `tests/core/wallStun.test.ts:8-18` 0,69/0,70; `tests/core/enemyBrainHold.test.ts:34` 599/600; `red-branches.mjs:401-402` um evento e 36 quadros; Peso 3 em `scripts/smoke/cursed-body.smoke.mjs:154` | ✅ PASS (mutante A8 morto) |
 | VRM-17.11 | Nv 5 com ramo liga o Despertar; borda dourada | `tests/core/axisBuild.test.ts:130-153`; `hud.smoke.mjs:27` borda `w`, `:41` borda `A` | ✅ PASS |
-| VRM-17.12 | 1ª soltura da rodada: banner com o nome e `timeScale` 0,4 por 350 ms reais | `red-branches.mjs:436-454` banner `Fliperama` e `timeScale` 0,4 na 1ª, não na 2ª, de novo na rodada 2. Os 350 ms não são afirmados: `tests/scenes/axisDirector.test.ts:108` só conta a chamada (`slow` com 1 item), sem `[0.4, 350]`; o número vem de `CAMERA_FEEL.slowMs` (`tests/data/feel.test.ts:44`) | ⚠️ Spec-precision gap (payload) |
+| VRM-17.12 | 1ª soltura da rodada: banner com o nome e `timeScale` 0,4 por 350 ms reais | `red-branches.mjs:436-454` banner `Fliperama` e `timeScale` 0,4 na 1ª, não na 2ª, de novo na rodada 2; payload (rodada 2) em `tests/scenes/axisDirector.test.ts:109` `expect(r.slow).toEqual([[0.4, 350]])` | ✅ PASS |
 | VRM-18 | `ramo=vermelho:a/b` | `tests/core/axisParam.test.ts:70-96`; `red-axes.smoke.mjs:83`; `red-branches.mjs:77`, `:176` | ✅ PASS |
 
 ### P1: O soco tem trilha própria
@@ -91,7 +114,7 @@ número na regra pura ou da marca de evento, não do efeito no jogo (L-043, L-08
 | CRP-01 | Corpo desde a r1 no Nv 1, fora dos slots, 1..6, volta ao Nv 1 na run nova | `tests/core/axisBuild.test.ts:12`, `:216`; `cursed-body.smoke.mjs:52-64` | ✅ PASS |
 | CRP-02.2 | Impacto ×1/1,1/1,2/1,3 sobre a Força pelo `meleeMul` | `tests/core/statSheetImpact.test.ts:41-55`; `cursed-body.smoke.mjs:42` jab 12 = round(6 × 1,5 × 1,3) lido do dano | ✅ PASS |
 | CRP-02.3 | cada ponto de Impacto = 1 ponto de força | `tests/core/power.test.ts` (CRP-02); `cursed-body.smoke.mjs:40` `power.points === 8` | ✅ PASS |
-| CRP-03.4 | Peso multiplica a `force` por 1/1,2/1,4/1,6 pelo `strikeMods` | Só a regra pura: `tests/core/cursedBody.test.ts:23-25`. O `force: base.force * b.forceMul` de `src/scenes/test/bodyDirector.ts:61` não tem teste nem smoke que leia a força entregue. **Mutante A3 vivo** | ❌ GAP |
+| CRP-03.4 | Peso multiplica a `force` por 1/1,2/1,4/1,6 pelo `strikeMods` | Regra pura `tests/core/cursedBody.test.ts:23-25`; adaptador (rodada 2) `tests/scenes/bodyDirector.test.ts:23-30` `toBeCloseTo` 6/7,2/8,4/9,6 no `BodyDirector.strikeMods` real (`bodyDirector.ts:61`). A3 morto | ✅ PASS |
 | CRP-03.5 | Peso ≥ 2: forte que acerta o comum leva `knockdown` | `tests/core/cursedBody.test.ts:46-52`; `cursed-body.smoke.mjs:23` derruba com Peso 2, `:26` não com Peso 1 | ✅ PASS |
 | CRP-04.6 | `recovery` × 1/0,92/0,85/0,78 (ms), resto igual | `tests/core/moveMachineRecovery.test.ts:40-110`; `cursed-body.smoke.mjs:137` jab acaba 26 ms antes, medido no jogo | ✅ PASS |
 | CRP-04.7 | Ritmo 3: pós-imagem de 1 quadro na `recovery` | `cursed-body.smoke.mjs:197` `bodyEcho` só quando a cópia nasce (`bodyDirector.ts:204`) | ✅ PASS |
@@ -107,13 +130,13 @@ número na regra pura ou da marca de evento, não do efeito no jogo (L-043, L-08
 | AC | Spec-defined outcome | `file:line` + assertion | Result |
 | --- | --- | --- | --- |
 | CRP-08.1 | 1º Nv 2 deixa o ramo pendente | `tests/core/axisBuild.test.ts:79-104` | ✅ PASS |
-| CRP-08.2 | todo 4º golpe seguido que acerta: tier `decisive` **e +50 % de dano** | Tier: `cursed-body-branches.mjs:53-54` 4º `impact:decisive`, sem ramo `impact:heavy`; `tests/core/cursedBody.test.ts:144-153`. Dano: nenhum teste lê o +50 % entregue (`bodyDirector.ts:56`). **Mutante A1 vivo** | ❌ GAP |
+| CRP-08.2 | todo 4º golpe seguido que acerta: tier `decisive` **e +50 % de dano** | Tier: `cursed-body-branches.mjs:64-65` 4º `impact:decisive`, sem ramo `impact:heavy`; `tests/core/cursedBody.test.ts:144-153`. Dano levado (rodada 2): `cursed-body-branches.mjs:67` 21 com ramo, `:68` 14 sem. A1 morto | ✅ PASS |
 | CRP-08.3 | golpe que termina o `active` sem acertar, ou perda de HP, zera | `tests/core/cursedBody.test.ts:162-180`; `cursed-body-branches.mjs:72` golpe no ar zera | ✅ PASS |
-| CRP-09 | decisivo do Martelo: o alvo leva +4 % (1 % chefe); os comuns a 48 px levam 4 % com `knockdown` | Vizinhos: `tests/core/cursedBody.test.ts:192-211` (47/48/49 px); `cursed-body-branches.mjs:97-98` 4 % e caído. Alvo: o `marks.maxHpBonus` de `bodyDirector.ts:59` não é lido por nada. **Mutante A2 vivo** | ❌ GAP |
+| CRP-09 | decisivo do Martelo: o alvo leva +4 % (1 % chefe); os comuns a 48 px levam 4 % com `knockdown` | Vizinhos: `tests/core/cursedBody.test.ts:192-211` (47/48/49 px); `cursed-body-branches.mjs:120-121` 4 % e caído. Alvo (rodada 2): `cursed-body-branches.mjs:111-115` `21 + round(0,04 × maxHp)` lido do dano levado. A2 e N2 mortos. O 1 % do chefe fica na regra pura (`maxHpBite`, `src/core/hit.ts:69-73`), o mesmo caminho que o VRM-13 prova | ✅ PASS |
 | CRP-10 | onda do ponto do acerto, 80 px a 600 px/s, 1º inimigo fora o alvo, `micro`, round(0,4 × dano) | `tests/core/strikeEmitter.test.ts:18-99`; `cursed-body-branches.mjs:157-162` onda e número `micro` de round(0,4 × dano) | ✅ PASS |
 | CRP-11 | Punho que Rasga: atravessa, 160 px; Fúria no teto: 2ª onda 100 ms depois | `tests/core/strikeEmitter.test.ts:29-35`, `:76-79`; `cursed-body-branches.mjs:219-224` atravessa 2, `:268` 2 ondas a 6 quadros | ✅ PASS |
 | CRP-12 | sem energia, sem pausar a regen, ≤ 4 ondas em 1000 ms | `tests/core/strikeEmitter.test.ts:103-148` (999/1000/1001 ms); `cursed-body-branches.mjs:163-172` regen intacta, `:269-280` `fistWave:capped` e dano do forte igual. Mutante P6 morto | ✅ PASS |
-| CRP-13 | Nv 5 com ramo liga; 1º decisivo ou 1ª onda da rodada: banner e 0,4 por 350 ms | `tests/core/axisBuild.test.ts:130-153`; `cursed-body-branches.mjs:219-220` anuncia na 1ª e não na 2ª. Mesmo payload de 350 ms sem afirmação que o VRM-17.12 | ⚠️ Spec-precision gap (payload) |
+| CRP-13 | Nv 5 com ramo liga; 1º decisivo ou 1ª onda da rodada: banner e 0,4 por 350 ms | `tests/core/axisBuild.test.ts:130-153`; `cursed-body-branches.mjs:219-220` anuncia na 1ª e não na 2ª; payload (rodada 2) `tests/scenes/axisDirector.test.ts:123` `toEqual([[0.4, 350]])`, uma vez na rodada | ✅ PASS |
 | CRP-14 (ramo) | `ramo=corpo:a/b` | `cursed-body-branches.mjs:52`, `:150` | ✅ PASS |
 
 ### P1: A carta oferece o eixo e o painel pede o ramo
@@ -162,8 +185,8 @@ número na regra pura ou da marca de evento, não do efeito no jogo (L-043, L-08
 | ESC-04.11 | `scale.smoke` lê r9 (89) e r11 (96), nunca r10 | `scale.smoke.mjs:24-27` | ✅ PASS |
 | ESC-05 | snapshot `difficulty` | `kokusen-scale.smoke.mjs` (1/1/1 na r1); `scale.smoke.mjs:42-45` | ✅ PASS |
 
-**Status**: ❌ 4 ACs sem evidência do efeito no motor (VRM-06 pós-imagem, CRP-03.4, CRP-08.2 dano, CRP-09 alvo) e
-⚠️ 2 spec-precision gaps de payload (VRM-17.12 e CRP-13: os 350 ms da câmera lenta). 57 de 63 requisitos inteiros.
+**Status**: ✅ 63 de 63 requisitos com evidência (rodada 2). As 4 lacunas de efeito e os 2 gaps de payload da rodada 1
+fecharam; nenhum spec-precision gap aberto.
 
 ---
 
@@ -191,8 +214,9 @@ número na regra pura ou da marca de evento, não do efeito no jogo (L-043, L-08
 
 ## Discrimination Sensor
 
-**Sensor depth**: caminho crítico expandido, 19 mutantes (10 de regra pura, 9 de adaptador). Cada um aplicado sozinho
-num worktree destacado em `fcbe549`; smokes de base (`red-axes`, `cursed-body`, `shop-axes`, `scale`, `kokusen`,
+**Sensor depth**: caminho crítico expandido. Rodada 1: 19 mutantes (10 de regra pura, 9 de adaptador). Rodada 2: os 4
+que viveram (A1 a A4) reinjetados em `9abcef3` e 2 novos nos caminhos dos consertos (N1, N2). Na rodada 1 cada um foi
+aplicado sozinho num worktree destacado em `fcbe549`; smokes de base (`red-axes`, `cursed-body`, `shop-axes`, `scale`, `kokusen`,
 `run-loop`) verdes antes. Dois mutantes de adaptador deram "morto" na 1ª passada por instabilidade de carga (smokes em
 paralelo, falha sem asserção); refeitos sozinhos, sobreviveram, e é esse o resultado registrado. Dois mutantes não
 compilavam na 1ª forma (`tsc` do build) e foram reescritos.
@@ -209,17 +233,23 @@ compilavam na 1ª forma (`tsc` do build) e foram reescritos.
 | P8 | `src/core/redBranch.ts:84` | 70 % só a partir da 3ª | `redBranch` | ✅ Morto |
 | P9 | `src/core/axisBuild.ts:62` | teto do item `< 5` → `<= 5` | `axisBuild` | ✅ Morto |
 | P10 | `src/core/redBranch.ts:116` | rebote aceita 1,5 px além dos 320 do player | `redBranch` | ✅ Morto |
-| A1 | `src/scenes/test/bodyDirector.ts:56` | Cadência sem o ×1,5 | smoke `cursed-body` | ❌ **Vivo** |
-| A2 | `src/scenes/test/bodyDirector.ts:59` | Martelo sem os 4 % no alvo | smoke `cursed-body` | ❌ **Vivo** |
-| A3 | `src/scenes/test/bodyDirector.ts:61` | Peso não multiplica a `force` | smoke `cursed-body` | ❌ **Vivo** |
-| A4 | `src/game/tech/red.ts:112` | sem a pós-imagem da Conjuração 3 | smoke `red-axes` | ❌ **Vivo** |
-| A5 | `src/game/tech/redFlight.ts:251` | raio ×1,4 também no orbe solto | smoke `red-axes` | ✅ Morto (`VRM-14.8: raio normal (96) sem segurar: 134`) |
-| A6 | `src/game/tech/red.ts:121` | devolve a recarga a todo abate | smoke `red-axes` | ✅ Morto (`VRM-07 … drops [1380 … 690]`) |
-| A7 | `src/scenes/test/statsDirector.ts:69` | `hpMul` do Kokusen fixo em 1 | smoke `kokusen` | ✅ Morto (`o chefe deveria perder 56`; `Kokusen deveria tirar 48 (rodada 2)`) |
-| A8 | `src/scenes/test/wallStun.ts:27` | parede sem o `holdDown` de 600 ms | smoke `red-axes` | ✅ Morto (`VRM-16: ragdollStun por 600 ms do toque (36 quadros)`: levanta no quadro 46 após o toque) |
-| A9 | `src/scenes/test/axisDirector.ts:81` | câmera lenta do Despertar 1050 ms | smoke `red-axes` | ✅ Morto, mas por tabela: duas vezes a mesma falha no cenário da parede (`VRM-16: o comum deveria bater na parede`), porque a câmera lenta longa desloca o tempo do orbe segurado; o cenário do anúncio (`red-branches.mjs:436-454`) não pega a duração. Daí o gap de payload do VRM-17.12 |
+| A1 | `src/scenes/test/bodyDirector.ts:56` | Cadência sem o ×1,5 | smoke `cursed-body` | Rodada 1: ❌ vivo. **Rodada 2: ✅ morto** (`CRP-08.2: +50 % = 21: {"on":[[12,14]],"off":[[12,14]]}`) |
+| A2 | `src/scenes/test/bodyDirector.ts:59` | Martelo sem os 4 % no alvo | smoke `cursed-body` | Rodada 1: ❌ vivo. **Rodada 2: ✅ morto** (`CRP-09: o alvo leva 21 + 4 % de 60 = 23: {"elbow":[[13,21],[12,21]]…}`) |
+| A3 | `src/scenes/test/bodyDirector.ts:61` | Peso não multiplica a `force` | `tests/scenes/bodyDirector.test.ts` | Rodada 1: ❌ vivo. **Rodada 2: ✅ morto** (3 de 5 testes falham, `expected 6 to be close to 9.6`) |
+| A4 | `src/game/tech/red.ts:112` | sem a pós-imagem da Conjuração 3 (linha trocada por `void red.afterimage;`) | smoke `red-axes` | Rodada 1: ❌ vivo. **Rodada 2: ✅ morto** (`VRM-06: uma pós-imagem na soltura com Conjuração 3: 0`) |
+| A5 | `src/game/tech/redFlight.ts:251` | raio ×1,4 também no orbe solto | smoke `red-axes` | ✅ Morto na rodada 1 (`VRM-14.8: raio normal (96) sem segurar: 134`) |
+| A6 | `src/game/tech/red.ts:121` | devolve a recarga a todo abate | smoke `red-axes` | ✅ Morto na rodada 1 (`VRM-07 … drops [1380 … 690]`) |
+| A7 | `src/scenes/test/statsDirector.ts:69` | `hpMul` do Kokusen fixo em 1 | smoke `kokusen` | ✅ Morto na rodada 1 (`o chefe deveria perder 56`; `Kokusen deveria tirar 48 (rodada 2)`) |
+| A8 | `src/scenes/test/wallStun.ts:27` | parede sem o `holdDown` de 600 ms | smoke `red-axes` | ✅ Morto na rodada 1 (`VRM-16: ragdollStun por 600 ms do toque (36 quadros)`) |
+| A9 | `src/scenes/test/axisDirector.ts:81` | câmera lenta do Despertar 1050 ms | smoke `red-axes` | ✅ Morto na rodada 1, por tabela (cenário da parede). Na rodada 2 o payload tem asserção direta em `tests/scenes/axisDirector.test.ts:109` e `:123`, que um 1050 quebra sem depender do cenário da parede |
+| N1 | `src/game/tech/red.ts:112` | `redEcho` emitido em toda soltura, com ou sem cópia | smoke `red-axes` | **Rodada 2: ✅ morto** (`VRM-06: nenhuma pós-imagem com Conjuração 2: 1`) |
+| N2 | `src/scenes/test/bodyDirector.ts:91` | `bodyHit` com o dano calculado (`hit.damage`) em vez do levado (`lastDamageTaken`) | smoke `cursed-body` | **Rodada 2: ✅ morto** (`CRP-09: o alvo leva 21 + 4 % de 60 = 23: {"elbow":[[13,21],[12,21]]…}`) |
 
-**Result**: 19 mutantes, 15 mortos, 4 vivos (A1 a A4) - FAIL ❌
+**Rodada 2**: worktree destacado em `9abcef3`, um mutante por vez, smokes em sequência (nunca em paralelo). Cada
+mutante caiu na asserção-alvo com mensagem própria (nenhuma falha por timeout ou sem asserção). Base limpa em
+`9abcef3`: `cursed-body` e `red-axes` verdes (`1 cenário(s) ok`, exit 0) depois dos mutantes.
+
+**Result**: rodada 2, 6 mutantes, 6 mortos, 0 vivos. Somando a rodada 1: 21 mutantes distintos, todos mortos - PASS ✅
 
 ---
 
@@ -228,13 +258,28 @@ compilavam na 1ª forma (`tsc` do build) e foram reescritos.
 | Desvio | Julgamento | Motivo |
 | --- | --- | --- |
 | T27: estilhaço lido por evento `redShard:` em vez de 2 números `micro` | ✅ Aceito | O evento leva o dano que o alvo levou de fato (`lastDamageTaken`) e a faixa sai do `hitstop.microMs` do motor; o número na tela se funde por regra da F29 (`mergeMs`). Mede o efeito, não o stat |
-| T33: o chão não desarma a parede; desarma ao levantar ou no 1º atordoamento | ✅ Aceito, com ressalva | O ragdoll toca o chão desde o 1º quadro (83 contatos medidos antes da parede), então "antes de pousar" literal nunca dispararia. O efeito do VRM-16 (600 ms e `wallStun:<id>`) é provado. A spec ainda diz "before it lands": vale atualizar o texto do VRM-16 para "enquanto caído pela mesma derrubada" |
+| T33: o chão não desarma a parede; desarma ao levantar ou no 1º atordoamento | ✅ Aceito | O ragdoll toca o chão desde o 1º quadro (83 contatos medidos antes da parede), então "antes de pousar" literal nunca dispararia. O efeito do VRM-16 (600 ms e `wallStun:<id>`) é provado. Rodada 2: o texto do VRM-16 foi alinhado (`spec.md:214`, commit `9abcef3`), ressalva fechada |
 | T45: o Alcance alonga o rastro em vez de engrossar | ✅ Aceito | O desvio é contra o design (`extraPx`), não contra a spec: o CRP-05 pede "lengthen the strike trail by the same px", que é o que o `fx.trails.lengthPx` +14 prova (`cursed-body.smoke.mjs:193`) |
-| T49: teto de 4 ondas provado na T50 | ✅ Aceito | Um forte leva ~450 ms; o teto vivo sai com a 2ª onda da Fúria (`cursed-body-branches.mjs:269-280`) e a regra pura tem 999/1000/1001 ms (`strikeEmitter.test.ts:122`) |
+| T49: teto de 4 ondas provado na T50 | ✅ Aceito | Um forte leva ~450 ms; o teto vivo sai com a 2ª onda da Fúria (`cursed-body-branches.mjs`) e a regra pura tem 999/1000/1001 ms (`strikeEmitter.test.ts:122`) |
 | Lote 5: Vermelho Nv 2 de 60 para 16; ECN-05 e TSH-05 reescritos | ✅ Aceito | Exigidos pela spec: CRD-02 (carta 0 = melhoria de item dono), CRD-03 e a Assumption "Garantia de técnica passa para a carta 1"; PRC-01/02. O caso de 60 virou `shopAxisBuy.test.ts:95` (16 × 1,54 = 25). O `toHaveLength(1)` → `<= 1` é coberto pela unicidade de `shopAxes.test.ts:299-312` |
 | Lote 6: preços inflados, trava a partir da r2, `difficulty`/`tuning`, AD-025 sobre a AD-014 | ✅ Aceito | PRC-03/04, ESC-01 e ESC-04 pedem cada mudança com o número novo; os testes antigos passaram a citar os IDs novos e o `run-loop` calcula pela fórmula |
 | Cenários de smoke no `fxlab` em vez da área modular | ✅ Aceito | Só onde o boneco parado é a condição do AC (alvo intocado no raio, 7 golpes sem levar dano, alcance medido ao px); os demais seguem `hd=1&area=modular`. Os 4 smokes novos existem com a query da spec |
 | `cbfdbdf` fora de um commit por tarefa | ✅ Aceito | Conserto de lint de ferramenta deixado pela T34, sem comportamento |
+| Rodada 2: `37074e3` muda código (`red.ts:112`) além do teste | ✅ Aceito | Só acopla o `redEcho` ao retorno de `fx.afterimage` (que já devolvia se a cópia nasceu, `fx.ts:166`); a pós-imagem continua a mesma. O evento `bodyHit` (`bodyDirector.ts:90-91`) é só observabilidade, no padrão do `martelo:` e do `fistWave:` |
+
+---
+
+## Regressão dos consertos (`fcbe549..9abcef3`)
+
+- `git diff fcbe549..9abcef3` toca 10 arquivos: `.specs/` (LESSONS, lessons.json, spec, validation), 2 smokes,
+  `src/game/tech/red.ts` (+1/−1), `src/scenes/test/bodyDirector.ts` (+4), `tests/scenes/axisDirector.test.ts`,
+  `tests/scenes/bodyDirector.test.ts` (novo).
+- Asserções antigas: nenhuma removida nem afrouxada. A única linha de teste trocada é `axisDirector.test.ts:108`
+  `toHaveLength(1)` → `:109` `toEqual([[0.4, 350]])`, mais forte. Nos smokes, o `chain` só ganhou o campo `elbow` no
+  retorno; as asserções de tier e de vizinhos ficaram iguais.
+- Arquivos travados (`TestScene.ts`, `ShopPanel.ts`, `Hud.ts`, `data/moves.ts`, `Player.ts`): diff vazio em
+  `fcbe549..9abcef3`; em `75a22b4..9abcef3` só o `ShopPanel` da rodada 1 (`CARD_COUNT` e dica, SHX-03).
+- `.oxlintrc.json`: diff vazio em `75a22b4..9abcef3`.
 
 ---
 
@@ -242,91 +287,70 @@ compilavam na 1ª forma (`tsc` do build) e foram reescritos.
 
 | Principle | Status |
 | --- | --- |
-| Minimum code / surgical | ✅ Tetos respeitados: nenhum arquivo novo no `.oxlintrc.json`; os 7 avisos de lint em arquivos tocados já existiam em `75a22b4` com o mesmo valor, fora o `debugSnapshot` (`snapshot.ts`, já na exceção) que foi de 171 para 172 linhas |
+| Minimum code / surgical | ✅ Tetos respeitados: nenhum arquivo novo no `.oxlintrc.json`; os avisos de lint em arquivos tocados já existiam em `75a22b4`; os consertos somam 5 linhas de código de produção |
 | No scope creep | ✅ |
-| Matches patterns | ✅ Diretores novos (`axisDirector`, `bodyDirector`, `fistWaves`, `wallStun`), regra pura com teste par |
-| Spec-anchored outcome check | ❌ 4 ACs com o efeito do adaptador sem leitura |
-| Per-layer coverage | ⚠️ Regra pura 1:1; adaptadores do Corpo com lacunas (strikeMods) |
+| Matches patterns | ✅ Diretores novos (`axisDirector`, `bodyDirector`, `fistWaves`, `wallStun`), regra pura com teste par; `bodyHit`/`redEcho` no padrão dos eventos de debug existentes |
+| Spec-anchored outcome check | ✅ Os 4 efeitos de adaptador lidos do motor com o número da spec; payload `[[0.4, 350]]` afirmado |
+| Per-layer coverage | ✅ Regra pura 1:1; adaptadores do Corpo e do Vermelho com leitura do efeito |
 | Every test maps to a requirement | ✅ |
-| Guidelines followed | `CLAUDE.md`, `.oxlintrc.json`, L-010, L-043, L-076 |
+| Guidelines followed | `CLAUDE.md`, `.oxlintrc.json`, L-010, L-043, L-076, L-082 |
 
 ---
 
 ## Gate Check
 
-- **Gate command**: `npm run gate` (worktree real, só leitura)
-- **Result**: 4272 passed, 0 failed, 0 skipped, 219 arquivos; typecheck, oxlint (0 erros, 28 avisos de arquivos na
+- **Gate command**: `npm run gate` (worktree real, só leitura), exit 0
+- **Result**: 4278 passed, 0 failed, 0 skipped, 220 arquivos; typecheck, oxlint (0 erros, só avisos de arquivos na
   exceção) e prettier verdes
 - **Test count before feature**: 3696 (192 arquivos, `75a22b4`)
-- **Test count after feature**: 4272
-- **Delta**: +576
+- **Test count rodada 1**: 4272 (219 arquivos, `fcbe549`)
+- **Test count after feature**: 4278 (+5 do `bodyDirector.test.ts`, +1 do CRP-13 no `axisDirector.test.ts`)
+- **Delta**: +582 sobre a base
 - **Skipped tests**: nenhum
-- **Smokes de base do sensor**: `red-axes`, `cursed-body`, `shop-axes`, `scale` (+ `kokusen-scale`), `kokusen`, `run-loop` verdes em `fcbe549`
+- **Smokes de base do sensor**: rodada 1 `red-axes`, `cursed-body`, `shop-axes`, `scale` (+ `kokusen-scale`),
+  `kokusen`, `run-loop` verdes em `fcbe549`; rodada 2 `cursed-body` e `red-axes` verdes em `9abcef3`
 
 ---
 
 ## Fix Plans
 
-### Fix 1: provar o +50 % da Cadência no jogo (CRP-08.2, A1)
-- **Root cause**: `cadenceDecisive` só confere o tier do impacto.
-- **Fix task**: em `scripts/smoke/cursed-body-branches.mjs` (`cadenceDecisive`), ler o dano levado pela cotovelada do
-  4º golpe (HP do alvo antes e depois, ou evento com `lastDamageTaken`) e afirmar `round(14 × 1,5)` = 21 com ramo e 14
-  sem.
-- **Priority**: Major
-
-### Fix 2: provar os 4 % no alvo do decisivo do Martelo (CRP-09, A2)
-- **Root cause**: `blackHammer` só lê os vizinhos (`martelo:`).
-- **Fix task**: no mesmo cenário, afirmar que o alvo da cotovelada decisiva perde `round(14 × 1,5) + round(0,04 × maxHp)`.
-- **Priority**: Major
-
-### Fix 3: provar a força do Peso entregue ao golpe (CRP-03.4, A3)
-- **Root cause**: só `bodyStrike` é testado; o `force` do `BodyDirector.strikeMods` não.
-- **Fix task**: teste unitário do `BodyDirector.strikeMods` com cena falsa (`force` base 6 → 7,2/8,4/9,6 com Peso 1/2/3),
-  ou um smoke que leia o recuo do comum (velocidade ou deslocamento) com e sem Peso (L-082).
-- **Priority**: Major
-
-### Fix 4: provar a pós-imagem da Conjuração 3 (VRM-06, A4)
-- **Root cause**: `red.ts:112` chama `player.fx.afterimage` sem evento nem leitura no snapshot.
-- **Fix task**: emitir `redEcho` só quando a cópia nasce (como o `bodyEcho` do Ritmo) e afirmar em `red-axes` um evento
-  na soltura com `axes=vermelho.conjuracao:3` e nenhum sem.
-- **Priority**: Minor
-
-### Fix 5: afirmar o payload da câmera lenta do Despertar (VRM-17.12, CRP-13)
-- **Fix task**: em `tests/scenes/axisDirector.test.ts:108`, `expect(r.slow).toEqual([[0.4, 350]])`; no smoke, opcional,
-  contar o tempo real em `timeScale` 0,4.
-- **Priority**: Minor
+Nenhum aberto. Os Fixes 1 a 5 da rodada 1 foram feitos em `6538b25`, `fd90381`, `02e3a70`, `37074e3` e `01eab27`; a
+ressalva da T33 em `9abcef3`. Sugestão opcional, sem bloquear: `elbow.length > 0` antes do laço do CRP-09
+(`cursed-body-branches.mjs:109`).
 
 ---
 
 ## Requirement Traceability Update
 
-| Requirement | Previous Status | New Status |
+| Requirement | Previous Status (rodada 1) | New Status (rodada 2) |
 | --- | --- | --- |
-| SHX-01..03, TST-01..04 | Pending | ✅ Verified |
-| VRM-01..05, VRM-07..16, VRM-18..20 | Pending | ✅ Verified |
-| VRM-06 | Pending | ❌ Needs Fix (pós-imagem) |
-| VRM-17 | Pending | ⚠️ Verified com gap de payload (350 ms) |
-| CRP-01, CRP-02, CRP-04..07, CRP-10..12, CRP-14, CRP-15 | Pending | ✅ Verified |
-| CRP-03 | Pending | ❌ Needs Fix (força do Peso) |
-| CRP-08 | Pending | ❌ Needs Fix (+50 %) |
-| CRP-09 | Pending | ❌ Needs Fix (alvo do Martelo) |
-| CRP-13 | Pending | ⚠️ Verified com gap de payload (350 ms) |
-| CRD-01..10, PRC-01..06, ESC-01..05 | Pending | ✅ Verified |
+| SHX-01..03, TST-01..04 | ✅ Verified | ✅ Verified |
+| VRM-01..05, VRM-07..16, VRM-18..20 | ✅ Verified | ✅ Verified |
+| VRM-06 | ❌ Needs Fix (pós-imagem) | ✅ Verified |
+| VRM-17 | ⚠️ gap de payload (350 ms) | ✅ Verified |
+| CRP-01, CRP-02, CRP-04..07, CRP-10..12, CRP-14, CRP-15 | ✅ Verified | ✅ Verified |
+| CRP-03 | ❌ Needs Fix (força do Peso) | ✅ Verified |
+| CRP-08 | ❌ Needs Fix (+50 %) | ✅ Verified |
+| CRP-09 | ❌ Needs Fix (alvo do Martelo) | ✅ Verified |
+| CRP-13 | ⚠️ gap de payload (350 ms) | ✅ Verified |
+| CRD-01..10, PRC-01..06, ESC-01..05 | ✅ Verified | ✅ Verified |
 
 ---
 
 ## Summary
 
-**Overall**: ❌ Not Ready
+**Overall**: ✅ Ready
 
-**Spec-anchored check**: 57/63 requisitos inteiros; 4 ACs sem evidência do efeito; 2 spec-precision gaps
-**Sensor**: 15/19 mortos (regra pura 10/10; adaptador 5/9)
-**Gate**: 4272 passed, 0 failed
+**Spec-anchored check**: 63/63 requisitos com evidência; nenhum spec-precision gap
+**Sensor**: rodada 2, 6/6 mortos (A1 a A4 e os novos N1, N2); rodada 1 + 2, 21/21 mutantes distintos mortos
+**Gate**: 4278 passed, 0 failed
 
 **What works**: eixos, tabela e base nova do Vermelho; ramos e Despertares do Vermelho lidos no motor (rebote, 70 %,
-Contido, campo, parede); Corpo nos números puros, alcance, ritmo, Fluxo, Fúria, onda e teto; loja de 4 cartas, eixo,
-painel do ramo; preço, trava, inflação e piso; escala do comum e Kokusen escalado; tetos de linha e travas de arquivo.
+Contido, campo, parede, pós-imagem da Conjuração 3); Corpo nos números puros e no jogo (Peso na força, +50 % da
+Cadência, 4 % no alvo do Martelo, alcance, ritmo, Fluxo, Fúria, onda e teto); câmera lenta do Despertar 0,4 por 350
+ms; loja de 4 cartas, eixo, painel do ramo; preço, trava, inflação e piso; escala do comum e Kokusen escalado; tetos de
+linha e travas de arquivo.
 
-**Issues found**: os quatro efeitos do `strikeMods`/soltura sem leitura (Fixes 1 a 4) e o payload de 350 ms (Fix 5).
+**Issues found**: nenhum bloqueante.
 
-**Next steps**: rodar os Fixes 1 a 4 (5 opcional) e revalidar com os mutantes A1 a A4.
+**Next steps**: feature pronta para integrar.
