@@ -1816,10 +1816,10 @@ painel aberto; `statsDirector.snapshotFields()` ganha `choice: this.s.ui.choiceP
 
 **Done when**:
 
-- [ ] `tests/core/shopPricing.test.ts`: 20/26; 12/16/20/24/28; inflação 1,00/1,06/1,54/2,14 nas r1/r2/r10/r20;
+- [x] `tests/core/shopPricing.test.ts`: 20/26; 12/16/20/24/28; inflação 1,00/1,06/1,54/2,14 nas r1/r2/r10/r20;
       Vermelho novo na r1 = 26; 1º ponto na r2 = 13; 2º ponto recusado na r1 e aceito na r2; 3º na r3/r4; 5º na r5/r6;
       Nv 2 e Nv 3 das outras na r1/r2 e r3/r4; preço de nível das outras = `base + step × nível` × inflação (PRC-06)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

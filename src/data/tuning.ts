@@ -320,13 +320,23 @@ export const SHOP: ShopTuning = {
   sortePerLevel: 0.03,
 };
 
-/** Preço da loja (PRC-02): o ponto de eixo custa `base` mais `step` por ponto já posto no item. */
+/**
+ * Preço da loja (PRC-01..04): o ponto de eixo custa `base` mais `step` por ponto já posto no item; a técnica nova custa
+ * `newTech` por raridade; cada carta sobe `inflationPerRound` por rodada depois da 1ª; `axisGate[n]` é a rodada
+ * mínima do ponto de eixo de índice `n` (o 1º é o 0).
+ */
 export interface PricingTuning {
   axisPoint: { base: number; step: number };
+  newTech: { common: number; rare: number };
+  inflationPerRound: number;
+  axisGate: readonly number[];
 }
 
 export const PRICING: PricingTuning = {
   axisPoint: { base: 12, step: 4 },
+  newTech: { common: 20, rare: 26 },
+  inflationPerRound: 0.06,
+  axisGate: [2, 2, 4, 4, 6],
 };
 
 /** Maestria das técnicas (MST-01..06): pontos para subir do Nv1 e do Nv2, e pontos por acerto no chefe. */
