@@ -192,19 +192,19 @@ design ("Components", `data/domains.ts`).
 
 **Done when**:
 
-- [ ] `tests/core/domain.test.ts` (novo): carga inteira de 0 a 100 sem passar dos limites (DOM-01); tabela evento a
+- [x] `tests/core/domain.test.ts` (novo): carga inteira de 0 a 100 sem passar dos limites (DOM-01); tabela evento a
       evento (+1 leve, +2 forte, +2 objeto, +1 abate, +5 defesa, +1 conjuração, +5 finalizador, +15 Kokusen); sem dono e
       com Domínio ativo nenhum evento muda a carga (DOM-02.5)
-- [ ] Esvaziamento (DOM-03): 7999 ms sem carga não muda; 8000 ms tira 10; 16000 ms tira 20; piso 0; evento zera o
+- [x] Esvaziamento (DOM-03): 7999 ms sem carga não muda; 8000 ms tira 10; 16000 ms tira 20; piso 0; evento zera o
       relógio; carga 100 não esvazia; com `roundActive` falso o relógio não anda
-- [ ] Ritmo de referência (DOM-04): 1 leve/s, 1 forte a cada 4 s, 1 abate a cada 5 s, 1 defesa perfeita a cada 20 s e 1
+- [x] Ritmo de referência (DOM-04): 1 leve/s, 1 forte a cada 4 s, 1 abate a cada 5 s, 1 defesa perfeita a cada 20 s e 1
       acerto de conjuração a cada 5 s, de 0, chega a 100 com `40 < t ≤ 60` s (~46,5 s), simulado em passos de 16 ms
-- [ ] `own(id)` dá Nv 1 e carga 0, `own(id, 1, 100)` dá a carga cheia (VEU-03); `raise` sobe 1 → 2 → 3 sem mexer na
+- [x] `own(id)` dá Nv 1 e carga 0, `own(id, 1, 100)` dá a carga cheia (VEU-03); `raise` sobe 1 → 2 → 3 sem mexer na
       carga e recusa no Nv 3 e sem Domínio (DNV-01); `reset` zera posse,
       carga, ativo, `veilPending` e `bossChestPending` (DOM-05, VEU-04.8); `setCharge` sem dono não faz nada
-- [ ] `domainBarView`: escondida sem dono; `fill = charge / 100` carregando e `remainingMs / totalMs` com ativo;
+- [x] `domainBarView`: escondida sem dono; `fill = charge / 100` carregando e `remainingMs / totalMs` com ativo;
       `blinking` só com `ready` (DHD-01 a DHD-03)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4295 → 4326)
 
 **Tests**: unit
 **Gate**: quick
