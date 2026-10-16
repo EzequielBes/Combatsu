@@ -7,6 +7,8 @@ import type { PerkId } from '../data/perks';
 import type { TechId } from '../data/techniques';
 import { RECIPES, type Recipe } from '../data/evolutions';
 import { recipeReady } from './evolution';
+import { ITEM_AXES, type AxisItem } from '../data/techAxes';
+import type { ItemAxis } from './axisBuild';
 import type { ModifierId, ShopEntry, ShopEntryId } from '../data/shop';
 
 /** Receita da evolução que vende `id` (EVO-01). */
@@ -18,10 +20,23 @@ function evolutionEligible(entry: ShopEntry, loadout: Loadout): boolean {
   return !!recipe && loadout.levelOf(recipe.into) === 0 && recipeReady(recipe, loadout);
 }
 
+/**
+ * Item com eixo na loja (CRD-02, CRD-04): o Corpo é sempre dono; o Vermelho só equipado; e algum eixo ainda aceita
+ * ponto (`canAdd`, teto de 3 por eixo e 5 no item). `round` fica para a trava por rodada (PRC-04).
+ */
+export function axisEligible(entry: ShopEntry, loadout: Loadout, _round: number): boolean {
+  if (entry.kind !== 'body' && entry.id !== 'vermelho') return false;
+  const item = entry.id as AxisItem;
+  if (item === 'vermelho' && loadout.levelOf('vermelho') === 0) return false;
+  return (ITEM_AXES[item] as readonly string[]).some((axis) => loadout.axes.canAdd(item, axis as ItemAxis<AxisItem>));
+}
+
 /** Técnica no pool (TSH-03, TSH-04). */
 function techniqueEligible(entry: ShopEntry, loadout: Loadout, round: number): boolean {
   // Edge case da F24: com a evolução equipada, as técnicas da receita não voltam à loja.
   if (RECIPES.some((r) => r.from.includes(entry.id as TechId) && loadout.levelOf(r.into) > 0)) return false;
+  // CRD-04: o Vermelho equipado é item de eixo; sobe pelo ponto, não pelo nível de técnica.
+  if (entry.id === 'vermelho' && loadout.levelOf('vermelho') > 0) return axisEligible(entry, loadout, round);
   const level = loadout.levelOf(entry.id as TechId);
   // TSH-04: equipada entra se abaixo do nível máximo e a rodada mínima do próximo nível já passou.
   if (level > 0) return level < entry.maxLevel && entry.minRound(level + 1) <= round;
@@ -47,7 +62,7 @@ export function eligible(
 ): ShopEntry[] {
   return catalog.filter((entry) => {
     if (entry.kind === 'consumable') return true;
-    if (entry.kind === 'body') return false; // CRP-01: o Corpo só entra na loja de eixos (T52)
+    if (entry.kind === 'body') return !!loadout && axisEligible(entry, loadout, round); // CRP-01
     if (entry.id in ARSENAL) return !!arsenal && arsenalEligible(entry.id as ArsenalId, arsenal, round);
     if (entry.kind === 'perk') return !!perks && !perks.has(entry.id as PerkId) && entry.minRound(1) <= round;
     if (entry.kind === 'technique') return !!loadout && techniqueEligible(entry, loadout, round);

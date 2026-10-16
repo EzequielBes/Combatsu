@@ -150,7 +150,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     kind: 'technique',
     rarity: 'rare',
     name: 'Reversão de Técnica: Vermelho',
-    maxLevel: 3,
+    maxLevel: 6,
     cost: { base: 30, step: 15 },
     minRound: techGate,
   },

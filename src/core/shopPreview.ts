@@ -42,6 +42,7 @@ export function previewText(
     const after = Math.min(hp + SHOP.curaHp, maxHp);
     return `Vida ${hp} → ${after}`;
   }
+  if (entry.kind === 'body') return ''; // a prévia da carta de eixo é a `axisPreview` (CRD-05)
   if (entry.kind === 'perk') return PERKS[entry.id as PerkId].effect;
   if (entry.kind === 'evolution') return 'Funde as duas técnicas (Nv 3) numa só';
   if (entry.kind === 'technique') return techniquePreview(entry.id as TechId, loadout);

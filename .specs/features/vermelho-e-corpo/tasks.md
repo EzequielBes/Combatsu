@@ -1606,9 +1606,9 @@ a entrada do Vermelho em `data/shop.ts:149-156` vai a `maxLevel 6`.
 
 **Done when**:
 
-- [ ] `tests/core/shopAxes.test.ts`: Vermelho com 5 pontos não é elegível (edge case); Corpo elegível sem compra;
+- [x] `tests/core/shopAxes.test.ts`: Vermelho com 5 pontos não é elegível (edge case); Corpo elegível sem compra;
       Vermelho fora do slot não é elegível
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

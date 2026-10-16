@@ -46,7 +46,7 @@ describe('TSH-01: catálogo tem as 4 técnicas, kind e maxLevel certos', () => {
     expect(technique('divergente')).toMatchObject({ kind: 'technique', rarity: 'common', maxLevel: 3 });
     expect(technique('corte')).toMatchObject({ kind: 'technique', rarity: 'common', maxLevel: 3 });
     expect(technique('azul')).toMatchObject({ kind: 'technique', rarity: 'rare', maxLevel: 3 });
-    expect(technique('vermelho')).toMatchObject({ kind: 'technique', rarity: 'rare', maxLevel: 3 });
+    expect(technique('vermelho')).toMatchObject({ kind: 'technique', rarity: 'rare', maxLevel: 6 });
   });
 });
 

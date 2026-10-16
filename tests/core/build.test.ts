@@ -180,18 +180,18 @@ describe('BLD-07: passivas na loja', () => {
   });
 });
 
-describe('CRP-01: o Corpo na loja ainda não é oferecido', () => {
+describe('CRP-01: o Corpo na loja', () => {
   it('o catálogo do jogo tem o corpo, do tipo body, comum, até o Nv 6 e preço 12 + 4', () => {
     const corpo = GAME_SHOP_CATALOG.filter((e) => e.id === 'corpo');
     expect(corpo).toHaveLength(1);
     expect(corpo[0]).toMatchObject({ kind: 'body', rarity: 'common', maxLevel: 6, cost: { base: 12, step: 4 } });
   });
 
-  it('o eligible recusa o corpo em qualquer rodada, com ou sem técnica', () => {
+  it('o eligible oferece o corpo em qualquer rodada com loadout, e nunca sem ele', () => {
     const { modifiers, loadout, perks } = fresh();
     loadout.equip(0, 'divergente', 1);
     for (const round of [1, 2, 6, 999]) {
-      expect(eligible(GAME_SHOP_CATALOG, modifiers, round, loadout, perks).some((e) => e.id === 'corpo')).toBe(false);
+      expect(eligible(GAME_SHOP_CATALOG, modifiers, round, loadout, perks).some((e) => e.id === 'corpo')).toBe(true);
     }
     expect(eligible(GAME_SHOP_CATALOG, modifiers, 6).some((e) => e.id === 'corpo')).toBe(false);
   });
