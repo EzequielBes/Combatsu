@@ -1764,9 +1764,9 @@ duas cartas com o nome do ramo e a linha do Despertar; criado em `UiSetup.addHud
 
 **Done when**:
 
-- [ ] `tests/game/choicePanel.test.ts` (molde do `vowPanel.test.ts`): `show` abre com as 2 opções, `select` move o
+- [x] `tests/game/choicePanel.test.ts` (molde do `vowPanel.test.ts`): `show` abre com as 2 opções, `select` move o
       realce, `hide` fecha, `debug()` = `{ open, page: { item, options } | null }`
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

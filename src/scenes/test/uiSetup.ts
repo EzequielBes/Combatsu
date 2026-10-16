@@ -7,6 +7,7 @@ import { EnergyHud } from '../../game/EnergyHud';
 import { FxLab } from '../../game/FxLab';
 import { GAME_NAME, Hud } from '../../game/Hud';
 import { Callout } from '../../game/techFx/Callout';
+import { ChoicePanel } from '../../game/ChoicePanel';
 import type { TestScene } from '../TestScene';
 
 /** Quanto tempo (ms) o painel de controles fica na tela ao iniciar e a cada reinício (HUD-03). */
@@ -24,6 +25,9 @@ export class UiSetup {
 
   /** Números de dano no mundo (POW-06): nascem de novo a cada `create`, então o `R` não guarda texto destruído. */
   damageNumbers!: DamageNumbers;
+
+  /** Painel do ramo da konbini (CRD-09), na `uiLayer` (AD-003). */
+  choicePanel!: ChoicePanel;
 
   /**
    * Duas câmeras (AD-003): a principal desenha o mundo com zoom e a de UI (zoom 1, sem scroll) só a `uiLayer`.
@@ -73,6 +77,7 @@ export class UiSetup {
     this.s.hud = new Hud(this.s, this.s.uiLayer, this.controlsLines().join('\n'));
     this.s.energyHud = new EnergyHud(this.s, this.s.uiLayer);
     this.s.callout = new Callout(this.s, this.s.uiLayer);
+    this.choicePanel = new ChoicePanel(this.s, this.s.uiLayer);
     // POW-06: fora da `uiLayer`, então a câmera de UI o ignora pelo `route` e só o mundo o desenha.
     this.damageNumbers = new DamageNumbers(this.s);
     // DOD-12: tom azulado por cima do mundo na câmera lenta, na `uiLayer` (a câmera de UI é a que o desenha).
