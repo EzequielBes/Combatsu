@@ -149,13 +149,13 @@ export const ENEMY_ATTACK: EnemyAttackDef = {
 };
 
 /**
- * Escala de dificuldade por rodada (DIF-06, SPN-13, SPN-14, AD-014): HP e dano dos comuns ficam fixos
- * (a dificuldade vem de mecânica, não de números), só a velocidade cresce até um teto.
+ * Escala de dificuldade por rodada (DIF-06, ESC-01, AD-025, que revisa a AD-014): o HP do comum cresce 6% e o dano 5%
+ * por rodada até os tetos de 3,0 e 2,5, e a velocidade 3% até 1,4. A build cresce junto (eixos, Corpo, Kokusen).
  */
 export const DIFFICULTY: DifficultyTuning = {
-  hpPerRound: 0,
+  hpPerRound: 0.06,
   hpCap: 3.0,
-  damagePerRound: 0,
+  damagePerRound: 0.05,
   damageCap: 2.5,
   speedPerRound: 0.03,
   speedCap: 1.4,

@@ -58,6 +58,17 @@ export default async function ({ page, baseUrl, assert }) {
   const first = [...s.bossSummoned];
   assert(first.length === FIRST_BOSS_COUNT, `na r5 nascem ${FIRST_BOSS_COUNT} invocados: ${first}`);
   const summonedNow = () => s.enemies.filter((e) => s.bossSummoned.includes(e.id));
+  // INV-05, ressalva R2 da F32: a escala por rodada vale para o invocado como para o comum da onda. A r5 é de chefe e
+  // não tem comum de onda para comparar; a referência é a conta que a onda usa (`scaleFor`: base × multiplicador da
+  // rodada, lido do `difficulty` do snapshot), e o invocado difere da base (60 de HP, 12 de dano), que era a única
+  // coisa que a conferência via antes da escala ligar.
+  const waveHp = Math.round(60 * s.difficulty.hpMul);
+  const waveDamage = Math.round(12 * s.difficulty.damageMul);
+  assert(waveHp > 60 && waveDamage > 12, `a r5 deveria escalar o comum acima da base: ${JSON.stringify(s.difficulty)}`);
+  assert(
+    summonedNow().every((e) => e.maxHp === waveHp && e.damage === waveDamage),
+    `INV-05: o invocado deveria ter o HP (${waveHp}) e o dano (${waveDamage}) do comum da r5: ${JSON.stringify(summonedNow())}`,
+  );
   assert(
     summonedNow().length === first.length && summonedNow().every((e) => e.weapon === null),
     `invocados desarmados na lista da cena: ${JSON.stringify(summonedNow())}`,
@@ -87,8 +98,13 @@ export default async function ({ page, baseUrl, assert }) {
   // INV-03: matar um invocado não conta abate nem cria pickup (o stream de loot fica intocado).
   const kills = s.run.kills;
   const pickups = s.pickups.length;
-  for (let i = 0; i < 60 && first.every((id) => s.bossSummoned.includes(id)) && s.boss && !s.player.dead; i++)
+  // O golpe de teste derruba o invocado e o chão aceita um golpe por vez: com a escala da r5 (74 de HP, não 60) ele
+  // pede 3 golpes e não 2, então o golpe espera ele levantar (450 ms) em vez de gastar o HP do chefe antes.
+  for (let i = 0; i < 40 && first.every((id) => s.bossSummoned.includes(id)) && s.boss && !s.player.dead; i++) {
     s = await pressTwo();
+    s = await step(450);
+  }
+  assert(s.boss !== null, `o invocado deveria morrer com o chefe ainda vivo: ${s.events.join(',')}`);
   const killed = first.filter((id) => !s.bossSummoned.includes(id));
   assert(killed.length > 0, `um invocado deveria morrer: ${JSON.stringify(summonedNow())}`);
   s = await step(500);

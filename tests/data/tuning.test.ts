@@ -3,11 +3,11 @@ import { DIFFICULTY, WAVE, SPAWN, RUN, BOSS, ECONOMY, PICKUP, ARMED, DROPPED_TOO
 import { BOSS_DEFEAT_HITSTOP_MS } from '../../src/data/fx';
 
 describe('tuning da dificuldade, onda e run (T1, valores das Assumptions da spec)', () => {
-  it('DIFFICULTY = hp e dano fixos por rodada (0), hpCap 3.0, damageCap 2.5, speedPerRound 0.03, speedCap 1.4 (SPN-13, SPN-14)', () => {
+  it('DIFFICULTY = hp +0.06 e dano +0.05 por rodada, hpCap 3.0, damageCap 2.5, speedPerRound 0.03, speedCap 1.4 (ESC-01, AD-025)', () => {
     expect(DIFFICULTY).toEqual({
-      hpPerRound: 0,
+      hpPerRound: 0.06,
       hpCap: 3.0,
-      damagePerRound: 0,
+      damagePerRound: 0.05,
       damageCap: 2.5,
       speedPerRound: 0.03,
       speedCap: 1.4,

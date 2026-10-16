@@ -4,7 +4,7 @@ import { DIFFICULTY, ENEMY, ENEMY_AI, ENEMY_ATTACK } from '../../src/data/tuning
 
 const BASE: EnemyBase = { brain: ENEMY, ai: ENEMY_AI, attack: ENEMY_ATTACK };
 
-/** Tuning com crescimento (o do jogo antes do AD-014): mantém coberta a fórmula de escala e os tetos (DIF-01, DIF-05). */
+/** Tuning com crescimento (o do jogo antes da AD-014): mantém coberta a fórmula de escala e os tetos (DIF-01, DIF-05). */
 const GROWING: DifficultyTuning = {
   hpPerRound: 0.12,
   hpCap: 3.0,
@@ -40,29 +40,39 @@ describe('scaleFor: dano por rodada com tuning crescente (DIF-05)', () => {
   });
 });
 
-describe('DIFFICULTY real: HP e dano dos comuns fixos por rodada (SPN-13, SPN-14, AD-014)', () => {
-  it('hpPerRound e damagePerRound são 0; a velocidade continua escalando', () => {
-    expect(DIFFICULTY.hpPerRound).toBe(0);
-    expect(DIFFICULTY.damagePerRound).toBe(0);
-    expect(DIFFICULTY.speedPerRound).toBe(0.03);
+describe('DIFFICULTY real: HP +6% e dano +5% por rodada (ESC-01, AD-025, que revisa a AD-014)', () => {
+  it('hpPerRound 0,06, damagePerRound 0,05, tetos 3,0 e 2,5 e velocidade 0,03/1,4 como antes', () => {
+    expect(DIFFICULTY).toEqual({
+      hpPerRound: 0.06,
+      hpCap: 3.0,
+      damagePerRound: 0.05,
+      damageCap: 2.5,
+      speedPerRound: 0.03,
+      speedCap: 1.4,
+    });
   });
 
-  it.each([2, 5, 10, 18, 30])('rodada %i: maxHp e dano iguais aos da rodada 1 (60 e 12)', (round) => {
-    const r1 = scaleFor(1, BASE, DIFFICULTY);
-    const r = scaleFor(round, BASE, DIFFICULTY);
-    expect(r1.brain.maxHp).toBe(60);
-    expect(r1.attack.damage).toBe(12);
-    expect(r.brain.maxHp).toBe(r1.brain.maxHp);
-    expect(r.attack.damage).toBe(r1.attack.damage);
+  it.each([
+    [1, 60],
+    [2, 64],
+    [9, 89],
+    [11, 96],
+    [19, 125],
+  ])('o comum nasce na rodada %i com maxHp %i (ESC-01.2)', (round, expected) => {
+    expect(scaleFor(round, BASE, DIFFICULTY).brain.maxHp).toBe(expected);
   });
 
-  it('para toda rodada de 1 a 30, maxHp e dano são os da rodada 1', () => {
-    const r1 = scaleFor(1, BASE, DIFFICULTY);
-    for (let r = 1; r <= 30; r++) {
-      const s = scaleFor(r, BASE, DIFFICULTY);
-      expect(s.brain.maxHp).toBe(r1.brain.maxHp);
-      expect(s.attack.damage).toBe(r1.attack.damage);
-    }
+  it('o dano do comum é 12 na rodada 1 e 13 na rodada 2 (ESC-01.2)', () => {
+    expect(scaleFor(1, BASE, DIFFICULTY).attack.damage).toBe(12);
+    expect(scaleFor(2, BASE, DIFFICULTY).attack.damage).toBe(13);
+  });
+
+  it('teto do HP de 3,0: a rodada 34 ainda está abaixo (179), a 35 chega a 180 e depois dela fica em 180', () => {
+    expect([34, 35, 36, 100].map((r) => scaleFor(r, BASE, DIFFICULTY).brain.maxHp)).toEqual([179, 180, 180, 180]);
+  });
+
+  it('teto do dano de 2,5: a rodada 30 ainda está abaixo (29), a 31 chega a 30 e depois dela fica em 30', () => {
+    expect([30, 31, 32, 100].map((r) => scaleFor(r, BASE, DIFFICULTY).attack.damage)).toEqual([29, 30, 30, 30]);
   });
 
   it('a velocidade ainda escala: rodada 2 = x1,03 e rodada 30 = teto x1,4', () => {

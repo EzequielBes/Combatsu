@@ -1,8 +1,8 @@
 // Kokusen escalado (ESC-02, ESC-05) com `?debug&hd=1&area=modular&seed=1&noshop=1&tech=divergente`: sem build na
 // rodada 1 o Kokusen tira 45 e o snapshot mostra `difficulty` { round: 1, hpMul: 1, damageMul: 1 }; com `mods=forca:5`
 // o mesmo golpe tira 68. O número flutuante funde o 1º impacto (12) com o Kokusen (`mergeMs`, POW-06) e vira do tipo
-// `kokusen`: vale 12 + dano. No chefe (rodada 5) o Kokusen tira o mesmo dano de HP e 3x dele da postura (`poiseMul`):
-// 45 x 3 = 135 passa dos 100 da postura e põe o chefe em `stagger`, o que 45 de postura não faria (ESC-02.5).
+// `kokusen`: vale 12 + dano. No chefe (rodada 5) o piso sobe com o HP da rodada, round(45 x 1,24) = 56; ele perde esse
+// tanto de HP e 3x dele da postura (`poiseMul`): 168 passa dos 100 da postura e põe o chefe em `stagger`.
 // Lê o dano do inimigo vivo e o número do motor.
 export default async function ({ page, baseUrl, assert }) {
   const stepAndSnap = async (ms) =>
@@ -161,12 +161,15 @@ export default async function ({ page, baseUrl, assert }) {
     }
   }
   assert(bossKokusen, 'o Kokusen nunca pousou no chefe em 12 tentativas');
+  // ESC-02: o piso é round(45 x hpMul da rodada); na r5 (hpMul 1,24) são 56, acima dos 45 de antes da escala.
+  const floor = Math.round(45 * bossKokusen.snap.difficulty.hpMul);
+  assert(floor === 56, `ESC-02: o piso da r5 deveria ser 56: ${floor}`);
   assert(
-    bossKokusen.snap.boss.hp === bossKokusen.afterFirst - 45,
-    `ESC-02.5: o chefe deveria perder 45 de HP no Kokusen: ${bossKokusen.afterFirst} -> ${bossKokusen.snap.boss.hp}`,
+    bossKokusen.snap.boss.hp === bossKokusen.afterFirst - floor,
+    `ESC-02.5: o chefe deveria perder ${floor} de HP no Kokusen: ${bossKokusen.afterFirst} -> ${bossKokusen.snap.boss.hp}`,
   );
   assert(
     bossKokusen.snap.boss.state === 'stagger' && bossKokusen.snap.boss.poise === 0,
-    `ESC-02.5: 45 x poiseMul (3) = 135 deveria zerar a postura e pôr o chefe em stagger: ${JSON.stringify(bossKokusen.snap.boss)}`,
+    `ESC-02.5: dano x poiseMul (3) deveria zerar a postura e pôr o chefe em stagger: ${JSON.stringify(bossKokusen.snap.boss)}`,
   );
 }

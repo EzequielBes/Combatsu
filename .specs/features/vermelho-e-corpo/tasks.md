@@ -1999,17 +1999,17 @@ AD-025; `run-loop.smoke.mjs` (`:67-83`, `:113-192`) calcula HP e dano do comum p
 
 **Done when**:
 
-- [ ] `difficulty.test.ts`: HP do comum 64/89/96/125 nas r2/r9/r11/r19 e dano 13 na r2 (ESC-01.2); teto 3,0 depois da
+- [x] `difficulty.test.ts`: HP do comum 64/89/96/125 nas r2/r9/r11/r19 e dano 13 na r2 (ESC-01.2); teto 3,0 depois da
       r34 (edge case); `hpCap`, `damageCap` e velocidades iguais
-- [ ] `scale.smoke.mjs`, `?debug&hd=1&area=modular`: `round=9` → `enemies[].maxHp` 89; `round=11` → 96; nunca a r10
+- [x] `scale.smoke.mjs`, `?debug&hd=1&area=modular`: `round=9` → `enemies[].maxHp` 89; `round=11` → 96; nunca a r10
       (ESC-04.11)
-- [ ] `run-loop` verde com as fórmulas (ESC-04.10); smokes `scale`, `run-loop`, `kokusen`, `boss` e `world-boss` verdes
-- [ ] Ressalva R2 da F32 fechada: o `boss-invocador.smoke.mjs` compara o `maxHp` (e o dano) do comum invocado com o do
+- [x] `run-loop` verde com as fórmulas (ESC-04.10); smokes `scale`, `run-loop`, `kokusen`, `boss` e `world-boss` verdes
+- [x] Ressalva R2 da F32 fechada: o `boss-invocador.smoke.mjs` compara o `maxHp` (e o dano) do comum invocado com o do
       comum da onda na mesma rodada, numa rodada acima da 1ª (antes da escala os dois eram a base e a conferência não
       discriminava)
-- [ ] AD-025 no `.specs/STATE.md` (ESC-01.3); `TestScene.ts` com no máximo as 388 linhas da base (SHX-02); nenhum arquivo novo
+- [x] AD-025 no `.specs/STATE.md` (ESC-01.3); `TestScene.ts` com no máximo as 388 linhas da base (SHX-02); nenhum arquivo novo
       no `.oxlintrc.json` (SHX-03)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit + smoke
 **Gate**: full

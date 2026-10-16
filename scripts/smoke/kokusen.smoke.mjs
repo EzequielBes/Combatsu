@@ -265,9 +265,12 @@ export default async function ({ page, baseUrl, assert }) {
     landed.damageNumbers.last && landed.damageNumbers.last.kind === 'kokusen',
     `POW-06.8: o último número deveria ser do tipo kokusen: ${JSON.stringify(landed.damageNumbers)}`,
   );
+  // ESC-02: o piso do Kokusen é round(45 × hpMul da rodada). Na rodada 1 são os 45 (2,5×18); se `approachFreshEnemy`
+  // avançou a rodada para repor inimigos, o piso acompanha (48 na rodada 2). A escala com build está no `kokusen-scale`.
+  const floor = Math.round(45 * landed.difficulty.hpMul);
   assert(
-    enemyAfterKokusen.hp === before2 - 12 - 45,
-    `KOK-06: Kokusen deveria tirar 45 (2,5×18): ${JSON.stringify(enemyAfterKokusen)}`,
+    enemyAfterKokusen.hp === before2 - 12 - floor,
+    `KOK-06/ESC-02: Kokusen deveria tirar ${floor} (rodada ${landed.difficulty.round}): ${JSON.stringify(enemyAfterKokusen)}`,
   );
   assert(
     Math.min(100, ceBeforeKokusen + 30) === landed.ce.cur,

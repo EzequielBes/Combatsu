@@ -112,7 +112,7 @@
 - **Trade-off**: `difficulty.ts` perde o escalonamento numérico; a curva depende de IA e composição bem afinadas.
 - **Scope**: Inimigos comuns (F12–F16); chefes mantêm o tier próprio.
 - **Date**: 2026-10-02
-- **Status**: active
+- **Status**: superseded by AD-025 (o HP e o dano do comum voltam a crescer por rodada; a dificuldade por mecânica continua)
 
 ### AD-015
 - **Decision**: A postura (estrutura) é a barra central: golpe forte só cambaleia; ragdoll apenas com postura quebrada, flag `knockdown`, morte ou impacto em parede/inimigo. Golpes têm `maxTargets` (leve 1, forte 2) e inimigo no chão leva no máximo 1 golpe.
@@ -192,6 +192,14 @@
 - **Trade-off**: Votos e evoluções aumentam as combinações e o custo de balanceamento; o final na rodada 20 limita a run padrão até o desbloqueio.
 - **Scope**: F24 `votos-e-evolucoes` (1 e 2), F25 `meta-progressao` (3 e 4), F26 `graus-e-eventos`.
 - **Date**: 2026-10-08
+- **Status**: active
+
+### AD-025
+- **Decision**: O HP e o dano do inimigo comum voltam a crescer por rodada: `DIFFICULTY.hpPerRound` 0,06 e `damagePerRound` 0,05, com os tetos de 3,0 e 2,5 e a velocidade como estava. O comum tem 64, 89, 96 e 125 de HP nas rodadas 2, 9, 11 e 19, e 13 de dano na 2. O Kokusen acompanha: `max(round(2,5 × golpe com Força × meleeMul), round(45 × hpMul))`. A dificuldade por mecânica da AD-014 continua; o número entra por cima, junto da build (eixos, Corpo) que cresce no mesmo ritmo (F30 `vermelho-e-corpo`, ESC-01..05).
+- **Reason**: A build ganha eixos, ramos e pontos do Corpo; com o inimigo parado em 60 de HP e 12 de dano ela passa por cima da horda sem fim. A curva de build (`tests/core/buildCurve.test.ts`) prova que o poder chega a tempo.
+- **Trade-off**: Volta o inimigo mais esponjoso nas rodadas altas, que o usuário recusou em 02/10 (AD-014); o enxame e o volume seguem a parte do desafio. `core/difficulty.ts` não muda, só os números.
+- **Scope**: Inimigo comum e o invocado pelo chefe. Chefes mantêm o tier próprio.
+- **Date**: 2026-10-16
 - **Status**: active
 
 ## Handoff
