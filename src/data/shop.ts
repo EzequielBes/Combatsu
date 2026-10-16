@@ -2,6 +2,7 @@ import { ARSENAL, ARSENAL_IDS, ARSENAL_TUNING, type ArsenalId } from './arsenal'
 import { PERK, PERK_IDS, PERKS, type PerkId } from './perks';
 import { RECIPES } from './evolutions';
 import type { TechId } from './techniques';
+import { techLevelGate } from '../core/shopPricing';
 
 /**
  * Catálogo da loja (SHOP-06..09, SHOP-18, MOD-03, MOD-09): dirigido por dados para a F5 acrescentar um `kind`
@@ -104,16 +105,6 @@ export const SHOP_CATALOG: readonly ShopEntry[] = [
 ];
 
 /**
- * Rodada mínima do próximo nível de uma técnica (TSH-04, AD-005): nível 2 exige rodada ≥ 2 (ECN-02), nível 3 exige
- * rodada ≥ 4 (ECN-09).
- */
-const techGate = (nextLevel: number): number => {
-  if (nextLevel >= 3) return 4;
-  if (nextLevel >= 2) return 2;
-  return 1;
-};
-
-/**
  * Técnicas na loja (TSH-01, TSH-02): Punho Divergente e Desmantelar comuns, Azul e Vermelho raras; custo
  * `base + step × nível atual` (0 se não equipada).
  */
@@ -125,7 +116,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     name: 'Punho Divergente',
     maxLevel: 3,
     cost: { base: 15, step: 11 },
-    minRound: techGate,
+    minRound: techLevelGate,
   },
   {
     id: 'corte',
@@ -134,7 +125,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     name: 'Desmantelar',
     maxLevel: 3,
     cost: { base: 23, step: 11 },
-    minRound: techGate,
+    minRound: techLevelGate,
   },
   {
     id: 'azul',
@@ -143,7 +134,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     name: 'Azul',
     maxLevel: 3,
     cost: { base: 26, step: 15 },
-    minRound: techGate,
+    minRound: techLevelGate,
   },
   {
     id: 'vermelho',
@@ -152,7 +143,7 @@ export const TECHNIQUE_SHOP_ENTRIES: readonly ShopEntry[] = [
     name: 'Reversão de Técnica: Vermelho',
     maxLevel: 6,
     cost: { base: 30, step: 15 },
-    minRound: techGate,
+    minRound: techLevelGate,
   },
 ];
 

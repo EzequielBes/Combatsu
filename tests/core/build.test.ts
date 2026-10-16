@@ -187,12 +187,13 @@ describe('CRP-01: o Corpo na loja', () => {
     expect(corpo[0]).toMatchObject({ kind: 'body', rarity: 'common', maxLevel: 6, cost: { base: 12, step: 4 } });
   });
 
-  it('o eligible oferece o corpo em qualquer rodada com loadout, e nunca sem ele', () => {
+  it('o eligible oferece o corpo a partir da rodada 2 (PRC-04) com loadout, e nunca sem ele', () => {
     const { modifiers, loadout, perks } = fresh();
     loadout.equip(0, 'divergente', 1);
-    for (const round of [1, 2, 6, 999]) {
+    for (const round of [2, 6, 999]) {
       expect(eligible(GAME_SHOP_CATALOG, modifiers, round, loadout, perks).some((e) => e.id === 'corpo')).toBe(true);
     }
+    expect(eligible(GAME_SHOP_CATALOG, modifiers, 1, loadout, perks).some((e) => e.id === 'corpo')).toBe(false);
     expect(eligible(GAME_SHOP_CATALOG, modifiers, 6).some((e) => e.id === 'corpo')).toBe(false);
   });
 

@@ -7,6 +7,7 @@ import type { PerkId } from '../data/perks';
 import type { TechId } from '../data/techniques';
 import { RECIPES, type Recipe } from '../data/evolutions';
 import { recipeReady } from './evolution';
+import { axisGate } from './shopPricing';
 import { ITEM_AXES, type AxisItem } from '../data/techAxes';
 import type { ItemAxis } from './axisBuild';
 import type { ModifierId, ShopEntry, ShopEntryId } from '../data/shop';
@@ -22,12 +23,13 @@ function evolutionEligible(entry: ShopEntry, loadout: Loadout): boolean {
 
 /**
  * Item com eixo na loja (CRD-02, CRD-04): o Corpo é sempre dono; o Vermelho só equipado; e algum eixo ainda aceita
- * ponto (`canAdd`, teto de 3 por eixo e 5 no item). `round` fica para a trava por rodada (PRC-04).
+ * ponto (`canAdd`, teto de 3 por eixo e 5 no item), e a rodada já passou da trava do próximo ponto (PRC-04, `axisGate`).
  */
-export function axisEligible(entry: ShopEntry, loadout: Loadout, _round: number): boolean {
+export function axisEligible(entry: ShopEntry, loadout: Loadout, round: number): boolean {
   if (entry.kind !== 'body' && entry.id !== 'vermelho') return false;
   const item = entry.id as AxisItem;
   if (item === 'vermelho' && loadout.levelOf('vermelho') === 0) return false;
+  if (axisGate(loadout.axes.total(item)) > round) return false; // PRC-04
   return (ITEM_AXES[item] as readonly string[]).some((axis) => loadout.axes.canAdd(item, axis as ItemAxis<AxisItem>));
 }
 

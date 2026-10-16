@@ -114,7 +114,7 @@ describe('TECHNIQUE_SHOP_ENTRIES: preços das técnicas (ECN-01)', () => {
   });
 });
 
-describe('TECHNIQUE_SHOP_ENTRIES: techGate nos dois lados dos limites (ECN-02, ECN-09)', () => {
+describe('TECHNIQUE_SHOP_ENTRIES: techLevelGate (PRC-04) nos dois lados dos limites (ECN-02, ECN-09)', () => {
   it('nível 1 (compra inicial) abre desde a rodada 1', () => {
     for (const e of TECHNIQUE_SHOP_ENTRIES) expect(e.minRound(1)).toBe(1);
   });

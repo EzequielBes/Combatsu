@@ -269,7 +269,7 @@ describe('ECN-05 → CRD-02: a carta 0 é a melhoria de um item dono (técnica e
     axisRng?: Rng,
   ): Shop => new Shop(catalog, new Modifiers(FULL_SHOP_CATALOG), rng, round, loadout, undefined, undefined, axisRng);
 
-  it('Nv1 equipada na loja da rodada 2 (techGate(2) = 2): a carta 0 é ela ou o Corpo, qualquer que seja a seed', () => {
+  it('Nv1 equipada na loja da rodada 2 (techLevelGate(2) = 2): a carta 0 é ela ou o Corpo, qualquer que seja a seed', () => {
     for (let seed = 1; seed <= 25; seed++) {
       const loadout = new Loadout();
       loadout.equip(0, 'divergente', 1);
@@ -277,14 +277,15 @@ describe('ECN-05 → CRD-02: a carta 0 é a melhoria de um item dono (técnica e
     }
   });
 
-  it('rodada 1 (gate 2): só o Corpo sobe; na rodada 2 o foco é a divergente', () => {
+  it('rodada 1: nenhuma carta de eixo (PRC-04); na rodada 2 o foco é a divergente', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 1);
-    expect(ids(fresh(loadout, 1, zeros()))).toEqual(['corpo', 'corte', 'vida', 'forca']);
+    expect(ids(fresh(loadout, 1, zeros()))).not.toContain('corpo');
+    expect(ids(fresh(loadout, 1, zeros()))[0]).not.toBe('divergente');
     expect(ids(fresh(loadout, 2, zeros()))).toEqual(['divergente', 'corte', 'vida', 'forca']);
   });
 
-  it('Nv2 equipada: a melhoria só a partir da rodada 4 (techGate(3) = 4), fora na 3 e dentro na 4', () => {
+  it('Nv2 equipada: a melhoria só a partir da rodada 4 (techLevelGate(3) = 4), fora na 3 e dentro na 4', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 2);
     expect(ids(fresh(loadout, 3, zeros()))[0]).toBe('corpo');

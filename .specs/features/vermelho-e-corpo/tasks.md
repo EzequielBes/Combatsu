@@ -1838,9 +1838,9 @@ painel aberto; `statsDirector.snapshotFields()` ganha `choice: this.s.ui.choiceP
 
 **Done when**:
 
-- [ ] `tests/core/techShop.test.ts` e `tests/data/shop.test.ts` com `techLevelGate`; `shopAxes.test.ts`: ponto 3 do
+- [x] `tests/core/techShop.test.ts` e `tests/data/shop.test.ts` com `techLevelGate`; `shopAxes.test.ts`: ponto 3 do
       Corpo recusado na loja da r3 e oferecido na r4
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

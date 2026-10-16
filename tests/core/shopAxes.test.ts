@@ -79,6 +79,41 @@ const entryOf = (id: string): ShopEntry => {
 const inPool = (id: string, loadout?: Loadout, round = 10): boolean =>
   eligible(GAME_SHOP_CATALOG, new Modifiers(), round, loadout).some((e) => e.id === id);
 
+describe('axisEligible: trava por rodada do ponto (PRC-04)', () => {
+  const corpoWith = (points: number): Loadout => {
+    const loadout = new Loadout();
+    const axes = ['impacto', 'impacto', 'impacto', 'peso'] as const;
+    for (let i = 0; i < points; i++) loadout.axes.add('corpo', axes[i]);
+    return loadout;
+  };
+
+  it.each([
+    [0, 1, false],
+    [0, 2, true],
+    [1, 1, false],
+    [1, 2, true],
+    [2, 3, false],
+    [2, 4, true],
+    [3, 3, false],
+    [3, 4, true],
+  ])('Corpo com %i pontos na loja da rodada %i: %s', (points, round, expected) => {
+    expect(axisEligible(entryOf('corpo'), corpoWith(points), round)).toBe(expected);
+  });
+
+  it('o 5º ponto: recusado na rodada 5, oferecido na 6', () => {
+    const loadout = corpoWith(4);
+    expect(axisEligible(entryOf('corpo'), loadout, 5)).toBe(false);
+    expect(axisEligible(entryOf('corpo'), loadout, 6)).toBe(true);
+  });
+
+  it('o Vermelho equipado segue a mesma trava', () => {
+    const loadout = new Loadout();
+    equipRed(loadout, 0, 3);
+    expect(axisEligible(entryOf('vermelho'), loadout, 3)).toBe(false);
+    expect(axisEligible(entryOf('vermelho'), loadout, 4)).toBe(true);
+  });
+});
+
 describe('axisEligible: itens com eixo na loja (CRD-02, CRD-04)', () => {
   it('o Vermelho entra no catálogo até o Nv 6', () => {
     expect(entryOf('vermelho').maxLevel).toBe(6);
@@ -86,8 +121,8 @@ describe('axisEligible: itens com eixo na loja (CRD-02, CRD-04)', () => {
 
   it('o Corpo é elegível sem compra e sem técnica equipada, mas não sem loadout', () => {
     const loadout = new Loadout();
-    expect(axisEligible(entryOf('corpo'), loadout, 1)).toBe(true);
-    expect(inPool('corpo', loadout, 1)).toBe(true);
+    expect(axisEligible(entryOf('corpo'), loadout, 2)).toBe(true);
+    expect(inPool('corpo', loadout, 2)).toBe(true);
     expect(inPool('corpo')).toBe(false);
   });
 
@@ -119,11 +154,11 @@ describe('axisEligible: itens com eixo na loja (CRD-02, CRD-04)', () => {
   it('o Corpo com 5 pontos não é elegível; com 4 ainda é', () => {
     const loadout = new Loadout();
     for (const axis of ['impacto', 'impacto', 'impacto', 'peso'] as const) loadout.axes.add('corpo', axis);
-    expect(axisEligible(entryOf('corpo'), loadout, 1)).toBe(true);
+    expect(axisEligible(entryOf('corpo'), loadout, 6)).toBe(true);
     loadout.axes.add('corpo', 'peso');
     expect(loadout.axes.total('corpo')).toBe(5);
-    expect(axisEligible(entryOf('corpo'), loadout, 1)).toBe(false);
-    expect(inPool('corpo', loadout, 1)).toBe(false);
+    expect(axisEligible(entryOf('corpo'), loadout, 6)).toBe(false);
+    expect(inPool('corpo', loadout, 6)).toBe(false);
   });
 
   it('o Vermelho não equipado segue como técnica nova se há slot vazio', () => {
