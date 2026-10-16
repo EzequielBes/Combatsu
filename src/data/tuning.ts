@@ -320,6 +320,15 @@ export const SHOP: ShopTuning = {
   sortePerLevel: 0.03,
 };
 
+/** Preço da loja (PRC-02): o ponto de eixo custa `base` mais `step` por ponto já posto no item. */
+export interface PricingTuning {
+  axisPoint: { base: number; step: number };
+}
+
+export const PRICING: PricingTuning = {
+  axisPoint: { base: 12, step: 4 },
+};
+
 /** Maestria das técnicas (MST-01..06): pontos para subir do Nv1 e do Nv2, e pontos por acerto no chefe. */
 export interface MasteryTuning {
   thresholds: { 1: number; 2: number };

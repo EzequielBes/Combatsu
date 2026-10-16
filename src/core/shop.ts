@@ -8,9 +8,11 @@ import { ARSENAL, type ArsenalId } from '../data/arsenal';
 import { BUILD_NAMES, PERKS, type PerkId } from '../data/perks';
 import { SHOP } from '../data/tuning';
 import type { TechId } from '../data/techniques';
+import type { AxisId, AxisItem } from '../data/techAxes';
 import { eligible } from './shopEligibility';
-import { drawOffers, weightOf, type Offer } from './shopDraw';
-import { previewText } from './shopPreview';
+import { axisItemOf, drawCards, drawOffers, weightOf, type Offer } from './shopDraw';
+import { axisPreview, previewText } from './shopPreview';
+import { axisPointPrice } from './shopPricing';
 import type { ModifierId, ShopEntry, ShopEntryId } from '../data/shop';
 
 export { drawOffers };
@@ -28,6 +30,10 @@ export interface OfferView {
   sold: boolean;
   affordable: boolean;
   rarity: 'common' | 'rare' | null;
+  /** CRD-05: eixos da carta do Vermelho ou do Corpo, o eixo-foco primeiro; vazio nas outras cartas. */
+  axes: readonly AxisId[];
+  /** CRD-05: eixo que a compra vai receber; `null` nas cartas sem eixo. */
+  selectedAxis: AxisId | null;
 }
 
 export interface ShopView {
@@ -54,11 +60,15 @@ export interface BuyContext {
   applyArsenal?: (id: ArsenalId) => void;
   /** EVO-03: funde as técnicas da receita que vende `id`; opcional para quem monta a loja sem evolução. */
   applyEvolution?: (id: TechId) => void;
+  /** CRD-05: põe um ponto do `item` no `axis` escolhido na carta; opcional para quem monta a loja sem eixos. */
+  applyAxis?: (item: AxisItem, axis: AxisId) => void;
 }
 
 /** Custo de `entry`, unificando modificadores (F4, por `Modifiers`) e técnicas (F5, por nível no `loadout`). */
 function costOf(entry: ShopEntry, modifiers: Modifiers, loadout?: Loadout, arsenal?: Arsenal): number {
   if (arsenal && entry.id in ARSENAL) return arsenalCost(entry.id as ArsenalId, arsenal); // ARS-04
+  const axisItem = loadout && axisItemOf(entry, loadout);
+  if (axisItem) return axisPointPrice(loadout.axes.total(axisItem)); // PRC-02
   if (entry.kind === 'evolution') return entry.cost.base; // EVO-04
   if (entry.kind === 'technique') {
     const level = loadout?.levelOf(entry.id as TechId) ?? 0;
@@ -83,6 +93,8 @@ const EMPTY_OFFER_VIEW = (slot: number): OfferView => ({
   sold: false,
   affordable: false,
   rarity: null,
+  axes: [],
+  selectedAxis: null,
 });
 
 /** Aplica a carta comprada pelo callback do tipo dela (design "Error Handling Strategy"). */
@@ -104,6 +116,8 @@ export class Shop {
   private readonly sold = new Set<number>();
   private _rerollCost = SHOP.rerollBase;
   private _selected = 0;
+  /** CRD-05: índice do eixo escolhido em cada carta de eixo (0 = o eixo-foco). */
+  private readonly axisChoice = new Map<number, number>();
 
   constructor(
     private readonly catalog: readonly ShopEntry[],
@@ -113,6 +127,7 @@ export class Shop {
     private readonly loadout?: Loadout,
     private readonly perks?: Perks,
     private readonly arsenal?: Arsenal,
+    private readonly axisRng?: Rng,
   ) {
     this.offers = this.drawFresh();
   }
@@ -125,45 +140,24 @@ export class Shop {
   }
 
   /**
-   * TSH-05: enquanto os dois slots estão vazios, o slot 0 de toda loja (também no reroll, já que `reroll` chama
-   * este método de novo) é garantido como uma técnica, sorteada entre as elegíveis pelo peso de SHOP-08 antes
-   * dos outros slots. Sem `loadout`, comportamento antigo da F4 (sem garantia). Com técnica equipada, o slot 0
-   * é reservado para aprimorá-la (ECN-05, ECN-06; o reroll passa por aqui de novo).
+   * As cartas de uma loja nova (CRD-01 a CRD-04, EVO-01): com `loadout`, `drawCards` (evolução, melhoria de item,
+   * técnica nova no slot vazio e sorteio por peso); sem ele, o sorteio por peso da F4. O reroll passa por aqui de novo,
+   * e a escolha de eixo volta ao eixo-foco.
    */
   private drawFresh(): (Offer | null)[] {
+    this.axisChoice.clear();
     const pool = eligible(this.catalog, this.modifiers, this.round, this.loadout, this.perks, this.arsenal);
     const weight = this.weightFn();
-    const slots: (Offer | null)[] = [];
-    let rest = pool;
-    // EVO-01: a evolução pronta sempre aparece (slot 0), antes de qualquer outra regra de reserva.
-    const evolution = pool.find((e) => e.kind === 'evolution');
-    if (evolution) {
-      // Com a evolução no slot 0, os outros dois slots vêm do sorteio normal.
-      slots.push({ id: evolution.id, entry: evolution });
-      rest = pool.filter((e) => e !== evolution);
-    } else if (this.loadout && !this.loadout.hasAny()) {
-      const techPool = pool.filter((e) => e.kind === 'technique');
-      const [guaranteed] = drawOffers(techPool, this.rng, 1, weight);
-      if (guaranteed) {
-        slots.push({ id: guaranteed.id, entry: guaranteed });
-        rest = pool.filter((e) => e.id !== guaranteed.id);
-      }
-    } else if (this.loadout) {
-      // ECN-05..07: reserva o slot 0 para aprimorar uma técnica equipada (nível < 3 e rodada mínima já passada;
-      // o `eligible` já filtra isso). Sem candidata, os 3 slots vêm do sorteio por peso (ECN-07, EDG-04).
-      const upgrades = pool.filter((e) => e.kind === 'technique' && this.loadout!.levelOf(e.id as TechId) > 0);
-      if (upgrades.length > 0) {
-        // Com uma só candidata não consome o rng; com várias escolhe uma (mesma conta de `Rng.int(0, n - 1)`).
-        const idx = upgrades.length > 1 ? Math.floor(this.rng.next() * upgrades.length) : 0;
-        const chosen = upgrades[idx];
-        slots.push({ id: chosen.id, entry: chosen });
-        rest = pool.filter((e) => e.id !== chosen.id);
-      }
+    if (!this.loadout) {
+      const slots: (Offer | null)[] = drawOffers(pool, this.rng, SHOP.offers, weight).map((e) => ({
+        id: e.id,
+        entry: e,
+      }));
+      while (slots.length < SHOP.offers) slots.push(null);
+      return slots;
     }
-    const drawn = drawOffers(rest, this.rng, SHOP.offers - slots.length, weight);
-    for (const entry of drawn) slots.push({ id: entry.id, entry });
-    while (slots.length < SHOP.offers) slots.push(null);
-    return slots;
+    const axisRng = this.axisRng ?? this.rng;
+    return drawCards({ pool, rng: this.rng, axisRng, weight, loadout: this.loadout });
   }
 
   get rerollCost(): number {
@@ -186,7 +180,9 @@ export class Shop {
     const cost = costOf(offer.entry, this.modifiers, this.loadout, this.arsenal);
     if (!ctx.wallet.spend(cost)) return { ok: false, reason: 'funds' };
     this.sold.add(slot);
-    applyEntry(offer.entry, ctx);
+    const item = axisItemOf(offer.entry, this.loadout);
+    if (item && offer.axes?.length) ctx.applyAxis?.(item, this.axisOf(slot, offer)!);
+    else applyEntry(offer.entry, ctx);
     return { ok: true, id: offer.entry.id, cost };
   }
 
@@ -202,6 +198,20 @@ export class Shop {
     return true;
   }
 
+  /** Eixo escolhido na carta `slot` (CRD-05); `null` se a carta não tem eixo. */
+  private axisOf(slot: number, offer: Offer | null): AxisId | null {
+    const axes = offer?.axes;
+    return axes?.length ? axes[(this.axisChoice.get(slot) ?? 0) % axes.length] : null;
+  }
+
+  /** CRD-05: troca o eixo da carta selecionada, em ciclo entre os eixos dela; nas outras cartas, nada. */
+  chooseAxis(delta: 1 | -1): void {
+    const axes = this.offers[this._selected]?.axes;
+    if (!axes || axes.length < 2) return;
+    const now = this.axisChoice.get(this._selected) ?? 0;
+    this.axisChoice.set(this._selected, (now + delta + axes.length) % axes.length);
+  }
+
   /** Move a seleção em ciclo entre os 3 slots (SHOP-28, SHOP-29): `+1` avança, `-1` volta. */
   move(delta: 1 | -1): void {
     this._selected = (this._selected + delta + SHOP.offers) % SHOP.offers;
@@ -211,8 +221,17 @@ export class Shop {
   levelOf(entry: ShopEntry): number {
     if (entry.kind === 'modifier') return this.modifiers.level(entry.id as ModifierId);
     if (entry.kind === 'technique') return this.loadout?.levelOf(entry.id as TechId) ?? 0;
+    if (entry.kind === 'body') return this.loadout?.axes.level('corpo') ?? 0;
     if (entry.id in ARSENAL) return this.arsenal?.levelOf(entry.id as ArsenalId) ?? 0;
     return 0;
+  }
+
+  private previewOf(slot: number, offer: Offer, hp: number, maxHp: number): string {
+    const item = axisItemOf(offer.entry, this.loadout);
+    if (item && this.loadout && offer.axes?.length) {
+      return axisPreview(item, offer.axes, this.axisChoice.get(slot) ?? 0, this.loadout);
+    }
+    return previewText(offer.entry, this.modifiers, hp, maxHp, this.loadout, this.arsenal);
   }
 
   /** Dados prontos para o painel e o snapshot de debug (SHOP-21, SHOP-38, SHOP-44). */
@@ -226,11 +245,13 @@ export class Shop {
         id: offer.entry.id,
         name: offer.entry.name,
         levelText: levelText(offer.entry, level),
-        preview: previewText(offer.entry, this.modifiers, hp, maxHp, this.loadout, this.arsenal),
+        preview: this.previewOf(slot, offer, hp, maxHp),
         cost,
         sold: this.sold.has(slot),
         affordable: cost <= wallet.fragments,
         rarity: offer.entry.rarity,
+        axes: offer.axes ?? [],
+        selectedAxis: this.axisOf(slot, offer),
       };
     });
     return { offers, rerollCost: this._rerollCost, selected: this._selected };

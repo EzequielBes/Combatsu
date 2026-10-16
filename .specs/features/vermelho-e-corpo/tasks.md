@@ -1681,16 +1681,18 @@ inflação nem trava até o passo 5), porque o `costOf` de hoje mandaria o `kind
 
 **Done when**:
 
-- [ ] `tests/core/shopAxes.test.ts`: carta de eixo custa 12, 16, 20, 24 e 28 pelo ponto (PRC-02) e mostra `Nv N/6`;
+- [x] `tests/core/shopAxes.test.ts`: carta de eixo custa 12, 16, 20, 24 e 28 pelo ponto (PRC-02) e mostra `Nv N/6`;
       com 4 cartas, `chooseAxis(+1)` troca para o 2º eixo e a compra põe o ponto nele;
       compra sem saldo não muda nada; reroll volta ao foco (edge case)
-- [ ] Os testes do Vermelho saem do `techShop.test.ts` para o `shopAxes.test.ts`; `shop.test.ts` e
+- [x] Os testes do Vermelho saem do `techShop.test.ts` para o `shopAxes.test.ts`; `shop.test.ts` e
       `evolutionShop.test.ts` com a garantia na carta 1
-- [ ] `shop.ts` abaixo de 230 linhas efetivas; gate verde; contagem sem perda (casos movidos contam)
+- [x] `shop.ts` abaixo de 230 linhas efetivas; gate verde; contagem sem perda (casos movidos contam)
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(core): choose the axis on the upgrade card`
+
+> Nota: os testes de compra, preço e `chooseAxis` ficaram em `tests/core/shopAxisBuy.test.ts` (o `shopAxes.test.ts` bateria o teto de 400 linhas). Os casos ECN-05 e TSH-05 do `techShop.test.ts` foram reescritos para a regra nova (carta 0 = melhoria de item dono, carta 1 = técnica nova); o do preço do Vermelho (60) virou o de 16 no `shopAxisBuy.test.ts`. `shop.test.ts` e `evolutionShop.test.ts` seguiram verdes sem mudança.
 
 ---
 

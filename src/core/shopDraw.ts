@@ -98,9 +98,11 @@ export interface DrawContext {
   count?: number;
 }
 
-/** Carta de eixo: o Corpo, ou o Vermelho já equipado (fora do slot ele é técnica nova). */
-const isAxisItem = (entry: ShopEntry, loadout: Loadout): boolean =>
-  entry.kind === 'body' || (entry.id === 'vermelho' && loadout.levelOf('vermelho') > 0);
+/** Item com eixo que a carta vende: o Corpo, ou o Vermelho já equipado (fora do slot ele é técnica nova). */
+export function axisItemOf(entry: ShopEntry, loadout?: Loadout): AxisItem | null {
+  if (entry.kind === 'body') return 'corpo';
+  return entry.id === 'vermelho' && (loadout?.levelOf('vermelho') ?? 0) > 0 ? 'vermelho' : null;
+}
 
 /** Dono do item: técnica equipada ou o Corpo (relíquia e arma não contam). */
 const isOwned = (entry: ShopEntry, loadout: Loadout): boolean =>
@@ -131,9 +133,8 @@ export function drawCards(ctx: DrawContext): (Offer | null)[] {
   const cards: Offer[] = [];
   let rest = [...ctx.pool];
   const take = (entry: ShopEntry): void => {
-    const axes = isAxisItem(entry, ctx.loadout)
-      ? axesFor(entry.id as AxisItem, ctx.loadout.axes, ctx.axisRng)
-      : undefined;
+    const item = axisItemOf(entry, ctx.loadout);
+    const axes = item ? axesFor(item, ctx.loadout.axes, ctx.axisRng) : undefined;
     cards.push(axes ? { id: entry.id, entry, axes } : { id: entry.id, entry });
     rest = rest.filter((e) => e.id !== entry.id);
   };

@@ -7,9 +7,8 @@ import { Loadout } from '../../src/core/loadout';
 import { Rng } from '../../src/core/rng';
 import { Wallet } from '../../src/core/wallet';
 import { CursedEnergy, cursedEnergyRegenAtLevel } from '../../src/core/energy';
-import { FULL_SHOP_CATALOG, type ShopEntry } from '../../src/data/shop';
+import { FULL_SHOP_CATALOG, GAME_SHOP_CATALOG, type ShopEntry } from '../../src/data/shop';
 import type { TechId } from '../../src/data/techniques';
-import { equipRed } from './redLevel';
 
 const technique = (id: string): ShopEntry => {
   const found = FULL_SHOP_CATALOG.find((e) => e.id === id);
@@ -56,15 +55,6 @@ describe('TSH-02: custo = base + step × nível atual (0 se não equipada)', () 
     expect(technique('corte').cost).toEqual({ base: 23, step: 11 });
     expect(technique('azul').cost).toEqual({ base: 26, step: 15 });
     expect(technique('vermelho').cost).toEqual({ base: 30, step: 15 });
-  });
-
-  it('Shop.view reporta o custo real: vermelho equipada no nível 2 custa 30 + 15×2 = 60', () => {
-    const loadout = new Loadout();
-    equipRed(loadout, 0, 2);
-    const shop = new Shop([technique('vermelho')], new Modifiers(FULL_SHOP_CATALOG), fakeRng([0]), 6, loadout);
-    const wallet = new Wallet();
-    wallet.add(200);
-    expect(shop.view(wallet, 100, 100).offers[0].cost).toBe(60);
   });
 
   it('não equipada (n=0): divergente custa 15', () => {
@@ -116,39 +106,29 @@ describe('TSH-04: técnica equipada entra no pool se nível < 3 e a rodada míni
   });
 });
 
-describe('TSH-05: com os dois slots vazios, o slot 0 é sempre uma técnica (também após reroll)', () => {
-  it('fakeRng([0,0,0]) escolhe divergente (peso 3, primeira do catálogo) e completa com vida/forca', () => {
+describe('TSH-05 → CRD-03: com os dois slots vazios, a carta 1 é uma técnica nova (também após reroll)', () => {
+  /** Rng falso com zeros de sobra: toda escolha cai na primeira entrada. */
+  const zeros = (): Rng => fakeRng(Array.from({ length: 40 }, () => 0));
+
+  it('rng zerado: carta 0 é o Corpo (único dono), carta 1 é a divergente (1ª técnica nova) e a 2 é vida', () => {
     const loadout = new Loadout();
-    const shop = new Shop(
-      FULL_SHOP_CATALOG,
-      new Modifiers(FULL_SHOP_CATALOG),
-      fakeRng([0, 0, 0, 0, 0, 0]),
-      10,
-      loadout,
-    );
+    const shop = new Shop(GAME_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), zeros(), 10, loadout);
     const ids = shop.view(new Wallet(), 100, 100).offers.map((o) => o.id);
-    expect(ids[0]).toBe('divergente');
-    expect(ids).toEqual(['divergente', 'vida', 'forca']);
+    expect(ids).toEqual(['corpo', 'divergente', 'vida']);
   });
 
-  it('depois do reroll, o slot 0 continua sendo uma técnica', () => {
+  it('depois do reroll, a carta 1 continua sendo uma técnica nova', () => {
     const loadout = new Loadout();
-    const shop = new Shop(
-      FULL_SHOP_CATALOG,
-      new Modifiers(FULL_SHOP_CATALOG),
-      fakeRng([0, 0, 0, 0, 0, 0]),
-      10,
-      loadout,
-    );
+    const shop = new Shop(GAME_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), zeros(), 10, loadout);
     const wallet = new Wallet();
     wallet.add(100);
     expect(shop.reroll(wallet)).toBe(true);
     const ids = shop.view(wallet, 100, 100).offers.map((o) => o.id);
-    expect(ids[0]).toBe('divergente');
+    expect(ids[1]).toBe('divergente');
   });
 
   it('sem loadout (comportamento antigo da F4): a garantia não se aplica, slot 0 sorteia normalmente', () => {
-    const shop = new Shop(FULL_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), fakeRng([0, 0, 0]), 10);
+    const shop = new Shop(GAME_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), fakeRng([0, 0, 0]), 10);
     const ids = shop.view(new Wallet(), 100, 100).offers.map((o) => o.id);
     expect(ids).toEqual(['vida', 'forca', 'agilidade']); // nenhuma técnica: sem loadout elas nem entram no pool
   });
@@ -278,43 +258,49 @@ describe('TSH-17: prévia de `fluxo` mostra o regen atual e o do próximo nível
   });
 });
 
-describe('ECN-05, ECN-06, ECN-07, EDG-04: slot 0 reservado para aprimorar uma técnica equipada', () => {
+describe('ECN-05 → CRD-02: a carta 0 é a melhoria de um item dono (técnica equipada ou Corpo)', () => {
   const ids = (shop: Shop): (string | null)[] => shop.view(new Wallet(), 100, 100).offers.map((o) => o.id);
-  const fresh = (loadout: Loadout, round: number, rng: Rng, catalog: readonly ShopEntry[] = FULL_SHOP_CATALOG): Shop =>
-    new Shop(catalog, new Modifiers(FULL_SHOP_CATALOG), rng, round, loadout);
+  const zeros = (): Rng => fakeRng(Array.from({ length: 40 }, () => 0));
+  const fresh = (
+    loadout: Loadout,
+    round: number,
+    rng: Rng,
+    catalog: readonly ShopEntry[] = GAME_SHOP_CATALOG,
+    axisRng?: Rng,
+  ): Shop => new Shop(catalog, new Modifiers(FULL_SHOP_CATALOG), rng, round, loadout, undefined, undefined, axisRng);
 
-  it('Nv1 equipada na loja da rodada 2 (techGate(2) = 2): offers[0] é ela, qualquer que seja a seed', () => {
+  it('Nv1 equipada na loja da rodada 2 (techGate(2) = 2): a carta 0 é ela ou o Corpo, qualquer que seja a seed', () => {
     for (let seed = 1; seed <= 25; seed++) {
       const loadout = new Loadout();
       loadout.equip(0, 'divergente', 1);
-      expect(ids(fresh(loadout, 2, new Rng(seed)))[0]).toBe('divergente');
+      expect(['divergente', 'corpo']).toContain(ids(fresh(loadout, 2, new Rng(seed)))[0]);
     }
   });
 
-  it('a mesma técnica na loja da rodada 1 (gate 2): sem reserva, os 3 slots vêm do sorteio por peso', () => {
+  it('rodada 1 (gate 2): só o Corpo sobe; na rodada 2 o foco é a divergente', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 1);
-    expect(ids(fresh(loadout, 1, fakeRng([0, 0, 0])))).toEqual(['vida', 'forca', 'agilidade']);
-    expect(ids(fresh(loadout, 2, fakeRng([0, 0, 0])))).toEqual(['divergente', 'vida', 'forca']);
+    expect(ids(fresh(loadout, 1, zeros()))).toEqual(['corpo', 'corte', 'vida']);
+    expect(ids(fresh(loadout, 2, zeros()))).toEqual(['divergente', 'corte', 'vida']);
   });
 
-  it('Nv2 equipada: reserva só a partir da rodada 4 (techGate(3) = 4), fora na 3 e dentro na 4', () => {
+  it('Nv2 equipada: a melhoria só a partir da rodada 4 (techGate(3) = 4), fora na 3 e dentro na 4', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 2);
-    expect(ids(fresh(loadout, 3, fakeRng([0, 0, 0])))[0]).toBe('vida');
-    expect(ids(fresh(loadout, 4, fakeRng([0, 0, 0])))[0]).toBe('divergente');
+    expect(ids(fresh(loadout, 3, zeros()))[0]).toBe('corpo');
+    expect(ids(fresh(loadout, 4, zeros()))[0]).toBe('divergente');
   });
 
-  it('a técnica reservada sai do pool: não aparece duas vezes na mesma loja', () => {
+  it('a técnica melhorada sai do pool: não aparece duas vezes na mesma loja', () => {
     for (let seed = 1; seed <= 25; seed++) {
       const loadout = new Loadout();
       loadout.equip(0, 'divergente', 1);
       const list = ids(fresh(loadout, 2, new Rng(seed)));
-      expect(list.filter((id) => id === 'divergente')).toHaveLength(1);
+      expect(list.filter((id) => id === 'divergente').length).toBeLessThanOrEqual(1);
     }
   });
 
-  it('reroll mantém a reserva (ECN-06)', () => {
+  it('reroll mantém a carta 0 como melhoria de um dono (ECN-06)', () => {
     for (let seed = 1; seed <= 25; seed++) {
       const loadout = new Loadout();
       loadout.equip(1, 'azul', 1);
@@ -322,46 +308,44 @@ describe('ECN-05, ECN-06, ECN-07, EDG-04: slot 0 reservado para aprimorar uma t�
       const wallet = new Wallet();
       wallet.add(100);
       expect(shop.reroll(wallet)).toBe(true);
-      expect(shop.view(wallet, 100, 100).offers[0].id).toBe('azul');
+      expect(['azul', 'corpo']).toContain(shop.view(wallet, 100, 100).offers[0].id);
     }
   });
 
-  it('duas candidatas: o rng escolhe entre elas, e o slot 0 é sempre uma delas', () => {
+  it('duas candidatas: o axisRng escolhe entre elas, e a carta 0 é sempre uma delas', () => {
     const make = (): Loadout => {
       const loadout = new Loadout();
       loadout.equip(0, 'divergente', 1);
       loadout.equip(1, 'corte', 1);
       return loadout;
     };
-    expect(ids(fresh(make(), 2, fakeRng([0, 0, 0])))[0]).toBe('divergente');
-    expect(ids(fresh(make(), 2, fakeRng([0.99, 0, 0])))[0]).toBe('corte');
+    // 0,6 ou mais sai do foco (divergente) e cai entre os outros donos: corte e Corpo
+    expect(ids(fresh(make(), 2, zeros(), GAME_SHOP_CATALOG, fakeRng([0.6, 0, 0, 0])))[0]).toBe('corte');
+    expect(ids(fresh(make(), 2, zeros(), GAME_SHOP_CATALOG, fakeRng([0.6, 0.99, 0, 0])))[0]).toBe('corpo');
+    expect(ids(fresh(make(), 2, zeros(), GAME_SHOP_CATALOG, fakeRng([0.59, 0, 0, 0])))[0]).toBe('divergente');
   });
 
-  it('só uma candidata elegível (a outra no Nv3): a reserva vai para a elegível', () => {
+  it('só uma candidata elegível (a outra no Nv3): a melhoria vai para a elegível ou o Corpo', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 3);
     loadout.equip(1, 'corte', 1);
-    expect(ids(fresh(loadout, 2, fakeRng([0, 0, 0])))[0]).toBe('corte');
+    expect(ids(fresh(loadout, 2, zeros()))[0]).toBe('corte');
   });
 
-  it('as duas técnicas no Nv3: sem reserva, os 3 slots vêm do sorteio por peso (EDG-04)', () => {
+  it('as duas técnicas no Nv3: só o Corpo sobe e o resto vem do sorteio por peso (EDG-04)', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 3);
     loadout.equip(1, 'corte', 3);
-    expect(ids(fresh(loadout, 10, fakeRng([0, 0, 0])))).toEqual(['vida', 'forca', 'agilidade']);
+    expect(ids(fresh(loadout, 10, zeros()))).toEqual(['corpo', 'vida', 'forca']);
   });
 
-  it('TSH-05 intacto: com os slots vazios o slot 0 continua sendo técnica não equipada', () => {
-    expect(ids(fresh(new Loadout(), 1, fakeRng([0, 0, 0, 0, 0, 0])))).toEqual(['divergente', 'vida', 'forca']);
-  });
-
-  it('tuning não padrão: com minRound = 5 a reserva só aparece da rodada 5 em diante', () => {
+  it('tuning não padrão: com minRound = 5 a melhoria só aparece da rodada 5 em diante', () => {
     const late: ShopEntry = { ...technique('divergente'), minRound: () => 5 };
-    const catalog = [...FULL_SHOP_CATALOG.filter((e) => e.id !== 'divergente'), late];
+    const catalog = [...GAME_SHOP_CATALOG.filter((e) => e.id !== 'divergente'), late];
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 1);
-    expect(ids(fresh(loadout, 4, fakeRng([0, 0, 0]), catalog))[0]).toBe('vida');
-    expect(ids(fresh(loadout, 5, fakeRng([0, 0, 0]), catalog))[0]).toBe('divergente');
+    expect(ids(fresh(loadout, 4, zeros(), catalog))[0]).toBe('corpo');
+    expect(ids(fresh(loadout, 5, zeros(), catalog))[0]).toBe('divergente');
   });
 });
 
