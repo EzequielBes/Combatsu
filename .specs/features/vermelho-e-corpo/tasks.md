@@ -1902,9 +1902,9 @@ trava e a inflação da F30, toda carta suposta à venda.
 
 **Done when**:
 
-- [ ] Nv 2 até a loja da r3 e Nv 5 até a da r10 (ESC-03.7); se não fechar, parar e levar ao usuário (tabela do topo)
-- [ ] Fim do passo 5: smokes `shop-axes`, `shop`, `shop-progress` e `run-loop` verdes
-- [ ] Gate verde; contagem sem perda
+- [x] Nv 2 até a loja da r3 e Nv 5 até a da r10 (ESC-03.7); se não fechar, parar e levar ao usuário (tabela do topo)
+- [x] Fim do passo 5: smokes `shop-axes`, `shop`, `shop-progress` e `run-loop` verdes
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
