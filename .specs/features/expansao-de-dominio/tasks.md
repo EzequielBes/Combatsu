@@ -224,10 +224,10 @@ entrada inválida.
 
 **Done when**:
 
-- [ ] `tests/core/domainParam.test.ts` (novo): `santuario` → Nv 1; `jackpot:3` → Nv 3; `amplificacao:0`, `santuario:4`,
+- [x] `tests/core/domainParam.test.ts` (novo): `santuario` → Nv 1; `jackpot:3` → Nv 3; `amplificacao:0`, `santuario:4`,
       `santuario:1.5` e `xx` → `null`; `charge` 0 e 100 aceitos; 101, -1, `5.5`, vazio e `abc` → `null`;
       `jackpotMisses` 0 e 2 aceitos, 3 e -1 → `null`
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4326 → 4350)
 
 **Tests**: unit
 **Gate**: quick
