@@ -105,9 +105,21 @@ describe('AxisDirector: painel, anúncio e rodada', () => {
     r.axes.announce('vermelho', 'Fliperama');
     r.axes.announce('vermelho', 'Fliperama');
     expect(r.banners).toEqual(['Fliperama']);
-    expect(r.slow).toHaveLength(1);
+    // VRM-17.12: o tempo vai a 0,4 por 350 ms (de tempo real), uma vez só na rodada.
+    expect(r.slow).toEqual([[0.4, 350]]);
     r.axes.onRoundStart();
     r.axes.announce('vermelho', 'Fliperama');
     expect(r.banners).toHaveLength(2);
+  });
+
+  it('CRP-13: o Despertar do Corpo também abre a câmera lenta 0,4 por 350 ms, uma vez na rodada', () => {
+    params.set('axes', 'corpo.fluxo:3,corpo.alcance:1');
+    params.set('ramo', 'corpo:a');
+    const r = rig(false);
+    r.axes.applyDebug();
+    r.axes.announce('corpo', 'Martelo Negro');
+    r.axes.announce('corpo', 'Martelo Negro');
+    expect(r.banners).toEqual(['Martelo Negro']);
+    expect(r.slow).toEqual([[0.4, 350]]);
   });
 });
