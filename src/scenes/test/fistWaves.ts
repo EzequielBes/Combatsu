@@ -24,6 +24,8 @@ export class FistWaves {
   /** Os alvos do golpe que soltou cada onda viva: a onda passa por eles sem acertar (CRP-10). */
   private readonly except = new Map<number, Set<number>>();
   private fx: FistWaveFx | null = null;
+  /** CRP-11: a 2ª onda do Punho que Rasga, que sai `leftMs` depois da 1ª, igual a ela. */
+  private pending: { leftMs: number; at: Vec2; dir: 1 | -1; damage: number; opts: WaveOpts; ids: Set<number> }[] = [];
 
   constructor(private readonly s: TestScene) {}
 
@@ -32,19 +34,39 @@ export class FistWaves {
    * 4 por segundo de jogo derruba o excedente, CRP-12). Eventos `fistWave:emit` e `fistWave:capped`.
    */
   emit(at: Vec2, damage: number, opts: WaveOpts, exceptId: number): boolean {
-    const ok = this.emitter.emit(at, this.s.player.facing, damage, opts, this.s.clockMs);
-    this.s.snapshot.debugEvents.push(ok ? 'fistWave:emit' : 'fistWave:capped');
-    if (ok) this.except.set(this.emitter.waves[this.emitter.waves.length - 1]!.id, new Set([exceptId]));
-    return ok;
+    return this.release(at, this.s.player.facing, damage, opts, new Set([exceptId]));
+  }
+
+  /** CRP-11: a mesma onda de novo daqui a `delayMs` de tempo de jogo, do mesmo ponto e para o mesmo lado. */
+  emitLater(delayMs: number, at: Vec2, damage: number, opts: WaveOpts, exceptId: number): void {
+    const dir = this.s.player.facing;
+    this.pending.push({ leftMs: delayMs, at, dir, damage, opts, ids: new Set([exceptId]) });
   }
 
   /** O mesmo golpe acertou mais um alvo (golpe de 2 alvos): as ondas dele também passam por esse. */
   skip(targetId: number): void {
     for (const ids of this.except.values()) ids.add(targetId);
+    for (const p of this.pending) p.ids.add(targetId);
+  }
+
+  private release(at: Vec2, dir: 1 | -1, damage: number, opts: WaveOpts, ids: Set<number>): boolean {
+    const ok = this.emitter.emit(at, dir, damage, opts, this.s.clockMs);
+    this.s.snapshot.debugEvents.push(ok ? 'fistWave:emit' : 'fistWave:capped');
+    if (ok) this.except.set(this.emitter.waves[this.emitter.waves.length - 1]!.id, ids);
+    return ok;
+  }
+
+  /** Solta as ondas adiadas cujo prazo acabou neste passo. */
+  private releaseDue(dtMs: number): void {
+    for (const p of this.pending) p.leftMs -= dtMs;
+    const due = this.pending.filter((p) => p.leftMs <= 0);
+    this.pending = this.pending.filter((p) => p.leftMs > 0);
+    for (const p of due) this.release(p.at, p.dir, p.damage, p.opts, p.ids);
   }
 
   /** Anda as ondas, entrega os acertos e redesenha; sem onda viva a vista sai do `FxRegistry`. */
   update(dtMs: number): void {
+    this.releaseDue(dtMs);
     if (this.emitter.waves.length === 0) {
       this.dropFx();
       return;
@@ -70,6 +92,7 @@ export class FistWaves {
   reset(): void {
     this.emitter.reset();
     this.except.clear();
+    this.pending = [];
     this.dropFx();
   }
 

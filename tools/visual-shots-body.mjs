@@ -132,9 +132,36 @@ async function fistWaveLeftScenario(t) {
   t.assert(false, 'a onda para a esquerda não saiu');
 }
 
+// Punho que Rasga (CRP-11, CRP-13): a 1ª onda da rodada com o Despertar mostra o banner e a câmera lenta, e a onda
+// atravessa os comuns atrás do alvo (tela inteira e recortes à frente do player).
+async function tearingWaveScenario(t) {
+  let s = await t.open(
+    'hd=1&area=modular&maxAlive=3&enemyGuard=0&noshop=1&shove=0&mods=vida:5&axes=corpo.fluxo:3,corpo.alcance:1&ramo=corpo:b',
+  );
+  for (let i = 0; i < 40 && s.enemies.length < 3; i++) s = await t.snap(300);
+  await t.waitQuiet();
+  s = await t.approach();
+  const seen = s.events.length;
+  await t.press('KeyK');
+  let n = 0;
+  for (let i = 0; i < 60 && n < 10; i++) {
+    s = await t.frame();
+    if (!s.events.slice(seen).includes('fistWave:emit')) continue;
+    if (n === 0) await t.shot('99-rasga-anuncio');
+    n += 1;
+    if (!s.hitstop.frozen)
+      await t.close(`99-rasga-${String(n).padStart(2, '0')}`, 110, {
+        x: s.player.x + s.player.facing * 70,
+        y: s.player.y,
+      });
+  }
+  t.assert(n > 0, 'a onda do Punho que Rasga não saiu');
+}
+
 export const bodyScenarios = () => ({
   corpoGolpe: (t) => bodyStrikeScenario(t),
   corpoFuria: (t) => furyAuraScenario(t),
   corpoOnda: (t) => fistWaveScenario(t),
   corpoOndaEsq: (t) => fistWaveLeftScenario(t),
+  corpoRasga: (t) => tearingWaveScenario(t),
 });

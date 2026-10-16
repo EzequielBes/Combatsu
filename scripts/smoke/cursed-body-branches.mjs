@@ -1,7 +1,7 @@
 // Ramos e Despertares do Corpo no jogo vivo (CRP-08 a CRP-13), cenários do `cursed-body.smoke.mjs`. Não é um cenário
 // próprio (o runner só roda `*.smoke.mjs`): existe para o smoke caber no teto de 400 linhas.
 import { makeKit } from './fight-kit.mjs';
-import { BASE, walkToDummy } from './cursed-body-kit.mjs';
+import { BASE, DUMMY_X, walkToDummy } from './cursed-body-kit.mjs';
 import { REGEN_PER_FRAME, spendRed } from './cursed-body-fury.mjs';
 
 /** Um ponto fora do dano e da força (Fluxo) leva o Corpo ao Nv 2, onde o `ramo=` é aceito. */
@@ -175,9 +175,117 @@ async function fistWave(ctx) {
   ctx.assert(false, `CRP-10: a onda não chegou ao 2º comum em 8 fortes: ${JSON.stringify(s.enemies.map((e) => e.x))}`);
 }
 
+/**
+ * Cinco pontos com a Fúria no 3 (o teto dela é o 7º acúmulo) e o Ritmo no 2 (a `recovery` × 0,85 deixa 3 fortes caberem
+ * em 1000 ms de jogo): Nv 6, com o ramo o Despertar liga.
+ */
+const FURY_LEVEL_6 = 'axes=corpo.furia:3,corpo.ritmo:2';
+const awakened = (s) => s.hud.banner === 'Punho que Rasga' && Math.abs(s.timeScale - 0.4) < 1e-9;
+
+/** Dá a rasteira no comum mais perto e segue a onda; devolve os acertos dela, os alvos do golpe e o anúncio. */
+async function sweepWave(kit) {
+  await kit.waitQuiet();
+  let s = await kit.approach();
+  const hp0 = new Map(s.enemies.map((e) => [e.id, e.hp]));
+  const seen = s.events.length;
+  await kit.down('KeyS');
+  await kit.tap('KeyK', 16);
+  await kit.up('KeyS');
+  let announced = null;
+  let struck = null;
+  for (let f = 0; f < 50; f++) {
+    s = await kit.frame();
+    struck ??= s.enemies.filter((e) => e.hp < (hp0.get(e.id) ?? e.hp)).map((e) => e.id);
+    if (struck.length === 0) struck = null;
+    if (announced === null && s.events.slice(seen).includes('fistWave:emit')) announced = awakened(s);
+  }
+  return { waves: waveHits(s, seen), struck: struck ?? [], announced, emitted: announced !== null };
+}
+
+/**
+ * CRP-11, CRP-13: com o Punho que Rasga (Onda do Punho no Nv 5) a onda atravessa e acerta os 2 comuns atrás do alvo;
+ * a 1ª onda da rodada mostra o banner do Despertar com o tempo a 0,4 e a 2ª não.
+ */
+async function tearingWave(ctx) {
+  const kit = makeKit(ctx);
+  let s = await kit.boot(`${BASE}&maxAlive=3&mods=vida:5&${LEVEL_5}&ramo=corpo:b`);
+  ctx.assert(s.build.corpo.awakened === true, `CRP-13: Punho que Rasga ligado: ${JSON.stringify(s.build.corpo)}`);
+  for (let i = 0; i < 40 && s.enemies.length < 3; i++) s = await kit.snap(300);
+  const runs = [];
+  for (let tries = 0; tries < 8; tries++) {
+    const r = await sweepWave(kit);
+    if (r.emitted) runs.push(r);
+    const view = JSON.stringify(runs);
+    if (runs.length === 1) ctx.assert(r.announced === true, `CRP-13: a 1ª onda da rodada anuncia: ${view}`);
+    if (runs.length === 2) ctx.assert(r.announced === false, `CRP-13: a 2ª onda da rodada não anuncia: ${view}`);
+    const others = new Set(r.waves.map(([id]) => id).filter((id) => !r.struck.includes(id)));
+    if (runs.length >= 2 && others.size >= 2) return;
+  }
+  ctx.assert(false, `CRP-11: a onda deveria atravessar 2 comuns atrás do alvo: ${JSON.stringify(runs)}`);
+}
+
+/** Dano do forte com a Fúria 3 no teto (+35 %): `round(12 × 1,35)` = 16 e `round(14 × 1,35)` = 19. */
+const HEAVY_AT_FURY_CAP = { chuteFrontal: 16, chuteAlto: 19 };
+
+/**
+ * CRP-11 e CRP-12 (laboratório: o boneco não revida, e a Fúria no teto pede 7 acertos sem levar golpe): com a Fúria no
+ * teto o forte solta 2 ondas a 100 ms (6 quadros, com 1 de folga); fortes seguidos passam de 4 ondas em 1000 ms e a
+ * excedente não sai (`fistWave:capped`), sem mudar o dano do forte. Um forte antes da Fúria gasta o anúncio da rodada,
+ * para a câmera lenta não esticar os 100 ms.
+ */
+async function secondWaveAndCap(ctx) {
+  const kit = makeKit(ctx);
+  let s = await walkToDummy(kit, ctx, `${FURY_LEVEL_6}&ramo=corpo:b`, 40);
+  await kit.tap('KeyK', 16);
+  s = await kit.snap(1200);
+  for (let k = 0; k < 7; k++) {
+    await kit.tap('KeyJ', 16);
+    s = await kit.snap(900);
+  }
+  ctx.assert(
+    Math.abs(s.build.corpo.fury.bonus - 0.35) < 1e-9,
+    `a Fúria deveria estar no teto: ${JSON.stringify(s.build.corpo)}`,
+  );
+  const log = [];
+  for (let f = 0; f < 90; f++) {
+    if (f % 3 === 0) await kit.down('KeyK');
+    if (f % 3 === 1) await kit.up('KeyK');
+    const prev = s;
+    s = await kit.frame();
+    // Quadro de jogo: o hitstop congela o relógio de jogo, que mede os 100 ms e a janela do teto.
+    if (!s.hitstop.frozen) log.push({ f, e: 'tick', dmg: 0 });
+    const dummy = (x) => x.fxlab.dummies.find((d) => d.x === DUMMY_X).hp;
+    const fresh = s.events.slice(prev.events.length);
+    for (const e of fresh) log.push({ f, e, dmg: dummy(prev) - dummy(s) });
+  }
+  await kit.up('KeyK');
+  // Índice de cada quadro em quadros de jogo (sem os congelados do hitstop).
+  const ticks = log.filter((x) => x.e === 'tick').map((x) => x.f);
+  const gameFrame = (f) => ticks.filter((t) => t <= f).length;
+  const emits = log.filter((x) => x.e === 'fistWave:emit').map((x) => gameFrame(x.f));
+  const capped = log.filter((x) => x.e === 'fistWave:capped');
+  const view = JSON.stringify({ emits, log: log.filter((x) => !x.e.startsWith('spark') && x.e !== 'tick') });
+  ctx.assert(emits.length >= 2 && Math.abs(emits[1] - emits[0] - 6) <= 1, `CRP-11: 2 ondas a 100 ms: ${view}`);
+  ctx.assert(capped.length >= 1, `CRP-12: a 5ª onda em 1000 ms não sai: ${view}`);
+  const inWindow = emits.some((f) => emits.filter((g) => g >= f && g < f + 60).length > 4);
+  ctx.assert(!inWindow, `CRP-12: nunca mais de 4 ondas em 1000 ms: ${view}`);
+  // A onda barrada no quadro do próprio forte (não a 2ª, adiada): o forte tira o mesmo que tiraria com a onda.
+  const struck = capped.filter((c) => c.dmg > 0);
+  ctx.assert(struck.length >= 1, `edge case: um forte deveria ter a onda barrada: ${view}`);
+  for (const c of struck) {
+    const move = log
+      .filter((x) => x.f <= c.f && x.e.startsWith('move:'))
+      .pop()
+      ?.e.slice(5);
+    ctx.assert(c.dmg === HEAVY_AT_FURY_CAP[move], `edge case: o forte da onda barrada tira o mesmo: ${view}`);
+  }
+}
+
 export async function branchScenarios(ctx) {
   await cadenceDecisive(ctx);
   await cadenceWhiffResets(ctx);
   await blackHammer(ctx);
   await fistWave(ctx);
+  await tearingWave(ctx);
+  await secondWaveAndCap(ctx);
 }

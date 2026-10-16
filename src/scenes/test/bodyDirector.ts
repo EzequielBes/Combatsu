@@ -4,7 +4,7 @@ import type { Hit, Vec2 } from '../../core/hit';
 import type { StrikeMods } from '../../core/statSheet';
 import type { MoveDef } from '../../data/moves';
 import { TECH_RULE } from '../../data/techRule';
-import { BODY_AXES, BODY_BRANCHES } from '../../data/techAxes';
+import { AWAKENING_NAMES, BODY_AWAKENINGS, BODY_AXES, BODY_BRANCHES } from '../../data/techAxes';
 import type { Hittable } from '../../game/bodyTags';
 import { Enemy } from '../../game/Enemy';
 import { FuryAura, furyAuraCenter } from '../../game/FuryAura';
@@ -87,7 +87,11 @@ export class BodyDirector {
     this.fury.onConnect(hit.swingId);
     this.cadence.onConnect(hit.swingId);
     const branch = this.s.loadout.axes.branch('corpo');
-    if (hit.decisive && this.awakened && branch === 'cadencia') this.hammer(point, target);
+    if (hit.decisive && this.awakened && branch === 'cadencia') {
+      // CRP-13: o 1º decisivo da rodada com o Martelo Negro anuncia o Despertar.
+      this.s.build.axes.announce('corpo', AWAKENING_NAMES.marteloNegro);
+      this.hammer(point, target);
+    }
     if (branch !== 'ondaDoPunho' || hit.strength !== 'heavy') return;
     if (this.waveSwing === hit.swingId) this.waves.skip(this.idOf(target));
     else {
@@ -96,10 +100,21 @@ export class BodyDirector {
     }
   }
 
-  /** CRP-10: a onda sai do ponto do acerto com `round(0,4 × dano)` e anda 80 px, passando pelo alvo do golpe. */
+  /**
+   * CRP-10: a onda sai do ponto do acerto com `round(0,4 × dano)` e anda 80 px, passando pelo alvo do golpe. CRP-11:
+   * com o Punho que Rasga ela atravessa todos e anda 160 px, e com a Fúria no teto uma 2ª igual sai 100 ms depois;
+   * CRP-13: a 1ª onda da rodada anuncia o Despertar.
+   */
   private throwWave(hit: Hit, point: Vec2, target?: Hittable): void {
     const { damageFrac, rangePx } = BODY_BRANCHES.ondaDoPunho;
-    this.waves.emit(point, Math.round(damageFrac * hit.damage), { pierce: false, rangePx }, this.idOf(target));
+    const tear = BODY_AWAKENINGS.punhoQueRasga;
+    const awake = this.awakened;
+    const opts = awake ? { pierce: true, rangePx: tear.rangePx } : { pierce: false, rangePx };
+    const damage = Math.round(damageFrac * hit.damage);
+    const id = this.idOf(target);
+    if (!this.waves.emit(point, damage, opts, id) || !awake) return;
+    this.s.build.axes.announce('corpo', AWAKENING_NAMES.punhoQueRasga);
+    if (this.fury.atCap(this.points.furia)) this.waves.emitLater(tear.secondWaveMs, point, damage, opts, id);
   }
 
   /** Id do alvo do golpe (comum ou chefe); -1 sem alvo com id. */

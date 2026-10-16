@@ -1545,12 +1545,23 @@ igual 100 ms depois; no 1º decisivo (Martelo Negro) ou na 1ª onda (Punho que R
 
 **Done when**:
 
-- [ ] `cursed-body.smoke.mjs` com `ramo=corpo:b&axes=` somando 4 pontos e `maxAlive=3`: a onda acerta os 2 inimigos
+- [x] `cursed-body.smoke.mjs` com `ramo=corpo:b&axes=` somando 4 pontos e `maxAlive=3`: a onda acerta os 2 inimigos
       atrás; com `furia:3` no teto, 2 ondas a 100 ms (CRP-11); banner e `timeScale` 0,4 na 1ª da rodada e não na 2ª
       (CRP-13)
-- [ ] Fim do passo 3: smokes `cursed-body`, `fight`, `fight-integration`, `impact`, `feel`, `power` e `player-anim`
+- [x] Fim do passo 3: smokes `cursed-body`, `fight`, `fight-integration`, `impact`, `feel`, `power` e `player-anim`
       verdes; `TestScene.ts`, `Player.ts`, `Hud.ts` e `moves.ts` intocados (SHX-02, SHX-03)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
+
+**Nota (T50)**: a 2ª onda sai 100 ms de tempo de jogo depois da 1ª (o `body.update` não anda no hitstop do forte),
+do mesmo ponto e para o mesmo lado (`FistWaves.emitLater`); o smoke conta os quadros sem hitstop entre as duas. A
+Fúria no teto e a 2ª onda são medidas no laboratório (o boneco não revida); ali também o teto do CRP-12: com Fúria 3 e
+Ritmo 2 (Nv 6) três fortes cabem em 1000 ms de jogo, a 5ª onda sai `fistWave:capped` e o forte dela tira o mesmo
+dano (16 no chute frontal e 19 no alto com +35 %). A travessia (2 comuns atrás do alvo) e o anúncio (banner "Punho
+que Rasga" e `timeScale` 0,4 na 1ª onda da rodada, não na 2ª) ficam no mundo modular com `maxAlive=3` e
+`mods=vida:5`. O Martelo Negro anuncia no 1º decisivo da rodada pelo mesmo `axisDirector.announce`. Banner olhado
+em `.fable-out/t50/99-rasga-anuncio.png` (`node tools/visual-shots.mjs .fable-out/t50 corpoRasga`). Fim do passo 3:
+`cursed-body`, `fight`, `fight-integration`, `impact`, `feel`, `power`, `player-anim` e `record-end` verdes;
+`TestScene.ts` (388 linhas efetivas), `Player.ts`, `Hud.ts` e `moves.ts` sem mudança desde `89b2a4a`. Testes: 4149.
 
 **Tests**: smoke
 **Gate**: full
