@@ -1,16 +1,11 @@
 import { DOMAIN_CHARGE, type DomainId, type DomainLevel } from '../data/domains';
+import type { ActiveDomain } from './domainActivation';
 
 /**
  * Barra e posse da Expansão de Domínio (DOM-01 a DOM-05, DNV-01, VEU-03/04): carga inteira de 0 a 100 que só enche com o
  * que o jogador acerta e esvazia 10 a cada 8 s sem carga na rodada. Regra pura, sem o motor.
  */
 export type ChargeEvent = 'light' | 'heavy' | 'prop' | 'kill' | 'defense' | 'techCast' | 'finisher' | 'kokusen';
-
-/** O mínimo do Domínio ativo que a barra lê (o `ActiveDomain` de `domainActivation.ts` cumpre). */
-export interface ActiveClock {
-  remainingMs: number;
-  totalMs: number;
-}
 
 export interface OwnedDomain {
   id: DomainId;
@@ -29,7 +24,7 @@ const clamp = (n: number): number => Math.min(DOMAIN_CHARGE.max, Math.max(0, Mat
 export class DomainState {
   owned: OwnedDomain | null = null;
   charge = 0;
-  active: ActiveClock | null = null;
+  active: ActiveDomain | null = null;
   veilPending: readonly [DomainId, DomainId] | null = null;
   bossChestPending = false;
   /** Tempo de `roundActive` seguido sem evento de carga (DOM-03). */

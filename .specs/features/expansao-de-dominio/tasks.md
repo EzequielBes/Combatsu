@@ -248,15 +248,15 @@ entrada inválida.
 
 **Done when**:
 
-- [ ] `tests/core/domainActivation.test.ts` (novo): as quatro recusas na ordem, cada uma sozinha e combinadas (com ativo
+- [x] `tests/core/domainActivation.test.ts` (novo): as quatro recusas na ordem, cada uma sozinha e combinadas (com ativo
       e carga 0 o motivo é `active`); nenhuma recusa muda a carga (DOM-07)
-- [ ] Raio 320 com o alvo a 320 px aceito e a 321 px fora; raio 96 com 96/97 px; alvo acima do player conta pela
+- [x] Raio 320 com o alvo a 320 px aceito e a 321 px fora; raio 96 com 96/97 px; alvo acima do player conta pela
       distância euclidiana (DOM-08)
-- [ ] Dano `max(1, round(fração × maxHp))`: 0,40/0,06 no Santuário e no Jackpot, 0,25/0,04 na Amplificação; `maxHp` 1
+- [x] Dano `max(1, round(fração × maxHp))`: 0,40/0,06 no Santuário e no Jackpot, 0,25/0,04 na Amplificação; `maxHp` 1
       dá 1; `maxHp` escalado (r35) mantém a fração (edge case)
-- [ ] `ActiveDomain`: Santuário 6000 ms no Nv 1 e 8000 no Nv 2/3, Amplificação 7000 e 9000; `update` devolve falso em
+- [x] `ActiveDomain`: Santuário 6000 ms no Nv 1 e 8000 no Nv 2/3, Amplificação 7000 e 9000; `update` devolve falso em
       `total − 1` e verdadeiro em `total`; `restart` troca o total e o restante (DOM-10, SAN-01, AMP-01)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4350 → 4370; `tests/core/domain.test.ts` passou a montar o ativo com `ActiveDomain`, mesmas asserções)
 
 **Tests**: unit
 **Gate**: quick

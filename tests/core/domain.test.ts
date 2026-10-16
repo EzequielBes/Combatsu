@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { type ChargeEvent, DomainState, domainBarView } from '../../src/core/domain';
+import { ActiveDomain } from '../../src/core/domainActivation';
 import source from '../../src/core/domain.ts?raw';
 
 const owned = (charge = 0): DomainState => {
@@ -8,7 +9,12 @@ const owned = (charge = 0): DomainState => {
   return s;
 };
 
-const ACTIVE = { remainingMs: 3000, totalMs: 6000 };
+/** Santuário Nv 1 (6000 ms) com metade do tempo restante. */
+const halfActive = (): ActiveDomain => {
+  const a = new ActiveDomain('santuario', 1);
+  a.update(3000);
+  return a;
+};
 
 describe('carga de 0 a 100 (DOM-01)', () => {
   it('é inteira e não passa de 100 nem fica abaixo de 0', () => {
@@ -53,7 +59,7 @@ describe('carga por evento (DOM-02)', () => {
 
   it('com Domínio ativo nenhum evento muda a carga (DOM-02.5)', () => {
     const s = owned(0);
-    s.active = { ...ACTIVE };
+    s.active = halfActive();
     s.addCharge('kokusen');
     s.addCharge('light');
     expect(s.charge).toBe(0);
@@ -170,7 +176,7 @@ describe('posse, nível e reinício (DOM-05, DNV-01, VEU-03, VEU-04)', () => {
 
   it('reset zera posse, carga, ativo, veilPending e bossChestPending', () => {
     const s = owned(80);
-    s.active = { ...ACTIVE };
+    s.active = halfActive();
     s.markVeil(['santuario', 'jackpot']);
     s.bossChestPending = true;
     s.reset();
@@ -210,7 +216,7 @@ describe('posse, nível e reinício (DOM-05, DNV-01, VEU-03, VEU-04)', () => {
     expect(s.ready).toBe(false);
     s.setCharge(100);
     expect(s.ready).toBe(true);
-    s.active = { ...ACTIVE };
+    s.active = halfActive();
     expect(s.ready).toBe(false);
   });
 });
@@ -230,7 +236,7 @@ describe('domainBarView (DHD-01 a DHD-03)', () => {
 
   it('ativo: fill = remainingMs / totalMs, sem piscar', () => {
     const s = owned(0);
-    s.active = { ...ACTIVE };
+    s.active = halfActive();
     expect(domainBarView(s)).toEqual({ visible: true, fill: 0.5, blinking: false, active: true });
   });
 });
