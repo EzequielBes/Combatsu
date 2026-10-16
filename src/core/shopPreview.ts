@@ -1,10 +1,15 @@
 import { magnetRangeAtLevel, maxHpAtLevel, healChanceAtLevel, runSpeedAtLevel, type Modifiers } from './modifiers';
 import { cursedEnergyMaxAtLevel, cursedEnergyRegenAtLevel } from './energy';
 import type { Loadout } from './loadout';
+import { AxisBuild } from './axisBuild';
+import { axisAt } from './axisRule';
+import { resolveTechStats } from './techStats';
 import { arsenalPreview, type Arsenal } from './arsenal';
 import { ARSENAL, type ArsenalId } from '../data/arsenal';
 import { PERKS, type PerkId } from '../data/perks';
 import { SHOP } from '../data/tuning';
+import { TECH_RULE } from '../data/techRule';
+import { AXIS_NAMES, BODY_AXES, type AxisId, type AxisItem } from '../data/techAxes';
 import { LEVEL_FACTOR, type TechId } from '../data/techniques';
 import type { ModifierId, ShopEntry } from '../data/shop';
 
@@ -65,4 +70,74 @@ export function previewText(
     default:
       throw new Error(`entrada sem prévia definida: ${entry.id}`);
   }
+}
+
+/** Número com vírgula decimal e sem casa à toa: 1 → "1", 1.1 → "1,1". */
+const commaNumber = (n: number): string => String(n).replace('.', ',');
+const percent = (fraction: number): number => Math.round(fraction * 100);
+
+/** Cópia dos pontos de `item` com `bump` a mais em `axis`, para resolver o valor do ponto seguinte. */
+function pointsWith(axes: AxisBuild, item: AxisItem, axis: AxisId | null): AxisBuild {
+  const copy = new AxisBuild();
+  for (const [name, points] of Object.entries(axes.axesOf(item))) {
+    for (let i = 0; i < (points as number); i++) copy.add(item, name as never);
+  }
+  if (axis !== null) copy.add(item, axis as never);
+  return copy;
+}
+
+/** Valor que o jogo usa para `axis` com os pontos de `build` (CRD-05): o do `resolveTechStats` ou o do `bodyStrike`. */
+function axisValue(item: AxisItem, axis: AxisId, build: AxisBuild, loadout: Loadout): string {
+  if (item === 'vermelho') {
+    const stats = resolveTechStats({
+      id: 'vermelho',
+      level: 1,
+      axes: build,
+      damageMul: loadout.damageMul,
+      vowDamageMul: loadout.vowDamageMul,
+      costMul: loadout.costMul,
+    });
+    const red = stats.red!;
+    const byAxis: Record<string, number> = {
+      potencia: stats.damage.hit,
+      escala: red.radius,
+      conjuracao: stats.signMs + stats.chargeMs,
+      eficiencia: stats.cost,
+      recarga: stats.cooldownMs,
+      perfuracao: red.shard,
+    };
+    return String(byAxis[axis]);
+  }
+  const points = build.axesOf('corpo');
+  switch (axis) {
+    case 'impacto':
+      return `×${commaNumber(axisAt(BODY_AXES.impacto.impactMul, points.impacto))}`;
+    case 'peso':
+      return `+${percent(axisAt(BODY_AXES.peso.forceMul, points.peso) - 1)}%`;
+    case 'ritmo':
+      return `-${percent(1 - axisAt(BODY_AXES.ritmo.recoveryMul, points.ritmo))}%`;
+    case 'alcance':
+      return `+${axisAt(BODY_AXES.alcance.reachPx, points.alcance)}`;
+    case 'fluxo':
+      return `+${axisAt(BODY_AXES.fluxo.energyBonus, points.fluxo)}`;
+    default:
+      return `+${percent(axisAt(BODY_AXES.furia.furyCap, points.furia))}%`;
+  }
+}
+
+/**
+ * Prévia da carta de eixo do Vermelho ou do Corpo (CRD-05): uma linha por eixo com o nome, o valor resolvido de
+ * agora e o do próximo ponto, a escolhida com `›` e a outra com um espaço, sem espaço em volta da seta para caber
+ * em 20 caracteres; uma linha `+ ramo` (a compra leva ao Nv 2) ou `+ Despertar` (leva ao Nv 5) ao fim.
+ */
+export function axisPreview(item: AxisItem, axes: readonly AxisId[], selected: number, loadout: Loadout): string {
+  const now = pointsWith(loadout.axes, item, null);
+  const lines = axes.map((axis, i) => {
+    const next = pointsWith(loadout.axes, item, axis);
+    return `${i === selected ? '›' : ' '}${AXIS_NAMES[axis]} ${axisValue(item, axis, now, loadout)}→${axisValue(item, axis, next, loadout)}`;
+  });
+  const levelAfter = loadout.axes.level(item) + 1;
+  if (levelAfter === TECH_RULE.branchLevel) lines.push('+ ramo');
+  if (levelAfter === TECH_RULE.awakenLevel) lines.push('+ Despertar');
+  return lines.join('\n');
 }

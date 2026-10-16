@@ -1653,14 +1653,16 @@ ou ao Nv 5; as outras quatro técnicas seguem a prévia de hoje (`Dano ×a → �
 
 **Done when**:
 
-- [ ] `tests/core/shopAxes.test.ts`: texto das duas linhas com `›` na escolhida; toda linha de todo eixo dos dois itens
+- [x] `tests/core/shopAxes.test.ts`: texto das duas linhas com `›` na escolhida; toda linha de todo eixo dos dois itens
       em 0, 1 e 2 pontos com até 20 caracteres; `+ ramo` só no 1º ponto e `+ Despertar` só no 4º; carta do Azul igual a
       hoje (CRD-10)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(core): preview both axes on the upgrade card`
+
+> Nota: os testes da prévia foram para `tests/core/shopAxisPreview.test.ts` (o `shopAxes.test.ts` bateria o teto de 400 linhas do lint).
 
 ---
 
