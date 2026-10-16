@@ -45,7 +45,7 @@ export default async function ({ page, baseUrl, assert }) {
   };
 
   // SHOP-23: a run começa com os 200 fragmentos do debug.
-  let { before, snap } = await openShop(200);
+  let { before, snap } = await openShop(600);
 
   // SHOP-01/32: a intermissão termina na loja, com um único `shopOpen:1`.
   assert(
@@ -64,7 +64,7 @@ export default async function ({ page, baseUrl, assert }) {
     snap.wallet.fragments === before.wallet.fragments + swept,
     `carteira ${snap.wallet.fragments} != ${before.wallet.fragments} + ${swept} varridos (SHOP-05)`,
   );
-  assert(snap.wallet.fragments >= 200, `carteira deveria ter os 200 do debug: ${snap.wallet.fragments}`);
+  assert(snap.wallet.fragments >= 600, `carteira deveria ter os 600 do debug: ${snap.wallet.fragments}`);
   assert(
     !snap.pickups.some((p) => p.kind === 'fragment'),
     `SHOP-36: fragmento sobrou na loja: ${JSON.stringify(snap.pickups)}`,
@@ -233,15 +233,26 @@ export default async function ({ page, baseUrl, assert }) {
   }
 
   // MOD-04/MOD-11: rerola até `vida` aparecer e compra; o teto sobe 15 e a vida sobe 15 (com teto).
-  for (let i = 0; i < 6 && !snap.shop.offers.some((o) => o.id === 'vida' && !o.sold); i++) snap = await tap('KeyR');
-  const vidaSlot = snap.shop.offers.findIndex((o) => o.id === 'vida' && !o.sold);
-  assert(vidaSlot >= 0, `vida não apareceu em 6 rerolls: ${JSON.stringify(snap.shop.offers)}`);
-  const hpBefore = snap.player.hp;
-  const maxBefore = snap.player.maxHp;
-  snap = await tap(`Digit${vidaSlot + 1}`);
-  assert(snap.player.maxHp === maxBefore + 15, `MOD-04: maxHp ${maxBefore} -> ${snap.player.maxHp}`);
-  assert(snap.player.hp === Math.min(hpBefore + 15, snap.player.maxHp), `MOD-11: hp ${hpBefore} -> ${snap.player.hp}`);
-  assert(snap.player.maxHp === 100 + 15 * snap.modifiers.vida, `MOD-04: maxHp fora da fórmula: ${snap.player.maxHp}`);
+  // Se a compra de modificador de antes já foi a `vida`, o Nv 2 dela só entra em rodada mais alta e o MOD-04 ficou
+  // coberto lá; o trecho procura outra `vida` só quando o nível dela ainda é 0.
+  assert(
+    snap.modifiers.vida === 0 || offer.id === 'vida',
+    `a vida só sobe pela compra de antes: ${JSON.stringify(snap.modifiers)}`,
+  );
+  if (snap.modifiers.vida === 0) {
+    for (let i = 0; i < 10 && !snap.shop.offers.some((o) => o.id === 'vida' && !o.sold); i++) snap = await tap('KeyR');
+    const vidaSlot = snap.shop.offers.findIndex((o) => o.id === 'vida' && !o.sold);
+    assert(vidaSlot >= 0, `vida não apareceu em 10 rerolls: ${JSON.stringify(snap.shop.offers)}`);
+    const hpBefore = snap.player.hp;
+    const maxBefore = snap.player.maxHp;
+    snap = await tap(`Digit${vidaSlot + 1}`);
+    assert(snap.player.maxHp === maxBefore + 15, `MOD-04: maxHp ${maxBefore} -> ${snap.player.maxHp}`);
+    assert(
+      snap.player.hp === Math.min(hpBefore + 15, snap.player.maxHp),
+      `MOD-11: hp ${hpBefore} -> ${snap.player.hp}`,
+    );
+    assert(snap.player.maxHp === 100 + 15 * snap.modifiers.vida, `MOD-04: maxHp fora da fórmula: ${snap.player.maxHp}`);
+  }
 
   // SHOP-28/30: D, D leva a seleção ao slot 2 e J compra essa carta.
   snap = await tap('KeyD');

@@ -1737,17 +1737,19 @@ inflação nem trava até o passo 5), porque o `costOf` de hoje mandaria o `kind
 
 **Done when**:
 
-- [ ] `shop-axes.smoke.mjs`, `?debug&hd=1&area=modular&fragments=200&round=4&tech=vermelho&axes=vermelho.potencia:1`:
+- [x] `shop-axes.smoke.mjs`, `?debug&hd=1&area=modular&fragments=200&round=4&tech=vermelho&axes=vermelho.potencia:1`:
       4 cartas; carta 0 do Vermelho com `axes` `['potencia', x]`; `S` muda `selectedAxis`; a tecla `1` compra o 2º eixo
       e o `build.vermelho.axes` mostra o ponto nele
-- [ ] `shop-progress.smoke.mjs` reescrito no trecho ECN-05/08 (`:1-62`): com `tech=azul&round=2&fragments=200` procura a
+- [x] `shop-progress.smoke.mjs` reescrito no trecho ECN-05/08 (`:1-62`): com `tech=azul&round=2&fragments=200` procura a
       carta do Azul entre as 4 (rerolando até ela aparecer, porque a carta 0 sai do `axisRng`), `Nv 2/3`, custo 41 e
       `buy:azul:41`; o trecho da maestria segue com o Vermelho (CRD-02, CRD-10)
-- [ ] Smokes `shop-axes`, `shop`, `shop-progress` e `world-run` verdes; gate verde; contagem sem perda
+- [x] Smokes `shop-axes`, `shop`, `shop-progress` e `world-run` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full
 **Commit**: `feat(shop): buy axis points with the chosen axis`
+
+> Nota: a seleção da loja começa na carta 1 quando a tecla `D` da caminhada está segurada ao abrir a konbini (comportamento anterior); o smoke leva a seleção à carta 0 com `A`. O `shop.smoke` passou a 600 fragmentos e a `vida` do trecho MOD-04/11 só é procurada se a compra anterior não foi ela (o Nv 2 dela abre em rodada mais alta), porque o `axisRng` mudou os sorteios. O smoke ficou com 398 linhas; o apoio do `shop-axes` mora em `shop-axes-kit.mjs`.
 
 ---
 

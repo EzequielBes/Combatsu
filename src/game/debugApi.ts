@@ -342,7 +342,17 @@ export interface GameSnapshot {
   /** Loja entre rodadas (SHOP-22): `open` só no estado `shop`; ofertas sem os espaços vazios. */
   shop: {
     open: boolean;
-    offers: { id: string; level: number; maxLevel: number; cost: number; sold: boolean; affordable: boolean }[];
+    /** `axes` e `selectedAxis`: os eixos da carta do Vermelho ou do Corpo e o escolhido (CRD-05); vazios nas outras. */
+    offers: {
+      id: string;
+      level: number;
+      maxLevel: number;
+      cost: number;
+      sold: boolean;
+      affordable: boolean;
+      axes: string[];
+      selectedAxis: string | null;
+    }[];
     rerollCost: number;
     selected: number;
     /** Painel visível: linhas de texto de cada carta (status, nome, nível, prévia, custo), realce e dica. */

@@ -106,6 +106,10 @@ export interface ShopInputSnapshot {
   moveRight: boolean;
   /** `←`/`A` (SHOP-29). */
   moveLeft: boolean;
+  /** `W`/`↑`: eixo anterior da carta de eixo selecionada (CRD-05). */
+  moveUp: boolean;
+  /** `S`/`↓`: próximo eixo da carta de eixo selecionada (CRD-05). */
+  moveDown: boolean;
   /** `R`: reroll (SHOP-16). */
   reroll: boolean;
   /** `Enter`: continua para a próxima rodada (SHOP-03). */
@@ -120,6 +124,8 @@ export class ShopInput {
   private readonly j: Key;
   private readonly left: Key[];
   private readonly right: Key[];
+  private readonly up: Key[];
+  private readonly downKeys: Key[];
   private readonly r: Key;
   private readonly enter: Key;
 
@@ -134,6 +140,8 @@ export class ShopInput {
     this.j = kb.addKey(K.J);
     this.left = keys(K.A, K.LEFT);
     this.right = keys(K.D, K.RIGHT);
+    this.up = keys(K.W, K.UP);
+    this.downKeys = keys(K.S, K.DOWN);
     this.r = kb.addKey(K.R);
     this.enter = kb.addKey(K.ENTER);
   }
@@ -150,6 +158,8 @@ export class ShopInput {
       buySelected: Phaser.Input.Keyboard.JustDown(this.j),
       moveRight: anyJustDown(this.right),
       moveLeft: anyJustDown(this.left),
+      moveUp: anyJustDown(this.up),
+      moveDown: anyJustDown(this.downKeys),
       reroll: Phaser.Input.Keyboard.JustDown(this.r),
       confirm: Phaser.Input.Keyboard.JustDown(this.enter),
     };

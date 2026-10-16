@@ -58,6 +58,8 @@ export class ShopDirector {
         }
         if (bothEmptyBefore) this.s.snapshot.debugEvents.push(`techUnlock:${id}`);
       },
+      // CRD-05: o ponto vai ao eixo escolhido na carta (evento `axis:<item>.<eixo>` e a fila do ramo, no AxisDirector).
+      applyAxis: (item, axis) => this.s.build.axes.applyAxis(item, axis as never),
       applyPerk: (id) => this.s.build.perks.add(id),
       applyArsenal: (id) => this.s.arsenal.buy(id),
       // EVO-03: funde as técnicas da receita; o slot da técnica nova recomeça a maestria.
@@ -74,6 +76,8 @@ export class ShopDirector {
     else if (input.buySelected) this.resolveBuy(shop, shop.selected, ctx);
     if (input.moveRight) shop.move(1);
     if (input.moveLeft) shop.move(-1);
+    if (input.moveUp) shop.chooseAxis(-1);
+    if (input.moveDown) shop.chooseAxis(1);
     if (input.reroll) this.resolveReroll(shop);
     if (input.confirm) this.closeShop();
     // T10: o painel acompanha a `view` a cada frame (compra/reroll/movimento mudam custo, seleção, sold...).
@@ -126,6 +130,7 @@ export class ShopDirector {
       this.s.loadout,
       this.s.build.perks,
       this.s.arsenal.arsenal,
+      this.s.run.axisRng!,
     );
     this.s.snapshot.debugEvents.push(`shopOpen:${round}`);
     // VOW-01/02/06: depois de uma rodada de chefe o painel de votos vem antes da loja (sem voto restante, não abre).
@@ -185,7 +190,16 @@ export class ShopDirector {
         .map((o) => {
           const entry = GAME_SHOP_CATALOG.find((e) => e.id === o.id)!;
           const level = this.shop!.levelOf(entry);
-          return { id: o.id!, level, maxLevel: entry.maxLevel, cost: o.cost!, sold: o.sold, affordable: o.affordable };
+          return {
+            id: o.id!,
+            level,
+            maxLevel: entry.maxLevel,
+            cost: o.cost!,
+            sold: o.sold,
+            affordable: o.affordable,
+            axes: [...o.axes],
+            selectedAxis: o.selectedAxis,
+          };
         }),
       rerollCost: view?.rerollCost ?? 0,
       selected: view?.selected ?? 0,
