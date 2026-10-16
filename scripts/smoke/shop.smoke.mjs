@@ -82,10 +82,10 @@ export default async function ({ page, baseUrl, assert }) {
     `SHOP-37: gotas mudaram: ${JSON.stringify(snap.pickups)}`,
   );
 
-  // SHOP-06/27/17: 3 ofertas distintas, seleção no slot 0 e reroll a 5.
-  assert(snap.shop.offers.length === 3, `esperava 3 ofertas: ${JSON.stringify(snap.shop.offers)}`);
+  // SHOP-06/27/17, CRD-01: 4 ofertas distintas, seleção no slot 0 e reroll a 5.
+  assert(snap.shop.offers.length === 4, `esperava 4 ofertas: ${JSON.stringify(snap.shop.offers)}`);
   assert(
-    new Set(snap.shop.offers.map((o) => o.id)).size === 3,
+    new Set(snap.shop.offers.map((o) => o.id)).size === 4,
     `ofertas repetidas: ${JSON.stringify(snap.shop.offers)}`,
   );
   assert(
@@ -96,6 +96,8 @@ export default async function ({ page, baseUrl, assert }) {
   // SHOP-21/31: cada carta mostra nome, `Nv`, prévia e custo; só a selecionada tem realce.
   // F5 (TSH-01/12/16): técnicas também não têm "Nv X/Y" — a prévia delas é "Nova · slot k" ou "Dano ×a → ×b".
   const TECH_IDS = ['divergente', 'vermelho', 'azul', 'corte'];
+  // O Corpo e o Vermelho equipado são cartas de eixo: a compra delas é do `shop-axes.smoke.mjs`.
+  const AXIS_IDS = ['corpo'];
   const cards = snap.shop.panel.cards;
   snap.shop.offers.forEach((o, i) => {
     assert(
@@ -110,11 +112,11 @@ export default async function ({ page, baseUrl, assert }) {
     }
   });
   assert(
-    cards.map((c) => c.highlighted).join() === 'true,false,false',
+    cards.map((c) => c.highlighted).join() === 'true,false,false,false',
     `SHOP-31: realce errado: ${JSON.stringify(cards)}`,
   );
   assert(
-    snap.shop.panel.hint === '1-3 comprar · R rerolar (5) · Enter continuar',
+    snap.shop.panel.hint === '1-4 comprar · W/S eixo · R rerolar (5) · Enter continuar',
     `dica errada: ${snap.shop.panel.hint}`,
   );
 
@@ -154,7 +156,9 @@ export default async function ({ page, baseUrl, assert }) {
 
   // SHOP-45/19/41/42/43: compra a primeira oferta de modificador pela tecla do slot (F5: pula técnicas, que têm
   // seu próprio fluxo de compra e não aparecem em `snap.modifiers`, TSH-06/07).
-  const slot = snap.shop.offers.findIndex((o) => o.id !== 'cura' && !TECH_IDS.includes(o.id));
+  const slot = snap.shop.offers.findIndex(
+    (o) => o.id !== 'cura' && !TECH_IDS.includes(o.id) && !AXIS_IDS.includes(o.id),
+  );
   const offer = snap.shop.offers[slot];
   const walletBefore = snap.wallet.fragments;
   const levelBefore = snap.modifiers[offer.id];
@@ -200,8 +204,33 @@ export default async function ({ page, baseUrl, assert }) {
   assert(snap.shop.panel.hint.includes('R rerolar (10)'), `SHOP-46: dica sem o novo custo: ${snap.shop.panel.hint}`);
   assert(
     snap.shop.offers.every((o) => !o.sold),
-    `reroll deveria trazer 3 ofertas novas: ${JSON.stringify(snap.shop.offers)}`,
+    `reroll deveria trazer 4 ofertas novas: ${JSON.stringify(snap.shop.offers)}`,
   );
+
+  // CRD-01: a tecla 4 compra a carta 3 (a cura com a vida cheia é recusada, como em SHOP-13).
+  const fourth = snap.shop.offers[3];
+  assert(fourth && fourth.id !== null, `a carta 3 deveria existir: ${JSON.stringify(snap.shop.offers)}`);
+  const walletBeforeFourth = snap.wallet.fragments;
+  snap = await tap('Digit4');
+  if (fourth.id === 'cura' && snap.player.hp === snap.player.maxHp) {
+    assert(
+      snap.events.includes('buyRefused:cura:fullHp'),
+      `CRD-01: a tecla 4 deveria tentar a carta 3: ${JSON.stringify(snap.events)}`,
+    );
+  } else {
+    assert(
+      snap.events.includes(`buy:${fourth.id}:${fourth.cost}`),
+      `CRD-01: a tecla 4 não comprou a carta 3: ${JSON.stringify(snap.events)}`,
+    );
+    assert(
+      snap.shop.offers[3].sold === true,
+      `CRD-01: a carta 3 deveria ficar vendida: ${JSON.stringify(snap.shop.offers)}`,
+    );
+    assert(
+      snap.wallet.fragments === walletBeforeFourth - fourth.cost,
+      `CRD-01: carteira ${walletBeforeFourth} - ${fourth.cost} != ${snap.wallet.fragments}`,
+    );
+  }
 
   // MOD-04/MOD-11: rerola até `vida` aparecer e compra; o teto sobe 15 e a vida sobe 15 (com teto).
   for (let i = 0; i < 6 && !snap.shop.offers.some((o) => o.id === 'vida' && !o.sold); i++) snap = await tap('KeyR');
@@ -322,7 +351,7 @@ export default async function ({ page, baseUrl, assert }) {
     `SHOP-47: fragmentos sumiram: ${JSON.stringify(prevFrags)} vs ${JSON.stringify(snap.pickups)}`,
   );
 
-  // F5 (TSH-05/06/14): sem `tech=`, os dois slots começam vazios - o espaço 0 de toda loja é então garantido
+  // F5 (TSH-05/06/14, CRD-03): sem `tech=`, os dois slots começam vazios - a carta 1 de toda loja é então garantida
   // como uma técnica (SHOP-08 decide qual). Comprá-la equipa no primeiro slot vazio (slot 1) e gera exatamente
   // um `techUnlock:<id>`.
   ({ snap } = await openShop(200));
@@ -331,13 +360,13 @@ export default async function ({ page, baseUrl, assert }) {
     `pré-condição: loadout deveria estar vazio: ${JSON.stringify(snap.tech.slots)}`,
   );
   assert(
-    TECH_IDS.includes(snap.shop.offers[0].id),
-    `TSH-05: espaço 0 deveria ser uma técnica: ${JSON.stringify(snap.shop.offers)}`,
+    TECH_IDS.includes(snap.shop.offers[1].id),
+    `CRD-03: a carta 1 deveria ser uma técnica: ${JSON.stringify(snap.shop.offers)}`,
   );
-  const techId = snap.shop.offers[0].id;
-  const techCost = snap.shop.offers[0].cost;
+  const techId = snap.shop.offers[1].id;
+  const techCost = snap.shop.offers[1].cost;
   const walletBeforeTech = snap.wallet.fragments;
-  snap = await tap('Digit1');
+  snap = await tap('Digit2');
   assert(
     snap.events.filter((e) => e === `techUnlock:${techId}`).length === 1,
     `TSH-14: esperava um techUnlock:${techId}: ${JSON.stringify(snap.events)}`,

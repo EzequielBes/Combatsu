@@ -29,7 +29,7 @@ const textStyle = (size: string, colorKey: string): Phaser.Types.GameObjects.Tex
 const CARD_W = 150;
 const CARD_H = 120;
 const CARD_GAP = 20;
-const CARD_COUNT = 3;
+const CARD_COUNT = 4;
 const CARD_TOP = 200;
 const BORDER_W = 3;
 const DEPTH = 200;
@@ -203,7 +203,7 @@ export class ShopPanel {
   update(view: ShopView): void {
     view.offers.forEach((offer, i) => this.updateCard(this.cards[i], offer, i === view.selected));
     // SHOP-46: a dica sempre mostra o `rerollCost` atual, inclusive o novo custo logo após um reroll.
-    this.hint.setText(`1-3 comprar · R rerolar (${view.rerollCost}) · Enter continuar`);
+    this.hint.setText(`1-${CARD_COUNT} comprar · W/S eixo · R rerolar (${view.rerollCost}) · Enter continuar`);
   }
 
   /** Textos e realce visíveis de cada carta e a dica, lidos dos objetos vivos (SHOP-22 estendido para o painel). */

@@ -98,8 +98,8 @@ export class PlayerInput {
 
 /** Teclas da loja (SHOP-45, SHOP-28..30, SHOP-16, SHOP-03), só consultadas com `run.state === 'shop'`. */
 export interface ShopInputSnapshot {
-  /** Slot 0/1/2 pela tecla 1/2/3 (SHOP-45); `null` sem tecla nova neste frame. */
-  buySlot: 0 | 1 | 2 | null;
+  /** Slot 0 a 3 pela tecla 1 a 4 (SHOP-45, CRD-01); `null` sem tecla nova neste frame. */
+  buySlot: 0 | 1 | 2 | 3 | null;
   /** `J`: compra o slot selecionado (SHOP-30). */
   buySelected: boolean;
   /** `→`/`D` (SHOP-28). */
@@ -116,6 +116,7 @@ export class ShopInput {
   private readonly one: Key;
   private readonly two: Key;
   private readonly three: Key;
+  private readonly four: Key;
   private readonly j: Key;
   private readonly left: Key[];
   private readonly right: Key[];
@@ -129,6 +130,7 @@ export class ShopInput {
     this.one = kb.addKey(K.ONE);
     this.two = kb.addKey(K.TWO);
     this.three = kb.addKey(K.THREE);
+    this.four = kb.addKey(K.FOUR);
     this.j = kb.addKey(K.J);
     this.left = keys(K.A, K.LEFT);
     this.right = keys(K.D, K.RIGHT);
@@ -138,10 +140,11 @@ export class ShopInput {
 
   /** Chamar uma vez por frame, só com `run.state === 'shop'` (SHOP-20). */
   read(): ShopInputSnapshot {
-    let buySlot: 0 | 1 | 2 | null = null;
+    let buySlot: 0 | 1 | 2 | 3 | null = null;
     if (Phaser.Input.Keyboard.JustDown(this.one)) buySlot = 0;
     if (Phaser.Input.Keyboard.JustDown(this.two)) buySlot = 1;
     if (Phaser.Input.Keyboard.JustDown(this.three)) buySlot = 2;
+    if (Phaser.Input.Keyboard.JustDown(this.four)) buySlot = 3;
     return {
       buySlot,
       buySelected: Phaser.Input.Keyboard.JustDown(this.j),

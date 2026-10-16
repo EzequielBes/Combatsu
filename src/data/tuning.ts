@@ -306,7 +306,7 @@ export interface ShopTuning {
 
 /** Números da loja (Assumptions da spec loja-da-run). */
 export const SHOP: ShopTuning = {
-  offers: 3,
+  offers: 4,
   weights: { common: 3, rare: 1 },
   rerollBase: 5,
   rerollStep: 5,

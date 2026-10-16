@@ -1,5 +1,5 @@
 // Loja de técnica e maestria (ECN-05/08, MST-01/03/07/08), com `?debug&seed=1`.
-// 1) `tech=vermelho&round=2&fragments=60`: na loja da rodada 2, `offers[0]` é o Vermelho com "Nv 2/3" e custo 45.
+// 1) `tech=azul&round=2&fragments=500`: na loja da rodada 2 o Azul (procurado nas 4 cartas) mostra "Nv 2/3" e custo 41.
 // 2) `tech=vermelho&mastery=14`: um Vermelho que acerta um inimigo sobe para o Nv2, com banner, e a barra de maestria
 //    volta a 0 (o limiar passa a 25).
 export default async function ({ page, baseUrl, assert }) {
@@ -36,9 +36,11 @@ export default async function ({ page, baseUrl, assert }) {
     return s;
   };
 
-  // --- 1) Loja da rodada 2: o upgrade da técnica equipada é a primeira oferta -----------------------------------------
+  // --- 1) Loja da rodada 2: o upgrade da técnica equipada aparece em alguma das 4 cartas -----------------------------
+  // CRD-02, CRD-10: a carta 0 sai do `axisRng` (foco ou outro dono), então o Azul é procurado nas 4 cartas e a loja é
+  // rerolada, com fragmentos de sobra, até ele aparecer.
   {
-    let s = await boot('tech=vermelho&round=2&fragments=60');
+    let s = await boot('tech=azul&round=2&fragments=500');
     assert(s.run.round === 2, `deveria começar na rodada 2: ${JSON.stringify(s.run)}`);
     for (let i = 0; i < 120 && s.run.state === 'roundActive'; i++) {
       await page.keyboard.press('Digit2', { delay: 50 });
@@ -46,24 +48,28 @@ export default async function ({ page, baseUrl, assert }) {
     }
     for (let i = 0; i < 400 && s.run.state !== 'shop'; i++) s = await snap(50);
     assert(s.run.state === 'shop' && s.run.round === 2, `a loja da rodada 2 deveria abrir: ${JSON.stringify(s.run)}`);
-    // ECN-05: o slot 0 é o Vermelho; ECN-08: a carta mostra `Nv 2/3`; custo 30 + 15 = 45 (ECN-01).
-    const o = s.shop.offers[0];
+    assert(s.shop.offers.length === 4, `CRD-01: a loja deveria ter 4 cartas: ${JSON.stringify(s.shop.offers)}`);
+    for (let i = 0; i < 10 && !s.shop.offers.some((o) => o.id === 'azul'); i++) s = await tap('KeyR');
+    const slot = s.shop.offers.findIndex((o) => o.id === 'azul');
+    assert(slot >= 0, `CRD-10: o Azul não apareceu em 10 rerolls: ${JSON.stringify(s.shop.offers)}`);
+    // ECN-08: a carta mostra `Nv 2/3`; custo 26 + 15 = 41 (ECN-01), a mesma conta de antes (CRD-10).
+    const o = s.shop.offers[slot];
     assert(
-      o && o.id === 'vermelho' && o.level === 1 && o.maxLevel === 3 && o.cost === 45,
-      `ECN-05: offers[0] deveria ser o Vermelho Nv1 a 45: ${JSON.stringify(s.shop.offers)}`,
+      o.level === 1 && o.maxLevel === 3 && o.cost === 41,
+      `CRD-10: o Azul deveria estar no Nv1 a 41: ${JSON.stringify(o)}`,
     );
-    const card = s.shop.panel.cards[0].lines;
+    const card = s.shop.panel.cards[slot].lines;
     assert(card.includes('Nv 2/3'), `ECN-08: a carta deveria mostrar "Nv 2/3": ${JSON.stringify(card)}`);
-    assert(card.includes('45'), `ECN-01: a carta deveria mostrar o custo 45: ${JSON.stringify(card)}`);
-    assert(s.wallet.fragments >= 60, `a carteira deveria ter os 60 do debug: ${s.wallet.fragments}`);
-    // Comprar leva o Vermelho ao Nv2 e cobra 45.
+    assert(card.includes('41'), `ECN-01: a carta deveria mostrar o custo 41: ${JSON.stringify(card)}`);
+    assert(s.wallet.fragments >= 41, `a carteira deveria cobrir o custo: ${s.wallet.fragments}`);
+    // Comprar leva o Azul ao Nv2 e cobra 41.
     const wallet = s.wallet.fragments;
-    s = await tap('Digit1');
-    assert(s.events.includes('buy:vermelho:45'), `esperava buy:vermelho:45: ${JSON.stringify(s.events)}`);
-    assert(s.wallet.fragments === wallet - 45, `a carteira deveria cair 45: ${wallet} -> ${s.wallet.fragments}`);
+    s = await tap(`Digit${slot + 1}`);
+    assert(s.events.includes('buy:azul:41'), `esperava buy:azul:41: ${JSON.stringify(s.events)}`);
+    assert(s.wallet.fragments === wallet - 41, `a carteira deveria cair 41: ${wallet} -> ${s.wallet.fragments}`);
     assert(
-      s.tech.slots[0].id === 'vermelho' && s.tech.slots[0].level === 2,
-      `o Vermelho deveria ir ao Nv2: ${JSON.stringify(s.tech.slots[0])}`,
+      s.tech.slots[0].id === 'azul' && s.tech.slots[0].level === 2,
+      `o Azul deveria ir ao Nv2: ${JSON.stringify(s.tech.slots[0])}`,
     );
   }
 

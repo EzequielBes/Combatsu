@@ -15,9 +15,9 @@ const entry = (id: string): ShopEntry => {
 };
 
 describe('SHOP (tuning da loja, T1, valores das Assumptions)', () => {
-  it('offers 3, weights comum 3 / raro 1, reroll 5/+5, salt 0x85ebca6b, cura 30 hp', () => {
+  it('offers 4, weights comum 3 / raro 1, reroll 5/+5, salt 0x85ebca6b, cura 30 hp', () => {
     expect(SHOP).toEqual({
-      offers: 3,
+      offers: 4,
       weights: { common: 3, rare: 1 },
       rerollBase: 5,
       rerollStep: 5,

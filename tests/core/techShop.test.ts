@@ -110,11 +110,11 @@ describe('TSH-05 → CRD-03: com os dois slots vazios, a carta 1 é uma técnica
   /** Rng falso com zeros de sobra: toda escolha cai na primeira entrada. */
   const zeros = (): Rng => fakeRng(Array.from({ length: 40 }, () => 0));
 
-  it('rng zerado: carta 0 é o Corpo (único dono), carta 1 é a divergente (1ª técnica nova) e a 2 é vida', () => {
+  it('rng zerado: carta 0 é o Corpo (único dono), carta 1 é a divergente (1ª técnica nova) e o resto é vida e forca', () => {
     const loadout = new Loadout();
     const shop = new Shop(GAME_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), zeros(), 10, loadout);
     const ids = shop.view(new Wallet(), 100, 100).offers.map((o) => o.id);
-    expect(ids).toEqual(['corpo', 'divergente', 'vida']);
+    expect(ids).toEqual(['corpo', 'divergente', 'vida', 'forca']);
   });
 
   it('depois do reroll, a carta 1 continua sendo uma técnica nova', () => {
@@ -128,9 +128,9 @@ describe('TSH-05 → CRD-03: com os dois slots vazios, a carta 1 é uma técnica
   });
 
   it('sem loadout (comportamento antigo da F4): a garantia não se aplica, slot 0 sorteia normalmente', () => {
-    const shop = new Shop(GAME_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), fakeRng([0, 0, 0]), 10);
+    const shop = new Shop(GAME_SHOP_CATALOG, new Modifiers(FULL_SHOP_CATALOG), fakeRng([0, 0, 0, 0]), 10);
     const ids = shop.view(new Wallet(), 100, 100).offers.map((o) => o.id);
-    expect(ids).toEqual(['vida', 'forca', 'agilidade']); // nenhuma técnica: sem loadout elas nem entram no pool
+    expect(ids).toEqual(['vida', 'forca', 'agilidade', 'ima']); // nenhuma técnica: sem loadout elas nem entram no pool
   });
 });
 
@@ -280,8 +280,8 @@ describe('ECN-05 → CRD-02: a carta 0 é a melhoria de um item dono (técnica e
   it('rodada 1 (gate 2): só o Corpo sobe; na rodada 2 o foco é a divergente', () => {
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 1);
-    expect(ids(fresh(loadout, 1, zeros()))).toEqual(['corpo', 'corte', 'vida']);
-    expect(ids(fresh(loadout, 2, zeros()))).toEqual(['divergente', 'corte', 'vida']);
+    expect(ids(fresh(loadout, 1, zeros()))).toEqual(['corpo', 'corte', 'vida', 'forca']);
+    expect(ids(fresh(loadout, 2, zeros()))).toEqual(['divergente', 'corte', 'vida', 'forca']);
   });
 
   it('Nv2 equipada: a melhoria só a partir da rodada 4 (techGate(3) = 4), fora na 3 e dentro na 4', () => {
@@ -336,7 +336,7 @@ describe('ECN-05 → CRD-02: a carta 0 é a melhoria de um item dono (técnica e
     const loadout = new Loadout();
     loadout.equip(0, 'divergente', 3);
     loadout.equip(1, 'corte', 3);
-    expect(ids(fresh(loadout, 10, zeros()))).toEqual(['corpo', 'vida', 'forca']);
+    expect(ids(fresh(loadout, 10, zeros()))).toEqual(['corpo', 'vida', 'forca', 'agilidade']);
   });
 
   it('tuning não padrão: com minRound = 5 a melhoria só aparece da rodada 5 em diante', () => {

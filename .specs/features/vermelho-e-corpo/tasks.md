@@ -1710,15 +1710,17 @@ inflação nem trava até o passo 5), porque o `costOf` de hoje mandaria o `kind
 
 **Done when**:
 
-- [ ] `tests/game/shopPanel.test.ts` e `tests/data/shop.test.ts` com 4 cartas
-- [ ] Smoke `shop`: 4 ofertas distintas no snapshot (`:86-88`), a tecla `4` compra a carta 3 e a garantia de técnica
+- [x] `tests/game/shopPanel.test.ts` e `tests/data/shop.test.ts` com 4 cartas
+- [x] Smoke `shop`: 4 ofertas distintas no snapshot (`:86-88`), a tecla `4` compra a carta 3 e a garantia de técnica
       sem slot ocupado (TSH-05, `:325-338`) passa a `offers[1]` (CRD-03); a dica do painel lida no `panel.hint`
-- [ ] `git diff src/game/ShopPanel.ts` só no `CARD_COUNT` e no texto da dica
-- [ ] Smokes `shop`, `shop-progress`, `evolution` e `vows` verdes; gate verde; contagem sem perda
+- [x] `git diff src/game/ShopPanel.ts` só no `CARD_COUNT` e no texto da dica
+- [x] Smokes `shop`, `shop-progress`, `evolution` e `vows` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full
 **Commit**: `feat(shop): show four cards and buy the fourth with key 4`
+
+> Nota: o trecho ECN-05/08 do `shop-progress.smoke.mjs` foi reescrito já aqui (Azul procurado nas 4 cartas, `Nv 2/3`, custo 41), porque sem ele o smoke da T56 não fica verde (a carta 0 sai do `axisRng`); a T57 só confere. Os testes de `shop.test.ts` e `techShop.test.ts` passaram a 4 cartas. A prova do painel é o smoke (a vista não roda sem o motor); o `shopPanel.test.ts` só lê o código-fonte do `CARD_COUNT` e da dica.
 
 ---
 

@@ -143,7 +143,7 @@ export class ShopDirector {
    * Painel de votos aberto (VOW-03, VOW-04): 1..3 toma o voto, Enter recusa; os dois fecham o painel e abrem a loja.
    * Devolve `true` enquanto o painel consumiu o quadro (a loja não lê input nesse quadro).
    */
-  private updateVowPanel(input: { buySlot: 0 | 1 | 2 | null; confirm: boolean }): boolean {
+  private updateVowPanel(input: { buySlot: 0 | 1 | 2 | 3 | null; confirm: boolean }): boolean {
     if (!this.s.vows.panelOpen) return false;
     if (input.buySlot === null && !input.confirm) return true;
     if (input.buySlot !== null && this.s.vows.offers![input.buySlot] === undefined) return true;
