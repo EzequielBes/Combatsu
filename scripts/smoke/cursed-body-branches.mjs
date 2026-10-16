@@ -11,6 +11,17 @@ const LEVEL_5 = 'axes=corpo.fluxo:3,corpo.alcance:1';
 
 const impacts = (s, seen) => s.events.slice(seen).filter((e) => e.startsWith('impact:'));
 
+/** Dano da cotovelada (14) e o que a Cadência soma (+50 %, CRP-08.2): o valor que o alvo leva de fato. */
+const ELBOW_DAMAGE = 14;
+const ELBOW_DECISIVE = 21;
+
+/** Danos levados pelos alvos da cotovelada (evento `bodyHit:cotovelada:<alvo>:<dano levado>`), na ordem. */
+const elbowHits = (s, seen) =>
+  s.events
+    .slice(seen)
+    .filter((e) => e.startsWith('bodyHit:cotovelada:'))
+    .map((e) => e.split(':').slice(2).map(Number));
+
 /**
  * Encosta no inimigo mais perto e faz a cadeia `jab → direto → gancho → cotovelada` (J quatro vezes, cada aperto
  * depois do acerto anterior, dentro da janela); devolve os níveis de impacto na ordem e o snapshot do fim.
@@ -30,12 +41,12 @@ export async function chain(kit, ctx, strict = true) {
   }
   const moves = s.events.slice(seen).filter((e) => e.startsWith('move:'));
   const whole = JSON.stringify(moves) === JSON.stringify(['move:jab', 'move:direto', 'move:gancho', 'move:cotovelada']);
-  if (!strict) return { tiers: impacts(s, seen), s, seen, whole };
+  if (!strict) return { tiers: impacts(s, seen), s, seen, whole, elbow: elbowHits(s, seen) };
   ctx.assert(
     JSON.stringify(moves) === JSON.stringify(['move:jab', 'move:direto', 'move:gancho', 'move:cotovelada']),
     `a cadeia deveria sair inteira: ${JSON.stringify({ moves, impacts: impacts(s, seen) })}`,
   );
-  return { tiers: impacts(s, seen), s, seen };
+  return { tiers: impacts(s, seen), s, seen, elbow: elbowHits(s, seen) };
 }
 
 /**
@@ -52,6 +63,9 @@ async function cadenceDecisive(ctx) {
   ctx.assert(on.s.build.corpo.branch === 'cadencia', `CRP-14: ramo Cadência: ${JSON.stringify(on.s.build.corpo)}`);
   ctx.assert(on.tiers[2] === 'impact:light' && on.tiers[3] === 'impact:decisive', `CRP-08.2: o 4º é decisivo: ${view}`);
   ctx.assert(off.tiers[3] === 'impact:heavy', `CRP-08.2: sem ramo o 4º é heavy: ${view}`);
+  const dmg = JSON.stringify({ on: on.elbow, off: off.elbow });
+  ctx.assert(on.elbow.length > 0 && on.elbow.every(([, d]) => d === ELBOW_DECISIVE), `CRP-08.2: +50 % = 21: ${dmg}`);
+  ctx.assert(off.elbow.length > 0 && off.elbow.every(([, d]) => d === ELBOW_DAMAGE), `CRP-08.2: sem ramo 14: ${dmg}`);
 }
 
 /**

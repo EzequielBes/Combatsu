@@ -86,6 +86,10 @@ export class BodyDirector {
     this.swingConnected = true;
     this.fury.onConnect(hit.swingId);
     this.cadence.onConnect(hit.swingId);
+    // Observabilidade: o dano que o alvo levou de fato neste golpe do moveset (CRP-08.2 e CRP-09 leem daqui).
+    if (target instanceof Enemy) {
+      this.s.snapshot.debugEvents.push(`bodyHit:${hit.moveName}:${target.id}:${target.lastDamageTaken}`);
+    }
     const branch = this.s.loadout.axes.branch('corpo');
     if (hit.decisive && this.awakened && branch === 'cadencia') {
       // CRP-13: o 1º decisivo da rodada com o Martelo Negro anuncia o Despertar.
