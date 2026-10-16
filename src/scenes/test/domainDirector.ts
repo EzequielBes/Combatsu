@@ -1,9 +1,11 @@
 import { DomainState } from '../../core/domain';
+import { ActiveDomain, activationDenial, type DomainEnd } from '../../core/domainActivation';
 import { parseChargeParam, parseDomainParam } from '../../core/domainParam';
 import type { Hit, HitBand } from '../../core/hit';
 import { FINISHER_MOVE } from '../../data/moves';
 import type { DomainSnapshot } from '../../game/domainSnapshot';
 import type { DefenseKind } from '../../game/player/types';
+import { acceptsPlayerInput } from '../../core/run';
 import type { TestScene } from '../TestScene';
 import { debugParam } from './params';
 
@@ -47,6 +49,56 @@ export class DomainDirector {
   private readonly chargedCasts = new Set<number>();
 
   constructor(readonly s: TestScene) {}
+
+  private event(name: string): void {
+    this.s.snapshot.debugEvents.push(name);
+  }
+
+  /**
+   * Um quadro de jogo (fora do hitstop e da loja), antes das técnicas: a tecla `P`/`N`, o relógio do Domínio e o
+   * esvaziamento. Fora de `roundActive`/`intermission`/`traverse` e no laboratório nada anda (o input já chega neutro
+   * nesses estados e na transição de área, `StatsDirector.inputFor`).
+   */
+  update(dtMs: number, pressed: boolean): void {
+    if (this.s.fxLab || !acceptsPlayerInput(this.s.run.state)) return;
+    if (pressed) this.tryActivate();
+    // DOM-10: o tempo do Domínio cai com o tempo de jogo; no hitstop a cena não chama este `update`.
+    if (this.state.active?.update(dtMs)) this.end('timer');
+    this.state.tick(dtMs, this.s.run.state === 'roundActive');
+  }
+
+  /**
+   * A tecla (DOM-06, DOM-07): a recusa empurra um `domainDenied:<motivo>` e não mexe na carga; aceita, termina o golpe
+   * em curso, zera a carga, liga o Domínio no nível possuído e empurra `domain:<id>`.
+   */
+  private tryActivate(): void {
+    const denial = activationDenial(this.state, this.busy());
+    if (denial) {
+      this.event(`domainDenied:${denial}`);
+      return;
+    }
+    const owned = this.state.owned!;
+    if (this.s.player.moveName !== null) this.s.player.cancelMelee();
+    this.state.setCharge(0);
+    this.state.active = new ActiveDomain(owned.id, owned.level);
+    this.event(`domain:${owned.id}`);
+    this.s.stats.sync();
+  }
+
+  /** Ocupado para a tecla: o mesmo de conjurar, mais conjuração ativa, Reversa canalizando e player morto (DOM-07). */
+  private busy(): boolean {
+    const { player } = this.s;
+    return player.isBusyForCast() || this.s.techCaster.cast !== null || this.s.recovery.reverse.active || player.dead;
+  }
+
+  /** Fim do Domínio ativo: `domainEnd:<id>`. Só o fim pelo tempo roda o efeito de fim (DOM-10.10). */
+  end(_reason: DomainEnd): void {
+    const active = this.state.active;
+    if (!active) return;
+    this.event(`domainEnd:${active.id}`);
+    this.state.active = null;
+    this.s.stats.sync();
+  }
 
   /** Run nova: nada do Domínio da run anterior sobrevive (DOM-05). */
   reset(): void {

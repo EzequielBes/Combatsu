@@ -1,5 +1,6 @@
 import { AWAKENING_NAMES, BRANCH_AWAKENING } from '../../data/techAxes';
 import type { TechId } from '../../data/techniques';
+import type { InputSnapshot } from '../../game/input';
 import type { TechTarget } from '../../game/TechRunner';
 import type { TestScene } from '../TestScene';
 
@@ -8,7 +9,8 @@ export class TechDirector {
   constructor(readonly s: TestScene) {}
 
   /** Parte técnica do `update` da cena (fora de hitstop e da loja), na ordem original. */
-  update(dt: number): void {
+  update(dt: number, input: InputSnapshot): void {
+    this.s.build.domain.update(dt, input.domainPressed);
     this.s.techCaster.update(dt);
     // FXL-02/KOK-03: a tecla 3 arma o Kokusen sem timing manual - injeta a "tecla apertada de novo" no exato
     // frame em que a janela abre (o `windowOpen` já reflete o começo deste frame, antes do `techRunner.update`).

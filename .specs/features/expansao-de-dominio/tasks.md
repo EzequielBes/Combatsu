@@ -387,19 +387,26 @@ sem mexer na carga; aceita: `player.cancelMelee()` se havia golpe, carga 0, `Act
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 2, tecla): com `domain=santuario&charge=100`, `P` dá `domain:santuario` e `charge` 0, e
+- [x] `domain.smoke.mjs` (parte 2, tecla): com `domain=santuario&charge=100`, `P` dá `domain:santuario` e `charge` 0, e
       `N` faz o mesmo numa run nova; segundo `P` dá `domainDenied:active`; sem `charge`, `domainDenied:charge`; sem
       `domain`, `domainDenied:none`; durante uma conjuração (`tech=corte`, `L` e `P` no quadro seguinte),
       `domainDenied:busy`; nenhuma recusa muda a carga e cada uma empurra um evento só (DOM-07)
-- [ ] `P` e `N` no mesmo quadro dão uma tentativa (edge case); `P` apertado e solto na konbini não dá evento nenhum,
+- [x] `P` e `N` no mesmo quadro dão uma tentativa (edge case); `P` apertado e solto na konbini não dá evento nenhum,
       nem no 1º quadro da rodada seguinte, com `charge=100` (os dois lados: sem o consumo no `ShopInput` o smoke
       falha) (DOM-06.2)
-- [ ] `P` no meio do `jab` termina o golpe na hora (DOM-07.4); o Domínio acaba pelo tempo com `domainEnd:santuario` em
+- [x] `P` no meio do `jab` termina o golpe na hora (DOM-07.4); o Domínio acaba pelo tempo com `domainEnd:santuario` em
       6000 ms de jogo (`active.remainingMs` lido no snapshot)
-- [ ] Esvaziamento no jogo: `charge=50` parado 8 s de `roundActive` cai para 40 (DOM-03)
-- [ ] `src/scenes/TestScene.ts` com as mesmas linhas efetivas de antes da tarefa (DOM-11)
-- [ ] Smokes `fight`, `tech`, `hud`, `boot`, `no-debug`, `shop` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Esvaziamento no jogo: `charge=50` parado 8 s de `roundActive` cai para 40 (DOM-03)
+- [x] `src/scenes/TestScene.ts` com as mesmas linhas efetivas de antes da tarefa (DOM-11)
+- [x] Smokes `fight`, `tech`, `hud`, `boot`, `no-debug`, `shop` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4370 → 4370)
+- Notas: a parte 2 (tecla) mora em `scripts/smoke/domain-keys.mjs`. SPEC_DEVIATION no DOM-06.2: o `Key.onUp` do Phaser
+  apaga a borda do `JustDown` ao soltar, então "apertado e solto na konbini" nunca vaza, com ou sem o consumo no
+  `ShopInput` (o caso fica no smoke). O lado que falha sem o consumo é o `P` ainda segurado quando a loja fecha, e só na
+  sala de teste (`area=sala`): no mundo modular o fade da konbini lê o input e o descarta. Conferido com o consumo
+  desligado: `domainDenied`/`domain:santuario` aparece no 1º quadro; com o consumo, nada. A parte 0 passou a esvaziar a
+  run velha para 40 antes do `R` (DOM-05: a run nova volta aos 50 do parâmetro). `TestScene` com 388 linhas efetivas,
+  as mesmas de antes.
 
 **Tests**: smoke
 **Gate**: full

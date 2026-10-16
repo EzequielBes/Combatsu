@@ -29,6 +29,8 @@ export interface InputSnapshot {
   interactPressed: boolean;
   /** `F` segurada: canaliza a Energia Amaldiçoada Reversa (RCT-01). */
   reverseHeld: boolean;
+  /** `P` ou `N` apertada no frame: ativa a Expansão de Domínio (DOM-06). */
+  domainPressed: boolean;
 }
 
 type Key = Phaser.Input.Keyboard.Key;
@@ -50,6 +52,7 @@ export class PlayerInput {
   private readonly dodge: Key[];
   private readonly interact: Key[];
   private readonly reverse: Key[];
+  private readonly domain: Key[];
 
   constructor(scene: Phaser.Scene) {
     const kb = scene.input.keyboard!;
@@ -70,6 +73,7 @@ export class PlayerInput {
     this.dodge = keys(K.SPACE, K.Q);
     this.interact = keys(K.E);
     this.reverse = keys(K.F);
+    this.domain = keys(K.P, K.N);
   }
 
   /** Chamar uma vez por frame. */
@@ -92,6 +96,7 @@ export class PlayerInput {
       dodgePressed: anyJustDown(this.dodge),
       interactPressed: anyJustDown(this.interact),
       reverseHeld: anyDown(this.reverse),
+      domainPressed: anyJustDown(this.domain),
     };
   }
 }
@@ -128,6 +133,7 @@ export class ShopInput {
   private readonly downKeys: Key[];
   private readonly r: Key;
   private readonly enter: Key;
+  private readonly domain: Key[];
 
   constructor(scene: Phaser.Scene) {
     const kb = scene.input.keyboard!;
@@ -144,6 +150,7 @@ export class ShopInput {
     this.downKeys = keys(K.S, K.DOWN);
     this.r = kb.addKey(K.R);
     this.enter = kb.addKey(K.ENTER);
+    this.domain = keys(K.P, K.N);
   }
 
   /** Chamar uma vez por frame, só com `run.state === 'shop'` (SHOP-20). */
@@ -153,6 +160,8 @@ export class ShopInput {
     if (Phaser.Input.Keyboard.JustDown(this.two)) buySlot = 1;
     if (Phaser.Input.Keyboard.JustDown(this.three)) buySlot = 2;
     if (Phaser.Input.Keyboard.JustDown(this.four)) buySlot = 3;
+    // DOM-06.2: o `P`/`N` da loja é consumido aqui; sem isso a borda sobraria para o 1º quadro da rodada seguinte.
+    anyJustDown(this.domain);
     return {
       buySlot,
       buySelected: Phaser.Input.Keyboard.JustDown(this.j),

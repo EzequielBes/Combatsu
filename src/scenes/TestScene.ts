@@ -482,7 +482,7 @@ export class TestScene extends Phaser.Scene implements DebugProbe {
     // AIR-05: enquanto a voadora está ativa a camada `air.kickTrail` fica viva (o rastro em si sai do Player).
     if (this.player.moveName === 'voadora' && this.player.movePhase === 'active')
       this.realtimeFx.add('air.kickTrail', 100);
-    this.techDirector.update(dt);
+    this.techDirector.update(dt, input);
     this.drops.updatePickups(dt);
     // Morte do player (RUN-04): só a transição para morto conta, uma vez.
     if (this.player.dead && !this.wasPlayerDead) this.run.playerDied();

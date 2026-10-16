@@ -1,6 +1,7 @@
 // Expansão de Domínio (DOM-*, DDB-*, DHD-*) no mundo modular em HD, com `?debug&hd=1&area=modular&seed=1`. Cada parte
 // abre a sua própria página pelo `fight-kit` (que acrescenta `seed=1`, `maxAlive=1` e `shove=0`).
 import { chargeFromStrikes } from './domain-charge.mjs';
+import { domainKeys } from './domain-keys.mjs';
 import { chargeFromTechniques } from './domain-tech.mjs';
 import { makeKit } from './fight-kit.mjs';
 
@@ -44,7 +45,10 @@ async function debugParams(kit) {
     `charge=101 ignorado: ${JSON.stringify(s.domain)}`,
   );
 
-  s = await kit.boot(`${BASE}&domain=jackpot:3&charge=50`);
+  // A run velha esvazia para 40 (8 s sem carga, DOM-03); a nova volta aos 50 do parâmetro.
+  s = await kit.boot(`${BASE}&domain=jackpot:3&charge=50&spawn=0`);
+  s = await kit.snap(8200);
+  kit.assert(s.domain.charge === 40, `a run velha deveria esvaziar para 40: ${s.domain.charge}`);
   s = await dieAndRestart(kit);
   kit.assert(
     s.domain.owned?.id === 'jackpot' && s.domain.owned.level === 3 && s.domain.charge === 50 && !s.domain.active,
@@ -57,4 +61,5 @@ export default async function ({ page, baseUrl, assert }) {
   await debugParams(kit);
   await chargeFromStrikes(kit, BASE);
   await chargeFromTechniques(kit, BASE);
+  await domainKeys(kit, BASE);
 }
