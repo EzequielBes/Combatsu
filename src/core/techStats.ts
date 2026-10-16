@@ -2,6 +2,7 @@ import { RED_AXES, type RedBranchId } from '../data/techAxes';
 import { LEVEL_FACTOR, TECH_GEOMETRY, TECHNIQUES, type TechId } from '../data/techniques';
 import { AxisBuild } from './axisBuild';
 import { axisAt, killRefundPct } from './axisRule';
+import { kokusenDamage, type KokusenScale } from './kokusen';
 import type { TechLevel } from './loadout';
 
 /**
@@ -54,6 +55,8 @@ export interface TechStats {
   recoverMs: number;
   /** Cada chave de `TECHNIQUES[id].damage` já com nível (ou eixo, no Vermelho) e multiplicadores. */
   damage: Record<string, number>;
+  /** ESC-02: dano do Kokusen do Divergente, com o piso da rodada; 0 nas outras técnicas. */
+  kokusenDamage: number;
   red?: RedStats;
   blue?: typeof TECH_GEOMETRY.azul;
   cut?: typeof TECH_GEOMETRY.corte;
@@ -72,7 +75,12 @@ export interface TechStatsInput {
   vowDamageMul: number;
   /** VOW-13: Fluxo selado. */
   costMul: number;
+  /** ESC-02: Força, golpe pesado e HP da rodada; sem ela, o Kokusen de uma rodada 1 sem build. */
+  kokusenScale?: KokusenScale;
 }
+
+/** Escala neutra do Kokusen: Força 0, sem multiplicador e HP da rodada 1 (45). */
+export const NO_KOKUSEN_SCALE: KokusenScale = { forca: 0, meleeMul: 1, hpMul: 1 };
 
 /** Eixos vazios: o Vermelho sem ponto (nunca recebe ponto; só é lido). */
 const NO_AXES = new AxisBuild();
@@ -154,8 +162,18 @@ function resolveVermelho(input: TechStatsInput): TechStats {
       hit: scaleDamage(axisAt(RED_AXES.potencia.touch, p.potencia), 1, damageMul, vowDamageMul),
       detonation: scaleDamage(axisAt(RED_AXES.potencia.detonation, p.potencia), 1, damageMul, vowDamageMul),
     },
+    kokusenDamage: 0,
     red: resolveRed(axes, damageMul, vowDamageMul),
   };
+}
+
+/**
+ * ESC-02.4: o Kokusen do Divergente parte do 2º impacto cru com o fator de nível, nunca do `damage.second` do stat (que
+ * já traz `damageMul` e `vowDamageMul`: o voto contaria duas vezes).
+ */
+function divergentKokusen(level: TechLevel, scale: KokusenScale = NO_KOKUSEN_SCALE): number {
+  const second = Math.round(TECHNIQUES.divergente.damage.second * LEVEL_FACTOR[level - 1]);
+  return kokusenDamage(second, scale);
 }
 
 /**
@@ -181,6 +199,7 @@ export function resolveTechStats(input: TechStatsInput): TechStats {
     releaseMs: def.releaseMs,
     recoverMs: def.recoverMs,
     damage,
+    kokusenDamage: id === 'divergente' ? divergentKokusen(level, input.kokusenScale) : 0,
     ...geometryOf(id),
   };
 }

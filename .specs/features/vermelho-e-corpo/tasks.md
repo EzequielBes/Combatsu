@@ -1948,11 +1948,11 @@ partir do `stats.damage.second` (que já traz `damageMul` e `vowDamageMul`: o vo
 
 **Done when**:
 
-- [ ] `tests/core/techStats.test.ts`: Divergente com escala 1 dá 45; com `damageMul` e `vowDamageMul` em 1,35 continua
+- [x] `tests/core/techStats.test.ts`: Divergente com escala 1 dá 45; com `damageMul` e `vowDamageMul` em 1,35 continua
       45; com `forca: 5` dá 68; com o `meleeMul` da folha (traços `{heavy: true,
       light: false, counter: false, shadow: false}`, o Impacto já dentro, contado uma vez) sobe; as outras 4 com
       `kokusenDamage` 0
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

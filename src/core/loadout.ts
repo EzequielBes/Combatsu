@@ -1,5 +1,6 @@
 import { TECHNIQUES, type TechId } from '../data/techniques';
 import { AxisBuild } from './axisBuild';
+import type { KokusenScale } from './kokusen';
 import { levelFactor, resolveTechStats, scaleDamage, type TechStats } from './techStats';
 
 export type TechLevel = 1 | 2 | 3;
@@ -46,6 +47,8 @@ export class Loadout {
   vowDamageMul = 1;
   /** VOW-13: multiplicador do custo de energia (Fluxo selado); 1 sem voto. */
   costMul = 1;
+  /** ESC-02: Força, golpe pesado e HP da rodada que escalam o Kokusen; o `StatsDirector` grava a cada quadro. */
+  kokusenScale: KokusenScale = { forca: 0, meleeMul: 1, hpMul: 1 };
 
   get slotsView(): readonly [LoadoutSlotView | null, LoadoutSlotView | null] {
     return [this.view(this.slots[0]), this.view(this.slots[1])];
@@ -121,6 +124,7 @@ export class Loadout {
       damageMul: this.damageMul,
       vowDamageMul: this.vowDamageMul,
       costMul: this.costMul,
+      kokusenScale: this.kokusenScale,
     });
   }
 
@@ -175,6 +179,7 @@ export class Loadout {
     this.damageMul = 1;
     this.vowDamageMul = 1;
     this.costMul = 1;
+    this.kokusenScale = { forca: 0, meleeMul: 1, hpMul: 1 };
   }
 
   private slotOf(id: TechId): LoadoutSlot | null {
