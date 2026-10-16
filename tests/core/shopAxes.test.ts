@@ -4,6 +4,8 @@ import { Loadout } from '../../src/core/loadout';
 import { Modifiers } from '../../src/core/modifiers';
 import { axisEligible, eligible } from '../../src/core/shopEligibility';
 import { GAME_SHOP_CATALOG, type ShopEntry } from '../../src/data/shop';
+import { drawCards, axesFor, focusItem, type Offer } from '../../src/core/shopDraw';
+import type { AxisBuild } from '../../src/core/axisBuild';
 import { equipRed } from './redLevel';
 import { Rng } from '../../src/core/rng';
 import { RUN, SHOP, WAVE } from '../../src/data/tuning';
@@ -130,5 +132,225 @@ describe('axisEligible: itens com eixo na loja (CRD-02, CRD-04)', () => {
     loadout.equip(0, 'divergente');
     loadout.equip(1, 'azul');
     expect(inPool('vermelho', loadout)).toBe(false);
+  });
+});
+
+/** Rng falso: devolve os valores dados na ordem e depois repete o último. */
+const fakeRng = (...values: number[]): Rng => {
+  let i = 0;
+  return { next: () => values[Math.min(i++, values.length - 1)] } as unknown as Rng;
+};
+
+const poolOf = (loadout: Loadout, round = 10): ShopEntry[] =>
+  eligible(GAME_SHOP_CATALOG, new Modifiers(), round, loadout);
+
+const cardIds = (cards: (Offer | null)[]): (string | undefined)[] => cards.map((c) => c?.id);
+
+/** Vermelho Nv 2 no slot 0 e Azul Nv 1 no slot 1: o foco é o Vermelho (maior nível). */
+const redFocusLoadout = (): Loadout => {
+  const loadout = new Loadout();
+  equipRed(loadout, 0, 2);
+  loadout.equip(1, 'azul');
+  return loadout;
+};
+
+describe('focusItem: o item de maior nível (CRD-02)', () => {
+  it('o maior nível vence', () => {
+    const loadout = redFocusLoadout();
+    expect(focusItem(loadout)).toBe('vermelho');
+    loadout.axes.add('corpo', 'impacto');
+    loadout.axes.add('corpo', 'impacto');
+    expect(focusItem(loadout)).toBe('corpo'); // Corpo Nv 3 contra Vermelho Nv 2
+  });
+
+  it('o empate vai ao slot 0, depois ao slot 1, depois ao Corpo', () => {
+    const loadout = new Loadout();
+    loadout.equip(0, 'divergente');
+    loadout.equip(1, 'azul');
+    expect(focusItem(loadout)).toBe('divergente');
+    const second = new Loadout();
+    second.equip(1, 'azul');
+    expect(focusItem(second)).toBe('azul');
+    expect(focusItem(new Loadout())).toBe('corpo');
+  });
+});
+
+describe('drawCards: carta 0 (CRD-02)', () => {
+  it('a evolução pronta vence o foco (CRD-02.2)', () => {
+    const loadout = redFocusLoadout();
+    const evolution = GAME_SHOP_CATALOG.find((e) => e.kind === 'evolution')!;
+    const pool = [...poolOf(loadout), evolution];
+    const cards = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0), loadout });
+    expect(cards[0]?.id).toBe(evolution.id);
+  });
+
+  it('axisRng 0,59 dá o foco e 0,60 dá outro item dono', () => {
+    const loadout = redFocusLoadout();
+    const pool = poolOf(loadout);
+    const at059 = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0.59), loadout });
+    const at060 = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0.6, 0), loadout });
+    expect(at059[0]?.id).toBe('vermelho');
+    expect(at060[0]?.id).not.toBe('vermelho');
+    expect(['azul', 'corpo']).toContain(at060[0]?.id);
+  });
+
+  it('o outro item sai do axisRng entre os donos que podem subir', () => {
+    const loadout = redFocusLoadout();
+    const pool = poolOf(loadout);
+    const low = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0.6, 0), loadout });
+    const high = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0.6, 0.99), loadout });
+    expect(low[0]?.id).toBe('azul');
+    expect(high[0]?.id).toBe('corpo');
+  });
+
+  it('foco no teto de 5 pontos cai para outro item (edge case)', () => {
+    const loadout = new Loadout();
+    equipRed(loadout, 0, 4);
+    loadout.axes.add('vermelho', 'escala');
+    loadout.axes.add('vermelho', 'escala');
+    expect(focusItem(loadout)).toBe('vermelho');
+    const cards = drawCards({ pool: poolOf(loadout), rng: fakeRng(0), axisRng: fakeRng(0), loadout });
+    expect(cards[0]?.id).toBe('corpo');
+  });
+
+  it('foco travado fora do pool cai para outro item (edge case)', () => {
+    const loadout = redFocusLoadout();
+    const pool = poolOf(loadout).filter((e) => e.id !== 'vermelho');
+    const cards = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0), loadout });
+    expect(cards[0]?.id).not.toBe('vermelho');
+    expect(['azul', 'corpo']).toContain(cards[0]?.id);
+  });
+
+  it('sem item que suba, a carta 0 vem do sorteio por peso (CRD-02.4)', () => {
+    const loadout = redFocusLoadout();
+    const pool = poolOf(loadout).filter((e) => e.kind === 'modifier');
+    const cards = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0), loadout });
+    expect(cards[0]?.id).toBe(pool[0].id);
+  });
+
+  it('só o foco sobe e o axisRng dá 0,60 ou mais: sorteio por peso (CRD-02.4)', () => {
+    const loadout = new Loadout();
+    const pool = [...poolOf(loadout).filter((e) => e.kind === 'modifier'), entryOf('corpo')];
+    const weighted = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0.6), loadout });
+    expect(weighted[0]?.id).toBe(pool[0].id);
+    const focus = drawCards({ pool, rng: fakeRng(0), axisRng: fakeRng(0.59), loadout });
+    expect(focus[0]?.id).toBe('corpo');
+  });
+});
+
+describe('drawCards: carta 1 e unicidade (CRD-03)', () => {
+  it('com slot vazio a carta 1 é uma técnica nova, em toda seed', () => {
+    for (let seed = 1; seed <= 100; seed++) {
+      const loadout = new Loadout();
+      equipRed(loadout, 0, 2);
+      const cards = drawCards({ pool: poolOf(loadout), rng: new Rng(seed), axisRng: new Rng(seed + 1), loadout });
+      const card = cards[1]!;
+      expect(card.entry.kind).toBe('technique');
+      expect(loadout.levelOf(card.id as 'azul')).toBe(0);
+      expect(card.axes).toBeUndefined();
+    }
+  });
+
+  it('sem slot vazio nenhuma carta é técnica nova', () => {
+    for (let seed = 1; seed <= 100; seed++) {
+      const loadout = redFocusLoadout();
+      const cards = drawCards({ pool: poolOf(loadout), rng: new Rng(seed), axisRng: new Rng(seed + 1), loadout });
+      for (const card of cards) {
+        if (card?.entry.kind === 'technique') expect(loadout.levelOf(card.id as 'azul')).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('nunca duas cartas do mesmo item, com 4 cartas pedidas', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const loadout = seed % 2 ? redFocusLoadout() : new Loadout();
+      const cards = drawCards({
+        pool: poolOf(loadout),
+        rng: new Rng(seed),
+        axisRng: new Rng(seed * 7),
+        loadout,
+        count: 4,
+      });
+      expect(cards).toHaveLength(4);
+      expect(new Set(cardIds(cards)).size).toBe(4);
+    }
+  });
+
+  it('a mesma seed dá as mesmas cartas e os mesmos eixos (CRD-06)', () => {
+    const run = (): unknown => {
+      const loadout = redFocusLoadout();
+      return drawCards({ pool: poolOf(loadout), rng: new Rng(42), axisRng: new Rng(43), loadout, count: 4 }).map(
+        (c) => [c?.id, c?.axes],
+      );
+    };
+    expect(run()).toEqual(run());
+  });
+});
+
+describe('axesFor: um ou dois eixos (CRD-04)', () => {
+  it('dois eixos com o foco primeiro', () => {
+    const loadout = new Loadout();
+    equipRed(loadout, 0, 2); // 1 ponto em potência: o foco
+    const [focus, other] = axesFor('vermelho', loadout.axes, fakeRng(0));
+    expect(focus).toBe(loadout.axes.focusAxis('vermelho'));
+    expect(focus).toBe('potencia');
+    expect(other).toBe('escala');
+    expect(axesFor('vermelho', loadout.axes, fakeRng(0.99))[1]).toBe('perfuracao');
+  });
+
+  it('o outro eixo nunca é um eixo no teto de 3 pontos', () => {
+    const loadout = new Loadout();
+    equipRed(loadout, 0, 4); // potência com 3 pontos
+    expect(loadout.axes.points('vermelho', 'potencia')).toBe(3);
+    for (const x of [0, 0.5, 0.99]) {
+      const axes = axesFor('vermelho', loadout.axes, fakeRng(x));
+      expect(axes).toHaveLength(2);
+      expect(axes).not.toContain('potencia');
+    }
+  });
+
+  it('um eixo só quando só um cabe (edge case)', () => {
+    const stub = {
+      focusAxis: () => 'impacto',
+      points: (_item: string, axis: string) => (axis === 'impacto' ? 0 : 3),
+    } as unknown as AxisBuild;
+    expect(axesFor('corpo', stub, fakeRng(0))).toEqual(['impacto']);
+  });
+
+  it('item no teto de 5 pontos não oferece eixo', () => {
+    const loadout = new Loadout();
+    equipRed(loadout, 0, 4);
+    loadout.axes.add('vermelho', 'escala');
+    loadout.axes.add('vermelho', 'escala');
+    expect(axesFor('vermelho', loadout.axes, fakeRng(0))).toEqual([]);
+  });
+
+  it('a carta do Vermelho equipado sai com axes; a de técnica comum, sem', () => {
+    const loadout = redFocusLoadout();
+    const cards = drawCards({ pool: poolOf(loadout), rng: fakeRng(0), axisRng: fakeRng(0.59), loadout });
+    expect(cards[0]?.axes?.[0]).toBe('potencia');
+    const azul = drawCards({ pool: [entryOf('azul')], rng: fakeRng(0), axisRng: fakeRng(0), loadout });
+    expect(azul[0]?.axes).toBeUndefined();
+  });
+});
+
+describe('CRD-07: o foco do Vermelho aparece em pelo menos 60% das lojas', () => {
+  it('em 1000 seeds, com o Vermelho no maior nível, o Corpo e outra técnica', () => {
+    let shown = 0;
+    for (let seed = 1; seed <= 1000; seed++) {
+      const loadout = new Loadout();
+      equipRed(loadout, 0, 3);
+      loadout.equip(1, 'azul');
+      const cards = drawCards({
+        pool: poolOf(loadout),
+        rng: new Rng(seed),
+        axisRng: new Rng(seed ^ SHOP.axisSalt),
+        loadout,
+        count: 4,
+      });
+      const focus = loadout.axes.focusAxis('vermelho');
+      if (cards.some((c) => c?.id === 'vermelho' && c.axes?.[0] === focus)) shown++;
+    }
+    expect(shown).toBeGreaterThanOrEqual(600);
   });
 });

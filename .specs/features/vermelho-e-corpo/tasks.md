@@ -1628,11 +1628,11 @@ a entrada do Vermelho em `data/shop.ts:149-156` vai a `maxLevel 6`.
 
 **Done when**:
 
-- [ ] `tests/core/shopAxes.test.ts`: evolução pronta vence (CRD-02.2); `axisRng` 0,59 dá o foco e 0,60 outro item;
+- [x] `tests/core/shopAxes.test.ts`: evolução pronta vence (CRD-02.2); `axisRng` 0,59 dá o foco e 0,60 outro item;
       foco no teto ou travado cai para outro item (edge case); sem item upável, sorteio por peso (CRD-02.4); carta 1
       técnica nova com slot vazio (CRD-03); nunca 2 cartas do mesmo item; 2 eixos com o foco primeiro, ou 1 só
       (CRD-04); empate do foco slot 0, slot 1, Corpo; foco do Vermelho em ≥ 60% de 1000 seeds (CRD-07)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

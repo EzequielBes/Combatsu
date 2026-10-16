@@ -9,51 +9,12 @@ import { BUILD_NAMES, PERKS, type PerkId } from '../data/perks';
 import { SHOP } from '../data/tuning';
 import type { TechId } from '../data/techniques';
 import { eligible } from './shopEligibility';
+import { drawOffers, weightOf, type Offer } from './shopDraw';
 import { previewText } from './shopPreview';
 import type { ModifierId, ShopEntry, ShopEntryId } from '../data/shop';
 
-/** Peso de sorteio de `entry` pela raridade (SHOP-08): comum 3, raro 1. */
-function weightOf(entry: ShopEntry): number {
-  return entry.rarity === 'common' ? SHOP.weights.common : SHOP.weights.rare;
-}
-
-/**
- * Sorteia até `n` entradas de `pool` sem reposição, por peso de raridade (SHOP-06, SHOP-08): a cada slot, tira
- * `x = rng.next() * W` (`W` = peso total do que resta) e pega a primeira entrada, na ordem do catálogo, cuja
- * soma acumulada de peso ultrapassa `x`. `weight` troca o peso de raridade (BLD-05: a loja puxa a build do jogador).
- */
-export function drawOffers(
-  pool: readonly ShopEntry[],
-  rng: Rng,
-  n: number,
-  weight: (entry: ShopEntry) => number = weightOf,
-): ShopEntry[] {
-  const remaining = [...pool];
-  const drawn: ShopEntry[] = [];
-  const count = Math.min(n, remaining.length);
-  for (let i = 0; i < count; i++) {
-    const total = remaining.reduce((sum, e) => sum + weight(e), 0);
-    const x = rng.next() * total;
-    let acc = 0;
-    let pick = remaining.length - 1;
-    for (let j = 0; j < remaining.length; j++) {
-      acc += weight(remaining[j]);
-      if (acc > x) {
-        pick = j;
-        break;
-      }
-    }
-    drawn.push(remaining[pick]);
-    remaining.splice(pick, 1);
-  }
-  return drawn;
-}
-
-/** Uma oferta viva na loja: `id` é `entry.id` (SHOP-15, cada catálogo entra no máximo uma vez por loja). */
-export interface Offer {
-  readonly id: ShopEntryId;
-  readonly entry: ShopEntry;
-}
+export { drawOffers };
+export type { Offer };
 
 /** Uma carta pronta para o painel/snapshot (SHOP-21, SHOP-38, SHOP-44); `null` em todo campo = "Esgotado". */
 export interface OfferView {
