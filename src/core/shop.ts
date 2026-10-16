@@ -2,7 +2,7 @@ import type { Rng } from './rng';
 import type { Wallet } from './wallet';
 import type { Modifiers } from './modifiers';
 import type { Loadout } from './loadout';
-import { arsenalCost, type Arsenal } from './arsenal';
+import type { Arsenal } from './arsenal';
 import { buildPoints, buildWeight, type Perks } from './build';
 import { ARSENAL, type ArsenalId } from '../data/arsenal';
 import { BUILD_NAMES, PERKS, type PerkId } from '../data/perks';
@@ -12,7 +12,7 @@ import type { AxisId, AxisItem } from '../data/techAxes';
 import { eligible } from './shopEligibility';
 import { axisItemOf, drawCards, drawOffers, weightOf, type Offer } from './shopDraw';
 import { axisPreview, previewText } from './shopPreview';
-import { axisPointPrice } from './shopPricing';
+import { cardCost } from './shopPricing';
 import type { ModifierId, ShopEntry, ShopEntryId } from '../data/shop';
 
 export { drawOffers };
@@ -62,19 +62,6 @@ export interface BuyContext {
   applyEvolution?: (id: TechId) => void;
   /** CRD-05: põe um ponto do `item` no `axis` escolhido na carta; opcional para quem monta a loja sem eixos. */
   applyAxis?: (item: AxisItem, axis: AxisId) => void;
-}
-
-/** Custo de `entry`, unificando modificadores (F4, por `Modifiers`) e técnicas (F5, por nível no `loadout`). */
-function costOf(entry: ShopEntry, modifiers: Modifiers, loadout?: Loadout, arsenal?: Arsenal): number {
-  if (arsenal && entry.id in ARSENAL) return arsenalCost(entry.id as ArsenalId, arsenal); // ARS-04
-  const axisItem = loadout && axisItemOf(entry, loadout);
-  if (axisItem) return axisPointPrice(loadout.axes.total(axisItem)); // PRC-02
-  if (entry.kind === 'evolution') return entry.cost.base; // EVO-04
-  if (entry.kind === 'technique') {
-    const level = loadout?.levelOf(entry.id as TechId) ?? 0;
-    return entry.cost.base + entry.cost.step * level; // TSH-02
-  }
-  return modifiers.cost(entry);
 }
 
 /** `Nv <n+1>/<max>` para modificador e técnica (SHOP-21, ECN-08); vazio para consumível; a build, para passiva. */
@@ -177,7 +164,7 @@ export class Shop {
     if (!offer) return { ok: false, reason: 'empty' };
     if (this.sold.has(slot)) return { ok: false, reason: 'sold' };
     if (offer.entry.id === 'cura' && ctx.hp >= ctx.maxHp) return { ok: false, reason: 'fullHp' };
-    const cost = costOf(offer.entry, this.modifiers, this.loadout, this.arsenal);
+    const cost = this.costOf(offer.entry);
     if (!ctx.wallet.spend(cost)) return { ok: false, reason: 'funds' };
     this.sold.add(slot);
     const item = axisItemOf(offer.entry, this.loadout);
@@ -196,6 +183,16 @@ export class Shop {
     this.offers = this.drawFresh();
     this.sold.clear();
     return true;
+  }
+
+  /** PRC-03: preço da carta nesta loja, com a inflação da rodada; o reroll não passa por aqui. */
+  private costOf(entry: ShopEntry): number {
+    return cardCost(entry, {
+      modifiers: this.modifiers,
+      loadout: this.loadout,
+      arsenal: this.arsenal,
+      round: this.round,
+    });
   }
 
   /** Eixo escolhido na carta `slot` (CRD-05); `null` se a carta não tem eixo. */
@@ -238,7 +235,7 @@ export class Shop {
   view(wallet: Wallet, hp: number, maxHp: number): ShopView {
     const offers = this.offers.map((offer, slot): OfferView => {
       if (!offer) return EMPTY_OFFER_VIEW(slot);
-      const cost = costOf(offer.entry, this.modifiers, this.loadout, this.arsenal);
+      const cost = this.costOf(offer.entry);
       const level = this.levelOf(offer.entry);
       return {
         slot,

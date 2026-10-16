@@ -37,7 +37,9 @@ export default async function (ctx) {
     `CRD-04: eixos da carta do Vermelho: ${JSON.stringify(red)}`,
   );
   assert(red.selectedAxis === 'potencia', `CRD-05: o eixo-foco começa escolhido: ${JSON.stringify(red)}`);
-  assert(red.cost === 16 && red.level === 2, `PRC-02: o 2º ponto custa 16 no Nv 2: ${JSON.stringify(red)}`);
+  // PRC-02 e PRC-03: o 2º ponto custa 12 + 4 = 16, vezes 1 + 0,06 × (4 − 1) na loja da rodada 4 (19).
+  const price = Math.round(16 * (1 + 0.06 * (4 - 1)));
+  assert(red.cost === price && red.level === 2, `PRC-02: o 2º ponto custa ${price} no Nv 2: ${JSON.stringify(red)}`);
   const second = red.axes[1];
   s = await kit.selectCard(s, 0);
   const marked = (snap, axis) =>
@@ -57,10 +59,10 @@ export default async function (ctx) {
   const wallet = s.wallet.fragments;
   s = await kit.tap('Digit1');
   assert(
-    s.events.includes('buy:vermelho:16') && s.events.includes(`axis:vermelho.${second}`),
+    s.events.includes(`buy:vermelho:${price}`) && s.events.includes(`axis:vermelho.${second}`),
     `CRD-01: a tecla 1 deveria comprar o ponto em ${second}: ${JSON.stringify(s.events)}`,
   );
-  assert(s.wallet.fragments === wallet - 16, `PRC-02: carteira ${wallet} - 16 != ${s.wallet.fragments}`);
+  assert(s.wallet.fragments === wallet - price, `PRC-02: carteira ${wallet} - ${price} != ${s.wallet.fragments}`);
   const axes = s.build.vermelho.axes;
   assert(
     axes.potencia === 1 && axes[second] === 1 && s.build.vermelho.level === 3,

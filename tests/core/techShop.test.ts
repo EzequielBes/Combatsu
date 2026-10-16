@@ -57,12 +57,12 @@ describe('TSH-02: custo = base + step × nível atual (0 se não equipada)', () 
     expect(technique('vermelho').cost).toEqual({ base: 30, step: 15 });
   });
 
-  it('não equipada (n=0): divergente custa 15', () => {
+  it('não equipada (n=0): divergente custa 20 (PRC-01, comum; antes 15)', () => {
     const loadout = new Loadout();
     const shop = new Shop([technique('divergente')], new Modifiers(FULL_SHOP_CATALOG), fakeRng([0]), 1, loadout);
     const wallet = new Wallet();
     wallet.add(100);
-    expect(shop.view(wallet, 100, 100).offers[0].cost).toBe(15);
+    expect(shop.view(wallet, 100, 100).offers[0].cost).toBe(20);
   });
 });
 
@@ -141,7 +141,7 @@ describe('TSH-06: comprar técnica não equipada equipa nível 1 no primeiro slo
     const wallet = new Wallet();
     wallet.add(100);
     const result = shop.buy(0, techBuyCtx(loadout, wallet));
-    expect(result).toEqual({ ok: true, id: 'divergente', cost: 15 });
+    expect(result).toEqual({ ok: true, id: 'divergente', cost: 20 });
     expect(loadout.slotsView[0]).toEqual({ id: 'divergente', level: 1 });
   });
 
@@ -164,7 +164,7 @@ describe('TSH-07: comprar técnica já equipada sobe exatamente 1 nível', () =>
     const wallet = new Wallet();
     wallet.add(100);
     const result = shop.buy(0, techBuyCtx(loadout, wallet));
-    expect(result).toEqual({ ok: true, id: 'divergente', cost: 26 }); // 15 + 11×1
+    expect(result).toEqual({ ok: true, id: 'divergente', cost: 28 }); // (15 + 11×1) × 1,06 da rodada 2, PRC-03/PRC-06
     expect(loadout.levelOf('divergente')).toBe(2);
   });
 });
@@ -385,7 +385,7 @@ describe('PRG-02, PRG-06: comprar Fluxo sobe o nível em 1 e a regen aplicada é
     wallet.add(100);
     const ctx: BuyContext = { ...techBuyCtx(loadout, wallet), applyModifier: (id) => void modifiers.apply(id) };
     expect(modifiers.level('fluxo')).toBe(0);
-    expect(shop.buy(0, ctx)).toEqual({ ok: true, id: 'fluxo', cost: 12 }); // 12 + 6×0
+    expect(shop.buy(0, ctx)).toEqual({ ok: true, id: 'fluxo', cost: 18 }); // (12 + 6×0) × 1,54 da rodada 10, PRC-03
     expect(modifiers.level('fluxo')).toBe(1);
     expect(modifiers.level('energia')).toBe(0);
     const energy = new CursedEnergy();

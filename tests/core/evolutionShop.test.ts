@@ -41,11 +41,11 @@ describe('evolução na loja (EVO-01, EVO-02, EVO-04)', () => {
     expect(pool(loadoutWith(['azul', 3], ['vermelho', 3]))).toContain('roxo');
   });
 
-  it('EVO-04: custa 60 e, comprada, chama a fusão uma vez; a mesma carta não se vende duas vezes', () => {
+  it('EVO-04: custa 60 na receita, 78 na loja da rodada 6 (PRC-03), e, comprada, chama a fusão uma vez; a mesma carta não se vende duas vezes', () => {
     const lo = loadoutWith(['azul', 3], ['vermelho', 3]);
     const shop = new Shop(GAME_SHOP_CATALOG, new Modifiers(), new Rng(1), 6, lo, new Perks(), new Arsenal());
     const slot = shop.view(new Wallet(), 100, 100).offers.findIndex((o) => o.id === 'roxo');
-    expect(shop.view(new Wallet(), 100, 100).offers[slot].cost).toBe(60);
+    expect(shop.view(new Wallet(), 100, 100).offers[slot].cost).toBe(78);
     const wallet = new Wallet();
     wallet.add(200);
     const evolved: TechId[] = [];
@@ -58,18 +58,18 @@ describe('evolução na loja (EVO-01, EVO-02, EVO-04)', () => {
       applyTechnique: () => undefined,
       applyEvolution: (id) => evolved.push(id),
     };
-    expect(shop.buy(slot, ctx)).toEqual({ ok: true, id: 'roxo', cost: 60 });
-    expect(wallet.fragments).toBe(140);
+    expect(shop.buy(slot, ctx)).toEqual({ ok: true, id: 'roxo', cost: 78 });
+    expect(wallet.fragments).toBe(122);
     expect(evolved).toEqual(['roxo']);
     expect(shop.buy(slot, ctx)).toEqual({ ok: false, reason: 'sold' });
   });
 
-  it('com 59 fragmentos não compra (59 < 60) e nada muda', () => {
+  it('com 77 fragmentos não compra (77 < 78) e nada muda', () => {
     const lo = loadoutWith(['azul', 3], ['vermelho', 3]);
     const shop = new Shop(GAME_SHOP_CATALOG, new Modifiers(), new Rng(1), 6, lo, new Perks(), new Arsenal());
     const slot = shop.view(new Wallet(), 100, 100).offers.findIndex((o) => o.id === 'roxo');
     const wallet = new Wallet();
-    wallet.add(59);
+    wallet.add(77);
     const evolved: TechId[] = [];
     const ctx: BuyContext = {
       wallet,

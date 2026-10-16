@@ -151,31 +151,57 @@ describe('Shop: sorteio determinístico usado nos testes de compra', () => {
 });
 
 describe('Shop.buy: saldo exato compra, saldo − 1 recusa por falta de fundos (SHOP-45, SHOP-19, SHOP-41, SHOP-42, SHOP-10, L-010)', () => {
-  it('saldo = custo (12): compra, saldo some, nível de vida sobe 1, oferta marcada como vendida', () => {
+  it('saldo = custo (18, a Vida da rodada 10, PRC-03): compra, saldo some, nível de vida sobe 1, oferta marcada como vendida', () => {
     const modifiers = new Modifiers();
     const shop = freshShop(fakeRng([0, 0, 0]), 10, modifiers);
     const wallet = new Wallet();
-    wallet.add(12);
+    wallet.add(18);
     const ctx = buyCtx(modifiers, { wallet });
     const result = shop.buy(0, ctx);
-    expect(result).toEqual({ ok: true, id: 'vida', cost: 12 });
+    expect(result).toEqual({ ok: true, id: 'vida', cost: 18 });
     expect(wallet.fragments).toBe(0);
     expect(modifiers.level('vida')).toBe(1);
     expect(ctx.applied).toEqual(['vida']);
     expect(shop.view(wallet, 100, 100).offers[0].sold).toBe(true);
   });
 
-  it('saldo = custo − 1 (11): recusa por falta de fundos, carteira e nível intactos', () => {
+  it('saldo = custo − 1 (17): recusa por falta de fundos, carteira e nível intactos', () => {
     const modifiers = new Modifiers();
     const shop = freshShop(fakeRng([0, 0, 0]), 10, modifiers);
     const wallet = new Wallet();
-    wallet.add(11);
+    wallet.add(17);
     const ctx = buyCtx(modifiers, { wallet });
     const result = shop.buy(0, ctx);
     expect(result).toEqual({ ok: false, reason: 'funds' });
-    expect(wallet.fragments).toBe(11);
+    expect(wallet.fragments).toBe(17);
     expect(modifiers.level('vida')).toBe(0);
     expect(ctx.applied).toEqual([]);
+  });
+});
+
+describe('PRC-03: toda carta de loja custa round(base × (1 + 0,06 × (r − 1)))', () => {
+  const costsAt = (round: number): (number | null)[] =>
+    freshShop(fakeRng([0, 0, 0, 0]), round)
+      .view(new Wallet(), 100, 100)
+      .offers.map((o) => o.cost);
+
+  it('Vida 12, Força 15, Agilidade 10 e Ímã 6 na rodada 10 custam 18, 23, 15 e 9 (× 1,54)', () => {
+    expect(costsAt(10)).toEqual([18, 23, 15, 9]);
+  });
+
+  it('a rodada 1 não inflaciona, a 2 sobe 6%', () => {
+    expect(costsAt(1)).toEqual([12, 15, 10, 6]);
+    expect(costsAt(2)).toEqual([13, 16, 11, 6]);
+  });
+
+  it('a compra cobra o preço inflado e o reroll continua em 5 sem inflação, mesmo na rodada 10', () => {
+    const shop = freshShop(fakeRng([0, 0, 0, 0, 0, 0, 0, 0]), 10);
+    expect(shop.rerollCost).toBe(5);
+    const wallet = new Wallet();
+    wallet.add(5);
+    expect(shop.reroll(wallet)).toBe(true);
+    expect(wallet.fragments).toBe(0);
+    expect(shop.rerollCost).toBe(10);
   });
 });
 
@@ -273,17 +299,17 @@ describe('Shop.view: ofertas não compradas mantêm id, slot e custo depois de u
     const after = shop.view(wallet, 100, 100);
     expect(after.offers[1]).toMatchObject({ id: before.offers[1].id, cost: before.offers[1].cost, slot: 1 });
     expect(after.offers[2]).toMatchObject({ id: before.offers[2].id, cost: before.offers[2].cost, slot: 2 });
-    // saldo 88 (100-12): forca custa 15 (affordable), agilidade custa 10 (affordable).
-    expect(after.offers[1].affordable).toBe(15 <= wallet.fragments);
-    expect(after.offers[2].affordable).toBe(10 <= wallet.fragments);
+    // saldo 82 (100-18): forca custa 23 (affordable), agilidade custa 15 (affordable).
+    expect(after.offers[1].affordable).toBe(23 <= wallet.fragments);
+    expect(after.offers[2].affordable).toBe(15 <= wallet.fragments);
   });
 
   it('affordable vira false quando o saldo cai abaixo do custo', () => {
     const shop = freshShop();
     const wallet = new Wallet();
-    wallet.add(11); // abaixo do custo de vida (12)
+    wallet.add(17); // abaixo do custo de vida na rodada 10 (18)
     expect(shop.view(wallet, 100, 100).offers[0].affordable).toBe(false);
-    wallet.add(1); // agora 12, exatamente o custo
+    wallet.add(1); // agora 18, exatamente o custo
     expect(shop.view(wallet, 100, 100).offers[0].affordable).toBe(true);
   });
 });

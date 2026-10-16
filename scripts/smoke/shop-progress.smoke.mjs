@@ -1,5 +1,5 @@
 // Loja de técnica e maestria (ECN-05/08, MST-01/03/07/08), com `?debug&seed=1`.
-// 1) `tech=azul&round=2&fragments=500`: na loja da rodada 2 o Azul (procurado nas 4 cartas) mostra "Nv 2/3" e custo 41.
+// 1) `tech=azul&round=2&fragments=500`: na loja da rodada 2 o Azul (procurado nas 4 cartas) mostra "Nv 2/3" e custo 43 (41 com a inflação da rodada 2, PRC-03).
 // 2) `tech=vermelho&mastery=14`: um Vermelho que acerta um inimigo sobe para o Nv2, com banner, e a barra de maestria
 //    volta a 0 (o limiar passa a 25).
 export default async function ({ page, baseUrl, assert }) {
@@ -52,21 +52,22 @@ export default async function ({ page, baseUrl, assert }) {
     for (let i = 0; i < 10 && !s.shop.offers.some((o) => o.id === 'azul'); i++) s = await tap('KeyR');
     const slot = s.shop.offers.findIndex((o) => o.id === 'azul');
     assert(slot >= 0, `CRD-10: o Azul não apareceu em 10 rerolls: ${JSON.stringify(s.shop.offers)}`);
-    // ECN-08: a carta mostra `Nv 2/3`; custo 26 + 15 = 41 (ECN-01), a mesma conta de antes (CRD-10).
+    // ECN-08: a carta mostra `Nv 2/3`; custo 26 + 15 = 41 (ECN-01) vezes 1 + 0,06 × (r − 1) = 43 na rodada 2 (PRC-03).
+    const cost = Math.round(41 * (1 + 0.06 * (2 - 1)));
     const o = s.shop.offers[slot];
     assert(
-      o.level === 1 && o.maxLevel === 3 && o.cost === 41,
-      `CRD-10: o Azul deveria estar no Nv1 a 41: ${JSON.stringify(o)}`,
+      o.level === 1 && o.maxLevel === 3 && o.cost === cost,
+      `CRD-10: o Azul deveria estar no Nv1 a ${cost}: ${JSON.stringify(o)}`,
     );
     const card = s.shop.panel.cards[slot].lines;
     assert(card.includes('Nv 2/3'), `ECN-08: a carta deveria mostrar "Nv 2/3": ${JSON.stringify(card)}`);
-    assert(card.includes('41'), `ECN-01: a carta deveria mostrar o custo 41: ${JSON.stringify(card)}`);
-    assert(s.wallet.fragments >= 41, `a carteira deveria cobrir o custo: ${s.wallet.fragments}`);
-    // Comprar leva o Azul ao Nv2 e cobra 41.
+    assert(card.includes(String(cost)), `ECN-01: a carta deveria mostrar o custo ${cost}: ${JSON.stringify(card)}`);
+    assert(s.wallet.fragments >= cost, `a carteira deveria cobrir o custo: ${s.wallet.fragments}`);
+    // Comprar leva o Azul ao Nv2 e cobra o preço inflado.
     const wallet = s.wallet.fragments;
     s = await tap(`Digit${slot + 1}`);
-    assert(s.events.includes('buy:azul:41'), `esperava buy:azul:41: ${JSON.stringify(s.events)}`);
-    assert(s.wallet.fragments === wallet - 41, `a carteira deveria cair 41: ${wallet} -> ${s.wallet.fragments}`);
+    assert(s.events.includes(`buy:azul:${cost}`), `esperava buy:azul:${cost}: ${JSON.stringify(s.events)}`);
+    assert(s.wallet.fragments === wallet - cost, `a carteira deveria cair ${cost}: ${wallet} -> ${s.wallet.fragments}`);
     assert(
       s.tech.slots[0].id === 'azul' && s.tech.slots[0].level === 2,
       `o Azul deveria ir ao Nv2: ${JSON.stringify(s.tech.slots[0])}`,

@@ -5,6 +5,7 @@ import { Modifiers } from '../../src/core/modifiers';
 import type { Rng } from '../../src/core/rng';
 import { Shop, type BuyContext } from '../../src/core/shop';
 import { eligible } from '../../src/core/shopEligibility';
+import { inflate } from '../../src/core/shopPricing';
 import { Wallet } from '../../src/core/wallet';
 import { PERK, PERK_IDS } from '../../src/data/perks';
 import { FULL_SHOP_CATALOG, GAME_SHOP_CATALOG, PERK_SHOP_ENTRIES, type ModifierId } from '../../src/data/shop';
@@ -163,7 +164,7 @@ describe('BLD-07: passivas na loja', () => {
       'Refluxo',
       'Feiticeiro',
       'parry devolve 12 de energia',
-      PERK.cost,
+      inflate(PERK.cost, 5),
     ]);
     const ctx: BuyContext = {
       wallet,
@@ -174,9 +175,9 @@ describe('BLD-07: passivas na loja', () => {
       applyTechnique: () => {},
       applyPerk: (id) => perks.add(id),
     };
-    expect(shop.buy(0, ctx)).toEqual({ ok: true, id: 'refluxo', cost: PERK.cost });
+    expect(shop.buy(0, ctx)).toEqual({ ok: true, id: 'refluxo', cost: inflate(PERK.cost, 5) });
     expect(perks.has('refluxo')).toBe(true);
-    expect(wallet.fragments).toBe(50 - PERK.cost);
+    expect(wallet.fragments).toBe(50 - inflate(PERK.cost, 5));
   });
 });
 

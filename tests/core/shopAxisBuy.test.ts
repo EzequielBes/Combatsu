@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Shop, type BuyContext, type OfferView } from '../../src/core/shop';
-import { axisPointPrice } from '../../src/core/shopPricing';
+import { axisPointPrice, inflate } from '../../src/core/shopPricing';
 import { Loadout } from '../../src/core/loadout';
 import { Modifiers } from '../../src/core/modifiers';
 import { Rng } from '../../src/core/rng';
@@ -58,7 +58,7 @@ describe('PRC-02: o ponto de eixo custa 12 + 4 por ponto já posto', () => {
     expect(PRICING.axisPoint).toEqual({ base: 12, step: 4 });
   });
 
-  it('a carta do Vermelho mostra o preço do ponto e Nv N/6', () => {
+  it('a carta do Vermelho mostra o preço do ponto na rodada 10 (PRC-03) e Nv N/6', () => {
     for (let points = 0; points <= 4; points++) {
       const loadout = new Loadout();
       equipRed(loadout, 0, 1);
@@ -67,7 +67,7 @@ describe('PRC-02: o ponto de eixo custa 12 + 4 por ponto já posto', () => {
       }
       const card = viewOf(redShop(loadout, fakeRng(0.59, 0)))[0];
       expect(card.id).toBe('vermelho');
-      expect(card.cost).toBe(12 + 4 * points);
+      expect(card.cost).toBe(inflate(12 + 4 * points, 10));
       expect(card.levelText).toBe(`Nv ${points + 2}/6`);
     }
   });
@@ -88,13 +88,13 @@ describe('PRC-02: o ponto de eixo custa 12 + 4 por ponto já posto', () => {
     );
     const card = viewOf(shop)[0];
     expect(card.id).toBe('corpo');
-    expect(card.cost).toBe(20);
+    expect(card.cost).toBe(31); // round(20 × 1,54)
     expect(card.levelText).toBe('Nv 4/6');
   });
 
-  it('o Vermelho equipado no Nv 2 custa 16 (1 ponto), não os 60 de técnica de antes', () => {
+  it('o Vermelho equipado no Nv 2 custa 16 (1 ponto) × 1,54 = 25 na rodada 10, não os 60 de técnica de antes', () => {
     const card = viewOf(redShop(redFocusLoadout()))[0];
-    expect(card.cost).toBe(16);
+    expect(card.cost).toBe(25);
   });
 });
 
@@ -149,11 +149,11 @@ describe('Shop: carta de eixo com 4 cartas (CRD-01, CRD-04, CRD-05)', () => {
     const wallet = richWallet();
     const { ctx, applyAxis } = ctxFor(loadout, wallet);
     const result = shop.buy(0, ctx);
-    expect(result).toEqual({ ok: true, id: 'vermelho', cost: 16 });
+    expect(result).toEqual({ ok: true, id: 'vermelho', cost: 25 });
     expect(applyAxis).toHaveBeenCalledWith('vermelho', 'escala');
     expect(loadout.axes.points('vermelho', 'escala')).toBe(1);
     expect(loadout.axes.points('vermelho', 'potencia')).toBe(1);
-    expect(wallet.fragments).toBe(500 - 16);
+    expect(wallet.fragments).toBe(500 - 25);
   });
 
   it('sem escolher, a compra vai ao eixo-foco', () => {
@@ -168,20 +168,20 @@ describe('Shop: carta de eixo com 4 cartas (CRD-01, CRD-04, CRD-05)', () => {
     const loadout = redFocusLoadout();
     const shop = redShop(loadout);
     const wallet = new Wallet();
-    wallet.add(15); // o ponto custa 16
+    wallet.add(24); // o ponto custa 25
     const { ctx, applyAxis } = ctxFor(loadout, wallet);
     expect(shop.buy(0, ctx)).toEqual({ ok: false, reason: 'funds' });
     expect(applyAxis).not.toHaveBeenCalled();
-    expect(wallet.fragments).toBe(15);
+    expect(wallet.fragments).toBe(24);
     expect(loadout.axes.total('vermelho')).toBe(1);
     expect(viewOf(shop, wallet)[0].sold).toBe(false);
   });
 
-  it('com saldo exato de 16 a compra passa', () => {
+  it('com saldo exato de 25 a compra passa', () => {
     const loadout = redFocusLoadout();
     const shop = redShop(loadout);
     const wallet = new Wallet();
-    wallet.add(16);
+    wallet.add(25);
     const { ctx } = ctxFor(loadout, wallet);
     expect(shop.buy(0, ctx).ok).toBe(true);
     expect(wallet.fragments).toBe(0);

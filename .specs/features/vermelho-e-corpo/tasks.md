@@ -1860,8 +1860,8 @@ T57 virando `round(41 × 1,06)` = 43 na loja da r2) passam a calcular pelo `infl
 
 **Done when**:
 
-- [ ] `tests/core/shop.test.ts`: carta de atributo na r10 custa `round(base × 1,54)`; reroll igual ao de hoje
-- [ ] Smokes `shop`, `shop-progress`, `shop-axes` e `run-loop` verdes; gate verde; contagem sem perda
+- [x] `tests/core/shop.test.ts`: carta de atributo na r10 custa `round(base × 1,54)`; reroll igual ao de hoje
+- [x] Smokes `shop`, `shop-progress`, `shop-axes` e `run-loop` verdes; gate verde; contagem sem perda
 
 **Tests**: unit + smoke
 **Gate**: full

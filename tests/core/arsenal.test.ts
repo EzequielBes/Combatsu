@@ -15,6 +15,7 @@ import { PropMachine } from '../../src/core/props';
 import type { Rng } from '../../src/core/rng';
 import { Shop, type BuyContext } from '../../src/core/shop';
 import { eligible } from '../../src/core/shopEligibility';
+import { inflate } from '../../src/core/shopPricing';
 import { Wallet } from '../../src/core/wallet';
 import { ARSENAL_IDS, ARSENAL_TUNING as T } from '../../src/data/arsenal';
 import { TOOL_DEFS } from '../../src/data/props';
@@ -178,7 +179,7 @@ describe('ARS-11: arsenal na loja e na build', () => {
     const wallet = new Wallet();
     wallet.add(100);
     const card = shop.view(wallet, 100, 100).offers[0];
-    const cost = T.weaponCost.base + T.weaponCost.step;
+    const cost = inflate(T.weaponCost.base + T.weaponCost.step, 9); // PRC-03
     expect([card.name, card.levelText, card.cost]).toEqual(['Bastão selado', 'Nv 2/3', cost]);
     const ctx: BuyContext = {
       wallet,
