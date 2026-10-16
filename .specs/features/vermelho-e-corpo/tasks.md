@@ -1583,10 +1583,10 @@ de hoje.
 
 **Done when**:
 
-- [ ] `tests/core/shopAxes.test.ts` (novo; `run.test.ts` está na lista de exceções): mesma seed dá a mesma sequência do
+- [x] `tests/core/shopAxes.test.ts` (novo; `run.test.ts` está na lista de exceções): mesma seed dá a mesma sequência do
       `axisRng`; sorteios no `axisRng` não deslocam o `shopRng`
-- [ ] `oxlint`: complexidade do `Run.resolveStart` sem subir
-- [ ] Gate verde; contagem sem perda
+- [x] `oxlint`: complexidade do `Run.resolveStart` sem subir
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

@@ -294,6 +294,8 @@ export interface ShopTuning {
   rerollBase: number;
   rerollStep: number;
   rngSalt: number;
+  /** Sal do stream da carta de eixo (CRD-06). */
+  axisSalt: number;
   curaHp: number;
   vidaPerLevel: number;
   forcaPerLevel: number;
@@ -309,6 +311,7 @@ export const SHOP: ShopTuning = {
   rerollBase: 5,
   rerollStep: 5,
   rngSalt: 0x85ebca6b,
+  axisSalt: 0xc2b2ae35,
   curaHp: 30,
   vidaPerLevel: 15,
   forcaPerLevel: 0.1,

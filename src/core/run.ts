@@ -67,6 +67,7 @@ export class Run {
   private vowRngValue: Rng | null = null;
   private kokusenRngValue: Rng | null = null;
   private bossAffixRngValue: Rng | null = null;
+  private axisRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -183,6 +184,11 @@ export class Run {
   /** Stream da escalação dos chefes (BLN-01): arquétipo, afixos e Portador; próprio, `seed ^ 0x9b05688c`. */
   get bossAffixRng(): Rng | null {
     return this.bossAffixRngValue;
+  }
+
+  /** Stream da carta de eixo (CRD-06): próprio, `seed ^ SHOP.axisSalt`, para não deslocar o `shopRng`. */
+  get axisRng(): Rng | null {
+    return this.axisRngValue;
   }
 
   startPressed(): void {
@@ -312,6 +318,7 @@ export class Run {
         this.vowRngValue = new Rng(seed ^ 0x13198a2e);
         this.kokusenRngValue = new Rng(seed ^ 0x3243f6a8);
         this.bossAffixRngValue = new Rng(seed ^ 0x9b05688c);
+        this.axisRngValue = new Rng(seed ^ SHOP.axisSalt);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;
