@@ -2028,9 +2028,9 @@ Fúria) contra o HP escalado.
 
 **Done when**:
 
-- [ ] `ceil(125 / dano)` do `jab` (6) e da `cotovelada` (14) com a build ≤ os da r1 sem build contra 60 de HP; as
+- [x] `ceil(125 / dano)` do `jab` (6) e da `cotovelada` (14) com a build ≤ os da r1 sem build contra 60 de HP; as
       compras cabem em `expectedIncome(19)` (ESC-03.8); se não fechar, parar e levar ao usuário
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick
