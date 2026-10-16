@@ -1880,10 +1880,10 @@ T57 virando `round(41 × 1,06)` = 43 na loja da r2) passam a calcular pelo `infl
 
 **Done when**:
 
-- [ ] `tests/core/loadoutAxes.test.ts`: Divergente Nv 3 = 12; Vermelho Eficiência 3 com Fluxo selado = 18 (PRC-05.6);
+- [x] `tests/core/loadoutAxes.test.ts`: Divergente Nv 3 = 12; Vermelho Eficiência 3 com Fluxo selado = 18 (PRC-05.6);
       custo acima do piso não muda; piso nos dois lados nas 5 técnicas
-- [ ] `techStats.test.ts` ajustado só nos casos que o piso pega, citando o PRC-05
-- [ ] Gate verde; contagem sem perda
+- [x] `techStats.test.ts` ajustado só nos casos que o piso pega, citando o PRC-05
+- [x] Gate verde; contagem sem perda
 
 **Tests**: unit
 **Gate**: quick

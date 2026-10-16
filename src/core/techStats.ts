@@ -130,6 +130,11 @@ export function resolveRed(axes: AxisBuild, damageMul: number, vowDamageMul: num
 /** O bloco `red` do Vermelho sem ponto e sem multiplicador (VRM-01). */
 export const RED_BASE: RedStats = resolveRed(NO_AXES, 1, 1);
 
+/** PRC-05: piso do custo de energia, 60% do custo do Nv 1 em `TECHNIQUES`, depois do eixo, do nível e do `costMul`. */
+export function costFloor(id: TechId): number {
+  return Math.ceil(0.6 * TECHNIQUES[id].cost);
+}
+
 /** VRM-01, VRM-03: o Vermelho pela tabela dos eixos; soltura e recuperação ficam no `TECHNIQUES`. */
 function resolveVermelho(input: TechStatsInput): TechStats {
   const { damageMul, vowDamageMul, costMul } = input;
@@ -139,7 +144,7 @@ function resolveVermelho(input: TechStatsInput): TechStats {
   return {
     id: 'vermelho',
     level: axes.level('vermelho'),
-    cost: Math.round(axisAt(RED_AXES.eficiencia.cost, p.eficiencia) * costMul),
+    cost: Math.max(costFloor('vermelho'), Math.round(axisAt(RED_AXES.eficiencia.cost, p.eficiencia) * costMul)),
     cooldownMs: axisAt(RED_AXES.recarga.cooldownMs, p.recarga),
     signMs: axisAt(RED_AXES.conjuracao.signMs, p.conjuracao),
     chargeMs: axisAt(RED_AXES.conjuracao.chargeMs, p.conjuracao),
@@ -169,7 +174,7 @@ export function resolveTechStats(input: TechStatsInput): TechStats {
   return {
     id,
     level,
-    cost: Math.round((def.cost - 5 * (level - 1)) * costMul),
+    cost: Math.max(costFloor(id), Math.round((def.cost - 5 * (level - 1)) * costMul)),
     cooldownMs: def.cooldownMs,
     signMs: def.signMs,
     chargeMs: def.chargeMs,

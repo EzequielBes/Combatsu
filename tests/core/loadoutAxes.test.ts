@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Loadout } from '../../src/core/loadout';
+import { TECHNIQUES } from '../../src/data/techniques';
 
 /** Loadout com o Vermelho no slot 0, sem ponto (Nv 1). */
 function withRed(): Loadout {
@@ -198,5 +199,46 @@ describe('reset (run nova)', () => {
     expect(loadout.axes.pending).toEqual([]);
     expect(loadout.lastSlot).toBeNull();
     expect(loadout.slotsView).toEqual([null, null]);
+  });
+});
+
+describe('PRC-05: piso de 60% do custo de energia, depois do eixo, do nível e do costMul', () => {
+  const IDS = ['divergente', 'vermelho', 'azul', 'corte', 'roxo'] as const;
+
+  it('Divergente no Nv 3 custa 12 (20 − 10 = 10 cairia abaixo do piso)', () => {
+    const loadout = new Loadout();
+    loadout.equip(0, 'divergente', 3);
+    expect(loadout.cost('divergente')).toBe(12);
+  });
+
+  it('Vermelho com Eficiência 3 e o Fluxo selado custa 18, não 11 (18 × 0,6 = 10,8)', () => {
+    const loadout = withRed();
+    for (let i = 0; i < 3; i++) loadout.axes.add('vermelho', 'eficiencia');
+    expect(loadout.cost('vermelho')).toBe(18);
+    loadout.costMul = 0.6;
+    expect(loadout.cost('vermelho')).toBe(18);
+  });
+
+  it('o Fluxo selado ainda dá os 40% de desconto no Nv 1 (20 → 12, o próprio piso)', () => {
+    const loadout = new Loadout();
+    loadout.equip(0, 'divergente', 1);
+    expect(loadout.cost('divergente')).toBe(20);
+    loadout.costMul = 0.6;
+    expect(loadout.cost('divergente')).toBe(12);
+  });
+
+  it.each(IDS)('%s no Nv 1: abaixo do piso sobe a ele, no piso e acima dele não muda', (id) => {
+    const base = TECHNIQUES[id].cost;
+    const floor = Math.ceil(0.6 * base);
+    const costWith = (target: number): number => {
+      const loadout = new Loadout();
+      loadout.equip(0, id, 1);
+      loadout.costMul = target / base;
+      return loadout.cost(id);
+    };
+    expect(costWith(floor - 1)).toBe(floor);
+    expect(costWith(floor)).toBe(floor);
+    expect(costWith(floor + 1)).toBe(floor + 1);
+    expect(costWith(base)).toBe(base);
   });
 });
