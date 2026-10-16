@@ -1,3 +1,4 @@
+import { multipliersFor } from '../../core/difficulty';
 import { parseModsParam } from '../../core/modsParam';
 import { powerLook, powerPoints, type PowerLook } from '../../core/power';
 import { acceptsPlayerInput } from '../../core/run';
@@ -10,6 +11,7 @@ import {
   type StrikeMods,
 } from '../../core/statSheet';
 import { MOVES, type MoveDef } from '../../data/moves';
+import { DIFFICULTY } from '../../data/tuning';
 import type { GameSnapshot } from '../../game/debugApi';
 import type { InputSnapshot } from '../../game/input';
 import type { PropDamage } from '../../game/Prop';
@@ -60,6 +62,12 @@ export class StatsDirector {
     loadout.damageMul = sheet.relicTechMul;
     loadout.vowDamageMul = sheet.vowTechMul;
     loadout.costMul = sheet.costMul;
+    // ESC-02: o Kokusen lê a Força, o golpe pesado da folha (traços do objeto) e o HP da rodada.
+    loadout.kokusenScale = {
+      forca: this.s.modifiers.level('forca'),
+      meleeMul: sheet.meleeMul(PROP_TRAITS),
+      hpMul: multipliersFor(this.s.run.round, DIFFICULTY).hp,
+    };
     player.damageTakenMul = sheet.damageTakenMul;
     if (player.maxHp !== sheet.maxHp) player.setMaxHp(sheet.maxHp);
   }
@@ -124,7 +132,7 @@ export class StatsDirector {
   }
 
   /** Campos do snapshot de debug que nascem aqui; cada passo da feature acrescenta o seu. */
-  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power' | 'stats' | 'choice'> {
+  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power' | 'stats' | 'choice' | 'difficulty'> {
     const { points, tier, impactScale, hitstopBonusMs, tone } = this.power;
     const power = {
       points,
@@ -142,6 +150,14 @@ export class StatsDirector {
       techDamageMul: sheet.relicTechMul * sheet.vowTechMul,
       costMul: sheet.costMul,
     };
-    return { damageNumbers: this.s.ui.damageNumbers.snapshot(), power, stats, choice: this.s.ui.choicePanel.debug() };
+    const { round } = this.s.run;
+    const { hp: hpMul, damage: damageMul } = multipliersFor(round, DIFFICULTY);
+    return {
+      damageNumbers: this.s.ui.damageNumbers.snapshot(),
+      power,
+      stats,
+      choice: this.s.ui.choicePanel.debug(),
+      difficulty: { round, hpMul, damageMul },
+    };
   }
 }

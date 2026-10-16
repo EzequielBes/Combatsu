@@ -226,6 +226,7 @@ describe('installDebugApi', () => {
       floatTexts: [{ text: '+1', color: 'U', x: 70, y: 76 }],
       damageNumbers: { live: 1, last: { value: 7, kind: 'strike' }, spots: [{ x: 70, y: 60 }] },
       choice: { open: false, page: null },
+      difficulty: { round: 1, hpMul: 1, damageMul: 1 },
       power: {
         points: 0,
         tier: 0,

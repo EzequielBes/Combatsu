@@ -392,6 +392,8 @@ export interface GameSnapshot {
   stats: StatsSnapshot;
   /** Painel do ramo da konbini (CRD-09). */
   choice: ChoiceSnapshot;
+  /** ESC-05: rodada e multiplicadores de HP e dano do inimigo comum nela (`multipliersFor`). */
+  difficulty: { round: number; hpMul: number; damageMul: number };
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
   worldProps: {
     id: number;

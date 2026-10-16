@@ -1974,10 +1974,10 @@ com o `hp` do `multipliersFor` da rodada; `divergent.ts:230`, `:238` trocam `KOK
 
 **Done when**:
 
-- [ ] Smoke `kokusen`: sem build na r1 o Kokusen tira 45 e o número é do tipo `kokusen`; com `mods=forca:5` tira 68; no
+- [x] Smoke `kokusen`: sem build na r1 o Kokusen tira 45 e o número é do tipo `kokusen`; com `mods=forca:5` tira 68; no
       chefe a postura cai dano × `poiseMul` (ESC-02.5)
-- [ ] Snapshot com `difficulty` na r1 = `{ round: 1, hpMul: 1, damageMul: 1 }`
-- [ ] Smokes `kokusen`, `boss`, `evolution` e `power` verdes; gate verde; contagem sem perda
+- [x] Snapshot com `difficulty` na r1 = `{ round: 1, hpMul: 1, damageMul: 1 }`
+- [x] Smokes `kokusen`, `boss`, `evolution` e `power` verdes; gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full

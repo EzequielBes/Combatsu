@@ -222,12 +222,14 @@ export class DivergentTech {
       this.resolveSecondImpact(target);
       return;
     }
-    const { player } = this.ctx;
+    const { player, loadout } = this.ctx;
+    // ESC-02: 2,5 × o 2º impacto com Força e golpe pesado, com o piso de 45 × HP da rodada (revisa o KOK-06: 45 fixos).
+    const damage = loadout.stats('divergente').kokusenDamage;
     this.fx.hideWaiting();
     const point = this.impactPoint(target);
     const hit: Hit = {
       ownerId: player.id,
-      damage: KOKUSEN.damage, // KOK-06: 45 fixos (18 × 2.5), não escalados pelo nível (TEC-06 não se aplica aqui)
+      damage,
       strength: 'heavy',
       // KOK-07: 2× o impulso do 2º impacto comum; o chefe não é empurrado (a postura dele é que sofre, KOK-08).
       force: target instanceof Boss ? 0 : DIVERGENT_FORCE.second * KOKUSEN.knockbackMul,
@@ -235,7 +237,7 @@ export class DivergentTech {
       ...techMarks('heavy', 'divergente'),
     };
     // KOK-08: no chefe, postura própria (3× o dano), não a fórmula 2× de um golpe forte comum.
-    if (target instanceof Boss) target.receiveKokusen(KOKUSEN.damage, KOKUSEN.damage * KOKUSEN.poiseMul);
+    if (target instanceof Boss) target.receiveKokusen(damage, damage * KOKUSEN.poiseMul);
     if (target instanceof Boss || target.receiveHit(hit)) {
       this.ctx.onTechHit(hit, point, target);
       this.ctx.masteryHit(this.cast, target);
