@@ -164,14 +164,14 @@ design ("Components", `data/domains.ts`).
 
 **Done when**:
 
-- [ ] `tests/data/domains.test.ts` (novo): raios 320/96/96; frações 0,40/0,06, 0,40/0,06 e 0,25/0,04 (elite 0,20, 0,20 e
+- [x] `tests/data/domains.test.ts` (novo): raios 320/96/96; frações 0,40/0,06, 0,40/0,06 e 0,25/0,04 (elite 0,20, 0,20 e
       0,12); empurrão da ativação 8/0/8; durações 6000/8000/8000 e 7000/9000/9000; carga 1/2/2/1/5/1/5/15 com
       `drainAfterMs` 8000, `drainStep` 10 e `veilStart` 100;
       Santuário 4 gatilhos em 1000 ms, alvos 4/6/6, corte base 6, Corte do Mundo 0,35 e 0,08; Jackpot 2000 ms, base
       0,33/0,40/0,40, Riichi 0,04, bônus 0,05, teto 0,60, piedade 2, efeito 8000/200 e 4000/400 com 0,5/0,5;
       Amplificação 1,25; loja 40 + 10 por nível a partir da r8
-- [ ] Toda chave de `DOMAIN_COLORS` existe na `PALETTE` (DHD-04)
-- [ ] Nenhum import de Phaser; gate verde; anotar aqui a contagem de testes do merge da F30 (base) e a nova
+- [x] Toda chave de `DOMAIN_COLORS` existe na `PALETTE` (DHD-04)
+- [x] Nenhum import de Phaser; gate verde; anotar aqui a contagem de testes do merge da F30 (base) e a nova — base 4278, nova 4295
 
 **Tests**: unit
 **Gate**: quick
