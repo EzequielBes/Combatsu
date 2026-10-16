@@ -4,7 +4,7 @@ import type { AdaptSource } from '../core/bossAdapt';
 import type { BossBrainState } from '../core/bossBrain';
 import type { BossArchetype } from '../core/bossTier';
 import type { BossAffixId } from '../data/bossAffixes';
-import type { BuildSnapshot } from './axisSnapshot';
+import type { BuildSnapshot, ChoiceSnapshot } from './axisSnapshot';
 import type { AdaptWheelView } from './boss/AdaptWheel';
 import type { AffixOutlineView } from './boss/AffixOutline';
 import type { BeamView } from './boss/BeamAttack';
@@ -390,6 +390,8 @@ export interface GameSnapshot {
   power: PowerSnapshot;
   /** Atributos da folha (POW-13). */
   stats: StatsSnapshot;
+  /** Painel do ramo da konbini (CRD-09). */
+  choice: ChoiceSnapshot;
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
   worldProps: {
     id: number;

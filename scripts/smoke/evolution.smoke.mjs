@@ -31,8 +31,11 @@ export default async function ({ page, baseUrl, assert }) {
     return step(20);
   };
 
+  // `ramo=` escolhe o ramo do Nv 3: sem ele a loja abriria atrás do painel do ramo (CRD-08), que ignora a compra.
   // EVO-01: vence a rodada na sala; a loja abre com o Vazio Roxo entre as ofertas, por 60 fragmentos.
-  let s = await open('area=sala&tech=azul:3,vermelho&axes=vermelho.potencia:2&fragments=200&maxAlive=2&regen=0');
+  let s = await open(
+    'area=sala&tech=azul:3,vermelho&axes=vermelho.potencia:2&ramo=vermelho:a&fragments=200&maxAlive=2&regen=0',
+  );
   assert(
     s.tech.slots[0]?.id === 'azul' &&
       s.tech.slots[0]?.level === 3 &&

@@ -17,8 +17,9 @@ export function makeShopKit({ page, baseUrl, assert }) {
     await page.keyboard.up(code);
     return step(20);
   };
+  // A carga em HD no rasterizador por software passa dos 30 s do padrão quando a máquina está ocupada.
   const open = async (query) => {
-    await page.goto(`${baseUrl}?debug&${query}`, { waitUntil: 'load' });
+    await page.goto(`${baseUrl}?debug&${query}`, { waitUntil: 'load', timeout: 90_000 });
     await page.waitForFunction(
       () => {
         try {
@@ -27,7 +28,7 @@ export function makeShopKit({ page, baseUrl, assert }) {
           return false;
         }
       },
-      { timeout: 15_000 },
+      { timeout: 60_000 },
     );
     await step(20);
     await page.keyboard.press('KeyJ', { delay: 50 });
@@ -50,6 +51,8 @@ export function makeShopKit({ page, baseUrl, assert }) {
     for (let i = 0; i < 20 && s.vows.panelCards === 0 && !s.choice?.open && shopCards(s) === 0; i++) {
       s = await step(50);
     }
+    // O fade de entrada da konbini ignora o `Enter` de saída: espera ele acabar.
+    for (let i = 0; i < 40 && s.area.transitioning; i++) s = await step(50);
     return s;
   };
 

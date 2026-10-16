@@ -2,6 +2,7 @@
 // `?debug&hd=1&area=modular&fragments=200&round=4&tech=vermelho&axes=vermelho.potencia:1`: a konbini abre com 4 cartas,
 // a carta do Vermelho traz dois eixos, `S` troca o eixo e a tecla do slot compra o ponto no eixo escolhido.
 import { BASE, makeShopKit } from './shop-axes-kit.mjs';
+import { branchScenarios } from './shop-branch.mjs';
 
 /** Nome do eixo na carta (`AXIS_NAMES`), só dos eixos do Vermelho que o sorteio pode trazer. */
 const NAMES = {
@@ -18,7 +19,7 @@ export default async function (ctx) {
   const kit = makeShopKit(ctx);
 
   // CRD-01: a konbini abre com 4 cartas distintas.
-  let s = await kit.open(`${BASE}&axes=vermelho.potencia:1`);
+  let s = await kit.open(`${BASE}&axes=vermelho.potencia:1&ramo=vermelho:a`);
   s = await kit.clearAndReachShop(s);
   assert(s.run.state === 'shop', `deveria chegar à loja: ${JSON.stringify(s.run)}`);
   assert(s.shop.offers.length === 4, `CRD-01: 4 cartas: ${JSON.stringify(s.shop.offers)}`);
@@ -66,4 +67,7 @@ export default async function (ctx) {
     `CRD-05: o ponto deveria estar em ${second}: ${JSON.stringify(s.build.vermelho)}`,
   );
   assert(s.shop.offers[0].sold === true, `a carta 0 deveria ficar vendida: ${JSON.stringify(s.shop.offers)}`);
+
+  // CRD-08, CRD-09: o painel do ramo na entrada da konbini.
+  await branchScenarios(ctx, kit);
 }

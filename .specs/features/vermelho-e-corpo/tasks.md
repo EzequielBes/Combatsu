@@ -1787,16 +1787,18 @@ painel aberto; `statsDirector.snapshotFields()` ganha `choice: this.s.ui.choiceP
 
 **Done when**:
 
-- [ ] `shop-axes.smoke.mjs`: comprar o 1º ponto na loja da r2 deixa o ramo pendente e a próxima konbini abre
+- [x] `shop-axes.smoke.mjs`: comprar o 1º ponto na loja da r2 deixa o ramo pendente e a próxima konbini abre
       `choice.open` antes da loja; `Enter` aplica o ramo e fecha; teclas da loja ignoradas com o painel aberto
-- [ ] Vermelho e Corpo pendentes: 2 páginas, Vermelho primeiro; em rodada de chefe o `VowPanel` vem antes (edge case)
-- [ ] Fim do passo 4: smokes `shop-axes`, `shop`, `shop-progress`, `vows`, `evolution` e `world-run` verdes;
+- [x] Vermelho e Corpo pendentes: 2 páginas, Vermelho primeiro; em rodada de chefe o `VowPanel` vem antes (edge case)
+- [x] Fim do passo 4: smokes `shop-axes`, `shop`, `shop-progress`, `vows`, `evolution` e `world-run` verdes;
       `TestScene.ts` intocado (SHX-02)
-- [ ] Gate verde; contagem sem perda
+- [x] Gate verde; contagem sem perda
 
 **Tests**: smoke
 **Gate**: full
 **Commit**: `feat(shop): open the branch panel before the shop`
+
+> Nota: os cenários do painel moram em `scripts/smoke/shop-branch.mjs` (chamado pelo `shop-axes.smoke.mjs`, por causa do teto de 400 linhas). `openShop` descarta as bordas de tecla da caminhada (o `D` que levava à konbini movia a seleção da loja e do painel). O `evolution.smoke.mjs` ganhou `ramo=vermelho:a` no começo, porque o Nv 3 do `axes=` deixa o ramo pendente e o painel, agora, vem antes da loja. Os smokes do passo 4 rodaram em 16/10: `shop-axes`, `shop`, `shop-progress`, `vows`, `evolution`, `world-run` e `cursed-body` verdes. Conferência visual: `ChoicePanel` e cartas em HD vistos em captura; o nome longo "Reversão de Técnica: Vermelho" passa da largura da carta (já era assim, e o `ShopPanel` só pode mudar `CARD_COUNT` e a dica).
 
 ---
 

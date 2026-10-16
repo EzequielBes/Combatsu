@@ -34,6 +34,12 @@ export interface BodyBuildSnapshot {
   aura: number;
 }
 
+/** Campo `choice` do snapshot (CRD-09): o painel do ramo aberto ou fechado e a página que ele mostra. */
+export interface ChoiceSnapshot {
+  open: boolean;
+  page: ChoicePage | null;
+}
+
 /** Campo `build` do snapshot: build deduzida, pontos por linha, passivas (BLD-*) e os dois itens com eixo. */
 export interface BuildSnapshot {
   build: string | null;

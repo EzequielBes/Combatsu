@@ -3,7 +3,7 @@ import { AWAKENING_NAMES, BRANCH_AWAKENING, ITEM_BRANCHES, type AxisItem } from 
 import { UI_SIZE } from './art/hd/screen';
 import { PALETTE } from './art/palette';
 import { SHOP_PANEL_COLORS } from './art/shopPanel';
-import type { ChoicePage } from './axisSnapshot';
+import type { ChoicePage, ChoiceSnapshot } from './axisSnapshot';
 
 /** Cor da paleta em CSS para o texto do Phaser (ART-01). */
 const css = (color: number): string => `#${color.toString(16).padStart(6, '0')}`;
@@ -150,7 +150,7 @@ export class ChoicePanel {
   }
 
   /** Estado para o snapshot de debug (CRD-09): `page` é `{ item, options }` ou `null` com o painel fechado. */
-  debug(): { open: boolean; page: { item: AxisItem; options: [string, string] } | null } {
+  debug(): ChoiceSnapshot {
     return {
       open: this.open,
       page: this.page ? { item: this.page.item, options: [...this.page.options] } : null,

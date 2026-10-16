@@ -7,6 +7,7 @@ import { evolve } from '../../core/evolution';
 import { isBossRound } from '../../core/waves';
 import { SHOP } from '../../data/tuning';
 import { type GameSnapshot } from '../../game/debugApi';
+import type { ShopInputSnapshot } from '../../game/input';
 import type { TestScene } from '../TestScene';
 
 /** Loja entre rodadas: teclas, compra, reroll, abertura/fechamento e o campo `shop` do snapshot. */
@@ -28,6 +29,7 @@ export class ShopDirector {
     if (!shop) return;
     const input = this.s.shopInput.read();
     if (this.updateVowPanel(input)) return;
+    if (this.updateChoicePanel(input)) return;
     const ctx: BuyContext = {
       wallet: this.s.wallet,
       hp: this.s.player.hp,
@@ -120,6 +122,8 @@ export class ShopDirector {
    * garantia do espaço 0 (TSH-05).
    */
   openShop(round: number): void {
+    // Descarta as bordas de tecla da caminhada (o `D` que levou à konbini moveria a seleção da loja e do painel do ramo).
+    this.s.shopInput.read();
     this.s.wallet.add(this.s.pickups.collectFragments());
     this.s.matter.world.pause();
     this.shop = new Shop(
@@ -141,7 +145,49 @@ export class ShopDirector {
       this.s.snapshot.debugEvents.push('vowPanel');
       return;
     }
-    this.s.shopPanel.show(this.shop.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
+    this.openChoiceOrShop();
+  }
+
+  /**
+   * Depois do `VowPanel` (se abriu), o `ChoicePanel` mostra uma página por item com ramo pendente, o Vermelho antes do
+   * Corpo; sem pendência, abre a loja (CRD-08).
+   */
+  private openChoiceOrShop(): void {
+    const pages = this.s.build.axes.choicePages();
+    if (pages.length > 0) {
+      this.s.hud.hideBanner();
+      this.s.ui.choicePanel.show(pages[0]);
+      this.s.snapshot.debugEvents.push('choicePanel');
+      return;
+    }
+    this.s.shopPanel.show(this.shop!.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
+  }
+
+  /**
+   * Painel do ramo aberto (CRD-08): `A`/`D` escolhem entre as opções, `Enter` confirma e o ramo vale na hora; a página
+   * seguinte (o Corpo, depois do Vermelho) abre, e sem mais nenhuma a loja abre. Devolve `true` enquanto o painel está
+   * aberto: a loja não lê teclas nesse quadro.
+   */
+  private updateChoicePanel(input: ShopInputSnapshot): boolean {
+    const panel = this.s.ui.choicePanel;
+    const page = panel.debug().page;
+    if (!page) return false;
+    if (input.moveLeft) panel.select(0);
+    if (input.moveRight) panel.select(1);
+    if (!input.confirm) return true;
+    this.s.build.axes.confirmBranch(page.item, panel.selected);
+    this.openNextChoiceOrShop();
+    return true;
+  }
+
+  private openNextChoiceOrShop(): void {
+    const next = this.s.build.axes.choicePages();
+    if (next.length > 0) {
+      this.s.ui.choicePanel.show(next[0]);
+      return;
+    }
+    this.s.ui.choicePanel.hide();
+    this.s.shopPanel.show(this.shop!.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
   }
 
   /**
@@ -155,7 +201,7 @@ export class ShopDirector {
     const taken = this.s.vows.choose(input.buySlot);
     this.s.snapshot.debugEvents.push(taken ? `vowTaken:${taken}` : 'vowRefused');
     this.s.vowPanel.hide();
-    this.s.shopPanel.show(this.shop!.view(this.s.wallet, this.s.player.hp, this.s.player.maxHp));
+    this.openChoiceOrShop();
     return true;
   }
 

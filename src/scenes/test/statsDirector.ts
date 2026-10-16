@@ -124,7 +124,7 @@ export class StatsDirector {
   }
 
   /** Campos do snapshot de debug que nascem aqui; cada passo da feature acrescenta o seu. */
-  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power' | 'stats'> {
+  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power' | 'stats' | 'choice'> {
     const { points, tier, impactScale, hitstopBonusMs, tone } = this.power;
     const power = {
       points,
@@ -142,6 +142,6 @@ export class StatsDirector {
       techDamageMul: sheet.relicTechMul * sheet.vowTechMul,
       costMul: sheet.costMul,
     };
-    return { damageNumbers: this.s.ui.damageNumbers.snapshot(), power, stats };
+    return { damageNumbers: this.s.ui.damageNumbers.snapshot(), power, stats, choice: this.s.ui.choicePanel.debug() };
   }
 }
