@@ -1,6 +1,9 @@
 import { DomainState } from '../../core/domain';
 import { parseChargeParam, parseDomainParam } from '../../core/domainParam';
+import type { Hit } from '../../core/hit';
+import { FINISHER_MOVE } from '../../data/moves';
 import type { DomainSnapshot } from '../../game/domainSnapshot';
+import type { DefenseKind } from '../../game/player/types';
 import type { TestScene } from '../TestScene';
 import { debugParam } from './params';
 
@@ -34,12 +37,53 @@ const NEUTRAL_MODS: DomainStatMods = {
  */
 export class DomainDirector {
   readonly state = new DomainState();
+  /** Último golpe do moveset que carregou: vários alvos do mesmo golpe carregam uma vez (DOM-02.3). */
+  private lastSwingId: number | null = null;
+  /** Relógio de jogo do último acerto de objeto que carregou: um por quadro. */
+  private lastPropAtMs: number | null = null;
 
   constructor(readonly s: TestScene) {}
 
   /** Run nova: nada do Domínio da run anterior sobrevive (DOM-05). */
   reset(): void {
     this.state.reset();
+    this.lastSwingId = null;
+    this.lastPropAtMs = null;
+  }
+
+  /**
+   * Golpe corpo a corpo do player que acertou (DOM-02): o do moveset carrega pela força (`light` +1, `heavy` +2) uma
+   * vez por `swingId`; o objeto na mão, arremessado ou a arma vinculada (sem `moveName`) carrega +2 uma vez por quadro.
+   * O finalizador carrega pelo `onFinisher`, não aqui.
+   */
+  onMeleeHit(hit: Hit): void {
+    if (hit.moveName === FINISHER_MOVE) return;
+    if (hit.moveName === undefined) {
+      if (this.lastPropAtMs === this.s.clockMs) return;
+      this.lastPropAtMs = this.s.clockMs;
+      this.state.addCharge('prop');
+      return;
+    }
+    if (hit.swingId !== undefined) {
+      if (hit.swingId === this.lastSwingId) return;
+      this.lastSwingId = hit.swingId;
+    }
+    this.state.addCharge(hit.strength === 'heavy' ? 'heavy' : 'light');
+  }
+
+  /** Parry, Deflexão e esquiva perfeita carregam +5 (DOM-02). */
+  onDefense(kind: DefenseKind): void {
+    if (kind === 'parry' || kind === 'deflect' || kind === 'perfectDodge') this.state.addCharge('defense');
+  }
+
+  /** Finalizador do comum ou do chefe: +5 (DOM-02.3). */
+  onFinisher(): void {
+    this.state.addCharge('finisher');
+  }
+
+  /** Abate de inimigo comum: +1 (DOM-02). */
+  onKill(): void {
+    this.state.addCharge('kill');
   }
 
   /**

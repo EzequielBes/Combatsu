@@ -63,16 +63,19 @@ export class BuildDirector {
   onDefense(kind: DefenseKind): void {
     if ((kind === 'parry' || kind === 'deflect') && this.perks.has('refluxo')) this.s.energy.gain(PERK.parryEnergy);
     if (kind === 'perfectDodge' && this.perks.has('passoSombrio')) this.shadowArmed = true;
+    this.domain.onDefense(kind);
   }
 
   /** Golpe corpo a corpo do jogador que acertou (junto do ganho normal de energia, CE-06); o Corpo conta a Fúria. */
   onMeleeHit(hit: Hit, point: Vec2, target?: Hittable): void {
     if (this.perks.has('condutor')) this.s.energy.gain(PERK.meleeEnergy);
     this.body.onMeleeHit(hit, point, target);
+    this.domain.onMeleeHit(hit);
   }
 
   onFinisher(): void {
     if (this.perks.has('executor')) this.s.player.heal(PERK.finisherHeal);
+    this.domain.onFinisher();
   }
 
   /** Campo `build` do snapshot de debug, com o Vermelho e o Corpo (VRM-10, CRP-14). */

@@ -288,6 +288,8 @@ export class CombatLinks {
     this.s.effects.freeze();
     this.s.cameras.main.zoomTo(FINISHER_ZOOM, FINISHER_ZOOM_IN_MS, 'Linear', true);
     this.s.camera.finisherZoomMs = FINISHER_ZOOM_HOLD_MS;
+    // DOM-02: o finalizador do chefe carrega a barra sem o `build.onFinisher` (o `executor` não cura no chefe).
+    this.s.build.domain.onFinisher();
     return true;
   }
 

@@ -316,12 +316,18 @@ chefe).
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 1) com `domain=santuario&maxAlive=1&enemyGuard=0`: `charge` sobe 1 no `jab`, 2 na
+- [x] `domain.smoke.mjs` (parte 1) com `domain=santuario&maxAlive=1&enemyGuard=0`: `charge` sobe 1 no `jab`, 2 na
       `cotovelada`, 1 no abate; um `jab` que acerta 2 comuns encostados (`maxAlive=2`) sobe 1 (DOM-02.3); o finalizador
       sobe 5 e não 7; um parry (ajudante de defesa do `fight-kit`) sobe 5
-- [ ] Sem Domínio (`seed=1` sem `domain=`), os mesmos golpes deixam `charge` em 0 (DOM-02.5)
-- [ ] Smokes `fight`, `defense`, `build`, `boss` e `domain` verdes; `combat.ts` abaixo de 400 linhas efetivas
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Sem Domínio (`seed=1` sem `domain=`), os mesmos golpes deixam `charge` em 0 (DOM-02.5)
+- [x] Smokes `fight`, `defense`, `build`, `boss` e `domain` verdes; `combat.ts` abaixo de 400 linhas efetivas
+- [x] Gate verde; contagem de testes sem perda (4370 → 4370; a tarefa é só de smoke)
+- Notas: SPEC_DEVIATION — o `jab` tem `maxTargets: 1` e nunca acerta 2 comuns; o "um golpe em 2 alvos carrega uma vez"
+  (DOM-02.3) é provado com o `chuteFrontal` (`K`, forte, `maxTargets: 2`): +2, não +4 (`domain-charge.mjs`). Reconferência:
+  o chefe passa sim pelo `combat.onEnemyDied` (`spawner.onBossDefeated`), então o `onKill()` foi para o retorno de
+  morte do comum no `spawner` (o mesmo que solta o drop do comum). A parte 1 mora em `scripts/smoke/domain-charge.mjs`.
+  O `fight-integration` ("forca não apareceu na loja") já falha na base `1273321`, antes da F31 (conferido numa cópia
+  da base); o `fight.smoke` está verde.
 
 **Tests**: smoke
 **Gate**: full

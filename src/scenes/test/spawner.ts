@@ -78,6 +78,8 @@ export class Spawner {
       // Drop do inimigo comum (design.md): sai daqui, não do onEnemyDied (que o chefe também chama).
       (dead, x, y) => {
         this.s.combat.onEnemyDied(dead.id, x, y);
+        // DOM-02: só o abate do comum carrega a barra (o chefe também passa pelo `onEnemyDied`).
+        this.s.build.domain.onKill();
         this.s.drops.applyDrop(this.s.loot.enemyDrop(this.s.run.round, dead.weapon !== null), x, y);
         this.s.drops.rollElixir(dead.weapon !== null, x, y);
         if (dead.weapon) this.s.drops.dropTool(dead.weapon, dead.weaponRare, x, y);
