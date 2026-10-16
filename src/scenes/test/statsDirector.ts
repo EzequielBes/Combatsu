@@ -132,7 +132,7 @@ export class StatsDirector {
   }
 
   /** Campos do snapshot de debug que nascem aqui; cada passo da feature acrescenta o seu. */
-  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power' | 'stats' | 'choice' | 'difficulty'> {
+  snapshotFields(): Pick<GameSnapshot, 'damageNumbers' | 'power' | 'stats' | 'choice' | 'difficulty' | 'domain'> {
     const { points, tier, impactScale, hitstopBonusMs, tone } = this.power;
     const power = {
       points,
@@ -158,6 +158,7 @@ export class StatsDirector {
       stats,
       choice: this.s.ui.choicePanel.debug(),
       difficulty: { round, hpMul, damageMul },
+      domain: this.s.build.domain.snapshot(),
     };
   }
 }

@@ -227,6 +227,15 @@ describe('installDebugApi', () => {
       damageNumbers: { live: 1, last: { value: 7, kind: 'strike' }, spots: [{ x: 70, y: 60 }] },
       choice: { open: false, page: null },
       difficulty: { round: 1, hpMul: 1, damageMul: 1 },
+      domain: {
+        owned: { id: 'santuario', level: 2 },
+        charge: 50,
+        ready: false,
+        active: null,
+        jackpot: null,
+        triggersLastSecond: 0,
+        veilPending: false,
+      },
       power: {
         points: 0,
         tier: 0,

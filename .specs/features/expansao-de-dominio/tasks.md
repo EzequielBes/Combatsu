@@ -282,15 +282,16 @@ F30); `StatsDirector.snapshotFields()` ganha `domain`; `GameSnapshot.domain` no 
 
 **Done when**:
 
-- [ ] `tests/game/debugApi.test.ts`: literal com `domain` obrigatório (`owned`, `charge`, `ready`, `active`, `jackpot`,
+- [x] `tests/game/debugApi.test.ts`: literal com `domain` obrigatório (`owned`, `charge`, `ready`, `active`, `jackpot`,
       `triggersLastSecond`, `veilPending`)
-- [ ] `domain.smoke.mjs` (cenário 0) em `?debug&hd=1&area=modular&seed=1`: sem parâmetro, `domain.owned` nulo e `charge`
+- [x] `domain.smoke.mjs` (cenário 0) em `?debug&hd=1&area=modular&seed=1`: sem parâmetro, `domain.owned` nulo e `charge`
       0; com `domain=santuario:2&charge=50`, `owned` `{id: 'santuario', level: 2}` e `charge` 50; com `domain=xx` ou
       `charge=101`, o parâmetro é ignorado (DDB-02); `R` na derrota começa a run nova com o Domínio do parâmetro de novo
       e sem o estado da run velha (DOM-05)
-- [ ] `debugSnapshot` sem linha nova (o campo vem do `snapshotFields`); `TestScene` sem linha nova
-- [ ] Smokes `boot`, `no-debug`, `power` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `debugSnapshot` sem linha nova (o campo vem do `snapshotFields`); `TestScene` sem linha nova
+- [x] Smokes `boot`, `no-debug`, `power` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4370 → 4370: o literal do `debugApi.test.ts` ganhou o campo, sem caso novo)
+- Nota: o `DomainStatMods` neutro mora no `domainDirector.ts` até a T22 criar o `core/domainEffects.ts`. O `R` da parte 0 só confere a posse e a carga do parâmetro: sem o laço do quadro (T8) nada muda a carga ainda; a T8 esvazia antes do `R`.
 
 **Tests**: smoke
 **Gate**: full

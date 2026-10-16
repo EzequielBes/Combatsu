@@ -7,6 +7,7 @@ import type { DefenseKind } from '../../game/player/types';
 import type { TestScene } from '../TestScene';
 import { AxisDirector } from './axisDirector';
 import { BodyDirector } from './bodyDirector';
+import { DomainDirector } from './domainDirector';
 import { debugParam } from './params';
 
 /** Passivas da run e a build deduzida das compras (BLD-01..08): liga cada passiva ao ponto do combate que ela muda. */
@@ -16,12 +17,15 @@ export class BuildDirector {
   readonly axes: AxisDirector;
   /** O Corpo Amaldiçoado no golpe do player (CRP-03 a CRP-13). */
   readonly body: BodyDirector;
+  /** A Expansão de Domínio: barra, tecla, ativação e debug (DOM-*). */
+  readonly domain: DomainDirector;
   /** Passo sombrio: armado pela esquiva perfeita, gasto no próximo golpe que abre a hitbox (acerte ou não). */
   private shadowArmed = false;
 
   constructor(readonly s: TestScene) {
     this.axes = new AxisDirector(s);
     this.body = new BodyDirector(s);
+    this.domain = new DomainDirector(s);
   }
 
   /** Run nova: nenhuma passiva sobrevive. `?debug&perks=a,b` começa a run com as passivas listadas. */
@@ -29,6 +33,7 @@ export class BuildDirector {
     this.perks.reset();
     this.shadowArmed = false;
     this.body.reset();
+    this.domain.reset();
     for (const id of (debugParam('perks') ?? '').split(',')) if (id in PERKS) this.perks.add(id as PerkId);
   }
 
