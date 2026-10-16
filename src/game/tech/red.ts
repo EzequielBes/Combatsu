@@ -109,7 +109,7 @@ export class RedTech {
     const stats = this.ctx.loadout.stats('vermelho');
     const red = redGeometry(stats);
     // VRM-06: com 3 pontos de Conjuração, uma pós-imagem do player no quadro da soltura.
-    if (red.afterimage) player.fx.afterimage(player.view);
+    if (red.afterimage && player.fx.afterimage(player.view)) this.ctx.emit('redEcho'); // só quando a cópia nasce
     if (red.awakened) this.ctx.emit('awakenCast:vermelho'); // VRM-17: banner e câmera lenta, na 1ª soltura da rodada
     // RED-15, EDG-02: recuo só no chão, oposto ao facing; a repulsão acontece no chão ou no ar.
     const effects = redReleaseEffects({ grounded: player.grounded });

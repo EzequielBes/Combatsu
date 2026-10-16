@@ -63,6 +63,22 @@ async function machineGun(ctx) {
   ctx.assert(cd <= 2300 && cd >= 2300 - 20, `VRM-03: recarga 2300 logo depois do techCast: ${cd}`);
 }
 
+/**
+ * VRM-06: com 3 pontos de Conjuração a soltura deixa uma pós-imagem do player (evento `redEcho`, emitido só quando a
+ * cópia nasce de fato); com 2 pontos não.
+ */
+async function releaseAfterimage(ctx) {
+  const kit = makeKit(ctx);
+  const echoes = async (points) => {
+    const { s } = await castRed(kit, ctx, await kit.boot(`${BASE}&axes=vermelho.conjuracao:${points}`));
+    return s.events.filter((e) => e === 'redEcho').length;
+  };
+  const three = await echoes(3);
+  const two = await echoes(2);
+  ctx.assert(three === 1, `VRM-06: uma pós-imagem na soltura com Conjuração 3: ${three}`);
+  ctx.assert(two === 0, `VRM-06: nenhuma pós-imagem com Conjuração 2: ${two}`);
+}
+
 /** VRM-10: 4 pontos num eixo param no teto de 3. */
 async function axisCap(ctx) {
   const kit = makeKit(ctx);
@@ -234,6 +250,7 @@ export default async function (ctx) {
   await pierceShards(ctx);
   await killRefund(ctx);
   await machineGun(ctx);
+  await releaseAfterimage(ctx);
   await axisCap(ctx);
   await branch(ctx);
   await branchScenarios(ctx);
