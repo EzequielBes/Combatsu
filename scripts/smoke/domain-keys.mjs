@@ -8,7 +8,9 @@ const domainEvents = (events) => events.filter((e) => /^domain(Denied|End)?:/.te
 
 /** Aperta as teclas juntas por um quadro; devolve o snapshot desse quadro e os eventos do Domínio dele. */
 async function press(kit, ...codes) {
-  const before = await kit.snap(0);
+  let before = await kit.snap(0);
+  // A tecla apertada e solta num quadro congelado se perde (o `Key.onUp` apaga a borda): a ativação congela 150 ms.
+  for (let f = 0; f < 30 && before.hitstop.frozen; f++) before = await kit.frame();
   for (const c of codes) await kit.down(c);
   const s = await kit.frame();
   for (const c of codes) await kit.up(c);

@@ -25,7 +25,7 @@ const HAND_TRAIL_SAMPLES = 8;
 const RISING_TRAIL_PX = 30;
 
 /** Escala e tom do impacto forte pela força do corpo (POW-08.3, POW-09); o patamar 0 é o desenho de sempre. */
-function lookOf(power: PowerLook): ImpactLook {
+export function lookOf(power: PowerLook): ImpactLook {
   return { scale: power.impactScale, tone: toneFromKeys(power.tone) };
 }
 

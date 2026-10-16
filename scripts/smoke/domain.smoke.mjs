@@ -2,6 +2,7 @@
 // abre a sua própria página pelo `fight-kit` (que acrescenta `seed=1`, `maxAlive=1` e `shove=0`).
 import { chargeFromStrikes } from './domain-charge.mjs';
 import { domainKeys } from './domain-keys.mjs';
+import { activationStrike } from './domain-strike.mjs';
 import { chargeFromTechniques } from './domain-tech.mjs';
 import { makeKit } from './fight-kit.mjs';
 
@@ -62,4 +63,5 @@ export default async function ({ page, baseUrl, assert }) {
   await chargeFromStrikes(kit, BASE);
   await chargeFromTechniques(kit, BASE);
   await domainKeys(kit, BASE);
+  await activationStrike(kit, BASE);
 }

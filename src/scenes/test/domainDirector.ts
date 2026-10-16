@@ -1,11 +1,24 @@
 import { DomainState } from '../../core/domain';
-import { ActiveDomain, activationDenial, type DomainEnd } from '../../core/domainActivation';
+import {
+  ActiveDomain,
+  activationDenial,
+  activationTargets,
+  type ActivationTarget,
+  type DomainEnd,
+} from '../../core/domainActivation';
+import { impactTier } from '../../core/impactTier';
 import { parseChargeParam, parseDomainParam } from '../../core/domainParam';
 import type { Hit, HitBand } from '../../core/hit';
+import { DOMAIN_HIT, DOMAINS, type DomainId } from '../../data/domains';
 import { FINISHER_MOVE } from '../../data/moves';
+import { RUN } from '../../data/tuning';
+import type { Boss } from '../../game/Boss';
+import type { Enemy } from '../../game/Enemy';
 import type { DomainSnapshot } from '../../game/domainSnapshot';
 import type { DefenseKind } from '../../game/player/types';
 import { acceptsPlayerInput } from '../../core/run';
+import { FINISHER_HITSTOP_MS } from './combat';
+import { lookOf } from './impactFx';
 import type { TestScene } from '../TestScene';
 import { debugParam } from './params';
 
@@ -21,6 +34,11 @@ export interface DomainStatMods {
   guardPierce: boolean;
   nullifyProjectiles: boolean;
   energyLock: boolean;
+}
+
+/** Alvo do acerto da ativação: o comum ou o chefe vivo, com o centro do corpo. */
+interface DomainTarget extends ActivationTarget {
+  body: Enemy | Boss;
 }
 
 const NEUTRAL_MODS: DomainStatMods = {
@@ -47,6 +65,8 @@ export class DomainDirector {
   private lastTechBand: HitBand | undefined;
   /** Conjurações que já carregaram (uma vez por `castId`, DOM-02). */
   private readonly chargedCasts = new Set<number>();
+  /** Id do `ImpactFrame` de cada ativação, negativo para não colidir com o `swingId` dos golpes (IMP-14). */
+  private activationSeq = 0;
 
   constructor(readonly s: TestScene) {}
 
@@ -82,7 +102,55 @@ export class DomainDirector {
     this.state.setCharge(0);
     this.state.active = new ActiveDomain(owned.id, owned.level);
     this.event(`domain:${owned.id}`);
+    this.strikeActivation(owned.id);
     this.s.stats.sync();
+  }
+
+  /**
+   * O acerto decisivo da ativação (DOM-08, DOM-09): um `Hit` por comum vivo e pelo chefe vivo no raio, com a fração do
+   * HP máximo e sem multiplicador; depois, uma vez por ativação (com ou sem alvo), o `ImpactFrame`, as linhas de foco, o
+   * banner com o nome do Domínio e o hitstop do finalizador. Não passa pelo `impactFx.reactCamera`.
+   */
+  private strikeActivation(id: DomainId): void {
+    const { player } = this.s;
+    const def = DOMAINS[id];
+    const pr = player.hurtRect();
+    const center = { x: pr.x, y: pr.y };
+    for (const { target, damage } of activationTargets(center, this.targets(), def)) {
+      const at = target.body.hurtRect();
+      const hit: Hit = {
+        ownerId: player.id,
+        damage,
+        strength: 'heavy',
+        force: def.activation.force,
+        direction: { x: at.x >= center.x ? 1 : -1, y: DOMAIN_HIT.liftY },
+        unblockable: true,
+        tech: true,
+        counter: true,
+        knockdown: id === 'amplificacao',
+      };
+      if (!target.body.receiveHit(hit)) continue;
+      const point = { x: at.x, y: at.y };
+      this.s.ui.damageNumbers.show(target.body, target.body.lastDamageTaken ?? damage, 'strike', point);
+      const tier = impactTier(hit, { brokePosture: false, forced: 'decisive' });
+      this.s.cursedFx.impact(tier, point, hit.direction, Math.floor(this.s.clockMs), lookOf(this.s.stats.power));
+    }
+    this.s.impactFrame.trigger(-++this.activationSeq);
+    this.s.focusLines.show(this.s.camera.worldToScreen(center));
+    this.s.hud.banner(def.name, RUN.bannerMs);
+    this.s.effects.hitstop.trigger(FINISHER_HITSTOP_MS);
+    this.s.effects.freeze();
+  }
+
+  /** Comuns vivos e o chefe vivo, com o centro do `hurtRect` (DOM-08). */
+  private targets(): DomainTarget[] {
+    const live: (Enemy | Boss)[] = this.s.enemies.filter((e) => !e.removed && !e.isDead());
+    const boss = this.s.boss;
+    if (boss && boss.hp > 0) live.push(boss);
+    return live.map((body) => {
+      const r = body.hurtRect();
+      return { id: body.id, center: { x: r.x, y: r.y }, maxHp: body.maxHp, isBoss: body === boss, body };
+    });
   }
 
   /** Ocupado para a tecla: o mesmo de conjurar, mais conjuração ativa, Reversa canalizando e player morto (DOM-07). */

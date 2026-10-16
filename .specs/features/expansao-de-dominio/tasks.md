@@ -432,18 +432,26 @@ sem mexer na carga; aceita: `player.cancelMelee()` se havia golpe, carga 0, `Act
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 2, acerto) com `domain=santuario&charge=100&maxAlive=3`: os comuns a até 320 px perdem
+- [x] `domain.smoke.mjs` (parte 2, acerto) com `domain=santuario&charge=100&maxAlive=3`: os comuns a até 320 px perdem
       `round(0,40 × maxHp)` e um posto a 321 px não perde nada (L-043: o raio e a fração chegam ao motor); com
       `domain=amplificacao`, 96/97 px e 0,25 com `knockdown` no alvo
-- [ ] `hitstop.remainingMs` parte de 150 no quadro da ativação, mesmo sem alvo; `damageNumbers.last.kind` é `strike` com
+- [x] `hitstop.remainingMs` parte de 150 no quadro da ativação, mesmo sem alvo; `damageNumbers.last.kind` é `strike` com
       o valor aplicado; o banner mostra o nome do Domínio; um comum de guarda levantada (`enemyGuard=1`) leva o acerto
       (DOM-08.6, DOM-09)
-- [ ] O comum que entrou no compromisso da garra (`ai.committed`) leva o acerto sem `armored:<id>` e a garra não sai (a
+- [x] O comum que entrou no compromisso da garra (`ai.committed`) leva o acerto sem `armored:<id>` e a garra não sai (a
       vida do player não cai por ela); o mesmo comum golpeado por um `jab` comum dá `armored:<id>` (os dois lados,
       CMT-04); um comum levantando leva o acerto (o `tech` passa pelo `refuses`)
-- [ ] O comum com 40% do HP ou menos morre e a morte não carrega a barra (edge case)
-- [ ] Smokes `fight`, `impact`, `feel`, `boss`, `telegraph` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] O comum com 40% do HP ou menos morre e a morte não carrega a barra (edge case)
+- [x] Smokes `fight`, `impact`, `feel`, `boss`, `telegraph` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4370 → 4370)
+- Notas: a parte 2 (acerto) mora em `scripts/smoke/domain-strike.mjs`. SPEC_DEVIATION no raio: no mundo modular os
+  comuns nascem juntos e chegam em bando (mesma posição), então não há um quadro com um comum a 320 px e outro a 321 px.
+  Os dois lados do raio são provados em duas runs: o bando a 326–344 px não perde nada e o bando a 296–314 px perde
+  `round(0,40 × maxHp)` (Santuário); o mesmo em 102–120 px e 40–90 px para a Amplificação, que derruba
+  (`ragdollStun`). Os 320/321 e 96/97 exatos ficam no teste puro (`domainActivation.test.ts`). O `lookOf` do `impactFx`
+  passou a ser exportado (o impacto da ativação usa o mesmo visual sem passar pelo `reactCamera`). A ativação congela 150
+  ms, então o `domain-keys.mjs` espera o hitstop acabar antes de apertar (a borda apertada e solta num quadro congelado
+  se perde).
 
 **Tests**: smoke
 **Gate**: full
