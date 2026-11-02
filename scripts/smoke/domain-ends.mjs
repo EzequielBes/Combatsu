@@ -90,7 +90,7 @@ async function clearedByActivation(kit, base) {
  * no quadro em que a konbini abre, com tempo de sobra, e sem efeito de fim.
  */
 async function endsAtKonbini(kit, base, noshop) {
-  const q = `${base}&domain=santuario&charge=100&maxAlive=3${noshop ? '&noshop=1' : ''}`;
+  const q = `${base}&domain=santuario:3&charge=100&maxAlive=3${noshop ? '&noshop=1' : ''}`;
   await kit.boot(q);
   const start = await clearRound(kit);
   const { lastX: doorX } = await walkUntil(
@@ -120,7 +120,7 @@ async function endsAtKonbini(kit, base, noshop) {
 
 /** Morrer (tecla 4 até 0 HP) com o Domínio ativo dá `domainEnd` na hora (DOM-10). */
 async function endsOnDeath(kit, base) {
-  await kit.boot(`${base}&domain=santuario&charge=100&spawn=0`);
+  await kit.boot(`${base}&domain=santuario:3&charge=100&spawn=0`);
   const { before } = await activate(kit);
   let s = await kit.snap(0);
   for (let i = 0; i < 40 && s.player.hp > 0; i++) s = await kit.tap('Digit4', 20);
@@ -133,7 +133,7 @@ async function endsOnDeath(kit, base) {
 
 /** `R` com o Domínio ativo: a cena nova começa sem `domain.active`, já no título (DOM-10). */
 async function endsOnRestart(kit, base) {
-  await kit.boot(`${base}&domain=santuario&charge=100&spawn=0`);
+  await kit.boot(`${base}&domain=santuario:3&charge=100&spawn=0`);
   await activate(kit);
   let s = await kit.snap(300);
   kit.assert(s.domain.active !== null, `ativo antes do R: ${JSON.stringify(s.domain)}`);

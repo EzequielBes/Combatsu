@@ -7,6 +7,7 @@ import { domainKeys } from './domain-keys.mjs';
 import { sanctuaryCuts } from './domain-sanctuary.mjs';
 import { activationStrike } from './domain-strike.mjs';
 import { chargeFromTechniques } from './domain-tech.mjs';
+import { worldCut } from './domain-worldcut.mjs';
 import { veilPage, veilPending } from './domain-veil.mjs';
 import { makeKit } from './fight-kit.mjs';
 
@@ -73,4 +74,5 @@ export default async function ({ page, baseUrl, assert }) {
   await veilPending(kit, BASE);
   await veilPage(kit, BASE);
   await sanctuaryCuts(kit, BASE);
+  await worldCut(kit, BASE);
 }

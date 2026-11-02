@@ -176,11 +176,11 @@ export class DomainDirector {
   }
 
   /** Fim do Domínio ativo: `domainEnd:<id>`. Só o fim pelo tempo roda o efeito de fim (DOM-10.10). */
-  end(_reason: DomainEnd): void {
+  end(reason: DomainEnd): void {
     const active = this.state.active;
     if (!active) return;
     this.event(`domainEnd:${active.id}`);
-    this.powers.onEnd();
+    this.powers.onEnd(reason === 'timer');
     this.state.active = null;
     this.s.stats.sync();
   }

@@ -1,8 +1,15 @@
 import { cutLine } from '../../core/cut';
 import { multipliersFor } from '../../core/difficulty';
 import type { Hit } from '../../core/hit';
-import { SanctuaryTriggers, sanctuaryCutDamage, sanctuaryTargets, type SanctuaryTarget } from '../../core/sanctuary';
-import { SANCTUARY } from '../../data/domains';
+import { impactTier } from '../../core/impactTier';
+import {
+  SanctuaryTriggers,
+  sanctuaryCutDamage,
+  sanctuaryTargets,
+  worldCutHits,
+  type SanctuaryTarget,
+} from '../../core/sanctuary';
+import { DOMAIN_HIT, SANCTUARY } from '../../data/domains';
 import { TECH_GEOMETRY } from '../../data/techniques';
 import { DIFFICULTY } from '../../data/tuning';
 import type { Boss } from '../../game/Boss';
@@ -12,6 +19,7 @@ import { CutFx } from '../../game/techFx/CutFx';
 import type { DomainFxView } from '../../game/DomainFx';
 import type { TestScene } from '../TestScene';
 import type { DomainDirector } from './domainDirector';
+import { lookOf } from './impactFx';
 
 /** Alvo de um poder do Domínio: o comum ou o chefe vivo, com o centro do corpo. */
 interface PowerTarget extends SanctuaryTarget {
@@ -113,9 +121,42 @@ export class DomainPowers {
     });
   }
 
-  /** Fim do Domínio: os gatilhos que não saíram se perdem. */
-  onEnd(): void {
+  /**
+   * Fim do Domínio (chamado antes de o ativo sair): os gatilhos que não saíram se perdem. Só o Santuário Nv 3 que acaba
+   * pelo tempo roda o Corte do Mundo (SAN-05, DOM-10.10).
+   */
+  onEnd(byTimer: boolean): void {
     this.pendingCuts = 0;
+    const active = this.d.state.active;
+    if (byTimer && active?.id === 'santuario' && active.level === 3) this.worldCut();
+  }
+
+  /**
+   * Corte do Mundo (SAN-05): um acerto decisivo por alvo de `worldCutHits` (o comum com 35% do HP ou menos leva o que
+   * resta, o chefe `round(0,08 × maxHp)`), com o empurrão do `DOMAIN_HIT`, o número e o impacto decisivo; evento
+   * `worldCut` uma vez.
+   */
+  private worldCut(): void {
+    const pr = this.s.player.hurtRect();
+    const center = { x: pr.x, y: pr.y };
+    this.s.snapshot.debugEvents.push('worldCut');
+    for (const { target, damage } of worldCutHits(center, this.targets())) {
+      const hit: Hit = {
+        ownerId: this.s.player.id,
+        damage,
+        strength: 'heavy',
+        force: DOMAIN_HIT.force,
+        direction: { x: target.center.x >= center.x ? 1 : -1, y: DOMAIN_HIT.liftY },
+        unblockable: true,
+        tech: true,
+        counter: true,
+      };
+      if (!target.body.receiveHit(hit)) continue;
+      const point = { x: target.center.x, y: target.center.y };
+      this.s.ui.damageNumbers.show(target.body, target.body.lastDamageTaken ?? damage, 'strike', point);
+      const tier = impactTier(hit, { brokePosture: false, forced: 'decisive' });
+      this.s.cursedFx.impact(tier, point, hit.direction, Math.floor(this.s.clockMs), lookOf(this.s.stats.power));
+    }
   }
 
   reset(): void {

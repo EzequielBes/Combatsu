@@ -790,13 +790,17 @@ nada.
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 4, fim) com `domain=santuario:3&charge=100`: com um comum posto em 35% do HP e outro
+- [x] `domain.smoke.mjs` (parte 4, fim) com `domain=santuario:3&charge=100`: com um comum posto em 35% do HP e outro
       acima, o fim pelo tempo dá `worldCut`, mata o primeiro e não toca o segundo; o Santuário Nv 2 não dá `worldCut`
-- [ ] `round=5`: o chefe a até 320 px perde `round(0,08 × maxHp)`; com 8% ou menos morre e a vitória segue o fluxo de
+- [x] `round=5`: o chefe a até 320 px perde `round(0,08 × maxHp)`; com 8% ou menos morre e a vitória segue o fluxo de
       hoje (edge case)
-- [ ] O fim por rodada limpa, morte ou `R` não dá `worldCut` (DOM-10.10)
-- [ ] Smokes `boss`, `boss-victory` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] O fim por rodada limpa, morte ou `R` não dá `worldCut` (DOM-10.10)
+- [x] Smokes `boss`, `boss-victory` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4400 → 4400; a tarefa é só de smoke)
+- Notas: a parte 4 (fim) mora em `scripts/smoke/domain-worldcut.mjs` (`worldCut`); os fins por konbini, morte e `R`
+  do `domain-ends.mjs` passaram a usar `santuario:3`, para o "sem `worldCut`" discriminar (no Nv 1 ele nunca sai). O
+  acerto do Corte do Mundo leva `unblockable`, `tech` e `counter`, como o da ativação. No chefe o player segura a
+  guarda até o fim (sem ela o chefe o mata nos 8 s e o fim seria pela morte); o chefe em `stagger` leva ×1,5 (BFX-05).
 
 **Tests**: smoke
 **Gate**: full
