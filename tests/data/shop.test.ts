@@ -23,6 +23,7 @@ describe('SHOP (tuning da loja, T1, valores das Assumptions)', () => {
       rerollStep: 5,
       rngSalt: 0x85ebca6b,
       axisSalt: 0xc2b2ae35,
+      chestSalt: 0xa54ff53a,
       curaHp: 30,
       vidaPerLevel: 15,
       forcaPerLevel: 0.1,

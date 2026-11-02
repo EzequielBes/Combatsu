@@ -296,6 +296,8 @@ export interface ShopTuning {
   rngSalt: number;
   /** Sal do stream da carta de eixo (CRD-06). */
   axisSalt: number;
+  /** Sal do stream do Baú do Véu e do baú do chefe (VEU-02). */
+  chestSalt: number;
   curaHp: number;
   vidaPerLevel: number;
   forcaPerLevel: number;
@@ -312,6 +314,7 @@ export const SHOP: ShopTuning = {
   rerollStep: 5,
   rngSalt: 0x85ebca6b,
   axisSalt: 0xc2b2ae35,
+  chestSalt: 0xa54ff53a,
   curaHp: 30,
   vidaPerLevel: 15,
   forcaPerLevel: 0.1,

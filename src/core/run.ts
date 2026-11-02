@@ -68,6 +68,7 @@ export class Run {
   private kokusenRngValue: Rng | null = null;
   private bossAffixRngValue: Rng | null = null;
   private axisRngValue: Rng | null = null;
+  private chestRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -189,6 +190,11 @@ export class Run {
   /** Stream da carta de eixo (CRD-06): próprio, `seed ^ SHOP.axisSalt`, para não deslocar o `shopRng`. */
   get axisRng(): Rng | null {
     return this.axisRngValue;
+  }
+
+  /** Stream do Baú do Véu (VEU-02): próprio, `seed ^ SHOP.chestSalt`, para não deslocar o `shopRng` nem o `axisRng`. */
+  get chestRng(): Rng | null {
+    return this.chestRngValue;
   }
 
   startPressed(): void {
@@ -319,6 +325,7 @@ export class Run {
         this.kokusenRngValue = new Rng(seed ^ 0x3243f6a8);
         this.bossAffixRngValue = new Rng(seed ^ 0x9b05688c);
         this.axisRngValue = new Rng(seed ^ SHOP.axisSalt);
+        this.chestRngValue = new Rng(seed ^ SHOP.chestSalt);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;

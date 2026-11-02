@@ -566,10 +566,13 @@ nenhum stream usa (`0xa54ff53a` no design, conferido por `grep` em `src/`); se a
 
 **Done when**:
 
-- [ ] `tests/core/domainStreams.test.ts` (novo; `run.test.ts` está na lista de exceções): `chestRng` existe depois do
+- [x] `tests/core/domainStreams.test.ts` (novo; `run.test.ts` está na lista de exceções): `chestRng` existe depois do
       start; a mesma seed dá a mesma sequência; sorteios no `chestRng` não deslocam o `shopRng` nem o `axisRng`
-- [ ] `oxlint`: complexidade do `Run.resolveStart` sem subir (só uma atribuição, sem ramo)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `oxlint`: complexidade do `Run.resolveStart` sem subir (só uma atribuição, sem ramo)
+- [x] Gate verde; contagem de testes sem perda (4373 → 4377)
+- Nota: o sal segue o molde da F30 (`SHOP.axisSalt`): `SHOP.chestSalt = 0xa54ff53a` em `data/tuning.ts`, conferido por
+  `grep` em `src/`. O literal do `SHOP` em `tests/data/shop.test.ts` ganhou o campo. O `0x9b05688c` que o design
+  reservava para o `domainRng` (T23) já é o sal do `bossAffixRng` (F32): a T23 precisa de outro.
 
 **Tests**: unit
 **Gate**: quick
