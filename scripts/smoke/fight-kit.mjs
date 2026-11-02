@@ -29,7 +29,9 @@ export function makeKit({ page, baseUrl, assert }) {
     let full = q;
     if (!has('maxAlive')) full += `${full ? '&' : ''}maxAlive=1`;
     if (!has('shove')) full += `${full ? '&' : ''}shove=0`;
-    await page.goto(`${baseUrl}?debug&seed=1&${full}`, { waitUntil: 'load' });
+    // Sem `seed` na query entra `seed=1`; a query pode trazer a sua (o `seedForNewRun` lê a primeira).
+    const seed = has('seed') ? '' : 'seed=1&';
+    await page.goto(`${baseUrl}?debug&${seed}${full}`, { waitUntil: 'load' });
     await page.waitForFunction(
       () => {
         try {

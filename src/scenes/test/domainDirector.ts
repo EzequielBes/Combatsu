@@ -8,7 +8,7 @@ import {
 } from '../../core/domainActivation';
 import { domainStatMods, type DomainStatMods } from '../../core/domainEffects';
 import { impactTier } from '../../core/impactTier';
-import { parseChargeParam, parseDomainParam } from '../../core/domainParam';
+import { parseChargeParam, parseDomainParam, parseMissesParam } from '../../core/domainParam';
 import type { Hit, HitBand } from '../../core/hit';
 import { drawVeil } from '../../core/veilChest';
 import { DOMAIN_CHARGE, DOMAIN_HIT, DOMAINS, type DomainId } from '../../data/domains';
@@ -73,8 +73,9 @@ export class DomainDirector {
     if (this.s.player.dead) this.end('death');
     if (!acceptsPlayerInput(this.s.run.state)) return;
     if (pressed) this.tryActivate();
-    // DOM-10: o tempo do Domínio cai com o tempo de jogo; no hitstop a cena não chama este `update`.
-    if (this.state.active?.update(dtMs)) this.end('timer');
+    // DOM-10: o tempo do Domínio cai com o tempo de jogo; no hitstop a cena não chama este `update`. No fim do relógio, a
+    // parada dos tambores do Jackpot troca o relógio pelo do efeito em vez de acabar (JAC-03).
+    if (this.state.active?.update(dtMs) && !this.powers.onPhaseEnd()) this.end('timer');
     this.state.tick(dtMs, this.s.run.state === 'roundActive');
     this.powers.update(dtMs);
   }
@@ -285,14 +286,17 @@ export class DomainDirector {
   }
 
   /**
-   * `?debug&domain=<id>[:<nível>]` e `charge=<n>` (DDB-02), lidos depois do `stats.reset()`: o Domínio do parâmetro no
-   * nível dele com a carga pedida. Entrada inválida é ignorada; `charge=` sem `domain=` não faz nada.
+   * `?debug&domain=<id>[:<nível>]`, `charge=<n>` e `jackpotMisses=<n>` (DDB-02), lidos depois do `stats.reset()`: o
+   * Domínio do parâmetro no nível dele com a carga pedida e as falhas seguidas do Jackpot. Entrada inválida é ignorada;
+   * `charge=` sem `domain=` não faz nada.
    */
   applyDebug(): void {
     const owned = parseDomainParam(debugParam('domain'));
     if (owned) this.state.own(owned.id, owned.level);
     const charge = parseChargeParam(debugParam('charge'));
     if (charge !== null) this.state.setCharge(charge);
+    const misses = parseMissesParam(debugParam('jackpotMisses'));
+    if (misses !== null) this.powers.jackpot.misses = misses;
   }
 
   /** A vista da barra do Domínio (DHD-01 a DHD-03). */
@@ -313,8 +317,7 @@ export class DomainDirector {
       charge,
       ready,
       active: active ? { id: active.id, level: active.level, remainingMs: active.remainingMs } : null,
-      jackpot: null,
-      triggersLastSecond: this.powers.snapshot().triggersLastSecond,
+      ...this.powers.snapshot(),
       veilPending: veilPending !== null,
     };
   }

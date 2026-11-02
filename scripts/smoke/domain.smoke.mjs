@@ -3,6 +3,7 @@
 import { domainBar } from './domain-bar.mjs';
 import { chargeFromStrikes } from './domain-charge.mjs';
 import { domainEnds } from './domain-ends.mjs';
+import { jackpotSpin } from './domain-jackpot.mjs';
 import { domainKeys } from './domain-keys.mjs';
 import { sanctuaryCuts } from './domain-sanctuary.mjs';
 import { activationStrike } from './domain-strike.mjs';
@@ -75,4 +76,5 @@ export default async function ({ page, baseUrl, assert }) {
   await veilPage(kit, BASE);
   await sanctuaryCuts(kit, BASE);
   await worldCut(kit, BASE);
+  await jackpotSpin(kit, BASE);
 }

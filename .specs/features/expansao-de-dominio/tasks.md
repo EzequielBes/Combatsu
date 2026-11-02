@@ -1003,20 +1003,25 @@ quadro; `tickEffect` → `player.heal(1)` por tique); `onEnd` → `abort()` no g
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 5) com `domain=jackpot&charge=100&tech=vermelho` e uma seed fixa em que o 1º sorteio do
+- [x] `domain.smoke.mjs` (parte 5) com `domain=jackpot&charge=100&tech=vermelho` e uma seed fixa em que o 1º sorteio do
       `domainRng` dá jackpot (o smoke falha com mensagem clara se a seed deixar de servir): `domain.jackpot.spinning` por
       2000 ms de jogo, sem efeito no giro; `chance` sobe 0,04 por golpe que acerta no giro (JAC-01, JAC-02)
-- [ ] Depois do `jackpot:hit`, `energy` lida no máximo em todo quadro, a conjuração não gasta e não arma recarga; a vida
+- [x] Depois do `jackpot:hit`, `energy` lida no máximo em todo quadro, a conjuração não gasta e não arma recarga; a vida
       (tirada antes pela tecla `4`) sobe 5 por segundo e para no máximo (JAC-04; edge case da cura no HP cheio)
-- [ ] Numa seed de falha, custo × 0,5 abaixo do piso e cura de 2,5 por segundo por 4000 ms; no fim, custo, recarga e
+- [x] Numa seed de falha, custo × 0,5 abaixo do piso e cura de 2,5 por segundo por 4000 ms; no fim, custo, recarga e
       energia voltam aos do `Loadout` e do `StatsDirector` (JAC-05)
-- [ ] Morrer no giro para os tambores sem `jackpot:` e sem mudar `misses`; `R` com o efeito ligado começa com energia,
+- [x] Morrer no giro para os tambores sem `jackpot:` e sem mudar `misses`; `R` com o efeito ligado começa com energia,
       custo e recarga de hoje (edge cases)
-- [ ] Com `maxAlive=1`, a ativação que mata o último comum ainda para os tambores com `jackpot:hit` ou `jackpot:miss`
+- [x] Com `maxAlive=1`, a ativação que mata o último comum ainda para os tambores com `jackpot:hit` ou `jackpot:miss`
       na travessia, e a cura do efeito continua até o tempo ou a konbini (DOM-10.10)
-- [ ] O comum atordoado pela ativação fica no lugar (empurrão 0) e o `jab` seguinte acerta dentro do giro (Riichi)
-- [ ] Smokes `tech`, `techniques`, `hud` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] O comum atordoado pela ativação fica no lugar (empurrão 0) e o `jab` seguinte acerta dentro do giro (Riichi)
+- [x] Smokes `tech`, `techniques`, `hud` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4444, sem teste unitário novo; smokes `tech` (2), `hud` (2) e `domain` verdes)
+
+- Nota: a parte 5 mora em `scripts/smoke/domain-jackpot.mjs`, com a seed 4 (1º sorteio do `domainRng` = 0,200, jackpot) e
+  a seed 1 (0,758, falha); o `fight-kit.boot` passou a aceitar `seed=` na query (sem ela, `seed=1` como antes). Os
+  cenários de cura rodam com `regen=0`, para a vida só subir pela cura do Jackpot. O caso "abaixo do piso" usa o
+  Vermelho sem eixo: 15 na falha contra o piso 18.
 
 **Tests**: smoke
 **Gate**: full
