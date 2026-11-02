@@ -592,9 +592,13 @@ nenhum stream usa (`0xa54ff53a` no design, conferido por `grep` em `src/`); se a
 
 **Done when**:
 
-- [ ] `tests/game/choicePanel.test.ts` (F30): página `veu` com 2 opções de título e linha; página `bauChefe`; `select`
+- [x] `tests/game/choicePanel.test.ts` (F30): página `veu` com 2 opções de título e linha; página `bauChefe`; `select`
       e `debug().page.item` nas duas; as páginas de ramo da F30 iguais
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4377 → 4382)
+- Nota: a F30 fechou o `ChoicePage` com `options: [string, string]` (só o título; a linha do ramo é o Despertar). A
+  página ganhou `lines?: [string, string]` (a linha de efeito do véu e do baú do chefe) em vez de trocar as opções por
+  `{ title, line }`, e o título/subtítulo do painel saem de uma tabela por item. O `shopDirector.updateChoicePanel` só
+  passa ao `confirmBranch` os itens de eixo (o despacho de `veu`/`bauChefe` entra na T16).
 
 **Tests**: unit
 **Gate**: quick

@@ -1,4 +1,5 @@
-import type { AxisItem, BodyAxisId, BodyBranchId, RedAxisId, RedBranchId } from '../data/techAxes';
+import type { ChoiceItem } from './ChoicePanel';
+import type { BodyAxisId, BodyBranchId, RedAxisId, RedBranchId } from '../data/techAxes';
 
 /** Campos do snapshot de debug dos itens com eixo da F30, fora do `debugApi.ts` para ele não crescer. */
 
@@ -51,8 +52,12 @@ export interface BuildSnapshot {
   corpo: BodyBuildSnapshot;
 }
 
-/** Uma página do painel de ramo (CRD-08): o item e o texto das duas opções, na ordem `a`/`b`. */
+/**
+ * Uma página do painel de escolha (CRD-08, VEU-02, DNV-02): o item e o título das duas opções, na ordem `a`/`b`, mais a
+ * linha de efeito de cada uma (o véu e o baú do chefe; a página de ramo mostra o Despertar e não traz linha).
+ */
 export interface ChoicePage {
-  item: AxisItem;
+  item: ChoiceItem;
   options: [string, string];
+  lines?: [string, string];
 }

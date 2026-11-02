@@ -175,7 +175,7 @@ export class ShopDirector {
     if (input.moveLeft) panel.select(0);
     if (input.moveRight) panel.select(1);
     if (!input.confirm) return true;
-    this.s.build.axes.confirmBranch(page.item, panel.selected);
+    if (page.item !== 'veu' && page.item !== 'bauChefe') this.s.build.axes.confirmBranch(page.item, panel.selected);
     this.openNextChoiceOrShop();
     return true;
   }

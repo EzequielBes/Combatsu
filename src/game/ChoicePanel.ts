@@ -20,8 +20,18 @@ export const CHOICE_PANEL_COLORS = {
   hint: 'S',
 } as const;
 
-/** Nome do item no título da página. */
-const ITEM_TITLES: Record<AxisItem, string> = { vermelho: 'Vermelho', corpo: 'Corpo Amaldiçoado' };
+/**
+ * Item de uma página do painel: o ramo de um item com eixo (F30), o Baú do Véu (VEU-02) ou o baú do chefe (DNV-02).
+ */
+export type ChoiceItem = AxisItem | 'veu' | 'bauChefe';
+
+/** Título e subtítulo de cada página. */
+const PAGE_TEXT: Record<ChoiceItem, { title: string; subtitle: string }> = {
+  vermelho: { title: 'Ramo do Vermelho', subtitle: 'Escolha o ramo (uma vez por run)' },
+  corpo: { title: 'Ramo do Corpo Amaldiçoado', subtitle: 'Escolha o ramo (uma vez por run)' },
+  veu: { title: 'Baú do Véu', subtitle: 'Escolha a Expansão de Domínio' },
+  bauChefe: { title: 'Baú do Chefe', subtitle: 'Escolha a recompensa do chefe' },
+};
 
 const style = (size: string, key: string, bold = false): Phaser.Types.GameObjects.Text.TextStyle => ({
   fontFamily: 'monospace',
@@ -31,6 +41,20 @@ const style = (size: string, key: string, bold = false): Phaser.Types.GameObject
   align: 'center',
   stroke: css(PALETTE.k),
   strokeThickness: 3,
+});
+
+/** A linha sob o título da opção: a de efeito da página (véu, baú do chefe) ou o Despertar que o ramo abre. */
+const cardLine = (page: ChoicePage, i: 0 | 1): string => {
+  if (page.lines) return page.lines[i];
+  if (page.item === 'veu' || page.item === 'bauChefe') return '';
+  return `Despertar: ${AWAKENING_NAMES[BRANCH_AWAKENING[ITEM_BRANCHES[page.item][i]]]}`;
+};
+
+/** Cópia da página para o snapshot (a linha de efeito só vem quando a página tem). */
+const copyPage = (page: ChoicePage): ChoicePage => ({
+  item: page.item,
+  options: [...page.options],
+  ...(page.lines ? { lines: [...page.lines] } : {}),
 });
 
 const CARD_W = 200;
@@ -67,12 +91,7 @@ export class ChoicePanel {
     const w = UI_SIZE.w;
     this.bg = scene.add.rectangle(0, 0, w, UI_SIZE.h, PALETTE[CHOICE_PANEL_COLORS.bg], 0.78).setOrigin(0, 0);
     this.title = scene.add.text(w / 2, CARD_TOP - 70, '', style('20px', CHOICE_PANEL_COLORS.title, true));
-    this.subtitle = scene.add.text(
-      w / 2,
-      CARD_TOP - 40,
-      'Escolha o ramo (uma vez por run)',
-      style('12px', CHOICE_PANEL_COLORS.text),
-    );
+    this.subtitle = scene.add.text(w / 2, CARD_TOP - 40, '', style('12px', CHOICE_PANEL_COLORS.text));
     this.hint = scene.add.text(
       w / 2,
       CARD_TOP + CARD_H + 20,
@@ -115,11 +134,12 @@ export class ChoicePanel {
     this.page = page;
     this.option = 0;
     for (const o of [this.bg, this.title, this.subtitle, this.hint]) o.setVisible(true);
-    this.title.setText(`Ramo do ${ITEM_TITLES[page.item]}`);
+    this.title.setText(PAGE_TEXT[page.item].title);
+    this.subtitle.setText(PAGE_TEXT[page.item].subtitle);
     this.cards.forEach((c, i) => {
       for (const o of [c.border, c.key, c.name, c.awakening]) o.setVisible(true);
       c.name.setText(page.options[i]);
-      c.awakening.setText(`Despertar: ${AWAKENING_NAMES[BRANCH_AWAKENING[ITEM_BRANCHES[page.item][i]]]}`);
+      c.awakening.setText(cardLine(page, i as 0 | 1));
     });
     this.select(0);
   }
@@ -153,7 +173,7 @@ export class ChoicePanel {
   debug(): ChoiceSnapshot {
     return {
       open: this.open,
-      page: this.page ? { item: this.page.item, options: [...this.page.options] } : null,
+      page: this.page ? copyPage(this.page) : null,
     };
   }
 }

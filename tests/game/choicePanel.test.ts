@@ -95,3 +95,74 @@ describe('ChoicePanel: a vista do ramo (CRD-08, CRD-09)', () => {
     expect(all.cards.every((c) => !c.border.visible && !c.name.visible)).toBe(true);
   });
 });
+
+describe('ChoicePanel: páginas do Baú do Véu e do baú do chefe (VEU-02, DNV-02, DDB-01)', () => {
+  const veilPage: ChoicePage = {
+    item: 'veu',
+    options: ['Santuário Malevolente', 'Jackpot'],
+    lines: ['Cortes nos alvos perto a cada acerto', 'Tambores: energia livre no jackpot'],
+  };
+  const bossPage: ChoicePage = {
+    item: 'bauChefe',
+    options: ['Domínio Nv 2', 'Divergente Nv 3'],
+    lines: ['Mais tempo e mais alvos', 'A técnica sobe um nível'],
+  };
+  const texts = (panel: ChoicePanel) => {
+    const p = panel as unknown as { title: Fake; subtitle: Fake; cards: { name: Fake; awakening: Fake }[] };
+    return {
+      title: p.title.text,
+      subtitle: p.subtitle.text,
+      names: p.cards.map((c) => c.name.text),
+      lines: p.cards.map((c) => c.awakening.text),
+    };
+  };
+
+  it('página veu: título do baú e as 2 opções com título e linha de efeito', () => {
+    const panel = new ChoicePanel(scene, layer);
+    panel.show(veilPage);
+    expect(texts(panel)).toEqual({
+      title: 'Baú do Véu',
+      subtitle: 'Escolha a Expansão de Domínio',
+      names: ['Santuário Malevolente', 'Jackpot'],
+      lines: ['Cortes nos alvos perto a cada acerto', 'Tambores: energia livre no jackpot'],
+    });
+  });
+
+  it('página bauChefe: título do baú do chefe e as 2 opções com título e linha', () => {
+    const panel = new ChoicePanel(scene, layer);
+    panel.show(bossPage);
+    expect(texts(panel)).toEqual({
+      title: 'Baú do Chefe',
+      subtitle: 'Escolha a recompensa do chefe',
+      names: ['Domínio Nv 2', 'Divergente Nv 3'],
+      lines: ['Mais tempo e mais alvos', 'A técnica sobe um nível'],
+    });
+  });
+
+  it.each([
+    ['veu', veilPage],
+    ['bauChefe', bossPage],
+  ] as const)('%s: select e debug().page.item', (item, page) => {
+    const panel = new ChoicePanel(scene, layer);
+    panel.show(page);
+    expect(panel.selected).toBe(0);
+    panel.select(1);
+    expect(panel.selected).toBe(1);
+    expect(panel.debug()).toEqual({ open: true, page: { item, options: page.options, lines: page.lines } });
+  });
+
+  it('as páginas de ramo da F30 ficam iguais depois de uma página de baú', () => {
+    const panel = new ChoicePanel(scene, layer);
+    panel.show(veilPage);
+    panel.show(redPage);
+    expect(texts(panel)).toEqual({
+      title: 'Ramo do Vermelho',
+      subtitle: 'Escolha o ramo (uma vez por run)',
+      names: ['Ricochete', 'Contido'],
+      lines: ['Despertar: Fliperama', 'Despertar: Vermelho Máximo'],
+    });
+    expect(panel.debug()).toEqual({ open: true, page: { item: 'vermelho', options: ['Ricochete', 'Contido'] } });
+    panel.show(bodyPage);
+    expect(texts(panel).title).toBe('Ramo do Corpo Amaldiçoado');
+  });
+});
