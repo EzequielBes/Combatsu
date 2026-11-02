@@ -69,6 +69,7 @@ export class Run {
   private bossAffixRngValue: Rng | null = null;
   private axisRngValue: Rng | null = null;
   private chestRngValue: Rng | null = null;
+  private domainRngValue: Rng | null = null;
   private intermissionTimer = 0;
   private gameOverTimer = 0;
 
@@ -195,6 +196,14 @@ export class Run {
   /** Stream do Baú do Véu (VEU-02): próprio, `seed ^ SHOP.chestSalt`, para não deslocar o `shopRng` nem o `axisRng`. */
   get chestRng(): Rng | null {
     return this.chestRngValue;
+  }
+
+  /**
+   * Stream da parada dos tambores do Jackpot (JAC-03): próprio, `seed ^ 0xbb67ae85`. O sal `0x9b05688c` do design já
+   * era o do `bossAffixRng` (F32).
+   */
+  get domainRng(): Rng | null {
+    return this.domainRngValue;
   }
 
   startPressed(): void {
@@ -326,6 +335,7 @@ export class Run {
         this.bossAffixRngValue = new Rng(seed ^ 0x9b05688c);
         this.axisRngValue = new Rng(seed ^ SHOP.axisSalt);
         this.chestRngValue = new Rng(seed ^ SHOP.chestSalt);
+        this.domainRngValue = new Rng(seed ^ 0xbb67ae85);
         this._round = this.firstRound;
         this._kills = 0;
         this._summary = null;

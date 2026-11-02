@@ -876,10 +876,13 @@ próprio (`0x9b05688c` no design, conferido por `grep`), no mesmo molde da T13.
 
 **Done when**:
 
-- [ ] `tests/core/domainStreams.test.ts`: `domainRng` determinístico por seed; sorteios nele não deslocam o `shopRng`,
+- [x] `tests/core/domainStreams.test.ts`: `domainRng` determinístico por seed; sorteios nele não deslocam o `shopRng`,
       o `axisRng` nem o `chestRng`
-- [ ] `oxlint`: complexidade do `Run.resolveStart` sem subir
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `oxlint`: complexidade do `Run.resolveStart` sem subir
+- [x] Gate verde; contagem de testes sem perda (4427 → 4432: +5 em `tests/core/domainStreams.test.ts`)
+
+- SPEC_DEVIATION: o sal `0x9b05688c` do design já é o do `bossAffixRng` (F32). O `domainRng` usa `0xbb67ae85` (2º valor
+  inicial do SHA-256, ausente de `src/` pelo `grep`); o teste confere que ele não repete nenhum sal dos outros streams.
 
 **Tests**: unit
 **Gate**: quick
