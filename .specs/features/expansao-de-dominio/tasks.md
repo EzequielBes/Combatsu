@@ -759,12 +759,18 @@ chip; a Onda do Punho e o próprio corte não têm `masteryHit` e não chegam l�
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 4, vista): durante o Santuário `domainFx.vignette` lido do objeto vivo é 0,35; 300 ms
+- [x] `domain.smoke.mjs` (parte 4, vista): durante o Santuário `domainFx.vignette` lido do objeto vivo é 0,35; 300 ms
       depois do fim é 0 (L-076: alpha real, não o pedido)
-- [ ] `R` com o Santuário ativo não deixa vinheta órfã (contagem de objetos da `uiLayer` igual à de antes)
-- [ ] Conferido no jogo em HD, em movimento e virado para os dois lados (DHD-06)
-- [ ] Smokes `hud`, `boot` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `R` com o Santuário ativo não deixa vinheta órfã (contagem de objetos da `uiLayer` igual à de antes)
+- [x] Conferido no jogo em HD, em movimento e virado para os dois lados (DHD-06)
+- [x] Smokes `hud`, `boot` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4400 → 4400; o literal do `debugApi.test.ts` ganhou o `domainFx`)
+- Notas: a parte 4 (vista) é o `vignette` do `scripts/smoke/domain-sanctuary.mjs`. O snapshot ganhou `domainFx:
+  {vignette, uiObjects}` pelo `StatsDirector.snapshotFields()` (`uiObjects` é a contagem da `uiLayer`, para o caso do
+  `R`). Desvio do "o `domainPowers.update` passa a vista": o `DomainFx` lê a vista pelo `bind` (molde da `DomainBar`) e
+  anda o fade no `UPDATE` da cena, porque o diretor do Domínio não roda na konbini, na derrota nem no hitstop, e a
+  vinheta tem de apagar em 300 ms também nesses fins. Conferido em HD por captura do `window.__game` (1280x720):
+  correndo para a esquerda e para a direita e no corte do `jab`, a vinheta fica nas 4 bordas e não cobre o HUD.
 
 **Tests**: smoke
 **Gate**: full

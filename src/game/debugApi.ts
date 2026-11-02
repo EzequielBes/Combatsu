@@ -21,6 +21,7 @@ import type { VowEffects } from '../core/vows';
 import type { PropState } from '../core/props';
 import type { DamageNumbersSnapshot, PowerSnapshot, StatsSnapshot } from './powerSnapshot';
 import type { DomainBarSnapshot, DomainSnapshot } from './domainSnapshot';
+import type { DomainFxSnapshot } from './DomainFx';
 import type { RunState } from '../core/run';
 import type { TechId } from '../data/techniques';
 import type { RecordSnapshot } from './recordSnapshot';
@@ -399,6 +400,8 @@ export interface GameSnapshot {
   difficulty: { round: number; hpMul: number; damageMul: number };
   /** Expansão de Domínio: posse, carga, ativo, Jackpot, Santuário e Baú do Véu (DDB-01). */
   domain: DomainSnapshot;
+  /** Vista do Domínio (SAN-06): alpha real da vinheta e objetos da `uiLayer`. */
+  domainFx: DomainFxSnapshot;
   /** Um item por objeto na cena (mapa e ferramentas largadas), lido do objeto vivo (ARM-16). */
   worldProps: {
     id: number;

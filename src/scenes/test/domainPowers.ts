@@ -9,6 +9,7 @@ import type { Boss } from '../../game/Boss';
 import type { Enemy } from '../../game/Enemy';
 import { techMarks } from '../../game/tech/shared';
 import { CutFx } from '../../game/techFx/CutFx';
+import type { DomainFxView } from '../../game/DomainFx';
 import type { TestScene } from '../TestScene';
 import type { DomainDirector } from './domainDirector';
 
@@ -121,6 +122,11 @@ export class DomainPowers {
     this.triggers.reset();
     this.pendingCuts = 0;
     this.cutSeq = 0;
+  }
+
+  /** O que o `DomainFx` mostra agora: a vinheta enquanto o Santuário está ativo (SAN-06). */
+  fxView(): DomainFxView {
+    return { vignette: this.sanctuaryActive() };
   }
 
   /** Gatilhos do Santuário soltos no último segundo de jogo (DDB-01). */

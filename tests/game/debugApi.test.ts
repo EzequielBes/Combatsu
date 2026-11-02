@@ -237,6 +237,7 @@ describe('installDebugApi', () => {
         triggersLastSecond: 0,
         veilPending: false,
       },
+      domainFx: { vignette: 0, uiObjects: 40 },
       power: {
         points: 0,
         tier: 0,

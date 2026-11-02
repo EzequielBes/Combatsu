@@ -2,6 +2,7 @@ import { SCREEN, UI_SCALE, UI_SIZE } from '../../game/art/hd/screen';
 import Phaser from 'phaser';
 import { SLOWMO_TINT_COLOR } from '../../game/art/combatColors';
 import { DamageNumbers } from '../../game/DamageNumbers';
+import { DomainFx } from '../../game/DomainFx';
 import { isDebug, onDebugChange } from '../../game/debug';
 import { EnergyHud } from '../../game/EnergyHud';
 import { FxLab } from '../../game/FxLab';
@@ -28,6 +29,9 @@ export class UiSetup {
 
   /** Painel do ramo da konbini (CRD-09), na `uiLayer` (AD-003). */
   choicePanel!: ChoicePanel;
+
+  /** Vinheta do Santuário (SAN-06): nasce a cada `create` e some no `SHUTDOWN` (DHD-05). */
+  domainFx!: DomainFx;
 
   /**
    * Duas câmeras (AD-003): a principal desenha o mundo com zoom e a de UI (zoom 1, sem scroll) só a `uiLayer`.
@@ -94,6 +98,9 @@ export class UiSetup {
     this.s.build.domain.onSceneCreate();
     // DHD-01 a DHD-03: a barra do Domínio lê a vista do diretor a cada quadro.
     this.s.energyHud.domainBar.bind(() => this.s.build.domain.barView());
+    this.domainFx = new DomainFx(this.s, this.s.uiLayer);
+    this.domainFx.bind(() => this.s.build.domain.powers.fxView());
+    this.s.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.domainFx.destroy());
     this.s.hud.setPlayerHp(this.s.player.hp, this.s.player.maxHp);
     // FXL-04: no laboratório a legenda fica sempre visível, não só os primeiros `CONTROLS_MS`.
     this.s.hud.showControls(this.s.fxLab ? Number.MAX_SAFE_INTEGER : CONTROLS_MS);

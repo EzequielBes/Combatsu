@@ -9,7 +9,7 @@ const FRAME_MS = 1000 / 60;
 /** Folga em px na ordem por distância: o snapshot dá o centro arredondado e o corpo anda no quadro do corte. */
 const DIST_SLACK = 12;
 
-const alive = (s) => s.enemies.filter((e) => e.hp > 0 && e.state !== 'deadRagdoll' && e.state !== 'dissolving');
+export const alive = (s) => s.enemies.filter((e) => e.hp > 0 && e.state !== 'deadRagdoll' && e.state !== 'dissolving');
 const dist = (s, e) => Math.hypot(e.x - s.player.x, e.y - s.player.y);
 const cutIds = (events) => events.filter((e) => e.startsWith('domainCut:')).map((e) => Number(e.split(':')[1]));
 const cutDamage = (s) => Math.round(6 * s.difficulty.hpMul);
@@ -22,9 +22,9 @@ async function waitCrowd(kit, n) {
   return s;
 }
 
-/** Encosta no bando e aperta `P` por um quadro (fora do hitstop); devolve o snapshot da ativação. */
-async function activate(kit, id = 'santuario') {
-  await kit.approach(36);
+/** Encosta no bando (se houver) e aperta `P` por um quadro (fora do hitstop); devolve o snapshot da ativação. */
+export async function activate(kit, id = 'santuario') {
+  if (alive(await kit.snap(0)).length > 0) await kit.approach(36);
   let before = await kit.snap(0);
   for (let f = 0; f < 30 && before.hitstop.frozen; f++) before = await kit.frame();
   await kit.down('KeyP');
@@ -224,7 +224,43 @@ async function waveTrigger(kit, base) {
   kit.assert(false, 'a onda do punho não acertou o 2º comum com o Santuário ativo');
 }
 
+/**
+ * Vista (SAN-06, DHD-05): durante o Santuário a vinheta lida do retângulo vivo tem alpha 0,35; 300 ms depois do fim é 0
+ * (no quadro do fim ainda está apagando). O `R` com o Santuário ativo não deixa vinheta órfã: a cena nova tem os mesmos
+ * objetos na `uiLayer` que a run anterior tinha antes da ativação, com a vinheta apagada.
+ */
+async function vignette(kit, base) {
+  const q = `${base}&domain=santuario&charge=100&spawn=0`;
+  let s = await kit.boot(q);
+  const objects = s.domainFx.uiObjects;
+  kit.assert(s.domainFx.vignette === 0, `sem Domínio, sem vinheta: ${JSON.stringify(s.domainFx)}`);
+  await activate(kit);
+  s = await kit.snap(400);
+  kit.assert(s.domainFx.vignette === 0.35, `vinheta 0,35 no Santuário: ${JSON.stringify(s.domainFx)}`);
+  kit.assert(s.domainFx.uiObjects === objects, `a vinheta já mora na uiLayer: ${s.domainFx.uiObjects} × ${objects}`);
+  for (let f = 0; f < 400 && s.domain.active; f++) s = await kit.frame();
+  kit.assert(
+    s.domain.active === null && s.domainFx.vignette > 0,
+    `no fim ainda apagando: ${JSON.stringify(s.domainFx)}`,
+  );
+  s = await kit.snap(300);
+  kit.assert(s.domainFx.vignette === 0, `300 ms depois do fim é 0: ${JSON.stringify(s.domainFx)}`);
+
+  await kit.boot(q);
+  await activate(kit);
+  s = await kit.snap(400);
+  kit.assert(s.domainFx.vignette === 0.35, `ativa antes do R: ${JSON.stringify(s.domainFx)}`);
+  await kit.tap('KeyR');
+  await kit.snap(100);
+  await kit.tap('KeyJ');
+  s = await kit.snap(100);
+  const view = JSON.stringify({ fx: s.domainFx, objects, run: s.run.state });
+  kit.assert(s.run.state === 'roundActive' && s.domainFx.vignette === 0, `R sem vinheta: ${view}`);
+  kit.assert(s.domainFx.uiObjects === objects, `R sem objeto órfão na uiLayer: ${view}`);
+}
+
 export async function sanctuaryCuts(kit, base) {
+  await vignette(kit, base);
   await levelOne(kit, base);
   await levelThree(kit, base);
   await castTrigger(kit, base);
