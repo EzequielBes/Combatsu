@@ -24,6 +24,7 @@ import { FINISHER_HITSTOP_MS } from './combat';
 import { lookOf } from './impactFx';
 import type { TestScene } from '../TestScene';
 import { debugParam } from './params';
+import { DomainPowers } from './domainPowers';
 
 /**
  * O que o Domínio muda na folha de atributos. Neutro até o Jackpot e a Amplificação (T22 leva o tipo para
@@ -63,6 +64,8 @@ const NEUTRAL_MODS: DomainStatMods = {
  */
 export class DomainDirector {
   readonly state = new DomainState();
+  /** O que o Domínio ativo faz: os cortes do Santuário (SAN-02 a SAN-04). */
+  readonly powers: DomainPowers;
   /** Último golpe do moveset que carregou: vários alvos do mesmo golpe carregam uma vez (DOM-02.3). */
   private lastSwingId: number | null = null;
   /** Relógio de jogo do último acerto de objeto que carregou: um por quadro. */
@@ -74,7 +77,9 @@ export class DomainDirector {
   /** Id do `ImpactFrame` de cada ativação, negativo para não colidir com o `swingId` dos golpes (IMP-14). */
   private activationSeq = 0;
 
-  constructor(readonly s: TestScene) {}
+  constructor(readonly s: TestScene) {
+    this.powers = new DomainPowers(s, this);
+  }
 
   private event(name: string): void {
     this.s.snapshot.debugEvents.push(name);
@@ -94,6 +99,7 @@ export class DomainDirector {
     // DOM-10: o tempo do Domínio cai com o tempo de jogo; no hitstop a cena não chama este `update`.
     if (this.state.active?.update(dtMs)) this.end('timer');
     this.state.tick(dtMs, this.s.run.state === 'roundActive');
+    this.powers.update(dtMs);
   }
 
   /**
@@ -111,6 +117,7 @@ export class DomainDirector {
     this.state.setCharge(0);
     this.state.active = new ActiveDomain(owned.id, owned.level);
     this.event(`domain:${owned.id}`);
+    this.powers.onActivate();
     this.strikeActivation(owned.id);
     this.s.stats.sync();
   }
@@ -173,6 +180,7 @@ export class DomainDirector {
     const active = this.state.active;
     if (!active) return;
     this.event(`domainEnd:${active.id}`);
+    this.powers.onEnd();
     this.state.active = null;
     this.s.stats.sync();
   }
@@ -233,6 +241,7 @@ export class DomainDirector {
   reset(): void {
     this.end('reset');
     this.state.reset();
+    this.powers.reset();
     this.lastSwingId = null;
     this.lastPropAtMs = null;
     this.lastTechBand = undefined;
@@ -242,7 +251,8 @@ export class DomainDirector {
   /**
    * Golpe corpo a corpo do player que acertou (DOM-02): o do moveset carrega pela força (`light` +1, `heavy` +2) uma
    * vez por `swingId`; o objeto na mão, arremessado ou a arma vinculada (sem `moveName`) carrega +2 uma vez por quadro.
-   * O finalizador carrega pelo `onFinisher`, não aqui.
+   * O finalizador carrega pelo `onFinisher`, não aqui. Com o Santuário ativo, o golpe do moveset solta um gatilho, uma
+   * vez por `swingId` (SAN-02).
    */
   onMeleeHit(hit: Hit): void {
     if (hit.moveName === FINISHER_MOVE) return;
@@ -257,6 +267,7 @@ export class DomainDirector {
       this.lastSwingId = hit.swingId;
     }
     this.state.addCharge(hit.strength === 'heavy' ? 'heavy' : 'light');
+    this.powers.onStrike();
   }
 
   /** Parry, Deflexão e esquiva perfeita carregam +5 (DOM-02). */
@@ -276,12 +287,14 @@ export class DomainDirector {
 
   /**
    * O alvo aceitou um acerto da conjuração `castId` (DOM-02.4): carrega +1 uma vez por conjuração, no primeiro acerto
-   * que não é chip. Acertos sem conjuração (a Onda do Punho, o corte do Santuário) nunca chegam aqui.
+   * que não é chip; com o Domínio ativo, esse acerto solta o gatilho do Santuário (SAN-02) em vez de carregar. Acertos
+   * sem conjuração (a Onda do Punho, o corte do Santuário) nunca chegam aqui.
    */
   onCastHit(castId: number): void {
     if (this.lastTechBand === 'chip' || this.chargedCasts.has(castId)) return;
     this.chargedCasts.add(castId);
-    this.state.addCharge('techCast');
+    if (this.state.active) this.powers.onCastTrigger();
+    else this.state.addCharge('techCast');
   }
 
   /** Kokusen: +15 (DOM-02). */
@@ -323,7 +336,7 @@ export class DomainDirector {
       ready,
       active: active ? { id: active.id, level: active.level, remainingMs: active.remainingMs } : null,
       jackpot: null,
-      triggersLastSecond: 0,
+      triggersLastSecond: this.powers.snapshot().triggersLastSecond,
       veilPending: veilPending !== null,
     };
   }

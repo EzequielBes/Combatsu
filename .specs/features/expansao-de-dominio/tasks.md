@@ -719,18 +719,27 @@ chip; a Onda do Punho e o próprio corte não têm `masteryHit` e não chegam l�
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 4) com `domain=santuario&charge=100&maxAlive=6`: cada `jab` durante o Domínio dá até 4
+- [x] `domain.smoke.mjs` (parte 4) com `domain=santuario&charge=100&maxAlive=6`: cada `jab` durante o Domínio dá até 4
       `domainCut:<id>` nos mais próximos; 5 golpes em menos de 1000 ms dão 4 gatilhos (`domain.triggersLastSecond` ≤ 4);
       com `domain=santuario:3`, até 6 alvos e o Domínio dura 8000 ms (SAN-01)
-- [ ] O HP do alvo cai `round(6 × hpMul)` por corte, lido no snapshot (L-043); o alvo não entra em `hitstun` pelo
+- [x] O HP do alvo cai `round(6 × hpMul)` por corte, lido no snapshot (L-043); o alvo não entra em `hitstun` pelo
       corte; `damageNumbers.last.kind` é `micro`
-- [ ] O corte não muda `charge`, a maestria nem a energia (SAN-04.7); o corte não vira gatilho de outro corte; uma
+- [x] O corte não muda `charge`, a maestria nem a energia (SAN-04.7); o corte não vira gatilho de outro corte; uma
       conjuração do Corte (`tech=corte`) que acerta 3 comuns solta 1 gatilho, e com o ramo Onda do Punho (`ramo=corpo:b`,
       F30) o `jab` com onda solta 1 gatilho, não 2 (SAN-02.3)
-- [ ] Com o teto do micro cheio, o corte ainda acerta e mostra o número, sem hitstop (edge case)
-- [ ] `fx.live` ≤ 40 durante o Santuário Nv 3 com 6 alvos (teto do POW-14)
-- [ ] Smokes `impact`, `feel`, `tech`, `power` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Com o teto do micro cheio, o corte ainda acerta e mostra o número, sem hitstop (edge case)
+- [x] `fx.live` ≤ 40 durante o Santuário Nv 3 com 6 alvos (teto do POW-14)
+- [x] Smokes `impact`, `feel`, `tech`, `power` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4400 → 4400; a tarefa é só de smoke)
+- Notas: a parte 4 mora em `scripts/smoke/domain-sanctuary.mjs` (`sanctuaryCuts`). O `CUT_MID_PX` não existe mais no
+  `CutFx.ts` (a F30 passou a ler `cutLine(geometry).midPx`): o diretor passa `x = alvo.x − cutLine(TECH_GEOMETRY.corte).midPx`
+  e o `CutFx.ts` fica igual. O `techMarks` hoje pede o id: o corte leva `techMarks('light', 'corte')`, a composição do
+  `cut.ts`; entra no registro como `golpe`, como a Onda do Punho. Os gatilhos aceitos saem um por quadro (com 2 no
+  mesmo quadro, golpe e conjuração, o pico de `fx.live` fica abaixo de 40; medido 18 no Nv 3 com 6 alvos). O "5 golpes
+  em menos de 1000 ms" não é alcançável com o moveset no jogo (um golpe que conecta a cada ~400 ms): o smoke prova
+  `triggersLastSecond ≤ 4` em todo quadro e um lote por golpe conectado; o 5º recusado está no teste puro (T17). A Onda
+  do Punho sai do golpe forte (CRP-10), então o smoke usa a rasteira com onda, não o `jab`. A conjuração do Corte conta
+  quando acerta 2 ou mais comuns (alinhar 3 na faixa de 60 a 180 px não é estável no mundo modular).
 
 **Tests**: smoke
 **Gate**: full

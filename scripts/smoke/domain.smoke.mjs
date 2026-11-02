@@ -4,6 +4,7 @@ import { domainBar } from './domain-bar.mjs';
 import { chargeFromStrikes } from './domain-charge.mjs';
 import { domainEnds } from './domain-ends.mjs';
 import { domainKeys } from './domain-keys.mjs';
+import { sanctuaryCuts } from './domain-sanctuary.mjs';
 import { activationStrike } from './domain-strike.mjs';
 import { chargeFromTechniques } from './domain-tech.mjs';
 import { veilPage, veilPending } from './domain-veil.mjs';
@@ -71,4 +72,5 @@ export default async function ({ page, baseUrl, assert }) {
   await domainEnds(kit, BASE);
   await veilPending(kit, BASE);
   await veilPage(kit, BASE);
+  await sanctuaryCuts(kit, BASE);
 }
