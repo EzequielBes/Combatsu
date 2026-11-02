@@ -922,9 +922,9 @@ próprio (`0x9b05688c` no design, conferido por `grep`), no mesmo molde da T13.
 
 **Done when**:
 
-- [ ] `tests/core/loadout.test.ts`: os dois nascem em 1 e voltam a 1 no `reset` depois de 0,5 (edge case do reset com o
+- [x] `tests/core/loadout.test.ts`: os dois nascem em 1 e voltam a 1 no `reset` depois de 0,5 (edge case do reset com o
       efeito ligado)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4432 → 4434: +2 em `tests/core/loadout.test.ts`)
 
 **Tests**: unit
 **Gate**: quick

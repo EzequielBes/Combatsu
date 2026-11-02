@@ -47,6 +47,10 @@ export class Loadout {
   vowDamageMul = 1;
   /** VOW-13: multiplicador do custo de energia (Fluxo selado); 1 sem voto. */
   costMul = 1;
+  /** JAC-04/05: custo das técnicas no Jackpot (0 no jackpot, 0,5 na falha); 1 fora dele. O `StatsDirector` grava. */
+  domainCostMul = 1;
+  /** JAC-04/05: recarga das técnicas no Jackpot, no mesmo molde do `domainCostMul`. */
+  domainCooldownMul = 1;
   /** ESC-02: Força, golpe pesado e HP da rodada que escalam o Kokusen; o `StatsDirector` grava a cada quadro. */
   kokusenScale: KokusenScale = { forca: 0, meleeMul: 1, hpMul: 1 };
 
@@ -179,6 +183,8 @@ export class Loadout {
     this.damageMul = 1;
     this.vowDamageMul = 1;
     this.costMul = 1;
+    this.domainCostMul = 1;
+    this.domainCooldownMul = 1;
     this.kokusenScale = { forca: 0, meleeMul: 1, hpMul: 1 };
   }
 

@@ -202,6 +202,21 @@ describe('votos no loadout (VOW-12, VOW-13)', () => {
   });
 });
 
+describe('multiplicadores do Domínio no loadout (JAC-05)', () => {
+  it('domainCostMul e domainCooldownMul nascem em 1', () => {
+    const lo = new Loadout();
+    expect([lo.domainCostMul, lo.domainCooldownMul]).toEqual([1, 1]);
+  });
+
+  it('reset com o efeito da falha ligado (0,5) volta os dois a 1', () => {
+    const lo = new Loadout();
+    lo.domainCostMul = 0.5;
+    lo.domainCooldownMul = 0.5;
+    lo.reset();
+    expect([lo.domainCostMul, lo.domainCooldownMul]).toEqual([1, 1]);
+  });
+});
+
 describe('?debug&tech= com nível (EVO)', () => {
   it('id e id:nível; desconhecido sai; nível fora de 1..3 vira 1', () => {
     expect(parseDebugTech('azul:3,vermelho:3')).toEqual([
