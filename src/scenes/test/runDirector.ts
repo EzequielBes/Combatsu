@@ -90,6 +90,8 @@ export class RunDirector {
         // Fica até o próximo `roundStart` (RHUD-03). Na rodada de chefe, ela entra depois de "Chefe derrotado!",
         // que o `onBossDefeated` já mostrou (BHUD-03).
         if (!isBossRound(cmd.round)) this.s.hud.banner(`Rodada ${cmd.round} concluída`, Infinity);
+        // VEU-01: o fim da r3 marca o Baú do Véu para quem não tem Domínio.
+        this.s.build.domain.onRoundCleared(cmd.round);
         // REG-05: fechar a rodada devolve uma fatia da vida.
         this.s.recovery.roundCleared();
         // CAM-08: o último inimigo da onda morreu, câmera lenta curta.

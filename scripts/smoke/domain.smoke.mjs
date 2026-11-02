@@ -6,6 +6,7 @@ import { domainEnds } from './domain-ends.mjs';
 import { domainKeys } from './domain-keys.mjs';
 import { activationStrike } from './domain-strike.mjs';
 import { chargeFromTechniques } from './domain-tech.mjs';
+import { veilPending } from './domain-veil.mjs';
 import { makeKit } from './fight-kit.mjs';
 
 const BASE = 'hd=1&area=modular';
@@ -68,4 +69,5 @@ export default async function ({ page, baseUrl, assert }) {
   await domainKeys(kit, BASE);
   await activationStrike(kit, BASE);
   await domainEnds(kit, BASE);
+  await veilPending(kit, BASE);
 }

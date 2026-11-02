@@ -618,11 +618,12 @@ muda); o snapshot mostra `veilPending`; `reset()` limpa a pendência.
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 3, pendência) com `round=3&maxAlive=1&noshop=1`: limpar a r3 deixa
+- [x] `domain.smoke.mjs` (parte 3, pendência) com `round=3&maxAlive=1&noshop=1`: limpar a r3 deixa
       `domain.veilPending` verdadeiro e ele segue verdadeiro na r4 (VEU-04.6); com `domain=santuario&round=3`, limpar a r3
       não marca (VEU-04.7); `R` com a pendência começa a run sem ela (VEU-04.8)
-- [ ] Smokes `run-loop` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `run-loop` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4382 → 4382; a tarefa é só de smoke)
+- Nota: a parte 3 mora em `scripts/smoke/domain-veil.mjs`. A rodada do véu é a constante `VEIL_ROUND = 3` do diretor.
 
 **Tests**: smoke
 **Gate**: full

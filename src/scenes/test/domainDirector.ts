@@ -9,6 +9,7 @@ import {
 import { impactTier } from '../../core/impactTier';
 import { parseChargeParam, parseDomainParam } from '../../core/domainParam';
 import type { Hit, HitBand } from '../../core/hit';
+import { drawVeil } from '../../core/veilChest';
 import { DOMAIN_HIT, DOMAINS, type DomainId } from '../../data/domains';
 import { FINISHER_MOVE } from '../../data/moves';
 import { RUN } from '../../data/tuning';
@@ -40,6 +41,9 @@ export interface DomainStatMods {
 interface DomainTarget extends ActivationTarget {
   body: Enemy | Boss;
 }
+
+/** Rodada cujo fim marca o Baú do Véu para quem não tem Domínio (VEU-01). */
+const VEIL_ROUND = 3;
 
 const NEUTRAL_MODS: DomainStatMods = {
   meleeMul: 1,
@@ -169,6 +173,16 @@ export class DomainDirector {
     this.event(`domainEnd:${active.id}`);
     this.state.active = null;
     this.s.stats.sync();
+  }
+
+  /**
+   * Rodada limpa (VEU-01, VEU-04): no fim da r3, sem Domínio, sorteia o par do Baú do Véu pelo `chestRng` e o deixa
+   * pendente até a próxima konbini. O Domínio ativo segue (DOM-10).
+   */
+  onRoundCleared(round: number): void {
+    const rng = this.s.run.chestRng;
+    if (round !== VEIL_ROUND || this.state.owned !== null || !rng) return;
+    this.state.markVeil(drawVeil(rng));
   }
 
   /** A konbini abriu (`shopOpen`, também com `noshop=1`): o Domínio ativo acaba sem efeito de fim (DOM-10). */
