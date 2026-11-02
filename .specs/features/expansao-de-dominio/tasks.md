@@ -823,19 +823,19 @@ nada.
 
 **Done when**:
 
-- [ ] `tests/core/jackpot.test.ts` (novo): chance 0,33 com 0 golpes no Nv 1, 0,37 com 1, 0,40 no Nv 2; 7 golpes no Nv 2
+- [x] `tests/core/jackpot.test.ts` (novo): chance 0,33 com 0 golpes no Nv 1, 0,37 com 1, 0,40 no Nv 2; 7 golpes no Nv 2
       batem no teto de 0,60 e 6 golpes no Nv 1 dão 0,57; Nv 3 com 2 jackpots ganhos soma 0,10, e no Nv 2 não soma; o teto
       vale para a soma (JAC-02)
-- [ ] `onStrike` fora do giro não soma; `stop` com `draw` abaixo da chance dá jackpot e igual à chance dá falha (JAC-03)
-- [ ] Piedade: com 2 falhas seguidas a 3ª parada é jackpot e `draw` não é chamado (espião); o jackpot zera `misses` e
+- [x] `onStrike` fora do giro não soma; `stop` com `draw` abaixo da chance dá jackpot e igual à chance dá falha (JAC-03)
+- [x] Piedade: com 2 falhas seguidas a 3ª parada é jackpot e `draw` não é chamado (espião); o jackpot zera `misses` e
       soma `jackpotsWon`; `reset` zera os dois (JAC-03.5)
-- [ ] `tickEffect`: 40 tiques em 8000 ms de jackpot e 10 em 4000 ms de falha, com o resto guardado entre passos de 16 ms
+- [x] `tickEffect`: 40 tiques em 8000 ms de jackpot e 10 em 4000 ms de falha, com o resto guardado entre passos de 16 ms
       (JAC-04, JAC-05)
-- [ ] `abort` no giro volta a `idle` sem resultado e sem mudar `misses` (edge case)
-- [ ] `reelFaces`: três iguais no jackpot e pelo menos um diferente na falha, sem `Rng` (JAC-06)
-- [ ] `shownChance` 1 e `guaranteed` verdadeiro com 2 falhas seguidas; com 1 falha, a chance do `jackpotChance` e
+- [x] `abort` no giro volta a `idle` sem resultado e sem mudar `misses` (edge case)
+- [x] `reelFaces`: três iguais no jackpot e pelo menos um diferente na falha, sem `Rng` (JAC-06)
+- [x] `shownChance` 1 e `guaranteed` verdadeiro com 2 falhas seguidas; com 1 falha, a chance do `jackpotChance` e
       `guaranteed` falso (JAC-06.11)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4400 → 4421: +21 em `tests/core/jackpot.test.ts`)
 
 **Tests**: unit
 **Gate**: quick
