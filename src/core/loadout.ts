@@ -129,6 +129,8 @@ export class Loadout {
       vowDamageMul: this.vowDamageMul,
       costMul: this.costMul,
       kokusenScale: this.kokusenScale,
+      domainCostMul: this.domainCostMul,
+      domainCooldownMul: this.domainCooldownMul,
     });
   }
 

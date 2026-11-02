@@ -77,6 +77,10 @@ export interface TechStatsInput {
   costMul: number;
   /** ESC-02: Força, golpe pesado e HP da rodada; sem ela, o Kokusen de uma rodada 1 sem build. */
   kokusenScale?: KokusenScale;
+  /** JAC-04/05: custo no Jackpot (0 no jackpot, 0,5 na falha); ausente = 1. */
+  domainCostMul?: number;
+  /** JAC-04/05: recarga no Jackpot, no mesmo molde; ausente = 1. */
+  domainCooldownMul?: number;
 }
 
 /** Escala neutra do Kokusen: Força 0, sem multiplicador e HP da rodada 1 (45). */
@@ -143,17 +147,32 @@ export function costFloor(id: TechId): number {
   return Math.ceil(0.6 * TECHNIQUES[id].cost);
 }
 
+/**
+ * Custo de `raw` (já com eixo e nível) com o `costMul` e o piso do PRC-05; dentro do Jackpot (`domainCostMul` < 1) o
+ * piso não vale e o custo é `round(raw × costMul × domainCostMul)` (JAC-04, JAC-05).
+ */
+function techCost(id: TechId, raw: number, input: TechStatsInput): number {
+  const domain = input.domainCostMul ?? 1;
+  if (domain < 1) return Math.round(raw * input.costMul * domain);
+  return Math.max(costFloor(id), Math.round(raw * input.costMul));
+}
+
+/** Recarga com o multiplicador do Jackpot (JAC-04, JAC-05): `round(cooldownMs × domainCooldownMul)`. */
+function techCooldown(cooldownMs: number, input: TechStatsInput): number {
+  return Math.round(cooldownMs * (input.domainCooldownMul ?? 1));
+}
+
 /** VRM-01, VRM-03: o Vermelho pela tabela dos eixos; soltura e recuperação ficam no `TECHNIQUES`. */
 function resolveVermelho(input: TechStatsInput): TechStats {
-  const { damageMul, vowDamageMul, costMul } = input;
+  const { damageMul, vowDamageMul } = input;
   const axes = input.axes ?? NO_AXES;
   const p = axes.axesOf('vermelho');
   const def = TECHNIQUES.vermelho;
   return {
     id: 'vermelho',
     level: axes.level('vermelho'),
-    cost: Math.max(costFloor('vermelho'), Math.round(axisAt(RED_AXES.eficiencia.cost, p.eficiencia) * costMul)),
-    cooldownMs: axisAt(RED_AXES.recarga.cooldownMs, p.recarga),
+    cost: techCost('vermelho', axisAt(RED_AXES.eficiencia.cost, p.eficiencia), input),
+    cooldownMs: techCooldown(axisAt(RED_AXES.recarga.cooldownMs, p.recarga), input),
     signMs: axisAt(RED_AXES.conjuracao.signMs, p.conjuracao),
     chargeMs: axisAt(RED_AXES.conjuracao.chargeMs, p.conjuracao),
     releaseMs: def.releaseMs,
@@ -182,7 +201,7 @@ function divergentKokusen(level: TechLevel, scale: KokusenScale = NO_KOKUSEN_SCA
  */
 export function resolveTechStats(input: TechStatsInput): TechStats {
   if (input.id === 'vermelho') return resolveVermelho(input);
-  const { id, level, damageMul, vowDamageMul, costMul } = input;
+  const { id, level, damageMul, vowDamageMul } = input;
   const def = TECHNIQUES[id];
   const factor = levelFactor({ id, level });
   const damage: Record<string, number> = {};
@@ -192,8 +211,8 @@ export function resolveTechStats(input: TechStatsInput): TechStats {
   return {
     id,
     level,
-    cost: Math.max(costFloor(id), Math.round((def.cost - 5 * (level - 1)) * costMul)),
-    cooldownMs: def.cooldownMs,
+    cost: techCost(id, def.cost - 5 * (level - 1), input),
+    cooldownMs: techCooldown(def.cooldownMs, input),
     signMs: def.signMs,
     chargeMs: def.chargeMs,
     releaseMs: def.releaseMs,

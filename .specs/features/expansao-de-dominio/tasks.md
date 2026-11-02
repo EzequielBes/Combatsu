@@ -944,10 +944,14 @@ max(round(bruto × costMul), ceil(0,6 × base))` (sem o piso do PRC-05 dentro do
 
 **Done when**:
 
-- [ ] `tests/core/techStats.test.ts` (F30): com 1/1 os números da F30 iguais (equivalência TST-01.6); jackpot custo 0 e
+- [x] `tests/core/techStats.test.ts` (F30): com 1/1 os números da F30 iguais (equivalência TST-01.6); jackpot custo 0 e
       recarga 0; falha custo `round(bruto × costMul × 0,5)` abaixo do piso de 60% (ex.: Vermelho com "Pacto de sangue") e
       recarga × 0,5; fora do Jackpot o piso volta
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4438 → 4444: +6 em `tests/core/techStats.test.ts`)
+
+- Nota: o exemplo "Pacto de sangue" não existe no código; o caso abaixo do piso é o Vermelho com Eficiência 3 e o voto
+  Fluxo selado (custo 18 no piso, 5 na falha). O `Loadout.stats` passou a repassar `domainCostMul`/`domainCooldownMul`
+  ao `resolveTechStats` (uma linha cada em `core/loadout.ts`), para o custo e a recarga armada lerem o Jackpot.
 
 **Tests**: unit
 **Gate**: quick

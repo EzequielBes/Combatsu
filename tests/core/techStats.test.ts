@@ -1,9 +1,10 @@
 /// <reference types="vite/client" />
 import { describe, expect, it } from 'vitest';
+import { AxisBuild } from '../../src/core/axisBuild';
 import { Loadout, type TechLevel } from '../../src/core/loadout';
 import { PURPLE } from '../../src/core/purple';
 import { RED_ORB_SPEED } from '../../src/core/redOrb';
-import { resolveTechStats } from '../../src/core/techStats';
+import { costFloor, resolveTechStats } from '../../src/core/techStats';
 import { TECH_GEOMETRY, TECHNIQUES, type TechId } from '../../src/data/techniques';
 import blueOrbSrc from '../../src/core/blueOrb.ts?raw';
 import cutSrc from '../../src/core/cut.ts?raw';
@@ -255,5 +256,78 @@ describe('TST-01/TST-02: Loadout.stats(id) = resolveTechStats com os multiplicad
     loadout.damageMul = 1.35;
     loadout.vowDamageMul = 1.35;
     expect(loadout.damage('azul', 10)).toBe(23);
+  });
+});
+
+/** Vermelho com 3 pontos de Eficiência: custo cru 18 nos eixos, no piso do PRC-05 (`ceil(0,6 × 30)` = 18). */
+function efficientRed(): AxisBuild {
+  const axes = new AxisBuild();
+  for (let i = 0; i < 3; i++) expect(axes.add('vermelho', 'eficiencia').ok).toBe(true);
+  return axes;
+}
+
+const ALL_IDS: readonly TechId[] = [...IDS, 'vermelho'];
+const NO_MUL = { damageMul: 1, vowDamageMul: 1 };
+
+describe('JAC-04/05: custo e recarga dentro do Jackpot', () => {
+  it('com 1 e 1 todo número da F30 fica igual (TST-01.6), nas 5 técnicas, níveis e costMul 1 e 0,6', () => {
+    for (const id of ALL_IDS)
+      for (const level of LEVELS)
+        for (const costMul of [1, 0.6]) {
+          const input = { id, level, ...NO_MUL, costMul, axes: efficientRed() };
+          expect(resolveTechStats({ ...input, domainCostMul: 1, domainCooldownMul: 1 })).toEqual(
+            resolveTechStats(input),
+          );
+        }
+  });
+
+  it('jackpot: custo 0 e recarga 0 em todas as técnicas', () => {
+    for (const id of ALL_IDS)
+      for (const level of LEVELS) {
+        const stats = resolveTechStats({ id, level, ...NO_MUL, costMul: 1, domainCostMul: 0, domainCooldownMul: 0 });
+        expect([stats.cost, stats.cooldownMs]).toEqual([0, 0]);
+      }
+  });
+
+  it('falha: Vermelho com Eficiência 3 e Fluxo selado custa round(18 × 0,6 × 0,5) = 5, abaixo do piso 18', () => {
+    const input = { id: 'vermelho' as const, level: 1 as const, ...NO_MUL, costMul: 0.6, axes: efficientRed() };
+    expect(costFloor('vermelho')).toBe(18);
+    const miss = resolveTechStats({ ...input, domainCostMul: 0.5, domainCooldownMul: 0.5 });
+    expect(miss.cost).toBe(5);
+    expect(miss.cooldownMs).toBe(2250);
+  });
+
+  it('falha: Corte Nv 3 com 0,6 custa round(20 × 0,6 × 0,5) = 6 e recarrega 2500 × 0,5 = 1250', () => {
+    const input = { id: 'corte' as const, level: 3 as const, ...NO_MUL, costMul: 0.6 };
+    const miss = resolveTechStats({ ...input, domainCostMul: 0.5, domainCooldownMul: 0.5 });
+    expect([miss.cost, miss.cooldownMs]).toEqual([6, 1250]);
+  });
+
+  it('fora do Jackpot o piso volta: os mesmos casos dão 18 e as recargas de TECHNIQUES/eixos', () => {
+    const red = resolveTechStats({ id: 'vermelho', level: 1, ...NO_MUL, costMul: 0.6, axes: efficientRed() });
+    expect([red.cost, red.cooldownMs]).toEqual([18, 4500]);
+    const cut = resolveTechStats({ id: 'corte', level: 3, ...NO_MUL, costMul: 0.6 });
+    expect([cut.cost, cut.cooldownMs]).toEqual([18, 2500]);
+  });
+
+  it('o Loadout repassa os dois multiplicadores: custo e recarga armada saem do Jackpot e voltam no fim', () => {
+    const lo = new Loadout();
+    lo.equip(0, 'corte', 3);
+    lo.costMul = 0.6;
+    lo.domainCostMul = 0;
+    lo.domainCooldownMul = 0;
+    expect(lo.cost('corte')).toBe(0);
+    lo.startCooldown(0);
+    expect(lo.cooldownOf(0)).toBe(0);
+    lo.domainCostMul = 0.5;
+    lo.domainCooldownMul = 0.5;
+    expect(lo.cost('corte')).toBe(6);
+    lo.startCooldown(0);
+    expect(lo.cooldownOf(0)).toBe(1250);
+    lo.domainCostMul = 1;
+    lo.domainCooldownMul = 1;
+    expect(lo.cost('corte')).toBe(18);
+    lo.startCooldown(0);
+    expect(lo.cooldownOf(0)).toBe(2500);
   });
 });
