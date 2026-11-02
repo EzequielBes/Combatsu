@@ -1,4 +1,4 @@
-# STATE
+﻿# STATE
 
 ## Decisions
 
@@ -206,27 +206,25 @@
 
 Só o estado atual; o histórico de cada sessão está no `git log`. Reescrever esta seção ao fechar a sessão, não empilhar.
 
-- **Onde está** (16/10/2026): a F30 `vermelho-e-corpo` está pronta no branch `feat/vermelho-e-corpo` (worktree `wt-f30` no scratchpad), com as 69 tarefas e o Verifier PASS na rodada 2 (`.specs/features/vermelho-e-corpo/validation.md`, faixa `75a22b4..9abcef3`, 21 de 21 mutantes mortos). Gate verde com 4278 testes. Tudo está no GitHub, mas nada foi mergeado no `master`.
-- **Cadeia de branches**: `master` (`a6e609a`, 08/10) ← `feat/fundacao-de-poder` (F29, PASS) ← `feat/builds-integracao` (F29 + F32 `chefes-com-afixos`, `recorde-e-recomeco`, regras das levas 1 e 2, arte paralela, specs F30–F41) ← `feat/vermelho-e-corpo` (F30).
-- **O que a F30 entregou**:
-  - `TechStats` único para as 5 técnicas.
-  - Vermelho com eixos Nv 1 a 6, ramos (Ricochete, Fliperama, Contido), Despertar, campo e atordoamento na parede.
-  - Corpo Amaldiçoado com eixos, Fúria e aura, Cadência, Martelo Negro, Onda do Punho e Punho que Rasga.
-  - Loja com 4 cartas, carta de 2 eixos e painel do ramo.
-  - Preço com trava a partir da r2, inflação e piso de 60%.
-  - Kokusen escalado e HP e dano do inimigo crescendo por rodada (AD-025 substitui a AD-014).
-- **Desvios aceitos pelo Verifier**:
-  - T27: o estilhaço é lido pelo evento `redShard:`.
-  - T33: a parede desarma quando o inimigo se levanta, não ao tocar o chão; o VRM-16 foi atualizado.
-  - T45: o Alcance alonga o rastro.
-  - T49: o teto de ondas é provado na T50.
-  - Alguns smokes rodam no `fxlab`, onde o boneco parado é condição.
-- **A conferir jogando**: a curva do Vermelho focado fecha com folga grande (Nv 5 na loja da r4, contra a meta da r10), então ele pode estar evoluindo rápido demais. O nome "Reversão de Técnica: Vermelho" passa da largura da carta (o `ShopPanel` estava travado pela spec).
-- **Next step**: o usuário decide entre mergear a cadeia no `master` e seguir o plano (`docs/plano-builds-e-habilidades.md`, seção 6): F31 `expansao-de-dominio` (48 tarefas), depois F33 a F41. A spec da F34 `tecnicas-jjk-1` só existe em `feat/regras-tecnicas-leva1` e precisa ser trazida para o trilho. A F39 (meta) só depende da F33 e pode ser adiantada.
-- **Regra nova do usuário (15/10)**: arte do protagonista (Yuta) não se gera mais em código. Pedido de quadro novo vira `docs/sprites-protagonista/<Tnn>-<nome>.md` e o código usa o quadro existente mais próximo. Cenário, inimigos e efeitos seguem em código.
-- **Processo que funcionou**: lotes sequenciais de fases inteiras por subagente, Sonnet no código e Opus na arte e no Verifier, push do branch ao fim de cada lote (pedido do usuário). Com o limite de uso estourado, o worker é retomado do mesmo ponto.
-- **Instáveis conhecidos**: o smoke `kokusen` (pré-condição de energia CE-06) falha mais ou menos a metade das vezes; o `armed` às vezes falha em ARM-12; há timeouts de navegação com a máquina ocupada. Repetir isolado antes de suspeitar.
-- **HD é a base**: smoke novo pede `?debug&hd=1&area=modular`. Teto de 400 linhas por arquivo; smoke grande ganha módulo próprio.
-- `src/core/mastery.ts` aparece modificado no `wt-f30` só por fim de linha e fica fora dos commits.
+- **Onde está** (16/10/2026):
+  - F29 `fundacao-de-poder`: pronta e validada (commit `81c3fa4`, Verifier PASS).
+  - F30 `vermelho-e-corpo`: pronta e validada no branch `feat/vermelho-e-corpo` (commit `11615ac`, Verifier PASS rodada 2, 4278 testes passando).
+  - F32 `chefes-com-afixos`: pronta e validada no branch `feat/chefes-com-afixos` (commit `cc995c2`, Verifier PASS).
+  - Frentes de arte e regras (armas imbuídas, cães/don, techfx, ícones HD, regras levas 1 e 2, recorde) já adiantadas e consolidadas no branch `feat/builds-integracao` (commit `75a22b4`).
+  - **F31 `expansao-de-dominio` (EM ANDAMENTO ATIVO)**: branch `feat/expansao-de-dominio`, aberta sobre a F30. As tarefas T1 a T9 já foram implementadas e testadas (último commit: `1332eae feat(scene): land the decisive domain activation hit`).
+- **Cadeia de branches**: `master` ← `feat/fundacao-de-poder` (F29) ← `feat/builds-integracao` ← `feat/vermelho-e-corpo` (F30) ← `feat/expansao-de-dominio` (F31).
+- **Atenção para Claude Cloud / sincronização**:
+  - A branch local `feat/expansao-de-dominio` está 9 commits à frente de `origin/feat/expansao-de-dominio` (commits T1 a T9).
+  - Se for rodar no Claude Cloud remoto, certifique-se de que o push desses commits foi feito (`git push origin feat/expansao-de-dominio`) para o ambiente remoto não recomeçar a F31 do zero.
+- **Next step para continuar**:
+  - Branch de trabalho: `feat/expansao-de-dominio`.
+  - Tarefa imediata: **T10** (`Fim do Domínio na konbini, na morte e no reinício`), descrita em `.specs/features/expansao-de-dominio/tasks.md`.
+  - Continuar sequencialmente de T10 até T48, seguindo os gates do `tlc-spec-driven` e finalizando com o Verifier independente da F31.
+- **Regras mandatórias do projeto**:
+  - **Arte do protagonista (Yuta)**: Regra de 15/10 — não gerar sprites do player em código. Pedidos de quadro novo viram `docs/sprites-protagonista/<Tnn>-<nome>.md` e o código usa o quadro existente mais próximo. Cenário, inimigos e efeitos seguem em código.
+  - **HD é a base**: Todo smoke novo roda com `?debug&hd=1&area=modular`.
+  - **Limites de código**: Teto de 400 linhas efetivas por arquivo, 80 por função, complexidade 15. Arquivo novo não entra no `.oxlintrc.json`. `TestScene.ts` não ganha linhas líquidas.
+  - **Escala de inimigos**: AD-025 ativa — HP (+6%/rodada) e dano (+5%/rodada) escalam, e Kokusen acompanha a curva da build.
+- **Instáveis conhecidos**: o smoke `kokusen` (pré-condição de energia CE-06) falha às vezes; o `armed` falha esporadicamente em ARM-12. Repetir isolado antes de suspeitar de regressão.
 
 Pendências antigas que continuam: silhueta própria para a Tecelã; alcance do arremesso; fracos da F22 (geladeiras da konbini, árvores claras do parque); efeitos das passivas e relíquias só cobertos pela regra pura; worktrees antigas e branches já mergeadas para limpar se o usuário quiser.
