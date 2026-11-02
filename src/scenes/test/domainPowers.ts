@@ -1,6 +1,7 @@
 import { cutLine } from '../../core/cut';
 import { multipliersFor } from '../../core/difficulty';
 import type { Hit } from '../../core/hit';
+import type { JackpotEffect } from '../../core/domainEffects';
 import { impactTier } from '../../core/impactTier';
 import {
   SanctuaryTriggers,
@@ -43,6 +44,11 @@ export class DomainPowers {
     private readonly s: TestScene,
     private readonly d: DomainDirector,
   ) {}
+
+  /** Efeito do Jackpot em curso; `null` no giro e fora do Jackpot (a T28 liga o giro). */
+  get jackpotEffect(): JackpotEffect {
+    return null;
+  }
 
   private sanctuaryActive(): boolean {
     return this.d.state.active?.id === 'santuario';

@@ -971,11 +971,14 @@ O ramo com o Jackpot ligado é provado no jogo vivo pela T28 (merge forward: nã
 
 **Done when**:
 
-- [ ] `grep` em `src/` mostra o `StatsDirector` como único escritor de `loadout.damageMul`, `loadout.vowDamageMul`,
+- [x] `grep` em `src/` mostra o `StatsDirector` como único escritor de `loadout.damageMul`, `loadout.vowDamageMul`,
       `loadout.costMul`, `loadout.domainCostMul`, `loadout.domainCooldownMul`, `player.damageTakenMul` e
       `player.setMaxHp` (AMP-05.2, POW-01)
-- [ ] Smokes `power`, `vows`, `shop`, `tech` e `domain` verdes e iguais (Domínio neutro)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Smokes `power`, `vows`, `shop`, `tech` e `domain` verdes e iguais (Domínio neutro)
+- [x] Gate verde; contagem de testes sem perda (4444, sem teste unitário novo; smokes `power`, `vows`, `shop` (3), `tech` (2) e `domain` verdes)
+
+- Nota: o tipo `DomainStatMods` saiu do `domainDirector` para o `core/domainEffects` (T22); o `DomainPowers` ganhou o
+  getter `jackpotEffect`, que devolve `null` até a T28 ligar o giro.
 
 **Tests**: smoke
 **Gate**: full

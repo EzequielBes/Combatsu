@@ -49,11 +49,12 @@ export class StatsDirector {
       vows: this.s.vows.effects,
       baseMaxHp: this.s.modifiers.maxHp,
       impact: this.s.loadout.axes.points('corpo', 'impacto'),
+      domain: this.s.build.domain.statMods(),
     });
   }
 
   /**
-   * Repassa a folha aos números que o combate lê (ARS-06, VOW-10, VOW-12, VOW-13, VOW-15..17). Grava o mesmo valor
+   * Repassa a folha aos números que o combate lê (ARS-06, VOW-10, VOW-12, VOW-13, VOW-15..17, JAC-04, JAC-05). Grava o mesmo valor
    * quando nada mudou; a vida máxima só é tocada quando muda (o `setMax` recorta a vida no teto).
    */
   sync(): void {
@@ -62,6 +63,9 @@ export class StatsDirector {
     loadout.damageMul = sheet.relicTechMul;
     loadout.vowDamageMul = sheet.vowTechMul;
     loadout.costMul = sheet.costMul;
+    // JAC-04/05: custo e recarga das técnicas dentro do Jackpot; 1 fora dele.
+    loadout.domainCostMul = sheet.domainCostMul;
+    loadout.domainCooldownMul = sheet.domainCooldownMul;
     // ESC-02: o Kokusen lê a Força, o golpe pesado da folha (traços do objeto) e o HP da rodada.
     loadout.kokusenScale = {
       forca: this.s.modifiers.level('forca'),

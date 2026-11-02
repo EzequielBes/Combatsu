@@ -6,6 +6,7 @@ import {
   type ActivationTarget,
   type DomainEnd,
 } from '../../core/domainActivation';
+import { domainStatMods, type DomainStatMods } from '../../core/domainEffects';
 import { impactTier } from '../../core/impactTier';
 import { parseChargeParam, parseDomainParam } from '../../core/domainParam';
 import type { Hit, HitBand } from '../../core/hit';
@@ -26,20 +27,6 @@ import type { TestScene } from '../TestScene';
 import { debugParam } from './params';
 import { DomainPowers } from './domainPowers';
 
-/**
- * O que o Domínio muda na folha de atributos. Neutro até o Jackpot e a Amplificação (T22 leva o tipo para
- * `core/domainEffects.ts` e a T27 liga o `statMods` ao `domainStatMods`).
- */
-export interface DomainStatMods {
-  meleeMul: number;
-  costMul: number;
-  cooldownMul: number;
-  techLocked: boolean;
-  guardPierce: boolean;
-  nullifyProjectiles: boolean;
-  energyLock: boolean;
-}
-
 /** Alvo do acerto da ativação: o comum ou o chefe vivo, com o centro do corpo. */
 interface DomainTarget extends ActivationTarget {
   body: Enemy | Boss;
@@ -47,16 +34,6 @@ interface DomainTarget extends ActivationTarget {
 
 /** Rodada cujo fim marca o Baú do Véu para quem não tem Domínio (VEU-01). */
 const VEIL_ROUND = 3;
-
-const NEUTRAL_MODS: DomainStatMods = {
-  meleeMul: 1,
-  costMul: 1,
-  cooldownMul: 1,
-  techLocked: false,
-  guardPierce: false,
-  nullifyProjectiles: false,
-  energyLock: false,
-};
 
 /**
  * Liga o `DomainState` (a barra e a posse da Expansão de Domínio, DOM-01 a DOM-05) ao debug e ao snapshot. Campo
@@ -323,8 +300,9 @@ export class DomainDirector {
     return domainBarView(this.state);
   }
 
+  /** O que o Domínio ativo muda na folha (JAC-04, JAC-05); o `StatsDirector` lê a cada quadro. */
   statMods(): DomainStatMods {
-    return NEUTRAL_MODS;
+    return domainStatMods(this.state.active, this.powers.jackpotEffect);
   }
 
   /** Campo `domain` do snapshot de debug (DDB-01). */
