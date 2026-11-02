@@ -10,11 +10,13 @@ import { impactTier } from '../../core/impactTier';
 import { parseChargeParam, parseDomainParam } from '../../core/domainParam';
 import type { Hit, HitBand } from '../../core/hit';
 import { drawVeil } from '../../core/veilChest';
-import { DOMAIN_HIT, DOMAINS, type DomainId } from '../../data/domains';
+import { DOMAIN_CHARGE, DOMAIN_HIT, DOMAINS, type DomainId } from '../../data/domains';
 import { FINISHER_MOVE } from '../../data/moves';
 import { RUN } from '../../data/tuning';
 import type { Boss } from '../../game/Boss';
 import type { Enemy } from '../../game/Enemy';
+import type { ChoicePage } from '../../game/axisSnapshot';
+import type { ChoiceItem } from '../../game/ChoicePanel';
 import type { DomainSnapshot } from '../../game/domainSnapshot';
 import type { DefenseKind } from '../../game/player/types';
 import { acceptsPlayerInput } from '../../core/run';
@@ -183,6 +185,35 @@ export class DomainDirector {
     const rng = this.s.run.chestRng;
     if (round !== VEIL_ROUND || this.state.owned !== null || !rng) return;
     this.state.markVeil(drawVeil(rng));
+  }
+
+  /**
+   * Páginas do Domínio no painel de escolha da konbini (VEU-02): o Baú do Véu pendente, com o nome e a linha de efeito
+   * de cada um dos dois Domínios sorteados.
+   */
+  choicePages(): ChoicePage[] {
+    const pair = this.state.veilPending;
+    if (!pair) return [];
+    return [
+      {
+        item: 'veu',
+        options: [DOMAINS[pair[0]].name, DOMAINS[pair[1]].name],
+        lines: [DOMAINS[pair[0]].line, DOMAINS[pair[1]].line],
+      },
+    ];
+  }
+
+  /**
+   * Confirmação de uma página do Domínio (VEU-03): o véu dá o Domínio escolhido no Nv 1 com a carga cheia, tira a
+   * pendência e empurra `veil:<id>`. A página não tem recusa.
+   */
+  confirm(item: ChoiceItem, option: 0 | 1): void {
+    if (item !== 'veu') return;
+    const pair = this.state.takeVeil();
+    if (!pair) return;
+    const id = pair[option];
+    this.state.own(id, 1, DOMAIN_CHARGE.veilStart);
+    this.event(`veil:${id}`);
   }
 
   /** A konbini abriu (`shopOpen`, também com `noshop=1`): o Domínio ativo acaba sem efeito de fim (DOM-10). */

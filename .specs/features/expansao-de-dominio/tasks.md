@@ -646,14 +646,20 @@ entrada até o `Enter`.
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 3) com `round=3&maxAlive=1`: limpar a r3 abre a konbini com
+- [x] `domain.smoke.mjs` (parte 3) com `round=3&maxAlive=1`: limpar a r3 abre a konbini com
       `choice.page.item === 'veu'` e 2 opções diferentes; a mesma seed mostra o mesmo par em duas runs (VEU-02.3); `D` e
       `Enter` dão `veil:<id>`, `domain.owned` `{id, level: 1}`, `charge` 100, `ready`, `veilPending` falso,
       `hud.domainBar.visible` e `blinking` (VEU-03); o 1º `P` da r4 dá `domain:<id>`; antes do `Enter`, as teclas da
       loja não compram nada (VEU-03.5)
-- [ ] Com `noshop=1` na r3, a página abre na konbini seguinte (VEU-04.6)
-- [ ] Smokes `shop`, `run-loop`, `vows`, `shop-axes` (F30) e `domain` verdes; `shopDirector.ts` abaixo de 400 linhas
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Com `noshop=1` na r3, a página abre na konbini seguinte (VEU-04.6) — ver SPEC_DEVIATION abaixo
+- [x] Smokes `shop`, `run-loop`, `vows`, `shop-axes` (F30) e `domain` verdes; `shopDirector.ts` abaixo de 400 linhas
+- [x] Gate verde; contagem de testes sem perda (4382 → 4382; a tarefa é só de smoke)
+- Notas: a parte 3 (página) mora em `scripts/smoke/domain-veil.mjs` (`veilPage`). A página leva o nome e a linha de
+  `DOMAINS` pelo `lines` do `ChoicePage` (T14). SPEC_DEVIATION no VEU-04.6: o `noshop=1` vale para a run inteira (no
+  mundo modular liga o `skipShop`, e na sala fecha toda konbini), então nenhuma konbini seguinte abre na mesma run e o
+  caso não é jogável. Fica provado em duas metades: a pendência sobrevive à r3 pulada e chega à r4 (T15,
+  `veilPending`), e a página sai da marca pendente, não da rodada (`domainDirector.choicePages`). O `P` da r4 espera o
+  fade da área nova (o input é neutro na transição).
 
 **Tests**: smoke
 **Gate**: full

@@ -7,6 +7,7 @@ import { evolve } from '../../core/evolution';
 import { isBossRound } from '../../core/waves';
 import { SHOP } from '../../data/tuning';
 import { type GameSnapshot } from '../../game/debugApi';
+import type { ChoicePage } from '../../game/axisSnapshot';
 import type { ShopInputSnapshot } from '../../game/input';
 import type { TestScene } from '../TestScene';
 
@@ -153,7 +154,7 @@ export class ShopDirector {
    * Corpo; sem pendência, abre a loja (CRD-08).
    */
   private openChoiceOrShop(): void {
-    const pages = this.s.build.axes.choicePages();
+    const pages = this.choicePages();
     if (pages.length > 0) {
       this.s.hud.hideBanner();
       this.s.ui.choicePanel.show(pages[0]);
@@ -175,13 +176,20 @@ export class ShopDirector {
     if (input.moveLeft) panel.select(0);
     if (input.moveRight) panel.select(1);
     if (!input.confirm) return true;
-    if (page.item !== 'veu' && page.item !== 'bauChefe') this.s.build.axes.confirmBranch(page.item, panel.selected);
+    // VEU-03: o véu (e o baú do chefe) vão ao Domínio; o ramo, ao item com eixo.
+    if (page.item === 'veu' || page.item === 'bauChefe') this.s.build.domain.confirm(page.item, panel.selected);
+    else this.s.build.axes.confirmBranch(page.item, panel.selected);
     this.openNextChoiceOrShop();
     return true;
   }
 
+  /** Fila do painel de escolha: as páginas do Domínio (o baú) antes das de ramo (VEU-02). */
+  private choicePages(): ChoicePage[] {
+    return [...this.s.build.domain.choicePages(), ...this.s.build.axes.choicePages()];
+  }
+
   private openNextChoiceOrShop(): void {
-    const next = this.s.build.axes.choicePages();
+    const next = this.choicePages();
     if (next.length > 0) {
       this.s.ui.choicePanel.show(next[0]);
       return;
