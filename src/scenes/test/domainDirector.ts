@@ -1,4 +1,4 @@
-import { DomainState } from '../../core/domain';
+import { DomainState, domainBarView, type DomainBarView } from '../../core/domain';
 import {
   ActiveDomain,
   activationDenial,
@@ -258,6 +258,11 @@ export class DomainDirector {
     if (owned) this.state.own(owned.id, owned.level);
     const charge = parseChargeParam(debugParam('charge'));
     if (charge !== null) this.state.setCharge(charge);
+  }
+
+  /** A vista da barra do Domínio (DHD-01 a DHD-03). */
+  barView(): DomainBarView {
+    return domainBarView(this.state);
   }
 
   statMods(): DomainStatMods {

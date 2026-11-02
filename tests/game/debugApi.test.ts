@@ -167,6 +167,7 @@ describe('installDebugApi', () => {
         },
         callout: null,
         kokusenCard: null,
+        domainBar: { visible: false, fill: 0, blinking: false },
       },
       combo: { hits: 0, grade: null },
       timeScale: 1,

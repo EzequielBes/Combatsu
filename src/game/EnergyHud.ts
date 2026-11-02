@@ -1,3 +1,4 @@
+import { DomainBar } from './DomainBar';
 import { HUD_TEXT_STYLE } from './Hud';
 import type Phaser from 'phaser';
 import { COST_MARKS_MAX, costMarks, type CursedEnergy } from '../core/energy';
@@ -70,6 +71,8 @@ export class EnergyHud {
   private readonly slots: [SlotIcon, SlotIcon];
   private readonly masteryBars: [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Rectangle];
   private flashMs = 0;
+  /** A barra do Domínio (DHD-01 a DHD-03), logo abaixo da moldura, no `x` e na largura do poço. */
+  readonly domainBar: DomainBar;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -77,6 +80,7 @@ export class EnergyHud {
   ) {
     const label = scene.add.text(MARGIN, FRAME_Y + 1, 'CE', LABEL_STYLE);
     this.ceLabel = label;
+    this.domainBar = new DomainBar(scene, layer, BAR_X, BAR_W);
     const frame = scene.add.image(FRAME_X, FRAME_Y, TEX.hudBar).setOrigin(0, 0);
     this.bg = scene.add.rectangle(BAR_X, BAR_Y, BAR_W, BAR_H, ENERGY_BAR_BG_COLOR).setOrigin(0, 0);
     this.fill = scene.add.rectangle(BAR_X, BAR_Y, 0, BAR_H, ENERGY_BAR_FILL_COLOR).setOrigin(0, 0);
@@ -156,6 +160,7 @@ export class EnergyHud {
     const frac = Math.max(0, Math.min(1, energy.cur / energy.max));
     this.fill.width = BAR_W * frac; // TEC-07
     this.updateMarks(energy, loadout);
+    this.domainBar.update(dtMs);
 
     loadout.slotsView.forEach((s, i) => {
       const slot = this.slots[i];

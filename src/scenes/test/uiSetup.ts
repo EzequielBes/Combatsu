@@ -92,6 +92,8 @@ export class UiSetup {
     this.s.runDirector.record.mountUi(this.s.uiLayer);
     // DOM-10: o `R` reinicia a cena com o mesmo diretor; o Domínio ativo da cena velha acaba aqui.
     this.s.build.domain.onSceneCreate();
+    // DHD-01 a DHD-03: a barra do Domínio lê a vista do diretor a cada quadro.
+    this.s.energyHud.domainBar.bind(() => this.s.build.domain.barView());
     this.s.hud.setPlayerHp(this.s.player.hp, this.s.player.maxHp);
     // FXL-04: no laboratório a legenda fica sempre visível, não só os primeiros `CONTROLS_MS`.
     this.s.hud.showControls(this.s.fxLab ? Number.MAX_SAFE_INTEGER : CONTROLS_MS);

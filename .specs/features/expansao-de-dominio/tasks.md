@@ -509,15 +509,20 @@ carregando, `T` ativa, pisca `U`/`W` a cada 250 ms com a carga cheia e mostra o 
 
 **Done when**:
 
-- [ ] `tests/game/debugApi.test.ts`: literal com `hud.domainBar` (`visible`, `fill`, `blinking`)
-- [ ] `domain.smoke.mjs` (parte 1, barra): sem Domínio `hud.domainBar.visible` falso; com `domain=santuario&charge=50`,
+- [x] `tests/game/debugApi.test.ts`: literal com `hud.domainBar` (`visible`, `fill`, `blinking`)
+- [x] `domain.smoke.mjs` (parte 1, barra): sem Domínio `hud.domainBar.visible` falso; com `domain=santuario&charge=50`,
       `fill` medido do retângulo vivo = 0,5 (L-043, L-076); com `charge=100`, `blinking` verdadeiro; ativo, o `fill`
       cai de 1 a 0 com o tempo do Domínio (DHD-03)
-- [ ] Conferido no jogo em HD (captura pelo `window.__game` e uma passada jogando, virado para os dois lados): a faixa
+- [x] Conferido no jogo em HD (captura pelo `window.__game` e uma passada jogando, virado para os dois lados): a faixa
       fica embaixo da moldura da energia sem encostar no ícone de fragmentos (`Hud.ts:192`) (DHD-06)
-- [ ] `EnergyHud.ts` com +4 linhas efetivas no máximo
-- [ ] Smokes `hud`, `tech` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] `EnergyHud.ts` com +4 linhas efetivas no máximo
+- [x] Smokes `hud`, `tech` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4370 → 4370: o literal do `debugApi.test.ts` ganhou o campo)
+- Notas: a parte 1 (barra) mora em `scripts/smoke/domain-bar.mjs`. O `EnergyHud` ganhou 4 linhas efetivas (import,
+  campo, criação e `update`); o `hud.domainBar` entra pelo `snapshot.ts` (`energyHud.domainBar.debug()`), para não
+  passar das 4 linhas com o tipo do `debugState`. Conferido em HD (capturas com `window.__game.render()`, andando para
+  a direita e para a esquerda): a faixa fica 1 px sob a moldura da energia, o rótulo `P` à direita da moldura, e não
+  encosta no ícone nem no texto de fragmentos (que começam abaixo dela).
 
 **Tests**: smoke
 **Gate**: full

@@ -20,7 +20,7 @@ import type { ToolKey } from '../core/loot';
 import type { VowEffects } from '../core/vows';
 import type { PropState } from '../core/props';
 import type { DamageNumbersSnapshot, PowerSnapshot, StatsSnapshot } from './powerSnapshot';
-import type { DomainSnapshot } from './domainSnapshot';
+import type { DomainBarSnapshot, DomainSnapshot } from './domainSnapshot';
 import type { RunState } from '../core/run';
 import type { TechId } from '../data/techniques';
 import type { RecordSnapshot } from './recordSnapshot';
@@ -305,6 +305,8 @@ export interface GameSnapshot {
     callout: { id: TechId; name: string } | null;
     /** Cartão 黒閃 do Kokusen (KOK-25/26), `null` fora da janela de 800 ms. */
     kokusenCard: { streak: number } | null;
+    /** A barra do Domínio sob a energia, lida do retângulo vivo (DHD-01 a DHD-03). */
+    domainBar: DomainBarSnapshot;
     /** Estado vivo da barra de energia e dos ícones de slot (TEC-07/09/10/12). */
     energy: {
       width: number;

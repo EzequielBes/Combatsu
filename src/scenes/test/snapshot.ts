@@ -161,6 +161,7 @@ export class DebugSnapshot {
       hud: {
         ...this.s.hud.debugState(),
         ...this.s.energyHud.debugState(),
+        domainBar: this.s.energyHud.domainBar.debug(),
         callout: this.s.callout.debug(),
         kokusenCard: this.s.kokusenFx.cardDebug(),
       },
