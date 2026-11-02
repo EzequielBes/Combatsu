@@ -682,17 +682,17 @@ max, radiusPx)` (vivos a até 320 px, do mais perto ao mais longe, empate pelo i
 
 **Done when**:
 
-- [ ] `tests/core/sanctuary.test.ts` (novo): 4 gatilhos em 1000 ms aceitos e o 5º recusado; o 5º em 999 ms recusado,
+- [x] `tests/core/sanctuary.test.ts` (novo): 4 gatilhos em 1000 ms aceitos e o 5º recusado; o 5º em 999 ms recusado,
       em 1000 e 1001 ms aceito; gatilho sem alvo conta (edge case) (SAN-02)
-- [ ] Até 4 alvos no Nv 1 e 6 no Nv 2/3; ordem por distância e, no empate, pelo id; alvo a 320 px entra e a 321 px
+- [x] Até 4 alvos no Nv 1 e 6 no Nv 2/3; ordem por distância e, no empate, pelo id; alvo a 320 px entra e a 321 px
       fica fora; morto fica fora; `round(6 × hpMul)` na r1 e na r19 (SAN-03)
-- [ ] Limpeza (SAN-03.5): golpes de referência a partir de 0 ms (leve a cada 1000, forte a cada 4000, conjuração a cada
+- [x] Limpeza (SAN-03.5): golpes de referência a partir de 0 ms (leve a cada 1000, forte a cada 4000, conjuração a cada
       5000) passados pelo `SanctuaryTriggers` dentro de 6000 ms soltam 10 gatilhos; com a ativação de 40% e esses
       cortes, 4 comuns de HP cheio chegam a 0 na r4 (HP 71, ativação 28, corte 7) e na r19 (HP 125, ativação 50, corte
       12); com só 6 gatilhos, na r4 um comum fica vivo (o teste discrimina)
-- [ ] Corte do Mundo: comum com HP = 35% do máximo morre (leva o HP restante); com 35% + 1 HP fica de fora; chefe leva
+- [x] Corte do Mundo: comum com HP = 35% do máximo morre (leva o HP restante); com 35% + 1 HP fica de fora; chefe leva
       `round(0,08 × maxHp)`; o chefe com 8% ou menos morre; alvo a 321 px fica de fora (SAN-05)
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4382 → 4400: +18 em `tests/core/sanctuary.test.ts`)
 
 **Tests**: unit
 **Gate**: quick
