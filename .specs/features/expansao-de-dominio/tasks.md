@@ -901,10 +901,10 @@ próprio (`0x9b05688c` no design, conferido por `grep`), no mesmo molde da T13.
 
 **Done when**:
 
-- [ ] `tests/core/statSheet.test.ts`: sem `domain` e com `NEUTRAL_DOMAIN_MODS` a grade do POW-01 dá o mesmo número com
+- [x] `tests/core/statSheet.test.ts`: sem `domain` e com `NEUTRAL_DOMAIN_MODS` a grade do POW-01 dá o mesmo número com
       `toBe`; com `meleeMul` 1,25 o `meleeMul(t)` sai × 1,25; `domainCostMul`/`domainCooldownMul` 0 no jackpot e 0,5 na
       falha
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4434 → 4438: +4 em `tests/core/statSheet.test.ts`; a grade do POW-01 ganhou a asserção com `NEUTRAL_DOMAIN_MODS`)
 
 **Tests**: unit
 **Gate**: quick

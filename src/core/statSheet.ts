@@ -4,6 +4,7 @@ import { axisAt } from './axisRule';
 import type { Hit } from './hit';
 import { relicStrikeMul, relicTechMul, type Arsenal } from './arsenal';
 import { strikeMultiplier, type Perks } from './build';
+import { NEUTRAL_DOMAIN_MODS, type DomainStatMods } from './domainEffects';
 import type { VowEffects } from './vows';
 
 /** Traços de um golpe corpo a corpo que as passivas, a relíquia e os votos leem (BLD-06, ARS-05, VOW-10..12). */
@@ -58,6 +59,8 @@ export interface StatInput {
   baseMaxHp: number;
   /** Pontos do Impacto do Corpo (0 a 3, CRP-02); ausente = 0. */
   impact?: number;
+  /** O que o Domínio ativo muda (JAC-04, JAC-05, AMP-05); ausente = neutro. */
+  domain?: DomainStatMods;
 }
 
 /** Os números do combate que saem de passivas, arsenal e votos juntos (POW-01). */
@@ -76,6 +79,10 @@ export interface StatSheet {
   maxHp: number;
   /** Guarda e parry desligados (Sem guarda). */
   guardOff: boolean;
+  /** Custo das técnicas pelo Domínio (`loadout.domainCostMul`): 0 no jackpot, 0,5 na falha, 1 fora. */
+  domainCostMul: number;
+  /** Recarga das técnicas pelo Domínio (`loadout.domainCooldownMul`). */
+  domainCooldownMul: number;
 }
 
 /** Parte dos votos no golpe corpo a corpo, agrupada como o `VowDirector.strikeMul` de antes (o ponto flutuante depende). */
@@ -87,16 +94,24 @@ function vowStrikeMul(vows: VowEffects, heavy: boolean): number {
  * POW-01: único lugar que combina passivas, arsenal e votos. A ordem dos fatores é a de antes (build × arsenal ×
  * votos), para o `Math.round` do dano cair no mesmo inteiro.
  */
-export function statSheet({ perks, arsenal, vows, baseMaxHp, impact = 0 }: StatInput): StatSheet {
+export function statSheet(input: StatInput): StatSheet {
+  const { perks, arsenal, vows, baseMaxHp, impact = 0, domain = NEUTRAL_DOMAIN_MODS } = input;
   const impactMul = axisAt(BODY_AXES.impacto.impactMul, impact);
   return {
+    // O Domínio multiplica por último: neutro, o número fica igual ao de antes.
     meleeMul: (t) =>
-      strikeMultiplier(perks, t) * relicStrikeMul(arsenal, t.light) * vowStrikeMul(vows, t.heavy) * impactMul,
+      strikeMultiplier(perks, t) *
+      relicStrikeMul(arsenal, t.light) *
+      vowStrikeMul(vows, t.heavy) *
+      impactMul *
+      domain.meleeMul,
     relicTechMul: relicTechMul(arsenal),
     vowTechMul: vows.techDamageMul * vows.damageMul,
     costMul: vows.techCostMul,
     damageTakenMul: vows.damageTakenMul,
     maxHp: Math.round(baseMaxHp * vows.maxHpMul),
     guardOff: vows.guardOff,
+    domainCostMul: domain.costMul,
+    domainCooldownMul: domain.cooldownMul,
   };
 }

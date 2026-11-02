@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Arsenal, relicStrikeMul, relicTechMul } from '../../src/core/arsenal';
 import { Perks, strikeMultiplier } from '../../src/core/build';
+import { NEUTRAL_DOMAIN_MODS, domainStatMods } from '../../src/core/domainEffects';
 import { maxHpAtLevel } from '../../src/core/modifiers';
 import { PROP_TRAITS, statSheet, traitsOf, type MeleeTraits } from '../../src/core/statSheet';
 import { vowEffects, type VowEffects } from '../../src/core/vows';
@@ -57,9 +58,13 @@ describe('statSheet: equivalência com a composição de antes (POW-01.3)', () =
         for (const perkId of PERK_CASES) {
           const perks = perksWith(perkId);
           const sheet = statSheet({ perks, arsenal, vows: fx, baseMaxHp: 100 });
+          // JAC-04/05: o Domínio neutro (ou ausente) não muda nenhum número da grade.
+          const neutral = statSheet({ perks, arsenal, vows: fx, baseMaxHp: 100, domain: NEUTRAL_DOMAIN_MODS });
           for (const move of STRIKES) {
             for (const shadow of [false, true]) {
-              expect(sheet.meleeMul(traitsOf(move, shadow))).toBe(todayStrikeMul(perks, arsenal, fx, move, shadow));
+              const today = todayStrikeMul(perks, arsenal, fx, move, shadow);
+              expect(sheet.meleeMul(traitsOf(move, shadow))).toBe(today);
+              expect(neutral.meleeMul(traitsOf(move, shadow))).toBe(today);
               checked++;
             }
           }
@@ -131,6 +136,42 @@ describe('statSheet: números da folha', () => {
     const sheet = statSheet({ perks, arsenal: new Arsenal(), vows: vowEffects([], { kills: 0 }), baseMaxHp: 100 });
     expect(sheet.meleeMul(traitsOf(MOVES.jab, false))).toBe(1);
     expect(sheet.meleeMul(traitsOf(MOVES.jab, true))).toBe(1.5);
+  });
+});
+
+describe('statSheet: Domínio na folha (JAC-04, JAC-05, AMP-05)', () => {
+  const base = { perks: new Perks(), arsenal: new Arsenal(), vows: vowEffects([], { kills: 0 }), baseMaxHp: 100 };
+
+  it('meleeMul do Domínio multiplica o golpe por último (1,25)', () => {
+    const fx = vowEffects(['furia'], { kills: 5 });
+    const perks = perksWith(PERK_IDS[0]);
+    const arsenal = arsenalWith({ id: 'manoplas', level: 3 });
+    const plain = statSheet({ ...base, perks, arsenal, vows: fx });
+    const amp = statSheet({ ...base, perks, arsenal, vows: fx, domain: { ...NEUTRAL_DOMAIN_MODS, meleeMul: 1.25 } });
+    for (const move of STRIKES) {
+      const t = traitsOf(move, false);
+      expect(amp.meleeMul(t)).toBe(plain.meleeMul(t) * 1.25);
+    }
+  });
+
+  it('sem Domínio os multiplicadores de custo e recarga são 1', () => {
+    const sheet = statSheet(base);
+    expect([sheet.domainCostMul, sheet.domainCooldownMul]).toEqual([1, 1]);
+  });
+
+  it('jackpot: domainCostMul e domainCooldownMul 0; falha: 0,5 e 0,5', () => {
+    const jackpot = { id: 'jackpot' as const, level: 1 as const };
+    const hit = statSheet({ ...base, domain: domainStatMods(jackpot, 'jackpot') });
+    expect([hit.domainCostMul, hit.domainCooldownMul]).toEqual([0, 0]);
+    const miss = statSheet({ ...base, domain: domainStatMods(jackpot, 'miss') });
+    expect([miss.domainCostMul, miss.domainCooldownMul]).toEqual([0.5, 0.5]);
+  });
+
+  it('o Domínio não mexe no costMul dos votos', () => {
+    const fx = vowEffects(['fluxoSelado'], { kills: 0 });
+    const sheet = statSheet({ ...base, vows: fx, domain: domainStatMods({ id: 'jackpot', level: 1 }, 'miss') });
+    expect(sheet.costMul).toBe(0.6);
+    expect(sheet.domainCostMul).toBe(0.5);
   });
 });
 
