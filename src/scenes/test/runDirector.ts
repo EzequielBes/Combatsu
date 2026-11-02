@@ -82,6 +82,9 @@ export class RunDirector {
         this.s.arsenal.onRoundStart();
         // VRM-17, CRP-13: o Despertar volta a ser anunciado na 1ª soltura da rodada.
         this.s.build.axes.onRoundStart();
+        // DOM-10: no mundo modular o `noshop=1` (`skipShop`) vai da saída direto à rodada seguinte, sem `shopOpen`; o
+        // Domínio ativo acaba aqui, no lugar da konbini. Com a konbini aberta antes, ele já acabou e isto não faz nada.
+        this.s.build.domain.onShopOpen();
         break;
       case 'roundCleared':
         // Fica até o próximo `roundStart` (RHUD-03). Na rodada de chefe, ela entra depois de "Chefe derrotado!",
@@ -93,6 +96,8 @@ export class RunDirector {
         this.s.effects.slowMo.trigger(CAMERA_FEEL.slowScale, CAMERA_FEEL.slowMs);
         break;
       case 'shopOpen':
+        // DOM-10: a konbini encerra o Domínio ativo, também com `noshop=1`.
+        this.s.build.domain.onShopOpen();
         // SHOP-47: `?debug&noshop=1` pula a loja sem varrer nada (cenários da F1/F3 que atravessam rodadas).
         if (debugParam('noshop') === '1') this.s.run.closeShop();
         else {

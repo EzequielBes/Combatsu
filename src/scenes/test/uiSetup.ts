@@ -90,6 +90,8 @@ export class UiSetup {
     this.s.uiLayer.add(this.slowTint);
     // Marcador do recorde e painel de fim de run: recriados a cada `create` (o R reaproveita o diretor).
     this.s.runDirector.record.mountUi(this.s.uiLayer);
+    // DOM-10: o `R` reinicia a cena com o mesmo diretor; o Domínio ativo da cena velha acaba aqui.
+    this.s.build.domain.onSceneCreate();
     this.s.hud.setPlayerHp(this.s.player.hp, this.s.player.maxHp);
     // FXL-04: no laboratório a legenda fica sempre visível, não só os primeiros `CONTROLS_MS`.
     this.s.hud.showControls(this.s.fxLab ? Number.MAX_SAFE_INTEGER : CONTROLS_MS);

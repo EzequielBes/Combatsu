@@ -1,6 +1,7 @@
 // Expansão de Domínio (DOM-*, DDB-*, DHD-*) no mundo modular em HD, com `?debug&hd=1&area=modular&seed=1`. Cada parte
 // abre a sua própria página pelo `fight-kit` (que acrescenta `seed=1`, `maxAlive=1` e `shove=0`).
 import { chargeFromStrikes } from './domain-charge.mjs';
+import { domainEnds } from './domain-ends.mjs';
 import { domainKeys } from './domain-keys.mjs';
 import { activationStrike } from './domain-strike.mjs';
 import { chargeFromTechniques } from './domain-tech.mjs';
@@ -64,4 +65,5 @@ export default async function ({ page, baseUrl, assert }) {
   await chargeFromTechniques(kit, BASE);
   await domainKeys(kit, BASE);
   await activationStrike(kit, BASE);
+  await domainEnds(kit, BASE);
 }

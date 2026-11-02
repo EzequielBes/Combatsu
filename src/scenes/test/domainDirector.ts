@@ -80,7 +80,10 @@ export class DomainDirector {
    * nesses estados e na transição de área, `StatsDirector.inputFor`).
    */
   update(dtMs: number, pressed: boolean): void {
-    if (this.s.fxLab || !acceptsPlayerInput(this.s.run.state)) return;
+    if (this.s.fxLab) return;
+    // DOM-10: morrer com o Domínio ativo encerra na hora; vem antes do portão, porque o `gameOver` não passa dele.
+    if (this.s.player.dead) this.end('death');
+    if (!acceptsPlayerInput(this.s.run.state)) return;
     if (pressed) this.tryActivate();
     // DOM-10: o tempo do Domínio cai com o tempo de jogo; no hitstop a cena não chama este `update`.
     if (this.state.active?.update(dtMs)) this.end('timer');
@@ -168,8 +171,22 @@ export class DomainDirector {
     this.s.stats.sync();
   }
 
-  /** Run nova: nada do Domínio da run anterior sobrevive (DOM-05). */
+  /** A konbini abriu (`shopOpen`, também com `noshop=1`): o Domínio ativo acaba sem efeito de fim (DOM-10). */
+  onShopOpen(): void {
+    this.end('shop');
+  }
+
+  /**
+   * O `R` reinicia a cena e o diretor sobrevive a ela (os campos da cena não reiniciam): o Domínio ativo da cena velha
+   * acaba sem efeito de fim (DOM-10).
+   */
+  onSceneCreate(): void {
+    this.end('reset');
+  }
+
+  /** Run nova: nada do Domínio da run anterior sobrevive (DOM-05); o ativo acaba sem efeito de fim (DOM-10). */
   reset(): void {
+    this.end('reset');
     this.state.reset();
     this.lastSwingId = null;
     this.lastPropAtMs = null;

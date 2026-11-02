@@ -473,13 +473,21 @@ fim). Só `end('timer')` roda o efeito de fim (DOM-10.10).
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 2, fins): ativar com `maxAlive=1` e o último inimigo morrer pela ativação limpa a
+- [x] `domain.smoke.mjs` (parte 2, fins): ativar com `maxAlive=1` e o último inimigo morrer pela ativação limpa a
       rodada e deixa `domain.active` vivo na travessia, com `remainingMs` caindo; o `domainEnd:santuario` sai no tempo
       (6000 ms) ou na abertura da konbini, o que vier antes, também com `noshop=1` (edge case); morrer com o Domínio
       ativo (tecla `4` do debug até 0 HP) dá `domainEnd`; `R` com o Domínio ativo começa sem `domain.active`
-- [ ] Nenhum fim que não seja o tempo empurra evento de efeito de fim (o `worldCut` da T20 só sai no fim pelo tempo)
-- [ ] Smokes `run-loop`, `world-traverse`, `boss` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Nenhum fim que não seja o tempo empurra evento de efeito de fim (o `worldCut` da T20 só sai no fim pelo tempo)
+- [x] Smokes `run-loop`, `world-traverse`, `boss` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4370 → 4370; a tarefa é só de smoke)
+- Notas: a parte 2 (fins) mora em `scripts/smoke/domain-ends.mjs`. SPEC_DEVIATION no `noshop=1`: no mundo modular o
+  `noshop=1` liga o `skipShop` da `Run`, que vai da saída direto ao `roundStart` sem `shopOpen`; o Domínio ativo acaba
+  então no `case 'roundStart'` do `runDirector` (o lugar da konbini), além do `case 'shopOpen'`. Sem isso o Domínio
+  seguia até o tempo (conferido). A morte é lida antes do portão de estado do `update` (no `gameOver` ele não passa).
+  O `R` reinicia a cena com o mesmo diretor: `uiSetup.addHud` chama o `onSceneCreate`, e o snapshot do título já vem
+  sem `active`. Nesta máquina (container de 4 núcleos) a página `hd=1&area=modular` leva ~40 s para carregar, acima dos
+  30 s do `goto` do Puppeteer: os smokes rodaram por um embrulho temporário (fora do git) com o timeout de navegação
+  maior, sem mudar nenhum cenário.
 
 **Tests**: smoke
 **Gate**: full
