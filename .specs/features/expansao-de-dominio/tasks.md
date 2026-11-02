@@ -543,9 +543,10 @@ carregando, `T` ativa, pisca `U`/`W` a cada 250 ms com a carga cheia e mostra o 
 
 **Done when**:
 
-- [ ] `tests/core/veilChest.test.ts` (novo): o par tem sempre 2 ids diferentes dos 3; a mesma seed dá o mesmo par; 1000
+- [x] `tests/core/veilChest.test.ts` (novo): o par tem sempre 2 ids diferentes dos 3; a mesma seed dá o mesmo par; 1000
       seeds cobrem os 3 pares possíveis
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4370 → 4373)
+- Nota: o `Rng` mora em `core/rng.ts` (o `run.ts` só o usa).
 
 **Tests**: unit
 **Gate**: quick
