@@ -855,9 +855,9 @@ fora do Jackpot → neutro). A parte da Amplificação entra na T30.
 
 **Done when**:
 
-- [ ] `tests/core/domainEffects.test.ts` (novo): sem ativo dá `NEUTRAL_DOMAIN_MODS`; Jackpot no giro neutro; jackpot
+- [x] `tests/core/domainEffects.test.ts` (novo): sem ativo dá `NEUTRAL_DOMAIN_MODS`; Jackpot no giro neutro; jackpot
       0/0 com `energyLock`; falha 0,5/0,5 sem `energyLock`; Santuário neutro
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4421 → 4427: +6 em `tests/core/domainEffects.test.ts`)
 
 **Tests**: unit
 **Gate**: quick
