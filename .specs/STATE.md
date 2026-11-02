@@ -1,4 +1,4 @@
-# STATE
+﻿# STATE
 
 ## Decisions
 
@@ -112,7 +112,7 @@
 - **Trade-off**: `difficulty.ts` perde o escalonamento numérico; a curva depende de IA e composição bem afinadas.
 - **Scope**: Inimigos comuns (F12–F16); chefes mantêm o tier próprio.
 - **Date**: 2026-10-02
-- **Status**: active
+- **Status**: superseded by AD-025 (o HP e o dano do comum voltam a crescer por rodada; a dificuldade por mecânica continua)
 
 ### AD-015
 - **Decision**: A postura (estrutura) é a barra central: golpe forte só cambaleia; ragdoll apenas com postura quebrada, flag `knockdown`, morte ou impacto em parede/inimigo. Golpes têm `maxTargets` (leve 1, forte 2) e inimigo no chão leva no máximo 1 golpe.
@@ -194,20 +194,37 @@
 - **Date**: 2026-10-08
 - **Status**: active
 
+### AD-025
+- **Decision**: O HP e o dano do inimigo comum voltam a crescer por rodada: `DIFFICULTY.hpPerRound` 0,06 e `damagePerRound` 0,05, com os tetos de 3,0 e 2,5 e a velocidade como estava. O comum tem 64, 89, 96 e 125 de HP nas rodadas 2, 9, 11 e 19, e 13 de dano na 2. O Kokusen acompanha: `max(round(2,5 × golpe com Força × meleeMul), round(45 × hpMul))`. A dificuldade por mecânica da AD-014 continua; o número entra por cima, junto da build (eixos, Corpo) que cresce no mesmo ritmo (F30 `vermelho-e-corpo`, ESC-01..05).
+- **Reason**: A build ganha eixos, ramos e pontos do Corpo; com o inimigo parado em 60 de HP e 12 de dano ela passa por cima da horda sem fim. A curva de build (`tests/core/buildCurve.test.ts`) prova que o poder chega a tempo.
+- **Trade-off**: Volta o inimigo mais esponjoso nas rodadas altas, que o usuário recusou em 02/10 (AD-014); o enxame e o volume seguem a parte do desafio. `core/difficulty.ts` não muda, só os números.
+- **Scope**: Inimigo comum e o invocado pelo chefe. Chefes mantêm o tier próprio.
+- **Date**: 2026-10-16
+- **Status**: active
+
 ## Handoff
 
 Só o estado atual; o histórico de cada sessão está no `git log`. Reescrever esta seção ao fechar a sessão, não empilhar.
 
-- **Onde está** (08/10/2026): o `master` tem o `feat/builds-e-arsenal`, o plano do pedido de 08/10 (`docs/plano-cenario-rejogabilidade-hordas.md`), a F22 `cenario-acabamento` e a F23 `arena-do-santuario`, ambas com Verifier PASS na rodada 3 (`validation.md` de cada uma). F22: muro e horizonte por tema (`src/game/art/scenery/`, um arquivo por tema), pilar nas emendas, borda esquerda de pedra, decoração, primeiro plano, contorno em todo texto do HUD. F23: céu do Véu (`santuarioSky.ts`), santuário com torii, escadaria e árvore sagrada (`santuarioMid.ts`) com variante por chefe (Oni: torii rachado e correntes; Tecelã: fios e casulos), selo dos dois lados e véu vermelho da fase 2 (`scenes/test/arena.ts`), arena de 48 colunas (teto de `MODULE_MAX_COLS`). Gate verde com 2814 testes; smokes `world-` (7), `boss` e `hud` verdes.
-- **Defeito antigo corrigido na F23**: `toLayerX` usava meia vista de 320 px; o Phaser amplia em volta do centro do canvas (640 em HD), então faixas de tema e pilares das emendas estavam deslocados desde a F18 (`src/game/art/scenery/layers.ts`, `CANVAS_CX`).
-- **Pedido em andamento** (usuário, 08/10): (1) cenário, (2) rejogabilidade, (3) hordas contínuas e Energia Reversa no estilo do anime. Ordem e escopo no plano: F22 → F23 `arena-do-santuario` → F24 `votos-e-evolucoes` → F25 `meta-progressao` → F26 `graus-e-eventos` → F27 `hordas` → F28 `reversa-anime`. O usuário mandou seguir o fluxo sem responder às decisões em aberto do plano; valem as recomendações dele (paredes verdes = faixa chapada do parque; rodada de horda termina por cota de abates; meta-progressão libera conteúdo e um pouco de poder base com teto; inimigo de enxame novo; run sem fim por enquanto). Confirmar quando ele voltar.
-- **Em andamento (08/10)**: F24 `votos-e-evolucoes` no branch `feat/votos-e-evolucoes` (sem push). Feitos: spec, design e tasks; T1 (`core/vows.ts`, `data/vows.ts`: 8 votos e sorteio), T2 (`vowEffects`) e a parte da T3 que mexe na `Run` (`vowRng`, `roundKills`, commit `5d7849b`). Gate verde com 2831 testes.
-- **Next step**: terminar a T3 (`src/scenes/test/vowDirector.ts`: votos da run, reset em `runDirector` junto de `build.reset()`, `?debug&vows=`, campo `vows` no snapshot e `vows.smoke.mjs`), depois T4 a T15 de `.specs/features/votos-e-evolucoes/tasks.md`, o Verifier e o merge. O usuário ainda não jogou a F22/F23 para aprovar.
-- **Fracos conhecidos da F22**: a konbini lê como loja nas gôndolas, mas as geladeiras ainda lembram estantes; as árvores do parque são claras para a noite; `terrainDepth` do snapshot lê só o primeiro tile.
-- **Builds e arsenal (no `master`)**: os fracos registrados antes continuam (efeito das passivas e relíquias só coberto pela regra pura, relíquia fora do HUD, armas vinculadas com a arte da faca e do porrete, finalizador do chefe sem Executor, preços sem teste em run real). Requisitos `BLD-*` e `ARS-*` só nos comentários e testes.
-- **HD é a base** (decisão do usuário, 08/10): trabalho novo é feito e conferido em HD. Smokes antigos ainda rodam em `hd=0` (o runner acrescenta); smoke novo pede `hd=1`. Folha de textura com menos de 14 px de largura não é desenhada pelo Phaser 4.
-- **Como conferir arte e efeitos**: `node tools/hd-boards.mjs --frames <lista> --name <nome> --out <pasta>`; `node tools/visual-shots.mjs <pasta> [cenário] --random=0.8 [--gpu]`. O usuário julga jogando.
-- **Smoke `armed` instável** (visto em 07/10): falha às vezes em `ARM-12`; acontece também sem mudanças, então repetir antes de suspeitar de regressão.
-- **Restrição**: toda arte é feita pelo Claude em código; nada manual nem pago. Arte e revisão em Opus 5.5 ou Fable, Sonnet só no mecânico. Subagentes em paralelo: proibir `stash`/`checkout` no prompt e não pôr dois agentes no mesmo arquivo.
+- **Onde está** (16/10/2026):
+  - F29 `fundacao-de-poder`: pronta e validada (commit `81c3fa4`, Verifier PASS).
+  - F30 `vermelho-e-corpo`: pronta e validada no branch `feat/vermelho-e-corpo` (commit `11615ac`, Verifier PASS rodada 2, 4278 testes passando).
+  - F32 `chefes-com-afixos`: pronta e validada no branch `feat/chefes-com-afixos` (commit `cc995c2`, Verifier PASS).
+  - Frentes de arte e regras (armas imbuídas, cães/don, techfx, ícones HD, regras levas 1 e 2, recorde) já adiantadas e consolidadas no branch `feat/builds-integracao` (commit `75a22b4`).
+  - **F31 `expansao-de-dominio` (EM ANDAMENTO ATIVO)**: branch `feat/expansao-de-dominio`, aberta sobre a F30. As tarefas T1 a T9 já foram implementadas e testadas (último commit: `1332eae feat(scene): land the decisive domain activation hit`).
+- **Cadeia de branches**: `master` ← `feat/fundacao-de-poder` (F29) ← `feat/builds-integracao` ← `feat/vermelho-e-corpo` (F30) ← `feat/expansao-de-dominio` (F31).
+- **Atenção para Claude Cloud / sincronização**:
+  - A branch local `feat/expansao-de-dominio` está 9 commits à frente de `origin/feat/expansao-de-dominio` (commits T1 a T9).
+  - Se for rodar no Claude Cloud remoto, certifique-se de que o push desses commits foi feito (`git push origin feat/expansao-de-dominio`) para o ambiente remoto não recomeçar a F31 do zero.
+- **Next step para continuar**:
+  - Branch de trabalho: `feat/expansao-de-dominio`.
+  - Tarefa imediata: **T10** (`Fim do Domínio na konbini, na morte e no reinício`), descrita em `.specs/features/expansao-de-dominio/tasks.md`.
+  - Continuar sequencialmente de T10 até T48, seguindo os gates do `tlc-spec-driven` e finalizando com o Verifier independente da F31.
+- **Regras mandatórias do projeto**:
+  - **Arte do protagonista (Yuta)**: Regra de 15/10 — não gerar sprites do player em código. Pedidos de quadro novo viram `docs/sprites-protagonista/<Tnn>-<nome>.md` e o código usa o quadro existente mais próximo. Cenário, inimigos e efeitos seguem em código.
+  - **HD é a base**: Todo smoke novo roda com `?debug&hd=1&area=modular`.
+  - **Limites de código**: Teto de 400 linhas efetivas por arquivo, 80 por função, complexidade 15. Arquivo novo não entra no `.oxlintrc.json`. `TestScene.ts` não ganha linhas líquidas.
+  - **Escala de inimigos**: AD-025 ativa — HP (+6%/rodada) e dano (+5%/rodada) escalam, e Kokusen acompanha a curva da build.
+- **Instáveis conhecidos**: o smoke `kokusen` (pré-condição de energia CE-06) falha às vezes; o `armed` falha esporadicamente em ARM-12. Repetir isolado antes de suspeitar de regressão.
 
-Pendências antigas que continuam: silhueta própria para a Tecelã; alcance do arremesso (garrafa ~260 px, cadeira ~140 px); taxa de atualização do monitor do usuário; worktrees antigas e branches já mergeadas para limpar se ele quiser. Os fracos de arte registrados em 04/10 (corrida, gancho, giratório, borrão, rosto, lampejo do impacto, HUD) continuam no histórico do `git log` desta seção.
+Pendências antigas que continuam: silhueta própria para a Tecelã; alcance do arremesso; fracos da F22 (geladeiras da konbini, árvores claras do parque); efeitos das passivas e relíquias só cobertos pela regra pura; worktrees antigas e branches já mergeadas para limpar se o usuário quiser.
