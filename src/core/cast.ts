@@ -4,12 +4,14 @@ import type { TechStats } from './techStats';
 import type { TechId } from '../data/techniques';
 
 export type CastState = 'sign' | 'charge' | 'release' | 'recover';
-export type DenyReason = 'energy' | 'cooldown' | 'busy';
+export type DenyReason = 'energy' | 'cooldown' | 'busy' | 'domain';
 
 /** Fase do golpe corpo a corpo e se o player está impedido de conjurar por outro motivo (segurando objeto, hitstun). */
 export interface CastContext {
   meleePhase: 'none' | 'startup' | 'active' | 'recover';
   busy: boolean;
+  /** AMP-04: a Amplificação de Domínio trava as técnicas. */
+  locked?: boolean;
 }
 
 export type CastEvent =
@@ -78,6 +80,7 @@ export class CastMachine {
     if (this.active) return [];
     const slotDef = this.loadout.slotsView[slot];
     if (!slotDef) return []; // slot vazio: nada a conjurar, sem evento de negação específico.
+    if (ctx.locked) return [{ type: 'denied', reason: 'domain' }];
     // CAST-09: segurando objeto, em hitstun (busy) ou no startup/active do golpe bloqueiam; CAST-10: recover não.
     if (ctx.busy || ctx.meleePhase === 'startup' || ctx.meleePhase === 'active') {
       return [{ type: 'denied', reason: 'busy' }];

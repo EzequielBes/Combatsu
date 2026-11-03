@@ -214,3 +214,38 @@ describe('TST-02: os tempos de fase saem do `loadout.stats(id)`, não da tabela 
     expect(machine.cast).toBe(null);
   });
 });
+
+describe('AMP-04: técnicas travadas pelo Domínio (`locked`)', () => {
+  const LOCKED: CastContext = { ...FREE, locked: true };
+
+  it('com `locked`, recusa `domain` sem gastar energia nem armar recarga', () => {
+    const { machine, energy, loadout } = setup();
+    expect(machine.request(0, LOCKED)).toEqual([{ type: 'denied', reason: 'domain' }]);
+    expect(machine.cast).toBe(null);
+    machine.update(1000);
+    expect(energy.cur).toBe(100);
+    expect(loadout.cooldownOf(0)).toBe(0);
+  });
+
+  it('a recusa `domain` vem antes de `busy` (hitstun e golpe em startup)', () => {
+    const { machine } = setup();
+    expect(machine.request(0, { meleePhase: 'none', busy: true, locked: true })).toEqual([
+      { type: 'denied', reason: 'domain' },
+    ]);
+    expect(machine.request(0, { meleePhase: 'startup', busy: false, locked: true })).toEqual([
+      { type: 'denied', reason: 'domain' },
+    ]);
+  });
+
+  it('slot vazio continua sem evento, mesmo travado', () => {
+    const { machine } = setup();
+    expect(machine.request(1, LOCKED)).toEqual([]);
+  });
+
+  it('sem `locked` (falso ou ausente) conjura como hoje', () => {
+    const a = setup();
+    expect(a.machine.request(0, { ...FREE, locked: false })).toEqual([{ type: 'enter', state: 'sign' }]);
+    const b = setup();
+    expect(b.machine.request(0, FREE)).toEqual([{ type: 'enter', state: 'sign' }]);
+  });
+});

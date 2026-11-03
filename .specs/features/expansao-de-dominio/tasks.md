@@ -1101,9 +1101,9 @@ inclusas.
 
 **Done when**:
 
-- [ ] `tests/core/cast.test.ts`: com `locked`, recusa `domain` sem gastar energia nem armar recarga; a recusa `domain`
+- [x] `tests/core/cast.test.ts`: com `locked`, recusa `domain` sem gastar energia nem armar recarga; a recusa `domain`
       vem antes de `busy`; slot vazio continua recusando como hoje; sem `locked`, igual a hoje
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4452 → 4456)
 
 **Tests**: unit
 **Gate**: quick
