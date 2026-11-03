@@ -1041,14 +1041,21 @@ texto `Riichi NN%`; no giro o símbolo troca pelo relógio de jogo, sem `Rng`; n
 
 **Done when**:
 
-- [ ] `domain.smoke.mjs` (parte 5, vista): no giro `domainFx.reels.spinning` e o `chance` do texto igual ao do snapshot
+- [x] `domain.smoke.mjs` (parte 5, vista): no giro `domainFx.reels.spinning` e o `chance` do texto igual ao do snapshot
       (lido do `Text` vivo, L-076); na parada, três `faces` iguais no `jackpot:hit` e pelo menos uma diferente no
       `jackpot:miss`; os tambores somem no fim do Domínio; com `jackpotMisses=2`, o texto do giro lido do `Text` vivo é
       "GARANTIDO", `domain.jackpot.guaranteed` é verdadeiro e a parada dá `jackpot:hit` (JAC-06.11, JAC-03.5); com
       `jackpotMisses=1` o texto mostra a chance
-- [ ] Conferido no jogo em HD, em movimento e virado para os dois lados (DHD-06)
-- [ ] Smokes `hud` e `domain` verdes
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Conferido no jogo em HD, em movimento e virado para os dois lados (DHD-06)
+- [x] Smokes `hud` e `domain` verdes
+- [x] Gate verde; contagem de testes sem perda (4444, sem teste unitário novo; o literal do `debugApi.test.ts` ganhou `reels: null`; smokes `hud` (2) e `domain` verdes)
+
+- Nota: a vista em `scripts/smoke/domain-reels.mjs`. O `DomainFx` passou a andar no `POST_UPDATE` da cena (era o
+  `UPDATE`, que roda antes do `update` da cena): os tambores mostram o estado do mesmo quadro, e a parada já aparece no
+  quadro do `jackpot:` (a vinheta só muda de ordem dentro do quadro; o smoke do Santuário segue verde). Parados, os
+  tambores mostram `JACKPOT!` ou `FALHA` no lugar do Riichi. Conferido em HD pelo `__game.render()`: giro com o player
+  parado à direita e andando à esquerda, parada `7 7 7` e efeito andando à direita, sem colidir com o banner. Sem quadro
+  novo do Yuta (vista só de UI).
 
 **Tests**: smoke
 **Gate**: full

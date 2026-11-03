@@ -2,31 +2,36 @@ import Phaser from 'phaser';
 import { DOMAIN_COLORS, DOMAIN_FX } from '../data/domains';
 import { PALETTE } from './art/palette';
 import { UI_SIZE } from './art/hd/screen';
+import { JackpotReels, type ReelsSnapshot, type ReelsView } from './JackpotReels';
 
-/** O que a vista do Domínio mostra agora (a vinheta liga com o Santuário ativo, SAN-06). */
+/** O que a vista do Domínio mostra agora: a vinheta com o Santuário ativo (SAN-06), os tambores com o Jackpot (JAC-06). */
 export interface DomainFxView {
   vignette: boolean;
+  reels: ReelsView | null;
 }
 
-/** `domainFx` do snapshot de debug: o alpha real da vinheta (0 apagada) e os objetos da `uiLayer`. */
+/** `domainFx` do snapshot de debug: o alpha real da vinheta (0 apagada), os objetos da `uiLayer` e os tambores. */
 export interface DomainFxSnapshot {
   vignette: number;
   uiObjects: number;
+  reels: ReelsSnapshot | null;
 }
 
 /** Abaixo do tom da câmera lenta (90) e do HUD. */
 const DEPTH = 89;
-const OFF: DomainFxView = { vignette: false };
+const OFF: DomainFxView = { vignette: false, reels: null };
 const SNAP_MS = 1e-6;
 
 /**
- * A vista do Domínio na tela (SAN-06, DHD-04, DHD-05): a vinheta do Santuário, 4 faixas de `vignettePx` nas bordas da
- * tela na cor `t` da `PALETTE`, na `uiLayer` (AD-003). Acende e apaga em `fadeMs` no relógio próprio (o `UPDATE` da
- * cena, que anda também na konbini, na derrota e no hitstop, onde o diretor do Domínio para). Lê a vista pelo `bind`;
- * o `UiSetup` a cria e a destrói no `SHUTDOWN`.
+ * A vista do Domínio na tela (SAN-06, JAC-06, DHD-04, DHD-05): a vinheta do Santuário, 4 faixas de `vignettePx` nas
+ * bordas da tela na cor `t` da `PALETTE`, na `uiLayer` (AD-003), e os tambores do Jackpot (`JackpotReels`). Acende e
+ * apaga em `fadeMs` no relógio próprio (o `POST_UPDATE` da cena, que anda também na konbini, na derrota e no hitstop,
+ * onde o diretor do Domínio para; depois do `update` da cena, a vista mostra o estado do mesmo quadro). Lê a vista pelo
+ * `bind`; o `UiSetup` a cria e a destrói no `SHUTDOWN`.
  */
 export class DomainFx {
   private readonly edges: Phaser.GameObjects.Rectangle[];
+  private readonly reels: JackpotReels;
   /** Quanto do fade está aceso, de 0 a `fadeMs`: o alpha sai exato nas duas pontas. */
   private litMs = 0;
   private source: () => DomainFxView = () => OFF;
@@ -55,7 +60,8 @@ export class DomainFx {
         .setVisible(false),
     );
     layer.add(this.edges);
-    scene.events.on(Phaser.Scenes.Events.UPDATE, this.tick);
+    this.reels = new JackpotReels(scene, layer);
+    scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.tick);
   }
 
   /** A vista que o efeito lê a cada quadro (o `UiSetup` liga a do `domainPowers`). */
@@ -71,16 +77,18 @@ export class DomainFx {
     this.litMs = ms < SNAP_MS ? 0 : ms > fadeMs - SNAP_MS ? fadeMs : ms;
     const alpha = (vignetteAlpha * this.litMs) / fadeMs;
     for (const e of this.edges) e.setAlpha(alpha).setVisible(alpha > 0);
+    this.reels.show(view.reels);
   }
 
   /** Lido dos retângulos vivos (L-076): o alpha desenhado, não o pedido. */
   debug(): DomainFxSnapshot {
     const edge = this.edges[0];
-    return { vignette: edge.visible ? edge.alpha : 0, uiObjects: this.layer.list.length };
+    return { vignette: edge.visible ? edge.alpha : 0, uiObjects: this.layer.list.length, reels: this.reels.debug() };
   }
 
   destroy(): void {
-    this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.tick);
+    this.scene.events.off(Phaser.Scenes.Events.POST_UPDATE, this.tick);
     for (const e of this.edges) e.destroy();
+    this.reels.destroy();
   }
 }
