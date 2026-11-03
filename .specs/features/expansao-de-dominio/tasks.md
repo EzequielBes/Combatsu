@@ -1077,10 +1077,12 @@ inclusas.
 
 **Done when**:
 
-- [ ] `tests/core/domainEffects.test.ts`: Amplificação Nv 1 e Nv 2 com as três travas e `meleeMul` 1; Nv 3 com 1,25;
+- [x] `tests/core/domainEffects.test.ts`: Amplificação Nv 1 e Nv 2 com as três travas e `meleeMul` 1; Nv 3 com 1,25;
       Santuário e Jackpot sem trava; `rectsOverlap` com as bordas encostadas (verdadeiro) e 1 px de folga (falso), nos
       dois eixos
-- [ ] Gate verde; contagem de testes sem perda
+- [x] Gate verde; contagem de testes sem perda (4444 → 4452)
+
+- Nota: `rectsOverlap` usa o `Rect` de `core/level.ts` (x/y no centro, como o `hurtRect`).
 
 **Tests**: unit
 **Gate**: quick
